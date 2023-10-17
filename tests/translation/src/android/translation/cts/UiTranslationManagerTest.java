@@ -77,6 +77,7 @@ import android.widget.TextView;
 import androidx.lifecycle.Lifecycle;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
+import androidx.test.filters.FlakyTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -112,6 +113,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * {@link ContentCaptureService} then uses this token in {@link UiTranslationManager} APIs.</p>
  */
 
+@FlakyTest(bugId = 285979174)
 @AppModeFull(reason = "TODO(b/182330968): disable instant mode. Re-enable after we decouple the "
         + "service from the test package.")
 @RunWith(AndroidJUnit4.class)

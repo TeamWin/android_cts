@@ -59,6 +59,9 @@ public final class FrameRateOverrideTest {
     // The tolerance within which we consider refresh rates are equal
     private static final float REFRESH_RATE_TOLERANCE = 0.01f;
 
+    // Needs to be in sync with RefreshRateSelector::kMinSupportedFrameRate
+    private static final float MIN_SUPPORTED_FRAME_RATE_HZ = 20.0f;
+
     private int mInitialMatchContentFrameRate;
     private DisplayManager mDisplayManager;
     private UiDevice mUiDevice;
@@ -150,6 +153,12 @@ public final class FrameRateOverrideTest {
         for (Display.Mode mode : modes) {
             if (mode.getPhysicalHeight() == currentDisplayHeight
                     && mode.getPhysicalWidth() == currentDisplayWidth) {
+
+                // Do not add refresh rates that are too low as those will be discarded by SF
+                if (mode.getRefreshRate() / 2
+                        < MIN_SUPPORTED_FRAME_RATE_HZ + REFRESH_RATE_TOLERANCE) {
+                    continue;
+                }
                 modesWithSameResolution.add(mode);
             }
         }

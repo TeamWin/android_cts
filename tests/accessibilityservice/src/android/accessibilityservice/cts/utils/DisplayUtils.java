@@ -42,10 +42,42 @@ import com.android.compatibility.common.util.TestUtils;
  */
 public class DisplayUtils {
     private static final int DISPLAY_ADDED_TIMEOUT_MS = 5000;
+    // Tolerance that allows for rounding differences in how various parts of
+    // Android calculate on-screen bounds given non-integer screen scaling or
+    // dp/pixel density.
+    private static final int BOUNDS_IN_SCREEN_TOLERANCE_PX = 1;
 
     public static int getStatusBarHeight(Activity activity) {
         return activity.getWindow().getDecorView().getRootWindowInsets()
                 .getInsets(WindowInsets.Type.statusBars()).top;
+    }
+
+    /**
+     * Checks if the bounds origin match the provided point, to a tolerance of
+     * {@link #BOUNDS_IN_SCREEN_TOLERANCE_PX} pixels.
+     */
+    public static boolean fuzzyBoundsInScreenSameOrigin(int[] origin, Rect bounds) {
+        return Math.abs((origin[0]) - bounds.left) <= BOUNDS_IN_SCREEN_TOLERANCE_PX
+                && Math.abs((origin[1]) - bounds.top) <= BOUNDS_IN_SCREEN_TOLERANCE_PX;
+    }
+
+    /**
+     * Checks if the bounds origins match each other, to a tolerance of
+     * {@link #BOUNDS_IN_SCREEN_TOLERANCE_PX} pixels.
+     */
+    public static boolean fuzzyBoundsInScreenSameOrigin(Rect boundsA, Rect boundsB) {
+        return Math.abs((boundsA.left) - boundsB.left) <= BOUNDS_IN_SCREEN_TOLERANCE_PX
+                && Math.abs((boundsA.top) - boundsB.top) <= BOUNDS_IN_SCREEN_TOLERANCE_PX;
+    }
+
+    /**
+     * Checks if a larger rect contains another, to a tolerance of
+     * {@link #BOUNDS_IN_SCREEN_TOLERANCE_PX} pixels.
+     */
+    public static boolean fuzzyBoundsInScreenContains(Rect larger, Rect smaller) {
+        final Rect largerExpanded = new Rect(larger);
+        largerExpanded.inset(-BOUNDS_IN_SCREEN_TOLERANCE_PX, -BOUNDS_IN_SCREEN_TOLERANCE_PX);
+        return largerExpanded.contains(smaller);
     }
 
     public static class VirtualDisplaySession implements AutoCloseable {

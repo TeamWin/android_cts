@@ -509,9 +509,10 @@ public class AvailableIntentsTest extends AndroidTestCase {
     }
 
     public void testPowerUsageSummarySettings() {
-        if(FeatureUtil.isWatch()){
+        if (FeatureUtil.isWatch() || FeatureUtil.isAutomotive()) {
             return;
         }
+
         if (isBatteryPresent()) {
             assertCanBeHandled(new Intent(Intent.ACTION_POWER_USAGE_SUMMARY));
         }

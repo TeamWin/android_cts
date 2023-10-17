@@ -18,7 +18,7 @@ package android.hardware.camera2.cts;
 
 import android.graphics.ImageFormat;
 import android.hardware.camera2.CameraCharacteristics;
-import android.hardware.camera2.cts.CameraTestUtils;
+import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.params.DynamicRangeProfiles;
@@ -29,7 +29,6 @@ import android.hardware.camera2.CaptureResult;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
-import android.os.ConditionVariable;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Range;
@@ -179,9 +178,9 @@ public class ZoomCaptureTest extends Camera2AndroidTestCase {
             physicalCameraIds = mStaticInfo.getCharacteristics().getPhysicalCameraIds();
         }
         try {
-            mListener  = new SimpleImageListener();
             // Pick the largest image size:
             Size maxSize = CameraTestUtils.getMaxSize(availableSizes);
+            mListener  = new SimpleImageListener(format, maxSize);
             createDefaultImageReader(maxSize, format, 1, mListener);
 
             checkImageReaderSessionConfiguration(
@@ -199,6 +198,7 @@ public class ZoomCaptureTest extends Camera2AndroidTestCase {
 
             boolean checkActivePhysicalIdConsistency =
                     PropertyUtil.getFirstApiLevel() >= Build.VERSION_CODES.S;
+            List<CaptureRequest> requests = new ArrayList<CaptureRequest>();
             for (Float zoomRatio : candidateZoomRatios) {
                 if (VERBOSE) {
                     Log.v(TAG, "Testing format " + format + " zoomRatio " + zoomRatio +
@@ -206,38 +206,36 @@ public class ZoomCaptureTest extends Camera2AndroidTestCase {
                 }
 
                 requestBuilder.set(CaptureRequest.CONTROL_ZOOM_RATIO, zoomRatio);
-                CaptureRequest request = requestBuilder.build();
+                requests.add(requestBuilder.build());
+            }
 
-                SimpleCaptureCallback listener = new SimpleCaptureCallback();
-                startCapture(request, false /*repeating*/, listener, mHandler);
+            SimpleCaptureCallback listener = new SimpleCaptureCallback();
+            int seqId = mCameraSession.captureBurst(requests, listener, mHandler);
 
-                // Validate images.
-                mListener.waitForAnyImageAvailable(CAPTURE_WAIT_TIMEOUT_MS);
-                Image img = mReader.acquireNextImage();
-                assertNotNull("Unable to acquire the latest image", img);
-                CameraTestUtils.validateImage(img, maxSize.getWidth(), maxSize.getHeight(), format,
-                        mDebugFileNameBase);
-                img.close();
+            // onCaptureSequenceCompleted() trails all capture results. Upon its return,
+            // we make sure we've received all results/errors.
+            listener.getCaptureSequenceLastFrameNumber(
+                    seqId, CAPTURE_WAIT_TIMEOUT_MS * candidateZoomRatios.size());
 
+            while (listener.hasMoreResults() && mStaticInfo.isActivePhysicalCameraIdSupported()) {
                 // Validate capture result.
-                if (mStaticInfo.isActivePhysicalCameraIdSupported()) {
-                    CaptureResult result = listener.getCaptureResult(CAPTURE_RESULT_TIMEOUT_MS);
-                    String activePhysicalId = result.get(
-                            CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID);
-                    if (checkActivePhysicalIdConsistency) {
-                        assertNotNull("Camera " + mCamera.getId() +
-                                " result metadata must contain ACTIVE_PHYSICAL_ID",
-                                activePhysicalId);
-                        assertTrue("Camera " + mCamera.getId() + " must be logical " +
-                                "camera if activePhysicalId exists in capture result",
-                                physicalCameraIds != null && physicalCameraIds.size() != 0);
-                        mCollector.expectTrue("Camera " + mCamera.getId() + "  activePhysicalId " +
-                                activePhysicalId + "must be among valid physical Ids "  +
-                                physicalCameraIds.toString(),
-                                physicalCameraIds.contains(activePhysicalId));
+                TotalCaptureResult result = listener.getTotalCaptureResult(
+                            CAPTURE_RESULT_TIMEOUT_MS);
+                String activePhysicalId = result.get(
+                        CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID);
+                if (checkActivePhysicalIdConsistency) {
+                    assertNotNull("Camera " + mCamera.getId() +
+                            " result metadata must contain ACTIVE_PHYSICAL_ID",
+                            activePhysicalId);
+                    assertTrue("Camera " + mCamera.getId() + " must be logical " +
+                            "camera if activePhysicalId exists in capture result",
+                            physicalCameraIds != null && physicalCameraIds.size() != 0);
+                    mCollector.expectTrue("Camera " + mCamera.getId() + "  activePhysicalId " +
+                            activePhysicalId + "must be among valid physical Ids "  +
+                            physicalCameraIds.toString(),
+                            physicalCameraIds.contains(activePhysicalId));
 
-                        activePhysicalIdsSeen.add(activePhysicalId);
-                    }
+                    activePhysicalIdsSeen.add(activePhysicalId);
                 }
             }
             // stop capture.
@@ -254,18 +252,21 @@ public class ZoomCaptureTest extends Camera2AndroidTestCase {
     }
 
     private final class SimpleImageListener implements ImageReader.OnImageAvailableListener {
-        private final ConditionVariable imageAvailable = new ConditionVariable();
-        @Override
-        public void onImageAvailable(ImageReader reader) {
-            imageAvailable.open();
+        private final int mImageFormat;
+        private final Size mMaxSize;
+        public SimpleImageListener(int imageFormat, Size maxSize) {
+            mImageFormat = imageFormat;
+            mMaxSize = maxSize;
         }
 
-        public void waitForAnyImageAvailable(long timeout) {
-            if (imageAvailable.block(timeout)) {
-                imageAvailable.close();
-            } else {
-                fail("wait for image available timed out after " + timeout + "ms");
-            }
+        @Override
+        public void onImageAvailable(ImageReader reader) {
+            Image img = mReader.acquireNextImage();
+            assertNotNull("Unable to acquire the latest image", img);
+            CameraTestUtils.validateImage(img, mMaxSize.getWidth(), mMaxSize.getHeight(),
+                    mImageFormat, mDebugFileNameBase);
+            Log.e(TAG, "Image verification done");
+            img.close();
         }
     }
 }

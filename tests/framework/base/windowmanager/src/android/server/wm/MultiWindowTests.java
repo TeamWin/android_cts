@@ -588,8 +588,11 @@ public class MultiWindowTests extends ActivityManagerTestBase {
                     final WindowContainerTransaction wct = new WindowContainerTransaction()
                             .reorder(token, true /* onTop */);
                     mTaskOrganizer.applyTransaction(wct);
-                    waitForOrFail("Fail to reorder", () ->
-                            mTaskOrganizer.getTaskInfo(taskId2).isVisible());
+
+                    final WindowManagerState.Task topTask = mWmState
+                            .getStandardRootTaskByWindowingMode(WINDOWING_MODE_FULLSCREEN)
+                            .getTopTask();
+                    waitForOrFail("Fail to reorder", () -> (topTask.mTaskId == taskId2));
                 });
             } catch (AssertionError e) {
                 gotAssertionError = true;

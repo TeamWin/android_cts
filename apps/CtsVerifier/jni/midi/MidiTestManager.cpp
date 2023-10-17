@@ -257,7 +257,7 @@ int MidiTestManager::matchStream(uint8_t* bytes, int count) {
     return matchedByteCount;
 }
 
-#define THROTTLE_PERIOD_MS 10
+#define THROTTLE_PERIOD_MS 20
 #define THROTTLE_MAX_PACKET_SIZE 15
 
 int portSend(AMidiInputPort* sendPort, uint8_t* msg, int length, bool throttle) {

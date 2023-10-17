@@ -100,12 +100,27 @@ public class Components extends ComponentsBase {
          */
         public final String ALLOW_BAL_EXTRA_ON_PENDING_INTENT =
                 "ALLOW_BAL_EXTRA_ON_PENDING_INTENT";
+        /**
+         * Create a PendingIntent with creator BAL option set to Deny BAL privilege.
+         */
+        public final String DENY_CREATOR_BAL_PRIVILEGE = "DENY_CREATOR_BAL_PRIVILEGE";
+        /**
+         * Create a PendingIntent to launch App B Foreground Activity instead of the usual App A
+         * Background Activity.
+         */
+        public final String CREATE_PI_LAUNCH_APP_B = "CREATE_PI_LAUNCH_APP_B";
     }
 
     /** Extra key constants for {@link #START_ACTIVITY_RECEIVER} */
     public static class StartActivityReceiverExtra {
         public final String START_ACTIVITY_DELAY_MS =
                 "START_ACTIVITY_FROM_FG_ACTIVITY_DELAY_MS_EXTRA";
+    }
+
+    /** Extra key constants for {@link #VIRTUAL_DISPLAY_ACTIVITY} */
+    public static class VirtualDisplayActivityExtra {
+        public final String USE_PUBLIC_PRESENTATION =
+                "USE_PUBLIC_PRESENTATION_EXTRA";
     }
 
     // TODO(b/263368846) rename to camelCase
@@ -125,6 +140,7 @@ public class Components extends ComponentsBase {
     public final ComponentName VIRTUAL_DISPLAY_ACTIVITY;
     public final ComponentName WIDGET_CONFIG_TEST_ACTIVITY;
     public final ComponentName WIDGET_PROVIDER;
+    public final ComponentName START_NEXT_MATCHING_ACTIVITY;
 
     public final ForegroundActivityAction FOREGROUND_ACTIVITY_ACTIONS;
     public final ForegroundActivityExtra FOREGROUND_ACTIVITY_EXTRA = new ForegroundActivityExtra();
@@ -137,6 +153,9 @@ public class Components extends ComponentsBase {
             new SendPendingIntentReceiverExtra();
     public final StartActivityReceiverExtra START_ACTIVITY_RECEIVER_EXTRA =
             new StartActivityReceiverExtra();
+
+    public final VirtualDisplayActivityExtra VIRTUAL_DISPLAY_ACTIVITY_EXTRA =
+            new VirtualDisplayActivityExtra();
 
     public Components(String appPackageName) {
         APP_PACKAGE_NAME = appPackageName;
@@ -171,6 +190,8 @@ public class Components extends ComponentsBase {
                 component(APP_PACKAGE_NAME, "WidgetProvider");
         ACTIVITY_START_SERVICE =
                 component(APP_PACKAGE_NAME, "ActivityStarterService");
+        START_NEXT_MATCHING_ACTIVITY =
+                component(APP_PACKAGE_NAME, "StartNextMatchingActivity");
 
         FOREGROUND_ACTIVITY_ACTIONS = new ForegroundActivityAction(APP_PACKAGE_NAME);
         FOREGROUND_EMBEDDING_ACTIVITY_ACTIONS =

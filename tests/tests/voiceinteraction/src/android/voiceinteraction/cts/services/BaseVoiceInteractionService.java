@@ -32,11 +32,14 @@ import android.service.voice.VisualQueryDetectionServiceFailure;
 import android.service.voice.VisualQueryDetector;
 import android.service.voice.VoiceInteractionService;
 import android.util.Log;
+import android.voiceinteraction.common.Utils;
 import android.voiceinteraction.cts.testcore.Helper;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -515,6 +518,19 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
      */
     public void disableOverrideRegisterModel() {
         createKeyphraseModelManager().setModelDatabaseForTestEnabled(/* enabled= */ false);
+    }
+
+    /**
+     * Creates a file in the internal storage to test the file read method
+     * {@link android.service.voice.VisualQueryDetectionService#openFileInput(String)}.
+     * @throws Throwable throws exceptions when writing to the file via output stream.
+     */
+    public void createTestFile(String suffix) throws Throwable {
+        File path = this.getFilesDir();
+        File file = new File(path, Utils.TEST_RESOURCE_FILE_NAME + suffix);
+        try (FileOutputStream stream = new FileOutputStream(file)) {
+            stream.write(Utils.TEST_RESOURCE_FILE_CONTENT.getBytes());
+        }
     }
 
     AlwaysOnHotwordDetector callCreateAlwaysOnHotwordDetectorNoHotwordDetectionService(

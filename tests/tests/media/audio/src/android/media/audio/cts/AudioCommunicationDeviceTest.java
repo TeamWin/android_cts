@@ -16,9 +16,12 @@
 
 package android.media.audio.cts;
 
+import android.Manifest;
 import android.content.pm.PackageManager;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
+import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.filters.SdkSuppress;
@@ -35,42 +38,46 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
     private final static String TAG = "AudioCommunicationDeviceTest";
 
     private AudioManager mAudioManager;
+    private int mOriginalMode;
+    private MyOnModeChangedListener mModelistener;
+
+    private MyOnCommunicationDeviceChangedListener mCommunicationDeviceListener;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+
         mAudioManager = getInstrumentation().getContext().getSystemService(AudioManager.class);
+
+        mOriginalMode = mAudioManager.getMode();
+        mModelistener = new MyOnModeChangedListener(mAudioManager);
+        mAudioManager.addOnModeChangedListener(
+                Executors.newSingleThreadExecutor(), mModelistener);
+
+        mCommunicationDeviceListener = new MyOnCommunicationDeviceChangedListener(mAudioManager);
+        mAudioManager.addOnCommunicationDeviceChangedListener(
+                Executors.newSingleThreadExecutor(), mCommunicationDeviceListener);
     }
 
-    public void testSetValidCommunicationDevice() {
+    @Override
+    protected void tearDown() throws Exception {
+        mAudioManager.clearCommunicationDevice();
+        // This will time out if the communication device is already the default one but as there
+        // is no way to tell what the default communication device should be it is the only way to
+        // safely return to the default device before next test
+        mCommunicationDeviceListener.waitForDeviceUpdate();
+        mAudioManager.removeOnCommunicationDeviceChangedListener(mCommunicationDeviceListener);
+
+        mModelistener.setAudioMode(mOriginalMode);
+        mAudioManager.removeOnModeChangedListener(mModelistener);
+
+        super.tearDown();
+    }
+
+    public void testGetCommunicationDevice() {
         if (!isValidPlatform("testSetValidCommunicationDevice")) return;
 
         AudioDeviceInfo commDevice = null;
-        List<AudioDeviceInfo> devices = mAudioManager.getAvailableCommunicationDevices();
-        for (AudioDeviceInfo device : devices) {
-            try {
-                mAudioManager.setCommunicationDevice(device);
-                try {
-                    commDevice = mAudioManager.getCommunicationDevice();
-                } catch (Exception e) {
-                    fail("getCommunicationDevice failed with exception: " + e);
-                }
-                if (commDevice == null || commDevice.getType() != device.getType()) {
-                    fail("setCommunicationDevice failed, expected device: "
-                            + device.getType() + " but got: "
-                            + ((commDevice == null)
-                                ? AudioDeviceInfo.TYPE_UNKNOWN : commDevice.getType()));
-                }
-            } catch (Exception e) {
-                fail("setCommunicationDevice failed with exception: " + e);
-            }
-        }
-
-        try {
-            mAudioManager.clearCommunicationDevice();
-        } catch (Exception e) {
-            fail("clearCommunicationDevice failed with exception: " + e);
-        }
         try {
             commDevice = mAudioManager.getCommunicationDevice();
         } catch (Exception e) {
@@ -81,7 +88,110 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
         }
     }
 
-    public void testSetInvalidCommunicationDevice() {
+    public void testClearCommunicationDevice() {
+        if (!isValidPlatform("testSetValidCommunicationDevice")) return;
+
+        try {
+            mAudioManager.clearCommunicationDevice();
+        } catch (Exception e) {
+            fail("clearCommunicationDevice failed with exception: " + e);
+        }
+    }
+
+    @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
+    public void testSetCommunicationDeviceSuccessModeOwner() {
+        if (!isValidPlatform("testSetValidCommunicationDevice")) return;
+
+        mModelistener.setAudioMode(AudioManager.MODE_IN_COMMUNICATION);
+
+        doSetCommunicationDeviceSuccessTest();
+    }
+
+    public void testSetCommunicationDeviceSuccessPrivileged() {
+        if (!isValidPlatform("testSetValidCommunicationDevice")) return;
+
+        try {
+            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+                    Manifest.permission.MODIFY_PHONE_STATE);
+
+            doSetCommunicationDeviceSuccessTest();
+        } finally {
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    private void doSetCommunicationDeviceSuccessTest() {
+        List<AudioDeviceInfo> devices = mAudioManager.getAvailableCommunicationDevices();
+        for (AudioDeviceInfo device : devices) {
+            AudioDeviceInfo commDevice = null;
+            try {
+                mCommunicationDeviceListener.setCommunicationDevice(device);
+                try {
+                    commDevice = mAudioManager.getCommunicationDevice();
+                    assertNotNull("Platform has no default communication device", commDevice);
+                } catch (Exception e) {
+                    fail("getCommunicationDevice failed with exception: " + e);
+                }
+                if (commDevice.getType() != device.getType()) {
+                    fail("setCommunicationDevice failed, expected device: "
+                            + device.getType() + " but got: " + commDevice.getType());
+                }
+            } catch (Exception e) {
+                fail("setCommunicationDevice failed with exception: " + e);
+            }
+        }
+    }
+
+    public void testSetCommunicationDeviceDeniedNotModeOwnerNotPrivileged() {
+        final long kDeviceListenerIdleWaitTimeoutMs = 10000;
+
+        if (!isValidPlatform("testSetValidCommunicationDevice")) return;
+
+        AudioDeviceInfo originalCommDevice = mAudioManager.getCommunicationDevice();
+        assertNotNull("Platform has no default communication device", originalCommDevice);
+
+        List<AudioDeviceInfo> devices = mAudioManager.getAvailableCommunicationDevices();
+        for (AudioDeviceInfo device : devices) {
+            if (device.getType() == originalCommDevice.getType()) {
+                continue;
+            }
+            MyOnCommunicationDeviceChangedListener listener =
+                    new MyOnCommunicationDeviceChangedListener(mAudioManager);
+            try {
+                mAudioManager.addOnCommunicationDeviceChangedListener(
+                        Executors.newSingleThreadExecutor(), listener);
+
+                listener.setCommunicationDevice(device);
+                // The following behaviors are acceptable:
+                // - U: the communication device changes: log a warning to
+                // track migration to post U QPR1 behavior
+                // - U QPR1 and after:
+                //    - the communication device does not change OR
+                //    - the communication device changes temporarily and comes back to
+                //    the initial device after the inactivity grace period.
+                AudioDeviceInfo listenerDevice = listener.getDevice();
+                if (listenerDevice != null
+                        && listenerDevice.getType() != originalCommDevice.getType()) {
+                    listener.waitForDeviceUpdate(
+                            originalCommDevice, kDeviceListenerIdleWaitTimeoutMs);
+                    listenerDevice = listener.getDevice();
+                    if (listenerDevice == null
+                            || listenerDevice.getType() != originalCommDevice.getType()) {
+                        Log.w(TAG, "setCommunicationDevice not denied, expected device: "
+                                + originalCommDevice.getType()
+                                + " but got: " + (listenerDevice == null
+                                    ? AudioDeviceInfo.TYPE_UNKNOWN : listenerDevice.getType()));
+                    }
+                }
+            } catch (Exception e) {
+                fail("AudioManager call failed with exception: " + e);
+            } finally {
+                mAudioManager.removeOnCommunicationDeviceChangedListener(listener);
+            }
+        }
+    }
+
+    public void testSetInvalidCommunicationDeviceFail() {
         if (!isValidPlatform("testSetInvalidCommunicationDevice")) return;
 
         AudioDeviceInfo[] alldevices = mAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
@@ -102,13 +212,16 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
     static class MyOnCommunicationDeviceChangedListener implements
             AudioManager.OnCommunicationDeviceChangedListener {
 
+        private static final long LISTENER_WAIT_TIMEOUT_MS = 3000;
+
         private final Object mCbLock = new Object();
         @GuardedBy("mCbLock")
         private boolean mCalled;
         @GuardedBy("mCbLock")
         private AudioDeviceInfo mDevice;
 
-        private static final int LISTENER_WAIT_TIMEOUT_MS = 3000;
+        private final AudioManager mAudioManager;
+
         void reset() {
             synchronized (mCbLock) {
                 mCalled = false;
@@ -117,15 +230,39 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
         }
 
         AudioDeviceInfo waitForDeviceUpdate() {
+            return waitForDeviceUpdateTo(null, LISTENER_WAIT_TIMEOUT_MS);
+        }
+
+        AudioDeviceInfo waitForDeviceUpdate(AudioDeviceInfo device) {
+            return waitForDeviceUpdateTo(device, LISTENER_WAIT_TIMEOUT_MS);
+        }
+
+        AudioDeviceInfo waitForDeviceUpdate(AudioDeviceInfo device, long timeoutMs) {
+            return waitForDeviceUpdateTo(device, timeoutMs);
+        }
+
+        // Waits for the communication device to be the one passed as argument.
+        // If the device passed is null, it will wait unconditionally for the listener to be called
+        private AudioDeviceInfo waitForDeviceUpdateTo(AudioDeviceInfo device,
+                long timeoutMs) {
             synchronized (mCbLock) {
-                while (!mCalled) {
+                long endTimeMillis = SystemClock.uptimeMillis() + timeoutMs;
+                long waiTimeMillis = endTimeMillis - SystemClock.uptimeMillis();
+                while (((device != null && !device.equals(mAudioManager.getCommunicationDevice()))
+                            || !mCalled) && (waiTimeMillis > 0)) {
                     try {
-                        mCbLock.wait(LISTENER_WAIT_TIMEOUT_MS);
+                        mCbLock.wait(waiTimeMillis);
                     } catch (InterruptedException e) {
                     }
+                    waiTimeMillis = endTimeMillis - SystemClock.uptimeMillis();
                 }
                 return mDevice;
             }
+        }
+
+        void setCommunicationDevice(AudioDeviceInfo device) {
+            mAudioManager.setCommunicationDevice(device);
+            waitForDeviceUpdateTo(device, LISTENER_WAIT_TIMEOUT_MS);
         }
 
         AudioDeviceInfo getDevice() {
@@ -134,7 +271,8 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
             }
         }
 
-        MyOnCommunicationDeviceChangedListener() {
+        MyOnCommunicationDeviceChangedListener(AudioManager audioManager) {
+            mAudioManager = audioManager;
             reset();
         }
 
@@ -148,11 +286,14 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
     public void testCommunicationDeviceListener() {
         if (!isValidPlatform("testCommunicationDeviceListener")) return;
 
+        mModelistener.setAudioMode(AudioManager.MODE_IN_COMMUNICATION);
+
         MyOnCommunicationDeviceChangedListener listener =
-                new MyOnCommunicationDeviceChangedListener();
+                new MyOnCommunicationDeviceChangedListener(mAudioManager);
 
         try {
             mAudioManager.addOnCommunicationDeviceChangedListener(null, listener);
@@ -189,7 +330,7 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
         }
 
         AudioDeviceInfo originalDevice = mAudioManager.getCommunicationDevice();
-        assertNotNull("Platform as no default communication device", originalDevice);
+        assertNotNull("Platform has no default communication device", originalDevice);
 
         AudioDeviceInfo requestedDevice = null;
         List<AudioDeviceInfo> devices = mAudioManager.getAvailableCommunicationDevices();
@@ -205,6 +346,7 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
                     +" no valid decice to test");
             return;
         }
+
         mAudioManager.setCommunicationDevice(requestedDevice);
         AudioDeviceInfo listenerDevice = listener.waitForDeviceUpdate();
         if (listenerDevice == null || listenerDevice.getType() != requestedDevice.getType()) {
@@ -214,11 +356,12 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
                         ? AudioDeviceInfo.TYPE_UNKNOWN : listenerDevice.getType()));
         }
         AudioDeviceInfo getterDevice = mAudioManager.getCommunicationDevice();
-        if (getterDevice == null || getterDevice.getType() != listenerDevice.getType()) {
+        assertNotNull("Platform has no default communication device", getterDevice);
+
+        if (getterDevice.getType() != listenerDevice.getType()) {
             fail("listener and getter device mismatch, expected device: "
                     + listenerDevice.getType() + " but got: "
-                    + ((getterDevice == null)
-                        ? AudioDeviceInfo.TYPE_UNKNOWN : getterDevice.getType()));
+                    + getterDevice.getType());
         }
 
         listener.reset();
@@ -226,7 +369,7 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
         mAudioManager.setCommunicationDevice(originalDevice);
 
         listenerDevice = listener.waitForDeviceUpdate();
-        assertNotNull("Platform as no default communication device", listenerDevice);
+        assertNotNull("Platform has no default communication device", listenerDevice);
 
         if (listenerDevice.getType() != originalDevice.getType()) {
             fail("communication device listener failed on clear, expected device: "
@@ -238,6 +381,64 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
         } catch (Exception e) {
             fail("removeOnCommunicationDeviceChangedListener failed with exception: "
                     + e);
+        }
+    }
+
+    static class MyOnModeChangedListener implements AudioManager.OnModeChangedListener {
+
+        private final Object mCbLock = new Object();
+        @GuardedBy("mCbLock")
+        private boolean mCalled;
+        @GuardedBy("mCbLock")
+        private int mMode;
+        private final AudioManager mAudioManager;
+
+        private static final int LISTENER_WAIT_TIMEOUT_MS = 3000;
+        void reset() {
+            synchronized (mCbLock) {
+                mCalled = false;
+                mMode = AudioManager.MODE_INVALID;
+            }
+        }
+
+        private int waitForModeUpdateTo(int mode) {
+            synchronized (mCbLock) {
+                long endTimeMillis = SystemClock.uptimeMillis() + LISTENER_WAIT_TIMEOUT_MS;
+                long waiTimeMillis = endTimeMillis - SystemClock.uptimeMillis();
+                while ((mAudioManager.getMode() != mode || !mCalled) && waiTimeMillis > 0) {
+                    try {
+                        mCbLock.wait(waiTimeMillis);
+                    } catch (InterruptedException e) {
+                    }
+                    waiTimeMillis = endTimeMillis - SystemClock.uptimeMillis();
+                }
+                return mMode;
+            }
+        }
+
+        void setAudioMode(int mode) {
+            mAudioManager.setMode(mode);
+            waitForModeUpdateTo(mode);
+        }
+
+        int getMode() {
+            synchronized (mCbLock) {
+                return mMode;
+            }
+        }
+
+        MyOnModeChangedListener(AudioManager audioManager) {
+            mAudioManager = audioManager;
+            reset();
+        }
+
+        @Override
+        public void onModeChanged(int mode) {
+            synchronized (mCbLock) {
+                mCalled = true;
+                mMode = mode;
+                mCbLock.notifyAll();
+            }
         }
     }
 

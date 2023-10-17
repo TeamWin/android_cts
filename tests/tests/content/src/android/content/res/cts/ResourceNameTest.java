@@ -16,10 +16,11 @@
 
 package android.content.res.cts;
 
-import android.content.cts.R;
 import android.content.res.Resources;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
+
+import android.content.cts.R;
 
 public class ResourceNameTest extends AndroidTestCase {
 

@@ -217,8 +217,7 @@ public class FreeformWindowingModeTests extends MultiDisplayTestBase {
 
         if (supportsFreeform()) {
             removeRootTasksWithActivityTypes(ACTIVITY_TYPE_STANDARD);
-            waitAndAssertStoppedActivity(MULTI_WINDOW_FULLSCREEN_ACTIVITY,
-                    "Needs to remove the fullscreen activity to run the following test.");
+            mWmState.waitAndAssertActivityRemoved(MULTI_WINDOW_FULLSCREEN_ACTIVITY);
             launchActivityOnDisplay(MULTI_WINDOW_FULLSCREEN_ACTIVITY, WINDOWING_MODE_FREEFORM,
                     displayId);
             mWmState.assertContainsStack("Must has a freeform stack.",

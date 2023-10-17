@@ -109,10 +109,14 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     private static final float FOCUS_DISTANCE_ERROR_PERCENT_UNCALIBRATED = 0.25f;
     // 10 percent error margin for approximate device
     private static final float FOCUS_DISTANCE_ERROR_PERCENT_APPROXIMATE = 0.10f;
+    // 1 percent boundary margin for focus range verify
+    private static final float FOCUS_RANGE_BOUNDARY_MARGIN_PERCENT = 0.01f;
     private static final int ANTI_FLICKERING_50HZ = 1;
     private static final int ANTI_FLICKERING_60HZ = 2;
     // 5 percent error margin for resulting crop regions
     private static final float CROP_REGION_ERROR_PERCENT_DELTA = 0.05f;
+    private static final float ZOOM_RATIO_ERROR_PERCENT_DELTA = 0.05f;
+
     // 1 percent error margin for centering the crop region
     private static final float CROP_REGION_ERROR_PERCENT_CENTERED = 0.01f;
     private static final float DYNAMIC_VS_FIXED_BLK_WH_LVL_ERROR_MARGIN = 0.25f;
@@ -678,6 +682,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      * Test focus distance control.
      */
     @Test
+    @AppModeFull(reason = "PropertyUtil methods don't work for instant apps")
     public void testFocusDistanceControl() throws Exception {
         for (String id : mCameraIdsUnderTest) {
             try {
@@ -1231,10 +1236,15 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
 
         Pair<Float, Float> focusRange = result.get(CaptureResult.LENS_FOCUS_RANGE);
         if (focusRange != null) {
+            // Prevent differences in floating point precision between manual request and HAL
+            // result, some margin need to be considered for focusRange.near and far check
+            float focusRangeNear = focusRange.first  * (1.0f + FOCUS_RANGE_BOUNDARY_MARGIN_PERCENT);
+            float focusRangeFar  = focusRange.second * (1.0f - FOCUS_RANGE_BOUNDARY_MARGIN_PERCENT);
+
             mCollector.expectLessOrEqual("Focus distance should be less than or equal to "
-                    + "FOCUS_RANGE.near", focusRange.first, focusDistance);
+                    + "FOCUS_RANGE.near (with margin)", focusRangeNear, focusDistance);
             mCollector.expectGreaterOrEqual("Focus distance should be greater than or equal to "
-                    + "FOCUS_RANGE.far", focusRange.second, focusDistance);
+                    + "FOCUS_RANGE.far (with margin)", focusRangeFar, focusDistance);
         } else if (VERBOSE) {
             Log.v(TAG, "FOCUS_RANGE undefined, skipping verification");
         }
@@ -3205,8 +3215,9 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
 
                 verifyCaptureResultForKey(CaptureResult.CONTROL_EXTENDED_SCENE_MODE,
                         mode, listener, NUM_FRAMES_VERIFIED);
+                float zoomRatioDelta = ZOOM_RATIO_ERROR_PERCENT_DELTA * ratio;
                 verifyCaptureResultForKey(CaptureResult.CONTROL_ZOOM_RATIO,
-                        ratio, listener, NUM_FRAMES_VERIFIED);
+                        ratio, listener, NUM_FRAMES_VERIFIED, zoomRatioDelta);
             }
         }
     }
@@ -3475,6 +3486,33 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 frameDuration >= expTime);
 
         validatePipelineDepth(result);
+    }
+
+    /**
+     * Basic verification for the control mode capture result.
+     *
+     * @param key The capture result key to be verified against
+     * @param requestMode The request mode for this result
+     * @param listener The capture listener to get capture results
+     * @param numFramesVerified The number of capture results to be verified
+     * @param threshold The threshold by which the request and result keys can differ
+     */
+    private void verifyCaptureResultForKey(CaptureResult.Key<Float> key, float requestMode,
+            SimpleCaptureCallback listener, int numFramesVerified, float threshold) {
+        for (int i = 0; i < numFramesVerified; i++) {
+            CaptureResult result = listener.getCaptureResult(WAIT_FOR_RESULT_TIMEOUT_MS);
+            validatePipelineDepth(result);
+            float resultMode = getValueNotNull(result, key);
+            if (VERBOSE) {
+                Log.v(TAG, "Expect value: " + requestMode + " result value: "
+                        + resultMode + " threshold " + threshold);
+            }
+            // Check that the request and result are within the given threshold of each other.
+            // (expectEquals isn't the most intuitive function name.)
+            mCollector.expectEquals("Key " + key.getName() + " request: " + requestMode +
+                    " result: " + resultMode + " not within threshold " + threshold +
+                    " of each other", requestMode, resultMode, threshold);
+        }
     }
 
     /**

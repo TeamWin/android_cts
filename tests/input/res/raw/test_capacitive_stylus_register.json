@@ -18,6 +18,7 @@
       {"type": 103, "data": [55]},  // UI_SET_ABSBIT : ABS_MT_TOOL_TYPE
       {"type": 110, "data": [1]},  // UI_SET_PROPBIT : INPUT_PROP_DIRECT
       {"type": 101, "data": [330]},  // UI_SET_KEYBIT : BTN_TOUCH
+      {"type": 101, "data": [320]},  // UI_SET_KEYBIT : BTN_TOOL_PEN
       {"type": 101, "data": [331]},  // UI_SET_KEYBIT : BTN_STYLUS
       {"type": 101, "data": [332]}  // UI_SET_KEYBIT : BTN_STYLUS2
     ],

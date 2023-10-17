@@ -26,6 +26,7 @@ import android.hardware.camera2.cts.helpers.StaticMetadata.CheckLevel;
 import android.util.Log;
 import android.os.Build;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import com.android.compatibility.common.util.PropertyUtil;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -283,6 +284,7 @@ public class FlashlightTest extends Camera2AndroidTestCase {
     }
 
     @Test
+    @AppModeFull(reason = "PropertyUtil methods don't work for instant apps")
     public void testCameraDeviceOpenAfterTorchOn() throws Exception {
         if (mFlashCameraIdList.size() == 0)
             return;

@@ -395,7 +395,6 @@ public class FrameRateOverrideTestActivity extends Activity {
                     frameRatesMatchesOverride(mReportedDisplayRefreshRate, expectedFrameRate));
         }
     }
-
     class DisplayModeGetRefreshRateFrameRateObserver implements FrameRateObserver {
         private final boolean mDisplayModeReturnsPhysicalRefreshRateEnabled;
 
@@ -440,6 +439,12 @@ public class FrameRateOverrideTestActivity extends Activity {
             int initialRefreshRateInt = (int) initialRefreshRate;
             for (int divisor = 1; initialRefreshRateInt / divisor >= 30; ++divisor) {
                 int overrideFrameRate = initialRefreshRateInt / divisor;
+                if (initialRefreshRateInt % divisor != 0) {
+                    // skip if the overriding frame rate is not a divisor of initial refresh rate
+                    Log.i(TAG, String.format("Skipping Frame rate %d as it is not a divisor of"
+                            + " refresh rate of %d", overrideFrameRate, initialRefreshRateInt));
+                    continue;
+                }
                 Log.i(TAG, String.format("Setting Frame Rate to %d using Game Mode",
                         overrideFrameRate));
 

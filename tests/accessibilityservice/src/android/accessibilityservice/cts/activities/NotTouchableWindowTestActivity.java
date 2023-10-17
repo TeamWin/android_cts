@@ -44,11 +44,6 @@ public class NotTouchableWindowTestActivity extends AccessibilityTestActivity  {
                     context.getSystemService(WindowManager.class).addView(rootView, params);
                     break;
 
-                case REMOVE_WINDOW:
-                    context.getSystemService(WindowManager.class).removeViewImmediate(rootView);
-                    rootView = null;
-                    break;
-
                 case ADD_TRUSTED_WINDOW:
                     if (rootView != null) {
                         throw new IllegalStateException("Window already exists");
@@ -60,9 +55,6 @@ public class NotTouchableWindowTestActivity extends AccessibilityTestActivity  {
                     break;
 
                 case FINISH_ACTIVITY:
-                    if (rootView != null) {
-                        throw new IllegalStateException("Window still exists");
-                    }
                     finish();
             }
         }
@@ -78,8 +70,6 @@ public class NotTouchableWindowTestActivity extends AccessibilityTestActivity  {
 
     public static final String ADD_WINDOW =
             "android.accessibilityservice.cts.ADD_WINDOW";
-    public static final String REMOVE_WINDOW =
-            "android.accessibilityservice.cts.REMOVE_WINDOW";
     public static final String ADD_TRUSTED_WINDOW =
             "android.accessibilityservice.cts.ADD_TRUSTED_WINDOW";
     public static final String FINISH_ACTIVITY =
@@ -94,7 +84,6 @@ public class NotTouchableWindowTestActivity extends AccessibilityTestActivity  {
 
         IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
         filter.addAction(ADD_WINDOW);
-        filter.addAction(REMOVE_WINDOW);
         filter.addAction(ADD_TRUSTED_WINDOW);
         filter.addAction(FINISH_ACTIVITY);
         this.registerReceiver(mBroadcastReceiver, filter, Context.RECEIVER_NOT_EXPORTED);

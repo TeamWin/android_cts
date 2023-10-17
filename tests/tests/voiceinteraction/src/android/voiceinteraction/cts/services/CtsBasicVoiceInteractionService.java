@@ -145,53 +145,8 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         Log.i(TAG, "createAlwaysOnHotwordDetectorNoHotwordDetectionService");
         mDetectorInitializedLatch = new CountDownLatch(1);
 
-        AlwaysOnHotwordDetector.Callback callback = new AlwaysOnHotwordDetector.Callback() {
-            @Override
-            public void onAvailabilityChanged(int status) {
-                Log.i(TAG, "onAvailabilityChanged(" + status + ")");
-                mAvailabilityStatus = status;
-                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
-                if (mAvailabilityChangeLatch != null) {
-                    mAvailabilityChangeLatch.countDown();
-                }
-            }
-
-            @Override
-            public void onDetected(AlwaysOnHotwordDetector.EventPayload eventPayload) {
-                // no-op
-            }
-
-            @Override
-            public void onRejected(@NonNull HotwordRejectedResult result) {
-                // no-op
-            }
-
-            @Override
-            public void onError() {
-                // no-op
-            }
-
-            @Override
-            public void onRecognitionPaused() {
-                // no-op
-            }
-
-            @Override
-            public void onRecognitionResumed() {
-                // no-op
-            }
-
-            @Override
-            public void onHotwordDetectionServiceInitialized(int status) {
-                // no-op
-            }
-
-            @Override
-            public void onHotwordDetectionServiceRestarted() {
-                // no-op
-            }
-        };
-
+        AlwaysOnHotwordDetector.Callback callback =
+                createAlwaysOnHotwordDetectorCallbackWithListeners();
         final Handler handler = runOnMainThread ? new Handler(Looper.getMainLooper()) : mHandler;
         handler.post(() -> runWithShellPermissionIdentity(() -> {
             mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetectorNoHotwordDetectionService(

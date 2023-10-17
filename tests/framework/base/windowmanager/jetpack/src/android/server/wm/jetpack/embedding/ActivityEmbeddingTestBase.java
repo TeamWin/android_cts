@@ -20,13 +20,16 @@ import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSuppo
 import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
 
 import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeTrue;
 
+import android.app.ActivityTaskManager;
 import android.server.wm.ActivityManagerTestBase.ReportedDisplayMetrics;
 import android.server.wm.UiDeviceUtils;
 import android.server.wm.jetpack.utils.TestValueCountConsumer;
 import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
 import android.view.Display;
 
+import androidx.test.core.app.ApplicationProvider;
 import androidx.window.extensions.WindowExtensions;
 import androidx.window.extensions.embedding.ActivityEmbeddingComponent;
 import androidx.window.extensions.embedding.SplitInfo;
@@ -51,6 +54,7 @@ public class ActivityEmbeddingTestBase extends WindowManagerJetpackTestBase {
     @Before
     public void setUp() {
         super.setUp();
+        assumeTrue(supportsMultiWindow());
         assumeExtensionSupportedDevice();
         WindowExtensions windowExtensions = getWindowExtensions();
         assumeNotNull(windowExtensions);
@@ -62,6 +66,11 @@ public class ActivityEmbeddingTestBase extends WindowManagerJetpackTestBase {
 
         UiDeviceUtils.pressWakeupButton();
         UiDeviceUtils.pressUnlockButton();
+    }
+
+    /** Checks whether the device supports the multi-window feature or not. */
+    private static boolean supportsMultiWindow() {
+        return ActivityTaskManager.supportsMultiWindow(ApplicationProvider.getApplicationContext());
     }
 
     @After

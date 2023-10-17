@@ -136,6 +136,7 @@ class YuvPlusRawTest(its_base_test.ItsBaseTest):
               'yuv', props, max_size=_MAX_IMG_SIZE)[0]
         out_surfaces = [{'format': raw_fmt},
                         {'format': 'yuv', 'width': w, 'height': h}]
+        cam.do_3a(do_af=False)
         cap_raw, cap_yuv = cam.do_capture(req, out_surfaces)
         msg = convert_and_compare_captures(cap_raw, cap_yuv, props,
                                            log_path, raw_fmt)

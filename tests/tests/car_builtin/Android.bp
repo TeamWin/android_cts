@@ -52,4 +52,5 @@ android_test {
         ":CtsCarBuiltinSimpleApp",
     ],
     per_testcase_directory: true,
+    certificate: ":cts-testkey1",
 }

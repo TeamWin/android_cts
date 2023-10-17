@@ -17,6 +17,7 @@ package android.server.wm;
 
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeNoException;
 
 import android.platform.test.annotations.Presubmit;
 
@@ -24,6 +25,7 @@ import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 @Presubmit
 public class WindowManagerReflectionTests {
@@ -44,6 +46,24 @@ public class WindowManagerReflectionTests {
                         .invoke(wms, null, 0);
             });
         });
+    }
+
+    @Test
+    public void requestImeKeyboardShortcuts_requiresPermission() throws Throwable {
+        Object wms = Class.forName("android.view.WindowManagerGlobal")
+                .getMethod("getWindowManagerService")
+                .invoke(null);
+        try {
+            Method method = Class.forName("android.view.IWindowManager")
+                    .getMethod("requestImeKeyboardShortcuts",
+                            Class.forName("com.android.internal.os.IResultReceiver"),
+                            Integer.TYPE);
+            assertThrows(SecurityException.class,
+                    () -> runAndUnwrapTargetException(() -> method.invoke(wms, null, 0)));
+        } catch (NoSuchMethodException e) {
+            // Ignores this test if the method is not available.
+            assumeNoException(e);
+        }
     }
 
     private void runAndUnwrapTargetException(ThrowingRunnable r) throws Throwable {

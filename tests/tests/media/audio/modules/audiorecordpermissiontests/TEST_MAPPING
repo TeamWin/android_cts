@@ -1,0 +1,17 @@
+{
+  "presubmit": [
+    {
+      "name": "AudioRecordPermissionTests",
+      "options": [
+        {
+          "exclude-annotation": "androidx.test.filters.FlakyTest"
+        }
+      ]
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "AudioRecordPermissionTests"
+    }
+  ]
+}

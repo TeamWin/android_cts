@@ -235,6 +235,12 @@ public class WatchUidRunner {
         }
     }
 
+    public void clearHistory() {
+        synchronized (mPendingLines) {
+            mPendingLines.clear();
+        }
+    }
+
     String[] waitForNextLine(long waitUntil, int cmd, String procState, Integer capability) {
         synchronized (mPendingLines) {
             while (true) {

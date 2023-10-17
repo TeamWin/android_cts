@@ -368,7 +368,8 @@ public final class CarOccupantZoneManagerTest extends AbstractCarTestCase {
     public void testClusterDisplayIsPrivate() {
         assumeDriverZone();
 
-        mUiAutomation.adoptShellPermissionIdentity(Car.PERMISSION_MANAGE_OCCUPANT_ZONE);
+        mUiAutomation.adoptShellPermissionIdentity(Car.PERMISSION_MANAGE_OCCUPANT_ZONE,
+                Car.ACCESS_PRIVATE_DISPLAY_ID);
 
         int clusterDisplayId = mCarOccupantZoneManager.getDisplayIdForDriver(
                 CarOccupantZoneManager.DISPLAY_TYPE_INSTRUMENT_CLUSTER);

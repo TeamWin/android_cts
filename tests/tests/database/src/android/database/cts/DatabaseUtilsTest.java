@@ -75,6 +75,134 @@ public class DatabaseUtilsTest extends AndroidTestCase {
         super.tearDown();
     }
 
+    public void testHighSurrogateStartInvalid() {
+        String expected = "name=''";
+        StringBuilder sb = new StringBuilder("name=");
+
+        DatabaseUtils.appendEscapedSQLString(sb, "\uD83D");
+        assertEquals(expected, sb.toString());
+    }
+
+    public void testDoubleHighSurrogateStart() {
+        String expected = "name=''";
+        StringBuilder sb = new StringBuilder("name=");
+
+        DatabaseUtils.appendEscapedSQLString(sb, "\uD83D\uD83D");
+        assertEquals(expected, sb.toString());
+    }
+
+    public void testHighSurrogatePairInvalid() {
+        String expected = "name=''''";
+        StringBuilder sb = new StringBuilder("name=");
+
+        DatabaseUtils.appendEscapedSQLString(sb, "\uD83D\'");
+        assertEquals(expected, sb.toString());
+    }
+
+    public void testValidSurrogate() {
+        String expected = "name='\uD83D\uDC00'";
+        StringBuilder sb = new StringBuilder("name=");
+
+        DatabaseUtils.appendEscapedSQLString(sb, "\uD83D" + "\uDC00");
+        assertEquals(expected, sb.toString());
+    }
+
+    public void testReversedSurrogate() {
+        String expected = "name=''";
+        StringBuilder sb = new StringBuilder("name=");
+
+        DatabaseUtils.appendEscapedSQLString(sb, "\uDC00" + "\uD83D");
+        assertEquals(expected, sb.toString());
+    }
+
+    public void testValidDoubleSurrogate() {
+        String expected = "name='\uD83D\uDC00\uD8FF\uDC01'";
+        StringBuilder sb = new StringBuilder("name=");
+
+        DatabaseUtils.appendEscapedSQLString(sb, "\uD83D\uDC00\uD8FF\uDC01");
+        assertEquals(expected, sb.toString());
+    }
+
+    public void testValidDoubleSurrogateWithStringMixed() {
+        String expected = "name='Joh\uD83D\uDC00nn\uD8FF\uDC01y'";
+        StringBuilder sb = new StringBuilder("name=");
+
+        DatabaseUtils.appendEscapedSQLString(sb, "Joh\uD83D\uDC00nn\uD8FF\uDC01y");
+        assertEquals(expected, sb.toString());
+    }
+
+    public void testInvalidDoubleSurrogateWithStringMixed() {
+        String expected = "name='Johnn\uD8FF\uDC01y'";
+        StringBuilder sb = new StringBuilder("name=");
+
+        DatabaseUtils.appendEscapedSQLString(sb, "Joh\uD83Dn\uDC00n\uD8FF\uDC01y");
+        assertEquals(expected, sb.toString());
+    }
+
+    public void testHighLowLowSurrogate() {
+        String expected = "name='\uD83D\uDC00'";
+        StringBuilder sb = new StringBuilder("name=");
+
+        DatabaseUtils.appendEscapedSQLString(sb, "\uD83D\uDC00\uDC01");
+        assertEquals(expected, sb.toString());
+    }
+
+    public void testHighLowLowSurrogateWithString_AtEnd() {
+        String expected = "name='Johnny\uD83D\uDC00'";
+        StringBuilder sb = new StringBuilder("name=");
+
+        DatabaseUtils.appendEscapedSQLString(sb, "Johnny\uD83D\uDC00\uDC01");
+        assertEquals(expected, sb.toString());
+    }
+
+    public void testHighLowLowSurrogateWithString_AtMiddle() {
+        String expected = "name='Jo\uD83D\uDC00hnny'";
+        StringBuilder sb = new StringBuilder("name=");
+
+        DatabaseUtils.appendEscapedSQLString(sb, "Jo\uD83D\uDC00\uDC01hnny");
+        assertEquals(expected, sb.toString());
+    }
+
+    public void testHighLowLowSurrogateWithString_AtStart() {
+        String expected = "name='\uD83D\uDC00Johnny'";
+        StringBuilder sb = new StringBuilder("name=");
+
+        DatabaseUtils.appendEscapedSQLString(sb, "\uD83D\uDC00\uDC01Johnny");
+        assertEquals(expected, sb.toString());
+    }
+
+    public void testLowSurrogateInvalid() {
+        String expected = "name=''";
+        StringBuilder sb = new StringBuilder("name=");
+
+        DatabaseUtils.appendEscapedSQLString(sb, "\uDC00");
+        assertEquals(expected, sb.toString());
+    }
+
+    public void testLowSurrogateInvalidWholeString_AtEnd() {
+        String expected = "name='Johnny'";
+        StringBuilder sb = new StringBuilder("name=");
+
+        DatabaseUtils.appendEscapedSQLString(sb, "Johnny\uDC00");
+        assertEquals(expected, sb.toString());
+    }
+
+    public void testLowSurrogateInvalidWholeString_AtStart() {
+        String expected = "name='Johnny'''";
+        StringBuilder sb = new StringBuilder("name=");
+
+        DatabaseUtils.appendEscapedSQLString(sb, "\uDC00Johnny'");
+        assertEquals(expected, sb.toString());
+    }
+
+    public void testLowSurrogateInvalidWholeString_AtMiddle() {
+        String expected = "name='Johnny'''";
+        StringBuilder sb = new StringBuilder("name=");
+
+        DatabaseUtils.appendEscapedSQLString(sb, "Joh\uDC00nny'");
+        assertEquals(expected, sb.toString());
+    }
+
     public void testAppendEscapedSQLString() {
         String expected = "name='Mike'";
         StringBuilder sb = new StringBuilder("name=");

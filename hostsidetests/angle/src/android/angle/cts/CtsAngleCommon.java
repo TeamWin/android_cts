@@ -17,6 +17,7 @@ package android.angle.cts;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.device.PackageInfo;
+import com.android.tradefed.result.TestDescription;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +27,10 @@ class CtsAngleCommon {
     static final int NUM_ATTEMPTS = 5;
     static final int REATTEMPT_SLEEP_MSEC = 5000;
 
+    static final String PERSIST_DRIVER_SUFFIX_PROPERTY = "persist.graphics.egl";
+    static final String RO_DRIVER_SUFFIX_PROPERTY = "ro.hardware.egl";
+    static final String RO_ANGLE_SUPPORTED_PROPERTY = "ro.gfx.angle.supported";
+
     // Settings.Global
     static final String SETTINGS_GLOBAL_ALL_USE_ANGLE = "angle_gl_driver_all_angle";
     static final String SETTINGS_GLOBAL_DRIVER_PKGS = "angle_gl_driver_selection_pkgs";
@@ -33,23 +38,25 @@ class CtsAngleCommon {
     static final String SETTINGS_GLOBAL_ALLOWLIST = "angle_allowlist";
     static final String SETTINGS_GLOBAL_ANGLE_IN_USE_DIALOG_BOX = "show_angle_in_use_dialog_box";
 
-    // System Properties
-    static final String PROPERTY_TEMP_RULES_FILE = "debug.angle.rules";
-
     // ANGLE
     static final String ANGLE_PACKAGE_NAME = "com.android.angle";
     static final String ANGLE_DRIVER_TEST_PKG = "com.android.angleintegrationtest.drivertest";
     static final String ANGLE_DRIVER_TEST_SEC_PKG =
             "com.android.angleintegrationtest.drivertestsecondary";
+    static final String ANGLE_DRIVER_DUMPSYS_PKG =
+            "com.android.angleintegrationtest.dumpsysgputest";
     static final String ANGLE_GAME_DRIVER_TEST_PKG =
             "com.android.angleintegrationtest.gamedrivertest";
+
     static final String ANGLE_DRIVER_TEST_CLASS = "AngleDriverTestActivity";
     static final String ANGLE_DRIVER_TEST_DEFAULT_METHOD = "testUseDefaultDriver";
     static final String ANGLE_DRIVER_TEST_ANGLE_METHOD = "testUseAngleDriver";
     static final String ANGLE_DRIVER_TEST_NATIVE_METHOD = "testUseNativeDriver";
+
     static final String ANGLE_DRIVER_TEST_APP = "CtsAngleDriverTestCases.apk";
     static final String ANGLE_DRIVER_TEST_SEC_APP = "CtsAngleDriverTestCasesSecondary.apk";
     static final String ANGLE_GAME_DRIVER_TEST_APP = "CtsAngleGameDriverTestCases.apk";
+
     static final String ANGLE_DUMPSYS_GPU_TEST_PKG =
             "com.android.angleintegrationtest.dumpsysgputest";
     static final String ANGLE_DUMPSYS_GPU_TEST_CLASS = "AngleDumpsysGpuTestActivity";
@@ -60,6 +67,17 @@ class CtsAngleCommon {
     static final String ANGLE_DRIVER_TEST_SEC_ACTIVITY =
             ANGLE_DRIVER_TEST_SEC_PKG
                     + "/com.android.angleIntegrationTest.common.AngleIntegrationTestActivity";
+
+    static final String ANGLE_NATIVE_DRIVER_CHECK_PKG =
+            "com.android.angleintegrationtest.nativedrivercheck";
+    static final String ANGLE_NATIVE_DRIVER_CHECK_APP = "CtsAngleNativeDriverCheck.apk";
+    static final String ANGLE_NATIVE_DRIVER_CHECK_CLASS = "NativeDriverCheckActivity";
+    static final String ANGLE_NATIVE_DRIVER_CHECK_METHOD = "checkNativeDriver";
+    static final String NATIVE_GL_RENDERER = "NATIVE_GL_RENDERER";
+    static final TestDescription NATIVE_DRIVER_CHECK_TEST_DESCRIPTION =
+            new TestDescription(ANGLE_NATIVE_DRIVER_CHECK_PKG + "."
+                                + ANGLE_NATIVE_DRIVER_CHECK_CLASS,
+                                ANGLE_NATIVE_DRIVER_CHECK_METHOD);
 
     enum OpenGlDriverChoice {
         DEFAULT,
@@ -107,31 +125,41 @@ class CtsAngleCommon {
         setGlobalSetting(device, SETTINGS_GLOBAL_DRIVER_PKGS, "\"\"");
         setGlobalSetting(device, SETTINGS_GLOBAL_DRIVER_VALUES, "\"\"");
         setGlobalSetting(device, SETTINGS_GLOBAL_ALLOWLIST, "\"\"");
-
-        // Properties
-        setProperty(device, PROPERTY_TEMP_RULES_FILE, "\"\"");
     }
 
-    static boolean isAngleInstalled(ITestDevice device) throws Exception {
+    static boolean isAngleApkInstalled(ITestDevice device) throws Exception {
         PackageInfo info = device.getAppPackageInfo(ANGLE_PACKAGE_NAME);
 
-        return (info != null);
+        return info != null && info.isSystemApp();
     }
 
-    static boolean isNativeDriverAngle(ITestDevice device) throws Exception {
-        String angleProp = device.getProperty("ro.hardware.egl");
+    static boolean isSystemAngleSupported(ITestDevice device) throws Exception {
+        final boolean supported = device.getBooleanProperty(RO_ANGLE_SUPPORTED_PROPERTY, false);
 
-        return (angleProp != null) && (angleProp.equals("angle"));
+        return supported;
     }
 
-    static boolean isAngleOnlySystem(ITestDevice device) throws Exception {
-        String angleProp = device.getProperty("ro.hardware.egl");
-
-        return angleProp != null && angleProp.equals("angle");
+    static boolean isAnglePresentAsNonDefault(ITestDevice device) throws Exception {
+        return isAngleApkInstalled(device)
+                || (isSystemAngleSupported(device) && !isAngleDefaultDriver(device));
     }
 
+    static boolean isAngleDefaultDriver(ITestDevice device) throws Exception {
+        String driverSuffix = device.getProperty(PERSIST_DRIVER_SUFFIX_PROPERTY);
+
+        return (driverSuffix != null) && (driverSuffix.equals("angle"));
+    }
+
+    static boolean isAnglePresent(ITestDevice device) throws Exception {
+        return isAnglePresentAsNonDefault(device) || isAngleDefaultDriver(device);
+    }
+
+    // If ANGLE is the default GLES driver, then the test method for default GLES driver should
+    // validate ANGLE and hence return the testUseAngleDriver method. If ANGLE is not default
+    // GLES driver, then the test method for default GLES driver should validate non ANGLE, hence
+    // return the testUseDefaultDriver method.
     static String getTestMethod(ITestDevice device) throws Exception {
-        return isNativeDriverAngle(device) ? ANGLE_DRIVER_TEST_ANGLE_METHOD
+        return isAngleDefaultDriver(device) ? ANGLE_DRIVER_TEST_ANGLE_METHOD
                                            : ANGLE_DRIVER_TEST_DEFAULT_METHOD;
     }
 
@@ -151,13 +179,6 @@ class CtsAngleCommon {
 
     static void stopPackage(ITestDevice device, String pkgName) throws Exception {
         device.executeShellCommand("am force-stop " + pkgName);
-    }
-
-    /**
-     * Work around the fact that INativeDevice.enableAdbRoot() is not supported.
-     */
-    static void setProperty(ITestDevice device, String property, String value) throws Exception {
-        device.executeShellCommand("setprop " + property + " " + value);
     }
 
     static void setGameModeBatteryConfig(ITestDevice device, String packageName, boolean useAngle)

@@ -547,6 +547,7 @@ public final class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
         try {
             toggleQuietMode(true);
+            waitForBroadcastIdle();
             toggleQuietMode(false);
             // Ensure the DPC has handled the broadcast
             waitForBroadcastIdle();
@@ -576,6 +577,7 @@ public final class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
         try {
             toggleQuietMode(true);
+            waitForBroadcastIdle();
             toggleQuietMode(false);
             // Ensure the DPC has handled the broadcast
             waitForBroadcastIdle();

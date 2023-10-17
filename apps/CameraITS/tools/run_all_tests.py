@@ -163,7 +163,11 @@ SUB_CAMERA_TESTS = {
 }
 
 _LIGHTING_CONTROL_TESTS = [
-    'test_auto_flash.py'
+    'test_auto_flash.py',
+    'test_preview_min_frame_rate.py',
+    'test_led_snapshot.py',
+    'test_night_extension.py',
+    'test_hdr_extension.py',
     ]
 
 _DST_SCENE_DIR = '/sdcard/Download/'

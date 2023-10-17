@@ -191,6 +191,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         waitAndAssertTopResumedActivity(BROADCAST_RECEIVER_ACTIVITY, newDisplay.mId,
                 "Activity should be resumed on secondary display");
 
+        mayLaunchHomeActivityForCar();
         mBroadcastActionTrigger.launchActivityNewTask(getActivityName(TEST_ACTIVITY));
         waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplayId,
                 "Activity should be resumed on secondary display");
@@ -296,6 +297,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         // can get the callbacks which are related to the reparenting.
         nonResizeableSession.takeCallbackHistory();
 
+        mayLaunchHomeActivityForCar();
         // Try to move the non-resizeable activity to the top of the root task on secondary display.
         moveActivityToRootTaskOrOnTop(NON_RESIZEABLE_ACTIVITY, externalFrontRootTaskId);
         // Wait for a while to check that it will move.
@@ -960,6 +962,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
                 "Activity launched on primary display and on top");
 
+        mayLaunchHomeActivityForCar();
         // Activity should be moved to target display.
         final ActivityOptions options = ActivityOptions.makeBasic();
         options.setLaunchDisplayId(displayContent.mId);
@@ -997,6 +1000,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
                 .setSimulateDisplay(true)
                 .createDisplay();
 
+        mayLaunchHomeActivityForCar();
         // Launch activity on new secondary display.
         getLaunchActivityBuilder()
                 .setUseInstrumentation()
@@ -1059,6 +1063,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
                 .setSimulateDisplay(true)
                 .createDisplay();
 
+        mayLaunchHomeActivityForCar();
         // Start LAUNCHING_ACTIVITY on secondary display with target flags, verify the task
         // be reparented to secondary display
         getLaunchActivityBuilder()
@@ -1069,6 +1074,15 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
                 .setDisplayId(newDisplay.mId).execute();
         waitAndAssertTopResumedActivity(topActivity, newDisplay.mId,
                 "Activity launched on secondary display and on top");
+    }
+
+    private void mayLaunchHomeActivityForCar() {
+        if (isCar()) {
+            // CarLauncher has a TaskView, and which launches the embedded task when it becomes
+            // visible and this can disrupt the top focused state of the test activity.
+            // So we'd like to make Home visible in advance to prevent that.
+            launchHomeActivity();
+        }
     }
 
     private PendingIntent getPendingIntentActivity(ComponentName activity) {

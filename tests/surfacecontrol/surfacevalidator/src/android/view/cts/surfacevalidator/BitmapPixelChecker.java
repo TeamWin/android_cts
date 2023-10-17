@@ -121,11 +121,10 @@ public class BitmapPixelChecker {
         File testDirectory = new File(directoryName);
         if (testDirectory.exists()) {
             String[] children = testDirectory.list();
-            if (children == null) {
-                return;
-            }
-            for (String file : children) {
-                new File(testDirectory, file).delete();
+            if (children != null) {
+                for (String file : children) {
+                    new File(testDirectory, file).delete();
+                }
             }
         } else {
             testDirectory.mkdirs();

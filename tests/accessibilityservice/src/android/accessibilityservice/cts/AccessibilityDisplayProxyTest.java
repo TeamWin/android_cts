@@ -419,12 +419,20 @@ public class AccessibilityDisplayProxyTest {
 
     @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#registerDisplayProxy"})
-    public void testRegisterAccessibilityProxy_withNonDeviceDisplay_throwsSecurityException() {
+    public void testRegisterAccessibilityProxy_withNonDeviceDisplay_throwsSecurityException()
+            throws Exception {
         try (DisplayUtils.VirtualDisplaySession displaySession =
                      new DisplayUtils.VirtualDisplaySession()) {
             final int virtualDisplayId =
                     displaySession.createDisplayWithDefaultDisplayMetricsAndWait(
                             sInstrumentation.getContext(), false).getDisplayId();
+            // Launches an activity on virtual display to guarantee the display is tracked by
+            // accessibility.
+            final Activity activityOnVirtualDisplay =
+                    launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(sInstrumentation,
+                            sUiAutomation,
+                            NonProxyActivity.class,
+                            virtualDisplayId);
 
             final MyA11yProxy invalidProxy = new MyA11yProxy(
                     virtualDisplayId, Executors.newSingleThreadExecutor(), new ArrayList<>());
@@ -435,6 +443,9 @@ public class AccessibilityDisplayProxyTest {
             } finally {
                 runWithShellPermissionIdentity(sUiAutomation, () ->
                         mA11yManager.unregisterDisplayProxy(invalidProxy));
+                if (activityOnVirtualDisplay != null) {
+                    activityOnVirtualDisplay.finish();
+                }
             }
         }
     }
@@ -1481,9 +1492,13 @@ public class AccessibilityDisplayProxyTest {
     }
 
     private View showTopWindowAndWaitForItToShowUp() throws TimeoutException {
+        final WindowManager wm =
+                mProxiedVirtualDisplayActivity.getSystemService(WindowManager.class);
+        final Rect windowBounds = wm.getCurrentWindowMetrics().getBounds();
         final WindowManager.LayoutParams paramsForTop =
                 WindowCreationUtils.layoutParamsForWindowOnTop(
-                        sInstrumentation, mProxiedVirtualDisplayActivity, TOP_WINDOW_TITLE);
+                        sInstrumentation, mProxiedVirtualDisplayActivity, TOP_WINDOW_TITLE,
+                        WindowManager.LayoutParams.MATCH_PARENT, windowBounds.height() / 2);
         final Button button = new Button(mProxiedVirtualDisplayActivity);
         button.setText(sInstrumentation.getContext().getString(R.string.button1));
         WindowCreationUtils.addWindowAndWaitForEvent(sUiAutomation, sInstrumentation,

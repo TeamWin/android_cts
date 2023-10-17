@@ -111,19 +111,24 @@ public class MockDataService {
         mPhoneId = instanceId;
         initializeParameter();
 
+        Log.d(TAG, "MockDataService(): enter");
         try {
             setDataCallListFromNetworkAgent();
         } catch (Exception e) {
             Log.e(TAG, "Exception error: " + e);
         }
+        Log.d(TAG, "MockDataService(): initialized");
     }
 
     private void setDataCallListFromNetworkAgent() throws Exception {
+        Log.d(TAG, "setDataCallListFromNetworkAgent(): enter");
         String result =
                 TelephonyUtils.executeShellCommand(
                         InstrumentationRegistry.getInstrumentation(),
                         sQueryTelephonyDebugServiceCommand);
+        Log.d(TAG, "setDataCallListFromNetworkAgent(): query finished");
         setBridgeTheDataConnection(result);
+        Log.d(TAG, "setDataCallListFromNetworkAgent(): exit");
     }
 
     /* Default value definition */

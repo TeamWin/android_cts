@@ -1019,6 +1019,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
      * {@link InputMethodService#onUpdateEditorToolType(int)} on next startInput().
      */
     @Test
+    @FlakyTest
     public void testOnViewClicked_withStylusHandwriting() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
@@ -1596,9 +1597,9 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     stream,
                     editorMatcher("onStartStylusHandwriting", secondaryMarker),
                     TIMEOUT);
-            TestUtils.injectStylusUpEvent(editText, endX, endY);
 
             verifyStylusHandwritingWindowIsShown(stream, imeSession);
+            TestUtils.injectStylusUpEvent(editText, endX, endY);
 
             // Finish handwriting to remove test stylus id.
             imeSession.callFinishStylusHandwriting();
@@ -1978,7 +1979,12 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
 
     private static int getTouchSlop() {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        return ViewConfiguration.get(context).getScaledTouchSlop();
+        // Some tests require stylus movements to exceed the touch slop so that they are not
+        // interpreted as clicks. Other tests require the movements to exceed the handwriting slop
+        // to trigger handwriting initiation. Using the larger value allows all tests to pass.
+        return Math.max(
+                ViewConfiguration.get(context).getScaledTouchSlop(),
+                ViewConfiguration.get(context).getScaledHandwritingSlop());
     }
 
     private Pair<EditText, EditText> launchTestActivity(@NonNull String focusedMarker,
@@ -2014,7 +2020,12 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     HANDWRITING_BOUNDS_OFFSET_PX,
                     HANDWRITING_BOUNDS_OFFSET_PX,
                     HANDWRITING_BOUNDS_OFFSET_PX);
-            layout.addView(nonFocusedEditText);
+            // Leave margin between the EditTexts so that their extended handwriting bounds do not
+            // overlap.
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            layoutParams.topMargin = 3 * HANDWRITING_BOUNDS_OFFSET_PX;
+            layout.addView(nonFocusedEditText, layoutParams);
             return layout;
         });
         return new Pair<>(focusedEditTextRef.get(), nonFocusedEditTextRef.get());

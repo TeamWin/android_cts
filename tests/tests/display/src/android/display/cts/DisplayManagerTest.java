@@ -17,7 +17,7 @@
 package android.display.cts;
 
 import static android.view.Display.DEFAULT_DISPLAY;
-import static android.view.WindowInsets.Type.statusBars;
+import static android.view.WindowInsets.Type.systemBars;
 
 import static org.junit.Assert.assertTrue;
 
@@ -45,6 +45,7 @@ import android.view.cts.surfacevalidator.SaveBitmapHelper;
 import android.widget.FrameLayout;
 
 import androidx.annotation.Nullable;
+import androidx.core.view.WindowCompat;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -59,7 +60,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public class DisplayManagerTest {
-    private static final String TAG = "MediaProjectionGlobalTest";
+    private static final String TAG = "DisplayManagerTest";
     @Rule
     public TestName mTestName = new TestName();
 
@@ -74,7 +75,7 @@ public class DisplayManagerTest {
 
     private int mNumRetries;
 
-    final HandlerThread mWorkerThread = new HandlerThread("MediaProjectGlobalTest");
+    final HandlerThread mWorkerThread = new HandlerThread("DisplayManagerTest");
 
     private VirtualDisplay mVirtualDisplay;
 
@@ -200,6 +201,9 @@ public class DisplayManagerTest {
 
             setContentView(mFrameLayout, layoutParams);
 
+            // Prevent certain devices from adding a left and right border
+            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
             mFrameLayout.getViewTreeObserver().addOnWindowAttachListener(
                     new ViewTreeObserver.OnWindowAttachListener() {
                         @Override
@@ -232,14 +236,14 @@ public class DisplayManagerTest {
             int testAreaWidth = mFrameLayout.getWidth();
             int testAreaHeight = mFrameLayout.getHeight();
 
-            Insets statusBarInsets = getWindow()
+            Insets systemBarInsets = getWindow()
                     .getDecorView()
                     .getRootWindowInsets()
-                    .getInsets(statusBars());
+                    .getInsets(systemBars());
 
-            return new Rect(statusBarInsets.left, statusBarInsets.top,
-                    testAreaWidth - statusBarInsets.right,
-                    testAreaHeight - statusBarInsets.bottom);
+            return new Rect(systemBarInsets.left, systemBarInsets.top,
+                    testAreaWidth - systemBarInsets.right,
+                    testAreaHeight - systemBarInsets.bottom);
         }
     }
 }

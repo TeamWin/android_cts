@@ -16,6 +16,8 @@
 
 package android.car.cts;
 
+import static com.android.tradefed.targetprep.UserHelper.RUN_TESTS_AS_USER_KEY;
+
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
@@ -93,6 +95,7 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
     private final HashSet<Integer> mUsersToBeRemoved = new HashSet<>();
 
     private int mInitialUserId;
+    private int mTestRunningUserId;
     private Integer mInitialMaximumNumberOfUsers;
 
     // It is possible that during test initial user is deleted and it is not possible to switch
@@ -107,6 +110,18 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
         removeUsers(USER_PREFIX);
 
         mInitialUserId = getCurrentUserId();
+
+        // The test runs as the current user in most cases. For secondary_user_on_secondary_display
+        // case, we set mTestRunningUserId from RUN_TEST_AS_USER.
+        mTestRunningUserId = getCurrentUserId();
+        if (getDevice().isVisibleBackgroundUsersSupported()) {
+            try {
+                mTestRunningUserId = Integer.parseInt(
+                        getTestInformation().properties().get(RUN_TESTS_AS_USER_KEY));
+            } catch (Exception e) {
+                CLog.e("Failed to parse the userId for " + RUN_TESTS_AS_USER_KEY + " due to " + e);
+            }
+        }
     }
 
     /**
@@ -292,6 +307,16 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
             throw new IllegalStateException("must be running adb root");
         }
         executeCommand("setprop fw.max_users %d", numUsers);
+    }
+
+    /**
+     * Gets the user's id that is running the test.
+     *
+     * <p>The tests run as the current user so this is same as {@link #getCurrentUserId()} in most
+     * cases. For secondary_user_on_secondary_display case, this is returned from RUN_TEST_AS_USER.
+     */
+    protected int getTestRunningUserId()  {
+        return mTestRunningUserId;
     }
 
     /**

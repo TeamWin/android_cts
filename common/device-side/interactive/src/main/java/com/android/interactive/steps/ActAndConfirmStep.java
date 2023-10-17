@@ -36,5 +36,6 @@ public abstract class ActAndConfirmStep extends Step<Nothing> {
         addButton("Done", this::pass);
 
         addFailButton();
+        addSwapButton();
     }
 }

@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.app.ActivityManager.LOCK_TASK_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
@@ -788,6 +789,9 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
             // Lock the task
             runWithShellPermission(() -> {
                 mAtm.startSystemLockTaskMode(activity.getTaskId());
+            });
+            waitForOrFail("Task in app pinning mode", () -> {
+                return mAm.getLockTaskModeState() == LOCK_TASK_MODE_PINNED;
             });
 
             // Create TaskFragment and reparent the activity

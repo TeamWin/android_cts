@@ -105,9 +105,13 @@ public class UiAutomatorUtils2 {
 
         final int minViewHeightPx = convertDpToPx(MIN_VIEW_HEIGHT_DP);
 
+        int viewHeight = -1;
         while (view == null && start + timeoutMs > System.currentTimeMillis()) {
             try {
                 view = getUiDevice().wait(Until.findObject(selector), 1000);
+                if (view != null) {
+                    viewHeight = view.getVisibleBounds().height();
+                }
             } catch (StaleObjectException exception) {
                 // UiDevice.wait() may cause StaleObjectException if the {@link View} attached to
                 // UiObject2 is no longer in the view tree.
@@ -116,7 +120,7 @@ public class UiAutomatorUtils2 {
                 continue;
             }
 
-            if (view == null || view.getVisibleBounds().height() < minViewHeightPx) {
+            if (view == null || viewHeight < minViewHeightPx) {
                 final double deadZone = getSwipeDeadZonePct();
                 UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
                 scrollable.setSwipeDeadZonePercentage(deadZone);

@@ -48,8 +48,24 @@ public class WindowCreationUtils {
      */
     public static WindowManager.LayoutParams layoutParamsForWindowOnTop(
             Instrumentation instrumentation, Activity activity, CharSequence windowTitle) {
+        return layoutParamsForWindowOnTop(instrumentation, activity, windowTitle,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.WRAP_CONTENT);
+    }
+
+    /**
+     * Returns the layout specifications for a test window of type TYPE_APPLICATION_PANEL that lies
+     * at the top of the screen.
+     * @param instrumentation the test instrumentation.
+     * @param activity the activity to specify the layout params against.
+     * @param windowTitle the title of the test window.
+     * @return the layout params.
+     */
+    public static WindowManager.LayoutParams layoutParamsForWindowOnTop(
+            Instrumentation instrumentation, Activity activity, CharSequence windowTitle,
+            int width, int height) {
         final WindowManager.LayoutParams params =
-                layoutParamsForTestWindow(instrumentation, activity);
+                layoutParamsForTestWindow(instrumentation, activity, width, height);
         params.gravity = Gravity.TOP;
         params.setTitle(windowTitle);
         instrumentation.runOnMainSync(() -> {
@@ -66,9 +82,24 @@ public class WindowCreationUtils {
      */
     public static WindowManager.LayoutParams layoutParamsForTestWindow(
             Instrumentation instrumentation, Activity activity) {
+        return layoutParamsForTestWindow(instrumentation, activity,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.WRAP_CONTENT);
+    }
+
+    /**
+     * Returns the layout params for a test window of type TYPE_APPLICATION_PANEL.
+     * @param instrumentation the test instrumentation.
+     * @param activity the activity whose window token will be used for the test window.
+     * @param width the width of the window.
+     * @param height the height of the window.
+     * @return the layout params.
+     */
+    public static WindowManager.LayoutParams layoutParamsForTestWindow(
+            Instrumentation instrumentation, Activity activity, int width, int height) {
         final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
-        params.width = WindowManager.LayoutParams.MATCH_PARENT;
-        params.height = WindowManager.LayoutParams.WRAP_CONTENT;
+        params.width = width;
+        params.height = height;
         params.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                 | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                 | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR;

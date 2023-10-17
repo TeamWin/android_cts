@@ -43,7 +43,13 @@ import android.voiceinteraction.common.Utils;
 
 import androidx.annotation.Nullable;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.NonWritableChannelException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntConsumer;
 
@@ -55,16 +61,23 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
     public static final String PERCEPTION_MODULE_SUCCESS = "Perception module working";
     public static final String FAKE_QUERY_FIRST = "What is ";
     public static final String FAKE_QUERY_SECOND = "the weather today?";
+    public static final String MSG_FILE_NOT_WRITABLE = "files does not have writable channel";
 
-    public static String KEY_VQDS_TEST_SCENARIO = "test scenario";
+    public static final String KEY_VQDS_TEST_SCENARIO = "test scenario";
 
-    public static int SCENARIO_TEST_PERCEPTION_MODULES = 0;
-    public static int SCENARIO_ATTENTION_LEAVE = 1;
-    public static int SCENARIO_ATTENTION_QUERY_REJECTED_LEAVE = 2;
-    public static int SCENARIO_ATTENTION_QUERY_FINISHED_LEAVE = 3;
-    public static int SCENARIO_ATTENTION_DOUBLE_QUERY_FINISHED_LEAVE = 4;
-    public static int SCENARIO_QUERY_NO_ATTENTION = 5;
-    public static int SCENARIO_QUERY_NO_QUERY_FINISH = 6;
+    public static final int SCENARIO_TEST_PERCEPTION_MODULES = 0;
+    public static final int SCENARIO_ATTENTION_LEAVE = 1;
+    public static final int SCENARIO_ATTENTION_QUERY_REJECTED_LEAVE = 2;
+    public static final int SCENARIO_ATTENTION_QUERY_FINISHED_LEAVE = 3;
+    public static final int SCENARIO_ATTENTION_DOUBLE_QUERY_FINISHED_LEAVE = 4;
+    public static final int SCENARIO_QUERY_NO_ATTENTION = 5;
+    public static final int SCENARIO_QUERY_NO_QUERY_FINISH = 6;
+    public static final int SCENARIO_READ_FILE_MMAP_READ_ONLY = 100;
+    public static final int SCENARIO_READ_FILE_MMAP_WRITE = 101;
+    public static final int SCENARIO_READ_FILE_MMAP_MULTIPLE = 102;
+
+    // stores the content of a file for isolated process to perform disk read
+    private ArrayList<String> mResourceContents = new ArrayList<>();
 
     private int mScenario = -1;
 
@@ -130,6 +143,7 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
             mHandler.removeCallbacks(mDetectionJob);
             mDetectionJob = null;
             mStopDetectionCalled = true;
+            mResourceContents = null;
         }
     }
 
@@ -165,6 +179,7 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
                 Process.killProcess(Process.myPid());
                 return;
             }
+            maybeReadTargetFiles(options);
             mScenario = options.getInt(KEY_VQDS_TEST_SCENARIO);
         }
 
@@ -231,6 +246,32 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
             detectionJob = () -> {
                 gainedAttention();
                 finishQuery();
+                lostAttention();
+            };
+        } else if (scenario == SCENARIO_READ_FILE_MMAP_READ_ONLY) {
+            // leverages the detection API to verify if the content read from the file is correct
+            detectionJob = () -> {
+                gainedAttention();
+                streamQuery(mResourceContents.get(0));
+                finishQuery();
+                lostAttention();
+            };
+        } else if (scenario == SCENARIO_READ_FILE_MMAP_WRITE) {
+            // leverages the detection API to verify if the content read from the file is correct
+            detectionJob = () -> {
+                gainedAttention();
+                streamQuery(mResourceContents.get(0));
+                finishQuery();
+                lostAttention();
+            };
+        } else if (scenario == SCENARIO_READ_FILE_MMAP_MULTIPLE) {
+            // leverages the detection API to verify if the content read from the file is correct
+            detectionJob = () -> {
+                gainedAttention();
+                for (String content : mResourceContents) {
+                    streamQuery(content);
+                    finishQuery();
+                }
                 lostAttention();
             };
         } else {
@@ -354,6 +395,39 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
                     mCameraBackgroundHandler);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void maybeReadTargetFiles(PersistableBundle options) {
+        switch (options.getInt(KEY_VQDS_TEST_SCENARIO)) {
+            case SCENARIO_READ_FILE_MMAP_READ_ONLY:
+                readFileWithMMap(Utils.TEST_RESOURCE_FILE_NAME, FileChannel.MapMode.READ_ONLY);
+                break;
+            case SCENARIO_READ_FILE_MMAP_WRITE:
+                readFileWithMMap(Utils.TEST_RESOURCE_FILE_NAME, FileChannel.MapMode.READ_WRITE);
+                break;
+            case SCENARIO_READ_FILE_MMAP_MULTIPLE:
+                for (int i = 0; i < Utils.NUM_TEST_RESOURCE_FILE_MULTIPLE; i++) {
+                    readFileWithMMap(Utils.TEST_RESOURCE_FILE_NAME + i,
+                            FileChannel.MapMode.READ_ONLY);
+                }
+                break;
+        } // end switch
+    }
+
+    private void readFileWithMMap(String filename, FileChannel.MapMode mode) {
+        try {
+            Log.d(TAG, "Reading test file in mode: " + mode);
+            FileChannel fc = openFileInput(filename).getChannel();
+            MappedByteBuffer buffer = fc.map(mode, 0, fc.size());
+            byte[] data = new byte[(int) fc.size()];
+            buffer.get(data);
+            mResourceContents.add(new String(data, StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            Log.e(TAG, "Cannot mmap read from opened file: " + e.getMessage());
+        } catch (NonWritableChannelException e) {
+            Log.e(TAG, "Only read-only mode is permitted.");
+            mResourceContents.add(MSG_FILE_NOT_WRITABLE);
         }
     }
 }

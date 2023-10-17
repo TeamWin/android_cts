@@ -86,5 +86,7 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
          android:targetPackage="android.telecom3.cts"
          android:label="CTS tests for android.telecom package">
+        <meta-data android:name="listener"
+             android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
 </manifest>

@@ -1668,6 +1668,22 @@ public class TextViewHandwritingGestureTest {
 
     @Test
     @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performInsertModeGesture_exitAfterSetText() {
+        mEditText.requestFocus();
+
+        performInsertModeGesture(
+                new PointF(3 * CHAR_WIDTH_PX, mEditText.getLayout().getLineTop(0) - 1f),
+                /* setFallbackText= */ false);
+
+        final int expectedOffset = 3;
+        assertGestureInsertMode(expectedOffset);
+
+        mEditText.setText("");
+        assertNoInsertMode();
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
     public void performInsertModeGesture_setTransformationMethod() {
         InsertModeGesture gesture = performInsertModeGesture(
                 new PointF(3 * CHAR_WIDTH_PX, mEditText.getLayout().getLineTop(0) - 1f),
@@ -1974,14 +1990,11 @@ public class TextViewHandwritingGestureTest {
     }
 
     private void assertGestureInsertModeHighlightRange(int start, int end) {
-        final TypedValue typedValue = new TypedValue();
-        mEditText.getContext().getTheme()
-                .resolveAttribute(android.R.attr.colorPrimary, typedValue, true);
-        final int colorPrimary = typedValue.data;
-        final int expectedColor = ColorUtils.setAlphaComponent(colorPrimary,
-                (int) (0.12f * Color.alpha(colorPrimary)));
+        final int textColor = mEditText.getTextColors().getDefaultColor();
+        final int expectedColor =
+                ColorUtils.setAlphaComponent(textColor, (int) (0.2f * Color.alpha(textColor)));
 
-        assertGestureHighlightRange(start, end, expectedColor);
+        assertGestureHighlightRange(start, end);
     }
 
     private void assertCursorOffset(int offset) {
@@ -2022,6 +2035,19 @@ public class TextViewHandwritingGestureTest {
         int color = mEditText.getTextColors().getDefaultColor();
         color = ColorUtils.setAlphaComponent(color, (int) (0.2f * Color.alpha(color)));
         assertGestureHighlightRange(start, end, color);
+    }
+
+    private void assertGestureHighlightRange(int start, int end) {
+        Canvas canvas = prepareMockCanvas();
+        mEditText.draw(canvas);
+
+        ArgumentCaptor<Path> pathCaptor = ArgumentCaptor.forClass(Path.class);
+        ArgumentCaptor<Paint> paintCaptor = ArgumentCaptor.forClass(Paint.class);
+        verify(canvas).drawPath(pathCaptor.capture(), paintCaptor.capture());
+
+        Path expectedPath = new Path();
+        mEditText.getLayout().getSelectionPath(start, end, expectedPath);
+        assertPathEquals(expectedPath, pathCaptor.getValue());
     }
 
     private void assertGestureHighlightRange(int start, int end, int color) {

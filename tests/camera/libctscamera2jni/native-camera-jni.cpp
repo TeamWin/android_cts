@@ -4556,7 +4556,7 @@ testStillCaptureNative(
         int64_t expectedDurationNs = (minFrameDurationNs + stallDurationNs) * NUM_TEST_IMAGES;
         constexpr int64_t waitPerIterationUs = 100000;
         constexpr int64_t usToNs = 1000;
-        int totalWaitIteration = 50;
+        int totalWaitIteration = 60;
 
         // Allow 1.5x margin
         if (expectedDurationNs * 3 / 2 > totalWaitIteration * waitPerIterationUs * usToNs) {

@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import android.app.DownloadManager;
 import android.app.Instrumentation;
@@ -465,6 +466,25 @@ public class DownloadManagerTestBase {
         return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
                 || pm.hasSystemFeature(PackageManager.FEATURE_WIFI)
                 || pm.hasSystemFeature(PackageManager.FEATURE_ETHERNET);
+    }
+
+    /**
+     * Some non-mobile form factors ship a "stub" DocumentsUI package. Such stub packages may
+     * effectively declare "no-op" components similar to those in the "real" DocUI.
+     * For example, WearOS devices ship FrameworkPackageStubs that declares an Activity that should
+     * handle {@link Intent#ACTION_OPEN_DOCUMENT}, that when started will simply return
+     * {@link android.app.Activity#RESULT_CANCELED} right away.
+     * <p>
+     * This method "runs" a few {@link org.junit.Assume assumptions} to make sure we are not running
+     * on one of the form factors that ship with such stub packages.
+     * <p>
+     * For now, these form factors are: Auto (Android Automotive OS), TVs and wearables (Wear OS).
+     */
+    protected void assumeDocumentsUiAvailableOnFormFactor() {
+        final PackageManager pm = mContext.getPackageManager();
+        assumeFalse(pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+        assumeFalse(pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)); // TVs
+        assumeFalse(pm.hasSystemFeature(PackageManager.FEATURE_WATCH));
     }
 
     public static class DownloadCompleteReceiver extends BroadcastReceiver {

@@ -30,6 +30,7 @@ import android.view.MotionEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.cts.input.UinputTouchDevice
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

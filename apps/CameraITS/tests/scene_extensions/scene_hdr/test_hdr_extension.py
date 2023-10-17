@@ -33,6 +33,7 @@ import opencv_processing_utils
 
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _EXTENSION_HDR = 3
+_TABLET_BRIGHTNESS = '12'  # Highest minimum brightness on a supported tablet
 
 _FMT_NAME = 'jpg'
 _WIDTH = 1920
@@ -203,7 +204,7 @@ class HdrExtensionTest(its_base_test.ItsBaseTest):
         raise AssertionError('Test must be run with tablet.')
 
       # Validate lighting
-      cam.do_3a()
+      cam.do_3a(do_af=False)
       cap = cam.do_capture(
           capture_request_utils.auto_capture_request(), cam.CAP_YUV)
       y_plane, _, _ = image_processing_utils.convert_capture_to_planes(cap)
@@ -211,10 +212,11 @@ class HdrExtensionTest(its_base_test.ItsBaseTest):
           y_plane, self.scene, state='OFF', log_path=self.log_path)
 
       self.setup_tablet()
+      self.set_screen_brightness(_TABLET_BRIGHTNESS)
 
       its_session_utils.load_scene(
           cam, props, self.scene, self.tablet, self.chart_distance,
-          log_path=self.log_path)
+          lighting_check=False, log_path=self.log_path)
 
       file_stem = f'{test_name}_{_FMT_NAME}_{_WIDTH}x{_HEIGHT}'
 

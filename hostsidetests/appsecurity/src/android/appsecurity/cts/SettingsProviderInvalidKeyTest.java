@@ -31,9 +31,14 @@ public class SettingsProviderInvalidKeyTest extends BaseAppSecurityTest {
     private static final String TEST_APK = "CtsSettingsProviderInvalidKeyTestApp.apk";
     private static final String TEST_PACKAGE = "com.android.cts.settingsproviderinvalidkeytestapp";
     private static final String TEST_CLASS = TEST_PACKAGE + ".SettingsProviderInvalidKeyTest";
+    private String mPackageVerifier = null;
 
     @Before
     public void setUp() throws Exception {
+        // Disable the package verifier
+        mPackageVerifier = getDevice().executeShellCommand(
+                "settings get global verifier_verify_adb_installs");
+        getDevice().executeShellCommand("settings put global verifier_verify_adb_installs 0");
         new InstallMultiple().addFile(TEST_APK).run();
         assertTrue(getDevice().isPackageInstalled(TEST_PACKAGE));
     }
@@ -41,6 +46,9 @@ public class SettingsProviderInvalidKeyTest extends BaseAppSecurityTest {
     @After
     public void tearDown() throws Exception {
         getDevice().uninstallPackage(TEST_PACKAGE);
+        // Reset the package verifier setting to its original value.
+        getDevice().executeShellCommand(
+                "settings put global verifier_verify_adb_installs " + mPackageVerifier);
     }
 
     @Test

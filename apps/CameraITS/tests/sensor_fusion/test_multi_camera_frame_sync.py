@@ -15,8 +15,8 @@
 
 
 import logging
-import multiprocessing
 import os
+import threading
 import time
 
 import cv2
@@ -181,7 +181,7 @@ class MultiCameraFrameSyncTest(its_base_test.ItsBaseTest):
           sensor_fusion_utils.ARDUINO_STRING)
       # send test cmd to Arduino until cmd returns properly
       sensor_fusion_utils.establish_serial_comm(serial_port)
-    p = multiprocessing.Process(
+    p = threading.Thread(
         target=sensor_fusion_utils.rotation_rig,
         args=(
             rot_rig['cntl'],
