@@ -31,6 +31,7 @@ import static android.os.UserManager.USER_OPERATION_SUCCESS;
 import static android.os.UserManager.USER_TYPE_FULL_SECONDARY;
 import static android.os.UserManager.USER_TYPE_PROFILE_CLONE;
 import static android.os.UserManager.USER_TYPE_PROFILE_MANAGED;
+import static android.os.UserManager.USER_TYPE_PROFILE_PRIVATE;
 
 import static com.android.bedstead.harrier.UserType.ADDITIONAL_USER;
 import static com.android.bedstead.nene.types.OptionalBoolean.FALSE;
@@ -551,6 +552,48 @@ public final class UserManagerTest {
     }
 
     @Test
+    @EnsureHasPermission({CREATE_USERS, QUERY_USERS})
+    @RequireRunOnInitialUser
+    @ApiTest(apis = {
+            "android.os.UserManager#createProfile",
+            "android.os.UserManager#isPrivateProfile",
+            "android.os.UserManager#isProfile",
+            "android.os.UserManager#isUserOfType"})
+    public void testPrivateProfile() throws Exception {
+        UserHandle userHandle = null;
+        assumeTrue(android.os.Flags.allowPrivateProfile());
+
+        try {
+            try {
+                userHandle = mUserManager.createProfile(
+                    "Private profile", UserManager.USER_TYPE_PROFILE_PRIVATE, new HashSet<>());
+            } catch (UserManager.UserOperationException e) {
+                // Not all devices and user types support these profiles; skip if this one doesn't.
+                assumeNoException("Couldn't create private profile", e);
+                return;
+            }
+            assertThat(userHandle).isNotNull();
+
+            final UserManager umOfProfile = sContext
+                    .createPackageContextAsUser("android", 0, userHandle)
+                    .getSystemService(UserManager.class);
+
+            assertThat(umOfProfile.isPrivateProfile()).isTrue();
+            assertThat(umOfProfile.isProfile()).isTrue();
+            assertThat(umOfProfile.isUserOfType(UserManager.USER_TYPE_PROFILE_PRIVATE)).isTrue();
+            final List<UserInfo> list = mUserManager.getAliveUsers();
+            final UserHandle finalUserHandle = userHandle;
+            final List<UserInfo> privateUsers = list.stream().filter(
+                    user -> (user.id == finalUserHandle.getIdentifier()
+                            && user.isPrivateProfile()))
+                    .collect(Collectors.toList());
+            assertThat(privateUsers.size()).isEqualTo(1);
+        } finally {
+            removeUser(userHandle);
+        }
+    }
+
+    @Test
     @RequireHeadlessSystemUserMode(reason = "Secondary user profile is only available on headless")
     @ApiTest(apis = {"android.os.UserManager#removeUser"})
     @EnsureHasAdditionalUser
@@ -640,6 +683,9 @@ public final class UserManagerTest {
         assertThat(umOfSys.isCloneProfile()).isFalse();
         if (android.multiuser.Flags.supportCommunalProfile()) {
             assertThat(umOfSys.isCommunalProfile()).isFalse();
+        }
+        if (android.os.Flags.allowPrivateProfile()) {
+            assertThat(umOfSys.isPrivateProfile()).isFalse();
         }
     }
 
