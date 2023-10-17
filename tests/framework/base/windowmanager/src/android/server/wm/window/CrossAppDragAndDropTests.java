@@ -137,11 +137,32 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
                 }
             };
 
+    private static final ActivityLaunchModeContext FREEFORM_LAUNCH_MODE_CONTEXT =
+            new ActivityLaunchModeContext() {
+                @Override
+                void assumeDeviceSupportsLaunchMode() {
+                    assumeTrue(mTestCase.supportsFreeform());
+                }
+
+                @Override
+                void launchActivities(ComponentName sourceComponentName, String sourceMode,
+                        ComponentName targetComponentName, String targetMode) throws Exception {
+                    mTestCase.launchFreeformActivities(
+                            sourceComponentName, sourceMode, targetComponentName, targetMode);
+                }
+
+                @Override
+                public String toString() {
+                    return "Freeform";
+                }
+            };
+
+
     @Parameterized.Parameters(name = "{0}")
     public static Object[] activityLaunchModes() {
         return new Object[] {
+                FREEFORM_LAUNCH_MODE_CONTEXT,
                 SPLIT_SCREEN_LAUNCH_MODE_CONTEXT
-                // TODO(b/303085497): Add freeform cases back.
         };
     }
 
