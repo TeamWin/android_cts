@@ -17,6 +17,7 @@ package android.angle.cts;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.device.PackageInfo;
+import com.android.tradefed.result.TestDescription;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,13 +47,16 @@ class CtsAngleCommon {
             "com.android.angleintegrationtest.dumpsysgputest";
     static final String ANGLE_GAME_DRIVER_TEST_PKG =
             "com.android.angleintegrationtest.gamedrivertest";
+
     static final String ANGLE_DRIVER_TEST_CLASS = "AngleDriverTestActivity";
     static final String ANGLE_DRIVER_TEST_DEFAULT_METHOD = "testUseDefaultDriver";
     static final String ANGLE_DRIVER_TEST_ANGLE_METHOD = "testUseAngleDriver";
     static final String ANGLE_DRIVER_TEST_NATIVE_METHOD = "testUseNativeDriver";
+
     static final String ANGLE_DRIVER_TEST_APP = "CtsAngleDriverTestCases.apk";
     static final String ANGLE_DRIVER_TEST_SEC_APP = "CtsAngleDriverTestCasesSecondary.apk";
     static final String ANGLE_GAME_DRIVER_TEST_APP = "CtsAngleGameDriverTestCases.apk";
+
     static final String ANGLE_DUMPSYS_GPU_TEST_PKG =
             "com.android.angleintegrationtest.dumpsysgputest";
     static final String ANGLE_DUMPSYS_GPU_TEST_CLASS = "AngleDumpsysGpuTestActivity";
@@ -63,6 +67,17 @@ class CtsAngleCommon {
     static final String ANGLE_DRIVER_TEST_SEC_ACTIVITY =
             ANGLE_DRIVER_TEST_SEC_PKG
                     + "/com.android.angleIntegrationTest.common.AngleIntegrationTestActivity";
+
+    static final String ANGLE_NATIVE_DRIVER_CHECK_PKG =
+            "com.android.angleintegrationtest.nativedrivercheck";
+    static final String ANGLE_NATIVE_DRIVER_CHECK_APP = "CtsAngleNativeDriverCheck.apk";
+    static final String ANGLE_NATIVE_DRIVER_CHECK_CLASS = "NativeDriverCheckActivity";
+    static final String ANGLE_NATIVE_DRIVER_CHECK_METHOD = "checkNativeDriver";
+    static final String NATIVE_GL_RENDERER = "NATIVE_GL_RENDERER";
+    static final TestDescription NATIVE_DRIVER_CHECK_TEST_DESCRIPTION =
+            new TestDescription(ANGLE_NATIVE_DRIVER_CHECK_PKG + "."
+                                + ANGLE_NATIVE_DRIVER_CHECK_CLASS,
+                                ANGLE_NATIVE_DRIVER_CHECK_METHOD);
 
     enum OpenGlDriverChoice {
         DEFAULT,
