@@ -25,6 +25,7 @@ import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_2
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_3_APK;
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_3_PACKAGE;
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_SELF_SCAN_ONLY_APK;
+import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_SELF_SCAN_ONLY_PACKAGE;
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_TEST_APK;
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_TEST_PACKAGE;
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_TEST_WITH_MODIFY_AUDIO_ROUTING_APK;
@@ -42,9 +43,13 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.AfterClassWithInfo;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
 
+import com.google.common.truth.Expect;
+
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -53,6 +58,8 @@ import java.io.FileNotFoundException;
 /** Installs route provider apps and runs tests in {@link MediaRouter2DeviceTest}. */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
+
+    @ClassRule public static final Expect expect = Expect.create();
 
     @BeforeClassWithInfo
     public static void installApps(TestInformation testInfo)
@@ -65,15 +72,16 @@ public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
         installTestApp(testInfo, MEDIA_ROUTER_TEST_WITH_MODIFY_AUDIO_ROUTING_APK);
     }
 
-    @BeforeClassWithInfo
+    @AfterClassWithInfo
     public static void uninstallApps(TestInformation testInfo) throws DeviceNotAvailableException {
         ITestDevice device = testInfo.getDevice();
-        device.uninstallPackage(MEDIA_ROUTER_PROVIDER_1_PACKAGE);
-        device.uninstallPackage(MEDIA_ROUTER_PROVIDER_2_PACKAGE);
-        device.uninstallPackage(MEDIA_ROUTER_PROVIDER_3_PACKAGE);
-        device.uninstallPackage(MEDIA_ROUTER_PROVIDER_SELF_SCAN_ONLY_APK);
-        device.uninstallPackage(MEDIA_ROUTER_TEST_PACKAGE);
-        device.uninstallPackage(MEDIA_ROUTER_TEST_WITH_MODIFY_AUDIO_ROUTING_PACKAGE);
+        expect.that(device.uninstallPackage(MEDIA_ROUTER_PROVIDER_1_PACKAGE)).isNull();
+        expect.that(device.uninstallPackage(MEDIA_ROUTER_PROVIDER_2_PACKAGE)).isNull();
+        expect.that(device.uninstallPackage(MEDIA_ROUTER_PROVIDER_3_PACKAGE)).isNull();
+        expect.that(device.uninstallPackage(MEDIA_ROUTER_PROVIDER_SELF_SCAN_ONLY_PACKAGE)).isNull();
+        expect.that(device.uninstallPackage(MEDIA_ROUTER_TEST_PACKAGE)).isNull();
+        expect.that(device.uninstallPackage(MEDIA_ROUTER_TEST_WITH_MODIFY_AUDIO_ROUTING_PACKAGE))
+                .isNull();
     }
 
     @Test
