@@ -42,6 +42,7 @@ import android.util.Log;
 
 import androidx.test.uiautomator.UiObject2;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.server.biometrics.nano.SensorStateProto;
 
 import org.junit.Ignore;
@@ -64,6 +65,11 @@ public class BiometricSimpleTests extends BiometricTestBase {
      * Tests that enrollments created via {@link BiometricTestSession} show up in the
      * biometric dumpsys.
      */
+    @ApiTest(apis = {
+            "android.hardware.biometrics."
+                    + "BiometricTestSession#startEnroll",
+            "android.hardware.biometrics."
+                    + "BiometricTestSession#finishEnroll"})
     @Test
     public void testEnroll() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
@@ -79,6 +85,9 @@ public class BiometricSimpleTests extends BiometricTestBase {
      * Tests that the sensorIds retrieved via {@link BiometricManager#getSensorProperties()} and
      * the dumpsys are consistent with each other.
      */
+    @ApiTest(apis = {
+            "android.hardware.biometrics."
+                    + "BiometricManager#getSensorProperties"})
     @Test
     public void testSensorPropertiesAndDumpsysMatch() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
@@ -93,6 +102,11 @@ public class BiometricSimpleTests extends BiometricTestBase {
     /**
      * Tests that the PackageManager features and biometric dumpsys are consistent with each other.
      */
+    @ApiTest(apis = {
+            "android.content.pm."
+                    + "PackageManager#FEATURE_FINGERPRINT",
+            "android.content.pm."
+                    + "PackageManager#FEATURE_FACE"})
     @Test
     public void testPackageManagerAndDumpsysMatch() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
@@ -119,6 +133,9 @@ public class BiometricSimpleTests extends BiometricTestBase {
         }
     }
 
+    @ApiTest(apis = {
+            "android.hardware.biometrics."
+                    + "BiometricManager#canAuthenticate"})
     @Test
     public void testCanAuthenticate_whenNoSensors() {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
@@ -130,6 +147,13 @@ public class BiometricSimpleTests extends BiometricTestBase {
         }
     }
 
+    @ApiTest(apis = {
+            "android.hardware.biometrics."
+                    + "BiometricManager#canAuthenticate",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.Builder#setAllowedAuthenticators",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt#authenticate"})
     @Test
     public void testInvalidInputs() {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
@@ -160,6 +184,15 @@ public class BiometricSimpleTests extends BiometricTestBase {
      * 2) BiometricPrompt#setAllowedAuthenticators(DEVICE_CREDENTIAL)
      * 3) @deprecated BiometricPrompt#setDeviceCredentialAllowed(true)
      */
+    @ApiTest(apis = {
+            "android.hardware.biometrics."
+                    + "BiometricManager#canAuthenticate",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.Builder#setAllowedAuthenticators",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.Builder#setDeviceCredentialAllowed",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt#authenticate"})
     @Test
     public void testWhenCredentialNotEnrolled() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
@@ -214,6 +247,17 @@ public class BiometricSimpleTests extends BiometricTestBase {
      * 3b) Cancelling authentication for the above
      * 4) Cancelling auth for options 2) and 3)
      */
+    @ApiTest(apis = {
+            "android.hardware.biometrics."
+                    + "BiometricManager#canAuthenticate",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.Builder#setAllowedAuthenticators",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.Builder#setDeviceCredentialAllowed",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.AuthenticationCallback#onAuthenticationSucceeded",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt#authenticate"})
     @Test
     public void testWhenCredentialEnrolled() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
@@ -258,6 +302,11 @@ public class BiometricSimpleTests extends BiometricTestBase {
         }
     }
 
+    @ApiTest(apis = {
+            "android.hardware.biometrics."
+                    + "BiometricManager#canAuthenticate",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.AuthenticationCallback#onAuthenticationError"})
     @Test
     public void testSimpleBiometricAuth_convenience() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
@@ -307,6 +356,23 @@ public class BiometricSimpleTests extends BiometricTestBase {
      * TODO(b/236763921): fix this test and unignore.
      */
     @Ignore
+    @ApiTest(apis = {
+            "android.hardware.biometrics."
+                    + "BiometricManager#canAuthenticate",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.Builder#setTitle",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.Builder#setSubtitle",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.Builder#setDescription",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.Builder#setNegativeButton",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.AuthenticationCallback#onAuthenticationSucceeded",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt#authenticate",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.AuthenticationResult#getAuthenticationType"})
     @Test
     public void testSimpleBiometricAuth_nonConvenience() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
@@ -377,6 +443,17 @@ public class BiometricSimpleTests extends BiometricTestBase {
      * Upon successful authentication, checks that the result is
      * {@link BiometricPrompt#AUTHENTICATION_RESULT_TYPE_BIOMETRIC}
      */
+    @ApiTest(apis = {
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.Builder#setTitle",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.Builder#setSubtitle",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.Builder#setDescription",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt#authenticate",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.AuthenticationResult#getAuthenticationType"})
     @Test
     public void testSimpleCredentialAuth() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
@@ -419,6 +496,9 @@ public class BiometricSimpleTests extends BiometricTestBase {
     /**
      * Tests that cancelling auth succeeds, and that ERROR_CANCELED is received.
      */
+    @ApiTest(apis = {
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.AuthenticationCallback#onAuthenticationError"})
     @Test
     public void testBiometricCancellation() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
