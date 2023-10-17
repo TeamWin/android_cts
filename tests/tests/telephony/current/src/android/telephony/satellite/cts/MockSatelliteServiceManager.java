@@ -883,15 +883,6 @@ class MockSatelliteServiceManager {
         mSatelliteService.setSupportedRadioTechnologies(supportedRadioTechnologies);
     }
 
-    void sendOnSatelliteModemStateChanged(int modemState) {
-        logd("sendOnSatelliteModemStateChanged: " + modemState);
-        if (mSatelliteService == null) {
-            loge("sendOnSatelliteModemStateChanged: mSatelliteService is null");
-            return;
-        }
-        mSatelliteService.sendOnSatelliteModemStateChanged(modemState);
-    }
-
     void setSatelliteSupport(boolean supported) {
         logd("setSatelliteSupport: supported=" + supported);
         if (mSatelliteService == null) {
@@ -908,6 +899,15 @@ class MockSatelliteServiceManager {
             return;
         }
         mSatelliteService.setShouldRespondTelephony(shouldRespondTelephony);
+    }
+
+    void setNtnSignalStrength(
+            android.telephony.satellite.stub.NtnSignalStrength ntnSignalStrength) {
+        if (mSatelliteService == null) {
+            loge("setNtnSignalStrength: mSatelliteService is null");
+            return;
+        }
+        mSatelliteService.setNtnSignalStrength(ntnSignalStrength);
     }
 
     void sendOnSatelliteDatagramReceived(SatelliteDatagram datagram, int pendingCount) {
@@ -931,6 +931,25 @@ class MockSatelliteServiceManager {
     void sendOnSatellitePositionChanged(PointingInfo pointingInfo) {
         logd("sendOnSatellitePositionChanged");
         mSatelliteService.sendOnSatellitePositionChanged(pointingInfo);
+    }
+
+    void sendOnSatelliteModemStateChanged(int modemState) {
+        logd("sendOnSatelliteModemStateChanged: " + modemState);
+        if (mSatelliteService == null) {
+            loge("sendOnSatelliteModemStateChanged: mSatelliteService is null");
+            return;
+        }
+        mSatelliteService.sendOnSatelliteModemStateChanged(modemState);
+    }
+
+    void sendOnNtnSignalStrengthChanged(
+            android.telephony.satellite.stub.NtnSignalStrength ntnSignalStrength) {
+        logd("sendOnNtnSignalStrengthChanged: " + ntnSignalStrength.signalStrengthLevel);
+        if (mSatelliteService == null) {
+            loge("sendOnNtnSignalStrengthChanged: mSatelliteService is null");
+            return;
+        }
+        mSatelliteService.sendOnNtnSignalStrengthChanged(ntnSignalStrength);
     }
 
     boolean setSatelliteListeningTimeoutDuration(long timeoutMillis) {

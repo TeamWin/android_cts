@@ -29,15 +29,25 @@ import static org.junit.Assume.assumeTrue;
 
 import android.os.CancellationSignal;
 import android.os.OutcomeReceiver;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.telephony.satellite.NtnSignalStrength;
+import android.telephony.satellite.NtnSignalStrengthCallback;
 import android.telephony.satellite.SatelliteCapabilities;
 import android.telephony.satellite.SatelliteDatagram;
 import android.telephony.satellite.SatelliteManager;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
+import com.android.internal.telephony.flags.Flags;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.time.Duration;
@@ -51,6 +61,10 @@ public class SatelliteManagerTest extends SatelliteManagerTestBase {
     private static boolean sOriginalIsSatelliteEnabled = false;
     private static boolean sOriginalIsSatelliteProvisioned = false;
     private static boolean sIsProvisionable = false;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @BeforeClass
     public static void beforeAllTests() throws Exception {
@@ -730,5 +744,71 @@ public class SatelliteManagerTest extends SatelliteManagerTestBase {
         assertThrows(SecurityException.class,
                 () -> sSatelliteManager.getSatelliteAttachRestrictionReasonsForCarrier(
                         getActiveSubIDForCarrierSatelliteTest()));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_OEM_ENABLED_SATELLITE_FLAG)
+    public void testRequestNtnSignalStrength() {
+        if (!shouldTestSatellite()) return;
+
+        final AtomicReference<NtnSignalStrength> enabled = new AtomicReference<>();
+        final AtomicReference<Integer> errorCode = new AtomicReference<>();
+        OutcomeReceiver<NtnSignalStrength, SatelliteManager.SatelliteException> receiver =
+                new OutcomeReceiver<>() {
+                    @Override
+                    public void onResult(NtnSignalStrength result) {
+                        Log.d(TAG, "onResult: result=" + result);
+                        enabled.set(result);
+                    }
+
+                    @Override
+                    public void onError(SatelliteManager.SatelliteException exception) {
+                        Log.d(TAG, "onError: onError=" + exception);
+                        errorCode.set(exception.getErrorCode());
+                    }
+                };
+        // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
+        assertThrows(SecurityException.class,
+                () -> sSatelliteManager.requestNtnSignalStrength(getContext().getMainExecutor(),
+                        receiver));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_OEM_ENABLED_SATELLITE_FLAG)
+    public void testRegisterForNtnSignalStrengthChanged() {
+        if (!shouldTestSatellite()) return;
+
+        NtnSignalStrengthCallback callback = new NtnSignalStrengthCallback() {
+            @Override
+            public void onNtnSignalStrengthChanged(@NonNull NtnSignalStrength ntnSignalStrength) {
+                logd("onNtnSignalStrengthChanged(" + ntnSignalStrength + ")");
+            }
+        };
+
+        // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
+        assertThrows(SecurityException.class,
+                () -> sSatelliteManager.registerForNtnSignalStrengthChanged(
+                        getContext().getMainExecutor(), callback));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_OEM_ENABLED_SATELLITE_FLAG)
+    public void testUnregisterForNtnSignalStrengthChanged() {
+        if (!shouldTestSatellite()) return;
+
+        NtnSignalStrengthCallback callback = new NtnSignalStrengthCallback() {
+            @Override
+            public void onNtnSignalStrengthChanged(@NonNull NtnSignalStrength ntnSignalStrength) {
+                logd("onNtnSignalStrengthChanged(" + ntnSignalStrength + ")");
+            }
+        };
+
+        assertThrows(SecurityException.class,
+                () -> sSatelliteManager.registerForNtnSignalStrengthChanged(
+                        getContext().getMainExecutor(), callback));
+
+        // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
+        assertThrows(SecurityException.class,
+                () -> sSatelliteManager.unregisterForNtnSignalStrengthChanged(callback));
     }
 }

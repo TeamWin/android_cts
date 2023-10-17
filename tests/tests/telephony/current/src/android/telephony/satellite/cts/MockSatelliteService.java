@@ -24,9 +24,11 @@ import android.os.IBinder;
 import android.telephony.satellite.AntennaDirection;
 import android.telephony.satellite.AntennaPosition;
 import android.telephony.satellite.SatelliteManager;
+import android.telephony.satellite.stub.INtnSignalStrengthConsumer;
 import android.telephony.satellite.stub.ISatelliteCapabilitiesConsumer;
 import android.telephony.satellite.stub.ISatelliteListener;
 import android.telephony.satellite.stub.NTRadioTechnology;
+import android.telephony.satellite.stub.NtnSignalStrength;
 import android.telephony.satellite.stub.PointingInfo;
 import android.telephony.satellite.stub.SatelliteCapabilities;
 import android.telephony.satellite.stub.SatelliteDatagram;
@@ -38,6 +40,7 @@ import android.util.Log;
 
 import com.android.internal.telephony.IBooleanConsumer;
 import com.android.internal.telephony.IIntegerConsumer;
+import com.android.internal.telephony.satellite.SatelliteServiceUtils;
 import com.android.internal.util.FunctionalUtils;
 import com.android.telephony.Rlog;
 
@@ -101,6 +104,8 @@ public class MockSatelliteService extends SatelliteImplBase {
     @Nullable private List<String> mCarrierPlmnList;
     @Nullable private List<String> mAllSatellitePlmnList;
     private boolean mIsSatelliteEnabledForCarrier;
+    private android.telephony.satellite.stub.NtnSignalStrength mNtnSignalStrength;
+    private boolean mStartSendingNtnSignalStrength;
 
     private int[] mSupportedRadioTechnologies;
 
@@ -546,6 +551,46 @@ public class MockSatelliteService extends SatelliteImplBase {
         }
     }
 
+    @Override
+    public void requestSignalStrength(@NonNull IIntegerConsumer resultCallback,
+            INtnSignalStrengthConsumer callback) {
+        logd("requestSignalStrength: mErrorCode=" + mErrorCode);
+        if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
+            if (mShouldRespondTelephony.get()) {
+                runWithExecutor(() -> resultCallback.accept(mErrorCode));
+            }
+            return;
+        }
+        if (mShouldRespondTelephony.get()) {
+            runWithExecutor(() -> callback.accept(
+                    SatelliteServiceUtils.fromModemInterface(mNtnSignalStrength)));
+        }
+    }
+
+    @Override
+    public void startSendingNtnSignalStrength(@NonNull IIntegerConsumer resultCallback) {
+        logd("startSendingNtnSignalStrength: mErrorCode=" + mErrorCode);
+        if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
+            if (mShouldRespondTelephony.get()) {
+                runWithExecutor(() -> resultCallback.accept(mErrorCode));
+            }
+            return;
+        }
+        mStartSendingNtnSignalStrength = true;
+    }
+
+    @Override
+    public void stopSendingNtnSignalStrength(@NonNull IIntegerConsumer resultCallback) {
+        logd("stopSendingNtnSignalStrength: mErrorCode=" + mErrorCode);
+        if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
+            if (mShouldRespondTelephony.get()) {
+                runWithExecutor(() -> resultCallback.accept(mErrorCode));
+            }
+            return;
+        }
+        mStartSendingNtnSignalStrength = false;
+    }
+
     public void setLocalSatelliteListener(@NonNull ILocalSatelliteListener listener) {
         logd("setLocalSatelliteListener: listener=" + listener);
         mLocalListener = listener;
@@ -554,6 +599,17 @@ public class MockSatelliteService extends SatelliteImplBase {
     public void setErrorCode(@SatelliteResult int errorCode) {
         logd("setErrorCode: errorCode=" + errorCode);
         mErrorCode = errorCode;
+    }
+
+    /**
+     * This API is used by CTS test cases to update current NTN signal strength of the mock
+     * satellite modem.
+     */
+    public void setNtnSignalStrength(
+            android.telephony.satellite.stub.NtnSignalStrength ntnSignalStrength) {
+        logd("setNtnSignalStrength: ntnSignalStrengthLevel="
+                + ntnSignalStrength.signalStrengthLevel);
+        mNtnSignalStrength = ntnSignalStrength;
     }
 
     /**
@@ -608,6 +664,18 @@ public class MockSatelliteService extends SatelliteImplBase {
      */
     public void sendOnSatelliteModemStateChanged(int modemState) {
         updateSatelliteModemState(modemState);
+    }
+
+    /**
+     * Called when NTN signal strength changes.
+     * This API is used by CTS test cases to update NTN signal strength.
+     * @param ntnSignalStrength The new NTN signal strength.
+     */
+    public void sendOnNtnSignalStrengthChanged(NtnSignalStrength ntnSignalStrength) {
+        logd("sendOnNtnSignalStrengthChanged");
+        mNtnSignalStrength = ntnSignalStrength;
+        mRemoteListeners.values().forEach(listener -> runWithExecutor(() ->
+                listener.onNtnSignalStrengthChanged(ntnSignalStrength)));
     }
 
     public void setWaitToSend(boolean wait) {
