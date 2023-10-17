@@ -57,6 +57,7 @@ import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.server.biometrics.nano.SensorServiceStateProto;
 import com.android.server.biometrics.nano.SensorStateProto;
 
@@ -153,6 +154,11 @@ public class FingerprintServiceTest extends ActivityManagerTestBase
         mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
     }
 
+    @ApiTest(apis = {
+            "android.hardware.biometrics."
+                    + "BiometricTestSession#startEnroll",
+            "android.hardware.biometrics."
+                    + "BiometricTestSession#finishEnroll"})
     @Test
     public void testEnroll() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
@@ -182,6 +188,9 @@ public class FingerprintServiceTest extends ActivityManagerTestBase
                 .get(sensorId).getUserStates().get(userId).numEnrolled);
     }
 
+    @ApiTest(apis = {
+            "android.hardware.fingerprint."
+                    + "FingerprintManager#authenticate"})
     @Test
     public void testAuthenticateFromForegroundActivity() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
@@ -220,6 +229,9 @@ public class FingerprintServiceTest extends ActivityManagerTestBase
         }
     }
 
+    @ApiTest(apis = {
+            "android.hardware.fingerprint."
+                    + "FingerprintManager#authenticate"})
     @Test
     public void testRejectThenErrorFromForegroundActivity() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
@@ -287,6 +299,9 @@ public class FingerprintServiceTest extends ActivityManagerTestBase
         }
     }
 
+    @ApiTest(apis = {
+            "android.hardware.fingerprint."
+                    + "FingerprintManager#authenticate"})
     @Test
     @AsbSecurityTest(cveBugId = 214261879)
     public void testAuthCancelsWhenAppSwitched() throws Exception {
