@@ -19,6 +19,8 @@ import static android.angle.cts.CtsAngleCommon.*;
 
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.result.TestResult;
+import com.android.tradefed.result.TestRunResult;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.RunUtil;
@@ -37,6 +39,9 @@ import org.junit.runner.RunWith;
 public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
 
     private static final String TAG = CtsAngleDeveloperOptionHostTest.class.getSimpleName();
+
+    private static boolean sSetupOnce = false;
+    private static boolean sIsAngleNativeDriver = false;
 
     private void setAndValidateAngleDevOptionPkgDriver(String pkgName, String driverValue)
             throws Exception {
@@ -83,6 +88,30 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
         }
     }
 
+    private boolean isAngleNativeDriver() throws Exception {
+        return sIsAngleNativeDriver;
+    }
+
+    // This method checks whether the native GLES driver is ANGLE this could happen on devices that
+    // ship ANGLE before platform supports it by specifying ro.hardware.egl
+    private void checkNativeDriver() throws Exception {
+        installApp(ANGLE_NATIVE_DRIVER_CHECK_APP);
+
+        setAndValidateAngleDevOptionPkgDriver(ANGLE_NATIVE_DRIVER_CHECK_PKG,
+                sDriverGlobalSettingMap.get(OpenGlDriverChoice.NATIVE));
+        runDeviceTests(ANGLE_NATIVE_DRIVER_CHECK_PKG,
+                       ANGLE_NATIVE_DRIVER_CHECK_PKG + "." + ANGLE_NATIVE_DRIVER_CHECK_CLASS,
+                       ANGLE_NATIVE_DRIVER_CHECK_METHOD);
+        final TestRunResult testRunResult = getLastDeviceRunResults();
+        final TestResult testResult = testRunResult.getTestResults().get(
+                NATIVE_DRIVER_CHECK_TEST_DESCRIPTION);
+        final String glRenderer = testResult.getMetrics().get(NATIVE_GL_RENDERER);
+        sIsAngleNativeDriver = glRenderer.toLowerCase().contains("angle");
+
+        stopPackage(getDevice(), ANGLE_NATIVE_DRIVER_CHECK_PKG);
+        clearSettings(getDevice());
+    }
+
     @Before
     public void setUp() throws Exception {
         clearSettings(getDevice());
@@ -91,6 +120,12 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
         stopPackage(getDevice(), ANGLE_DRIVER_TEST_SEC_PKG);
         stopPackage(getDevice(), ANGLE_DRIVER_DUMPSYS_PKG);
         stopPackage(getDevice(), ANGLE_GAME_DRIVER_TEST_PKG);
+        stopPackage(getDevice(), ANGLE_NATIVE_DRIVER_CHECK_PKG);
+
+        if (!sSetupOnce) {
+            sSetupOnce = true;
+            checkNativeDriver();
+        }
     }
 
     @After
@@ -128,6 +163,8 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testUseDefaultDriver() throws Exception {
+        Assume.assumeFalse(isAngleNativeDriver());
+
         final String testMethod = getTestMethod(getDevice());
 
         installApp(ANGLE_DRIVER_TEST_APP);
@@ -161,6 +198,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testUseNativeDriver() throws Exception {
+        Assume.assumeFalse(isAngleNativeDriver());
         Assume.assumeTrue(isAnglePresent(getDevice()));
 
         installApp(ANGLE_DRIVER_TEST_APP);
@@ -179,6 +217,8 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testSettingsLengthMismatch() throws Exception {
+        Assume.assumeFalse(isAngleNativeDriver());
+
         final String testMethod = getTestMethod(getDevice());
 
         installApp(ANGLE_DRIVER_TEST_APP);
@@ -200,6 +240,8 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testUseInvalidDriverSetting() throws Exception {
+        Assume.assumeFalse(isAngleNativeDriver());
+
         final String testMethod = getTestMethod(getDevice());
 
         installApp(ANGLE_DRIVER_TEST_APP);
@@ -215,6 +257,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testUpdateDriverValues() throws Exception {
+        Assume.assumeFalse(isAngleNativeDriver());
         Assume.assumeTrue(isAnglePresent(getDevice()));
 
         installApp(ANGLE_DRIVER_TEST_APP);
@@ -243,6 +286,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testMultipleDevOptionsAngleNative() throws Exception {
+        Assume.assumeFalse(isAngleNativeDriver());
         Assume.assumeTrue(isAnglePresent(getDevice()));
 
         installApp(ANGLE_DRIVER_TEST_APP);
@@ -267,6 +311,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testMultipleUpdateDriverValues() throws Exception {
+        Assume.assumeFalse(isAngleNativeDriver());
         Assume.assumeTrue(isAnglePresent(getDevice()));
 
         installApp(ANGLE_DRIVER_TEST_APP);
@@ -348,6 +393,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testAngleInUseDialogBoxWithNative() throws Exception {
+        Assume.assumeFalse(isAngleNativeDriver());
         Assume.assumeTrue(isAngleApkInstalled(getDevice()));
 
         setGlobalSetting(getDevice(), SETTINGS_GLOBAL_ANGLE_IN_USE_DIALOG_BOX, "1");
@@ -395,6 +441,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testGameModeBatteryUseAngleOverrideWithNative() throws Exception {
+        Assume.assumeFalse(isAngleNativeDriver());
         Assume.assumeTrue(isAnglePresent(getDevice()));
 
         installApp(ANGLE_GAME_DRIVER_TEST_APP);
@@ -422,6 +469,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testGameModeBatteryDontUseAngleOverrideWithAngle() throws Exception {
+        Assume.assumeFalse(isAngleNativeDriver());
         Assume.assumeTrue(isAnglePresent(getDevice()));
 
         final String testMethod = getTestMethod(getDevice());
