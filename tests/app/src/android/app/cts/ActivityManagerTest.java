@@ -107,6 +107,7 @@ import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RestrictedBuildTest;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
+import android.server.wm.WindowManagerStateHelper;
 import android.server.wm.settings.SettingsSession;
 import android.util.ArrayMap;
 import android.util.ArraySet;
@@ -1722,8 +1723,11 @@ public final class ActivityManagerTest {
                 }
             }));
 
+            final WindowManagerStateHelper wms = new WindowManagerStateHelper();
             mTargetContext.startActivity(intent);
             watcher3.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP, null);
+            wms.waitForValidState(new ComponentName(CANT_SAVE_STATE_1_PACKAGE_NAME,
+                      "CantSave1Activity"));
 
             heavyLatchHolder[0] = new CountDownLatch(1);
             testFunc[0] = level -> TRIM_MEMORY_RUNNING_MODERATE <= (int) level
@@ -1742,6 +1746,7 @@ public final class ActivityManagerTest {
             heavyLatchHolder[0] = new CountDownLatch(1);
             testFunc[0] = level -> TRIM_MEMORY_BACKGROUND == (int) level;
             mTargetContext.startActivity(homeIntent);
+            wms.waitForHomeActivityVisible();
             assertTrue("Failed to wait for the trim memory event",
                     heavyLatchHolder[0].await(waitForSec, TimeUnit.MILLISECONDS));
 
