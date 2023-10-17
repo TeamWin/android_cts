@@ -69,10 +69,14 @@ public class PixelCopyViewProducerActivity extends Activity implements OnDrawLis
 
         mContent = new ColoredGrid(this);
         setContentView(mContent);
+
         Window window = getWindow();
         window.setDecorFitsSystemWindows(false);
         window.setStatusBarColor(Color.TRANSPARENT);
+        window.setStatusBarContrastEnforced(false);
         window.setNavigationBarColor(Color.TRANSPARENT);
+        window.setNavigationBarContrastEnforced(false);
+
         mContent.getViewTreeObserver().addOnDrawListener(this);
         mContent.setOnApplyWindowInsetsListener(this);
     }
