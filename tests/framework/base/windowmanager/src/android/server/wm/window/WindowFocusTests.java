@@ -38,7 +38,9 @@ import static android.view.KeyEvent.KEYCODE_7;
 import static android.view.KeyEvent.KEYCODE_8;
 import static android.view.KeyEvent.KEYCODE_9;
 import static android.view.KeyEvent.keyCodeToString;
+
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -57,6 +59,7 @@ import android.hardware.display.VirtualDisplay;
 import android.media.ImageReader;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.BuildUtils;
 import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerTestBase;
 import android.view.Display;
@@ -489,9 +492,9 @@ public class WindowFocusTests extends WindowManagerTestBase {
 
     private static class InputTargetActivity extends FocusableActivity {
         private static final long TIMEOUT_DISPLAY_CHANGED = 5000; // milliseconds
-        private static final long TIMEOUT_POINTER_CAPTURE_CHANGED = 1000;
+        private static final long TIMEOUT_POINTER_CAPTURE_CHANGED = 3000
+                * BuildUtils.HW_TIMEOUT_MULTIPLIER;
         private static final long TIMEOUT_NEXT_KEY_EVENT = 1000;
-
         private final Object mLockPointerCapture = new Object();
         private final Object mLockKeyEvent = new Object();
 
