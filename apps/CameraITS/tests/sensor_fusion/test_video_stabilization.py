@@ -34,8 +34,6 @@ _IMG_FORMAT = 'png'
 _MIN_PHONE_MOVEMENT_ANGLE = 5  # degrees
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NUM_ROTATIONS = 24
-_RADS_TO_DEGS = 180/math.pi
-_SEC_TO_NSEC = 1E9
 _START_FRAME = 30  # give 3A 1s to warm up
 _VIDEO_DELAY_TIME = 5.5  # seconds
 _VIDEO_DURATION = 5.5  # seconds
@@ -255,20 +253,22 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
               f"Max gyro angle: {max_angles['gyro']:.3f}, "
               f"ratio: {max_angles['cam']/max_angles['gyro']:.3f} "
               f'THRESH: {video_stabilization_factor}.')
-        else: # remove frames if PASS
+        else:  # remove frames if PASS
           temp_files = []
           try:
             temp_files = os.listdir(log_path)
           except FileNotFoundError:
             logging.debug('/tmp directory: %s not found', log_path)
           for file in temp_files:
-            if fnmatch.fnmatch(file, f'*_{video_quality}_*_stabilized_frame_*.png'):
+            if fnmatch.fnmatch(
+                file, f'*_{video_quality}_*_stabilized_frame_*.png'):
               file_to_remove = os.path.join(log_path, file)
               try:
                 os.remove(file_to_remove)
               except FileNotFoundError:
                 logging.debug('File not found: %s', str(file))
-          logging.debug('Quality %s passes, frame images have been removed', video_quality)
+          logging.debug('Quality %s passes, frame images have been removed',
+                        video_quality)
       if test_failures:
         raise AssertionError(test_failures)
 
