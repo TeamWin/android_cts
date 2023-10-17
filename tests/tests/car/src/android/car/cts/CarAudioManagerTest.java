@@ -160,7 +160,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.media.CarAudioManager#isAudioFeatureEnabled(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#isAudioFeatureEnabled"})
     public void isAudioFeatureEnabled_withVolumeGroupMuteFeature_succeeds() {
         boolean volumeGroupMutingEnabled = mCarAudioManager.isAudioFeatureEnabled(
                         AUDIO_FEATURE_VOLUME_GROUP_MUTING);
@@ -169,7 +169,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.media.CarAudioManager#isAudioFeatureEnabled(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#isAudioFeatureEnabled"})
     public void isAudioFeatureEnabled_withDynamicRoutingFeature_succeeds() {
         boolean dynamicRoutingEnabled = mCarAudioManager.isAudioFeatureEnabled(
                         AUDIO_FEATURE_DYNAMIC_ROUTING);
@@ -178,7 +178,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.media.CarAudioManager#isAudioFeatureEnabled(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#isAudioFeatureEnabled"})
     public void isAudioFeatureEnabled_withVolumeGroupEventsFeature_succeeds() {
         boolean volumeGroupEventsEnabled = mCarAudioManager.isAudioFeatureEnabled(
                 AUDIO_FEATURE_VOLUME_GROUP_EVENTS);
@@ -188,7 +188,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.media.CarAudioManager#isAudioFeatureEnabled(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#isAudioFeatureEnabled"})
     public void isAudioFeatureEnabled_withNonAudioFeature_fails() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> mCarAudioManager.isAudioFeatureEnabled(-1));
@@ -220,7 +220,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {
-            "android.car.media.CarAudioManager#registerCarVolumeCallback(CarVolumeCallback)"})
+            "android.car.media.CarAudioManager#registerCarVolumeCallback"})
     public void registerCarVolumeCallback_nullCallback_throwsNPE() {
         assertThrows(NullPointerException.class,
                 () -> mCarAudioManager.registerCarVolumeCallback(null));
@@ -229,7 +229,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     @ApiTest(apis = {
-            "android.car.media.CarAudioManager#registerCarVolumeCallback(CarVolumeCallback)"})
+            "android.car.media.CarAudioManager#registerCarVolumeCallback"})
     public void registerCarVolumeCallback_onGroupVolumeChanged() throws Exception {
         assumeDynamicRoutingIsEnabled();
         mCallback = new CarAudioManagerTestUtils.SyncCarVolumeCallback();
@@ -245,7 +245,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     @ApiTest(apis = {
-            "android.car.media.CarAudioManager#registerCarVolumeCallback(CarVolumeCallback)"})
+            "android.car.media.CarAudioManager#registerCarVolumeCallback"})
     public void registerCarVolumeCallback_onMasterMuteChanged() throws Exception {
         assumeDynamicRoutingIsEnabled();
         assumeVolumeGroupMutingIsDisabled();
@@ -266,7 +266,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     @ApiTest(apis = {
-            "android.car.media.CarAudioManager#registerCarVolumeCallback(CarVolumeCallback)"})
+            "android.car.media.CarAudioManager#registerCarVolumeCallback"})
     public void registerCarVolumeCallback_onGroupMuteChanged() throws Exception {
         assumeDynamicRoutingIsEnabled();
         assumeVolumeGroupMutingIsEnabled();
@@ -287,7 +287,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {
-            "android.car.media.CarAudioManager#unregisterCarVolumeCallback(CarVolumeCallback)"})
+            "android.car.media.CarAudioManager#unregisterCarVolumeCallback"})
     public void unregisterCarVolumeCallback_nullCallback_throws() {
         assertThrows(NullPointerException.class,
                 () -> mCarAudioManager.unregisterCarVolumeCallback(null));
@@ -295,7 +295,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {
-            "android.car.media.CarAudioManager#unregisterCarVolumeCallback(CarVolumeCallback)"})
+            "android.car.media.CarAudioManager#unregisterCarVolumeCallback"})
     public void unregisterCarVolumeCallback_unregisteredCallback_doesNotReceiveCallback()
             throws Exception {
         mCallback = new CarAudioManagerTestUtils.SyncCarVolumeCallback();
@@ -310,7 +310,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     @ApiTest(apis = {
-            "android.car.media.CarAudioManager#unregisterCarVolumeCallback(CarVolumeCallback)"})
+            "android.car.media.CarAudioManager#unregisterCarVolumeCallback"})
     public void unregisterCarVolumeCallback_noLongerReceivesCallback() throws Exception {
         assumeDynamicRoutingIsEnabled();
         CarAudioManagerTestUtils.SyncCarVolumeCallback callback =
@@ -327,7 +327,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupInfo(int, int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupInfo"})
     public void getVolumeGroupInfo() {
         assumeDynamicRoutingIsEnabled();
         int groupCount = mCarAudioManager.getVolumeGroupCount(PRIMARY_AUDIO_ZONE);
@@ -350,7 +350,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupInfosForZone(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupInfosForZone"})
     public void getVolumeGroupInfosForZone() {
         assumeDynamicRoutingIsEnabled();
         int groupCount = mCarAudioManager.getVolumeGroupCount(PRIMARY_AUDIO_ZONE);
@@ -371,7 +371,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#getAudioAttributesForVolumeGroup(CarVolumeGroupInfo)"})
+            + "#getAudioAttributesForVolumeGroup"})
     public void getAudioAttributesForVolumeGroup() {
         assumeDynamicRoutingIsEnabled();
         CarVolumeGroupInfo info =
@@ -384,9 +384,9 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getGroupMaxVolume(int)",
-            "android.car.media.CarAudioManager#getGroupMinVolume(int)",
-            "android.car.media.CarAudioManager#getGroupVolume(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getGroupMaxVolume",
+            "android.car.media.CarAudioManager#getGroupMinVolume",
+            "android.car.media.CarAudioManager#getGroupVolume"})
     public void getGroupVolume() {
         if (mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING)) {
             assumePrimaryZone();
@@ -404,9 +404,9 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getGroupMaxVolume(int, int)",
-            "android.car.media.CarAudioManager#getGroupMinVolume(int, int)",
-            "android.car.media.CarAudioManager#getGroupVolume(int, int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getGroupMaxVolume",
+            "android.car.media.CarAudioManager#getGroupMinVolume",
+            "android.car.media.CarAudioManager#getGroupVolume"})
     public void getGroupVolume_withZoneId() {
         if (mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING)) {
             readFirstZoneAndVolumeGroup();
@@ -424,7 +424,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#setGroupVolume(int, int, int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#setGroupVolume"})
     public void setGroupVolume_toMax_succeeds() {
         assumeDynamicRoutingIsEnabled();
         assumePrimaryZone();
@@ -444,7 +444,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#setGroupVolume(int, int, int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#setGroupVolume"})
     public void setGroupVolume_toMin_succeeds() {
         assumeDynamicRoutingIsEnabled();
         assumePrimaryZone();
@@ -464,7 +464,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#setGroupVolume(int, int, int, int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#setGroupVolume"})
     public void setGroupVolume_withZone_toMax_succeeds() {
         assumeDynamicRoutingIsEnabled();
         readFirstZoneAndVolumeGroup();
@@ -484,7 +484,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#setGroupVolume(int, int, int, int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#setGroupVolume"})
     public void setGroupVolume_withZone_toMin_succeeds() {
         assumeDynamicRoutingIsEnabled();
         readFirstZoneAndVolumeGroup();
@@ -504,7 +504,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#setGroupVolume(int, int, int, int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#setGroupVolume"})
     public void setGroupVolume_aboveMax_throwsException() {
         assumeDynamicRoutingIsEnabled();
         readFirstZoneAndVolumeGroup();
@@ -520,7 +520,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#setGroupVolume(int, int, int, int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#setGroupVolume"})
     public void setGroupVolume_belowMin_throwsException() {
         assumeDynamicRoutingIsEnabled();
         readFirstZoneAndVolumeGroup();
@@ -536,7 +536,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupCount()"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupCount"})
     public void getVolumeGroupCount() {
         if (mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING)) {
             assumePrimaryZone();
@@ -548,7 +548,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupCount(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupCount"})
     public void getVolumeGroupCount_withZoneIdAndDynamicRouting() {
         if (mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING)) {
             readFirstZoneAndVolumeGroup();
@@ -560,7 +560,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupCount(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupCount"})
     public void getVolumeGroupCount_withInvalidZoneId_throwsException() {
         assumeDynamicRoutingIsEnabled();
         assumePrimaryZone();
@@ -574,7 +574,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupIdForUsage(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupIdForUsage"})
     public void getVolumeGroupIdForUsage_forInvalidUsage_returnsInvalidId() {
         if (mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING)) {
             assumePrimaryZone();
@@ -588,7 +588,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupIdForUsage(int, int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupIdForUsage"})
     public void getVolumeGroupIdForUsage_withInvalidZoneId_throwsException() {
         assumeDynamicRoutingIsEnabled();
 
@@ -601,7 +601,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupIdForUsage(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupIdForUsage"})
     public void getVolumeGroupIdForUsage_returnsValidId() {
         if (mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING)) {
             assumePrimaryZone();
@@ -615,7 +615,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupIdForUsage(int, int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupIdForUsage"})
     public void getVolumeGroupIdForUsage_withZoneId_returnsValidId() {
         assumeDynamicRoutingIsEnabled();
         readFirstZoneAndVolumeGroup();
@@ -628,7 +628,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getUsagesForVolumeGroupId(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getUsagesForVolumeGroupId"})
     public void getUsagesForVolumeGroupId_returnsAtLeastOneUsage() {
         assumeDynamicRoutingIsEnabled();
         assumePrimaryZone();
@@ -641,7 +641,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getUsagesForVolumeGroupId(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getUsagesForVolumeGroupId"})
     public void getUsagesForVolumeGroupId_withoutDynamicRouting_returnsAtLeastOneUsage() {
         assumeDynamicRoutingIsDisabled();
 
@@ -653,7 +653,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getUsagesForVolumeGroupId(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getUsagesForVolumeGroupId"})
     public void getUsagesForVolumeGroupId_withZoneId_returnsAtLeastOneUsage() {
         assumeDynamicRoutingIsEnabled();
         readFirstZoneAndVolumeGroup();
@@ -666,7 +666,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getUsagesForVolumeGroupId(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getUsagesForVolumeGroupId"})
     public void getUsagesForVolumeGroupId_withZoneIdWithoutDynamicRouting_returnsAtLeastOneUsage() {
         assumeDynamicRoutingIsDisabled();
 
@@ -678,7 +678,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getUsagesForVolumeGroupId(int, int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getUsagesForVolumeGroupId"})
     public void getUsagesForVolumeGroupId_withInvalidZone_throwsException() {
         assumeDynamicRoutingIsEnabled();
         assumePrimaryZone();
@@ -693,7 +693,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getOutputDeviceForUsage(int, int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getOutputDeviceForUsage"})
     public void getOutputDeviceForUsage_withoutDynamicRouting_throws() {
         assumeDynamicRoutingIsDisabled();
 
@@ -701,12 +701,12 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
                 () -> mCarAudioManager.getOutputDeviceForUsage(PRIMARY_AUDIO_ZONE, USAGE_MEDIA));
 
         assertWithMessage("Exception for getting media output device with dynamic routing disabled")
-                .that(exception).hasMessageThat().contains("Dynamic routing");
+                .that(exception).hasMessageThat().contains("Non legacy routing");
     }
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getOutputDeviceForUsage(int, int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getOutputDeviceForUsage"})
     public void getOutputDeviceForUsage_withInvalidZoneId_throws() {
         assumeDynamicRoutingIsEnabled();
 
@@ -719,7 +719,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getOutputDeviceForUsage(int, int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getOutputDeviceForUsage"})
     public void getOutputDeviceForUsage_withInvalidUsage_throws() {
         assumeDynamicRoutingIsEnabled();
 
@@ -732,7 +732,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getOutputDeviceForUsage(int, int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getOutputDeviceForUsage"})
     public void getOutputDeviceForUsage_succeeds() {
         assumeDynamicRoutingIsEnabled();
 
@@ -747,7 +747,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getInputDevicesForZoneId(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getInputDevicesForZoneId"})
     public void getInputDevicesForZoneId_withoutDynamicRouting_throws() {
         assumeDynamicRoutingIsDisabled();
 
@@ -755,12 +755,12 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
                 () -> mCarAudioManager.getInputDevicesForZoneId(PRIMARY_AUDIO_ZONE));
 
         assertWithMessage("Exception for getting input devices with dynamic routing disabled")
-                .that(exception).hasMessageThat().contains("Dynamic routing");
+                .that(exception).hasMessageThat().contains("Non legacy routing");
     }
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getInputDevicesForZoneId(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getInputDevicesForZoneId"})
     public void getInputDevicesForZoneId_withInvalidZoneId_throws() {
         assumeDynamicRoutingIsEnabled();
 
@@ -773,7 +773,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getInputDevicesForZoneId(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getInputDevicesForZoneId"})
     public void getInputDevicesForZoneId_succeeds() {
         assumeDynamicRoutingIsEnabled();
 
@@ -791,7 +791,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#isMediaAudioAllowedInPrimaryZone(OccupantZoneInfo)"})
+            + "#isMediaAudioAllowedInPrimaryZone"})
     public void isMediaAudioAllowedInPrimaryZone_byDefault() {
         int passengerAudioZoneId = assumePassengerWithValidAudioZone();
         OccupantZoneInfo info =
@@ -804,7 +804,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#isMediaAudioAllowedInPrimaryZone(OccupantZoneInfo)"})
+            + "#isMediaAudioAllowedInPrimaryZone"})
     public void isMediaAudioAllowedInPrimaryZone_afterAllowed() throws Exception {
         int passengerAudioZoneId = assumePassengerWithValidAudioZone();
         setupMediaAudioRequestCallback();
@@ -823,7 +823,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#isMediaAudioAllowedInPrimaryZone(OccupantZoneInfo)"})
+            + "#isMediaAudioAllowedInPrimaryZone"})
     public void isMediaAudioAllowedInPrimaryZone_afterRejected() throws Exception {
         int passengerAudioZoneId = assumePassengerWithValidAudioZone();
         setupMediaAudioRequestCallback();
@@ -842,8 +842,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#setPrimaryZoneMediaAudioRequestCallback(Executor,"
-            + "PrimaryZoneMediaAudioRequestCallback)"})
+            + "#setPrimaryZoneMediaAudioRequestCallback"})
     public void setPrimaryZoneMediaAudioRequestCallback() {
         assumePassengerWithValidAudioZone();
         Executor executor = Executors.newFixedThreadPool(1);
@@ -860,8 +859,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#requestMediaAudioOnPrimaryZone(OccupantZoneInfo, Executor, "
-            + "MediaAudioRequestStatusCallback)"})
+            + "#requestMediaAudioOnPrimaryZone"})
     public void requestMediaAudioOnPrimaryZone() throws Exception {
         assumeDynamicRoutingIsEnabled();
         int passengerAudioZoneId = assumePassengerWithValidAudioZone();
@@ -884,8 +882,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#requestMediaAudioOnPrimaryZone(OccupantZoneInfo,"
-            + "Executor, MediaAudioRequestStatusCallback)"})
+            + "#requestMediaAudioOnPrimaryZone"})
     public void requestMediaAudioOnPrimaryZone_withoutApprover() throws Exception {
         assumeDynamicRoutingIsEnabled();
         assumeNoPrimaryZoneAudioMediaApprovers();
@@ -908,7 +905,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#allowMediaAudioOnPrimaryZone(long, boolean)"})
+            + "#allowMediaAudioOnPrimaryZone"})
     public void allowMediaAudioOnPrimaryZone() throws Exception {
         int passengerAudioZoneId = assumePassengerWithValidAudioZone();
         setupMediaAudioRequestCallback();
@@ -935,7 +932,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#allowMediaAudioOnPrimaryZone(long, boolean)"})
+            + "#allowMediaAudioOnPrimaryZone"})
     public void allowMediaAudioOnPrimaryZone_withReject() throws Exception {
         int passengerAudioZoneId = assumePassengerWithValidAudioZone();
         setupMediaAudioRequestCallback();
@@ -961,7 +958,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#allowMediaAudioOnPrimaryZone(long, boolean)"})
+            + "#allowMediaAudioOnPrimaryZone"})
     public void allowMediaAudioOnPrimaryZone_withInvalidRequestId() throws Exception {
         assumePassengerWithValidAudioZone();
         setupMediaAudioRequestCallback();
@@ -976,7 +973,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#cancelMediaAudioOnPrimaryZone(long)"})
+            + "#cancelMediaAudioOnPrimaryZone"})
     public void cancelMediaAudioOnPrimaryZone() throws Exception {
         int passengerAudioZoneId = assumePassengerWithValidAudioZone();
         setupMediaAudioRequestCallback();
@@ -996,7 +993,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#resetMediaAudioOnPrimaryZone(OccupantZoneInfo)"})
+            + "#resetMediaAudioOnPrimaryZone"})
     public void resetMediaAudioOnPrimaryZone() throws Exception {
         int passengerAudioZoneId = assumePassengerWithValidAudioZone();
         setupMediaAudioRequestCallback();
@@ -1021,7 +1018,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getCurrentAudioZoneConfigInfo(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getCurrentAudioZoneConfigInfo"})
     public void getCurrentAudioZoneConfigInfo() {
         assumeDynamicRoutingIsEnabled();
         List<TestZoneConfigInfo> zoneConfigs = assumeSecondaryZoneConfigs();
@@ -1036,7 +1033,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getCurrentAudioZoneConfigInfo(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getCurrentAudioZoneConfigInfo"})
     public void getCurrentAudioZoneConfigInfo_withInvalidZoneId_fails() {
         assumeDynamicRoutingIsEnabled();
 
@@ -1048,7 +1045,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getAudioZoneConfigInfos(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getAudioZoneConfigInfos"})
     public void getAudioZoneConfigInfos_forPrimaryZone_onlyOneConfigExists() {
         assumeDynamicRoutingIsEnabled();
         TestZoneConfigInfo primaryZoneConfigFromDump = parsePrimaryZoneConfigs();
@@ -1063,7 +1060,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getAudioZoneConfigInfos(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getAudioZoneConfigInfos"})
     public void getAudioZoneConfigInfos_forSecondaryZone() {
         assumeDynamicRoutingIsEnabled();
         List<TestZoneConfigInfo> zoneConfigs = assumeSecondaryZoneConfigs();
@@ -1078,7 +1075,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getAudioZoneConfigInfos(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getAudioZoneConfigInfos"})
     public void getAudioZoneConfigInfos_withInvalidZoneId_fails() {
         assumeDynamicRoutingIsEnabled();
 
@@ -1090,8 +1087,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#switchAudioZoneToConfig("
-            + "CarAudioZoneConfigInfo, Executor, SwitchAudioZoneConfigCallback)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#switchAudioZoneToConfig"})
     public void switchAudioZoneToConfig() throws Exception {
         assumeDynamicRoutingIsEnabled();
         assumeSecondaryZoneConfigs();
@@ -1116,8 +1112,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#switchAudioZoneToConfig("
-            + "CarAudioZoneConfigInfo, Executor, SwitchAudioZoneConfigCallback)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#switchAudioZoneToConfig"})
     public void switchAudioZoneToConfig_withNullConfig_fails() throws Exception {
         assumeDynamicRoutingIsEnabled();
         Executor callbackExecutor = Executors.newFixedThreadPool(1);
@@ -1132,8 +1127,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#switchAudioZoneToConfig("
-            + "CarAudioZoneConfigInfo, Executor, SwitchAudioZoneConfigCallback)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#switchAudioZoneToConfig"})
     public void switchAudioZoneToConfig_withNullExecutor_fails() throws Exception {
         assumeDynamicRoutingIsEnabled();
         assumeSecondaryZoneConfigs();
@@ -1149,8 +1143,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#switchAudioZoneToConfig("
-            + "CarAudioZoneConfigInfo, Executor, SwitchAudioZoneConfigCallback)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#switchAudioZoneToConfig"})
     public void switchAudioZoneToConfig_withNullCallback_fails() throws Exception {
         assumeDynamicRoutingIsEnabled();
         assumeSecondaryZoneConfigs();
@@ -1167,7 +1160,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#setAudioZoneMirrorStatusCallback(Executor, AudioZonesMirrorStatusCallback)"})
+            + "#setAudioZoneMirrorStatusCallback"})
     public void setAudioZoneMirrorStatusCallback() {
         assumeAudioMirrorEnabled();
         assumePassengersForAudioMirror();
@@ -1190,7 +1183,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#enableMirrorForAudioZones(List)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#enableMirrorForAudioZones"})
     public void enableMirrorForAudioZones() throws Exception {
         assumeAudioMirrorEnabled();
         List<Integer> audioZones = assumePassengersForAudioMirror();
@@ -1208,7 +1201,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#enableMirrorForAudioZones(List)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#enableMirrorForAudioZones"})
     public void enableMirrorForAudioZones_withNullList() throws Exception {
         assumeAudioMirrorEnabled();
         setupAudioMirrorStatusCallback();
@@ -1223,7 +1216,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#disableAudioMirrorForZone(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#disableAudioMirrorForZone"})
     public void disableAudioMirrorForZone() throws Exception {
         assumeAudioMirrorEnabled();
         List<Integer> audioZones = assumePassengersForAudioMirror();
@@ -1246,7 +1239,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#disableAudioMirror(long)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#disableAudioMirror"})
     public void disableAudioMirror() throws Exception {
         assumeAudioMirrorEnabled();
         List<Integer> audioZones = assumePassengersForAudioMirror();
@@ -1268,7 +1261,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getMirrorAudioZonesForAudioZone(int)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getMirrorAudioZonesForAudioZone"})
     public void getMirrorAudioZonesForAudioZone() throws Exception {
         assumeAudioMirrorEnabled();
         List<Integer> audioZones = assumePassengersForAudioMirror();
@@ -1285,7 +1278,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
-    @ApiTest(apis = {"android.car.media.CarAudioManager#getMirrorAudioZonesForMirrorRequest(long)"})
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getMirrorAudioZonesForMirrorRequest"})
     public void getMirrorAudioZonesForMirrorRequest() throws Exception {
         assumeAudioMirrorEnabled();
         List<Integer> audioZones = assumePassengersForAudioMirror();
@@ -1419,7 +1412,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#registerCarVolumeGroupEventCallback(Executor, CarVolumeGroupEventCallback)"})
+            + "#registerCarVolumeGroupEventCallback"})
     public void registerCarVolumeGroupEventCallback_nullCallback_throwsNPE() {
         Executor executor = Executors.newFixedThreadPool(1);
 
@@ -1434,7 +1427,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#registerCarVolumeGroupEventCallback(Executor, CarVolumeGroupEventCallback)"})
+            + "#registerCarVolumeGroupEventCallback"})
     public void registerCarVolumeGroupEventCallback_nullExecutor_throwsNPE() {
         mEventCallback = new CarAudioManagerTestUtils.TestCarVolumeGroupEventCallback();
 
@@ -1450,7 +1443,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#registerCarVolumeGroupEventCallback(Executor, CarVolumeGroupEventCallback)"})
+            + "#registerCarVolumeGroupEventCallback"})
     public void registerCarVolumeGroupEventCallback_volumeGroupEventsDisabled() throws Exception {
         assumeDynamicRoutingIsEnabled();
         assumeVolumeGroupEventsIsDisabled();
@@ -1469,8 +1462,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     @ApiTest(apis = {
-            "android.car.media.CarAudioManager#registerCarVolumeGroupEventCallback(Executor, "
-                    + "CarVolumeGroupEventCallback)"})
+            "android.car.media.CarAudioManager#registerCarVolumeGroupEventCallback"})
     public void registerCarVolumeGroupEventCallback_onVolumeGroupEvent() throws Exception {
         assumeDynamicRoutingIsEnabled();
         assumeVolumeGroupEventsIsEnabled();
@@ -1488,7 +1480,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#registerCarVolumeGroupEventCallback(Executor, CarVolumeGroupEventCallback)"})
+            + "#registerCarVolumeGroupEventCallback"})
     public void registerCarVolumeGroupEventCallback_registerCarVolumeCallback_onVolumeGroupEvent()
             throws Exception {
         assumeDynamicRoutingIsEnabled();
@@ -1510,9 +1502,9 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#registerCarVolumeGroupEventCallback(Executor, CarVolumeGroupEventCallback)",
+            + "#registerCarVolumeGroupEventCallback",
             "android.car.media.CarAudioManager"
-                    + "#unregisterCarVolumeGroupEventCallback(CarVolumeGroupEventCallback)"})
+                    + "#unregisterCarVolumeGroupEventCallback"})
     public void unregisterCarVolumeGroupEventCallback_onGroupVolumeChanged()
             throws Exception {
         assumeDynamicRoutingIsEnabled();
@@ -1535,9 +1527,9 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#registerCarVolumeGroupEventCallback(Executor, CarVolumeGroupEventCallback)",
+            + "#registerCarVolumeGroupEventCallback",
             "android.car.media.CarAudioManager"
-                    + "#unregisterCarVolumeGroupEventCallback(CarVolumeGroupEventCallback)"})
+                    + "#unregisterCarVolumeGroupEventCallback"})
     public void reRegisterCarVolumeGroupEventCallback_eventCallbackReprioritized()
             throws Exception {
         assumeDynamicRoutingIsEnabled();
@@ -1560,7 +1552,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#unregisterCarVolumeGroupEventCallback(CarVolumeGroupEventCallback)"})
+            + "#unregisterCarVolumeGroupEventCallback"})
     public void unregisterCarVolumeGroupEventCallback_nullCallback_throwsNPE() {
         NullPointerException exception = assertThrows(NullPointerException.class,
                 () -> mCarAudioManager.unregisterCarVolumeGroupEventCallback(/* callback= */ null));
@@ -1572,7 +1564,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#unregisterCarVolumeGroupEventCallback(CarVolumeGroupEventCallback)"})
+            + "#unregisterCarVolumeGroupEventCallback"})
     public void unregisterCarVolumeGroupEventCallback_withoutPermission_throws()
             throws Exception {
         assumeDynamicRoutingIsEnabled();
@@ -1593,7 +1585,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#unregisterCarVolumeGroupEventCallback(CarVolumeGroupEventCallback)"})
+            + "#unregisterCarVolumeGroupEventCallback"})
     public void unregisterCarVolumeGroupEventCallback_withoutPermission_receivesCallback()
             throws Exception {
         assumeDynamicRoutingIsEnabled();
@@ -1615,9 +1607,9 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     @ApiTest(apis = {"android.car.media.CarAudioManager"
-            + "#registerCarVolumeGroupEventCallback(Executor, CarVolumeGroupEventCallback)",
+            + "#registerCarVolumeGroupEventCallback",
             "android.car.media.CarAudioManager"
-                    + "#unregisterCarVolumeGroupEventCallback(CarVolumeGroupEventCallback)"})
+                    + "#unregisterCarVolumeGroupEventCallback"})
     public void unregisterCarVolumeGroupEventCallback_noLongerReceivesEventCallback()
             throws Exception {
         assumeDynamicRoutingIsEnabled();
