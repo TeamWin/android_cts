@@ -34,8 +34,10 @@ import static android.net.wifi.WifiUsabilityStatsEntry.WME_ACCESS_CATEGORY_BK;
 import static android.net.wifi.WifiUsabilityStatsEntry.WME_ACCESS_CATEGORY_VI;
 import static android.net.wifi.WifiUsabilityStatsEntry.WME_ACCESS_CATEGORY_VO;
 import static android.os.Process.myUid;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -69,6 +71,7 @@ import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.wifi.flags.FeatureFlags;
 
 import com.google.common.collect.Range;
 
@@ -111,6 +114,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
 
     private static boolean sShouldRunTest = false;
     private static boolean sWasScanThrottleEnabled;
+    private static FeatureFlags sFeatureFlags;
 
     private final Executor mExecutor = Executors.newSingleThreadExecutor();
 
@@ -123,6 +127,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
         }
         sShouldRunTest = true;
 
+        sFeatureFlags = new com.android.wifi.flags.FeatureFlagsImpl();
         sWifiManager = sContext.getSystemService(WifiManager.class);
         assertThat(sWifiManager).isNotNull();
         // Location mode must be enabled, otherwise the connection info will be redacted.
@@ -375,10 +380,14 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                             } catch (NoSuchElementException e) {
                                 // pass - Device does not support the field.
                             }
-                            assertThat(statsEntry.getTotalCcaBusyFreqTimeMillis(link)).isAtLeast(
-                                    0L);
-                            assertThat(statsEntry.getTotalRadioOnFreqTimeMillis(link)).isAtLeast(
-                                    0L);
+                            if (sFeatureFlags.addChannelStatsPerLink()) {
+                                assertThat(
+                                        statsEntry.getTotalCcaBusyFreqTimeMillis(link)).isAtLeast(
+                                        0L);
+                                assertThat(
+                                        statsEntry.getTotalRadioOnFreqTimeMillis(link)).isAtLeast(
+                                        0L);
+                            }
                             assertThat(statsEntry.getContentionTimeStats(link,
                                     WME_ACCESS_CATEGORY_BE).getContentionTimeMinMicros()).isAtLeast(
                                     0);
