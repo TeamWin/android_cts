@@ -73,7 +73,9 @@
 
         <activity android:name=".WallpaperTestActivity"
                   android:theme="@style/Theme.Transparent"
-                  android:showWhenLocked="true">
+                  android:keepScreenOn="true"
+                  android:showWhenLocked="true"
+                  android:turnScreenOn="true">
         </activity>
 
         <activity android:name=".WallpaperOverlayTestActivity"
