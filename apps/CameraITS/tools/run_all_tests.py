@@ -577,6 +577,15 @@ def main():
     raise ValueError('testbed_index must be less than num_testbeds. '
                      'testbed_index starts at 0.')
 
+  # Prepend 'scene' if not specified at cmd line
+  for i, s in enumerate(scenes):
+    if (not s.startswith('scene') and
+        not s.startswith(('checkerboard', 'sensor_fusion',
+                          'flash', '<scene-name>'))):
+      scenes[i] = f'scene{s}'
+    if s.startswith('flash'):
+      scenes[i] = f'scene_{s}'
+
   # Read config file and extract relevant TestBed
   config_file_contents = get_config_file_contents()
   if testbed_index is None:
@@ -643,15 +652,6 @@ def main():
   if (test_params_content.get('lighting_cntl', 'None').lower() == 'arduino' and
       'manual' not in config_file_test_key):
     testing_flash_with_controller = True
-
-  # Prepend 'scene' if not specified at cmd line
-  for i, s in enumerate(scenes):
-    if (not s.startswith('scene') and
-        not s.startswith(('checkerboard', 'sensor_fusion',
-                          'flash', '<scene-name>'))):
-      scenes[i] = f'scene{s}'
-    if s.startswith('flash'):
-      scenes[i] = f'scene_{s}'
 
   # Expand GROUPED_SCENES and remove any duplicates
   scenes = [_GROUPED_SCENES[s] if s in _GROUPED_SCENES else s for s in scenes]
@@ -726,6 +726,8 @@ def main():
     else:
       if 'checkerboard' in scenes:
         possible_scenes = _CHECKERBOARD_SCENES
+      elif 'scene_flash' in scenes:
+        possible_scenes = _FLASH_SCENES
       else:
         possible_scenes = _TABLET_SCENES if auto_scene_switch else _ALL_SCENES
 
