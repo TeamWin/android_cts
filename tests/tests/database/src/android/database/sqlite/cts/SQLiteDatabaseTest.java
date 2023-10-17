@@ -2166,7 +2166,7 @@ public class SQLiteDatabaseTest {
      * This test verifies that a read-only transaction can be started, and it is deferred.  A
      * deferred transaction does not take a database locks until the database is accessed.
      */
-    @RequiresFlagsEnabled(Flags.FLAG_SQLITE_APIS_15)
+    @RequiresFlagsEnabled(Flags.FLAG_SQLITE_APIS_35)
     @Test
     public void testReadOnlyTransaction() throws Exception {
         // Enable WAL.
@@ -2262,7 +2262,7 @@ public class SQLiteDatabaseTest {
         assertEquals(mTransactionListenerOnRollbackCalled, false);
     }
 
-    @RequiresFlagsEnabled(Flags.FLAG_SQLITE_APIS_15)
+    @RequiresFlagsEnabled(Flags.FLAG_SQLITE_APIS_35)
     @Test
     public void testTransactionReadOnlyIsReadOnly() {
         mDatabase.execSQL("CREATE TABLE test (num INTEGER);");
@@ -2404,7 +2404,7 @@ public class SQLiteDatabaseTest {
     }
 
     @CddTest(requirements = { "3.1/C-0-1,C-0-3" })
-    @RequiresFlagsEnabled(Flags.FLAG_SQLITE_APIS_15)
+    @RequiresFlagsEnabled(Flags.FLAG_SQLITE_APIS_35)
     @Test
     public void testAutomaticCounters() {
         final int size = 10;
@@ -2463,7 +2463,7 @@ public class SQLiteDatabaseTest {
     }
 
     @CddTest(requirements = { "3.1/C-0-1,C-0-3" })
-    @RequiresFlagsEnabled(Flags.FLAG_SQLITE_APIS_15)
+    @RequiresFlagsEnabled(Flags.FLAG_SQLITE_APIS_35)
     @Test
     public void testAutomaticCountersOutsideTransactions() {
         try {

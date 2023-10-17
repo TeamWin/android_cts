@@ -48,7 +48,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-@RequiresFlagsEnabled(Flags.FLAG_SQLITE_APIS_15)
+@RequiresFlagsEnabled(Flags.FLAG_SQLITE_APIS_35)
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 public class SQLiteRawStatementTest {
