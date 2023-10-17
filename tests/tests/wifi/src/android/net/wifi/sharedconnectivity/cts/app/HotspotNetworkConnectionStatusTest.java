@@ -23,6 +23,8 @@ import static android.net.wifi.sharedconnectivity.app.HotspotNetworkConnectionSt
 import static android.net.wifi.sharedconnectivity.app.HotspotNetworkConnectionStatus.CONNECTION_STATUS_TETHERING_TIMEOUT;
 import static android.net.wifi.sharedconnectivity.app.NetworkProviderInfo.DEVICE_TYPE_TABLET;
 
+import static com.android.wifi.flags.Flags.networkProviderBatteryChargingStatus;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
@@ -70,7 +72,7 @@ public class HotspotNetworkConnectionStatusTest {
                         .setConnectionStrength(2)
                         .setBatteryPercentage(50);
 
-        if (SdkLevel.isAtLeastV()) {
+        if (networkProviderBatteryChargingStatus() && SdkLevel.isAtLeastV()) {
             builder.setBatteryCharging(false);
         }
 

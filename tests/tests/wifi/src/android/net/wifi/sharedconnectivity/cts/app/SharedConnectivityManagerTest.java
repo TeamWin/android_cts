@@ -52,14 +52,19 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.os.UserManager;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.modules.utils.build.SdkLevel;
+import com.android.wifi.flags.Flags;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -93,6 +98,10 @@ public class SharedConnectivityManagerTest {
 
     private NetworkProviderInfo mNetworkProviderInfo;
 
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
+
     @Mock
     Context mContext;
     @Mock
@@ -125,7 +134,7 @@ public class SharedConnectivityManagerTest {
                         .setConnectionStrength(2)
                         .setBatteryPercentage(50);
 
-        if (SdkLevel.isAtLeastV()) {
+        if (Flags.networkProviderBatteryChargingStatus() && SdkLevel.isAtLeastV()) {
             builder.setBatteryCharging(false);
         }
 
@@ -188,6 +197,7 @@ public class SharedConnectivityManagerTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_SHARED_CONNECTIVITY_BROADCAST_RECEIVER_TEST_API)
     public void broadcastReceiver_onReceiveUnlock_retriesBind() {
         SharedConnectivityManager manager = SharedConnectivityManager.create(mContext);
 
