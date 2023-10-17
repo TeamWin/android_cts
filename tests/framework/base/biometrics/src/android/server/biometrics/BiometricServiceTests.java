@@ -27,6 +27,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.server.biometrics.nano.BiometricsProto;
 
 import org.junit.Test;
@@ -113,6 +114,9 @@ public class BiometricServiceTests extends BiometricTestBase {
         }
     }
 
+    @ApiTest(apis = {
+            "android.hardware.biometrics."
+                    + "BiometricPrompt#authenticate"})
     @Test
     public void testLockoutResetRequestedAfterCredentialUnlock() throws Exception {
         // ResetLockout only really needs to be applied when enrollments exist. Furthermore, some
@@ -161,6 +165,9 @@ public class BiometricServiceTests extends BiometricTestBase {
         }
     }
 
+    @ApiTest(apis = {
+            "android.hardware.biometrics."
+                    + "BiometricPrompt#authenticate"})
     @Test
     public void testLockoutResetRequestedAfterBiometricUnlock_whenStrong() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
@@ -254,6 +261,9 @@ public class BiometricServiceTests extends BiometricTestBase {
         }
     }
 
+    @ApiTest(apis = {
+            "android.hardware.biometrics."
+                    + "BiometricPrompt#authenticate"})
     @Test
     public void testLockoutResetNotRequestedAfterBiometricUnlock_whenNotStrong() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
