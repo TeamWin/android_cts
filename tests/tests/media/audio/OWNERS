@@ -1,5 +1,5 @@
-# Bug component: 1344
-# include media developers and framework video team
+# Bug component: 48436
+# include media developers and framework audio team
 include platform/frameworks/av:/media/OWNERS
 
 per-file src/android/media/audio/cts/AudioMetadataTest.java = hunga@google.com
