@@ -1263,6 +1263,7 @@ public final class DeviceState extends HarrierRule {
                 EnsureHasNoAccounts ensureHasNoAccountsAnnotation =
                         (EnsureHasNoAccounts) annotation;
                 ensureHasNoAccounts(ensureHasNoAccountsAnnotation.onUser(),
+                        ensureHasNoAccountsAnnotation.allowPreCreatedAccounts(),
                         ensureHasNoAccountsAnnotation.failureMode());
                 continue;
             }
@@ -2837,7 +2838,9 @@ public final class DeviceState extends HarrierRule {
             ensureCanGetPermission(INTERACT_ACROSS_USERS_FULL);
         }
 
-        ensureHasNoAccounts(UserType.ANY, FailureMode.FAIL);
+
+        ensureHasNoAccounts(UserType.ANY, /* allowPreCreatedAccounts= */ true,
+                FailureMode.FAIL);
         ensureTestAppInstalled(RemoteDevicePolicyManagerRoleHolder.sTestApp, user);
         TestApis.devicePolicy().setDevicePolicyManagementRoleHolder(
                 RemoteDevicePolicyManagerRoleHolder.sTestApp.pkg(), user);
@@ -3137,10 +3140,13 @@ public final class DeviceState extends HarrierRule {
             }
 
             if (Versions.meetsMinimumSdkVersionRequirement(Versions.U)) {
-                ensureHasNoAccounts(UserType.ANY, FailureMode.FAIL);
+
+                ensureHasNoAccounts(UserType.ANY, /* allowPreCreatedAccounts= */ true,
+                        FailureMode.FAIL);
             } else {
                 // Prior to U this only checked the system user
-                ensureHasNoAccounts(UserType.SYSTEM_USER, FailureMode.FAIL);
+                ensureHasNoAccounts(UserType.SYSTEM_USER, /* allowPreCreatedAccounts= */ true,
+                        FailureMode.FAIL);
             }
             ensureHasNoProfileOwner(userReference);
 
@@ -3254,7 +3260,8 @@ public final class DeviceState extends HarrierRule {
                 mChangedProfileOwners.put(user, currentProfileOwner);
             }
 
-            ensureHasNoAccounts(user, FailureMode.FAIL);
+            ensureHasNoAccounts(user, /* allowPreCreatedAccounts= */ true,
+                    FailureMode.FAIL);
 
             if (resolvedDpcTestApp != null) {
                 mProfileOwners.put(user,
@@ -3267,10 +3274,12 @@ public final class DeviceState extends HarrierRule {
         }
 
         if (Versions.meetsMinimumSdkVersionRequirement(Versions.U)) {
-            ensureHasNoAccounts(user, FailureMode.FAIL);
+            ensureHasNoAccounts(user, /* allowPreCreatedAccounts= */ true,
+                    FailureMode.FAIL);
         } else {
             // Prior to U this incorrectly checked the system user
-            ensureHasNoAccounts(UserType.SYSTEM_USER, FailureMode.FAIL);
+            ensureHasNoAccounts(UserType.SYSTEM_USER, /* allowPreCreatedAccounts= */ true,
+                    FailureMode.FAIL);
         }
 
         if (isPrimary) {
@@ -4047,15 +4056,19 @@ public final class DeviceState extends HarrierRule {
         }
     }
 
-    private void ensureHasNoAccounts(UserType userType, FailureMode failureMode) {
+    private void ensureHasNoAccounts(UserType userType, boolean allowPreCreatedAccounts,
+            FailureMode failureMode) {
         if (userType == UserType.ANY) {
-            TestApis.users().all().forEach(user -> ensureHasNoAccounts(user, failureMode));
+            TestApis.users().all().forEach(user -> ensureHasNoAccounts(user,
+                    allowPreCreatedAccounts, failureMode));
         } else {
-            ensureHasNoAccounts(resolveUserTypeToUser(userType), failureMode);
+            ensureHasNoAccounts(resolveUserTypeToUser(userType),
+                    allowPreCreatedAccounts, failureMode);
         }
     }
 
-    private void ensureHasNoAccounts(UserReference user, FailureMode failureMode) {
+    private void ensureHasNoAccounts(UserReference user, boolean allowPreCreatedAccounts,
+            FailureMode failureMode) {
         if (REMOTE_ACCOUNT_AUTHENTICATOR_TEST_APP.pkg().installedOnUser(user)) {
             user.start(); // The user has to be started to remove accounts
 
@@ -4063,14 +4076,25 @@ public final class DeviceState extends HarrierRule {
                     .forEach(AccountReference::remove);
         }
 
-        Set<AccountReference> nonPreCreatedAccounts = TestApis.accounts().all(user)
-                .stream().filter(accountReference -> accountReference.hasFeature(
-                        DevicePolicyManager.ACCOUNT_FEATURE_DEVICE_OR_PROFILE_OWNER_ALLOWED))
-                .collect(Collectors.toSet());
+        Set<AccountReference> accounts = TestApis.accounts().all(user);
 
-        if (!nonPreCreatedAccounts.isEmpty()) {
+        // If allowPreCreatedAccounts is enabled, that means it's okay to have
+        // pre created accounts on the device.
+        // Now to EnsureHasNoAccounts we will only check that there are no non-pre created accounts.
+        // Non pre created accounts either have ACCOUNT_FEATURE_DEVICE_OR_PROFILE_OWNER_DISALLOWED
+        // or do not have ACCOUNT_FEATURE_DEVICE_OR_PROFILE_OWNER_ALLOWED
+        if (allowPreCreatedAccounts) {
+            accounts = accounts.stream()
+                    .filter(accountReference -> !accountReference.hasFeature(
+                            DevicePolicyManager.ACCOUNT_FEATURE_DEVICE_OR_PROFILE_OWNER_ALLOWED)
+                            || accountReference.hasFeature(
+                            DevicePolicyManager.ACCOUNT_FEATURE_DEVICE_OR_PROFILE_OWNER_DISALLOWED))
+                    .collect(Collectors.toSet());
+        }
+
+        if (!accounts.isEmpty()) {
             failOrSkip("Expected no user created accounts on user " + user
-                    + " but there was some that could not be removed", failureMode);
+                    + " but there was some that could not be removed.", failureMode);
         }
 
         TestApis.devicePolicy().calculateHasIncompatibleAccounts();

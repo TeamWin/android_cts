@@ -25,16 +25,15 @@ import static org.junit.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
-import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.UserType;
 import com.android.bedstead.harrier.annotations.EnsureHasAccount;
-import com.android.bedstead.harrier.annotations.EnsureHasAccountAuthenticator;
 import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAccounts;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
@@ -42,7 +41,6 @@ import com.android.bedstead.harrier.annotations.UserTest;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.accounts.AccountReference;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.packages.ComponentReference;
@@ -155,7 +153,8 @@ public final class DeviceOwnerTest {
 
     @EnsureHasAdditionalUser
     @EnsureHasNoDpc
-    @EnsureHasNoAccounts(onUser = UserType.ANY)
+    @EnsureHasNoAccounts(onUser = UserType.ANY, allowPreCreatedAccounts = false,
+            failureMode =  FailureMode.SKIP)
     @RequireNotHeadlessSystemUserMode(reason = "No non-testonly dpc which supports headless")
     @Test
     public void setDeviceOwnerViaAdb_noAccounts_notTestOnly_sets() throws Exception {
