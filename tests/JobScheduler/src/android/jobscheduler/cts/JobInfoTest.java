@@ -30,6 +30,9 @@ import android.os.PersistableBundle;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 /**
  * Tests related to creating and reading JobInfo objects.
  */
@@ -76,6 +79,21 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         assertFalse(ji.isRequireBatteryNotLow());
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
+    }
+
+    public void testBias() {
+        JobInfo.Builder builder = new JobInfo.Builder(JOB_ID, kJobServiceComponent);
+        try {
+            Method method = JobInfo.Builder.class.getDeclaredMethod("setBias", int.class);
+            method.setAccessible(true);
+            method.invoke(builder, 40);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            android.util.Log.e("blah", "Can't set user-initiated", e);
+        }
+        JobInfo ji = builder.build();
+        // Confirm JobScheduler rejects the JobInfo object.
+        assertScheduleFailsWithException("Successfully scheduled a job with a modified bias", ji,
+                SecurityException.class);
     }
 
     public void testCharging() {
@@ -793,6 +811,22 @@ public class JobInfoTest extends BaseJobSchedulerTest {
             fail(message);
         } catch (IllegalArgumentException e) {
             // Expected
+        }
+    }
+
+    private void assertScheduleFailsWithException(
+            String message, JobInfo jobInfo, Class<? extends Exception> expectedExceptionClass) {
+        try {
+            mJobScheduler.schedule(jobInfo);
+            fail(message);
+        } catch (Exception e) {
+            if (expectedExceptionClass.isInstance(e)) {
+                // Expected
+            } else {
+                fail("Scheduling failed with wrong exception class."
+                        + " Got " + e.getClass().getSimpleName()
+                        + ", wanted " + expectedExceptionClass.getSimpleName());
+            }
         }
     }
 }
