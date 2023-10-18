@@ -24,7 +24,7 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 
 /**
- * Parser for "adb dumpsys user" on Android 30+
+ * Parser for "adb shell dumpsys user" on Android 30+
  *
  * <p>Example output:
  * {@code
@@ -43,11 +43,15 @@ public class AdbUserParser31 extends AdbUserParser30 {
         AdbUser.MutableUser user = super.parseUser(userString);
 
         if (user.mType.baseType().contains(UserType.BaseType.PROFILE)) {
-            try {
-                user.mParent = TestApis.users().find(
-                        Integer.parseInt(userString.split("parentId=")[1].split("[ \n]")[0]));
-            } catch (IndexOutOfBoundsException e) {
-                throw new AdbParseException("Error parsing user", userString, e);
+            String[] parentIdSplit = userString.split("parentId=");
+            // It is conceivable for a profile to have no parent, e.g. a communal profile.
+            if (parentIdSplit.length > 1) {
+                try {
+                    user.mParent = TestApis.users().find(
+                            Integer.parseInt(parentIdSplit[1].split("[ \n]")[0]));
+                } catch (IndexOutOfBoundsException e) {
+                    throw new AdbParseException("Error parsing user", userString, e);
+                }
             }
         }
 

@@ -55,13 +55,13 @@ import android.content.pm.UserInfo;
 import android.content.pm.UserProperties;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.os.Flags;
 import android.os.NewUserRequest;
 import android.os.NewUserResponse;
 import android.os.PersistableBundle;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.annotations.SystemUserOnly;
 import android.util.Log;
 
@@ -79,6 +79,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireMultiUserSupport;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
@@ -346,6 +347,34 @@ public final class UserManagerTest {
         }
     }
 
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#isCommunalProfile"})
+    @RequiresFlagsEnabled(android.multiuser.Flags.FLAG_SUPPORT_COMMUNAL_PROFILE)
+    @RequireMultiUserSupport
+    @EnsureHasPermission({QUERY_USERS, CREATE_USERS, INTERACT_ACROSS_USERS})
+    public void testCommunalProfile() throws Exception {
+        final UserHandle communalUser = mUserManager.getCommunalProfile();
+        // Not all devices will have a communal profile on it. If they don't, bypass the test.
+        assumeNotNull(communalUser);
+
+        final UserManager umOfCommunal = sContext
+                .createPackageContextAsUser("android", 0, communalUser)
+                .getSystemService(UserManager.class);
+
+        assertThat(umOfCommunal.isCommunalProfile()).isTrue();
+        assertThat(umOfCommunal.isProfile()).isTrue();
+        if (umOfCommunal.isUserRunning(communalUser)) {
+            // Communal Profile should always be visible (if it exists and is running).
+            assertThat(umOfCommunal.isUserVisible()).isTrue();
+        }
+
+        // Make sure that there can be only one.
+        final List<UserInfo> communalUsers = mUserManager.getAliveUsers().stream()
+                .filter(UserInfo::isCommunalProfile).toList();
+        assertThat(communalUsers.size()).isEqualTo(1);
+        assertThat(communalUsers.get(0).id).isEqualTo(communalUser.getIdentifier());
+    }
+
 
     @Test
     @EnsureHasNoWorkProfile
@@ -563,6 +592,9 @@ public final class UserManagerTest {
         assertThat(umOfSys.isManagedProfile()).isFalse();
         assertThat(umOfSys.isManagedProfile(UserHandle.USER_SYSTEM)).isFalse();
         assertThat(umOfSys.isCloneProfile()).isFalse();
+        if (android.multiuser.Flags.supportCommunalProfile()) {
+            assertThat(umOfSys.isCommunalProfile()).isFalse();
+        }
     }
 
     @Test
@@ -961,7 +993,7 @@ public final class UserManagerTest {
     @EnsureHasPermission({MODIFY_QUIET_MODE})
     // TODO(b/301574823) : Limit this test to only when private space is supported.
     public void testRequestQuietMode_shouldSendProfileUnavailableBroadcast() {
-        assumeTrue(Flags.allowPrivateProfile());
+        assumeTrue(android.os.Flags.allowPrivateProfile());
         final UserHandle profileHandle = sDeviceState.privateProfile().userHandle();
         presetQuietModeStatus(false, profileHandle);
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState
@@ -975,7 +1007,7 @@ public final class UserManagerTest {
     @EnsureHasPermission({MODIFY_QUIET_MODE})
     // TODO(b/301574823) : Limit this test to only when private space is supported.
     public void testRequestQuietMode_shouldSendProfileAvailableBroadcast() {
-        assumeTrue(Flags.allowPrivateProfile());
+        assumeTrue(android.os.Flags.allowPrivateProfile());
         final UserHandle profileHandle = sDeviceState.privateProfile().userHandle();
         presetQuietModeStatus(true, profileHandle);
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState
@@ -988,7 +1020,7 @@ public final class UserManagerTest {
     @EnsureHasWorkProfile
     @EnsureHasPermission({MODIFY_QUIET_MODE})
     public void testRequestQuietModeOnManaged_shouldSendProfileUnavailableBroadcast() {
-        assumeTrue(Flags.allowPrivateProfile());
+        assumeTrue(android.os.Flags.allowPrivateProfile());
         final UserHandle profileHandle = sDeviceState.workProfile().userHandle();
         presetQuietModeStatus(false, profileHandle);
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState
@@ -1002,7 +1034,7 @@ public final class UserManagerTest {
     @EnsureHasWorkProfile
     @EnsureHasPermission({MODIFY_QUIET_MODE})
     public void testRequestQuietModeOnManaged_shouldSendProfileAvailableBroadcast() {
-        assumeTrue(Flags.allowPrivateProfile());
+        assumeTrue(android.os.Flags.allowPrivateProfile());
         final UserHandle profileHandle = sDeviceState.workProfile().userHandle();
         presetQuietModeStatus(true, profileHandle);
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState
