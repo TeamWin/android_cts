@@ -28,6 +28,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.CddTest;
 import com.android.server.biometrics.nano.BiometricsProto;
 
 import org.junit.Test;
@@ -42,6 +43,7 @@ import java.util.List;
 public class BiometricServiceTests extends BiometricTestBase {
     private static final String TAG = "BiometricTests/Service";
 
+    @CddTest(requirements = {"7.3.10/C-3-5"})
     @Test
     public void testAuthenticatorIdsInvalidated() throws Exception {
         // On devices with multiple strong sensors, adding enrollments to one strong sensor
@@ -114,6 +116,7 @@ public class BiometricServiceTests extends BiometricTestBase {
         }
     }
 
+    @CddTest(requirements = {"7.3.10/C-1-3"})
     @ApiTest(apis = {
             "android.hardware.biometrics."
                     + "BiometricPrompt#authenticate"})
@@ -165,6 +168,7 @@ public class BiometricServiceTests extends BiometricTestBase {
         }
     }
 
+    @CddTest(requirements = {"7.3.10/C-1-3,C-7-2"})
     @ApiTest(apis = {
             "android.hardware.biometrics."
                     + "BiometricPrompt#authenticate"})
@@ -261,6 +265,7 @@ public class BiometricServiceTests extends BiometricTestBase {
         }
     }
 
+    @CddTest(requirements = {"7.3.10/C-1-3,C-7-2"})
     @ApiTest(apis = {
             "android.hardware.biometrics."
                     + "BiometricPrompt#authenticate"})
