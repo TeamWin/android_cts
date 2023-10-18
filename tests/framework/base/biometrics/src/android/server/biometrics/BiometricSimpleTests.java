@@ -43,6 +43,7 @@ import android.util.Log;
 import androidx.test.uiautomator.UiObject2;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.CddTest;
 import com.android.server.biometrics.nano.SensorStateProto;
 
 import org.junit.Ignore;
@@ -302,6 +303,7 @@ public class BiometricSimpleTests extends BiometricTestBase {
         }
     }
 
+    @CddTest(requirements = {"7.3.10/C-4-2"})
     @ApiTest(apis = {
             "android.hardware.biometrics."
                     + "BiometricManager#canAuthenticate",
@@ -356,6 +358,7 @@ public class BiometricSimpleTests extends BiometricTestBase {
      * TODO(b/236763921): fix this test and unignore.
      */
     @Ignore
+    @CddTest(requirements = {"7.3.10/C-4-2"})
     @ApiTest(apis = {
             "android.hardware.biometrics."
                     + "BiometricManager#canAuthenticate",
