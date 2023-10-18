@@ -451,6 +451,89 @@ public class LauncherAppsTest {
         assertThat(activity).isNull();
     }
 
+    @Test
+    @AppModeFull(reason = "Need special permission")
+    @RequiresFlagsEnabled(FLAG_ARCHIVING)
+    public void isActivityEnabled_archivedApp_componentNameMatches()
+            throws ExecutionException, InterruptedException {
+        installPackage(ARCHIVE_APK_PATH);
+        SystemUtil.runWithShellPermissionIdentity(
+                () ->
+                        mPackageInstaller.requestArchive(
+                                ARCHIVE_PACKAGE_NAME,
+                                new IntentSender((IIntentSender) mIntentSender)),
+                Manifest.permission.DELETE_PACKAGES);
+        assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+        ComponentName archiveAppComponentName =
+                new ComponentName(ARCHIVE_PACKAGE_NAME, ARCHIVE_ACTIVITY_NAME);
+
+        boolean isArchivedAppActivityEnabled =
+                mLauncherApps.isActivityEnabled(archiveAppComponentName, USER_HANDLE);
+
+        assertThat(isArchivedAppActivityEnabled).isTrue();
+    }
+
+    @Test
+    @AppModeFull(reason = "Need special permission")
+    @RequiresFlagsEnabled(FLAG_ARCHIVING)
+    public void isActivityEnabled_archivedApp_componentNameMismatch()
+            throws ExecutionException, InterruptedException {
+        installPackage(ARCHIVE_APK_PATH);
+        SystemUtil.runWithShellPermissionIdentity(
+                () ->
+                        mPackageInstaller.requestArchive(
+                                ARCHIVE_PACKAGE_NAME,
+                                new IntentSender((IIntentSender) mIntentSender)),
+                Manifest.permission.DELETE_PACKAGES);
+        assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+        ComponentName archiveAppComponentName =
+                new ComponentName(ARCHIVE_PACKAGE_NAME, "randomClassName");
+
+        boolean isArchivedAppActivityEnabled =
+                mLauncherApps.isActivityEnabled(archiveAppComponentName, USER_HANDLE);
+
+        assertThat(isArchivedAppActivityEnabled).isFalse();
+    }
+
+    @Test
+    @AppModeFull(reason = "Need special permission")
+    @RequiresFlagsEnabled(FLAG_ARCHIVING)
+    public void isPackageEnabled_archivedApp() throws ExecutionException, InterruptedException {
+        installPackage(ARCHIVE_APK_PATH);
+        SystemUtil.runWithShellPermissionIdentity(
+                () ->
+                        mPackageInstaller.requestArchive(
+                                ARCHIVE_PACKAGE_NAME,
+                                new IntentSender((IIntentSender) mIntentSender)),
+                Manifest.permission.DELETE_PACKAGES);
+        assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+
+        boolean isArchivedAppPackageEnabled =
+                mLauncherApps.isPackageEnabled(ARCHIVE_PACKAGE_NAME, USER_HANDLE);
+
+        assertThat(isArchivedAppPackageEnabled).isTrue();
+    }
+
+    @Test
+    @AppModeFull(reason = "Need special permission")
+    @RequiresFlagsEnabled(FLAG_ARCHIVING)
+    public void shouldHideFromSuggestions_archivedApp()
+            throws ExecutionException, InterruptedException {
+        installPackage(ARCHIVE_APK_PATH);
+        SystemUtil.runWithShellPermissionIdentity(
+                () ->
+                        mPackageInstaller.requestArchive(
+                                ARCHIVE_PACKAGE_NAME,
+                                new IntentSender((IIntentSender) mIntentSender)),
+                Manifest.permission.DELETE_PACKAGES);
+        assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+
+        boolean isArchivedAppPackageEnabled =
+                mLauncherApps.shouldHideFromSuggestions(ARCHIVE_PACKAGE_NAME, USER_HANDLE);
+
+        assertThat(isArchivedAppPackageEnabled).isTrue();
+    }
+
     private void registerDefaultObserver() {
         registerObserver(DEFAULT_OBSERVER_ID, Duration.ofMinutes(DEFAULT_TIME_LIMIT),
                 Duration.ofMinutes(0));
