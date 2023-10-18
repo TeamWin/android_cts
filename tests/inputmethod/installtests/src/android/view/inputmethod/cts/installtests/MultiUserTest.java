@@ -35,8 +35,12 @@ import android.os.Process;
 import android.os.RemoteCallback;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.inputmethod.Flags;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.InputMethodSubtype;
@@ -53,6 +57,7 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 import org.junit.runner.RunWith;
@@ -100,6 +105,9 @@ public class MultiUserTest {
      * checks into a non-static {@link org.junit.BeforeClass} method.
      */
     private List<Integer> mOriginalUsers;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setUp() throws Exception {
@@ -149,6 +157,7 @@ public class MultiUserTest {
      * APK installation
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_IMM_USERHANDLE_HOSTSIDETESTS)
     public void testSecondaryUser() throws Exception {
         final int currentUserId = Process.myUserHandle().getIdentifier();
         final int secondaryUserId = createNewUser();
@@ -210,6 +219,7 @@ public class MultiUserTest {
      * APK installation
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_IMM_USERHANDLE_HOSTSIDETESTS)
     public void testProfileUser() throws Exception {
         assumeTrue(mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_MANAGED_USERS));
