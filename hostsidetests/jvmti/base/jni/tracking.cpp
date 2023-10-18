@@ -63,7 +63,6 @@ static void JNICALL ObjectAllocatedGlobal(jvmtiEnv* ti_env ATTRIBUTE_UNUSED, JNI
   // disabling the allocation events. So just ignore events from other threads
   // to make the test stable.
   if (!jni_env->IsSameObject(thread, gExpectedThread)) {
-    RecordAllocationEvent(jni_env, object, object_klass, size);
     return;
   }
   RecordAllocationEvent(jni_env, object, object_klass, size);
@@ -102,7 +101,7 @@ extern "C" JNIEXPORT void JNICALL Java_android_jvmti_cts_JvmtiTrackingTest_enabl
       // ones on the current thread.
       jthread curr_thread;
       jvmti_env->GetCurrentThread(&curr_thread);
-      gExpectedThread = env->NewGlobalRef(thread);
+      gExpectedThread = env->NewGlobalRef(curr_thread);
     } else {
       gExpectedThread = env->NewGlobalRef(thread);
     }
