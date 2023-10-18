@@ -101,7 +101,6 @@ import com.android.compatibility.common.util.ReportLog.Metric;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.camera.performance.CameraTestInstrumentation;
 import com.android.cts.verifier.camera.performance.CameraTestInstrumentation.MetricListener;
-import com.android.ex.camera2.blocking.BlockingCameraManager;
 import com.android.ex.camera2.blocking.BlockingCameraManager.BlockingOpenException;
 import com.android.ex.camera2.blocking.BlockingExtensionSessionCallback;
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
@@ -906,8 +905,6 @@ public class ItsService extends Service implements SensorEventListener {
                     doGetSensorEvents();
                 } else if ("do3A".equals(cmdObj.getString("cmdName"))) {
                     do3A(cmdObj);
-                } else if ("doAutoframing".equals(cmdObj.getString("cmdName"))) {
-                    doAutoframing(cmdObj);
                 } else if ("doCapture".equals(cmdObj.getString("cmdName"))) {
                     doCapture(cmdObj);
                 } else if ("doVibrate".equals(cmdObj.getString("cmdName"))) {
@@ -2015,87 +2012,6 @@ public class ItsService extends Service implements SensorEventListener {
             mSocketRunnableObj.sendResponse("3aDone", "");
             // stop listener from updating 3A states
             threeAListener.stop();
-            if (mSession != null) {
-                mSession.close();
-            }
-        }
-    }
-
-    private void doAutoframing(JSONObject params) throws ItsException {
-        AutoframingResultListener autoframingListener = new AutoframingResultListener();
-        try {
-            CameraCharacteristics c = mCameraCharacteristics;
-            Size[] sizes = ItsUtils.getYuvOutputSizes(c);
-            int[] outputFormats = new int[1];
-            outputFormats[0] = ImageFormat.YUV_420_888;
-            Size[] outputSizes = new Size[1];
-            outputSizes[0] = sizes[0];
-            int width = outputSizes[0].getWidth();
-            int height = outputSizes[0].getHeight();
-
-            prepareImageReaders(outputSizes, outputFormats, /*inputSize*/null, /*inputFormat*/0,
-                    /*maxInputBuffers*/0);
-
-            List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>(1);
-            OutputConfiguration config =
-                    new OutputConfiguration(mOutputImageReaders[0].getSurface());
-            outputConfigs.add(config);
-            BlockingSessionCallback sessionListener = new BlockingSessionCallback();
-            mCamera.createCaptureSessionByOutputConfigurations(
-                    outputConfigs, sessionListener, mCameraHandler);
-            mSession = sessionListener.waitAndGetSession(TIMEOUT_IDLE_MS);
-
-            // Add a listener that just recycles buffers; they aren't saved anywhere.
-            ImageReader.OnImageAvailableListener readerListener =
-                    createAvailableListenerDropper();
-            mOutputImageReaders[0].setOnImageAvailableListener(readerListener, mSaveHandlers[0]);
-
-            double zoomRatio = params.optDouble(ZOOM_RATIO_KEY);
-
-            mInterlockAutoframing.open();
-            synchronized (mAutoframingStateLock) {
-                mConvergedAutoframing = false;
-            }
-
-            long tstart = System.currentTimeMillis();
-
-            // Keep issuing capture requests until autoframing has converged.
-            while (true) {
-                // Block until the next autoframing frame.
-                if (!mInterlockAutoframing.block(TIMEOUT_AUTOFRAMING * 1000)
-                        || System.currentTimeMillis() - tstart > TIMEOUT_AUTOFRAMING * 1000) {
-                    throw new ItsException(
-                            "Autoframing failed to converge after " + TIMEOUT_AUTOFRAMING
-                                    + " seconds.\n"
-                                    + "Autoframing converge state: " + mConvergedAutoframing + ".");
-                }
-                mInterlockAutoframing.close();
-
-                synchronized (mAutoframingStateLock) {
-                    if (!mConvergedAutoframing) {
-                        CaptureRequest.Builder req = mCamera.createCaptureRequest(
-                                CameraDevice.TEMPLATE_PREVIEW);
-                        req.set(CaptureRequest.CONTROL_AUTOFRAMING,
-                                CaptureRequest.CONTROL_AUTOFRAMING_ON);
-                        if (!Double.isNaN(zoomRatio)) {
-                            req.set(CaptureRequest.CONTROL_ZOOM_RATIO, (float) zoomRatio);
-                        }
-                        req.addTarget(mOutputImageReaders[0].getSurface());
-
-                        mSession.setRepeatingRequest(req.build(), autoframingListener,
-                                mResultHandler);
-                    } else {
-                        mSocketRunnableObj.sendResponse("autoframingConverged", "");
-                        Logt.i(TAG, "Autoframing converged");
-                        break;
-                    }
-                }
-            }
-        } catch (android.hardware.camera2.CameraAccessException e) {
-            throw new ItsException("Access error: ", e);
-        } finally {
-            mSocketRunnableObj.sendResponse("autoframingDone", "");
-            autoframingListener.stop();
             if (mSession != null) {
                 mSession.close();
             }
