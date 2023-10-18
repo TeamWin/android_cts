@@ -21,14 +21,20 @@ import static android.app.WallpaperManager.FLAG_SYSTEM;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.WallpaperColors;
 import android.app.WallpaperManager;
 import android.content.ComponentName;
+import android.os.Handler;
+import android.util.Log;
+
+import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.ThrowingRunnable;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -78,6 +84,37 @@ public class WallpaperManagerTestUtils {
             TestWallpaperService.Companion.removeCallback(callback);
         }
 
+        return result;
+    }
+
+    /**
+     * Runs the given runnable and waits until request number of color change events are triggered.
+     * @param timeout          Amount of time to wait.
+     * @param unit             Unit for the timeout.
+     * @param whichColors      Flags for which we expect a color change callback.
+     * @param wallpaperManager Instance of WallpaperManager that will register the color listener.
+     * @param handler          Handler that will receive the color callbacks.
+     * @param runnable         The action to perform that will trigger engine events.
+     * @return True if all events were received, false if there was a timeout waiting for any of
+     * the events.
+     *
+     * @see #runAndAwaitChanges(long, TimeUnit, int, int, int, ThrowingRunnable)
+     */
+    public static boolean runAndAwaitColorChanges(long timeout, TimeUnit unit,
+            int whichColors, WallpaperManager wallpaperManager, Handler handler,
+            ThrowingRunnable runnable) {
+        assertThat(whichColors).isIn(List.of(FLAG_LOCK, FLAG_SYSTEM, FLAG_LOCK | FLAG_SYSTEM));
+        ColorChangeWaiter callback = new ColorChangeWaiter(whichColors);
+        wallpaperManager.addOnColorsChangedListener(callback, handler);
+        boolean result;
+        try {
+            runnable.run();
+            result = callback.waitForChanges(timeout, unit);
+        } catch (Exception e) {
+            throw new RuntimeException("Caught exception", e);
+        } finally {
+            wallpaperManager.removeOnColorsChangedListener(callback);
+        }
         return result;
     }
 
@@ -360,5 +397,36 @@ public class WallpaperManagerTestUtils {
 
         WallpaperChange change2 = new WallpaperChange(state.mLockWallpaper, FLAG_LOCK);
         if (!state.mSingleEngine) performChange(wallpaperManager, change2);
+    }
+
+    static class ColorChangeWaiter implements WallpaperManager.OnColorsChangedListener {
+        private CountDownLatch mHomeCountDownLatch;
+        private CountDownLatch mLockCountDownLatch;
+        ColorChangeWaiter(int which) {
+            int expectedHomeEvents = ((which & FLAG_SYSTEM) != 0) ? 1 : 0;
+            int expectedLockEvents = ((which & FLAG_LOCK) != 0) ? 1 : 0;
+            mHomeCountDownLatch = new CountDownLatch(expectedHomeEvents);
+            mLockCountDownLatch = new CountDownLatch(expectedLockEvents);
+        }
+
+        @Override
+        public void onColorsChanged(@Nullable WallpaperColors colors, int which) {
+            if ((which & FLAG_SYSTEM) != 0) {
+                mHomeCountDownLatch.countDown();
+            }
+            if ((which & FLAG_LOCK) != 0) {
+                mLockCountDownLatch.countDown();
+            }
+            Log.d(TAG, "color state count down: " + which + " - " + colors);
+        }
+
+        public boolean waitForChanges(long timeout, TimeUnit unit) {
+            try {
+                return mHomeCountDownLatch.await(timeout, unit)
+                        && mLockCountDownLatch.await(timeout, unit);
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Wallpaper colors wait interrupted");
+            }
+        }
     }
 }
