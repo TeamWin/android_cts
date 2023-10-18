@@ -6478,6 +6478,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     }
 
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @RequiresFlagsEnabled(Flags.FLAG_LOW_LATENCY_LOCK_LISTENER)
     @Test
     public void testWifiLowLatencyLockListener() throws Exception {
         TestWifiLowLatencyLockListener testListener = new TestWifiLowLatencyLockListener();
