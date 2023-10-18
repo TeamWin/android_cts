@@ -30,6 +30,7 @@ android_test {
     static_libs: [
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
+        "cts-media-common",
     ],
     libs: [
         "android.test.runner",
