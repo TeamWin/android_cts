@@ -16,32 +16,14 @@
 
 package android.video.cts;
 
-import android.os.Environment;
+import android.media.cts.WorkDirBase;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
-import org.junit.Assert;
-
-import java.io.File;
-
-class WorkDir {
-    private static final String MEDIA_PATH_INSTR_ARG_KEY = "media-path";
-    static private final File getTopDir() {
-        Assert.assertEquals("External Storage is not in correct state",
-                        Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
-        return Environment.getExternalStorageDirectory();
-    }
-    static private final String getTopDirString() {
-        return (getTopDir().getAbsolutePath() + File.separator);
-    }
+/**
+ * Return the primary shared/external storage directory used by the tests
+ * Note: Path returned includes File.separator() at the end.
+ */
+class WorkDir extends WorkDirBase {
     static final String getMediaDirString() {
-        android.os.Bundle bundle = InstrumentationRegistry.getArguments();
-        String mediaDirString = bundle.getString(MEDIA_PATH_INSTR_ARG_KEY);
-        if (mediaDirString != null) {
-            // user has specified the mediaDirString via instrumentation-arg
-            return mediaDirString + ((mediaDirString.endsWith("/")) ? "" : "/");
-        } else {
-            return (getTopDirString() + "test/CtsVideoTestCases-1.3/");
-        }
+        return getMediaDirString("CtsVideoTestCases-1.3");
     }
 }
