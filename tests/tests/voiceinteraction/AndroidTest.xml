@@ -49,4 +49,11 @@
         <option name="package" value="android.voiceinteraction.cts" />
         <option name="runtime-hint" value="11m" />
     </test>
+
+    <!-- This test is included as part of GTS 11 but is built against U SDK.
+         Skip on non-U devices. -->
+    <object type="module_controller"
+            class="com.android.tradefed.testtype.suite.module.MinApiLevelModuleController">
+        <option name="min-api-level" value="34" />
+    </object>
 </configuration>
