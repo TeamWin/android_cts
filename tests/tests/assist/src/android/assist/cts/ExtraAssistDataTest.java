@@ -72,6 +72,10 @@ public class ExtraAssistDataTest extends AssistTestBase {
 
     @Test
     public void testAssistContentAndDataNullWhenNoFlagsToShowSession() throws Exception {
+        if (!Utils.isSupportedDevice(mContext)) {
+            return;
+        }
+
         assumeIsNotLowRamDevice();
         // TODO(b/299988169): Fix multi/secure displays for automotive
         // Currently automotive uses multi-display and/or secure displays

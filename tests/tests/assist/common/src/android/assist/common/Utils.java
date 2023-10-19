@@ -278,4 +278,15 @@ public class Utils {
     public static boolean isAutomotive(Context context) {
         return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
+
+    public static boolean isSupportedDevice(Context context) {
+        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            // TODO(b/280025610): Need to check if this test class should be tested on Auto.
+            return false;
+        } else if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            // TODO(b/280025610): Need to check if this test class should be tested on Wear.
+            return false;
+        }
+        return true;
+    }
 }

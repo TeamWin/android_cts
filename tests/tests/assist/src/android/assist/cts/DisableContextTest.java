@@ -40,6 +40,9 @@ public class DisableContextTest extends AssistTestBase {
 
     @Test
     public void testContextAndScreenshotOff() throws Exception {
+        if (!Utils.isSupportedDevice(mContext)) {
+            return;
+        }
         if (!mContext.getPackageManager().hasSystemFeature(FEATURE_VOICE_RECOGNIZERS)) {
             Log.d(TAG, "Not running assist tests - voice_recognizers feature is not supported");
             return;
@@ -56,6 +59,9 @@ public class DisableContextTest extends AssistTestBase {
 
     @Test
     public void testContextOff() throws Exception {
+        if (!Utils.isSupportedDevice(mContext)) {
+            return;
+        }
         if (!mContext.getPackageManager().hasSystemFeature(FEATURE_VOICE_RECOGNIZERS)) {
             Log.d(TAG, "Not running assist tests - voice_recognizers feature is not supported");
             return;
@@ -72,6 +78,9 @@ public class DisableContextTest extends AssistTestBase {
 
     @Test
     public void testScreenshotOff() throws Exception {
+        if (!Utils.isSupportedDevice(mContext)) {
+            return;
+        }
         if (!mContext.getPackageManager().hasSystemFeature(FEATURE_VOICE_RECOGNIZERS)) {
             Log.d(TAG, "Not running assist tests - voice_recognizers feature is not supported");
             return;
