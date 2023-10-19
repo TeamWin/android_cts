@@ -24,6 +24,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.UiAutomation;
 import android.car.Car;
 import android.car.CarOccupantZoneManager;
 import android.car.CarOccupantZoneManager.OccupantZoneInfo;
@@ -39,6 +40,7 @@ import android.util.Log;
 import android.view.Display;
 
 import androidx.annotation.Nullable;
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
 
@@ -68,6 +70,7 @@ public final class CarPowerManagerTest extends AbstractCarTestCase {
 
     private static String sDefaultDisplayPowerModeValue;
 
+    private UiAutomation mUiAutomation;
     private CarPowerManager mCarPowerManager;
     private CarOccupantZoneManager mCarOccupantZoneManager;
     private String mInitialPowerPolicyId;
@@ -82,6 +85,8 @@ public final class CarPowerManagerTest extends AbstractCarTestCase {
 
     @Before
     public void setUp() throws Exception {
+        mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        mUiAutomation.adoptShellPermissionIdentity(Car.PERMISSION_CAR_POWER);
         mCarPowerManager = (CarPowerManager) getCar().getCarManager(Car.POWER_SERVICE);
         mCarOccupantZoneManager = (CarOccupantZoneManager) getCar().getCarManager(
                 Car.CAR_OCCUPANT_ZONE_SERVICE);
@@ -94,6 +99,7 @@ public final class CarPowerManagerTest extends AbstractCarTestCase {
         if (!mInitialPowerPolicyId.equals(policy.getPolicyId())) {
             applyPowerPolicy(mInitialPowerPolicyId);
         }
+        mUiAutomation.dropShellPermissionIdentity();
     }
 
     @BeforeClass

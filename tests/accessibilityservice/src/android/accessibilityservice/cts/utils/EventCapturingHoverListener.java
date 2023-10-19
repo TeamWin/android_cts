@@ -108,8 +108,4 @@ public class EventCapturingHoverListener implements View.OnHoverListener {
             throw new RuntimeException(e);
         }
     }
-
-    public MotionEvent peek() {
-        return mEvents.peek();
-    }
 }

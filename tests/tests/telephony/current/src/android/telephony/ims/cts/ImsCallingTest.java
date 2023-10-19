@@ -895,7 +895,7 @@ public class ImsCallingTest extends ImsCallingBase {
         mCallSession2.addTestType(TestImsCallSessionImpl.TEST_TYPE_CONFERENCE_FAILED);
         addConferenceCall(mCall1, mCall2);
 
-        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
+        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE_MERGE_FAILED);
         //Verify foreground call is in Active state after merge failed.
         assertTrue("Call is not in Active State", (mCall2.getDetails().getState()
                 == Call.STATE_ACTIVE));
@@ -1065,7 +1065,7 @@ public class ImsCallingTest extends ImsCallingBase {
                 TestImsCallSessionImpl.TEST_TYPE_JOIN_EXIST_CONFERENCE_FAILED_AFTER_SWAP);
 
         mConferenceCall.conference(mCall3);
-        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
+        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE_MERGE_FAILED);
 
         // verify foreground call is in Active state after merge failed.
         assertTrue("Call is not in Active State", (mConferenceCall.getDetails().getState()

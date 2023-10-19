@@ -132,6 +132,10 @@ public class VirtualSensorTest {
     private VirtualSensorDirectChannelCallback mVirtualSensorDirectChannelCallback;
     private VirtualSensorEventListener mSensorEventListener = new VirtualSensorEventListener();
 
+    // Listener for the default SensorManager used to ensure that there are real sensor events.
+    private VirtualSensorEventListener mDefaultSensorEventListener =
+            new VirtualSensorEventListener();
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -182,6 +186,7 @@ public class VirtualSensorTest {
 
     @After
     public void tearDown() {
+        mSensorManager.unregisterListener(mDefaultSensorEventListener);
         if (mVirtualDevice != null) {
             mVirtualDevice.close();
         }
@@ -327,6 +332,8 @@ public class VirtualSensorTest {
 
     @Test
     public void sendEvent_reachesRegisteredListeners() {
+        assumeTrue(defaultAccelerometerEventsAreAvailable());
+
         mVirtualSensor = setUpVirtualSensor(
                 new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME).build());
 
@@ -358,6 +365,8 @@ public class VirtualSensorTest {
 
     @Test
     public void sendEvent_explicitTimestampSpecified() {
+        assumeTrue(defaultAccelerometerEventsAreAvailable());
+
         mVirtualSensor = setUpVirtualSensor(
                 new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME).build());
         Sensor sensor = mVirtualDeviceSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
@@ -406,6 +415,8 @@ public class VirtualSensorTest {
 
     @Test
     public void virtualSensor_arbitrarySensorType() {
+        assumeTrue(defaultAccelerometerEventsAreAvailable());
+
         mVirtualSensor = setUpVirtualSensor(
                 new VirtualSensorConfig.Builder(CUSTOM_SENSOR_TYPE, VIRTUAL_SENSOR_NAME).build());
 
@@ -776,6 +787,27 @@ public class VirtualSensorTest {
                 offset = 0;
             }
         }
+    }
+
+    // If there are no "real" events in general, then the virtual sensor events never reach the
+    // registered listeners.
+    // TODO(b/288383960): Remove this check and the relevant assumptions.
+    private boolean defaultAccelerometerEventsAreAvailable() {
+        final PackageManager packageManager =
+                InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_ACCELEROMETER)) {
+            return false;
+        }
+        Sensor accelerometer = mSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
+        if (accelerometer == null) {
+            return false;
+        }
+        if (!mSensorManager.registerListener(
+                mDefaultSensorEventListener, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)) {
+            return false;
+        }
+        SensorEvent event = mDefaultSensorEventListener.waitForEvent();
+        return event != null;
     }
 
     private void verifyDirectChannelEvents(int reportToken) throws Exception {

@@ -17,6 +17,7 @@
 package android.widget.toast.cts.legacy;
 
 import android.content.Intent;
+import android.os.UserManager;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.toast.cts.BaseToastTest;
@@ -25,6 +26,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -129,6 +131,8 @@ public class ToastTest extends BaseToastTest {
 
     @Test
     public void testAddTwoToastsViaAddingWindowApisWhenUidFocusedQuickly() throws Exception {
+        // Not supporting this test on Headless devices
+        Assume.assumeFalse(UserManager.isHeadlessSystemUserMode());
         // dismiss deprecated app warnings dialog
         mContext.sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
         Thread.sleep(WAIT_LEGACY_DIALOG_CLOSE_MS);

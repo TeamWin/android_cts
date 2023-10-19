@@ -16,11 +16,14 @@
 
 package android.provider.cts.settings;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.testng.Assert.expectThrows;
 
 import android.content.ContentResolver;
 import android.content.res.Configuration;
@@ -36,6 +39,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
+
+import com.google.common.base.Strings;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -185,6 +190,17 @@ public class Settings_SystemTest extends StsExtraBusinessLogicTestCase {
     }
 
     @Test
+    @AsbSecurityTest(cveBugId = 227201030)
+    public void testInvalidRingtoneUriIsRejected() {
+        final ContentResolver cr = InstrumentationRegistry.getTargetContext().getContentResolver();
+        final String originalValue = System.getString(cr, System.RINGTONE);
+        final String invalidUri = "content://10@media/external/audio/media/1000000019";
+        System.putString(cr, System.RINGTONE, invalidUri);
+        // Assert that the insertion didn't take effect
+        assertThat(System.getString(cr, System.RINGTONE)).isEqualTo(originalValue);
+    }
+
+    @Test
     public void testGetDefaultValues() {
         final ContentResolver cr = InstrumentationRegistry.getTargetContext().getContentResolver();
 
@@ -200,5 +216,18 @@ public class Settings_SystemTest extends StsExtraBusinessLogicTestCase {
         Uri uri = System.getUriFor(name);
         assertNotNull(uri);
         assertEquals(Uri.withAppendedPath(System.CONTENT_URI, name), uri);
+    }
+
+    @Test
+    public void testLargeSettingExceedsLimit() {
+        final ContentResolver cr = InstrumentationRegistry.getTargetContext().getContentResolver();
+        // Test large value
+        expectThrows(IllegalArgumentException.class,
+                () -> System.putString(
+                        cr, STRING_FIELD, Strings.repeat("A", 65535)));
+        // Test large key
+        expectThrows(IllegalArgumentException.class,
+                () -> System.putString(
+                        cr, Strings.repeat("A", 65535), "test"));
     }
 }

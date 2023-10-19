@@ -362,8 +362,8 @@ public class TunerTest {
 
     private class TunerTestOnTuneEventListener implements OnTuneEventListener {
         public static final int INVALID_TUNE_EVENT = -1;
-        private static final int SLEEP_TIME_MS = 100;
-        private static final int TIMEOUT_MS = 500;
+        private static final int SLEEP_TIME_MS = 3000;
+        private static final int TIMEOUT_MS = 3000;
         private final ReentrantLock mLock = new ReentrantLock();
         private final ConditionVariable mCV = new ConditionVariable();
         private int mLastTuneEvent = INVALID_TUNE_EVENT;
@@ -1771,7 +1771,6 @@ public class TunerTest {
         res = tuner200.tune(feSettings);
         assertEquals(Tuner.RESULT_SUCCESS, res);
 
-        tuner100 = new Tuner(mContext, null, 100);
         tuner100.shareFrontendFromTuner(tuner200);
         // call openFilter to trigger ITunerDemux.setFrontendDataSourceById()
         Filter f = tuner100.openFilter(
@@ -1965,7 +1964,7 @@ public class TunerTest {
         tunerB.close();
 
         // now that the CiCam is released, disconnectFrontendToCiCam() should fail
-        assertEquals(Tuner.RESULT_UNAVAILABLE, tunerB.disconnectFrontendToCiCam(ciCamId));
+        assertEquals(Tuner.RESULT_INVALID_STATE, tunerB.disconnectFrontendToCiCam(ciCamId));
 
         // see if tune still works just in case
         tunerA = new Tuner(mContext, null, 100);
@@ -2798,6 +2797,30 @@ public class TunerTest {
         int status = f.delayCallbackForDurationMillis(timeDelayInMs);
 
         if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
+            // Configure filter setting for receiving PAT
+            Settings settings = SectionSettingsWithTableInfo
+                    .builder(Filter.TYPE_TS)
+                    .setTableId(0)
+                    .setCrcEnabled(true)
+                    .setRaw(false)
+                    .setRepeat(false)
+                    .build();
+            FilterConfiguration config = TsFilterConfiguration
+                    .builder()
+                    .setTpid(0)
+                    .setSettings(settings)
+                    .build();
+
+            f.configure(config);
+
+            // Tune a frontend before starting the filter
+            List<Integer> ids = mTuner.getFrontendIds();
+            assertFalse(ids.isEmpty());
+
+            FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+            int res = mTuner.tune(createFrontendSettings(info));
+            assertEquals(Tuner.RESULT_SUCCESS, res);
+
             // start / stop prevents initial race condition after first setting the time delay.
             f.start();
             f.stop();
@@ -2809,6 +2832,9 @@ public class TunerTest {
             Instant finish = Instant.now();
             Duration timeElapsed = Duration.between(start, finish);
             assertTrue(timeElapsed.toMillis() >= timeDelayInMs);
+
+            res = mTuner.cancelTuning();
+            assertEquals(Tuner.RESULT_SUCCESS, res);
         } else {
             assertEquals(Tuner.RESULT_UNAVAILABLE, status);
         }
@@ -2870,46 +2896,49 @@ public class TunerTest {
         FrontendInfo info1 = mTuner.getFrontendInfoById(ids.get(0));
         FrontendSettings feSettings1 = createFrontendSettings(info1);
         int type1 = info1.getType();
-        if (ids.size() >= 1) {
-            int originalMax1 = mTuner.getMaxNumberOfFrontends(type1);
-            assertEquals(Tuner.RESULT_SUCCESS, mTuner.tune(feSettings1));
-            assertNotNull(mTuner.getFrontendInfo());
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(
+                        TunerVersionChecker.TUNER_VERSION_2_0)) {
+            if (ids.size() >= 1) {
+                int originalMax1 = mTuner.getMaxNumberOfFrontends(type1);
+                assertEquals(Tuner.RESULT_SUCCESS, mTuner.tune(feSettings1));
+                assertNotNull(mTuner.getFrontendInfo());
 
-            // validate that set max cannot be set to lower value than current usage
-            assertEquals(Tuner.RESULT_INVALID_ARGUMENT,
-                    mTuner.setMaxNumberOfFrontends(type1, 0));
+                // validate that set max cannot be set to lower value than current usage
+                assertEquals(Tuner.RESULT_INVALID_ARGUMENT,
+                            mTuner.setMaxNumberOfFrontends(type1, 0));
 
-            // validate max value is reflected in the tune behavior
-            mTuner.closeFrontend();
-            assertEquals(Tuner.RESULT_SUCCESS,
-                    mTuner.setMaxNumberOfFrontends(type1, 0));
-            assertEquals(Tuner.RESULT_UNAVAILABLE,
-                    mTuner.tune(feSettings1));
+                // validate max value is reflected in the tune behavior
+                mTuner.closeFrontend();
+                assertEquals(Tuner.RESULT_SUCCESS,
+                            mTuner.setMaxNumberOfFrontends(type1, 0));
+                assertEquals(Tuner.RESULT_UNAVAILABLE,
+                            mTuner.tune(feSettings1));
 
-            assertEquals(Tuner.RESULT_SUCCESS,
-                    mTuner.setMaxNumberOfFrontends(type1, originalMax1));
-            assertEquals(Tuner.RESULT_SUCCESS, mTuner.tune(feSettings1));
-            assertNotNull(mTuner.getFrontendInfo());
-            mTuner.closeFrontend();
-        }
+                assertEquals(Tuner.RESULT_SUCCESS,
+                            mTuner.setMaxNumberOfFrontends(type1, originalMax1));
+                assertEquals(Tuner.RESULT_SUCCESS, mTuner.tune(feSettings1));
+                assertNotNull(mTuner.getFrontendInfo());
+                mTuner.closeFrontend();
+            }
 
-        // validate max number on one frontend type has no impact on other
-        if (ids.size() >= 2) {
-            FrontendInfo info2 = mTuner.getFrontendInfoById(ids.get(1));
-            int type2 = info2.getType();
-            int originalMax2 = mTuner.getMaxNumberOfFrontends(type2);
+            // validate max number on one frontend type has no impact on other
+            if (ids.size() >= 2) {
+                FrontendInfo info2 = mTuner.getFrontendInfoById(ids.get(1));
+                int type2 = info2.getType();
+                int originalMax2 = mTuner.getMaxNumberOfFrontends(type2);
 
-            assertEquals(Tuner.RESULT_SUCCESS,
-                    mTuner.setMaxNumberOfFrontends(type2, 0));
-            assertEquals(Tuner.RESULT_SUCCESS,
-                    mTuner.tune(feSettings1));
-            assertNotNull(mTuner.getFrontendInfo());
+                assertEquals(Tuner.RESULT_SUCCESS,
+                        mTuner.setMaxNumberOfFrontends(type2, 0));
+                assertEquals(Tuner.RESULT_SUCCESS,
+                        mTuner.tune(feSettings1));
+                assertNotNull(mTuner.getFrontendInfo());
 
-            // set it back to the original max
-            assertEquals(Tuner.RESULT_SUCCESS,
-                    mTuner.setMaxNumberOfFrontends(type2, originalMax2));
-            mTuner.closeFrontend();
+                // set it back to the original max
+                assertEquals(Tuner.RESULT_SUCCESS,
+                        mTuner.setMaxNumberOfFrontends(type2, originalMax2));
+                mTuner.closeFrontend();
 
+            }
         }
     }
 

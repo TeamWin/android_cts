@@ -1131,7 +1131,7 @@ public class ViewGroupTest implements CTSResult {
     }
 
     private void onResolvePointerIcon_scrollabilityAffectsPointerIcon(boolean vertical,
-            boolean canScroll, boolean pointerIsSystemArrow) {
+            boolean canScroll, boolean pointerIsArrayOrNull) {
 
         // Arrange
 
@@ -1166,8 +1166,14 @@ public class ViewGroupTest implements CTSResult {
 
         // Assert
 
-        if (pointerIsSystemArrow) {
-            assertEquals(PointerIcon.getSystemIcon(mContext, PointerIcon.TYPE_ARROW), actualResult);
+        if (pointerIsArrayOrNull) {
+            // When the returned PointerIcon is null it will fallback to the system default for the
+            // given source devices. For mouse devices, the default is TYPE_ARROW.
+            // We also allow it to return TYPE_ARROW so that we don't break CTS test compatibility.
+            if (actualResult != null) {
+                assertEquals(PointerIcon.getSystemIcon(mContext, PointerIcon.TYPE_ARROW),
+                        actualResult);
+            }
         } else {
             assertEquals(expectedPointerIcon, actualResult);
         }

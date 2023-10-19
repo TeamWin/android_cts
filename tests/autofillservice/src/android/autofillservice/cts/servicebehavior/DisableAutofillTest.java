@@ -21,6 +21,7 @@ import static android.autofillservice.cts.testcore.Timeouts.CALLBACK_NOT_CALLED_
 
 import static org.junit.Assume.assumeTrue;
 
+import android.app.Instrumentation;
 import android.autofillservice.cts.activities.AbstractAutoFillActivity;
 import android.autofillservice.cts.activities.PreSimpleSaveActivity;
 import android.autofillservice.cts.activities.SimpleSaveActivity;
@@ -35,6 +36,9 @@ import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillResponse;
 import android.util.Log;
+import android.support.test.uiautomator.UiDevice;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.RetryableException;
 
@@ -49,6 +53,7 @@ import org.junit.Test;
 public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityLaunch {
 
     private static final String TAG = "DisableAutofillTest";
+    private Instrumentation mInstrumentation;
 
     /**
      * Defines what to do after the activity being tested is launched.
@@ -101,6 +106,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
 
         }
 
+        final UiDevice device = UiDevice.getInstance(mInstrumentation);
         final long before = SystemClock.elapsedRealtime();
         final SimpleSaveActivity activity = startSimpleSaveActivity();
         final MyAutofillCallback callback = activity.registerCallback();
@@ -111,7 +117,9 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
 
             if (action == PostLaunchAction.ASSERT_DISABLING) {
                 callback.assertUiUnavailableEvent(activity.mInput);
+                callback.assertNotCalled();
                 sReplier.getNextFillRequest();
+                device.waitForIdle();
 
                 // Make sure other fields are not triggered.
                 activity.syncRunOnUiThread(() -> activity.mPassword.requestFocus());
@@ -188,6 +196,11 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
     public void clearAutofillOptions() throws Exception {
         // Clear AutofillOptions.
         Helper.clearApplicationAutofillOptions(sContext);
+    }
+
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
     }
 
     @Before

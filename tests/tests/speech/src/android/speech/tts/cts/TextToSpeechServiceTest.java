@@ -15,21 +15,30 @@
  */
 package android.speech.tts.cts;
 
+import android.content.Context;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ConditionVariable;
-import android.os.Environment;
+import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.os.ServiceManager;
+import android.speech.tts.ITextToSpeechManager;
+import android.speech.tts.ITextToSpeechSession;
+import android.speech.tts.ITextToSpeechSessionCallback;
 import android.speech.tts.TextToSpeech;
 import android.test.AndroidTestCase;
+
+import com.google.common.util.concurrent.SettableFuture;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link android.speech.tts.TextToSpeechService} using StubTextToSpeechService.
@@ -60,6 +69,37 @@ public class TextToSpeechServiceTest extends AndroidTestCase {
         return mTts.getTts();
     }
 
+    public void testNullEngine() throws Exception {
+        IBinder binder = ServiceManager.getService(Context.TEXT_TO_SPEECH_MANAGER_SERVICE);
+        ITextToSpeechManager manager =
+                Objects.requireNonNull(ITextToSpeechManager.Stub.asInterface(binder));
+        // could use a spy instead but we run into "cannot proxy inaccessible class" issues
+        final SettableFuture<String> errorMsg = SettableFuture.create();
+        final SettableFuture<Void> connected = SettableFuture.create();
+        final SettableFuture<Void> disconnected = SettableFuture.create();
+        ITextToSpeechSessionCallback callback =
+                new ITextToSpeechSessionCallback.Stub() {
+                    @Override
+                    public void onConnected(ITextToSpeechSession session, IBinder serviceBinder) {
+                        connected.set(null);
+                    }
+
+                    @Override
+                    public void onDisconnected() {
+                        disconnected.set(null);
+                    }
+
+                    @Override
+                    public void onError(String errorInfo) {
+                        errorMsg.set(errorInfo);
+                    }
+                };
+        manager.createSession(null, callback);
+        assertFalse(connected.isDone());
+        assertFalse(disconnected.isDone());
+        assertEquals("Engine cannot be null", errorMsg.get(1, TimeUnit.SECONDS));
+    }
+
     public void testSynthesizeToFile() throws Exception {
         File sampleFile = new File(getContext().getExternalFilesDir(null), SAMPLE_FILE_NAME);
         try {
@@ -67,7 +107,7 @@ public class TextToSpeechServiceTest extends AndroidTestCase {
 
             int result =
                     getTts().synthesizeToFile(
-                                    UTTERANCE, createParams("mocktofile"), sampleFile.getPath());
+                            UTTERANCE, createParams("mocktofile"), sampleFile.getPath());
             verifySynthesisFile(result, mTts, sampleFile);
         } finally {
             sampleFile.delete();
@@ -84,10 +124,10 @@ public class TextToSpeechServiceTest extends AndroidTestCase {
 
             int result =
                     getTts().synthesizeToFile(
-                                    UTTERANCE,
-                                    params,
-                                    sampleFile,
-                                    params.getString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID));
+                            UTTERANCE,
+                            params,
+                            sampleFile,
+                            params.getString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID));
             verifySynthesisFile(result, mTts, sampleFile);
         } finally {
             sampleFile.delete();
@@ -101,16 +141,16 @@ public class TextToSpeechServiceTest extends AndroidTestCase {
             assertFalse(sampleFile.exists());
 
             ParcelFileDescriptor fileDescriptor = ParcelFileDescriptor.open(sampleFile,
-                ParcelFileDescriptor.MODE_WRITE_ONLY
-                | ParcelFileDescriptor.MODE_CREATE
-                | ParcelFileDescriptor.MODE_TRUNCATE);
+                    ParcelFileDescriptor.MODE_WRITE_ONLY
+                            | ParcelFileDescriptor.MODE_CREATE
+                            | ParcelFileDescriptor.MODE_TRUNCATE);
 
             Bundle params = createParamsBundle("mocktofile");
 
             int result =
-                getTts().synthesizeToFile(
-                    UTTERANCE, params, fileDescriptor,
-                    params.getString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID));
+                    getTts().synthesizeToFile(
+                            UTTERANCE, params, fileDescriptor,
+                            params.getString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID));
             verifySynthesisFile(result, mTts, sampleFile);
         } finally {
             sampleFile.delete();
@@ -119,29 +159,30 @@ public class TextToSpeechServiceTest extends AndroidTestCase {
     }
 
     public void testMaxSpeechInputLength() {
-      File sampleFile = new File(getContext().getExternalFilesDir(null), SAMPLE_FILE_NAME);
-      try {
-          assertFalse(sampleFile.exists());
-          TextToSpeech tts = getTts();
+        File sampleFile = new File(getContext().getExternalFilesDir(null), SAMPLE_FILE_NAME);
+        try {
+            assertFalse(sampleFile.exists());
+            TextToSpeech tts = getTts();
 
-          int maxLength = tts.getMaxSpeechInputLength();
-          StringBuilder sb = new StringBuilder();
-          for (int i = 0; i < maxLength; i++) {
+            int maxLength = tts.getMaxSpeechInputLength();
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < maxLength; i++) {
+                sb.append("c");
+            }
+            String valid = sb.toString();
             sb.append("c");
-          }
-          String valid = sb.toString();
-          sb.append("c");
-          String invalid = sb.toString();
+            String invalid = sb.toString();
 
-          assertEquals(maxLength, valid.length());
-          assertTrue(invalid.length() > maxLength);
-          assertEquals(TextToSpeech.ERROR,
-                  tts.synthesizeToFile(invalid, createParams("mockToFile"), sampleFile.getPath()));
-          assertEquals(TextToSpeech.SUCCESS,
-                  tts.synthesizeToFile(valid, createParams("mockToFile"), sampleFile.getPath()));
-      } finally {
-          sampleFile.delete();
-      }
+            assertEquals(maxLength, valid.length());
+            assertTrue(invalid.length() > maxLength);
+            assertEquals(TextToSpeech.ERROR,
+                    tts.synthesizeToFile(invalid, createParams("mockToFile"),
+                            sampleFile.getPath()));
+            assertEquals(TextToSpeech.SUCCESS,
+                    tts.synthesizeToFile(valid, createParams("mockToFile"), sampleFile.getPath()));
+        } finally {
+            sampleFile.delete();
+        }
     }
 
     public void testSpeak() throws Exception {
@@ -203,7 +244,7 @@ public class TextToSpeechServiceTest extends AndroidTestCase {
         try {
             assertFalse(TextToSpeechWrapper.isSoundFile(sampleFile.getPath()));
             FileOutputStream out = new FileOutputStream(sampleFile);
-            out.write(new byte[] { 0x01, 0x02 });
+            out.write(new byte[]{0x01, 0x02});
             out.close();
             assertFalse(TextToSpeechWrapper.isSoundFile(sampleFile.getPath()));
         } finally {
@@ -212,79 +253,81 @@ public class TextToSpeechServiceTest extends AndroidTestCase {
     }
 
     public void testAddPlayEarcon() throws Exception {
-      File sampleFile = new File(getContext().getExternalFilesDir(null), SAMPLE_FILE_NAME);
-      try {
-        generateSampleAudio(sampleFile);
+        File sampleFile = new File(getContext().getExternalFilesDir(null), SAMPLE_FILE_NAME);
+        try {
+            generateSampleAudio(sampleFile);
 
-        Uri sampleUri = Uri.fromFile(sampleFile);
-        assertEquals(getTts().addEarcon(EARCON_UTTERANCE, sampleFile), TextToSpeech.SUCCESS);
+            Uri sampleUri = Uri.fromFile(sampleFile);
+            assertEquals(getTts().addEarcon(EARCON_UTTERANCE, sampleFile), TextToSpeech.SUCCESS);
 
-        int result = getTts().playEarcon(EARCON_UTTERANCE,
-            TextToSpeech.QUEUE_FLUSH, createParamsBundle(EARCON_UTTERANCE), EARCON_UTTERANCE);
+            int result = getTts().playEarcon(EARCON_UTTERANCE,
+                    TextToSpeech.QUEUE_FLUSH, createParamsBundle(EARCON_UTTERANCE),
+                    EARCON_UTTERANCE);
 
-        verifyAddPlay(result, mTts, EARCON_UTTERANCE);
-      } finally {
-        sampleFile.delete();
-      }
+            verifyAddPlay(result, mTts, EARCON_UTTERANCE);
+        } finally {
+            sampleFile.delete();
+        }
     }
 
     public void testAddPlaySpeech() throws Exception {
-      File sampleFile = new File(getContext().getExternalFilesDir(null), SAMPLE_FILE_NAME);
-      try {
-        generateSampleAudio(sampleFile);
+        File sampleFile = new File(getContext().getExternalFilesDir(null), SAMPLE_FILE_NAME);
+        try {
+            generateSampleAudio(sampleFile);
 
-        Uri sampleUri = Uri.fromFile(sampleFile);
-        assertEquals(getTts().addSpeech(SPEECH_UTTERANCE, sampleFile), TextToSpeech.SUCCESS);
+            Uri sampleUri = Uri.fromFile(sampleFile);
+            assertEquals(getTts().addSpeech(SPEECH_UTTERANCE, sampleFile), TextToSpeech.SUCCESS);
 
-        int result = getTts().speak(SPEECH_UTTERANCE,
-            TextToSpeech.QUEUE_FLUSH, createParamsBundle(SPEECH_UTTERANCE), SPEECH_UTTERANCE);
+            int result = getTts().speak(SPEECH_UTTERANCE,
+                    TextToSpeech.QUEUE_FLUSH, createParamsBundle(SPEECH_UTTERANCE),
+                    SPEECH_UTTERANCE);
 
-        verifyAddPlay(result, mTts, SPEECH_UTTERANCE);
-      } finally {
-        sampleFile.delete();
-      }
+            verifyAddPlay(result, mTts, SPEECH_UTTERANCE);
+        } finally {
+            sampleFile.delete();
+        }
     }
 
     public void testSetLanguage() {
-      TextToSpeech tts = getTts();
+        TextToSpeech tts = getTts();
 
-      assertEquals(tts.setLanguage(null), TextToSpeech.LANG_NOT_SUPPORTED);
-      assertEquals(tts.setLanguage(new Locale("en", "US")), TextToSpeech.LANG_COUNTRY_AVAILABLE);
-      assertEquals(tts.setLanguage(new Locale("en")), TextToSpeech.LANG_AVAILABLE);
-      assertEquals(tts.setLanguage(new Locale("es", "US")), TextToSpeech.LANG_NOT_SUPPORTED);
+        assertEquals(tts.setLanguage(null), TextToSpeech.LANG_NOT_SUPPORTED);
+        assertEquals(tts.setLanguage(new Locale("en", "US")), TextToSpeech.LANG_COUNTRY_AVAILABLE);
+        assertEquals(tts.setLanguage(new Locale("en")), TextToSpeech.LANG_AVAILABLE);
+        assertEquals(tts.setLanguage(new Locale("es", "US")), TextToSpeech.LANG_NOT_SUPPORTED);
     }
 
     public void testAddAudioAttributes() {
-      TextToSpeech tts = getTts();
-      AudioAttributes attr =
-          new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build();
+        TextToSpeech tts = getTts();
+        AudioAttributes attr =
+                new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build();
 
-      assertEquals(tts.setAudioAttributes(null), TextToSpeech.ERROR);
-      assertEquals(tts.setAudioAttributes(attr), TextToSpeech.SUCCESS);
+        assertEquals(tts.setAudioAttributes(null), TextToSpeech.ERROR);
+        assertEquals(tts.setAudioAttributes(attr), TextToSpeech.SUCCESS);
     }
 
     private void generateSampleAudio(File sampleFile) throws Exception {
-      assertFalse(sampleFile.exists());
+        assertFalse(sampleFile.exists());
 
-      ParcelFileDescriptor fileDescriptor = ParcelFileDescriptor.open(sampleFile,
-          ParcelFileDescriptor.MODE_WRITE_ONLY
-          | ParcelFileDescriptor.MODE_CREATE
-          | ParcelFileDescriptor.MODE_TRUNCATE);
+        ParcelFileDescriptor fileDescriptor = ParcelFileDescriptor.open(sampleFile,
+                ParcelFileDescriptor.MODE_WRITE_ONLY
+                        | ParcelFileDescriptor.MODE_CREATE
+                        | ParcelFileDescriptor.MODE_TRUNCATE);
 
-      Bundle params = createParamsBundle("mocktofile");
+        Bundle params = createParamsBundle("mocktofile");
 
-      int result =
-          getTts().synthesizeToFile(
-              UTTERANCE, params, fileDescriptor,
-              params.getString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID));
+        int result =
+                getTts().synthesizeToFile(
+                        UTTERANCE, params, fileDescriptor,
+                        params.getString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID));
 
-      verifySynthesisFile(result, mTts, sampleFile);
+        verifySynthesisFile(result, mTts, sampleFile);
     }
 
     private void verifyAddPlay(int result, TextToSpeechWrapper mTts, String utterance)
-        throws Exception {
-      assertEquals(TextToSpeech.SUCCESS, result);
-      assertTrue(mTts.waitForComplete(utterance));
+            throws Exception {
+        assertEquals(TextToSpeech.SUCCESS, result);
+        assertTrue(mTts.waitForComplete(utterance));
     }
 
     private HashMap<String, String> createParams(String utteranceId) {
@@ -300,7 +343,7 @@ public class TextToSpeechServiceTest extends AndroidTestCase {
     }
 
     private void verifySynthesisFile(int result, TextToSpeechWrapper mTts, File file)
-        throws InterruptedException {
+            throws InterruptedException {
 
         assertEquals("synthesizeToFile() failed", TextToSpeech.SUCCESS, result);
 

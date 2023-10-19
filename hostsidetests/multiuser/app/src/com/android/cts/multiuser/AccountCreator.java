@@ -31,9 +31,17 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @RunWith(JUnit4.class)
 public class AccountCreator {
     private static final String TAG = "MultiuserAccountCreator";
+
+    private static final int ACCOUNT_AUTHENTICATOR_TIMEOUT_MILLISECONDS = 180000; // 180 seconds
+
+    private static final int ACCOUNT_AUTHENTICATOR_WAIT_TIME_MILLISECONDS = 5000; // 5 seconds
 
     private Context mContext;
 
@@ -48,6 +56,9 @@ public class AccountCreator {
         final AccountManager accountManager = mContext.getSystemService(AccountManager.class);
 
         Log.i(TAG, "Adding account");
+
+        waitForAccountAuthenticator(MockAuthenticator.ACCOUNT_TYPE, accountManager);
+
         final AccountManagerFuture<Bundle> future = accountManager.addAccount(
                 MockAuthenticator.ACCOUNT_TYPE, null, null, null, null, null, null);
 
@@ -64,5 +75,34 @@ public class AccountCreator {
         assertThat(accountManager.getAccountsByType(MockAuthenticator.ACCOUNT_TYPE)).hasLength(1);
 
         Log.i(TAG, "Successfully added account; all is good");
+    }
+
+
+    private void waitForAccountAuthenticator(String accountType, AccountManager am) {
+        long startTime = System.currentTimeMillis();
+
+        while (System.currentTimeMillis() - startTime < ACCOUNT_AUTHENTICATOR_TIMEOUT_MILLISECONDS
+                && !accountAuthenticatorExists(accountType, am)) {
+            Log.w(TAG, "Account authenticator not found for accountType: " + accountType);
+            sleep(ACCOUNT_AUTHENTICATOR_WAIT_TIME_MILLISECONDS);
+        }
+
+        Log.i(TAG, "Account authenticator found for accountType: " + accountType);
+    }
+
+
+    private boolean accountAuthenticatorExists(String accountType, AccountManager am) {
+
+        Set<String> authenticatorTypes  = Arrays.stream(am.getAuthenticatorTypes())
+                .map(authenticatorDescription -> authenticatorDescription.type)
+                .collect(Collectors.toSet());
+
+        return authenticatorTypes.contains(accountType);
+    }
+
+    private void sleep(int timeout) {
+        try {
+            Thread.sleep(timeout);
+        } catch (InterruptedException ex) { }
     }
 }

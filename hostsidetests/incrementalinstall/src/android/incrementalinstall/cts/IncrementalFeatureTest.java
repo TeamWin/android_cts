@@ -48,15 +48,20 @@ public class IncrementalFeatureTest extends BaseHostJUnit4Test {
 
     @Before
     public void setUp() throws Exception {
-        // Test devices that are launched with R and above; ignore non-targeted devices
-        assumeTrue(getDevice().getLaunchApiLevel() >= 30 /* Build.VERSION_CODES.R */);
+        int launchApiLevel = getDevice().getLaunchApiLevel();
+
+        // Devices that launched with R may fail GSI testing if they have incfs built into the
+        // kernel.
+        // Test R devices that report the feature.
+        // Test all devices S and above.
+        assumeTrue((launchApiLevel == 30 && featureAvailable())
+                   || launchApiLevel > 30);
     }
 
     @CddTest(requirement="4/C-1-1")
     @Test
     public void testFeatureAvailable() throws Exception {
-        assertTrue("true\n".equals(getDevice().executeShellCommand(
-                "pm has-feature android.software.incremental_delivery")));
+        assertTrue(featureAvailable());
     }
 
     @CddTest(requirement="4/C-1-1,C-3-1")
@@ -77,5 +82,10 @@ public class IncrementalFeatureTest extends BaseHostJUnit4Test {
         assertEquals("Success\n", installResult);
         assertTrue(getDevice().isPackageInstalled(TEST_APP_PACKAGE_NAME));
         getDevice().uninstallPackage(TEST_APP_PACKAGE_NAME);
+    }
+
+    private boolean featureAvailable() throws Exception {
+        return "true\n".equals(getDevice().executeShellCommand(
+                "pm has-feature android.software.incremental_delivery"));
     }
 }

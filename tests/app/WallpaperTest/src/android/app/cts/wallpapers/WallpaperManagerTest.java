@@ -696,6 +696,10 @@ public class WallpaperManagerTest {
 
     @Test
     public void invokeOnColorsChangedListenerTest_systemOnly() {
+        if (mWallpaperManager.isLockscreenLiveWallpaperEnabled()) {
+            verifyColorListenerInvoked(FLAG_SYSTEM, FLAG_SYSTEM);
+            return;
+        }
         int both = FLAG_LOCK | FLAG_SYSTEM;
         // Expect both since the first step is to migrate the current wallpaper
         // to the lock screen.

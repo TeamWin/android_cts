@@ -71,6 +71,7 @@ import com.android.bedstead.testapp.TestAppInstance;
 
 import org.junit.After;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -145,6 +146,7 @@ public class QuietModeTest {
     @EnsureHasWorkProfile(dpcIsPrimary = true)
     @EnsureHasPermission(INTERACT_ACROSS_USERS_FULL)
     @Test
+    @Ignore // because keep profile running disabled for Android U
     public void quietMode_profileKeptRunning() throws Exception {
         ensureKeepProfilesRunningEnabled();
 
@@ -192,6 +194,7 @@ public class QuietModeTest {
     @RequireRunOnWorkProfile
     @EnsureHasPermission({ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION, ACCESS_BACKGROUND_LOCATION})
     @Test
+    @Ignore // because keep profile running disabled for Android U
     public void quietMode_noLocationAccess() throws Exception {
         ensureKeepProfilesRunningEnabled();
 
@@ -223,6 +226,7 @@ public class QuietModeTest {
     @EnsureHasPermission({ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION, ACCESS_BACKGROUND_LOCATION,
             ACTIVITY_RECOGNITION, NEARBY_WIFI_DEVICES, RECORD_AUDIO, CAMERA})
     @Test
+    @Ignore // because keep profile running disabled for Android U
     public void quietMode_sensitiveAppOpsNotAllowed(@StringTestParameter({
             AppOpsManager.OPSTR_COARSE_LOCATION,
             AppOpsManager.OPSTR_FINE_LOCATION,
@@ -256,6 +260,7 @@ public class QuietModeTest {
     @Postsubmit(reason = "new test")
     @RequireRunOnWorkProfile
     @Test
+    @Ignore // because keep profile running disabled for Android U
     public void quietMode_suspendedApp_remainsSuspended() throws Exception {
         ensureKeepProfilesRunningEnabled();
 
@@ -283,6 +288,7 @@ public class QuietModeTest {
     @Postsubmit(reason = "new test")
     @RequireRunOnWorkProfile
     @Test
+    @Ignore // because keep profile running disabled for Android U
     public void quietMode_alreadySuspendedApp_remainsSuspended() throws Exception {
         ensureKeepProfilesRunningEnabled();
 
@@ -305,6 +311,7 @@ public class QuietModeTest {
     @Postsubmit(reason = "new test")
     @RequireRunOnWorkProfile
     @Test
+    @Ignore // because keep profile running disabled for Android U
     public void quietMode_unsuspendablePackageGetsSuspended() throws Exception {
         ensureKeepProfilesRunningEnabled();
 
@@ -327,6 +334,7 @@ public class QuietModeTest {
     @Postsubmit(reason = "new test")
     @RequireRunOnWorkProfile
     @Test
+    @Ignore // because keep profile running disabled for Android U
     public void quietMode_adminCannotSuspendUnsuspendablePackage() throws Exception {
         ensureKeepProfilesRunningEnabled();
 
@@ -353,6 +361,7 @@ public class QuietModeTest {
     @Postsubmit(reason = "new test")
     @RequireRunOnWorkProfile
     @Test
+    @Ignore // because keep profile running disabled for Android U
     public void quietMode_dpcPackageGetsSuspended() throws Exception {
         ensureKeepProfilesRunningEnabled();
 
@@ -376,6 +385,7 @@ public class QuietModeTest {
     @RequireRunOnWorkProfile
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.WORK_PROFILE)
     @Test
+    @Ignore // because keep profile running disabled for Android U
     public void quietMode_mgmtRoleHolderPackageNotSuspended() throws Exception {
         ensureKeepProfilesRunningEnabled();
 
@@ -396,6 +406,7 @@ public class QuietModeTest {
     @Postsubmit(reason = "new test")
     @RequireRunOnWorkProfile
     @Test
+    @Ignore // because keep profile running disabled for Android U
     public void quietMode_adminCannotUnsuspendUnsuspendablePackage() throws Exception {
         ensureKeepProfilesRunningEnabled();
 

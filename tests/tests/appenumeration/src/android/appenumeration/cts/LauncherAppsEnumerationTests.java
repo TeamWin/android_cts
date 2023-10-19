@@ -74,6 +74,7 @@ import android.os.Bundle;
 import android.os.Process;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
 
 import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.SystemUtil;
@@ -91,6 +92,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 public class LauncherAppsEnumerationTests extends AppEnumerationTestsBase {
 
+    @LargeTest
     @Test
     public void callback_added_notVisibleNotReceives() throws Exception {
         ensurePackageIsNotInstalled(TARGET_STUB);
@@ -118,6 +120,7 @@ public class LauncherAppsEnumerationTests extends AppEnumerationTestsBase {
                 arrayContainingInAnyOrder(new String[]{TARGET_STUB}));
     }
 
+    @LargeTest
     @Test
     public void callback_removed_notVisibleNotReceives() throws Exception {
         ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
@@ -145,6 +148,7 @@ public class LauncherAppsEnumerationTests extends AppEnumerationTestsBase {
                 arrayContainingInAnyOrder(new String[]{TARGET_STUB}));
     }
 
+    @LargeTest
     @Test
     public void callback_changed_notVisibleNotReceives() throws Exception {
         final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING,
@@ -170,6 +174,7 @@ public class LauncherAppsEnumerationTests extends AppEnumerationTestsBase {
                 arrayContainingInAnyOrder(new String[]{TARGET_FILTERS}));
     }
 
+    @LargeTest
     @Test
     public void callback_suspended_notVisibleNotReceives() throws Exception {
         final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING,
@@ -203,6 +208,7 @@ public class LauncherAppsEnumerationTests extends AppEnumerationTestsBase {
         }
     }
 
+    @LargeTest
     @Test
     public void callback_unsuspended_notVisibleNotReceives() throws Exception {
         final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING,
@@ -230,6 +236,7 @@ public class LauncherAppsEnumerationTests extends AppEnumerationTestsBase {
                 arrayContainingInAnyOrder(new String[]{TARGET_FILTERS}));
     }
 
+    @LargeTest
     @Test
     public void sessionCallback_queriesNothing_cannotSeeSession() throws Exception {
         try {

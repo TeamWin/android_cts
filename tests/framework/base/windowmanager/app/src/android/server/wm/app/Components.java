@@ -408,7 +408,6 @@ public class Components extends ComponentsBase {
 
     /** Extra key constants for {@link android.server.wm.app.FontScaleActivity}. */
     public static class FontScaleActivity {
-        public static final String EXTRA_FONT_SCALE = "fontScale";
         public static final String EXTRA_FONT_PIXEL_SIZE = "fontPixelSize";
         public static final String EXTRA_FONT_ACTIVITY_DPI = "fontActivityDpi";
     }

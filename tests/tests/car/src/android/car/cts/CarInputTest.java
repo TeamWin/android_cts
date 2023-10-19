@@ -50,6 +50,7 @@ import android.view.MotionEvent;
 
 import androidx.lifecycle.Lifecycle;
 import androidx.test.core.app.ActivityScenario;
+import androidx.test.filters.FlakyTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
@@ -68,6 +69,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 @RunWith(AndroidJUnit4.class)
+@FlakyTest(bugId = 279829443)
 public class CarInputTest extends AbstractCarTestCase {
     private static final String TAG = CarInputTest.class.getSimpleName();
     private static final long ACTIVITY_WAIT_TIME_OUT_MS = 10_000L;

@@ -1375,7 +1375,7 @@ public class JobThrottlingTest {
     private boolean isTestAppTempWhitelisted() throws Exception {
         final String output = mUiDevice.executeShellCommand("cmd deviceidle tempwhitelist").trim();
         for (String line : output.split("\n")) {
-            if (line.contains("UID=" + mTestPackageUid)) {
+            if (line.contains("UID=" + UserHandle.getAppId(mTestPackageUid))) {
                 return true;
             }
         }
@@ -1413,6 +1413,7 @@ public class JobThrottlingTest {
 
     private void tempWhitelistTestApp(long duration) throws Exception {
         mUiDevice.executeShellCommand("cmd deviceidle tempwhitelist -d " + duration
+                + " -u " + UserHandle.myUserId()
                 + " " + TEST_APP_PACKAGE);
     }
 
@@ -1453,7 +1454,9 @@ public class JobThrottlingTest {
     }
 
     private boolean removeTestAppFromTempWhitelist() throws Exception {
-        mUiDevice.executeShellCommand("cmd deviceidle tempwhitelist -r " + TEST_APP_PACKAGE);
+        mUiDevice.executeShellCommand("cmd deviceidle tempwhitelist"
+                + " -u " + UserHandle.myUserId()
+                + " -r " + TEST_APP_PACKAGE);
         return waitUntilTrue(SHELL_TIMEOUT, () -> !isTestAppTempWhitelisted());
     }
 

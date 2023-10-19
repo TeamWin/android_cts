@@ -379,9 +379,10 @@ public class WindowManagerStateHelper extends WindowManagerState {
         }, message);
     }
 
-    public void waitForFocusedActivity(final String msg, final ComponentName activityName) {
+    public boolean waitForFocusedActivity(final String msg, final ComponentName activityName) {
         final String activityComponentName = getActivityName(activityName);
-        waitFor(msg, wmState -> Objects.equals(activityComponentName, wmState.getFocusedActivity())
+        return waitFor(msg, wmState ->
+                Objects.equals(activityComponentName, wmState.getFocusedActivity())
                 && Objects.equals(activityComponentName, wmState.getFocusedApp()));
     }
 

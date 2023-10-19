@@ -32,8 +32,10 @@ import android.platform.test.annotations.AppModeFull;
 import android.service.voice.SandboxedDetectionInitializer;
 import android.service.voice.VisualQueryDetector;
 import android.util.Log;
+import android.voiceinteraction.common.Utils;
 import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
 import android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService;
+import android.voiceinteraction.cts.testcore.AssumptionCheckerRule;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -61,6 +63,11 @@ public class VisualQueryDetectorTest {
     protected final Context mContext = getInstrumentation().getTargetContext();
 
     private CtsBasicVoiceInteractionService mService;
+
+    @Rule
+    public AssumptionCheckerRule checkVisualQueryDetectionServiceEnabledRule =
+            new AssumptionCheckerRule(() -> Utils.SYSPROP_VISUAL_QUERY_SERVICE_ENABLED,
+            "Testing VisualQueryDetectionService requires enabling the feature");
 
     @Rule
     public VoiceInteractionServiceConnectedRule mConnectedRule =

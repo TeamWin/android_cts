@@ -53,10 +53,12 @@ public class LocalService extends Service {
     public static final int STOP_SELF_CODE = 12;
     public static final int STOP_SELF_RESULT_CODE = 13;
     public static final int STOP_SELF_SUCCESS_UNBIND_CODE = 14;
+    public static final int GET_ON_CREATE_CALLED_COUNT = 15;
 
     public static Context sServiceContext = null;
 
     private static final AtomicReference<String> sLastAttributionTag = new AtomicReference<>();
+    private static volatile int sOnCreateCount = 0;
 
     private IBinder mReportObject;
     private int mStartCount = 1;
@@ -105,6 +107,10 @@ public class LocalService extends Service {
                 case STOP_SELF_CODE:
                     stopSelf(mStartId);
                     return true;
+                case GET_ON_CREATE_CALLED_COUNT:
+                    data.enforceInterface(SERVICE_LOCAL);
+                    reply.writeInt(sOnCreateCount);
+                    return true;
                 default:
                     return super.onTransact(code, data, reply, flags);
             }
@@ -118,6 +124,7 @@ public class LocalService extends Service {
     public void onCreate() {
         super.onCreate();
         sLastAttributionTag.set(getAttributionTag());
+        sOnCreateCount++;
     }
 
     public static String getAndClearLastAttributionTag() {

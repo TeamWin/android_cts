@@ -17,9 +17,9 @@
 import json
 import logging
 import math
-import multiprocessing
 import os
 import sys
+import threading
 import time
 
 from matplotlib import pylab
@@ -105,7 +105,7 @@ def _collect_data(cam, fps, w, h, test_length, rot_rig, chart_dist,
         sensor_fusion_utils.ARDUINO_STRING)
     # send test cmd to Arduino until cmd returns properly
     sensor_fusion_utils.establish_serial_comm(serial_port)
-  p = multiprocessing.Process(
+  p = threading.Thread(
       target=sensor_fusion_utils.rotation_rig,
       args=(
           rot_rig['cntl'],

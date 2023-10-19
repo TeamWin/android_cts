@@ -30,10 +30,10 @@ public class AppWidgetConfirmPin extends Activity {
     private PinItemRequest mRequest;
 
     private BroadcastReceiver mReceiver;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         try {
             final LauncherApps launcherApps = getSystemService(LauncherApps.class);
             mRequest = launcherApps.getPinItemRequest(getIntent());

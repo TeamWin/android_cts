@@ -37,15 +37,17 @@ _CIRCLE_R = 2
 _CIRCLE_X = 0
 _CIRCLE_Y = 1
 _CIRCLISH_RTOL = 0.15  # contour area vs ideal circle area pi*((w+h)/4)**2
+_LENS_FACING_FRONT = 0
 _LINE_COLOR = (255, 0, 0)  # red
 _MAX_STR = 'max'
 _MIN_STR = 'min'
 _MIN_AREA_RATIO = 0.00015  # based on 2000/(4000x3000) pixels
 _MIN_CIRCLE_PTS = 25
-_MIN_SIZE = 640*480 # VGA
+_MIN_ZOOM_CHART_SCALING = 0.7
+_MIN_SIZE = 1280*720  # 720P
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
-_OFFSET_TOL = 5 # pixels
-_RADIUS_RTOL = 0.1 # 10% tolerance Video/Preview circle size
+_OFFSET_TOL = 5  # pixels
+_RADIUS_RTOL = 0.1  # 10% tolerance Video/Preview circle size
 _RECORDING_DURATION = 2  # seconds
 _ZOOM_COMP_MAX_THRESH = 1.15
 _ZOOM_MIN_THRESH = 2.0
@@ -85,7 +87,7 @@ def _extract_key_frame_from_recording(log_path, file_name):
   return np_image
 
 
-class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
+class PreviewVideoZoomMatchTest(its_base_test.ItsBaseTest):
   """Tests if preview matches video output when zooming.
 
   Preview and video are recorded while do_3a() iterate through
@@ -98,7 +100,7 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
   match in zoom factors.
   """
 
-  def test_preview_video_zoom(self):
+  def test_preview_video_zoom_match(self):
     video_test_data = {}
     preview_test_data = {}
     log_path = self.log_path
@@ -171,7 +173,6 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
 
         return video_file_name
 
-
       # Find zoom range
       z_range = props['android.control.zoomRatioRange']
 
@@ -183,10 +184,6 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
       )
       logging.debug('Testing zoomRatioRange: %s', str(z_range))
 
-      # Load chart for scene
-      its_session_utils.load_scene(
-          cam, props, self.scene, self.tablet, self.chart_distance)
-
       # Determine zoom factors
       z_min = z_range[0]
       camera_properties_utils.skip_unless(
@@ -197,6 +194,15 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
       else:
         zoom_ratios_to_be_tested.append(float(z_min * 2))
       logging.debug('Testing zoom ratios: %s', str(zoom_ratios_to_be_tested))
+
+      # Load chart for scene
+      if z_min > _MIN_ZOOM_CHART_SCALING:
+        its_session_utils.load_scene(
+            cam, props, self.scene, self.tablet, self.chart_distance)
+      else:
+        its_session_utils.load_scene(
+            cam, props, self.scene, self.tablet,
+            its_session_utils.CHART_DISTANCE_NO_SCALING)
 
       # Find supported preview/video sizes, and their smallest and common size
       supported_preview_sizes = cam.get_supported_preview_sizes(self.camera_id)
@@ -266,6 +272,24 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
             # Get key frames from the preview recording
             preview_img = _extract_key_frame_from_recording(
                 log_path, preview_file_name)
+
+            # If testing front camera, mirror preview image
+            # Opencv expects a numpy array but np.flip generates a 'view' which
+            # doesn't work with opencv. ndarray.copy forces copy instead of view
+            if props['android.lens.facing'] == _LENS_FACING_FRONT:
+              # Preview are flipped on device's natural orientation
+              # so for sensor orientation 90 or 270, it is up or down
+              # Sensor orientation 0 or 180 is left or right
+              if props['android.sensor.orientation'] in (90, 270):
+                preview_img = np.ndarray.copy(np.flipud(preview_img))
+                logging.debug(
+                    'Found sensor orientation %d, flipping up down',
+                    props['android.sensor.orientation'])
+              else:
+                preview_img = np.ndarray.copy(np.fliplr(preview_img))
+                logging.debug(
+                    'Found sensor orientation %d, flipping left right',
+                    props['android.sensor.orientation'])
 
             # Find the center circle in preview img
             preview_img_name = (f'Preview_zoomRatio_{z}_{size}_circle.png')

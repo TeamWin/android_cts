@@ -16,8 +16,6 @@
 
 package android.provider.cts.contacts;
 
-import junit.framework.Assert;
-
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
 import android.provider.ContactsContract;
@@ -27,10 +25,17 @@ import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.DisplayNameSources;
 import android.provider.ContactsContract.RawContacts;
+import android.provider.ContactsContract.SimAccount;
 import android.provider.cts.contacts.ContactsContract_TestDataBuilder.TestContact;
 import android.provider.cts.contacts.ContactsContract_TestDataBuilder.TestData;
 import android.provider.cts.contacts.ContactsContract_TestDataBuilder.TestRawContact;
 import android.test.AndroidTestCase;
+
+import com.android.compatibility.common.util.SystemUtil;
+
+import junit.framework.Assert;
+
+import java.util.List;
 
 /**
  * CTS tests for {@link DisplayNameSources#STRUCTURED_PHONETIC_NAME}.
@@ -38,6 +43,8 @@ import android.test.AndroidTestCase;
 public class ContactsContract_StructuredPhoneticName extends AndroidTestCase {
     private ContentResolver mResolver;
     private ContactsContract_TestDataBuilder mBuilder;
+    private SimAccount mTestAccount;
+    private final int mSimSlotIndex = 0;
 
     @Override
     protected void setUp() throws Exception {
@@ -46,19 +53,28 @@ public class ContactsContract_StructuredPhoneticName extends AndroidTestCase {
         ContentProviderClient provider =
                 mResolver.acquireContentProviderClient(ContactsContract.AUTHORITY);
         mBuilder = new ContactsContract_TestDataBuilder(provider);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            ContactsContract.SimContacts.addSimAccount(mResolver, "sim_acc",
+                    "sim_type", mSimSlotIndex, ContactsContract.SimAccount.ADN_EF_TYPE);
+            List<SimAccount> simAccounts = ContactsContract.SimContacts.getSimAccounts(mResolver);
+            mTestAccount = simAccounts.get(0); // only a single account added
+        });
     }
 
     @Override
     protected void tearDown() throws Exception {
         mBuilder.cleanup();
         super.tearDown();
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            ContactsContract.SimContacts.removeSimAccounts(mResolver, mSimSlotIndex);
+        });
     }
 
     public void testPhoneticStructuredName() throws Exception {
         // Setup: contact with only phonetic name
         TestRawContact rawContact1 = mBuilder.newRawContact()
-                .with(RawContacts.ACCOUNT_TYPE, "test_account")
-                .with(RawContacts.ACCOUNT_NAME, "test_name")
+                .with(RawContacts.ACCOUNT_TYPE, mTestAccount.getAccountType())
+                .with(RawContacts.ACCOUNT_NAME, mTestAccount.getAccountName())
                 .insert();
         TestData name1 = rawContact1.newDataRow(StructuredName.CONTENT_ITEM_TYPE)
                 .with(StructuredName.PHONETIC_FAMILY_NAME, "phonetic name")
@@ -81,8 +97,8 @@ public class ContactsContract_StructuredPhoneticName extends AndroidTestCase {
     public void testPhoneticStructuredName_phoneticPriority1() throws Exception {
         // Setup: one raw contact has a complex phonetic name and the other a simple given name
         TestRawContact rawContact1 = mBuilder.newRawContact()
-                .with(RawContacts.ACCOUNT_TYPE, "test_account")
-                .with(RawContacts.ACCOUNT_NAME, "test_name")
+                .with(RawContacts.ACCOUNT_TYPE, mTestAccount.getAccountType())
+                .with(RawContacts.ACCOUNT_NAME, mTestAccount.getAccountName())
                 .insert();
         TestData name1 = rawContact1.newDataRow(StructuredName.CONTENT_ITEM_TYPE)
                 .with(StructuredName.GIVEN_NAME, "name")
@@ -91,8 +107,8 @@ public class ContactsContract_StructuredPhoneticName extends AndroidTestCase {
         name1.load();
 
         TestRawContact rawContact2 = mBuilder.newRawContact()
-                .with(RawContacts.ACCOUNT_TYPE, "test_account")
-                .with(RawContacts.ACCOUNT_NAME, "test_name")
+                .with(RawContacts.ACCOUNT_TYPE, mTestAccount.getAccountType())
+                .with(RawContacts.ACCOUNT_NAME, mTestAccount.getAccountName())
                 .insert();
         TestData name2 = rawContact2.newDataRow(StructuredName.CONTENT_ITEM_TYPE)
                 .with(StructuredName.PHONETIC_FAMILY_NAME, "name phonetic")
@@ -118,8 +134,8 @@ public class ContactsContract_StructuredPhoneticName extends AndroidTestCase {
     public void testPhoneticStructuredName_phoneticPriority2() throws Exception {
         // Setup: one raw contact has a complex phonetic name and the other a simple given name
         TestRawContact rawContact2 = mBuilder.newRawContact()
-                .with(RawContacts.ACCOUNT_TYPE, "test_account")
-                .with(RawContacts.ACCOUNT_NAME, "test_name")
+                .with(RawContacts.ACCOUNT_TYPE, mTestAccount.getAccountType())
+                .with(RawContacts.ACCOUNT_NAME, mTestAccount.getAccountName())
                 .insert();
         TestData name2 = rawContact2.newDataRow(StructuredName.CONTENT_ITEM_TYPE)
                 .with(StructuredName.PHONETIC_FAMILY_NAME, "name phonetic")
@@ -128,8 +144,8 @@ public class ContactsContract_StructuredPhoneticName extends AndroidTestCase {
         name2.load();
 
         TestRawContact rawContact1 = mBuilder.newRawContact()
-                .with(RawContacts.ACCOUNT_TYPE, "test_account")
-                .with(RawContacts.ACCOUNT_NAME, "test_name")
+                .with(RawContacts.ACCOUNT_TYPE, mTestAccount.getAccountType())
+                .with(RawContacts.ACCOUNT_NAME, mTestAccount.getAccountName())
                 .insert();
         TestData name1 = rawContact1.newDataRow(StructuredName.CONTENT_ITEM_TYPE)
                 .with(StructuredName.GIVEN_NAME, "name")

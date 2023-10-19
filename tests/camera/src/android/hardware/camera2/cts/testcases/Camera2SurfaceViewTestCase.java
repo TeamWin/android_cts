@@ -673,7 +673,7 @@ public class Camera2SurfaceViewTestCase extends Camera2ParameterizedTestCase {
      * @param size The preview size to be updated.
      */
     protected void updatePreviewSurface(Size size) {
-        if (size.equals(mPreviewSize) && mPreviewSurface != null) {
+        if (size.equals(mPreviewSize) && mPreviewSurface != null && mPreviewSurface.isValid()) {
             Log.w(TAG, "Skipping update preview surface size...");
             return;
         }

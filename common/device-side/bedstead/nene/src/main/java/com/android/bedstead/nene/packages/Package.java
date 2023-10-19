@@ -66,6 +66,7 @@ import com.android.bedstead.nene.permissions.Permissions;
 import com.android.bedstead.nene.roles.RoleContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Poll;
+import com.android.bedstead.nene.utils.Retry;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
@@ -715,16 +716,20 @@ public final class Package {
 
             PackageManager userPackageManager =
                     TestApis.context().androidContextAsUser(user).getPackageManager();
-
+            boolean shouldCheckPreviousProcess = runningProcess() != null;
             // In most cases this should work first time, however if a user restriction has been
             // recently removed we may need to retry
+
+            int previousPid = shouldCheckPreviousProcess ? runningProcess().pid() : -1;
+
             Poll.forValue("Application flag", () -> {
                 userActivityManager.forceStopPackage(mPackageName);
 
-                return userPackageManager.getPackageInfo(mPackageName, PackageManager.GET_META_DATA)
-                        .applicationInfo.flags;
-            })
-                    .toMeet(flag -> (flag & FLAG_STOPPED) == FLAG_STOPPED)
+                return userPackageManager.getPackageInfo(mPackageName,
+                            PackageManager.GET_META_DATA)
+                            .applicationInfo.flags;
+            }).toMeet(flag -> !shouldCheckPreviousProcess || (flag & FLAG_STOPPED) == FLAG_STOPPED
+                            ||  previousPid != runningProcess().pid())
                     .errorOnFail("Expected application flags to contain FLAG_STOPPED ("
                             + FLAG_STOPPED + ")")
                     .await();
@@ -952,24 +957,48 @@ public final class Package {
     public RoleContext setAsRoleHolder(String role, UserReference user) {
         try (PermissionContext p = TestApis.permissions().withPermission(
                 MANAGE_ROLE_HOLDERS, INTERACT_ACROSS_USERS_FULL)) {
-            DefaultBlockingCallback<Boolean> blockingCallback = new DefaultBlockingCallback<>();
 
-            sRoleManager.addRoleHolderAsUser(
-                    role,
-                    mPackageName,
-                    /* flags= */ 0,
-                    user.userHandle(),
-                    TestApis.context().instrumentedContext().getMainExecutor(),
-                    blockingCallback::triggerCallback);
+            Retry.logic(() -> {
+                TestApis.logcat().clear();
+                DefaultBlockingCallback<Boolean> blockingCallback = new DefaultBlockingCallback<>();
 
-            boolean success = blockingCallback.await();
-            if (!success) {
-                fail("Could not set role holder of " + role + ".");
-            }
+                sRoleManager.addRoleHolderAsUser(
+                        role,
+                        mPackageName,
+                        /* flags= */ 0,
+                        user.userHandle(),
+                        TestApis.context().instrumentedContext().getMainExecutor(),
+                        blockingCallback::triggerCallback);
+
+                boolean success = blockingCallback.await();
+                if (!success) {
+                    fail("Could not set role holder of " + role + "." + " Relevant logcat: "
+                            + TestApis.logcat().dump((line) -> line.contains(role)));
+                }
+                if (!TestApis.roles().getRoleHoldersAsUser(role, user).contains(packageName())) {
+                    fail("addRoleHolderAsUser returned true but did not add role holder. "
+                            + "Relevant logcat: " + TestApis.logcat().dump(
+                                    (line) -> line.contains(role)));
+                }
+            }).terminalException(e -> {
+                // Terminal unless we see logcat output indicating it might be temporary
+                var logcat = TestApis.logcat()
+                        .dump(l -> l.contains("Error calling onAddRoleHolder()"));
+                if (!logcat.isEmpty()) {
+                    // On low end devices - this can happen when the broadcast queue is full
+                    try {
+                        Thread.sleep(10_000);
+                    } catch (InterruptedException ex) {
+                        return true;
+                    }
+
+                    return false;
+                }
+
+                return true;
+            }).runAndWrapException();
 
             return new RoleContext(role, this, user);
-        } catch (InterruptedException e) {
-            throw new NeneException("Error waiting for setting role holder callback " + role, e);
         }
     }
 
@@ -988,23 +1017,45 @@ public final class Package {
     public void removeAsRoleHolder(String role, UserReference user) {
         try (PermissionContext p = TestApis.permissions().withPermission(
                 MANAGE_ROLE_HOLDERS)) {
-            DefaultBlockingCallback<Boolean> blockingCallback = new DefaultBlockingCallback<>();
-            sRoleManager.removeRoleHolderAsUser(
-                    role,
-                    mPackageName,
-                    /* flags= */ 0,
-                    user.userHandle(),
-                    TestApis.context().instrumentedContext().getMainExecutor(),
-                    blockingCallback::triggerCallback);
-            TestApis.roles().setBypassingRoleQualification(false);
+            Retry.logic(() -> {
+                TestApis.logcat().clear();
+                DefaultBlockingCallback<Boolean> blockingCallback = new DefaultBlockingCallback<>();
+                sRoleManager.removeRoleHolderAsUser(
+                        role,
+                        mPackageName,
+                        /* flags= */ 0,
+                        user.userHandle(),
+                        TestApis.context().instrumentedContext().getMainExecutor(),
+                        blockingCallback::triggerCallback);
+                TestApis.roles().setBypassingRoleQualification(false);
 
-            boolean success = blockingCallback.await();
-            if (!success) {
-                fail("Failed to clear the role holder of "
-                        + role + ".");
-            }
-        } catch (InterruptedException e) {
-            throw new NeneException("Error while clearing role holder " + role, e);
+                boolean success = blockingCallback.await();
+                if (!success) {
+                    fail("Failed to clear the role holder of "
+                            + role + ".");
+                }
+                if (TestApis.roles().getRoleHoldersAsUser(role, user).contains(packageName())) {
+                    fail("removeRoleHolderAsUser returned true but did not remove role holder. "
+                            + "Relevant logcat: " + TestApis.logcat().dump(
+                                    (line) -> line.contains(role)));
+                }
+            }).terminalException(e -> {
+                // Terminal unless we see logcat output indicating it might be temporary
+                var logcat = TestApis.logcat()
+                        .dump(l -> l.contains("Error calling onRemoveRoleHolder()"));
+                if (!logcat.isEmpty()) {
+                    // On low end devices - this can happen when the broadcast queue is full
+                    try {
+                        Thread.sleep(10_000);
+                    } catch (InterruptedException ex) {
+                        return true;
+                    }
+
+                    return false;
+                }
+
+                return true;
+            }).runAndWrapException();
         }
     }
 

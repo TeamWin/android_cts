@@ -1826,4 +1826,11 @@ public class MockImeSession implements AutoCloseable {
     public ImeCommand callGetCurrentWindowMetricsBounds() {
         return callCommandInternal("getCurrentWindowMetricsBounds", new Bundle());
     }
+
+    @NonNull
+    public ImeCommand callSetImeCaptionBarVisible(boolean visible) {
+        final Bundle params = new Bundle();
+        params.putBoolean("visible", visible);
+        return callCommandInternal("setImeCaptionBarVisible", params);
+    }
 }

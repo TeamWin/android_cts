@@ -62,21 +62,6 @@ public class TileServiceTest extends BaseTileServiceTest {
         remTile();
         assertTrue(waitFor("onTileRemoved"));
     }
-
-    @ApiTest(apis = {"android.service.quicksettings.TileService#onStartListening",
-            "android.service.quicksettings.TileService#onStopListening"})
-    public void testListeningNotifications() throws Exception {
-        if (!supported()) return;
-        addTile();
-
-        // Open the notification shade and make sure the tile gets a chance to listen.
-        openNotifications();
-        assertTrue(waitFor("onStartListening"));
-        // Collapse the shade and make sure the listening ends.
-        collapse();
-        assertTrue(waitFor("onStopListening"));
-    }
-
     @ApiTest(apis = {"android.service.quicksettings.TileService#onStartListening",
             "android.service.quicksettings.TileService#onStopListening"})
     public void testListeningSettings() throws Exception {

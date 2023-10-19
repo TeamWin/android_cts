@@ -18,11 +18,9 @@ package android.server.wm;
 
 import android.app.Activity;
 import android.app.Application;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Point;
@@ -31,9 +29,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.Message;
+import android.os.Messenger;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.Process;
+import android.os.RemoteException;
 import android.os.SystemClock;
 import android.server.wm.TestJournalProvider.TestJournalClient;
 import android.util.ArrayMap;
@@ -77,6 +78,7 @@ public final class CommandSession {
 
     static final String KEY_FORWARD = EXTRA_PREFIX + "key_forward";
 
+    private static final String KEY_MESSENGER = EXTRA_PREFIX + "key_messenger";
     private static final String KEY_CALLBACK_HISTORY = EXTRA_PREFIX + "key_callback_history";
     private static final String KEY_CLIENT_ID = EXTRA_PREFIX + "key_client_id";
     private static final String KEY_COMMAND = EXTRA_PREFIX + "key_command";
@@ -175,6 +177,7 @@ public final class CommandSession {
         private String mPendingCommand;
         private boolean mFinished;
         private Intent mOriginalLaunchIntent;
+        private Messenger mHostMessenger;
 
         ActivitySession(ActivitySessionClient client, boolean requireReply) {
             mClient = client;
@@ -258,13 +261,24 @@ public final class CommandSession {
             if (mFinished) {
                 throw new IllegalStateException("The session is finished");
             }
+            if (!retrieveHostMessenger()) {
+                throw new IllegalStateException(mHostId + " is not ready yet");
+            }
 
             final Intent intent = new Intent(mHostId);
             if (data != null) {
                 intent.putExtras(data);
             }
             intent.putExtra(KEY_COMMAND, command);
-            mClient.mContext.sendBroadcast(intent);
+            final Message msg = new Message();
+            msg.obj = intent;
+            try {
+                mHostMessenger.send(msg);
+            } catch (RemoteException e) {
+                Log.i(TAG, mClient.mClientId + " failed to send " + commandIntentToString(intent)
+                        + " to " + mHostId, e);
+                return;
+            }
             if (DEBUG) {
                 Log.i(TAG, mClient.mClientId + " sends " + commandIntentToString(intent)
                         + " to " + mHostId);
@@ -291,6 +305,12 @@ public final class CommandSession {
 
             sendCommand(command, data);
             return waitReply();
+        }
+
+        /** Called when a host activity is started with an intent containing COMMAND_WAIT_IDLE. */
+        void waitForHostReady() {
+            waitReply();
+            retrieveHostMessenger();
         }
 
         private Bundle waitReply() {
@@ -321,13 +341,33 @@ public final class CommandSession {
             }
         }
 
+        @Override
+        public String toString() {
+            return "ActivitySession{client=" + mClient.mClientId + " host=" + mHostId + "}";
+        }
+
         /** Finish the activity that associates with this session. */
         public void finish() {
             if (!mFinished) {
-                sendCommand(COMMAND_FINISH);
+                if (retrieveHostMessenger()) {
+                    sendCommand(COMMAND_FINISH);
+                } else {
+                    Log.w(TAG, "Ignore unreachable finish request from " + mClient.mClientId);
+                }
                 mClient.mSessions.remove(mHostId);
                 mFinished = true;
             }
+        }
+
+        private boolean retrieveHostMessenger() {
+            if (mHostMessenger != null) {
+                return true;
+            }
+            final Bundle data = TestJournalProvider.TestJournalContainer.takeResidentData(mHostId);
+            if (data != null) {
+                mHostMessenger = data.getParcelable(KEY_MESSENGER, Messenger.class);
+            }
+            return mHostMessenger != null;
         }
 
         private static class Response {
@@ -390,7 +430,7 @@ public final class CommandSession {
     }
 
     /** Created by test case to control testing activity that implements the session protocol. */
-    public static class ActivitySessionClient extends BroadcastReceiver implements AutoCloseable {
+    public static class ActivitySessionClient implements AutoCloseable, Handler.Callback {
         private final Context mContext;
         private final String mClientId;
         private final HandlerThread mThread;
@@ -402,9 +442,11 @@ public final class CommandSession {
             mClientId = generateId("testcase", this);
             mThread = new HandlerThread(mClientId);
             mThread.start();
-            context.registerReceiver(this, new IntentFilter(mClientId),
-                    null /* broadcastPermission */, new Handler(mThread.getLooper()),
-                    Context.RECEIVER_EXPORTED);
+            final Bundle bundle = new Bundle();
+            // Publish the client messenger so the host (may be in another process) can access it.
+            bundle.putParcelable(KEY_MESSENGER,
+                    new Messenger(new Handler(mThread.getLooper(), this)));
+            TestJournalProvider.TestJournalContainer.putResidentData(mClientId, bundle);
         }
 
         /** Start the activity by the given intent and wait it becomes idle. */
@@ -431,7 +473,7 @@ public final class CommandSession {
             }
             mContext.startActivity(intent, options);
             if (waitIdle) {
-                session.waitReply();
+                session.waitForHostReady();
             }
             return session;
         }
@@ -467,7 +509,7 @@ public final class CommandSession {
 
             proxy.execute();
             if (waitIdle) {
-                session.waitReply();
+                session.waitForHostReady();
             }
             return session;
         }
@@ -496,7 +538,9 @@ public final class CommandSession {
         }
 
         @Override
-        public void onReceive(Context context, Intent intent) {
+        public boolean handleMessage(Message message) {
+            final Intent intent = (Intent) message.obj;
+            intent.setExtrasClassLoader(mContext.getClassLoader());
             final ActivitySession session = mSessions.get(intent.getStringExtra(KEY_HOST_ID));
             if (DEBUG) Log.i(TAG, mClientId + " receives " + commandIntentToString(intent));
             if (session != null) {
@@ -504,34 +548,22 @@ public final class CommandSession {
             } else {
                 Log.w(TAG, "No available session for " + commandIntentToString(intent));
             }
-        }
-
-        /** Complete cleanup with finishing all associated activities. */
-        @Override
-        public void close() {
-            close(true /* finishSession */);
-        }
-
-        /** Cleanup except finish associated activities. */
-        public void closeAndKeepSession() {
-            close(false /* finishSession */);
+            return true;
         }
 
         /**
-         * Closes this client. Once a client is closed, all methods on it will throw an
+         * Complete cleanup with finishing all associated activities.
+         * Once a client is closed, all methods on it will throw an
          * IllegalStateException and all responses from host are ignored.
-         *
-         * @param finishSession Whether to finish activities launched from this client.
          */
-        public void close(boolean finishSession) {
+        @Override
+        public void close() {
             ensureNotClosed();
             mClosed = true;
-            if (finishSession) {
-                for (int i = mSessions.size() - 1; i >= 0; i--) {
-                    mSessions.valueAt(i).finish();
-                }
+            for (int i = mSessions.size() - 1; i >= 0; i--) {
+                mSessions.valueAt(i).finish();
             }
-            mContext.unregisterReceiver(this);
+            TestJournalProvider.TestJournalContainer.takeResidentData(mClientId);
             mThread.quit();
         }
     }
@@ -545,25 +577,29 @@ public final class CommandSession {
     }
 
     /** The host receives command from the test client. */
-    public static class ActivitySessionHost extends BroadcastReceiver {
+    static class ActivitySessionHost extends Handler {
         private final Context mContext;
         private final String mClientId;
         private final String mHostId;
+        private final Messenger mClient;
         private CommandReceiver mCallback;
         /** The intents received when the host activity is relaunching. */
         private ArrayList<Intent> mPendingIntents;
 
         ActivitySessionHost(Context context, String hostId, String clientId,
-                CommandReceiver callback) {
+                Messenger client, CommandReceiver callback) {
+            super(Looper.getMainLooper());
             mContext = context;
             mHostId = hostId;
             mClientId = clientId;
             mCallback = callback;
-            context.registerReceiver(this, new IntentFilter(hostId), Context.RECEIVER_EXPORTED);
+            mClient = client;
         }
 
         @Override
-        public void onReceive(Context context, Intent intent) {
+        public void handleMessage(Message msg) {
+            final Intent intent = (Intent) msg.obj;
+            intent.setExtrasClassLoader(mContext.getClassLoader());
             if (DEBUG) {
                 Log.i(TAG, mHostId + "("
                         + (mCallback != null
@@ -590,7 +626,15 @@ public final class CommandSession {
             intent.putExtras(data);
             intent.putExtra(KEY_COMMAND, command);
             intent.putExtra(KEY_HOST_ID, mHostId);
-            mContext.sendBroadcast(intent);
+            final Message msg = new Message();
+            msg.obj = intent;
+            try {
+                mClient.send(msg);
+            } catch (RemoteException e) {
+                Log.e(TAG, mContext.getClass().getSimpleName() + " failed to reply "
+                        + msg.obj, e);
+                return;
+            }
             if (DEBUG) {
                 Log.i(TAG, mHostId + "(" + mContext.getClass().getSimpleName()
                         + ") replies " + commandIntentToString(intent) + " to " + mClientId);
@@ -605,10 +649,6 @@ public final class CommandSession {
                 mPendingIntents = null;
             }
             mCallback = callback;
-        }
-
-        void destroy() {
-            mContext.unregisterReceiver(this);
         }
     }
 
@@ -681,18 +721,16 @@ public final class CommandSession {
         private static CommandStorage sCommandStorage;
         private ActivitySessionHost mReceiver;
 
-        /** The subclasses can disable the test journal client if its information is not used. */
-        protected boolean mUseTestJournal = true;
         protected TestJournalClient mTestJournalClient;
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            if (mUseTestJournal) {
-                mTestJournalClient = TestJournalClient.create(this /* context */,
-                        getComponentName());
-            }
+            mTestJournalClient = createTestJournalClient();
 
+            // The initial communication protocol can only be based on primitive type data in
+            // intent because it needs to support the launch from shell command. Such as it is
+            // unable to put a Binder in the intent via shell command.
             final String hostId = getIntent().getStringExtra(KEY_HOST_ID);
             final String clientId = getIntent().getStringExtra(KEY_CLIENT_ID);
             if (hostId != null && clientId != null) {
@@ -704,8 +742,24 @@ public final class CommandSession {
                     mReceiver = (ActivitySessionHost) receiver;
                     mReceiver.setCallback(this);
                 } else {
+                    if (mTestJournalClient == null) {
+                        throw new RuntimeException("The session required TestJournalClient");
+                    }
+                    // The client should publish its messenger so this activity can reply data to
+                    // the client.
+                    final Bundle extras = mTestJournalClient.getResidentExtras(clientId);
+                    final Messenger client = extras != null
+                            ? extras.getParcelable(KEY_MESSENGER, Messenger.class) : null;
+                    if (client == null) {
+                        throw new RuntimeException("The client must put its messenger");
+                    }
+                    // Publish the messenger of this activity so the client can use it to send
+                    // commands.
                     mReceiver = new ActivitySessionHost(getApplicationContext(), hostId, clientId,
-                            this /* callback */);
+                            client, this /* callback */);
+                    final Bundle hostMessenger = new Bundle();
+                    hostMessenger.putParcelable(KEY_MESSENGER, new Messenger(mReceiver));
+                    mTestJournalClient.putResidentExtras(hostId, hostMessenger);
                 }
             }
         }
@@ -722,7 +776,6 @@ public final class CommandSession {
             } else if (mReceiver != null) {
                 // Clean up for real removal.
                 sCommandStorage.clear(getHostId());
-                mReceiver.destroy();
                 mReceiver = null;
             }
             if (mTestJournalClient != null) {
@@ -738,7 +791,8 @@ public final class CommandSession {
         @Override
         public final void receiveCommand(String command, Bundle data) {
             if (mReceiver == null) {
-                throw new IllegalStateException("The receiver is not created");
+                Log.e(TAG, "The receiver is not created");
+                return;
             }
             sCommandStorage.add(getHostId(), data);
             handleCommand(command, data);
@@ -770,6 +824,10 @@ public final class CommandSession {
 
         protected boolean hasPendingCommand(String command) {
             return mReceiver != null && sCommandStorage.containsCommand(getHostId(), command);
+        }
+
+        protected TestJournalClient createTestJournalClient() {
+            return TestJournalClient.create(this /* context */, getComponentName());
         }
 
         /** Returns null means this activity does support the session protocol. */

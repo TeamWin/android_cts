@@ -19,6 +19,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical"
+                android:keepScreenOn="true"
                 style="@style/RootLayoutPadding"
                 tools:ignore="Autofill">
 
@@ -48,6 +49,12 @@
                 android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
+
+                <CheckBox
+                    android:id="@+id/is_manual_pass"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/is_manual_pass_text"/>
 
                 <Button
                     android:id="@+id/start_test"

@@ -21,7 +21,6 @@ import static android.content.res.Configuration.UI_MODE_TYPE_MASK;
 import static android.content.res.Configuration.UI_MODE_TYPE_NORMAL;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.deskresources.Components.DESK_RESOURCES_ACTIVITY;
-import static android.view.Surface.ROTATION_270;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
@@ -29,8 +28,10 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.platform.test.annotations.Presubmit;
+import android.view.Surface;
 
 import org.junit.Test;
 
@@ -47,12 +48,14 @@ public class DockConfigChangeTests extends ActivityManagerTestBase {
         // enabled.
         assumeTrue(getConfigSkipRelaunchOnDock());
 
-        // Set rotation to 270 first, since docking forces rotation to 270, causing an extra config
-        // change.
         RotationSession rotationSession = createManagedRotationSession();
-        rotationSession.set(ROTATION_270, /*waitDeviceRotation=*/ true);
 
         launchActivity(TEST_ACTIVITY);
+        waitAndAssertResumedActivity(TEST_ACTIVITY, "Activity must be resumed");
+
+        // Set rotation to the same rotation as the device would be rotated to after docking. This
+        // prevents an extraneous config change from the device rotating when docked/undocked.
+        rotateToDockRotation(rotationSession);
         waitAndAssertResumedActivity(TEST_ACTIVITY, "Activity must be resumed");
         separateTestJournal();
 
@@ -80,12 +83,14 @@ public class DockConfigChangeTests extends ActivityManagerTestBase {
         // enabled.
         assumeTrue(getConfigSkipRelaunchOnDock());
 
-        // Set rotation to 270 first, since docking forces rotation to 270, causing an extra config
-        // change.
         RotationSession rotationSession = createManagedRotationSession();
-        rotationSession.set(ROTATION_270, /*waitDeviceRotation=*/ true);
 
         launchActivity(DESK_RESOURCES_ACTIVITY);
+        waitAndAssertResumedActivity(DESK_RESOURCES_ACTIVITY, "Activity must be resumed");
+
+        // Set rotation to the same rotation as the device would be rotated to after docking. This
+        // prevents an extraneous config change from the device rotating when docked/undocked.
+        rotateToDockRotation(rotationSession);
         waitAndAssertResumedActivity(DESK_RESOURCES_ACTIVITY, "Activity must be resumed");
         separateTestJournal();
 
@@ -114,6 +119,43 @@ public class DockConfigChangeTests extends ActivityManagerTestBase {
                 Resources.getSystem().getIdentifier("config_skipActivityRelaunchWhenDocking",
                         "bool", "android"));
     }
+
+    /**
+     * Rotates the device to the same rotation as it would rotate to when docked.
+     *
+     * Dock rotation is read from config_deskDockRotation.
+     */
+    void rotateToDockRotation(RotationSession rotationSession) {
+        int rotation = rotationDegreesToConst(mContext.getResources().getInteger(
+                Resources.getSystem().getIdentifier("config_deskDockRotation",
+                        "integer", "android")));
+        if (rotation == -1) {
+            // -1 could come from the const itself, which means no rotation on dock, or from
+            // rotationDegreesToConst, which means we got an unexpected value from the resource.
+            return;
+        }
+        rotationSession.set(rotation);
+    }
+
+    /**
+     * Converts from a rotation in degrees to a {@link Surface.Rotation} constant.
+     *
+     * Returns -1 if a value that doesn't match a {@link Surface.Rotation} constant is provided.
+     */
+    private int rotationDegreesToConst(int rotationDegrees) {
+        switch (rotationDegrees) {
+            case 0:
+                return Surface.ROTATION_0;
+            case 90:
+                return Surface.ROTATION_90;
+            case 180:
+                return Surface.ROTATION_180;
+            case 270:
+                return Surface.ROTATION_270;
+        }
+        return -1;
+    }
+
 
     private class DockTestSession implements AutoCloseable {
         private void dock() {

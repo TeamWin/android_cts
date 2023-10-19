@@ -93,7 +93,6 @@ public class ASurfaceControlBackPressureTest {
     public void setup() {
         mActivity = mActivityRule.getActivity();
         mActivity.setLogicalDisplaySize(getLogicalDisplaySize());
-        mActivity.setMinimumCaptureDurationMs(1000);
         assumeFalse(mActivity.isOnWatch());
     }
 
@@ -236,18 +235,16 @@ public class ASurfaceControlBackPressureTest {
             }
         };
 
-        MultiFramePixelChecker PixelChecker = new MultiFramePixelChecker(colors) {
+        MultiFramePixelChecker pixelChecker = new MultiFramePixelChecker(colors) {
             @Override
             public boolean checkPixels(int pixelCount, int width, int height) {
                 return pixelCount > 2000 && pixelCount < 3000;
             }
         };
 
-        mActivity.verifyTest(new SurfaceControlTestCase(callback, null /* animation factory */,
-                        PixelChecker,
+        mActivity.verifyTest(new SurfaceControlTestCase(callback, pixelChecker,
                         DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                        DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                        true /* checkSurfaceViewBoundsOnly */),
+                        DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT),
                 mName);
     }
 
@@ -268,7 +265,7 @@ public class ASurfaceControlBackPressureTest {
             }
         };
 
-        MultiFramePixelChecker PixelChecker = new MultiFramePixelChecker(colors) {
+        MultiFramePixelChecker pixelChecker = new MultiFramePixelChecker(colors) {
             @Override
             public boolean checkPixels(int pixelCount, int width, int height) {
                 return pixelCount > 2000 && pixelCount < 3000;
@@ -276,11 +273,9 @@ public class ASurfaceControlBackPressureTest {
         };
 
         CapturedActivity.TestResult result = mActivity.runTest(new SurfaceControlTestCase(callback,
-                null /* animation factory */,
-                PixelChecker,
+                pixelChecker,
                 DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                true /* checkSurfaceViewBoundsOnly */));
+                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT));
 
         assertTrue(result.passFrames > 0);
 

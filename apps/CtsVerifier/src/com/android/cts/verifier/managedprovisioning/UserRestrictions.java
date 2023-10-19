@@ -60,7 +60,6 @@ public class UserRestrictions {
         UserManager.DISALLOW_AIRPLANE_MODE,
         UserManager.DISALLOW_CONFIG_SCREEN_TIMEOUT,
         UserManager.DISALLOW_CONFIG_BRIGHTNESS,
-        UserManager.DISALLOW_CELLULAR_2G,
     };
 
     private static final ArrayMap<String, UserRestrictionItem> USER_RESTRICTION_ITEMS;
@@ -90,7 +89,6 @@ public class UserRestrictions {
             R.string.disallow_airplane_mode,
             R.string.disallow_config_screen_timeout,
             R.string.disallow_config_brightness,
-            R.string.disallow_cellular_2g,
         };
 
         final int[] restrictionActions = new int[] {
@@ -118,7 +116,6 @@ public class UserRestrictions {
             R.string.disallow_airplane_mode_action,
             R.string.disallow_config_screen_timeout_action,
             R.string.disallow_config_brightness_action,
-            R.string.disallow_cellular_2g_action,
         };
 
         final String[] settingsIntentActions = new String[] {
@@ -146,7 +143,6 @@ public class UserRestrictions {
             Settings.ACTION_AIRPLANE_MODE_SETTINGS,
             Settings.ACTION_DISPLAY_SETTINGS,
             Settings.ACTION_DISPLAY_SETTINGS,
-            Settings.ACTION_WIRELESS_SETTINGS,
         };
 
         if (RESTRICTION_IDS_FOR_POLICY_TRANSPARENCY.length != restrictionLabels.length
@@ -174,8 +170,7 @@ public class UserRestrictions {
                     UserManager.DISALLOW_USER_SWITCH,
                     UserManager.DISALLOW_CONFIG_PRIVATE_DNS,
                     UserManager.DISALLOW_MICROPHONE_TOGGLE,
-                    UserManager.DISALLOW_CAMERA_TOGGLE,
-                    UserManager.DISALLOW_CELLULAR_2G);
+                    UserManager.DISALLOW_CAMERA_TOGGLE);
 
     /**
      * Copied from UserRestrictionsUtils. User restrictions that cannot be set by profile owners
@@ -348,10 +343,6 @@ public class UserRestrictions {
                 return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
             case UserManager.DISALLOW_UNINSTALL_APPS:
                 return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
-            case UserManager.DISALLOW_CELLULAR_2G:
-                return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
-                        && tm.isRadioInterfaceCapabilitySupported(
-                        TelephonyManager.CAPABILITY_USES_ALLOWED_NETWORK_TYPES_BITMASK);
             default:
                 return true;
         }

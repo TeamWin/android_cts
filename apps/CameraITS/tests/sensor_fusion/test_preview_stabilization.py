@@ -14,8 +14,8 @@
 """Verify preview is stable during phone movement."""
 
 import logging
-import multiprocessing
 import os
+import threading
 import time
 
 from mobly import test_runner
@@ -74,7 +74,7 @@ def _collect_data(cam, tablet_device, video_size, rot_rig):
     servo_speed = _TABLET_SERVO_SPEED
   else:
     servo_speed = _ARDUINO_SERVO_SPEED
-  p = multiprocessing.Process(
+  p = threading.Thread(
       target=sensor_fusion_utils.rotation_rig,
       args=(
           rot_rig['cntl'],

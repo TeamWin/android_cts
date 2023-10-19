@@ -70,6 +70,12 @@ import java.util.Arrays;
  */
 @RunWith(Parameterized.class)
 public class CompatScaleTests extends ActivityManagerTestBase {
+    /**
+     * If application size is 1280, then Upscaling by 0.3 will make the surface 1280/0.3 = 4267.
+     * Some devices do not support this high resolution, so limiting Upscaling test case for
+     * scaling >= 0.5.
+     */
+    public static float MAX_UPSCALING_TESTED = 0.5f;
 
     @Parameterized.Parameters(name = "{0}")
     public static Iterable<Object[]> data() {
@@ -126,10 +132,12 @@ public class CompatScaleTests extends ActivityManagerTestBase {
                 runTestUpdateResourcesConfiguration(session.getActivitySession());
             }
 
-            // Now launch the same activity with upscaling *enabled*
-            try (var up = new CompatChangeCloseable("DOWNSCALED_INVERSE", PACKAGE_UNDER_TEST);
-                 var session = new BaseActivitySessionCloseable(ACTIVITY_UNDER_TEST)) {
-                runTestUpdateResourcesConfiguration(session.getActivitySession());
+            if (mCompatScale >= MAX_UPSCALING_TESTED) {
+                // Now launch the same activity with upscaling *enabled*
+                try (var up = new CompatChangeCloseable("DOWNSCALED_INVERSE", PACKAGE_UNDER_TEST);
+                     var session = new BaseActivitySessionCloseable(ACTIVITY_UNDER_TEST)) {
+                    runTestUpdateResourcesConfiguration(session.getActivitySession());
+                }
             }
         }
     }
@@ -188,15 +196,17 @@ public class CompatScaleTests extends ActivityManagerTestBase {
             test_scalesCorrectly_inCompatDownscalingMode();
             test_windowState_inCompatDownscalingMode();
 
-            // Now launch the same activity with upscaling *enabled* and get the sizes it reports
-            // and its Window state.
-            try (var up = new CompatChangeCloseable("DOWNSCALED_INVERSE", PACKAGE_UNDER_TEST);
-                 var session = new BaseActivitySessionCloseable(ACTIVITY_UNDER_TEST)) {
-                mAppSizesUpscaled = getActivityReportedSizes();
-                mWindowStateUpscaled = getPackageWindowState();
+            if (mCompatScale >= MAX_UPSCALING_TESTED) {
+                // Now launch the same activity with upscaling *enabled* and get the sizes it
+                // reports and its Window state.
+                try (var up = new CompatChangeCloseable("DOWNSCALED_INVERSE", PACKAGE_UNDER_TEST);
+                     var session = new BaseActivitySessionCloseable(ACTIVITY_UNDER_TEST)) {
+                    mAppSizesUpscaled = getActivityReportedSizes();
+                    mWindowStateUpscaled = getPackageWindowState();
+                }
+                test_scalesCorrectly_inCompatUpscalingMode();
+                test_windowState_inCompatUpscalingMode();
             }
-            test_scalesCorrectly_inCompatUpscalingMode();
-            test_windowState_inCompatUpscalingMode();
         }
 
     }
