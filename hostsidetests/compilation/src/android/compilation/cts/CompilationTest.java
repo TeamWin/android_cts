@@ -301,6 +301,26 @@ public class CompilationTest extends BaseHostJUnit4Test {
                 .isEqualTo(2);
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_USE_ART_SERVICE_V2)
+    public void testIgnoreDexoptProfile() throws Exception {
+        // Both the APK and the DM have a good profile, but ART Service should use none of them.
+        mUtils.installFromResourcesWithArgs(getAbi(), List.of("--ignore-dexopt-profile"),
+                List.of(Pair.create(TEST_APP_WITH_GOOD_PROFILE_RES, TEST_APP_DM_RES)));
+        String dump = mUtils.assertCommandSucceeds("pm art dump " + TEST_APP_PKG);
+        checkDexoptStatus(dump, Pattern.quote("base.apk"), "verify");
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_USE_ART_SERVICE_V2)
+    public void testIgnoreDexoptProfileNoValidation() throws Exception {
+        // Both the APK and the DM have a bad profile, but ART Service should not complain.
+        mUtils.installFromResourcesWithArgs(getAbi(), List.of("--ignore-dexopt-profile"),
+                List.of(Pair.create(TEST_APP_WITH_BAD_PROFILE_RES, TEST_APP_2_DM_RES)));
+        String dump = mUtils.assertCommandSucceeds("pm art dump " + TEST_APP_PKG);
+        checkDexoptStatus(dump, Pattern.quote("base.apk"), "verify");
+    }
+
     private void checkDexoptStatus(String dump, String dexfilePattern, String statusPattern) {
         // Matches the dump output typically being:
         //     /data/user/0/android.compilation.cts.statuscheckerapp/secondary.jar
