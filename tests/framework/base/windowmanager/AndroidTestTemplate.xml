@@ -72,7 +72,14 @@
         <option name="teardown-command"
                 value="settings put secure android.car.ENABLE_INITIAL_NOTICE_SCREEN_TO_USER 1" />
     </target_preparer>
-
+    <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
+        <option name="force-skip-system-props" value="true" />
+        <option name="restore-settings" value="true" />
+        <!-- settings put global verifier_engprod 1 -->
+        <option name="set-global-setting" key="verifier_engprod" value="1" />
+        <!-- settings put global verifier_verify_adb_installs 0 -->
+        <option name="set-global-setting" key="verifier_verify_adb_installs" value="0" />
+    </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
       <!-- Disable hidden API checking, see b/166236554 -->
         <option name="run-command" value="settings put global hidden_api_policy 1" />
