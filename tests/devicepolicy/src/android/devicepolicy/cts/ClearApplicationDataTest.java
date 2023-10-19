@@ -26,6 +26,7 @@ import com.android.bedstead.deviceadminapp.DeviceAdminApp;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
@@ -87,6 +88,7 @@ public final class ClearApplicationDataTest {
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#clearApplicationUserData")
     @Postsubmit(reason = "new test")
     @EnsureHasNoDpc
+    @RequireRunOnSystemUser
     @Test
     public void clearApplicationUserData_calledByDeviceOwner_testPackage_isCleared()
             throws Exception {
@@ -125,6 +127,7 @@ public final class ClearApplicationDataTest {
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#clearApplicationUserData")
     @Postsubmit(reason = "new test")
     @EnsureHasNoDpc
+    @RequireRunOnSystemUser
     @Test
     public void clearApplicationUserData_calledByDeviceOwner_activeAdmin_isNotCleared()
             throws Exception {
@@ -163,6 +166,7 @@ public final class ClearApplicationDataTest {
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#clearApplicationUserData")
     @Postsubmit(reason = "new test")
     @EnsureHasNoDpc
+    @RequireRunOnSystemUser
     @Test
     public void clearApplicationUserData_calledByDeviceOwner_deviceProvisioning_isNotCleared()
             throws Exception {
