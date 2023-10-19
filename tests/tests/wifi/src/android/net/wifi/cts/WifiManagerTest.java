@@ -6236,6 +6236,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
      * {@link WifiManager#getMaxMloStrLinkCount(Executor, Consumer)}.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @RequiresFlagsEnabled(Flags.FLAG_MLO_LINK_CAPABILITIES_INFO)
     @Test
     public void testMloCapabilities() throws Exception {
         AtomicInteger linkCount = new AtomicInteger();
@@ -6361,6 +6362,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     }
 
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @RequiresFlagsEnabled(Flags.FLAG_MLO_LINK_CAPABILITIES_INFO)
     @Test
     public void testGetSupportedSimultaneousBandCombinations() {
         AtomicInteger nEntries = new AtomicInteger();
