@@ -98,6 +98,10 @@ class UinputTouchDevice(
         injectEvent(intArrayOf(EV_SYN, SYN_REPORT, 0))
     }
 
+    fun delay(delayMs: Int) {
+        uinputDevice.injectDelay(delayMs)
+    }
+
     private fun readRawResource(context: Context): String {
         return context.resources
             .openRawResource(rawResource)
