@@ -271,6 +271,52 @@ public final class UserManagerTest {
                 .that(mUserManager.isUserForeground()).isFalse();
     }
 
+    /**
+     * Verify that isForegroundUserAdmin() returns true when called on the foreground initial
+     * user, which is an admin user, regardless of whether there are other users.
+     */
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#isForegroundUserAdmin"})
+    @RequiresFlagsEnabled(android.multiuser.Flags.FLAG_SUPPORT_COMMUNAL_PROFILE_NEXTGEN)
+    @RequireRunOnInitialUser
+    public void testIsForegroundUserAdminUser_admin() {
+        assertTrue(mUserManager.isForegroundUserAdmin());
+    }
+
+    /**
+     * Verify that isForegroundUserAdmin() returns the correct value when called on a
+     * (foreground) secondary user, which generally will not be an admin, regardless of the Context.
+     */
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#isForegroundUserAdmin"})
+    @RequiresFlagsEnabled(android.multiuser.Flags.FLAG_SUPPORT_COMMUNAL_PROFILE_NEXTGEN)
+    @RequireRunOnInitialUser
+    @EnsureHasAdditionalUser(installInstrumentedApp = TRUE)
+    public void testIsForegroundUserAdminUser_withAdditionalUser() {
+        UserReference additionalUserRef = sDeviceState.additionalUser();
+        final UserManager initialUm = mUserManager;
+        Context additionalUserContext;
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            additionalUserContext = getContextForUser(additionalUserRef.id());
+        }
+        final UserManager additionalUm = additionalUserContext.getSystemService(UserManager.class);
+
+        // The initial user is an admin, so we should get true (regardless of who is asking).
+        assertTrue(initialUm.isForegroundUserAdmin());
+        assertTrue(additionalUm.isForegroundUserAdmin());
+
+        additionalUserRef.switchTo();
+
+        // The additional user is most likely a non-admin, but just in case, let's be more general.
+        final boolean isAdditionalUserAdmin = additionalUserRef.isAdmin();
+        if (isAdditionalUserAdmin) {
+            Log.i(TAG, "WARNING: the additional user " + additionalUserRef.id() + " is admin");
+        }
+        assertThat(initialUm.isForegroundUserAdmin()).isEqualTo(isAdditionalUserAdmin);
+        assertThat(additionalUm.isForegroundUserAdmin()).isEqualTo(isAdditionalUserAdmin);
+    }
+
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserRunning"})
     @RequireRunOnInitialUser
