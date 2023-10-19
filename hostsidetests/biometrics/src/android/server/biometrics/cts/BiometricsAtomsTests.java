@@ -34,6 +34,7 @@ import android.hardware.biometrics.ClientEnum;
 import android.hardware.biometrics.ModalityEnum;
 import android.hardware.biometrics.SessionTypeEnum;
 
+import com.android.compatibility.common.util.NonApiTest;
 import com.android.os.AtomsProto;
 import com.android.os.StatsLog;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -69,6 +70,7 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
         ReportUtils.clearReports(getDevice());
     }
 
+    @NonApiTest(exemptionReasons = {}, justification = "METRIC")
     public void testEnrollAtom() throws Exception {
         if (!hasAidlBiometrics()) {
             CLog.w("Skipping test - no AIDL biometrics on device");
@@ -143,6 +145,7 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
         }
     }
 
+    @NonApiTest(exemptionReasons = {}, justification = "METRIC")
     public void testAuthenticateAtom() throws Exception {
         if (!hasAidlBiometrics()) {
             CLog.w("Skipping test - no AIDL biometrics on device");
