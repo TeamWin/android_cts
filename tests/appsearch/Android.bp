@@ -20,7 +20,7 @@ android_test {
     name: "CtsAppSearchTestCases",
     defaults: ["cts_defaults"],
     static_libs: [
-        "AppSearchTestUtils",
+        "CtsAppSearchTestUtils",
         "androidx.test.ext.junit",
         "androidx.test.rules",
         "compatibility-device-util-axt",
@@ -47,7 +47,7 @@ android_test_helper_app {
     name: "CtsAppSearchTestHelperA",
     defaults: ["cts_defaults"],
     static_libs: [
-        "AppSearchTestUtils",
+        "CtsAppSearchTestUtils",
         "androidx.test.ext.junit",
         "androidx.test.rules",
         "compatibility-device-util-axt",
@@ -74,7 +74,7 @@ android_test_helper_app {
     name: "CtsAppSearchTestHelperB",
     defaults: ["cts_defaults"],
     static_libs: [
-        "AppSearchTestUtils",
+        "CtsAppSearchTestUtils",
         "androidx.test.ext.junit",
         "androidx.test.rules",
         "compatibility-device-util-axt",
