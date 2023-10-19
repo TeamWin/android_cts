@@ -78,7 +78,9 @@ import android.permission.PermissionManager;
 import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.RequiresDevice;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.provider.Settings;
+import android.service.notification.Flags;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.ArrayMap;
@@ -996,6 +998,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
      */
     @LargeTest
     @RequiresDevice
+    @RequiresFlagsEnabled(Flags.FLAG_RANKING_UPDATE_ASHMEM)
     public void testRankingUpdateSentWithPressure() throws Exception {
         if (onCuttlefish()) {
             return;
