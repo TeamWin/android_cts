@@ -17,6 +17,7 @@
 package android.virtualdevice.cts;
 
 import static android.Manifest.permission.ACTIVITY_EMBEDDING;
+import static android.Manifest.permission.ADD_ALWAYS_UNLOCKED_DISPLAY;
 import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.Manifest.permission.READ_CLIPBOARD_IN_BACKGROUND;
@@ -82,6 +83,7 @@ import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.server.wm.LockScreenSession;
 import android.server.wm.WakeUpAndUnlockRule;
 import android.server.wm.WindowManagerStateHelper;
 import android.util.DisplayMetrics;
@@ -96,6 +98,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.Timeout;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -136,6 +139,7 @@ public class StreamedAppClipboardTest {
             .around(new AdoptShellPermissionsRule(
                     InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                     ACTIVITY_EMBEDDING,
+                    ADD_ALWAYS_UNLOCKED_DISPLAY,
                     ADD_TRUSTED_DISPLAY,
                     CREATE_VIRTUAL_DEVICE,
                     READ_CLIPBOARD_IN_BACKGROUND,
@@ -177,7 +181,9 @@ public class StreamedAppClipboardTest {
         mVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(
                         mFakeAssociationRule.getAssociationInfo().getId(),
-                        new VirtualDeviceParams.Builder().build());
+                        new VirtualDeviceParams.Builder()
+                                .setLockState(VirtualDeviceParams.LOCK_STATE_ALWAYS_UNLOCKED)
+                                .build());
 
         mImageReaderForVirtualDisplay = ImageReader.newInstance(/* width= */ 100, /* height= */ 100,
                 PixelFormat.RGBA_8888, /* maxImages= */ 1);
@@ -229,6 +235,46 @@ public class StreamedAppClipboardTest {
 
         // We shouldn't observe what was written to the VirtualDevice siloed clipboard
         assertThat(clipboard.hasPrimaryClip()).isFalse();
+    }
+
+    @Test
+    public void oneAppOnVirtualDevice_canWriteAndReadClipboard_hostDeviceIsLocked() {
+        assumeTrue(FeatureUtil.hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN));
+
+        ClipboardManager clipboard = mContext.createDeviceContext(
+                DEVICE_ID_DEFAULT).getSystemService(ClipboardManager.class);
+        clipboard.clearPrimaryClip();
+        assertThat(clipboard.hasPrimaryClip()).isFalse();
+
+        ClipData clipToSet = ClipData.newPlainText("some label", "Hello World");
+        final Intent intent = new Intent(ACTION_SET_AND_GET_CLIP)
+                .setComponent(CLIPBOARD_TEST_ACTIVITY)
+                .putExtra(EXTRA_SET_CLIP_DATA, clipToSet)
+                .putExtra(EXTRA_RESULT_RECEIVER, mResultReceiver);
+
+        try (LockScreenSession session = new LockScreenSession(
+                InstrumentationRegistry.getInstrumentation(), mWmState)) {
+            session.setLockCredential().gotoKeyguard();
+
+            launchAndAwaitActivityOnVirtualDisplay(intent);
+            tapOnDisplay(mVirtualDisplay.getDisplay());
+
+            ArgumentCaptor<Bundle> bundle = ArgumentCaptor.forClass(Bundle.class);
+            verify(mOnReceiveResultListener, timeout(EVENT_TIMEOUT_MS)).onReceiveResult(anyInt(),
+                    bundle.capture());
+
+            // Make sure the activity was able to read what it wrote itself.
+            ClipData clipData = bundle.getValue().getParcelable(EXTRA_GET_CLIP_DATA,
+                    ClipData.class);
+            assertThat(clipData).isNotNull();
+            assertThat(clipData.getItemCount()).isEqualTo(1);
+            assertThat(clipData.getDescription().getLabel().toString()).isEqualTo(
+                    clipToSet.getDescription().getLabel().toString());
+            assertThat(clipData.getItemAt(0).getText()).isEqualTo(clipToSet.getItemAt(0).getText());
+
+            // We shouldn't observe what was written to the VirtualDevice siloed clipboard
+            assertThat(clipboard.hasPrimaryClip()).isFalse();
+        }
     }
 
 
