@@ -1611,6 +1611,8 @@
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest"
+                       android:value="7.3.10/C-4-3,C-6-1,C-6-2,C-3-2,C-3-5,C-3-6" />
         </activity>
 
         <activity
@@ -1632,6 +1634,8 @@
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest"
+                       android:value="7.3.10/C-4-3,C-2-9" />
         </activity>
 
         <activity
