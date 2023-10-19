@@ -19,7 +19,7 @@ package android.content.pm.cts;
 import static android.content.Context.RECEIVER_EXPORTED;
 import static android.content.pm.Checksum.TYPE_PARTIAL_MERKLE_ROOT_1M_SHA256;
 import static android.content.pm.Checksum.TYPE_WHOLE_MERKLE_ROOT_4K_SHA256;
-import static android.content.pm.Flags.preventSdkLibApp;
+import static android.content.pm.Flags.disallowSdkLibsToBeApps;
 import static android.content.pm.Flags.sdkLibIndependence;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_INCREMENTAL;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_NONE;
@@ -893,7 +893,7 @@ public class PackageManagerShellCommandInstallTest {
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
 
         // No uid is assigned for SDK package
-        if (preventSdkLibApp()) {
+        if (disallowSdkLibsToBeApps()) {
             SystemUtil.runWithShellPermissionIdentity(() -> {
                 ApplicationInfo appInfo = getPackageManager().getApplicationInfo(TEST_SDK1_PACKAGE,
                         PackageManager.ApplicationInfoFlags.of(
@@ -915,7 +915,7 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_PREVENT_SDK_LIB_APP)
+    @RequiresFlagsEnabled(Flags.FLAG_DISALLOW_SDK_LIBS_TO_BE_APPS)
     public void testSdkInstallNoComponentRegistered() throws Exception {
         onBeforeSdkTests();
 
