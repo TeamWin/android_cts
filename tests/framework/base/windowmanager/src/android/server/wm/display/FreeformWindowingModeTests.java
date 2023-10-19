@@ -127,7 +127,6 @@ public class FreeformWindowingModeTests extends MultiDisplayTestBase {
     }
 
     @Test
-    @Ignore("b/303087543 Need to investigate the reason why this test doesn't work on tablets")
     public void testActivityLifeCycleOnResizeFreeformTask() throws Exception {
         launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FREEFORM);
         launchActivity(NO_RELAUNCH_ACTIVITY, WINDOWING_MODE_FREEFORM);
