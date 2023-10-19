@@ -23,6 +23,8 @@ import static android.net.wifi.sharedconnectivity.app.KnownNetwork.NETWORK_SOURC
 import static android.net.wifi.sharedconnectivity.app.NetworkProviderInfo.DEVICE_TYPE_PHONE;
 import static android.net.wifi.sharedconnectivity.app.NetworkProviderInfo.DEVICE_TYPE_TABLET;
 
+import static com.android.wifi.flags.Flags.networkProviderBatteryChargingStatus;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
@@ -77,7 +79,7 @@ public class KnownNetworkTest {
                         .setConnectionStrength(3)
                         .setBatteryPercentage(33);
 
-        if (SdkLevel.isAtLeastV()) {
+        if (networkProviderBatteryChargingStatus() && SdkLevel.isAtLeastV()) {
             builder.setBatteryCharging(false);
             builder1.setBatteryCharging(true);
         }

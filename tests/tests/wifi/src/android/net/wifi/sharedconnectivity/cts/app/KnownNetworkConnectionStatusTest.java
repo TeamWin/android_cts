@@ -22,6 +22,8 @@ import static android.net.wifi.sharedconnectivity.app.KnownNetworkConnectionStat
 import static android.net.wifi.sharedconnectivity.app.KnownNetworkConnectionStatus.CONNECTION_STATUS_SAVE_FAILED;
 import static android.net.wifi.sharedconnectivity.app.NetworkProviderInfo.DEVICE_TYPE_TABLET;
 
+import static com.android.wifi.flags.Flags.networkProviderBatteryChargingStatus;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
@@ -66,7 +68,7 @@ public class KnownNetworkConnectionStatusTest {
                         .setConnectionStrength(2)
                         .setBatteryPercentage(50);
 
-        if (SdkLevel.isAtLeastV()) {
+        if (networkProviderBatteryChargingStatus() && SdkLevel.isAtLeastV()) {
             builder.setBatteryCharging(false);
         }
 
