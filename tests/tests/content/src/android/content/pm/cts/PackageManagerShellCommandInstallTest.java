@@ -20,6 +20,7 @@ import static android.content.Context.RECEIVER_EXPORTED;
 import static android.content.pm.Checksum.TYPE_PARTIAL_MERKLE_ROOT_1M_SHA256;
 import static android.content.pm.Checksum.TYPE_WHOLE_MERKLE_ROOT_4K_SHA256;
 import static android.content.pm.Flags.preventSdkLibApp;
+import static android.content.pm.Flags.sdkLibIndependence;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_INCREMENTAL;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_NONE;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_STREAMING;
@@ -1007,8 +1008,13 @@ public class PackageManagerShellCommandInstallTest {
         onBeforeSdkTests();
 
         // Try to install without required SDK1.
-        installPackage(TEST_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-        assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
+        if (sdkLibIndependence()) {
+            installPackage(TEST_USING_SDK1);
+            assertTrue(isAppInstalled(TEST_SDK_USER_PACKAGE));
+        } else {
+            installPackage(TEST_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+            assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
+        }
 
         // Now install the required SDK1.
         installPackage(TEST_SDK1);
@@ -1040,7 +1046,12 @@ public class PackageManagerShellCommandInstallTest {
         }
 
         // Try to install without required SDK2.
-        installPackage(TEST_USING_SDK1_AND_SDK2, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        if (sdkLibIndependence()) {
+            installPackage(TEST_USING_SDK1_AND_SDK2);
+        } else {
+            installPackage(TEST_USING_SDK1_AND_SDK2,
+                    "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        }
 
         // Now install the required SDK2.
         installPackage(TEST_SDK2);
@@ -1086,8 +1097,13 @@ public class PackageManagerShellCommandInstallTest {
         uninstallPackageSilently(TEST_SDK1_PACKAGE);
 
         // Try to install without required SDK1.
-        installPackage(TEST_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-        assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
+        if (sdkLibIndependence()) {
+            installPackage(TEST_USING_SDK1);
+            assertTrue(isAppInstalled(TEST_SDK_USER_PACKAGE));
+        } else {
+            installPackage(TEST_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+            assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
+        }
 
         // Parent session
         String parentSessionId = createSession("--multi-package");
@@ -1249,12 +1265,22 @@ public class PackageManagerShellCommandInstallTest {
         onBeforeSdkTests();
 
         // Try to install without required SDK1.
-        installPackage(TEST_USING_SDK3, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-        assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
+        if (sdkLibIndependence()) {
+            installPackage(TEST_USING_SDK3);
+            assertTrue(isAppInstalled(TEST_SDK_USER_PACKAGE));
+        } else {
+            installPackage(TEST_USING_SDK3, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+            assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
+        }
 
         // Try to install SDK3 without required SDK1.
-        installPackage(TEST_SDK3_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-        assertFalse(isSdkInstalled(TEST_SDK3_NAME, 3));
+        if (sdkLibIndependence()) {
+            installPackage(TEST_SDK3_USING_SDK1);
+            assertTrue(isSdkInstalled(TEST_SDK3_NAME, 3));
+        } else {
+            installPackage(TEST_SDK3_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+            assertFalse(isSdkInstalled(TEST_SDK3_NAME, 3));
+        }
 
         // Now install the required SDK1.
         installPackage(TEST_SDK1);
@@ -1290,8 +1316,12 @@ public class PackageManagerShellCommandInstallTest {
         }
 
         // Try to install updated SDK3 without required SDK2.
-        installPackage(TEST_SDK3_USING_SDK1_AND_SDK2,
-                "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        if (sdkLibIndependence()) {
+            installPackage(TEST_SDK3_USING_SDK1_AND_SDK2);
+        } else {
+            installPackage(TEST_SDK3_USING_SDK1_AND_SDK2,
+                    "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        }
 
         // Now install the required SDK2.
         installPackage(TEST_SDK2);
@@ -1332,8 +1362,14 @@ public class PackageManagerShellCommandInstallTest {
         onBeforeSdkTests();
 
         // Try to install without required SDK1.
-        installPackage(TEST_SDK3_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-        assertFalse(isSdkInstalled(TEST_SDK3_NAME, 3));
+        if (sdkLibIndependence()) {
+            installPackage(TEST_SDK3_USING_SDK1);
+            assertTrue(isSdkInstalled(TEST_SDK3_NAME, 3));
+        } else {
+            installPackage(TEST_SDK3_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+            assertFalse(isSdkInstalled(TEST_SDK3_NAME, 3));
+        }
+
 
         // Now install the required SDK1.
         installPackage(TEST_SDK1);
@@ -1364,8 +1400,13 @@ public class PackageManagerShellCommandInstallTest {
         }
 
         // Try to install without required SDK2.
-        installPackage(TEST_SDK3_USING_SDK1_AND_SDK2,
-                "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+
+        if (sdkLibIndependence()) {
+            installPackage(TEST_SDK3_USING_SDK1_AND_SDK2);
+        } else {
+            installPackage(TEST_SDK3_USING_SDK1_AND_SDK2,
+                    "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        }
 
         // Now install the required SDK2.
         installPackage(TEST_SDK2);
