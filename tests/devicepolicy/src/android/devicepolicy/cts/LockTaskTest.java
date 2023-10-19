@@ -33,6 +33,7 @@ import static android.content.Intent.ACTION_DIAL;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
+import static android.content.pm.PackageManager.FEATURE_TELEPHONY_CALLING;
 import static android.devicepolicy.cts.utils.PolicyEngineUtils.FINANCED_DEVICE_CONTROLLER_ROLE;
 
 import static com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest.LESS_IMPORTANT;
@@ -998,7 +999,7 @@ public final class LockTaskTest {
     }
 
     @PolicyAppliesTest(policy = LockTaskFinance.class)
-    @RequireFeature(FEATURE_TELEPHONY)
+    @RequireFeature(FEATURE_TELEPHONY_CALLING)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     // Tests that the default dialer doesn't crash or otherwise misbehave in lock task mode
     public void launchDefaultDialerInLockTaskMode_launches() {
