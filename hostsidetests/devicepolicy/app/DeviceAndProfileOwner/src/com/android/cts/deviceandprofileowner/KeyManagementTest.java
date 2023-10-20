@@ -33,6 +33,7 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.keystore.cts.Attestation;
 import android.keystore.cts.AuthorizationList;
+import android.keystore.cts.util.TestUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Process;
@@ -293,11 +294,26 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         Attestation attestationRecord = Attestation.loadFromCertificate((X509Certificate) leaf);
         AuthorizationList teeAttestation = attestationRecord.getTeeEnforced();
         assertThat(teeAttestation).isNotNull();
-        assertThat(teeAttestation.getBrand()).isEqualTo(Build.BRAND);
-        assertThat(teeAttestation.getDevice()).isEqualTo(Build.DEVICE);
-        assertThat(teeAttestation.getProduct()).isEqualTo(Build.PRODUCT);
-        assertThat(teeAttestation.getManufacturer()).isEqualTo(Build.MANUFACTURER);
-        assertThat(teeAttestation.getModel()).isEqualTo(Build.MODEL);
+        final String platformReportedBrand =
+                TestUtils.isPropertyEmptyOrUnknown(Build.BRAND_FOR_ATTESTATION)
+                ? Build.BRAND : Build.BRAND_FOR_ATTESTATION;
+        assertThat(teeAttestation.getBrand()).isEqualTo(platformReportedBrand);
+        final String platformReportedDevice =
+                TestUtils.isPropertyEmptyOrUnknown(Build.DEVICE_FOR_ATTESTATION)
+                        ? Build.DEVICE : Build.DEVICE_FOR_ATTESTATION;
+        assertThat(teeAttestation.getDevice()).isEqualTo(platformReportedDevice);
+        final String platformReportedProduct =
+                TestUtils.isPropertyEmptyOrUnknown(Build.PRODUCT_FOR_ATTESTATION)
+                ? Build.PRODUCT : Build.PRODUCT_FOR_ATTESTATION;
+        assertThat(teeAttestation.getProduct()).isEqualTo(platformReportedProduct);
+        final String platformReportedManufacturer =
+                TestUtils.isPropertyEmptyOrUnknown(Build.MANUFACTURER_FOR_ATTESTATION)
+                        ? Build.MANUFACTURER : Build.MANUFACTURER_FOR_ATTESTATION;
+        assertThat(teeAttestation.getManufacturer()).isEqualTo(platformReportedManufacturer);
+        final String platformReportedModel =
+                TestUtils.isPropertyEmptyOrUnknown(Build.MODEL_FOR_ATTESTATION)
+                ? Build.MODEL : Build.MODEL_FOR_ATTESTATION;
+        assertThat(teeAttestation.getModel()).isEqualTo(platformReportedModel);
         assertThat(teeAttestation.getSerialNumber()).isEqualTo(expectedSerial);
         assertThat(teeAttestation.getImei()).isEqualTo(expectedImei);
         assertThat(teeAttestation.getMeid()).isEqualTo(expectedMeid);
