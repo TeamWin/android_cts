@@ -25,6 +25,8 @@ import static android.atrace.cts.AtraceDeviceTestList.launchActivity;
 
 import com.android.tradefed.log.LogUtil.CLog;
 
+import kotlin.Unit;
+
 import java.io.BufferedReader;
 import java.io.Reader;
 import java.util.Arrays;
@@ -34,7 +36,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import kotlin.Unit;
 import trebuchet.model.Counter;
 import trebuchet.model.CounterValue;
 import trebuchet.model.Model;
@@ -42,7 +43,7 @@ import trebuchet.model.ProcessModel;
 import trebuchet.model.ThreadModel;
 import trebuchet.model.base.Slice;
 import trebuchet.model.fragments.AsyncSlice;
-import trebuchet.queries.slices.*;
+import trebuchet.queries.slices.SliceQueriesKt;
 
 /**
  * Test to check that atrace is usable, to enable usage of systrace.
@@ -252,6 +253,10 @@ public class AtraceHostTest extends AtraceHostTestBase {
             // Quick hack to handle vsyncId being appended to doFrame
             if (slice.getName().startsWith("Choreographer#doFrame ")) {
                 requiredSections.remove("Choreographer#doFrame");
+            }
+            // Quick hack to handle names being appended to draw
+            if (slice.getName().startsWith("draw")) {
+                requiredSections.remove("draw");
             }
             return Unit.INSTANCE;
         });
