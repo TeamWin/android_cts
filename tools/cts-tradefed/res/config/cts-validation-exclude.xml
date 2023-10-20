@@ -518,4 +518,12 @@
     <option name="compatibility:exclude-filter" value="CtsCredentialManagerTestCases android.credentials.cts.CtsDevicePolicyTest#setCredentialManagerPolicy_policyIsSet[IncludeRunOnDeviceOwnerUser]" />
     <option name="compatibility:exclude-filter" value="CtsCredentialManagerTestCases android.credentials.cts.CtsDevicePolicyTest#setCredentialManagerPolicy_allowlistAndSystemPolicy_allowsAllowlistedAndSystemProviders_SDK[IncludeRunOnDeviceOwnerUser]" />
 
+    <!-- b/302404278 -->
+    <option name="compatibility:exclude-filter" value="CtsDomainVerificationDeviceMultiUserTestCases com.android.cts.packagemanager.verify.domain.device.multiuser.DomainVerificationWorkProfileCrossProfileIntentTests#inPersonal_unverified" />
+    <option name="compatibility:exclude-filter" value="CtsDomainVerificationDeviceMultiUserTestCases com.android.cts.packagemanager.verify.domain.device.multiuser.DomainVerificationWorkProfileCrossProfileIntentTests#inPersonal_verifiedInOtherProfile" />
+    <option name="compatibility:exclude-filter" value="CtsDomainVerificationDeviceMultiUserTestCases CtsDomainVerificationDeviceMultiUserTestCases com.android.cts.packagemanager.verify.domain.device.multiuser.DomainVerificationWorkProfileCrossProfileIntentTests#inPersonal_verifiedInBothProfiles" />
+    <option name="compatibility:exclude-filter" value="CtsDomainVerificationDeviceMultiUserTestCases com.android.cts.packagemanager.verify.domain.device.multiuser.DomainVerificationWorkProfileAllowParentLinkingTests#inPersonal_verifiedInOtherProfile" />
+    <option name="compatibility:exclude-filter" value="CtsDomainVerificationDeviceMultiUserTestCases com.android.cts.packagemanager.verify.domain.device.multiuser.DomainVerificationWorkProfileAllowParentLinkingTests#inPersonal_verifiedInBothProfiles" />
+    <option name="compatibility:exclude-filter" value="CtsDomainVerificationDeviceMultiUserTestCases com.android.cts.packagemanager.verify.domain.device.multiuser.DomainVerificationWorkProfileAllowParentLinkingTests#inPersonal_verifiedInCurrentProfile" />
+
 </configuration>
