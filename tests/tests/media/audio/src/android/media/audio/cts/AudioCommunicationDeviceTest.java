@@ -210,6 +210,15 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
         }
     }
 
+    public void testNoSourceInCommunicationDevices() {
+        if (!isValidPlatform("testNoSourceInCommunicationDevices")) return;
+
+        List<AudioDeviceInfo> devices = mAudioManager.getAvailableCommunicationDevices();
+        for (AudioDeviceInfo device : devices) {
+            assertFalse(device.isSource());
+        }
+    }
+
     static class MyOnCommunicationDeviceChangedListener implements
             AudioManager.OnCommunicationDeviceChangedListener {
 
