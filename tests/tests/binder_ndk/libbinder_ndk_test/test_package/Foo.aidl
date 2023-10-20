@@ -5,6 +5,7 @@ import test_package.ByteEnum;
 import test_package.IntEnum;
 import test_package.LongEnum;
 import test_package.SimpleUnion;
+import android.os.PersistableBundle;
 
 parcelable Foo {
     const int kZero = 0;
@@ -38,4 +39,8 @@ parcelable Foo {
 
     // example: using a String constant of union
     @nullable SimpleUnion shouldBeConstS1;
+
+    PersistableBundle bundle1;
+    @nullable PersistableBundle bundle2;
+    PersistableBundle[] bundleArray;
 }
