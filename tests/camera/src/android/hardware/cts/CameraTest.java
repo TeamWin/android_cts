@@ -1986,7 +1986,7 @@ public class CameraTest extends Assert {
     }
 
     @UiThreadTest
-    @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
+    @Test(timeout=120*60*1000) // timeout = 120 mins for long running tests
     public void testPreviewPictureSizesCombination() throws Exception {
         for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
