@@ -1913,7 +1913,8 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         mWmState.waitForWithAmState(wmState -> {
             Task task = wmState.getTaskByActivity(activityName);
             return task != null
-                    && task.getActivity(activityName).getWindowingMode() == WINDOWING_MODE_PINNED;
+                    && task.getActivity(activityName).getWindowingMode() == WINDOWING_MODE_PINNED
+                    && task.isVisible();
         }, "checking task windowing mode");
     }
 
