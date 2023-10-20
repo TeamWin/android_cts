@@ -277,7 +277,7 @@ bool CodecEncoderTest::dequeueOutput(size_t bufferIndex, AMediaCodecBufferInfo* 
             RETURN_IF_NULL(buf, std::string{"AMediaCodec_getOutputBuffer returned nullptr"})
             mOutputBuff->saveToMemory(buf, info);
         }
-        if ((info->flags & TBD_AMEDIACODEC_BUFFER_FLAG_KEY_FRAME) != 0) {
+        if ((info->flags & AMEDIACODEC_BUFFER_FLAG_KEY_FRAME) != 0) {
             mNumSyncFramesReceived += 1;
             mSyncFramesPos.push_back(mOutputCount);
         }
@@ -310,6 +310,14 @@ bool CodecEncoderTest::isTestStateValid() {
     return true;
 }
 
+// @ApiTest = AMEDIAFORMAT_KEY_CHANNEL_COUNT
+// @ApiTest = AMEDIAFORMAT_KEY_COLOR_FORMAT
+// @ApiTest = AMEDIAFORMAT_KEY_FRAME_RATE
+// @ApiTest = AMEDIAFORMAT_KEY_HEIGHT
+// @ApiTest = AMEDIAFORMAT_KEY_MAX_B_FRAMES
+// @ApiTest = AMEDIAFORMAT_KEY_SAMPLE_RATE
+// @ApiTest = AMEDIAFORMAT_KEY_WIDTH
+//
 bool CodecEncoderTest::initFormat(AMediaFormat* format) {
     if (mIsAudio) {
         RETURN_IF_FALSE(AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_SAMPLE_RATE, &mSampleRate),
@@ -321,10 +329,19 @@ bool CodecEncoderTest::initFormat(AMediaFormat* format) {
                         StringFormat("format does not have key %s", AMEDIAFORMAT_KEY_WIDTH))
         RETURN_IF_FALSE(AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_HEIGHT, &mHeight),
                         StringFormat("format does not have key %s", AMEDIAFORMAT_KEY_HEIGHT))
-        RETURN_IF_FALSE(AMediaFormat_getInt32(format, TBD_AMEDIACODEC_PARAMETER_KEY_MAX_B_FRAMES,
+        // key formalized in Android U (sdk==34).
+        // Use internally-defined when running on earlier releases, such as happens with MTS
+        if (__builtin_available(android __ANDROID_API_U__, *)) {
+            RETURN_IF_FALSE(AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_MAX_B_FRAMES,
                                               &mMaxBFrames),
                         StringFormat("format does not have key %s",
-                                     TBD_AMEDIACODEC_PARAMETER_KEY_MAX_B_FRAMES))
+                                     AMEDIAFORMAT_KEY_MAX_B_FRAMES))
+        } else {
+            RETURN_IF_FALSE(AMediaFormat_getInt32(format, COMPATIBLE_AMEDIAFORMAT_KEY_MAX_B_FRAMES,
+                                              &mMaxBFrames),
+                        StringFormat("format does not have key %s",
+                                     COMPATIBLE_AMEDIAFORMAT_KEY_MAX_B_FRAMES))
+        }
         RETURN_IF_FALSE(AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_FRAME_RATE, &mDefFrameRate),
                         StringFormat("format does not have key %s", AMEDIAFORMAT_KEY_FRAME_RATE))
         RETURN_IF_FALSE(AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_COLOR_FORMAT, &mColorFormat),
