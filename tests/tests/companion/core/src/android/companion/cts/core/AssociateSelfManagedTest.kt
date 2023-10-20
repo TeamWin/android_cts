@@ -26,13 +26,14 @@ import android.companion.cts.common.SIMPLE_EXECUTOR
 import android.companion.cts.common.assertEmpty
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import org.junit.Test
-import org.junit.runner.RunWith
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
 
 /**
  * Test CDM APIs for requesting establishing new associations.
@@ -88,6 +89,7 @@ class AssociateSelfManagedTest : CoreTestBase() {
         with(associationInvocation.associationInfo) {
             assertEquals(actual = displayName, expected = DEVICE_DISPLAY_NAME)
             assertNull(deviceProfile)
+            assertTrue(isSelfManaged)
         }
 
         // Check that the newly created association is included in
@@ -125,6 +127,7 @@ class AssociateSelfManagedTest : CoreTestBase() {
                 with(associationInvocation.associationInfo) {
                     assertEquals(actual = displayName, expected = DEVICE_DISPLAY_NAME)
                     assertEquals(actual = deviceProfile, expected = ROLE_WATCH)
+                    assertTrue(isSelfManaged)
                 }
 
                 // Check that the newly created association is included in
