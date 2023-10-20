@@ -45,7 +45,6 @@ import android.media.MediaRoute2Info;
 import android.media.MediaRouter2;
 import android.media.MediaRouter2.ControllerCallback;
 import android.media.MediaRouter2.RouteCallback;
-import android.media.MediaRouter2.RouteListingPreferenceCallback;
 import android.media.MediaRouter2.RoutingController;
 import android.media.MediaRouter2.TransferCallback;
 import android.media.MediaRouter2Manager;
@@ -82,6 +81,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "The system should be able to bind to StubMediaRoute2ProviderService")
@@ -402,24 +402,20 @@ public class SystemMediaRouter2Test {
         assertThat(mSystemRouter2ForCts.getRouteListingPreference()).isNull();
 
         CountDownLatch preferenceChangedLatch = new CountDownLatch(1);
-        RouteListingPreferenceCallback routeListingPreferenceCallback =
-                new RouteListingPreferenceCallback() {
-                    @Override
-                    public void onRouteListingPreferenceChanged(RouteListingPreference preference) {
-                        if (Objects.equals(preference, testPreference)) {
-                            preferenceChangedLatch.countDown();
-                        }
+        Consumer<RouteListingPreference> callback =
+                (preference) -> {
+                    if (Objects.equals(preference, testPreference)) {
+                        preferenceChangedLatch.countDown();
                     }
                 };
+
         try {
-            mSystemRouter2ForCts.registerRouteListingPreferenceCallback(
-                    mExecutor, routeListingPreferenceCallback);
+            mSystemRouter2ForCts.registerRouteListingPreferenceUpdatedCallback(mExecutor, callback);
 
             mAppRouter2.setRouteListingPreference(testPreference);
             assertThat(preferenceChangedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
         } finally {
-            mSystemRouter2ForCts.unregisterRouteListingPreferenceCallback(
-                    routeListingPreferenceCallback);
+            mSystemRouter2ForCts.unregisterRouteListingPreferenceUpdatedCallback(callback);
         }
     }
 
@@ -436,24 +432,22 @@ public class SystemMediaRouter2Test {
         assertThat(mSystemRouter2ForCts.getRouteListingPreference()).isNull();
 
         CountDownLatch preferenceChangedLatch = new CountDownLatch(1);
-        RouteListingPreferenceCallback routeListingPreferenceCallback =
-                new RouteListingPreferenceCallback() {
-                    @Override
-                    public void onRouteListingPreferenceChanged(RouteListingPreference preference) {
-                        if (Objects.equals(preference, testPreference)) {
-                            preferenceChangedLatch.countDown();
-                        }
+        Consumer<RouteListingPreference> routeListingPreferenceCallback =
+                (preference) -> {
+                    if (Objects.equals(preference, testPreference)) {
+                        preferenceChangedLatch.countDown();
                     }
                 };
+
         try {
-            mSystemRouter2ForCts.registerRouteListingPreferenceCallback(
+            mSystemRouter2ForCts.registerRouteListingPreferenceUpdatedCallback(
                     mExecutor, routeListingPreferenceCallback);
 
             mAppRouter2.setRouteListingPreference(testPreference);
             expect.that(preferenceChangedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
             assertThat(mSystemRouter2ForCts.getRouteListingPreference()).isEqualTo(testPreference);
         } finally {
-            mSystemRouter2ForCts.unregisterRouteListingPreferenceCallback(
+            mSystemRouter2ForCts.unregisterRouteListingPreferenceUpdatedCallback(
                     routeListingPreferenceCallback);
         }
     }
