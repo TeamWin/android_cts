@@ -44,6 +44,7 @@ import androidx.test.filters.SmallTest;
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.Assume;
 import org.junit.Test;
@@ -287,13 +288,45 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
      * vpx streams are muxed using webm writer and others are muxed using mp4 writer.
      * Briefly, the test checks OMX/c2 framework, plugins, encoder, muxer ability to SIGNAL color
      * metadata.
+     *
+     * When running CTS, both testColorAspectsEndToEnd and testColorAspectsEncoderOnly
+     * execute, with some duplication of effort.
      */
     @ApiTest(apis = {"android.media.MediaFormat#KEY_COLOR_RANGE",
             "android.media.MediaFormat#KEY_COLOR_STANDARD",
             "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
-    public void testColorAspects() throws IOException, InterruptedException {
+    @NonMainlineTest
+    public void testColorAspectsEndToEnd() throws IOException, InterruptedException {
+        doFullColorAspects(true /* includeMuxing */);
+    }
+
+    /**
+     * ColorAspects are passed to the encoder at the time of configuration. The encoder is
+     * expected to pass this information to outputFormat() so that a consumer can use this
+     * information to populate color metadata.
+     * ColorAspects encoded in the bitstream itself -- the test only checks those after muxing
+     * the outputs (e.g. the EndToEnd test above).
+     *
+     * This is therefore a subset of the testColorAspectsEndToEnd() test above, skipping
+     * the muxing (which is outside of mainline), the re-reading via extractors, and
+     * the bitstream contents (e.g. the CSD) that we get from decoding.
+     * TODO: It would be good if we could validate the bitstream (CSD) without the
+     * muxer/extractor steps in between.
+     *
+     */
+    @ApiTest(apis = {"android.media.MediaFormat#KEY_COLOR_RANGE",
+            "android.media.MediaFormat#KEY_COLOR_STANDARD",
+            "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
+    @SmallTest
+    @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
+    public void testColorAspectsEncoderOnly() throws IOException, InterruptedException {
+        doFullColorAspects(false /* includeMuxing */);
+    }
+
+    private void doFullColorAspects(boolean includeMuxing) throws IOException,
+            InterruptedException {
         Assume.assumeTrue("Test introduced with Android 11", sIsAtLeastR);
 
         mActiveEncCfg = mEncCfgParams[0];
@@ -379,27 +412,30 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
             mCodec.stop();
             mCodec.release();
 
-            int muxerFormat = getMuxerFormatForMediaType(mMediaType);
-            String tmpPath = getTempFilePath((mActiveEncCfg.mInputBitDepth == 10) ? "10bit" : "");
-            muxOutput(tmpPath, muxerFormat, fmt, mOutputBuff.getBuffer(), mInfoList);
+            if (includeMuxing) {
+                int muxerFormat = getMuxerFormatForMediaType(mMediaType);
+                String tmpPath = getTempFilePath((mActiveEncCfg.mInputBitDepth == 10) ? "10bit"
+                                                                                      : "");
+                muxOutput(tmpPath, muxerFormat, fmt, mOutputBuff.getBuffer(), mInfoList);
 
-            // verify if the muxed file contains color aspects as expected
-            MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-            String decoder = codecList.findDecoderForFormat(mActiveEncCfg.getFormat());
-            assertNotNull("Device advertises support for encoding " + mActiveEncCfg.getFormat()
-                    + " but not decoding it. \n" + mTestConfig + mTestEnv, decoder);
-            CodecDecoderTestBase cdtb = new CodecDecoderTestBase(decoder, mMediaType, tmpPath,
-                    mAllTestParams);
-            cdtb.validateColorAspects(mActiveEncCfg.mRange, mActiveEncCfg.mStandard,
-                    mActiveEncCfg.mTransfer, false);
-
-            // if color metadata can also be signalled via elementary stream then verify if the
-            // elementary stream contains color aspects as expected
-            if (IGNORE_COLOR_BOX_LIST.contains(mMediaType)) {
+                // verify if the muxed file contains color aspects as expected
+                MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+                String decoder = codecList.findDecoderForFormat(mActiveEncCfg.getFormat());
+                assertNotNull("Device advertises support for encoding " + mActiveEncCfg.getFormat()
+                        + " but not decoding it. \n" + mTestConfig + mTestEnv, decoder);
+                CodecDecoderTestBase cdtb = new CodecDecoderTestBase(decoder, mMediaType, tmpPath,
+                        mAllTestParams);
                 cdtb.validateColorAspects(mActiveEncCfg.mRange, mActiveEncCfg.mStandard,
-                        mActiveEncCfg.mTransfer, true);
+                        mActiveEncCfg.mTransfer, false);
+
+                // if color metadata can also be signalled via elementary stream then verify if the
+                // elementary stream contains color aspects as expected
+                if (IGNORE_COLOR_BOX_LIST.contains(mMediaType)) {
+                    cdtb.validateColorAspects(mActiveEncCfg.mRange, mActiveEncCfg.mStandard,
+                            mActiveEncCfg.mTransfer, true);
+                }
+                new File(tmpPath).delete();
             }
-            new File(tmpPath).delete();
         }
     }
 }
