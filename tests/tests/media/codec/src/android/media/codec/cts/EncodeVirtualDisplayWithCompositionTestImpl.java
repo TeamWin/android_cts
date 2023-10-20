@@ -37,7 +37,6 @@ import android.media.MediaFormat;
 import android.media.cts.CompositionTextureView;
 import android.media.cts.InputSurface;
 import android.media.cts.OutputSurface;
-import android.media.cts.R;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
