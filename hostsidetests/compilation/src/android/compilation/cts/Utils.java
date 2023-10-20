@@ -61,16 +61,14 @@ public class Utils {
      * @param multiPackage True for {@code install-multi-package}, false for {@code
      *         install-multiple}.
      */
-    private void installFromResourcesImpl(IAbi abi, List<String> args,
-            List<List<Pair<String, String>>> packages, boolean multiPackage) throws Exception {
+    private void installFromResourcesImpl(IAbi abi, List<List<Pair<String, String>>> packages,
+            boolean multiPackage) throws Exception {
         // We cannot use `ITestDevice.installPackage` or `SuiteApkInstaller` here because they don't
         // support DM files.
         List<String> cmd =
                 new ArrayList<>(List.of("adb", "-s", mTestInfo.getDevice().getSerialNumber(),
                         multiPackage ? "install-multi-package" : "install-multiple", "--abi",
                         abi.getName()));
-
-        cmd.addAll(args);
 
         if (!multiPackage && packages.size() != 1) {
             throw new IllegalArgumentException(
@@ -115,20 +113,14 @@ public class Utils {
     }
 
     /**
-     * Installs a package from resources with arguments.
+     * Installs a package from resources.
      *
      * @param apkDmResources For each pair, the first item is the APK resource name, and the second
      *         item is the DM resource name or null.
      */
-    public void installFromResourcesWithArgs(IAbi abi, List<String> args,
-            List<Pair<String, String>> apkDmResources) throws Exception {
-        installFromResourcesImpl(abi, args, List.of(apkDmResources), false /* multiPackage */);
-    }
-
-    /** Same as above, but takes no argument. */
     public void installFromResources(IAbi abi, List<Pair<String, String>> apkDmResources)
             throws Exception {
-        installFromResourcesWithArgs(abi, List.of() /* args */, apkDmResources);
+        installFromResourcesImpl(abi, List.of(apkDmResources), false /* multiPackage */);
     }
 
     public void installFromResources(IAbi abi, String apkResource, String dmResource)
@@ -142,7 +134,7 @@ public class Utils {
 
     public void installFromResourcesMultiPackage(
             IAbi abi, List<List<Pair<String, String>>> packages) throws Exception {
-        installFromResourcesImpl(abi, List.of() /* args */, packages, true /* multiPackage */);
+        installFromResourcesImpl(abi, packages, true /* multiPackage */);
     }
 
     public void pushFromResource(String resource, String remotePath) throws Exception {
