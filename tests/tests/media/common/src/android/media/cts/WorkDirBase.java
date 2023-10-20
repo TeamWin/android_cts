@@ -34,8 +34,23 @@ public class WorkDirBase {
     private static final int WAIT_FOR_STORAGE_SLEEP_MILLIS = 1000;
 
     private static boolean sPolledForStatus = false;
+    private static boolean sExternalMounted = false;
 
     private static final File getTopDir() {
+        // All of this is to handle delays in storage being ready during cuttlefish coverage runs.
+        // We don't see any of this in normal on-devlce runs.
+        // TODO(): can we remove this logic once we resolve the underlying root cause
+        //
+        // seeing instances where storage seems to go back to unmounted.
+        // so if we notice that, let's retry the polling.  But only if it has
+        // been mounted at least one time; we want to avoid a constant stream
+        // of 30-second delays looking for it to become mounted.
+        String storageState = Environment.getExternalStorageState();
+        if (sExternalMounted && !Environment.MEDIA_MOUNTED.equals(storageState)) {
+            Log.w(TAG, "Previously mounted external storage is now " + storageState);
+            sPolledForStatus = false;
+            // preserve that it has been mounted before.
+        }
         // we wait a bit if storage is not yet ready.
         // We only do this 1 time per run, so bad storage state doesn't explode runtime.
         //
@@ -69,6 +84,7 @@ public class WorkDirBase {
         // fatal if not mounted by now
         Assert.assertEquals("Missing external storage, is this running in instant mode?",
                         Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
+        sExternalMounted = true;
         return Environment.getExternalStorageDirectory();
     }
 
