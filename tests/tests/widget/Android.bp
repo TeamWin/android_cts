@@ -36,6 +36,8 @@ android_test {
         "cts-wm-util",
         "testables",
         "com.android.text.flags-aconfig-java",
+        "android.view.inputmethod.flags-aconfig-java",
+        "flag-junit",
     ],
 
     libs: ["android.test.runner"],

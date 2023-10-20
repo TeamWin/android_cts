@@ -45,6 +45,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import static java.lang.annotation.RetentionPolicy.SOURCE;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
@@ -78,6 +80,9 @@ import android.os.Bundle;
 import android.os.LocaleList;
 import android.os.Parcelable;
 import android.os.SystemClock;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
@@ -139,6 +144,7 @@ import android.view.inputmethod.CorrectionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
+import android.view.inputmethod.Flags;
 import android.view.inputmethod.InputConnection;
 import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextSelection;
@@ -171,8 +177,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.xmlpull.v1.XmlPullParserException;
-
-import static java.lang.annotation.RetentionPolicy.SOURCE;
 
 import java.io.IOException;
 import java.lang.annotation.Retention;
@@ -216,6 +220,10 @@ public class TextViewTest {
     @Rule
     public ActivityTestRule<TextViewCtsActivity> mActivityRule =
             new ActivityTestRule<>(TextViewCtsActivity.class);
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setup() {
@@ -5706,6 +5714,43 @@ public class TextViewTest {
                 | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
 
         assertFalse(mTextView.isAutoHandwritingEnabled());
+    }
+
+    /**
+     * Verify that TextView returns default {@code true} for
+     * {@link EditorInfo#isStylusHandwritingEnabled}.
+     */
+    @ApiTest(apis = {"android.view.inputmethod.EditorInfo#isStylusHandwritingEnabled"})
+    @UiThreadTest
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_EDITORINFO_HANDWRITING_ENABLED)
+    public void isStylusHandwritingEnabled_default_returnsTrue() {
+        mTextView = new TextView(mActivity);
+        mTextView.setText(null, BufferType.EDITABLE);
+        mTextView.setInputType(InputType.TYPE_CLASS_TEXT);
+        mTextView.requestFocus();
+        EditorInfo editorInfo = new EditorInfo();
+        mTextView.onCreateInputConnection(editorInfo);
+        assertTrue(editorInfo.isStylusHandwritingEnabled());
+    }
+
+    /**
+     * Verify that TextView returns {@code false} for {@link EditorInfo#isStylusHandwritingEnabled}
+     * when {@link TextView#isAutoHandwritingEnabled()} is {@code false}.
+     */
+    @ApiTest(apis = {"android.view.inputmethod.EditorInfo#isStylusHandwritingEnabled"})
+    @UiThreadTest
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_EDITORINFO_HANDWRITING_ENABLED)
+    public void isStylusHandwritingEnabled_autoHandwritingDisabled_returnsFalse() {
+        mTextView = new TextView(mActivity);
+        mTextView.setText(null, BufferType.EDITABLE);
+        mTextView.setInputType(InputType.TYPE_CLASS_TEXT);
+        mTextView.setAutoHandwritingEnabled(false);
+        mTextView.requestFocus();
+        EditorInfo editorInfo = new EditorInfo();
+        mTextView.onCreateInputConnection(editorInfo);
+        assertFalse(editorInfo.isStylusHandwritingEnabled());
     }
 
     @UiThreadTest
