@@ -45,7 +45,7 @@ const char* AMEDIA_MIMETYPE_AUDIO_RAW = "audio/raw";
 /* TODO(b/153592281) */
 const char* TBD_AMEDIACODEC_PARAMETER_KEY_REQUEST_SYNC_FRAME = "request-sync";
 const char* TBD_AMEDIACODEC_PARAMETER_KEY_VIDEO_BITRATE = "video-bitrate";
-const char* TBD_AMEDIACODEC_PARAMETER_KEY_MAX_B_FRAMES = "max-bframes";
+const char* COMPATIBLE_AMEDIAFORMAT_KEY_MAX_B_FRAMES = "max-bframes";
 const char* TBD_AMEDIAFORMAT_KEY_BIT_RATE_MODE = "bitrate-mode";
 
 // NDK counterpart of RMS_ERROR_TOLERANCE of CodecDecoderTest class

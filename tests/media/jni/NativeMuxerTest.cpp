@@ -516,22 +516,22 @@ void MuxerNativeTestHelper::offsetTimeStamp(int64_t tsAudioOffsetUs, int64_t tsV
     }
 }
 
-static bool isCodecContainerPairValid(MuxerFormat format, const char* mediaType) {
-    static const std::map<MuxerFormat, std::vector<const char*>> codecListforType = {
-            {OUTPUT_FORMAT_MPEG_4,
+static bool isCodecContainerPairValid(OutputFormat format, const char* mediaType) {
+    static const std::map<OutputFormat, std::vector<const char*>> codecListforType = {
+            {AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4,
              {AMEDIA_MIMETYPE_VIDEO_MPEG4, AMEDIA_MIMETYPE_VIDEO_H263, AMEDIA_MIMETYPE_VIDEO_AVC,
               AMEDIA_MIMETYPE_VIDEO_HEVC, AMEDIA_MIMETYPE_AUDIO_AAC}},
-            {OUTPUT_FORMAT_WEBM,
+            {AMEDIAMUXER_OUTPUT_FORMAT_WEBM,
              {AMEDIA_MIMETYPE_VIDEO_VP8, AMEDIA_MIMETYPE_VIDEO_VP9, AMEDIA_MIMETYPE_AUDIO_VORBIS,
               AMEDIA_MIMETYPE_AUDIO_OPUS}},
-            {OUTPUT_FORMAT_THREE_GPP,
+            {AMEDIAMUXER_OUTPUT_FORMAT_THREE_GPP,
              {AMEDIA_MIMETYPE_VIDEO_MPEG4, AMEDIA_MIMETYPE_VIDEO_H263, AMEDIA_MIMETYPE_VIDEO_AVC,
               AMEDIA_MIMETYPE_AUDIO_AAC, AMEDIA_MIMETYPE_AUDIO_AMR_NB,
               AMEDIA_MIMETYPE_AUDIO_AMR_WB}},
-            {OUTPUT_FORMAT_OGG, {AMEDIA_MIMETYPE_AUDIO_OPUS}},
+            {AMEDIAMUXER_OUTPUT_FORMAT_OGG, {AMEDIA_MIMETYPE_AUDIO_OPUS}},
     };
 
-    if (format == OUTPUT_FORMAT_MPEG_4 &&
+    if (format == AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4 &&
         strncmp(mediaType, "application/", strlen("application/")) == 0)
         return true;
 
@@ -593,8 +593,8 @@ static jboolean nativeTestSetLocation(JNIEnv* env, jobject, jint jformat, jstrin
                 ALOGE("setLocation fails on args: (%f, %f)", annapurnaLat, annapurnaLong);
             }
         } else {
-            isPass &= ((MuxerFormat)jformat != OUTPUT_FORMAT_MPEG_4 &&
-                       (MuxerFormat)jformat != OUTPUT_FORMAT_THREE_GPP);
+            isPass &= ((OutputFormat)jformat != AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4 &&
+                       (OutputFormat)jformat != AMEDIAMUXER_OUTPUT_FORMAT_THREE_GPP);
         }
         const char* csrcPath = env->GetStringUTFChars(jsrcPath, nullptr);
         auto* mediaInfo = new MuxerNativeTestHelper(csrcPath);
@@ -630,6 +630,9 @@ static jboolean nativeTestSetLocation(JNIEnv* env, jobject, jint jformat, jstrin
     return static_cast<jboolean>(isPass);
 }
 
+// @ApiTest = AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4
+// @ApiTest = AMEDIAMUXER_OUTPUT_FORMAT_THREE_GPP
+//
 static jboolean nativeTestSetOrientationHint(JNIEnv* env, jobject, jint jformat, jstring jsrcPath,
                                              jstring jdstPath) {
     bool isPass = true;
@@ -658,8 +661,8 @@ static jboolean nativeTestSetOrientationHint(JNIEnv* env, jobject, jint jformat,
                 ALOGE("setOrientationHint fails on args: %d", currRotation);
             }
         } else {
-            isPass &= ((MuxerFormat)jformat != OUTPUT_FORMAT_MPEG_4 &&
-                       (MuxerFormat)jformat != OUTPUT_FORMAT_THREE_GPP);
+            isPass &= ((OutputFormat)jformat != AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4 &&
+                       (OutputFormat)jformat != AMEDIAMUXER_OUTPUT_FORMAT_THREE_GPP);
         }
         const char* csrcPath = env->GetStringUTFChars(jsrcPath, nullptr);
         auto* mediaInfo = new MuxerNativeTestHelper(csrcPath);
@@ -740,7 +743,7 @@ static jboolean nativeTestMultiTrack(JNIEnv* env, jobject, jint jformat, jstring
                                 }
                                 delete dstInfo;
                             } else {
-                                if ((MuxerFormat)jformat != OUTPUT_FORMAT_MPEG_4) {
+                                if ((OutputFormat)jformat != AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4) {
                                     isPass = false;
                                     ALOGE("testMultiTrack: inputs: %s %s, fmt: %d, error ! muxing "
                                           "src A: %d, src B: %d failed", csrcPathA, csrcPathB,
@@ -756,7 +759,7 @@ static jboolean nativeTestMultiTrack(JNIEnv* env, jobject, jint jformat, jstring
                 }
                 delete refInfo;
             } else {
-                if ((MuxerFormat)jformat != OUTPUT_FORMAT_OGG) {
+                if ((OutputFormat)jformat != AMEDIAMUXER_OUTPUT_FORMAT_OGG) {
                     isPass = false;
                     ALOGE("testMultiTrack: inputs: %s %s, fmt: %d, error ! muxing src A and src B "
                           "failed", csrcPathA, csrcPathB, jformat);
@@ -835,6 +838,14 @@ static jboolean nativeTestOffsetPts(JNIEnv* env, jobject, jint format, jstring j
     return static_cast<jboolean>(isPass);
 }
 
+// simple muxer tests, including varying the output container format.
+//
+// @ApiTest = AMEDIAMUXER_OUTPUT_FORMAT_HEIF
+// @ApiTest = AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4
+// @ApiTest = AMEDIAMUXER_OUTPUT_FORMAT_OGG
+// @ApiTest = AMEDIAMUXER_OUTPUT_FORMAT_THREE_GPP
+// @ApiTest = AMEDIAMUXER_OUTPUT_FORMAT_WEBM
+//
 static jboolean nativeTestSimpleMux(JNIEnv* env, jobject, jstring jsrcPath, jstring jdstPath,
                                     jstring jMediaType, jstring jselector) {
     bool isPass = true;
@@ -842,20 +853,21 @@ static jboolean nativeTestSimpleMux(JNIEnv* env, jobject, jstring jsrcPath, jstr
     const char* csrcPath = env->GetStringUTFChars(jsrcPath, nullptr);
     const char* cselector = env->GetStringUTFChars(jselector, nullptr);
     auto* mediaInfo = new MuxerNativeTestHelper(csrcPath, cMediaType);
-    static const std::map<MuxerFormat, const char*> formatStringPair = {
-            {OUTPUT_FORMAT_MPEG_4, "mp4"},
-            {OUTPUT_FORMAT_WEBM, "webm"},
-            {OUTPUT_FORMAT_THREE_GPP, "3gp"},
-            {OUTPUT_FORMAT_HEIF, "heif"},
-            {OUTPUT_FORMAT_OGG, "ogg"}};
+    static const std::map<OutputFormat, const char*> formatStringPair = {
+            {AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4, "mp4"},
+            {AMEDIAMUXER_OUTPUT_FORMAT_WEBM, "webm"},
+            {AMEDIAMUXER_OUTPUT_FORMAT_THREE_GPP, "3gp"},
+            {AMEDIAMUXER_OUTPUT_FORMAT_HEIF, "heif"},
+            {AMEDIAMUXER_OUTPUT_FORMAT_OGG, "ogg"}};
     if (mediaInfo->getTrackCount() == 1) {
         const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
-        for (int fmt = OUTPUT_FORMAT_START; fmt <= OUTPUT_FORMAT_LIST_END && isPass; fmt++) {
-            auto it = formatStringPair.find((MuxerFormat)fmt);
+        for (int fmt = LOCAL_AMEDIAMUXER_OUTPUT_FORMAT_FIRST;
+             fmt <= LOCAL_AMEDIAMUXER_OUTPUT_FORMAT_LAST && isPass; fmt++) {
+            auto it = formatStringPair.find((OutputFormat)fmt);
             if (it == formatStringPair.end() || strstr(cselector, it->second) == nullptr) {
                 continue;
             }
-            if (fmt == OUTPUT_FORMAT_WEBM) continue;  // TODO(b/146923551)
+            if (fmt == AMEDIAMUXER_OUTPUT_FORMAT_WEBM) continue;  // TODO(b/146923551)
             FILE* ofp = fopen(cdstPath, "wbe+");
             if (ofp) {
                 AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)fmt);
@@ -869,7 +881,7 @@ static jboolean nativeTestSimpleMux(JNIEnv* env, jobject, jstring jsrcPath, jstr
                     delete outInfo;
                 }
                 if ((muxStatus && !result) ||
-                    (!muxStatus && isCodecContainerPairValid((MuxerFormat)fmt, cMediaType))) {
+                    (!muxStatus && isCodecContainerPairValid((OutputFormat)fmt, cMediaType))) {
                     isPass = false;
                     ALOGE("error: file %s, mediaType %s, output != clone(input) for format %d",
                           csrcPath, cMediaType, fmt);
