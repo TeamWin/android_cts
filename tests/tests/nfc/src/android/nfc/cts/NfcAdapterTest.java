@@ -15,6 +15,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.nfc.*;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.nfc.tech.*;
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -25,6 +28,7 @@ import androidx.test.core.app.ApplicationProvider;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -40,6 +44,8 @@ public class NfcAdapterTest {
     @Mock private INfcAdapter mService;
     private INfcAdapter mSavedService;
     private Context mContext;
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private boolean supportsHardware() {
         final PackageManager pm = mContext.getPackageManager();
@@ -256,6 +262,15 @@ public class NfcAdapterTest {
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
         boolean result = adapter.removeNfcUnlockHandler(new CtsNfcUnlockHandler());
         Assert.assertTrue(result);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_NFC_MAINLINE)
+    public void testSetReaderMode() {
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        // Verify the API does not crash or throw any exceptions.
+        adapter.setReaderMode(true);
+        adapter.setReaderMode(false);
     }
 
     private class CtsReaderCallback implements NfcAdapter.ReaderCallback {
