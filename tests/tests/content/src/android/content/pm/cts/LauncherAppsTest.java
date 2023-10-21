@@ -16,13 +16,18 @@
 
 package android.content.pm.cts;
 
+import static android.os.Flags.FLAG_ALLOW_PRIVATE_PROFILE;
+
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.getDefaultLauncher;
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.setDefaultLauncher;
+
+import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
@@ -38,6 +43,9 @@ import android.os.Process;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeSdkSandbox;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -47,6 +55,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -64,6 +73,10 @@ public class LauncherAppsTest {
     private UsageStatsManager mUsageStatsManager;
     private String mDefaultHome;
     private String mTestHome = PACKAGE_NAME;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private static final String PACKAGE_NAME = "android.content.cts";
     private static final String FULL_CLASS_NAME = "android.content.pm.cts.LauncherMockActivity";
@@ -233,6 +246,16 @@ public class LauncherAppsTest {
         assertNotNull(info.getActivityInfo());
         assertEquals(info.getName(), info.getActivityInfo().name);
         assertEquals(info.getComponentName().getPackageName(), info.getActivityInfo().packageName);
+    }
+
+    @Test
+    @AppModeFull(reason = "Need special permission")
+    @RequiresFlagsEnabled(FLAG_ALLOW_PRIVATE_PROFILE)
+    public void testLauncherUserInfo() {
+        // TODO(b/303803157): Add a permission check if we decide to support 3p launchers
+        SecurityException exception = assertThrows(SecurityException.class,
+                () -> mLauncherApps.getLauncherUserInfo(UserHandle.of(0)));
+        assertThat(exception).hasMessageThat().contains("Caller is not the recents app");
     }
 
     private void registerDefaultObserver() {
