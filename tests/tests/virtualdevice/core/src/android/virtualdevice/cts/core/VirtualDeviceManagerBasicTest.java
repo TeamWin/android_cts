@@ -23,6 +23,7 @@ import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAULT;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_ACTIVITY;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_AUDIO;
+import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_CLIPBOARD;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_RECENTS;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_SENSORS;
 import static android.content.Context.DEVICE_ID_DEFAULT;
@@ -686,6 +687,26 @@ public class VirtualDeviceManagerBasicTest {
         assertThat(
                 mVirtualDeviceManager.getDevicePolicy(mVirtualDevice.getDeviceId(),
                         POLICY_TYPE_ACTIVITY))
+                .isEqualTo(DEVICE_POLICY_DEFAULT);
+    }
+
+    @Test
+    @RequiresFlagsEnabled({Flags.FLAG_DYNAMIC_POLICY, Flags.FLAG_CROSS_DEVICE_CLIPBOARD})
+    public void policyTypeClipboard_changeAtRuntime_shouldReturnConfiguredValue() {
+        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
+                mFakeAssociationRule.getAssociationInfo().getId(),
+                new VirtualDeviceParams.Builder().build());
+
+        mVirtualDevice.setDevicePolicy(POLICY_TYPE_CLIPBOARD, DEVICE_POLICY_CUSTOM);
+        assertThat(
+                mVirtualDeviceManager.getDevicePolicy(mVirtualDevice.getDeviceId(),
+                        POLICY_TYPE_CLIPBOARD))
+                .isEqualTo(DEVICE_POLICY_CUSTOM);
+
+        mVirtualDevice.setDevicePolicy(POLICY_TYPE_CLIPBOARD, DEVICE_POLICY_DEFAULT);
+        assertThat(
+                mVirtualDeviceManager.getDevicePolicy(mVirtualDevice.getDeviceId(),
+                        POLICY_TYPE_CLIPBOARD))
                 .isEqualTo(DEVICE_POLICY_DEFAULT);
     }
 
