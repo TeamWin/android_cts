@@ -24,6 +24,8 @@ android_test {
         "bluetooth-test-util-lib",
         "compatibility-device-util-axt",
         "PlatformProperties",
+        "bluetooth_flags_java_lib",
+        "flag-junit",
     ],
     libs: [
         "android.test.runner",
