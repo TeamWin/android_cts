@@ -26,6 +26,7 @@ import android.uirendering.cts.R
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import androidx.annotation.Nullable
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -88,6 +89,8 @@ class DrawActivity : Activity() {
         mHandler = RenderSpecHandler()
 
         setContentView(R.layout.test_container)
+        window.attributes.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
         mTestContainer = findViewById(R.id.test_content_wrapper)
     }
 
