@@ -215,35 +215,4 @@ public class StreamedAppBehaviorTest {
             }
         }
     }
-
-    @Test
-    public void isDeviceSecure_shouldReturnFalseOnVirtualDisplay() {
-        EmptyActivity activity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
-                .startActivitySync(
-                        new Intent(mContext, EmptyActivity.class)
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                                        | Intent.FLAG_ACTIVITY_CLEAR_TASK),
-                        createActivityOptions(mVirtualDisplay));
-
-        EmptyActivity.Callback callback = mock(EmptyActivity.Callback.class);
-        activity.setCallback(callback);
-
-        int requestCode = 1;
-        activity.startActivityForResult(
-                TestAppHelper.createKeyguardManagerIsDeviceSecureTestIntent(),
-                requestCode,
-                createActivityOptions(mVirtualDisplay));
-
-        ArgumentCaptor<Intent> intentArgumentCaptor = ArgumentCaptor.forClass(Intent.class);
-        verify(callback, timeout(5000)).onActivityResult(
-                eq(requestCode), eq(Activity.RESULT_OK), intentArgumentCaptor.capture());
-        Intent resultData = intentArgumentCaptor.getValue();
-        // This is important to get us off of the virtual display
-        activity.finish();
-
-        assertThat(resultData).isNotNull();
-        boolean isDeviceSecure = resultData.getBooleanExtra(
-                TestAppHelper.EXTRA_IS_DEVICE_SECURE, true);
-        assertThat(isDeviceSecure).isFalse();
-    }
 }

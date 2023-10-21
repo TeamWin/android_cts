@@ -46,7 +46,6 @@ import static android.virtualdevice.cts.common.AudioHelper.SHORT_VALUE;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.app.Activity;
-import android.app.KeyguardManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
@@ -83,12 +82,6 @@ public class MainActivity extends Activity {
             PACKAGE_NAME + ".CALL_RESULT_RECEIVER";
 
     /**
-     * Tell this activity to call the API (KeyguardManager.isDeviceSecure) when launched.
-     */
-    static final String ACTION_CALL_IS_DEVICE_SECURE =
-            PACKAGE_NAME + ".ACTION_CALL_IS_DEVICE_SECURE";
-
-    /**
      * Extra in the result data that contains the integer display ID when the receiver for
      * {@link #ACTION_CALL_RESULT_RECEIVER} is called.
      */
@@ -117,7 +110,6 @@ public class MainActivity extends Activity {
             PACKAGE_NAME + ".TEST_CLIPBOARD";
     static final String EXTRA_ACTIVITY_LAUNCHED_RECEIVER = "activityLaunchedReceiver";
     static final String EXTRA_CLIPBOARD_STRING = "clipboardString";
-    static final String EXTRA_IS_DEVICE_SECURE = "isDeviceSecure";
 
     /**
      * Tell this activity to request a given permission when it is launched.
@@ -152,15 +144,6 @@ public class MainActivity extends Activity {
                 case ACTION_TEST_CAMERA:
                     Log.d(TAG, "Testing camera");
                     testCamera();
-                    break;
-                case ACTION_CALL_IS_DEVICE_SECURE:
-                    Log.d(TAG, "Handling ACTION_CALL_IS_DEVICE_SECURE");
-                    Intent resultData = new Intent();
-                    KeyguardManager km = getSystemService(KeyguardManager.class);
-                    boolean isDeviceSecure = km.isDeviceSecure();
-                    resultData.putExtra(EXTRA_IS_DEVICE_SECURE, isDeviceSecure);
-                    setResult(RESULT_OK, resultData);
-                    finish();
                     break;
                 case ACTION_PLAY_AUDIO:
                     @AudioHelper.DataType int playDataType = getIntent().getIntExtra(
