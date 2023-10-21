@@ -16,7 +16,7 @@
 
 package android.graphics.fonts;
 
-import static com.android.text.flags.Flags.FLAG_DEPRECATE_FONTS_XML;
+import static com.android.text.flags.Flags.FLAG_NEW_FONTS_FALLBACK_XML;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -147,7 +147,7 @@ public class SystemFontsTest {
         }
     }
 
-    @RequiresFlagsEnabled(FLAG_DEPRECATE_FONTS_XML)
+    @RequiresFlagsEnabled(FLAG_NEW_FONTS_FALLBACK_XML)
     @Test
     public void testWeightAdjustment() {
         String text = "Hello, World.";
@@ -166,7 +166,7 @@ public class SystemFontsTest {
         }
     }
 
-    @RequiresFlagsEnabled(FLAG_DEPRECATE_FONTS_XML)
+    @RequiresFlagsEnabled(FLAG_NEW_FONTS_FALLBACK_XML)
     @Test
     public void testItalicAdjustment() {
         String text = "Hello, World.";
@@ -185,7 +185,7 @@ public class SystemFontsTest {
         }
     }
 
-    @RequiresFlagsEnabled(FLAG_DEPRECATE_FONTS_XML)
+    @RequiresFlagsEnabled(FLAG_NEW_FONTS_FALLBACK_XML)
     @Test
     public void testAdjustmentPreserveWidth() {
         String text = "Hello, World.";
