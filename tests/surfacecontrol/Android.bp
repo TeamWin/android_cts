@@ -50,6 +50,8 @@ android_test {
         "cts-wm-util",
         "CtsMockInputMethodLib",
         "CtsCrossProcessSurfaceControlViewHostTestService",
+        "flag-junit",
+        "com.android.window.flags.window-aconfig-java",
     ],
 
     jni_libs: [
