@@ -101,6 +101,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @RunWith(BedsteadJUnit4.class)
@@ -1530,23 +1531,20 @@ public class MediaRouter2Test {
 
         RouteListingPreference testPreference = new RouteListingPreference.Builder().build();
         CountDownLatch preferenceChangedLatch = new CountDownLatch(1);
-        MediaRouter2.RouteListingPreferenceCallback callback =
-                new MediaRouter2.RouteListingPreferenceCallback() {
-                    @Override
-                    public void onRouteListingPreferenceChanged(RouteListingPreference preference) {
-                        if (Objects.equals(preference, testPreference)) {
-                            preferenceChangedLatch.countDown();
-                        }
+        Consumer<RouteListingPreference> callback =
+                (preference) -> {
+                    if (Objects.equals(preference, testPreference)) {
+                        preferenceChangedLatch.countDown();
                     }
                 };
 
         try {
-            mRouter2.registerRouteListingPreferenceCallback(mExecutor, callback);
+            mRouter2.registerRouteListingPreferenceUpdatedCallback(mExecutor, callback);
 
             mRouter2.setRouteListingPreference(testPreference);
             assertThat(preferenceChangedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
         } finally {
-            mRouter2.unregisterRouteListingPreferenceCallback(callback);
+            mRouter2.unregisterRouteListingPreferenceUpdatedCallback(callback);
         }
     }
 
