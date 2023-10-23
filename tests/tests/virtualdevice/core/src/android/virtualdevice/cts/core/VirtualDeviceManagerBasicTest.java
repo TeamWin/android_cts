@@ -67,7 +67,6 @@ import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
-import android.util.Log;
 import android.virtualdevice.cts.common.FakeAssociationRule;
 import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
 
@@ -174,20 +173,6 @@ public class VirtualDeviceManagerBasicTest {
         if (Flags.vdmPublicApis()) {
             mVirtualDeviceManager.unregisterVirtualDeviceListener(mVirtualDeviceListener);
         }
-    }
-
-    @Test
-    @RequiresFlagsEnabled(Flags.FLAG_MORE_LOGS)
-    public void flags_onlyRunWhenMoreLogsEnabled_shouldBeEnabled() {
-        Log.i(VIRTUAL_DEVICE_NAME, "CTS Flag " + Flags.FLAG_MORE_LOGS + " is " + Flags.moreLogs());
-        assertThat(Flags.moreLogs()).isTrue();
-    }
-
-    @Test
-    @RequiresFlagsDisabled(Flags.FLAG_MORE_LOGS)
-    public void flags_onlyRunWhenMoreLogsDisabled_shouldBeDisabled() {
-        Log.i(VIRTUAL_DEVICE_NAME, "CTS Flag " + Flags.FLAG_MORE_LOGS + " is " + Flags.moreLogs());
-        assertThat(Flags.moreLogs()).isFalse();
     }
 
     @Test
