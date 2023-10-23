@@ -17,6 +17,7 @@
 package android.display.cts;
 
 import static android.content.pm.PackageManager.FEATURE_LEANBACK;
+import static android.hardware.flags.Flags.FLAG_OVERLAYPROPERTIES_CLASS_API;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -45,6 +46,7 @@ import android.graphics.Color;
 import android.graphics.ColorSpace;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
+import android.hardware.OverlayProperties;
 import android.hardware.display.DeviceProductInfo;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.DisplayManager.DisplayListener;
@@ -52,10 +54,14 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.Settings;
 import android.server.wm.WakeUpAndUnlockRule;
 import android.text.TextUtils;
@@ -110,6 +116,9 @@ import java.util.function.Predicate;
 @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class DisplayTest extends TestBase {
     private static final String TAG = "DisplayTest";
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     // The CTS package brings up an overlay display on the target device (see AndroidTest.xml).
     // The overlay display parameters must match the ones defined there which are
@@ -1004,6 +1013,31 @@ public class DisplayTest extends TestBase {
         } else {
             assertNull(colorSpace);
         }
+    }
+
+    private void testGetOverlaySupportInternal(OverlayProperties overlayProperties) {
+        assertNotNull(overlayProperties);
+        Parcel parcel = Parcel.obtain();
+        assertEquals(0, overlayProperties.describeContents());
+        overlayProperties.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        OverlayProperties dest = OverlayProperties.CREATOR.createFromParcel(parcel);
+        assertEquals(overlayProperties.supportMixedColorSpaces(), dest.supportMixedColorSpaces());
+        parcel.recycle();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_OVERLAYPROPERTIES_CLASS_API)
+    public void testGetOverlaySupportForPrimary() {
+        testGetOverlaySupportInternal(mDefaultDisplay.getOverlaySupport());
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_OVERLAYPROPERTIES_CLASS_API)
+    public void testGetOverlaySupportForSecondary() {
+        Display secondaryDisplay = getSecondaryDisplay(mDisplayManager.getDisplays());
+        testGetOverlaySupportInternal(secondaryDisplay.getOverlaySupport());
+        assertTrue(secondaryDisplay.getOverlaySupport().supportMixedColorSpaces());
     }
 
     @Test

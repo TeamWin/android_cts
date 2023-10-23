@@ -27,9 +27,11 @@ android_test {
     },
     srcs: ["src/**/*.java"],
     static_libs: [
+        "android.hardware.flags-aconfig-java",
         "androidx.test.core",
         "androidx.test.rules",
         "compatibility-device-util-axt",
+        "flag-junit",
         "CtsSurfaceValidatorLib",
     ],
     libs: ["android.test.base"],
