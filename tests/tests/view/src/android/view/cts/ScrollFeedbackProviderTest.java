@@ -16,16 +16,14 @@
 
 package android.view.cts;
 
-import static android.view.MotionEvent.AXIS_X;
-import static android.view.MotionEvent.AXIS_SCROLL;
-import static android.view.MotionEvent.AXIS_Y;
 import static android.view.flags.Flags.FLAG_SCROLL_FEEDBACK_API;
-import static org.junit.Assume.assumeTrue;
+
+import static com.google.common.truth.Truth.assertThat;
 
 import android.platform.test.annotations.RequiresFlagsEnabled;
-import android.view.HapticScrollFeedbackProvider;
 import android.view.InputDevice;
 import android.view.MotionEvent;
+import android.view.ScrollFeedbackProvider;
 import android.view.cts.util.InputDeviceUtils;
 
 import androidx.test.filters.SmallTest;
@@ -43,18 +41,24 @@ import org.junit.runner.RunWith;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class HapticScrollFeedbackProviderTest {
+public class ScrollFeedbackProviderTest {
     @Rule
     public ActivityTestRule<ViewTestCtsActivity> mActivityRule =
             new ActivityTestRule<>(ViewTestCtsActivity.class);
 
-    private HapticScrollFeedbackProvider mProvider;
+    private ScrollFeedbackProvider mProvider;
 
     /** Setup common for all tests. */
     @Before
     public void setup() {
-        mProvider = new HapticScrollFeedbackProvider(
+        mProvider = ScrollFeedbackProvider.createProvider(
                 mActivityRule.getActivity().findViewById(R.id.scroll_view));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_SCROLL_FEEDBACK_API)
+    public void testDefaultProviderIsNotNull() {
+        assertThat(mProvider).isNotNull();
     }
 
     @Test
