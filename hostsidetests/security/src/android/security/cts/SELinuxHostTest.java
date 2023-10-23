@@ -51,7 +51,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -614,25 +613,6 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     }
 
     /**
-     * Asserts that the actual file contents starts with the expected file
-     * contents.
-     *
-     * @param expectedFile
-     *  The file with the expected contents.
-     * @param actualFile
-     *  The actual file being checked.
-     */
-    private void assertFileStartsWith(File expectedFile, File actualFile) throws Exception {
-        BufferedReader expectedReader = new BufferedReader(new FileReader(expectedFile.getAbsolutePath()));
-        BufferedReader actualReader = new BufferedReader(new FileReader(actualFile.getAbsolutePath()));
-        String expectedLine, actualLine;
-        while ((expectedLine = expectedReader.readLine()) != null) {
-            actualLine = actualReader.readLine();
-            assertEquals("Lines do not match:", expectedLine, actualLine);
-        }
-    }
-
-    /**
      * Asserts that the actual file contains all the lines from the expected file.
      * It does not guarantee the order of the lines.
      *
@@ -671,7 +651,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         /* retrieve the AOSP seapp_contexts file from jar */
         File aospSeappFile = copyResourceToTempFile("/plat_seapp_contexts");
 
-        assertFileStartsWith(aospSeappFile, platformSeappFile);
+        assertContainsAllLines(aospSeappFile, platformSeappFile);
     }
 
     /**
@@ -722,7 +702,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         // Android devices. See build script of this CTS module.
         aospPcFile = copyResourceToTempFile("/plat_property_contexts");
 
-        assertFileStartsWith(aospPcFile, devicePcFile);
+        assertContainsAllLines(aospPcFile, devicePcFile);
     }
 
     /**
