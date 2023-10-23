@@ -29,13 +29,9 @@ import android.hardware.input.VirtualTouchscreenConfig;
 import android.view.InputEvent;
 import android.view.MotionEvent;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.cts.input.DebugInputRule;
-
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -50,9 +46,6 @@ public class VirtualTouchscreenTest extends VirtualDeviceTestCase {
     private static final String DEVICE_NAME = "CtsVirtualTouchscreenTestDevice";
 
     private VirtualTouchscreen mVirtualTouchscreen;
-
-    @Rule
-    public DebugInputRule mDebugInputRule = new DebugInputRule();
 
     @Override
     void onSetUpVirtualInputDevice() {
@@ -79,8 +72,6 @@ public class VirtualTouchscreenTest extends VirtualDeviceTestCase {
         }
     }
 
-    @FlakyTest(bugId = 292973473)
-    @DebugInputRule.DebugInput(bug = 292544797)
     @Test
     public void sendTouchEvent() {
         final float inputSize = 1f;
