@@ -107,7 +107,7 @@ public class SearchSpecCtsTest {
                         expectedPropertyPaths2);
         assertThat(searchSpec.getResultGroupingLimit()).isEqualTo(37);
         assertThat(searchSpec.getPropertyWeights().keySet())
-                .containsExactly("schemaType1", "schemaTypes2");
+                .containsExactly("schemaTypes1", "schemaTypes2");
         assertThat(searchSpec.getPropertyWeights().get("schemaTypes1"))
                 .containsExactly("property1", 1.0, "property2", 2.0);
         assertThat(searchSpec.getPropertyWeights().get("schemaTypes2"))
