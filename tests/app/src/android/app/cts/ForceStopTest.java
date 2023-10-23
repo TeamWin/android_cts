@@ -21,12 +21,14 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 
 import static junit.framework.Assert.fail;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
 import android.app.Instrumentation;
+import android.app.stubs.BootReceiver;
+import android.app.stubs.CommandReceiver;
+import android.app.stubs.SimpleActivity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -55,17 +57,9 @@ import org.junit.runner.RunWith;
 @Presubmit
 public final class ForceStopTest {
 
-    private static final String TAG = ForceStopTest.class.getSimpleName();
-    // A secondary test activity from another APK.
-    private static final String SIMPLE_PACKAGE_NAME = "com.android.cts.launcherapps.simpleapp";
-    private static final String SIMPLE_ACTIVITY = ".SimpleActivity";
-    // The action sent back by the SIMPLE_APP after a restart.
-    private static final String ACTIVITY_LAUNCHED_ACTION =
-            "com.android.cts.launchertests.LauncherAppsTests.LAUNCHED_ACTION";
-
-    // Return states of the ActivityReceiverFilter.
-    public static final int RESULT_PASS = 1;
-    public static final int RESULT_TIMEOUT = 3;
+    // A simple test activity from another package.
+    private static final String APP_PACKAGE = "com.android.app1";
+    private static final String APP_ACTIVITY = "android.app.stubs.SimpleActivity";
 
     private static final long DELAY_MILLIS = 10_000;
 
@@ -92,8 +86,8 @@ public final class ForceStopTest {
     private Intent createSimpleActivityIntent() {
         Intent intent = new Intent();
         intent.setAction(Intent.ACTION_MAIN);
-        intent.setPackage(SIMPLE_PACKAGE_NAME);
-        intent.setClassName(SIMPLE_PACKAGE_NAME, SIMPLE_PACKAGE_NAME + SIMPLE_ACTIVITY);
+        intent.setPackage(APP_PACKAGE);
+        intent.setClassName(APP_PACKAGE, APP_ACTIVITY);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         return intent;
     }
@@ -103,10 +97,10 @@ public final class ForceStopTest {
         runWithShellPermissionIdentity(
                 () -> mActivityManager.forceStopPackage(intent.getPackage()));
         ActivityReceiverFilter appStartedReceiver = new ActivityReceiverFilter(
-                ACTIVITY_LAUNCHED_ACTION);
+                SimpleActivity.ACTION_ACTIVITY_STARTED);
         // Start an activity of another APK.
         mTargetContext.startActivity(intent);
-        assertEquals(RESULT_PASS, appStartedReceiver.waitForActivity());
+        assertTrue(appStartedReceiver.waitForActivity());
         return appStartedReceiver;
     }
 
@@ -215,13 +209,110 @@ public final class ForceStopTest {
                 () -> mActivityManager.forceStopPackage(packageName));
     }
 
+    @Test
+    @RequiresFlagsEnabled(FLAG_STAY_STOPPED)
+    public void testBootCompletedBroadcasts_activity() throws Exception {
+        final Intent intent = createSimpleActivityIntent();
+
+        final ConditionVariable gotLockedBoot = new ConditionVariable();
+        final ConditionVariable gotBoot = new ConditionVariable();
+        final ConditionVariable gotActivityStarted = new ConditionVariable();
+        final BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                final String action = intent.getAction();
+                if (BootReceiver.ACTION_BOOT_COMPLETED_RECEIVED.equals(action)) {
+                    final String extraAction = intent.getStringExtra(
+                            BootReceiver.EXTRA_BOOT_COMPLETED_ACTION);
+                    if (Intent.ACTION_LOCKED_BOOT_COMPLETED.equals(extraAction)) {
+                        gotLockedBoot.open();
+                    } else if (Intent.ACTION_BOOT_COMPLETED.equals(extraAction)) {
+                        gotBoot.open();
+                    }
+                } else if (SimpleActivity.ACTION_ACTIVITY_STARTED.equals(action)) {
+                    gotActivityStarted.open();
+                }
+            }
+        };
+        final IntentFilter filter = new IntentFilter();
+        filter.addAction(BootReceiver.ACTION_BOOT_COMPLETED_RECEIVED);
+        filter.addAction(SimpleActivity.ACTION_ACTIVITY_STARTED);
+        mTargetContext.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
+
+        mTargetContext.startActivity(intent);
+
+        assertTrue("Activity didn't start", gotActivityStarted.block(DELAY_MILLIS));
+
+        runWithShellPermissionIdentity(
+                () -> mActivityManager.forceStopPackage(APP_PACKAGE));
+
+        mTargetContext.startActivity(intent);
+
+        assertTrue("Didn't get LOCKED_BOOT_COMPLETED", gotLockedBoot.block(DELAY_MILLIS));
+        assertTrue("Didn't get BOOT_COMPLETED", gotBoot.block(DELAY_MILLIS));
+
+        runWithShellPermissionIdentity(
+                () -> mActivityManager.forceStopPackage(APP_PACKAGE));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_STAY_STOPPED)
+    public void testBootCompletedBroadcasts_broadcast() throws Exception {
+        final ConditionVariable gotLockedBoot = new ConditionVariable();
+        final ConditionVariable gotBoot = new ConditionVariable();
+        final ConditionVariable appStarted = new ConditionVariable();
+        final BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                final String action = intent.getAction();
+                if (BootReceiver.ACTION_BOOT_COMPLETED_RECEIVED.equals(action)) {
+                    final String extraAction = intent.getStringExtra(
+                            BootReceiver.EXTRA_BOOT_COMPLETED_ACTION);
+                    if (Intent.ACTION_LOCKED_BOOT_COMPLETED.equals(extraAction)) {
+                        gotLockedBoot.open();
+                    } else if (Intent.ACTION_BOOT_COMPLETED.equals(extraAction)) {
+                        gotBoot.open();
+                    }
+                }
+            }
+        };
+        CommandReceiver.sendCommandWithResultReceiver(mTargetContext,
+                CommandReceiver.COMMAND_EMPTY, APP_PACKAGE, APP_PACKAGE,
+                0, null,
+                new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        appStarted.open();
+                    }
+                });
+
+        assertTrue("Activity didn't start", appStarted.block(DELAY_MILLIS));
+
+        runWithShellPermissionIdentity(
+                () -> mActivityManager.forceStopPackage(APP_PACKAGE));
+
+        AmUtils.waitForBroadcastBarrier();
+
+        final IntentFilter filter = new IntentFilter();
+        filter.addAction(BootReceiver.ACTION_BOOT_COMPLETED_RECEIVED);
+        mTargetContext.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
+
+        CommandReceiver.sendCommand(mTargetContext,
+                CommandReceiver.COMMAND_EMPTY, APP_PACKAGE, APP_PACKAGE,
+                0, null);
+
+        assertTrue("Didn't get LOCKED_BOOT_COMPLETED", gotLockedBoot.block(DELAY_MILLIS));
+        assertTrue("Didn't get BOOT_COMPLETED", gotBoot.block(DELAY_MILLIS));
+
+        runWithShellPermissionIdentity(
+                () -> mActivityManager.forceStopPackage(APP_PACKAGE));
+    }
+
     // The receiver filter needs to be instantiated with the command to filter for before calling
     // startActivity.
     private class ActivityReceiverFilter extends BroadcastReceiver {
         // The activity we want to filter for.
         private String mActivityToFilter;
-        private int mResult = RESULT_TIMEOUT;
-        private static final int TIMEOUT_IN_MS = 5000;
         private ConditionVariable mBroadcastCondition = new ConditionVariable();
 
         // Create the filter with the intent to look for.
@@ -236,17 +327,14 @@ public final class ForceStopTest {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(mActivityToFilter)) {
-                mResult = RESULT_PASS;
                 mBroadcastCondition.open();
             }
         }
 
-        public int waitForActivity() throws Exception {
+        public boolean waitForActivity() throws Exception {
             AmUtils.waitForBroadcastBarrier();
-            if (mResult == RESULT_PASS) return mResult;
             // Wait for the broadcast
-            mBroadcastCondition.block(TIMEOUT_IN_MS);
-            return mResult;
+            return mBroadcastCondition.block(DELAY_MILLIS);
         }
     }
 }
