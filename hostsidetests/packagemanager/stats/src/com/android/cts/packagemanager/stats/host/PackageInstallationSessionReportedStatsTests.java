@@ -65,6 +65,9 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
     }
 
     public void testPackageInstallationSessionReportedForApkSuccessWithReplace() throws Exception {
+        if (!Utils.hasIncrementalFeature(getDevice())) {
+            return;
+        }
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.PACKAGE_INSTALLATION_SESSION_REPORTED_FIELD_NUMBER);
         RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
