@@ -26,6 +26,9 @@
         <option name="test-file-name" value="CtsCarApp.apk" />
         <option name="test-file-name" value="CtsCarWatchdogSharedApp.apk" />
         <option name="test-file-name" value="CtsCarWatchdogSecondSharedApp.apk" />
+        <!-- Install arg required to install the APK as a test app. -->
+        <option name="install-arg" value="-t" />
+        <option name="test-file-name" value="CtsCarWatchdogDeviceTestApp.apk" />
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsCarHostTestCases.jar" />

@@ -52,5 +52,6 @@ java_test_host {
         ":CtsCarApp",
         ":CtsCarWatchdogSharedApp",
         ":CtsCarWatchdogSecondSharedApp",
+        ":CtsCarWatchdogDeviceTestApp",
     ],
 }
