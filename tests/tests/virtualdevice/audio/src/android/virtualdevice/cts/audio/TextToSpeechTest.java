@@ -25,6 +25,7 @@ import static android.Manifest.permission.WAKE_LOCK;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_AUDIO;
 import static android.media.AudioAttributes.CONTENT_TYPE_SPEECH;
+import static android.media.AudioPlaybackConfiguration.PLAYER_STATE_IDLE;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
@@ -227,9 +228,8 @@ public class TextToSpeechTest {
         @Override
         public void onPlaybackConfigChanged(List<AudioPlaybackConfiguration> configs) {
             super.onPlaybackConfigChanged(configs);
-            configs.stream().filter(c -> c.getAudioAttributes().getContentType()
-                    == CONTENT_TYPE_SPEECH).findAny().ifPresent(
-                    mAudioPlaybackConfigurationFuture::set);
+            configs.stream().filter(SpeechPlaybackObserver::isSpeechPlaybackIdle)
+                    .findAny().ifPresent(mAudioPlaybackConfigurationFuture::set);
         }
 
         /**
@@ -240,6 +240,11 @@ public class TextToSpeechTest {
          */
         ListenableFuture<AudioPlaybackConfiguration> getSpeechAudioPlaybackConfigFuture() {
             return mAudioPlaybackConfigurationFuture;
+        }
+
+        private static boolean isSpeechPlaybackIdle(AudioPlaybackConfiguration config) {
+            return config.getAudioAttributes().getContentType() == CONTENT_TYPE_SPEECH
+                    && config.getPlayerState() == PLAYER_STATE_IDLE;
         }
     }
 }
