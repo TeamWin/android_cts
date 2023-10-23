@@ -18,7 +18,6 @@ package android.media.audio.cts;
 
 import android.media.audiofx.AudioEffect;
 import android.media.audiofx.EnvironmentalReverb;
-import android.media.cts.PostProcTestBase;
 import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
