@@ -36,8 +36,9 @@ java_test_host {
         "platformprotos",
     ],
     data: [
-        ":CtsHostsideTestsFullBackupApp",
         ":CtsBackupOtherSoundsSettingsApp",
+        ":CtsHostsideTestsFullBackupApp",
+        ":CtsProfileKeyValueApp",
     ],
     per_testcase_directory: true,
 }
