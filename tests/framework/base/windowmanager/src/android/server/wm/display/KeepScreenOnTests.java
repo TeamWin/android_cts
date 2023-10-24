@@ -16,6 +16,7 @@
 
 package android.server.wm.display;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.provider.Settings.Global.STAY_ON_WHILE_PLUGGED_IN;
 import static android.provider.Settings.System.SCREEN_OFF_TIMEOUT;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
@@ -131,11 +132,11 @@ public class KeepScreenOnTests extends MultiDisplayTestBase {
 
         final WindowManagerState.DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true).createDisplay();
-        launchActivityOnDisplay(TURN_SCREEN_ON_ACTIVITY, newDisplay.mId);
+        launchActivityOnDisplay(TURN_SCREEN_ON_ACTIVITY, WINDOWING_MODE_FULLSCREEN, newDisplay.mId);
         assertTrue(mPowerManager.isInteractive());
         try (BlockingBroadcastReceiver r = BlockingBroadcastReceiver.create(mContext,
                 Intent.ACTION_SCREEN_OFF).register()) {
-            launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
+            launchActivityOnDisplay(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN, newDisplay.mId);
         }
         mWmState.waitAndAssertVisibilityGone(TURN_SCREEN_ON_ACTIVITY);
         assertFalse(mPowerManager.isInteractive());
