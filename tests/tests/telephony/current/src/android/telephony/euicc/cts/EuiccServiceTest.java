@@ -20,10 +20,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.service.euicc.DownloadSubscriptionResult;
 import android.service.euicc.EuiccService;
 import android.service.euicc.GetDefaultDownloadableSubscriptionListResult;
@@ -54,6 +57,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ServiceTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.internal.telephony.flags.Flags;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -65,6 +70,10 @@ import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 public class EuiccServiceTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
+
     private static final String ACTIVATION_CODE = "12345-ABCDE";
 
     private static final int CALLBACK_TIMEOUT_MILLIS = 2000 /* 2 sec */;
@@ -162,6 +171,10 @@ public class EuiccServiceTest {
 
     @Before
     public void setUp() throws Exception {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(EuiccUtil.hasEuiccFeature());
+        }
+
         mCallback = new MockEuiccServiceCallback();
         MockEuiccService.setCallback(mCallback);
 
@@ -174,6 +187,12 @@ public class EuiccServiceTest {
 
     @After
     public void tearDown() throws Exception {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            if (!EuiccUtil.hasEuiccFeature()) {
+                return;
+            }
+        }
+
         mServiceTestRule.unbindService();
         mCallback.reset();
     }
