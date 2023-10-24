@@ -1,4 +1,5 @@
-# Bug component: 610774
+# Bug component: 970984
 include tools/platform-compat:/OWNERS
 
-tomnatan@google.com
+mariiasand@google.com
+mcarli@google.com
