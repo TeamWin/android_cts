@@ -28,6 +28,8 @@ android_test {
         "androidx.test.ext.junit",
         "testng",
         "platform-compat-test-rules",
+        "flag-junit",
+        "android.service.voice.flags-aconfig-java",
     ],
     aidl: {
         local_include_dirs: [
