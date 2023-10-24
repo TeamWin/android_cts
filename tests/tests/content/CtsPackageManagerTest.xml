@@ -125,6 +125,9 @@
         <option name="push-file" key="HelloWorldResHardening_mdpi-v4.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldResHardening_mdpi-v4.apk.idsig" />
         <option name="push-file" key="malformed.apk.idsig" value="/data/local/tmp/cts/content/malformed.apk.idsig" />
         <option name="push-file" key="test-cert.x509.pem" value="/data/local/tmp/cts/content/test-cert.x509.pem" />
+        <option name="push-file" key="icon.png" value="/data/local/tmp/cts/content/icon.png" />
+        <option name="push-file" key="icon_mono.png" value="/data/local/tmp/cts/content/icon_mono.png" />
+        <option name="push-file" key="cts-testkey1.x509.pem" value="/data/local/tmp/cts/content/cts-testkey1.x509.pem" />
         <option name="push-file" key="HelloWorldSdk1.apk" value="/data/local/tmp/cts/content/HelloWorldSdk1.apk" />
         <option name="push-file" key="HelloWorldSdk1.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldSdk1.apk.idsig" />
         <option name="push-file" key="HelloWorldSdk1Updated.apk" value="/data/local/tmp/cts/content/HelloWorldSdk1Updated.apk" />
