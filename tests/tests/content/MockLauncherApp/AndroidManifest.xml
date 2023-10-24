@@ -18,6 +18,7 @@
         package="android.content.cts.mocklauncherapp">
     <application
         android:resetEnabledSettingsOnAppDataCleared="true"
+        android:label="Mock Launcher"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round">
         <uses-library android:name="android.test.runner"/>
