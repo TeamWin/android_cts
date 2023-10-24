@@ -20,16 +20,33 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.net.Uri;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.cts.embmstestapp.CtsDownloadService;
 import android.telephony.mbms.DownloadRequest;
 
-import java.io.File;
+import com.android.internal.telephony.flags.Flags;
 
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
+import java.io.File;
+
 public class DownloadRequestTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
+
+    @Before
+    public void setUp() throws Exception {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(MbmsUtil.hasMbmsFeature());
+        }
+    }
 
     @Test
     public void testGetMaxAppIntentSize() {
