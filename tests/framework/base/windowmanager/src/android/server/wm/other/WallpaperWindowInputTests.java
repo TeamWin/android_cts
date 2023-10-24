@@ -16,6 +16,7 @@
 
 package android.server.wm.other;
 
+import static android.content.pm.PackageManager.FEATURE_LIVE_WALLPAPER;
 import static android.server.wm.CliIntentExtra.extraBool;
 import static android.server.wm.app.Components.TestInteractiveLiveWallpaperKeys.COMPONENT;
 import static android.server.wm.app.Components.TestInteractiveLiveWallpaperKeys.LAST_RECEIVED_MOTION_EVENT;
@@ -65,6 +66,8 @@ public class WallpaperWindowInputTests extends ActivityManagerTestBase {
         WallpaperManager wallpaperManager = WallpaperManager.getInstance(mContext);
         assumeTrue("Device does not support wallpapers",
                 wallpaperManager.isWallpaperSupported());
+        assumeTrue("Device does not support live wallpapers",
+                mContext.getPackageManager().hasSystemFeature(FEATURE_LIVE_WALLPAPER));
     }
 
     @Test
