@@ -344,8 +344,11 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
                 return false;
             }
         });
+    }
 
-        // Of course IMM#invalidateInput() should just work for ICs that support
+    @Test
+    public void testInvalidateInputOnInputConnectionWithBatchEdit() throws Exception {
+        // IMM#invalidateInput() should just work for ICs that support
         // {begin,end}BatchEdit().
         expectNativeInvalidateInput((view, editable) -> new TestInputConnection(view, editable) {
             private int mBatchEditCount = 0;
@@ -363,7 +366,10 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
                 return mBatchEditCount > 0;
             }
         });
+    }
 
+    @Test
+    public void testInvalidateInputFallback() throws Exception {
         // If IC#takeSnapshot() returns false, then fall back to IMM#restartInput()
         expectFallbackInvalidateInput((view, editable) -> new TestInputConnection(view, editable) {
             @Override
@@ -379,7 +385,10 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
                 return null;
             }
         });
+    }
 
+    @Test
+    public void testInvalidateInputOnInputConnectionWithBrokenBatchEdit() throws Exception {
         // Bug 209958658 should not prevent the system from using the native invalidateInput().
         expectNativeInvalidateInput((view, editable) -> new TestInputConnection(view, editable) {
             private int mBatchEditCount = 0;
@@ -399,7 +408,10 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
                 return true;
             }
         });
+    }
 
+    @Test
+    public void testInvalidateInputFallbackOnInputConnectionWithBrokenBatchEdit() throws Exception {
         // Even if IC#endBatchEdit() never returns false, the system should be able to fall back
         // to IMM#restartInput().  This is a regression test for Bug 208941904.
         expectFallbackInvalidateInput((view, editable) -> new TestInputConnection(view, editable) {
