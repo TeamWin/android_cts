@@ -301,6 +301,11 @@ public class AttachedSurfaceControlTest {
             if (mChildScAttached) {
                 return;
             }
+            // This should be called even if buildReparentTransaction fails the first time since
+            // the second call will come from preDrawListener which is called after bounding insets
+            // are updated in VRI.
+            getRootSurfaceControl().setChildBoundingInsets(mChildBoundingInsets);
+
             SurfaceControl.Transaction t =
                     getRootSurfaceControl().buildReparentTransaction(mSurfaceControl);
 
@@ -311,11 +316,7 @@ public class AttachedSurfaceControlTest {
                 return;
             }
 
-            getRootSurfaceControl().setChildBoundingInsets(mChildBoundingInsets);
-            t.setLayer(mSurfaceControl, 1)
-                    .setVisibility(mSurfaceControl, true)
-                    .apply();
-
+            t.setLayer(mSurfaceControl, 1).setVisibility(mSurfaceControl, true);
             t.addTransactionCommittedListener(Runnable::run, mDrawCompleteLatch::countDown);
             getRootSurfaceControl().applyTransactionOnDraw(t);
             mChildScAttached = true;
@@ -363,7 +364,7 @@ public class AttachedSurfaceControlTest {
                     countDownLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
 
             view[0].waitForDrawn();
-            // Do not include system insets because the child SC is not layed out in the system
+            // Do not include system insets because the child SC is not laid out in the system
             // insets
             validateScreenshot(mName, activity[0],
                     new BitmapPixelChecker(Color.GREEN, new Rect(0, 10, 100, 100)),
