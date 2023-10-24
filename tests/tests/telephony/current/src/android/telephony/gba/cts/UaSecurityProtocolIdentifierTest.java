@@ -16,19 +16,29 @@
 
 package android.telephony.gba.cts;
 
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
+import android.annotation.FlaggedApi;
+import android.content.pm.PackageManager;
 import android.os.Parcel;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.gba.TlsParams;
 import android.telephony.gba.UaSecurityProtocolIdentifier;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.android.internal.telephony.flags.Flags;
+
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -39,6 +49,10 @@ import java.util.Random;
 
 @RunWith(AndroidJUnit4.class)
 public final class UaSecurityProtocolIdentifierTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
+
     private static final String TAG = "UaSecurityProtocolIdentifierTest";
     private static final int PROTO_SIZE = 5;
     private static final byte[] PROTO_DEFAULT = {0x00, 0x00, 0x00, 0x00, 0x00};
@@ -77,6 +91,10 @@ public final class UaSecurityProtocolIdentifierTest {
 
     @Test
     public void testDefaultId() {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(isFeatureSupported());
+        }
+
         UaSecurityProtocolIdentifier.Builder builder = new UaSecurityProtocolIdentifier.Builder();
         UaSecurityProtocolIdentifier sp = builder.build();
         assertNotNull(sp);
@@ -86,6 +104,10 @@ public final class UaSecurityProtocolIdentifierTest {
 
     @Test
     public void testValid3gppId() {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(isFeatureSupported());
+        }
+
         for (int i = 0; i < PROTO_3GPP_PLAIN_ID.length; i++) {
             UaSecurityProtocolIdentifier sp = testCreate3GppSpId(
                     PROTO_3GPP_PLAIN_ID[i], null, false);
@@ -99,6 +121,10 @@ public final class UaSecurityProtocolIdentifierTest {
 
     @Test
     public void testValid3gppIdWithTls() {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(isFeatureSupported());
+        }
+
         for (int i = 0; i < PROTO_3GPP_TLS_ID.length; i++) {
             for (int j = 0; j < TLS_CS_ID_SUPPORTED.length; j++) {
                 UaSecurityProtocolIdentifier sp = testCreate3GppSpId(
@@ -118,6 +144,10 @@ public final class UaSecurityProtocolIdentifierTest {
 
     @Test
     public void testInvalidId() {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(isFeatureSupported());
+        }
+
         Random rand = new Random();
         HashSet<Integer> validIds = new HashSet<>();
         for (int id : PROTO_3GPP_PLAIN_ID) {
@@ -135,6 +165,10 @@ public final class UaSecurityProtocolIdentifierTest {
 
     @Test
     public void testInvalid3gppIdWithTls() {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(isFeatureSupported());
+        }
+
         Random rand = new Random();
         for (int i = 0; i < PROTO_3GPP_TLS_ID.length; i++) {
             for (int j = 0; j < 200; j++) {
@@ -149,6 +183,10 @@ public final class UaSecurityProtocolIdentifierTest {
 
     @Test
     public void testParcelUnparcel() {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(isFeatureSupported());
+        }
+
         UaSecurityProtocolIdentifier sp = testCreate3GppSpId(
                 PROTO_3GPP_TLS_ID[0], TLS_CS_ID_SUPPORTED[0], false);
         Parcel parcel = Parcel.obtain();
@@ -162,6 +200,10 @@ public final class UaSecurityProtocolIdentifierTest {
 
     @Test
     public void testIsTlsCipherSuiteSupported() {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(isFeatureSupported());
+        }
+
         Random rand = new Random();
 
         for (int i = 0; i < TLS_CS_ID_SUPPORTED.length; i++) {
@@ -178,6 +220,10 @@ public final class UaSecurityProtocolIdentifierTest {
 
     @Test
     public void testUaSecurityProtocolIdentifierBuilder() {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(isFeatureSupported());
+        }
+
         UaSecurityProtocolIdentifier sp = testCreate3GppSpId(
                 PROTO_3GPP_TLS_ID[0], TLS_CS_ID_SUPPORTED[0], false);
         UaSecurityProtocolIdentifier.Builder builder =
@@ -215,5 +261,15 @@ public final class UaSecurityProtocolIdentifierTest {
         byte[] arr = new byte[size];
         rand.nextBytes(arr);
         return new String(arr);
+    }
+
+    @FlaggedApi(Flags.FLAG_ENFORCE_TELEPHONY_FEATURE_MAPPING_FOR_PUBLIC_APIS)
+    private static boolean isFeatureSupported() {
+        if (!InstrumentationRegistry.getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION)) {
+            return false;
+        }
+
+        return true;
     }
 }
