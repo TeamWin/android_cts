@@ -24,6 +24,7 @@ import static junit.framework.TestCase.fail;
 
 import static org.junit.Assert.assertThrows;
 
+import android.content.ContentProvider;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
@@ -59,6 +60,7 @@ import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
 
+import androidx.core.content.FileProvider;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
@@ -81,6 +83,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -275,6 +279,42 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             fail("Null path was accepted");
         } catch (RuntimeException e) {
             // expected
+        }
+    }
+
+    @Test
+    public void testPlayContentUri() throws Exception {
+        String testFile = "testmp3_2.mp3";
+        File localFile;
+        try (AssetFileDescriptor mediaFd = getAssetFileDescriptorFor(testFile)) {
+            Environment.getExternalStorageDirectory();
+            File externalFilesDir = mContext.getExternalFilesDir(/* type= */ null);
+            localFile = new File(externalFilesDir, "test_files/" + testFile);
+            localFile.mkdirs();
+            Files.copy(
+                    mediaFd.createInputStream(),
+                    localFile.toPath(),
+                    StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        MediaPlayer mediaPlayer = new MediaPlayer();
+        try {
+            Uri contentUri = FileProvider.getUriForFile(
+                    mContext, /* authority= */ "com.android.media.player.cts.provider", localFile);
+            mediaPlayer.setDataSource(mContext, contentUri);
+            mediaPlayer.prepare();
+
+            assertFalse(mediaPlayer.isPlaying());
+            mediaPlayer.start();
+            assertTrue(mediaPlayer.isPlaying());
+
+            // waiting to complete
+            while (mediaPlayer.isPlaying()) {
+                Thread.sleep(SLEEP_TIME);
+            }
+        } finally {
+            mediaPlayer.release();
+            localFile.delete();
         }
     }
 
@@ -2634,6 +2674,13 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     @Test
     public void testConstructorWithNullContextFails() {
         assertThrows(NullPointerException.class, () -> new MediaPlayer(/*context=*/null));
+    }
+
+    /** {@link ContentProvider} implementation which serves local files using content:// URIs. */
+    public static final class TestFileProvider extends FileProvider {
+        public TestFileProvider() {
+            super(R.xml.media_player_test_content_path);
+        }
     }
 
 }
