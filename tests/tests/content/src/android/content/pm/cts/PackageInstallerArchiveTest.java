@@ -252,6 +252,16 @@ public class PackageInstallerArchiveTest {
                 () -> mPackageManager.getPackageInfo(PACKAGE_NAME, /* flags= */ 0));
         assertThrows(NameNotFoundException.class,
                 () -> mPackageManager.getApplicationInfo(PACKAGE_NAME, /* flags= */ 0));
+
+        assertThat(
+                mPackageManager.getInstalledApplications(
+                                ApplicationInfoFlags.of(MATCH_ARCHIVED_PACKAGES))
+                        .stream()
+                        .anyMatch(
+                                applicationInfo ->
+                                        applicationInfo.packageName.equals(PACKAGE_NAME)
+                                                && applicationInfo.isArchived))
+                .isTrue();
     }
 
     @Test
