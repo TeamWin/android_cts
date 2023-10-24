@@ -970,6 +970,30 @@ public class AccessibilityDisplayProxyTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(android.companion.virtual.flags.Flags.FLAG_VDM_PUBLIC_APIS)
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager"
+            + ".AccessibilityServicesStateChangeListener#onAccessibilityServicesStateChanged"})
+    public void onAccessibilityServicesStateChanged_updateProxyEnabledList_closeVirtualDevice_notifiesProxiedApp() {
+        // Test that the proxy activity is notified that the services state is changed after
+        // a proxy update of installed and enabled services.
+        registerProxyAndWaitForConnection();
+        final MyAccessibilityServicesStateChangeListener listener =
+                new MyAccessibilityServicesStateChangeListener(0, 0);
+        mProxyActivityA11yManager.addAccessibilityServicesStateChangeListener(listener);
+        try {
+            mA11yProxy.setInstalledAndEnabledServices(getTestAccessibilityServiceInfoAsList());
+
+            runWithShellPermissionIdentity(() -> mVirtualDevice.close());
+
+            waitOn(listener.mWaitObject, () -> listener.mAtomicBoolean.get(), TIMEOUT_MS,
+                    "Services state listener should be called when proxy installed and"
+                            + "virtual device is closed.");
+        } finally {
+            mProxyActivityA11yManager.removeAccessibilityServicesStateChangeListener(listener);
+        }
+    }
+
+    @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityManager"
             + ".TouchExplorationStateChangeListener#onTouchExplorationStateChanged"})
     public void onTouchExplorationStateChanged_enableProxyTouchExploration_notifiesProxiedApp() {
