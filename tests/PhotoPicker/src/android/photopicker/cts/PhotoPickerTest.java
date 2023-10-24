@@ -16,8 +16,7 @@
 
 package android.photopicker.cts;
 
-import static android.photopicker.cts.util.GetContentActivityAliasUtils.clearPackageData;
-import static android.photopicker.cts.util.GetContentActivityAliasUtils.getDocumentsUiPackageName;
+import static android.photopicker.cts.util.PhotoPickerComponentUtils.GET_CONTENT_ACTIVITY_COMPONENT;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createImageWithUnknownMimeType;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createImagesAndGetUris;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createMj2VideosAndGetUris;
@@ -26,6 +25,8 @@ import static android.photopicker.cts.util.PhotoPickerFilesUtils.createSvgImage;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createVideoWithUnknownMimeType;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createVideosAndGetUris;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.deleteMedia;
+import static android.photopicker.cts.util.PhotoPickerPackageUtils.clearPackageData;
+import static android.photopicker.cts.util.PhotoPickerPackageUtils.getDocumentsUiPackageName;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.REGEX_PACKAGE_NAME;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.SHORT_TIMEOUT;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.clickAndWait;
@@ -50,7 +51,7 @@ import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.net.Uri;
-import android.photopicker.cts.util.GetContentActivityAliasUtils;
+import android.photopicker.cts.util.PhotoPickerComponentUtils;
 import android.provider.MediaStore;
 
 import androidx.test.uiautomator.UiObject;
@@ -93,7 +94,8 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        sGetContentTakeOverActivityAliasState = GetContentActivityAliasUtils.enableAndGetOldState();
+        sGetContentTakeOverActivityAliasState = PhotoPickerComponentUtils
+                .enableAndGetOldState(GET_CONTENT_ACTIVITY_COMPONENT);
         clearPackageData(getDocumentsUiPackageName());
     }
 
@@ -108,7 +110,8 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
             mActivity.finish();
         }
 
-        GetContentActivityAliasUtils.restoreState(sGetContentTakeOverActivityAliasState);
+        PhotoPickerComponentUtils.setState(GET_CONTENT_ACTIVITY_COMPONENT,
+                sGetContentTakeOverActivityAliasState);
     }
 
     @Test
