@@ -146,6 +146,9 @@ def find_center_circle(
   # check contours and find the best circle candidates
   circles = []
   img_ctr = [gray.shape[1] // 2, gray.shape[0] // 2]
+  logging.debug('img center x,y: %d, %d', img_ctr[0], img_ctr[1])
+  logging.debug('min area: %d, min circle pts: %d', min_area, min_circle_pts)
+  logging.debug('circlish_rtol: %.3f', circlish_rtol)
 
   for contour in contours:
     area = cv2.contourArea(contour)
@@ -175,6 +178,8 @@ def find_center_circle(
           'No circle detected for zoom ratio <= '
           f'{ZOOM_MAX_THRESH}. '
           'Take pictures according to instructions carefully!')
+  else:
+    logging.debug('num of circles found: %s', len(circles))
 
   if debug:
     logging.debug('circles [x, y, r, pi*r**2/area, area]: %s', str(circles))
