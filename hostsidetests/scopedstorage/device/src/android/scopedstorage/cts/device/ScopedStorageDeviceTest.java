@@ -139,6 +139,7 @@ import android.os.storage.StorageManager;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.scopedstorage.cts.lib.RedactionTestHelper;
+import android.scopedstorage.cts.lib.ScopedStorageBaseDeviceTest;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.StructStat;

@@ -42,6 +42,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.platform.test.annotations.FlakyTest;
 import android.provider.MediaStore;
+import android.scopedstorage.cts.lib.ScopedStorageBaseDeviceTest;
 import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
