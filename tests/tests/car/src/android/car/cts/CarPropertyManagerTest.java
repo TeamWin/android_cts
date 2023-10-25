@@ -6466,8 +6466,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                         == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE
                                 || cfg.getPropertyType() != Integer[].class) {
                             // skip the test if the property is not readable or not an int array
-                            // type
-                            // property.
+                            // type property.
                             continue;
                         }
                         switch (cfg.getPropertyId()) {
@@ -6720,10 +6719,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                     VehiclePropertyIds.PERF_VEHICLE_SPEED);
                     long bufferMillis = 1_000; // 1 second
                     // timeoutMillis is set to the maximum expected time needed to receive the
-                    // required
-                    // number of PERF_VEHICLE_SPEED events for test. If the test does not receive
-                    // the
-                    // required number of events before the timeout expires, it fails.
+                    // required number of PERF_VEHICLE_SPEED events for test. If the test does not
+                    // receive the required number of events before the timeout expires, it fails.
                     long timeoutMillis = generateTimeoutMillis(carPropertyConfig.getMinSampleRate(),
                             bufferMillis);
                     CarPropertyEventCounter speedListenerUI =
@@ -6801,9 +6798,9 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     int currentEventNormal = speedListenerNormal.receivedEvent(vehicleSpeed);
                     int currentEventUI = speedListenerUI.receivedEvent(vehicleSpeed);
                     // Because we copy the callback outside the lock, so even after
-                    // unregisterCallback, one
-                    // callback that is already copied out still might be called.
-                    // As a result, we verify that the callback is not called more than once.
+                    // unregisterCallback, one callback that is already copied out still might be
+                    // called. As a result, we verify that the callback is not called more than
+                    // once.
                     speedListenerNormal.assertOnChangeEventNotCalledWithinMs(WAIT_CALLBACK);
 
                     assertThat(speedListenerNormal.receivedEvent(vehicleSpeed))
