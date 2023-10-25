@@ -2878,8 +2878,8 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
             assertEquals(lastPassphrase.value, testPassphrase);
         } finally {
             // Restore SoftApConfiguration
-            ShellIdentityUtils.invokeWithShellPermissions(
-                    () -> sWifiManager.setSoftApConfiguration(currentConfig));
+            sWifiManager.setSoftApConfiguration(currentConfig);
+            uiAutomation.dropShellPermissionIdentity();
         }
     }
 
