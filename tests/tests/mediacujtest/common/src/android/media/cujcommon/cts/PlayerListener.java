@@ -81,11 +81,13 @@ public class PlayerListener implements Player.Listener {
   private boolean mScrollRequested;
   private boolean mIsSwitchAudioTracksTest;
   private boolean mTrackChangeRequested;
-  private List<Tracks.Group> mAudioTrackGroups;
+  private List<Tracks.Group> mTrackGroups;
   private Format mStartTrackFormat;
   private Format mCurrentTrackFormat;
   private Format mConfiguredTrackFormat;
   private int mNumOfAudioTrack;
+  private boolean mIsSwitchSubtitleTracksTest;
+  private int mNumOfSubtitleTrack;
 
   /**
    * Create player listener for playback test.
@@ -102,6 +104,8 @@ public class PlayerListener implements Player.Listener {
     playerListener.mNumOfScrollIteration = 0;
     playerListener.mIsSwitchAudioTracksTest = false;
     playerListener.mNumOfAudioTrack = 0;
+    playerListener.mIsSwitchSubtitleTracksTest = false;
+    playerListener.mNumOfSubtitleTrack = 0;
     return playerListener;
   }
 
@@ -176,6 +180,21 @@ public class PlayerListener implements Player.Listener {
     PlayerListener playerListener = createListenerForPlaybackTest();
     playerListener.mIsSwitchAudioTracksTest = true;
     playerListener.mNumOfAudioTrack = numOfAudioTrack;
+    playerListener.mSendMessagePosition = sendMessagePosition;
+    return playerListener;
+  }
+
+  /**
+   * Create player listener for Switching Subtitle Tracks test.
+   *
+   * @param numOfSubtitleTrack  Number of subtitle tracks in input clip
+   * @param sendMessagePosition The position at which message will be send
+   */
+  public static PlayerListener createListenerForSwitchSubtitleTracksTest(int numOfSubtitleTrack,
+      long sendMessagePosition) {
+    PlayerListener playerListener = createListenerForPlaybackTest();
+    playerListener.mIsSwitchSubtitleTracksTest = true;
+    playerListener.mNumOfSubtitleTrack = numOfSubtitleTrack;
     playerListener.mSendMessagePosition = sendMessagePosition;
     return playerListener;
   }
@@ -300,6 +319,9 @@ public class PlayerListener implements Player.Listener {
           != testFormat.sampleRate)) {
         return false;
       }
+    } else if (mIsSwitchSubtitleTracksTest) {
+      assertTrue((refMediaType.startsWith("text/") && testMediaType.startsWith("text/")) || (
+          refMediaType.startsWith("application/") && testMediaType.startsWith("application/")));
     }
     if (!refMediaType.equals(testMediaType)) {
       return false;
@@ -308,6 +330,20 @@ public class PlayerListener implements Player.Listener {
       return false;
     }
     return true;
+  }
+
+  /**
+   * Select the first subtitle track explicitly.
+   */
+  private void selectFirstSubtitleTrack() {
+    TrackSelectionParameters currentParameters =
+        mActivity.mPlayer.getTrackSelectionParameters();
+    TrackSelectionParameters newParameters = currentParameters
+        .buildUpon()
+        .setOverrideForType(
+            new TrackSelectionOverride(mTrackGroups.get(0).getMediaTrackGroup(), 0))
+        .build();
+    mActivity.mPlayer.setTrackSelectionParameters(newParameters);
   }
 
   /**
@@ -352,9 +388,14 @@ public class PlayerListener implements Player.Listener {
             mVideoFormatList = getVideoFormatList();
             mCurrentTrackIndex = 0;
           }
-          if (mIsSwitchAudioTracksTest) {
-            // When player is ready, get the list of audio track groups in the mediaItem
-            mAudioTrackGroups = getAudioTrackGroups();
+          if (mIsSwitchAudioTracksTest || mIsSwitchSubtitleTracksTest) {
+            // When player is ready, get the list of audio/subtitle track groups in the mediaItem
+            mTrackGroups = getTrackGroups();
+            // For a subtitle track switching test, we need to explicitly select the first
+            // subtitle track
+            if (mIsSwitchSubtitleTracksTest) {
+              selectFirstSubtitleTrack();
+            }
           }
         }
       } else if (mTrackChangeRequested && player.getPlaybackState() == Player.STATE_ENDED) {
@@ -397,13 +438,15 @@ public class PlayerListener implements Player.Listener {
         for (int count = 1; count < totalNumOfVideoTrackChange; count++) {
           createAdaptivePlaybackMessage(mSendMessagePosition * (count));
         }
-      } else if (mIsSwitchAudioTracksTest) {
+      } else if (mIsSwitchAudioTracksTest || mIsSwitchSubtitleTracksTest) {
         // Create messages to be executed at different positions
+        final int numOfTrackGroup =
+            mIsSwitchAudioTracksTest ? mNumOfAudioTrack : mNumOfSubtitleTrack;
         // First trackGroupIndex is selected at the time of playback start, so changing
         // track from second track group Index onwards.
-        for (int trackGroupIndex = 1; trackGroupIndex < mNumOfAudioTrack; trackGroupIndex++) {
-          createSwitchAudioTrackMessage(mSendMessagePosition * trackGroupIndex,
-              trackGroupIndex, 0 /* audioTrackIndex */);
+        for (int trackGroupIndex = 1; trackGroupIndex < numOfTrackGroup; trackGroupIndex++) {
+          createSwitchTrackMessage(mSendMessagePosition * trackGroupIndex, trackGroupIndex,
+              0 /* TrackIndex */);
         }
       }
       // In case of scroll test, send the message to scroll the view to change the surface
@@ -503,13 +546,13 @@ public class PlayerListener implements Player.Listener {
   }
 
   /**
-   * Create a message at given position to change the audio track
+   * Create a message at given position to change the audio or the subtitle track
    *
    * @param sendMessagePosition Position at which message needs to be executed
    * @param trackGroupIndex     Index of the current track group
    * @param trackIndex          Index of the current track
    */
-  private void createSwitchAudioTrackMessage(long sendMessagePosition, int trackGroupIndex,
+  private void createSwitchTrackMessage(long sendMessagePosition, int trackGroupIndex,
       int trackIndex) {
     mActivity.mPlayer.createMessage((messageType, payload) -> {
           TrackSelectionParameters currentParameters =
@@ -518,11 +561,11 @@ public class PlayerListener implements Player.Listener {
               .buildUpon()
               .setOverrideForType(
                   new TrackSelectionOverride(
-                      mAudioTrackGroups.get(trackGroupIndex).getMediaTrackGroup(),
+                      mTrackGroups.get(trackGroupIndex).getMediaTrackGroup(),
                       trackIndex))
               .build();
           mActivity.mPlayer.setTrackSelectionParameters(newParameters);
-          mConfiguredTrackFormat = mAudioTrackGroups.get(trackGroupIndex)
+          mConfiguredTrackFormat = mTrackGroups.get(trackGroupIndex)
               .getTrackFormat(trackIndex);
           mTrackChangeRequested = true;
         }).setLooper(Looper.getMainLooper()).setPosition(sendMessagePosition)
@@ -540,7 +583,8 @@ public class PlayerListener implements Player.Listener {
   public void onTracksChanged(Tracks tracks) {
     for (Tracks.Group currentTrackGroup : tracks.getGroups()) {
       if (currentTrackGroup.isSelected() && (mIsSwitchAudioTracksTest && (
-          currentTrackGroup.getType() == C.TRACK_TYPE_AUDIO))) {
+          currentTrackGroup.getType() == C.TRACK_TYPE_AUDIO)) || (mIsSwitchSubtitleTracksTest && (
+          currentTrackGroup.getType() == C.TRACK_TYPE_TEXT))) {
         for (int trackIndex = 0; trackIndex < currentTrackGroup.length; trackIndex++) {
           if (currentTrackGroup.isTrackSelected(trackIndex)) {
             if (!mTrackChangeRequested) {
@@ -555,16 +599,17 @@ public class PlayerListener implements Player.Listener {
   }
 
   /**
-   * Get all audio tracks group from the player's Tracks.
+   * Get all audio/subtitle tracks group from the player's Tracks.
    */
-  private List<Tracks.Group> getAudioTrackGroups() {
-    List<Tracks.Group> audioTrackGroups = new ArrayList<>();
+  private List<Tracks.Group> getTrackGroups() {
+    List<Tracks.Group> trackGroups = new ArrayList<>();
     Tracks currentTracks = mActivity.mPlayer.getCurrentTracks();
     for (Tracks.Group currentTrackGroup : currentTracks.getGroups()) {
-      if (currentTrackGroup.getType() == C.TRACK_TYPE_AUDIO) {
-        audioTrackGroups.add(currentTrackGroup);
+      if ((currentTrackGroup.getType() == C.TRACK_TYPE_AUDIO) || (currentTrackGroup.getType()
+          == C.TRACK_TYPE_TEXT)) {
+        trackGroups.add(currentTrackGroup);
       }
     }
-    return audioTrackGroups;
+    return trackGroups;
   }
 }
