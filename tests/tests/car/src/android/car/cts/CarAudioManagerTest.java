@@ -41,6 +41,7 @@ import android.car.CarOccupantZoneManager;
 import android.car.CarOccupantZoneManager.OccupantZoneInfo;
 import android.car.PlatformVersion;
 import android.car.cts.utils.ProtoDumpUtils;
+import android.car.feature.Flags;
 import android.car.media.AudioZonesMirrorStatusCallback;
 import android.car.media.CarAudioManager;
 import android.car.media.CarAudioZoneConfigInfo;
@@ -51,9 +52,13 @@ import android.car.media.SwitchAudioZoneConfigCallback;
 import android.car.test.PermissionsCheckerRule;
 import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.car.test.util.CarAudioManagerTestUtils;
+import android.media.AudioDeviceAttributes;
 import android.media.AudioDeviceInfo;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.KeyEvent;
@@ -98,6 +103,9 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     @Rule
     public final PermissionsCheckerRule mPermissionsCheckerRule = new PermissionsCheckerRule();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private static final UiAutomation UI_AUTOMATION =
             InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -365,6 +373,34 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
                     mCarAudioManager.getVolumeGroupInfo(PRIMARY_AUDIO_ZONE, index);
             expectWithMessage("Car volume group infos for info %s and group %s", info, index)
                     .that(infos).contains(info);
+        }
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupInfosForZone",
+        "android.car.media.CarVolumeGroupInfo#getAudioDeviceAttributes"})
+    @RequiresFlagsEnabled(Flags.FLAG_CAR_AUDIO_DYNAMIC_DEVICES)
+    public void getVolumeGroupInfosForZone_forPrimaryZone_withAudioDeviceAttributes() {
+        assumeDynamicRoutingIsEnabled();
+
+        // TODO(b/307824959): Setup default config for test when dynamic switching
+        // is available for primary zone.
+        List<CarVolumeGroupInfo> infos =
+                mCarAudioManager.getVolumeGroupInfosForZone(PRIMARY_AUDIO_ZONE);
+
+        expectWithMessage("Primary zone's car volume groups").that(infos).isNotEmpty();
+        for (int count = 0; count < infos.size(); count++) {
+            CarVolumeGroupInfo info = infos.get(count);
+            List<Integer> types = info.getAudioDeviceAttributes().stream()
+                    .map(AudioDeviceAttributes::getType).collect(Collectors.toList());
+            expectWithMessage("Primary zone's car volume group %s types", info)
+                    .that(types).isNotEmpty();
+            for (int index = 0; index < types.size(); index++)  {
+                expectWithMessage("Primary zone's car volume group device type "
+                    + " for group %s device index %s", info, index)
+                        .that(types.get(index)).isEqualTo(AudioDeviceInfo.TYPE_BUS);
+            }
         }
     }
 
