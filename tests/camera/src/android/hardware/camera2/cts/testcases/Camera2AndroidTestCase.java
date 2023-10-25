@@ -181,7 +181,7 @@ public class Camera2AndroidTestCase extends Camera2ParameterizedTestCase {
         // If external camera is supported, verify that it is connected as part of the camera Ids
         // under test. If the external camera is not connected, an exception will be thrown to
         // prevent bypassing CTS testing for external camera
-        CameraTestUtils.verifyExternalCameraConnected(mAllCameraIds,
+        CameraTestUtils.verifyExternalCameraConnected(mCameraManager.getCameraIdListNoLazy(),
                 mContext.getPackageManager(), mCameraManager);
 
         return mAllCameraIds;
