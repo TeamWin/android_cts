@@ -15,6 +15,8 @@
  */
 package android.os.cts.batterysaving;
 
+import static android.os.Flags.batterySaverSupportedCheckApi;
+
 import static com.android.compatibility.common.util.BatteryUtils.enableBatterySaver;
 import static com.android.compatibility.common.util.BatteryUtils.resetBatterySaver;
 import static com.android.compatibility.common.util.BatteryUtils.runDumpsysBatteryUnplug;
@@ -33,7 +35,11 @@ import static org.junit.Assume.assumeTrue;
 import android.Manifest;
 import android.app.UiModeManager;
 import android.content.res.Configuration;
+import android.os.Flags;
 import android.os.PowerManager;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.DeviceConfig;
 
 import androidx.test.filters.FlakyTest;
@@ -45,6 +51,7 @@ import com.android.compatibility.common.util.DeviceConfigStateHelper;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -60,6 +67,10 @@ public class BatterySaverTest extends BatterySavingTestBase {
             new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_BATTERY_SAVER);
 
     private String mInitialNightMode;
+
+    // Required for RequiresFlagsEnabled and RequiresFlagsDisabled annotations to take effect.
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setUp() {
@@ -80,7 +91,9 @@ public class BatterySaverTest extends BatterySavingTestBase {
     @Test
     public void testActivateBatterySaver() throws Exception {
         final PowerManager powerManager = getPowerManager();
-        assumeTrue(powerManager.isBatterySaverSupported());
+        if (batterySaverSupportedCheckApi()) {
+            assumeTrue(powerManager.isBatterySaverSupported());
+        }
 
         assertFalse(powerManager.isPowerSaveMode());
         assertEquals(PowerManager.LOCATION_MODE_NO_CHANGE,
@@ -113,6 +126,7 @@ public class BatterySaverTest extends BatterySavingTestBase {
      * Make sure the relevant components don't change if the battery saver is not supported.
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_BATTERY_SAVER_SUPPORTED_CHECK_API)
     public void testActivateBatterySaver_notSupported() throws Exception {
         final PowerManager powerManager = getPowerManager();
         assumeFalse(powerManager.isBatterySaverSupported());
@@ -147,7 +161,11 @@ public class BatterySaverTest extends BatterySavingTestBase {
             runDumpsysBatteryUnplug();
             // Verify battery saver gets toggled only when battery saver is supported.
             manager.setPowerSaveModeEnabled(true);
-            assertEquals(manager.isBatterySaverSupported(), manager.isPowerSaveMode());
+            if (batterySaverSupportedCheckApi()) {
+                assertEquals(manager.isBatterySaverSupported(), manager.isPowerSaveMode());
+            } else {
+                assertTrue(manager.isPowerSaveMode());
+            }
 
             manager.setPowerSaveModeEnabled(false);
             assertFalse(manager.isPowerSaveMode());
@@ -158,7 +176,9 @@ public class BatterySaverTest extends BatterySavingTestBase {
     @Test
     public void testAutomotiveProjectionExceptions() throws Exception {
         final PowerManager powerManager = BatteryUtils.getPowerManager();
-        assumeTrue(powerManager.isBatterySaverSupported());
+        if (batterySaverSupportedCheckApi()) {
+            assumeTrue(powerManager.isBatterySaverSupported());
+        }
 
         runShellCommand("cmd uimode night no");
         UiModeManager uiModeManager = getContext().getSystemService(UiModeManager.class);
@@ -226,7 +246,9 @@ public class BatterySaverTest extends BatterySavingTestBase {
     @Test
     public void testGlobalSettings() throws Exception {
         final PowerManager powerManager = BatteryUtils.getPowerManager();
-        assumeTrue(powerManager.isBatterySaverSupported());
+        if (batterySaverSupportedCheckApi()) {
+            assumeTrue(powerManager.isBatterySaverSupported());
+        }
 
         runDumpsysBatteryUnplug();
         enableBatterySaver(true);
@@ -250,7 +272,9 @@ public class BatterySaverTest extends BatterySavingTestBase {
     @Test
     public void testDeviceConfig() throws Exception {
         final PowerManager powerManager = BatteryUtils.getPowerManager();
-        assumeTrue(powerManager.isBatterySaverSupported());
+        if (batterySaverSupportedCheckApi()) {
+            assumeTrue(powerManager.isBatterySaverSupported());
+        }
 
         runDumpsysBatteryUnplug();
         enableBatterySaver(true);
@@ -275,7 +299,9 @@ public class BatterySaverTest extends BatterySavingTestBase {
     @Test
     public void testGlobalSettingsOverridesDeviceConfig() throws Exception {
         final PowerManager powerManager = BatteryUtils.getPowerManager();
-        assumeTrue(powerManager.isBatterySaverSupported());
+        if (batterySaverSupportedCheckApi()) {
+            assumeTrue(powerManager.isBatterySaverSupported());
+        }
 
         runDumpsysBatteryUnplug();
         enableBatterySaver(true);

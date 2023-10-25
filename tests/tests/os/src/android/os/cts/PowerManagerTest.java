@@ -16,12 +16,15 @@
 
 package android.os.cts;
 
+import static android.os.Flags.batterySaverSupportedCheckApi;
+
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Flags;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.platform.test.annotations.AppModeFull;
@@ -104,7 +107,7 @@ public class PowerManagerTest extends AndroidTestCase {
 
     public void testPowerManager_getPowerSaveMode() {
         PowerManager manager = BatteryUtils.getPowerManager();
-        if (!manager.isBatterySaverSupported()) {
+        if (batterySaverSupportedCheckApi() && !manager.isBatterySaverSupported()) {
             return;
         }
 
@@ -127,7 +130,7 @@ public class PowerManagerTest extends AndroidTestCase {
 
     public void testPowerManager_setDynamicPowerSavings() {
         PowerManager manager = BatteryUtils.getPowerManager();
-        if (!manager.isBatterySaverSupported()) {
+        if (batterySaverSupportedCheckApi() && !manager.isBatterySaverSupported()) {
             return;
         }
 
@@ -150,7 +153,7 @@ public class PowerManagerTest extends AndroidTestCase {
     @LargeTest
     public void testPowerManager_batteryDischargePrediction() throws Exception {
         final PowerManager manager = BatteryUtils.getPowerManager();
-        if (!manager.isBatterySaverSupported()) {
+        if (batterySaverSupportedCheckApi() && !manager.isBatterySaverSupported()) {
             return;
         }
 

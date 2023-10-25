@@ -29,6 +29,8 @@ android_test {
         "platformprotosnano",
         "truth",
         "androidx.test.uiautomator_uiautomator",
+        "android.os.flags-aconfig-java",
+        "flag-junit",
     ],
     libs: [
         "android.test.runner",

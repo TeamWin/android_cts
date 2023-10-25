@@ -15,6 +15,8 @@
  */
 package com.android.compatibility.common.util;
 
+import static android.os.Flags.batterySaverSupportedCheckApi;
+
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
 import android.content.Intent;
@@ -175,8 +177,12 @@ public class BatteryUtils {
     /** @return true if the device supports battery saver. */
     public static boolean isBatterySaverSupported() {
         final PowerManager powerManager = getPowerManager();
-        if (!powerManager.isBatterySaverSupported() || !hasBattery()) {
+        if (batterySaverSupportedCheckApi() && !powerManager.isBatterySaverSupported()) {
             // Battery saver configuration has been turned off for devices.
+            return false;
+        }
+
+        if (!hasBattery()) {
             // Devices without a battery don't support battery saver.
             return false;
         }

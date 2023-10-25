@@ -38,6 +38,8 @@ java_defaults {
         "error_prone_annotations",
         "truth",
         "modules-utils-build_system",
+        "android.os.flags-aconfig-java",
+        "flag-junit",
     ],
 
     libs: [
