@@ -127,7 +127,9 @@ public final class AccessibilityInputConnectionTest {
                     // For some reasons, Mockito.spy() for real Framework classes did not work...
                     // Use NoOpInputConnection/InputConnectionSplitter instead.
                     final InputConnection spy = Mockito.spy(new NoOpInputConnection());
-                    mLastInputConnectionSpy.set(spy);
+                    if (mLastInputConnectionSpy.get() == null) {
+                        mLastInputConnectionSpy.set(spy);
+                    }
                     return new InputConnectionSplitter(ic, spy);
                 }
             };
