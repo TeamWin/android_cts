@@ -68,7 +68,7 @@ class AutoframingTest(its_base_test.ItsBaseTest):
       # zooms into the scene so that none of the faces are in the view
       # initially - which gives room for autoframing to take place.
       max_zoom_ratio = camera_properties_utils.get_max_digital_zoom(props)
-      cam.do_3a(do_af=False, zoom_ratio=max_zoom_ratio)
+      cam.do_3a(zoom_ratio=max_zoom_ratio)
 
       req = capture_request_utils.auto_capture_request(
           do_autoframing=True, zoom_ratio=max_zoom_ratio)
