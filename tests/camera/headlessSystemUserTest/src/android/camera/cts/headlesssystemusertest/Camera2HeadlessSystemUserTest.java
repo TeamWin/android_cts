@@ -41,6 +41,7 @@ import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 
+import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.nene.TestApis;
@@ -50,6 +51,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
 import com.android.internal.camera.flags.Flags;
 
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,6 +70,10 @@ public class Camera2HeadlessSystemUserTest extends Camera2ParameterizedTestCase 
 
     @Rule
     public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
+    @Rule
+    @ClassRule
+    public static final DeviceState sDeviceState = new DeviceState();
 
     @Override
     public void setUp() throws Exception {
