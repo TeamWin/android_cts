@@ -32,14 +32,6 @@ import java.nio.ByteOrder;
  * Utility methods for creating and processing audio data.
  */
 public final class AudioHelper {
-    /** Tells the activity to play audio for testing. */
-    public static final String ACTION_PLAY_AUDIO = "android.virtualdevice.cts.PLAY_AUDIO";
-
-    /** Tells the activity to record audio for testing. */
-    public static final String ACTION_RECORD_AUDIO = "android.virtualdevice.cts.RECORD_AUDIO";
-
-    /** Tells the activity to play or record for which audio data type. */
-    public static final String EXTRA_AUDIO_DATA_TYPE = "audio_data_type";
 
     @IntDef({
             BYTE_BUFFER,

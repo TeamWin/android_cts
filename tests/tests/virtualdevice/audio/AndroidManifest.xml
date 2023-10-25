@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
  * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,19 +17,25 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.virtualdevice.cts.audio">
 
+    <uses-feature android:name="android.software.companion_device_setup" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <queries>
         <package android:name="android.virtualdevice.streamedtestapp" />
     </queries>
 
     <application>
+        <activity
+            android:name="android.virtualdevice.cts.VirtualAudioTest$AudioActivity"
+            android:exported="false" />
+
         <uses-library android:name="android.test.runner" />
     </application>
 
-    <uses-feature android:name="android.software.companion_device_setup" />
-
-    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.virtualdevice.cts.audio"
-                     android:label="CTS tests of android.companion.virtual audio functionality">
+    <instrumentation
+        android:name="androidx.test.runner.AndroidJUnitRunner"
+        android:label="CTS tests of android.companion.virtual audio functionality"
+        android:targetPackage="android.virtualdevice.cts.audio">
     </instrumentation>
 
 </manifest>
