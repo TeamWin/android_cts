@@ -25,10 +25,12 @@ import static android.Manifest.permission.WAKE_LOCK;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_AUDIO;
 import static android.media.AudioAttributes.CONTENT_TYPE_SPEECH;
+import static android.media.AudioPlaybackConfiguration.PLAYER_STATE_STARTED;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.util.concurrent.Uninterruptibles.getUninterruptibly;
 
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
@@ -54,7 +56,6 @@ import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.junit.After;
 import org.junit.Before;
@@ -62,6 +63,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
@@ -74,6 +76,8 @@ public class TextToSpeechTest {
     private static final String TAG = TextToSpeechTest.class.getSimpleName();
     private static final String TTS_TEXT = "My hovercraft is full of eels";
     private static final String UTTERANCE_ID = "vdmTtsTestUtteranceId";
+
+    private static final Duration TIMEOUT = Duration.ofSeconds(5);
 
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
@@ -136,7 +140,9 @@ public class TextToSpeechTest {
 
                 // Wait for audio playback with SPEECH content.
                 AudioPlaybackConfiguration ttsAudioPlaybackConfig =
-                        mSpeechPlaybackObserver.getSpeechAudioPlaybackConfigFuture().get();
+                        getUninterruptibly(
+                                mSpeechPlaybackObserver.getSpeechAudioPlaybackConfigFuture(),
+                                TIMEOUT.getSeconds(), TimeUnit.SECONDS);
 
                 // Verify the SPEECH playback has audio session id corresponding to virtual device.
                 assertThat(ttsAudioPlaybackConfig.getSessionId()).isEqualTo(
@@ -170,7 +176,9 @@ public class TextToSpeechTest {
 
                 // Wait for audio playback with SPEECH content.
                 AudioPlaybackConfiguration ttsAudioPlaybackConfig =
-                                mSpeechPlaybackObserver.getSpeechAudioPlaybackConfigFuture().get();
+                        getUninterruptibly(
+                                mSpeechPlaybackObserver.getSpeechAudioPlaybackConfigFuture(),
+                                TIMEOUT.getSeconds(), TimeUnit.SECONDS);
 
                 // Verify that explicitly requested audio session id has overridden the virtual
                 // device audio session id.
@@ -193,7 +201,8 @@ public class TextToSpeechTest {
         TextToSpeech tts = new TextToSpeech(context, status -> ttsInitFuture.set(status));
         int status;
         try {
-            status = Uninterruptibles.getUninterruptibly(ttsInitFuture, 5, TimeUnit.SECONDS);
+            status = getUninterruptibly(ttsInitFuture, TIMEOUT.getSeconds(),
+                    TimeUnit.SECONDS);
         } catch (ExecutionException | TimeoutException exception) {
             Log.w(TAG, "Failed to initialize TTS", exception);
             return null;
@@ -227,19 +236,23 @@ public class TextToSpeechTest {
         @Override
         public void onPlaybackConfigChanged(List<AudioPlaybackConfiguration> configs) {
             super.onPlaybackConfigChanged(configs);
-            configs.stream().filter(c -> c.getAudioAttributes().getContentType()
-                    == CONTENT_TYPE_SPEECH).findAny().ifPresent(
-                    mAudioPlaybackConfigurationFuture::set);
+            configs.stream().filter(SpeechPlaybackObserver::isSpeechPlaybackStarted)
+                    .findAny().ifPresent(mAudioPlaybackConfigurationFuture::set);
         }
 
         /**
          * Get {@ListenableFuture} with observed SPEECH playb
          *
          * @return {@code ListenableFuture} instance which will be completed with
-         *    @code AudioPlaybackConfiguration} corresponding to SPEECH playback once detected.
+         * @code AudioPlaybackConfiguration} corresponding to SPEECH playback once detected.
          */
         ListenableFuture<AudioPlaybackConfiguration> getSpeechAudioPlaybackConfigFuture() {
             return mAudioPlaybackConfigurationFuture;
+        }
+
+        private static boolean isSpeechPlaybackStarted(AudioPlaybackConfiguration config) {
+            return config.getAudioAttributes().getContentType() == CONTENT_TYPE_SPEECH
+                    && config.getPlayerState() == PLAYER_STATE_STARTED;
         }
     }
 }
