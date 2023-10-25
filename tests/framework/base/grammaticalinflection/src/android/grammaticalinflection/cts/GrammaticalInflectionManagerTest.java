@@ -64,8 +64,7 @@ public class GrammaticalInflectionManagerTest extends ActivityManagerTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
-        final Context context = InstrumentationRegistry.getContext();
-        mGrammaticalInflectionManager = context.getSystemService(
+        mGrammaticalInflectionManager = mContext.getSystemService(
                 GrammaticalInflectionManager.class);
     }
 
@@ -137,7 +136,7 @@ public class GrammaticalInflectionManagerTest extends ActivityManagerTestBase {
         mOriginalSystemTermsOfAddressFlag = SystemUtil.runShellCommand(
                 "device_config get " + FLAG_SYSTEM_TERMS_OF_ADDRESS_ENABLED);
         mOriginalGrammaticalGender = SystemUtil.runShellCommand(String.format(
-                CMD_GET_GRAMMATICAL_GENDER + " --user %d ", 0));
+                CMD_GET_GRAMMATICAL_GENDER + " --user %d ", mContext.getUserId()));
 
         if (!mOriginalSystemTermsOfAddressFlag.contains("true")) {
             setSystemTermsOfAddressFlag("true");
@@ -157,7 +156,7 @@ public class GrammaticalInflectionManagerTest extends ActivityManagerTestBase {
         SystemUtil.runShellCommand(String.format(
                 CMD_SET_GRAMMATICAL_GENDER_ENABLED + " --user %d "
                         + "--grammaticalGender %s",
-                0,
+                mContext.getUserId(),
                 grammaticalGender
         ));
     }
