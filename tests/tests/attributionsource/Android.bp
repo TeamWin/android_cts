@@ -35,7 +35,9 @@ android_test {
         "truth",
         "ctstestrunner-axt",
         "platform-test-annotations",
+        "flag-junit",
         "kotlin-test",
+        "android.permission.flags-aconfig-java",
     ],
     data: [
         ":CtsBlamedPermissionApp",
