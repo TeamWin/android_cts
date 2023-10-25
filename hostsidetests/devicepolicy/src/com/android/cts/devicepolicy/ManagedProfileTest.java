@@ -529,6 +529,7 @@ public final class ManagedProfileTest extends BaseManagedProfileTest {
         installAppAsUser(SHARING_APP_2_APK, mPrimaryUserId);
         installAppAsUser(SHARING_APP_1_APK, mProfileUserId);
         installAppAsUser(SHARING_APP_2_APK, mProfileUserId);
+        RunUtil.getDefault().sleep(3000);
         try {
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
                     "addCrossProfileIntents", mProfileUserId);
