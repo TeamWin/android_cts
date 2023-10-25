@@ -18,7 +18,8 @@ package android.media.cujlargetest.cts;
 
 import android.media.cujcommon.cts.CujTestBase;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.LargeTest;
+
+import androidx.test.filters.LargeTest;
 
 import androidx.media3.common.C;
 
