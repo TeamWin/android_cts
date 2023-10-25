@@ -51,6 +51,7 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
     private static final String APPA_CLASS =
             "com.android.cts.appdataisolation.appa.AppATests";
     private static final String APPA_METHOD_CREATE_CE_DE_DATA = "testCreateCeDeAppData";
+    private static final String APPA_METHOD_DELETE_EXTERNAL_DIRS = "testDeleteExternalDirs";
     private static final String APPA_METHOD_CHECK_CE_DATA_EXISTS = "testAppACeDataExists";
     private static final String APPA_METHOD_CHECK_CE_DATA_DOES_NOT_EXIST =
             "testAppACeDataDoesNotExist";
@@ -248,6 +249,10 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
                 try {
                     runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_TEST_UNLOCK_DEVICE);
                 } catch (Exception e) {}
+                try {
+                    runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_DELETE_EXTERNAL_DIRS);
+                } catch (Exception e) {}
+
                 getDevice().executeShellCommand("locksettings clear --old 1234");
                 getDevice().executeShellCommand("locksettings set-disabled true");
             } finally {
