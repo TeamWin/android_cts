@@ -3,11 +3,17 @@ package android.nfc.cts;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Looper;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.util.ArrayList;
+
 
 @RunWith(JUnit4.class)
 public class HostApduServiceTest {
@@ -46,6 +52,15 @@ public class HostApduServiceTest {
       throw new IllegalStateException("Unexpected Exception: " + e);
     }
   }
+
+    @Test
+  @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP)
+  public void testProcessPollingFrame() {
+        ArrayList<Bundle> frames = new ArrayList<Bundle>();
+        Bundle frame = new Bundle();
+        frames.add(frame);
+        service.processPollingFrames(frames);
+    }
 
   @Test
   public void testProcessCommandApdu() {
