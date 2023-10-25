@@ -214,7 +214,7 @@ public class HideOverlayWindowsTest extends ActivityManagerTestBase {
             mWmState.waitAndAssertWindowSurfaceShown(windowName, true);
         }, Manifest.permission.SYSTEM_ALERT_WINDOW);
 
-        launchActivity(HIDE_OVERLAY_WINDOWS_ACTIVITY);
+        launchActivityInFullscreen(HIDE_OVERLAY_WINDOWS_ACTIVITY);
         setHideOverlayWindowsAndWaitForPong(false);
         mWmState.waitAndAssertWindowSurfaceShown(windowName, true);
 
