@@ -64,6 +64,8 @@ public class MockModemService extends Service {
 
     public static final byte PHONE_ID_0 = 0x00;
     public static final byte PHONE_ID_1 = 0x01;
+    public static final byte PHONE_ID_2 = 0x02;
+    public static final byte MAX_PHONE_NUM = 3;
 
     public static final int LATCH_MOCK_MODEM_SERVICE_READY = 0;
     public static final int LATCH_RADIO_INTERFACES_READY = 1;
@@ -98,6 +100,10 @@ public class MockModemService extends Service {
         mNumOfSim = getNumPhysicalSlots();
         mNumOfPhone = mTelephonyManager.getActiveModemCount();
         Log.d(TAG, "Support number of phone = " + mNumOfPhone + ", number of SIM = " + mNumOfSim);
+
+        if (mNumOfPhone > MAX_PHONE_NUM) {
+            mNumOfPhone = MAX_PHONE_NUM;
+        }
 
         // Number of physical Sim slot should be equals to or greater than number of phone.
         if (mNumOfSim < mNumOfPhone) {
@@ -181,7 +187,7 @@ public class MockModemService extends Service {
 
         byte phoneId = intent.getByteExtra(PHONE_ID, PHONE_ID_0);
 
-        if (phoneId > PHONE_ID_1) {
+        if (phoneId >= MAX_PHONE_NUM) {
             Log.e(TAG, "Not suuport for phone " + phoneId);
             return null;
         }
