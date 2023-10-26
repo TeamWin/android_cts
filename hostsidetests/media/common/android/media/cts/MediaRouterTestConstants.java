@@ -51,14 +51,27 @@ public final class MediaRouterTestConstants {
     public static final String DEVICE_SIDE_TEST_CLASS_WITH_MODIFY_AUDIO_ROUTING =
             "android.media.router.cts.modifyaudioroutingapp"
                     + ".MediaRouter2DeviceTestWithModifyAudioRouting";
-    public static final String PROXY_MEDIA_ROUTER_APP_PACKAGE =
+    public static final String PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_PACKAGE =
             "android.media.router.cts.proxyroutingapp";
 
-    public static final String PROXY_MEDIA_ROUTER_APP_APK =
+    public static final String PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_APK =
             "CtsMediaRouterHostSideTestMediaRoutingControlApp.apk";
 
-    public static final String PROXY_MEDIA_ROUTER_APP_TEST_CLASS =
+    public static final String PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_TEST_CLASS =
             "android.media.router.cts.proxyroutingapp.MediaRouter2DeviceTest";
+
+    public static final String MEDIA_ROUTER_SECONDARY_USER_HELPER_APK =
+            "CtsProxyMediaRouterSecondaryUserTestHelperApp.apk";
+
+    public static final String MEDIA_ROUTER_SECONDARY_USER_HELPER_PACKAGE =
+            "android.media.router.cts.secondaryusertesthelper";
+
+    public static final String PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_APK =
+            "CtsProxyMediaRouterTestHelperApp.apk";
+    public static final String PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_PACKAGE =
+            "android.media.router.cts.proxymediacontentcontrolapp";
+    public static final String PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_TEST_CLASS =
+            "android.media.router.cts.proxymediacontentcontrolapp.MediaRouter2DeviceTest";
 
     public static final String ROUTE_ID_APP_1_ROUTE_1 = "route_1-1";
     public static final String ROUTE_ID_APP_1_ROUTE_2 = "route_1-2";
@@ -90,6 +103,8 @@ public final class MediaRouterTestConstants {
     public static final String ROUTE_DEDUPLICATION_ID_3 = "dedup_id_3";
 
     public static final String FEATURE_SAMPLE = "android.media.cts.FEATURE_SAMPLE";
+
+    public static final String TARGET_USER_ID_KEY = "TARGET_USER_ID_KEY";
 
     private MediaRouterTestConstants() {
         // Private to prevent instantiation.

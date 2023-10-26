@@ -16,15 +16,17 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.media.router.cts.proxyroutingapp">
+          package="android.media.router.cts.proxymediacontentcontrolapp">
 
-    <uses-permission android:name="android.permission.MEDIA_ROUTING_CONTROL" />
+    <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL"/>
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL" />
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
 
     <application android:testOnly="true">
         <uses-library android:name="android.test.runner"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.media.router.cts.proxyroutingapp"
-                     android:label="Proxy routing app for MediaRouter2 hostside tests."/>
+                     android:targetPackage="android.media.router.cts.proxymediacontentcontrolapp"
+                     android:label="MediaRouter multi-provider case CTS Tests"/>
 </manifest>
