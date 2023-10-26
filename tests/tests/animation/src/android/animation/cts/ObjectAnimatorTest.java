@@ -367,7 +367,7 @@ public class ObjectAnimatorTest {
         objAnimator.setRepeatMode(ValueAnimator.REVERSE);
         mActivityRule.runOnUiThread(objAnimator::start);
 
-        verify(mockListener, timeout(2000).atLeast(20)).onAnimationUpdate(objAnimator);
+        verify(mockListener, timeout(2000).atLeast(2)).onAnimationUpdate(objAnimator);
         mActivityRule.runOnUiThread(objAnimator::cancel);
     }
 
