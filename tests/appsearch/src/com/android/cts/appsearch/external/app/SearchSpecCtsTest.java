@@ -69,10 +69,10 @@ public class SearchSpecCtsTest {
                                 SearchSpec.GROUPING_TYPE_PER_NAMESPACE
                                         | SearchSpec.GROUPING_TYPE_PER_PACKAGE,
                                 /*limit=*/ 37)
-                        .addProjection("schemaType1", expectedPropertyPaths1)
-                        .addProjection("schemaType2", expectedPropertyPaths2)
-                        .setPropertyWeights("schemaType1", expectedPropertyWeights)
-                        .setPropertyWeightPaths("schemaType2", expectedPropertyWeightPaths)
+                        .addProjection("schemaTypes1", expectedPropertyPaths1)
+                        .addProjection("schemaTypes2", expectedPropertyPaths2)
+                        .setPropertyWeights("schemaTypes1", expectedPropertyWeights)
+                        .setPropertyWeightPaths("schemaTypes2", expectedPropertyWeightPaths)
                         .setNumericSearchEnabled(true)
                         .setVerbatimSearchEnabled(true)
                         .setListFilterQueryLanguageEnabled(true)
@@ -101,21 +101,21 @@ public class SearchSpecCtsTest {
                                 | SearchSpec.GROUPING_TYPE_PER_PACKAGE);
         assertThat(searchSpec.getProjections())
                 .containsExactly(
-                        "schemaType1",
+                        "schemaTypes1",
                         expectedPropertyPaths1,
-                        "schemaType2",
+                        "schemaTypes2",
                         expectedPropertyPaths2);
         assertThat(searchSpec.getResultGroupingLimit()).isEqualTo(37);
         assertThat(searchSpec.getPropertyWeights().keySet())
-                .containsExactly("schemaType1", "schemaType2");
-        assertThat(searchSpec.getPropertyWeights().get("schemaType1"))
+                .containsExactly("schemaTypes1", "schemaTypes2");
+        assertThat(searchSpec.getPropertyWeights().get("schemaTypes1"))
                 .containsExactly("property1", 1.0, "property2", 2.0);
-        assertThat(searchSpec.getPropertyWeights().get("schemaType2"))
+        assertThat(searchSpec.getPropertyWeights().get("schemaTypes2"))
                 .containsExactly("property1.nested", 1.0);
-        assertThat(searchSpec.getPropertyWeightPaths().get("schemaType1"))
+        assertThat(searchSpec.getPropertyWeightPaths().get("schemaTypes1"))
                 .containsExactly(
                         new PropertyPath("property1"), 1.0, new PropertyPath("property2"), 2.0);
-        assertThat(searchSpec.getPropertyWeightPaths().get("schemaType2"))
+        assertThat(searchSpec.getPropertyWeightPaths().get("schemaTypes2"))
                 .containsExactly(new PropertyPath("property1.nested"), 1.0);
         assertThat(searchSpec.isNumericSearchEnabled()).isTrue();
         assertThat(searchSpec.isVerbatimSearchEnabled()).isTrue();
