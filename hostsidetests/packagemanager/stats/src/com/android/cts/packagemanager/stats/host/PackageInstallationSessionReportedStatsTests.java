@@ -18,8 +18,6 @@ package com.android.cts.packagemanager.stats.host;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assume.assumeTrue;
-
 import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
@@ -67,7 +65,6 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
     }
 
     public void testPackageInstallationSessionReportedForApkSuccessWithReplace() throws Exception {
-        assumeTrue(Utils.hasIncrementalFeature(getDevice()));
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.PACKAGE_INSTALLATION_SESSION_REPORTED_FIELD_NUMBER);
         RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
