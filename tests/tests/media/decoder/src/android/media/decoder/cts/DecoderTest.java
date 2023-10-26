@@ -65,6 +65,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.view.Display;
@@ -85,6 +86,7 @@ import com.android.compatibility.common.util.ResultUnit;
 import com.google.common.collect.ImmutableList;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -114,7 +116,12 @@ import java.util.zip.CRC32;
 public class DecoderTest extends MediaTestBase {
     private static final String TAG = "DecoderTest";
     private static final String REPORT_LOG_NAME = "CtsMediaDecoderTestCases";
-    private static boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
+
+    private static final int BOARD_SDK_LEVEL =
+            SystemProperties.getInt("ro.board.api_level", Build.VERSION_CODES.CUR_DEVELOPMENT);
+    public static final boolean IS_BOARD_AT_LEAST_S = BOARD_SDK_LEVEL >= Build.VERSION_CODES.S;
+
+    private static boolean IS_AT_LEAST_R = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
 
     private static final int RESET_MODE_NONE = 0;
     private static final int RESET_MODE_RECONFIGURE = 1;
@@ -374,7 +381,7 @@ public class DecoderTest extends MediaTestBase {
     private void verifyChannelsAndRates(String[] mimetypes, int[] sampleRates,
                                        int[] channelMasks) throws Exception {
 
-        if (!MediaUtils.check(mIsAtLeastR, "test invalid before Android 11")) return;
+        if (!MediaUtils.check(IS_AT_LEAST_R, "test invalid before Android 11")) return;
 
         for (String mimetype : mimetypes) {
             // ensure we find a codec for all listed mime/channel/rate combinations
@@ -4077,6 +4084,8 @@ public class DecoderTest extends MediaTestBase {
     @Test
     @ApiTest(apis={"android.media.MediaCodec#PARAMETER_KEY_TUNNEL_PEEK"})
     public void testTunneledVideoPeekOnHevc() throws Exception {
+        // Requires vendor support of the TUNNEL_PEEK feature
+        Assume.assumeTrue("Board API level is not Android 12 or later.", IS_BOARD_AT_LEAST_S);
         testTunneledVideoPeekOn(MediaFormat.MIMETYPE_VIDEO_HEVC,
                 "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv", 25);
     }
@@ -4087,6 +4096,8 @@ public class DecoderTest extends MediaTestBase {
     @Test
     @ApiTest(apis={"android.media.MediaCodec#PARAMETER_KEY_TUNNEL_PEEK"})
     public void testTunneledVideoPeekOnAvc() throws Exception {
+        // Requires vendor support of the TUNNEL_PEEK feature
+        Assume.assumeTrue("Board API level is not Android 12 or later.", IS_BOARD_AT_LEAST_S);
         testTunneledVideoPeekOn(MediaFormat.MIMETYPE_VIDEO_AVC,
                 "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4", 25);
     }
@@ -4097,6 +4108,8 @@ public class DecoderTest extends MediaTestBase {
     @Test
     @ApiTest(apis={"android.media.MediaCodec#PARAMETER_KEY_TUNNEL_PEEK"})
     public void testTunneledVideoPeekOnVp9() throws Exception {
+        // Requires vendor support of the TUNNEL_PEEK feature
+        Assume.assumeTrue("Board API level is not Android 12 or later.", IS_BOARD_AT_LEAST_S);
         testTunneledVideoPeekOn(MediaFormat.MIMETYPE_VIDEO_VP9,
                 "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
                 30);
@@ -4167,6 +4180,8 @@ public class DecoderTest extends MediaTestBase {
     @Test
     @ApiTest(apis={"android.media.MediaCodec#PARAMETER_KEY_TUNNEL_PEEK"})
     public void testTunneledVideoPeekOffHevc() throws Exception {
+        // Requires vendor support of the TUNNEL_PEEK feature
+        Assume.assumeTrue("Board API level is not Android 12 or later.", IS_BOARD_AT_LEAST_S);
         testTunneledVideoPeekOff(MediaFormat.MIMETYPE_VIDEO_HEVC,
                 "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv", 25);
     }
@@ -4177,6 +4192,8 @@ public class DecoderTest extends MediaTestBase {
     @Test
     @ApiTest(apis={"android.media.MediaCodec#PARAMETER_KEY_TUNNEL_PEEK"})
     public void testTunneledVideoPeekOffAvc() throws Exception {
+        // Requires vendor support of the TUNNEL_PEEK feature
+        Assume.assumeTrue("Board API level is not Android 12 or later.", IS_BOARD_AT_LEAST_S);
         testTunneledVideoPeekOff(MediaFormat.MIMETYPE_VIDEO_AVC,
                 "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4", 25);
     }
@@ -4187,6 +4204,8 @@ public class DecoderTest extends MediaTestBase {
     @Test
     @ApiTest(apis={"android.media.MediaCodec#PARAMETER_KEY_TUNNEL_PEEK"})
     public void testTunneledVideoPeekOffVp9() throws Exception {
+        // Requires vendor support of the TUNNEL_PEEK feature
+        Assume.assumeTrue("Board API level is not Android 12 or later.", IS_BOARD_AT_LEAST_S);
         testTunneledVideoPeekOff(MediaFormat.MIMETYPE_VIDEO_VP9,
                 "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
                 30);
