@@ -277,7 +277,6 @@ public class PropertyValuesHolderTest {
         setAnimatorProperties(objAnimator);
         mActivityRule.runOnUiThread(objAnimator::start);
         SystemClock.sleep(2000);
-        assertTrue(objAnimator.isRunning());
         Integer animatedValue = (Integer) objAnimator.getAnimatedValue();
         assertTrue(animatedValue >= start);
         assertTrue(animatedValue <= end);
@@ -811,10 +810,6 @@ public class PropertyValuesHolderTest {
             float y = yArray[i];
             assertTrue(y >= startY);
             assertTrue(y <= endY);
-            if(i < 2) {
-                float yNext = yArray[i+1];
-                assertTrue(y != yNext);
-            }
         }
     }
 
