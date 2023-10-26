@@ -27,6 +27,7 @@ import static android.content.pm.ApplicationInfo.FLAG_HAS_CODE;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.Flags.FLAG_ARCHIVING;
+import static android.content.pm.Flags.FLAG_GET_PACKAGE_INFO;
 import static android.content.pm.Flags.FLAG_QUARANTINED_ENABLED;
 import static android.content.pm.PackageInstaller.STATUS_FAILURE;
 import static android.content.pm.PackageInstaller.STATUS_SUCCESS;
@@ -303,6 +304,8 @@ public class PackageManagerTest {
             "android.intent.action.RESOLUTION_TEST";
     private static final String SELECTOR_ACTION_NAME = "android.intent.action.SELECTORTEST";
     private static final String FILE_PROVIDER_AUTHORITY = "android.content.cts.fileprovider";
+
+    private static final String TAG_MANIFEST = "manifest";
 
     private static final ComponentName ACTIVITY_COMPONENT = new ComponentName(
             PACKAGE_NAME, ACTIVITY_NAME);
@@ -3551,5 +3554,69 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         final int keyEnd = userStatesLine.indexOf(key) + key.length();
         final int valueEnd = userStatesLine.indexOf(" ", keyEnd);
         return userStatesLine.substring(keyEnd, valueEnd);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_GET_PACKAGE_INFO)
+    public void testParseAndroidManifest_withNullApkFilePath() {
+        // Disallow the apk file path is null
+        assertThrows(NullPointerException.class,
+                () -> mPackageManager.parseAndroidManifest(null /* apkFilePath */,
+                        xmlResourceParser -> new Bundle()));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_GET_PACKAGE_INFO)
+    public void testParseAndroidManifest_withNullParserFunction() {
+        // Disallow the parser function is null
+        assertThrows(NullPointerException.class,
+                () -> mPackageManager.parseAndroidManifest(mContext.getPackageCodePath(),
+                        null /* parserFunction */));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_GET_PACKAGE_INFO)
+    public void testParseAndroidManifest_withInvalidApkFilePath() {
+        assertThrows(IOException.class,
+                () -> mPackageManager.parseAndroidManifest("/data/app/invalid/base.apk",
+                        xmlResourceParser -> new Bundle()));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_GET_PACKAGE_INFO)
+    public void testParseAndroidManifest() {
+        Bundle testResult;
+        try {
+            testResult = mPackageManager.parseAndroidManifest(mContext.getPackageCodePath(),
+                    xmlResourceParser -> {
+                        assertNotNull(xmlResourceParser);
+
+                        // Search the start tag
+                        int type = -1;
+                        try {
+                            while ((type = xmlResourceParser.next()) != XmlPullParser.START_TAG
+                                    && type != XmlPullParser.END_DOCUMENT) {
+                                Log.d(TAG, "type=" + type);
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Failure to parse next" + e);
+                        }
+
+                        assertThat(type).isEqualTo(XmlPullParser.START_TAG);
+                        assertThat(xmlResourceParser.getName()).isEqualTo(TAG_MANIFEST);
+                        assertThat(xmlResourceParser.getAttributeValue(null, "package")).isEqualTo(
+                                PACKAGE_NAME);
+
+                        Bundle bundle = new Bundle();
+                        bundle.putString("package", PACKAGE_NAME);
+                        return bundle;
+                    });
+        } catch (IOException e) {
+            Log.e(TAG, "Failure to parse android manifest" + e);
+            testResult = null;
+        }
+
+        assertNotNull(testResult);
+        assertThat(testResult.getString("package")).isEqualTo(PACKAGE_NAME);
     }
 }
