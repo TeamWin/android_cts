@@ -77,13 +77,17 @@ public class BackGestureInvokedTest extends ActivityManagerTestBase {
     @Test
     public void popupWindowDismissedOnBackGesture() {
         mActivitySession.runOnMainSyncAndWait(mActivity::addPopupWindow);
-        mWmState.waitAndAssertWindowShown(TYPE_APPLICATION_PANEL, true);
+        final int taskId = mWmState.getTaskByActivity(mActivity.getComponentName()).getTaskId();
+        assertTrue("Popup window must show", mWmState.waitFor(state ->
+                mWmState.getMatchingWindows(ws -> ws.getType() == TYPE_APPLICATION_PANEL
+                                && ws.getStackId() == taskId && ws.isSurfaceShown())
+                        .findAny().isPresent(), "popup window show"));
         triggerBackEventByGesture(DEFAULT_DISPLAY);
 
-        assertTrue("Popup window must be removed",
-                mWmState.waitForWithAmState(
-                        state -> state.getMatchingWindowType(TYPE_APPLICATION_PANEL).isEmpty(),
-                        "popup window to dismiss"));
+        assertTrue("Popup window must be removed", mWmState.waitFor(state ->
+                        mWmState.getMatchingWindows(ws -> ws.getType() == TYPE_APPLICATION_PANEL
+                                && ws.getStackId() == taskId).findAny().isEmpty(),
+                "popup window removed"));
 
         // activity remain focused
         mWmState.assertFocusedActivity("Top activity must be focused",
