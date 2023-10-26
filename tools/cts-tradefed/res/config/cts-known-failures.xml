@@ -304,4 +304,8 @@
     <!-- b/296988493 -->
     <option name="compatibility:exclude-filter" value="CtsFrameRateOverrideTestCases com.android.cts.graphics.framerateoverride.FrameRateOverrideHostTest" />
     <option name="compatibility:exclude-filter" value="CtsFrameRateOverrideTestCases[instant] com.android.cts.graphics.framerateoverride.FrameRateOverrideHostTest" />
+
+    <!-- b/303631162 -->
+    <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.ims.cts.ImsCallingTest#testCallJoinExistingConferenceCallAfterCallSwap" />
+    <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.ims.cts.ImsCallingTest#testCallJoinExistingConferenceCallAfterCallSwapFail" />
 </configuration>
