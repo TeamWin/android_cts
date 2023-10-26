@@ -29,17 +29,22 @@ import android.graphics.ColorSpace;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.media.ExifInterface;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.BitmapUtils;
+import com.android.graphics.flags.Flags;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -389,10 +394,58 @@ public class YuvImageTest {
                                              width, height, null);
 
             assertTrue("Fail in JPEG/R compression.",
-                       hdrImage.compressToJpegR(sdrImage, 90, stream));
+                    hdrImage.compressToJpegR(sdrImage, 90, stream));
             byte[] jpegRData = stream.toByteArray();
             Bitmap decoded = BitmapFactory.decodeByteArray(jpegRData, 0, jpegRData.length);
             assertNotNull(decoded);
+        } catch (Exception e) {
+            Log.e(TAG, "unexpected exception", e);
+            fail("unexpected exception");
+        }
+    }
+
+    @ApiTest(apis = {"android.graphics.YuvImage#compressToJpegR"})
+    @RequiresFlagsEnabled(Flags.FLAG_YUV_IMAGE_COMPRESS_TO_ULTRA_HDR)
+    @Test
+    public void testCompressYuvToJpegRWithExif() {
+        String hdrInput = Utils.obtainPath(R.raw.raw_p010_image, 0);
+        String sdrInput = Utils.obtainPath(R.raw.raw_yuv420_image, 0);
+        String exifInput = Utils.obtainPath(R.raw.sample_exif, 0);
+
+        final int width = 1280;
+        final int height = 720;
+
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+
+        try {
+            byte[] hdrData = Files.readAllBytes(Paths.get(hdrInput));
+            byte[] sdrData = Files.readAllBytes(Paths.get(sdrInput));
+            byte[] exifData = Files.readAllBytes(Paths.get(exifInput));
+
+            YuvImage hdrImage = new YuvImage(hdrData, ImageFormat.YCBCR_P010,
+                width, height, null,
+                ColorSpace.get(ColorSpace.Named.BT2020_HLG));
+            YuvImage sdrImage = new YuvImage(sdrData, ImageFormat.YUV_420_888,
+                width, height, null);
+
+            assertTrue("Fail in JPEG/R compression.",
+                    hdrImage.compressToJpegR(sdrImage, 90, stream, exifData));
+            byte[] jpegRData = stream.toByteArray();
+            Bitmap decoded = BitmapFactory.decodeByteArray(jpegRData, 0, jpegRData.length);
+            assertNotNull(decoded);
+
+            ExifInterface exifInterface = new ExifInterface(
+                    new ByteArrayInputStream(stream.toByteArray()));
+            assertEquals(exifInterface.getAttribute(ExifInterface.TAG_IMAGE_WIDTH),
+                    String.valueOf(width));
+            assertEquals(exifInterface.getAttribute(ExifInterface.TAG_IMAGE_LENGTH),
+                    String.valueOf(height));
+            assertEquals(exifInterface.getAttribute(ExifInterface.TAG_DATETIME),
+                    "2022:11:22 23:05:32");
+            assertEquals(exifInterface.getAttribute(ExifInterface.TAG_MAKE),
+                    "Google");
+            assertEquals(exifInterface.getAttribute(ExifInterface.TAG_MODEL),
+                    "Cuttlefish GMS x86_64");
         } catch (Exception e) {
             Log.e(TAG, "unexpected exception", e);
             fail("unexpected exception");
