@@ -27,9 +27,10 @@ import image_processing_utils
 import its_session_utils
 import opencv_processing_utils
 
+_AUTOFRAMING_CONVERGED = 2
 _CV2_FACE_SCALE_FACTOR = 1.05  # 5% step for resizing image to find face
 _CV2_FACE_MIN_NEIGHBORS = 4  # recommended 3-6: higher for less faces
-_NUM_TEST_FRAMES = 20
+_NUM_TEST_FRAMES = 150
 _NUM_FACES = 3
 _W, _H = 640, 480
 
@@ -68,7 +69,6 @@ class AutoframingTest(its_base_test.ItsBaseTest):
       # initially - which gives room for autoframing to take place.
       max_zoom_ratio = camera_properties_utils.get_max_digital_zoom(props)
       cam.do_3a(do_af=False, zoom_ratio=max_zoom_ratio)
-      cam.do_autoframing(zoom_ratio=max_zoom_ratio)
 
       req = capture_request_utils.auto_capture_request(
           do_autoframing=True, zoom_ratio=max_zoom_ratio)
@@ -77,16 +77,20 @@ class AutoframingTest(its_base_test.ItsBaseTest):
       caps = cam.do_capture([req]*_NUM_TEST_FRAMES, fmt)
       for i, cap in enumerate(caps):
         faces = cap['metadata']['android.statistics.faces']
+        autoframing_state = cap['metadata']['android.control.autoframingState']
+        logging.debug('Frame %d faces: %d, autoframingState: %d', i, len(faces),
+                      autoframing_state)
+
         # Face detection and autoframing could take several frames to warm up,
-        # but should detect the correct number of faces in last frame
-        if i == _NUM_TEST_FRAMES - 1:
+        # but should detect the correct number of faces before the last frame
+        if autoframing_state == _AUTOFRAMING_CONVERGED:
           num_faces_found = len(faces)
           if num_faces_found != _NUM_FACES:
             raise AssertionError('Wrong num of faces found! Found: '
                                  f'{num_faces_found}, expected: {_NUM_FACES}')
 
           # Also check the faces with open cv to make sure the scene is not
-          # distored or anything.
+          # distorted or anything.
           img = image_processing_utils.convert_capture_to_rgb_image(
               cap, props=props)
           opencv_faces = opencv_processing_utils.find_opencv_faces(
@@ -95,10 +99,12 @@ class AutoframingTest(its_base_test.ItsBaseTest):
           if num_opencv_faces != _NUM_FACES:
             raise AssertionError('Wrong num of faces found with OpenCV! Found: '
                                  f'{num_opencv_faces}, expected: {_NUM_FACES}')
+          break
 
-        if not faces:
-          continue
-        logging.debug('Frame %d face metadata:', i)
+        # Autoframing didn't converge till the last frame
+        elif i == _NUM_TEST_FRAMES - 1:
+          raise AssertionError('Autoframing failed to converge')
+
         logging.debug('Faces: %s', str(faces))
 
 
