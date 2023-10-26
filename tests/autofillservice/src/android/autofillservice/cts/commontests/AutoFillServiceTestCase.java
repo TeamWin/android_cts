@@ -509,6 +509,8 @@ public final class AutoFillServiceTestCase {
             assumeFalse("Device is half-folded",
                     Helper.isDeviceInState(mContext, Helper.DeviceStateEnum.HALF_FOLDED));
 
+            assumeFalse("Device is TV", Helper.isTv(mContext));
+
             // Set orientation as portrait, otherwise some tests might fail due to elements not
             // fitting in, IME orientation, etc...
             mUiBot.setScreenOrientation(UiBot.PORTRAIT);

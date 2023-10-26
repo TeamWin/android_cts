@@ -1855,6 +1855,17 @@ public final class Helper {
         });
     }
 
+    /**
+     * Whether the device is TV.
+     * @param context
+     * @return true if the device is TV, false otherwise
+     */
+    public static boolean isTv(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                || pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION);
+    }
+
     private Helper() {
         throw new UnsupportedOperationException("contain static methods only");
     }
