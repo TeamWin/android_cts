@@ -44,7 +44,7 @@ _MIN_STR = 'min'
 _MIN_AREA_RATIO = 0.00015  # based on 2000/(4000x3000) pixels
 _MIN_CIRCLE_PTS = 25
 _MIN_ZOOM_CHART_SCALING = 0.7
-_MIN_SIZE = 640*480  # VGA
+_MIN_SIZE = 1280*720  # 720P
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _OFFSET_TOL = 5  # pixels
 _RADIUS_RTOL = 0.1  # 10% tolerance Video/Preview circle size
@@ -87,7 +87,7 @@ def _extract_key_frame_from_recording(log_path, file_name):
   return np_image
 
 
-class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
+class PreviewVideoZoomMatchTest(its_base_test.ItsBaseTest):
   """Tests if preview matches video output when zooming.
 
   Preview and video are recorded while do_3a() iterate through
@@ -100,7 +100,7 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
   match in zoom factors.
   """
 
-  def test_preview_video_zoom(self):
+  def test_preview_video_zoom_match(self):
     video_test_data = {}
     preview_test_data = {}
     log_path = self.log_path
