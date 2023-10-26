@@ -49,7 +49,9 @@ import static org.junit.Assert.assertNotEquals;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivitySession;
@@ -313,13 +315,37 @@ public class StartActivityTests extends ActivityManagerTestBase {
         if (useShellPermission) {
             waitAndAssertResumedActivity(BROADCAST_RECEIVER_ACTIVITY,
                     "Activity should be started and resumed");
-            mWmState.assertFrontStackActivityType("The activity type should be same as requested.",
-                    type);
+            if (type == ACTIVITY_TYPE_HOME && isAutomotive(mContext)
+                    && hasSplitscreenMultitaskingFeature(mContext)) {
+                // For automotive devices with splitscreen multitasking, home activity might
+                // not be in front of the stack, hence, check for its visibility instead.
+                mWmState.assertHomeActivityVisible(/* visible= */ true);
+            } else {
+                mWmState.assertFrontStackActivityType(
+                        "The activity type should be same as requested.", type);
+            }
             mBroadcastActionTrigger.finishBroadcastReceiverActivity();
             mWmState.waitAndAssertActivityRemoved(BROADCAST_RECEIVER_ACTIVITY);
         } else {
             assertSecurityExceptionFromActivityLauncher();
         }
+    }
+
+    /**
+     * Checks whether the device is automotive
+     */
+    private static boolean isAutomotive(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    /**
+     * Checks whether the device has automotive splitscreen multitasking feature enabled
+     */
+    private static boolean hasSplitscreenMultitaskingFeature(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(/* PackageManager.FEATURE_CAR_SPLITSCREEN_MULTITASKING */
+                "android.software.car.splitscreen_multitasking");
     }
 
     /**

@@ -64,6 +64,15 @@ public class CtsRecognitionService extends RecognitionService {
     public static Queue<Pair<Integer, CallbackMethod>> sInstructedCallbackMethods =
             new ArrayDeque<>();
 
+    /**
+     * Queue of instructions for callbacks on the model download task - {@link
+     * CtsRecognitionService#onTriggerModelDownload(
+     * Intent, AttributionSource, ModelDownloadListener)}.
+     *
+     * <p> Each instruction represents the callback to be run on the given listener.
+     */
+    public static Queue<ModelDownloadCallback> sInstructedModelDownloadCallbacks = null;
+
     public static AtomicBoolean sIsActive = new AtomicBoolean(false);
     public static Queue<Consumer<SupportCallback>> sConsumerQueue = new ArrayDeque<>();
     public static List<Intent> sDownloadTriggers = new ArrayList<>();
@@ -128,10 +137,26 @@ public class CtsRecognitionService extends RecognitionService {
             @NonNull AttributionSource attributionSource,
             @NonNull ModelDownloadListener listener) {
         assertThat(attributionSource.getUid()).isEqualTo(android.os.Process.myUid());
-        listener.onProgress(50);
-        listener.onScheduled();
-        listener.onSuccess();
-        listener.onError(0);
+
+        while (!sInstructedModelDownloadCallbacks.isEmpty()) {
+            ModelDownloadCallback callback = sInstructedModelDownloadCallbacks.poll();
+            switch (callback) {
+                case ON_PROGRESS:
+                    listener.onProgress(50);
+                    break;
+                case ON_SUCCESS:
+                    listener.onSuccess();
+                    break;
+                case ON_SCHEDULED:
+                    listener.onScheduled();
+                    break;
+                case ON_ERROR:
+                    listener.onError(0);
+                    break;
+                default:
+                    break;
+            }
+        }
         sDownloadTriggers.add(recognizerIntent);
     }
 

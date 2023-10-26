@@ -68,6 +68,7 @@ import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.UiAutomatorUtils;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -118,6 +119,9 @@ public class WindowInputTests {
         mActivity = mActivityRule.launchActivity(null);
         mInputManager = mActivity.getSystemService(InputManager.class);
         mInstrumentation.waitForIdleSync();
+        // TODO(b/295916860) - Replace this 'uidevice' workaround with an
+        //  WindowInfosListener-based solution
+        UiAutomatorUtils.getUiDevice().waitForIdle();
         mClickCount = 0;
     }
 

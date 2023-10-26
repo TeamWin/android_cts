@@ -21,6 +21,7 @@ import static android.server.wm.CtsWindowInfoUtils.tapOnWindowCenter;
 import static android.server.wm.CtsWindowInfoUtils.waitForWindowFocus;
 import static android.server.wm.CtsWindowInfoUtils.waitForWindowInfo;
 import static android.server.wm.CtsWindowInfoUtils.waitForWindowInfos;
+import static android.server.wm.CtsWindowInfoUtils.waitForWindowOnTop;
 import static android.server.wm.CtsWindowInfoUtils.waitForWindowVisible;
 import static android.server.wm.MockImeHelper.createManagedMockImeSession;
 import static android.view.SurfaceControlViewHost.SurfacePackage;
@@ -63,6 +64,7 @@ import android.server.wm.shared.ICrossProcessSurfaceControlViewHostTestService;
 import android.util.ArrayMap;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.SurfaceControl;
 import android.view.SurfaceControlViewHost;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -180,6 +182,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.launchActivity(null);
         mInstrumentation.waitForIdleSync();
+        // Wait for device animation that shows above the activity to leave.
+        waitForWindowOnTop(mActivity.getWindow());
 
         // This is necessary to call waitForWindowInfos
         mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
@@ -784,13 +788,23 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
             mVr.setView(mEmbeddedView, mEmbeddedViewWidth, mEmbeddedViewHeight);
 
         });
-        surfaceCreated.await();
+        assertTrue("Failed to wait for SurfaceView created",
+                surfaceCreated.await(5, TimeUnit.SECONDS));
 
         // Make a copy of the SurfacePackage and release the original package.
         SurfacePackage surfacePackage = mVr.getSurfacePackage();
         SurfacePackage copy = new SurfacePackage(surfacePackage);
         surfacePackage.release();
-        mSurfaceView.setChildSurfacePackage(copy);
+
+        CountDownLatch surfacePackageReparented = new CountDownLatch(1);
+        mActivityRule.runOnUiThread(() -> {
+            mSurfaceView.setChildSurfacePackage(copy);
+            SurfaceControl.Transaction t = new SurfaceControl.Transaction();
+            t.addTransactionCommittedListener(Runnable::run, surfacePackageReparented::countDown);
+            mSurfaceView.getRootSurfaceControl().applyTransactionOnDraw(t);
+        });
+        assertTrue("Failed to wait for surface package to get reparented",
+                surfacePackageReparented.await(5, TimeUnit.SECONDS));
 
         mInstrumentation.waitForIdleSync();
         waitUntilEmbeddedViewDrawn();

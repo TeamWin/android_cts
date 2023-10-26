@@ -99,9 +99,20 @@ public class GainmapTests {
         return mapWhiteWithGain(sTestImage.getGainmap(), gain);
     }
 
-    private static void assertTestImageResult(Bitmap result) {
+    private static float toleranceForResult(Bitmap result) {
         // 8888 precision ain't so great
-        final float delta = result.getConfig() == Bitmap.Config.ARGB_8888 ? 0.02f : 0.002f;
+        if (result.getConfig() == Bitmap.Config.ARGB_8888) {
+            // PQ math on GLES2.0 is very poor
+            if (result.getColorSpace().getId() == ColorSpace.Named.BT2020_PQ.ordinal()) {
+                return 0.06f;
+            }
+            return 0.02f;
+        }
+        return 0.002f;
+    }
+
+    private static void assertTestImageResult(Bitmap result) {
+        final float delta = toleranceForResult(result);
         assertChannels(result.getColor(0, 0), Color.pack(Color.WHITE), delta);
         assertChannels(result.getColor(2, 2), mapWhiteWithGain(0x40 / 255.f), delta);
         assertChannels(result.getColor(4, 2), mapWhiteWithGain(0x80 / 255.f), delta);

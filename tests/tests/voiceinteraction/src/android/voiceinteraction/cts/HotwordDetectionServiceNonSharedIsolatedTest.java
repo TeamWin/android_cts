@@ -25,8 +25,10 @@ import static com.google.common.truth.Truth.assertThat;
 import android.platform.test.annotations.AppModeFull;
 import android.service.voice.HotwordDetectionService;
 import android.util.Log;
+import android.voiceinteraction.common.Utils;
 import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
 import android.voiceinteraction.cts.services.NonSharedIsolatedHotwordDetectionVoiceInteractionService;
+import android.voiceinteraction.cts.testcore.AssumptionCheckerRule;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -49,6 +51,11 @@ public class HotwordDetectionServiceNonSharedIsolatedTest {
     private static final String SERVICE_COMPONENT =
             "android.voiceinteraction.cts.services"
                     + ".NonSharedIsolatedHotwordDetectionVoiceInteractionService";
+
+    @Rule
+    public AssumptionCheckerRule checkVisualQueryDetectionServiceEnabledRule =
+            new AssumptionCheckerRule(() -> Utils.SYSPROP_VISUAL_QUERY_SERVICE_ENABLED,
+            "Testing VisualQueryDetectionService requires enabling the feature");
 
     @Rule
     public VoiceInteractionServiceConnectedRule mConnectedRule =

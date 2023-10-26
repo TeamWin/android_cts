@@ -126,7 +126,7 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
 
         VpnTestHelper.setAlwaysOnVpn(
                 mContext, VPN_PACKAGE, /* lockdown */ false, /* allowlist */ false);
-        assertConnectivity(true, "VPN service not started, no lockdown");
+        waitForConnectivity("VPN service not started, no lockdown");
         assertNotNull(receiver.awaitForBroadcast(VPN_ON_START_TIMEOUT_MS));
 
         VpnTestHelper.setAlwaysOnVpn(
@@ -138,7 +138,7 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
 
         VpnTestHelper.setAlwaysOnVpn(
                 mContext, VPN_PACKAGE, /* lockdown */ true, /* allowlist */ true);
-        assertConnectivity(true, "VPN in lockdown, service not started, app allowlisted");
+        waitForConnectivity("VPN in lockdown, service not started, app allowlisted");
         assertNotNull(receiver.awaitForBroadcast(VPN_ON_START_TIMEOUT_MS));
 
         VpnTestHelper.setAlwaysOnVpn(
@@ -167,7 +167,7 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
 
         VpnTestHelper.setAlwaysOnVpn(
                 mContext, VPN_PACKAGE,  /* lockdown */ true, /* allowlist */ true);
-        assertConnectivity(true, "VPN in lockdown, service not started, app allowlisted");
+        waitForConnectivity("VPN in lockdown, service not started, app allowlisted");
         assertNotNull(receiver.awaitForBroadcast(VPN_ON_START_TIMEOUT_MS));
 
         // Make VPN workable again and restart.

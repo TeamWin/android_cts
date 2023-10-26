@@ -37,10 +37,8 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.PersistableBundle;
-import android.os.SystemProperties;
 import android.telecom.Call;
 import android.telecom.PhoneAccount;
 import android.telecom.TelecomManager;
@@ -78,9 +76,6 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
 
     private static final String LOG_TAG = "CtsImsCallingTestOnMockModem";
     private static final boolean VDBG = false;
-    private static final boolean DEBUG = !"user".equals(Build.TYPE);
-
-    private static final String ALLOW_MOCK_MODEM_PROPERTY = "persist.radio.allow_mock_modem";
 
     // the timeout to wait result in milliseconds
     private static final int WAIT_UPDATE_TIMEOUT_MS = 2000;
@@ -113,7 +108,7 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
             return;
         }
 
-        enforceMockModemDeveloperSetting();
+        MockModemManager.enforceMockModemDeveloperSetting();
         sMockModemManager = new MockModemManager();
         assertNotNull(sMockModemManager);
         assertTrue(sMockModemManager.connectMockModemService(MOCK_SIM_PROFILE_ID_TWN_CHT));
@@ -492,16 +487,6 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
         isCallDisconnected(call, callSession);
         assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
         waitForUnboundService();
-    }
-
-    private static void enforceMockModemDeveloperSetting() throws Exception {
-        boolean isAllowed = SystemProperties.getBoolean(ALLOW_MOCK_MODEM_PROPERTY, false);
-        // Check for developer settings for user build. Always allow for debug builds
-        if (!isAllowed && !DEBUG) {
-            throw new IllegalStateException(
-                "!! Enable Mock Modem before running this test !! "
-                    + "Developer options => Allow Mock Modem");
-        }
     }
 
     private void verifySrvccStateChange(int state) throws Exception {

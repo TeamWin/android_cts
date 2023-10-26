@@ -20,7 +20,16 @@ import static android.content.Context.RECEIVER_NOT_EXPORTED;
 import static android.net.wifi.p2p.WifiP2pConfig.GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL;
 import static android.os.Process.myUid;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
@@ -28,8 +37,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
 import android.net.MacAddress;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
+import android.net.NetworkRequest;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WpsInfo;
@@ -49,29 +62,39 @@ import android.os.HandlerExecutor;
 import android.os.HandlerThread;
 import android.os.WorkSource;
 import android.platform.test.annotations.AppModeFull;
-import android.provider.Settings;
-import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
 import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
-public class ConcurrencyTest extends WifiJUnit3TestBase {
-    private class MySync {
+public class ConcurrencyTest extends WifiJUnit4TestBase {
+    private static Context sContext;
+    private static boolean sShouldRunTest;
+
+    private static class MySync {
         static final int P2P_STATE = 1;
         static final int DISCOVERY_STATE = 2;
         static final int NETWORK_INFO = 3;
@@ -85,7 +108,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         public int expectedListenState;
     }
 
-    private class MyResponse {
+    private static class MyResponse {
         public boolean valid = false;
 
         public boolean success;
@@ -120,85 +143,84 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         }
     }
 
-    private WifiManager mWifiManager;
-    private WifiP2pManager mWifiP2pManager;
-    private WifiP2pManager.Channel mWifiP2pChannel;
-    private final MySync mMySync = new MySync();
-    private final MyResponse mMyResponse = new MyResponse();
-    private boolean mWasVerboseLoggingEnabled;
+    private static WifiManager sWifiManager;
+    private static WifiP2pManager sWifiP2pManager;
+    private static WifiP2pManager.Channel sWifiP2pChannel;
+    private static final MySync MY_SYNC = new MySync();
+    private static final MyResponse MY_RESPONSE = new MyResponse();
+    private static boolean sWasVerboseLoggingEnabled;
     private WifiP2pConfig mTestWifiP2pPeerConfig;
-    private boolean mWasWifiEnabled;
-    private UiDevice mUiDevice;
-    private TestHelper mTestHelper;
-    private boolean mWasScanThrottleEnabled;
+    private static boolean sWasWifiEnabled;
+    private static boolean sWasScanThrottleEnabled;
 
 
     private static final String TAG = "ConcurrencyTest";
     private static final int TIMEOUT_MS = 15000;
     private static final int WAIT_MS = 100;
     private static final int DURATION = 5000;
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+    private static final BroadcastReceiver RECEIVER = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             if (action.equals(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)) {
-                synchronized (mMySync) {
-                    mMySync.pendingSync.set(MySync.P2P_STATE);
-                    mMySync.expectedP2pState = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE,
+                synchronized (MY_SYNC) {
+                    MY_SYNC.pendingSync.set(MySync.P2P_STATE);
+                    MY_SYNC.expectedP2pState = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE,
                             WifiP2pManager.WIFI_P2P_STATE_DISABLED);
                     Log.d(TAG, "Get WIFI_P2P_STATE_CHANGED_ACTION: "
-                            + mMySync.expectedP2pState);
-                    mMySync.notify();
+                            + MY_SYNC.expectedP2pState);
+                    MY_SYNC.notify();
                 }
             } else if (action.equals(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION)) {
-                synchronized (mMySync) {
-                    mMySync.pendingSync.set(MySync.DISCOVERY_STATE);
-                    mMySync.expectedDiscoveryState = intent.getIntExtra(
+                synchronized (MY_SYNC) {
+                    MY_SYNC.pendingSync.set(MySync.DISCOVERY_STATE);
+                    MY_SYNC.expectedDiscoveryState = intent.getIntExtra(
                             WifiP2pManager.EXTRA_DISCOVERY_STATE,
                             WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED);
                     Log.d(TAG, "Get WIFI_P2P_STATE_CHANGED_ACTION: "
-                            + mMySync.expectedDiscoveryState);
-                    mMySync.notify();
+                            + MY_SYNC.expectedDiscoveryState);
+                    MY_SYNC.notify();
                 }
             } else if (action.equals(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)) {
-                synchronized (mMySync) {
-                    mMySync.pendingSync.set(MySync.NETWORK_INFO);
-                    mMySync.expectedNetworkInfo = (NetworkInfo) intent.getExtra(
+                synchronized (MY_SYNC) {
+                    MY_SYNC.pendingSync.set(MySync.NETWORK_INFO);
+                    MY_SYNC.expectedNetworkInfo = (NetworkInfo) intent.getExtra(
                             WifiP2pManager.EXTRA_NETWORK_INFO, null);
                     Log.d(TAG, "Get WIFI_P2P_CONNECTION_CHANGED_ACTION: "
-                            + mMySync.expectedNetworkInfo);
-                    mMySync.notify();
+                            + MY_SYNC.expectedNetworkInfo);
+                    MY_SYNC.notify();
                 }
             } else if (action.equals(WifiP2pManager.ACTION_WIFI_P2P_LISTEN_STATE_CHANGED)) {
-                synchronized (mMySync) {
-                    mMySync.pendingSync.set(MySync.LISTEN_STATE);
-                    mMySync.expectedListenState = intent.getIntExtra(
+                synchronized (MY_SYNC) {
+                    MY_SYNC.pendingSync.set(MySync.LISTEN_STATE);
+                    MY_SYNC.expectedListenState = intent.getIntExtra(
                             WifiP2pManager.EXTRA_LISTEN_STATE,
                             WifiP2pManager.WIFI_P2P_LISTEN_STOPPED);
-                    mMySync.notify();
+                    MY_SYNC.notify();
                 }
             }
         }
     };
 
-    private WifiP2pManager.ActionListener mActionListener = new WifiP2pManager.ActionListener() {
+    private static WifiP2pManager.ActionListener sActionListener =
+            new WifiP2pManager.ActionListener() {
         @Override
         public void onSuccess() {
-            synchronized (mMyResponse) {
-                mMyResponse.valid = true;
-                mMyResponse.success = true;
-                mMyResponse.notify();
+            synchronized (MY_RESPONSE) {
+                MY_RESPONSE.valid = true;
+                MY_RESPONSE.success = true;
+                MY_RESPONSE.notify();
             }
         }
 
         @Override
         public void onFailure(int reason) {
-            synchronized (mMyResponse) {
+            synchronized (MY_RESPONSE) {
                 Log.d(TAG, "failure reason: " + reason);
-                mMyResponse.valid = true;
-                mMyResponse.success = false;
-                mMyResponse.failureReason = reason;
-                mMyResponse.notify();
+                MY_RESPONSE.valid = true;
+                MY_RESPONSE.success = false;
+                MY_RESPONSE.failureReason = reason;
+                MY_RESPONSE.notify();
             }
         }
     };
@@ -210,18 +232,38 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         mExecutor = new HandlerExecutor(new Handler(mHandlerThread.getLooper()));
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        if (!WifiFeature.isWifiSupported(getContext())
-                && !WifiFeature.isP2pSupported(getContext())) {
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        sContext = InstrumentationRegistry.getInstrumentation().getContext();
+        if (!WifiFeature.isWifiSupported(sContext)
+                && !WifiFeature.isP2pSupported(sContext)) {
             // skip the test if WiFi && p2p are not supported
             return;
         }
+        if (!WifiFeature.isWifiSupported(sContext)) {
+            assertThat(WifiFeature.isP2pSupported(sContext)).isFalse();
+        }
+        if (!WifiFeature.isP2pSupported(sContext)) {
+            return;
+        }
+        if (!hasLocationFeature()) {
+            Log.d(TAG, "Skipping test as location is not supported");
+            return;
+        }
+        sShouldRunTest = true;
+        sWifiManager =  sContext.getSystemService(WifiManager.class);
+        assertThat(sWifiManager).isNotNull();
 
-        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        mTestHelper = new TestHelper(mContext, mUiDevice);
-        mTestHelper.turnScreenOn();
+        // turn on verbose logging for tests
+        sWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.isVerboseLoggingEnabled());
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.setVerboseLoggingEnabled(true));
+        sWasScanThrottleEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.isScanThrottleEnabled());
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.setScanThrottleEnabled(false));
+        sWasWifiEnabled = sWifiManager.isWifiEnabled();
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
@@ -230,42 +272,58 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         intentFilter.addAction(WifiP2pManager.ACTION_WIFI_P2P_LISTEN_STATE_CHANGED);
         intentFilter.setPriority(999);
         if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
-            mContext.registerReceiver(mReceiver, intentFilter, RECEIVER_NOT_EXPORTED);
+            sContext.registerReceiver(RECEIVER, intentFilter, RECEIVER_NOT_EXPORTED);
         } else {
-            mContext.registerReceiver(mReceiver, intentFilter);
+            sContext.registerReceiver(RECEIVER, intentFilter);
         }
-        mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
-        assertNotNull(mWifiManager);
-
-        // turn on verbose logging for tests
-        mWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.isVerboseLoggingEnabled());
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setVerboseLoggingEnabled(true));
-        mWasScanThrottleEnabled = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.isScanThrottleEnabled());
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setScanThrottleEnabled(false));
-
-        mWasWifiEnabled = mWifiManager.isWifiEnabled();
-        if (mWasWifiEnabled) {
+        if (sWasWifiEnabled) {
             // Clean the possible P2P enabled broadcast from other test case.
             waitForBroadcasts(MySync.P2P_STATE);
-            ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.setWifiEnabled(false));
-            PollingCheck.check("Wifi not disabled", DURATION, () -> !mWifiManager.isWifiEnabled());
+            ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.setWifiEnabled(false));
+            PollingCheck.check("Wifi not disabled", DURATION, () -> !sWifiManager.isWifiEnabled());
             // Make sure WifiP2P is disabled
             waitForBroadcasts(MySync.P2P_STATE);
-            assertEquals(WifiP2pManager.WIFI_P2P_STATE_DISABLED, mMySync.expectedP2pState);
+            assertThat(WifiP2pManager.WIFI_P2P_STATE_DISABLED).isEqualTo(MY_SYNC.expectedP2pState);
         }
+        synchronized (MY_SYNC) {
+            MY_SYNC.expectedP2pState = WifiP2pManager.WIFI_P2P_STATE_DISABLED;
+            MY_SYNC.expectedDiscoveryState = WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED;
+            MY_SYNC.expectedNetworkInfo = null;
+            MY_SYNC.expectedListenState = WifiP2pManager.WIFI_P2P_LISTEN_STOPPED;
+            MY_SYNC.pendingSync.clear();
+            resetResponse(MY_RESPONSE);
+        }
+        setupWifiP2p();
+    }
+
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        if (!sShouldRunTest) {
+            return;
+        }
+        sContext.unregisterReceiver(RECEIVER);
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.setVerboseLoggingEnabled(sWasVerboseLoggingEnabled));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.setScanThrottleEnabled(sWasScanThrottleEnabled));
+        if (sWasWifiEnabled) {
+            enableWifi();
+        }
+    }
+
+
+    @Before
+    public void setUp() throws Exception {
+        assumeTrue(sShouldRunTest);
 
         // Clean all the state
-        synchronized (mMySync) {
-            mMySync.expectedP2pState = WifiP2pManager.WIFI_P2P_STATE_DISABLED;
-            mMySync.expectedDiscoveryState = WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED;
-            mMySync.expectedNetworkInfo = null;
-            mMySync.expectedListenState = WifiP2pManager.WIFI_P2P_LISTEN_STOPPED;
-            mMySync.pendingSync.clear();
-            resetResponse(mMyResponse);
+        synchronized (MY_SYNC) {
+            MY_SYNC.expectedP2pState = WifiP2pManager.WIFI_P2P_STATE_DISABLED;
+            MY_SYNC.expectedDiscoveryState = WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED;
+            MY_SYNC.expectedNetworkInfo = null;
+            MY_SYNC.expectedListenState = WifiP2pManager.WIFI_P2P_LISTEN_STOPPED;
+            MY_SYNC.pendingSync.clear();
+            resetResponse(MY_RESPONSE);
         }
 
         // for general connect command
@@ -273,43 +331,30 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         mTestWifiP2pPeerConfig.deviceAddress = "aa:bb:cc:dd:ee:ff";
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext()) &&
-                !WifiFeature.isP2pSupported(getContext())) {
-            // skip the test if WiFi and p2p are not supported
-            super.tearDown();
+    @After
+    public void tearDown() throws Exception {
+        if (!sShouldRunTest) {
             return;
         }
-        if (null != mWifiP2pManager) {
-            removeAllPersistentGroups();
-        }
-        mContext.unregisterReceiver(mReceiver);
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setVerboseLoggingEnabled(mWasVerboseLoggingEnabled));
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setScanThrottleEnabled(mWasScanThrottleEnabled));
-        if (mWasWifiEnabled) {
-            enableWifi();
-        }
-        mTestHelper.turnScreenOff();
-        super.tearDown();
+        removeAllPersistentGroups();
+        sWifiP2pManager.removeGroup(sWifiP2pChannel, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
     }
 
-    private boolean waitForBroadcasts(List<Integer> waitSyncList) {
-        synchronized (mMySync) {
+    private static boolean waitForBroadcasts(List<Integer> waitSyncList) {
+        synchronized (MY_SYNC) {
             long timeout = System.currentTimeMillis() + TIMEOUT_MS;
             while (System.currentTimeMillis() < timeout) {
                 List<Integer> handledSyncList = waitSyncList.stream()
-                        .filter(w -> mMySync.pendingSync.get(w))
+                        .filter(w -> MY_SYNC.pendingSync.get(w))
                         .collect(Collectors.toList());
-                handledSyncList.forEach(w -> mMySync.pendingSync.clear(w));
+                handledSyncList.forEach(w -> MY_SYNC.pendingSync.clear(w));
                 waitSyncList.removeAll(handledSyncList);
                 if (waitSyncList.isEmpty()) {
                     break;
                 }
                 try {
-                    mMySync.wait(WAIT_MS);
+                    MY_SYNC.wait(WAIT_MS);
                 } catch (InterruptedException e) { }
             }
             if (!waitSyncList.isEmpty()) {
@@ -319,15 +364,15 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         }
     }
 
-    private boolean waitForBroadcasts(int waitSingleSync) {
+    private static boolean waitForBroadcasts(int waitSingleSync) {
         return waitForBroadcasts(
                 new LinkedList<Integer>(Arrays.asList(waitSingleSync)));
     }
 
     private NetworkInfo.DetailedState waitForNextNetworkState() {
         waitForBroadcasts(MySync.NETWORK_INFO);
-        assertNotNull(mMySync.expectedNetworkInfo);
-        return mMySync.expectedNetworkInfo.getDetailedState();
+        assertThat(MY_SYNC.expectedNetworkInfo).isNotNull();
+        return MY_SYNC.expectedNetworkInfo.getDetailedState();
     }
 
     private boolean waitForConnectedNetworkState() {
@@ -347,7 +392,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         return state == NetworkInfo.DetailedState.CONNECTED;
     }
 
-    private boolean waitForServiceResponse(MyResponse waitResponse) {
+    private static boolean waitForServiceResponse(MyResponse waitResponse) {
         synchronized (waitResponse) {
             long timeout = System.currentTimeMillis() + TIMEOUT_MS;
             while (System.currentTimeMillis() < timeout) {
@@ -363,19 +408,13 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         }
     }
 
-    // Return true if location is enabled.
-    private boolean isLocationEnabled() {
-        return Settings.Secure.getInt(getContext().getContentResolver(),
-                Settings.Secure.LOCATION_MODE, Settings.Secure.LOCATION_MODE_OFF)
-                != Settings.Secure.LOCATION_MODE_OFF;
-    }
 
     // Returns true if the device has location feature.
-    private boolean hasLocationFeature() {
-        return getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION);
+    private static boolean hasLocationFeature() {
+        return sContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION);
     }
 
-    private void resetResponse(MyResponse responseObj) {
+    private static void resetResponse(MyResponse responseObj) {
         synchronized (responseObj) {
             responseObj.reset();
         }
@@ -384,28 +423,43 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
     /*
      * Enables Wifi and block until connection is established.
      */
-    private void enableWifi() throws Exception {
-        if (!mWifiManager.isWifiEnabled()) {
-            ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.setWifiEnabled(true));
-            PollingCheck.check("Wifi not enabled", DURATION, () -> mWifiManager.isWifiEnabled());
+    private static void enableWifi() throws Exception {
+        if (!sWifiManager.isWifiEnabled()) {
+            ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.setWifiEnabled(true));
+            PollingCheck.check("Wifi not enabled", DURATION, () -> sWifiManager.isWifiEnabled());
             ShellIdentityUtils.invokeWithShellPermissions(
-                    () -> mWifiManager.startScan(new WorkSource(myUid())));
-            PollingCheck.check("Wifi not connected", DURATION,
-                    () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
+                    () -> sWifiManager.startScan(new WorkSource(myUid())));
+            ConnectivityManager cm = sContext.getSystemService(ConnectivityManager.class);
+            NetworkRequest request = new NetworkRequest.Builder()
+                    .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                    .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    .build();
+            final CountDownLatch latch = new CountDownLatch(1);
+            ConnectivityManager.NetworkCallback networkCallback =
+                    new ConnectivityManager.NetworkCallback() {
+                @Override
+                public void onAvailable(Network network) {
+                    latch.countDown();
+                }
+            };
+            cm.registerNetworkCallback(request, networkCallback);
+            assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            cm.unregisterNetworkCallback(networkCallback);
+            Thread.sleep(15_000);
         }
     }
 
-    private void removeAllPersistentGroups() {
+    private static void removeAllPersistentGroups() {
         WifiP2pGroupList persistentGroups = getPersistentGroups();
         assertNotNull(persistentGroups);
         for (WifiP2pGroup group: persistentGroups.getGroupList()) {
-            resetResponse(mMyResponse);
+            resetResponse(MY_RESPONSE);
             ShellIdentityUtils.invokeWithShellPermissions(() -> {
-                mWifiP2pManager.deletePersistentGroup(mWifiP2pChannel,
+                sWifiP2pManager.deletePersistentGroup(sWifiP2pChannel,
                         group.getNetworkId(),
-                        mActionListener);
-                assertTrue(waitForServiceResponse(mMyResponse));
-                assertTrue(mMyResponse.success);
+                        sActionListener);
+                assertTrue(waitForServiceResponse(MY_RESPONSE));
+                assertTrue(MY_RESPONSE.success);
             });
         }
         persistentGroups = getPersistentGroups();
@@ -413,99 +467,73 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         assertEquals(0, persistentGroups.getGroupList().size());
     }
 
-    private boolean setupWifiP2p() {
-        // Cannot support p2p alone
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            assertFalse(WifiFeature.isP2pSupported(getContext()));
-            return false;
-        }
-
-        if (!WifiFeature.isP2pSupported(getContext())) {
-            // skip the test if p2p is not supported
-            return false;
-        }
-
-        if (!hasLocationFeature()) {
-            Log.d(TAG, "Skipping test as location is not supported");
-            return false;
-        }
-        if (!isLocationEnabled()) {
-            fail("Please enable location for this test - since P-release WiFi Direct"
-                    + " needs Location enabled.");
-        }
+    private static void setupWifiP2p() {
         try {
             enableWifi();
         } catch (Exception e) {
             Log.d(TAG, "Enable Wifi got exception:" + e.getMessage());
         }
 
-        assertTrue(mWifiManager.isWifiEnabled());
+        assertThat(sWifiManager.isWifiEnabled()).isTrue();
 
-        mWifiP2pManager =
-                (WifiP2pManager) getContext().getSystemService(Context.WIFI_P2P_SERVICE);
-        mWifiP2pChannel = mWifiP2pManager.initialize(
-                getContext(), getContext().getMainLooper(), null);
+        sWifiP2pManager = sContext.getSystemService(WifiP2pManager.class);
+        sWifiP2pChannel = sWifiP2pManager.initialize(
+                sContext, sContext.getMainLooper(), null);
 
-        assertNotNull(mWifiP2pManager);
-        assertNotNull(mWifiP2pChannel);
+        assertThat(sWifiP2pManager).isNotNull();
+        assertThat(sWifiP2pChannel).isNotNull();
 
-        assertTrue(waitForBroadcasts(MySync.P2P_STATE));
+        assertThat(waitForBroadcasts(MySync.P2P_STATE)).isTrue();
 
-        assertEquals(WifiP2pManager.WIFI_P2P_STATE_ENABLED, mMySync.expectedP2pState);
+        assertThat(WifiP2pManager.WIFI_P2P_STATE_ENABLED).isEqualTo(MY_SYNC.expectedP2pState);
         removeAllPersistentGroups();
-
-        return true;
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#requestP2pState"})
+    @Test
     public void testConcurrency() {
-        if (!setupWifiP2p()) {
-            return;
-        }
-
-        resetResponse(mMyResponse);
-        mWifiP2pManager.requestP2pState(mWifiP2pChannel, new WifiP2pManager.P2pStateListener() {
+        sWifiP2pManager.requestP2pState(sWifiP2pChannel, new WifiP2pManager.P2pStateListener() {
             @Override
             public void onP2pStateAvailable(int state) {
-                synchronized (mMyResponse) {
-                    mMyResponse.valid = true;
-                    mMyResponse.p2pState = state;
-                    mMyResponse.notify();
+                synchronized (MY_RESPONSE) {
+                    MY_RESPONSE.valid = true;
+                    MY_RESPONSE.p2pState = state;
+                    MY_RESPONSE.notify();
                 }
             }
         });
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertEquals(WifiP2pManager.WIFI_P2P_STATE_ENABLED, mMyResponse.p2pState);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertEquals(WifiP2pManager.WIFI_P2P_STATE_ENABLED, MY_RESPONSE.p2pState);
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#requestDiscoveryState",
+            "android.net.wifi.p2p.WifiP2pManager#discoverPeers",
+            "android.net.wifi.p2p.WifiP2pManager#stopPeerDiscovery"})
+    @Test
     public void testRequestDiscoveryState() {
-        if (!setupWifiP2p()) {
-            return;
-        }
-
-        resetResponse(mMyResponse);
-        mWifiP2pManager.requestDiscoveryState(
-                mWifiP2pChannel, new WifiP2pManager.DiscoveryStateListener() {
+        sWifiP2pManager.requestDiscoveryState(
+                sWifiP2pChannel, new WifiP2pManager.DiscoveryStateListener() {
                     @Override
                     public void onDiscoveryStateAvailable(int state) {
-                        synchronized (mMyResponse) {
-                            mMyResponse.valid = true;
-                            mMyResponse.discoveryState = state;
-                            mMyResponse.notify();
+                        synchronized (MY_RESPONSE) {
+                            MY_RESPONSE.valid = true;
+                            MY_RESPONSE.discoveryState = state;
+                            MY_RESPONSE.notify();
                         }
                     }
                 });
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED, mMyResponse.discoveryState);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED, MY_RESPONSE.discoveryState);
 
         // If there is any saved network and this device is connecting to this saved network,
         // p2p discovery might be blocked during DHCP provision.
         int retryCount = 3;
         while (retryCount > 0) {
-            resetResponse(mMyResponse);
-            mWifiP2pManager.discoverPeers(mWifiP2pChannel, mActionListener);
-            assertTrue(waitForServiceResponse(mMyResponse));
-            if (mMyResponse.success
-                    || mMyResponse.failureReason != WifiP2pManager.BUSY) {
+            resetResponse(MY_RESPONSE);
+            sWifiP2pManager.discoverPeers(sWifiP2pChannel, sActionListener);
+            assertTrue(waitForServiceResponse(MY_RESPONSE));
+            if (MY_RESPONSE.success
+                    || MY_RESPONSE.failureReason != WifiP2pManager.BUSY) {
                 break;
             }
             Log.w(TAG, "Discovery is blocked, try again!");
@@ -514,244 +542,234 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
             } catch (InterruptedException ex) {}
             retryCount--;
         }
-        assertTrue(mMyResponse.success);
+        assertTrue(MY_RESPONSE.success);
         assertTrue(waitForBroadcasts(MySync.DISCOVERY_STATE));
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.requestDiscoveryState(mWifiP2pChannel,
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.requestDiscoveryState(sWifiP2pChannel,
                 new WifiP2pManager.DiscoveryStateListener() {
                     @Override
                     public void onDiscoveryStateAvailable(int state) {
-                        synchronized (mMyResponse) {
-                            mMyResponse.valid = true;
-                            mMyResponse.discoveryState = state;
-                            mMyResponse.notify();
+                        synchronized (MY_RESPONSE) {
+                            MY_RESPONSE.valid = true;
+                            MY_RESPONSE.discoveryState = state;
+                            MY_RESPONSE.notify();
                         }
                     }
                 });
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED, mMyResponse.discoveryState);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED, MY_RESPONSE.discoveryState);
 
-        mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, null);
+        sWifiP2pManager.stopPeerDiscovery(sWifiP2pChannel, null);
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#requestNetworkInfo",
+            "android.net.wifi.p2p.WifiP2pManager#createGroup",
+            "android.net.wifi.p2p.WifiP2pManager#removeGroup"})
+    @Test
     public void testRequestNetworkInfo() {
-        if (!setupWifiP2p()) {
-            return;
-        }
-
-        resetResponse(mMyResponse);
-        mWifiP2pManager.requestNetworkInfo(mWifiP2pChannel,
+        sWifiP2pManager.requestNetworkInfo(sWifiP2pChannel,
                 new WifiP2pManager.NetworkInfoListener() {
                     @Override
                     public void onNetworkInfoAvailable(NetworkInfo info) {
-                        synchronized (mMyResponse) {
-                            mMyResponse.valid = true;
-                            mMyResponse.networkInfo = info;
-                            mMyResponse.notify();
+                        synchronized (MY_RESPONSE) {
+                            MY_RESPONSE.valid = true;
+                            MY_RESPONSE.networkInfo = info;
+                            MY_RESPONSE.notify();
                         }
                     }
                 });
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertNotNull(mMyResponse.networkInfo);
-        // The state might be IDLE, DISCONNECTED, FAILED before a connection establishment.
-        // Just ensure the state is NOT CONNECTED.
-        assertNotEquals(NetworkInfo.DetailedState.CONNECTED,
-                mMySync.expectedNetworkInfo.getDetailedState());
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertNotNull(MY_RESPONSE.networkInfo);
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.createGroup(mWifiP2pChannel, mActionListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertTrue(mMyResponse.success);
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.createGroup(sWifiP2pChannel, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertTrue(MY_RESPONSE.success);
 
         assertTrue(waitForConnectedNetworkState());
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.requestNetworkInfo(mWifiP2pChannel,
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.requestNetworkInfo(sWifiP2pChannel,
                 new WifiP2pManager.NetworkInfoListener() {
                     @Override
                     public void onNetworkInfoAvailable(NetworkInfo info) {
-                        synchronized (mMyResponse) {
-                            mMyResponse.valid = true;
-                            mMyResponse.networkInfo = info;
-                            mMyResponse.notify();
+                        synchronized (MY_RESPONSE) {
+                            MY_RESPONSE.valid = true;
+                            MY_RESPONSE.networkInfo = info;
+                            MY_RESPONSE.notify();
                         }
                     }
                 });
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertNotNull(mMyResponse.networkInfo);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertNotNull(MY_RESPONSE.networkInfo);
         assertEquals(NetworkInfo.DetailedState.CONNECTED,
-                mMyResponse.networkInfo.getDetailedState());
+                MY_RESPONSE.networkInfo.getDetailedState());
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.requestConnectionInfo(mWifiP2pChannel,
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.requestConnectionInfo(sWifiP2pChannel,
                 new WifiP2pManager.ConnectionInfoListener() {
                     @Override
                     public void onConnectionInfoAvailable(WifiP2pInfo info) {
-                        synchronized (mMyResponse) {
-                            mMyResponse.valid = true;
-                            mMyResponse.p2pInfo = new WifiP2pInfo(info);
-                            mMyResponse.notify();
+                        synchronized (MY_RESPONSE) {
+                            MY_RESPONSE.valid = true;
+                            MY_RESPONSE.p2pInfo = new WifiP2pInfo(info);
+                            MY_RESPONSE.notify();
                         }
                     }
                 });
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertNotNull(mMyResponse.p2pInfo);
-        assertTrue(mMyResponse.p2pInfo.groupFormed);
-        assertTrue(mMyResponse.p2pInfo.isGroupOwner);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertNotNull(MY_RESPONSE.p2pInfo);
+        assertTrue(MY_RESPONSE.p2pInfo.groupFormed);
+        assertTrue(MY_RESPONSE.p2pInfo.isGroupOwner);
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.requestGroupInfo(mWifiP2pChannel,
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.requestGroupInfo(sWifiP2pChannel,
                 new WifiP2pManager.GroupInfoListener() {
                     @Override
                     public void onGroupInfoAvailable(WifiP2pGroup group) {
-                        synchronized (mMyResponse) {
-                            mMyResponse.group = new WifiP2pGroup(group);
-                            mMyResponse.valid = true;
-                            mMyResponse.notify();
+                        synchronized (MY_RESPONSE) {
+                            MY_RESPONSE.group = new WifiP2pGroup(group);
+                            MY_RESPONSE.valid = true;
+                            MY_RESPONSE.notify();
                         }
                     }
                 });
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertNotNull(mMyResponse.group);
-        assertNotEquals(0, mMyResponse.group.getFrequency());
-        assertTrue(mMyResponse.group.getNetworkId() >= 0);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertNotNull(MY_RESPONSE.group);
+        assertNotEquals(0, MY_RESPONSE.group.getFrequency());
+        assertTrue(MY_RESPONSE.group.getNetworkId() >= 0);
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.removeGroup(mWifiP2pChannel, mActionListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertTrue(mMyResponse.success);
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.removeGroup(sWifiP2pChannel, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertTrue(MY_RESPONSE.success);
         assertTrue(waitForBroadcasts(MySync.NETWORK_INFO));
-        assertNotNull(mMySync.expectedNetworkInfo);
+        assertNotNull(MY_SYNC.expectedNetworkInfo);
         assertEquals(NetworkInfo.DetailedState.DISCONNECTED,
-                mMySync.expectedNetworkInfo.getDetailedState());
+                MY_SYNC.expectedNetworkInfo.getDetailedState());
     }
 
     private String getDeviceName() {
-        resetResponse(mMyResponse);
-        mWifiP2pManager.requestDeviceInfo(mWifiP2pChannel,
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.requestDeviceInfo(sWifiP2pChannel,
                 new WifiP2pManager.DeviceInfoListener() {
                     @Override
                     public void onDeviceInfoAvailable(WifiP2pDevice wifiP2pDevice) {
-                        synchronized (mMyResponse) {
-                            mMyResponse.deviceName = wifiP2pDevice.deviceName;
-                            mMyResponse.valid = true;
-                            mMyResponse.notify();
+                        synchronized (MY_RESPONSE) {
+                            MY_RESPONSE.deviceName = wifiP2pDevice.deviceName;
+                            MY_RESPONSE.valid = true;
+                            MY_RESPONSE.notify();
                         }
                     }
                 });
-        assertTrue(waitForServiceResponse(mMyResponse));
-        return mMyResponse.deviceName;
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        return MY_RESPONSE.deviceName;
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#setDeviceName"})
+    @Test
     public void testSetDeviceName() {
-        if (!setupWifiP2p()) {
-            return;
-        }
-
         String testDeviceName = "test";
         String originalDeviceName = getDeviceName();
         assertNotNull(originalDeviceName);
 
-        resetResponse(mMyResponse);
         ShellIdentityUtils.invokeWithShellPermissions(() -> {
-            mWifiP2pManager.setDeviceName(
-                    mWifiP2pChannel, testDeviceName, mActionListener);
-            assertTrue(waitForServiceResponse(mMyResponse));
-            assertTrue(mMyResponse.success);
+            sWifiP2pManager.setDeviceName(
+                    sWifiP2pChannel, testDeviceName, sActionListener);
+            assertTrue(waitForServiceResponse(MY_RESPONSE));
+            assertTrue(MY_RESPONSE.success);
         });
 
         String currentDeviceName = getDeviceName();
         assertEquals(testDeviceName, currentDeviceName);
 
         // restore the device name at the end
-        resetResponse(mMyResponse);
+        resetResponse(MY_RESPONSE);
         ShellIdentityUtils.invokeWithShellPermissions(() -> {
-            mWifiP2pManager.setDeviceName(
-                    mWifiP2pChannel, originalDeviceName, mActionListener);
-            assertTrue(waitForServiceResponse(mMyResponse));
-            assertTrue(mMyResponse.success);
+            sWifiP2pManager.setDeviceName(
+                    sWifiP2pChannel, originalDeviceName, sActionListener);
+            assertTrue(waitForServiceResponse(MY_RESPONSE));
+            assertTrue(MY_RESPONSE.success);
         });
     }
 
-    private WifiP2pGroupList getPersistentGroups() {
-        resetResponse(mMyResponse);
+    private static WifiP2pGroupList getPersistentGroups() {
+        resetResponse(MY_RESPONSE);
         ShellIdentityUtils.invokeWithShellPermissions(() -> {
-            mWifiP2pManager.requestPersistentGroupInfo(mWifiP2pChannel,
+            sWifiP2pManager.requestPersistentGroupInfo(sWifiP2pChannel,
                     new WifiP2pManager.PersistentGroupInfoListener() {
                         @Override
                         public void onPersistentGroupInfoAvailable(WifiP2pGroupList groups) {
-                            synchronized (mMyResponse) {
-                                mMyResponse.persistentGroups = groups;
-                                mMyResponse.valid = true;
-                                mMyResponse.notify();
+                            synchronized (MY_RESPONSE) {
+                                MY_RESPONSE.persistentGroups = groups;
+                                MY_RESPONSE.valid = true;
+                                MY_RESPONSE.notify();
                             }
                         }
                     });
-            assertTrue(waitForServiceResponse(mMyResponse));
+            assertTrue(waitForServiceResponse(MY_RESPONSE));
         });
-        return mMyResponse.persistentGroups;
+        return MY_RESPONSE.persistentGroups;
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#requestPersistentGroupInfo",
+            "android.net.wifi.p2p.WifiP2pManager#factoryReset"})
+    @Test
     public void testPersistentGroupOperation() {
-        if (!setupWifiP2p()) {
-            return;
-        }
-
-        resetResponse(mMyResponse);
-        mWifiP2pManager.createGroup(mWifiP2pChannel, mActionListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertTrue(mMyResponse.success);
+        sWifiP2pManager.createGroup(sWifiP2pChannel, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertTrue(MY_RESPONSE.success);
 
         assertTrue(waitForConnectedNetworkState());
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.removeGroup(mWifiP2pChannel, mActionListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertTrue(mMyResponse.success);
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.removeGroup(sWifiP2pChannel, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertTrue(MY_RESPONSE.success);
         assertTrue(waitForBroadcasts(MySync.NETWORK_INFO));
-        assertNotNull(mMySync.expectedNetworkInfo);
+        assertNotNull(MY_SYNC.expectedNetworkInfo);
         assertEquals(NetworkInfo.DetailedState.DISCONNECTED,
-                mMySync.expectedNetworkInfo.getDetailedState());
+                MY_SYNC.expectedNetworkInfo.getDetailedState());
 
         WifiP2pGroupList persistentGroups = getPersistentGroups();
         assertNotNull(persistentGroups);
         assertEquals(1, persistentGroups.getGroupList().size());
 
-        resetResponse(mMyResponse);
+        resetResponse(MY_RESPONSE);
         final int firstNetworkId = persistentGroups.getGroupList().get(0).getNetworkId();
         ShellIdentityUtils.invokeWithShellPermissions(() -> {
-            mWifiP2pManager.deletePersistentGroup(mWifiP2pChannel,
+            sWifiP2pManager.deletePersistentGroup(sWifiP2pChannel,
                     firstNetworkId,
-                    mActionListener);
-            assertTrue(waitForServiceResponse(mMyResponse));
-            assertTrue(mMyResponse.success);
+                    sActionListener);
+            assertTrue(waitForServiceResponse(MY_RESPONSE));
+            assertTrue(MY_RESPONSE.success);
         });
 
         persistentGroups = getPersistentGroups();
         assertNotNull(persistentGroups);
         assertEquals(0, persistentGroups.getGroupList().size());
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.createGroup(mWifiP2pChannel, mActionListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertTrue(mMyResponse.success);
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.createGroup(sWifiP2pChannel, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertTrue(MY_RESPONSE.success);
         assertTrue(waitForConnectedNetworkState());
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.removeGroup(mWifiP2pChannel, mActionListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertTrue(mMyResponse.success);
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.removeGroup(sWifiP2pChannel, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertTrue(MY_RESPONSE.success);
         assertTrue(waitForBroadcasts(MySync.NETWORK_INFO));
-        assertNotNull(mMySync.expectedNetworkInfo);
+        assertNotNull(MY_SYNC.expectedNetworkInfo);
         assertEquals(NetworkInfo.DetailedState.DISCONNECTED,
-                mMySync.expectedNetworkInfo.getDetailedState());
+                MY_SYNC.expectedNetworkInfo.getDetailedState());
 
-        resetResponse(mMyResponse);
+        resetResponse(MY_RESPONSE);
         ShellIdentityUtils.invokeWithShellPermissions(() -> {
-            mWifiP2pManager.factoryReset(mWifiP2pChannel, mActionListener);
-            assertTrue(waitForServiceResponse(mMyResponse));
-            assertTrue(mMyResponse.success);
+            sWifiP2pManager.factoryReset(sWifiP2pChannel, sActionListener);
+            assertTrue(waitForServiceResponse(MY_RESPONSE));
+            assertTrue(MY_RESPONSE.success);
         });
 
         persistentGroups = getPersistentGroups();
@@ -759,38 +777,38 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         assertEquals(0, persistentGroups.getGroupList().size());
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#setWifiP2pChannels",
+            "android.net.wifi.p2p.WifiP2pManager#startListening",
+            "android.net.wifi.p2p.WifiP2pManager#stopListening"})
+    @Test
     public void testP2pListening() {
-        if (!setupWifiP2p()) {
-            return;
-        }
-
-        resetResponse(mMyResponse);
         ShellIdentityUtils.invokeWithShellPermissions(() -> {
-            mWifiP2pManager.setWifiP2pChannels(mWifiP2pChannel, 6, 11, mActionListener);
-            assertTrue(waitForServiceResponse(mMyResponse));
-            assertTrue(mMyResponse.success);
+            sWifiP2pManager.setWifiP2pChannels(sWifiP2pChannel, 6, 11, sActionListener);
+            assertTrue(waitForServiceResponse(MY_RESPONSE));
+            assertTrue(MY_RESPONSE.success);
         });
 
-        resetResponse(mMyResponse);
+        resetResponse(MY_RESPONSE);
         ShellIdentityUtils.invokeWithShellPermissions(() -> {
-            mWifiP2pManager.startListening(mWifiP2pChannel, mActionListener);
-            assertTrue(waitForServiceResponse(mMyResponse));
-            assertTrue(mMyResponse.success);
+            sWifiP2pManager.startListening(sWifiP2pChannel, sActionListener);
+            assertTrue(waitForServiceResponse(MY_RESPONSE));
+            assertTrue(MY_RESPONSE.success);
         });
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.stopListening(mWifiP2pChannel, mActionListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertTrue(mMyResponse.success);
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.stopListening(sWifiP2pChannel, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertTrue(MY_RESPONSE.success);
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#setServiceResponseListener",
+            "android.net.wifi.p2p.WifiP2pManager#addLocalService",
+            "android.net.wifi.p2p.WifiP2pManager#clearLocalServices",
+            "android.net.wifi.p2p.WifiP2pManager#removeLocalService"})
+    @Test
     public void testP2pService() {
-        if (!setupWifiP2p()) {
-            return;
-        }
-
         // This only store the listener to the WifiP2pManager internal variable, nothing to fail.
-        mWifiP2pManager.setServiceResponseListener(mWifiP2pChannel,
+        sWifiP2pManager.setServiceResponseListener(sWifiP2pChannel,
                 new WifiP2pManager.ServiceResponseListener() {
                     @Override
                     public void onServiceAvailable(
@@ -798,7 +816,6 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
                     }
                 });
 
-        resetResponse(mMyResponse);
         List<String> services = new ArrayList<String>();
         services.add("urn:schemas-upnp-org:service:AVTransport:1");
         services.add("urn:schemas-upnp-org:service:ConnectionManager:1");
@@ -806,82 +823,78 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
                 "6859dede-8574-59ab-9332-123456789011",
                 "urn:schemas-upnp-org:device:MediaRenderer:1",
                 services);
-        mWifiP2pManager.addLocalService(mWifiP2pChannel,
+        sWifiP2pManager.addLocalService(sWifiP2pChannel,
                 rendererService,
-                mActionListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertTrue(mMyResponse.success);
+                sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertTrue(MY_RESPONSE.success);
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.removeLocalService(mWifiP2pChannel,
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.removeLocalService(sWifiP2pChannel,
                 rendererService,
-                mActionListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertTrue(mMyResponse.success);
+                sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertTrue(MY_RESPONSE.success);
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.clearLocalServices(mWifiP2pChannel,
-                mActionListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertTrue(mMyResponse.success);
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.clearLocalServices(sWifiP2pChannel,
+                sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertTrue(MY_RESPONSE.success);
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#removeClient"})
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @Test
     public void testRemoveClient() {
-        if (!setupWifiP2p()) {
-            return;
-        }
 
-        if (!mWifiP2pManager.isGroupClientRemovalSupported()) return;
+        if (!sWifiP2pManager.isGroupClientRemovalSupported()) return;
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.createGroup(mWifiP2pChannel, mActionListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertTrue(mMyResponse.success);
+        sWifiP2pManager.createGroup(sWifiP2pChannel, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertTrue(MY_RESPONSE.success);
 
         assertTrue(waitForConnectedNetworkState());
 
-        resetResponse(mMyResponse);
+        resetResponse(MY_RESPONSE);
         MacAddress peerMacAddress = MacAddress.fromString(mTestWifiP2pPeerConfig.deviceAddress);
-        mWifiP2pManager.removeClient(
-                mWifiP2pChannel, peerMacAddress, mActionListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertTrue(mMyResponse.success);
+        sWifiP2pManager.removeClient(
+                sWifiP2pChannel, peerMacAddress, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertTrue(MY_RESPONSE.success);
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#discoverPeersOnSpecificFrequency"})
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @Test
     public void testDiscoverPeersOnSpecificFreq() {
-        if (!setupWifiP2p()) {
-            return;
-        }
+        if (!sWifiP2pManager.isChannelConstrainedDiscoverySupported()) return;
 
-        if (!mWifiP2pManager.isChannelConstrainedDiscoverySupported()) return;
-
-        resetResponse(mMyResponse);
-        mWifiP2pManager.requestDiscoveryState(
-                mWifiP2pChannel, new WifiP2pManager.DiscoveryStateListener() {
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.requestDiscoveryState(
+                sWifiP2pChannel, new WifiP2pManager.DiscoveryStateListener() {
                     @Override
                     public void onDiscoveryStateAvailable(int state) {
-                        synchronized (mMyResponse) {
-                            mMyResponse.valid = true;
-                            mMyResponse.discoveryState = state;
-                            mMyResponse.notify();
+                        synchronized (MY_RESPONSE) {
+                            MY_RESPONSE.valid = true;
+                            MY_RESPONSE.discoveryState = state;
+                            MY_RESPONSE.notify();
                         }
                     }
                 });
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED, mMyResponse.discoveryState);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED, MY_RESPONSE.discoveryState);
 
         // If there is any saved network and this device is connecting to this saved network,
         // p2p discovery might be blocked during DHCP provision.
         int retryCount = 3;
         while (retryCount > 0) {
-            resetResponse(mMyResponse);
-            mWifiP2pManager.discoverPeersOnSpecificFrequency(mWifiP2pChannel,
-                    2412, mActionListener);
-            assertTrue(waitForServiceResponse(mMyResponse));
-            if (mMyResponse.success
-                    || mMyResponse.failureReason != WifiP2pManager.BUSY) {
+            resetResponse(MY_RESPONSE);
+            sWifiP2pManager.discoverPeersOnSpecificFrequency(sWifiP2pChannel,
+                    2412, sActionListener);
+            assertTrue(waitForServiceResponse(MY_RESPONSE));
+            if (MY_RESPONSE.success
+                    || MY_RESPONSE.failureReason != WifiP2pManager.BUSY) {
                 break;
             }
             Log.w(TAG, "Discovery is blocked, try again!");
@@ -890,59 +903,58 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
             } catch (InterruptedException ex) { }
             retryCount--;
         }
-        assertTrue(mMyResponse.success);
+        assertTrue(MY_RESPONSE.success);
         assertTrue(waitForBroadcasts(MySync.DISCOVERY_STATE));
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.requestDiscoveryState(mWifiP2pChannel,
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.requestDiscoveryState(sWifiP2pChannel,
                 new WifiP2pManager.DiscoveryStateListener() {
                     @Override
                     public void onDiscoveryStateAvailable(int state) {
-                        synchronized (mMyResponse) {
-                            mMyResponse.valid = true;
-                            mMyResponse.discoveryState = state;
-                            mMyResponse.notify();
+                        synchronized (MY_RESPONSE) {
+                            MY_RESPONSE.valid = true;
+                            MY_RESPONSE.discoveryState = state;
+                            MY_RESPONSE.notify();
                         }
                     }
                 });
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED, mMyResponse.discoveryState);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED, MY_RESPONSE.discoveryState);
 
-        mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, null);
+        sWifiP2pManager.stopPeerDiscovery(sWifiP2pChannel, null);
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#discoverPeersOnSocialChannels"})
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @Test
     public void testDiscoverPeersOnSocialChannelsOnly() {
-        if (!setupWifiP2p()) {
-            return;
-        }
 
-        if (!mWifiP2pManager.isChannelConstrainedDiscoverySupported()) return;
+        if (!sWifiP2pManager.isChannelConstrainedDiscoverySupported()) return;
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.requestDiscoveryState(
-                mWifiP2pChannel, new WifiP2pManager.DiscoveryStateListener() {
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.requestDiscoveryState(
+                sWifiP2pChannel, new WifiP2pManager.DiscoveryStateListener() {
                     @Override
                     public void onDiscoveryStateAvailable(int state) {
-                        synchronized (mMyResponse) {
-                            mMyResponse.valid = true;
-                            mMyResponse.discoveryState = state;
-                            mMyResponse.notify();
+                        synchronized (MY_RESPONSE) {
+                            MY_RESPONSE.valid = true;
+                            MY_RESPONSE.discoveryState = state;
+                            MY_RESPONSE.notify();
                         }
                     }
                 });
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED, mMyResponse.discoveryState);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED, MY_RESPONSE.discoveryState);
 
         // If there is any saved network and this device is connecting to this saved network,
         // p2p discovery might be blocked during DHCP provision.
         int retryCount = 3;
         while (retryCount > 0) {
-            resetResponse(mMyResponse);
-            mWifiP2pManager.discoverPeersOnSocialChannels(mWifiP2pChannel, mActionListener);
-            assertTrue(waitForServiceResponse(mMyResponse));
-            if (mMyResponse.success
-                    || mMyResponse.failureReason != WifiP2pManager.BUSY) {
+            resetResponse(MY_RESPONSE);
+            sWifiP2pManager.discoverPeersOnSocialChannels(sWifiP2pChannel, sActionListener);
+            assertTrue(waitForServiceResponse(MY_RESPONSE));
+            if (MY_RESPONSE.success
+                    || MY_RESPONSE.failureReason != WifiP2pManager.BUSY) {
                 break;
             }
             Log.w(TAG, "Discovery is blocked, try again!");
@@ -951,87 +963,81 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
             } catch (InterruptedException ex) { }
             retryCount--;
         }
-        assertTrue(mMyResponse.success);
+        assertTrue(MY_RESPONSE.success);
         assertTrue(waitForBroadcasts(MySync.DISCOVERY_STATE));
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.requestDiscoveryState(mWifiP2pChannel,
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.requestDiscoveryState(sWifiP2pChannel,
                 new WifiP2pManager.DiscoveryStateListener() {
                     @Override
                     public void onDiscoveryStateAvailable(int state) {
-                        synchronized (mMyResponse) {
-                            mMyResponse.valid = true;
-                            mMyResponse.discoveryState = state;
-                            mMyResponse.notify();
+                        synchronized (MY_RESPONSE) {
+                            MY_RESPONSE.valid = true;
+                            MY_RESPONSE.discoveryState = state;
+                            MY_RESPONSE.notify();
                         }
                     }
                 });
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED, mMyResponse.discoveryState);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED, MY_RESPONSE.discoveryState);
 
-        mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, null);
+        sWifiP2pManager.stopPeerDiscovery(sWifiP2pChannel, null);
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pConfig.Builder#setGroupClientIpProvisioningMode"})
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @Test
     public void testP2pConnectDoesNotThrowExceptionWhenGroupOwnerIpv6IsNotProvided() {
-        if (!setupWifiP2p()) {
+
+        if (sWifiP2pManager.isGroupOwnerIPv6LinkLocalAddressProvided()) {
             return;
         }
-
-        if (mWifiP2pManager.isGroupOwnerIPv6LinkLocalAddressProvided()) {
-            return;
-        }
-
-        resetResponse(mMyResponse);
         WifiP2pConfig config = new WifiP2pConfig.Builder()
                 .setDeviceAddress(MacAddress.fromString("aa:bb:cc:dd:ee:ff"))
                 .setGroupClientIpProvisioningMode(
                         GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL)
                 .build();
-        mWifiP2pManager.connect(mWifiP2pChannel, config, mActionListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertFalse(mMyResponse.success);
+        sWifiP2pManager.connect(sWifiP2pChannel, config, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertFalse(MY_RESPONSE.success);
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#setVendorElements"})
+    @Test
     public void testP2pSetVendorElements() {
-        if (!setupWifiP2p()) {
-            return;
-        }
 
-        if (!mWifiP2pManager.isSetVendorElementsSupported()) return;
+        if (!sWifiP2pManager.isSetVendorElementsSupported()) return;
 
         // Vendor-Specific EID is 221.
         List<ScanResult.InformationElement> ies = new ArrayList<>(Arrays.asList(
                 new ScanResult.InformationElement(221, 0,
                         new byte[]{(byte) 1, (byte) 2, (byte) 3, (byte) 4})));
-        resetResponse(mMyResponse);
         ShellIdentityUtils.invokeWithShellPermissions(() -> {
-            mWifiP2pManager.setVendorElements(mWifiP2pChannel, ies, mActionListener);
-            assertTrue(waitForServiceResponse(mMyResponse));
-            assertTrue(mMyResponse.success);
+            sWifiP2pManager.setVendorElements(sWifiP2pChannel, ies, sActionListener);
+            assertTrue(waitForServiceResponse(MY_RESPONSE));
+            assertTrue(MY_RESPONSE.success);
         });
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.discoverPeers(mWifiP2pChannel, mActionListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.discoverPeers(sWifiP2pChannel, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
     }
 
     /** Test IEs whose size is greater than the maximum allowed size. */
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager"
+            + "#getP2pMaxAllowedVendorElementsLengthBytes"})
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @Test
     public void testP2pSetVendorElementsOverMaximumAllowedSize() {
-        if (!setupWifiP2p()) {
-            return;
-        }
 
-        if (!mWifiP2pManager.isSetVendorElementsSupported()) return;
+        if (!sWifiP2pManager.isSetVendorElementsSupported()) return;
 
         List<ScanResult.InformationElement> ies = new ArrayList<>();
         ies.add(new ScanResult.InformationElement(221, 0,
                 new byte[WifiP2pManager.getP2pMaxAllowedVendorElementsLengthBytes() + 1]));
-        resetResponse(mMyResponse);
         ShellIdentityUtils.invokeWithShellPermissions(() -> {
             try {
-                mWifiP2pManager.setVendorElements(mWifiP2pChannel, ies, mActionListener);
+                sWifiP2pManager.setVendorElements(sWifiP2pChannel, ies, sActionListener);
                 fail("Should raise IllegalArgumentException");
             } catch (IllegalArgumentException ex) {
                 // expected
@@ -1041,32 +1047,32 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
     }
 
     /** Test that external approver APIs. */
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#addExternalApprover",
+            "android.net.wifi.p2p.WifiP2pManager#setConnectionRequestResult",
+            "android.net.wifi.p2p.WifiP2pManager#removeExternalApprover"})
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @Test
     public void testP2pExternalApprover() {
         final MacAddress peer = MacAddress.fromString("11:22:33:44:55:66");
-        if (!setupWifiP2p()) {
-            return;
-        }
-
         ExternalApproverRequestListener listener =
                 new ExternalApproverRequestListener() {
                     @Override
                     public void onAttached(MacAddress deviceAddress) {
-                        synchronized (mMyResponse) {
-                            mMyResponse.targetPeer = deviceAddress;
-                            mMyResponse.valid = true;
-                            mMyResponse.isAttached = true;
-                            mMyResponse.notify();
+                        synchronized (MY_RESPONSE) {
+                            MY_RESPONSE.targetPeer = deviceAddress;
+                            MY_RESPONSE.valid = true;
+                            MY_RESPONSE.isAttached = true;
+                            MY_RESPONSE.notify();
                         }
                     }
                     @Override
                     public void onDetached(MacAddress deviceAddress, int reason) {
-                        synchronized (mMyResponse) {
-                            mMyResponse.targetPeer = deviceAddress;
-                            mMyResponse.detachReason = reason;
-                            mMyResponse.valid = true;
-                            mMyResponse.isDetached = true;
-                            mMyResponse.notify();
+                        synchronized (MY_RESPONSE) {
+                            MY_RESPONSE.targetPeer = deviceAddress;
+                            MY_RESPONSE.detachReason = reason;
+                            MY_RESPONSE.valid = true;
+                            MY_RESPONSE.isDetached = true;
+                            MY_RESPONSE.notify();
                         }
                     }
                     @Override
@@ -1078,31 +1084,29 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
                     }
             };
 
-        resetResponse(mMyResponse);
-
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
-            mWifiP2pManager.addExternalApprover(mWifiP2pChannel, peer, listener);
-            assertTrue(waitForServiceResponse(mMyResponse));
-            assertTrue(mMyResponse.isAttached);
-            assertFalse(mMyResponse.isDetached);
-            assertEquals(peer, mMyResponse.targetPeer);
+            sWifiP2pManager.addExternalApprover(sWifiP2pChannel, peer, listener);
+            assertTrue(waitForServiceResponse(MY_RESPONSE));
+            assertTrue(MY_RESPONSE.isAttached);
+            assertFalse(MY_RESPONSE.isDetached);
+            assertEquals(peer, MY_RESPONSE.targetPeer);
 
             // Just ignore the result as there is no real incoming request.
-            mWifiP2pManager.setConnectionRequestResult(mWifiP2pChannel, peer,
+            sWifiP2pManager.setConnectionRequestResult(sWifiP2pChannel, peer,
                     WifiP2pManager.CONNECTION_REQUEST_ACCEPT, null);
-            mWifiP2pManager.setConnectionRequestResult(mWifiP2pChannel, peer,
+            sWifiP2pManager.setConnectionRequestResult(sWifiP2pChannel, peer,
                     WifiP2pManager.CONNECTION_REQUEST_ACCEPT, "12345678", null);
 
-            resetResponse(mMyResponse);
-            mWifiP2pManager.removeExternalApprover(mWifiP2pChannel, peer, null);
-            assertTrue(waitForServiceResponse(mMyResponse));
-            assertTrue(mMyResponse.isDetached);
-            assertFalse(mMyResponse.isAttached);
-            assertEquals(peer, mMyResponse.targetPeer);
+            resetResponse(MY_RESPONSE);
+            sWifiP2pManager.removeExternalApprover(sWifiP2pChannel, peer, null);
+            assertTrue(waitForServiceResponse(MY_RESPONSE));
+            assertTrue(MY_RESPONSE.isDetached);
+            assertFalse(MY_RESPONSE.isAttached);
+            assertEquals(peer, MY_RESPONSE.targetPeer);
             assertEquals(ExternalApproverRequestListener.APPROVER_DETACH_REASON_REMOVE,
-                    mMyResponse.detachReason);
+                    MY_RESPONSE.detachReason);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
@@ -1110,68 +1114,65 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
     }
 
     /** Test setWfdInfo() API. */
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#setWfdInfo"})
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @Test
     public void testP2pSetWfdInfo() {
-        if (!setupWifiP2p()) {
-            return;
-        }
-
         WifiP2pWfdInfo info = new WifiP2pWfdInfo();
         info.setEnabled(true);
         info.setDeviceType(WifiP2pWfdInfo.DEVICE_TYPE_WFD_SOURCE);
         info.setSessionAvailable(true);
-        resetResponse(mMyResponse);
         ShellIdentityUtils.invokeWithShellPermissions(() -> {
-            mWifiP2pManager.setWfdInfo(mWifiP2pChannel, info, mActionListener);
-            assertTrue(waitForServiceResponse(mMyResponse));
-            assertTrue(mMyResponse.success);
+            sWifiP2pManager.setWfdInfo(sWifiP2pChannel, info, sActionListener);
+            assertTrue(waitForServiceResponse(MY_RESPONSE));
+            assertTrue(MY_RESPONSE.success);
         });
     }
 
     /**
      * Tests {@link WifiP2pManager#getListenState(WifiP2pManager.Channel, Executor, Consumer)}
      */
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#getListenState"})
+    @Test
     public void testGetListenState() {
-        if (!setupWifiP2p()) {
-            return;
-        }
-
         Consumer<Integer> testListenStateListener = new Consumer<Integer>() {
             @Override
             public void accept(Integer state) {
-                synchronized (mMyResponse) {
-                    mMyResponse.valid = true;
-                    mMyResponse.listenState = state.intValue();
-                    mMyResponse.notify();
+                synchronized (MY_RESPONSE) {
+                    MY_RESPONSE.valid = true;
+                    MY_RESPONSE.listenState = state.intValue();
+                    MY_RESPONSE.notify();
                 }
             }
         };
 
-        mWifiP2pManager.getListenState(mWifiP2pChannel, mExecutor, testListenStateListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertEquals(WifiP2pManager.WIFI_P2P_LISTEN_STOPPED, mMyResponse.listenState);
+        sWifiP2pManager.getListenState(sWifiP2pChannel, mExecutor, testListenStateListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertEquals(WifiP2pManager.WIFI_P2P_LISTEN_STOPPED, MY_RESPONSE.listenState);
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.startListening(mWifiP2pChannel, mActionListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.startListening(sWifiP2pChannel, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
         assertTrue(waitForBroadcasts(MySync.LISTEN_STATE));
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.getListenState(mWifiP2pChannel, mExecutor, testListenStateListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertEquals(WifiP2pManager.WIFI_P2P_LISTEN_STARTED, mMyResponse.listenState);
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.getListenState(sWifiP2pChannel, mExecutor, testListenStateListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertEquals(WifiP2pManager.WIFI_P2P_LISTEN_STARTED, MY_RESPONSE.listenState);
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.stopListening(mWifiP2pChannel, mActionListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.stopListening(sWifiP2pChannel, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
         assertTrue(waitForBroadcasts(MySync.LISTEN_STATE));
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.getListenState(mWifiP2pChannel, mExecutor, testListenStateListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertEquals(WifiP2pManager.WIFI_P2P_LISTEN_STOPPED, mMyResponse.listenState);
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.getListenState(sWifiP2pChannel, mExecutor, testListenStateListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertEquals(WifiP2pManager.WIFI_P2P_LISTEN_STOPPED, MY_RESPONSE.listenState);
     }
 
+    @ApiTest(apis = {"android.net.wifi.WifiP2pManager#getListenState"})
+    @Test
     public void testWpsInfo() {
         WpsInfo info = new WpsInfo();
         assertEquals(WpsInfo.INVALID, info.setup);

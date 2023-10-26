@@ -600,8 +600,17 @@ public class RoutingSessionInfoTest {
                 .setVolumeHandling(PLAYBACK_VOLUME_VARIABLE)
                 .build();
 
-        boolean volumeAdjustmentForRemoteGroupSessions = Resources.getSystem().getBoolean(
-                com.android.internal.R.bool.config_volumeAdjustmentForRemoteGroupSessions);
+        // Resources.getSystem().getIdentifier() is necessary to avoid the inlining of the resource
+        // id int, which is not guaranteed to match across Android builds on which CTS runs. See
+        // b/288602351 for more context.
+        int volumeAdjustmentForRemoteGroupSessionsResourceId =
+                Resources.getSystem()
+                        .getIdentifier(
+                                "config_volumeAdjustmentForRemoteGroupSessions",
+                                "bool",
+                                /* defPackage= */ "android");
+        boolean volumeAdjustmentForRemoteGroupSessions =
+                Resources.getSystem().getBoolean(volumeAdjustmentForRemoteGroupSessionsResourceId);
 
         int expectedVolumeHandling = volumeAdjustmentForRemoteGroupSessions
                 ? PLAYBACK_VOLUME_VARIABLE : PLAYBACK_VOLUME_FIXED;

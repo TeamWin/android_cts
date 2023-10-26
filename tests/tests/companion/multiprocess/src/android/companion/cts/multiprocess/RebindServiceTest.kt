@@ -17,6 +17,8 @@ package android.companion.cts.multiprocess
 
 import android.companion.cts.common.DEVICE_DISPLAY_NAME_A
 import android.companion.cts.common.DEVICE_DISPLAY_NAME_B
+import android.companion.cts.common.PRIMARY_PROCESS_NAME
+import android.companion.cts.common.SECONDARY_PROCESS_NAME
 import android.companion.cts.common.TestBase
 import android.companion.cts.common.assertApplicationBinds
 import android.companion.cts.common.killProcess
@@ -44,8 +46,8 @@ class RebindServiceTest : TestBase() {
         // Wait for secondary service to start.
         SystemClock.sleep(2000)
         // Kill both primary and secondary processes.
-        killProcess(":primary")
-        killProcess(":secondary")
+        killProcess(PRIMARY_PROCESS_NAME)
+        killProcess(SECONDARY_PROCESS_NAME)
 
         // Schedule rebind in 10 seconds but give it 11 seconds.
         SystemClock.sleep(11000)
@@ -72,7 +74,7 @@ class RebindServiceTest : TestBase() {
         // Wait for secondary service to start.
         SystemClock.sleep(2000)
         // Kill secondary process.
-        killProcess(":secondary")
+        killProcess(SECONDARY_PROCESS_NAME)
 
         // Schedule rebind in 10 seconds but give it 11 seconds.
         SystemClock.sleep(11000)
@@ -96,8 +98,8 @@ class RebindServiceTest : TestBase() {
         // Wait for secondary service to start.
         SystemClock.sleep(2000)
         // Kill the primary process.
-        killProcess(":primary")
-        killProcess(":secondary")
+        killProcess(PRIMARY_PROCESS_NAME)
+        killProcess(SECONDARY_PROCESS_NAME)
         // Primary service should be unbound.
         assertServiceNotBound("PrimaryCompanionService")
 

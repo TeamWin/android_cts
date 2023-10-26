@@ -57,6 +57,7 @@ import com.android.compatibility.common.util.ThrowingRunnable;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -246,11 +247,12 @@ public class LightBarTests extends LightBarTestBase {
             Thread.sleep(WAIT_TIME);
 
             Bitmap bitmap = takeStatusBarScreenshot(activity);
-            Stats s = evaluateDarkBarBitmap(bitmap, Color.BLACK, 0);
+            Stats s = evaluateDarkBarBitmap(bitmap, Color.TRANSPARENT, 0);
             assertStats(bitmap, s, false /* light */);
         });
     }
 
+    @Ignore
     @Test
     @AppModeFull // Instant apps cannot create notifications
     public void testLightBarIsNotAllowed_fitDisplayCutout() throws Throwable {

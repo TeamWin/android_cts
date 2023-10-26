@@ -69,13 +69,12 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
             activity.assertMatchesWindowBounds();
         });
 
-        testSetFitInsetsTypesInner(Type.statusBars(), activity, mainWindowRoot);
-        testSetFitInsetsTypesInner(Type.navigationBars(), activity, mainWindowRoot);
-        testSetFitInsetsTypesInner(Type.systemBars(), activity, mainWindowRoot);
+        testSetFitInsetsTypesInner(Type.statusBars(), activity);
+        testSetFitInsetsTypesInner(Type.navigationBars(), activity);
+        testSetFitInsetsTypesInner(Type.systemBars(), activity);
     }
 
-    private void testSetFitInsetsTypesInner(
-            int types, TestActivity activity, View mainWindowRoot) {
+    private void testSetFitInsetsTypesInner(int types, TestActivity activity) {
         getInstrumentation().runOnMainSync(() -> {
             activity.addChildWindow(types, Side.all(), false);
         });
@@ -85,16 +84,9 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
         PollingCheck.waitFor(TIMEOUT, () -> childWindowRoot.getWidth() > 0);
 
         getInstrumentation().runOnMainSync(() -> {
-            final WindowInsets windowInsets = mainWindowRoot.getRootWindowInsets();
+            final WindowInsets windowInsets = childWindowRoot.getRootWindowInsets();
             final Insets insets = windowInsets.getInsets(types);
-            final int[] locationOnScreen = new int[2];
-            childWindowRoot.getLocationOnScreen(locationOnScreen);
-            assertEquals(insets.left, locationOnScreen[0]);
-            assertEquals(insets.top, locationOnScreen[1]);
-            assertEquals(insets.right,
-                    mainWindowRoot.getWidth() - locationOnScreen[0] - childWindowRoot.getWidth());
-            assertEquals(insets.bottom,
-                    mainWindowRoot.getHeight()- locationOnScreen[1] - childWindowRoot.getHeight());
+            assertEquals(Insets.NONE, insets);
             activity.removeChildWindow();
         });
     }
@@ -113,14 +105,13 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
             activity.assertMatchesWindowBounds();
         });
 
-        testSetFitInsetsSidesInner(Side.LEFT, activity, mainWindowRoot);
-        testSetFitInsetsSidesInner(Side.TOP, activity, mainWindowRoot);
-        testSetFitInsetsSidesInner(Side.RIGHT, activity, mainWindowRoot);
-        testSetFitInsetsSidesInner(Side.BOTTOM, activity, mainWindowRoot);
+        testSetFitInsetsSidesInner(Side.LEFT, activity);
+        testSetFitInsetsSidesInner(Side.TOP, activity);
+        testSetFitInsetsSidesInner(Side.RIGHT, activity);
+        testSetFitInsetsSidesInner(Side.BOTTOM, activity);
     }
 
-    private void testSetFitInsetsSidesInner(
-            int sides, TestActivity activity, View mainWindowRoot) {
+    private void testSetFitInsetsSidesInner(int sides, TestActivity activity) {
         final int types = Type.systemBars();
         getInstrumentation().runOnMainSync(() -> {
             activity.addChildWindow(types, sides, false);
@@ -131,16 +122,20 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
         PollingCheck.waitFor(TIMEOUT, () -> childWindowRoot.getWidth() > 0);
 
         getInstrumentation().runOnMainSync(() -> {
-            final WindowInsets windowInsets = mainWindowRoot.getRootWindowInsets();
+            final WindowInsets windowInsets = childWindowRoot.getRootWindowInsets();
             final Insets insets = windowInsets.getInsets(types);
-            final int[] locationOnScreen = new int[2];
-            childWindowRoot.getLocationOnScreen(locationOnScreen);
-            assertEquals((sides & Side.LEFT) != 0 ? insets.left : 0, locationOnScreen[0]);
-            assertEquals((sides & Side.TOP) != 0 ? insets.top : 0, locationOnScreen[1]);
-            assertEquals((sides & Side.RIGHT) != 0 ? insets.right : 0,
-                    mainWindowRoot.getWidth() - locationOnScreen[0] - childWindowRoot.getWidth());
-            assertEquals((sides & Side.BOTTOM) != 0 ? insets.bottom : 0,
-                    mainWindowRoot.getHeight()- locationOnScreen[1] - childWindowRoot.getHeight());
+            if ((sides & Side.LEFT) != 0) {
+                assertEquals(0, insets.left);
+            }
+            if ((sides & Side.TOP) != 0) {
+                assertEquals(0, insets.top);
+            }
+            if ((sides & Side.RIGHT) != 0) {
+                assertEquals(0, insets.right);
+            }
+            if ((sides & Side.BOTTOM) != 0) {
+                assertEquals(0, insets.bottom);
+            }
             activity.removeChildWindow();
         });
     }

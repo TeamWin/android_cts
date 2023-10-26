@@ -76,6 +76,7 @@ import android.util.Pair;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
@@ -97,7 +98,6 @@ import android.widget.TextView;
 import android.window.OnBackInvokedDispatcher;
 
 import androidx.annotation.ColorInt;
-import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -1308,11 +1308,18 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
      */
     @Test
     public void testRotateScreenWithKeyboardShownImplicitly() throws Exception {
+        // Test only when both portrait and landscape mode are supported.
+        final PackageManager pm = mInstrumentation.getTargetContext().getPackageManager();
+        assumeTrue(pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT));
+        assumeTrue(pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE));
+
         final InputMethodManager imm = mInstrumentation
                 .getTargetContext().getSystemService(InputMethodManager.class);
         // Disable auto-rotate screen and set the screen orientation to portrait mode.
         setAutoRotateScreen(false);
-        rotateScreen(0);
+        final UiDevice uiDevice = UiDevice.getInstance(mInstrumentation);
+        uiDevice.setOrientationPortrait();
+        mInstrumentation.waitForIdleSync();
 
         // Set FullscreenModePolicy as OS_DEFAULT to call the original
         // InputMethodService#onEvaluateFullscreenMode()
@@ -1344,14 +1351,9 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                     View.VISIBLE, TIMEOUT);
             expectImeVisible(TIMEOUT);
 
-            // Rotate screen right
-            rotateScreen(3);
-            expectImeVisible(TIMEOUT);
-            assertTrue("IME should be in fullscreen mode",
-                    getOnMainSync(() -> imm.isFullscreenMode()));
-
-            // Rotate screen left
-            rotateScreen(1);
+            // Rotate screen to landscape.
+            uiDevice.setOrientationLandscape();
+            mInstrumentation.waitForIdleSync();
             expectImeVisible(TIMEOUT);
             assertTrue("IME should be in fullscreen mode",
                     getOnMainSync(() -> imm.isFullscreenMode()));
@@ -1524,6 +1526,18 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                             return new LinearLayout(activity);
                         }, TestActivity2.class);
 
+                View decor = splitPrimaryActivity.getWindow().getDecorView();
+                CountDownLatch latch = new CountDownLatch(1);
+                ViewTreeObserver observer = decor.getViewTreeObserver();
+                observer.addOnDrawListener(() -> {
+                    if (splitPrimaryActivity.isInMultiWindowMode()) {
+                        // check activity in multi-window mode after relayoutWindow.
+                        latch.countDown();
+                    }
+                });
+
+                latch.await(LAYOUT_STABLE_THRESHOLD, TimeUnit.MILLISECONDS);
+
                 // Tap on the first activity to change focus
                 mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation,
                         null, splitPrimaryActivity.getWindow().getDecorView());
@@ -1650,17 +1664,6 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             instrumentation.waitForIdleSync();
         } catch (IOException io) {
             fail("Couldn't enable/disable auto-rotate screen");
-        }
-    }
-
-    private void rotateScreen(@IntRange(from = 0, to = 3) int rotation) {
-        try {
-            final Instrumentation instrumentation = mInstrumentation;
-            SystemUtil.runShellCommand(instrumentation, "settings put system user_rotation "
-                    + rotation);
-            instrumentation.waitForIdleSync();
-        } catch (IOException io) {
-            fail("Couldn't rotate screen");
         }
     }
 

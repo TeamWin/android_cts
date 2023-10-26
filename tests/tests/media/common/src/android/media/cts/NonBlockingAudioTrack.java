@@ -23,7 +23,9 @@ import android.media.AudioTrack;
 
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Class for playing audio by using audio track.
@@ -47,6 +49,13 @@ public class NonBlockingAudioTrack {
     private LinkedList<QueueElement> mQueue = new LinkedList<QueueElement>();
     private boolean mStopped;
     private int mBufferSizeInBytes;
+    private AtomicBoolean mStopWriting = new AtomicBoolean(false);
+
+    /**
+     * An offset (in nanoseconds) to add to presentation timestamps fed to the {@link AudioTrack}.
+     * This is used to simulate desynchronization between tracks.
+     */
+    private AtomicLong mAudioOffsetNs = new AtomicLong(0);
 
     public NonBlockingAudioTrack(int sampleRate, int channelCount, boolean hwAvSync,
                     int audioSessionId) {
@@ -130,6 +139,14 @@ public class NonBlockingAudioTrack {
         }
     }
 
+    public void setStopWriting(boolean stop) {
+        mStopWriting.set(stop);
+    }
+
+    public void setAudioOffsetNs(long audioOffsetNs) {
+        mAudioOffsetNs.set(audioOffsetNs);
+    }
+
     public void pause() {
         mAudioTrack.pause();
     }
@@ -155,8 +172,12 @@ public class NonBlockingAudioTrack {
     public void process() {
         while (!mQueue.isEmpty()) {
             QueueElement element = mQueue.peekFirst();
+            if (mStopWriting.get()) {
+                break;
+            }
+
             int written = mAudioTrack.write(element.data, element.size,
-                                            AudioTrack.WRITE_NON_BLOCKING, element.pts);
+                    AudioTrack.WRITE_NON_BLOCKING, element.pts + mAudioOffsetNs.get());
             if (written < 0) {
                 throw new RuntimeException("Audiotrack.write() failed.");
             }

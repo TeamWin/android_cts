@@ -26,8 +26,6 @@ import static android.window.TaskFragmentOrganizer.TASK_FRAGMENT_TRANSIT_OPEN;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assume.assumeTrue;
-
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -66,7 +64,6 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
      */
     @Test
     public void testCreateTaskFragment() {
-        assumeTrue("MultiWindow is not supported.", supportsMultiWindow());
         mWmState.computeState(mOwnerActivityName);
         Task parentTask = mWmState.getRootTask(mOwnerActivity.getTaskId());
         final int originalTaskFragCount = parentTask.getTaskFragments().size();
@@ -158,7 +155,7 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
 
         mWmState.waitForActivityState(mLaunchingActivity, STATE_RESUMED);
 
-        Task parentTask = mWmState.getRootTask(mOwnerActivity.getTaskId());
+        Task parentTask = mWmState.getTaskByActivity(mOwnerActivityName);
         TaskFragment taskFragment = mWmState.getTaskFragmentByActivity(mLaunchingActivity);
 
         // Assert window hierarchy must be as follows
@@ -186,8 +183,8 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
         assertEmptyTaskFragment(taskFragmentInfo, taskFragmentInfo.getFragmentToken());
 
         mWmState.computeState(mOwnerActivityName);
-        final int originalTaskFragCount = mWmState.getRootTask(mOwnerTaskId).getTaskFragments()
-                .size();
+        final int originalTaskFragCount = mWmState.getTaskByActivity(mOwnerActivityName)
+                .getTaskFragments().size();
 
         WindowContainerTransaction wct = new WindowContainerTransaction()
                 .deleteTaskFragment(taskFragToken);
@@ -200,7 +197,8 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
                 taskFragToken);
 
         mWmState.computeState(mOwnerActivityName);
-        final int currTaskFragCount = mWmState.getRootTask(mOwnerTaskId).getTaskFragments().size();
+        final int currTaskFragCount = mWmState.getTaskByActivity(mOwnerActivityName)
+                .getTaskFragments().size();
         assertWithMessage("TaskFragment with token " + taskFragToken + " must be"
                 + " removed.").that(originalTaskFragCount - currTaskFragCount).isEqualTo(1);
     }
@@ -212,15 +210,15 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
     @Test
     @ApiTest(apis = {
             "android.window.WindowContainerTransaction#deleteTaskFragment",
-            "android.window.TaskFragmentOrganizer.#onTransactionReady"})
+            "android.window.TaskFragmentOrganizer#onTransactionReady"})
     public void testDeleteTaskFragmentWithActivity() {
         final TaskFragmentInfo taskFragmentInfo = createTaskFragment(mLaunchingActivity);
         final IBinder taskFragToken = taskFragmentInfo.getFragmentToken();
         assertNotEmptyTaskFragment(taskFragmentInfo, taskFragmentInfo.getFragmentToken());
 
         mWmState.computeState(mOwnerActivityName);
-        final int originalTaskFragCount = mWmState.getRootTask(mOwnerTaskId).getTaskFragments()
-                .size();
+        final int originalTaskFragCount = mWmState.getTaskByActivity(mOwnerActivityName)
+                .getTaskFragments().size();
 
         WindowContainerTransaction wct = new WindowContainerTransaction()
                 .deleteTaskFragment(taskFragToken);
@@ -233,7 +231,8 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
                 taskFragToken);
 
         mWmState.computeState(mOwnerActivityName);
-        final int currTaskFragCount = mWmState.getRootTask(mOwnerTaskId).getTaskFragments().size();
+        final int currTaskFragCount = mWmState.getTaskByActivity(mOwnerActivityName)
+                .getTaskFragments().size();
         assertWithMessage("TaskFragment with token " + taskFragToken + " must be"
                 + " removed.").that(originalTaskFragCount - currTaskFragCount).isEqualTo(1);
     }

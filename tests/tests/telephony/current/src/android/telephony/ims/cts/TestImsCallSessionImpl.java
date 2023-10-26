@@ -506,8 +506,12 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
                     return;
                 }
 
+                TestImsCallSessionImpl confCallSession = mConfSession;
+                if (isTestType(TEST_TYPE_JOIN_EXIST_CONFERENCE_FAILED_AFTER_SWAP)) {
+                    confCallSession = null;
+                }
                 Log.d(LOG_TAG, "invokeCallSessionMergeStarted");
-                mListener.callSessionMergeStarted(mConfSession, mConfCallProfile);
+                mListener.callSessionMergeStarted(confCallSession, mConfCallProfile);
                 ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
                 if (isTestType(TEST_TYPE_CONFERENCE_FAILED_REMOTE_TERMINATED)) {
                     return;
@@ -537,6 +541,10 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
                     return;
                 }
 
+                Log.d(LOG_TAG, "invokeMergeComplete into an existing conference call");
+                TestImsCallSessionImpl newSession = null;
+                mListener.callSessionMergeComplete(newSession);
+
                 if (isTestType(TEST_TYPE_JOIN_EXIST_CONFERENCE_AFTER_SWAP)) {
                     mConferenceHelper.getBackGroundSession().setState(State.TERMINATED);
                     mConferenceHelper.getBackGroundSession().invokeTerminatedByRemote();
@@ -544,10 +552,6 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
                     mConferenceHelper.getForeGroundSession().setState(State.TERMINATED);
                     mConferenceHelper.getForeGroundSession().invokeTerminatedByRemote();
                 }
-
-                Log.d(LOG_TAG, "invokeMergeComplete into an existing conference call");
-                TestImsCallSessionImpl newSession = null;
-                mListener.callSessionMergeComplete(newSession);
             } catch (Throwable t) {
                 Throwable cause = t.getCause();
                 if (t instanceof DeadObjectException

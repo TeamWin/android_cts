@@ -21,8 +21,6 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.EXPAND_SPLIT
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.HINGE_SPLIT_ATTRS;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitPairRuleBuilder;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplitAttributes;
-import static android.view.Surface.ROTATION_270;
-import static android.view.Surface.ROTATION_90;
 
 import static com.android.compatibility.common.util.PollingCheck.waitFor;
 
@@ -233,10 +231,13 @@ public class SplitAttributesCalculatorTest extends ActivityEmbeddingTestBase {
         }
 
         try (RotationSession rotationSession = new RotationSession()) {
-            for (int rotation = ROTATION_90; rotation <= ROTATION_270; rotation++) {
+            final int initialRotation = activityA.getDisplay().getRotation();
+            for (int i = 1; i <= 3; i++) {
+                // Rotate the device by 90 degree clockwise.
+                final int rotation = (initialRotation + i) % 4;
                 rotationSession.set(rotation);
 
-                verifier.waitAndAssertFunctionApplied("The calculator function mus be called for"
+                verifier.waitAndAssertFunctionApplied("The calculator function must be called for"
                         + " rotation:" + rotation);
             }
         }

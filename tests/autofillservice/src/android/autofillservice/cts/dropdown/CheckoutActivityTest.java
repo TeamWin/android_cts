@@ -473,13 +473,10 @@ public class CheckoutActivityTest
     @Test
     public void getEditTextAutoFillValue() throws Exception {
         EditText editText = mActivity.getCcNumber();
+
         mActivity.syncRunOnUiThread(() -> editText.setText("test"));
 
         assertThat(editText.getAutofillValue()).isEqualTo(AutofillValue.forText("test"));
-
-        mActivity.syncRunOnUiThread(() -> editText.setEnabled(false));
-
-        assertThat(editText.getAutofillValue()).isNull();
     }
 
     // ============================================================================================

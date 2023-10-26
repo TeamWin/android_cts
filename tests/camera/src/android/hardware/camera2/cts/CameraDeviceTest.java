@@ -1113,13 +1113,21 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
      */
     private void testCreateSessionWithParametersByCamera(String cameraId, boolean reprocessable)
             throws Exception {
-        final int SESSION_TIMEOUT_MS = 1000;
         final int CAPTURE_TIMEOUT_MS = 3000;
         int inputFormat = ImageFormat.YUV_420_888;
         int outputFormat = inputFormat;
         Size outputSize = mOrderedPreviewSizes.get(0);
         Size inputSize = outputSize;
         InputConfiguration inputConfig = null;
+
+        boolean reprocessSupported = mStaticInfo.isCapabilitySupported(
+                REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING);
+        reprocessSupported |= mStaticInfo.isCapabilitySupported(
+                REQUEST_AVAILABLE_CAPABILITIES_YUV_REPROCESSING);
+        if (reprocessable && !reprocessSupported) {
+            Log.v(TAG, "Reprocessing not supported for " + cameraId);
+            return;
+        }
 
         if (VERBOSE) {
             Log.v(TAG, "Testing creating session with parameters for camera " + cameraId);
@@ -1128,40 +1136,20 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(cameraId);
         StreamConfigurationMap config = characteristics.get(
                 CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        List<OutputConfiguration> outputs = new ArrayList<>();
+        ImageReader reprocessInputReader = null;
 
         if (reprocessable) {
-            //Pick a supported i/o format and size combination.
-            //Ideally the input format should match the output.
-            boolean found = false;
-            int inputFormats [] = config.getInputFormats();
-            if (inputFormats.length == 0) {
-                return;
-            }
-
-            for (int inFormat : inputFormats) {
-                int outputFormats [] = config.getValidOutputFormatsForInput(inFormat);
-                for (int outFormat : outputFormats) {
-                    if (inFormat == outFormat) {
-                        inputFormat = inFormat;
-                        outputFormat = outFormat;
-                        found = true;
-                        break;
-                    }
-                }
-                if (found) {
-                    break;
-                }
-            }
-
-            //In case the above combination doesn't exist, pick the first first supported
-            //pair.
-            if (!found) {
-                inputFormat = inputFormats[0];
-                int outputFormats [] = config.getValidOutputFormatsForInput(inputFormat);
-                assertTrue("No output formats supported for input format: " + inputFormat,
-                        (outputFormats.length > 0));
-                outputFormat = outputFormats[0];
-            }
+            // Setup the mandatory PRIV/YUV(input) + PRIV/YUV(output) + Jpeg(output) stream
+            // combination.
+            int inputFormats[] = config.getInputFormats();
+            assertNotNull(inputFormats);
+            assertArrayNotEmpty(inputFormats, "No input formats supported");
+            inputFormat = inputFormats[0];
+            int outputFormats[] = config.getValidOutputFormatsForInput(inputFormat);
+            assertNotNull(outputFormats);
+            assertTrue(contains(outputFormats, ImageFormat.JPEG));
+            outputFormat = ImageFormat.JPEG;
 
             Size inputSizes[] = config.getInputSizes(inputFormat);
             Size outputSizes[] = config.getOutputSizes(outputFormat);
@@ -1174,6 +1162,8 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             outputSize = outputSizes[0];
             inputConfig = new InputConfiguration(inputSize.getWidth(),
                     inputSize.getHeight(), inputFormat);
+            reprocessInputReader = ImageReader.newInstance(inputSize.getWidth(),
+                    inputSize.getHeight(), inputFormat, /*maxImages*/1);
         } else {
             if (config.isOutputSupportedFor(outputFormat)) {
                 outputSize = config.getOutputSizes(outputFormat)[0];
@@ -1188,8 +1178,10 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         try {
             mSessionMockListener = spy(new BlockingSessionCallback());
             mSessionWaiter = mSessionMockListener.getStateWaiter();
-            List<OutputConfiguration> outputs = new ArrayList<>();
             outputs.add(new OutputConfiguration(imageReader.getSurface()));
+            if (reprocessInputReader != null) {
+                outputs.add( new OutputConfiguration(reprocessInputReader.getSurface()));
+            }
             SessionConfiguration sessionConfig = new SessionConfiguration(
                     SessionConfiguration.SESSION_REGULAR, outputs,
                     new HandlerExecutor(mHandler), mSessionMockListener);
@@ -1215,6 +1207,9 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             imageListener.getImage(CAPTURE_TIMEOUT_MS).close();
         } finally {
             imageReader.close();
+            if (reprocessInputReader != null) {
+                reprocessInputReader.close();
+            }
             mSession.close();
         }
     }

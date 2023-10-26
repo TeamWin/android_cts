@@ -38,6 +38,7 @@ public final class HdmiCecConstants {
     public static final int DEVICE_WAIT_TIME_MS = 5000;
     public static final int MAX_SLEEP_TIME_SECONDS = 8;
     public static final int SLEEP_TIMESTEP_SECONDS = 1;
+    public static final int SLEEP_TIME_DELAY_SECONDS = 2;
     public static final int DEFAULT_PHYSICAL_ADDRESS = 0x1000;
     public static final int TV_PHYSICAL_ADDRESS = 0x0000;
     public static final int PHYSICAL_ADDRESS_LENGTH = 4; /* Num nibbles in CEC message */

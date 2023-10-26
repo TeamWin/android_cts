@@ -110,6 +110,7 @@ import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
 import com.android.modules.utils.build.SdkLevel;
 import com.android.net.module.util.MacAddressUtils;
@@ -1124,7 +1125,9 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
            mMySync.expectedState = STATE_WIFI_CHANGING;
 
            // now shut down LocalOnlyHotspot
-           callback.reservation.close();
+           if (callback.reservation != null) {
+               callback.reservation.close();
+           }
 
            try {
                waitForExpectedWifiState(wifiEnabled);
@@ -1148,7 +1151,14 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
 
         boolean wifiEnabled = mWifiManager.isWifiEnabled();
-
+        if (wifiEnabled) {
+            // Re-enabled Wi-Fi as shell for HalDeviceManager legacy LOHS behavior when there's no
+            // STA+AP concurrency.
+            ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.setWifiEnabled(false));
+            PollingCheck.check("Wifi turn off failed!", 2_000, () -> !mWifiManager.isWifiEnabled());
+            SystemUtil.runShellCommand("cmd wifi set-wifi-enabled enabled");
+            PollingCheck.check("Wifi turn on failed!", 2_000, () -> mWifiManager.isWifiEnabled());
+        }
         TestLocalOnlyHotspotCallback callback = startLocalOnlyHotspot();
 
         // add sleep to avoid calling stopLocalOnlyHotspot before TetherController initialization.
@@ -1996,6 +2006,14 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         boolean caughtException = false;
 
         boolean wifiEnabled = mWifiManager.isWifiEnabled();
+        if (wifiEnabled) {
+            // Re-enabled Wi-Fi as shell for HalDeviceManager legacy LOHS behavior when there's no
+            // STA+AP concurrency.
+            ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.setWifiEnabled(false));
+            PollingCheck.check("Wifi turn off failed!", 2_000, () -> !mWifiManager.isWifiEnabled());
+            SystemUtil.runShellCommand("cmd wifi set-wifi-enabled enabled");
+            PollingCheck.check("Wifi turn on failed!", 2_000, () -> mWifiManager.isWifiEnabled());
+        }
 
         TestLocalOnlyHotspotCallback callback = startLocalOnlyHotspot();
 
@@ -2096,10 +2114,23 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
             SparseIntArray testBandsAndChannels = getAvailableBandAndChannelForTesting(
                     lohsSoftApCallback.getCurrentSoftApCapability());
-
+            // The devices which doesn't have SIM and default country code in system property
+            // (ro.boot.wificountrycodeCountry) will return a null country code. Since country code
+            // is mandatory for 5GHz/6GHz band, skip the softap operation on 5GHz & 6GHz only band.
+            boolean skip5g6gBand = false;
+            String wifiCountryCode = ShellIdentityUtils.invokeWithShellPermissions(
+                    mWifiManager::getCountryCode);
+            if (wifiCountryCode == null) {
+                skip5g6gBand = true;
+                Log.e(TAG, "Country Code is not available - Skip 5GHz and 6GHz test");
+            }
             for (int i = 0; i < testBandsAndChannels.size(); i++) {
                 TestLocalOnlyHotspotCallback callback = new TestLocalOnlyHotspotCallback(mLock);
                 int testBand = testBandsAndChannels.keyAt(i);
+                if (skip5g6gBand && (testBand == SoftApConfiguration.BAND_6GHZ
+                        || testBand == SoftApConfiguration.BAND_5GHZ)) {
+                    continue;
+                }
                 // WPA2_PSK is not allowed in 6GHz band. So test with WPA3_SAE which is
                 // mandatory to support in 6GHz band.
                 if (testBand == SoftApConfiguration.BAND_6GHZ) {
@@ -3803,7 +3834,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Tests {@link WifiManager#isStaApConcurrencySupported().
+     * Tests {@link WifiManager#isStaApConcurrencySupported()}.
      */
     public void testIsStaApConcurrencySupported() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
@@ -3815,6 +3846,13 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             return;
         }
         assertTrue(mWifiManager.isWifiEnabled());
+
+        // Re-enabled Wi-Fi as shell for HalDeviceManager legacy LOHS behavior when there's no
+        // STA+AP concurrency.
+        ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.setWifiEnabled(false));
+        PollingCheck.check("Wifi turn off failed!", 2_000, () -> !mWifiManager.isWifiEnabled());
+        SystemUtil.runShellCommand("cmd wifi set-wifi-enabled enabled");
+        PollingCheck.check("Wifi turn on failed!", 2_000, () -> mWifiManager.isWifiEnabled());
 
         boolean isStaApConcurrencySupported = mWifiManager.isStaApConcurrencySupported();
         // start local only hotspot.
@@ -5917,17 +5955,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             return;
         }
         PackageManager packageManager = mContext.getPackageManager();
-        boolean isPasspointSupported = packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI_PASSPOINT);
-
-        int currentSdkVersion = Build.VERSION.SDK_INT;
-        if ((currentSdkVersion == Build.VERSION_CODES.S || currentSdkVersion == Build.VERSION_CODES.S_V2) && !isPasspointSupported) {
-            // If the Android version is S or S_V2, and Passpoint is not supported,
-            // we will consider the test as passed.
-            return;
-        }
-
-        // For all other cases, we use assertTrue to check the Passpoint support.
-        assertTrue("Passpoint must be supported", isPasspointSupported);
+        assertTrue("Passpoint must be supported",
+                packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI_PASSPOINT));
     }
 
     /**
@@ -6346,6 +6375,31 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Check whether the application QoS feature is enabled.
+     *
+     * The feature is enabled if the overlay is true, the experiment feature flag
+     * is true, and the supplicant service implements V2 of the AIDL interface.
+     */
+    private boolean applicationQosFeatureEnabled() {
+        boolean overlayEnabled;
+        try {
+            WifiResourceUtil resourceUtil = new WifiResourceUtil(mContext);
+            overlayEnabled = resourceUtil
+                    .getWifiBoolean("config_wifiApplicationCentricQosPolicyFeatureEnabled");
+        } catch (Exception e) {
+            Log.i(TAG, "Unable to retrieve the QoS overlay value");
+            return false;
+        }
+
+        // Supplicant V2 is supported if the vendor partition indicates API > T.
+        boolean halSupport = PropertyUtil.isVndkApiLevelNewerThan(Build.VERSION_CODES.TIRAMISU);
+        boolean featureFlagEnabled = DeviceConfig.getBoolean(DEVICE_CONFIG_NAMESPACE,
+                "application_qos_policy_api_enabled", false);
+
+        return overlayEnabled && featureFlagEnabled && halSupport;
+    }
+
+    /**
      * Tests that {@link WifiManager#addQosPolicies(List, Executor, Consumer)},
      * {@link WifiManager#removeQosPolicies(int[])}, and
      * {@link WifiManager#removeAllQosPolicies()} do not crash.
@@ -6390,10 +6444,9 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
-            boolean enabled = DeviceConfig.getBoolean(DEVICE_CONFIG_NAMESPACE,
-                    "application_qos_policy_api_enabled", false);
+            boolean enabled = applicationQosFeatureEnabled();
 
-            // If the feature flag is disabled, verify that all policies are rejected.
+            // If the feature is disabled, verify that all policies are rejected.
             if (!enabled) {
                 Log.i(TAG, "QoS policy APIs are not enabled");
                 fillQosPolicyParamsList(policyParamsList, 4, true);

@@ -65,8 +65,10 @@ public class Checkers {
 
     @Test
     public void checkConfigShowUserSwitcher() {
-        assertThat(Resources.getSystem().getBoolean(com.android.internal
-                .R.bool.config_showUserSwitcherByDefault)).isTrue();
+        Resources resources = Resources.getSystem();
+        int resourceId = resources.getIdentifier("config_showUserSwitcherByDefault",
+                "bool", "android");
+        assertThat(resources.getBoolean(resourceId)).isTrue();
     }
 
     /**

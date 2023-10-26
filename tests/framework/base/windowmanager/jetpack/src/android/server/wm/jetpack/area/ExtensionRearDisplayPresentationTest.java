@@ -47,6 +47,7 @@ import android.os.PowerManager;
 import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.DeviceStateUtils;
+import android.server.wm.jetpack.utils.ExtensionUtil;
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestActivityLauncher;
 import android.server.wm.jetpack.utils.TestRearDisplayActivity;
@@ -211,16 +212,20 @@ public class ExtensionRearDisplayPresentationTest extends WindowManagerJetpackTe
                         mDeviceStateManager.requestState(request, null, null));
 
                 waitAndAssert(() -> mCurrentDeviceState == newState);
+
                 // If the state does not put the device into the rear display presentation state,
                 // and the state is not one where the device is folded, the status should be
                 // available.
-                if (!containsValue(mFoldedDeviceStates, mCurrentDeviceState)
-                        && mCurrentDeviceState != mRearDisplayPresentationState) {
+                if (ExtensionUtil.getWindowExtensions().getVendorApiLevel() >= 4
+                        && mCurrentDeviceState == mRearDisplayPresentationState) {
                     waitAndAssert(() -> mWindowAreaPresentationStatus.getWindowAreaStatus()
-                            == WindowAreaComponent.STATUS_AVAILABLE);
-                } else {
+                            == WindowAreaComponent.STATUS_ACTIVE);
+                } else if (containsValue(mFoldedDeviceStates, mCurrentDeviceState)) {
                     waitAndAssert(() -> mWindowAreaPresentationStatus.getWindowAreaStatus()
                             == WindowAreaComponent.STATUS_UNAVAILABLE);
+                } else {
+                    waitAndAssert(() -> mWindowAreaPresentationStatus.getWindowAreaStatus()
+                            == WindowAreaComponent.STATUS_AVAILABLE);
                 }
             }
         }
@@ -318,8 +323,8 @@ public class ExtensionRearDisplayPresentationTest extends WindowManagerJetpackTe
                 presentation.getPresentationContext());
         mActivity.runOnUiThread(() -> presentation.setPresentationView(presentationView));
         waitAndAssert(() -> presentationView.mAttachedToWindow);
+        waitAndAssert(() -> presentationView.getDisplay().getState() != Display.STATE_OFF);
         assertNotEquals(presentationView.getDisplay().getDisplayId(), DEFAULT_DISPLAY);
-        assertTrue(presentationView.getDisplay().getState() != Display.STATE_OFF);
         assertEquals(mWindowAreaSessionState, SESSION_STATE_CONTENT_VISIBLE);
 
         pressHomeButton();
@@ -453,8 +458,8 @@ public class ExtensionRearDisplayPresentationTest extends WindowManagerJetpackTe
         // Currently when ending rear display presentation session, the display turns off. If this
         // expectation ever changes, we will probably also need to update KeyguardPresentation in
         // SystemUI to ensure that the secondary keyguard is shown.
-        assertNotEquals(Display.STATE_ON,
-                presentation.getPresentationContext().getDisplay().getState());
+        waitAndAssert(() -> Display.STATE_ON
+                != presentation.getPresentationContext().getDisplay().getState());
     }
 
     /**

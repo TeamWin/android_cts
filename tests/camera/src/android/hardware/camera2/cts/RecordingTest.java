@@ -1383,7 +1383,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
 
     private void startSlowMotionRecording(boolean useMediaRecorder, int videoFrameRate,
             int captureRate, Range<Integer> fpsRange,
-            CameraCaptureSession.CaptureCallback listener, boolean useHighSpeedSession)
+            SimpleCaptureCallback listener, boolean useHighSpeedSession)
             throws Exception {
         List<Surface> outputSurfaces = new ArrayList<Surface>(2);
         assertTrue("Both preview and recording surfaces should be valid",
@@ -1447,6 +1447,8 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         mSession.setRepeatingBurst(slowMoRequests, listener, mHandler);
 
         if (useMediaRecorder) {
+            // Wait for the first capture start before starting mediaRecorder
+            listener.getCaptureStartTimestamps(1);
             mMediaRecorder.start();
         } else {
             // TODO: need implement MediaCodec path.
@@ -2247,20 +2249,20 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
     }
 
     private void startRecording(boolean useMediaRecorder,
-            CameraCaptureSession.CaptureCallback listener, boolean useVideoStab) throws Exception {
+            SimpleCaptureCallback listener, boolean useVideoStab) throws Exception {
         startRecording(useMediaRecorder, listener, useVideoStab, /*variableFpsRange*/null,
                 /*useIntermediateSurface*/false);
     }
 
     private void startRecording(boolean useMediaRecorder,
-            CameraCaptureSession.CaptureCallback listener, boolean useVideoStab,
+            SimpleCaptureCallback listener, boolean useVideoStab,
             boolean useIntermediateSurface) throws Exception {
         startRecording(useMediaRecorder, listener, useVideoStab, /*variableFpsRange*/null,
                 useIntermediateSurface);
     }
 
     private void startRecording(boolean useMediaRecorder,
-            CameraCaptureSession.CaptureCallback listener, boolean useVideoStab,
+            SimpleCaptureCallback listener, boolean useVideoStab,
             Range<Integer> variableFpsRange, boolean useIntermediateSurface) throws Exception {
         if (!mStaticInfo.isVideoStabilizationSupported() && useVideoStab) {
             throw new IllegalArgumentException("Video stabilization is not supported");
@@ -2309,6 +2311,8 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         mSession.setRepeatingRequest(recordingRequest, listener, mHandler);
 
         if (useMediaRecorder) {
+            // Wait for the first capture start before starting mediaRecorder
+            listener.getCaptureStartTimestamps(1);
             mMediaRecorder.start();
         } else {
             // TODO: need implement MediaCodec path.
@@ -2323,7 +2327,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * @return true if success, false if sharing is not supported.
      */
     private boolean startSharedRecording(boolean useMediaRecorder,
-            CameraCaptureSession.CaptureCallback listener, boolean useVideoStab,
+            SimpleCaptureCallback listener, boolean useVideoStab,
             Range<Integer> variableFpsRange) throws Exception {
         if (!mStaticInfo.isVideoStabilizationSupported() && useVideoStab) {
             throw new IllegalArgumentException("Video stabilization is not supported");
@@ -2363,6 +2367,8 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         mSession.setRepeatingRequest(recordingRequestBuilder.build(), listener, mHandler);
 
         if (useMediaRecorder) {
+            // Wait for the first capture start before starting mediaRecorder
+            listener.getCaptureStartTimestamps(1);
             mMediaRecorder.start();
         } else {
             // TODO: need implement MediaCodec path.

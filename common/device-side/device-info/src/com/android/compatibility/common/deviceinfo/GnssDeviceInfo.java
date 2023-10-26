@@ -51,7 +51,9 @@ public final class GnssDeviceInfo extends DeviceInfo {
             return;
         }
         collectGnssHardwareModelName(store, locationManager);
-        collectGnssCapabilities(store, locationManager.getGnssCapabilities());
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+            collectGnssCapabilities(store, locationManager.getGnssCapabilities());
+        }
         collectAccumulatedDeltaRangeMeasurements(store, locationManager);
     }
 
@@ -79,9 +81,6 @@ public final class GnssDeviceInfo extends DeviceInfo {
     /** collect info for gnss capabilities into a group */
     private void collectGnssCapabilities(DeviceInfoStore store, GnssCapabilities gnssCapabilities)
             throws IOException {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            return;
-        }
         store.startGroup("gnss_capabilities");
 
         store.addResult("has_low_power_mode", gnssCapabilities.hasLowPowerMode());

@@ -58,6 +58,7 @@ import android.os.Messenger;
 import android.os.Process;
 import android.os.RemoteException;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.Settings;
@@ -1400,8 +1401,9 @@ public final class ActivityManagerAppExitInfoTest {
     @CddTest(requirements = {"3.5/C-0-2"})
     @Test
     public void testFreezerEnabled() throws Exception {
-        if (FIRST_SDK_IS_AT_LEAST_U) {
-            // We expect all devices that first shipped with U to support Freezer
+        if (FIRST_SDK_IS_AT_LEAST_U
+                && SystemProperties.get("ro.kernel.version").compareTo("5") >= 0) {
+            // We expect all devices with kernel 5.x that first shipped with U to support Freezer
             assertTrue(ActivityManager.getService().isAppFreezerSupported());
         } else {
             // For old devices OTA'ed to U, check if Linux kernel and vendor partition is too old

@@ -39,6 +39,28 @@ filegroup {
 }
 
 java_test_helper_library {
+    name: "cts-wm-window-manager-helper",
+
+    srcs: [
+        "src/android/server/wm/Condition.java",
+        "src/android/server/wm/ComponentNameUtils.java",
+        "src/android/server/wm/ProtoExtractors.java",
+        "src/android/server/wm/StateLogger.java",
+        "src/android/server/wm/WaitForValidActivityState.java",
+        "src/android/server/wm/WindowManagerState.java",
+        "src/android/server/wm/WindowManagerStateHelper.java",
+    ],
+
+    static_libs: [
+        "compatibility-device-util-axt",
+        "platformprotosnano",
+        "hamcrest-library",
+    ],
+
+    sdk_version: "test_current",
+}
+
+java_test_helper_library {
     name: "cts-wm-util",
 
     srcs: [

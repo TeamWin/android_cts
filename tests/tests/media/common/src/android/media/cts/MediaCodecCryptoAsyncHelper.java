@@ -192,7 +192,7 @@ public class MediaCodecCryptoAsyncHelper {
                 slotQueue = new LinkedBlockingQueue<>();
         boolean isSecureDecodeASuccess = false;
         try {
-            outputSurface = new OutputSurface(1, 1);
+            outputSurface = new OutputSurface(1, 1, false, secure);
             MediaFormat mediaFormat = mediaExtractor.getTrackFormat(
                     mediaExtractor.getSampleTrackIndex());
             String mime = mediaFormat.getString(MediaFormat.KEY_MIME);
@@ -310,7 +310,7 @@ public class MediaCodecCryptoAsyncHelper {
         final LinkedBlockingQueue<MediaCodecAsyncHelper.SlotEvent>
                 slotQueue = new LinkedBlockingQueue<>();
         try {
-            outputSurface = new OutputSurface(1, 1);
+            outputSurface = new OutputSurface(1, 1, false, secure);
             MediaFormat mediaFormat = mediaExtractor.getTrackFormat(
                     mediaExtractor.getSampleTrackIndex());
             String mime = mediaFormat.getString(MediaFormat.KEY_MIME);
@@ -438,7 +438,7 @@ public class MediaCodecCryptoAsyncHelper {
        final LinkedBlockingQueue<MediaCodec.CryptoInfo>
               cryptoInfoQueue = new LinkedBlockingQueue<>();
         try {
-            outputSurface = new OutputSurface(1, 1);
+            outputSurface = new OutputSurface(1, 1, false, secure);
             MediaFormat mediaFormat = mediaExtractor.getTrackFormat(
                     mediaExtractor.getSampleTrackIndex());
             String mime = mediaFormat.getString(MediaFormat.KEY_MIME);

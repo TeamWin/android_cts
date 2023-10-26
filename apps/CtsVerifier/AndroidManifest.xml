@@ -18,7 +18,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.android.cts.verifier"
           android:versionCode="5"
-          android:versionName="14_r1">
+          android:versionName="14_r2">
 
     <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="34"/>
 
@@ -419,7 +419,10 @@
 
         <!-- Support service to ensure HID Device Test succeeds on
             devices with full screen pairing dialogs (ex. Android TV -->
-        <service android:name=".bluetooth.FocusLossPreventionService" />
+        <service android:name=".bluetooth.FocusLossPreventionService"
+                 android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="CtsVerifier" />
+        </service>
 
         <!--
              CTS Verifier Bluetooth Hid Host Test Screen
@@ -4935,8 +4938,6 @@
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
-            <meta-data android:name="ApiTest"
-                       android:value="android.os.UserManager#DISALLOW_CELLULAR_2G"/>
         </activity>
 
         <activity android:name=".managedprovisioning.ManagedUserPositiveTestActivity"

@@ -118,6 +118,7 @@ class ReviewAccessibilityServicesTest {
 
     @Test
     @ScreenRecordRule.ScreenRecord
+    @Ignore("b/293507233")
     fun testClickingSettingsGoesToGeneralSettingsWhenMultipleServicesEnabled() {
         accessibilityServiceRule.enableService()
         accessibilityServiceRule2.enableService()

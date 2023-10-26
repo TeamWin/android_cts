@@ -27,6 +27,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.UserHandle;
 import android.test.suitebuilder.annotation.SmallTest;
+import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CddTest;
@@ -138,6 +139,8 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
         getLauncherApps().unregisterCallback(c);
     }
 
+    // TODO: b/288276271
+    @Suppress
     public void testCallbacks() {
         final MyCallback c = new MyCallback(mPackageContext1.getPackageName());
 

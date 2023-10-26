@@ -43,6 +43,7 @@ import android.app.PictureInPictureParams;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.server.wm.MultiDisplayTestBase;
 import android.server.wm.ObjectTracker;
@@ -50,9 +51,6 @@ import android.server.wm.cts.R;
 import android.transition.Transition;
 import android.transition.TransitionListenerAdapter;
 import android.util.Pair;
-import android.view.WindowManager;
-import android.view.Display;
-import android.graphics.Rect;
 
 import androidx.annotation.NonNull;
 import androidx.test.rule.ActivityTestRule;

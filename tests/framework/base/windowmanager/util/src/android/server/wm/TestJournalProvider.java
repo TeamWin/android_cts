@@ -75,6 +75,10 @@ public class TestJournalProvider extends ContentProvider {
     private static final String METHOD_SET_LAST_CONFIG_INFO = "set_last_config_info";
     /** Puts any additional information. */
     private static final String METHOD_PUT_EXTRAS = "put_extras";
+    /** For test app to put resident data from test case. */
+    private static final String METHOD_PUT_RESIDENT_EXTRAS = "put_resident_extras";
+    /** For test app to get resident data from test case. */
+    private static final String METHOD_GET_RESIDENT_EXTRAS = "get_resident_extras";
 
     /** Avoid accidentally getting data from {@link #TestJournalContainer} in another process. */
     private static boolean sCrossProcessAccessGuard;
@@ -105,6 +109,14 @@ public class TestJournalProvider extends ContentProvider {
                 TestJournalContainer.getInstance().putExtras(
                         extras.getString(EXTRA_KEY_OWNER), extras);
                 break;
+
+            case METHOD_PUT_RESIDENT_EXTRAS:
+                ensureExtras(method, extras);
+                TestJournalContainer.getInstance().mResidentData.put(arg, extras);
+                break;
+
+            case METHOD_GET_RESIDENT_EXTRAS:
+                return TestJournalContainer.getInstance().mResidentData.get(arg);
         }
         return null;
     }
@@ -218,6 +230,24 @@ public class TestJournalProvider extends ContentProvider {
             callWithExtras(METHOD_PUT_EXTRAS, extras);
         }
 
+        /** Puts the resident data with customized owner key. */
+        public void putResidentExtras(String owner, Bundle extras) {
+            try {
+                mClient.call(METHOD_PUT_RESIDENT_EXTRAS, owner, extras);
+            } catch (RemoteException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        /** Gets the resident data according to the owner key. */
+        public Bundle getResidentExtras(String owner) {
+            try {
+                return mClient.call(METHOD_GET_RESIDENT_EXTRAS, owner, null /* extras */);
+            } catch (RemoteException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         @Override
         public void close() {
             mClient.close();
@@ -256,6 +286,8 @@ public class TestJournalProvider extends ContentProvider {
     public static class TestJournalContainer {
         private static TestJournalContainer sInstance;
         private final ArrayMap<String, TestJournal> mContainer = new ArrayMap<>();
+        /** The data in this container won't be cleared by {@link #start()}. */
+        private final ArrayMap<String, Bundle> mResidentData = new ArrayMap<>();
 
         private TestJournalContainer() {
         }
@@ -268,6 +300,17 @@ public class TestJournalProvider extends ContentProvider {
         @NonNull
         public static TestJournal get(String owner) {
             return getInstance().getTestJournal(owner);
+        }
+
+        /** Removes and returns the resident data by the owner key. */
+        @Nullable
+        public static Bundle takeResidentData(String owner) {
+            return getInstance().mResidentData.remove(owner);
+        }
+
+        /** Puts the resident data. */
+        public static void putResidentData(String owner, Bundle extras) {
+            getInstance().mResidentData.put(owner, extras);
         }
 
         /**

@@ -158,8 +158,8 @@ public class AccessibilityOverlayTest {
         final Button button = new Button(mService);
         button.setText("Button");
         final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
-        params.width = 1;
-        params.height = 1;
+        params.width = 10;
+        params.height = 10;
         params.flags =
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                         | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR;

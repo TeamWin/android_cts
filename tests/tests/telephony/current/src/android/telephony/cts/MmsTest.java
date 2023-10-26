@@ -215,7 +215,7 @@ public class MmsTest {
         DefaultSmsAppHelper.stopBeingDefaultSmsApp();
     }
 
-    @Test(timeout = 30000) // b/232461746: reduce test timeout to 30s for CF
+    @Test
     @ApiTest(apis = "android.telephony.SmsManager#sendMultimediaMessage")
     public void testSendMmsMessage() {
         Log.i("MmsTest", "testSendMmsMessage");
@@ -229,7 +229,7 @@ public class MmsTest {
         DefaultSmsAppHelper.stopBeingDefaultSmsApp();
     }
 
-    @Test(timeout = 30000) // b/232461746: reduce test timeout to 30s for CF
+    @Test
     @ApiTest(apis = "android.telephony.SmsManager#sendMultimediaMessage")
     public void testSendMmsMessageWithInactiveSubscriptionId() {
         int inactiveSubId = 127;
@@ -245,7 +245,7 @@ public class MmsTest {
         DefaultSmsAppHelper.stopBeingDefaultSmsApp();
     }
 
-    @Test(timeout = 30000) // b/232461746: reduce test timeout to 30s for CF
+    @Test
     @ApiTest(apis = "android.telephony.SmsManager#sendMultimediaMessage")
     public void testSendMmsMessageWithMessageId() {
         // Test non-default SMS app

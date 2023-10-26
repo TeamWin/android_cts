@@ -75,6 +75,9 @@ public class InputMethodPickerTest extends MultiDisplayTestBase {
 
     @After
     public void tearDown() throws Exception {
+        if (!mContext.getPackageManager().hasSystemFeature(FEATURE_INPUT_METHODS)) {
+            return;
+        }
         closeSystemDialogsAndWait();
     }
 

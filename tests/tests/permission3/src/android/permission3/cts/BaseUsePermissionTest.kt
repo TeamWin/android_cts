@@ -549,27 +549,18 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     ) {
         val result = requestAppPermissions(*permissions, block = block)
         assertEquals(Activity.RESULT_OK, result.resultCode)
-
-        val responseSize: Int =
-            result.resultData!!.getStringArrayExtra("$APP_PACKAGE_NAME.PERMISSIONS")!!.size
         assertEquals(
-            responseSize,
+            result.resultData!!.getStringArrayExtra("$APP_PACKAGE_NAME.PERMISSIONS")!!.size,
             result.resultData!!.getIntArrayExtra("$APP_PACKAGE_NAME.GRANT_RESULTS")!!.size
         )
 
-        // Note that the behavior around requesting `null` permissions changed in the platform
-        // in Android U. In Android T, null permissions are included in the result set.
-        assertTrue(permissions.size >= responseSize)
         assertEquals(
-            permissionAndExpectedGrantResults
-                .filter { it.first != null }
-                .toList(),
+            permissionAndExpectedGrantResults.toList(),
             result.resultData!!.getStringArrayExtra("$APP_PACKAGE_NAME.PERMISSIONS")!!
                 .zip(
                     result.resultData!!.getIntArrayExtra("$APP_PACKAGE_NAME.GRANT_RESULTS")!!
                         .map { it == PackageManager.PERMISSION_GRANTED }
                 )
-                .filter { it.first != null }
         )
         permissionAndExpectedGrantResults.forEach {
             it.first?.let { permission ->
@@ -808,7 +799,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             clearTargetSdkWarning()
         }
 
-        val useLegacyNavigation = isWatch || isTv || isAutomotive || manuallyNavigate
+        val useLegacyNavigation = isWatch || isAutomotive || manuallyNavigate
         if (useLegacyNavigation) {
             navigateToAppPermissionSettings()
             val permissionLabel = getPermissionLabel(permission)
@@ -852,7 +843,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         if (targetSdk <= MAX_SDK_FOR_SDK_WARNING) {
             clearTargetSdkWarning(QUICK_CHECK_TIMEOUT_MILLIS)
         }
-        val useLegacyNavigation = isWatch || isAutomotive || isTv || manuallyNavigate
+        val useLegacyNavigation = isWatch || isAutomotive || manuallyNavigate
         if (useLegacyNavigation) {
             navigateToAppPermissionSettings()
         }

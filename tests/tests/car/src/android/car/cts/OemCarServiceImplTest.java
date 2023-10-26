@@ -22,7 +22,6 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
 
 import android.car.Car;
-import android.car.oem.OemCarService;
 import android.car.test.CarTestManager;
 import android.car.test.PermissionsCheckerRule;
 import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
@@ -43,14 +42,8 @@ import java.util.concurrent.CountDownLatch;
 
 public final class OemCarServiceImplTest extends AbstractCarTestCase {
 
-    private static final String TAG = OemCarServiceImplTest.class.getSimpleName();
-
-    private final Object mLock = new Object();
-
     private CarTestManager mManager;
     private String mOemServiceName;
-    private OemCarService mOemCarService;
-    private boolean mIsOemServiceConnected;
     private CountDownLatch mLatch = new CountDownLatch(1);
 
     @Rule
@@ -64,7 +57,8 @@ public final class OemCarServiceImplTest extends AbstractCarTestCase {
     // Test should run for TIRAMISU_0. As it is not testing API or CDD, using
     // android.car.oem.OemCarService#getSupportedCarVersion so that test run for TIRAMISU_0.
     @Test
-    @EnsureHasPermission(android.Manifest.permission.INTERACT_ACROSS_USERS_FULL)
+    @EnsureHasPermission({android.Manifest.permission.INTERACT_ACROSS_USERS_FULL,
+            Car.PERMISSION_CAR_TEST_SERVICE})
     @ApiTest(apis = "android.car.oem.OemCarService#getSupportedCarVersion")
     public void testOemServicePermissionInManifest() throws Exception {
         Intent intent = (new Intent())

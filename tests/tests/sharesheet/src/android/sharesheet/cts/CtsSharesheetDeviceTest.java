@@ -271,7 +271,9 @@ public class CtsSharesheetDeviceTest {
             // Note: EII and ECT cap is not tested here
 
             showsExtraInitialIntents();
-            showsExtraChooserTargets();
+            if (!mActivityManager.isLowRamDevice()) {
+                showsExtraChooserTargets();
+            }
             isSharingShortcutDirectShareEnabled();
 
         }, () -> {
@@ -659,6 +661,10 @@ public class CtsSharesheetDeviceTest {
     @Test
     @ApiTest(apis = "android.content.Intent#EXTRA_CHOOSER_TARGETS")
     public void testChooserTargets() throws Throwable {
+        assumeFalse(
+                "EXTRA_CHOOSER_TARGETS not required on low RAM devices",
+                mActivityManager.isLowRamDevice());
+
         final CountDownLatch appStarted = new CountDownLatch(1);
         final AtomicReference<Intent> targetLaunchIntent = new AtomicReference<>();
 
@@ -698,6 +704,10 @@ public class CtsSharesheetDeviceTest {
     @Test
     @ApiTest(apis = "android.content.Intent#EXTRA_CHOOSER_TARGETS")
     public void testChooserTargetsRefinement() throws Throwable {
+        assumeFalse(
+                "EXTRA_CHOOSER_TARGETS not required on low RAM devices",
+                mActivityManager.isLowRamDevice());
+
         final CountDownLatch broadcastInvoked = new CountDownLatch(1);
         final CountDownLatch appStarted = new CountDownLatch(1);
         final AtomicReference<Intent> targetLaunchIntent = new AtomicReference<>();
@@ -806,22 +816,24 @@ public class CtsSharesheetDeviceTest {
         Intent shareIntent = createShareIntent(true /* test content preview */,
                 0 /* do not test EIIs */,
                 0 /* do not test ECTs */);
-        // Test clicking the fifth action (to ensure it shows up to the max of 5).
         ChooserAction[] actions = new ChooserAction[] {
                 createChooserAction("act1", fakeCustomAction),
                 createChooserAction("act2", fakeCustomAction),
-                createChooserAction("act3", fakeCustomAction),
+                createChooserAction("act3", customAction),
                 createChooserAction("act4", fakeCustomAction),
-                createChooserAction("act5", customAction),
+                createChooserAction("act5", fakeCustomAction),
         };
         shareIntent.putExtra(Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS, actions);
         runAndExecuteCleanupBeforeAnyThrow(() -> {
             launchSharesheet(shareIntent);
-            // Ensure all the actions are shown, click the last one.
-            for (int i = 0; i < 4; i++) {
-                waitAndAssertTextContains(actions[i].getLabel().toString());
-            }
-            clickText(actions[4].getLabel().toString());
+            // 5 actions should be provided to the user, but it's possible that some require
+            // scrolling which we currently can't do in this test, so just verify the existence
+            // of the first two and click the third, which we expect to be at least partially
+            // visible.
+            waitAndAssertTextContains(actions[0].getLabel().toString());
+            waitAndAssertTextContains(actions[1].getLabel().toString());
+            clickText(actions[2].getLabel().toString());
+
             assertTrue(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS));
         }, () -> {
             mContext.unregisterReceiver(customActionReceiver);

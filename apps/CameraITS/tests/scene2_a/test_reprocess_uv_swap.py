@@ -133,6 +133,7 @@ class ReprocessUvSwapTest(its_base_test.ItsBaseTest):
           # Create req, do caps and determine UV swap likelihood
           req = capture_request_utils.auto_capture_request()
           req['android.noiseReduction.mode'] = nr_mode
+          cam.do_3a()
           caps_no_nr = cam.do_capture([req], out_surface)
           caps = cam.do_capture([req], out_surface, reprocess_format)
 
@@ -206,6 +207,7 @@ class ReprocessUvSwapTest(its_base_test.ItsBaseTest):
           # Create req, do caps and determine UV swap likelihood
           req = capture_request_utils.auto_capture_request()
           req['android.edge.mode'] = edge_mode
+          cam.do_3a()
           caps_no_ee = cam.do_capture([req], out_surface)
           caps = cam.do_capture([req], out_surface, reprocess_format)
 
@@ -266,6 +268,7 @@ class ReprocessUvSwapTest(its_base_test.ItsBaseTest):
         # Create req, do caps and determine UV swap likelihood
         req = capture_request_utils.auto_capture_request()
         req['android.jpeg.orientation'] = applied_orientation
+        cam.do_3a()
         caps_no_jpeg = cam.do_capture([req], out_surface)
         caps = cam.do_capture([req], out_surface, reprocess_format)
 

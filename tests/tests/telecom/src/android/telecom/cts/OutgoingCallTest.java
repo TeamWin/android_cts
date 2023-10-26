@@ -25,7 +25,9 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.CallLog;
-import android.provider.Contacts;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.CommonDataKinds;
+import android.provider.ContactsContract.Data;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
 import android.telecom.Connection;
@@ -71,19 +73,25 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
 
                 // insert a contact with phone number
                 ContentValues values = new ContentValues();
-                values.put(Contacts.People.NAME, "CTS test contact");
-                mPersonRecord = cr.insert(Contacts.People.CONTENT_URI, values);
-                Uri phoneUri = Uri.withAppendedPath(mPersonRecord,
-                        Contacts.People.Phones.CONTENT_DIRECTORY);
-                values.clear();
-                values.put(Contacts.People.Phones.TYPE, Contacts.People.Phones.TYPE_HOME);
-                values.put(Contacts.People.Phones.NUMBER, TEST_PHONE_NUMBER);
-                mPhoneRecord = cr.insert(phoneUri, values);
+                mPersonRecord = cr.insert(ContactsContract.RawContacts.CONTENT_URI, values);
 
+                values.clear();
+                values.put(CommonDataKinds.StructuredName.DISPLAY_NAME, "CTS test contact");
+                values.put(Data.RAW_CONTACT_ID, mPersonRecord.getLastPathSegment());
+                values.put(Data.MIMETYPE, CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE);
+                cr.insert(Data.CONTENT_URI, values);
+
+                values.clear();
+                values.put(Data.RAW_CONTACT_ID, mPersonRecord.getLastPathSegment());
+                values.put(CommonDataKinds.Phone.TYPE, CommonDataKinds.Phone.TYPE_HOME);
+                values.put(CommonDataKinds.Phone.NUMBER, TEST_PHONE_NUMBER);
+                values.put(Data.MIMETYPE, CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE);
+                mPhoneRecord = cr.insert(Data.CONTENT_URI, values);
             } catch (Exception e) {
                 // Force tearDown if setUp errors out to ensure unused listeners are cleaned up.
                 tearDown();
-                assertTrue("Failed to insert test contact", false);
+                fail(String.format("Failed to insert test contact because of the following"
+                        + " exception=[%s]", e));
             }
         }
     }

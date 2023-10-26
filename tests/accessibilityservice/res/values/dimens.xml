@@ -18,4 +18,11 @@
 
 <resources>
     <dimen name="button_touchable_width_increment_amount">48dp</dimen>
+
+    <!-- Dimens used in AccessibilityEmbeddedHierarchyTest. Need to be small enough
+         for a watch screen because this test checks boundsInScreen. -->
+    <!-- Smaller than the host activity layout view so that it can be embedded inside. -->
+    <dimen name="embedded_hierarchy_embedded_layout_size">100dp</dimen>
+    <!-- Amount that the embedded layout can move while still remaining inside the host. -->
+    <dimen name="embedded_hierarchy_embedded_layout_movement_size">25dp</dimen>
 </resources>

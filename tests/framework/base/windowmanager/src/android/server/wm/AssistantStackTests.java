@@ -44,6 +44,7 @@ import static android.server.wm.app.Components.TestActivity.TEST_ACTIVITY_ACTION
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -172,13 +173,11 @@ public class AssistantStackTests extends ActivityManagerTestBase {
             mWmState.assertFocusedRootTask("Assistant stack should be focused.",
                     WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_ASSISTANT);
         } else {
-            final int testActivityWindowingMode =
-                    mWmState.getTaskDisplayArea(TEST_ACTIVITY).getWindowingMode();
             mWmState.assertFocusedActivity("TestActivity should be resumed", TEST_ACTIVITY);
             mWmState.assertFrontStack("TestActivity stack should be on top.",
-                    testActivityWindowingMode, ACTIVITY_TYPE_STANDARD);
+                    WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_STANDARD);
             mWmState.assertFocusedRootTask("TestActivity stack should be focused.",
-                    testActivityWindowingMode, ACTIVITY_TYPE_STANDARD);
+                    WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_STANDARD);
         }
 
         // Now, tell it to finish itself and ensure that the assistant stack is brought back forward
@@ -215,12 +214,10 @@ public class AssistantStackTests extends ActivityManagerTestBase {
                 "TestActivity should be resumed");
         mWmState.assertFocusedActivity("TestActivity should be focused", TEST_ACTIVITY);
 
-        final int testActivityWindowingMode =
-                mWmState.getTaskDisplayArea(TEST_ACTIVITY).getWindowingMode();
         mWmState.assertFrontStack("TestActivity stack should be on top.",
-                testActivityWindowingMode, ACTIVITY_TYPE_STANDARD);
+                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_STANDARD);
         mWmState.assertFocusedRootTask("TestActivity stack should be focused.",
-                testActivityWindowingMode, ACTIVITY_TYPE_STANDARD);
+                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_STANDARD);
     }
 
     @Test
@@ -344,8 +341,11 @@ public class AssistantStackTests extends ActivityManagerTestBase {
             mWmState.assertFocusedRootTask("Expected assistant stack focused",
                     WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_ASSISTANT);
             final WindowManagerState amState = mWmState;
+            // If activity is hosted by created-by-organizer root task, the root task captured by
+            // WindowManagerState will have 0 child task. Otherwise, root task contains 1 child
+            // task.
             assertThat(amState.getRootTaskByActivityType(ACTIVITY_TYPE_ASSISTANT).getTasks(),
-                    hasSize(1));
+                    hasSize(lessThanOrEqualTo(1)));
             final int taskId = mWmState.getTaskByActivity(ASSISTANT_ACTIVITY)
                     .mTaskId;
 
@@ -376,8 +376,11 @@ public class AssistantStackTests extends ActivityManagerTestBase {
             mWmState.assertVisibility(ASSISTANT_ACTIVITY, true);
             mWmState.assertFocusedRootTask("Expected assistant stack focused",
                     WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_ASSISTANT);
+            // If activity is hosted by created-by-organizer root task, the root task captured by
+            // WindowManagerState will have 0 child task. Otherwise, root task contains 1 child
+            // task.
             assertThat(amState.getRootTaskByActivityType(ACTIVITY_TYPE_ASSISTANT).getTasks(),
-                    hasSize(1));
+                    hasSize(lessThanOrEqualTo(1)));
             assertEquals(taskId,
                     mWmState.getTaskByActivity(ASSISTANT_ACTIVITY).mTaskId);
 

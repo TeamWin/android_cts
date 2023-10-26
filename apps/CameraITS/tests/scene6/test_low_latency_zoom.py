@@ -31,6 +31,7 @@ import zoom_capture_utils
 _CIRCLE_COLOR = 0  # [0: black, 255: white]
 _CIRCLE_AR_RTOL = 0.15  # contour width vs height (aspect ratio)
 _CIRCLISH_RTOL = 0.05  # contour area vs ideal circle area pi*((w+h)/4)**2
+_CONTINUOUS_PICTURE_MODE = 4  # continuous picture AF mode
 _MIN_AREA_RATIO = 0.00015  # based on 2000/(4000x3000) pixels
 _MIN_CIRCLE_PTS = 25
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -63,14 +64,15 @@ class LowLatencyZoomTest(its_base_test.ItsBaseTest):
       its_session_utils.load_scene(
           cam, props, self.scene, self.tablet, self.chart_distance)
 
+      # Determine test zoom range
       z_range = props['android.control.zoomRatioRange']
-      logging.debug('testing zoomRatioRange: %s', str(z_range))
       debug = self.debug_mode
-
       z_min, z_max = float(z_range[0]), float(z_range[1])
       camera_properties_utils.skip_unless(z_max >= z_min * _ZOOM_MIN_THRESH)
-      z_list = np.arange(z_min, z_max, float(z_max - z_min) / (_NUM_STEPS - 1))
+      z_max = min(z_max, zoom_capture_utils.ZOOM_MAX_THRESH * z_min)
+      z_list = np.arange(z_min, z_max, (z_max - z_min) / (_NUM_STEPS - 1))
       z_list = np.append(z_list, z_max)
+      logging.debug('Testing zoom range: %s', str(z_list))
 
       # set TOLs based on camera and test rig params
       if camera_properties_utils.logical_multi_camera(props):
@@ -90,13 +92,18 @@ class LowLatencyZoomTest(its_base_test.ItsBaseTest):
       # do auto captures over zoom range and find circles with cv2
       img_name_stem = f'{os.path.join(self.log_path, _NAME)}'
       logging.debug('Using auto capture request')
-      cam.do_3a()
+      cam.do_3a(zoom_ratio=z_min)
       test_failed = False
       fmt = 'yuv'
       test_data = {}
       reqs = []
       req = capture_request_utils.auto_capture_request()
-      req['android.control.settingsOverride'] = camera_properties_utils.SETTINGS_OVERRIDE_ZOOM
+      req['android.control.settingsOverride'] = (
+          camera_properties_utils.SETTINGS_OVERRIDE_ZOOM
+      )
+      req['android.control.enableZsl'] = False
+      if not camera_properties_utils.fixed_focus(props):
+        req['android.control.afMode'] = _CONTINUOUS_PICTURE_MODE
       for z in z_list:
         logging.debug('zoom ratio: %.2f', z)
         req_for_zoom = req.copy()
@@ -110,8 +117,10 @@ class LowLatencyZoomTest(its_base_test.ItsBaseTest):
       # Check low latency zoom outputs match result metadata
       for i, cap in enumerate(caps):
         z_result = cap['metadata']['android.control.zoomRatio']
+        af_state = cap['metadata']['android.control.afState']
         scaled_zoom = min(z_list[i], z_result)
-        logging.debug('zoom ratio in result: %.2f', z_result)
+        logging.debug('Result[%d]: zoom ratio %.2f, afState %d',
+                      i, z_result, af_state)
         img = image_processing_utils.convert_capture_to_rgb_image(
             cap, props=props)
         img_name = f'{img_name_stem}_{fmt}_{i}_{round(z_result, 2)}.jpg'
@@ -146,6 +155,13 @@ class LowLatencyZoomTest(its_base_test.ItsBaseTest):
 
         test_data[i] = {'z': z_result, 'circle': circle, 'r_tol': radius_tol,
                         'o_tol': offset_tol, 'fl': cap_fl}
+
+      # Since we are zooming in, settings_override may change the minimum zoom
+      # value in the result metadata.
+      # This is because zoom values like: [1., 2., 3., ..., 10.] may be applied
+      # as: [4., 4., 4., .... 9., 10., 10.].
+      # If we were zooming out, we would need to change the z_max.
+      z_min = test_data[min(test_data.keys())]['z']
 
       if not zoom_capture_utils.verify_zoom_results(
           test_data, size, z_max, z_min):

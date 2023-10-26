@@ -27,6 +27,7 @@ import android.os.SystemProperties;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.Window;
+import android.view.Display;
 import android.window.WindowInfosListenerForTest;
 import android.window.WindowInfosListenerForTest.WindowInfo;
 
@@ -127,7 +128,9 @@ public class CtsWindowInfoUtils {
                 if (!windowInfo.isVisible) {
                     continue;
                 }
-                if (windowInfo.windowToken == windowToken) {
+                // only wait for default display.
+                if (windowInfo.windowToken == windowToken
+                        && windowInfo.displayId == Display.DEFAULT_DISPLAY) {
                     return predicate.test(windowInfo);
                 }
             }
@@ -165,7 +168,7 @@ public class CtsWindowInfoUtils {
     }
 
     /**
-     * Waits until the window specified by windowTokenSupplier is present, not occluded, and hasn't
+     * Waits until the window specified by the predicate is present, not occluded, and hasn't
      * had geometry changes for 200ms.
      *
      * The window is considered occluded if any part of another window is above it, excluding
@@ -186,7 +189,7 @@ public class CtsWindowInfoUtils {
      * reached. False otherwise.
      */
     public static boolean waitForWindowOnTop(int timeout, @NonNull TimeUnit unit,
-            @NonNull Supplier<IBinder> windowTokenSupplier)
+                                             @NonNull Predicate<WindowInfo> predicate)
             throws InterruptedException {
         var latch = new CountDownLatch(1);
         var satisfied = new AtomicBoolean();
@@ -210,15 +213,10 @@ public class CtsWindowInfoUtils {
                     return;
                 }
 
-                IBinder windowToken = windowTokenSupplier.get();
-                if (windowToken == null) {
-                    return;
-                }
-
                 WindowInfo targetWindowInfo = null;
                 ArrayList<WindowInfo> aboveWindowInfos = new ArrayList<>();
                 for (var windowInfo : windowInfos) {
-                    if (windowInfo.windowToken == windowToken) {
+                    if (predicate.test(windowInfo)) {
                         targetWindowInfo = windowInfo;
                         break;
                     }
@@ -263,7 +261,7 @@ public class CtsWindowInfoUtils {
                         latch.countDown();
                     }
                 };
-                mTimer.schedule(mTask, 200);
+                mTimer.schedule(mTask, 200L * HW_TIMEOUT_MULTIPLIER);
             }
         };
 
@@ -295,6 +293,36 @@ public class CtsWindowInfoUtils {
         }
 
         return satisfied.get();
+    }
+
+    /**
+     * Waits until the window specified by windowTokenSupplier is present, not occluded, and hasn't
+     * had geometry changes for 200ms.
+     *
+     * The window is considered occluded if any part of another window is above it, excluding
+     * trusted overlays.
+     *
+     * <p>
+     * <strong>Note:</strong>If the caller has any adopted shell permissions, they must include
+     * android.permission.ACCESS_SURFACE_FLINGER.
+     * </p>
+     *
+     * @param timeout             The amount of time to wait for the window to be visible.
+     * @param unit                The units associated with timeout.
+     * @param windowTokenSupplier Supplies the window token for the window to wait on. The
+     *                            supplier is called each time window infos change. If the
+     *                            supplier returns null, the window is assumed not visible
+     *                            yet.
+     * @return True if the window satisfies the visibility requirements before the timeout is
+     * reached. False otherwise.
+     */
+    public static boolean waitForWindowOnTop(int timeout, @NonNull TimeUnit unit,
+            @NonNull Supplier<IBinder> windowTokenSupplier)
+            throws InterruptedException {
+        return waitForWindowOnTop(timeout, unit, windowInfo -> {
+            IBinder windowToken = windowTokenSupplier.get();
+            return windowToken != null && windowInfo.windowToken == windowToken;
+        });
     }
 
     /**

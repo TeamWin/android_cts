@@ -24,7 +24,6 @@ import com.android.compatibility.common.util.ReportLogDeviceInfoStore;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlSerializer;
@@ -109,19 +108,6 @@ public class CtsVerifierReportLog extends ReportLog {
             String content = new String(Files.readAllBytes(path));
             // This loads the text into a valid JSON model, removing all duplicates.
             JSONObject jsonObject = new JSONObject(content);
-
-            // Fix old "test_peripheral" fields with Strings that prevent database ingestion.
-            try {
-                JSONObject loopbackObject = jsonObject.getJSONObject(
-                        "audio_loopback_latency_activity");
-                String peripheralName = loopbackObject.getString("test_peripheral");
-                Log.d(TAG, "Replace test_peripheral value " + peripheralName + " with 0.");
-                loopbackObject.put("test_peripheral", 0); // replace with legal Int32
-                loopbackObject.put("test_peripheral_name", peripheralName); // correct key
-            } catch( JSONException e) {
-                Log.d(TAG, "No bad test_peripheral field, which is good.");
-            }
-
             // Write as human readable text.
             String fixed = jsonObject.toString(2);
             Log.d(TAG, "JSON file size changed from " + content.length()

@@ -26,6 +26,7 @@ import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.os.PersistableBundle;
+import android.os.SystemProperties;
 import android.service.voice.HotwordAudioStream;
 import android.service.voice.HotwordDetectedResult;
 import android.util.Log;
@@ -263,6 +264,9 @@ public class Utils {
     public static final HotwordDetectedResult AUDIO_EGRESS_DETECTED_RESULT_WRONG_COPY_BUFFER_SIZE =
             new HotwordDetectedResult.Builder().setAudioStreams(
                     List.of(HOTWORD_AUDIO_STREAM_WRONG_COPY_BUFFER_SIZE)).build();
+
+    public static final boolean SYSPROP_VISUAL_QUERY_SERVICE_ENABLED =
+            SystemProperties.getBoolean("ro.hotword.visual_query_service_enabled", false);
 
     /**
      * Returns the PersistableBundle data that is used for testing.

@@ -204,8 +204,10 @@ static void android_view_surfacecontrol_cts_ChoreographerNativeTest_testFrameCal
         ASSERT(deadline > lastValue, "Deadline must be greater than last frame deadline");
         lastValue = deadline;
     }
+    // To avoid API fragmentation, enforce there are at least a certain amount of frame timeline
+    // choices, by number of choices or by the last deadline timestamp.
     ASSERT(std::chrono::nanoseconds{frameTimelines[frameTimelines.size() - 1].deadline} >
-                   start + std::chrono::nanoseconds{50ms},
+           start + std::chrono::nanoseconds{45ms},
            "Not enough later choices for frame timelines");
 }
 

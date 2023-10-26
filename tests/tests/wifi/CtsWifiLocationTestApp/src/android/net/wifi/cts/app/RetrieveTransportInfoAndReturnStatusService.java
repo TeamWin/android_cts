@@ -20,11 +20,8 @@ import static android.net.wifi.cts.app.RetrieveTransportInfoAndReturnStatusActiv
 
 import android.app.job.JobParameters;
 import android.app.job.JobService;
-import android.content.Intent;
 import android.net.ConnectivityManager;
-import android.net.wifi.WifiManager;
 import android.os.ResultReceiver;
-import android.util.Log;
 
 /**
  * A service that retrieves transport Info and returns status.
@@ -38,6 +35,11 @@ public class RetrieveTransportInfoAndReturnStatusService extends JobService {
     public boolean onStartJob(JobParameters jobParameters) {
         ResultReceiver resultReceiver =
                 jobParameters.getTransientExtras().getParcelable(RESULT_RECEIVER_EXTRA);
+        try {
+            Thread.sleep(5_000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         ConnectivityManager connectivityManager  = getSystemService(ConnectivityManager.class);
         resultReceiver.send(
                 canRetrieveSsidFromTransportInfo(TAG, connectivityManager) ? 1 : 0, null);

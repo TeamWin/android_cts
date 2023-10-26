@@ -737,16 +737,16 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
     }
 
     /** Configure underrun simulation on audio codecs. */
-    public void stopDrainingAudioOutputBuffers(boolean enabled) {
+    public void stopDrainingAudioOutputBuffers(boolean stop) {
         for (CodecState state: mAudioCodecStates.values()) {
-            state.stopDrainingOutputBuffers(enabled);
+            state.stopDrainingOutputBuffers(stop);
         }
     }
 
-    /** Configure an offset (in ms) to audio content to simulate track desynchronization. */
-    public void setAudioTrackOffsetMs(int audioOffsetMs) {
+    /** Configure an offset (in Ns) to audio content to simulate track desynchronization. */
+    public void setAudioTrackOffsetNs(long audioOffsetNs) {
         if (mAudioTrackState != null) {
-            mAudioTrackState.setAudioOffsetMs(audioOffsetMs);
+            mAudioTrackState.setAudioOffsetNs(audioOffsetNs);
         }
     }
 

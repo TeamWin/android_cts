@@ -56,9 +56,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.PersistableBundle;
-import android.os.SystemProperties;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -96,11 +94,7 @@ public class MmTelFeatureTestOnMockModem {
     private static final String LOG_TAG = "MmTelFeatureTestOnMockModem";
     private static final boolean VDBG = false;
 
-    private static final boolean DEBUG = !"user".equals(Build.TYPE);
-
     private static final int FEATURE_STATE_READY = 0;
-
-    private static final String ALLOW_MOCK_MODEM_PROPERTY = "persist.radio.allow_mock_modem";
 
     // the timeout to wait for result in milliseconds
     private static final int WAIT_UPDATE_TIMEOUT_MS = 2000;
@@ -171,7 +165,7 @@ public class MmTelFeatureTestOnMockModem {
             sSupportsImsHal = true;
         }
 
-        enforceMockModemDeveloperSetting();
+        MockModemManager.enforceMockModemDeveloperSetting();
         sMockModemManager = new MockModemManager();
         assertNotNull(sMockModemManager);
         assertTrue(sMockModemManager.connectMockModemService(MOCK_SIM_PROFILE_ID_TWN_CHT));
@@ -702,16 +696,6 @@ public class MmTelFeatureTestOnMockModem {
             return false;
         }
         return true;
-    }
-
-    private static void enforceMockModemDeveloperSetting() throws Exception {
-        boolean isAllowed = SystemProperties.getBoolean(ALLOW_MOCK_MODEM_PROPERTY, false);
-        // Check for developer settings for user build. Always allow for debug builds
-        if (!isAllowed && !DEBUG) {
-            throw new IllegalStateException(
-                "!! Enable Mock Modem before running this test !! "
-                    + "Developer options => Allow Mock Modem");
-        }
     }
 
     private void verifySrvccStateChange(int state) throws Exception {

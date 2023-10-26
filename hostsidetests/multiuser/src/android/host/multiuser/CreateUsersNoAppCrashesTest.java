@@ -40,10 +40,11 @@ public final class CreateUsersNoAppCrashesTest extends BaseMultiUserTest {
     @Presubmit
     @Test
     public void testCanCreateGuestUser() throws Exception {
-        int userId = getDevice().createUser(
-                "TestUser_" + System.currentTimeMillis() /* name */,
-                true /* guest */,
-                false /* ephemeral */);
+        // The device may already have a guest present if it is configured with
+        // config_guestUserAutoCreated. If so, skip the test.
+        assumeGuestDoesNotExist();
+
+        int userId = createGuestUser();
         assertSwitchToUser(userId);
         assertSwitchToUser(mInitialUserId);
     }

@@ -157,7 +157,10 @@ def extract_key_frames_from_video(log_path, video_file_name):
          'quiet',
         ]
   logging.debug('Extracting key frames from: %s', video_file_name)
-  _ = subprocess.call(cmd)
+  _ = subprocess.call(cmd,
+                      stdin=subprocess.DEVNULL,
+                      stdout=subprocess.DEVNULL,
+                      stderr=subprocess.DEVNULL)
   arr = os.listdir(os.path.join(log_path))
   key_frame_files = []
   for file in arr:
@@ -221,7 +224,10 @@ def extract_all_frames_from_video(log_path, video_file_name, img_format):
       '-vsync', 'vfr', # force ffmpeg to use video fps instead of inferred fps
       ffmpeg_image_file_names, '-loglevel', 'quiet'
   ]
-  _ = subprocess.call(cmd)
+  _ = subprocess.call(cmd,
+                      stdin=subprocess.DEVNULL,
+                      stdout=subprocess.DEVNULL,
+                      stderr=subprocess.DEVNULL)
 
   file_list = sorted(
       [_ for _ in os.listdir(log_path) if (_.endswith(img_format)
@@ -241,35 +247,34 @@ def get_average_frame_rate(video_file_name_with_path):
     Float. average frames per second.
   """
 
-  cmd = ['ffmpeg',
-         '-i',
-         video_file_name_with_path,
-         '-vf',
-         'vfrdet',
-         '-f',
-         'null',
-         '-',
+  cmd = ['ffprobe',
+         '-v',
+         'quiet',
+         '-show_streams',
+         '-select_streams',
+         'v:0',  # first video stream
+         video_file_name_with_path
         ]
   logging.debug('Getting frame rate')
   raw_output = ''
   try:
-    raw_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    raw_output = subprocess.check_output(cmd,
+                                         stdin=subprocess.DEVNULL,
+                                         stderr=subprocess.STDOUT)
   except subprocess.CalledProcessError as e:
     raise AssertionError(str(e.output)) from e
   if raw_output:
     output = str(raw_output.decode('utf-8')).strip()
-    logging.debug('FFmpeg command %s output: %s', ' '.join(cmd), output)
-    fps_data = output.splitlines()[-3]  # frames printed on third to last line
-    frames = int(re.search(r'frame= *([0-9]+)', fps_data).group(1))
-    duration = re.search(r'time= *([0-9][0-9:\.]*)', fps_data).group(1)
-    time_parts = [float(t) for t in duration.split(':')]
-    seconds = time_parts[0] * HR_TO_SEC + time_parts[
-        1] * MIN_TO_SEC + time_parts[2]
-    logging.debug('Average FPS: %d / %d = %.4f',
-                  frames, seconds, frames / seconds)
-    return frames / seconds
+    logging.debug('ffprobe command %s output: %s', ' '.join(cmd), output)
+    average_frame_rate_data = (
+        re.search(r'avg_frame_rate=*([0-9]+/[0-9]+)', output).group(1)
+    )
+    average_frame_rate = (int(average_frame_rate_data.split('/')[0]) /
+                          int(average_frame_rate_data.split('/')[1]))
+    logging.debug('Average FPS: %.4f', average_frame_rate)
+    return average_frame_rate
   else:
-    raise AssertionError('ffmpeg failed to provide frame rate data')
+    raise AssertionError('ffprobe failed to provide frame rate data')
 
 
 def get_frame_deltas(video_file_name_with_path, timestamp_type='pts'):
@@ -292,7 +297,9 @@ def get_frame_deltas(video_file_name_with_path, timestamp_type='pts'):
   logging.debug('Getting frame deltas')
   raw_output = ''
   try:
-    raw_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    raw_output = subprocess.check_output(cmd,
+                                         stdin=subprocess.DEVNULL,
+                                         stderr=subprocess.STDOUT)
   except subprocess.CalledProcessError as e:
     raise AssertionError(str(e.output)) from e
   if raw_output:

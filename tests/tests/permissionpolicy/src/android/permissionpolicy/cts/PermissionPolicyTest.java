@@ -37,6 +37,8 @@ import android.util.ArraySet;
 import android.util.Log;
 import android.util.Xml;
 
+import com.android.modules.utils.build.SdkLevel;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -71,6 +73,9 @@ public class PermissionPolicyTest {
     private static final String MANAGE_COMPANION_DEVICES_PERMISSION
             = "android.permission.MANAGE_COMPANION_DEVICES";
 
+    private static final String SYNC_FLAGS_PERMISSION = "android.permission.SYNC_FLAGS";
+    private static final String WRITE_FLAGS_PERMISSION = "android.permission.WRITE_FLAGS";
+
     private static final String LOG_TAG = "PermissionProtectionTest";
 
     private static final String PLATFORM_PACKAGE_NAME = "android";
@@ -85,6 +90,11 @@ public class PermissionPolicyTest {
     private static final String ATTR_PERMISSION_FLAGS = "permissionFlags";
     private static final String ATTR_PROTECTION_LEVEL = "protectionLevel";
     private static final String ATTR_BACKGROUND_PERMISSION = "backgroundPermission";
+
+    private static final String OBSERVE_APP_USAGE_PERMISSION =
+            "android.permission.OBSERVE_APP_USAGE";
+    private static final String MODIFY_DAY_NIGHT_MODE_PERMISSION =
+            "android.permission.MODIFY_DAY_NIGHT_MODE";
 
     private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -503,10 +513,16 @@ public class PermissionPolicyTest {
 
     private boolean shouldSkipPermission(String permissionName) {
         switch (permissionName) {
+            case SYNC_FLAGS_PERMISSION:
+            case WRITE_FLAGS_PERMISSION:
+                return true;  // Added in u-qpr.
             case HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PERMISSION:
                 return parseDate(SECURITY_PATCH).before(HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE);
             case MANAGE_COMPANION_DEVICES_PERMISSION:
                 return parseDate(SECURITY_PATCH).before(MANAGE_COMPANION_DEVICES_PATCH_DATE);
+            case OBSERVE_APP_USAGE_PERMISSION:
+            case MODIFY_DAY_NIGHT_MODE_PERMISSION:
+                return true;
             default:
                 return false;
         }

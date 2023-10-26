@@ -50,9 +50,22 @@ open class CompanionDeviceManagerUi(private val ui: UiDevice) {
 
     fun waitUntilGone() = ui.waitShort(Until.gone(CONFIRMATION_UI), "CDM UI has not disappeared")
 
-    fun waitAndClickOnFirstFoundDevice() = ui.waitLongAndFind(
-            Until.findObject(DEVICE_LIST_WITH_ITEMS), "Device List not found or empty")
-                    .children[0].click()
+    fun waitAndClickOnFirstFoundDevice() {
+        val firstDevice = ui.waitLongAndFind(
+            Until.findObject(
+                DEVICE_LIST_WITH_ITEMS), "The item in the Device List not found or empty")
+            .children[0]
+
+        val startTime = SystemClock.uptimeMillis()
+        var elapsedTime = 0L
+        // Keep trying to click the first item in the list until the device_list is disappeared
+        // or it times out after 5s.
+        while (ui.hasObject(DEVICE_LIST) && elapsedTime < 5.seconds.inWholeMilliseconds) {
+            firstDevice.click()
+            SystemClock.sleep(0.2.seconds.inWholeMilliseconds)
+            elapsedTime = SystemClock.uptimeMillis() - startTime
+        }
+    }
 
     fun waitUntilPositiveButtonIsEnabledAndClick() = ui.waitLongAndFind(
         Until.findObject(POSITIVE_BUTTON), "Positive button not found or not clickable")
@@ -99,6 +112,10 @@ open class CompanionDeviceManagerUi(private val ui: UiDevice) {
         }
     }
 
+    fun isCdmDialogExists(): Boolean {
+        return ui.wait(Until.hasObject(CONFIRMATION_UI), 2.seconds.inWholeMilliseconds)
+    }
+
     protected fun click(selector: BySelector, description: String) = ui.waitShortAndFind(
             Until.findObject(selector), "$description is not found")
             .click()
@@ -125,12 +142,10 @@ open class CompanionDeviceManagerUi(private val ui: UiDevice) {
         private val NEGATIVE_BUTTON_MULTIPLE_DEVICES = By.pkg(PACKAGE_NAME)
                 .res(PACKAGE_NAME, "negative_multiple_devices_layout")
 
-        private val DEVICE_LIST = By.pkg(PACKAGE_NAME)
-                .res(PACKAGE_NAME, "device_list")
-        private val DEVICE_LIST_ITEM = By.pkg(PACKAGE_NAME)
-                .res(PACKAGE_NAME, "list_item_device")
+        private val DEVICE_LIST = By.res(PACKAGE_NAME, "device_list")
+        private val DEVICE_LIST_ITEM = By.res(PACKAGE_NAME, "list_item_device")
         private val DEVICE_LIST_WITH_ITEMS = By.copy(DEVICE_LIST)
-                .hasChild(DEVICE_LIST_ITEM)
+                .hasDescendant(DEVICE_LIST_ITEM)
 
         private val SCROLLABLE_PERMISSION_LIST = UiScrollable(
             UiSelector().resourceId("$PACKAGE_NAME:id/permission_list"))

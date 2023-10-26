@@ -64,10 +64,8 @@ import android.annotation.Nullable;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.PersistableBundle;
-import android.os.SystemProperties;
 import android.telecom.Call;
 import android.telecom.PhoneAccount;
 import android.telecom.TelecomManager;
@@ -113,9 +111,7 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     private static final String LOG_TAG = "CtsEmergencyCallDomainSelectionTestOnMockModem";
     private static final boolean VDBG = false;
-    private static final boolean DEBUG = !"user".equals(Build.TYPE);
 
-    private static final String ALLOW_MOCK_MODEM_PROPERTY = "persist.radio.allow_mock_modem";
     private static final String TEST_DOMAIN_SELECTION_PROPERTY =
             "persist.radio.test_domain_selection";
 
@@ -173,7 +169,7 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
             return;
         }
 
-        enforceMockModemDeveloperSetting();
+        MockModemManager.enforceMockModemDeveloperSetting();
         sMockModemManager = new MockModemManager();
         assertNotNull(sMockModemManager);
         assertTrue(sMockModemManager.connectMockModemService(MOCK_SIM_PROFILE_ID_TWN_CHT));
@@ -1217,16 +1213,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
                                 ImsReasonInfo.CODE_UNSPECIFIED, ""));
 
         Thread.sleep(3000);
-    }
-
-    private static void enforceMockModemDeveloperSetting() throws Exception {
-        boolean isAllowed = SystemProperties.getBoolean(ALLOW_MOCK_MODEM_PROPERTY, false);
-        // Check for developer settings for user build. Always allow for debug builds
-        if (!isAllowed && !DEBUG) {
-            throw new IllegalStateException(
-                "!! Enable Mock Modem before running this test !! "
-                    + "Developer options => Allow Mock Modem");
-        }
     }
 
     private static PersistableBundle getDefaultPersistableBundle() {

@@ -296,12 +296,14 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testEnterPipToOtherOrientation() {
+        assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
         // Launch a portrait only app on the fullscreen stack
         launchActivity(TEST_ACTIVITY,
                 extraString(EXTRA_FIXED_ORIENTATION, String.valueOf(SCREEN_ORIENTATION_PORTRAIT)));
         // Launch the PiP activity fixed as landscape
         launchActivity(PIP_ACTIVITY,
                 extraString(EXTRA_PIP_ORIENTATION, String.valueOf(SCREEN_ORIENTATION_LANDSCAPE)));
+        mWmState.waitForActivityOrientation(PIP_ACTIVITY, Configuration.ORIENTATION_LANDSCAPE);
         // Enter PiP, and assert that the PiP is within bounds now that the device is back in
         // portrait
         mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
@@ -879,12 +881,13 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchHomeActivity();
         // Launch an auto pip activity
         launchActivity(PIP_ACTIVITY, extraString(EXTRA_ENTER_PIP, "true"));
-        waitForEnterPip(PIP_ACTIVITY);
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         assertPinnedStackExists();
 
         // Relaunch the activity to fullscreen to trigger the activity to exit and re-enter pip
         launchActivity(PIP_ACTIVITY);
         waitForExitPipToFullscreen(PIP_ACTIVITY);
+        waitAndAssertActivityState(PIP_ACTIVITY, STATE_RESUMED, "Activity should be resumed");
         mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         mWmState.assertVisibility(TEST_ACTIVITY, false);
@@ -898,12 +901,13 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
         // Launch an auto pip activity
         launchActivity(PIP_ACTIVITY, extraString(EXTRA_ENTER_PIP, "true"));
-        waitForEnterPip(PIP_ACTIVITY);
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         assertPinnedStackExists();
 
         // Relaunch the activity to fullscreen to trigger the activity to exit and re-enter pip
         launchActivity(PIP_ACTIVITY);
         waitForExitPipToFullscreen(PIP_ACTIVITY);
+        waitAndAssertActivityState(PIP_ACTIVITY, STATE_RESUMED, "Activity should be resumed");
         mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         mWmState.assertVisibility(TEST_ACTIVITY, true);

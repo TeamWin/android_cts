@@ -282,9 +282,6 @@ public final class AutoFillServiceTestCase {
                 new ImeSettings.Builder().setInlineSuggestionsEnabled(true)
                         .setInlineSuggestionViewContentDesc(InlineUiBot.SUGGESTION_STRIP_DESC));
 
-        protected static final RequiredFeatureRule sRequiredFeatureRule =
-                new RequiredFeatureRule(PackageManager.FEATURE_AUTOFILL);
-
         private final AutofillTestWatcher mTestWatcher = new AutofillTestWatcher();
 
         private final RetryRule mRetryRule =
@@ -399,6 +396,10 @@ public final class AutoFillServiceTestCase {
         protected final String mPackageName;
         protected final UiBot mUiBot;
 
+        protected static final RuleChain sRequiredFeaturesRule = RuleChain
+                .outerRule(new RequiredFeatureRule(PackageManager.FEATURE_AUTOFILL))
+                .around(new RequiredFeatureRule(PackageManager.FEATURE_INPUT_METHODS));
+
         public BaseTestCase() {
             mPackageName = mContext.getPackageName();
             mUiBot = sDefaultUiBot;
@@ -456,7 +457,7 @@ public final class AutoFillServiceTestCase {
          */
         @NonNull
         protected TestRule getRequiredFeaturesRule() {
-            return sRequiredFeatureRule;
+            return sRequiredFeaturesRule;
         }
 
         /**

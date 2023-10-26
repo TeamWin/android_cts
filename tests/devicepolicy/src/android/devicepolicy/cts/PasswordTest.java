@@ -17,6 +17,7 @@
 package android.devicepolicy.cts;
 
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
+import static android.content.pm.PackageManager.FEATURE_SECURE_LOCK_SCREEN;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
 
@@ -30,6 +31,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireTargetSdkVersion;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
@@ -62,6 +64,7 @@ public final class PasswordTest {
                 .setPasswordExpirationTimeout(sDeviceState.dpc().componentName(), TIMEOUT));
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @PolicyAppliesTest(policy = PasswordExpirationTimeout.class)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setPasswordExpirationTimeout",
@@ -130,6 +133,7 @@ public final class PasswordTest {
                 .setRequiredStrongAuthTimeout(sDeviceState.dpc().componentName(), TIMEOUT));
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @PolicyAppliesTest(policy = StrongAuthTimeout.class)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setRequiredStrongAuthTimeout",
@@ -180,6 +184,7 @@ public final class PasswordTest {
                 .devicePolicyManager().resetPassword(DEFAULT_PASSWORD, /* flags= */ 0)).isFalse();
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     @RequireTargetSdkVersion(min = O)
     @PolicyAppliesTest(policy = DeprecatedResetPassword.class)

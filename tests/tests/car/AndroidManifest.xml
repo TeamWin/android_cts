@@ -17,12 +17,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.car.cts">
     <uses-feature android:name="android.hardware.type.automotive" />
-    <uses-permission android:name="android.car.permission.ACCESS_PRIVATE_DISPLAY_ID" />
-    <uses-permission android:name="android.car.permission.CAR_POWER" />
-    <uses-permission android:name="android.car.permission.CAR_TEST_SERVICE" />
-    <!-- for CarRemoteDeviceManagerTest and CarOccupantConnectionManagerTest-->
-    <uses-permission android:name="android.car.permission.MANAGE_REMOTE_DEVICE" />
-    <uses-permission android:name="android.car.permission.MANAGE_OCCUPANT_CONNECTION" />
     <uses-permission android:name="android.car.permission.READ_CAR_POWER_POLICY" />
     <uses-permission android:name="android.car.permission.USE_CAR_TELEMETRY_SERVICE" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
@@ -35,8 +29,6 @@
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
     <!-- Allow query of any normal app on the device -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-    <!-- Allow to get the CarTaskViewController -->
-    <uses-permission android:name="android.car.permission.MANAGE_CAR_SYSTEM_UI" />
     <!-- For CarRemoteAccessManagerTest -->
     <uses-permission android:name="android.car.permission.USE_REMOTE_ACCESS" />
 

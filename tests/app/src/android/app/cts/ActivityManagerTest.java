@@ -923,6 +923,7 @@ public final class ActivityManagerTest {
     @Test
     public void testHomeVisibilityListener() throws Exception {
         assumeFalse("With platforms that have no home screen, no need to test", noHomeScreen());
+        assumeFalse("Skip test on TV devices", isAtvDevice());
 
         LinkedBlockingQueue<Boolean> currentHomeScreenVisibility = new LinkedBlockingQueue<>(2);
         HomeVisibilityListener homeVisibilityListener = new HomeVisibilityListener() {

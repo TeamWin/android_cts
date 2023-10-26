@@ -39,6 +39,7 @@ public class BackupRestoreEventLoggerTest extends BaseBackupCtsTest {
     private static final String BACKUP_APP_PACKAGE
             = "android.cts.backup.backuprestoreeventloggerapp";
     private static final int OPERATION_TIMEOUT_SECONDS = 30;
+    private static final int BACKUP_APP_RESTART_SLEEP_MS = 3_000;
 
 
     // Copied from LoggingFullBackupAgent.java
@@ -84,6 +85,10 @@ public class BackupRestoreEventLoggerTest extends BaseBackupCtsTest {
     }
 
     public void testBackupRestoreRoundTrip_logsSentToMonitor() throws Exception {
+        if (!isBackupSupported()) {
+            return;
+        }
+
         // Ensure the app is not in stopped state.
         createTestFileOfSize(BACKUP_APP_PACKAGE, /* size */ 1);
 
@@ -93,6 +98,9 @@ public class BackupRestoreEventLoggerTest extends BaseBackupCtsTest {
                 /* observer */ mBackupObserver, mBackupMonitor, /* flags */ 0);
         boolean backupFinished = mOperationLatch.await(OPERATION_TIMEOUT_SECONDS,
                 TimeUnit.SECONDS);
+
+        // Sleep to allow the app to be killed, so that this doesn't disrupt the restore operation
+        Thread.sleep(BACKUP_APP_RESTART_SLEEP_MS);
 
         // Run a restore.
         mOperationLatch = new CountDownLatch(/* count */ 1);

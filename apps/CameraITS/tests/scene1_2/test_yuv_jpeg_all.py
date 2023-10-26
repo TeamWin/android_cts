@@ -29,16 +29,18 @@ import image_processing_utils
 import its_session_utils
 import target_exposure_utils
 
+_JPG_STR = 'jpg'
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _PATCH_H = 0.1  # center 10%
 _PATCH_W = 0.1
 _PATCH_X = 0.5 - _PATCH_W/2
 _PATCH_Y = 0.5 - _PATCH_H/2
-_THRESHOLD_MAX_RMS_DIFF = 0.03
 _PLOT_ALPHA = 0.5
 _PLOT_MARKER_SIZE = 8
 _PLOT_LEGEND_CIRCLE_SIZE = 10
 _PLOT_LEGEND_TRIANGLE_SIZE = 6
+_THRESHOLD_MAX_RMS_DIFF = 0.03
+_YUV_STR = 'yuv'
 
 
 def do_capture_and_extract_rgb_means(
@@ -76,7 +78,7 @@ def do_capture_and_extract_rgb_means(
                 cap['metadata']['android.sensor.exposureTime'],
                 cap['metadata']['android.sensor.sensitivity'],
                 cap['metadata']['android.lens.focusDistance'])
-  if img_type == 'jpg':
+  if img_type == _JPG_STR:
     if cap['format'] != 'jpeg':
       raise AssertionError(f"{cap['format']} != jpeg")
     img = image_processing_utils.decompress_jpeg_to_rgb_image(cap['data'])
@@ -93,7 +95,7 @@ def do_capture_and_extract_rgb_means(
     image_processing_utils.write_image(
         img, f'{name_with_log_path}_{img_type}_w{size[0]}_h{size[1]}.png')
 
-  if img_type == 'jpg':
+  if img_type == _JPG_STR:
     if img.shape[0] != size[1]:
       raise AssertionError(f'{img.shape[0]} != {size[1]}')
     if img.shape[1] != size[0]:
@@ -145,23 +147,28 @@ class YuvJpegAllTest(its_base_test.ItsBaseTest):
         logging.debug('e_req: %d, s_req: %d', e, s)
         req = capture_request_utils.manual_capture_request(
             s, e, 0.0, True, props)
+        match_ar = None
       else:
         logging.debug('Using auto capture request')
         cam.do_3a(do_af=False)
         req = capture_request_utils.auto_capture_request(
             linear_tonemap=True, props=props, do_af=False)
+        largest_yuv = capture_request_utils.get_largest_yuv_format(props)
+        match_ar = (largest_yuv['width'], largest_yuv['height'])
 
       yuv_rgbs = []
       for i, size in enumerate(
-          capture_request_utils.get_available_output_sizes('yuv', props)):
+          capture_request_utils.get_available_output_sizes(
+              _YUV_STR, props, match_ar_size=match_ar)):
         yuv_rgbs.append(do_capture_and_extract_rgb_means(
-            req, cam, props, size, 'yuv', i, name_with_log_path, debug))
+            req, cam, props, size, _YUV_STR, i, name_with_log_path, debug))
 
       jpg_rgbs = []
       for i, size in enumerate(
-          capture_request_utils.get_available_output_sizes('jpg', props)):
+          capture_request_utils.get_available_output_sizes(
+              _JPG_STR, props, match_ar_size=match_ar)):
         jpg_rgbs.append(do_capture_and_extract_rgb_means(
-            req, cam, props, size, 'jpg', i, name_with_log_path, debug))
+            req, cam, props, size, _JPG_STR, i, name_with_log_path, debug))
 
       # Plot means vs format
       pylab.figure(_NAME)

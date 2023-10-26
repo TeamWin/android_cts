@@ -23,6 +23,8 @@ import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import java.util.Arrays;
+
 /**
 * Activity for testing the UiAutomation APIs.
 */
@@ -40,11 +42,13 @@ public class UiAutomationTestFirstActivity extends Activity {
                 | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
                 | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
 
-        String[] cheeses = getResources().getStringArray(R.array.some_cheeses);
-        ArrayAdapter<String> cheeseAdapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, cheeses);
+        final String[] list = new String[100];
+        Arrays.setAll(list, Integer::toString);
+        ArrayAdapter<String> listAdapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_1, list);
 
         ListView listView = (ListView) findViewById(R.id.list_view);
-        listView.setAdapter(cheeseAdapter);
+        listView.setAdapter(listAdapter);
     }
 }
+

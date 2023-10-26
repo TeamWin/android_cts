@@ -21,15 +21,14 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLI
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRule;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifyNotSplit;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplitAttributes;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.verifyFillsTask;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertFinishing;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumedAndFillsTask;
 
 import static androidx.window.extensions.embedding.SplitRule.FINISH_ADJACENT;
 import static androidx.window.extensions.embedding.SplitRule.FINISH_ALWAYS;
 import static androidx.window.extensions.embedding.SplitRule.FINISH_NEVER;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
@@ -41,6 +40,7 @@ import android.util.Pair;
 import android.view.WindowMetrics;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
 import androidx.window.extensions.embedding.SplitInfo;
 import androidx.window.extensions.embedding.SplitPairRule;
 
@@ -67,6 +67,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
      * Tests that finishing the primary activity results in the secondary activity resizing to fill
      * the task.
      */
+    @FlakyTest(bugId = 302112669)
     @Test
     public void testFinishPrimary() throws InterruptedException {
         SplitPairRule splitPairRule = createWildcardSplitPairRule();
@@ -81,9 +82,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
         // Finishing the primary activity should cause the secondary activity to resize to fill the
         // task.
         primaryActivity.finish();
-        assertTrue(secondaryActivity.waitForBoundsChange());
-        assertEquals(getMaximumActivityBounds(secondaryActivity),
-                getActivityBounds(secondaryActivity));
+        waitAndAssertResumedAndFillsTask(secondaryActivity);
 
         // Verify that there are no split states
         List<SplitInfo> splitInfoList = mSplitInfoConsumer.waitAndGet();
@@ -94,6 +93,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
      * Tests that finishing the secondary activity results in the primary activity resizing to fill
      * the task.
      */
+    @FlakyTest(bugId = 302192873)
     @Test
     public void testFinishSecondary() throws InterruptedException {
         SplitPairRule splitPairRule = createWildcardSplitPairRule();
@@ -105,16 +105,10 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
                 primaryActivity, TestActivityWithId.class, splitPairRule, "secondaryActivity",
                 mSplitInfoConsumer);
 
-        // Need to reset primary activity bounds change counter because entering the split already
-        // triggered a bounds change.
-        primaryActivity.resetBoundsChangeCounter();
-
         // Finishing the secondary activity should cause the primary activity to resize to fill the
         // task.
         secondaryActivity.finish();
-        assertTrue(primaryActivity.waitForBoundsChange());
-        assertEquals(getMaximumActivityBounds(primaryActivity),
-                getActivityBounds(primaryActivity));
+        waitAndAssertResumedAndFillsTask(primaryActivity);
 
         // Verify that there are no split states
         List<SplitInfo> splitInfoList = mSplitInfoConsumer.waitAndGet();
@@ -179,10 +173,8 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
         Pair<TestActivity, TestActivity> activityPair = new PairedFinishBehaviorScenario()
                 .setFinishPrimaryWithSecondary(FINISH_NEVER).start();
         // Verify the paired finish behavior
-        activityPair.first.resetBoundsChangeCounter();
         activityPair.second.finish();
-        assertTrue(activityPair.first.waitForBoundsChange());
-        verifyFillsTask(activityPair.first);
+        waitAndAssertResumedAndFillsTask(activityPair.first);
     }
 
     /**
@@ -274,10 +266,8 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
         Pair<TestActivity, TestActivity> activityPair = new PairedFinishBehaviorScenario()
                 .setFinishSecondaryWithPrimary(FINISH_NEVER).start();
         // Verify the paired finish behavior
-        activityPair.second.resetBoundsChangeCounter();
         activityPair.first.finish();
-        assertTrue(activityPair.second.waitForBoundsChange());
-        verifyFillsTask(activityPair.second);
+        waitAndAssertResumedAndFillsTask(activityPair.second);
     }
 
     /**

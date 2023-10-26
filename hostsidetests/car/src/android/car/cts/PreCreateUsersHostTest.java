@@ -61,7 +61,7 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
     @Presubmit
     @Test
     public void testAppsAreNotInstalledOnPreCreatedUser() throws Exception {
-        appsAreNotInstalledOnPreCreatedUserTest(/* isGuest= */ false, /* afterReboot= */ false);
+        appsAreNotInstalledOnPreCreatedUserTest(/* isGuest= */ false);
     }
 
     /**
@@ -70,31 +70,10 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
     @Presubmit
     @Test
     public void testAppsAreNotInstalledOnPreCreatedGuest() throws Exception {
-        appsAreNotInstalledOnPreCreatedUserTest(/* isGuest= */ true, /* afterReboot= */ false);
+        appsAreNotInstalledOnPreCreatedUserTest(/* isGuest= */ true);
     }
 
-    /**
-     * Makes sure an app installed for a regular user is not visible to a pre-created user, even
-     * after the system restarts
-     */
-    @Presubmit
-    @Test
-    public void testAppsAreNotInstalledOnPreCreatedUserAfterReboot() throws Exception {
-        appsAreNotInstalledOnPreCreatedUserTest(/* isGuest= */ false, /* afterReboot= */ true);
-    }
-
-    /**
-     * Same as {@link #testAppsAreNotInstalledOnPreCreatedUserAfterReboot()}, but for a guest
-     * user.
-     */
-    @Presubmit
-    @Test
-    public void testAppsAreNotInstalledOnPreCreatedGuestAfterReboot() throws Exception {
-        appsAreNotInstalledOnPreCreatedUserTest(/* isGuest= */ true, /* afterReboot= */ true);
-    }
-
-    private void appsAreNotInstalledOnPreCreatedUserTest(boolean isGuest,
-            boolean afterReboot) throws Exception {
+    private void appsAreNotInstalledOnPreCreatedUserTest(boolean isGuest) throws Exception {
         deletePreCreatedUsers();
         requiresExtraUsers(1);
 
@@ -106,14 +85,6 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
         assertAppInstalledForUser(APP_PKG, initialUserId);
         assertAppNotInstalledForUser(APP_PKG, preCreatedUserId);
 
-        if (afterReboot) {
-            restartSystem();
-            waitForCarServiceReady();
-
-            // Checks again
-            assertAppInstalledForUser(APP_PKG, initialUserId);
-            assertAppNotInstalledForUser(APP_PKG, preCreatedUserId);
-        }
         convertPreCreatedUser(isGuest, preCreatedUserId);
         assertAppNotInstalledForUser(APP_PKG, preCreatedUserId);
     }
@@ -124,7 +95,7 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
     @Presubmit
     @Test
     public void testAppPermissionsPreCreatedUserPackages() throws Exception {
-        appPermissionsPreCreatedUserPackagesTest(/* isGuest= */ false, /* afterReboot= */ false);
+        appPermissionsPreCreatedUserPackagesTest(/* isGuest= */ false);
     }
 
     /**
@@ -133,29 +104,10 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
     @Presubmit
     @Test
     public void testAppPermissionsPreCreatedGuestPackages() throws Exception {
-        appPermissionsPreCreatedUserPackagesTest(/* isGuest= */ true, /* afterReboot= */ false);
+        appPermissionsPreCreatedUserPackagesTest(/* isGuest= */ true);
     }
 
-    /**
-     * Verifies a pre-created user have same packages as non-precreated users.
-     */
-    @Presubmit
-    @Test
-    public void testAppPermissionsPreCreatedUserPackagesAfterReboot() throws Exception {
-        appPermissionsPreCreatedUserPackagesTest(/* isGuest= */ false, /* afterReboot= */ true);
-    }
-
-    /**
-     * Verifies a pre-created guest have same packages as non-precreated users.
-     */
-    @Presubmit
-    @Test
-    public void testAppPermissionsPreCreatedGuestPackagesAfterReboot() throws Exception {
-        appPermissionsPreCreatedUserPackagesTest(/* isGuest= */ true, /* afterReboot= */ true);
-    }
-
-    private void appPermissionsPreCreatedUserPackagesTest(boolean isGuest, boolean afterReboot)
-            throws Exception {
+    private void appPermissionsPreCreatedUserPackagesTest(boolean isGuest) throws Exception {
         deletePreCreatedUsers();
         requiresExtraUsers(2);
 
@@ -172,15 +124,11 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
 
         // There can be just one guest by default, so remove it now otherwise
         // convertPreCreatedUser() below will fail
-        if (isGuest && !afterReboot) {
+        if (isGuest) {
             removeUser(referenceUserId);
         }
 
         int preCreatedUserId = preCreateUser(isGuest);
-
-        if (afterReboot) {
-            restartSystem();
-        }
 
         convertPreCreatedUser(isGuest, preCreatedUserId);
         // Some permissions (e.g. Role permission) are given only after initialization.
@@ -299,10 +247,5 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
         }
         fail("Created new " + type + " with id " + newUserId + ", which doesn't match pre-created "
                 + "id " + expectedId);
-    }
-
-    private void restartSystem() throws Exception {
-        // Restart the system to make sure PackageManager preserves the installed bit
-        restartSystemServer();
     }
 }

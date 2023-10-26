@@ -39,6 +39,8 @@ import org.junit.runner.RunWith;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.android.compatibility.common.util.PollingCheck;
+
 /**
  * Test for personal app suspension APIs available to POs on organization owned devices.
  */
@@ -47,6 +49,7 @@ public class PersonalAppsSuspensionTest {
     private static final ComponentName ADMIN = BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT;
     private final Context mContext = InstrumentationRegistry.getContext();
     private final DevicePolicyManager mDpm = mContext.getSystemService(DevicePolicyManager.class);
+    public static final long WAIT_FOR_COMPLIANCE_ACKNOWLEDGEMENT_REQUIRED_TIMEOUT_MS = 20000;
 
     @Test
     public void testSuspendPersonalApps() {
@@ -98,7 +101,8 @@ public class PersonalAppsSuspensionTest {
     public void testComplianceAcknowledgementRequiredReceived() {
         final SharedPreferences pref =
                 mContext.getSharedPreferences(COMPLIANCE_ACK_PREF_NAME, Context.MODE_PRIVATE);
-        assertThat(pref.getBoolean(COMPLIANCE_ACK_PREF_KEY_BCAST_RECEIVED, false)).isTrue();
+        PollingCheck.waitFor(WAIT_FOR_COMPLIANCE_ACKNOWLEDGEMENT_REQUIRED_TIMEOUT_MS,
+                () -> pref.getBoolean(COMPLIANCE_ACK_PREF_KEY_BCAST_RECEIVED, false));
     }
 
     @Test

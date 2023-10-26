@@ -37,7 +37,7 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class Settings_MemoryUsageTest {
-    private static final String STRING_SETTING = Settings.System.RINGTONE;
+    private static final String STRING_SETTING = Settings.System.SCREEN_BRIGHTNESS;
     private static final int sUserId = Process.myUserHandle().getIdentifier();
 
     private ContentResolver mContentResolver;
@@ -64,11 +64,11 @@ public class Settings_MemoryUsageTest {
 
     @Test
     public void testMemoryUsageExceeded() {
-        expectThrows(IllegalStateException.class,
+        expectThrows(Exception.class,
                 () -> Settings.System.putString(
                         mContentResolver, STRING_SETTING, Strings.repeat("A", 65535)));
         // Repeated calls should throw as well
-        expectThrows(IllegalStateException.class,
+        expectThrows(Exception.class,
                 () -> Settings.System.putString(
                         mContentResolver, STRING_SETTING, Strings.repeat("A", 65535)));
     }

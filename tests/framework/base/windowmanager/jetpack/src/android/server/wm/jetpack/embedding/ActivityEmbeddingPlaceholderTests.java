@@ -18,16 +18,14 @@ package android.server.wm.jetpack.embedding;
 
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLIT_ATTRS;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.assertValidSplit;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.verifyFillsTask;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertFinishing;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertNotResumed;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumedAndFillsTask;
 import static android.server.wm.jetpack.utils.TestActivityLauncher.KEY_ACTIVITY_ID;
 import static android.view.Surface.ROTATION_0;
 
 import static androidx.window.extensions.embedding.SplitRule.FINISH_NEVER;
-
-import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -112,7 +110,7 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
         Activity primaryActivity = startFullScreenActivityNewTask(TestActivityWithId.class,
                 PRIMARY_ACTIVITY_ID);
         waitAndAssertNotResumed(PLACEHOLDER_ACTIVITY_ID);
-        verifyFillsTask(primaryActivity);
+        waitAndAssertResumedAndFillsTask(primaryActivity);
     }
 
     /**
@@ -163,10 +161,8 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
 
         // Finish the placeholder activity and verify that the primary activity does not finish
         // and fills the task.
-        primaryActivity.resetBoundsChangeCounter();
         placeholderActivity.finish();
-        assertTrue(primaryActivity.waitForBoundsChange());
-        verifyFillsTask(primaryActivity);
+        waitAndAssertResumedAndFillsTask(primaryActivity);
     }
 
     /**
@@ -200,7 +196,6 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
             final Activity placeholderActivity = activityPair.second;
 
             // Shrink display size by 10% so that the primary and placeholder activities are stacked
-            primaryActivity.resetBoundsChangeCounter();
             final Size currentSize = mReportedDisplayMetrics.getSize();
             mReportedDisplayMetrics.setSize(new Size((int) (currentSize.getWidth() * 0.9),
                     (int) (currentSize.getHeight() * 0.9)));
@@ -208,8 +203,7 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
             // Verify that the placeholder activity was finished and that the primary activity now
             // fills the task.
             waitAndAssertFinishing(placeholderActivity);
-            assertTrue(primaryActivity.waitForBoundsChange());
-            verifyFillsTask(primaryActivity);
+            waitAndAssertResumedAndFillsTask(primaryActivity);
         }
     }
 
@@ -221,6 +215,14 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
     public void testPlaceholderLaunchedWhenTaskWidthIncreased() {
         try (RotationSession rotationSession = new RotationSession()) {
             rotationSession.set(ROTATION_0);
+
+            // Reduce display size by 50% so that display size won't exceed the maximum display
+            // size during the test.
+            final Size currentSize = mReportedDisplayMetrics.getSize();
+            final Size displaySize = new Size((int) (currentSize.getWidth() * 0.5),
+                    (int) (currentSize.getHeight() * 0.5));
+            mReportedDisplayMetrics.setSize(displaySize);
+
             final double splitTaskWidth = getTaskWidth() * 1.05;
             final double splitTaskHeight = getTaskHeight() * 1.05;
 
@@ -241,14 +243,13 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
             // not launched
             Activity primaryActivity = startFullScreenActivityNewTask(TestActivityWithId.class,
                     PRIMARY_ACTIVITY_ID);
-            verifyFillsTask(primaryActivity);
+            waitAndAssertResumedAndFillsTask(primaryActivity);
             waitAndAssertNotResumed(PLACEHOLDER_ACTIVITY_ID);
 
             // Increase display size by 10% so that the primary and placeholder activities are
             // stacked
-            final Size currentSize = mReportedDisplayMetrics.getSize();
-            mReportedDisplayMetrics.setSize(new Size((int) (currentSize.getWidth() * 1.1),
-                    (int) (currentSize.getHeight() * 1.1)));
+            mReportedDisplayMetrics.setSize(new Size((int) (displaySize.getWidth() * 1.1),
+                    (int) (displaySize.getHeight() * 1.1)));
 
             // Verify that the placeholder activity is launched into a split with the primary
             // activity
@@ -290,14 +291,12 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
 
             // Shrink display width by 10% so that the primary and placeholder activities are
             // stacked
-            placeholderActivity.resetBoundsChangeCounter();
             final Size currentSize = mReportedDisplayMetrics.getSize();
             mReportedDisplayMetrics.setSize(new Size((int) (currentSize.getWidth() * 0.9),
                     (int) (currentSize.getHeight() * 0.9)));
 
             // Verify that the placeholder was not finished and fills the task
-            assertTrue(placeholderActivity.waitForBoundsChange());
-            verifyFillsTask(placeholderActivity);
+            waitAndAssertResumedAndFillsTask(placeholderActivity);
             waitAndAssertResumed(Arrays.asList(placeholderActivity));
         }
     }

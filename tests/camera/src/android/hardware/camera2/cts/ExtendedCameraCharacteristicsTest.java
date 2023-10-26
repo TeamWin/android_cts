@@ -510,11 +510,20 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
         Size[] jpegSizes = staticInfo.getJpegOutputSizesChecked();
         assertTrue("Primary cameras must support JPEG formats",
                 jpegSizes != null && jpegSizes.length > 0);
+        int minEuclidDistSquare = Integer.MAX_VALUE;
+        Size closestJpegSizeToVga = VGA;
         for (Size jpegSize : jpegSizes) {
             mCollector.expectTrue(
                     "Primary camera's JPEG size must be at least 1080p, but is "
                     + jpegSize, jpegSize.getWidth() * jpegSize.getHeight()
                         >= FULLHD.getWidth() * FULLHD.getHeight());
+            int widthDist = jpegSize.getWidth() - VGA.getWidth();
+            int heightDist = jpegSize.getHeight() - VGA.getHeight();
+            int euclidDistSquare = widthDist * widthDist + heightDist * heightDist;
+            if (euclidDistSquare < minEuclidDistSquare) {
+                closestJpegSizeToVga = jpegSize;
+                minEuclidDistSquare = euclidDistSquare;
+            }
         }
 
         CameraDevice camera = null;
@@ -533,7 +542,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             outputConfigs.add(new OutputConfiguration(jpegSurface));
 
             // isSessionConfigurationSupported will return true for JPEG sizes smaller
-            // than 1080P, due to framework rouding up to closest supported size (1080p).
+            // than 1080P, due to framework rouding up to closest supported size.
             CameraTestUtils.SessionConfigSupport sessionConfigSupport =
                     CameraTestUtils.isSessionConfigSupported(
                             camera, mHandler, outputConfigs, /*inputConfig*/ null,
@@ -544,7 +553,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                     sessionConfigSupport.configSupported);
 
             // Session creation for JPEG sizes smaller than 1080p will succeed, and the
-            // result JPEG image dimension is rounded up to closest supported size (1080p).
+            // result JPEG image dimension is rounded up to closest supported size.
             CaptureRequest.Builder request =
                     camera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             request.addTarget(jpegSurface);
@@ -579,8 +588,8 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             byte[] data = CameraTestUtils.getDataFromImage(image);
             assertTrue("Invalid image data", data != null && data.length > 0);
 
-            CameraTestUtils.validateJpegData(data, FULLHD.getWidth(), FULLHD.getHeight(),
-                    null /*filePath*/);
+            CameraTestUtils.validateJpegData(data, closestJpegSizeToVga.getWidth(),
+                    closestJpegSizeToVga.getHeight(), null /*filePath*/);
         } finally {
             if (camera != null) {
                 camera.close();
@@ -1700,19 +1709,49 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             boolean supportsRemosaic = arrayContains(capabilities,
                     CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_REMOSAIC_REPROCESSING);
 
-            if (!isUltraHighResolutionSensor) {
-                Log.i(TAG, "Camera id " + cameraId + " not ultra high resolution. Skipping " +
-                        "testUltraHighResolutionSensorCharacteristics");
+            List<CaptureRequest.Key<?>> requestKeys = c.getAvailableCaptureRequestKeys();
+            boolean doesSupportSensorPixelMode =
+                    requestKeys.contains(CaptureRequest.SENSOR_PIXEL_MODE);
+
+            if (!isUltraHighResolutionSensor && !doesSupportSensorPixelMode) {
+                Log.i(TAG, "Camera id " + cameraId + " not ultra high resolution / doesn't" +
+                      " support sensor pixel mode. Skipping " +
+                      "testUltraHighResolutionSensorCharacteristics");
                 continue;
             }
-            assertArrayContains(
-                    String.format("Ultra high resolution sensor, camera id %s" +
-                    " must also have the RAW capability", cameraId), capabilities,
-                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW);
+
+            // Test conditions applicable to both ULTRA_HIGH_RESOLUTION_SENSOR devices and those
+            // which support SENSOR_PIXEL_MODE.
             StreamConfigurationMap configs =
                     c.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION);
             assertNotNull("Maximum resolution stream configuration map must not be null for ultra" +
                     " high resolution sensor camera " + cameraId, configs);
+
+            int[] outputFormats = configs.getOutputFormats();
+            boolean supportsRawOutput =
+                    arrayContains(outputFormats, ImageFormat.RAW_SENSOR) ||
+                    arrayContains(outputFormats, ImageFormat.RAW10) ||
+                    arrayContains(outputFormats, ImageFormat.RAW_PRIVATE) ||
+                    arrayContains(outputFormats, ImageFormat.RAW12);
+
+            if (supportsRawOutput) {
+                Size binningFactor = c.get(CameraCharacteristics.SENSOR_INFO_BINNING_FACTOR);
+                assertTrue("SENSOR_INFO_BINNING_FACTOR must be advertised by a sensor that " +
+                        " supports ULTRA_HIGH_RESOLUTION_SENSOR / SENSOR_PIXEL_MODE with "
+                        + " RAW outputs - camera id: " +
+                        cameraId, binningFactor != null);
+            }
+
+            if (!isUltraHighResolutionSensor) {
+                continue;
+            }
+
+            // These conditions apply to ULTRA_HIGH_RESOLUTION_SENSOR devices.
+            assertArrayContains(
+                    String.format("Ultra high resolution sensor, camera id %s" +
+                    " must also have the RAW capability", cameraId), capabilities,
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW);
+
             Size uhrPixelArraySize = CameraTestUtils.getValueNotNull(
                 c, CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE_MAXIMUM_RESOLUTION);
             long uhrSensorSize = uhrPixelArraySize.getHeight() * uhrPixelArraySize.getWidth();
@@ -1721,7 +1760,6 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                     MIN_UHR_SENSOR_RESOLUTION + " pixels, is " + uhrSensorSize + ", for camera id "
                     + cameraId, uhrSensorSize >= MIN_UHR_SENSOR_RESOLUTION);
 
-            int[] outputFormats = configs.getOutputFormats();
             assertArrayContains(String.format("No max res JPEG image format for ultra high" +
                   " resolution sensor: ID %s", cameraId), outputFormats, ImageFormat.JPEG);
             assertArrayContains(String.format("No max res YUV_420_88 image format for ultra high" +
@@ -3399,11 +3437,9 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             "2.2.7.2/7.5/H-1-13",
             "2.2.7.2/7.5/H-1-14"})
     public void testCameraPerfClassCharacteristics() throws Exception {
-        if (mAdoptShellPerm) {
-            // Skip test for system camera. Performance class is only applicable for public camera
-            // ids.
-            return;
-        }
+        assumeFalse("Media performance class tests not applicable if shell permission is adopted",
+                mAdoptShellPerm);
+
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.PrimaryCameraRequirement primaryRearReq =
                 pce.addPrimaryRearCameraReq();
@@ -3698,17 +3734,13 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     @Test
     @AppModeFull(reason = "Media Performance class test not applicable to instant apps")
     @CddTest(requirements = {
-            "2.2.7.2/7.5/H-1-15",
             "2.2.7.2/7.5/H-1-16",
             "2.2.7.2/7.5/H-1-17"})
     public void testCameraUPerfClassCharacteristics() throws Exception {
-        if (mAdoptShellPerm) {
-            // Skip test for system camera. Performance class is only applicable for public camera
-            // ids.
-            return;
-        }
+        assumeFalse("Media performance class tests not applicable if shell permission is adopted",
+                mAdoptShellPerm);
+
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
-        CameraExtensionRequirement cameraExtensionReq = pce.addR7_5__H_1_15();
         DynamicRangeTenBitsRequirement dynamicRangeTenBitsReq = pce.addR7_5__H_1_16();
         FaceDetectionRequirement faceDetectionReq = pce.addR7_5__H_1_17();
 
@@ -3716,12 +3748,6 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 mCameraIdsUnderTest);
         String primaryFrontId = CameraTestUtils.getPrimaryFrontCamera(mCameraManager,
                 mCameraIdsUnderTest);
-
-        // H-1-15
-        verifyExtensionForCamera(primaryRearId, CameraExtensionRequirement.PRIMARY_REAR_CAMERA,
-                cameraExtensionReq);
-        verifyExtensionForCamera(primaryFrontId, CameraExtensionRequirement.PRIMARY_FRONT_CAMERA,
-                cameraExtensionReq);
 
         // H-1-16
         verifyDynamicRangeTenBits(primaryRearId,
@@ -3734,6 +3760,34 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 FaceDetectionRequirement.PRIMARY_REAR_CAMERA, faceDetectionReq);
         verifyFaceDetection(primaryFrontId,
                 FaceDetectionRequirement.PRIMARY_FRONT_CAMERA, faceDetectionReq);
+
+        pce.submitAndCheck();
+    }
+
+    /**
+     * Check camera extension characteristics for Android 14 Performance class requirements
+     * as specified in CDD camera section 7.5
+     */
+    @Test
+    @AppModeFull(reason = "Media Performance class test not applicable to instant apps")
+    @CddTest(requirements = {
+            "2.2.7.2/7.5/H-1-15"})
+    public void testCameraUPerfClassExtensionCharacteristics() throws Exception {
+        assumeFalse("Media performance class tests not applicable if shell permission is adopted",
+                mAdoptShellPerm);
+
+        PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
+        CameraExtensionRequirement cameraExtensionReq = pce.addR7_5__H_1_15();
+
+        String primaryRearId = CameraTestUtils.getPrimaryRearCamera(mCameraManager,
+                mCameraIdsUnderTest);
+        String primaryFrontId = CameraTestUtils.getPrimaryFrontCamera(mCameraManager,
+                mCameraIdsUnderTest);
+
+        verifyExtensionForCamera(primaryRearId, CameraExtensionRequirement.PRIMARY_REAR_CAMERA,
+                cameraExtensionReq);
+        verifyExtensionForCamera(primaryFrontId, CameraExtensionRequirement.PRIMARY_FRONT_CAMERA,
+                cameraExtensionReq);
 
         pce.submitAndCheck();
     }

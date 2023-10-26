@@ -26,11 +26,13 @@ import android.permission.cts.PermissionUtils
 import androidx.test.filters.SdkSuppress
 import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.AppOpsUtils
+import com.android.compatibility.common.util.CddTest
 import com.android.compatibility.common.util.SystemUtil
 import java.util.concurrent.TimeUnit
 import org.junit.Assert
 import org.junit.Assume.assumeFalse
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 private const val EXTRA_PACKAGE_NAME = "android.intent.extra.PACKAGE_NAME"
@@ -42,6 +44,7 @@ private const val ACTION_MANAGE_APP_PERMISSIONS = "android.intent.action.MANAGE_
  * app in this test).
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+@CddTest(requirement = "9.1/C-0-1")
 class LocationProviderInterceptDialogTest : BaseUsePermissionTest() {
     @Before
     fun setup() {
@@ -57,6 +60,7 @@ class LocationProviderInterceptDialogTest : BaseUsePermissionTest() {
     }
 
     @Test
+    @Ignore("b/288471744")
     fun clickLocationPermission_showDialog_clickOk() {
         openPermissionScreenForApp()
         click(By.text("Location"))
@@ -67,6 +71,7 @@ class LocationProviderInterceptDialogTest : BaseUsePermissionTest() {
     }
 
     @Test
+    @Ignore("b/288471744")
     fun clickLocationPermission_showDialog_clickLocationAccess() {
         openPermissionScreenForApp()
         click(By.text("Location"))
@@ -74,10 +79,11 @@ class LocationProviderInterceptDialogTest : BaseUsePermissionTest() {
             By.textContains("Location access can be modified from location settings"),
             true)
         click(By.res(LOCATION_ACCESS_BUTTON_RES))
-        findView(By.textContains("Use location"), true)
+        findView(By.res(USE_LOCATION_LABEL_ID), true)
     }
 
     @Test
+    @Ignore("b/288471744")
     fun checkRestrictedPermissions() {
         context.sendBroadcast(Intent(PermissionTapjackingTest.ACTION_SHOW_OVERLAY)
             .putExtra("package", MIC_LOCATION_PROVIDER_APP_PACKAGE_NAME)
@@ -121,6 +127,8 @@ class LocationProviderInterceptDialogTest : BaseUsePermissionTest() {
     }
 
     companion object {
+        private const val USE_LOCATION_LABEL_ID =
+            "com.android.settings:id/switch_text"
         private const val MIC_LOCATION_PROVIDER_APP_APK_PATH =
             "$APK_DIRECTORY/CtsAccessMicrophoneAppLocationProvider.apk"
         private const val MIC_LOCATION_PROVIDER_APP_PACKAGE_NAME =

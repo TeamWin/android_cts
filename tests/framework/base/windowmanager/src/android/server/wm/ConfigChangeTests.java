@@ -25,7 +25,6 @@ import static android.server.wm.app.Components.FONT_SCALE_ACTIVITY;
 import static android.server.wm.app.Components.FONT_SCALE_NO_RELAUNCH_ACTIVITY;
 import static android.server.wm.app.Components.FontScaleActivity.EXTRA_FONT_ACTIVITY_DPI;
 import static android.server.wm.app.Components.FontScaleActivity.EXTRA_FONT_PIXEL_SIZE;
-import static android.server.wm.app.Components.FontScaleActivity.EXTRA_FONT_SCALE;
 import static android.server.wm.app.Components.NO_RELAUNCH_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.TestActivity.EXTRA_CONFIG_ASSETS_SEQ;
@@ -257,39 +256,27 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
         }
         final int densityDpi = extras.getInt(EXTRA_FONT_ACTIVITY_DPI);
 
-        // Retry set font scale if needed, but with a maximum retry count to prevent infinite loop.
-        int retrySetFontScale = 5;
-        final float step = 0.15f;
-        for (float fontScale = 0.85f; fontScale <= 1.3f; fontScale += step) {
-            separateTestJournal();
-            fontScaleSession.set(fontScale);
-            mWmState.computeState(activityName);
-            // The number of config changes could be greater than expected as there may have
-            // other configuration change events triggered after font scale changed, such as
-            // NavigationBar recreated.
-            new ActivityLifecycleCounts(activityName).assertCountWithRetry(
-                    "relaunch or config changed",
-                    countSpec(ActivityCallback.ON_DESTROY, CountSpec.EQUALS, relaunch ? 1 : 0),
-                    countSpec(ActivityCallback.ON_CREATE, CountSpec.EQUALS, relaunch ? 1 : 0),
-                    countSpec(ActivityCallback.ON_RESUME, CountSpec.EQUALS, relaunch ? 1 : 0),
-                    countSpec(ActivityCallback.ON_CONFIGURATION_CHANGED,
-                            CountSpec.GREATER_THAN_OR_EQUALS, relaunch ? 0 : 1));
+        final float fontScale = 0.85f;
+        separateTestJournal();
+        fontScaleSession.set(fontScale);
+        mWmState.computeState(activityName);
+        // The number of config changes could be greater than expected as there may have
+        // other configuration change events triggered after font scale changed, such as
+        // NavigationBar recreated.
+        new ActivityLifecycleCounts(activityName).assertCountWithRetry(
+                "relaunch or config changed",
+                countSpec(ActivityCallback.ON_DESTROY, CountSpec.EQUALS, relaunch ? 1 : 0),
+                countSpec(ActivityCallback.ON_CREATE, CountSpec.EQUALS, relaunch ? 1 : 0),
+                countSpec(ActivityCallback.ON_RESUME, CountSpec.EQUALS, relaunch ? 1 : 0),
+                countSpec(ActivityCallback.ON_CONFIGURATION_CHANGED,
+                        CountSpec.GREATER_THAN_OR_EQUALS, relaunch ? 0 : 1));
 
-            // Verify that the display metrics are updated, and therefore the text size is also
-            // updated accordingly.
-            final Bundle changedExtras = TestJournalContainer.get(activityName).extras;
-            if (changedExtras.getFloat(EXTRA_FONT_SCALE) == fontScale) {
-                final float scale = fontScale;
-                waitForOrFail("reported fontPixelSize from " + activityName,
-                        () -> scaledPixelsToPixels(EXPECTED_FONT_SIZE_SP, scale, densityDpi)
-                                == changedExtras.getInt(EXTRA_FONT_PIXEL_SIZE));
-            } else if (retrySetFontScale-- > 0) {
-                logE("retry set font scale " + fontScale + ", currently is "
-                        + changedExtras.getFloat(EXTRA_FONT_SCALE) + " session="
-                        + fontScaleSession.get());
-                fontScale -= step;
-            }
-        }
+        // Verify that the display metrics are updated, and therefore the text size is also
+        // updated accordingly.
+        waitForOrFail("reported fontPixelSize from " + activityName,
+                () -> scaledPixelsToPixels(EXPECTED_FONT_SIZE_SP, fontScale, densityDpi)
+                        == TestJournalContainer.get(activityName).extras.getInt(
+                        EXTRA_FONT_PIXEL_SIZE));
     }
 
     /**

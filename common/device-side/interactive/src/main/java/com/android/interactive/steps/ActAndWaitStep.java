@@ -45,6 +45,7 @@ public abstract class ActAndWaitStep extends Step<Nothing> {
     public void interact() {
         show(mInstruction);
         addFailButton();
+        addSwapButton();
     }
 
     @Override

@@ -92,7 +92,7 @@ public abstract class AbstractTestListActivity extends ListActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if ((getResources().getConfiguration().uiMode & Configuration.UI_MODE_TYPE_MASK)
-              == Configuration.UI_MODE_TYPE_TELEVISION) {
+                == Configuration.UI_MODE_TYPE_TELEVISION) {
             getWindow().requestFeature(Window.FEATURE_OPTIONS_PANEL);
         }
         setContentView(R.layout.list_content);
@@ -114,10 +114,11 @@ public abstract class AbstractTestListActivity extends ListActivity {
                 mEndTime = System.currentTimeMillis();
             }
             TestResult testResult = TestResult.fromActivityResult(resultCode, data);
-            // Set the same result in both folded and unfolded mode if the test pass mode is set to
-            // either_mode.
+            // Set the same result in both folded and unfolded mode if the device is foldable
+            // and the test pass mode is set to either_mode.
             TestListItem testListItem = mAdapter.getItemByName(testResult.getName());
-            if (testListItem != null && testListItem.passInEitherMode) {
+            if (mAdapter.isFoldableDevice() && testListItem != null
+                    && testListItem.passInEitherMode) {
                 setTestResult(TestResult.fromActivityResultWithDisplayMode(
                         resultCode, data, DisplayMode.FOLDED.toString()));
                 setTestResult(TestResult.fromActivityResultWithDisplayMode(

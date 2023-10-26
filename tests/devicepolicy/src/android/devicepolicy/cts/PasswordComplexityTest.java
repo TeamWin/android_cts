@@ -23,6 +23,7 @@ import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_MEDIUM;
 import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_NONE;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.pm.PackageManager.FEATURE_SECURE_LOCK_SCREEN;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -34,6 +35,7 @@ import android.content.Intent;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
@@ -130,6 +132,7 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
                 .isEqualTo(PASSWORD_COMPLEXITY_NONE);
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
@@ -143,6 +146,7 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
         }
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
@@ -156,6 +160,7 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
         }
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
@@ -169,6 +174,7 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
         }
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
@@ -182,6 +188,7 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
         }
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
@@ -195,6 +202,7 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
         }
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
@@ -208,6 +216,7 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
         }
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
@@ -221,6 +230,7 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
         }
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
@@ -234,6 +244,7 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
         }
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
@@ -247,6 +258,7 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
         }
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
@@ -260,6 +272,7 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
         }
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
@@ -273,6 +286,7 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
         }
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
@@ -286,6 +300,7 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
         }
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = PasswordComplexity.class, singleTestOnly = true)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#getPasswordComplexity")
@@ -476,6 +491,7 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
     }
 
     @Postsubmit(reason = "new test")
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @PolicyAppliesTest(policy = PasswordComplexity.class)
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setRequiredPasswordComplexity")
     public void setRequiredPasswordComplexity_low_passwordThatMeetsLowPasswordBandRequired() {
@@ -493,6 +509,7 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
 
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = PasswordComplexity.class)
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setRequiredPasswordComplexity")
     public void setRequiredPasswordComplexity_medium_passwordThatMeetsMediumPasswordBandRequired() {
         try {
@@ -513,6 +530,7 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
     // currently these reasons might not be accurate...
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = PasswordComplexity.class)
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setRequiredPasswordComplexity")
     public void setRequiredPasswordComplexity_high_passwordThatMeetsHighPasswordBandRequired() {
         try {
