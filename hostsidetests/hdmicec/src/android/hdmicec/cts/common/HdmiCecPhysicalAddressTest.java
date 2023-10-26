@@ -37,6 +37,7 @@ public final class HdmiCecPhysicalAddressTest extends BaseHdmiCecCtsTest {
         RuleChain
             .outerRule(CecRules.requiresCec(this))
             .around(CecRules.requiresLeanback(this))
+            .around(CecRules.requiresPhysicalDevice(this))
             .around(hdmiCecClient);
     /**
      * Test 10.1.2-1

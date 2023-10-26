@@ -16,7 +16,6 @@
 
 package android.hdmicec.cts.common;
 
-import com.android.tradefed.util.RunUtil;
 import static android.hdmicec.cts.HdmiCecConstants.TIMEOUT_SAFETY_MS;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -29,6 +28,7 @@ import android.hdmicec.cts.LogicalAddress;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.util.RunUtil;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -47,6 +47,7 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
             RuleChain
                     .outerRule(CecRules.requiresCec(this))
                     .around(CecRules.requiresLeanback(this))
+                    .around(CecRules.requiresPhysicalDevice(this))
                     .around(hdmiCecClient);
 
     /**
