@@ -209,7 +209,8 @@ class HdrExtensionTest(its_base_test.ItsBaseTest):
           capture_request_utils.auto_capture_request(), cam.CAP_YUV)
       y_plane, _, _ = image_processing_utils.convert_capture_to_planes(cap)
       its_session_utils.validate_lighting(
-          y_plane, self.scene, state='OFF', log_path=self.log_path)
+          y_plane, self.scene, state='OFF', log_path=self.log_path,
+          tablet_state='OFF')
 
       self.setup_tablet()
       self.set_screen_brightness(_TABLET_BRIGHTNESS)
