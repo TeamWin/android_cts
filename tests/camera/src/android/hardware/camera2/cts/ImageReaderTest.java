@@ -2025,7 +2025,7 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             if (VERBOSE) Log.v(TAG, "Waiting for an Image");
             mListener.waitForAnyImageAvailable(CAPTURE_WAIT_TIMEOUT_MS);
             if (repeating) {
-                img = mReader.acquireLatestImage();
+                img = mReader.acquireNextImage();
                 if (img == null && retryCount < MAX_RETRY_COUNT) {
                     retryCount++;
                     continue;
