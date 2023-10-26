@@ -16,6 +16,7 @@
 
 package android.server.wm.jetpack.utils;
 
+import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.EXTENSION_VERSION_2;
 import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.assumeExtensionSupportedDevice;
@@ -73,7 +74,7 @@ import java.util.List;
 public class ActivityEmbeddingUtil {
 
     public static final String TAG = "ActivityEmbeddingTests";
-    public static final long WAIT_FOR_LIFECYCLE_TIMEOUT_MS = 3000;
+    public static final long WAIT_FOR_LIFECYCLE_TIMEOUT_MS = 3000L * HW_TIMEOUT_MULTIPLIER;
     public static final SplitAttributes DEFAULT_SPLIT_ATTRS = new SplitAttributes.Builder().build();
 
     public static final SplitAttributes EXPAND_SPLIT_ATTRS = new SplitAttributes.Builder()
