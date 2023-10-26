@@ -39,6 +39,9 @@ public @interface EnsureHasNoAccounts {
     /** Which user type the account must not be present added on. */
     UserType onUser() default ANY;
 
+    /** Exclude pre created accounts. */
+    boolean allowPreCreatedAccounts() default true;
+
     /** Behaviour if there are some accounts for the user. */
     com.android.bedstead.harrier.annotations.FailureMode failureMode()
             default com.android.bedstead.harrier.annotations.FailureMode.SKIP;
