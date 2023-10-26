@@ -43,6 +43,7 @@ import static android.media.audio.cts.AudioTestUtil.resetVolumeIndex;
 import static android.provider.Settings.Global.APPLY_RAMPING_RINGER;
 import static android.provider.Settings.System.SOUND_EFFECTS_ENABLED;
 
+import static com.android.media.audio.flags.Flags.autoPublicVolumeApiHardening;
 import static com.android.media.mediatestutils.TestUtils.getFutureForIntent;
 import static com.android.media.mediatestutils.TestUtils.getFutureForListener;
 
@@ -64,10 +65,8 @@ import android.Manifest;
 import android.app.Instrumentation;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.media.AudioAttributes;
@@ -93,7 +92,6 @@ import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.provider.Settings;
 import android.provider.Settings.System;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.SoundEffectConstants;
 
@@ -110,8 +108,8 @@ import com.android.compatibility.common.util.UserSettings.Namespace;
 import com.android.internal.annotations.GuardedBy;
 import com.android.media.mediatestutils.CancelAllFuturesRule;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 
 import org.junit.After;
@@ -189,6 +187,7 @@ public class AudioManagerTest {
     private boolean mIsTelevision;
     private boolean mIsSingleVolume;
     private boolean mSkipRingerTests;
+    private boolean mSkipAutoVolumeTests = false;
     // From N onwards, ringer mode adjustments that toggle DND are not allowed unless
     // package has DND access. Many tests in this package toggle DND access in order
     // to get device out of the DND state for the test to proceed correctly.
@@ -238,6 +237,13 @@ public class AudioManagerTest {
         mIsSingleVolume = mContext.getResources().getBoolean(
                 Resources.getSystem().getIdentifier("config_single_volume", "bool", "android"));
         mSkipRingerTests = mUseFixedVolume || mIsTelevision || mIsSingleVolume;
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+                && autoPublicVolumeApiHardening()) {
+            // setRingerMode is a no-op
+            mSkipRingerTests = true;
+            // volume SDK APIs are no-ops
+            mSkipAutoVolumeTests = true;
+        }
 
         // TODO (b/294941969) pull out volume/ringer/zen state setting/resetting into test rule
         // Store the original volumes that that they can be recovered in tearDown().
@@ -393,6 +399,10 @@ public class AudioManagerTest {
     @Test
     public void testVolumeChangedIntent() throws Exception {
         if (mAudioManager.isVolumeFixed()) {
+            return;
+        }
+        if (mSkipAutoVolumeTests) {
+            // setStreamVolume is a no-op
             return;
         }
         // safe media can block the raising the volume, disable it
@@ -607,6 +617,10 @@ public class AudioManagerTest {
         if (mUseFixedVolume || !mHasVibrator) {
             return;
         }
+        if (mSkipAutoVolumeTests) {
+            // setRingerMode is a no-op
+            return;
+        }
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
         // VIBRATE_SETTING_ON
@@ -669,6 +683,10 @@ public class AudioManagerTest {
     @Test
     public void testVibrateRinger() throws Exception {
         if (mUseFixedVolume || !mHasVibrator) {
+            return;
+        }
+        if (mSkipAutoVolumeTests) {
+            // setRingerMode is a no-op
             return;
         }
         Utils.toggleNotificationPolicyAccess(
@@ -1008,6 +1026,10 @@ public class AudioManagerTest {
     public void testVolume() throws Exception {
         if (MediaUtils.check(mIsTelevision, "No volume test due to fixed/full vol devices"))
             return;
+        if (mSkipAutoVolumeTests) {
+            // setStreamVolume/adjustVolume are no-op
+            return;
+        }
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
         int volume, volumeDelta;
@@ -1191,6 +1213,10 @@ public class AudioManagerTest {
 
     @Test
     public void testMuteFixedVolume() throws Exception {
+        if (mSkipAutoVolumeTests) {
+            // adjustStreamVolume is a no-op
+            return;
+        }
         int[] streams = {
                 STREAM_VOICE_CALL,
                 STREAM_MUSIC,
@@ -1335,6 +1361,10 @@ public class AudioManagerTest {
     }
 
     private void testStreamMuting(int stream) {
+        if (mSkipAutoVolumeTests) {
+            // adjustStreamVolume is a no-op
+            return;
+        }
         getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(Manifest.permission.QUERY_AUDIO_STATE);
 
@@ -1406,6 +1436,10 @@ public class AudioManagerTest {
      */
     @Test
     public void testAdjustVolumeInTotalSilenceMode() throws Exception {
+        if (mSkipAutoVolumeTests) {
+            // adjustStreamVolume is a no-op
+            return;
+        }
         assumeFalse(mSkipRingerTests);
 
         final int SILENCE_VOL = 0;
@@ -1772,6 +1806,10 @@ public class AudioManagerTest {
 
     @Test
     public void testAdjustVolumeWithIllegalDirection() throws Exception {
+        if (mSkipAutoVolumeTests) {
+            // adjustVolume is a no-op
+            return;
+        }
         // Call the method with illegal direction. System should not reboot.
         mAudioManager.adjustVolume(37, 0);
     }
