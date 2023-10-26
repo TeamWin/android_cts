@@ -100,6 +100,7 @@ import android.content.cts.MockService;
 import android.content.cts.R;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.ArchivedActivity;
 import android.content.pm.ArchivedPackage;
 import android.content.pm.ComponentInfo;
 import android.content.pm.IPackageManager;
@@ -119,12 +120,14 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.content.pm.SharedLibraryInfo;
 import android.content.pm.Signature;
+import android.content.pm.SigningInfo;
 import android.content.pm.cts.PackageManagerShellCommandInstallTest.PackageBroadcastReceiver;
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -168,10 +171,14 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.security.PublicKey;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -247,6 +254,11 @@ public class PackageManagerTest {
             + "CtsContentLongLabelNameTestApp.apk";
     private static final String LONG_USES_PERMISSION_NAME_APK = SAMPLE_APK_BASE
             + "CtsContentLongUsesPermissionNameTestApp.apk";
+
+    private static final String TEST_ICON = SAMPLE_APK_BASE + "icon.png";
+    private static final String TEST_ICON_MONO = SAMPLE_APK_BASE + "icon_mono.png";
+    private static final String DIFF_SIGNER_CERTIFICATE = SAMPLE_APK_BASE + "cts-testkey1.x509.pem";
+
     private static final String EMPTY_APP_PACKAGE_NAME = "android.content.cts.emptytestapp";
     private static final String EMPTY_APP_MAX_PACKAGE_NAME = "android.content.cts.emptytestapp27j"
             + "EBRNRG3ozwBsGr1sVIM9U0bVTI2TdyIyeRkZgW4JrJefwNIBAmCg4AzqXiCvG6JjqA0uTCWSFu2YqAVxVd"
@@ -2870,7 +2882,7 @@ public class PackageManagerTest {
                 "pm get-archived-package-metadata " + HELLO_WORLD_PACKAGE_NAME);
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
 
-        // Install a default APK.
+        // Install archived APK.
         assertEquals("Success\n", executeShellCommand(
                 String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
                         archivedPackage.length), archivedPackage));
@@ -3044,7 +3056,6 @@ public class PackageManagerTest {
         var archivedPackage = packageManager.getArchivedPackage(HELLO_WORLD_PACKAGE_NAME);
 
         // Try to install archived on top of fully installed app.
-        var params = new SessionParams(MODE_FULL_INSTALL);
         installArchived(archivedPackage, STATUS_FAILURE,
                 "INSTALL_FAILED_SESSION_INVALID: Archived installation");
 
@@ -3151,6 +3162,58 @@ public class PackageManagerTest {
 
         mContext.unregisterReceiver(addedBroadcastReceiver);
         mContext.unregisterReceiver(removedBroadcastReceiver);
+    }
+
+    private static Certificate readCertificate() throws Exception {
+        try (InputStream is = new FileInputStream(DIFF_SIGNER_CERTIFICATE)) {
+            CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+            return certFactory.generateCertificate(is);
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_ARCHIVING)
+    public void testInstallArchivedApi() throws Exception {
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+
+        Certificate certificate = readCertificate();
+        Signature signature = new Signature(new Certificate[] { certificate });
+        PublicKey publicKey = certificate.getPublicKey();
+
+        SigningInfo signingInfo = new SigningInfo(/* schemeVersion= */3, List.of(signature),
+                List.of(publicKey), null);
+
+        ArchivedActivity archivedActivity = new ArchivedActivity("HelloWorldTitle",
+                new ComponentName(HELLO_WORLD_PACKAGE_NAME, ".MainActivity"));
+        archivedActivity.setIcon(new BitmapDrawable(/* res= */null, TEST_ICON));
+        archivedActivity.setMonochromeIcon(new BitmapDrawable(/* res= */null, TEST_ICON_MONO));
+
+        ArchivedPackage archivedPackage = new ArchivedPackage(
+                HELLO_WORLD_PACKAGE_NAME,
+                signingInfo,
+                List.of(archivedActivity)
+        );
+        archivedPackage.setVersionCode(1);
+        archivedPackage.setVersionCodeMajor(0);
+        archivedPackage.setTargetSdkVersion(27);
+        archivedPackage.setDefaultToDeviceProtectedStorage(null);
+        archivedPackage.setRequestLegacyExternalStorage("true");
+        archivedPackage.setUserDataFragile("true");
+
+        // Install archived.
+        installArchived(archivedPackage);
+        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+
+        // Wrong signature (we are using cts-testkey1).
+        assertThat(SystemUtil.runShellCommand(
+                "pm install -t -g " + HELLO_WORLD_UPDATED_APK)).startsWith(
+                "Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE");
+        // Unarchive/full install succeeds.
+        assertEquals("Success\n", SystemUtil.runShellCommand(
+                "pm install -t -g " + HELLO_WORLD_DIFF_SIGNER_APK));
+        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
     }
 
     @Test
