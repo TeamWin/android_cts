@@ -94,6 +94,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerExecutor;
 import android.os.HandlerThread;
+import android.os.PersistableBundle;
 import android.os.PowerManager;
 import android.os.Process;
 import android.os.SystemClock;
@@ -6546,18 +6547,20 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     @Test
     public void testOuiKeyedDataBuilder() throws Exception {
         int oui = 0x00112233;
-        WifiSsid parcelable =
-                WifiSsid.fromBytes("TEST_SSID_1".getBytes(StandardCharsets.UTF_8));
+        PersistableBundle data = new PersistableBundle();
+        String key = "intField";
+        data.putInt(key, 12345);
 
         assertThrows("Zero OUI should trigger an exception", IllegalArgumentException.class,
-                () -> new OuiKeyedData.Builder(0, parcelable).build());
+                () -> new OuiKeyedData.Builder(0, data).build());
         assertThrows(">24-bit OUI should trigger an exception", IllegalArgumentException.class,
-                () -> new OuiKeyedData.Builder(0x11223344, parcelable).build());
+                () -> new OuiKeyedData.Builder(0x11223344, data).build());
         assertThrows("Null data should trigger an exception", IllegalArgumentException.class,
                 () -> new OuiKeyedData.Builder(oui, null).build());
 
-        OuiKeyedData ouiKeyedData = new OuiKeyedData.Builder(oui, parcelable).build();
+        OuiKeyedData ouiKeyedData = new OuiKeyedData.Builder(oui, data).build();
         assertEquals(oui, ouiKeyedData.getOui());
-        assertTrue(parcelable.equals(ouiKeyedData.getData()));
+        assertTrue(data.keySet().equals(ouiKeyedData.getData().keySet()));
+        assertEquals(data.getInt(key), ouiKeyedData.getData().getInt(key));
     }
 }
