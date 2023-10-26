@@ -105,6 +105,11 @@ public abstract class StreamBase {
      */
     protected int mSharingMode;
 
+    /**
+     * @return the sharing mode for the (open) stream
+     */
+    public abstract int getSharingMode();
+
     //TODO - Add methods for changing the routing of an instantiated stream.
 
     // the thread on which the underlying Android AudioTrack/AudioRecord will run

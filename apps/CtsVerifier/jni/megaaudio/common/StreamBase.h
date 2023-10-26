@@ -46,7 +46,8 @@ public:
     // Attributes
     //
     static const int32_t ROUTING_DEVICE_NONE    = -1;
-    int32_t getRoutedDeviceId() const { return mRouteDeviceId; }
+
+    static const int32_t SHARING_MODE_INVALID   = -1;
 
     int32_t getNumBufferFrames() const { return mBufferSizeInFrames; }
 

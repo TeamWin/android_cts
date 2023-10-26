@@ -206,6 +206,11 @@ JNIEXPORT jint JNICALL Java_org_hyphonate_megaaudio_player_OboePlayer_getRoutedD
     return ((OboePlayer*)(native_player))->getRoutedDeviceId();
 }
 
+JNIEXPORT jint JNICALL Java_org_hyphonate_megaaudio_player_OboePlayer_getSharingModeN(
+            JNIEnv *env, jobject thiz, jlong native_player) {
+    return ((OboePlayer*)(native_player))->getSharingMode();
+}
+
 JNIEXPORT jboolean JNICALL Java_org_hyphonate_megaaudio_player_OboePlayer_getTimestampN(
             JNIEnv *env, jobject thiz, jlong native_player, jobject timestamp) {
     return ((OboePlayer*)native_player)->getJavaTimestamp(timestamp);

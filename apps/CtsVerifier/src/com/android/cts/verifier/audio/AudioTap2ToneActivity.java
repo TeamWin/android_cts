@@ -273,7 +273,7 @@ public class AudioTap2ToneActivity
             mDuplexAudioManager.setNumRecorderChannels(NUM_RECORD_CHANNELS);
         }
 
-        if (mDuplexAudioManager.setupStreams(mApi, BuilderBase.TYPE_JAVA) == StreamBase.OK) {
+        if (mDuplexAudioManager.buildStreams(mApi, BuilderBase.TYPE_JAVA) == StreamBase.OK) {
             mBuffSizeView.setText(
                     getString(R.string.audio_general_play_colon)
                             + mDuplexAudioManager.getNumPlayerBufferFrames()

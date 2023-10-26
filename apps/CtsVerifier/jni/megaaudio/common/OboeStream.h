@@ -38,6 +38,10 @@ public:
 
     StreamBase::Result getTimeStamp(oboe::FrameTimestamp* timeStamp);
 
+    int32_t getRoutedDeviceId();
+
+    int32_t getSharingMode();
+
 protected:
     OboeStream(int32_t subtype) : mSubtype(subtype), mStreamStarted(false) {}
 

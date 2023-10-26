@@ -39,7 +39,7 @@ public class AudioDataPathsUSBActivity extends AudioDataPathsBaseActivity {
                 R.string.audio_datapaths_USB_test, R.string.audio_datapaths_USB_info, -1);
 
         // Make sure there are devices to test, or else enable pass button.
-        if (mTestManager.countValidTestSpecs() == 0) {
+        if (mTestManager.countValidTestModules() == 0) {
             getPassButton().setEnabled(true);
         }
     }
@@ -53,7 +53,7 @@ public class AudioDataPathsUSBActivity extends AudioDataPathsBaseActivity {
         AudioSinkProvider analysisSinkProvider =
                 new AppCallbackAudioSinkProvider(mAnalysisCallbackHandler);
 
-        TestSpec testSpec;
+        TestModule testModule;
 
         // These just make it easier to turn on/off various categories
         boolean doUsbHeadset = true;
@@ -63,49 +63,49 @@ public class AudioDataPathsUSBActivity extends AudioDataPathsBaseActivity {
         // USB Device
         //
         if (doUsbDevice) {
-            testSpec = new TestSpec(
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2,
                     AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2);
-            testSpec.setSectionTitle("USB Device");
-            testSpec.setSources(leftSineSourceProvider, analysisSinkProvider);
-            testSpec.setDescription("USBDevice:2:L USBDevice:2");
-            testSpec.setAnalysisChannel(0);
-            testManager.mTestSpecs.add(testSpec);
-            testSpec = new TestSpec(
+            testModule.setSectionTitle("USB Device");
+            testModule.setSources(leftSineSourceProvider, analysisSinkProvider);
+            testModule.setDescription("USBDev:2:L USBDev:2");
+            testModule.setAnalysisChannel(0);
+            testManager.addTestModule(testModule);
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2,
                     AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2);
-            testSpec.setSources(rightSineSourceProvider, analysisSinkProvider);
-            testSpec.setDescription("USBDevice:2:R USBDevice:2");
-            testSpec.setAnalysisChannel(1);
-            testManager.mTestSpecs.add(testSpec);
+            testModule.setSources(rightSineSourceProvider, analysisSinkProvider);
+            testModule.setDescription("USBDev:2:R USBDev:2");
+            testModule.setAnalysisChannel(1);
+            testManager.addTestModule(testModule);
         }
 
         //
         // USB Headset
         //
         if (doUsbHeadset) {
-            testSpec = new TestSpec(
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_USB_HEADSET, 48000, 2,
                     AudioDeviceInfo.TYPE_USB_HEADSET, 48000, 2);
-            testSpec.setSectionTitle("USB Headset");
-            testSpec.setSources(leftSineSourceProvider, analysisSinkProvider);
-            testSpec.setDescription("USBHeadset:2:L USBHeadset:2");
-            testSpec.setAnalysisChannel(0);
-            testManager.mTestSpecs.add(testSpec);
-            testSpec = new TestSpec(
+            testModule.setSectionTitle("USB Headset");
+            testModule.setSources(leftSineSourceProvider, analysisSinkProvider);
+            testModule.setDescription("USBHeadset:2:L USBHeadset:2");
+            testModule.setAnalysisChannel(0);
+            testManager.addTestModule(testModule);
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_USB_HEADSET, 48000, 2,
                     AudioDeviceInfo.TYPE_USB_HEADSET, 48000, 2);
-            testSpec.setSources(rightSineSourceProvider, analysisSinkProvider);
-            testSpec.setDescription("USBHeadset:2:R USBHeadset:2");
-            testSpec.setAnalysisChannel(1);
-            testManager.mTestSpecs.add(testSpec);
+            testModule.setSources(rightSineSourceProvider, analysisSinkProvider);
+            testModule.setDescription("USBHeadset:2:R USBHeadset:2");
+            testModule.setAnalysisChannel(1);
+            testManager.addTestModule(testModule);
         }
     }
 
-    void postValidateTestDevices(int numValidTestSpecs) {
+    void postValidateTestDevices(int numValidTestModules) {
         TextView promptView = findViewById(R.id.audio_datapaths_deviceprompt);
 
-        if (mTestManager.countTestedTestSpecs() != 0) {
+        if (mTestManager.countTestedTestModules() != 0) {
             // There are already tested devices in the list, so they must be attaching
             // another test peripheral
             promptView.setText(
@@ -113,6 +113,6 @@ public class AudioDataPathsUSBActivity extends AudioDataPathsBaseActivity {
         } else {
             promptView.setText(getResources().getString(R.string.audio_datapaths_usb_nodevices));
         }
-        promptView.setVisibility(numValidTestSpecs == 0 ? View.VISIBLE : View.GONE);
+        promptView.setVisibility(numValidTestModules == 0 ? View.VISIBLE : View.GONE);
     }
 }

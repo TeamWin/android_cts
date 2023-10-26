@@ -66,6 +66,12 @@ public class JavaPlayer extends Player {
         setupStream(builder);
     }
 
+    @Override
+    public int getSharingMode() {
+        // JAVA Audio API does not support a sharing mode
+        return BuilderBase.SHARING_MODE_NOTSUPPORTED;
+    }
+
     /**
      * Allocates the array for the burst buffer.
      */
