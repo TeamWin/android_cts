@@ -204,7 +204,7 @@ class HdrExtensionTest(its_base_test.ItsBaseTest):
         raise AssertionError('Test must be run with tablet.')
 
       # Validate lighting
-      cam.do_3a()
+      cam.do_3a(do_af=False)
       cap = cam.do_capture(
           capture_request_utils.auto_capture_request(), cam.CAP_YUV)
       y_plane, _, _ = image_processing_utils.convert_capture_to_planes(cap)
