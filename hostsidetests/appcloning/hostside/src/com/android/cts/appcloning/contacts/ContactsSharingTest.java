@@ -56,7 +56,7 @@ public class ContactsSharingTest extends AppCloningBaseHostTest {
     private static final String CLONE_CONTACTS_PROVIDER_DATA_TEST_CLASS =
             "CloneContactsProviderDataTest";
 
-    private static final String CONTACTS_PROVIDER_PACKAGE_NAME = "com.android.providers.contacts";
+    private static final String CONTACTS_PROVIDER_PACKAGE_NAME = "android.providers.contacts";
     private static final String OWNER_USER_ID = "0";
     private static final String TEST_ACCOUNT_TYPE = "test.com";
     private static TestContactsDataManager sTestContactsDataManager;
