@@ -57,16 +57,21 @@ import android.content.pm.PackageManager.ApplicationInfoFlags;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PackageManager.PackageInfoFlags;
 import android.content.pm.cts.PackageManagerShellCommandInstallTest.PackageBroadcastReceiver;
+import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.text.TextUtils;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -91,7 +96,6 @@ import java.util.concurrent.TimeUnit;
 
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
-@RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
 public class PackageInstallerArchiveTest {
 
     private static final String SAMPLE_APK_BASE = "/data/local/tmp/cts/content/";
@@ -105,11 +109,18 @@ public class PackageInstallerArchiveTest {
     private static final String NO_ACTIVITY_APK_PATH =
             SAMPLE_APK_BASE + "CtsIntentResolutionTestApp.apk";
 
+    private static CompletableFuture<Integer> sUnarchiveId;
     private static CompletableFuture<String> sUnarchiveReceiverPackageName;
     private static CompletableFuture<Boolean> sUnarchiveReceiverAllUsers;
 
     @Rule
     public final Expect expect = Expect.create();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
+    @Rule
+    public AbandonAllPackageSessionsRule mAbandonSessionsRule = new AbandonAllPackageSessionsRule();
 
     private Context mContext;
     private UiDevice mUiDevice;
@@ -131,6 +142,7 @@ public class PackageInstallerArchiveTest {
         mStorageStatsManager = mContext.getSystemService(StorageStatsManager.class);
         mAppOpsManager = mContext.getSystemService(AppOpsManager.class);
         mIntentSender = new ArchiveIntentSender();
+        sUnarchiveId = new CompletableFuture<>();
         sUnarchiveReceiverPackageName = new CompletableFuture<>();
         sUnarchiveReceiverAllUsers = new CompletableFuture<>();
         mContext.getPackageManager().setComponentEnabledSetting(
@@ -155,8 +167,9 @@ public class PackageInstallerArchiveTest {
                         new IntentSender((IIntentSender) mIntentSender)),
                 Manifest.permission.DELETE_PACKAGES);
 
-        assertThat(mIntentSender.mPackage.get()).isEqualTo(PACKAGE_NAME);
-        assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+        assertThat(mIntentSender.mPackage.get(5, TimeUnit.SECONDS)).isEqualTo(PACKAGE_NAME);
+        assertThat(mIntentSender.mStatus.get(10, TimeUnit.MILLISECONDS)).isEqualTo(
+                PackageInstaller.STATUS_SUCCESS);
         StorageStats stats =
                 runWithShellPermissionIdentity(() ->
                                 mStorageStatsManager.queryStatsForPackage(
@@ -177,7 +190,8 @@ public class PackageInstallerArchiveTest {
                 () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
                         new IntentSender((IIntentSender) mIntentSender)),
                 Manifest.permission.DELETE_PACKAGES);
-        assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+        assertThat(mIntentSender.mStatus.get(5, TimeUnit.SECONDS)).isEqualTo(
+                PackageInstaller.STATUS_SUCCESS);
 
         ApplicationInfo applicationInfo = mPackageManager.getPackageInfo(PACKAGE_NAME,
                 PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).applicationInfo;
@@ -231,7 +245,8 @@ public class PackageInstallerArchiveTest {
                         new IntentSender((IIntentSender) mIntentSender)),
                 Manifest.permission.DELETE_PACKAGES);
 
-        assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+        assertThat(mIntentSender.mStatus.get(5, TimeUnit.SECONDS)).isEqualTo(
+                PackageInstaller.STATUS_SUCCESS);
         assertThat(mPackageManager.getPackageInfo(PACKAGE_NAME,
                 PackageInfoFlags.of(
                         MATCH_UNINSTALLED_PACKAGES)).applicationInfo.isArchived).isTrue();
@@ -262,19 +277,68 @@ public class PackageInstallerArchiveTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
     public void unarchiveApp() throws Exception {
         installPackage(PACKAGE_NAME, APK_PATH);
         runWithShellPermissionIdentity(
                 () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
                         new IntentSender((IIntentSender) mIntentSender)),
                 Manifest.permission.DELETE_PACKAGES);
-        assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+        assertThat(mIntentSender.mStatus.get(5, TimeUnit.SECONDS)).isEqualTo(
+                PackageInstaller.STATUS_SUCCESS);
+
+        SessionListener sessionListener = new SessionListener();
+        mPackageInstaller.registerSessionCallback(sessionListener,
+                new Handler(Looper.getMainLooper()));
 
         runWithShellPermissionIdentity(
                 () -> mPackageInstaller.requestUnarchive(PACKAGE_NAME),
                 Manifest.permission.INSTALL_PACKAGES);
-        assertThat(sUnarchiveReceiverPackageName.get()).isEqualTo(PACKAGE_NAME);
-        assertThat(sUnarchiveReceiverAllUsers.get()).isFalse();
+        assertThat(sUnarchiveReceiverPackageName.get(5, TimeUnit.SECONDS)).isEqualTo(PACKAGE_NAME);
+        assertThat(sUnarchiveReceiverAllUsers.get(10, TimeUnit.MILLISECONDS)).isFalse();
+        int unarchiveId = sUnarchiveId.get(10, TimeUnit.MILLISECONDS);
+
+        int draftSessionId = sessionListener.mSessionIdCreated.get(5, TimeUnit.SECONDS);
+        PackageInstaller.SessionInfo sessionInfo = mPackageInstaller.getSessionInfo(
+                draftSessionId);
+        assertThat(unarchiveId).isEqualTo(draftSessionId);
+        assertThat(sessionInfo.appPackageName).isEqualTo(PACKAGE_NAME);
+        PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
+                PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+        params.setUnarchiveId(unarchiveId);
+        params.appPackageName = PACKAGE_NAME;
+        int sessionId = mPackageInstaller.createSession(params);
+        assertThat(unarchiveId).isEqualTo(sessionId);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
+    public void unarchiveApp_repeatedCallsDeduplicated() throws Exception {
+        installPackage(PACKAGE_NAME, APK_PATH);
+        runWithShellPermissionIdentity(
+                () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
+                        new IntentSender((IIntentSender) mIntentSender)),
+                Manifest.permission.DELETE_PACKAGES);
+        assertThat(mIntentSender.mStatus.get(5, TimeUnit.SECONDS)).isEqualTo(
+                PackageInstaller.STATUS_SUCCESS);
+
+        runWithShellPermissionIdentity(
+                () -> mPackageInstaller.requestUnarchive(PACKAGE_NAME),
+                Manifest.permission.INSTALL_PACKAGES);
+        int unarchiveId1 = sUnarchiveId.get(5, TimeUnit.SECONDS);
+
+        sUnarchiveId = new CompletableFuture<>();
+        sUnarchiveReceiverPackageName = new CompletableFuture<>();
+        sUnarchiveReceiverAllUsers = new CompletableFuture<>();
+
+        runWithShellPermissionIdentity(
+                () -> mPackageInstaller.requestUnarchive(PACKAGE_NAME),
+                Manifest.permission.INSTALL_PACKAGES);
+        int unarchiveId2 = sUnarchiveId.get(5, TimeUnit.SECONDS);
+
+        assertThat(unarchiveId1).isEqualTo(unarchiveId2);
+
+        mPackageInstaller.abandonSession(unarchiveId1);
     }
 
     @Test
@@ -338,8 +402,8 @@ public class PackageInstallerArchiveTest {
                 SystemUtil.runShellCommand(String.format("pm request-unarchive %s", PACKAGE_NAME)))
                 .isEqualTo("Success\n");
 
-        assertThat(sUnarchiveReceiverPackageName.get()).isEqualTo(PACKAGE_NAME);
-        assertThat(sUnarchiveReceiverAllUsers.get()).isFalse();
+        assertThat(sUnarchiveReceiverPackageName.get(5, TimeUnit.SECONDS)).isEqualTo(PACKAGE_NAME);
+        assertThat(sUnarchiveReceiverAllUsers.get(1, TimeUnit.MILLISECONDS)).isFalse();
     }
 
     @Test
@@ -365,7 +429,8 @@ public class PackageInstallerArchiveTest {
                     () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
                             new IntentSender((IIntentSender) mIntentSender)),
                     Manifest.permission.DELETE_PACKAGES);
-            assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+            assertThat(mIntentSender.mStatus.get(5, TimeUnit.SECONDS)).isEqualTo(
+                    PackageInstaller.STATUS_SUCCESS);
 
             removedBroadcastReceiver.assertBroadcastReceived();
             Intent removedIntent = removedBroadcastReceiver.getBroadcastResult();
@@ -527,6 +592,7 @@ public class PackageInstallerArchiveTest {
                 return;
             }
 
+            sUnarchiveId.complete(intent.getIntExtra(PackageInstaller.EXTRA_UNARCHIVE_ID, -1));
             sUnarchiveReceiverPackageName.complete(
                     intent.getStringExtra(PackageInstaller.EXTRA_UNARCHIVE_PACKAGE_NAME));
             sUnarchiveReceiverAllUsers.complete(
@@ -549,5 +615,31 @@ public class PackageInstallerArchiveTest {
             mMessage.complete(intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE));
         }
 
+    }
+
+    static class SessionListener extends PackageInstaller.SessionCallback {
+
+        final CompletableFuture<Integer> mSessionIdCreated = new CompletableFuture<>();
+
+        @Override
+        public void onCreated(int sessionId) {
+            mSessionIdCreated.complete(sessionId);
+        }
+
+        @Override
+        public void onBadgingChanged(int sessionId) {
+        }
+
+        @Override
+        public void onActiveChanged(int sessionId, boolean active) {
+        }
+
+        @Override
+        public void onProgressChanged(int sessionId, float progress) {
+        }
+
+        @Override
+        public void onFinished(int sessionId, boolean success) {
+        }
     }
 }
