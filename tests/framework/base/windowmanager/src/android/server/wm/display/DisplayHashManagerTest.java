@@ -43,6 +43,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerStateHelper;
 import android.service.displayhash.DisplayHashParams;
 import android.util.Size;
@@ -292,6 +293,8 @@ public class DisplayHashManagerTest {
         } catch (InterruptedException e) {
         }
 
+        waitForAllActivitiesResumed();
+
         generateDisplayHash(null);
 
         mInstrumentation.runOnMainSync(() -> {
@@ -419,6 +422,8 @@ public class DisplayHashManagerTest {
         } catch (InterruptedException e) {
         }
 
+        waitForAllActivitiesResumed();
+
         byte[] expectedImageHash = new byte[]{-1, -1, 127, -1, -1, -1, 127, 127};
 
         DisplayHash displayHash = generateDisplayHash(null);
@@ -476,6 +481,7 @@ public class DisplayHashManagerTest {
             committedCallbackLatch.await(WAIT_TIME_S, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
         }
+        waitForAllActivitiesResumed();
     }
 
     public static class TestActivity extends Activity {
@@ -542,5 +548,14 @@ public class DisplayHashManagerTest {
             mError = errorCode;
             mCountDownLatch.countDown();
         }
+    }
+
+    /**
+     * Waits for all activities to be resumed since image hash could be calculated before the
+     * activity is resumed.
+     */
+    private void waitForAllActivitiesResumed() {
+        mWmState.waitForWithAmState(WindowManagerState::allActivitiesResumed,
+                "All activities should be resumed");
     }
 }
