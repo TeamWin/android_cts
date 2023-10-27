@@ -65,4 +65,8 @@
         <option name="run-command" value="setprop persist.radio.allow_mock_modem true" />
         <option name="teardown-command" value="setprop persist.radio.allow_mock_modem false" />
     </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.FeatureFlagTargetPreparer" >
+        <option name="flag-value" value="telephony/com.android.internal.telephony.flags.oem_enabled_satellite_flag=true" />
+        <option name="flag-value" value="telephony/com.android.internal.telephony.flags.carrier_enabled_satellite_flag=true" />
+    </target_preparer>
 </configuration>
