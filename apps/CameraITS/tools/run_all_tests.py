@@ -88,6 +88,11 @@ _CHECKERBOARD_SCENES = ('sensor_fusion', 'scene_flash',)
 # Scenes that have to be run manually regardless of configuration
 _MANUAL_SCENES = ('scene5',)
 
+# Scene extensions
+_EXTENSIONS_SCENES = (os.path.join('scene_extensions', 'scene_hdr'),
+                      os.path.join('scene_extensions', 'scene_night'),
+                      )
+
 # All possible scenes
 _ALL_SCENES = _TABLET_SCENES + _MANUAL_SCENES + _MOTION_SCENES + _FLASH_SCENES
 
@@ -583,8 +588,13 @@ def main():
         not s.startswith(('checkerboard', 'sensor_fusion',
                           'flash', '<scene-name>'))):
       scenes[i] = f'scene{s}'
-    if s.startswith('flash'):
+    if s.startswith('flash') or s.startswith('extensions'):
       scenes[i] = f'scene_{s}'
+    # Handle scene_extensions
+    if s.startswith('hdr') or s.startswith('night'):
+      scenes[i] = f'scene_extensions/scene_{s}'
+    if s.startswith('scene_hdr') or s.startswith('scene_night'):
+      scenes[i] = f'scene_extensions/{s}'
 
   # Read config file and extract relevant TestBed
   config_file_contents = get_config_file_contents()
@@ -728,10 +738,13 @@ def main():
         possible_scenes = _CHECKERBOARD_SCENES
       elif 'scene_flash' in scenes:
         possible_scenes = _FLASH_SCENES
+      elif 'scene_extensions' in scenes:
+        possible_scenes = _EXTENSIONS_SCENES
       else:
         possible_scenes = _TABLET_SCENES if auto_scene_switch else _ALL_SCENES
 
-    if '<scene-name>' in scenes or 'checkerboard' in scenes:
+    if ('<scene-name>' in scenes or 'checkerboard' in scenes or
+        'scene_extensions' in scenes):
       per_camera_scenes = possible_scenes
     else:
       # Validate user input scene names
