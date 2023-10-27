@@ -12,10 +12,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.nfc.Flags;
 import android.nfc.INfcCardEmulation;
 import android.nfc.NfcAdapter;
 import android.nfc.cardemulation.*;
 import android.os.RemoteException;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.core.app.ApplicationProvider;
@@ -23,6 +27,7 @@ import androidx.test.core.app.ApplicationProvider;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -42,6 +47,9 @@ public class CardEmulationTest {
 
     private INfcCardEmulation mOldService;
     @Mock private INfcCardEmulation mEmulation;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private boolean supportsHardware() {
         final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
@@ -286,6 +294,19 @@ public class CardEmulationTest {
         when(mEmulation.getPreferredPaymentService(anyInt())).thenReturn(serviceInfo);
         CharSequence result = instance.getDescriptionForPreferredPaymentService();
         Assert.assertEquals(description, result);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_NFC_MAINLINE)
+    public void testGetServices() throws NoSuchFieldException, RemoteException {
+        CardEmulation instance = createMockedInstance();
+        String description = "Preferred Payment Service Description";
+        ApduServiceInfo serviceInfo = new ApduServiceInfo(new ResolveInfo(), false,
+                /* description */ description, new ArrayList<AidGroup>(), new ArrayList<AidGroup>(),
+                false, 0, 0, "", "", "");
+        List<ApduServiceInfo> services = List.of(serviceInfo);
+        when(mEmulation.getServices(anyInt(), anyString())).thenReturn(services);
+        Assert.assertEquals(instance.getServices(CardEmulation.CATEGORY_PAYMENT, 0), services);
     }
 
     private Activity createAndResumeActivity() {
