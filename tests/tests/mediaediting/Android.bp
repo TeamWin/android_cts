@@ -28,6 +28,7 @@ android_test {
         "androidx.media3.media3-effect",
         "androidx.media3.media3-exoplayer",
         "androidx.media3.media3-transformer",
+        "ctsmediav2common",
     ],
     srcs: [
         "src/**/*.java",
@@ -42,6 +43,6 @@ android_test {
         "mts-media",
     ],
     host_required: ["cts-dynamic-config"],
-    min_sdk_version: "21",
+    min_sdk_version: "29",
     target_sdk_version: "31",
 }

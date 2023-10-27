@@ -36,7 +36,11 @@ public class WorkDirBase {
     private static boolean sPolledForStatus = false;
     private static boolean sExternalMounted = false;
 
-    private static final File getTopDir() {
+    /**
+     * Return a File for the top of External Storage.
+     * Ensures that external storage is mounted before returing, otherwise errors.
+     */
+    public static final File getTopDir() {
         // All of this is to handle delays in storage being ready during cuttlefish coverage runs.
         // We don't see any of this in normal on-devlce runs.
         // TODO(): can we remove this logic once we resolve the underlying root cause
@@ -88,7 +92,7 @@ public class WorkDirBase {
         return Environment.getExternalStorageDirectory();
     }
 
-    private static final String getTopDirString() {
+    public static final String getTopDirString() {
         return getTopDir().getAbsolutePath() + File.separator;
     }
 
