@@ -111,5 +111,34 @@ public class RequiredDeviceTypeRule implements TestRule {
             }
         };
     }
+
+    /**
+     * Rule to check that the DUT is not an emulator.
+     * @param test The test using this rule.
+     * @return The rule to be used in the test.
+     */
+    public static RequiredDeviceTypeRule requiredPhysicalDevice(final BaseHostJUnit4Test test) {
+        return new RequiredDeviceTypeRule() {
+            @Override
+            public Statement apply(final Statement base, final Description description) {
+                return new Statement() {
+                    @Override
+                    public void evaluate() throws Throwable {
+                        ITestDevice testDevice = test.getDevice();
+                        String buildFingerPrint = RequiredPropertyRule.getDevicePropertyValue(test,
+                                                HdmiCecConstants.PROPERTY_BUILD_FINGERPRINT);
+                        // Currently only Cuttlefish is supported in automation testing. We will add
+                        // more targets in the future if necessary.
+                        assumeFalse(
+                                "Invalid device " +  testDevice.getSerialNumber() + " for "
+                                        + "running HDMI Control CTS. Physical device required, "
+                                        + "emulator found instead.",
+                                buildFingerPrint.contains("cf_x86_"));
+                        base.evaluate();
+                    }
+                };
+            }
+        };
+    }
 }
 
