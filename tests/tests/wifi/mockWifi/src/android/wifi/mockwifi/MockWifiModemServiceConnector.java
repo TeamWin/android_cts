@@ -218,6 +218,7 @@ public class MockWifiModemServiceConnector {
         if (mMockWifiModemServiceConn != null) {
             mContext.unbindService(mMockWifiModemServiceConn);
             mMockWifiModemService = null;
+            mMockWifiModemServiceConn = null;
         }
 
         return isComplete;
