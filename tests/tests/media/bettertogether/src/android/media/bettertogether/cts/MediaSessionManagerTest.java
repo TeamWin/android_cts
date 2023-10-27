@@ -57,6 +57,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -65,6 +66,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -75,6 +77,8 @@ public class MediaSessionManagerTest {
     private static final int TIMEOUT_MS = 3000;
     private static final int WAIT_MS = 500;
     private static final String ENABLED_NOTIFICATION_LISTENERS = "enabled_notification_listeners";
+
+    @Rule public final ResourceReleaser mResourceReleaser = new ResourceReleaser();
 
     private Context mContext;
     private AudioManager mAudioManager;
@@ -136,9 +140,10 @@ public class MediaSessionManagerTest {
 
         MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
         mSessionManager.addOnMediaKeyEventSessionChangedListener(
-                Executors.newSingleThreadExecutor(), keyEventSessionListener);
+                createExecutorWithScheduledShutdown(), keyEventSessionListener);
 
         MediaSession session = createMediaKeySession();
+        mResourceReleaser.add(session::release);
         assertThat(keyEventSessionListener.mCountDownLatch
                 .await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
@@ -150,7 +155,6 @@ public class MediaSessionManagerTest {
         mSessionManager.removeOnMediaKeyEventSessionChangedListener(keyEventSessionListener);
         keyEventSessionListener.resetCountDownLatch();
 
-        session.release();
         // This shouldn't be called because the callback is removed
         assertThat(keyEventSessionListener.mCountDownLatch.await(WAIT_MS, TimeUnit.MILLISECONDS))
                 .isFalse();
@@ -166,7 +170,7 @@ public class MediaSessionManagerTest {
 
         MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
         mSessionManager.addOnMediaKeyEventSessionChangedListener(
-                Executors.newSingleThreadExecutor(), keyEventSessionListener);
+                createExecutorWithScheduledShutdown(), keyEventSessionListener);
 
         MediaSession session = createMediaKeySession();
         assertThat(keyEventSessionListener.mCountDownLatch
@@ -193,7 +197,7 @@ public class MediaSessionManagerTest {
 
         MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
         mSessionManager.addOnMediaKeyEventSessionChangedListener(
-                Executors.newSingleThreadExecutor(), keyEventSessionListener);
+                createExecutorWithScheduledShutdown(), keyEventSessionListener);
 
         assertThat(keyEventSessionListener.mCountDownLatch
                 .await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
@@ -222,11 +226,13 @@ public class MediaSessionManagerTest {
     @NonMainlineTest
     public void testOnMediaKeyEventSessionChangedListener_noPermission_throwsSecurityException() {
         MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
-        assertThrows("Expected security exception for call to"
+        assertThrows(
+                "Expected security exception for call to"
                         + " addOnMediaKeyEventSessionChangedListener",
                 SecurityException.class,
-                () -> mSessionManager.addOnMediaKeyEventSessionChangedListener(
-                        Executors.newSingleThreadExecutor(), keyEventSessionListener));
+                () ->
+                        mSessionManager.addOnMediaKeyEventSessionChangedListener(
+                                createExecutorWithScheduledShutdown(), keyEventSessionListener));
     }
 
     @Test
@@ -238,10 +244,12 @@ public class MediaSessionManagerTest {
 
         MediaKeyEventDispatchedListener keyEventDispatchedListener =
                 new MediaKeyEventDispatchedListener();
-        mSessionManager.addOnMediaKeyEventDispatchedListener(Executors.newSingleThreadExecutor(),
-                keyEventDispatchedListener);
+        mSessionManager.addOnMediaKeyEventDispatchedListener(
+                createExecutorWithScheduledShutdown(), keyEventDispatchedListener);
 
         MediaSession session = new MediaSession(getInstrumentation().getTargetContext(), TAG);
+        mResourceReleaser.add(session::release);
+
         session.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS
                 | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
         PlaybackState state = new PlaybackState.Builder()
@@ -268,8 +276,6 @@ public class MediaSessionManagerTest {
         // This shouldn't be called because the callback is removed
         assertThat(keyEventDispatchedListener.mCountDownLatch
                 .await(WAIT_MS, TimeUnit.MILLISECONDS)).isFalse();
-
-        session.release();
     }
 
     @Test
@@ -312,7 +318,7 @@ public class MediaSessionManagerTest {
             // events directly to the audio service to change the system volume.
             return;
         }
-        Handler handler = createHandler();
+        Handler handler = createHandlerWithScheduledLooperQuit();
 
         // Ensure that the listener is called for long-press.
         VolumeKeyLongPressListener listener = new VolumeKeyLongPressListener(3, handler);
@@ -339,137 +345,123 @@ public class MediaSessionManagerTest {
         injectInputEvent(KeyEvent.KEYCODE_VOLUME_DOWN, true);
         assertThat(listener.mCountDownLatch.await(WAIT_MS, TimeUnit.MILLISECONDS)).isFalse();
         assertThat(listener.mKeyEvents).isEmpty();
-
-        removeHandler(handler);
     }
 
     @Test
     @NonMainlineTest
     public void testSetOnMediaKeyListener() throws Exception {
-        Handler handler = createHandler();
-        MediaSession session = null;
-        try {
-            session = new MediaSession(getInstrumentation().getTargetContext(), TAG);
-            MediaSessionCallback callback = new MediaSessionCallback(2, session);
-            session.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS
-                    | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
-            session.setCallback(callback, handler);
-            PlaybackState state = new PlaybackState.Builder()
-                    .setState(PlaybackState.STATE_PLAYING, 0, 1.0f).build();
-            // Fake the media session service so this session can take the media key events.
-            session.setPlaybackState(state);
-            session.setActive(true);
+        Handler handler = createHandlerWithScheduledLooperQuit();
+        MediaSession session = new MediaSession(getInstrumentation().getTargetContext(), TAG);
+        mResourceReleaser.add(session::release);
 
-            // A media playback is also needed to receive media key events.
-            Utils.assertMediaPlaybackStarted(getInstrumentation().getTargetContext());
+        MediaSessionCallback callback = new MediaSessionCallback(2, session);
+        session.setFlags(
+                MediaSession.FLAG_HANDLES_MEDIA_BUTTONS
+                        | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+        session.setCallback(callback, handler);
+        PlaybackState state =
+                new PlaybackState.Builder().setState(PlaybackState.STATE_PLAYING, 0, 1.0f).build();
+        // Fake the media session service so this session can take the media key events.
+        session.setPlaybackState(state);
+        session.setActive(true);
 
-            // Ensure that the listener is called for media key event,
-            // and any other media sessions don't get the key.
-            MediaKeyListener listener = new MediaKeyListener(2, true, handler);
-            mSessionManager.setOnMediaKeyListener(listener, handler);
-            injectInputEvent(KeyEvent.KEYCODE_HEADSETHOOK, false);
-            assertThat(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
-            assertThat(listener.mKeyEvents).hasSize(2);
-            assertKeyEventEquals(listener.mKeyEvents.get(0),
-                    KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_DOWN, 0);
-            assertKeyEventEquals(listener.mKeyEvents.get(1),
-                    KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_UP, 0);
-            assertThat(callback.mCountDownLatch.await(WAIT_MS, TimeUnit.MILLISECONDS)).isFalse();
-            assertThat(callback.mKeyEvents).isEmpty();
+        // A media playback is also needed to receive media key events.
+        Utils.assertMediaPlaybackStarted(getInstrumentation().getTargetContext());
 
-            // Ensure that the listener is called for media key event,
-            // and another media session gets the key.
-            listener = new MediaKeyListener(2, false, handler);
-            mSessionManager.setOnMediaKeyListener(listener, handler);
-            injectInputEvent(KeyEvent.KEYCODE_HEADSETHOOK, false);
-            assertThat(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
-            assertThat(listener.mKeyEvents).hasSize(2);
-            assertKeyEventEquals(listener.mKeyEvents.get(0),
-                    KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_DOWN, 0);
-            assertKeyEventEquals(listener.mKeyEvents.get(1),
-                    KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_UP, 0);
-            assertThat(callback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
-            assertThat(callback.mKeyEvents).hasSize(2);
-            assertKeyEventEquals(callback.mKeyEvents.get(0),
-                    KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_DOWN, 0);
-            assertKeyEventEquals(callback.mKeyEvents.get(1),
-                    KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_UP, 0);
+        // Ensure that the listener is called for media key event,
+        // and any other media sessions don't get the key.
+        MediaKeyListener listener = new MediaKeyListener(2, true, handler);
+        mSessionManager.setOnMediaKeyListener(listener, handler);
+        injectInputEvent(KeyEvent.KEYCODE_HEADSETHOOK, false);
+        assertThat(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+        assertThat(listener.mKeyEvents).hasSize(2);
+        assertKeyEventEquals(
+                listener.mKeyEvents.get(0), KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_DOWN, 0);
+        assertKeyEventEquals(
+                listener.mKeyEvents.get(1), KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_UP, 0);
+        assertThat(callback.mCountDownLatch.await(WAIT_MS, TimeUnit.MILLISECONDS)).isFalse();
+        assertThat(callback.mKeyEvents).isEmpty();
 
-            // Ensure that the listener isn't called anymore.
-            listener = new MediaKeyListener(1, true, handler);
-            mSessionManager.setOnMediaKeyListener(listener, handler);
-            mSessionManager.setOnMediaKeyListener(null, handler);
-            injectInputEvent(KeyEvent.KEYCODE_HEADSETHOOK, false);
-            assertThat(listener.mCountDownLatch.await(WAIT_MS, TimeUnit.MILLISECONDS)).isFalse();
-            assertThat(listener.mKeyEvents).isEmpty();
-        } finally {
-            if (session != null) {
-                session.release();
-            }
-            removeHandler(handler);
-        }
+        // Ensure that the listener is called for media key event,
+        // and another media session gets the key.
+        listener = new MediaKeyListener(2, false, handler);
+        mSessionManager.setOnMediaKeyListener(listener, handler);
+        injectInputEvent(KeyEvent.KEYCODE_HEADSETHOOK, false);
+        assertThat(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+        assertThat(listener.mKeyEvents).hasSize(2);
+        assertKeyEventEquals(
+                listener.mKeyEvents.get(0), KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_DOWN, 0);
+        assertKeyEventEquals(
+                listener.mKeyEvents.get(1), KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_UP, 0);
+        assertThat(callback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+        assertThat(callback.mKeyEvents).hasSize(2);
+        assertKeyEventEquals(
+                callback.mKeyEvents.get(0), KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_DOWN, 0);
+        assertKeyEventEquals(
+                callback.mKeyEvents.get(1), KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_UP, 0);
+
+        // Ensure that the listener isn't called anymore.
+        listener = new MediaKeyListener(1, true, handler);
+        mSessionManager.setOnMediaKeyListener(listener, handler);
+        mSessionManager.setOnMediaKeyListener(null, handler);
+        injectInputEvent(KeyEvent.KEYCODE_HEADSETHOOK, false);
+        assertThat(listener.mCountDownLatch.await(WAIT_MS, TimeUnit.MILLISECONDS)).isFalse();
+        assertThat(listener.mKeyEvents).isEmpty();
     }
 
     @Test
     @NonMainlineTest
     public void testRemoteUserInfo() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
-        Handler handler = createHandler();
+        Handler handler = createHandlerWithScheduledLooperQuit();
 
-        MediaSession session = null;
-        try {
-            session = new MediaSession(context, TAG);
-            MediaSessionCallback callback = new MediaSessionCallback(5, session);
-            session.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS
-                    | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
-            session.setCallback(callback, handler);
-            PlaybackState state = new PlaybackState.Builder()
-                    .setState(PlaybackState.STATE_PLAYING, 0, 1.0f).build();
-            // Fake the media session service so this session can take the media key events.
-            session.setPlaybackState(state);
-            session.setActive(true);
+        MediaSession session = new MediaSession(context, TAG);
+        mResourceReleaser.add(session::release);
+        MediaSessionCallback callback = new MediaSessionCallback(5, session);
+        session.setFlags(
+                MediaSession.FLAG_HANDLES_MEDIA_BUTTONS
+                        | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+        session.setCallback(callback, handler);
+        PlaybackState state =
+                new PlaybackState.Builder().setState(PlaybackState.STATE_PLAYING, 0, 1.0f).build();
+        // Fake the media session service so this session can take the media key events.
+        session.setPlaybackState(state);
+        session.setActive(true);
 
-            // A media playback is also needed to receive media key events.
-            Utils.assertMediaPlaybackStarted(context);
+        // A media playback is also needed to receive media key events.
+        Utils.assertMediaPlaybackStarted(context);
 
-            // Dispatch key events 5 times.
-            KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PLAY);
-            // (1), (2): dispatch through key -- this will trigger event twice for up & down.
-            injectInputEvent(KeyEvent.KEYCODE_HEADSETHOOK, false);
-            // (3): dispatch through controller
-            session.getController().dispatchMediaButtonEvent(event);
+        // Dispatch key events 5 times.
+        KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PLAY);
+        // (1), (2): dispatch through key -- this will trigger event twice for up & down.
+        injectInputEvent(KeyEvent.KEYCODE_HEADSETHOOK, false);
+        // (3): dispatch through controller
+        session.getController().dispatchMediaButtonEvent(event);
 
-            // Creating another controller.
-            MediaController controller = new MediaController(context, session.getSessionToken());
-            // (4): dispatch through different controller.
-            controller.dispatchMediaButtonEvent(event);
-            // (5): dispatch through the same controller
-            controller.dispatchMediaButtonEvent(event);
+        // Creating another controller.
+        MediaController controller = new MediaController(context, session.getSessionToken());
+        // (4): dispatch through different controller.
+        controller.dispatchMediaButtonEvent(event);
+        // (5): dispatch through the same controller
+        controller.dispatchMediaButtonEvent(event);
 
-            // Wait.
-            assertThat(callback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+        // Wait.
+        assertThat(callback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
-            // Caller of (1) ~ (4) shouldn't be the same as any others.
-            for (int i = 0; i < 4; i++) {
-                for (int j = 0; j < i; j++) {
-                    assertThat(callback.mCallers.get(i))
-                            .isNotSameInstanceAs(callback.mCallers.get(j));
-                }
+        // Caller of (1) ~ (4) shouldn't be the same as any others.
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < i; j++) {
+                assertThat(callback.mCallers.get(i)).isNotSameInstanceAs(callback.mCallers.get(j));
             }
-            // Caller of (5) should be the same as (4), since they're called from the same
-            assertThat(callback.mCallers.get(4)).isEqualTo(callback.mCallers.get(3));
-        } finally {
-            if (session != null) {
-                session.release();
-            }
-            removeHandler(handler);
         }
+        // Caller of (5) should be the same as (4), since they're called from the same
+        assertThat(callback.mCallers.get(4)).isEqualTo(callback.mCallers.get(3));
     }
 
     @Test
     public void testGetSession2Tokens() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
-        Handler handler = createHandler();
+        Handler handler = createHandlerWithScheduledLooperQuit();
         Executor handlerExecutor = new HandlerExecutor(handler);
 
         Session2TokenListener listener = new Session2TokenListener();
@@ -487,8 +479,6 @@ public class MediaSessionManagerTest {
             assertThat(listContainsToken(listener.mTokens, currentToken)).isTrue();
             assertThat(listContainsToken(mSessionManager.getSession2Tokens(), currentToken))
                     .isTrue();
-        } finally {
-            removeHandler(handler);
         }
     }
 
@@ -496,7 +486,7 @@ public class MediaSessionManagerTest {
     @Test
     public void testGetSession2TokensWithTwoSessions() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
-        Handler handler = createHandler();
+        Handler handler = createHandlerWithScheduledLooperQuit();
         Executor handlerExecutor = new HandlerExecutor(handler);
 
         Session2TokenListener listener = new Session2TokenListener();
@@ -539,15 +529,13 @@ public class MediaSessionManagerTest {
                     .isTrue();
             assertThat(listContainsToken(mSessionManager.getSession2Tokens(), session2Token))
                     .isFalse();
-        } finally {
-            removeHandler(handler);
         }
     }
 
     @Test
     public void testAddAndRemoveSession2TokensListener() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
-        Handler handler = createHandler();
+        Handler handler = createHandlerWithScheduledLooperQuit();
         Executor handlerExecutor = new HandlerExecutor(handler);
 
         Session2TokenListener listener1 = new Session2TokenListener();
@@ -571,35 +559,26 @@ public class MediaSessionManagerTest {
             assertThat(listener1.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS))
                     .isFalse();
             assertThat(listener2.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
-        } finally {
-            removeHandler(handler);
         }
     }
 
     @Test
     public void testSession2TokensNotChangedBySession1() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
-        Handler handler = createHandler();
+        Handler handler = createHandlerWithScheduledLooperQuit();
 
         Session2TokenListener listener = new Session2TokenListener();
         List<Session2Token> initialSession2Tokens = mSessionManager.getSession2Tokens();
         mSessionManager.addOnSession2TokensChangedListener(listener, handler);
-        MediaSession session = null;
-        try {
-            session = new MediaSession(context, TAG);
-            session.setActive(true);
-            session.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS
-                    | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
-            assertThat(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isFalse();
-            List<Session2Token> laterSession2Tokens = mSessionManager.getSession2Tokens();
+        MediaSession session = new MediaSession(context, TAG);
+        mResourceReleaser.add(session::release);
+        session.setActive(true);
+        session.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS
+                | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+        assertThat(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isFalse();
+        List<Session2Token> laterSession2Tokens = mSessionManager.getSession2Tokens();
 
-            assertThat(laterSession2Tokens).hasSize(initialSession2Tokens.size());
-        } finally {
-            if (session != null) {
-                session.release();
-            }
-            removeHandler(handler);
-        }
+        assertThat(laterSession2Tokens).hasSize(initialSession2Tokens.size());
     }
 
     @Test
@@ -657,17 +636,18 @@ public class MediaSessionManagerTest {
         return false;
     }
 
-    private Handler createHandler() {
-        HandlerThread handlerThread = new HandlerThread("MediaSessionManagerTest");
-        handlerThread.start();
-        return new Handler(handlerThread.getLooper());
+    private Executor createExecutorWithScheduledShutdown() {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        mResourceReleaser.add(executor::shutdown);
+        return executor;
     }
 
-    private void removeHandler(Handler handler) {
-        if (handler == null) {
-            return;
-        }
-        handler.getLooper().quitSafely();
+    private Handler createHandlerWithScheduledLooperQuit() {
+        HandlerThread handlerThread = new HandlerThread("MediaSessionManagerTest");
+        handlerThread.start();
+        Looper looper = handlerThread.getLooper();
+        mResourceReleaser.add(looper::quitSafely);
+        return new Handler(looper);
     }
 
     // This uses public APIs to dispatch key events, so sessions would consider this as
