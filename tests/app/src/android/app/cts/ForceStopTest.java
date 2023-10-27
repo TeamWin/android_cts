@@ -22,10 +22,14 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 import static junit.framework.Assert.fail;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
 import android.app.Instrumentation;
+import android.app.PendingIntent;
+import android.app.PendingIntent.CanceledException;
 import android.app.stubs.BootReceiver;
 import android.app.stubs.CommandReceiver;
 import android.app.stubs.SimpleActivity;
@@ -52,6 +56,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 @Presubmit
@@ -306,6 +314,57 @@ public final class ForceStopTest {
 
         runWithShellPermissionIdentity(
                 () -> mActivityManager.forceStopPackage(APP_PACKAGE));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_STAY_STOPPED)
+    public void testPendingIntentCancellation() throws Exception {
+        final PendingIntent pendingIntent = triggerPendingIntentCreation(APP_PACKAGE);
+        assertNotNull(pendingIntent);
+
+        final ConditionVariable pendingIntentCancelled = new ConditionVariable();
+        pendingIntent.addCancelListener(mTargetContext.getMainExecutor(), pi -> {
+            if (pendingIntent.equals(pi)) {
+                pendingIntentCancelled.open();
+            }
+        });
+
+        runWithShellPermissionIdentity(
+                () -> mActivityManager.forceStopPackage(APP_PACKAGE));
+        assertTrue("Package " + APP_PACKAGE + " should be in the stopped state",
+                mPackageManager.isPackageStopped(APP_PACKAGE));
+
+        // Verify that pending intent gets cancelled when the app that created it is force-stopped.
+        assertTrue("Did not receive PendingIntent cancellation callback",
+                pendingIntentCancelled.block(DELAY_MILLIS));
+        assertThrows(CanceledException.class, () -> pendingIntent.send());
+
+        // Trigger the PendingIntent creation to verify the app can create new PendingIntents
+        // as usual.
+        final PendingIntent pendingIntent2 = triggerPendingIntentCreation(APP_PACKAGE);
+        assertNotNull(pendingIntent2);
+
+        // Force-stop it again to clean up
+        runWithShellPermissionIdentity(
+                () -> mActivityManager.forceStopPackage(APP_PACKAGE));
+    }
+
+    private PendingIntent triggerPendingIntentCreation(final String packageName) throws Exception {
+        final BlockingQueue<PendingIntent> blockingQueue = new LinkedBlockingQueue<>();
+        CommandReceiver.sendCommandWithResultReceiver(mTargetContext,
+                CommandReceiver.COMMAND_CREATE_FGSL_PENDING_INTENT,
+                packageName, packageName, Intent.FLAG_RECEIVER_FOREGROUND, null,
+                new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        final PendingIntent pi = getResultExtras(true).getParcelable(
+                                CommandReceiver.KEY_PENDING_INTENT, PendingIntent.class);
+                        if (pi != null) {
+                            blockingQueue.offer(pi);
+                        }
+                    }
+                });
+        return blockingQueue.poll(DELAY_MILLIS, TimeUnit.MILLISECONDS);
     }
 
     // The receiver filter needs to be instantiated with the command to filter for before calling
