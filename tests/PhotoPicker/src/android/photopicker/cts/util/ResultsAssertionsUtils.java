@@ -53,17 +53,13 @@ import java.util.Map;
 public class ResultsAssertionsUtils {
     private static final String TAG = "PhotoPickerTestAssertions";
 
-    public static void assertPickerUriFormat(String action, Uri uri, int expectedUserId) {
+    public static void assertPickerUriFormat(Uri uri, int expectedUserId) {
         // content://media/picker/<user-id>/<media-id>
         final int userId = Integer.parseInt(uri.getPathSegments().get(1));
         assertThat(userId).isEqualTo(expectedUserId);
 
         final String auth = uri.getPathSegments().get(0);
-        if (action.equalsIgnoreCase(Intent.ACTION_GET_CONTENT)) {
-            assertThat(auth).isEqualTo("picker_get_content");
-        } else {
-            assertThat(auth).isEqualTo("picker");
-        }
+        assertThat(auth).isEqualTo("picker");
     }
 
     public static void assertPersistedGrant(Uri uri, ContentResolver resolver) {
