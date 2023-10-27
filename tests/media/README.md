@@ -36,6 +36,15 @@ Example: To limit the tests to run for c2.android.hevc.decoder
 atest CtsMediaV2TestCases -- --module-arg CtsMediaV2TestCases:instrumentation-arg:codec-prefix:=c2.android.hevc.decoder
 ```
 
+#### Select codecs using regular expressions
+To select codecs by applying regular expressions, *codec-filter* can be passed to media codec tests to select one or more codecs that match with a specified regular expression pattern.
+
+Example: To limit the tests to run for c2.android.avc.encoder and c2.exynos.hevc.encoder
+
+```sh
+atest CtsMediaV2TestCases -- --module-arg CtsMediaV2TestCases:instrumentation-arg:codec-filter:="c2\.android\.avc\.encoder\|c2\.exynos\.hevc\.encoder"
+```
+
 #### Select codecs by type
 To select codecs by type, *media-type-sel* can be passed to media codec tests to select one or more codecs.
 
