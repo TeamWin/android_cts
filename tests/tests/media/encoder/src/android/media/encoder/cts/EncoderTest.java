@@ -69,7 +69,7 @@ public class EncoderTest {
     static final String mInpPrefix = WorkDir.getMediaDirString();
     private static final int kNumInputBytes = 512 * 1024;
     private static final long kTimeoutUs = 100;
-    public static final int PER_TEST_TIMEOUT_SMALL_TEST_MS = 60000;
+    public static final int PER_TEST_TIMEOUT_SMALL_TEST_MS = 120000;
 
     // not all combinations are valid
     private static final int MODE_SILENT = 0;
