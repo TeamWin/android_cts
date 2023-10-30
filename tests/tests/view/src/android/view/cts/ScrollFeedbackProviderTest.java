@@ -21,6 +21,8 @@ import static android.view.flags.Flags.FLAG_SCROLL_FEEDBACK_API;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.ScrollFeedbackProvider;
@@ -45,6 +47,9 @@ public class ScrollFeedbackProviderTest {
     @Rule
     public ActivityTestRule<ViewTestCtsActivity> mActivityRule =
             new ActivityTestRule<>(ViewTestCtsActivity.class);
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private ScrollFeedbackProvider mProvider;
 
