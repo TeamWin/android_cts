@@ -54,7 +54,6 @@ import android.view.SurfaceControlViewHost;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
-import android.view.accessibility.Flags;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.window.WindowInfosListenerForTest;
@@ -200,7 +199,18 @@ public class AccessibilityOverlayTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_A11Y_OVERLAY_CALLBACKS)
+    @RequiresFlagsEnabled(com.android.server.accessibility.Flags.FLAG_CLEANUP_A11Y_OVERLAYS)
+    public void testEmbeddedDisplayOverlayWithServiceExit_shouldAppearAndDisappear()
+            throws Exception {
+        // Set up a view that will become our accessibility overlay.
+        final String overlayTitle = "Overlay title";
+        final SurfaceControl sc = createDisplayOverlay(overlayTitle);
+        attachOverlayToDisplayAndCheck(sc, overlayTitle, null, null);
+        disableServiceAndCheckForOverlay(overlayTitle);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.view.accessibility.Flags.FLAG_A11Y_OVERLAY_CALLBACKS)
     public void testA11yServiceShowsDisplayEmbeddedOverlayWithCallback_shouldAppearAndDisappear()
             throws Exception {
         // Set up a view that will become our accessibility overlay.
@@ -215,28 +225,57 @@ public class AccessibilityOverlayTest {
     @FlakyTest
     public void testA11yServiceShowsWindowEmbeddedOverlayWithoutCallback_shouldAppearAndDisappear()
             throws Exception {
-        doOverlayWindowTest(null, null);
+        final String overlayTitle = "App Overlay title";
+        Activity activity = showActivity();
+        try {
+            SurfaceControl sc = doOverlayWindowTest(overlayTitle, null, null);
+            removeOverlayAndCheck(sc, overlayTitle);
+        } finally {
+            if (activity != null) {
+                activity.finish();
+            }
+        }
     }
 
     @Test
     @FlakyTest
-    @RequiresFlagsEnabled(Flags.FLAG_A11Y_OVERLAY_CALLBACKS)
+    @RequiresFlagsEnabled(android.view.accessibility.Flags.FLAG_A11Y_OVERLAY_CALLBACKS)
     public void testA11yServiceShowsWindowEmbeddedOverlayWithCallback_shouldAppearAndDisappear()
             throws Exception {
-        doOverlayWindowTest(mExecutor, mCallback);
-        mCallback.assertCallbackReceived(AccessibilityService.OVERLAY_RESULT_SUCCESS);
+        final String overlayTitle = "App Overlay title";
+        Activity activity = showActivity();
+        try {
+            SurfaceControl sc = doOverlayWindowTest(overlayTitle, mExecutor, mCallback);
+            mCallback.assertCallbackReceived(AccessibilityService.OVERLAY_RESULT_SUCCESS);
+            removeOverlayAndCheck(sc, overlayTitle);
+        } finally {
+            if (activity != null) {
+                activity.finish();
+            }
+        }
     }
 
-    private void doOverlayWindowTest(Executor executor, ResultCapturingCallback callback)
+    @Test
+    @FlakyTest
+    @RequiresFlagsEnabled(com.android.server.accessibility.Flags.FLAG_CLEANUP_A11Y_OVERLAYS)
+    public void testEmbeddedWindowOverlayWithServiceExit_shouldAppearAndDisappear()
             throws Exception {
-        // Show an activity on screen.
+        final String overlayTitle = "App Overlay title";
+        Activity activity = showActivity();
+        try {
+            doOverlayWindowTest(overlayTitle, null, null);
+            disableServiceAndCheckForOverlay(overlayTitle);
+        } finally {
+            if (activity != null) {
+                activity.finish();
+            }
+        }
+    }
+
+    private SurfaceControl doOverlayWindowTest(
+            String overlayTitle, Executor executor, ResultCapturingCallback callback)
+            throws Exception {
         final StringBuilder timeoutExceptionRecords = new StringBuilder();
-        final Activity activity =
-                launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(
-                        sInstrumentation,
-                        sUiAutomation,
-                        AccessibilityWindowQueryActivity.class,
-                        Display.DEFAULT_DISPLAY);
         try {
             final Display display =
                     mService.getSystemService(DisplayManager.class)
@@ -256,7 +295,7 @@ public class AccessibilityOverlayTest {
             final Rect activityRootNodeBounds = new Rect();
             activityRootNode.getBoundsInWindow(activityRootNodeBounds);
             final WindowManager.LayoutParams overlayParams = new WindowManager.LayoutParams();
-            final String overlayTitle = "App Overlay title";
+
             overlayParams.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
             overlayParams.format = PixelFormat.TRANSLUCENT;
             overlayParams.setTitle(overlayTitle);
@@ -351,16 +390,12 @@ public class AccessibilityOverlayTest {
                     AsyncUtils.DEFAULT_TIMEOUT_MS);
 
             checkTrustedOverlayExists(overlayTitle);
-            removeOverlayAndCheck(sc, overlayTitle);
+            return sc;
         } catch (TimeoutException timeout) {
             throw new TimeoutException(
                     timeout.getMessage()
                             + "\n\nTimeout exception records : \n"
                             + timeoutExceptionRecords);
-        } finally {
-            if (activity != null) {
-                activity.finish();
-            }
         }
     }
 
@@ -542,5 +577,24 @@ public class AccessibilityOverlayTest {
                 (event) ->
                         ActivityLaunchUtils.findWindowByTitle(sUiAutomation, overlayTitle) == null,
                 AsyncUtils.DEFAULT_TIMEOUT_MS);
+    }
+
+    /** Disables the service and makes sure the overlay is not on the screen. */
+    private void disableServiceAndCheckForOverlay(String overlayTitle) throws Exception {
+        sUiAutomation.executeAndWaitForEvent(
+                () -> mService.disableSelfAndRemove(),
+                (event) ->
+                        ActivityLaunchUtils.findWindowByTitle(sUiAutomation, overlayTitle) == null,
+                AsyncUtils.DEFAULT_TIMEOUT_MS);
+    }
+
+    private Activity showActivity() throws Exception {
+        final Activity activity =
+                launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(
+                        sInstrumentation,
+                        sUiAutomation,
+                        AccessibilityWindowQueryActivity.class,
+                        Display.DEFAULT_DISPLAY);
+        return activity;
     }
 }
