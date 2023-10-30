@@ -20,6 +20,7 @@ import android.app.Instrumentation
 import android.content.Context
 import android.graphics.Point
 import android.hardware.input.InputManager
+import android.server.wm.WindowManagerStateHelper
 import android.util.Size
 import android.view.Display
 import android.view.InputDevice
@@ -45,6 +46,8 @@ class UinputTouchDevice(
         uinputDevice = createDevice(instrumentation, size)
         inputManager = instrumentation.targetContext.getSystemService(InputManager::class.java)!!
         associateWith(display)
+        WindowManagerStateHelper().waitForAppTransitionIdleOnDisplay(display.displayId)
+        instrumentation.uiAutomation.syncInputTransactions()
     }
 
     private fun injectEvent(events: IntArray) {
