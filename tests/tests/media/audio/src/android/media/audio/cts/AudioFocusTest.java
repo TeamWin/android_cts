@@ -42,6 +42,9 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.compatibility.common.util.NonMainlineTest;
+import com.android.media.audio.flags.Flags;
+
+import org.junit.Before;
 
 import java.util.Arrays;
 import java.util.concurrent.Semaphore;
@@ -51,6 +54,8 @@ import java.util.concurrent.TimeUnit;
 @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class AudioFocusTest extends CtsAndroidTestCase {
     private static final String TAG = "AudioFocusTest";
+
+    private boolean mDeflakeApisAvailable;
 
     private static final int TEST_TIMING_TOLERANCE_MS = 200;
     private static final long MEDIAPLAYER_PREPARE_TIMEOUT_MS = 2000;
@@ -73,6 +78,13 @@ public class AudioFocusTest extends CtsAndroidTestCase {
             .build();
 
     private static final String TEST_CALL_ID = "fake call";
+
+    @Before
+    public void setUp() throws Exception {
+        // if the test APIs for robustness and additional checks are not available,
+        // skip the parts of the tests that call them / take advantage of them
+        mDeflakeApisAvailable = Flags.focusFreezeTestApi();
+    }
 
     public void testInvalidAudioFocusRequestDelayNoListener() throws Exception {
         AudioFocusRequest req = null;
@@ -574,15 +586,21 @@ public class AudioFocusTest extends CtsAndroidTestCase {
             Log.i(TAG, "Test " + testName + " skipped: not required for Auto platform");
             return;
         }
+        if (!mDeflakeApisAvailable) {
+            Log.i(TAG, "running " + testName + " without deflake test APIs");
+        }
         // for query of fade out duration and focus request/abandon test methods
         getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
                 Manifest.permission.QUERY_AUDIO_STATE,
                 Manifest.permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED);
         final AudioManager am = new AudioManager(getContext());
 
-        java.util.List<Integer> duckedUids = am.getFocusDuckedUidsForTest();
-        assertEquals("Test start, expected no ducked UIDs bug got " + duckedUids,
-                0, duckedUids.size());
+        java.util.List<Integer> duckedUids;
+        if (mDeflakeApisAvailable) {
+            duckedUids = am.getFocusDuckedUidsForTest();
+            assertEquals("Test start, expected no ducked UIDs bug got " + duckedUids,
+                    0, duckedUids.size());
+        }
 
         final int NbFocusOwners = 3;
         final AudioFocusRequest[] focusRequests = new AudioFocusRequest[NbFocusOwners];
@@ -628,8 +646,10 @@ public class AudioFocusTest extends CtsAndroidTestCase {
         final int playerUnderTestUid = android.os.Process.myUid();
         try {
             // prevent audio focus from apps other than CTS and the fake UIDs for test
-            assertTrue(am.enterAudioFocusFreezeForTest(Arrays.asList(
-                    FocusHelperAssistUid, FocusHelperMediaUid, playerUnderTestUid)));
+            if (mDeflakeApisAvailable) {
+                assertTrue(am.enterAudioFocusFreezeForTest(Arrays.asList(
+                        FocusHelperAssistUid, FocusHelperMediaUid, playerUnderTestUid)));
+            }
             // set up the test conditions: a focus owner is playing media on a MediaPlayer
             mp = createPreparedMediaPlayer(R.raw.sine1khzs40dblong, mediaAttributes);
             final MediaPlayerRoutingListener routingListener = new MediaPlayerRoutingListener(mp);
@@ -653,10 +673,12 @@ public class AudioFocusTest extends CtsAndroidTestCase {
                 // of the ducked UIDs (which in theory should be of size 1, but we only check it's
                 // in the list for test robustness)
                 Thread.sleep(TEST_TIMING_TOLERANCE_MS);
-                duckedUids = am.getFocusDuckedUidsForTest();
-                assertTrue("List of ducked UIDs doesn't contain the player UID ("
-                        + playerUnderTestUid + ") list:" + duckedUids,
-                        duckedUids.contains(playerUnderTestUid));
+                if (mDeflakeApisAvailable) {
+                    duckedUids = am.getFocusDuckedUidsForTest();
+                    assertTrue("List of ducked UIDs doesn't contain the player UID ("
+                                    + playerUnderTestUid + ") list:" + duckedUids,
+                            duckedUids.contains(playerUnderTestUid));
+                }
                 // check that no focus change was received by the player under test
                 assertEquals("Player shouldn't have received a focus change",
                         AudioManager.AUDIOFOCUS_NONE,
@@ -672,10 +694,12 @@ public class AudioFocusTest extends CtsAndroidTestCase {
                         AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK,
                         focusListeners[FocusUnderTest].getFocusChangeAndReset());
                 // verify the UID of the player is not ducked
-                duckedUids = am.getFocusDuckedUidsForTest();
-                assertFalse("List of ducked UIDs contains the player UID ("
-                                + playerUnderTestUid + ") list:" + duckedUids,
-                        duckedUids.contains(playerUnderTestUid));
+                if (mDeflakeApisAvailable) {
+                    duckedUids = am.getFocusDuckedUidsForTest();
+                    assertFalse("List of ducked UIDs contains the player UID ("
+                                    + playerUnderTestUid + ") list:" + duckedUids,
+                            duckedUids.contains(playerUnderTestUid));
+                }
             }
 
             // another (fake) media app requests focus with GAIN, the initial focus holder should
@@ -685,21 +709,27 @@ public class AudioFocusTest extends CtsAndroidTestCase {
                     Build.VERSION_CODES.S);
             assertEquals("media (test) focus request failed",
                     AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
-            focusListeners[FocusUnderTest].waitForFocusChange("testDuckedUids",
-                    am.getFocusFadeOutDurationForTest()
-                            + TEST_TIMING_TOLERANCE_MS,
-                    /* shouldAcquire= */ true);
-            assertEquals("Focus loss from media to assistant not dispatched",
-                    AudioManager.AUDIOFOCUS_LOSS,
-                    focusListeners[FocusUnderTest].getFocusChangeAndReset());
+            if (mDeflakeApisAvailable) {
+                focusListeners[FocusUnderTest].waitForFocusChange("testDuckedUids",
+                        am.getFocusFadeOutDurationForTest()
+                                + TEST_TIMING_TOLERANCE_MS,
+                        /* shouldAcquire= */ true);
+                assertEquals("Focus loss from media to assistant not dispatched",
+                        AudioManager.AUDIOFOCUS_LOSS,
+                        focusListeners[FocusUnderTest].getFocusChangeAndReset());
+            }
 
             // check there is more ducking going on
-            SafeWaitObject.checkConditionFor(am.getFocusUnmuteDelayAfterFadeOutForTest() * 2,
-                    /*period*/50, () -> am.getFocusDuckedUidsForTest().size() == 0);
-            duckedUids = am.getFocusDuckedUidsForTest();
-            assertEquals("Expected no ducked UIDs, got " + duckedUids, 0, duckedUids.size());
+            if (mDeflakeApisAvailable) {
+                SafeWaitObject.checkConditionFor(am.getFocusUnmuteDelayAfterFadeOutForTest() * 2,
+                        /*period*/50, () -> am.getFocusDuckedUidsForTest().size() == 0);
+                duckedUids = am.getFocusDuckedUidsForTest();
+                assertEquals("Expected no ducked UIDs, got " + duckedUids, 0, duckedUids.size());
+            }
         } finally {
-            am.exitAudioFocusFreezeForTest();
+            if (mDeflakeApisAvailable) {
+                am.exitAudioFocusFreezeForTest();
+            }
             handler.getLooper().quit();
             handlerThread.quitSafely();
             if (mp != null) {
