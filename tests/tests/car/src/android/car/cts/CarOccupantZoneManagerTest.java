@@ -16,6 +16,7 @@
 
 package android.car.cts;
 
+import static android.car.feature.Flags.carDumpToProto;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -48,7 +49,9 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.car.occupantzone.CarOccupantZoneDumpProto;
 import com.android.car.occupantzone.CarOccupantZoneDumpProto.DisplayConfigProto;
 import com.android.car.occupantzone.CarOccupantZoneDumpProto.DisplayPortConfigsProto;
+import com.android.car.occupantzone.CarOccupantZoneDumpProto.DisplayUniqueIdConfigsProto;
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.ShellUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -61,6 +64,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -449,7 +454,14 @@ public final class CarOccupantZoneManagerTest extends AbstractCarTestCase {
     public void testGetSupportedInputTypes_validatedInputTypes() throws Exception {
         assumeTrue((Car.getPlatformVersion().isAtLeast(
                 PlatformVersion.VERSION_CODES.UPSIDE_DOWN_CAKE_0)));
-        List<DisplayConfig> configs = parseDisplayConfigsFromDumpProto();
+        List<DisplayConfig> configs;
+        if (carDumpToProto()) {
+            configs = parseDisplayConfigsFromDumpProto();
+        } else {
+            String dump = ShellUtils.runShellCommand(
+                    "dumpsys car_service --services CarOccupantZoneService");
+            configs = parseDisplayConfigsFromDump(dump);
+        }
         assumeTrue("No display config found for device", configs.size() > 0);
 
         // Ensure that input types match the ones from dumpsys
@@ -472,7 +484,14 @@ public final class CarOccupantZoneManagerTest extends AbstractCarTestCase {
     public void testGetSupportedInputTypes_validatedInputTypesForAndroidU() throws Exception {
         assumeTrue((Car.getPlatformVersion().isAtLeast(
                 PlatformVersion.VERSION_CODES.TIRAMISU_0)));
-        List<DisplayConfig> configs = parseDisplayConfigsFromDumpProto();
+        List<DisplayConfig> configs;
+        if (carDumpToProto()) {
+            configs = parseDisplayConfigsFromDumpProto();
+        } else {
+            String dump = ShellUtils.runShellCommand(
+                    "dumpsys car_service --services CarOccupantZoneService");
+            configs = parseDisplayConfigsFromDump(dump);
+        }
         assertWithMessage("Device's display config cannot be empty").that(configs).isNotEmpty();
 
         for (DisplayConfig c : configs) {
@@ -490,6 +509,57 @@ public final class CarOccupantZoneManagerTest extends AbstractCarTestCase {
         }
     }
 
+    // Parses the content from `mDisplayConfigs` field displayed in
+    // `adb shell dumpsys car_service --services CarOccupantZoneService`
+    //
+    // Output example:
+    // ** Dumping CarOccupantZoneService
+    //
+    // *OccupantZoneService*
+    // **mOccupantsConfig**
+    // zoneId=0 info=OccupantZoneInfo{zoneId=0 type=0 seat=1}
+    // zoneId=1 info=OccupantZoneInfo{zoneId=1 type=1 seat=4}
+    // **mDisplayConfigs**
+    // port=0 config={displayType=1 occupantZoneId=0}
+    // port=2 config={displayType=1 occupantZoneId=1}
+    // **mAudioZoneIdToOccupantZoneIdMapping**
+    // audioZoneId=0 zoneId=0
+    // audioZoneId=1 zoneId=1
+    // **mActiveOccupantConfigs**
+    // zoneId=0 config={userId=10 displays={displayId=0 displayType=1}
+    //         {displayId=8 displayType=2} audioZoneId=0}
+    // zoneId=1 config={userId=-10000 displays={displayId=3 displayType=1} audioZoneId=1}
+    // mEnableProfileUserAssignmentForMultiDisplay:true
+    // mEnableSourcePreferred:true
+    // mSourcePreferredComponents:
+    //         [ComponentInfo{com.google.android.apps.maps/com.google.android.maps.MapsActivity}]
+    private List<DisplayConfig> parseDisplayConfigsFromDump(String dump) {
+        Pattern dumpPattern = Pattern.compile("\\*\\*mDisplayConfigs\\*\\*(.+?)\\*\\*",
+                Pattern.DOTALL);
+        Matcher dumpMatcher = dumpPattern.matcher(dump);
+        if (!dumpMatcher.find()) {
+            return new ArrayList<>();
+        }
+        String displayConfigsString = dumpMatcher.group(1);
+        Pattern displayConfigPattern = Pattern.compile(
+                "config=\\{displayType=(.*?) occupantZoneId=(.*?) inputTypes=\\[(.*?)\\]");
+        Matcher inputTypeMatcher = displayConfigPattern.matcher(displayConfigsString);
+        List<DisplayConfig> configs = new ArrayList<>();
+        while (inputTypeMatcher.find()) {
+            int displayId = Integer.parseInt(inputTypeMatcher.group(1));
+            int occupantZoneId = Integer.parseInt(inputTypeMatcher.group(2));
+            List<Integer> inputTypes = new ArrayList<>();
+            String inputTypesString = inputTypeMatcher.group(3);
+            if (!inputTypesString.isEmpty()) {
+                for (String inputTypeString : inputTypesString.split(",")) {
+                    inputTypes.add(Integer.parseInt(inputTypeString.trim()));
+                }
+            }
+            configs.add(new DisplayConfig(displayId, occupantZoneId, inputTypes));
+        }
+        return configs;
+    }
+
     private List<DisplayConfig> parseDisplayConfigsFromDumpProto() throws Exception {
         List<DisplayConfig> configs = new ArrayList<>();
         CarOccupantZoneDumpProto carOccupantZoneDumpProto = CarOccupantZoneDumpProto.parseFrom(
@@ -501,6 +571,26 @@ public final class CarOccupantZoneManagerTest extends AbstractCarTestCase {
                 DisplayPortConfigsProto displayPortConfigsProto = displayPortConfigsList.get(i);
                 DisplayConfigProto displayConfigProto =
                         displayPortConfigsProto.getDisplayConfigPort().getDisplayConfig();
+                int displayType = displayConfigProto.getDisplayType();
+                int occupantZoneId = displayConfigProto.getOccupantZoneId();
+                List<Integer> inputTypes = new ArrayList<>();
+                if (displayConfigProto.getInputTypesCount() > 0) {
+                    inputTypes = displayConfigProto.getInputTypesList();
+                } else {
+                    throwExceptionFromProto(carOccupantZoneDumpProto);
+                }
+                configs.add(new DisplayConfig(displayType, occupantZoneId, inputTypes));
+            }
+        }
+
+        if (carOccupantZoneDumpProto.getDisplayUniqueIdConfigsCount() > 0) {
+            List<DisplayUniqueIdConfigsProto> displayUniqueIdConfigsList =
+                    carOccupantZoneDumpProto.getDisplayUniqueIdConfigsList();
+            for (int i = 0; i < displayUniqueIdConfigsList.size(); i++) {
+                DisplayUniqueIdConfigsProto displayUniqueIdConfigsProto =
+                        displayUniqueIdConfigsList.get(i);
+                DisplayConfigProto displayConfigProto =
+                        displayUniqueIdConfigsProto.getDisplayConfigUniqueId().getDisplayConfig();
                 int displayType = displayConfigProto.getDisplayType();
                 int occupantZoneId = displayConfigProto.getOccupantZoneId();
                 List<Integer> inputTypes = new ArrayList<>();
