@@ -43,7 +43,7 @@ public class PhotoPickerBaseTest {
     public static int REQUEST_CODE = 42;
     private static final Instrumentation sInstrumentation =
             InstrumentationRegistry.getInstrumentation();
-    protected static final String sTargetPackageName =
+    public static final String sTargetPackageName =
             sInstrumentation.getTargetContext().getPackageName();
     protected static final UiDevice sDevice = UiDevice.getInstance(sInstrumentation);
 
