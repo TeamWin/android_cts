@@ -26,7 +26,9 @@ java_test_host {
         "tradefed",
     ],
     test_suites: [
-        "cts",
+        // need to straighten out host tool dependencies before it goes back into CTS
+        // (ffmpeg and mediainfo used in scripts)
+        // "cts",
         "cts-shim-host-lib",
         "tradefed",
     ],
