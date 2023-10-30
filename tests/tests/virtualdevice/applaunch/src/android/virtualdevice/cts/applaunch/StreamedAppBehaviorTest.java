@@ -19,9 +19,7 @@ package android.virtualdevice.cts;
 import static android.Manifest.permission.ACTIVITY_EMBEDDING;
 import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
-import static android.Manifest.permission.READ_CLIPBOARD_IN_BACKGROUND;
 import static android.Manifest.permission.WAKE_LOCK;
-import static android.content.Context.DEVICE_ID_DEFAULT;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createActivityOptions;
 
@@ -44,8 +42,6 @@ import android.companion.virtual.VirtualDeviceManager.ActivityListener;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
 import android.companion.virtual.flags.Flags;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -89,7 +85,6 @@ public class StreamedAppBehaviorTest {
             ACTIVITY_EMBEDDING,
             ADD_TRUSTED_DISPLAY,
             CREATE_VIRTUAL_DEVICE,
-            READ_CLIPBOARD_IN_BACKGROUND,
             WAKE_LOCK);
 
     @Rule
@@ -138,48 +133,6 @@ public class StreamedAppBehaviorTest {
         if (mVirtualDevice != null) {
             mVirtualDevice.close();
         }
-    }
-
-    @Test
-    public void appsInVirtualDevice_shouldNotHaveAccessToClipboard() {
-        ClipboardManager clipboardManager = mContext.createDeviceContext(DEVICE_ID_DEFAULT)
-                .getSystemService(ClipboardManager.class);
-        clipboardManager.setPrimaryClip(
-                new ClipData(
-                        "CTS test clip",
-                        new String[] { "application/text" },
-                        new ClipData.Item("clipboard content from test")));
-
-        EmptyActivity activity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
-                .startActivitySync(
-                        new Intent(mContext, EmptyActivity.class)
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                                        | Intent.FLAG_ACTIVITY_CLEAR_TASK),
-                        createActivityOptions(mVirtualDisplay));
-
-        EmptyActivity.Callback callback = mock(EmptyActivity.Callback.class);
-        activity.setCallback(callback);
-
-        int requestCode = 1;
-        activity.startActivityForResult(
-                TestAppHelper.createClipboardTestIntent("clipboard content from app"),
-                requestCode,
-                createActivityOptions(mVirtualDisplay));
-
-        ArgumentCaptor<Intent> intentArgumentCaptor = ArgumentCaptor.forClass(Intent.class);
-        verify(callback, timeout(10000)).onActivityResult(
-                eq(requestCode), eq(Activity.RESULT_OK), intentArgumentCaptor.capture());
-        Intent resultData = intentArgumentCaptor.getValue();
-        // This is important to get us off of the virtual display so we can read the clipboard
-        activity.finish();
-
-        assertThat(resultData).isNotNull();
-        ClipData appReadClipData = resultData.getParcelableExtra("readClip");
-        assertThat(appReadClipData).isNull();
-        verify(mActivityListener, timeout(3000))
-                .onDisplayEmpty(eq(mVirtualDisplay.getDisplay().getDisplayId()));
-        assertThat(clipboardManager.getPrimaryClip().getItemAt(0).getText().toString())
-                .isEqualTo("clipboard content from test");
     }
 
     @RequiresFlagsDisabled(Flags.FLAG_STREAM_CAMERA)

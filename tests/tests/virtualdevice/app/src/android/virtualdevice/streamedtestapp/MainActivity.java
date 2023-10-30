@@ -46,8 +46,6 @@ import static android.virtualdevice.cts.common.AudioHelper.SHORT_VALUE;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.app.Activity;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Intent;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraDevice;
@@ -99,17 +97,7 @@ public class MainActivity extends Activity {
     static final String EXTRA_CAMERA_ID = "cameraId";
     static final String EXTRA_CAMERA_RESULT = "cameraResult";
     public static final String EXTRA_CAMERA_ON_ERROR_CODE = "cameraOnErrorCode";
-
-    /**
-     * Tell this activity to test clipboard when it is launched. This will attempt to read the
-     * existing string in clipboard, put that in the activity result (as
-     * {@link #EXTRA_CLIPBOARD_STRING}), and add the string in {@link #EXTRA_CLIPBOARD_STRING} in
-     * the intent extra to the clipboard.
-     */
-    static final String ACTION_TEST_CLIPBOARD =
-            PACKAGE_NAME + ".TEST_CLIPBOARD";
     static final String EXTRA_ACTIVITY_LAUNCHED_RECEIVER = "activityLaunchedReceiver";
-    static final String EXTRA_CLIPBOARD_STRING = "clipboardString";
 
     /**
      * Tell this activity to request a given permission when it is launched.
@@ -136,10 +124,6 @@ public class MainActivity extends Activity {
                     result.putInt(EXTRA_DISPLAY, getDisplay().getDisplayId());
                     resultReceiver.send(Activity.RESULT_OK, result);
                     finish();
-                    break;
-                case ACTION_TEST_CLIPBOARD:
-                    Log.d(TAG, "Testing clipboard");
-                    testClipboard();
                     break;
                 case ACTION_TEST_CAMERA:
                     Log.d(TAG, "Testing camera");
@@ -203,27 +187,6 @@ public class MainActivity extends Activity {
                     Log.w(TAG, "Unknown action: " + action);
             }
         }
-    }
-
-    private void testClipboard() {
-        Intent resultData = new Intent();
-        ClipboardManager clipboardManager = getSystemService(ClipboardManager.class);
-        resultData.putExtra(EXTRA_CLIPBOARD_STRING, clipboardManager.getPrimaryClip());
-
-        String clipboardContent = getIntent().getStringExtra(EXTRA_CLIPBOARD_STRING);
-        if (clipboardContent != null) {
-            clipboardManager.setPrimaryClip(
-                    new ClipData(
-                            "CTS clip data",
-                            new String[]{"application/text"},
-                            new ClipData.Item(clipboardContent)));
-            Log.d(TAG, "Wrote \"" + clipboardContent + "\" to clipboard");
-        } else {
-            Log.w(TAG, "Clipboard content is null");
-        }
-
-        setResult(Activity.RESULT_OK, resultData);
-        finish();
     }
 
     private void testCamera() {

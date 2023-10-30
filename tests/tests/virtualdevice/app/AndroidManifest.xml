@@ -45,8 +45,7 @@
             android:exported="true" />
 
         <activity android:name=".ClipboardTestActivity"
-                  android:allowEmbedded="true"
-                  android:exported="true"/>
+            android:exported="true"/>
 
         <activity android:name=".NoEmbedActivity"
             android:exported="true" />
