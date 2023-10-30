@@ -49,6 +49,7 @@ import android.graphics.nano.RectProto;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.util.SparseArray;
+import android.view.WindowInsets;
 import android.view.nano.DisplayInfoProto;
 import android.view.nano.InsetsSourceProto;
 import android.view.nano.ViewProtoEnums;
@@ -65,6 +66,7 @@ import com.android.server.wm.nano.DisplayContentProto;
 import com.android.server.wm.nano.DisplayFramesProto;
 import com.android.server.wm.nano.DisplayRotationProto;
 import com.android.server.wm.nano.IdentifierProto;
+import com.android.server.wm.nano.InsetsSourceProviderProto;
 import com.android.server.wm.nano.KeyguardControllerProto;
 import com.android.server.wm.nano.KeyguardServiceDelegateProto;
 import com.android.server.wm.nano.PinnedTaskControllerProto;
@@ -254,10 +256,6 @@ public class WindowManagerState {
                 return null;
             }
         }
-    }
-
-    static boolean isValidNavBarType(WindowState navState) {
-        return TYPE_NAVIGATION_BAR == navState.getType();
     }
 
     /**
@@ -1020,14 +1018,23 @@ public class WindowManagerState {
     }
 
     public List<WindowState> getAllNavigationBarStates() {
-        return getMatchingWindows(WindowManagerState::isValidNavBarType)
+        return mDisplays.stream()
+                .filter(dc -> dc.mProviders != null)
+                .flatMap(dc -> dc.mProviders.stream())
+                .filter(provider -> (provider.mSource.is(WindowInsets.Type.navigationBars())))
+                .map(InsetsSourceProvider::getWindowState)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
     @Nullable
     List<WindowState> getAndAssertNavBarWindowsOnDisplay(int displayId, int expectedNavBarCount) {
-        List<WindowState> navWindows = getMatchingWindows(ws -> isValidNavBarType(ws)
-                && ws.getDisplayId() == displayId)
+        List<WindowState> navWindows = mDisplays.stream()
+                .filter(dc -> dc.mId == displayId)
+                .filter(dc -> dc.mProviders != null)
+                .flatMap(dc -> dc.mProviders.stream())
+                .filter(provider -> (provider.mSource.is(WindowInsets.Type.navigationBars())))
+                .map(InsetsSourceProvider::getWindowState)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         // We may need some time to wait for nav bar showing.
@@ -1185,6 +1192,7 @@ public class WindowManagerState {
         private int mLastOrientation;
         private boolean mIsFixedToUserRotation;
         private List<Rect> mKeepClearRects;
+        private List<InsetsSourceProvider> mProviders;
 
         DisplayContent(DisplayContentProto proto) {
             super(proto.rootDisplayArea);
@@ -1237,6 +1245,10 @@ public class WindowManagerState {
             mKeepClearRects = new ArrayList();
             for (RectProto r : proto.keepClearAreas) {
                 mKeepClearRects.add(new Rect(r.left, r.top, r.right, r.bottom));
+            }
+            mProviders = new ArrayList<>();
+            for (InsetsSourceProviderProto provider: proto.insetsSourceProviders) {
+                mProviders.add(new InsetsSourceProvider(provider));
             }
         }
 
@@ -2408,15 +2420,19 @@ public class WindowManagerState {
     }
 
     public static class InsetsSource {
-        private String mType;
+        private int mType;
+        private String mTypeName;
         private Rect mFrame;
         private Rect mVisibleFrame;
         private boolean mVisible;
 
         InsetsSource(InsetsSourceProto proto) {
-            mType = proto.type;
-            mFrame = new Rect(
-                    proto.frame.left, proto.frame.top, proto.frame.right, proto.frame.bottom);
+            mType = proto.typeNumber;
+            mTypeName = proto.type;
+            if (proto.frame != null) {
+                mFrame = new Rect(
+                        proto.frame.left, proto.frame.top, proto.frame.right, proto.frame.bottom);
+            }
             if (proto.visibleFrame != null) {
                 mVisibleFrame = new Rect(proto.visibleFrame.left, proto.visibleFrame.top,
                         proto.visibleFrame.right, proto.visibleFrame.bottom);
@@ -2424,7 +2440,7 @@ public class WindowManagerState {
             mVisible = proto.visible;
         }
 
-        String getType() {
+        int getType() {
             return mType;
         }
 
@@ -2440,8 +2456,13 @@ public class WindowManagerState {
             return mVisible;
         }
 
-        public boolean isCaptionBar() {
-            return mType.contains("captionBar");
+        /**
+         * Check whether this InsetsSource is with given type.
+         * @param type The type to which check against.
+         * @return {@code true} if this insets source is with the given type.
+         */
+        public boolean is(int type) {
+            return (mType & type) != 0;
         }
 
         public void insetGivenFrame(Rect inOutFrame) {
@@ -2469,11 +2490,39 @@ public class WindowManagerState {
 
         @Override
         public String toString() {
-            return "InsetsSource: {type=" + mType
+            return "InsetsSource: {type=" + mTypeName
                     + " frame=" + mFrame
                     + " visibleFrame=" + mVisibleFrame
                     + " visible=" + mVisible
                     + "}";
         }
+    }
+
+    public static class InsetsSourceProvider {
+        private InsetsSource mSource;
+        private WindowState mWindowState;
+
+        InsetsSourceProvider(InsetsSourceProviderProto proto) {
+            if (proto.source != null) {
+                mSource = new InsetsSource(proto.source);
+            }
+            if (proto.sourceWindowState != null) {
+                mWindowState = new WindowState(proto.sourceWindowState);
+            }
+        }
+
+        int getType() {
+            return mSource.getType();
+        }
+
+        WindowState getWindowState() {
+            return mWindowState;
+        }
+
+        @Override
+        public String toString() {
+            return "InsetsSourceProvider: mSource=" + mSource + " mWindowState=" + mWindowState;
+        }
+
     }
 }
