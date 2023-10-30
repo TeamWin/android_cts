@@ -88,6 +88,10 @@ public class HardwareBufferTest {
             HardwareBuffer.DS_FP32UI8,
             HardwareBuffer.S_UI8,
             HardwareBuffer.YCBCR_P010,
+            HardwareBuffer.R_8,
+            HardwareBuffer.R_16_UINT,
+            HardwareBuffer.RG_1616_UINT,
+            HardwareBuffer.RGBA_10101010
         };
     }
 
