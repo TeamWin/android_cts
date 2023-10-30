@@ -33,6 +33,8 @@ java_defaults {
     ],
     static_libs: [
         "cts-statsd-atom-host-test-utils",
+        "flag-junit-host",
+        "android.content.pm.flags-aconfig-java-host",
     ],
     data: [
         ":CtsStatsdAtomEmptyApp",
