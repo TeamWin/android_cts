@@ -6597,6 +6597,82 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @Test
     @ApiTest(
             apis = {
+                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents"
+            }
+    )
+    public void testSubscribePropertyEventsForContinuousPropertyWithBatchedRequest()
+            throws Exception {
+        runWithShellPermissionIdentity(
+                () -> {
+                    int vehicleSpeed = VehiclePropertyIds.PERF_VEHICLE_SPEED;
+                    int vehicleSpeedDisplay = VehiclePropertyIds.PERF_VEHICLE_SPEED_DISPLAY;
+                    CarPropertyConfig<?> perfVehicleSpeedCarPropertyConfig =
+                            mCarPropertyManager.getCarPropertyConfig(
+                                    vehicleSpeed);
+                    CarPropertyConfig<?> perfVehicleSpeedDisplayCarPropertyConfig =
+                            mCarPropertyManager.getCarPropertyConfig(
+                                    vehicleSpeedDisplay);
+                    assumeTrue("The CarPropertyConfig of vehicle speed display does not exist",
+                            perfVehicleSpeedDisplayCarPropertyConfig != null);
+                    assumeTrue("The CarPropertyConfig of vehicle speed does not exist",
+                            perfVehicleSpeedCarPropertyConfig != null);
+                    long bufferMillis = 1_000; // 1 second
+                    // timeoutMillis is set to the maximum expected time needed to receive the
+                    // required number of PERF_VEHICLE_SPEED events for test. If the test does not
+                    // receive the required number of events before the timeout expires, it fails.
+                    long timeoutMillisPerfVehicleSpeed = generateTimeoutMillis(
+                            perfVehicleSpeedCarPropertyConfig.getMinSampleRate(), bufferMillis);
+                    long timeoutMillisPerfVehicleSpeedDisplay = generateTimeoutMillis(
+                            perfVehicleSpeedDisplayCarPropertyConfig.getMinSampleRate(),
+                            bufferMillis);
+                    CarPropertyEventCounter speedListener =
+                            new CarPropertyEventCounter(Math.max(timeoutMillisPerfVehicleSpeed,
+                                    timeoutMillisPerfVehicleSpeedDisplay));
+
+                    assertThat(speedListener.receivedEvent(vehicleSpeed)).isEqualTo(NO_EVENTS);
+                    assertThat(speedListener.receivedError(vehicleSpeed)).isEqualTo(NO_EVENTS);
+                    assertThat(speedListener.receivedErrorWithErrorCode(vehicleSpeed))
+                            .isEqualTo(NO_EVENTS);
+                    assertThat(speedListener.receivedEvent(vehicleSpeedDisplay))
+                            .isEqualTo(NO_EVENTS);
+                    assertThat(speedListener.receivedError(vehicleSpeedDisplay))
+                            .isEqualTo(NO_EVENTS);
+                    assertThat(speedListener.receivedErrorWithErrorCode(vehicleSpeedDisplay))
+                            .isEqualTo(NO_EVENTS);
+
+                    speedListener.resetCountDownLatch(UI_RATE_EVENT_COUNTER);
+                    mCarPropertyManager.subscribePropertyEvents(
+                            List.of(new SubscriptionOption
+                                            .Builder(vehicleSpeed)
+                                            .setUpdateRateUi()
+                                            .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL)
+                                            .build(),
+                                    new SubscriptionOption
+                                            .Builder(vehicleSpeedDisplay)
+                                            .setUpdateRateUi()
+                                            .addAreaId(
+                                                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL)
+                                            .build()),
+                            /* callbackExecutor= */ null, speedListener);
+                    speedListener.assertOnChangeEventCalled();
+                    mCarPropertyManager.unregisterCallback(speedListener);
+
+                    assertThat(speedListener.receivedEvent(vehicleSpeed))
+                            .isGreaterThan(NO_EVENTS);
+                    assertThat(speedListener.receivedEvent(vehicleSpeedDisplay))
+                            .isGreaterThan(NO_EVENTS);
+                    // The test did not change property values, it should not get error with error
+                    // codes.
+                    assertThat(speedListener.receivedErrorWithErrorCode(vehicleSpeed))
+                            .isEqualTo(NO_EVENTS);
+                    assertThat(speedListener.receivedErrorWithErrorCode(vehicleSpeedDisplay))
+                            .isEqualTo(NO_EVENTS);
+                });
+    }
+
+    @Test
+    @ApiTest(
+            apis = {
                     "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
                     "android.car.hardware.property.CarPropertyManager#"
                             + "unregisterCallback(CarPropertyEventCallback)"
