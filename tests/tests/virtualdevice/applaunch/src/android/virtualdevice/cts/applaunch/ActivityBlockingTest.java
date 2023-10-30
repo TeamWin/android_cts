@@ -335,6 +335,31 @@ public class ActivityBlockingTest {
         assertActivityLaunchBlocked(mMonitoriedIntent);
     }
 
+    @RequiresFlagsEnabled(Flags.FLAG_INTERACTIVE_SCREEN_MIRROR)
+    @Test
+    public void autoMirrorDisplay_shouldNotLaunchActivity() {
+        createVirtualDeviceAndTrustedDisplay(new VirtualDeviceParams.Builder().build(),
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR);
+        assertNoActivityLaunched(mMonitoriedIntent);
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_INTERACTIVE_SCREEN_MIRROR)
+    @Test
+    public void publicDisplay_shouldNotLaunchActivity() {
+        createVirtualDeviceAndTrustedDisplay(new VirtualDeviceParams.Builder().build(),
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC);
+        assertNoActivityLaunched(mMonitoriedIntent);
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_INTERACTIVE_SCREEN_MIRROR)
+    @Test
+    public void publicAutoMirrorDisplay_shouldNotLaunchActivity() {
+        createVirtualDeviceAndTrustedDisplay(new VirtualDeviceParams.Builder().build(),
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                    | DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR);
+        assertNoActivityLaunched(mMonitoriedIntent);
+    }
+
     @Test
     public void setAllowedCrossTaskNavigations_shouldBlockNonAllowedNavigations() {
         createVirtualDeviceAndTrustedDisplay(new VirtualDeviceParams.Builder()
@@ -342,7 +367,7 @@ public class ActivityBlockingTest {
                 .build());
         EmptyActivity emptyActivity = startEmptyActivityOnVirtualDisplay();
         emptyActivity.startActivity(mMonitoriedIntent);
-        assertNoActivityLaunched();
+        assertBlockedAppStreamingActivityLaunched();
     }
 
     @Test
@@ -372,7 +397,7 @@ public class ActivityBlockingTest {
                 .build());
         EmptyActivity emptyActivity = startEmptyActivityOnVirtualDisplay();
         emptyActivity.startActivity(mMonitoriedIntent);
-        assertNoActivityLaunched();
+        assertBlockedAppStreamingActivityLaunched();
     }
 
     private static ComponentName emptyActivityComponent() {
@@ -400,6 +425,13 @@ public class ActivityBlockingTest {
                 virtualDeviceParams, DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED);
     }
 
+    private void createVirtualDeviceAndTrustedDisplay(
+            VirtualDeviceParams virtualDeviceParams, int virtualDisplayFlags) {
+        createVirtualDeviceAndDisplay(
+                virtualDeviceParams,
+                virtualDisplayFlags | DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED);
+    }
+
     private void createVirtualDeviceAndDisplay(
             VirtualDeviceParams virtualDeviceParams, int virtualDisplayFlags) {
         mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
@@ -413,13 +445,34 @@ public class ActivityBlockingTest {
                 /* executor= */ null, /* callback= */ null);
     }
 
+    /**
+     * Assert that starting an activity with the given intent actually starts
+     * BlockedAppStreamingActivity.
+     */
     private void assertActivityLaunchBlocked(Intent intent) {
         assertThat(mActivityManager.isActivityStartAllowedOnDisplay(
                 mTargetContext, mVirtualDisplay.getDisplay().getDisplayId(), intent)).isFalse();
         mTargetContext.startActivity(intent, createActivityOptions(mVirtualDisplay));
-        assertNoActivityLaunched();
+        assertBlockedAppStreamingActivityLaunched();
     }
 
+    /**
+     * Assert that no activity is launched with the given intent.
+     */
+    private void assertNoActivityLaunched(Intent intent) {
+        assertThat(mActivityManager.isActivityStartAllowedOnDisplay(
+                mTargetContext, mVirtualDisplay.getDisplay().getDisplayId(), intent)).isFalse();
+        mTargetContext.startActivity(intent, createActivityOptions(mVirtualDisplay));
+        verify(mActivityListener, never()).onTopActivityChanged(
+                eq(mVirtualDisplay.getDisplay().getDisplayId()), any(), anyInt());
+        verify(mOnReceiveResultListener, never()).onReceiveResult(anyInt(), any());
+        reset(mActivityListener);
+        reset(mOnReceiveResultListener);
+    }
+
+    /**
+     * Assert that launching an activity is successful with the given intent.
+     */
     private void assertActivityLaunchAllowed(Intent intent) {
         assertThat(mActivityManager.isActivityStartAllowedOnDisplay(
                 mTargetContext, mVirtualDisplay.getDisplay().getDisplayId(), intent)).isTrue();
@@ -427,7 +480,7 @@ public class ActivityBlockingTest {
         assertActivityLaunched(intent.getComponent());
     }
 
-    private void assertNoActivityLaunched() {
+    private void assertBlockedAppStreamingActivityLaunched() {
         verify(mActivityListener, timeout(TIMEOUT_MS).atLeastOnce()).onTopActivityChanged(
                 eq(mVirtualDisplay.getDisplay().getDisplayId()),
                 eq(BLOCKED_ACTIVITY_COMPONENT), anyInt());
