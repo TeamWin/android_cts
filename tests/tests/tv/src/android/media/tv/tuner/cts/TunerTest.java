@@ -1159,6 +1159,7 @@ public class TunerTest {
             // TODO: get real CiCam id from MediaCas
             res = mTuner.connectFrontendToCiCam(0);
         } else {
+            res = mTuner.connectFrontendToCiCam(0);
             assertEquals(Tuner.INVALID_LTS_ID, mTuner.connectFrontendToCiCam(0));
         }
 
@@ -1403,12 +1404,12 @@ public class TunerTest {
         assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
 
         DownloadSettings.Builder builder = DownloadSettings.builder(Filter.TYPE_MMTP);
-        if (!TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
             builder.setUseDownloadId(true);
         }
         builder.setDownloadId(2);
         DownloadSettings settings = builder.build();
-        if (!TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
             assertEquals(settings.useDownloadId(), true);
         } else {
             assertEquals(settings.useDownloadId(), false);
