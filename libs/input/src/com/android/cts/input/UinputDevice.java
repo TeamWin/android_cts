@@ -140,4 +140,22 @@ public final class UinputDevice extends VirtualInputDevice {
         writeCommands(json.toString().getBytes());
     }
 
+    /**
+     * Inject a delay into the uinput process, guaranteeing that it will wait for at least the
+     * specified time before executing any more commands.
+     *
+     * @param delayMs The amount of time to delay, in milliseconds.
+     */
+    public void injectDelay(int delayMs) {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("command", "delay");
+            json.put("id", mId);
+            json.put("duration", delayMs);
+        } catch (JSONException e) {
+            throw new RuntimeException("Could not inject delay of " + delayMs + "ms");
+        }
+        writeCommands(json.toString().getBytes());
+    }
+
 }
