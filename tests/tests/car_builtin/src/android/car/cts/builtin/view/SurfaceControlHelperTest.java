@@ -16,19 +16,46 @@
 
 package android.car.cts.builtin.view;
 
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.car.builtin.view.SurfaceControlHelper;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.view.SurfaceControl;
 
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 @RunWith(AndroidJUnit4.class)
 public final class SurfaceControlHelperTest {
+    private static final long TIMEOUT_MS = 5_000;
+
+    private final Instrumentation mInstrumentation = getInstrumentation();
+    private final Context mContext = getInstrumentation().getContext();
+
+    private TestActivity mTestActivity;
+
+    @After
+    public void tearDown() throws Exception {
+        if (mTestActivity != null) {
+            mTestActivity.finishAndRemoveTask();
+            mTestActivity.waitForDestroyed();
+            mTestActivity = null;
+        }
+    }
 
     @Test
     public void testMirrorSurface() {
@@ -43,5 +70,33 @@ public final class SurfaceControlHelperTest {
         // Just checks SurfaceControlHelper.mirrorSurface() returns the valid SurfaceControl.
         assertThat(mirror).isNotNull();
         assertThat(mirror.isValid()).isTrue();
+    }
+
+    @Test
+    public void testGetSurfaceControl() throws Exception {
+        mTestActivity = launchTestActivity(TestActivity.class);
+        SurfaceControl surface = SurfaceControlHelper.getSurfaceControl(mTestActivity);
+        assertThat(surface).isNotNull();
+    }
+
+    private <T> T launchTestActivity(Class<T> type) {
+        Intent startIntent = new Intent(mContext, type).addFlags(FLAG_ACTIVITY_NEW_TASK);
+        Activity testActivity = (Activity) mInstrumentation
+                .startActivitySync(startIntent, /* options = */ null);
+        return type.cast(testActivity);
+    }
+
+    public static final class TestActivity extends Activity {
+        private final CountDownLatch mDestroyed = new CountDownLatch(1);
+
+        @Override
+        protected void onDestroy() {
+            super.onDestroy();
+            mDestroyed.countDown();
+        }
+
+        private boolean waitForDestroyed() throws InterruptedException {
+            return mDestroyed.await(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        }
     }
 }
