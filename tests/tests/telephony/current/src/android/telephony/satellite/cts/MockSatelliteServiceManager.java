@@ -952,6 +952,16 @@ class MockSatelliteServiceManager {
         mSatelliteService.sendOnNtnSignalStrengthChanged(ntnSignalStrength);
     }
 
+    void sendOnSatelliteCapabilitiesChanged(
+            android.telephony.satellite.stub.SatelliteCapabilities satelliteCapabilities) {
+        logd("sendOnSatelliteCapabilitiesChanged: " + satelliteCapabilities);
+        if (mSatelliteService == null) {
+            loge("sendOnSatelliteCapabilitiesChanged: mSatelliteService is null");
+            return;
+        }
+        mSatelliteService.sendOnSatelliteCapabilitiesChanged(satelliteCapabilities);
+    }
+
     boolean setSatelliteListeningTimeoutDuration(long timeoutMillis) {
         try {
             String result =
