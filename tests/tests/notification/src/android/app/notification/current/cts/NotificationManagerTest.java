@@ -988,7 +988,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     /**
-     * Tests that, given a significant amount of Notification pressure from 500 notifications
+     * Tests that, given a significant amount of Notification pressure from 400 notifications
      * posted in rapid succession, NotificationListeners don't experience binder errors.
      * Timing in this test is tuned to reduce flakiness while avoiding timeouts. Posting a
      * notification requires approximately 100 ms, so 500 notifications is expected to take about
@@ -1038,7 +1038,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         mListener.addTestPackage(PRESSURE_APP_06);
         mListener.addTestPackage(PRESSURE_APP_07);
 
-        // For 10 different apps, send notificationsPerApp notifications each, and ensure that
+        // For each app, sends notificationsPerApp notifications each, and ensure that
         // none are dropped.
         EventCallback callback = new EventCallback();
         int notificationId = 6500;
