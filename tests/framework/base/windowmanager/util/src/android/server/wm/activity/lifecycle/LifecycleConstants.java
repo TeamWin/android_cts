@@ -16,6 +16,8 @@
 
 package android.server.wm.activity.lifecycle;
 
+import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
+
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import android.app.Activity;
@@ -42,7 +44,7 @@ public final class LifecycleConstants {
      * Activity launch time is evaluated. It is expected to be less than 5 seconds. Otherwise, it's
      * likely there is a timeout.
      */
-    static final long ACTIVITY_LAUNCH_TIMEOUT = 5 * 1000;
+    static final long ACTIVITY_LAUNCH_TIMEOUT = 5 * 1000L * HW_TIMEOUT_MULTIPLIER;
     static final String EXTRA_RECREATE = "recreate";
     static final String EXTRA_FINISH_IN_ON_CREATE = "finish_in_on_create";
     static final String EXTRA_FINISH_IN_ON_START = "finish_in_on_start";
