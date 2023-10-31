@@ -89,6 +89,12 @@ _GROUPED_SCENES = {
                    'scene2_f']
 }
 
+# Scene extensions
+_EXTENSIONS_SCENES = (
+    os.path.join('scene_extensions', 'scene_hdr'),
+    os.path.join('scene_extensions', 'scene_night'),
+)
+
 # Scenes that have to be run manually regardless of configuration
 _MANUAL_SCENES = ['scene5']
 
@@ -642,6 +648,13 @@ def main():
     if (not s.startswith('scene') and
         not s.startswith(('sensor_fusion', '<scene-name>'))):
       scenes[i] = f'scene{s}'
+    # Handle scene_extensions
+    if s.startswith('extensions'):
+      scenes[i] = f'scene_{s}'
+    if s.startswith('hdr') or s.startswith('night'):
+      scenes[i] = f'scene_extensions/scene_{s}'
+    if s.startswith('scene_hdr') or s.startswith('scene_night'):
+      scenes[i] = f'scene_extensions/{s}'
 
   # Expand GROUPED_SCENES and remove any duplicates
   scenes = [_GROUPED_SCENES[s] if s in _GROUPED_SCENES else s for s in scenes]
@@ -714,9 +727,12 @@ def main():
       if auto_scene_switch:
         possible_scenes.remove('sensor_fusion')
     else:
-      possible_scenes = _AUTO_SCENES if auto_scene_switch else _ALL_SCENES
+      if 'scene_extensions' in scenes:
+        possible_scenes = _EXTENSIONS_SCENES
+      else:
+        possible_scenes = _AUTO_SCENES if auto_scene_switch else _ALL_SCENES
 
-    if '<scene-name>' in scenes:
+    if '<scene-name>' in scenes or 'scene_extensions' in scenes:
       per_camera_scenes = possible_scenes
     else:
       # Validate user input scene names
