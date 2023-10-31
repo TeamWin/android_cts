@@ -32,6 +32,9 @@ import android.os.Message;
 import android.os.RemoteException;
 import android.util.Log;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 public class IRadioModemImpl extends IRadioModem.Stub {
     private static final String TAG = "MRMDM";
 
@@ -42,7 +45,7 @@ public class IRadioModemImpl extends IRadioModem.Stub {
     private int mForceRadioPowerError = -1;
 
     private MockModemConfigInterface mMockModemConfigInterface;
-    private Object mCacheUpdateMutex;
+    private final Object mCacheUpdateMutex;
     private final Handler mHandler;
     private int mSubId;
     private String mTag;
@@ -52,7 +55,8 @@ public class IRadioModemImpl extends IRadioModem.Stub {
     static final int EVENT_DEVICE_IDENTITY_CHANGED = 2;
     static final int EVENT_RADIO_STATE_CHANGED = 3;
     static final int EVENT_DEVICE_IMEI_INFO_CHANGED = 4;
-
+    private static final int LATCH_MAX = 2;
+    private final CountDownLatch[] mLatches = new CountDownLatch[LATCH_MAX];
     // ***** Cache of modem attributes/status
     private String mBasebandVer;
     private String mImei;
@@ -466,6 +470,26 @@ public class IRadioModemImpl extends IRadioModem.Stub {
     }
 
     /**
+     * Sent when there is a change in the IMEI mapping with respect to sim slot.
+     *
+     * @param imeiInfo : change in the imeiInfo value
+     */
+    public void onImeiMappingChanged(ImeiInfo imeiInfo) {
+        Log.d(TAG, "onImeiMappingChanged");
+
+        if (mRadioModemIndication != null) {
+            try {
+                mRadioModemIndication.onImeiMappingChanged(RadioIndicationType.UNSOLICITED,
+                        imeiInfo);
+            } catch (RemoteException ex) {
+                Log.e(TAG, "Failed to onImeiMappingChanged from AIDL. Exception" + ex);
+            }
+        } else {
+            Log.e(TAG, "null mRadioModemIndication");
+        }
+    }
+
+    /**
      * Indicates when radio state changes.
      *
      * @param radioState Current radio state
@@ -520,5 +544,67 @@ public class IRadioModemImpl extends IRadioModem.Stub {
     @Override
     public int getInterfaceVersion() {
         return IRadioModem.VERSION;
+    }
+
+    /**
+     * Helper method that will change the Imei mapping to another slot.
+     */
+    public void changeImeiMapping() {
+        if (mImeiType == ImeiInfo.ImeiType.PRIMARY
+                && MockModemConfigInterface.DEFAULT_PHONE1_IMEI.equals(mImei)) {
+            mImeiType = ImeiInfo.ImeiType.SECONDARY;
+            mImei = MockModemConfigInterface.DEFAULT_PHONE2_IMEI;
+        } else {
+            mImeiType = ImeiInfo.ImeiType.PRIMARY;
+            mImei = MockModemConfigInterface.DEFAULT_PHONE1_IMEI;
+        }
+
+        Log.d(TAG, "changeImeiMapping");
+        android.hardware.radio.modem.ImeiInfo imeiInfo =
+                new android.hardware.radio.modem.ImeiInfo();
+        synchronized (mCacheUpdateMutex) {
+            imeiInfo.type = mImeiType;
+            imeiInfo.imei = mImei;
+            imeiInfo.svn = mImeiSv;
+        }
+        onImeiMappingChanged(imeiInfo);
+    }
+
+    /**
+     * Waits for the event of voice service.
+     *
+     * @param latchIndex The index of the event.
+     * @param waitMs The timeout in milliseconds.
+     * @return {@code true} if the event happens.
+     */
+    public boolean waitForLatchCountdown(int latchIndex, long waitMs) {
+        boolean complete = false;
+        try {
+            CountDownLatch latch;
+            synchronized (mLatches) {
+                latch = mLatches[latchIndex];
+            }
+            long startTime = System.currentTimeMillis();
+            complete = latch.await(waitMs, TimeUnit.MILLISECONDS);
+            Log.i(TAG, "Latch " + latchIndex + " took "
+                    + (System.currentTimeMillis() - startTime) + " ms to count down.");
+        } catch (InterruptedException e) {
+            Log.e(TAG, "Waiting latch " + latchIndex + " interrupted, e=" + e);
+        }
+        synchronized (mLatches) {
+            mLatches[latchIndex] = new CountDownLatch(1);
+        }
+        return complete;
+    }
+
+    /**
+     * Resets the CountDownLatches
+     */
+    public void resetAllLatchCountdown() {
+        synchronized (mLatches) {
+            for (int i = 0; i < LATCH_MAX; i++) {
+                mLatches[i] = new CountDownLatch(1);
+            }
+        }
     }
 }
