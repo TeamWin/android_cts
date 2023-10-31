@@ -57,6 +57,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -845,6 +846,54 @@ public class KeyAttestationTest {
         testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_SERIAL, null);
         testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_IMEI, "Unable to retrieve IMEI");
         testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_MEID, "Unable to retrieve MEID");
+    }
+
+    @Test
+    public void testAttestedRoTAcrossKeymints() throws Exception {
+        assumeTrue("This test requires a device supporting key attestation",
+                TestUtils.isAttestationSupported());
+        assumeTrue("This test is not applicable for PC",
+                !getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC));
+        assumeTrue("This test is only applicable to devices with StrongBox",
+                TestUtils.hasStrongBox(getContext()));
+
+        RootOfTrust teeRootOfTrust = generateAttestationAndExtractRoT("tee_test_key", false);
+        RootOfTrust sbRootOfTrust = generateAttestationAndExtractRoT("sb_test_key", true);
+
+        assertNotNull("RootOfTrust should not be null for TEE", teeRootOfTrust);
+        assertNotNull("RootOfTrust should not be null for StrongBox", sbRootOfTrust);
+        assertArrayEquals("Verified boot hash in TEE and StrongBox issued certificates must be"
+                        + " same.", teeRootOfTrust.getVerifiedBootHash(),
+                sbRootOfTrust.getVerifiedBootHash());
+        assertArrayEquals("Verified boot key in TEE and StrongBox issued certificates must be"
+                        + " same.", teeRootOfTrust.getVerifiedBootKey(),
+                sbRootOfTrust.getVerifiedBootKey());
+        assertEquals("Verified boot state in TEE and StrongBox issued certificates must be same.",
+                teeRootOfTrust.getVerifiedBootState(),
+                sbRootOfTrust.getVerifiedBootState());
+        assertEquals("Device locked state in TEE and StrongBox issued certificates must be same.",
+                teeRootOfTrust.isDeviceLocked(), sbRootOfTrust.isDeviceLocked());
+    }
+
+    private RootOfTrust generateAttestationAndExtractRoT(String alias, boolean isStrongBox)
+            throws Exception {
+        KeyGenParameterSpec.Builder specBuilder =
+                new KeyGenParameterSpec.Builder(alias, PURPOSE_SIGN | PURPOSE_VERIFY)
+                        .setIsStrongBoxBacked(isStrongBox)
+                        .setAlgorithmParameterSpec(new ECGenParameterSpec("secp256r1"))
+                        .setDigests(DIGEST_SHA256)
+                        .setAttestationChallenge("challenge".getBytes());
+        generateKeyPair(KEY_ALGORITHM_EC, specBuilder.build());
+
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null);
+
+        Certificate[] certificates = keyStore.getCertificateChain(alias);
+        verifyCertificateChain(certificates, isStrongBox);
+
+        Attestation attestation =
+                Attestation.loadFromCertificate((X509Certificate) certificates[0]);
+        return attestation.getRootOfTrust();
     }
 
     @RequiresDevice
