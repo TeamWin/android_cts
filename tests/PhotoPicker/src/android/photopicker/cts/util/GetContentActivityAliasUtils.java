@@ -16,89 +16,88 @@
 
 package android.photopicker.cts.util;
 
-import static android.photopicker.cts.util.PhotoPickerPackageUtils.getPhotoPickerPackageName;
+import static android.provider.MediaStore.ACTION_PICK_IMAGES;
 
 import android.Manifest;
 import android.app.Instrumentation;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 
 import androidx.annotation.NonNull;
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.InstrumentationRegistry;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
-/**
- * Util methods for Photo Picker related components.
- */
-public class PhotoPickerComponentUtils {
+public class GetContentActivityAliasUtils {
 
     private static final long POLLING_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(5);
     private static final long POLLING_SLEEP_MILLIS = 100;
 
-    public static final ComponentName GET_CONTENT_ACTIVITY_COMPONENT = new ComponentName(
+    private static ComponentName sComponentName = new ComponentName(
             getPhotoPickerPackageName(),
             "com.android.providers.media.photopicker.PhotoPickerGetContentActivity");
 
-    public static final ComponentName PICKER_SETTINGS_ACTIVITY_COMPONENT = new ComponentName(
-            getPhotoPickerPackageName(),
-            "com.android.providers.media.photopicker.PhotoPickerSettingsActivity");
-
-    /**
-     * Returns the current state of the given component and enables it.
-     */
-    public static int enableAndGetOldState(@NonNull ComponentName componentName) throws Exception {
+    public static int enableAndGetOldState() throws Exception {
         final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
         final PackageManager packageManager = inst.getContext().getPackageManager();
         if (isComponentEnabledSetAsExpected(packageManager,
-                componentName,
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED)) {
             return PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
         }
 
-        final int currentState = packageManager.getComponentEnabledSetting(componentName);
+        final int currentState = packageManager.getComponentEnabledSetting(sComponentName);
 
         updateComponentEnabledSetting(packageManager,
-                componentName,
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED);
 
         return currentState;
     }
 
-    /**
-     * Sets state of the given component to the given state.
-     */
-    public static void setState(@NonNull ComponentName componentName, int oldState)
-            throws Exception {
+    public static void restoreState(int oldState) throws Exception {
         final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
-        updateComponentEnabledSetting(inst.getContext().getPackageManager(),
-                componentName, oldState);
+        updateComponentEnabledSetting(inst.getContext().getPackageManager(), oldState);
     }
 
-    private static void updateComponentEnabledSetting(
-            @NonNull PackageManager packageManager,
-            @NonNull ComponentName componentName,
+    /**
+     * Clears the package data.
+     */
+    public static void clearPackageData(String packageName) throws Exception {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .executeShellCommand("pm clear " + packageName);
+
+        // We should ideally be listening to an effective measure to know if package data was
+        // cleared, like listening to a broadcasts or checking a value. But that information is
+        // very package private and not available.
+        Thread.sleep(500);
+    }
+
+    public static String getDocumentsUiPackageName() {
+        final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.setType("*/*");
+        return getActivityPackageNameFromIntent(intent);
+    }
+
+    private static void updateComponentEnabledSetting(PackageManager packageManager,
             int state) throws Exception {
         final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
         inst.getUiAutomation().adoptShellPermissionIdentity(
                 Manifest.permission.CHANGE_COMPONENT_ENABLED_STATE);
         try {
-            packageManager.setComponentEnabledSetting(componentName, state,
+            packageManager.setComponentEnabledSetting(sComponentName, state,
                     PackageManager.DONT_KILL_APP);
         } finally {
             inst.getUiAutomation().dropShellPermissionIdentity();
         }
-        waitForComponentToBeInExpectedState(packageManager, componentName, state);
+        waitForComponentToBeInExpectedState(packageManager, state);
     }
 
-    private static void waitForComponentToBeInExpectedState(
-            @NonNull PackageManager packageManager,
-            @NonNull ComponentName componentName,
+    private static void waitForComponentToBeInExpectedState(PackageManager packageManager,
             int state) throws Exception {
-        pollForCondition(() ->
-                        isComponentEnabledSetAsExpected(packageManager, componentName, state),
+        pollForCondition(() -> isComponentEnabledSetAsExpected(packageManager, state),
                 "Timed out while waiting for component to be enabled");
     }
 
@@ -113,9 +112,20 @@ public class PhotoPickerComponentUtils {
         throw new TimeoutException(errorMessage);
     }
 
-    private static boolean isComponentEnabledSetAsExpected(@NonNull PackageManager packageManager,
-            @NonNull ComponentName componentName,
+    private static boolean isComponentEnabledSetAsExpected(PackageManager packageManager,
             int state) {
-        return packageManager.getComponentEnabledSetting(componentName) == state;
+        return packageManager.getComponentEnabledSetting(sComponentName) == state;
+    }
+
+    @NonNull
+    private static String getPhotoPickerPackageName() {
+        return getActivityPackageNameFromIntent(new Intent(ACTION_PICK_IMAGES));
+    }
+
+    @NonNull
+    private static String getActivityPackageNameFromIntent(@NonNull Intent intent) {
+        final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
+        final ResolveInfo ri = inst.getContext().getPackageManager().resolveActivity(intent, 0);
+        return ri.activityInfo.packageName;
     }
 }
