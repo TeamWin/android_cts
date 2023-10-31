@@ -193,7 +193,12 @@ public class Settings_SystemTest extends StsExtraBusinessLogicTestCase {
     public void testInvalidRingtoneUriIsRejected() {
         final String originalValue = System.getString(mContentResolver, System.RINGTONE);
         final String invalidUri = "content://10@media/external/audio/media/1000000019";
-        System.putString(mContentResolver, System.RINGTONE, invalidUri);
+        try {
+            System.putString(mContentResolver, System.RINGTONE, invalidUri);
+        } catch (Exception ignored) {
+            // Some implementation of SettingsProvider might throw an exception here, which
+            // is okay, as long as the insertion of the invalid setting fails in the end
+        }
         // Assert that the insertion didn't take effect
         assertThat(System.getString(mContentResolver, System.RINGTONE)).isEqualTo(originalValue);
     }
