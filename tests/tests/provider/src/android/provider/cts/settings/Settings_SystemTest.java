@@ -204,6 +204,33 @@ public class Settings_SystemTest extends StsExtraBusinessLogicTestCase {
     }
 
     @Test
+    @AsbSecurityTest(cveBugId = 227201030)
+    public void testInvalidAlarmAlertUriIsRejected() {
+        final String originalValue = System.getString(mContentResolver, System.NOTIFICATION_SOUND);
+        final String invalidUri = "content://10@media/external/audio/media/1000000019";
+        try {
+            System.putString(mContentResolver, System.NOTIFICATION_SOUND, invalidUri);
+        } catch (Exception ignored) {
+        }
+        // Assert that the insertion didn't take effect
+        assertThat(System.getString(mContentResolver, System.NOTIFICATION_SOUND))
+                .isEqualTo(originalValue);
+    }
+
+    @Test
+    @AsbSecurityTest(cveBugId = 227201030)
+    public void testInvalidNotificationSoundUriIsRejected() {
+        final String originalValue = System.getString(mContentResolver, System.ALARM_ALERT);
+        final String invalidUri = "content://10@media/external/audio/media/1000000019";
+        try {
+            System.putString(mContentResolver, System.ALARM_ALERT, invalidUri);
+        } catch (Exception ignored) {
+        }
+        // Assert that the insertion didn't take effect
+        assertThat(System.getString(mContentResolver, System.ALARM_ALERT)).isEqualTo(originalValue);
+    }
+
+    @Test
     public void testGetDefaultValues() {
         assertEquals(10, System.getInt(mContentResolver, "int", 10));
         assertEquals(20, System.getLong(mContentResolver, "long", 20L));
