@@ -27,7 +27,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNoException;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
+
 
 import android.Manifest;
 import android.app.Instrumentation;
@@ -44,6 +46,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemProperties;
 import android.provider.Telephony.Sms;
 import android.provider.Telephony.Sms.Intents;
 import android.telecom.PhoneAccount;
@@ -105,7 +108,8 @@ public class VisualVoicemailServiceTest {
     public void setUp() throws Exception {
         mContext = getInstrumentation().getContext();
         assumeTrue(hasFeatureSupported(mContext));
-
+        // The tests run on real modem with visual voicemail SMS.
+        assumeFalse(isEmulator());
         mPreviousDefaultDialer = getDefaultDialer(getInstrumentation());
         setDefaultDialer(getInstrumentation(), PACKAGE);
 
@@ -713,5 +717,10 @@ public class VisualVoicemailServiceTest {
             } catch (Exception ignored) {
             }
         }
+    }
+
+    private static boolean isEmulator() {
+        return SystemProperties.getBoolean("ro.boot.qemu", false)
+                || SystemProperties.getBoolean("ro.kernel.qemu", false);
     }
 }
