@@ -56,27 +56,48 @@ public class AudioDataPathsUSBActivity extends AudioDataPathsBaseActivity {
         TestModule testModule;
 
         // These just make it easier to turn on/off various categories
-        boolean doUsbHeadset = true;
         boolean doUsbDevice = true;
+        boolean doUsbHeadset = true;
 
         //
         // USB Device
         //
         if (doUsbDevice) {
+            // Signal Presence
             testModule = new TestModule(
                     AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2,
                     AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2);
             testModule.setSectionTitle("USB Device");
             testModule.setSources(leftSineSourceProvider, analysisSinkProvider);
-            testModule.setDescription("USBDev:2:L USBDev:2");
+            testModule.setDescription("Dev:2:L Dev:2");
             testModule.setAnalysisChannel(0);
             testManager.addTestModule(testModule);
+
             testModule = new TestModule(
                     AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2,
                     AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2);
             testModule.setSources(rightSineSourceProvider, analysisSinkProvider);
-            testModule.setDescription("USBDev:2:R USBDev:2");
+            testModule.setDescription("Dev:2:R Dev:2");
             testModule.setAnalysisChannel(1);
+            testManager.addTestModule(testModule);
+
+            // Signal Absence
+            testModule = new TestModule(
+                    AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2,
+                    AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2);
+            testModule.setSources(leftSineSourceProvider, analysisSinkProvider);
+            testModule.setDescription("Dev:2:L Dev:2 [Cross Talk]");
+            testModule.setAnalysisChannel(1);
+            testModule.setAnalysisType(TestModule.TYPE_SIGNAL_ABSENCE);
+            testManager.addTestModule(testModule);
+
+            testModule = new TestModule(
+                    AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2,
+                    AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2);
+            testModule.setSources(rightSineSourceProvider, analysisSinkProvider);
+            testModule.setDescription("Dev:2:R Dev:2 [Cross Talk]");
+            testModule.setAnalysisChannel(0);
+            testModule.setAnalysisType(TestModule.TYPE_SIGNAL_ABSENCE);
             testManager.addTestModule(testModule);
         }
 
@@ -89,14 +110,14 @@ public class AudioDataPathsUSBActivity extends AudioDataPathsBaseActivity {
                     AudioDeviceInfo.TYPE_USB_HEADSET, 48000, 2);
             testModule.setSectionTitle("USB Headset");
             testModule.setSources(leftSineSourceProvider, analysisSinkProvider);
-            testModule.setDescription("USBHeadset:2:L USBHeadset:2");
+            testModule.setDescription("Headset:2:L Headset:2");
             testModule.setAnalysisChannel(0);
             testManager.addTestModule(testModule);
             testModule = new TestModule(
                     AudioDeviceInfo.TYPE_USB_HEADSET, 48000, 2,
                     AudioDeviceInfo.TYPE_USB_HEADSET, 48000, 2);
             testModule.setSources(rightSineSourceProvider, analysisSinkProvider);
-            testModule.setDescription("USBHeadset:2:R USBHeadset:2");
+            testModule.setDescription("Headset:2:R Headset:2");
             testModule.setAnalysisChannel(1);
             testManager.addTestModule(testModule);
         }
