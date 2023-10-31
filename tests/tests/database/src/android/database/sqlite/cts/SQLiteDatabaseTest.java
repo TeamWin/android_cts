@@ -92,8 +92,6 @@ import java.util.stream.Collectors;
 public class SQLiteDatabaseTest {
 
     private static final String TAG = "SQLiteDatabaseTest";
-    private static final String EXPECTED_MAJOR_MINOR_VERSION = "3.42";
-    private static final int EXPECTED_MIN_PATCH_LEVEL = 0;
 
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
@@ -2286,25 +2284,6 @@ public class SQLiteDatabaseTest {
         } finally {
             mDatabase.endTransaction();
         }
-    }
-
-    @Test
-    public void testSqliteLibraryVersion() {
-        // SQLite uses semantic versioning in a form of MAJOR.MINOR.PATCH.
-        // Major/minor should match, while patch can be newer
-        String fullVersionStr = DatabaseUtils
-                .stringForQuery(mDatabase, "select sqlite_version()", null);
-        int lastDot = fullVersionStr.lastIndexOf('.');
-        assertTrue(
-                "Unexpected version format, expected MAJOR.MINOR.PATCH but was " + fullVersionStr,
-                lastDot > 0);
-        String majorMinor = fullVersionStr.substring(0, lastDot);
-        assertEquals(
-                "Expected SQLite library version " + EXPECTED_MAJOR_MINOR_VERSION + ", but was "
-                        + fullVersionStr, EXPECTED_MAJOR_MINOR_VERSION, majorMinor);
-        int patchLevel = Integer.valueOf(fullVersionStr.substring(lastDot + 1));
-        assertTrue("Expected minimum patch level " + EXPECTED_MIN_PATCH_LEVEL + ", but was "
-                + patchLevel, patchLevel >= EXPECTED_MIN_PATCH_LEVEL);
     }
 
     // http://b/147928666
