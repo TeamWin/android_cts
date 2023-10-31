@@ -640,6 +640,8 @@ def find_center_circle(img, img_name, color, circle_ar_rtol, circlish_rtol,
   # check contours and find the best circle candidates
   circles = []
   img_ctr = [gray.shape[1] // 2, gray.shape[0] // 2]
+  logging.debug('img center x,y: %d, %d', img_ctr[0], img_ctr[1])
+  logging.debug('min area: %d, min circle pts: %d', min_area, min_circle_pts)
   for contour in contours:
     area = cv2.contourArea(contour)
     if area > min_area and len(contour) >= min_circle_pts:
@@ -656,6 +658,8 @@ def find_center_circle(img, img_name, color, circle_ar_rtol, circlish_rtol,
   if not circles:
     raise AssertionError('No circle was detected. Please take pictures '
                          'according to instructions carefully!')
+  else:
+    logging.debug('num of circles found: %s', len(circles))
 
   if debug:
     logging.debug('circles [x, y, r, pi*r**2/area, area]: %s', str(circles))

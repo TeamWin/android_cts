@@ -112,6 +112,7 @@ class ZoomTest(its_base_test.ItsBaseTest):
         logging.debug('testing %s format', fmt)
         test_data = {}
         for i, z in enumerate(z_list):
+          logging.debug('zoom ratio: %.3f', z)
           req['android.control.zoomRatio'] = z
           cam.do_3a(zoom_ratio=z)
           cap = cam.do_capture(
