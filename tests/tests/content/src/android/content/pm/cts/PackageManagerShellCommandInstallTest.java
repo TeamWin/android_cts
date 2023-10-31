@@ -1166,7 +1166,12 @@ public class PackageManagerShellCommandInstallTest {
         // Install the package.
         installPackage(TEST_USING_SDK1);
 
-        uninstallPackage(TEST_SDK1_PACKAGE, "Failure [DELETE_FAILED_USED_SHARED_LIBRARY]");
+        if (sdkLibIndependence()) {
+            uninstallPackage(TEST_SDK1_PACKAGE, "Success");
+            assertThat(isSdkInstalled(TEST_SDK1_NAME, 1)).isFalse();
+        } else {
+            uninstallPackage(TEST_SDK1_PACKAGE, "Failure [DELETE_FAILED_USED_SHARED_LIBRARY]");
+        }
     }
 
     @Test
