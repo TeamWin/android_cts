@@ -49,8 +49,12 @@ public class ContactsContract_DirectoryTest extends AndroidTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-
         mResolver = getContext().getContentResolver();
+
+
+        // Query the provider to un-stop the CTS test app. Test will always fail otherwise
+        mResolver.query(Uri.parse("content://android.provider.cts.contacts.gal.empty/"),
+                new String[] {Directory.DISPLAY_NAME}, null, null);
 
         mAccountManager = getContext().getSystemService(AccountManager.class);
         mAccount = new Account(CtsGalProvider.ACCOUNT_NAME, CtsGalProvider.ACCOUNT_TYPE);

@@ -28,6 +28,11 @@
             android:readPermission="android.permission.BIND_DIRECTORY_SEARCH" >
             <meta-data android:name="android.content.ContactDirectory" android:value="true" />
         </provider>
+        <provider
+            android:name=".CtsEmptyContentProvider"
+            android:authorities="android.provider.cts.contacts.gal.empty"
+            android:exported="true" >
+        </provider>
     </application>
 </manifest>
 
