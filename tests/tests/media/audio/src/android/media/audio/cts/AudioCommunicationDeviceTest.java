@@ -21,6 +21,7 @@ import android.content.pm.PackageManager;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.filters.SdkSuppress;
@@ -97,6 +98,7 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
     public void testSetCommunicationDeviceSuccessModeOwner() {
         if (!isValidPlatform("testSetValidCommunicationDevice")) return;
 
@@ -257,6 +259,7 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
     public void testCommunicationDeviceListener() {
         if (!isValidPlatform("testCommunicationDeviceListener")) return;
 
