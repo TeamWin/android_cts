@@ -43,7 +43,7 @@ import static android.media.audio.cts.AudioTestUtil.resetVolumeIndex;
 import static android.provider.Settings.Global.APPLY_RAMPING_RINGER;
 import static android.provider.Settings.System.SOUND_EFFECTS_ENABLED;
 
-import static com.android.media.audio.flags.Flags.autoPublicVolumeApiHardening;
+import static android.media.audio.Flags.autoPublicVolumeApiHardening;
 import static com.android.media.mediatestutils.TestUtils.getFutureForIntent;
 import static com.android.media.mediatestutils.TestUtils.getFutureForListener;
 

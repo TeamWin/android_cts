@@ -24,6 +24,7 @@ import android.annotation.RawRes;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
+import android.media.audio.Flags;
 import android.media.AudioAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFocusRequest;
@@ -42,7 +43,6 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.compatibility.common.util.NonMainlineTest;
-import com.android.media.audio.flags.Flags;
 
 import org.junit.Before;
 
