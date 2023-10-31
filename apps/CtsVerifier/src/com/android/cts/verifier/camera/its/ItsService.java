@@ -399,6 +399,7 @@ public class ItsService extends Service implements SensorEventListener {
     private Sensor mAccelSensor = null;
     private Sensor mMagSensor = null;
     private Sensor mGyroSensor = null;
+    private Sensor mRotationVector = null;
     private volatile LinkedList<MySensorEvent> mEvents = null;
     private volatile Object mEventLock = new Object();
     private volatile boolean mEventsEnabled = false;
@@ -447,15 +448,18 @@ public class ItsService extends Service implements SensorEventListener {
             mAccelSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
             mMagSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
             mGyroSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+            mRotationVector = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
             mSensorThread = new HandlerThread("SensorThread");
             mSensorThread.start();
             mSensorHandler = new Handler(mSensorThread.getLooper());
             mSensorManager.registerListener(this, mAccelSensor,
-                    /*100hz*/ 10000, mSensorHandler);
+                    /*100Hz*/ 10000, mSensorHandler);
             mSensorManager.registerListener(this, mMagSensor,
                     SensorManager.SENSOR_DELAY_NORMAL, mSensorHandler);
             mSensorManager.registerListener(this, mGyroSensor,
-                    /*200hz*/5000, mSensorHandler);
+                    SensorManager.SENSOR_DELAY_FASTEST, mSensorHandler);
+            mSensorManager.registerListener(this, mRotationVector,
+                    SensorManager.SENSOR_DELAY_FASTEST, mSensorHandler);
 
             // Get a handle to the system vibrator.
             mVibrator = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
@@ -1109,6 +1113,7 @@ public class ItsService extends Service implements SensorEventListener {
                 JSONArray accels = new JSONArray();
                 JSONArray mags = new JSONArray();
                 JSONArray gyros = new JSONArray();
+                JSONArray rvs = new JSONArray();
                 for (MySensorEvent event : events) {
                     JSONObject obj = new JSONObject();
                     obj.put("time", event.timestamp);
@@ -1121,12 +1126,15 @@ public class ItsService extends Service implements SensorEventListener {
                         mags.put(obj);
                     } else if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
                         gyros.put(obj);
+                    } else if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
+                        rvs.put(obj);
                     }
                 }
                 JSONObject obj = new JSONObject();
                 obj.put("accel", accels);
                 obj.put("mag", mags);
                 obj.put("gyro", gyros);
+                obj.put("rv", rvs);
                 sendResponse("sensorEvents", null, obj, null);
             } catch (org.json.JSONException e) {
                 throw new ItsException("JSON error: ", e);
@@ -1370,6 +1378,7 @@ public class ItsService extends Service implements SensorEventListener {
             obj.put("accel", mAccelSensor != null);
             obj.put("mag", mMagSensor != null);
             obj.put("gyro", mGyroSensor != null);
+            obj.put("rv", mRotationVector != null);
             obj.put("vibrator", mVibrator.hasVibrator());
             mSocketRunnableObj.sendResponse("sensorExistence", null, obj, null);
         } catch (org.json.JSONException e) {
