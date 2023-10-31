@@ -463,6 +463,11 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSetDefaultVoiceSubId() {
+        // Only make sense to set default sub if the device supports more than 1 modem.
+        final TelephonyManager tm = InstrumentationRegistry.getContext()
+                .getSystemService(TelephonyManager.class).createForSubscriptionId(mSubId);
+        assumeTrue(tm.getSupportedModemCount() > 1);
+
         int oldSubId = SubscriptionManager.getDefaultVoiceSubscriptionId();
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity();
