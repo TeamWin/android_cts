@@ -37,6 +37,7 @@ android_test {
         "junit",
         "flag-junit",
         "android.companion.virtual.flags-aconfig-java",
+        "platform-compat-test-rules",
     ],
 
     srcs: [
