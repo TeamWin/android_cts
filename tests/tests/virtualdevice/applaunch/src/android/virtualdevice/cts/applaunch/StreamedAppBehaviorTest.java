@@ -43,6 +43,7 @@ import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.ActivityListener;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
+import android.companion.virtual.flags.Flags;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -53,6 +54,9 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.display.VirtualDisplay;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.virtualdevice.cts.applaunch.util.EmptyActivity;
 import android.virtualdevice.cts.common.FakeAssociationRule;
 import android.virtualdevice.cts.common.util.TestAppHelper;
@@ -90,6 +94,9 @@ public class StreamedAppBehaviorTest {
 
     @Rule
     public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private VirtualDeviceManager mVirtualDeviceManager;
     @Nullable private VirtualDevice mVirtualDevice;
@@ -175,6 +182,7 @@ public class StreamedAppBehaviorTest {
                 .isEqualTo("clipboard content from test");
     }
 
+    @RequiresFlagsDisabled(Flags.FLAG_STREAM_CAMERA)
     @Test
     public void appsInVirtualDevice_shouldNotHaveAccessToCamera() throws CameraAccessException {
         CameraManager manager = mContext.getSystemService(CameraManager.class);
