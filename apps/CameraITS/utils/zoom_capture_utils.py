@@ -114,11 +114,18 @@ def get_center_circle(img, img_name, size, zoom_ratio, min_zoom_ratio, debug):
   # convert [0, 1] image to [0, 255] and cast as uint8
   imgc = image_processing_utils.convert_image_to_uint8(imgc)
 
+  # Scale circlish RTOL for low zoom ratios
+  if zoom_ratio < 1:
+    circlish_rtol = _CIRCLISH_RTOL / zoom_ratio
+  else:
+    circlish_rtol = _CIRCLISH_RTOL
+  logging.debug('circlish_rtol: %.3f', circlish_rtol)
+
   # Find the center circle in img
   try:
     circle = opencv_processing_utils.find_center_circle(
         imgc, img_name, _CIRCLE_COLOR, circle_ar_rtol=_CIRCLE_AR_RTOL,
-        circlish_rtol=_CIRCLISH_RTOL,
+        circlish_rtol=circlish_rtol,
         min_area=_MIN_AREA_RATIO * size[0] * size[1] * zoom_ratio * zoom_ratio,
         min_circle_pts=_MIN_CIRCLE_PTS, debug=debug)
     if opencv_processing_utils.is_circle_cropped(circle, size):
