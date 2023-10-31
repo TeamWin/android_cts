@@ -60,6 +60,7 @@ _VALIDATE_LIGHTING_REGIONS = {
                      1-_VALIDATE_LIGHTING_PATCH_H),
 }
 _VALIDATE_LIGHTING_THRESH = 0.05  # Determined empirically from scene[1:6] tests
+_VALIDATE_LIGHTING_THRESH_DARK = 0.15  # Determined empirically for night test
 _CMD_NAME_STR = 'cmdName'
 _OBJ_VALUE_STR = 'objValue'
 _STR_VALUE = 'strValue'
@@ -1983,7 +1984,8 @@ def load_scene(cam, props, scene, tablet, chart_distance, lighting_check=True,
     validate_lighting(y_plane, scene, log_path=log_path)
 
 
-def validate_lighting(y_plane, scene, state='ON', log_path=None):
+def validate_lighting(y_plane, scene, state='ON', log_path=None,
+                      tablet_state='ON'):
   """Validates the lighting level in scene corners based on empirical values.
 
   Args:
@@ -1991,6 +1993,7 @@ def validate_lighting(y_plane, scene, state='ON', log_path=None):
     scene: scene name
     state: string 'ON' or 'OFF'
     log_path: [Optional] path to store artifacts
+    tablet_state: string 'ON' or 'OFF'
 
   Returns:
     boolean True if lighting validated, else raise AssertionError
@@ -2000,6 +2003,11 @@ def validate_lighting(y_plane, scene, state='ON', log_path=None):
   if log_path:
     file_name = os.path.join(log_path, f'validate_lighting_{scene}.jpg')
 
+  if tablet_state == 'OFF':
+    validate_lighting_thresh = _VALIDATE_LIGHTING_THRESH_DARK
+  else:
+    validate_lighting_thresh = _VALIDATE_LIGHTING_THRESH
+
   # Test patches from each corner.
   for location, coordinates in _VALIDATE_LIGHTING_REGIONS.items():
     patch = image_processing_utils.get_image_patch(
@@ -2008,14 +2016,14 @@ def validate_lighting(y_plane, scene, state='ON', log_path=None):
     y_mean = image_processing_utils.compute_image_means(patch)[0]
     logging.debug('%s corner Y mean: %.3f', location, y_mean)
     if state == 'ON':
-      if y_mean > _VALIDATE_LIGHTING_THRESH:
+      if y_mean > validate_lighting_thresh:
         logging.debug('Lights ON in test rig.')
         return True
       else:
         image_processing_utils.write_image(y_plane, file_name)
         raise AssertionError('Lights OFF in test rig. Turn ON and retry.')
     elif state == 'OFF':
-      if y_mean < _VALIDATE_LIGHTING_THRESH:
+      if y_mean < validate_lighting_thresh:
         logging.debug('Lights OFF in test rig.')
         return True
       else:
