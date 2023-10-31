@@ -56,8 +56,8 @@ import java.util.stream.Collectors;
 public class SQLiteDatabaseTest extends AndroidTestCase {
 
     private static final String TAG = "SQLiteDatabaseTest";
-    private static final String EXPECTED_MAJOR_MINOR_VERSION = "3.42";
-    private static final int EXPECTED_MIN_PATCH_LEVEL = 0;
+    private static final String EXPECTED_MAJOR_MINOR_VERSION = "3.39";
+    private static final int EXPECTED_MIN_PATCH_LEVEL = 2;
 
     private SQLiteDatabase mDatabase;
     private File mDatabaseFile;
@@ -2015,10 +2015,15 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
                 "Unexpected version format, expected MAJOR.MINOR.PATCH but was " + fullVersionStr,
                 lastDot > 0);
         String majorMinor = fullVersionStr.substring(0, lastDot);
+        int patchLevel = Integer.valueOf(fullVersionStr.substring(lastDot + 1));
+        // Temporarily allow 3.42.0.
+        if (majorMinor.equals("3.42") && patchLevel >= 0) {
+            // Okay.  No further testing required.
+            return;
+        }
         assertEquals(
                 "Expected SQLite library version " + EXPECTED_MAJOR_MINOR_VERSION + ", but was "
                         + fullVersionStr, EXPECTED_MAJOR_MINOR_VERSION, majorMinor);
-        int patchLevel = Integer.valueOf(fullVersionStr.substring(lastDot + 1));
         assertTrue("Expected minimum patch level " + EXPECTED_MIN_PATCH_LEVEL + ", but was "
                 + patchLevel, patchLevel >= EXPECTED_MIN_PATCH_LEVEL);
     }
