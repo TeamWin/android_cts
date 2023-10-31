@@ -130,6 +130,11 @@ public class FileUtils {
         file.createNewFile();
     }
 
+    public static void deleteFile(String path, String name) throws IOException {
+        File file = new File(path, name);
+        file.delete();
+    }
+
     public static String replacePackageAWithPackageB(String path) {
         return path.replace(APPA_PKG, APPB_PKG);
     }
