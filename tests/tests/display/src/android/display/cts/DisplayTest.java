@@ -1022,7 +1022,8 @@ public class DisplayTest extends TestBase {
         overlayProperties.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
         OverlayProperties dest = OverlayProperties.CREATOR.createFromParcel(parcel);
-        assertEquals(overlayProperties.supportMixedColorSpaces(), dest.supportMixedColorSpaces());
+        assertEquals(overlayProperties.isMixedColorSpacesSupported(),
+                     dest.isMixedColorSpacesSupported());
         parcel.recycle();
     }
 
@@ -1037,7 +1038,7 @@ public class DisplayTest extends TestBase {
     public void testGetOverlaySupportForSecondary() {
         Display secondaryDisplay = getSecondaryDisplay(mDisplayManager.getDisplays());
         testGetOverlaySupportInternal(secondaryDisplay.getOverlaySupport());
-        assertTrue(secondaryDisplay.getOverlaySupport().supportMixedColorSpaces());
+        assertTrue(secondaryDisplay.getOverlaySupport().isMixedColorSpacesSupported());
     }
 
     @Test
