@@ -28,6 +28,7 @@ import static com.android.cts.appdataisolation.common.FileUtils.assertDirIsAcces
 import static com.android.cts.appdataisolation.common.FileUtils.assertDirIsNotAccessible;
 import static com.android.cts.appdataisolation.common.FileUtils.assertFileDoesNotExist;
 import static com.android.cts.appdataisolation.common.FileUtils.assertFileExists;
+import static com.android.cts.appdataisolation.common.FileUtils.deleteFile;
 import static com.android.cts.appdataisolation.common.FileUtils.touchFile;
 import static com.android.cts.appdataisolation.common.UserUtils.getCurrentUserId;
 
@@ -145,6 +146,15 @@ public class AppATests {
 
         assertFileExists(mExternalDataPath, EXTERNAL_DATA_FILE_NAME);
         assertFileExists(mObbPath, OBB_FILE_NAME);
+    }
+
+    @Test
+    public void testDeleteExternalDirs() throws Exception {
+        deleteFile(mExternalDataPath, EXTERNAL_DATA_FILE_NAME);
+        deleteFile(mObbPath, OBB_FILE_NAME);
+
+        assertFileDoesNotExist(mExternalDataPath, EXTERNAL_DATA_FILE_NAME);
+        assertFileDoesNotExist(mObbPath, OBB_FILE_NAME);
     }
 
     @Test
