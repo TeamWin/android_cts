@@ -227,6 +227,9 @@ public class MockModemConfigBase implements MockModemConfigInterface {
                     case 1:
                         imei = new String(MockModemConfigInterface.DEFAULT_PHONE2_IMEI);
                         break;
+                    case 2:
+                        imei = new String(MockModemConfigInterface.DEFAULT_PHONE3_IMEI);
+                        break;
                     default:
                         imei = new String(MockModemConfigInterface.DEFAULT_PHONE1_IMEI);
                         break;
@@ -242,6 +245,9 @@ public class MockModemConfigBase implements MockModemConfigInterface {
                         break;
                     case 1:
                         imeisv = new String(MockModemConfigInterface.DEFAULT_PHONE2_IMEISV);
+                        break;
+                    case 2:
+                        imeisv = new String(MockModemConfigInterface.DEFAULT_PHONE3_IMEISV);
                         break;
                     default:
                         imeisv = new String(MockModemConfigInterface.DEFAULT_PHONE1_IMEISV);
@@ -259,6 +265,9 @@ public class MockModemConfigBase implements MockModemConfigInterface {
                     case 1:
                         esn = new String(MockModemConfigInterface.DEFAULT_PHONE2_ESN);
                         break;
+                    case 2:
+                        esn = new String(MockModemConfigInterface.DEFAULT_PHONE3_ESN);
+                        break;
                     default:
                         esn = new String(MockModemConfigInterface.DEFAULT_PHONE1_ESN);
                         break;
@@ -274,6 +283,9 @@ public class MockModemConfigBase implements MockModemConfigInterface {
                         break;
                     case 1:
                         meid = new String(MockModemConfigInterface.DEFAULT_PHONE2_MEID);
+                        break;
+                    case 2:
+                        meid = new String(MockModemConfigInterface.DEFAULT_PHONE3_MEID);
                         break;
                     default:
                         meid = new String(MockModemConfigInterface.DEFAULT_PHONE1_MEID);
@@ -523,6 +535,13 @@ public class MockModemConfigBase implements MockModemConfigInterface {
                         mMeid[i] = MockModemConfigInterface.DEFAULT_PHONE2_MEID;
                         mImeiType[i] = MockModemConfigInterface.DEFAULT_PHONE2_IMEITYPE;
                         break;
+                    case 2:
+                        mImei[i] = MockModemConfigInterface.DEFAULT_PHONE3_IMEI;
+                        mImeiSv[i] = MockModemConfigInterface.DEFAULT_PHONE3_IMEISV;
+                        mEsn[i] = MockModemConfigInterface.DEFAULT_PHONE3_ESN;
+                        mMeid[i] = MockModemConfigInterface.DEFAULT_PHONE3_MEID;
+                        mImeiType[i] = MockModemConfigInterface.DEFAULT_PHONE3_IMEITYPE;
+                        break;
                     default:
                         mImei[i] = MockModemConfigInterface.DEFAULT_PHONE1_IMEI;
                         mImeiSv[i] = MockModemConfigInterface.DEFAULT_PHONE1_IMEISV;
@@ -554,6 +573,7 @@ public class MockModemConfigBase implements MockModemConfigInterface {
                 MockModemConfigInterface.DEFAULT_IS_INTERNAL_LINGERING_SUPPORTED;
         phoneCapability.logicalModemIds[0] = MockModemConfigInterface.DEFAULT_LOGICAL_MODEM1_ID;
         phoneCapability.logicalModemIds[1] = MockModemConfigInterface.DEFAULT_LOGICAL_MODEM2_ID;
+        phoneCapability.logicalModemIds[2] = MockModemConfigInterface.DEFAULT_LOGICAL_MODEM3_ID;
     }
 
     private void updateSimSlotStatus() {

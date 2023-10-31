@@ -27,7 +27,7 @@ public interface MockModemConfigInterface {
 
     // ***** Constants
     int MAX_NUM_OF_SIM_SLOT = 3; // Change this needs to add more SIM SLOT NVs.
-    int MAX_NUM_OF_LOGICAL_MODEM = 2; // Change this needs to add more MODEM NVs.
+    int MAX_NUM_OF_LOGICAL_MODEM = 3; // Change this needs to add more MODEM NVs.
     int RADIO_STATE_UNAVAILABLE = 0;
     int RADIO_STATE_OFF = 1;
     int RADIO_STATE_ON = 2;
@@ -46,6 +46,12 @@ public interface MockModemConfigInterface {
     String DEFAULT_PHONE2_ESN = "987654321";
     String DEFAULT_PHONE2_MEID = "987654321543210";
     int DEFAULT_PHONE2_IMEITYPE = ImeiInfo.ImeiType.SECONDARY;
+    // PHONE3
+    String DEFAULT_PHONE3_IMEI = "987654321012345";
+    String DEFAULT_PHONE3_IMEISV = "03";
+    String DEFAULT_PHONE3_ESN = "192837465";
+    String DEFAULT_PHONE3_MEID = "987654321012345";
+    int DEFAULT_PHONE3_IMEITYPE = ImeiInfo.ImeiType.SECONDARY;
 
     int DEFAULT_RADIO_STATE = RADIO_STATE_UNAVAILABLE;
     int DEFAULT_NUM_OF_LIVE_MODEM = 1; // Should <= MAX_NUM_OF_MODEM
@@ -54,6 +60,7 @@ public interface MockModemConfigInterface {
     boolean DEFAULT_IS_INTERNAL_LINGERING_SUPPORTED = false;
     int DEFAULT_LOGICAL_MODEM1_ID = 0;
     int DEFAULT_LOGICAL_MODEM2_ID = 1;
+    int DEFAULT_LOGICAL_MODEM3_ID = 2;
 
     // ***** Methods
     void destroy();
