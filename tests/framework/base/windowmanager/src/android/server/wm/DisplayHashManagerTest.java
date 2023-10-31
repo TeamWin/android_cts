@@ -289,6 +289,8 @@ public class DisplayHashManagerTest {
         } catch (InterruptedException e) {
         }
 
+        waitForAllActivitiesResumed();
+
         generateDisplayHash(null);
 
         mInstrumentation.runOnMainSync(() -> {
@@ -414,6 +416,7 @@ public class DisplayHashManagerTest {
             committedCallbackLatch.await(WAIT_TIME_S, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
         }
+        waitForAllActivitiesResumed();
 
         byte[] expectedImageHash = new byte[]{-1, -1, 127, -1, -1, -1, 127, 127};
 
@@ -472,6 +475,7 @@ public class DisplayHashManagerTest {
             committedCallbackLatch.await(WAIT_TIME_S, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
         }
+        waitForAllActivitiesResumed();
     }
 
     public static class TestActivity extends Activity {
@@ -538,5 +542,14 @@ public class DisplayHashManagerTest {
             mError = errorCode;
             mCountDownLatch.countDown();
         }
+    }
+
+    /**
+     * Waits for all activities to be resumed since image hash could be calculated before the
+     * activity is resumed due to slower activity transitions.
+     */
+    private void waitForAllActivitiesResumed() {
+        mWmState.waitForWithAmState(WindowManagerState::allActivitiesResumed,
+                "All activities should be resumed");
     }
 }
