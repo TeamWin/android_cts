@@ -21,6 +21,8 @@ import pathlib
 import cv2
 import numpy
 
+from scipy.spatial import distance
+
 import capture_request_utils
 import error_util
 import image_processing_utils
@@ -50,12 +52,19 @@ CIRCLE_LOCATION_VARIATION_RTOL = 0.05  # tolerance to remove similar circles
 
 CV2_LINE_THICKNESS = 3  # line thickness for drawing on images
 CV2_RED = (255, 0, 0)  # color in cv2 to draw lines
+CV2_GREEN = (0, 1, 0)
 CV2_THRESHOLD_BLOCK_SIZE = 11
 CV2_THRESHOLD_CONSTANT = 2
 
 CV2_HOME_DIRECTORY = os.path.dirname(cv2.__file__)
 CV2_ALTERNATE_DIRECTORY = pathlib.Path(CV2_HOME_DIRECTORY).parents[3]
 HAARCASCADE_FILE_NAME = 'haarcascade_frontalface_default.xml'
+
+FACES_ALIGNED_MIN_NUM = 2
+FACE_CENTER_MATCH_TOL_X = 10  # 10 pixels or ~1.5% in 640x480 image
+FACE_CENTER_MATCH_TOL_Y = 20  # 20 pixels or ~4% in 640x480 image
+FACE_CENTER_MIN_LOGGING_DIST = 50
+FACE_MIN_CENTER_DELTA = 15
 
 FOV_THRESH_TELE25 = 25
 FOV_THRESH_TELE40 = 40
@@ -907,3 +916,120 @@ def get_angle(input_img):
     return None
 
   return numpy.median(filtered_angles)
+
+
+def correct_faces_for_crop(faces, img, crop):
+  """Correct face rectangles for sensor crop.
+
+  Args:
+    faces: list of dicts with face information
+    img: np image array
+    crop: dict of crop region size with 'top, right, left, bottom' as keys
+  Returns:
+    list of face locations (left, right, top, bottom) corrected
+  """
+  faces_corrected = []
+  cw, ch = crop['right'] - crop['left'], crop['bottom'] - crop['top']
+  logging.debug('crop region: %s', str(crop))
+  w = img.shape[1]
+  h = img.shape[0]
+  for rect in [face['bounds'] for face in faces]:
+    logging.debug('rect: %s', str(rect))
+    left = int(round((rect['left'] - crop['left']) * w / cw))
+    right = int(round((rect['right'] - crop['left']) * w / cw))
+    top = int(round((rect['top'] - crop['top']) * h / ch))
+    bottom = int(round((rect['bottom'] - crop['top']) * h / ch))
+    faces_corrected.append([left, right, top, bottom])
+  logging.debug('faces_corrected: %s', str(faces_corrected))
+  return faces_corrected
+
+
+def eliminate_duplicate_centers(coordinates_list):
+  """Checks center coordinates of OpenCV's face rectangles
+
+  Method makes sure that the list of face rectangles' centers do not
+  contain duplicates from the same face
+
+  Args:
+    coordinates_list: list; coordinates of face rectangles' centers
+  Returns:
+    non_duplicate_list: list; coordinates of face rectangles' centers
+    without duplicates on the same face
+  """
+  output = set()
+
+  for i, xy1 in enumerate(coordinates_list):
+    for j, xy2 in enumerate(coordinates_list):
+      if distance.euclidean(xy1, xy2) < FACE_MIN_CENTER_DELTA:
+        continue
+      if xy1 not in output:
+        output.add(xy1)
+      else:
+        output.add(xy2)
+  return list(output)
+
+
+def match_face_locations(faces_cropped, faces_opencv, img, img_name):
+  """Assert face locations between two methods.
+
+  Method determines if center of opencv face boxes is within face detection
+  face boxes. Using math.hypot to measure the distance between the centers,
+  as math.dist is not available for python versions before 3.8.
+
+  Args:
+    faces_cropped: list of lists with (l, r, t, b) for each face.
+    faces_opencv: list of lists with (x, y, w, h) for each face.
+    img: numpy [0, 1] image array
+    img_name: text string with path to image file
+  """
+  # turn faces_opencv into list of center locations
+  faces_opencv_center = [(x+w//2, y+h//2) for (x, y, w, h) in faces_opencv]
+  cropped_faces_centers = [
+      ((l+r)//2, (t+b)//2) for (l, r, t, b) in faces_cropped]
+  faces_opencv_center.sort(key=lambda t: [t[1], t[0]])
+  cropped_faces_centers.sort(key=lambda t: [t[1], t[0]])
+  logging.debug('cropped face centers: %s', str(cropped_faces_centers))
+  logging.debug('opencv face center: %s', str(faces_opencv_center))
+  faces_opencv_centers = []
+  num_centers_aligned = 0
+
+  # eliminate duplicate openCV face rectangles' centers the same face
+  faces_opencv_centers = eliminate_duplicate_centers(faces_opencv_center)
+  logging.debug('opencv face centers: %s', str(faces_opencv_centers))
+
+  for (x, y) in faces_opencv_centers:
+    for (x1, y1) in cropped_faces_centers:
+      centers_dist = math.hypot(x-x1, y-y1)
+      if centers_dist < FACE_CENTER_MIN_LOGGING_DIST:
+        logging.debug('centers_dist: %.3f', centers_dist)
+      if (abs(x-x1) < FACE_CENTER_MATCH_TOL_X and
+          abs(y-y1) < FACE_CENTER_MATCH_TOL_Y):
+        num_centers_aligned += 1
+
+  # If test failed, save image with green AND OpenCV red rectangles
+  image_processing_utils.write_image(img, img_name)
+  if num_centers_aligned < FACES_ALIGNED_MIN_NUM:
+    for (x, y, w, h) in faces_opencv:
+      cv2.rectangle(img, (x, y), (x+w, y+h), tuple(numpy.array(CV2_RED)/255), 2)
+      image_processing_utils.write_image(img, img_name)
+      logging.debug('centered: %s', str(num_centers_aligned))
+    raise AssertionError(f'Face rectangles in wrong location(s)!. '
+                         f'Found {num_centers_aligned} rectangles near cropped '
+                         f'face centers, expected {FACES_ALIGNED_MIN_NUM}')
+
+
+def draw_green_boxes_around_faces(img, faces_cropped, img_name):
+  """Correct face rectangles for sensor crop.
+
+  Args:
+    img: numpy [0, 1] image array
+    faces_cropped: list of lists with (l, r, t, b) for each face
+    img_name: text string with path to image file
+  Returns:
+    image with green rectangles
+  """
+  # draw boxes around faces in green and save image
+  for (l, r, t, b) in faces_cropped:
+    cv2.rectangle(img, (l, t), (r, b), CV2_GREEN, 2)
+  image_processing_utils.write_image(img, img_name)
+

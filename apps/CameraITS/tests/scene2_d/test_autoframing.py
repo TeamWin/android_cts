@@ -30,6 +30,7 @@ import opencv_processing_utils
 _AUTOFRAMING_CONVERGED = 2
 _CV2_FACE_SCALE_FACTOR = 1.05  # 5% step for resizing image to find face
 _CV2_FACE_MIN_NEIGHBORS = 4  # recommended 3-6: higher for less faces
+_NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NUM_TEST_FRAMES = 150
 _NUM_FACES = 3
 _W, _H = 640, 480
@@ -84,6 +85,21 @@ class AutoframingTest(its_base_test.ItsBaseTest):
         # Face detection and autoframing could take several frames to warm up,
         # but should detect the correct number of faces before the last frame
         if autoframing_state == _AUTOFRAMING_CONVERGED:
+          # Save image when autoframing state converges
+          control_zoom_ratio = cap['metadata']['android.control.zoomRatio']
+          logging.debug('Control zoom ratio: %d', control_zoom_ratio)
+          img = image_processing_utils.convert_capture_to_rgb_image(
+              cap, props=props)
+          file_name_stem = os.path.join(self.log_path, _NAME)
+          img_name = f'{file_name_stem}.jpg'
+
+          # Save images with green boxes around faces
+          crop_region = cap['metadata']['android.scaler.cropRegion']
+          faces_cropped = opencv_processing_utils.correct_faces_for_crop(
+              faces, img, crop_region)
+          opencv_processing_utils.draw_green_boxes_around_faces(
+              img, faces_cropped, img_name)
+
           num_faces_found = len(faces)
           if num_faces_found != _NUM_FACES:
             raise AssertionError('Wrong num of faces found! Found: '
@@ -91,14 +107,10 @@ class AutoframingTest(its_base_test.ItsBaseTest):
 
           # Also check the faces with open cv to make sure the scene is not
           # distorted or anything.
-          img = image_processing_utils.convert_capture_to_rgb_image(
-              cap, props=props)
           opencv_faces = opencv_processing_utils.find_opencv_faces(
               img, _CV2_FACE_SCALE_FACTOR, _CV2_FACE_MIN_NEIGHBORS)
-          num_opencv_faces = len(opencv_faces)
-          if num_opencv_faces != _NUM_FACES:
-            raise AssertionError('Wrong num of faces found with OpenCV! Found: '
-                                 f'{num_opencv_faces}, expected: {_NUM_FACES}')
+          opencv_processing_utils.match_face_locations(
+              faces_cropped, opencv_faces, img, img_name)
           break
 
         # Autoframing didn't converge till the last frame
