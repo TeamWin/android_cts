@@ -20,6 +20,8 @@ import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
 import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
 import static android.view.cts.surfacevalidator.BitmapPixelChecker.validateScreenshot;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
@@ -32,6 +34,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Insets;
 import android.graphics.Rect;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.server.wm.IgnoreOrientationRequestSession;
 import android.server.wm.WindowManagerStateHelper;
 import android.util.Log;
@@ -54,6 +59,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.window.flags.Flags;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -79,6 +85,9 @@ public class AttachedSurfaceControlTest {
 
     @Rule
     public TestName mName = new TestName();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private static class TransformHintListener implements
             AttachedSurfaceControl.OnBufferTransformHintChangedListener {
@@ -410,6 +419,34 @@ public class AttachedSurfaceControlTest {
         public void waitForReady() throws InterruptedException {
             assertTrue("Failed to wait for ScvhSurfaceView to get added",
                     mReadyLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_GET_HOST_TOKEN_API)
+    public void testGetHostToken() throws Throwable {
+        try (ActivityScenario<TestActivity> scenario =
+                     ActivityScenario.launch(TestActivity.class)) {
+            CountDownLatch countDownLatch = new CountDownLatch(1);
+            final ScvhSurfaceView[] scvhSurfaceView = new ScvhSurfaceView[1];
+            final View[] view = new View[1];
+            final Activity[] activity = new Activity[1];
+            scenario.onActivity(a -> {
+                activity[0] = a;
+                view[0] = new View(a);
+                FrameLayout parentLayout = a.getParentLayout();
+                scvhSurfaceView[0] = new ScvhSurfaceView(a, view[0]);
+                parentLayout.addView(scvhSurfaceView[0]);
+
+                countDownLatch.countDown();
+            });
+            assertTrue("Failed to wait for activity to start",
+                    countDownLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
+
+            final AttachedSurfaceControl attachedSurfaceControl =
+                    scvhSurfaceView[0].getRootSurfaceControl();
+            assertThat(attachedSurfaceControl.getHostToken())
+                    .isNotEqualTo(null);
         }
     }
 
