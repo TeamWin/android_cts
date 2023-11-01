@@ -100,8 +100,8 @@ import android.content.cts.MockService;
 import android.content.cts.R;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.ArchivedActivity;
-import android.content.pm.ArchivedPackage;
+import android.content.pm.ArchivedActivityInfo;
+import android.content.pm.ArchivedPackageInfo;
 import android.content.pm.ComponentInfo;
 import android.content.pm.IPackageManager;
 import android.content.pm.InstallSourceInfo;
@@ -2128,20 +2128,20 @@ public class PackageManagerTest {
     }
 
 
-    private void installArchived(ArchivedPackage archivedPackage)
+    private void installArchived(ArchivedPackageInfo archivedPackageInfo)
             throws Exception {
-        installArchived(archivedPackage,
+        installArchived(archivedPackageInfo,
                 STATUS_SUCCESS, /* expectedResultStartsWith= */ null);
     }
 
-    private void installArchived(ArchivedPackage archivedPackage, int expectedStatus,
+    private void installArchived(ArchivedPackageInfo archivedPackageInfo, int expectedStatus,
                                  String expectedResultStartsWith) throws Exception {
         var packageInstaller = mContext.getPackageManager().getPackageInstaller();
         final CompletableFuture<Integer> status = new CompletableFuture<>();
         final CompletableFuture<String> statusMessage = new CompletableFuture<>();
         SystemUtil.runWithShellPermissionIdentity(mInstrumentation.getUiAutomation(), () -> {
             var params = new SessionParams(MODE_FULL_INSTALL);
-            packageInstaller.installPackageArchived(archivedPackage, params,
+            packageInstaller.installPackageArchived(archivedPackageInfo, params,
                     new IntentSender((IIntentSender) new IIntentSender.Stub() {
                         @Override
                         public void send(int code, Intent intent, String resolvedType,
@@ -3183,12 +3183,12 @@ public class PackageManagerTest {
         SigningInfo signingInfo = new SigningInfo(/* schemeVersion= */3, List.of(signature),
                 List.of(publicKey), null);
 
-        ArchivedActivity archivedActivity = new ArchivedActivity("HelloWorldTitle",
+        ArchivedActivityInfo archivedActivity = new ArchivedActivityInfo("HelloWorldTitle",
                 new ComponentName(HELLO_WORLD_PACKAGE_NAME, ".MainActivity"));
         archivedActivity.setIcon(new BitmapDrawable(/* res= */null, TEST_ICON));
         archivedActivity.setMonochromeIcon(new BitmapDrawable(/* res= */null, TEST_ICON_MONO));
 
-        ArchivedPackage archivedPackage = new ArchivedPackage(
+        ArchivedPackageInfo archivedPackage = new ArchivedPackageInfo(
                 HELLO_WORLD_PACKAGE_NAME,
                 signingInfo,
                 List.of(archivedActivity)
