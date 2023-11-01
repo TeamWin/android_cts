@@ -175,15 +175,17 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * Device-side test suite to verify scoped storage business logic.
+ * We are in process of splitting CtsScopedStorageDeviceOnlyTest module into multiple ones.
+ * This is a temporary test class, and it will be deleted
+ * after all the links to new modules are created.
  */
 @RunWith(Parameterized.class)
-public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
+public class ScopedStorageDeviceTestCopy extends ScopedStorageBaseDeviceTest {
     public static final String STR_DATA1 = "Just some random text";
 
     public static final byte[] BYTES_DATA1 = STR_DATA1.getBytes();
 
-    static final String TAG = "ScopedStorageDeviceTest";
+    static final String TAG = "ScopedStorageDeviceTestCopy";
     static final String THIS_PACKAGE_NAME = getContext().getPackageName();
 
     /**
@@ -247,7 +249,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     /** Parameters data. */
     @Parameters(name = "volume={0}")
     public static Iterable<? extends Object> data() {
-        return ScopedStorageDeviceTest.getTestParameters();
+        return ScopedStorageDeviceTestCopy.getTestParameters();
     }
 
     @BeforeClass
@@ -874,7 +876,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
 
             try (InputStream in =
                          getContext().getResources().openRawResource(R.raw.img_with_metadata);
-                FileOutputStream out = new FileOutputStream(jpgFile)) {
+                 FileOutputStream out = new FileOutputStream(jpgFile)) {
                 // Dump the image we have to external storage
                 FileUtils.copy(in, out);
                 // Sync file to disk to ensure file is fully written to the lower fs attempting to
@@ -1212,9 +1214,9 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         File lowerCaseFile = new File(getDownloadDir(), "cache_consistency_for_case_insensitivity");
 
         try (ParcelFileDescriptor upperCasePfd =
-                    ParcelFileDescriptor.open(upperCaseFile, MODE_READ_WRITE | MODE_CREATE);
+                     ParcelFileDescriptor.open(upperCaseFile, MODE_READ_WRITE | MODE_CREATE);
              ParcelFileDescriptor lowerCasePfd =
-                    ParcelFileDescriptor.open(lowerCaseFile, MODE_READ_WRITE | MODE_CREATE)) {
+                     ParcelFileDescriptor.open(lowerCaseFile, MODE_READ_WRITE | MODE_CREATE)) {
 
             assertRWR(upperCasePfd, lowerCasePfd);
             assertRWR(lowerCasePfd, upperCasePfd);
@@ -1277,15 +1279,15 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     public void testReadStorageInvalidation() throws Exception {
         if (SdkLevel.isAtLeastT()) {
             testAppOpInvalidation(
-                APP_C,
-                new File(getDcimDir(), "read_storage.jpg"),
-                Manifest.permission.READ_MEDIA_IMAGES,
-                AppOpsManager.OPSTR_READ_MEDIA_IMAGES,
-                /* forWrite */ false);
+                    APP_C,
+                    new File(getDcimDir(), "read_storage.jpg"),
+                    Manifest.permission.READ_MEDIA_IMAGES,
+                    AppOpsManager.OPSTR_READ_MEDIA_IMAGES,
+                    /* forWrite */ false);
         } else {
             testAppOpInvalidation(APP_C, new File(getDcimDir(), "read_storage.jpg"),
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                AppOpsManager.OPSTR_READ_EXTERNAL_STORAGE, /* forWrite */ false);
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    AppOpsManager.OPSTR_READ_EXTERNAL_STORAGE, /* forWrite */ false);
         }
     }
 
