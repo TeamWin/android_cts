@@ -37,3 +37,19 @@ android_test {
     platform_apis: true,
     min_sdk_version: "30",
 }
+
+android_ravenwood_test {
+    name: "CtsUtilTestCasesRavenwood",
+    defaults: ["cts_defaults"],
+    static_libs: [
+        "androidx.annotation_annotation",
+        "androidx.test.rules",
+        "junit",
+    ],
+    srcs: [
+        "src/android/util/cts/ArrayMapTest.java",
+        "src/android/util/cts/LogTest.java",
+    ],
+    sdk_version: "test_current",
+    auto_gen_config: true,
+}
