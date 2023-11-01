@@ -101,6 +101,8 @@ public class MockSatelliteService extends SatelliteImplBase {
     private Object mSendDatagramWithDelayLock = new Object();
     private static final long TIMEOUT = 1000;
     private final AtomicBoolean mShouldRespondTelephony = new AtomicBoolean(true);
+    private final AtomicBoolean mShouldNotifyRemoteServiceConnected =
+            new AtomicBoolean(false);
     @Nullable private List<String> mCarrierPlmnList;
     @Nullable private List<String> mAllSatellitePlmnList;
     private boolean mIsSatelliteEnabledForCarrier;
@@ -594,6 +596,9 @@ public class MockSatelliteService extends SatelliteImplBase {
     public void setLocalSatelliteListener(@NonNull ILocalSatelliteListener listener) {
         logd("setLocalSatelliteListener: listener=" + listener);
         mLocalListener = listener;
+        if (mShouldNotifyRemoteServiceConnected.get()) {
+            notifyRemoteServiceConnected();
+        }
     }
 
     public void setErrorCode(@SatelliteResult int errorCode) {
@@ -795,7 +800,12 @@ public class MockSatelliteService extends SatelliteImplBase {
 
     private void notifyRemoteServiceConnected() {
         logd("notifyRemoteServiceConnected");
-        runWithExecutor(() -> mLocalListener.onRemoteServiceConnected());
+        if (mLocalListener != null) {
+            runWithExecutor(() -> mLocalListener.onRemoteServiceConnected());
+            mShouldNotifyRemoteServiceConnected.set(false);
+        } else {
+            mShouldNotifyRemoteServiceConnected.set(true);
+        }
     }
 
     /**
