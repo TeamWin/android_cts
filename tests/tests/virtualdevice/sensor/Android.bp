@@ -35,7 +35,11 @@ android_test {
         "ctstestrunner-axt",
         "CtsVirtualDeviceCommonLib",
         "junit",
+        "flag-junit",
+        "android.companion.virtual.flags-aconfig-java",
     ],
+
+    jni_libs: ["libvirtualsensortest-jni"],
 
     srcs: [
         "src/**/*.java",

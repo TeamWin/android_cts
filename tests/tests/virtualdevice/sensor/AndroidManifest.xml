@@ -24,6 +24,9 @@
 
     <application>
         <uses-library android:name="android.test.runner" />
+        <activity
+            android:name="android.virtualdevice.cts.sensor.util.NativeSensorTestActivity"
+            android:exported="false" />
     </application>
 
     <uses-feature android:name="android.software.companion_device_setup" />
