@@ -20,7 +20,7 @@ import static android.content.Context.RECEIVER_EXPORTED;
 import static android.content.pm.Checksum.TYPE_PARTIAL_MERKLE_ROOT_1M_SHA256;
 import static android.content.pm.Checksum.TYPE_WHOLE_MERKLE_ROOT_4K_SHA256;
 import static android.content.pm.Flags.disallowSdkLibsToBeApps;
-import static android.content.pm.Flags.sdkLibIndependence;
+import static android.content.pm.Flags.FLAG_SDK_LIB_INDEPENDENCE;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_INCREMENTAL;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_NONE;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_STREAMING;
@@ -76,6 +76,7 @@ import android.os.Process;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
@@ -1004,11 +1005,24 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
-    public void testAppUsingSdkInstallAndUpdate() throws Exception {
+    @RequiresFlagsEnabled(FLAG_SDK_LIB_INDEPENDENCE)
+    public void testAppUsingSdkInstallAndUpdate_allowAppInstallWithoutSDK() throws Exception {
         onBeforeSdkTests();
 
+        testAppUsingSdkInstallAndUpdate(true /* enableSdkLibIndependence */);
+    }
+
+    @Test
+    @RequiresFlagsDisabled(FLAG_SDK_LIB_INDEPENDENCE)
+    public void testAppUsingSdkInstallAndUpdate_blockAppInstallWithoutSDK() throws Exception {
+        onBeforeSdkTests();
+
+        testAppUsingSdkInstallAndUpdate(false /* enableSdkLibIndependence */);
+    }
+
+    public void testAppUsingSdkInstallAndUpdate(boolean enableSdkLibIndependence) throws Exception {
         // Try to install without required SDK1.
-        if (sdkLibIndependence()) {
+        if (enableSdkLibIndependence) {
             installPackage(TEST_USING_SDK1);
             assertTrue(isAppInstalled(TEST_SDK_USER_PACKAGE));
         } else {
@@ -1046,7 +1060,7 @@ public class PackageManagerShellCommandInstallTest {
         }
 
         // Try to install without required SDK2.
-        if (sdkLibIndependence()) {
+        if (enableSdkLibIndependence) {
             installPackage(TEST_USING_SDK1_AND_SDK2);
         } else {
             installPackage(TEST_USING_SDK1_AND_SDK2,
@@ -1087,9 +1101,23 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
-    public void testAppUsingSdkInstallGroupInstall() throws Exception {
+    @RequiresFlagsDisabled(FLAG_SDK_LIB_INDEPENDENCE)
+    public void testAppUsingSdkInstallGroupInstall_blockAppInstallWithoutSDK() throws Exception {
         onBeforeSdkTests();
 
+        testAppUsingSdkInstallGroupInstall(false /* enableSdkLibIndependence */);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_SDK_LIB_INDEPENDENCE)
+    public void testAppUsingSdkInstallGroupInstall_allowAppInstallWithoutSDK() throws Exception {
+        onBeforeSdkTests();
+
+        testAppUsingSdkInstallGroupInstall(true /* enableSdkLibIndependence */);
+    }
+
+    private void testAppUsingSdkInstallGroupInstall(boolean enableSdkLibIndependence)
+            throws Exception {
         // Install/uninstall the sdk to grab its certDigest.
         installPackage(TEST_SDK1);
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
@@ -1097,7 +1125,7 @@ public class PackageManagerShellCommandInstallTest {
         uninstallPackageSilently(TEST_SDK1_PACKAGE);
 
         // Try to install without required SDK1.
-        if (sdkLibIndependence()) {
+        if (enableSdkLibIndependence) {
             installPackage(TEST_USING_SDK1);
             assertTrue(isAppInstalled(TEST_SDK_USER_PACKAGE));
         } else {
@@ -1154,7 +1182,8 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
-    public void testUninstallSdkWhileAppUsing() throws Exception {
+    @RequiresFlagsDisabled(FLAG_SDK_LIB_INDEPENDENCE)
+    public void testUninstallSdkWhileAppUsing_blockUninstall() throws Exception {
         onBeforeSdkTests();
 
         // Install the required SDK1.
@@ -1166,12 +1195,25 @@ public class PackageManagerShellCommandInstallTest {
         // Install the package.
         installPackage(TEST_USING_SDK1);
 
-        if (sdkLibIndependence()) {
-            uninstallPackage(TEST_SDK1_PACKAGE, "Success");
-            assertThat(isSdkInstalled(TEST_SDK1_NAME, 1)).isFalse();
-        } else {
-            uninstallPackage(TEST_SDK1_PACKAGE, "Failure [DELETE_FAILED_USED_SHARED_LIBRARY]");
-        }
+        uninstallPackage(TEST_SDK1_PACKAGE, "Failure [DELETE_FAILED_USED_SHARED_LIBRARY]");
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_SDK_LIB_INDEPENDENCE)
+    public void testUninstallSdkWhileAppUsing_allowUninstall() throws Exception {
+        onBeforeSdkTests();
+
+        // Install the required SDK1.
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        overrideUsesSdkLibraryCertificateDigest(getPackageCertDigest(TEST_SDK1_PACKAGE));
+
+        // Install the package.
+        installPackage(TEST_USING_SDK1);
+
+        uninstallPackage(TEST_SDK1_PACKAGE, "Success");
+        assertThat(isSdkInstalled(TEST_SDK1_NAME, 1)).isFalse();
     }
 
     @Test
@@ -1266,11 +1308,27 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
-    public void testAppUsingSdkUsingSdkInstallAndUpdate() throws Exception {
+    @RequiresFlagsDisabled(FLAG_SDK_LIB_INDEPENDENCE)
+    public void testAppUsingSdkUsingSdkInstallAndUpdate_blockAppInstallWithoutSDK()
+            throws Exception {
         onBeforeSdkTests();
 
+        testAppUsingSdkUsingSdkInstallAndUpdate(false /* enableSdkLibIndependence */);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_SDK_LIB_INDEPENDENCE)
+    public void testAppUsingSdkUsingSdkInstallAndUpdate_allowAppInstallWithoutSDK()
+            throws Exception {
+        onBeforeSdkTests();
+
+        testAppUsingSdkUsingSdkInstallAndUpdate(true /* enableSdkLibIndependence */);
+    }
+
+    public void testAppUsingSdkUsingSdkInstallAndUpdate(boolean enableSdkLibIndependence)
+            throws Exception {
         // Try to install without required SDK1.
-        if (sdkLibIndependence()) {
+        if (enableSdkLibIndependence) {
             installPackage(TEST_USING_SDK3);
             assertTrue(isAppInstalled(TEST_SDK_USER_PACKAGE));
         } else {
@@ -1279,7 +1337,7 @@ public class PackageManagerShellCommandInstallTest {
         }
 
         // Try to install SDK3 without required SDK1.
-        if (sdkLibIndependence()) {
+        if (enableSdkLibIndependence) {
             installPackage(TEST_SDK3_USING_SDK1);
             assertTrue(isSdkInstalled(TEST_SDK3_NAME, 3));
         } else {
@@ -1321,7 +1379,7 @@ public class PackageManagerShellCommandInstallTest {
         }
 
         // Try to install updated SDK3 without required SDK2.
-        if (sdkLibIndependence()) {
+        if (enableSdkLibIndependence) {
             installPackage(TEST_SDK3_USING_SDK1_AND_SDK2);
         } else {
             installPackage(TEST_SDK3_USING_SDK1_AND_SDK2,
@@ -1363,11 +1421,26 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
-    public void testSdkUsingSdkInstallAndUpdate() throws Exception {
+    @RequiresFlagsEnabled(FLAG_SDK_LIB_INDEPENDENCE)
+    public void testSdkUsingSdkInstallAndUpdate_allowAppInstallWithoutSDK() throws Exception {
+        onBeforeSdkTests();
+
+        testSdkUsingSdkInstallAndUpdate(true /* enableSdkLibIndependence */);
+    }
+
+    @Test
+    @RequiresFlagsDisabled(FLAG_SDK_LIB_INDEPENDENCE)
+    public void testSdkUsingSdkInstallAndUpdate_blockAppInstallWithoutSDK() throws Exception {
+        onBeforeSdkTests();
+
+        testSdkUsingSdkInstallAndUpdate(false /* enableSdkLibIndependence */);
+    }
+
+    public void testSdkUsingSdkInstallAndUpdate(boolean enableSdkLibIndependence) throws Exception {
         onBeforeSdkTests();
 
         // Try to install without required SDK1.
-        if (sdkLibIndependence()) {
+        if (enableSdkLibIndependence) {
             installPackage(TEST_SDK3_USING_SDK1);
             assertTrue(isSdkInstalled(TEST_SDK3_NAME, 3));
         } else {
@@ -1406,7 +1479,7 @@ public class PackageManagerShellCommandInstallTest {
 
         // Try to install without required SDK2.
 
-        if (sdkLibIndependence()) {
+        if (enableSdkLibIndependence) {
             installPackage(TEST_SDK3_USING_SDK1_AND_SDK2);
         } else {
             installPackage(TEST_SDK3_USING_SDK1_AND_SDK2,
