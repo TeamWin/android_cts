@@ -18,10 +18,10 @@ package android.media.cujlargetest.cts;
 
 import android.media.cujcommon.cts.CujTestBase;
 import android.platform.test.annotations.AppModeFull;
-
-import androidx.test.filters.LargeTest;
+import android.platform.test.annotations.PlatinumTest;
 
 import androidx.media3.common.C;
+import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.ApiTest;
 
@@ -108,6 +108,7 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
       "android.media.MediaCodecInfo#getName",
       "android.media.MediaCodecInfo#getSupportedTypes",
       "android.media.MediaCodecInfo#isSoftwareOnly"})
+  @PlatinumTest(focusArea = "media")
   @Test
   public void testVideoPlayback() throws Exception {
     play(mMediaUrls, mTimeoutMilliSeconds, mIsSeekTest, mNumOfSeekIteration, mSeekStartPosition,
