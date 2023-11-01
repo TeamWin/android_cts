@@ -338,4 +338,7 @@
 
     <!-- b/288212464#comment5 -->
     <option name="compatibility:exclude-filter" value="art_standalone_dex2oat_cts_tests" />
+
+     <!--- b/295798316 -->
+    <option name="compatibility:exclude-filter" value="CtsDevicePolicyTestCases android.devicepolicy.cts.SupportMessageTest#setShortSupportMessage_tooLongText_isTruncated[IncludeRunOnProfileOwnerPrimaryUser]" />
 </configuration>
