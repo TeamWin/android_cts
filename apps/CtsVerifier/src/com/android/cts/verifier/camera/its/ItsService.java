@@ -339,6 +339,7 @@ public class ItsService extends Service implements SensorEventListener {
         public int videoFrameRate; // -1 implies video framerate was not set by the test
         public int fileFormat;
         public double zoomRatio;
+        public Map<String, String> metadata = new HashMap<>();
 
         public VideoRecordingObject(String recordedOutputPath,
                 String quality, Size videoSize, int videoFrameRate,
@@ -359,6 +360,10 @@ public class ItsService extends Service implements SensorEventListener {
 
         public boolean isFrameRateValid() {
             return videoFrameRate != INVALID_FRAME_RATE;
+        }
+
+        public void addMetadata(String key, String value) {
+            metadata.put(key, value);
         }
     }
 
@@ -1122,6 +1127,11 @@ public class ItsService extends Service implements SensorEventListener {
                     videoJson.put("videoFrameRate", obj.videoFrameRate);
                 }
                 videoJson.put("videoSize", obj.videoSize);
+                JSONObject metadata = new JSONObject();
+                for (Map.Entry<String, String> entry : obj.metadata.entrySet()) {
+                    metadata.put(entry.getKey(), entry.getValue());
+                }
+                videoJson.put("metadata", metadata);
                 sendResponse("recordingResponse", null, videoJson, null);
             } catch (org.json.JSONException e) {
                 throw new ItsException("JSON error: ", e);
@@ -2363,6 +2373,7 @@ public class ItsService extends Service implements SensorEventListener {
             int recordingDuration, int videoStabilizationMode,
             boolean hlg10Enabled, double zoomRatio, int aeTargetFpsMin, int aeTargetFpsMax)
             throws ItsException {
+        ScalerCropRegionListener scalerCropRegionListener = new ScalerCropRegionListener();
         final long SESSION_CLOSE_TIMEOUT_MS  = 3000;
 
         if (!hlg10Enabled) {
@@ -2436,7 +2447,7 @@ public class ItsService extends Service implements SensorEventListener {
         try {
             configureAndCreateCaptureSession(CameraDevice.TEMPLATE_RECORD, mRecordSurface,
                     videoStabilizationMode, DynamicRangeProfiles.HLG10, mockCallback,
-                    zoomRatio, aeTargetFpsMin, aeTargetFpsMax);
+                    zoomRatio, aeTargetFpsMin, aeTargetFpsMax, scalerCropRegionListener);
         } catch (CameraAccessException e) {
             throw new ItsException("Access error: ", e);
         }
@@ -2481,6 +2492,7 @@ public class ItsService extends Service implements SensorEventListener {
     private void doBasicRecording(String cameraId, int profileId, String quality,
             int recordingDuration, int videoStabilizationMode,
             double zoomRatio, int aeTargetFpsMin, int aeTargetFpsMax) throws ItsException {
+        ScalerCropRegionListener scalerCropRegionListener = new ScalerCropRegionListener();
         int cameraDeviceId = Integer.parseInt(cameraId);
         mMediaRecorder = new MediaRecorder();
         CamcorderProfile camcorderProfile = getCamcorderProfile(cameraDeviceId, profileId);
@@ -2513,7 +2525,8 @@ public class ItsService extends Service implements SensorEventListener {
         try {
             configureAndCreateCaptureSession(CameraDevice.TEMPLATE_RECORD, mRecordSurface,
                     videoStabilizationMode, DynamicRangeProfiles.STANDARD,
-                    /*callback =*/ null, zoomRatio, aeTargetFpsMin, aeTargetFpsMax);
+                    /*callback =*/ null, zoomRatio, aeTargetFpsMin, aeTargetFpsMax,
+                    scalerCropRegionListener);
         } catch (android.hardware.camera2.CameraAccessException e) {
             throw new ItsException("Access error: ", e);
         }
@@ -2561,7 +2574,7 @@ public class ItsService extends Service implements SensorEventListener {
             int recordingDuration, boolean stabilize, double zoomRatio,
             int aeTargetFpsMin, int aeTargetFpsMax)
             throws ItsException {
-
+        ScalerCropRegionListener scalerCropRegionListener = new ScalerCropRegionListener();
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             throw new ItsException("Cannot record preview before API level 33");
         }
@@ -2591,7 +2604,8 @@ public class ItsService extends Service implements SensorEventListener {
                     : CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF;
             configureAndCreateCaptureSession(CameraDevice.TEMPLATE_PREVIEW,
                     pr.getCameraSurface(), stabilizationMode, DynamicRangeProfiles.STANDARD,
-                    /*callback=*/ null, zoomRatio, aeTargetFpsMin, aeTargetFpsMax);
+                    /*stateCallback=*/ null, zoomRatio, aeTargetFpsMin, aeTargetFpsMax,
+                    scalerCropRegionListener);
             pr.recordPreview(recordingDuration * 1000L);
             mSession.close();
         } catch (CameraAccessException e) {
@@ -2602,6 +2616,8 @@ public class ItsService extends Service implements SensorEventListener {
         // Send VideoRecordingObject for further processing.
         VideoRecordingObject obj = new VideoRecordingObject(outputFilePath, /* quality= */"preview",
                 videoSize, fileFormat, zoomRatio);
+        obj.addMetadata("SCALER_CROP_REGION",
+                scalerCropRegionListener.mScalerCropRegion.flattenToString());
         mSocketRunnableObj.sendVideoRecordingObject(obj);
     }
 
@@ -2661,7 +2677,8 @@ public class ItsService extends Service implements SensorEventListener {
     private void configureAndCreateCaptureSession(int requestTemplate, Surface recordSurface,
             int videoStabilizationMode, long dynamicRangeProfile,
             CameraCaptureSession.StateCallback stateCallback,
-            double zoomRatio, int aeTargetFpsMin, int aeTargetFpsMax) throws CameraAccessException {
+            double zoomRatio, int aeTargetFpsMin, int aeTargetFpsMax,
+            CameraCaptureSession.CaptureCallback captureCallback) throws CameraAccessException {
         assert (recordSurface != null);
         // Create capture request builder
         mCaptureRequestBuilder = mCamera.createCaptureRequest(requestTemplate);
@@ -2713,7 +2730,8 @@ public class ItsService extends Service implements SensorEventListener {
                     public void onConfigured(CameraCaptureSession session) {
                         mSession = session;
                         try {
-                            mSession.setRepeatingRequest(mCaptureRequestBuilder.build(), null, null);
+                            mSession.setRepeatingRequest(mCaptureRequestBuilder.build(),
+                                    captureCallback, mResultHandler);
                         } catch (CameraAccessException e) {
                             e.printStackTrace();
                         }
@@ -3667,6 +3685,41 @@ public class ItsService extends Service implements SensorEventListener {
         public void stop() {
             stopped = true;
         }
+    }
+
+    private class ScalerCropRegionListener extends CaptureResultListener {
+        private volatile Rect mScalerCropRegion = null;
+
+        @Override
+        public void onCaptureStarted(CameraCaptureSession session, CaptureRequest request,
+                long timestamp, long frameNumber) {
+        }
+
+        @Override
+        public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request,
+                TotalCaptureResult result) {
+            try {
+                if (request == null || result == null) {
+                    throw new ItsException("Request/Result is invalid");
+                }
+
+                Logt.i(TAG, buildLogString(result));
+
+                if (result.get(CaptureResult.SCALER_CROP_REGION) != null) {
+                    mScalerCropRegion = result.get(CaptureResult.SCALER_CROP_REGION);
+                }
+
+            } catch (ItsException e) {
+                throw new ItsRuntimeException("Error handling capture result", e);
+            }
+        }
+
+        @Override
+        public void onCaptureFailed(CameraCaptureSession session, CaptureRequest request,
+                CaptureFailure failure) {
+            Logt.e(TAG, "Script error: capture failed");
+        }
+
     }
 
     private class AutoframingResultListener extends CaptureResultListener {
