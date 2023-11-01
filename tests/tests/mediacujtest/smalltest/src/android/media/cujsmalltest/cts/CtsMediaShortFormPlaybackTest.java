@@ -17,6 +17,7 @@
 package android.media.cujsmalltest.cts;
 
 import android.media.cujcommon.cts.CujTestBase;
+import android.platform.test.annotations.PlatinumTest;
 
 import androidx.media3.common.C;
 import androidx.test.filters.LargeTest;
@@ -111,6 +112,7 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
       "android.media.MediaCodecInfo#getSupportedTypes",
       "android.media.MediaCodecInfo#isSoftwareOnly"})
   @Test
+  @PlatinumTest(focusArea = "media")
   public void testVideoPlayback() throws Exception {
     play(mMediaUrls, mTimeoutMilliSeconds, mIsSeekTest, mNumOfSeekIteration, mSeekStartPosition,
         mSeekTimeUs);
