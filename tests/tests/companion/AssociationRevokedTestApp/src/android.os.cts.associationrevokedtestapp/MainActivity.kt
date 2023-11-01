@@ -22,7 +22,6 @@ import android.bluetooth.BluetoothManager
 import android.companion.AssociationInfo
 import android.companion.AssociationRequest
 import android.companion.AssociationRequest.DEVICE_PROFILE_WATCH
-import android.companion.BluetoothDeviceFilter
 import android.companion.CompanionDeviceManager
 import android.content.Context
 import android.content.Intent
@@ -46,10 +45,10 @@ class MainActivity : Activity() {
         var associationRequest = AssociationRequest.Builder().apply {
             setSingleDevice(true)
             setDeviceProfile(DEVICE_PROFILE_WATCH)
-            addDeviceFilter(BluetoothDeviceFilter.Builder().build())
         }.build()
 
-        cdm.associate(associationRequest,
+        cdm.associate(
+            associationRequest,
             this.mainExecutor,
             object : CompanionDeviceManager.Callback() {
                 override fun onAssociationPending(intentSender: IntentSender) {
@@ -63,7 +62,8 @@ class MainActivity : Activity() {
 
                 override fun onFailure(errorMessage: CharSequence?) {
                 }
-            })
+            }
+        )
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
