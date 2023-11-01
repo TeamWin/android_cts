@@ -19,6 +19,8 @@ package android.compilation.cts;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeTrue;
+
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.util.CommandResult;
@@ -179,6 +181,11 @@ public class Utils {
 
     public static int countSubstringOccurrence(String str, String subStr) {
         return str.split(subStr, -1 /* limit */).length - 1;
+    }
+
+    public void assumeSysPropTrue(String key) throws Exception {
+        assumeTrue(String.format("System property '%s' is not true", key),
+                mTestInfo.getDevice().getBooleanProperty(key, false /* defaultValue */));
     }
 
     private String getDmPath(String apkPath) throws Exception {
