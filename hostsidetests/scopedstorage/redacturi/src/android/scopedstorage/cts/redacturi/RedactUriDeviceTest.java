@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.scopedstorage.cts.device;
+package android.scopedstorage.cts.redacturi;
 
 
 import static android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION;
