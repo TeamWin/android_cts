@@ -19,11 +19,13 @@ package android.media.cujcommon.cts;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.WindowManager;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.ui.PlayerView;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
