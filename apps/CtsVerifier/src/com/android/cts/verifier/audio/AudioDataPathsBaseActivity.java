@@ -193,6 +193,13 @@ public abstract class AudioDataPathsBaseActivity
 
     class TestModule implements Cloneable {
         //
+        // Analysis Type
+        //
+        public static final int TYPE_SIGNAL_PRESENCE    = 0;
+        public static final int TYPE_SIGNAL_ABSENCE     = 1;
+        private int mAnalysisType = TYPE_SIGNAL_PRESENCE;
+
+        //
         // Datapath specifications
         //
         // Playback Specification
@@ -259,6 +266,10 @@ public abstract class AudioDataPathsBaseActivity
             newModule.setAnalysisChannel(mAnalysisChannel);
             newModule.setTransferType(mTransferType);
             return newModule;
+        }
+
+        public void setAnalysisType(int type) {
+            mAnalysisType = type;
         }
 
         // Test states that indicate a not run or successful (not failures) test are
@@ -340,13 +351,12 @@ public abstract class AudioDataPathsBaseActivity
             return mInDeviceInfo != null && mOutDeviceInfo != null;
         }
 
-        void setTestResults(int api, TestResults results) {
-            mTestResults[api] = results;
-        }
-
-        void setPassCriteria(double minPassMagnitude, double maxPassJitter) {
-            mMinPassMagnitude = minPassMagnitude;
-            mMaxPassJitter = maxPassJitter;
+        void setTestResults(int api, BaseSineAnalyzer analyzer) {
+            mTestResults[api] = new TestResults(api,
+                    analyzer.getMagnitude(),
+                    analyzer.getMaxMagnitude(),
+                    analyzer.getPhaseOffset(),
+                    analyzer.getPhaseJitter());
         }
 
         //
@@ -359,12 +369,16 @@ public abstract class AudioDataPathsBaseActivity
 
         // Ran and passed the criteria
         boolean hasPassed(int api) {
+            boolean passed = false;
             if (hasRun(api)) {
-                return mTestResults[api].mMaxMagnitude >= mMinPassMagnitude
-                        && mTestResults[api].mPhaseJitter <= mMaxPassJitter;
-            } else {
-                return false;
+                if (mAnalysisType == TYPE_SIGNAL_PRESENCE) {
+                    passed = mTestResults[api].mMaxMagnitude >= mMinPassMagnitude
+                            && mTestResults[api].mPhaseJitter <= mMaxPassJitter;
+                } else {
+                    passed = mTestResults[api].mMaxMagnitude <= mMinPassMagnitude;
+                }
             }
+            return passed;
         }
 
         // Should've been able to run, but ran into errors opening/starting streams
@@ -514,6 +528,7 @@ public abstract class AudioDataPathsBaseActivity
                 if (isErrorState) {
                     htmlFormatter.closeTextColor();
                 }
+
                 TestResults results = mTestResults[api];
                 if (results != null) {
                     // we can get null here if the test was cancelled
@@ -523,8 +538,9 @@ public abstract class AudioDataPathsBaseActivity
                     String phaseJitterString = String.format(
                             locale, "jitter:%.4f ", results.mPhaseJitter);
 
-                    boolean passMagnitude =
-                            results.mMaxMagnitude >= mMinPassMagnitude;
+                    boolean passMagnitude = mAnalysisType == TYPE_SIGNAL_PRESENCE
+                            ? results.mMaxMagnitude >= mMinPassMagnitude
+                            : results.mMaxMagnitude <= mMinPassMagnitude;
                     boolean passJitter =
                             results.mPhaseJitter <= mMaxPassJitter;
 
@@ -551,12 +567,15 @@ public abstract class AudioDataPathsBaseActivity
                     if (!passMagnitude) {
                         htmlFormatter.openTextColor("blue")
                                 .appendText(maxMagString
-                                        + String.format(locale, " <= %.4f ",
+                                        + String.format(locale,
+                                            mAnalysisType == TYPE_SIGNAL_PRESENCE
+                                                    ? " <= %.4f " : " >= %.4f ",
                                         mMinPassMagnitude))
                                 .closeTextColor();
                     }
 
-                    if (!passJitter) {
+                    // Jitter isn't relevant to SIGNAL ABSENCE test
+                    if (mAnalysisType == TYPE_SIGNAL_PRESENCE && !passJitter) {
                         htmlFormatter.openTextColor("blue")
                                 .appendText(phaseJitterString
                                         + String.format(locale, " >= %.4f",
@@ -996,11 +1015,7 @@ public abstract class AudioDataPathsBaseActivity
 
                 TestModule testModule = getActiveTestModule();
                 if (testModule != null && testModule.canRun()) {
-                    testModule.setTestResults(mApi, new TestResults(mApi,
-                            mAnalyzer.getMagnitude(),
-                            mAnalyzer.getMaxMagnitude(),
-                            mAnalyzer.getPhaseOffset(),
-                            mAnalyzer.getPhaseJitter()));
+                    testModule.setTestResults(mApi, mAnalyzer);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
