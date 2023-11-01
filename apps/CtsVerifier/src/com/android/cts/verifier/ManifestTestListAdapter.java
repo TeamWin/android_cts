@@ -152,6 +152,8 @@ public class ManifestTestListAdapter extends TestListAdapter {
 
     private static final String CONFIG_HAS_CAMERA_TOGGLE = "config_has_camera_toggle";
 
+    private static final String CONFIG_CHANGEABLE_VOLUME = "config_changeable_volume";
+
     /** The config to represent that a test is only needed to run in the main display mode
      * (i.e. unfolded) */
     private static final String SINGLE_DISPLAY_MODE = "single_display_mode";
@@ -499,6 +501,8 @@ public class ManifestTestListAdapter extends TestListAdapter {
                         return isHardwareToggleSupported(SensorPrivacyManager.Sensors.MICROPHONE);
                     case CONFIG_HAS_CAMERA_TOGGLE:
                         return isHardwareToggleSupported(SensorPrivacyManager.Sensors.CAMERA);
+                    case CONFIG_CHANGEABLE_VOLUME:
+                        return !getSystemResourceFlag("config_useFixedVolume");
                     default:
                         break;
                 }
