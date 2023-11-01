@@ -63,7 +63,6 @@ import android.system.ErrnoException;
 import android.virtualdevice.cts.common.FakeAssociationRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
@@ -133,6 +132,9 @@ public class VirtualSensorTest {
     @Mock
     private VirtualSensorDirectChannelCallback mVirtualSensorDirectChannelCallback;
     private VirtualSensorEventListener mSensorEventListener = new VirtualSensorEventListener();
+
+    // Synchronize the IO to reduce test flakiness.
+    private final Object mSharedMemoryLock = new Object();
 
     @Before
     public void setUp() throws Exception {
@@ -640,7 +642,6 @@ public class VirtualSensorTest {
         assertThat(virtualSensor.getValue().getHandle()).isEqualTo(mVirtualSensor.getHandle());
     }
 
-    @FlakyTest(bugId = 291719810)
     @Test
     public void directConnection_memoryFile_injectEvents() throws Exception {
         setUpDirectChannel();
@@ -668,7 +669,6 @@ public class VirtualSensorTest {
                 .onDirectChannelDestroyed(channelHandle.getValue());
     }
 
-    @FlakyTest(bugId = 291719810)
     @Test
     public void directConnection_memoryFile_injectEvents_withHelperWriter() throws Exception {
         mVirtualSensorDirectChannelWriter = new VirtualSensorDirectChannelWriter();
@@ -701,12 +701,14 @@ public class VirtualSensorTest {
                         reportToken + eventCount * 0.02f,
                         reportToken + eventCount * 0.03f,
                 };
-                assertThat(
-                        mVirtualSensorDirectChannelWriter.writeSensorEvent(sensor,
-                                new VirtualSensorEvent.Builder(values)
-                                        .setTimestampNanos(System.nanoTime())
-                                        .build()))
-                        .isTrue();
+                synchronized (mSharedMemoryLock) {
+                    assertThat(
+                            mVirtualSensorDirectChannelWriter.writeSensorEvent(sensor,
+                                    new VirtualSensorEvent.Builder(values)
+                                            .setTimestampNanos(System.nanoTime())
+                                            .build()))
+                            .isTrue();
+                }
                 try {
                     Thread.sleep(random.nextInt(10));  // Sleep random time of 0-20ms.
                 } catch (InterruptedException e) {
@@ -778,11 +780,13 @@ public class VirtualSensorTest {
         event.order(ByteOrder.nativeOrder());
         Random random = new Random();
         ByteBuffer memoryMapping = null;
-        try {
-            memoryMapping = sharedMemory.mapReadWrite();
-        } catch (ErrnoException e) {
-            sharedMemory.close();
-            fail("Could not map the shared memory for IO: " + e);
+        synchronized (mSharedMemoryLock) {
+            try {
+                memoryMapping = sharedMemory.mapReadWrite();
+            } catch (ErrnoException e) {
+                sharedMemory.close();
+                fail("Could not map the shared memory for IO: " + e);
+            }
         }
 
         while (eventCount < SENSOR_EVENT_COUNT * 2) {
@@ -807,8 +811,10 @@ public class VirtualSensorTest {
             }
 
             offset += SENSOR_EVENT_SIZE;
-            if (offset + SENSOR_EVENT_SIZE >= sharedMemory.getSize()) {
-                offset = 0;
+            synchronized (mSharedMemoryLock) {
+                if (offset + SENSOR_EVENT_SIZE >= sharedMemory.getSize()) {
+                    offset = 0;
+                }
             }
         }
     }
@@ -820,8 +826,10 @@ public class VirtualSensorTest {
         byteBuffer.order(ByteOrder.nativeOrder());
 
         while (eventCount < SENSOR_EVENT_COUNT * 2) {
-            assertThat(mMemoryFile.readBytes(byteBuffer.array(), offset, 0, SENSOR_EVENT_SIZE))
-                    .isEqualTo(SENSOR_EVENT_SIZE);
+            synchronized (mSharedMemoryLock) {
+                assertThat(mMemoryFile.readBytes(byteBuffer.array(), offset, 0, SENSOR_EVENT_SIZE))
+                        .isEqualTo(SENSOR_EVENT_SIZE);
+            }
             byteBuffer.position(0);
             int eventSize = byteBuffer.getInt();
             int actualReportToken = byteBuffer.getInt();
