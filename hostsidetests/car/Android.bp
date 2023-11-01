@@ -45,8 +45,10 @@ java_test_host {
         "automotive-general-tests",
     ],
     static_libs: [
+        "android.car.feature-aconfig-java-host",
         "car-cts-host-util",
         "cts-statsd-atom-host-test-utils",
+        "flag-junit-host",
     ],
     data: [
         ":CtsCarApp",
