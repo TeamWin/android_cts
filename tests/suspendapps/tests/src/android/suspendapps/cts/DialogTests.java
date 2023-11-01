@@ -73,6 +73,7 @@ public class DialogTests {
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mTestAppInterface = new TestAppInterface(mContext);
         turnScreenOn();
+        SuspendTestUtils.unsuspendAll();
     }
 
     private void turnScreenOn() throws Exception {
