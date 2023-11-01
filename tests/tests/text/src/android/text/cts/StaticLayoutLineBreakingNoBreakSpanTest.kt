@@ -76,7 +76,7 @@ class StaticLayoutLineBreakingNoBreakSpanTest {
         // Wrapping "This is" with NoBreakSpan, so that the line breaker prevents line break inside
         // the given span.
         layout = buildLayout(SpannableString("This is an example.").apply {
-            setSpan(LineBreakConfigSpan.NoBreakSpan(), 0, 7, Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
+            setSpan(LineBreakConfigSpan.createNoBreakSpan(), 0, 7, Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
         }, 80, LineBreaker.BREAK_STRATEGY_HIGH_QUALITY)
         assertLineBreak(layout, "This is ", "an ", "example.")
     }

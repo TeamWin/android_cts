@@ -18,23 +18,34 @@ package android.text.style.cts
 
 import android.graphics.Paint
 import android.graphics.text.LineBreakConfig
+import android.graphics.text.LineBreakConfig.HYPHENATION_DISABLED
+import android.graphics.text.LineBreakConfig.HYPHENATION_UNSPECIFIED
+import android.graphics.text.LineBreakConfig.LINE_BREAK_STYLE_NO_BREAK
+import android.graphics.text.LineBreakConfig.LINE_BREAK_STYLE_STRICT
+import android.graphics.text.LineBreakConfig.LINE_BREAK_STYLE_UNSPECIFIED
+import android.graphics.text.LineBreakConfig.LINE_BREAK_WORD_STYLE_UNSPECIFIED
 import android.graphics.text.MeasuredText
+import android.os.Parcel
 import android.text.MeasuredParagraph
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.TextDirectionHeuristics
 import android.text.TextPaint
+import android.text.TextUtils
+import android.text.cts.R
 import android.text.style.LineBreakConfigSpan
 import android.text.style.LocaleSpan
-import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import com.google.common.truth.Truth.assertThat
+import java.util.Locale
 import junit.framework.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.Locale
 
 private const val TEST_STRING = "hello, world."
 
-@RunWith(AndroidJUnit4ClassRunner::class)
+@RunWith(AndroidJUnit4::class)
 class LineBreakConfigSpanTest {
 
     private data class Run(val length: Int, val lineBreakConfig: LineBreakConfig?, val paint: Paint)
@@ -53,7 +64,8 @@ class LineBreakConfigSpanTest {
         MeasuredParagraph.buildForStaticLayoutTest(
                 paint, lineBreakConfig, text, 0, text.length, TextDirectionHeuristics.LTR,
                 MeasuredText.Builder.HYPHENATION_MODE_NONE,
-                false /* computeLayout */, object : MeasuredParagraph.StyleRunCallback {
+                false, // computeLayout
+                object : MeasuredParagraph.StyleRunCallback {
             override fun onAppendStyleRun(
                     paint: Paint,
                     lineBreakConfig: LineBreakConfig?,
@@ -76,8 +88,12 @@ class LineBreakConfigSpanTest {
                 .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_LOOSE)
                 .build()
         val text = SpannableString(TEST_STRING).apply {
-            setSpan(LineBreakConfigSpan(config), 0, TEST_STRING.length,
-                Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
+            setSpan(
+                LineBreakConfigSpan(config),
+                0,
+                TEST_STRING.length,
+                Spanned.SPAN_INCLUSIVE_EXCLUSIVE
+            )
         }
 
         val runs = buildMeasuredText(paint, null, text)
@@ -106,10 +122,18 @@ class LineBreakConfigSpanTest {
                 .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_NORMAL)
                 .build()
         val text = SpannableString(TEST_STRING).apply {
-            setSpan(LineBreakConfigSpan(config), 0, TEST_STRING.length,
-                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
-            setSpan(LineBreakConfigSpan(overrideConfig), 0, TEST_STRING.length,
-                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
+            setSpan(
+                LineBreakConfigSpan(config),
+                0,
+                TEST_STRING.length,
+                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE
+            )
+            setSpan(
+                LineBreakConfigSpan(overrideConfig),
+                0,
+                TEST_STRING.length,
+                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE
+            )
         }
 
         val overridden = LineBreakConfig.Builder()
@@ -143,10 +167,18 @@ class LineBreakConfigSpanTest {
                 .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_NORMAL)
                 .build()
         val text = SpannableString(TEST_STRING).apply {
-            setSpan(LineBreakConfigSpan(config), 0, TEST_STRING.length,
-                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
-            setSpan(LineBreakConfigSpan(overrideConfig), 0, middleTextPos,
-                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
+            setSpan(
+                LineBreakConfigSpan(config),
+                0,
+                TEST_STRING.length,
+                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE
+            )
+            setSpan(
+                LineBreakConfigSpan(overrideConfig),
+                0,
+                middleTextPos,
+                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE
+            )
         }
 
         val overridden = LineBreakConfig.Builder()
@@ -183,10 +215,18 @@ class LineBreakConfigSpanTest {
                 .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_NORMAL)
                 .build()
         val text = SpannableString(TEST_STRING).apply {
-            setSpan(LineBreakConfigSpan(config), 0, TEST_STRING.length,
-                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
-            setSpan(LineBreakConfigSpan(overrideConfig), textPos1, textPos2,
-                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
+            setSpan(
+                LineBreakConfigSpan(config),
+                0,
+                TEST_STRING.length,
+                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE
+            )
+            setSpan(
+                LineBreakConfigSpan(overrideConfig),
+                textPos1,
+                textPos2,
+                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE
+            )
         }
 
         val overridden = LineBreakConfig.Builder()
@@ -225,10 +265,18 @@ class LineBreakConfigSpanTest {
                 .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_NORMAL)
                 .build()
         val text = SpannableString(TEST_STRING).apply {
-            setSpan(LineBreakConfigSpan(config), 0, textPos2,
-                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
-            setSpan(LineBreakConfigSpan(overrideConfig), textPos1, TEST_STRING.length,
-                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
+            setSpan(
+                LineBreakConfigSpan(config),
+                0,
+                textPos2,
+                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE
+            )
+            setSpan(
+                LineBreakConfigSpan(overrideConfig),
+                textPos1,
+                TEST_STRING.length,
+                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE
+            )
         }
 
         val overridden = LineBreakConfig.Builder()
@@ -268,10 +316,18 @@ class LineBreakConfigSpanTest {
                 .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE)
                 .build()
         val text = SpannableString(TEST_STRING).apply {
-            setSpan(LineBreakConfigSpan(config), 0, TEST_STRING.length,
-                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
-            setSpan(LocaleSpan(Locale.JAPAN), textPos1, textPos2,
-                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
+            setSpan(
+                LineBreakConfigSpan(config),
+                0,
+                TEST_STRING.length,
+                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE
+            )
+            setSpan(
+                LocaleSpan(Locale.JAPAN),
+                textPos1,
+                textPos2,
+                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE
+            )
         }
 
         val runs = buildMeasuredText(paint, null, text)
@@ -309,10 +365,18 @@ class LineBreakConfigSpanTest {
                 .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE)
                 .build()
         val text = SpannableString(TEST_STRING).apply {
-            setSpan(LineBreakConfigSpan(config), 0, textPos2,
-                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
-            setSpan(LocaleSpan(Locale.JAPAN), textPos1, TEST_STRING.length,
-                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
+            setSpan(
+                LineBreakConfigSpan(config),
+                0,
+                textPos2,
+                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE
+            )
+            setSpan(
+                LocaleSpan(Locale.JAPAN),
+                textPos1,
+                TEST_STRING.length,
+                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE
+            )
         }
 
         val runs = buildMeasuredText(paint, null, text)
@@ -328,5 +392,100 @@ class LineBreakConfigSpanTest {
         assertEquals(TEST_STRING.length - textPos2, runs[2].length)
         assertEquals(LineBreakConfig.Builder().build(), runs[2].lineBreakConfig)
         assertEquals(Locale.JAPAN, runs[2].paint.textLocale)
+    }
+
+    private fun assertNoBreakSpan(span: LineBreakConfigSpan) {
+        val config = span.lineBreakConfig
+        assertThat(config).isNotNull()
+        assertThat(config.lineBreakStyle).isEqualTo(LINE_BREAK_STYLE_NO_BREAK)
+        assertThat(config.lineBreakWordStyle).isEqualTo(LINE_BREAK_WORD_STYLE_UNSPECIFIED)
+        assertThat(config.hyphenation).isEqualTo(HYPHENATION_UNSPECIFIED)
+    }
+
+    private fun assertNoHyphenationSpan(span: LineBreakConfigSpan) {
+        val config = span.lineBreakConfig
+        assertThat(config).isNotNull()
+        assertThat(config.lineBreakStyle).isEqualTo(LINE_BREAK_STYLE_UNSPECIFIED)
+        assertThat(config.lineBreakWordStyle).isEqualTo(LINE_BREAK_WORD_STYLE_UNSPECIFIED)
+        assertThat(config.hyphenation).isEqualTo(HYPHENATION_DISABLED)
+    }
+
+    private fun parcelUnparcelText(text: CharSequence): CharSequence {
+        val inParcel = Parcel.obtain()
+        val outParcel = Parcel.obtain()
+        try {
+            TextUtils.writeToParcel(text, inParcel, 0)
+            val marshalled = inParcel.marshall()
+            outParcel.unmarshall(marshalled, 0, marshalled.size)
+            outParcel.setDataPosition(0)
+            return TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(outParcel)
+        } finally {
+            outParcel.recycle()
+            inParcel.recycle()
+        }
+    }
+
+    @Test
+    fun testLineBreakConfigSpan_parcelable() {
+        val strictConfig = LineBreakConfig.Builder()
+                .setLineBreakStyle(LINE_BREAK_STYLE_STRICT)
+                .build()
+        val text = SpannableString("abcde").apply {
+            setSpan(LineBreakConfigSpan.createNoBreakSpan(), 1, 2, Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
+            setSpan(
+                LineBreakConfigSpan.createNoHyphenationSpan(),
+                2,
+                3,
+                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE
+            )
+            setSpan(LineBreakConfigSpan(strictConfig), 3, 4, Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
+        }
+
+        val parceledText = parcelUnparcelText(text)
+        require(parceledText is Spanned)
+        var spans = requireNotNull(parceledText.getSpans(1, 2, LineBreakConfigSpan::class.java))
+        assertThat(spans.size).isEqualTo(1)
+        var span = spans[0]
+        assertNoBreakSpan(span)
+
+        spans = requireNotNull(parceledText.getSpans(2, 3, LineBreakConfigSpan::class.java))
+        assertThat(spans.size).isEqualTo(1)
+        span = spans[0]
+        assertNoHyphenationSpan(span)
+
+        spans = requireNotNull(parceledText.getSpans(3, 4, LineBreakConfigSpan::class.java))
+        assertThat(spans.size).isEqualTo(1)
+        span = spans[0]
+        val config = span.lineBreakConfig
+        assertThat(config).isNotNull()
+        assertThat(config.lineBreakStyle).isEqualTo(LINE_BREAK_STYLE_STRICT)
+        assertThat(config.lineBreakWordStyle).isEqualTo(LINE_BREAK_WORD_STYLE_UNSPECIFIED)
+        assertThat(config.hyphenation).isEqualTo(HYPHENATION_UNSPECIFIED)
+    }
+
+    @Test
+    fun testLineBreakConfigSpan_resource() {
+        val context = InstrumentationRegistry.getInstrumentation().getTargetContext()
+
+        val text = context.resources.getText(R.string.linebreakconfig_span_test)
+        require(text is Spanned)
+        var spans = requireNotNull(text.getSpans(1, 2, LineBreakConfigSpan::class.java))
+        assertThat(spans.size).isEqualTo(1)
+        var span = spans[0]
+        assertNoBreakSpan(span)
+
+        spans = requireNotNull(text.getSpans(2, 3, LineBreakConfigSpan::class.java))
+        assertThat(spans.size).isEqualTo(1)
+        span = spans[0]
+        assertNoHyphenationSpan(span)
+
+        spans = requireNotNull(text.getSpans(3, 4, LineBreakConfigSpan::class.java))
+        assertThat(spans.size).isEqualTo(1)
+        span = spans[0]
+        val config = span.lineBreakConfig
+        assertThat(config).isNotNull()
+        assertThat(config.lineBreakStyle).isEqualTo(LINE_BREAK_STYLE_STRICT)
+        assertThat(config.lineBreakWordStyle).isEqualTo(LINE_BREAK_WORD_STYLE_UNSPECIFIED)
+        assertThat(config.hyphenation).isEqualTo(HYPHENATION_UNSPECIFIED)
     }
 }
