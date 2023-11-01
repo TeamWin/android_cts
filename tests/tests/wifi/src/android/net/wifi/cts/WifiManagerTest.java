@@ -2762,8 +2762,9 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                 assertEquals(currentConfig.getMaxChannelBandwidth(),
                         testSoftApConfig.getMaxChannelBandwidth());
             }
-            if (ApiLevelUtil.codenameEquals("VanillaIceCream")
-                    || ApiLevelUtil.isAtLeast(Build.VERSION_CODES.VANILLA_ICE_CREAM)) {
+            if (Flags.vendorParcelableParameters()
+                    && (ApiLevelUtil.codenameEquals("VanillaIceCream")
+                    || ApiLevelUtil.isAtLeast(Build.VERSION_CODES.VANILLA_ICE_CREAM))) {
                 assertTrue(Objects.equals(
                         currentConfig.getVendorData(), testSoftApConfig.getVendorData()));
             }
