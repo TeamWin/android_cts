@@ -27,9 +27,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.DropBoxManager;
 import android.os.SystemClock;
-import android.platform.test.annotations.RequiresFlagsEnabled;
-import android.platform.test.flag.junit.CheckFlagsRule;
-import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
@@ -37,11 +34,9 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.SystemUtil;
-import com.android.server.feature.flags.Flags;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -57,9 +52,6 @@ import java.util.concurrent.TimeUnit;
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class DropBoxTests {
-    @Rule
-    public final CheckFlagsRule mCheckFlagsRule =
-            DeviceFlagsValueProvider.createCheckFlagsRule();
     private static final String ENABLED_TAG = "DropBoxTestsEnabledTag";
     private static final String LOW_PRIORITY_TAG = "DropBoxTestsLowPriorityTag";
     private static final String ANOTHER_LOW_PRIORITY_TAG = "AnotherDropBoxTestsLowPriorityTag";
@@ -339,7 +331,6 @@ public class DropBoxTests {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_READ_DROPBOX_PERMISSION)
     public void testReadDropBoxPermission() {
         long currTime = System.currentTimeMillis();
         mDropBoxManager.addText(GET_ENTRY_TAG, "0");
