@@ -26,6 +26,8 @@ import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_NEVER;
 import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_RARE;
 import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_WORKING_SET;
 import static android.provider.DeviceConfig.NAMESPACE_APP_STANDBY;
+import static android.text.format.DateUtils.HOUR_IN_MILLIS;
+import static android.text.format.DateUtils.MINUTE_IN_MILLIS;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -52,6 +54,7 @@ import android.app.usage.EventStats;
 import android.app.usage.Flags;
 import android.app.usage.UsageEvents;
 import android.app.usage.UsageEvents.Event;
+import android.app.usage.UsageEventsQuery;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.BroadcastReceiver;
@@ -116,6 +119,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -1501,7 +1505,6 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         return latestTime;
     }
 
-
     private ArrayList<Event> waitForEventCount(int[] whichEvents, long startTime, int count) {
         return waitForEventCount(whichEvents, startTime, count, null);
     }
@@ -1839,8 +1842,20 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsDisabled(Flags.FLAG_FILTER_BASED_EVENT_QUERY_API)
     @Test
     public void testForegroundService() throws Exception {
+        testForegroundServiceHelper(/* filteredEvents= */ false);
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsEnabled(Flags.FLAG_FILTER_BASED_EVENT_QUERY_API)
+    @Test
+    public void testForegroundService_withQueryFilter() throws Exception {
+        testForegroundServiceHelper(/* filteredEvents= */ true);
+    }
+
+    private void testForegroundServiceHelper(boolean filteredEvents) {
         // This test start a foreground service then stop it. The event list should have one
         // FOREGROUND_SERVICE_START and one FOREGROUND_SERVICE_STOP event.
         final long startTime = System.currentTimeMillis();
@@ -1851,7 +1866,16 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         mContext.stopService(new Intent(mContext, TestService.class));
         mUiDevice.wait(Until.gone(By.clazz(TestService.class)), TIMEOUT);
         final long endTime = System.currentTimeMillis();
-        UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
+        UsageEvents events = null;
+        if (filteredEvents) {
+            UsageEventsQuery query = new UsageEventsQuery.Builder(startTime, endTime)
+                    .addEventTypes(Event.FOREGROUND_SERVICE_START)
+                    .addEventTypes(Event.FOREGROUND_SERVICE_STOP)
+                    .build();
+            events = mUsageStatsManager.queryEvents(query);
+        } else {
+            events = mUsageStatsManager.queryEvents(startTime, endTime);
+        }
 
         int numStarts = 0;
         int numStops = 0;
@@ -1861,6 +1885,9 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         while (events.hasNextEvent()) {
             UsageEvents.Event event = new UsageEvents.Event();
             assertTrue(events.getNextEvent(event));
+            assertTrue(!filteredEvents
+                    || (event.getEventType() == Event.FOREGROUND_SERVICE_START
+                            || event.getEventType() == Event.FOREGROUND_SERVICE_STOP));
             if (mTargetPackage.equals(event.getPackageName())
                     || TestService.class.getName().equals(event.getClassName())) {
                 if (event.getEventType() == Event.FOREGROUND_SERVICE_START) {
@@ -1879,7 +1906,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         assertLessThan(startIdx, stopIdx);
 
         final Map<String, UsageStats> map = mUsageStatsManager.queryAndAggregateUsageStats(
-            startTime, endTime);
+                startTime, endTime);
         final UsageStats stats = map.get(mTargetPackage);
         assertNotNull(stats);
         final long lastTimeUsed = stats.getLastTimeForegroundServiceUsed();
@@ -2313,6 +2340,138 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         final UsageEvents allEvents = queryEventsAsShell(startTime, endTime);
         verifyLocusIdEventVisibility(restrictedEvents, false);
         verifyLocusIdEventVisibility(allEvents, true);
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsEnabled(Flags.FLAG_FILTER_BASED_EVENT_QUERY_API)
+    @Test
+    public void testUsageEventsQueryParceling() throws Exception {
+        final long endTime = System.currentTimeMillis();
+        final long startTime = endTime - MINUTE_IN_MILLIS;
+        Random rnd = new Random();
+        UsageEventsQuery.Builder queryBuilder = new UsageEventsQuery.Builder(startTime, endTime);
+        for (int i = 0; i < Event.MAX_EVENT_TYPE + 1; i++) {
+            queryBuilder.addEventTypes(rnd.nextInt(Event.MAX_EVENT_TYPE + 1));
+        }
+        UsageEventsQuery query = queryBuilder.build();
+        Parcel p = Parcel.obtain();
+        p.setDataPosition(0);
+        query.writeToParcel(p, 0);
+        p.setDataPosition(0);
+
+        UsageEventsQuery queryFromParcel = UsageEventsQuery.CREATOR.createFromParcel(p);
+        assertEquals(query.getBeginTimeMillis(), queryFromParcel.getBeginTimeMillis());
+        assertEquals(query.getEndTimeMillis(), queryFromParcel.getEndTimeMillis());
+        assertTrue(query.getEventTypes().equals(queryFromParcel.getEventTypes()));
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsEnabled(Flags.FLAG_FILTER_BASED_EVENT_QUERY_API)
+    @Test
+    public void testQueryEventsWithFilter() throws Exception {
+        final long endTime = System.currentTimeMillis() - MINUTE_IN_MILLIS;
+        final long startTime = Math.max(0, endTime - HOUR_IN_MILLIS); // 1 hour
+
+        UsageEvents unfilteredEvents = mUsageStatsManager.queryEvents(startTime, endTime);
+        UsageEventsQuery query = new UsageEventsQuery.Builder(startTime, endTime)
+                .addEventTypes(Event.ACTIVITY_RESUMED, Event.ACTIVITY_PAUSED)
+                .build();
+        UsageEvents filteredEvents = mUsageStatsManager.queryEvents(query);
+        ArrayList<Event> filteredEventList = new ArrayList<>();
+        ArrayList<Event> unfilteredEventList = new ArrayList<>();
+        while (unfilteredEvents.hasNextEvent()) {
+            final Event event = new Event();
+            unfilteredEvents.getNextEvent(event);
+            if (event.getEventType() == Event.ACTIVITY_RESUMED
+                    || event.getEventType() == Event.ACTIVITY_PAUSED) {
+                unfilteredEventList.add(event);
+            }
+        }
+
+        while (filteredEvents.hasNextEvent()) {
+            final Event event = new Event();
+            filteredEvents.getNextEvent(event);
+            assertTrue(event.getEventType() == Event.ACTIVITY_RESUMED
+                    || event.getEventType() == Event.ACTIVITY_PAUSED);
+            filteredEventList.add(event);
+        }
+
+        compareUsageEventList(unfilteredEventList, filteredEventList);
+
+        // Test with empty event types, it should behave the same with the non-filter one
+        unfilteredEvents = mUsageStatsManager.queryEvents(startTime, endTime);
+        query = new UsageEventsQuery.Builder(startTime, endTime).build();
+        filteredEvents = mUsageStatsManager.queryEvents(query);
+        unfilteredEventList = new ArrayList<>();
+        filteredEventList = new ArrayList<>();
+        while (unfilteredEvents.hasNextEvent()) {
+            final Event event = new Event();
+            unfilteredEvents.getNextEvent(event);
+            unfilteredEventList.add(event);
+        }
+
+        while (filteredEvents.hasNextEvent()) {
+            final Event event = new Event();
+            filteredEvents.getNextEvent(event);
+            filteredEventList.add(event);
+        }
+
+        // Two query results should be the same.
+        compareUsageEventList(unfilteredEventList, filteredEventList);
+    }
+
+    private static void compareUsageEventList(List<Event> unfilteredEventList,
+            List<Event> filteredEventList) {
+        // There should be same number of usage events.
+        assertEquals(unfilteredEventList.size(), filteredEventList.size());
+
+        for (Event event : filteredEventList) {
+            // Each event should be appeared in both query results.
+            boolean found = false;
+            for (int i = 0; i < unfilteredEventList.size(); i++) {
+                if (compareEvent(event, unfilteredEventList.get(i))) {
+                    found = true;
+                    break;
+                }
+            }
+            assertTrue(found);
+        }
+    }
+
+    private static boolean compareEvent(Event ue1, Event ue2) {
+        boolean result = (ue1.mEventType == ue2.mEventType)
+                && (ue1.mTimeStamp ==  ue2.mTimeStamp)
+                && (ue1.mInstanceId == ue2.mInstanceId)
+                && Objects.equals(ue1.mPackage, ue2.mPackage)
+                && Objects.equals(ue1.mClass, ue2.mClass)
+                && Objects.equals(ue1.mTaskRootPackage, ue2.mTaskRootPackage)
+                && Objects.equals(ue1.mTaskRootClass, ue2.mTaskRootClass)
+                && (ue1.mFlags == ue2.mFlags);
+
+        switch (ue1.mEventType) {
+            case Event.CONFIGURATION_CHANGE:
+                result &= Objects.equals(ue1.mConfiguration, ue2.mConfiguration);
+                break;
+            case Event.SHORTCUT_INVOCATION:
+                result &= Objects.equals(ue1.mShortcutId, ue2.mShortcutId);
+                break;
+            case Event.CHOOSER_ACTION:
+                result &= Objects.equals(ue1.mAction, ue2.mAction);
+                result &= Objects.equals(ue1.mContentType, ue2.mContentType);
+                result &= Arrays.equals(ue1.mContentAnnotations, ue2.mContentAnnotations);
+                break;
+            case Event.STANDBY_BUCKET_CHANGED:
+                result &= (ue1.mBucketAndReason == ue2.mBucketAndReason);
+                break;
+            case Event.NOTIFICATION_INTERRUPTION:
+                result &= Objects.equals(ue1.mNotificationChannelId, ue2.mNotificationChannelId);
+                break;
+            case Event.LOCUS_ID_SET:
+                result &= Objects.equals(ue1.mLocusId, ue2.mLocusId);
+                break;
+        }
+
+        return result;
     }
 
     private void startAndDestroyActivityWithLocus() {
