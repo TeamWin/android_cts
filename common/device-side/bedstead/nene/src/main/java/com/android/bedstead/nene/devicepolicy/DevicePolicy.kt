@@ -778,6 +778,6 @@ object DevicePolicy {
 
     private const val LOG_TAG = "DevicePolicy"
 
-    private val devicePolicyManager = TestApis.context().instrumentedContext()
-        .getSystemService(DevicePolicyManager::class.java)!!
+    private val devicePolicyManager: DevicePolicyManager by lazy { TestApis.context().instrumentedContext()
+            .getSystemService(DevicePolicyManager::class.java)!! }
 }
