@@ -36,6 +36,7 @@ import static org.junit.Assume.assumeTrue;
 import android.Manifest;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
+import android.app.AppOpsManager;
 import android.app.Instrumentation;
 import android.app.usage.StorageStats;
 import android.app.usage.StorageStatsManager;
@@ -85,9 +86,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 @AppModeFull
@@ -118,6 +117,7 @@ public class PackageInstallerArchiveTest {
     private PackageInstaller mPackageInstaller;
     private StorageStatsManager mStorageStatsManager;
     private ArchiveIntentSender mIntentSender;
+    private AppOpsManager mAppOpsManager;
 
     @Before
     public void setup() throws Exception {
@@ -129,6 +129,7 @@ public class PackageInstallerArchiveTest {
         mPackageManager = mContext.getPackageManager();
         mPackageInstaller = mPackageManager.getPackageInstaller();
         mStorageStatsManager = mContext.getSystemService(StorageStatsManager.class);
+        mAppOpsManager = mContext.getSystemService(AppOpsManager.class);
         mIntentSender = new ArchiveIntentSender();
         sUnarchiveReceiverPackageName = new CompletableFuture<>();
         sUnarchiveReceiverAllUsers = new CompletableFuture<>();
@@ -144,7 +145,7 @@ public class PackageInstallerArchiveTest {
 
     @Test
     public void archiveApp_dataIsKept() throws Exception {
-        installPackage(APK_PATH);
+        installPackage(PACKAGE_NAME, APK_PATH);
         // This creates a data directory which will be verified later.
         launchTestActivity();
         PackageInfo packageInfo = getPackageInfo();
@@ -170,7 +171,7 @@ public class PackageInstallerArchiveTest {
 
     @Test
     public void archiveApp_getApplicationIcon() throws Exception {
-        installPackage(APK_PATH);
+        installPackage(PACKAGE_NAME, APK_PATH);
 
         runWithShellPermissionIdentity(
                 () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
@@ -188,8 +189,8 @@ public class PackageInstallerArchiveTest {
     }
 
     @Test
-    public void archiveApp_noInstaller() {
-        installPackageWithNoInstaller(APK_PATH);
+    public void archiveApp_noInstaller() throws NameNotFoundException {
+        installPackageWithNoInstaller(PACKAGE_NAME, APK_PATH);
 
         PackageManager.NameNotFoundException e =
                 runWithShellPermissionIdentity(
@@ -203,8 +204,8 @@ public class PackageInstallerArchiveTest {
     }
 
     @Test
-    public void archiveApp_installerDoesntSupportUnarchival() {
-        installPackage(APK_PATH);
+    public void archiveApp_installerDoesntSupportUnarchival() throws NameNotFoundException {
+        installPackage(PACKAGE_NAME, APK_PATH);
         mContext.getPackageManager().setComponentEnabledSetting(
                 new ComponentName(mContext, UnarchiveBroadcastReceiver.class),
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
@@ -223,7 +224,7 @@ public class PackageInstallerArchiveTest {
 
     @Test
     public void matchArchivedPackages() throws Exception {
-        installPackage(APK_PATH);
+        installPackage(PACKAGE_NAME, APK_PATH);
 
         runWithShellPermissionIdentity(
                 () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
@@ -261,8 +262,8 @@ public class PackageInstallerArchiveTest {
     }
 
     @Test
-    public void unarchiveApp() throws IOException, ExecutionException, InterruptedException {
-        installPackage(APK_PATH);
+    public void unarchiveApp() throws Exception {
+        installPackage(PACKAGE_NAME, APK_PATH);
         runWithShellPermissionIdentity(
                 () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
                         new IntentSender((IIntentSender) mIntentSender)),
@@ -277,10 +278,10 @@ public class PackageInstallerArchiveTest {
     }
 
     @Test
-    public void archiveApp_noMainActivity() {
+    public void archiveApp_noMainActivity() throws NameNotFoundException {
         // To ensure the installer is set.
         uninstallPackage(NO_ACTIVITY_PACKAGE_NAME);
-        installPackage(NO_ACTIVITY_APK_PATH);
+        installPackage(NO_ACTIVITY_PACKAGE_NAME, NO_ACTIVITY_APK_PATH);
 
         PackageManager.NameNotFoundException e =
                 runWithShellPermissionIdentity(
@@ -295,12 +296,29 @@ public class PackageInstallerArchiveTest {
                         NO_ACTIVITY_PACKAGE_NAME));
 
         // Reset for other PM tests.
-        installPackageWithNoInstaller(NO_ACTIVITY_APK_PATH);
+        installPackageWithNoInstaller(NO_ACTIVITY_PACKAGE_NAME, NO_ACTIVITY_APK_PATH);
+    }
+
+    @Test
+    public void archiveApp_appOptedOut() throws NameNotFoundException {
+        installPackage(PACKAGE_NAME, APK_PATH);
+        setOptInStatus(PACKAGE_NAME, /* optIn= */ false);
+
+        PackageManager.NameNotFoundException e =
+                runWithShellPermissionIdentity(
+                        () -> assertThrows(
+                                PackageManager.NameNotFoundException.class,
+                                () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
+                                        new IntentSender((IIntentSender) mIntentSender))),
+                        Manifest.permission.DELETE_PACKAGES);
+
+        assertThat(e).hasMessageThat().isEqualTo(
+                TextUtils.formatSimple("The app %s is opted out of archiving.", PACKAGE_NAME));
     }
 
     @Test
     public void archiveApp_shellCommand() throws Exception {
-        installPackage(APK_PATH);
+        installPackage(PACKAGE_NAME, APK_PATH);
 
         assertThat(
                 SystemUtil.runShellCommand(String.format("pm archive %s", PACKAGE_NAME))).isEqualTo(
@@ -311,7 +329,7 @@ public class PackageInstallerArchiveTest {
 
     @Test
     public void unarchiveApp_shellCommand() throws Exception {
-        installPackage(APK_PATH);
+        installPackage(PACKAGE_NAME, APK_PATH);
         assertThat(
                 SystemUtil.runShellCommand(String.format("pm archive %s", PACKAGE_NAME))).isEqualTo(
                 "Success\n");
@@ -326,7 +344,7 @@ public class PackageInstallerArchiveTest {
 
     @Test
     public void archiveApp_broadcasts() throws Exception {
-        installPackage(APK_PATH);
+        installPackage(PACKAGE_NAME, APK_PATH);
 
         int currentUser = ActivityManager.getCurrentUser();
         PackageBroadcastReceiver
@@ -356,7 +374,7 @@ public class PackageInstallerArchiveTest {
             assertTrue(removedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false));
 
             mContext.registerReceiver(addedBroadcastReceiver, intentFilter);
-            installPackage(APK_PATH);
+            installPackage(PACKAGE_NAME, APK_PATH);
 
             addedBroadcastReceiver.assertBroadcastReceived();
             Intent addedIntent = addedBroadcastReceiver.getBroadcastResult();
@@ -370,6 +388,47 @@ public class PackageInstallerArchiveTest {
                 // Already unregistered.
             }
         }
+    }
+
+    @Test
+    public void isAppArchivable_success() throws NameNotFoundException {
+        installPackage(PACKAGE_NAME, APK_PATH);
+
+        assertThat(mContext.getPackageManager().isAppArchivable(PACKAGE_NAME)).isTrue();
+    }
+
+    @Test
+    public void isAppArchivable_installerDoesntSupportUnarchival() throws NameNotFoundException {
+        installPackage(PACKAGE_NAME, APK_PATH);
+        mContext.getPackageManager().setComponentEnabledSetting(
+                new ComponentName(mContext, UnarchiveBroadcastReceiver.class),
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP);
+
+        assertThat(mContext.getPackageManager().isAppArchivable(PACKAGE_NAME)).isFalse();
+    }
+
+    @Test
+    public void isAppArchivable_noMainActivity() throws NameNotFoundException {
+        // To ensure the installer is set.
+        uninstallPackage(NO_ACTIVITY_PACKAGE_NAME);
+        installPackage(NO_ACTIVITY_PACKAGE_NAME, NO_ACTIVITY_APK_PATH);
+
+        assertThat(
+                mContext.getPackageManager().isAppArchivable(NO_ACTIVITY_PACKAGE_NAME)).isFalse();
+
+        // Reset for other PM tests.
+        installPackageWithNoInstaller(NO_ACTIVITY_PACKAGE_NAME, NO_ACTIVITY_APK_PATH);
+    }
+
+    @Test
+    public void isAppArchivable_appOptedOut() throws NameNotFoundException {
+        installPackage(PACKAGE_NAME, APK_PATH);
+        setOptInStatus(PACKAGE_NAME, /* optIn= */ false);
+
+        assertThat(
+                mContext.getPackageManager().isAppArchivable(PACKAGE_NAME)).isFalse();
+
     }
 
     private void launchTestActivity() {
@@ -393,15 +452,29 @@ public class PackageInstallerArchiveTest {
                 String.format("pm uninstall %s", packageName));
     }
 
-    private void installPackage(String path) {
+    private void installPackage(String packageName, String path) throws NameNotFoundException {
         assertEquals("Success\n", SystemUtil.runShellCommand(
                 String.format("pm install -r -i %s -t -g %s", mContext.getPackageName(),
                         path)));
+        setOptInStatus(packageName, /* optIn= */ true);
     }
 
-    private void installPackageWithNoInstaller(String path) {
+    private void setOptInStatus(String packageName, boolean optIn) throws NameNotFoundException {
+        ApplicationInfo applicationInfo = mPackageManager.getApplicationInfo(
+                packageName, /* flags= */ 0);
+        runWithShellPermissionIdentity(
+                () -> mAppOpsManager.setUidMode(
+                        AppOpsManager.OP_AUTO_REVOKE_PERMISSIONS_IF_UNUSED,
+                        applicationInfo.uid,
+                        optIn ? AppOpsManager.MODE_ALLOWED : AppOpsManager.MODE_IGNORED),
+                Manifest.permission.MANAGE_APP_OPS_MODES);
+    }
+
+    private void installPackageWithNoInstaller(String packageName, String path)
+            throws NameNotFoundException {
         assertEquals("Success\n",
                 SystemUtil.runShellCommand(String.format("pm install -r -t -g %s", path)));
+        setOptInStatus(packageName, /* optIn= */ true);
     }
 
     private PackageInfo getPackageInfo() {
