@@ -6949,7 +6949,7 @@ Follow the instructions on the screen to measure the frequency response for the 
         \n1. Ensure that the test is already started on the reference device.
         \n2. Input the device ID of the reference device (displayed on the reference device) into the provided field and click "Start Test"
         \n3. The test is automatically stopped and passed (or failed) when all the required data is collected
-        \n4. The test is passed if the median RSSI from both DUT and reference device is between -65dBm and -45dBm.
+        \n4. The test is passed if the median RSSI from both DUT and reference device is between -65dBm and -35dBm.
         \nReference device instructions
         \n1. Ensure that the "Is reference device" checkbox is checked, then click, "Start Advertising"
     </string>
