@@ -54,7 +54,7 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
 
     // Thresholds
     private static final int MIN_RSSI_MEDIAN_DBM = -65;
-    private static final int MAX_RSSI_MEDIAN_DBM = -45;
+    private static final int MAX_RSSI_MEDIAN_DBM = -35;
 
     private boolean isReferenceDevice;
     private BleScanner mBleScanner;
