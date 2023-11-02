@@ -54,6 +54,7 @@ public class HdmiCecAvbToAudioSystemTest extends BaseHdmiCecAbsoluteVolumeBehavi
     public RuleChain ruleChain =
             RuleChain.outerRule(BaseHdmiCecCtsTest.CecRules.requiresCec(this))
                     .around(BaseHdmiCecCtsTest.CecRules.requiresLeanback(this))
+                    .around(CecRules.requiresPhysicalDevice(this))
                     .around(
                             BaseHdmiCecCtsTest.CecRules.requiresDeviceType(
                                     this, HdmiCecConstants.CEC_DEVICE_TYPE_TV))

@@ -21,16 +21,15 @@ import static com.google.common.truth.Truth.assertThat;
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
-import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
-import org.junit.Test;
 
 /** HDMI CEC test to verify physical address after device reboot (Section 10.2.3) */
 @RunWith(DeviceJUnit4ClassRunner.class)
@@ -43,6 +42,7 @@ public final class HdmiCecLogicalAddressTest extends BaseHdmiCecCtsTest {
         RuleChain
             .outerRule(CecRules.requiresCec(this))
             .around(CecRules.requiresLeanback(this))
+            .around(CecRules.requiresPhysicalDevice(this))
             .around(hdmiCecClient);
 
     /**

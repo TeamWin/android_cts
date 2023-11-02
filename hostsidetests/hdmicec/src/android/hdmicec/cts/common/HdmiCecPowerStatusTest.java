@@ -54,6 +54,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
             RuleChain
                     .outerRule(CecRules.requiresCec(this))
                     .around(CecRules.requiresLeanback(this))
+                    .around(CecRules.requiresPhysicalDevice(this))
                     .around(hdmiCecClient);
 
     /**
