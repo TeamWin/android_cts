@@ -68,6 +68,8 @@ android_test {
         "ctshardware-aidl-java",
         "junit",
         "junit-params",
+        "flag-junit",
+        "android.hardware.biometrics.flags-aconfig-java",
     ],
     jni_libs: [
         "libctshardware_jni",
