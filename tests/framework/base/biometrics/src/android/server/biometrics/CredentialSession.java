@@ -21,6 +21,7 @@ public class CredentialSession implements AutoCloseable {
     private static final String SET_PASSWORD = "locksettings set-pin 1234";
     private static final String CLEAR_PASSWORD = "locksettings clear --old 1234";
     private static final String VERIFY_CREDENTIAL = "locksettings verify --old 1234";
+    private static final String VERIFY_INCORRECT_CREDENTIAL = "locksettings verify --old 9999";
 
     public void setCredential() {
         Utils.executeShellCommand(SET_PASSWORD);
@@ -28,6 +29,10 @@ public class CredentialSession implements AutoCloseable {
 
     public void verifyCredential() {
         Utils.executeShellCommand(VERIFY_CREDENTIAL);
+    }
+
+    public void verifyIncorrectCredential() {
+        Utils.executeShellCommand(VERIFY_INCORRECT_CREDENTIAL);
     }
 
     @Override

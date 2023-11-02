@@ -16,11 +16,15 @@
 
 package android.hardware.biometrics.cts;
 
+import static android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_CONVENIENCE;
+import static android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_STRONG;
 import static android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_WEAK;
 import static android.hardware.biometrics.BiometricManager.Authenticators.DEVICE_CREDENTIAL;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
@@ -28,14 +32,22 @@ import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.biometrics.BiometricManager;
+import android.hardware.biometrics.Flags;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.text.TextUtils;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -47,6 +59,9 @@ import org.junit.runner.RunWith;
 @SmallTest
 @Presubmit
 public class BiometricManagerTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
     private Context mContext;
     private BiometricManager mBiometricManager;
 
@@ -163,5 +178,74 @@ public class BiometricManagerTest {
         assertFalse("Name should be non-empty if device supports PIN/pattern/password",
                 TextUtils.isEmpty(mBiometricManager.getStrings(BIOMETRIC_WEAK | DEVICE_CREDENTIAL)
                         .getSettingName()));
+    }
+
+    @Test
+    @ApiTest(apis = {"android.hardware.biometrics.BiometricManager#getLastAuthenticationTime"})
+    @RequiresFlagsDisabled(Flags.FLAG_LAST_AUTHENTICATION_TIME)
+    public void testGetLastAuthenticationTime_flagOff_throwsUnsupportedOperation() {
+        assertThrows(
+                "Should throw UnsupportedOperationException when flag is disabled",
+                UnsupportedOperationException.class,
+                () -> mBiometricManager.getLastAuthenticationTime(BIOMETRIC_STRONG));
+    }
+
+    @Test
+    @ApiTest(apis = {"android.hardware.biometrics.BiometricManager#getLastAuthenticationTime"})
+    @RequiresFlagsEnabled(Flags.FLAG_LAST_AUTHENTICATION_TIME)
+    public void testGetLastAuthenticationTime_allowsStrongAuthenticator() {
+        assertEquals("BIOMETRIC_STRONG should have no auth time",
+                BiometricManager.BIOMETRIC_NO_AUTHENTICATION,
+                mBiometricManager.getLastAuthenticationTime(BIOMETRIC_STRONG));
+    }
+
+    @Test
+    @ApiTest(apis = {"android.hardware.biometrics.BiometricManager#getLastAuthenticationTime"})
+    @RequiresFlagsEnabled(Flags.FLAG_LAST_AUTHENTICATION_TIME)
+    public void testGetLastAuthenticationTime_allowsDeviceCredentialAuthenticator() {
+        assertEquals("DEVICE_CREDENTIAL should have no auth time",
+                BiometricManager.BIOMETRIC_NO_AUTHENTICATION,
+                mBiometricManager.getLastAuthenticationTime(DEVICE_CREDENTIAL));
+    }
+
+    @Test
+    @ApiTest(apis = {"android.hardware.biometrics.BiometricManager#getLastAuthenticationTime"})
+    @RequiresFlagsEnabled(Flags.FLAG_LAST_AUTHENTICATION_TIME)
+    public void testGetLastAuthenticationTime_allowsDeviceCredentialAndStrongAuthenticator() {
+        assertEquals("DEVICE_CREDENTIAL and BIOMETRIC_STRONG should have no auth time",
+                BiometricManager.BIOMETRIC_NO_AUTHENTICATION,
+                mBiometricManager.getLastAuthenticationTime(DEVICE_CREDENTIAL | BIOMETRIC_STRONG));
+    }
+
+    @Test
+    @ApiTest(apis = {"android.hardware.biometrics.BiometricManager#getLastAuthenticationTime"})
+    public void testGetLastAuthenticationTime_throwsNoAuthenticator() {
+        assertThrows("0 should not be allowed",
+                IllegalArgumentException.class,
+                () -> mBiometricManager.getLastAuthenticationTime(0));
+    }
+
+    @Test
+    @ApiTest(apis = {"android.hardware.biometrics.BiometricManager#getLastAuthenticationTime"})
+    public void testGetLastAuthenticationTime_throwsBogusAuthenticator() {
+        assertThrows("42 should not be allowed",
+                IllegalArgumentException.class,
+                () -> mBiometricManager.getLastAuthenticationTime(42));
+    }
+
+    @Test
+    @ApiTest(apis = {"android.hardware.biometrics.BiometricManager#getLastAuthenticationTime"})
+    public void testGetLastAuthenticationTime_throwsWeakAuthenticator() {
+        assertThrows("BIOMETRIC_WEAK should not be allowed",
+                IllegalArgumentException.class,
+                () -> mBiometricManager.getLastAuthenticationTime(BIOMETRIC_WEAK));
+    }
+
+    @Test
+    @ApiTest(apis = {"android.hardware.biometrics.BiometricManager#getLastAuthenticationTime"})
+    public void testGetLastAuthenticationTime_throwsConvenienceAuthenticator() {
+        assertThrows("BIOMETRIC_CONVENIENCE should not be allowed",
+                IllegalArgumentException.class,
+                () -> mBiometricManager.getLastAuthenticationTime(BIOMETRIC_CONVENIENCE));
     }
 }
