@@ -46,6 +46,7 @@ android_test {
         "junit-params",
         "net-utils-framework-common",
         "truth",
+        "android.wifi.mockwifi",
     ],
 
     test_suites: [
