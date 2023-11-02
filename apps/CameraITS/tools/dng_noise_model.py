@@ -16,7 +16,7 @@
 import logging
 import math
 import os.path
-import pathlib.Path
+import pathlib
 import pickle
 import tempfile
 import textwrap
