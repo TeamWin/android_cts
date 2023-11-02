@@ -746,7 +746,6 @@ public abstract class CodecTestBase {
                 if (needVideo) {
                     list.add(MediaFormat.MIMETYPE_VIDEO_AVC);
                     list.add(MediaFormat.MIMETYPE_VIDEO_MPEG4);
-                    list.add(MediaFormat.MIMETYPE_VIDEO_H263);
                     list.add(MediaFormat.MIMETYPE_VIDEO_VP8);
                     list.add(MediaFormat.MIMETYPE_VIDEO_VP9);
                 }
