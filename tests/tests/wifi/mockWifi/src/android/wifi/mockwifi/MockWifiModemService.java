@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import android.wifi.mockwifi.nl80211.IClientInterfaceImp;
 import android.wifi.mockwifi.nl80211.WifiNL80211ManagerImp;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -122,14 +123,12 @@ public class MockWifiModemService extends Service {
         return complete;
     }
 
-    public boolean configureSignalPoll(String ifaceName, int currentRssiDbm, int txBitrateMbps,
-            int rxBitrateMbps, int associationFrequencyMHz) {
+    public boolean configureClientInterfaceMock(String ifaceName,
+            IClientInterfaceImp.ClientInterfaceMock clientInterfaceMock) {
         if (sWifiNL80211ManagerImp == null) {
             return false;
         }
-        if (sWifiNL80211ManagerImp == null) return false;
-        return sWifiNL80211ManagerImp.configureSignalPoll(ifaceName, currentRssiDbm, txBitrateMbps,
-                rxBitrateMbps, associationFrequencyMHz);
+        return sWifiNL80211ManagerImp.configureClientInterfaceMock(ifaceName, clientInterfaceMock);
     }
 
     /**
