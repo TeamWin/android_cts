@@ -128,7 +128,7 @@ public class KeyguardTests extends KeyguardTestBase {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
 
         lockScreenSession.gotoKeyguard();
-        launchActivityWithDismissKeyguard(SHOW_WHEN_LOCKED_ACTIVITY);
+        launchActivityWithDismissKeyguardIfInsecure(SHOW_WHEN_LOCKED_ACTIVITY);
 
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         mWmState.computeState();
@@ -673,7 +673,7 @@ public class KeyguardTests extends KeyguardTestBase {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
 
         lockScreenSession.gotoKeyguard();
-        launchActivityWithDismissKeyguard(SHOW_WHEN_LOCKED_NO_PREVIEW_ACTIVITY);
+        launchActivityWithDismissKeyguardIfInsecure(SHOW_WHEN_LOCKED_NO_PREVIEW_ACTIVITY);
         waitAndAssertResumedActivity(SHOW_WHEN_LOCKED_NO_PREVIEW_ACTIVITY);
 
         lockScreenSession.gotoKeyguard();
