@@ -18,30 +18,6 @@ package android.virtualdevice.streamedtestapp;
 
 import static android.hardware.camera2.CameraAccessException.CAMERA_DISABLED;
 import static android.hardware.camera2.CameraAccessException.CAMERA_DISCONNECTED;
-import static android.media.AudioFormat.CHANNEL_OUT_MONO;
-import static android.media.AudioFormat.ENCODING_PCM_16BIT;
-import static android.media.AudioFormat.ENCODING_PCM_FLOAT;
-import static android.media.AudioRecord.READ_BLOCKING;
-import static android.virtualdevice.cts.common.ActivityResultReceiver.ACTION_SEND_ACTIVITY_RESULT;
-import static android.virtualdevice.cts.common.ActivityResultReceiver.EXTRA_LAST_RECORDED_NONZERO_VALUE;
-import static android.virtualdevice.cts.common.ActivityResultReceiver.EXTRA_POWER_SPECTRUM_AT_FREQUENCY;
-import static android.virtualdevice.cts.common.ActivityResultReceiver.EXTRA_POWER_SPECTRUM_NOT_FREQUENCY;
-import static android.virtualdevice.cts.common.AudioHelper.ACTION_PLAY_AUDIO;
-import static android.virtualdevice.cts.common.AudioHelper.ACTION_RECORD_AUDIO;
-import static android.virtualdevice.cts.common.AudioHelper.AMPLITUDE;
-import static android.virtualdevice.cts.common.AudioHelper.BUFFER_SIZE_IN_BYTES;
-import static android.virtualdevice.cts.common.AudioHelper.BYTE_ARRAY;
-import static android.virtualdevice.cts.common.AudioHelper.BYTE_BUFFER;
-import static android.virtualdevice.cts.common.AudioHelper.BYTE_VALUE;
-import static android.virtualdevice.cts.common.AudioHelper.CHANNEL_COUNT;
-import static android.virtualdevice.cts.common.AudioHelper.EXTRA_AUDIO_DATA_TYPE;
-import static android.virtualdevice.cts.common.AudioHelper.FLOAT_ARRAY;
-import static android.virtualdevice.cts.common.AudioHelper.FLOAT_VALUE;
-import static android.virtualdevice.cts.common.AudioHelper.FREQUENCY;
-import static android.virtualdevice.cts.common.AudioHelper.NUMBER_OF_SAMPLES;
-import static android.virtualdevice.cts.common.AudioHelper.SAMPLE_RATE;
-import static android.virtualdevice.cts.common.AudioHelper.SHORT_ARRAY;
-import static android.virtualdevice.cts.common.AudioHelper.SHORT_VALUE;
 
 import android.annotation.NonNull;
 import android.annotation.Nullable;
@@ -50,19 +26,9 @@ import android.content.Intent;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
-import android.media.AudioFormat;
-import android.media.AudioManager;
-import android.media.AudioRecord;
-import android.media.AudioTrack;
-import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.util.Log;
-import android.virtualdevice.cts.common.AudioHelper;
-
-import java.nio.ByteBuffer;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 /**
  * Test activity to be streamed in the virtual device.
@@ -129,55 +95,6 @@ public class MainActivity extends Activity {
                     Log.d(TAG, "Testing camera");
                     testCamera();
                     break;
-                case ACTION_PLAY_AUDIO:
-                    @AudioHelper.DataType int playDataType = getIntent().getIntExtra(
-                            EXTRA_AUDIO_DATA_TYPE, -1);
-                    int playEncoding =
-                            playDataType == FLOAT_ARRAY ? ENCODING_PCM_FLOAT : ENCODING_PCM_16BIT;
-                    int bufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, CHANNEL_OUT_MONO,
-                            playEncoding);
-                    AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE,
-                            CHANNEL_OUT_MONO, playEncoding, bufferSize, AudioTrack.MODE_STREAM);
-                    audioTrack.play();
-                    switch (playDataType) {
-                        case BYTE_BUFFER:
-                            playAudioFromByteBuffer(audioTrack);
-                            break;
-                        case BYTE_ARRAY:
-                            playAudioFromByteArray(audioTrack);
-                            break;
-                        case SHORT_ARRAY:
-                            playAudioFromShortArray(audioTrack);
-                            break;
-                        case FLOAT_ARRAY:
-                            playAudioFromFloatArray(audioTrack);
-                            break;
-                    }
-                    break;
-                case ACTION_RECORD_AUDIO:
-                    @AudioHelper.DataType int recordDataType = getIntent().getIntExtra(
-                            EXTRA_AUDIO_DATA_TYPE, -1);
-                    int recordEncoding =
-                            recordDataType == FLOAT_ARRAY ? ENCODING_PCM_FLOAT : ENCODING_PCM_16BIT;
-                    AudioRecord audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
-                            SAMPLE_RATE,
-                            AudioFormat.CHANNEL_IN_MONO, recordEncoding, BUFFER_SIZE_IN_BYTES);
-                    audioRecord.startRecording();
-                    switch (recordDataType) {
-                        case BYTE_BUFFER:
-                            recordAudioToByteBuffer(audioRecord);
-                            break;
-                        case BYTE_ARRAY:
-                            recordAudioToByteArray(audioRecord);
-                            break;
-                        case SHORT_ARRAY:
-                            recordAudioToShortArray(audioRecord);
-                            break;
-                        case FLOAT_ARRAY:
-                            recordAudioToFloatArray(audioRecord);
-                            break;
-                    }
-                    break;
                 case ACTION_TEST_PERMISSION:
                     String permission = getIntent().getStringExtra(Intent.EXTRA_PERMISSION_NAME);
                     String[] permissions = { permission };
@@ -231,183 +148,5 @@ public class MainActivity extends Activity {
         } catch (IllegalArgumentException e) {
             Log.e(TAG, "IllegalArgumentException - maybe invalid camera id? (" + cameraId + ")", e);
         }
-    }
-
-    private void playAudioFromByteBuffer(AudioTrack audioTrack) {
-        // Write to the audio track asynchronously to avoid ANRs.
-        Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
-            ByteBuffer audioData = AudioHelper.createAudioData(
-                    SAMPLE_RATE, NUMBER_OF_SAMPLES, CHANNEL_COUNT, FREQUENCY, AMPLITUDE);
-
-            int remainingSamples = NUMBER_OF_SAMPLES;
-            while (remainingSamples > 0) {
-                remainingSamples -= audioTrack.write(audioData, audioData.remaining(),
-                        AudioTrack.WRITE_BLOCKING);
-            }
-            audioTrack.release();
-
-            Intent intent = new Intent(ACTION_SEND_ACTIVITY_RESULT);
-            sendBroadcast(intent);
-            finish();
-        });
-    }
-
-    private void playAudioFromByteArray(AudioTrack audioTrack) {
-        // Write to the audio track asynchronously to avoid ANRs.
-        Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
-            byte[] audioData = new byte[NUMBER_OF_SAMPLES];
-            for (int i = 0; i < audioData.length; i++) {
-                audioData[i] = BYTE_VALUE;
-            }
-
-            int remainingSamples = audioData.length;
-            while (remainingSamples > 0) {
-                remainingSamples -= audioTrack.write(audioData, 0, audioData.length);
-            }
-            audioTrack.release();
-
-            Intent intent = new Intent(ACTION_SEND_ACTIVITY_RESULT);
-            sendBroadcast(intent);
-            finish();
-        });
-    }
-
-    private void playAudioFromShortArray(AudioTrack audioTrack) {
-        // Write to the audio track asynchronously to avoid ANRs.
-        Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
-            short[] audioData = new short[NUMBER_OF_SAMPLES];
-            for (int i = 0; i < audioData.length; i++) {
-                audioData[i] = SHORT_VALUE;
-            }
-
-            int remainingSamples = audioData.length;
-            while (remainingSamples > 0) {
-                remainingSamples -= audioTrack.write(audioData, 0, audioData.length);
-            }
-            audioTrack.release();
-
-            Intent intent = new Intent(ACTION_SEND_ACTIVITY_RESULT);
-            sendBroadcast(intent);
-            finish();
-        });
-    }
-
-    private void playAudioFromFloatArray(AudioTrack audioTrack) {
-        // Write to the audio track asynchronously to avoid ANRs.
-        Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
-            float[] audioData = new float[NUMBER_OF_SAMPLES];
-            for (int i = 0; i < audioData.length; i++) {
-                audioData[i] = FLOAT_VALUE;
-            }
-
-            int remainingSamples = audioData.length;
-            while (remainingSamples > 0) {
-                remainingSamples -= audioTrack.write(audioData, 0, audioData.length,
-                        AudioTrack.WRITE_BLOCKING);
-            }
-            audioTrack.release();
-
-            Intent intent = new Intent(ACTION_SEND_ACTIVITY_RESULT);
-            sendBroadcast(intent);
-            finish();
-        });
-    }
-
-    private void recordAudioToByteBuffer(AudioRecord audioRecord) {
-        // Read from the audio record asynchronously to avoid ANRs.
-        Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
-            AudioHelper.CapturedAudio capturedAudio = new AudioHelper.CapturedAudio(audioRecord);
-            double powerSpectrumNotFrequency = capturedAudio.getPowerSpectrum(FREQUENCY + 100);
-            double powerSpectrumAtFrequency = capturedAudio.getPowerSpectrum(FREQUENCY);
-            audioRecord.release();
-
-            Intent intent = new Intent(ACTION_SEND_ACTIVITY_RESULT);
-            intent.putExtra(EXTRA_POWER_SPECTRUM_NOT_FREQUENCY, powerSpectrumNotFrequency);
-            intent.putExtra(EXTRA_POWER_SPECTRUM_AT_FREQUENCY, powerSpectrumAtFrequency);
-            sendBroadcast(intent);
-            finish();
-        });
-    }
-
-    private void recordAudioToByteArray(AudioRecord audioRecord) {
-        // Read from the audio record asynchronously to avoid ANRs.
-        Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
-            byte[] audioData = new byte[BUFFER_SIZE_IN_BYTES];
-            while (true) {
-                int bytesRead = audioRecord.read(audioData, 0, audioData.length);
-                if (bytesRead == 0) {
-                    continue;
-                }
-                break;
-            }
-            byte value = 0;
-            for (int i = 0; i < audioData.length; i++) {
-                if (audioData[i] == BYTE_VALUE) {
-                    value = audioData[i];
-                    break;
-                }
-            }
-            audioRecord.release();
-
-            Intent intent = new Intent(ACTION_SEND_ACTIVITY_RESULT);
-            intent.putExtra(EXTRA_LAST_RECORDED_NONZERO_VALUE, value);
-            sendBroadcast(intent);
-            finish();
-        });
-    }
-
-    private void recordAudioToShortArray(AudioRecord audioRecord) {
-        // Read from the audio record asynchronously to avoid ANRs.
-        Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
-            short[] audioData = new short[BUFFER_SIZE_IN_BYTES / 2];
-            while (true) {
-                int bytesRead = audioRecord.read(audioData, 0, audioData.length);
-                if (bytesRead == 0) {
-                    continue;
-                }
-                break;
-            }
-            short value = 0;
-            for (int i = 0; i < audioData.length; i++) {
-                if (audioData[i] == SHORT_VALUE) {
-                    value = audioData[i];
-                    break;
-                }
-            }
-            audioRecord.release();
-
-            Intent intent = new Intent(ACTION_SEND_ACTIVITY_RESULT);
-            intent.putExtra(EXTRA_LAST_RECORDED_NONZERO_VALUE, value);
-            sendBroadcast(intent);
-            finish();
-        });
-    }
-
-    private void recordAudioToFloatArray(AudioRecord audioRecord) {
-        // Read from the audio record asynchronously to avoid ANRs.
-        Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
-            float[] audioData = new float[BUFFER_SIZE_IN_BYTES / 4];
-            while (true) {
-                int bytesRead = audioRecord.read(audioData, 0, audioData.length, READ_BLOCKING);
-                if (bytesRead == 0) {
-                    continue;
-                }
-                break;
-            }
-            float value = 0f;
-            for (int i = 0; i < audioData.length; i++) {
-                float roundOffDiff = Math.abs(audioData[i] - FLOAT_VALUE);
-                if (roundOffDiff < 0.001f) {
-                    value = audioData[i];
-                    break;
-                }
-            }
-            audioRecord.release();
-
-            Intent intent = new Intent(ACTION_SEND_ACTIVITY_RESULT);
-            intent.putExtra(EXTRA_LAST_RECORDED_NONZERO_VALUE, value);
-            sendBroadcast(intent);
-            finish();
-        });
     }
 }

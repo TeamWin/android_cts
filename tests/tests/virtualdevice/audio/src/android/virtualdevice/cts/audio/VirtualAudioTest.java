@@ -26,6 +26,7 @@ import static android.Manifest.permission.WAKE_LOCK;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED;
 import static android.media.AudioFormat.CHANNEL_IN_MONO;
+import static android.media.AudioFormat.CHANNEL_OUT_MONO;
 import static android.media.AudioFormat.ENCODING_PCM_16BIT;
 import static android.media.AudioFormat.ENCODING_PCM_FLOAT;
 import static android.media.AudioRecord.READ_BLOCKING;
@@ -35,18 +36,12 @@ import static android.media.AudioTrack.PLAYSTATE_PLAYING;
 import static android.media.AudioTrack.PLAYSTATE_STOPPED;
 import static android.media.AudioTrack.WRITE_BLOCKING;
 import static android.media.AudioTrack.WRITE_NON_BLOCKING;
-import static android.virtualdevice.cts.common.ActivityResultReceiver.EXTRA_LAST_RECORDED_NONZERO_VALUE;
-import static android.virtualdevice.cts.common.ActivityResultReceiver.EXTRA_POWER_SPECTRUM_AT_FREQUENCY;
-import static android.virtualdevice.cts.common.ActivityResultReceiver.EXTRA_POWER_SPECTRUM_NOT_FREQUENCY;
-import static android.virtualdevice.cts.common.AudioHelper.ACTION_PLAY_AUDIO;
-import static android.virtualdevice.cts.common.AudioHelper.ACTION_RECORD_AUDIO;
 import static android.virtualdevice.cts.common.AudioHelper.AMPLITUDE;
 import static android.virtualdevice.cts.common.AudioHelper.BUFFER_SIZE_IN_BYTES;
 import static android.virtualdevice.cts.common.AudioHelper.BYTE_ARRAY;
 import static android.virtualdevice.cts.common.AudioHelper.BYTE_BUFFER;
 import static android.virtualdevice.cts.common.AudioHelper.BYTE_VALUE;
 import static android.virtualdevice.cts.common.AudioHelper.CHANNEL_COUNT;
-import static android.virtualdevice.cts.common.AudioHelper.EXTRA_AUDIO_DATA_TYPE;
 import static android.virtualdevice.cts.common.AudioHelper.FLOAT_ARRAY;
 import static android.virtualdevice.cts.common.AudioHelper.FLOAT_VALUE;
 import static android.virtualdevice.cts.common.AudioHelper.FREQUENCY;
@@ -54,7 +49,6 @@ import static android.virtualdevice.cts.common.AudioHelper.NUMBER_OF_SAMPLES;
 import static android.virtualdevice.cts.common.AudioHelper.SAMPLE_RATE;
 import static android.virtualdevice.cts.common.AudioHelper.SHORT_ARRAY;
 import static android.virtualdevice.cts.common.AudioHelper.SHORT_VALUE;
-import static android.virtualdevice.cts.common.util.TestAppHelper.MAIN_ACTIVITY_COMPONENT;
 import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createActivityOptions;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
@@ -68,6 +62,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
@@ -80,6 +76,11 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioRecord;
+import android.media.AudioTrack;
+import android.media.MediaRecorder;
+import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.common.ActivityResultReceiver;
 import android.virtualdevice.cts.common.AudioHelper;
@@ -87,7 +88,6 @@ import android.virtualdevice.cts.common.FakeAssociationRule;
 import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
@@ -104,6 +104,8 @@ import org.mockito.MockitoAnnotations;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 /**
  * Tests for injection and capturing of audio from streamed apps
@@ -112,8 +114,8 @@ import java.nio.ByteOrder;
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class VirtualAudioTest {
     /**
-     * Captured signal should be mostly single frequency and power of that frequency should be
-     * over this much of total power.
+     * Captured signal should be mostly single frequency and power of that frequency should be over
+     * this much of total power.
      */
     public static final double POWER_THRESHOLD_FOR_PRESENT = 0.4f;
 
@@ -149,8 +151,26 @@ public class VirtualAudioTest {
     private AudioConfigurationChangeCallback mAudioConfigurationChangeCallback;
     @Mock
     private ActivityResultReceiver.Callback mActivityResultCallback;
+    @Mock
+    private AudioActivity.ResultCallback mAudioResultCallback;
     @Captor
     private ArgumentCaptor<Intent> mIntentCaptor;
+
+    private static AudioFormat createCaptureFormat(int encoding) {
+        return new AudioFormat.Builder()
+                .setSampleRate(SAMPLE_RATE)
+                .setEncoding(encoding)
+                .setChannelMask(CHANNEL_IN_MONO)
+                .build();
+    }
+
+    private static AudioFormat createInjectionFormat(int encoding) {
+        return new AudioFormat.Builder()
+                .setSampleRate(SAMPLE_RATE)
+                .setEncoding(encoding)
+                .setChannelMask(CHANNEL_IN_MONO)
+                .build();
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -229,40 +249,29 @@ public class VirtualAudioTest {
     }
 
     @Test
-    @FlakyTest(bugId = 292966437)
     public void audioCapture_receivesAudioConfigurationChangeCallback() {
         mVirtualAudioDevice = mVirtualDevice.createVirtualAudioDevice(
                 mVirtualDisplay, /* executor= */ null, mAudioConfigurationChangeCallback);
         AudioFormat audioFormat = createCaptureFormat(ENCODING_PCM_16BIT);
         mVirtualAudioDevice.startAudioCapture(audioFormat);
 
-        ActivityResultReceiver activityResultReceiver = new ActivityResultReceiver(
-                getApplicationContext());
-        activityResultReceiver.register(mActivityResultCallback);
-        InstrumentationRegistry.getInstrumentation().getTargetContext().startActivity(
-                createPlayAudioIntent(BYTE_BUFFER),
-                createActivityOptions(mVirtualDisplay));
+        AudioActivity activity = startAudioActivity(mVirtualDisplay);
+        activity.playAudio(BYTE_BUFFER);
+        verify(mAudioResultCallback, timeout(5000)).onCompleted();
         verify(mAudioConfigurationChangeCallback, timeout(5000).atLeastOnce())
                 .onPlaybackConfigChanged(any());
-        verify(mActivityResultCallback, timeout(5000)).onActivityResult(
-                mIntentCaptor.capture());
-        activityResultReceiver.unregister();
+        stopAudioActivity(activity);
     }
 
     @Test
-    @FlakyTest(bugId = 292966437)
     public void audioInjection_receivesAudioConfigurationChangeCallback() {
         mVirtualAudioDevice = mVirtualDevice.createVirtualAudioDevice(
                 mVirtualDisplay, /* executor= */ null, mAudioConfigurationChangeCallback);
         AudioFormat audioFormat = createInjectionFormat(ENCODING_PCM_16BIT);
         AudioInjection audioInjection = mVirtualAudioDevice.startAudioInjection(audioFormat);
 
-        ActivityResultReceiver activityResultReceiver = new ActivityResultReceiver(
-                getApplicationContext());
-        activityResultReceiver.register(mActivityResultCallback);
-        InstrumentationRegistry.getInstrumentation().getTargetContext().startActivity(
-                createAudioRecordIntent(BYTE_BUFFER),
-                createActivityOptions(mVirtualDisplay));
+        AudioActivity activity = startAudioActivity(mVirtualDisplay);
+        activity.recordAudio(BYTE_BUFFER);
 
         ByteBuffer byteBuffer = AudioHelper.createAudioData(
                 SAMPLE_RATE, NUMBER_OF_SAMPLES, CHANNEL_COUNT, FREQUENCY, AMPLITUDE);
@@ -271,97 +280,82 @@ public class VirtualAudioTest {
             remaining -= audioInjection.write(byteBuffer, byteBuffer.remaining(), WRITE_BLOCKING);
         }
 
+        verify(mAudioResultCallback, timeout(5000)).onCompleted();
         verify(mAudioConfigurationChangeCallback, timeout(5000).atLeastOnce())
                 .onRecordingConfigChanged(any());
-        verify(mActivityResultCallback, timeout(5000)).onActivityResult(
-                mIntentCaptor.capture());
-        activityResultReceiver.unregister();
+        stopAudioActivity(activity);
     }
 
     @Test
-    @FlakyTest(bugId = 292966437)
     public void audioCapture_readByteBuffer_shouldCaptureAppPlaybackFrequency() {
         runAudioCaptureTest(BYTE_BUFFER, /* readMode= */ -1);
     }
 
     @Test
-    @FlakyTest(bugId = 292966437)
     public void audioCapture_readByteBufferBlocking_shouldCaptureAppPlaybackFrequency() {
         runAudioCaptureTest(BYTE_BUFFER, /* readMode= */ READ_BLOCKING);
     }
 
     @Test
-    @FlakyTest(bugId = 292966437)
     public void audioCapture_readByteArray_shouldCaptureAppPlaybackData() {
         runAudioCaptureTest(BYTE_ARRAY, /* readMode= */ -1);
     }
 
     @Test
-    @FlakyTest(bugId = 292966437)
     public void audioCapture_readByteArrayBlocking_shouldCaptureAppPlaybackData() {
         runAudioCaptureTest(BYTE_ARRAY, /* readMode= */ READ_BLOCKING);
     }
 
     @Test
-    @FlakyTest(bugId = 292966437)
     public void audioCapture_readShortArray_shouldCaptureAppPlaybackData() {
         runAudioCaptureTest(SHORT_ARRAY, /* readMode= */ -1);
     }
 
     @Test
-    @FlakyTest(bugId = 292966437)
     public void audioCapture_readShortArrayBlocking_shouldCaptureAppPlaybackData() {
         runAudioCaptureTest(SHORT_ARRAY, /* readMode= */ READ_BLOCKING);
     }
 
     @Test
-    @FlakyTest(bugId = 292966437)
     public void audioCapture_readFloatArray_shouldCaptureAppPlaybackData() {
         runAudioCaptureTest(FLOAT_ARRAY, /* readMode= */ READ_BLOCKING);
     }
 
     @Test
-    @FlakyTest(bugId = 292966437)
     public void audioInjection_writeByteBuffer_appShouldRecordInjectedFrequency() {
         runAudioInjectionTest(BYTE_BUFFER, /* writeMode= */
                 WRITE_BLOCKING, /* timestamp= */ 0);
     }
 
     @Test
-    @FlakyTest(bugId = 292966437)
     public void audioInjection_writeByteBufferWithTimestamp_appShouldRecordInjectedFrequency() {
         runAudioInjectionTest(BYTE_BUFFER, /* writeMode= */
                 WRITE_BLOCKING, /* timestamp= */ 50);
     }
 
     @Test
-    @FlakyTest(bugId = 292966437)
     public void audioInjection_writeByteArray_appShouldRecordInjectedData() {
         runAudioInjectionTest(BYTE_ARRAY, /* writeMode= */ -1, /* timestamp= */ 0);
     }
 
     @Test
-    @FlakyTest(bugId = 292966437)
     public void audioInjection_writeByteArrayBlocking_appShouldRecordInjectedData() {
         runAudioInjectionTest(BYTE_ARRAY, /* writeMode= */ WRITE_BLOCKING, /* timestamp= */
                 0);
     }
 
     @Test
-    @FlakyTest(bugId = 292966437)
     public void audioInjection_writeShortArray_appShouldRecordInjectedData() {
         runAudioInjectionTest(SHORT_ARRAY, /* writeMode= */ -1, /* timestamp= */ 0);
     }
 
     @Test
-    @FlakyTest(bugId = 292966437)
     public void audioInjection_writeShortArrayBlocking_appShouldRecordInjectedData() {
         runAudioInjectionTest(SHORT_ARRAY, /* writeMode= */
                 WRITE_BLOCKING, /* timestamp= */ 0);
     }
 
     @Test
-    @FlakyTest(bugId = 292966437)
     public void audioInjection_writeFloatArray_appShouldRecordInjectedData() {
         runAudioInjectionTest(FLOAT_ARRAY, /* writeMode= */
                 WRITE_BLOCKING, /* timestamp= */ 0);
@@ -379,12 +373,8 @@ public class VirtualAudioTest {
         AudioCapture audioCapture = mVirtualAudioDevice.startAudioCapture(
                 createCaptureFormat(encoding));
 
-        ActivityResultReceiver activityResultReceiver = new ActivityResultReceiver(
-                getApplicationContext());
-        activityResultReceiver.register(mActivityResultCallback);
-        InstrumentationRegistry.getInstrumentation().getTargetContext().startActivity(
-                createPlayAudioIntent(dataType),
-                createActivityOptions(mVirtualDisplay));
+        AudioActivity audioActivity = startAudioActivity(mVirtualDisplay);
+        audioActivity.playAudio(dataType);
 
         AudioHelper.CapturedAudio capturedAudio = null;
         switch (dataType) {
@@ -415,9 +405,8 @@ public class VirtualAudioTest {
                 break;
         }
 
-        verify(mActivityResultCallback, timeout(5000)).onActivityResult(
-                mIntentCaptor.capture());
-        activityResultReceiver.unregister();
+        verify(mAudioResultCallback, timeout(5000)).onCompleted();
+        stopAudioActivity(audioActivity);
     }
 
     private void runAudioInjectionTest(@AudioHelper.DataType int dataType, int writeMode,
@@ -428,12 +417,8 @@ public class VirtualAudioTest {
         AudioInjection audioInjection = mVirtualAudioDevice.startAudioInjection(
                 createInjectionFormat(encoding));
 
-        ActivityResultReceiver activityResultReceiver = new ActivityResultReceiver(
-                getApplicationContext());
-        activityResultReceiver.register(mActivityResultCallback);
-        InstrumentationRegistry.getInstrumentation().getTargetContext().startActivity(
-                createAudioRecordIntent(dataType),
-                createActivityOptions(mVirtualDisplay));
+        AudioActivity audioActivity = startAudioActivity(mVirtualDisplay);
+        audioActivity.recordAudio(dataType);
 
         int remaining;
         switch (dataType) {
@@ -493,68 +478,293 @@ public class VirtualAudioTest {
                 break;
         }
 
-        verify(mActivityResultCallback, timeout(5000)).onActivityResult(
-                mIntentCaptor.capture());
-        Intent intent = mIntentCaptor.getValue();
-        assertThat(intent).isNotNull();
-        activityResultReceiver.unregister();
+        verify(mAudioResultCallback, timeout(5000)).onCompleted();
 
         switch (dataType) {
             case BYTE_BUFFER:
-                double powerSpectrumAtFrequency = intent.getDoubleExtra(
-                        EXTRA_POWER_SPECTRUM_AT_FREQUENCY,
-                        0);
-                double powerSpectrumNotFrequency = intent.getDoubleExtra(
-                        EXTRA_POWER_SPECTRUM_NOT_FREQUENCY,
-                        0);
-                assertThat(powerSpectrumNotFrequency).isLessThan(POWER_THRESHOLD_FOR_ABSENT);
-                assertThat(powerSpectrumAtFrequency).isGreaterThan(POWER_THRESHOLD_FOR_PRESENT);
+                assertThat(audioActivity.mPowerSpectrumNotFrequency).isLessThan(
+                        POWER_THRESHOLD_FOR_ABSENT);
+                assertThat(audioActivity.mPowerSpectrumAtFrequency).isGreaterThan(
+                        POWER_THRESHOLD_FOR_PRESENT);
                 break;
             case BYTE_ARRAY:
-                byte byteValue = intent.getByteExtra(EXTRA_LAST_RECORDED_NONZERO_VALUE,
-                        Byte.MIN_VALUE);
-                assertThat(byteValue).isEqualTo(BYTE_VALUE);
+                assertThat(audioActivity.mLastRecordedNonZeroByteValue).isEqualTo(BYTE_VALUE);
                 break;
             case SHORT_ARRAY:
-                short shortValue = intent.getShortExtra(EXTRA_LAST_RECORDED_NONZERO_VALUE,
-                        Short.MIN_VALUE);
-                assertThat(shortValue).isEqualTo(SHORT_VALUE);
+                assertThat(audioActivity.mLastRecordedNonZeroShortValue).isEqualTo(SHORT_VALUE);
                 break;
             case FLOAT_ARRAY:
-                float floatValue = intent.getFloatExtra(EXTRA_LAST_RECORDED_NONZERO_VALUE, 0);
+                float floatValue = audioActivity.mLastRecordedNonZeroFloatValue;
                 float roundOffError = Math.abs(floatValue - FLOAT_VALUE);
                 assertThat(roundOffError).isLessThan(0.001f);
                 break;
         }
+
+        stopAudioActivity(audioActivity);
     }
 
-    private static AudioFormat createCaptureFormat(int encoding) {
-        return new AudioFormat.Builder()
-                .setSampleRate(SAMPLE_RATE)
-                .setEncoding(encoding)
-                .setChannelMask(CHANNEL_IN_MONO)
-                .build();
+    private AudioActivity startAudioActivity(VirtualDisplay virtualDisplay) {
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+
+        Bundle options = createActivityOptions(virtualDisplay.getDisplay().getDisplayId());
+        AudioActivity audioActivity = (AudioActivity) instrumentation.startActivitySync(
+                new Intent(getApplicationContext(), AudioActivity.class)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK),
+                options);
+        audioActivity.registerResultCallback(mAudioResultCallback);
+        return audioActivity;
     }
 
-    private static AudioFormat createInjectionFormat(int encoding) {
-        return new AudioFormat.Builder()
-                .setSampleRate(SAMPLE_RATE)
-                .setEncoding(encoding)
-                .setChannelMask(CHANNEL_IN_MONO)
-                .build();
+    private void stopAudioActivity(AudioActivity activity) {
+        activity.clear();
+        activity.finish();
     }
 
-    private static Intent createPlayAudioIntent(@AudioHelper.DataType int dataType) {
-        return new Intent(ACTION_PLAY_AUDIO)
-                .putExtra(EXTRA_AUDIO_DATA_TYPE, dataType)
-                .setComponent(MAIN_ACTIVITY_COMPONENT)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-    }
+    public static class AudioActivity extends Activity {
 
-    private static Intent createAudioRecordIntent(@AudioHelper.DataType int dataType) {
-        return new Intent(ACTION_RECORD_AUDIO)
-                .putExtra(EXTRA_AUDIO_DATA_TYPE, dataType)
-                .setComponent(MAIN_ACTIVITY_COMPONENT)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        float mLastRecordedNonZeroFloatValue;
+        short mLastRecordedNonZeroShortValue;
+        byte mLastRecordedNonZeroByteValue;
+        double mPowerSpectrumNotFrequency;
+        double mPowerSpectrumAtFrequency;
+        private ResultCallback mCallback;
+
+        void registerResultCallback(ResultCallback callback) {
+            mCallback = callback;
+        }
+
+        void clear() {
+            mCallback = null;
+        }
+
+        void playAudio(int dataType) {
+            int playEncoding =
+                    dataType == FLOAT_ARRAY ? ENCODING_PCM_FLOAT : ENCODING_PCM_16BIT;
+            int bufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, CHANNEL_OUT_MONO,
+                    playEncoding);
+            AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE,
+                    CHANNEL_OUT_MONO, playEncoding, bufferSize, AudioTrack.MODE_STREAM);
+            audioTrack.play();
+            switch (dataType) {
+                case BYTE_BUFFER:
+                    playAudioFromByteBuffer(audioTrack);
+                    break;
+                case BYTE_ARRAY:
+                    playAudioFromByteArray(audioTrack);
+                    break;
+                case SHORT_ARRAY:
+                    playAudioFromShortArray(audioTrack);
+                    break;
+                case FLOAT_ARRAY:
+                    playAudioFromFloatArray(audioTrack);
+                    break;
+            }
+        }
+
+        void recordAudio(int dataType) {
+            int recordEncoding =
+                    dataType == FLOAT_ARRAY ? ENCODING_PCM_FLOAT : ENCODING_PCM_16BIT;
+            AudioRecord audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
+                    SAMPLE_RATE,
+                    AudioFormat.CHANNEL_IN_MONO, recordEncoding, BUFFER_SIZE_IN_BYTES);
+            audioRecord.startRecording();
+            switch (dataType) {
+                case BYTE_BUFFER:
+                    recordAudioToByteBuffer(audioRecord);
+                    break;
+                case BYTE_ARRAY:
+                    recordAudioToByteArray(audioRecord);
+                    break;
+                case SHORT_ARRAY:
+                    recordAudioToShortArray(audioRecord);
+                    break;
+                case FLOAT_ARRAY:
+                    recordAudioToFloatArray(audioRecord);
+                    break;
+            }
+        }
+
+        private void playAudioFromByteBuffer(AudioTrack audioTrack) {
+            // Write to the audio track asynchronously to avoid ANRs.
+            Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
+                ByteBuffer audioData = AudioHelper.createAudioData(
+                        SAMPLE_RATE, NUMBER_OF_SAMPLES, CHANNEL_COUNT, FREQUENCY, AMPLITUDE);
+
+                int remainingSamples = NUMBER_OF_SAMPLES;
+                while (remainingSamples > 0) {
+                    remainingSamples -= audioTrack.write(audioData, audioData.remaining(),
+                            AudioTrack.WRITE_BLOCKING);
+                }
+                audioTrack.release();
+
+                if (mCallback != null) {
+                    mCallback.onCompleted();
+                }
+            });
+        }
+
+        private void playAudioFromByteArray(AudioTrack audioTrack) {
+            // Write to the audio track asynchronously to avoid ANRs.
+            Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
+                byte[] audioData = new byte[NUMBER_OF_SAMPLES];
+                for (int i = 0; i < audioData.length; i++) {
+                    audioData[i] = BYTE_VALUE;
+                }
+
+                int remainingSamples = audioData.length;
+                while (remainingSamples > 0) {
+                    remainingSamples -= audioTrack.write(audioData, 0, audioData.length);
+                }
+                audioTrack.release();
+
+                if (mCallback != null) {
+                    mCallback.onCompleted();
+                }
+            });
+        }
+
+        private void playAudioFromShortArray(AudioTrack audioTrack) {
+            // Write to the audio track asynchronously to avoid ANRs.
+            Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
+                short[] audioData = new short[NUMBER_OF_SAMPLES];
+                for (int i = 0; i < audioData.length; i++) {
+                    audioData[i] = SHORT_VALUE;
+                }
+
+                int remainingSamples = audioData.length;
+                while (remainingSamples > 0) {
+                    remainingSamples -= audioTrack.write(audioData, 0, audioData.length);
+                }
+                audioTrack.release();
+
+                if (mCallback != null) {
+                    mCallback.onCompleted();
+                }
+            });
+        }
+
+        private void playAudioFromFloatArray(AudioTrack audioTrack) {
+            // Write to the audio track asynchronously to avoid ANRs.
+            Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
+                float[] audioData = new float[NUMBER_OF_SAMPLES];
+                for (int i = 0; i < audioData.length; i++) {
+                    audioData[i] = FLOAT_VALUE;
+                }
+
+                int remainingSamples = audioData.length;
+                while (remainingSamples > 0) {
+                    remainingSamples -= audioTrack.write(audioData, 0, audioData.length,
+                            AudioTrack.WRITE_BLOCKING);
+                }
+                audioTrack.release();
+
+                if (mCallback != null) {
+                    mCallback.onCompleted();
+                }
+            });
+        }
+
+        private void recordAudioToByteBuffer(AudioRecord audioRecord) {
+            // Read from the audio record asynchronously to avoid ANRs.
+            Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
+                AudioHelper.CapturedAudio capturedAudio = new AudioHelper.CapturedAudio(
+                        audioRecord);
+                double powerSpectrumNotFrequency = capturedAudio.getPowerSpectrum(FREQUENCY + 100);
+                double powerSpectrumAtFrequency = capturedAudio.getPowerSpectrum(FREQUENCY);
+                audioRecord.release();
+
+                mPowerSpectrumNotFrequency = powerSpectrumNotFrequency;
+                mPowerSpectrumAtFrequency = powerSpectrumAtFrequency;
+                if (mCallback != null) {
+                    mCallback.onCompleted();
+                }
+            });
+        }
+
+        private void recordAudioToByteArray(AudioRecord audioRecord) {
+            // Read from the audio record asynchronously to avoid ANRs.
+            Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
+                byte[] audioData = new byte[BUFFER_SIZE_IN_BYTES];
+                while (true) {
+                    int bytesRead = audioRecord.read(audioData, 0, audioData.length);
+                    if (bytesRead == 0) {
+                        continue;
+                    }
+                    break;
+                }
+                byte value = 0;
+                for (int i = 0; i < audioData.length; i++) {
+                    if (audioData[i] == BYTE_VALUE) {
+                        value = audioData[i];
+                        break;
+                    }
+                }
+                audioRecord.release();
+
+                mLastRecordedNonZeroByteValue = value;
+                if (mCallback != null) {
+                    mCallback.onCompleted();
+                }
+            });
+        }
+
+        private void recordAudioToShortArray(AudioRecord audioRecord) {
+            // Read from the audio record asynchronously to avoid ANRs.
+            Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
+                short[] audioData = new short[BUFFER_SIZE_IN_BYTES / 2];
+                while (true) {
+                    int bytesRead = audioRecord.read(audioData, 0, audioData.length);
+                    if (bytesRead == 0) {
+                        continue;
+                    }
+                    break;
+                }
+                short value = 0;
+                for (int i = 0; i < audioData.length; i++) {
+                    if (audioData[i] == SHORT_VALUE) {
+                        value = audioData[i];
+                        break;
+                    }
+                }
+                audioRecord.release();
+
+                mLastRecordedNonZeroShortValue = value;
+                if (mCallback != null) {
+                    mCallback.onCompleted();
+                }
+            });
+        }
+
+        private void recordAudioToFloatArray(AudioRecord audioRecord) {
+            // Read from the audio record asynchronously to avoid ANRs.
+            Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
+                float[] audioData = new float[BUFFER_SIZE_IN_BYTES / 4];
+                while (true) {
+                    int bytesRead = audioRecord.read(audioData, 0, audioData.length, READ_BLOCKING);
+                    if (bytesRead == 0) {
+                        continue;
+                    }
+                    break;
+                }
+                float value = 0f;
+                for (int i = 0; i < audioData.length; i++) {
+                    float roundOffDiff = Math.abs(audioData[i] - FLOAT_VALUE);
+                    if (roundOffDiff < 0.001f) {
+                        value = audioData[i];
+                        break;
+                    }
+                }
+                audioRecord.release();
+
+                mLastRecordedNonZeroFloatValue = value;
+                if (mCallback != null) {
+                    mCallback.onCompleted();
+                }
+            });
+        }
+
+        interface ResultCallback {
+            void onCompleted();
+        }
     }
 }
