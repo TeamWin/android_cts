@@ -269,6 +269,7 @@ public class CompilationTest extends BaseHostJUnit4Test {
 
     @Test
     public void testEmbeddedProfileOk() throws Exception {
+        mUtils.assumeSysPropTrue("dalvik.vm.features.embedded_profile");
         mUtils.installFromResources(getAbi(), TEST_APP_WITH_GOOD_PROFILE_RES);
         String dump = mUtils.assertCommandSucceeds("pm art dump " + TEST_APP_PKG);
         checkDexoptStatus(dump, Pattern.quote("base.apk"), "speed-profile");
@@ -277,6 +278,7 @@ public class CompilationTest extends BaseHostJUnit4Test {
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_USE_ART_SERVICE_V2)
     public void testEmbeddedProfileFailed() throws Exception {
+        mUtils.assumeSysPropTrue("dalvik.vm.features.embedded_profile");
         Throwable throwable = assertThrows(Throwable.class,
                 () -> { mUtils.installFromResources(getAbi(), TEST_APP_WITH_BAD_PROFILE_RES); });
         assertThat(throwable).hasMessageThat().contains(
