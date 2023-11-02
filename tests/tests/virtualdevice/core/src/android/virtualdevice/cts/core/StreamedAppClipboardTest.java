@@ -20,6 +20,9 @@ import static android.Manifest.permission.ADD_ALWAYS_UNLOCKED_DISPLAY;
 import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.Manifest.permission.READ_CLIPBOARD_IN_BACKGROUND;
+import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
+import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAULT;
+import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_CLIPBOARD;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.ACTION_READ;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.ACTION_WRITE;
@@ -47,6 +50,7 @@ import static org.mockito.Mockito.verify;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
+import android.companion.virtual.flags.Flags;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.ComponentName;
@@ -59,6 +63,9 @@ import android.hardware.display.VirtualDisplayConfig;
 import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.server.wm.LockScreenSession;
 import android.server.wm.TouchHelper;
 import android.server.wm.WindowManagerStateHelper;
@@ -113,6 +120,9 @@ public class StreamedAppClipboardTest {
 
     @Rule
     public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private VirtualDeviceManager mVirtualDeviceManager;
 
@@ -215,6 +225,21 @@ public class StreamedAppClipboardTest {
         }
     }
 
+    /** Virtual and default device's clipboards are isolated. */
+    @Test
+    public void clipboardsAreIsolated() {
+        DeviceEnvironment defaultDevice = new DeviceEnvironment();
+        DeviceEnvironment virtualDevice = new DeviceEnvironment(mVirtualDeviceManager);
+
+        defaultDevice.mClipboardManager.setPrimaryClip(CLIP_DATA);
+        assertThat(virtualDevice.mClipboardManager.hasPrimaryClip()).isFalse();
+
+        defaultDevice.mClipboardManager.clearPrimaryClip();
+
+        virtualDevice.mClipboardManager.setPrimaryClip(CLIP_DATA);
+        assertThat(defaultDevice.mClipboardManager.hasPrimaryClip()).isFalse();
+    }
+
     /** Activities running on the virtual device cannot read default device's clipboard. */
     @Test
     public void streamedAppCanNotReadDefaultDeviceClipboard() {
@@ -235,6 +260,64 @@ public class StreamedAppClipboardTest {
         virtualDevice.writeClipboardFromActivity(defaultDevice.mDeviceId);
 
         assertThat(defaultDevice.mClipboardManager.hasPrimaryClip()).isFalse();
+    }
+
+
+    /** Virtual and default device's clipboards are the same if the policy is custom. */
+    @RequiresFlagsEnabled(Flags.FLAG_CROSS_DEVICE_CLIPBOARD)
+    @Test
+    public void customPolicy_clipboardsAreShared() {
+        DeviceEnvironment defaultDevice = new DeviceEnvironment();
+        DeviceEnvironment virtualDevice =
+                new DeviceEnvironment(mVirtualDeviceManager, DEVICE_POLICY_CUSTOM);
+
+        defaultDevice.mClipboardManager.setPrimaryClip(CLIP_DATA);
+        assertThat(virtualDevice.mClipboardManager.hasPrimaryClip()).isTrue();
+        verifyClipData(virtualDevice.mClipboardManager.getPrimaryClip());
+
+        defaultDevice.mClipboardManager.clearPrimaryClip();
+        assertThat(virtualDevice.mClipboardManager.hasPrimaryClip()).isFalse();
+
+        virtualDevice.mClipboardManager.setPrimaryClip(CLIP_DATA);
+        assertThat(defaultDevice.mClipboardManager.hasPrimaryClip()).isTrue();
+        verifyClipData(defaultDevice.mClipboardManager.getPrimaryClip());
+
+        virtualDevice.mClipboardManager.clearPrimaryClip();
+        assertThat(defaultDevice.mClipboardManager.hasPrimaryClip()).isFalse();
+    }
+
+    /**
+     * Activities running on the virtual device can read default device's clipboard if the virtual
+     * device clipboard policy is custom.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_CROSS_DEVICE_CLIPBOARD)
+    @Test
+    public void customPolicy_streamedAppReadsFromDefaultDeviceClipboard() {
+        DeviceEnvironment defaultDevice = new DeviceEnvironment();
+        DeviceEnvironment virtualDevice =
+                new DeviceEnvironment(mVirtualDeviceManager, DEVICE_POLICY_CUSTOM);
+
+        defaultDevice.mClipboardManager.setPrimaryClip(CLIP_DATA);
+
+        verifyClipData(virtualDevice.readClipboardFromActivity(virtualDevice.mDeviceId));
+    }
+
+    /**
+     * Activities running on the virtual device can write default device's clipboard if the virtual
+     * device clipboard policy is custom.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_CROSS_DEVICE_CLIPBOARD)
+    @Test
+    public void customPolicy_streamedAppWritesToDefaultDeviceClipboard() {
+        DeviceEnvironment defaultDevice = new DeviceEnvironment();
+        DeviceEnvironment virtualDevice =
+                new DeviceEnvironment(mVirtualDeviceManager, DEVICE_POLICY_CUSTOM);
+
+        virtualDevice.writeClipboardFromActivity(virtualDevice.mDeviceId);
+
+        defaultDevice.verifyClipChanged();
+        assertThat(defaultDevice.mClipboardManager.hasPrimaryClip()).isTrue();
+        verifyClipData(defaultDevice.mClipboardManager.getPrimaryClip());
     }
 
     /** Activities running on the virtual device cannot read another virtual device's clipboard. */
@@ -280,6 +363,40 @@ public class StreamedAppClipboardTest {
         assertThat(virtualDevice.mClipboardManager.hasPrimaryClip()).isFalse();
     }
 
+    /**
+     * Activities running on the default device can read virtual device's clipboard if the virtual
+     * device clipboard policy is custom.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_CROSS_DEVICE_CLIPBOARD)
+    @Test
+    public void customPolicy_defaultDeviceAppCanReadVirtualDeviceClipboard() {
+        DeviceEnvironment defaultDevice = new DeviceEnvironment();
+        DeviceEnvironment virtualDevice =
+                new DeviceEnvironment(mVirtualDeviceManager, DEVICE_POLICY_CUSTOM);
+
+        virtualDevice.mClipboardManager.setPrimaryClip(CLIP_DATA);
+
+        verifyClipData(defaultDevice.readClipboardFromActivity(virtualDevice.mDeviceId));
+    }
+
+    /**
+     * Activities running on the default device can write virtual device's clipboard if the virtual
+     * device clipboard policy is custom.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_CROSS_DEVICE_CLIPBOARD)
+    @Test
+    public void customPolicy_defaultDeviceAppCanWriteVirtualDeviceClipboard() {
+        DeviceEnvironment defaultDevice = new DeviceEnvironment();
+        DeviceEnvironment virtualDevice =
+                new DeviceEnvironment(mVirtualDeviceManager, DEVICE_POLICY_CUSTOM);
+
+        defaultDevice.writeClipboardFromActivity(virtualDevice.mDeviceId);
+
+        virtualDevice.verifyClipChanged();
+        assertThat(virtualDevice.mClipboardManager.hasPrimaryClip()).isTrue();
+        verifyClipData(virtualDevice.mClipboardManager.getPrimaryClip());
+    }
+
     private void verifyClipData(ClipData actual) {
         assertThat(actual).isNotNull();
         assertThat(actual.getItemCount()).isEqualTo(1);
@@ -320,11 +437,17 @@ public class StreamedAppClipboardTest {
         }
 
         DeviceEnvironment(VirtualDeviceManager virtualDeviceManager) {
+            this(virtualDeviceManager, DEVICE_POLICY_DEFAULT);
+        }
+
+        DeviceEnvironment(VirtualDeviceManager virtualDeviceManager,
+                @VirtualDeviceParams.DevicePolicy int clipboardPolicy) {
             MockitoAnnotations.initMocks(this);
             mVirtualDevice = virtualDeviceManager.createVirtualDevice(
                     mFakeAssociationRule.getAssociationInfo().getId(),
                     new VirtualDeviceParams.Builder()
                             .setLockState(VirtualDeviceParams.LOCK_STATE_ALWAYS_UNLOCKED)
+                            .setDevicePolicy(POLICY_TYPE_CLIPBOARD, clipboardPolicy)
                             .build());
             VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
                     VIRTUAL_DISPLAY_CONFIG, null, null);
