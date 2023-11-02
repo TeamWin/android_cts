@@ -42,6 +42,8 @@ android_test {
         "platform-test-annotations",
         "platformprotosnano",
         "androidx.test.uiautomator_uiautomator",
+        "android.hardware.biometrics.flags-aconfig-java",
+        "flag-junit",
     ],
     srcs: ["src/**/*.java"],
     data: [

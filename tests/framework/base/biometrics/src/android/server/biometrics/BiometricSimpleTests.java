@@ -16,6 +16,10 @@
 
 package android.server.biometrics;
 
+import static android.hardware.biometrics.BiometricManager.Authenticators.DEVICE_CREDENTIAL;
+
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -35,9 +39,14 @@ import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricManager.Authenticators;
 import android.hardware.biometrics.BiometricPrompt;
 import android.hardware.biometrics.BiometricTestSession;
+import android.hardware.biometrics.Flags;
 import android.hardware.biometrics.SensorProperties;
 import android.os.CancellationSignal;
+import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 
 import androidx.test.uiautomator.UiObject2;
@@ -45,6 +54,7 @@ import androidx.test.uiautomator.UiObject2;
 import com.android.server.biometrics.nano.SensorStateProto;
 
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -59,6 +69,10 @@ import java.util.concurrent.TimeUnit;
 @Presubmit
 public class BiometricSimpleTests extends BiometricTestBase {
     private static final String TAG = "BiometricTests/Simple";
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     /**
      * Tests that enrollments created via {@link BiometricTestSession} show up in the
@@ -444,5 +458,61 @@ public class BiometricSimpleTests extends BiometricTestBase {
                 verifyNoMoreInteractions(callback);
             }
         }
+    }
+
+    /**
+     * Tests that {@link BiometricManager#getLastAuthenticationTime(int)} result changes
+     * appropriately for DEVICE_CREDENTIAL after a PIN unlock.
+     */
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_LAST_AUTHENTICATION_TIME)
+    public void testGetLastAuthenticationTime_unlockWithCorrectDeviceCredential() throws Exception {
+        try (CredentialSession credentialSession = new CredentialSession()) {
+            credentialSession.setCredential();
+
+            final long startTime = SystemClock.elapsedRealtime();
+
+            credentialSession.verifyCredential();
+            final long lastAuthTime = mBiometricManager.getLastAuthenticationTime(
+                    DEVICE_CREDENTIAL);
+
+            assertThat(lastAuthTime).isGreaterThan(startTime);
+        }
+    }
+
+    /**
+     * Tests that {@link BiometricManager#getLastAuthenticationTime(int)} result does not change
+     * when an incorrect PIN is entered.
+     */
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_LAST_AUTHENTICATION_TIME)
+    public void testGetLastAuthenticationTime_unlockWithIncorrectDeviceCredential()
+            throws Exception {
+        try (CredentialSession credentialSession = new CredentialSession()) {
+            credentialSession.setCredential();
+
+            final long initialLastAuthTime = mBiometricManager.getLastAuthenticationTime(
+                    DEVICE_CREDENTIAL);
+
+            credentialSession.verifyIncorrectCredential();
+
+            long lastAuthTime = mBiometricManager.getLastAuthenticationTime(
+                    DEVICE_CREDENTIAL);
+
+            assertThat(lastAuthTime).isEqualTo(initialLastAuthTime);
+        }
+    }
+
+    /**
+     * Tests that {@link BiometricManager#getLastAuthenticationTime(int)} result returns
+     * {@link BiometricManager#BIOMETRIC_NO_AUTHENTICATION} if there is no password/PIN set.
+     */
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_LAST_AUTHENTICATION_TIME)
+    public void testGetLastAuthenticationTime_noCredential() throws Exception {
+        final long lastAuthTime = mBiometricManager.getLastAuthenticationTime(
+                DEVICE_CREDENTIAL);
+
+        assertThat(lastAuthTime).isEqualTo(BiometricManager.BIOMETRIC_NO_AUTHENTICATION);
     }
 }
