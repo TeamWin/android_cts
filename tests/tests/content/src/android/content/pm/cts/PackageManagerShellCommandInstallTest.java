@@ -19,7 +19,6 @@ package android.content.pm.cts;
 import static android.content.Context.RECEIVER_EXPORTED;
 import static android.content.pm.Checksum.TYPE_PARTIAL_MERKLE_ROOT_1M_SHA256;
 import static android.content.pm.Checksum.TYPE_WHOLE_MERKLE_ROOT_4K_SHA256;
-import static android.content.pm.Flags.disallowSdkLibsToBeApps;
 import static android.content.pm.Flags.FLAG_SDK_LIB_INDEPENDENCE;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_INCREMENTAL;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_NONE;
@@ -887,21 +886,48 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
-    public void testSdkInstallAndUpdate() throws Exception {
+    @RequiresFlagsDisabled(Flags.FLAG_DISALLOW_SDK_LIBS_TO_BE_APPS)
+    public void testSdkInstallAndUpdate_sdkLibsBeAppsHasAppId() throws Exception {
         onBeforeSdkTests();
 
         installPackage(TEST_SDK1);
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
 
-        // No uid is assigned for SDK package
-        if (disallowSdkLibsToBeApps()) {
-            SystemUtil.runWithShellPermissionIdentity(() -> {
-                ApplicationInfo appInfo = getPackageManager().getApplicationInfo(TEST_SDK1_PACKAGE,
-                        PackageManager.ApplicationInfoFlags.of(
-                                MATCH_STATIC_SHARED_AND_SDK_LIBRARIES));
-                assertThat(appInfo.uid).isEqualTo(Process.INVALID_UID);
-            });
-        }
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            // No uid is assigned for SDK package
+            ApplicationInfo appInfo = getPackageManager().getApplicationInfo(TEST_SDK1_PACKAGE,
+                    PackageManager.ApplicationInfoFlags.of(
+                            MATCH_STATIC_SHARED_AND_SDK_LIBRARIES));
+            assertThat(appInfo.uid).isGreaterThan(Process.INVALID_UID);
+        });
+
+        // Same APK.
+        installPackage(TEST_SDK1);
+
+        // Updated APK.
+        installPackage(TEST_SDK1_UPDATED);
+
+        // Reverted APK.
+        installPackage(TEST_SDK1);
+
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_DISALLOW_SDK_LIBS_TO_BE_APPS)
+    public void testSdkInstallAndUpdate_blockSdkLibsBeAppsNoAppId() throws Exception {
+        onBeforeSdkTests();
+
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            // No uid is assigned for SDK package
+            ApplicationInfo appInfo = getPackageManager().getApplicationInfo(TEST_SDK1_PACKAGE,
+                    PackageManager.ApplicationInfoFlags.of(
+                            MATCH_STATIC_SHARED_AND_SDK_LIBRARIES));
+            assertThat(appInfo.uid).isEqualTo(Process.INVALID_UID);
+        });
 
         // Same APK.
         installPackage(TEST_SDK1);
