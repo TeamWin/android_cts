@@ -20,9 +20,11 @@ import android.app.Notification.WearableExtender
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Bitmap.Config
+import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
+import org.junit.Assume
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,6 +41,9 @@ class WearableExtenderApiCurrentTest {
 
     @Test
     fun wearableBackgroundBlockDisabled_wearableBackgroundSet_valueIsNull() {
+        // The API change in this test is not present in API levels beforehand.
+        Assume.assumeTrue(Build.VERSION.SDK_INT >= 35)
+
         val extender = WearableExtender()
         val bitmap = Bitmap.createBitmap(200, 200, Config.ARGB_8888)
         extender.setBackground(bitmap)
