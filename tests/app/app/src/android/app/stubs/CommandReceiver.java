@@ -70,6 +70,8 @@ public class CommandReceiver extends BroadcastReceiver {
     public static final int COMMAND_START_FOREGROUND_SERVICE_SPOOF_PACKAGE_NAME = 23;
     public static final int COMMAND_CREATE_ACTIVE_MEDIA_SESSION = 24;
 
+    public static final String KEY_PENDING_INTENT = "android.app.stubs.key.PENDING_INTENT";
+
     public static final int RESULT_CHILD_PROCESS_STARTED = IBinder.FIRST_CALL_TRANSACTION;
     public static final int RESULT_CHILD_PROCESS_STOPPED = IBinder.FIRST_CALL_TRANSACTION + 1;
     public static final int RESULT_CHILD_PROCESS_GONE = IBinder.FIRST_CALL_TRANSACTION + 2;
@@ -116,6 +118,7 @@ public class CommandReceiver extends BroadcastReceiver {
         int command = intent.getIntExtra(EXTRA_COMMAND, -1);
         Log.d(TAG + "_" + context.getPackageName(), "Got command " + command + ", intent="
                 + intent);
+        Bundle resultExtras = null;
         switch (command) {
             case COMMAND_BIND_SERVICE:
                 doBindService(context, intent, SERVICE_NAME);
@@ -161,7 +164,9 @@ public class CommandReceiver extends BroadcastReceiver {
                 doStopActivity(context, intent);
                 break;
             case COMMAND_CREATE_FGSL_PENDING_INTENT:
-                doCreateFgslPendingIntent(context, intent);
+                final PendingIntent pendingIntent = doCreateFgslPendingIntent(context, intent);
+                resultExtras = new Bundle();
+                resultExtras.putParcelable(KEY_PENDING_INTENT, pendingIntent);
                 break;
             case COMMAND_SEND_FGSL_PENDING_INTENT:
                 doSendFgslPendingIntent(context, intent);
@@ -187,6 +192,9 @@ public class CommandReceiver extends BroadcastReceiver {
                 doStartMediaPlayback(context, intent.getParcelableExtra(
                         Intent.EXTRA_REMOTE_CALLBACK, RemoteCallback.class));
                 break;
+        }
+        if (resultExtras != null) {
+            setResultExtras(resultExtras);
         }
     }
 
@@ -303,7 +311,7 @@ public class CommandReceiver extends BroadcastReceiver {
         context.startActivity(activityIntent);
     }
 
-    private void doCreateFgslPendingIntent(Context context, Intent commandIntent) {
+    private PendingIntent doCreateFgslPendingIntent(Context context, Intent commandIntent) {
         final String targetPackage = getTargetPackage(commandIntent);
         final Intent intent = new Intent().setComponent(
                 new ComponentName(targetPackage, FG_LOCATION_SERVICE_NAME));
@@ -312,6 +320,7 @@ public class CommandReceiver extends BroadcastReceiver {
         final PendingIntent pendingIntent = PendingIntent.getForegroundService(context, 0,
                 intent, PendingIntent.FLAG_IMMUTABLE);
         sPendingIntent.put(targetPackage, pendingIntent);
+        return pendingIntent;
     }
 
     private void doSendFgslPendingIntent(Context context, Intent commandIntent) {
