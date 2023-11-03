@@ -140,19 +140,21 @@ public final class MediaDeviceInfo extends DeviceInfo {
                 }
                 AudioCapabilities audioCapabilities = codecCapabilities.getAudioCapabilities();
                 if (audioCapabilities != null) {
-                    int minSampleRate = -1, maxSampleRate = -1;
-                    int[] discreteSampleRates = audioCapabilities.getSupportedSampleRates();
-                    if (discreteSampleRates != null) {  // codec supports only discrete sample rates
-                        minSampleRate = Arrays.stream(discreteSampleRates).min().getAsInt();
-                        maxSampleRate = Arrays.stream(discreteSampleRates).max().getAsInt();
-                    } else {  // codec supports continuous sample rates
-                        Range<Integer>[] sampleRateRanges =
-                                        audioCapabilities.getSupportedSampleRateRanges();
-                        minSampleRate = sampleRateRanges[0].getLower();
-                        maxSampleRate = sampleRateRanges[sampleRateRanges.length - 1].getUpper();
+                    if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.Q)) {
+                        int minSampleRate = -1, maxSampleRate = -1;
+                        int[] discreteSampleRates = audioCapabilities.getSupportedSampleRates();
+                        if (discreteSampleRates != null) {  // codec supports only discrete sample rates
+                            minSampleRate = Arrays.stream(discreteSampleRates).min().getAsInt();
+                            maxSampleRate = Arrays.stream(discreteSampleRates).max().getAsInt();
+                        } else {  // codec supports continuous sample rates
+                            Range<Integer>[] sampleRateRanges =
+                                             audioCapabilities.getSupportedSampleRateRanges();
+                            minSampleRate = sampleRateRanges[0].getLower();
+                            maxSampleRate = sampleRateRanges[sampleRateRanges.length - 1].getUpper();
+                        }
+                        store.addResult("min_sample_rate", minSampleRate);
+                        store.addResult("max_sample_rate", maxSampleRate);
                     }
-                    store.addResult("min_sample_rate", minSampleRate);
-                    store.addResult("max_sample_rate", maxSampleRate);
 
                     store.addResult("max_channel_count",
                                 audioCapabilities.getMaxInputChannelCount());
