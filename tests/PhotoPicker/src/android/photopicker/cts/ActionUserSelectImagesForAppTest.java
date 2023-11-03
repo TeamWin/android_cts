@@ -48,6 +48,7 @@ import android.photopicker.cts.cloudproviders.CloudProviderPrimary;
 import android.photopicker.cts.util.PhotoPickerFilesUtils;
 import android.photopicker.cts.util.UiAssertionUtils;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.util.Pair;
 
 import androidx.annotation.Nullable;
@@ -68,7 +69,7 @@ import java.util.List;
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 @RunWith(AndroidJUnit4.class)
 public class ActionUserSelectImagesForAppTest extends PhotoPickerBaseTest {
-
+    private static final String TAG = ActionUserSelectImagesForAppTest.class.getSimpleName();
     private static boolean sCloudMediaPreviouslyEnabled;
     @Nullable
     private static String sPreviouslyAllowedCloudProviders;
@@ -83,7 +84,13 @@ public class ActionUserSelectImagesForAppTest extends PhotoPickerBaseTest {
         if (sCloudMediaPreviouslyEnabled) {
             sPreviouslyAllowedCloudProviders = getAllowedProvidersDeviceConfig();
         }
-        sPreviouslySetCloudProvider = getCurrentCloudProvider();
+
+        try {
+            sPreviouslySetCloudProvider = getCurrentCloudProvider();
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Could not get previously set cloud provider", e);
+            sPreviouslySetCloudProvider = INVALID_CLOUD_PROVIDER;
+        }
 
         // Override the allowed cloud providers config to enable the banners
         // (this is a self-instrumenting test, so "target" package name and "own" package name are
