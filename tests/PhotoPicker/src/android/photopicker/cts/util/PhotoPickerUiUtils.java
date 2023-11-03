@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.text.format.DateUtils;
 
+import androidx.annotation.NonNull;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject;
 import androidx.test.uiautomator.UiScrollable;
@@ -138,6 +139,16 @@ public class PhotoPickerUiUtils {
         assertWithMessage("Timed out waiting for settings page description to appear")
                 .that(new UiObject(new UiSelector()
                         .resourceIdMatches(REGEX_PACKAGE_NAME + ":id/picker_settings_description"))
+                        .waitForExists(TIMEOUT))
+                .isTrue();
+    }
+
+    /**
+     * Verify if the app label of the {@code sTargetPackageName} is visible on the UI.
+     */
+    public static void verifySettingsCloudProviderOptionIsVisible(@NonNull String cmpLabel) {
+        assertWithMessage("Timed out waiting for cloud provider option on settings activity")
+                .that(new UiObject(new UiSelector().textContains(cmpLabel))
                         .waitForExists(TIMEOUT))
                 .isTrue();
     }

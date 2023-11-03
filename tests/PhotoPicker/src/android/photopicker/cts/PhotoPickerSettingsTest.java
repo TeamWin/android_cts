@@ -22,20 +22,27 @@ import static android.photopicker.cts.PhotoPickerCloudUtils.getAllowedProvidersD
 import static android.photopicker.cts.PhotoPickerCloudUtils.isCloudMediaEnabled;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.REGEX_PACKAGE_NAME;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.SHORT_TIMEOUT;
+import static android.photopicker.cts.util.PhotoPickerComponentUtils.PICKER_SETTINGS_ACTIVITY_COMPONENT;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.isPhotoPickerVisible;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.verifySettingsActionBarIsVisible;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.verifySettingsActivityIsVisible;
+import static android.photopicker.cts.util.PhotoPickerUiUtils.verifySettingsCloudProviderOptionIsVisible;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.verifySettingsDescriptionIsVisible;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.verifySettingsFragmentContainerExists;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.verifySettingsTitleIsVisible;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.UserHandle;
+import android.photopicker.cts.util.PhotoPickerComponentUtils;
 import android.photopicker.cts.util.PhotoPickerUiUtils;
 import android.provider.MediaStore;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.test.filters.LargeTest;
@@ -46,24 +53,20 @@ import androidx.test.uiautomator.UiSelector;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
+import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assume;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Photo Picker tests for settings page launched from the overflow menu in PhotoPickerActivity or
- * the Settings app.
+ * Photo Picker tests for settings activity launched from PhotoPickerActivity or intent.
  */
-// TODO(b/195009187): Enabling settings page requires setting allowed_cloud_providers device config.
-//  We currently can't do this in R.
 @RunWith(BedsteadJUnit4.class)
-@SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
-
+    private static final String TAG = PhotoPickerSettingsTest.class.getSimpleName();
     private static boolean sCloudMediaPreviouslyEnabled;
     private static String sPreviouslyAllowedCloudProviders;
     private static final String EXTRA_TAB_USER_ID = "user_id";
@@ -72,39 +75,57 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
     private static final String TAB_LAYOUT_RESOURCE_ID = REGEX_PACKAGE_NAME + ":id/tabs";
     private static final String PERSONAL_TAB_TITLE_ENGLISH = "Personal";
     private static final String WORK_TAB_TITLE_ENGLISH = "Work";
+    private static final String DEFAULT_APP_LABEL = "Photo Picker Device Tests";
+    private static int sPhotoPickerSettingsActivityState;
+    private Intent mSettingsIntent;
 
-    @BeforeClass
-    public static void setUpBeforeClass() {
-        // Store the current CMP configs, so that we can reset them at the end of the test.
-        sCloudMediaPreviouslyEnabled = isCloudMediaEnabled();
-        if (sCloudMediaPreviouslyEnabled) {
-            sPreviouslyAllowedCloudProviders = getAllowedProvidersDeviceConfig();
-        }
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
 
-        // Enable Settings menu item in PhotoPickerActivity's overflow menu.
-        PhotoPickerCloudUtils.enableCloudMediaAndSetAllowedCloudProviders(
-                /* allowedCloudProviders */ sTargetPackageName);
-    }
+        sPhotoPickerSettingsActivityState = PhotoPickerComponentUtils
+                .enableAndGetOldState(PICKER_SETTINGS_ACTIVITY_COMPONENT);
 
-    @AfterClass
-    public static void tearDownClass() {
-        // Reset CloudMedia configs.
-        if (sCloudMediaPreviouslyEnabled) {
-            enableCloudMediaAndSetAllowedCloudProviders(sPreviouslyAllowedCloudProviders);
-        } else {
-            disableCloudMediaAndClearAllowedCloudProviders();
+        mSettingsIntent = new Intent(MediaStore.ACTION_PICK_IMAGES_SETTINGS);
+
+        // Only enable cloud media in S+ because R cannot use Device Config APIs.
+        if (SdkLevel.isAtLeastS()) {
+            // Store the current CMP configs, so that we can reset them at the end of the test.
+            sCloudMediaPreviouslyEnabled = isCloudMediaEnabled();
+            if (sCloudMediaPreviouslyEnabled) {
+                sPreviouslyAllowedCloudProviders = getAllowedProvidersDeviceConfig();
+            }
+
+            // Enable Settings menu item in PhotoPickerActivity's overflow menu.
+            PhotoPickerCloudUtils.enableCloudMediaAndSetAllowedCloudProviders(
+                    /* allowedCloudProviders */ sTargetPackageName);
         }
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
         if (mActivity != null) {
             mActivity.finish();
+        }
+
+        PhotoPickerComponentUtils.setState(PICKER_SETTINGS_ACTIVITY_COMPONENT,
+                sPhotoPickerSettingsActivityState);
+
+        // Reset CloudMedia configs.
+        if (SdkLevel.isAtLeastS()) {
+            if (sCloudMediaPreviouslyEnabled) {
+                enableCloudMediaAndSetAllowedCloudProviders(sPreviouslyAllowedCloudProviders);
+            } else {
+                disableCloudMediaAndClearAllowedCloudProviders();
+            }
         }
     }
 
     @Test
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testSettingsLaunchFromOverflowMenu_WorkDisabled() throws Exception {
+        String cmpAppLabel = getCmpAppLabel();
+
         // Launch PhotoPickerActivity.
         final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
         mActivity.startActivityForResult(intent, REQUEST_CODE);
@@ -121,6 +142,7 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
         verifySettingsTitleIsVisible();
         verifySettingsDescriptionIsVisible();
         verifySettingsFragmentContainerExists();
+        verifySettingsCloudProviderOptionIsVisible(cmpAppLabel);
 
         // Verify Tab container (to switch profiles) is not visible since Work profile is disabled.
         verifySettingsTabContainerIsNotVisible();
@@ -129,11 +151,9 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
     @Test
     @LargeTest
     @RequireRunOnWorkProfile
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testSettingsLaunchedInPersonalProfile_WorkEnabled() throws Exception {
-        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES_SETTINGS);
-
-        mActivity.startActivityForResult(intent, REQUEST_CODE);
-        sDevice.waitForIdle();
+        launchSettingsActivityWithRetry(/* retryCount */ 3, /* backoffSeedInMillis */ 500);
         verifySettingsActivityIsVisible();
 
         verifySettingsTabContainerIsVisible();
@@ -144,12 +164,10 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
     @Test
     @LargeTest
     @RequireRunOnWorkProfile
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testSettingsLaunchedInWorkProfile() throws Exception {
-        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES_SETTINGS);
-        intent.putExtra(EXTRA_TAB_USER_ID, UserHandle.myUserId());
-
-        mActivity.startActivityForResult(intent, REQUEST_CODE);
-        sDevice.waitForIdle();
+        mSettingsIntent.putExtra(EXTRA_TAB_USER_ID, UserHandle.myUserId());
+        launchSettingsActivityWithRetry(/* retryCount */ 3, /* backoffSeedInMillis */ 500);
         verifySettingsActivityIsVisible();
 
         verifySettingsTabContainerIsVisible();
@@ -178,5 +196,58 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
 
     private static UiObject findObject(@NonNull String resourceId) {
         return sDevice.findObject(new UiSelector().resourceIdMatches(resourceId));
+    }
+
+    @Test
+    // This test is required for API coverage in Android R
+    public void testSettingsLaunchFromIntent() throws InterruptedException {
+        // Launch PhotoPickerSettingsActivity.
+        launchSettingsActivityWithRetry(/* retryCount */ 3, /* backoffSeedInMillis */ 500);
+
+        // Verify PhotoPickerSettingsActivity is launched and visible.
+        verifySettingsActivityIsVisible();
+        verifySettingsActionBarIsVisible();
+        verifySettingsTitleIsVisible();
+        verifySettingsDescriptionIsVisible();
+        verifySettingsFragmentContainerExists();
+    }
+
+
+    private void launchSettingsActivityWithRetry(long maxRetries, long backoffSeedInMillis)
+            throws InterruptedException {
+        for (int attempt = 0; attempt <= maxRetries; attempt++) {
+            if (attempt > 0) {
+                // If the Settings Activity component has been recently enabled, it may take some
+                // time for the resolver to resolve the intent to the right activity.
+                long backoffTimeInMillis = backoffSeedInMillis * (2 ^ (attempt - 1));
+                Log.e(TAG, "Retry launching activity for " + mSettingsIntent
+                        + " after backoff " + backoffTimeInMillis);
+                Thread.sleep(backoffTimeInMillis);
+            }
+
+            try {
+                mActivity.startActivity(mSettingsIntent);
+                sDevice.waitForIdle();
+                return;
+            } catch (ActivityNotFoundException e) {
+                Log.e(TAG, "Activity not found for intent " + mSettingsIntent);
+            }
+        }
+
+        Log.e(TAG, "Intent " + mSettingsIntent + " does not resolve to any component.");
+        throw new AssertionError("Cannot find activity for intent " + mSettingsIntent);
+    }
+
+    @NonNull
+    private String getCmpAppLabel() {
+        PackageManager pm = mContext.getPackageManager();
+        {
+            try {
+                ApplicationInfo applicationInfo = pm.getApplicationInfo(sTargetPackageName, 0);
+                return (String) pm.getApplicationLabel(applicationInfo);
+            } catch (PackageManager.NameNotFoundException e) {
+                return DEFAULT_APP_LABEL;
+            }
+        }
     }
 }
