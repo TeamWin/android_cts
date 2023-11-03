@@ -23,7 +23,7 @@ import static org.junit.Assert.assertThrows;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.input.VirtualKeyEvent;
 import android.hardware.input.VirtualKeyboard;
-import android.hardware.input.VirtualKeyboardConfig;
+import android.hardware.input.cts.VirtualDeviceUtils;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 
@@ -46,19 +46,6 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
     @Override
     void onSetUpVirtualInputDevice() {
         mVirtualKeyboard = createVirtualKeyboard(mVirtualDisplay.getDisplay().getDisplayId());
-    }
-
-    VirtualKeyboard createVirtualKeyboard(int displayId) {
-        final VirtualKeyboardConfig keyboardConfig =
-                new VirtualKeyboardConfig.Builder()
-                        .setVendorId(VENDOR_ID)
-                        .setProductId(PRODUCT_ID)
-                        .setInputDeviceName(DEVICE_NAME)
-                        .setAssociatedDisplayId(displayId)
-                        .setLanguageTag(VirtualKeyboardConfig.DEFAULT_LANGUAGE_TAG)
-                        .setLayoutType(VirtualKeyboardConfig.DEFAULT_LAYOUT_TYPE)
-                        .build();
-        return mVirtualDevice.createVirtualKeyboard(keyboardConfig);
     }
 
     @Override
@@ -142,9 +129,13 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
 
     @Test
     public void createVirtualKeyboard_unownedDisplay_throwsException() {
-        VirtualDisplay unownedDisplay = createUnownedVirtualDisplay();
+        VirtualDisplay unownedDisplay = VirtualDeviceUtils.createUnownedVirtualDisplay();
         assertThrows(SecurityException.class,
                 () -> createVirtualKeyboard(unownedDisplay.getDisplay().getDisplayId()));
         unownedDisplay.release();
+    }
+
+    private VirtualKeyboard createVirtualKeyboard(int displayId) {
+        return VirtualDeviceUtils.createKeyboard(mVirtualDevice, DEVICE_NAME, displayId);
     }
 }

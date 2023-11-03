@@ -21,13 +21,14 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
+import android.graphics.Point;
 import android.graphics.PointF;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.input.VirtualMouse;
 import android.hardware.input.VirtualMouseButtonEvent;
-import android.hardware.input.VirtualMouseConfig;
 import android.hardware.input.VirtualMouseRelativeEvent;
 import android.hardware.input.VirtualMouseScrollEvent;
+import android.hardware.input.cts.VirtualDeviceUtils;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 
@@ -52,17 +53,6 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
     @Override
     void onSetUpVirtualInputDevice() {
         mVirtualMouse = createVirtualMouse(mVirtualDisplay.getDisplay().getDisplayId());
-    }
-
-    VirtualMouse createVirtualMouse(int displayId) {
-        final VirtualMouseConfig mouseConfig =
-                new VirtualMouseConfig.Builder()
-                        .setVendorId(VENDOR_ID)
-                        .setProductId(PRODUCT_ID)
-                        .setInputDeviceName(DEVICE_NAME)
-                        .setAssociatedDisplayId(displayId)
-                        .build();
-        return mVirtualDevice.createVirtualMouse(mouseConfig);
     }
 
     @Override
@@ -210,8 +200,8 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
     public void testStartingCursorPosition() {
         // The virtual display is 100x100px, running from [0,99]. Half of this is 49.5, and
         // we assume the pointer for a new display begins at the center.
-        final PointF startPosition = new PointF((DISPLAY_WIDTH - 1) / 2f,
-                (DISPLAY_HEIGHT - 1) / 2f);
+        final Point size = VirtualDeviceUtils.getDisplaySize(mVirtualDisplay);
+        final PointF startPosition = new PointF((size.x - 1) / 2f, (size.y - 1) / 2f);
         // Trigger a position update without moving the cursor off the starting position.
         mVirtualMouse.sendButtonEvent(new VirtualMouseButtonEvent.Builder()
                 .setAction(VirtualMouseButtonEvent.ACTION_BUTTON_PRESS)
@@ -270,9 +260,13 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
 
     @Test
     public void createVirtualMouse_unownedDisplay_throwsException() {
-        VirtualDisplay unownedDisplay = createUnownedVirtualDisplay();
+        VirtualDisplay unownedDisplay = VirtualDeviceUtils.createUnownedVirtualDisplay();
         assertThrows(SecurityException.class,
                 () -> createVirtualMouse(unownedDisplay.getDisplay().getDisplayId()));
         unownedDisplay.release();
+    }
+
+    private VirtualMouse createVirtualMouse(int displayId) {
+        return VirtualDeviceUtils.createMouse(mVirtualDevice, DEVICE_NAME, displayId);
     }
 }

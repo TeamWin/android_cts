@@ -22,8 +22,8 @@ import static org.junit.Assert.assertThrows;
 
 import android.hardware.display.VirtualDisplay;
 import android.hardware.input.VirtualDpad;
-import android.hardware.input.VirtualDpadConfig;
 import android.hardware.input.VirtualKeyEvent;
+import android.hardware.input.cts.VirtualDeviceUtils;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 
@@ -45,17 +45,6 @@ public class VirtualDpadTest extends VirtualDeviceTestCase {
     @Override
     void onSetUpVirtualInputDevice() {
         mVirtualDpad = createVirtualDpad(mVirtualDisplay.getDisplay().getDisplayId());
-    }
-
-    VirtualDpad createVirtualDpad(int displayId) {
-        final VirtualDpadConfig dpadConfig =
-                new VirtualDpadConfig.Builder()
-                        .setVendorId(VENDOR_ID)
-                        .setProductId(PRODUCT_ID)
-                        .setInputDeviceName(DEVICE_NAME)
-                        .setAssociatedDisplayId(displayId)
-                        .build();
-        return mVirtualDevice.createVirtualDpad(dpadConfig);
     }
 
     @Override
@@ -170,9 +159,13 @@ public class VirtualDpadTest extends VirtualDeviceTestCase {
 
     @Test
     public void createVirtualDpad_unownedDisplay_throwsException() {
-        VirtualDisplay unownedDisplay = createUnownedVirtualDisplay();
+        VirtualDisplay unownedDisplay = VirtualDeviceUtils.createUnownedVirtualDisplay();
         assertThrows(SecurityException.class,
                 () -> createVirtualDpad(unownedDisplay.getDisplay().getDisplayId()));
         unownedDisplay.release();
+    }
+
+    private VirtualDpad createVirtualDpad(int displayId) {
+        return VirtualDeviceUtils.createDpad(mVirtualDevice, DEVICE_NAME, displayId);
     }
 }
