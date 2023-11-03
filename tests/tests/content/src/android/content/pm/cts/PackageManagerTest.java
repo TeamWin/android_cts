@@ -3383,6 +3383,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
 
         // Flag treatment.
         ApplicationInfo appInfo = mPackageManager.getApplicationInfo(HELLO_WORLD_PACKAGE_NAME, 0);
+        assertTrue(appInfo.enabled);
 
         // Default filtration of activities.
         List<ResolveInfo> activitiesResult;
@@ -3463,7 +3464,6 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
 
         if (enabled) {
             assertThat(runCommand("pm list packages -q")).contains(HELLO_WORLD_PACKAGE_NAME);
-            assertFalse(appInfo.enabled);
             assertTrue(servicesResult.toString(), servicesResult.size() == 0);
             assertTrue(providersResult1.toString(), providersResult1.size() == 0);
             assertTrue(providersResult2.toString(), providersResult2.size() == 0);
@@ -3471,7 +3471,6 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
             assertFalse(providerFound);
         } else {
             assertThat(runCommand("pm list packages -q")).doesNotContain(HELLO_WORLD_PACKAGE_NAME);
-            assertTrue(appInfo.enabled);
             assertEquals(servicesResult.toString(), 1, servicesResult.size());
             assertEquals("com.example.helloworld.TestService",
                     servicesResult.get(0).serviceInfo.name);
