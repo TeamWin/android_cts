@@ -22,15 +22,17 @@ import static android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED;
 import android.app.job.JobInfo;
 import android.content.ClipData;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
@@ -81,19 +83,34 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         mJobScheduler.schedule(ji);
     }
 
-    public void testBias() {
+    public void testBias() throws Exception {
         JobInfo.Builder builder = new JobInfo.Builder(JOB_ID, kJobServiceComponent);
-        try {
-            Method method = JobInfo.Builder.class.getDeclaredMethod("setBias", int.class);
-            method.setAccessible(true);
-            method.invoke(builder, 40);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            android.util.Log.e("blah", "Can't set user-initiated", e);
-        }
+
+        Method setBiasMethod = JobInfo.Builder.class.getDeclaredMethod("setBias", int.class);
+        setBiasMethod.setAccessible(true);
+        setBiasMethod.invoke(builder, 40);
+
         JobInfo ji = builder.build();
         // Confirm JobScheduler rejects the JobInfo object.
-        assertScheduleFailsWithException("Successfully scheduled a job with a modified bias", ji,
-                SecurityException.class);
+        final PackageManager pm = getContext().getPackageManager();
+        ApplicationInfo applicationInfo = pm.getApplicationInfo(MY_PACKAGE, 0);
+        if (applicationInfo == null) {
+            fail("Couldn't get ApplicationInfo");
+        }
+        boolean targetSdkIsAfterU =
+                applicationInfo.targetSdkVersion > Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
+        if (targetSdkIsAfterU) {
+            assertScheduleFailsWithException("Successfully scheduled a job with a modified bias",
+                    ji, SecurityException.class);
+        } else {
+            mJobScheduler.schedule(ji);
+            JobInfo scheduledJob = mJobScheduler.getPendingJob(JOB_ID);
+
+            Method getBiasMethod = JobInfo.class.getDeclaredMethod("getBias");
+            getBiasMethod.setAccessible(true);
+            Integer bias = (Integer) getBiasMethod.invoke(scheduledJob);
+            assertEquals("Bias wasn't changed to default", 0, (int) bias);
+        }
     }
 
     public void testCharging() {
