@@ -20,6 +20,13 @@ import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL;
 import static android.Manifest.permission.REVOKE_RUNTIME_PERMISSIONS;
 import static android.app.AutomaticZenRule.TYPE_BEDTIME;
+import static android.app.NotificationManager.ACTION_AUTOMATIC_ZEN_RULE_STATUS_CHANGED;
+import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_ACTIVATED;
+import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_DEACTIVATED;
+import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_DISABLED;
+import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_ENABLED;
+import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_UNKNOWN;
+import static android.app.NotificationManager.EXTRA_AUTOMATIC_ZEN_RULE_STATUS;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_ALARMS;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_ALL;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_NONE;
@@ -52,6 +59,7 @@ import android.app.Flags;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.compat.CompatChanges;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.GetResultActivity;
 import android.app.stubs.R;
@@ -87,6 +95,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests zen/dnd related logic in NotificationManager.
@@ -1928,5 +1937,95 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertNotNull(id);
         mRuleIds.add(id);
         assertTrue(areRulesSame(ruleToCreate, mNotificationManager.getAutomaticZenRule(id)));
+    }
+
+    public void testSnoozeRule() throws Exception {
+        if (!Flags.modesApi() || !CompatChanges.isChangeEnabled(308673617)) {
+            Log.d(TAG, "Skipping testSnoozeRule() "
+                    + Flags.modesApi() + " " + Build.VERSION.SDK_INT);
+            return;
+        }
+        NotificationManagerBroadcastReceiver br = new NotificationManagerBroadcastReceiver();
+        br.register(mContext, ACTION_AUTOMATIC_ZEN_RULE_STATUS_CHANGED, 2);
+
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+
+        AutomaticZenRule ruleToCreate = createRule("testSnoozeRule");
+        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
+        mRuleIds.add(id);
+
+        // enable DND
+        Condition condition =
+                new Condition(ruleToCreate.getConditionId(), "summary", Condition.STATE_TRUE);
+        mNotificationManager.setAutomaticZenRuleState(id, condition);
+
+        // snooze the rule
+        mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
+        assertEquals(AUTOMATIC_RULE_STATUS_ACTIVATED,
+                br.getExtra(EXTRA_AUTOMATIC_ZEN_RULE_STATUS, 0, 500));
+        assertEquals(AUTOMATIC_RULE_STATUS_DEACTIVATED,
+                br.getExtra(EXTRA_AUTOMATIC_ZEN_RULE_STATUS, 1, 500));
+        br.unregister();
+    }
+
+    public void testUnsnoozeRule_disableEnable() throws Exception {
+        if (!Flags.modesApi()) {
+            Log.d(TAG, "Skipping testUnsnoozeRule_disableEnable() " + Flags.modesApi()
+                    + " " + Build.VERSION.SDK_INT);
+            return;
+        }
+        NotificationManagerBroadcastReceiver br = new NotificationManagerBroadcastReceiver();
+        br.register(mContext, ACTION_AUTOMATIC_ZEN_RULE_STATUS_CHANGED, 3);
+
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+
+        // No broadcast expected on creation
+        AutomaticZenRule ruleToCreate = createRule("testUnsnoozeRule_disableEnable");
+        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
+        mRuleIds.add(id);
+
+        // enable DND
+        Condition condition =
+                new Condition(ruleToCreate.getConditionId(), "summary", Condition.STATE_TRUE);
+        // triggers ACTION_AUTOMATIC_ZEN_RULE_STATUS_CHANGED: Enabled
+        mNotificationManager.setAutomaticZenRuleState(id, condition);
+
+        // snooze the rule by pretending the user turned off the mode from SystemUI
+        // triggers ACTION_AUTOMATIC_ZEN_RULE_STATUS_CHANGED: Deactivated
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
+                });
+        assertExpectedDndState(INTERRUPTION_FILTER_ALL);
+
+        // disable the rule. should unsnooze.
+        ruleToCreate.setEnabled(false);
+        mNotificationManager.updateAutomaticZenRule(id, ruleToCreate);
+
+        assertEquals(AUTOMATIC_RULE_STATUS_DISABLED,
+                br.getExtra(EXTRA_AUTOMATIC_ZEN_RULE_STATUS, 2, 500));
+        br.unregister();
+
+        br = new NotificationManagerBroadcastReceiver();
+        br.register(mContext, ACTION_AUTOMATIC_ZEN_RULE_STATUS_CHANGED, 2);
+
+        // re-enable and activate
+        ruleToCreate.setEnabled(true);
+        mNotificationManager.updateAutomaticZenRule(id, ruleToCreate);
+        mNotificationManager.setAutomaticZenRuleState(id, condition);
+        assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
+
+        assertEquals(AUTOMATIC_RULE_STATUS_ENABLED,
+                br.getExtra(EXTRA_AUTOMATIC_ZEN_RULE_STATUS, 0, 500));
+        if (CompatChanges.isChangeEnabled(308673617)) {
+            assertEquals(AUTOMATIC_RULE_STATUS_ACTIVATED,
+                    br.getExtra(EXTRA_AUTOMATIC_ZEN_RULE_STATUS, 1, 500));
+        } else {
+            assertEquals(AUTOMATIC_RULE_STATUS_UNKNOWN,
+                    br.getExtra(EXTRA_AUTOMATIC_ZEN_RULE_STATUS, 1, 500));
+        }
+        br.unregister();
     }
 }
