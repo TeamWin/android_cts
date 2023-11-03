@@ -631,12 +631,7 @@ public class EncoderProfileLevelTest extends EncoderProfileLevelTestBase {
                     hasSupportForColorFormat(mCodecName, mMediaType,
                             mEncCfgParams[0].mColorFormat));
         }
-        // TODO(b/280510792): Remove the following once level can be configured correctly in
-        // c2.android.av1.encoder
-        if (mCodecName.equals("c2.android.av1.encoder")) {
-            Assume.assumeFalse("Disable frame rate > 30 for " + mCodecName,
-                    mEncCfgParams[0].mFrameRate > 30);
-        }
+
         boolean cddSupportedMediaType = CDD_REQUIREMENTS_MAP.get(mMediaType) != null;
         {
             mActiveRawRes = EncoderInput.getRawResource(mEncCfgParams[0]);
