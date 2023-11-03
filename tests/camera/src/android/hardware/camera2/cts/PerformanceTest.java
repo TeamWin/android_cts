@@ -984,6 +984,7 @@ public class PerformanceTest {
         final int ZOOM_STEPS = 5;
         final float ZOOM_ERROR_MARGIN = 0.05f;
         final int ZOOM_IN_MIN_IMPROVEMENT_IN_FRAMES = 1;
+        final int MAX_IMPROVEMENT_VARIATION = 2;
         for (String id : mTestRule.getCameraIdsUnderTest()) {
             StaticMetadata staticMetadata = mTestRule.getAllStaticInfo().get(id);
             CameraCharacteristics ch = staticMetadata.getCharacteristics();
@@ -1093,6 +1094,10 @@ public class PerformanceTest {
                     sequenceId = newSequenceId;
                 }
 
+                int variation = Arrays.stream(overrideImprovements).max().getAsInt() -
+                        Arrays.stream(overrideImprovements).min().getAsInt();
+                assertTrue(String.format("Zoom latency improvement variation %d is too large",
+                        variation), variation <= MAX_IMPROVEMENT_VARIATION);
                 mReportLog.addValues("Camera zoom ratios", zoomRatios, ResultType.NEUTRAL,
                         ResultUnit.NONE);
                 mReportLog.addValues("Latency improvements", overrideImprovements,
