@@ -1222,6 +1222,9 @@ public class PackageManagerShellCommandInstallTest {
         installPackage(TEST_USING_SDK1);
 
         uninstallPackage(TEST_SDK1_PACKAGE, "Failure [DELETE_FAILED_USED_SHARED_LIBRARY]");
+
+        // The SDK is still installed
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
     }
 
     @Test
