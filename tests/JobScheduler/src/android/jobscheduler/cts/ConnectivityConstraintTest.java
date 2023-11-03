@@ -22,6 +22,7 @@ import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
 import static org.junit.Assert.assertNotEquals;
 
 import android.annotation.TargetApi;
+import android.app.ActivityManager;
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.content.Context;
@@ -649,6 +650,26 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
         params = kTestEnvironment.getLastStartJobParameters();
         assertNull(params.getNetwork());
+    }
+
+    public void testJobUidState() throws Exception {
+        // Turn screen off so any lingering activity close processing from previous tests
+        // don't affect this one.
+        toggleScreenOn(false);
+        mTestAppInterface = new TestAppInterface(mContext, CONNECTIVITY_JOB_ID);
+        mTestAppInterface.scheduleJob(
+                Map.of(TestJobSchedulerReceiver.EXTRA_REQUEST_JOB_UID_STATE, true),
+                Map.of(
+                        TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE,
+                        JobInfo.NETWORK_TYPE_ANY
+                )
+        );
+        mTestAppInterface.forceRunJob();
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_TIMEOUT_MILLIS));
+        mTestAppInterface.assertJobUidState(ActivityManager.PROCESS_STATE_TRANSIENT_BACKGROUND,
+                0, // Regular jobs should not have any privileged network capabilities
+                250 /* ProcessList.PERCEPTIBLE_LOW_APP_ADJ */);
     }
 
     // --------------------------------------------------------------------------------------------
