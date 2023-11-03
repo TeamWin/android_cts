@@ -47,6 +47,7 @@ import android.photopicker.cts.PickerProviderMediaGenerator.MediaGenerator;
 import android.photopicker.cts.cloudproviders.CloudProviderPrimary;
 import android.photopicker.cts.cloudproviders.CloudProviderPrimary.CloudMediaSurfaceControllerImpl;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.util.Pair;
 
 import androidx.annotation.Nullable;
@@ -77,7 +78,7 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
-
+    private static final String TAG = RemoteVideoPreviewTest.class.getSimpleName();
     private MediaGenerator mCloudPrimaryMediaGenerator;
     private final List<Uri> mUriList = new ArrayList<>();
 
@@ -104,7 +105,13 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
         if (sCloudMediaPreviouslyEnabled) {
             sPreviouslyAllowedCloudProviders = getAllowedProvidersDeviceConfig();
         }
-        sPreviouslySetCloudProvider = getCurrentCloudProvider();
+
+        try {
+            sPreviouslySetCloudProvider = getCurrentCloudProvider();
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Could not get previously set cloud provider", e);
+            sPreviouslySetCloudProvider = INVALID_CLOUD_PROVIDER;
+        }
 
         // This is a self-instrumentation test, so both "target" package name and "own" package name
         // should be the same (android.photopicker.cts).
