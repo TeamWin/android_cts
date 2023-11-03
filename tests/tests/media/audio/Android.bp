@@ -74,6 +74,7 @@ android_test {
     // include both the 32 and 64 bit versions
     compile_multilib: "both",
     static_libs: [
+        "android.media.audio-aconfig-java",
         "CtsVirtualDeviceCommonLib",
         "android.os.vibrator.flags-aconfig-java",
         "androidx.test.ext.junit",

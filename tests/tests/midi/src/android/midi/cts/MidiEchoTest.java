@@ -40,7 +40,7 @@ import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
 
-import com.android.media.midi.flags.Flags;
+import android.media.midi.Flags;
 import com.android.midi.CTSMidiEchoTestService;
 import com.android.midi.CTSMidiUmpEchoTestService;
 import com.android.midi.MidiEchoTestService;

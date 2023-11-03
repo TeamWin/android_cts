@@ -37,7 +37,7 @@ android_test {
         "junit",
         "junit-params",
         "flag-junit",
-        "aconfig_midi_flags_java_lib",
+        "android.media.midi-aconfig-java",
     ],
 
     libs: ["android.test.base"],
