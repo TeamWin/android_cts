@@ -96,6 +96,7 @@ android_test {
         "androidx.test.rules",
         "CtsTelecomUtilLib",
         "telecom_flags_core_java_lib",
+        "telephony_flags_core_java_lib",
     ],
     libs: [
         "android.test.base",

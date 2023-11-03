@@ -32,6 +32,7 @@ import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.ContactsContract;
 import android.telecom.PhoneAccount;
@@ -487,19 +488,19 @@ public class TestUtils {
     public static void enablePhoneAccount(Instrumentation instrumentation,
             PhoneAccountHandle handle) throws Exception {
         final ComponentName component = handle.getComponentName();
-        final long currentUserSerial = getCurrentUserSerialNumber(instrumentation);
+        final long userSerial = getUserSerialNumber(instrumentation, handle);
         executeShellCommand(instrumentation, COMMAND_ENABLE
                 + component.getPackageName() + "/" + component.getClassName() + " "
-                + handle.getId() + " " + currentUserSerial);
+                + handle.getId() + " " + userSerial);
     }
 
     public static void disablePhoneAccount(Instrumentation instrumentation,
             PhoneAccountHandle handle) throws Exception {
         final ComponentName component = handle.getComponentName();
-        final long currentUserSerial = getCurrentUserSerialNumber(instrumentation);
+        final long userSerial = getUserSerialNumber(instrumentation, handle);
         executeShellCommand(instrumentation, COMMAND_DISABLE
                 + component.getPackageName() + "/" + component.getClassName() + " "
-                + handle.getId() + " " + currentUserSerial);
+                + handle.getId() + " " + userSerial);
     }
 
     public static void registerSimPhoneAccount(Instrumentation instrumentation,
@@ -918,7 +919,12 @@ public class TestUtils {
         return userManager.getSerialNumberForUser(Process.myUserHandle());
     }
 
-
+    private static long getUserSerialNumber(
+            Instrumentation instrumentation, PhoneAccountHandle handle) {
+        UserManager userManager =
+                instrumentation.getContext().getSystemService(UserManager.class);
+        return userManager.getSerialNumberForUser(handle.getUserHandle());
+    }
 
     public static Uri insertContact(ContentResolver contentResolver, String phoneNumber)
             throws Exception {
@@ -996,5 +1002,18 @@ public class TestUtils {
         return new PhoneAccountHandle(TELECOM_CTS_COMPONENT_NAME, id);
     }
 
-
+    /**
+     * Creates a PhoneAccountHandle based on the input parameters
+     * @param seed random seed to use for random UUIDs; passed in for determinism.
+     * @param packageName the package name of the handle
+     * @param component the component name of the handle
+     * @param userId the user id of the handle
+     * @return The PhoneAccountHandle
+     */
+    public static PhoneAccountHandle createPhoneAccountHandle(long seed,
+            String packageName, String component, int userId) {
+        Random random = new Random(seed);
+        return new PhoneAccountHandle(new ComponentName(packageName, component),
+                getRandomUuid(random).toString(), UserHandle.of(userId));
+    }
 }
