@@ -4998,19 +4998,19 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     }
 
     /**
-     * Verify the invalid and valid usages of {@code WifiManager#setPnoScanEnabled}.
+     * Verify the invalid and valid usages of {@code WifiManager#setPnoScanState}.
      */
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_RUNTIME_DISABLE_PNO_SCAN)
-    public void testSetPnoScanEnabled() throws Exception {
+    public void testSetPnoScanState() throws Exception {
         // Test caller with no permission triggers SecurityException.
         assertThrows("No permission should trigger SecurityException", SecurityException.class,
-                () -> sWifiManager.setPnoScanEnabled(true, false));
+                () -> sWifiManager.setPnoScanState(WifiManager.PNO_SCAN_STATE_ENABLED));
 
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
-            sWifiManager.setPnoScanEnabled(true, false);
+            sWifiManager.setPnoScanState(WifiManager.PNO_SCAN_STATE_ENABLED);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
