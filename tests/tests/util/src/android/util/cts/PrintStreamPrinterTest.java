@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import android.util.PrintStreamPrinter;
 
-import androidx.test.filters.MediumTest;
+import androidx.test.filters.SmallTest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -35,7 +35,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 
-@MediumTest
+@SmallTest
 public class PrintStreamPrinterTest {
     private File mFile;
 
