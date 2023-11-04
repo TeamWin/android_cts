@@ -817,6 +817,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
     @Test
     public void testUnfocusedEditor_stateHidden_hidesIme() throws Exception {
+        Assume.assumeFalse(isPreventImeStartup());
         ImeEventStream stream = startFocusedEditorActivity_thenAnotherUnfocusedEditorActivity(
                 SOFT_INPUT_STATE_HIDDEN);
         expectImeHidden(stream);
@@ -825,6 +826,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
     @Test
     public void testUnfocusedEditor_stateAlwaysHidden_hidesIme() throws Exception {
+        Assume.assumeFalse(isPreventImeStartup());
         ImeEventStream stream = startFocusedEditorActivity_thenAnotherUnfocusedEditorActivity(
                 SOFT_INPUT_STATE_ALWAYS_HIDDEN);
         expectImeHidden(stream);
@@ -833,6 +835,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
     @Test
     public void testUnfocusedEditor_stateVisible_startsIme() throws Exception {
+        Assume.assumeFalse(isPreventImeStartup());
         ImeEventStream stream = startFocusedEditorActivity_thenAnotherUnfocusedEditorActivity(
                 SOFT_INPUT_STATE_VISIBLE);
         // The previous IME should be finished
@@ -847,6 +850,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
     @Test
     public void testUnfocusedEditor_stateAlwaysVisible_startsIme() throws Exception {
+        Assume.assumeFalse(isPreventImeStartup());
         ImeEventStream stream = startFocusedEditorActivity_thenAnotherUnfocusedEditorActivity(
                 SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         // The previous IME should be finished
