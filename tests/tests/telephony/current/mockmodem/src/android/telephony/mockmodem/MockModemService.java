@@ -409,4 +409,8 @@ public class MockModemService extends Service {
     public IRadioImsImpl getIRadioIms(byte phoneId) {
         return sIRadioImsImpl[phoneId];
     }
+
+    public int getActiveMockModemCount() {
+        return mNumOfPhone;
+    }
 }

@@ -948,6 +948,7 @@ public class TelephonyManagerTestOnMockModem {
     /**
      * Test for primaryImei will return the IMEI that is set through mockModem
      */
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     @Test
     public void testGetPrimaryImei() {
         assumeTrue(sTelephonyManager.getActiveModemCount() > 0);
@@ -955,5 +956,35 @@ public class TelephonyManagerTestOnMockModem {
                 (tm) -> tm.getPrimaryImei());
         assertNotNull(primaryImei);
         assertEquals(MockModemConfigInterface.DEFAULT_PHONE1_IMEI, primaryImei);
+    }
+
+    /**
+     * Verify the change of PrimaryImei with respect to sim slot.
+     */
+    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @Test
+    public void onImeiMappingChanged() {
+        // As first step verify the primary Imei against the default allocation
+        assumeTrue(sTelephonyManager.getActiveModemCount() > 1);
+        String primaryImei = ShellIdentityUtils.invokeMethodWithShellPermissions(sTelephonyManager,
+                (tm) -> tm.getPrimaryImei());
+        assertNotNull(primaryImei);
+        assertEquals(MockModemConfigInterface.DEFAULT_PHONE1_IMEI, primaryImei);
+        String slot0Imei = ShellIdentityUtils.invokeMethodWithShellPermissions(sTelephonyManager,
+                (tm) -> tm.getImei(0));
+        assertEquals(slot0Imei, primaryImei);
+
+        // Second step is change the PrimaryImei to slot2 and verify the same.
+        if (sMockModemManager.changeImeiMapping()) {
+            Log.d(TAG, "Verifying primary IMEI after change in IMEI mapping");
+            primaryImei = ShellIdentityUtils.invokeMethodWithShellPermissions(sTelephonyManager,
+                    (tm) -> tm.getPrimaryImei());
+            assertNotNull(primaryImei);
+            assertEquals(MockModemConfigInterface.DEFAULT_PHONE1_IMEI, primaryImei);
+            String slot1Imei = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    sTelephonyManager,
+                    (tm) -> tm.getImei(1));
+            assertEquals(slot1Imei, primaryImei);
+        }
     }
 }
