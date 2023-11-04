@@ -21,7 +21,7 @@ import static org.junit.Assert.assertEquals;
 import android.hardware.input.InputManager;
 import android.hardware.input.VirtualKeyboard;
 import android.hardware.input.VirtualKeyboardConfig;
-import android.hardware.input.cts.VirtualDeviceUtils;
+import android.hardware.input.cts.virtualcreators.VirtualInputDeviceCreator;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
@@ -82,8 +82,8 @@ public class VirtualKeyboardLayoutTest extends VirtualDeviceTestCase {
     VirtualKeyboard createVirtualKeyboard(String languageTag, String layoutType) {
         final VirtualKeyboardConfig keyboardConfig =
                 new VirtualKeyboardConfig.Builder()
-                        .setVendorId(VirtualDeviceUtils.VENDOR_ID)
-                        .setProductId(VirtualDeviceUtils.PRODUCT_ID)
+                        .setVendorId(VirtualInputDeviceCreator.VENDOR_ID)
+                        .setProductId(VirtualInputDeviceCreator.PRODUCT_ID)
                         .setInputDeviceName(DEVICE_NAME)
                         .setAssociatedDisplayId(mVirtualDisplay.getDisplay().getDisplayId())
                         .setLanguageTag(languageTag)
@@ -235,8 +235,8 @@ public class VirtualKeyboardLayoutTest extends VirtualDeviceTestCase {
     private void updateVirtualInputDevice(int deviceId) {
         InputDevice device = mInputManager.getInputDevice(deviceId);
         if (device != null
-                && device.getProductId() == VirtualDeviceUtils.PRODUCT_ID
-                && device.getVendorId() == VirtualDeviceUtils.VENDOR_ID) {
+                && device.getProductId() == VirtualInputDeviceCreator.PRODUCT_ID
+                && device.getVendorId() == VirtualInputDeviceCreator.VENDOR_ID) {
             mVirtualInputDevice = device;
         }
     }

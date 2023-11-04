@@ -23,8 +23,9 @@ import static org.junit.Assert.assertThrows;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.input.VirtualKeyEvent;
 import android.hardware.input.VirtualKeyboard;
-import android.hardware.input.cts.VirtualDeviceUtils;
-import android.view.InputDevice;
+import android.hardware.input.cts.virtualcreators.VirtualDisplayCreator;
+import android.hardware.input.cts.virtualcreators.VirtualInputDeviceCreator;
+import android.hardware.input.cts.virtualcreators.VirtualInputEventCreator;
 import android.view.KeyEvent;
 
 import androidx.test.filters.SmallTest;
@@ -38,7 +39,6 @@ import java.util.Arrays;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class VirtualKeyboardTest extends VirtualDeviceTestCase {
-    private static final String TAG = "VirtualKeyboardTest";
 
     private static final String DEVICE_NAME = "CtsVirtualKeyboardTestDevice";
     private VirtualKeyboard mVirtualKeyboard;
@@ -68,29 +68,10 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
                         .setAction(VirtualKeyEvent.ACTION_UP)
                         .build());
         verifyEvents(
-                Arrays.asList(
-                        new KeyEvent(
-                                /* downTime= */ 0,
-                                /* eventTime= */ 0,
-                                KeyEvent.ACTION_DOWN,
-                                KeyEvent.KEYCODE_A,
-                                /* repeat= */ 0,
-                                /* metaState= */ 0,
-                                /* deviceId= */ 0,
-                                /* scancode= */ 0,
-                                /* flags= */ 0,
-                                /* source= */ InputDevice.SOURCE_KEYBOARD),
-                        new KeyEvent(
-                                /* downTime= */ 0,
-                                /* eventTime= */ 0,
-                                KeyEvent.ACTION_UP,
-                                KeyEvent.KEYCODE_A,
-                                /* repeat= */ 0,
-                                /* metaState= */ 0,
-                                /* deviceId= */ 0,
-                                /* scancode= */ 0,
-                                /* flags= */ 0,
-                                /* source= */ InputDevice.SOURCE_KEYBOARD)));
+                Arrays.asList(VirtualInputEventCreator.createKeyboardEvent(KeyEvent.ACTION_DOWN,
+                                KeyEvent.KEYCODE_A),
+                        VirtualInputEventCreator.createKeyboardEvent(KeyEvent.ACTION_UP,
+                                KeyEvent.KEYCODE_A)));
     }
 
     @Test
@@ -129,13 +110,13 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
 
     @Test
     public void createVirtualKeyboard_unownedDisplay_throwsException() {
-        VirtualDisplay unownedDisplay = VirtualDeviceUtils.createUnownedVirtualDisplay();
+        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
         assertThrows(SecurityException.class,
                 () -> createVirtualKeyboard(unownedDisplay.getDisplay().getDisplayId()));
         unownedDisplay.release();
     }
 
     private VirtualKeyboard createVirtualKeyboard(int displayId) {
-        return VirtualDeviceUtils.createKeyboard(mVirtualDevice, DEVICE_NAME, displayId);
+        return VirtualInputDeviceCreator.createKeyboard(mVirtualDevice, DEVICE_NAME, displayId);
     }
 }
