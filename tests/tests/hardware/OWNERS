@@ -2,7 +2,6 @@
 michaelwr@google.com
 
 # For HardwareBuffer & friends
-# Bug component: 1075130
 include platform/frameworks/base:/graphics/java/android/graphics/OWNERS
 
 # Trust that people only touch their own resources.
