@@ -106,6 +106,7 @@ public class CtsCredentialProviderServiceDeviceTest {
     private static final String PASSKEY_CREDENTIAL_TYPE =
             "android.credentials.TYPE_PUBLIC_KEY_CREDENTIAL";
     private static final String CREDENTIAL_SERVICE = "credential_service";
+    private static final String CREDENTIAL_SERVICE_PRIMARY = "credential_service_primary";
     private static final Timeout CONNECTION_TIMEOUT =
             new Timeout("CONNECTION_TIMEOUT", 1500, 2F, 1500);
     private static final UserHandle USER_ID_HANDLE = UserHandle.getUserHandleForUid(USER_ID);
@@ -129,6 +130,7 @@ public class CtsCredentialProviderServiceDeviceTest {
     private static final String PROVIDER_LABEL_SYSTEM = "Test Provider Service System";
     private static final String PRIMARY_SETTINGS_INTENT = "android.settings.CREDENTIAL_PROVIDER";
     private static final String SECONDARY_SETTINGS_INTENT = "android.settings.SYNC_SETTINGS";
+    private static final String CLASS_NAME = "android.credentials.cts.CtsNoOpCredentialProviderService";
 
     private CredentialManager mCredentialManager;
     private final Context mContext = getInstrumentation().getContext();
@@ -174,6 +176,7 @@ public class CtsCredentialProviderServiceDeviceTest {
 
     private void clearAllTestCredentialProviderServices() {
         mUserSettings.set(CREDENTIAL_SERVICE, null);
+        mUserSettings.set(CREDENTIAL_SERVICE_PRIMARY, null);
     }
 
     @Test
@@ -742,6 +745,28 @@ public class CtsCredentialProviderServiceDeviceTest {
                 });
     }
 
+    @Test
+    public void testIsEnabledCredentialProviderService_isEnabled_primary() {
+        final String componentName = CTS_PACKAGE_NAME + "/" + CLASS_NAME;
+        setTestableCredentialProviderServiceInternal(componentName, CREDENTIAL_SERVICE_PRIMARY);
+        assertThat(isCredentialProviderServiceEnabledInternal(componentName, CREDENTIAL_SERVICE_PRIMARY)).isTrue();
+
+        ComponentName testService = new ComponentName(CTS_PACKAGE_NAME, CLASS_NAME);
+        assertThat(mCredentialManager.isEnabledCredentialProviderService(testService)).isTrue();
+    }
+
+    @Test
+    public void testIsEnabledCredentialProviderService_isEnabled_secondary() {
+        ComponentName testService = new ComponentName(CTS_PACKAGE_NAME, CLASS_NAME);
+        assertThat(mCredentialManager.isEnabledCredentialProviderService(testService)).isTrue();
+    }
+
+    @Test
+    public void testIsEnabledCredentialProviderService_isDisabled() {
+        ComponentName testService = new ComponentName(CTS_PACKAGE_NAME, "com.android.TestService");
+        assertThat(mCredentialManager.isEnabledCredentialProviderService(testService)).isFalse();
+    }
+
     /**
      * Enable the main credential manager feature. If this is off, any underlying changes for
      * autofill-credentialManager integrations are off.
@@ -789,10 +814,18 @@ public class CtsCredentialProviderServiceDeviceTest {
         return runShellCommand("settings get secure credential_service %d", USER_ID);
     }
 
-    private void setTestableCredentialProviderService(@NonNull String serviceName) {
-        if (isCredentialProviderServiceEnabled(serviceName)) return;
+    private String getCredentialProviderServicePrimaryComponent() {
+        return runShellCommand("settings get secure credential_service_primary %d", USER_ID);
+    }
 
-        String settingOutput = readCredentialManagerProviderSetting();
+    private void setTestableCredentialProviderService(@NonNull String serviceName) {
+        setTestableCredentialProviderServiceInternal(serviceName, CREDENTIAL_SERVICE);
+    }
+
+    private void setTestableCredentialProviderServiceInternal(@NonNull String serviceName, @NonNull String key) {
+        if (isCredentialProviderServiceEnabledInternal(serviceName, key)) return;
+
+        String settingOutput = readCredentialManagerProviderSetting(key);
         settingOutput = settingOutput == null ? "" : settingOutput;
         if (settingOutput.length() > 0) {
             settingOutput += ";" + serviceName;
@@ -801,13 +834,13 @@ public class CtsCredentialProviderServiceDeviceTest {
         }
         // Guaranteed to not be null now since the NoOp service exists at a minimum
         Log.i(TAG, "Attempting to set services: " + settingOutput);
-        mUserSettings.set(CREDENTIAL_SERVICE, settingOutput);
+        mUserSettings.set(key, settingOutput);
 
         // Waits until the service is actually enabled.
         try {
             CONNECTION_TIMEOUT.run(
                     "Checking if service enabled",
-                    () -> isCredentialProviderServiceEnabled(serviceName));
+                    () -> isCredentialProviderServiceEnabledInternal(serviceName, key));
         } catch (Exception e) {
             Log.i(TAG, "Failure... " + e.getLocalizedMessage());
             throw new AssertionError("Enabling Credman service failed.");
@@ -821,7 +854,11 @@ public class CtsCredentialProviderServiceDeviceTest {
 
     /** Checks whether the given service is set as the credential service for the default user. */
     private boolean isCredentialProviderServiceEnabled(String serviceName) {
-        final String actualNames = readCredentialManagerProviderSetting();
+        return isCredentialProviderServiceEnabledInternal(serviceName, CREDENTIAL_SERVICE);
+    }
+
+    private boolean isCredentialProviderServiceEnabledInternal(String serviceName, String key) {
+        final String actualNames = readCredentialManagerProviderSetting(key);
         Log.i(
                 TAG,
                 "actual names in setting: "
@@ -841,8 +878,8 @@ public class CtsCredentialProviderServiceDeviceTest {
     }
 
     /** Gets then name of the credential service for the default user. */
-    private String readCredentialManagerProviderSetting() {
-        String serviceNames = mUserSettings.get(CREDENTIAL_SERVICE);
+    private String readCredentialManagerProviderSetting(String key) {
+        String serviceNames = mUserSettings.get(key);
         return serviceNames;
     }
 
