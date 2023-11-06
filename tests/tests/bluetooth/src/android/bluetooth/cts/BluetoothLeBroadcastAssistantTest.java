@@ -42,18 +42,23 @@ import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothStatusCodes;
 import android.content.Context;
 import android.os.Build;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bluetooth.flags.Flags;
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -105,9 +110,53 @@ public class BluetoothLeBroadcastAssistantTest {
     private boolean mIsProfileReady;
     private Condition mConditionProfileConnection;
     private ReentrantLock mProfileConnectionlock;
+    private boolean mSourceLostCallbackCalled;
+    private int mTestBroadcastId;
+
+    private final TestCallback mTestCallback = new TestCallback();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Mock
     BluetoothLeBroadcastAssistant.Callback mCallbacks;
+
+    class TestCallback implements BluetoothLeBroadcastAssistant.Callback {
+        @Override
+        public void onSearchStarted(int reason) {}
+        @Override
+        public void onSearchStartFailed(int reason) {}
+        @Override
+        public void onSearchStopped(int reason) {}
+        @Override
+        public void onSearchStopFailed(int reason) {}
+        @Override
+        public void onSourceFound(BluetoothLeBroadcastMetadata source) {}
+        @Override
+        public void onSourceAdded(BluetoothDevice sink, int sourceId, int reason) {}
+        @Override
+        public void onSourceAddFailed(BluetoothDevice sink,
+                BluetoothLeBroadcastMetadata source, int reason) {}
+        @Override
+        public void onSourceModified(BluetoothDevice sink, int sourceId, int reason) {}
+        @Override
+        public void onSourceModifyFailed(
+                BluetoothDevice sink, int sourceId, int reason) {}
+        @Override
+        public void onSourceRemoved(BluetoothDevice sink, int sourceId, int reason) {}
+        @Override
+        public void onSourceRemoveFailed(
+                BluetoothDevice sink, int sourceId, int reason) {}
+        @Override
+        public void onReceiveStateChanged(BluetoothDevice sink, int sourceId,
+                BluetoothLeBroadcastReceiveState state) {}
+        @Override
+        public void onSourceLost(int broadcastId) {
+            mSourceLostCallbackCalled = true;
+            assertTrue(broadcastId == mTestBroadcastId);
+        }
+    }
 
     @Before
     public void setUp() {
@@ -513,6 +562,20 @@ public class BluetoothLeBroadcastAssistantTest {
         // Verify returns false if bluetooth is not enabled
         assertEquals(BluetoothProfile.STATE_DISCONNECTED,
                 mBluetoothLeBroadcastAssistant.getConnectionState(testDevice));
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_LEAUDIO_BROADCAST_MONITOR_SOURCE_SYNC_STATUS)
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
+    @Test
+    public void testOnSourceLostCallback() {
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeBroadcastAssistant);
+
+        mTestBroadcastId = 1;
+        mSourceLostCallbackCalled = false;
+
+        mTestCallback.onSourceLost(mTestBroadcastId);
+        assertTrue(mSourceLostCallbackCalled);
     }
 
     private boolean waitForProfileConnect() {
