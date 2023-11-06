@@ -51,6 +51,14 @@ public final class MediaRouterTestConstants {
     public static final String DEVICE_SIDE_TEST_CLASS_WITH_MODIFY_AUDIO_ROUTING =
             "android.media.router.cts.modifyaudioroutingapp"
                     + ".MediaRouter2DeviceTestWithModifyAudioRouting";
+    public static final String PROXY_MEDIA_ROUTER_APP_PACKAGE =
+            "android.media.router.cts.proxyroutingapp";
+
+    public static final String PROXY_MEDIA_ROUTER_APP_APK =
+            "CtsMediaRouterHostSideTestMediaRoutingControlApp.apk";
+
+    public static final String PROXY_MEDIA_ROUTER_APP_TEST_CLASS =
+            "android.media.router.cts.proxyroutingapp.MediaRouter2DeviceTest";
 
     public static final String ROUTE_ID_APP_1_ROUTE_1 = "route_1-1";
     public static final String ROUTE_ID_APP_1_ROUTE_2 = "route_1-2";
