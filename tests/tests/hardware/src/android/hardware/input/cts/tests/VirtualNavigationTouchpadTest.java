@@ -22,8 +22,8 @@ import static org.junit.Assert.assertThrows;
 
 import android.hardware.display.VirtualDisplay;
 import android.hardware.input.VirtualNavigationTouchpad;
-import android.hardware.input.VirtualNavigationTouchpadConfig;
 import android.hardware.input.VirtualTouchEvent;
+import android.hardware.input.cts.VirtualDeviceUtils;
 import android.os.SystemClock;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -52,19 +52,6 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
     void onSetUpVirtualInputDevice() {
         mVirtualNavigationTouchpad = createVirtualNavigationTouchpad(
                 mVirtualDisplay.getDisplay().getDisplayId());
-    }
-
-    VirtualNavigationTouchpad createVirtualNavigationTouchpad(int displayId) {
-        final VirtualNavigationTouchpadConfig navigationTouchpadConfig =
-                new VirtualNavigationTouchpadConfig.Builder(TOUCHPAD_WIDTH, TOUCHPAD_HEIGHT)
-                        .setVendorId(VENDOR_ID)
-                        .setProductId(PRODUCT_ID)
-                        .setInputDeviceName(DEVICE_NAME)
-                        .setAssociatedDisplayId(displayId)
-                        .build();
-
-        return mVirtualDevice.createVirtualNavigationTouchpad(
-                navigationTouchpadConfig);
     }
 
     @Override
@@ -134,7 +121,7 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
 
     @Test
     public void createVirtualNavigationTouchpad_unownedDisplay_throwsException() {
-        VirtualDisplay unownedDisplay = createUnownedVirtualDisplay();
+        VirtualDisplay unownedDisplay = VirtualDeviceUtils.createUnownedVirtualDisplay();
         assertThrows(SecurityException.class,
                 () -> createVirtualNavigationTouchpad(unownedDisplay.getDisplay().getDisplayId()));
         unownedDisplay.release();
@@ -336,5 +323,10 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
         event.setSource(InputDevice.SOURCE_TOUCH_NAVIGATION);
         event.setDisplayId(mVirtualDisplay.getDisplay().getDisplayId());
         return event;
+    }
+
+    private VirtualNavigationTouchpad createVirtualNavigationTouchpad(int displayId) {
+        return VirtualDeviceUtils.createNavigationTouchpad(mVirtualDevice, DEVICE_NAME, displayId,
+                TOUCHPAD_WIDTH, TOUCHPAD_HEIGHT);
     }
 }

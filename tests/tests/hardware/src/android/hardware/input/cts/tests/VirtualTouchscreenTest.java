@@ -25,7 +25,7 @@ import android.graphics.Point;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.input.VirtualTouchEvent;
 import android.hardware.input.VirtualTouchscreen;
-import android.hardware.input.VirtualTouchscreenConfig;
+import android.hardware.input.cts.VirtualDeviceUtils;
 import android.view.InputEvent;
 import android.view.MotionEvent;
 
@@ -52,19 +52,6 @@ public class VirtualTouchscreenTest extends VirtualDeviceTestCase {
         mVirtualTouchscreen = createVirtualTouchscreen(mVirtualDisplay.getDisplay().getDisplayId());
     }
 
-    VirtualTouchscreen createVirtualTouchscreen(int displayId) {
-        final Point size = new Point();
-        mVirtualDisplay.getDisplay().getSize(size);
-        final VirtualTouchscreenConfig touchscreenConfig =
-                new VirtualTouchscreenConfig.Builder(size.x, size.y)
-                        .setVendorId(VENDOR_ID)
-                        .setProductId(PRODUCT_ID)
-                        .setInputDeviceName(DEVICE_NAME)
-                        .setAssociatedDisplayId(displayId)
-                        .build();
-        return mVirtualDevice.createVirtualTouchscreen(touchscreenConfig);
-    }
-
     @Override
     void onTearDownVirtualInputDevice() {
         if (mVirtualTouchscreen != null) {
@@ -76,7 +63,8 @@ public class VirtualTouchscreenTest extends VirtualDeviceTestCase {
     public void sendTouchEvent() {
         final float inputSize = 1f;
         // Convert the input axis size to its equivalent fraction of the total screen.
-        final float computedSize = inputSize / (DISPLAY_WIDTH - 1f);
+        final float computedSize =
+                inputSize / (VirtualDeviceUtils.getDisplaySize(mVirtualDisplay).x - 1f);
         final float x = 50f;
         final float y = 50f;
 
@@ -222,9 +210,16 @@ public class VirtualTouchscreenTest extends VirtualDeviceTestCase {
 
     @Test
     public void createVirtualTouchscreen_unownedDisplay_throwsException() {
-        VirtualDisplay unownedDisplay = createUnownedVirtualDisplay();
+        VirtualDisplay unownedDisplay = VirtualDeviceUtils.createUnownedVirtualDisplay();
         assertThrows(SecurityException.class,
                 () -> createVirtualTouchscreen(unownedDisplay.getDisplay().getDisplayId()));
         unownedDisplay.release();
+    }
+
+    private VirtualTouchscreen createVirtualTouchscreen(int displayId) {
+        Point size = new Point();
+        mVirtualDisplay.getDisplay().getSize(size);
+        return VirtualDeviceUtils.createTouchscreen(mVirtualDevice, DEVICE_NAME, displayId,
+                size.x, size.y);
     }
 }
