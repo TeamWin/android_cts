@@ -20,6 +20,7 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.text.TextUtils;
 import android.os.UserHandle;
 import android.util.Log;
 
@@ -42,6 +43,7 @@ import java.io.IOException;
 public class PhotoPickerBaseTest {
     private static final String TAG = "PhotoPickerBaseTest";
     public static int REQUEST_CODE = 42;
+    protected static final String INVALID_CLOUD_PROVIDER = "Invalid";
     private static final Instrumentation sInstrumentation =
             InstrumentationRegistry.getInstrumentation();
     protected static final String sTargetPackageName =
@@ -85,6 +87,11 @@ public class PhotoPickerBaseTest {
     }
 
     protected static void setCloudProvider(@Nullable String authority) throws Exception {
+        if (INVALID_CLOUD_PROVIDER.equals(authority)) {
+            Log.w(TAG, "Cloud provider is invalid. "
+                    + "Ignoring the request to set the cloud provider to invalid");
+            return;
+        }
         if (authority == null) {
             sDevice.executeShellCommand(
                     "content call"
@@ -111,11 +118,11 @@ public class PhotoPickerBaseTest {
     }
 
     private static String extractCloudProvider(String out) {
-        if (out == null) {
-            Log.d(TAG, "Failed request to get current cloud provider");
-            return null;
+        String[] splitOutput;
+        if (TextUtils.isEmpty(out) || ((splitOutput = out.split("=")).length < 2)) {
+            throw new RuntimeException("Could not get current cloud provider. Output: " + out);
         }
-        String cloudprovider = (out.split("=")[1]);
+        String cloudprovider = splitOutput[1];
         cloudprovider = cloudprovider.substring(0, cloudprovider.length() - 3);
         if (cloudprovider.equals("null")) {
             return null;

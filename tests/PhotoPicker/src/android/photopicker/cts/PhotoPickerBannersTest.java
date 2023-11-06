@@ -42,6 +42,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.photopicker.cts.cloudproviders.CloudProviderPrimary;
+import android.util.Log;
 
 
 import androidx.annotation.Nullable;
@@ -64,7 +65,7 @@ import java.io.IOException;
 //  We currently can't do this in R.
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 public class PhotoPickerBannersTest extends PhotoPickerBaseTest {
-
+    private static final String TAG = PhotoPickerBannersTest.class.getSimpleName();
     private static boolean sCloudMediaPreviouslyEnabled;
     private static String sPreviouslyAllowedCloudProviders;
     @Nullable
@@ -78,7 +79,13 @@ public class PhotoPickerBannersTest extends PhotoPickerBaseTest {
         if (sCloudMediaPreviouslyEnabled) {
             sPreviouslyAllowedCloudProviders = getAllowedProvidersDeviceConfig();
         }
-        sPreviouslySetCloudProvider = getCurrentCloudProvider();
+
+        try {
+            sPreviouslySetCloudProvider = getCurrentCloudProvider();
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Could not get previously set cloud provider", e);
+            sPreviouslySetCloudProvider = INVALID_CLOUD_PROVIDER;
+        }
 
         // Override the allowed cloud providers config to enable the banners.
         enableCloudMediaAndSetAllowedCloudProviders(sTargetPackageName);
