@@ -67,7 +67,7 @@ import android.car.hardware.property.LaneDepartureWarningState;
 import android.car.hardware.property.LaneKeepAssistState;
 import android.car.hardware.property.LocationCharacterization;
 import android.car.hardware.property.PropertyNotAvailableException;
-import android.car.hardware.property.SubscriptionOption;
+import android.car.hardware.property.Subscription;
 import android.car.hardware.property.TrailerState;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardStatus;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardType;
@@ -6535,7 +6535,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             int invalidPropertyId = -1;
 
             assertThrows(IllegalArgumentException.class, () ->
-                    mCarPropertyManager.subscribePropertyEvents(List.of(new SubscriptionOption
+                    mCarPropertyManager.subscribePropertyEvents(List.of(new Subscription
                             .Builder(invalidPropertyId)
                             .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).build()),
                     /* callbackExecutor= */ null, new CarPropertyEventCounter()));
@@ -6561,14 +6561,14 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL));
 
             CarPropertyEventCallback callback = new CarPropertyEventCounter();
-            assertThat(mCarPropertyManager.subscribePropertyEvents(List.of(new SubscriptionOption
+            assertThat(mCarPropertyManager.subscribePropertyEvents(List.of(new Subscription
                             .Builder(VehiclePropertyIds.PERF_VEHICLE_SPEED)
                             .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).build()),
                     Executors.newSingleThreadExecutor(), callback))
                     .isTrue();
 
             assertThrows(IllegalArgumentException.class, () ->
-                    mCarPropertyManager.subscribePropertyEvents(List.of(new SubscriptionOption
+                    mCarPropertyManager.subscribePropertyEvents(List.of(new Subscription
                                     .Builder(VehiclePropertyIds.WHEEL_TICK)
                                     .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).build()),
                             Executors.newSingleThreadExecutor(), callback));
@@ -6586,9 +6586,9 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     public void testSubscribeOverlappingPropIdAreaIdInOneCall_notAllowed() throws Exception {
         runWithShellPermissionIdentity(() -> assertThrows(IllegalArgumentException.class, () ->
                 mCarPropertyManager.subscribePropertyEvents(
-                List.of(new SubscriptionOption.Builder(VehiclePropertyIds.HVAC_FAN_SPEED)
+                List.of(new Subscription.Builder(VehiclePropertyIds.HVAC_FAN_SPEED)
                                 .addAreaId(SEAT_ROW_1_LEFT).addAreaId(SEAT_ROW_1_RIGHT).build(),
-                        new SubscriptionOption.Builder(VehiclePropertyIds.HVAC_FAN_SPEED)
+                        new Subscription.Builder(VehiclePropertyIds.HVAC_FAN_SPEED)
                                 .addAreaId(SEAT_ROW_1_LEFT).build()),
                 null, new CarPropertyEventCounter())));
     }
@@ -6641,12 +6641,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
                     speedListener.resetCountDownLatch(UI_RATE_EVENT_COUNTER);
                     mCarPropertyManager.subscribePropertyEvents(
-                            List.of(new SubscriptionOption
+                            List.of(new Subscription
                                             .Builder(vehicleSpeed)
                                             .setUpdateRateUi()
                                             .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL)
                                             .build(),
-                                    new SubscriptionOption
+                                    new Subscription
                                             .Builder(vehicleSpeedDisplay)
                                             .setUpdateRateUi()
                                             .addAreaId(
@@ -6707,13 +6707,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
                     speedListenerUI.resetCountDownLatch(UI_RATE_EVENT_COUNTER);
                     mCarPropertyManager.subscribePropertyEvents(
-                            List.of(new SubscriptionOption
+                            List.of(new Subscription
                                     .Builder(VehiclePropertyIds.PERF_VEHICLE_SPEED)
                                     .setUpdateRateUi()
                                     .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).build()),
                             /* callbackExecutor= */ null, speedListenerUI);
                     mCarPropertyManager.subscribePropertyEvents(
-                            List.of(new SubscriptionOption
+                            List.of(new Subscription
                                     .Builder(VehiclePropertyIds.PERF_VEHICLE_SPEED)
                                     .setUpdateRateFastest().addAreaId(
                                             VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).build()),
@@ -6755,7 +6755,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     CarPropertyEventCounter nightModeListener = new CarPropertyEventCounter();
                     nightModeListener.resetCountDownLatch(ONCHANGE_RATE_EVENT_COUNTER);
                     mCarPropertyManager.subscribePropertyEvents(
-                            List.of(new SubscriptionOption.Builder(nightMode).addAreaId(0).build()),
+                            List.of(new Subscription.Builder(nightMode).addAreaId(0).build()),
                             /* callbackExecutor= */ null, nightModeListener);
                     nightModeListener.assertOnChangeEventCalled();
                     assertThat(nightModeListener.receivedEvent(nightMode)).isEqualTo(1);
