@@ -125,6 +125,7 @@ filegroup {
     name: "CtsWindowManagerDeviceActivity-src",
     srcs: [
         "src/**/activity/*.java",
+        "src/**/activity/lifecycle/*.java",
         "src/**/intent/*.java",
     ],
 }
@@ -180,6 +181,7 @@ android_test {
     defaults: ["CtsWindowManagerDeviceDefault"],
 
     srcs: [
+        ":CtsWindowManagerDeviceHelper-src",
         ":CtsWindowManagerDeviceActivity-src",
         ":CtsVerifierMockVrListenerServiceFiles",
     ],
