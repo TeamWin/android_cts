@@ -17,10 +17,11 @@
 package android.media.cujlargetest.cts;
 
 import android.media.cujcommon.cts.CujTestBase;
+import android.media.cujcommon.cts.CujTestParam;
+import android.media.cujcommon.cts.PlayerListener;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.PlatinumTest;
 
-import androidx.media3.common.C;
 import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -50,44 +51,43 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
   private static final String MP4_ELEPHANTSDREAM_BIGBUCKBUNNY_CONCAT_1080P_AVC_30MIN_URI_STRING =
       MEDIA_DIR + "ElephantsDream_BigBuckBunny_concat_1080p_avc_30min.mp4";
 
-  private final List<String> mMediaUrls;
-  private final long mTimeoutMilliSeconds;
-  private final boolean mIsSeekTest;
-  private final int mNumOfSeekIteration;
-  private final long mSeekStartPosition;
-  private final long mSeekTimeUs;
+  CujTestParam mCujTestParam;
 
-  public CtsMediaLargeFormPlaybackTest(List<String> mediaUrls, long timeoutMilliSeconds,
-      boolean isSeekTest, int numOfSeekIteration, long seekStartPosition, long seekTimeUs,
-      String testType) {
-    super();
-    this.mMediaUrls = mediaUrls;
-    this.mTimeoutMilliSeconds = timeoutMilliSeconds;
-    this.mIsSeekTest = isSeekTest;
-    this.mNumOfSeekIteration = numOfSeekIteration;
-    this.mSeekStartPosition = seekStartPosition;
-    this.mSeekTimeUs = seekTimeUs;
+  public CtsMediaLargeFormPlaybackTest(CujTestParam cujTestParam, String testType) {
+    super(cujTestParam.playerListener());
+    mCujTestParam = cujTestParam;
   }
 
   /**
    * Returns the list of parameters
    */
-  @Parameterized.Parameters(name = "{index}_{6}")
+  @Parameterized.Parameters(name = "{index}_{1}")
   public static Collection<Object[]> input() {
-    // mediaUrl, timeoutMilliSeconds, isSeekTest, numOfSeekIteration, seekStartPosition, seekTimeUs
+    // CujTestParam, testId
     final List<Object[]> exhaustiveArgsList = new ArrayList<>(Arrays.asList(new Object[][]{
-        {prepareVP9_640x480_5minVideoList(), 930000, false, C.LENGTH_UNSET, C.LENGTH_UNSET,
-            C.LENGTH_UNSET, "VP9_640x480_5min"},
-        {prepareVP9_640x480_5minVideoList(), 930000, true, 30, 30000, 10000,
+        {CujTestParam.builder().setMediaUrls(prepareVP9_640x480_5minVideoList())
+            .setTimeoutMilliSeconds(930000)
+            .setPlayerListener(PlayerListener.createListenerForPlaybackTest()).build(),
+            "VP9_640x480_5min"},
+        {CujTestParam.builder().setMediaUrls(prepareVP9_640x480_5minVideoList())
+            .setTimeoutMilliSeconds(930000)
+            .setPlayerListener(PlayerListener.createListenerForSeekTest(30, 10000, 30000)).build(),
             "VP9_640x480_5min_seekTest"},
-        {prepareAvc_1080p_30minVideoList(), 1830000, false, C.LENGTH_UNSET, C.LENGTH_UNSET,
-            C.LENGTH_UNSET, "Avc_1080p_30min"},
-        {prepareAvc_1080p_30minVideoList(), 1830000, true, 30, 30000, 10000,
+        {CujTestParam.builder().setMediaUrls(prepareAvc_1080p_30minVideoList())
+            .setTimeoutMilliSeconds(1830000)
+            .setPlayerListener(PlayerListener.createListenerForPlaybackTest()).build(),
+            "Avc_1080p_30min"},
+        {CujTestParam.builder().setMediaUrls(prepareAvc_1080p_30minVideoList())
+            .setTimeoutMilliSeconds(1830000)
+            .setPlayerListener(PlayerListener.createListenerForSeekTest(30, 10000, 30000)).build(),
             "Avc_1080p_30min_seekTest"},
     }));
     return exhaustiveArgsList;
   }
 
+  /**
+   * Prepare Vp9 640x480 5min video list.
+   */
   public static List<String> prepareVP9_640x480_5minVideoList() {
     List<String> videoInput = Arrays.asList(
         WEBM_ELEPHANTDREAM_640x480_VP9_5MIN_URI_STRING,
@@ -96,6 +96,9 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
     return videoInput;
   }
 
+  /**
+   * Prepare Avc 1080p 30min video list.
+   */
   public static List<String> prepareAvc_1080p_30minVideoList() {
     List<String> videoInput = Arrays.asList(
         MP4_ELEPHANTSDREAM_BIGBUCKBUNNY_CONCAT_1080P_AVC_30MIN_URI_STRING);
@@ -111,7 +114,6 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
   @PlatinumTest(focusArea = "media")
   @Test
   public void testVideoPlayback() throws Exception {
-    play(mMediaUrls, mTimeoutMilliSeconds, mIsSeekTest, mNumOfSeekIteration, mSeekStartPosition,
-        mSeekTimeUs);
+    play(mCujTestParam.mediaUrls(), mCujTestParam.timeoutMilliSeconds());
   }
 }

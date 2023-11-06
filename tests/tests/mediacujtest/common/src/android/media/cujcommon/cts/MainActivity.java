@@ -32,10 +32,10 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-  protected PlayerView exoplayerView;
-  protected ExoPlayer player;
-  protected static List<String> videoUrls = new ArrayList<>();
-  protected Player.Listener playerListener;
+  protected PlayerView mExoplayerView;
+  protected ExoPlayer mPlayer;
+  protected static List<String> sVideoUrls = new ArrayList<>();
+  protected Player.Listener mPlayerListener;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -45,50 +45,62 @@ public class MainActivity extends AppCompatActivity {
     buildPlayer();
   }
 
-  // Build the player
+  /**
+   * Build the player
+   */
   protected void buildPlayer() {
-    player = new ExoPlayer.Builder(this).build();
-    exoplayerView = findViewById(R.id.exoplayer);
-    exoplayerView.setPlayer(player);
+    mPlayer = new ExoPlayer.Builder(this).build();
+    mExoplayerView = findViewById(R.id.exoplayer);
+    mExoplayerView.setPlayer(mPlayer);
   }
 
-  // Prepare input list and add it to player's playlist.
+  /**
+   * Prepare input list and add it to player's playlist.
+   */
   public void prepareMediaItems(List<String> urls) {
-    videoUrls = urls != null ? Collections.unmodifiableList(urls) : null;
-    if (videoUrls == null) {
+    sVideoUrls = urls != null ? Collections.unmodifiableList(urls) : null;
+    if (sVideoUrls == null) {
       return;
     }
-    for (String videoUrl : videoUrls) {
+    for (String videoUrl : sVideoUrls) {
       MediaItem mediaItem = MediaItem.fromUri(Uri.parse(videoUrl));
-      player.addMediaItem(mediaItem);
+      mPlayer.addMediaItem(mediaItem);
     }
   }
 
-  // Prepare the player and play the list
+  /**
+   * Prepare the player and play the list
+   */
   public void run() {
-    player.prepare();
-    player.play();
+    mPlayer.prepare();
+    mPlayer.play();
   }
 
-  // Resume the player
+  /**
+   * Resume the player.
+   */
   @Override
   protected void onResume() {
     super.onResume();
-    player.play();
+    mPlayer.play();
   }
 
+  /**
+   * Stop the player.
+   */
   @Override
-  // Stop the player
   protected void onStop() {
     super.onStop();
-    player.pause();
+    mPlayer.pause();
   }
 
-  // Release the player and destroy the activity
+  /**
+   * Release the player and destroy the activity
+   */
   @Override
   protected void onDestroy() {
     super.onDestroy();
-    player.release();
+    mPlayer.release();
     getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
   }
 
@@ -98,19 +110,17 @@ public class MainActivity extends AppCompatActivity {
    * <p>This method can be called from any thread.
    *
    * @param listener The listener to register.
-   *
    */
   public void addPlayerListener(Player.Listener listener) {
-    player.addListener(listener);
-    this.playerListener = listener;
+    mPlayer.addListener(listener);
+    this.mPlayerListener = listener;
   }
 
   /**
    * Unregister a listener registered through addPlayerListener(Listener). The listener will no
    * longer receive events.
-   *
    */
   public void removePlayerListener() {
-    player.removeListener(this.playerListener);
+    mPlayer.removeListener(this.mPlayerListener);
   }
 }
