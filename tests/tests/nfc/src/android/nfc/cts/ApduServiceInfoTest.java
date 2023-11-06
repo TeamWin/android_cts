@@ -219,4 +219,16 @@ public class ApduServiceInfoTest {
         assertNotNull(apduServiceInfo.loadIcon(pm));
         assertNull(apduServiceInfo.loadBanner(pm));
     }
+
+    @Test
+    public void test_SetOtherServiceStateSelected() throws Exception {
+        ApduServiceInfo apduServiceInfo = new ApduServiceInfo(mResolveInfo, false, "",
+                new ArrayList<>(), mDynamicAidGroups, false, 0, 0, "", "", "");
+
+        assertFalse(apduServiceInfo.isOtherServiceEnabled());
+
+        apduServiceInfo.setOtherServiceEnabled(true);
+        assertTrue(apduServiceInfo.isOtherServiceEnabled());
+    }
+
 }
