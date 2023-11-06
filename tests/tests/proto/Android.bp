@@ -36,3 +36,20 @@ android_test {
     libs: ["android.test.runner"],
     static_libs: ["ctstestrunner-axt"],
 }
+
+android_ravenwood_test {
+    name: "CtsProtoTestCasesRavenwood",
+    defaults: ["cts_defaults"],
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.proto",
+    ],
+    proto: {
+        type: "nano",
+    },
+    static_libs: [
+        "junit",
+    ],
+    platform_apis: true,
+    auto_gen_config: true,
+}
