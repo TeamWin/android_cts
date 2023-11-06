@@ -157,6 +157,32 @@ public class NetworkingHelper {
         return unquoteSSID(ssid.get());
     }
 
+    boolean hasCellularNetwork() throws Exception {
+        if (!mHasTelephony) {
+            Log.d(TAG, "Telephony feature not found");
+            return false;
+        }
+
+        if (isAirplaneModeOn()) {
+            // Shortcut. When mHasTelephony=true, setAirplaneMode makes sure the cellular network
+            // is connected before returning. Thus, if we turn airplane mode off and the wait
+            // succeeds, we can assume there's a cellular network.
+            setAirplaneMode(false);
+            return true;
+        }
+
+        Network[] networks = mConnectivityManager.getAllNetworks();
+        for (Network network : networks) {
+            if (mConnectivityManager.getNetworkCapabilities(network)
+                    .hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                return true;
+            }
+        }
+
+        Log.d(TAG, "Cellular network not found");
+        return false;
+    }
+
     boolean hasEthernetConnection() {
         if (!mHasEthernet) return false;
         Network[] networks = mConnectivityManager.getAllNetworks();
@@ -309,6 +335,10 @@ public class NetworkingHelper {
      * Taken from {@link android.net.http.cts.ApacheHttpClientTest}.
      */
     void setWifiState(final boolean enable) throws Exception {
+        if (!mHasWifi) {
+            Log.w(TAG, "Tried to change wifi state when device doesn't have wifi feature");
+            return;
+        }
         if (enable != isWiFiConnected()) {
             NetworkRequest nr = new NetworkRequest.Builder().clearCapabilities().build();
             NetworkCapabilities nc = new NetworkCapabilities.Builder()

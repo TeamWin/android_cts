@@ -258,8 +258,8 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
      * verify the job runs if the device is connected to wifi.
      */
     @RequiresDevice // Emulators don't always have access to wifi/network
-    public void testUnmeteredConnectionSatisfiesFlexibleConstraints() throws Exception {
-        if (!deviceSupportsFlexConstraints()) {
+    public void testWifiSatisfiesFlexibleConstraints() throws Exception {
+        if (!deviceSupportsFlexConstraints() || !deviceSupportsFlexTransportAffinities()) {
             return;
         }
         if (mNetworkingHelper.hasEthernetConnection()) {
@@ -270,7 +270,14 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
             Log.d(TAG, "Skipping test that requires the device be WiFi enabled.");
             return;
         }
-        mNetworkingHelper.setWifiMeteredState(true);
+        if (!mNetworkingHelper.hasCellularNetwork()) {
+            Log.d(TAG, "Skipping test that requires a cellular network");
+            return;
+        }
+
+        // Switch device to cellular network
+        mNetworkingHelper.setAirplaneMode(false);
+        mNetworkingHelper.setWifiState(false);
 
         mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
         scheduleJobToExecute();
@@ -281,8 +288,7 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         Thread.sleep(12_000);
 
         assertJobNotReady();
-        mNetworkingHelper.setWifiMeteredState(false);
-        Thread.sleep(1_000);
+        mNetworkingHelper.setWifiState(true);
 
         runJob();
 
@@ -294,7 +300,7 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
      * Schedule a job that requires no network.
      * Verify it only requires 3 flexible constraints.
      */
-    public void testPreferUnMetered_RequiredNone() throws Exception {
+    public void testPreferredTransport_RequiredNone() throws Exception {
         if (!deviceSupportsFlexConstraints()) {
             return;
         }
@@ -310,20 +316,24 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
     }
 
     /**
-     * Schedule a job that requires an unmetered network.
+     * Schedule a job that requires a cellular network.
      * Verify it only requires 3 flexible constraints.
      */
     @RequiresDevice // Emulators don't always have access to wifi/network
-    public void testPreferUnMetered_RequiredUnMetered() throws Exception {
-        if (!deviceSupportsFlexConstraints()) {
+    public void testPreferredTransport_RequiredCellular() throws Exception {
+        if (!deviceSupportsFlexConstraints() || !deviceSupportsFlexTransportAffinities()) {
             return;
         }
-        if (!mNetworkingHelper.hasWifiFeature()) {
-            Log.d(TAG, "Skipping test that requires WiFi.");
+        if (!mNetworkingHelper.hasCellularNetwork()) {
+            Log.d(TAG, "Skipping test that requires a cellular network");
             return;
         }
-        mNetworkingHelper.setWifiMeteredState(false);
-        mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED);
+
+        mNetworkingHelper.setAirplaneMode(false);
+        if (mNetworkingHelper.hasWifiFeature()) {
+            mNetworkingHelper.setWifiState(false);
+        }
+        mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_CELLULAR);
         scheduleJobToExecute();
         assertJobNotReady();
         // Wait for one constraint to drop.
@@ -336,10 +346,54 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
                 kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
     }
 
+    /**
+     * Schedule a job that requires any network, confirm that the preferred transport logic doesn't
+     * apply when it's not defined for the device.
+     */
+    @RequiresDevice // Emulators don't always have access to wifi/network
+    public void testPreferredTransport_UnsupportedDevice() throws Exception {
+        if (!deviceSupportsFlexConstraints() || deviceSupportsFlexTransportAffinities()) {
+            return;
+        }
+        if (mNetworkingHelper.hasEthernetConnection()) {
+            Log.d(TAG, "Can't run test with an active ethernet connection");
+            return;
+        }
+        if (!mNetworkingHelper.hasCellularNetwork()) {
+            Log.d(TAG, "Skipping test that requires a cellular network");
+            return;
+        }
+
+        // Switch device to cellular network
+        mNetworkingHelper.setAirplaneMode(false);
+        if (mNetworkingHelper.hasWifiFeature()) {
+            mNetworkingHelper.setWifiState(false);
+        }
+
+        mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
+        scheduleJobToExecute();
+
+        assertJobNotReady();
+
+        satisfyAllSystemWideConstraints();
+
+        runJob();
+
+        assertTrue(
+                "Job with flexible constraint did not fire when transport affinity not applicable",
+                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
+    }
+
     private boolean deviceSupportsFlexConstraints() {
         // Flex constraints are disabled on auto devices.
         return !getContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    private boolean deviceSupportsFlexTransportAffinities() {
+        // Transport affinities aren't enabled on watches by default.
+        return !getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 
     private void satisfyAllSystemWideConstraints() throws Exception {

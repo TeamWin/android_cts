@@ -29,7 +29,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
 import android.net.ConnectivityManager;
-import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.wifi.WifiManager;
@@ -65,8 +64,6 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
     /** Whether the device running these tests supports WiFi. */
     private boolean mHasWifi;
-    /** Whether the device running these tests supports telephony. */
-    private boolean mHasTelephony;
 
     private JobInfo.Builder mBuilder;
 
@@ -82,7 +79,6 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
         PackageManager packageManager = mContext.getPackageManager();
         mHasWifi = packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI);
-        mHasTelephony = packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
         mBuilder = new JobInfo.Builder(CONNECTIVITY_JOB_ID, kJobServiceComponent);
 
         setDataSaverEnabled(false);
@@ -1002,21 +998,8 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      * mobile data.
      * @return True if this device will support a mobile data connection.
      */
-    private boolean checkDeviceSupportsMobileData() {
-        if (!mHasTelephony) {
-            Log.d(TAG, "Skipping test that requires telephony features, not supported by this" +
-                    " device");
-            return false;
-        }
-        Network[] networks = mCm.getAllNetworks();
-        for (Network network : networks) {
-            if (mCm.getNetworkCapabilities(network)
-                    .hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
-                return true;
-            }
-        }
-        Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-        return false;
+    private boolean checkDeviceSupportsMobileData() throws Exception {
+        return mNetworkingHelper.hasCellularNetwork();
     }
 
     private boolean hasEthernetConnection() {
@@ -1046,7 +1029,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      * best effort - there are no public APIs to force connecting to cell data. We disable WiFi
      * and wait for a broadcast that we're connected to cell.
      * We will not call into this function if the device doesn't support telephony.
-     * @see #mHasTelephony
+     * @see NetworkingHelper#hasCellularNetwork
      * @see #checkDeviceSupportsMobileData()
      */
     private void disconnectWifiToConnectToMobile() throws Exception {
