@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package {
     // See: http://go/android-license-faq
     default_applicable_licenses: [
@@ -31,9 +30,13 @@ android_library {
         "androidx.media3.media3-exoplayer",
         "androidx.media3.media3-ui",
     ],
+    libs: [
+        "auto_value_annotations",
+    ],
     srcs: [
         "src/**/*.java",
     ],
+    plugins: ["auto_value_plugin"],
     min_sdk_version: "30",
     sdk_version: "current",
 }

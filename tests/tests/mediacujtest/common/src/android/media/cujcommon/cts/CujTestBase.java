@@ -18,42 +18,55 @@ package android.media.cujcommon.cts;
 
 import static org.junit.Assert.assertEquals;
 
+import android.app.Activity;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+
 import androidx.test.core.app.ActivityScenario;
 
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
-
-/** This class comprises of routines that are generic to all tests. */
+/**
+ * This class comprises of routines that are generic to all tests.
+ */
 public class CujTestBase {
 
+  static final int[] ORIENTATIONS = {
+      ActivityInfo.SCREEN_ORIENTATION_PORTRAIT,
+      ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,
+  };
   protected MainActivity mActivity;
-  protected PlayerListener mListener;
+  public PlayerListener mListener;
 
-  public CujTestBase() {
+  public CujTestBase(PlayerListener playerListener) {
     ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class);
     scenario.onActivity(activity -> {
       this.mActivity = activity;
     });
-    mListener = new PlayerListener(mActivity);
+    mListener = playerListener;
     mActivity.addPlayerListener(mListener);
+    mListener.setActivity(mActivity);
+  }
+
+  /**
+   * Whether the device supports orientation request from apps.
+   */
+  public static boolean supportOrientationRequest(final Activity activity) {
+    final PackageManager pm = activity.getPackageManager();
+    return pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE)
+        && pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT);
   }
 
   /**
    * Prepare the player, input list and add input list to player's playlist. After that, play for
    * the provided playlist and validate playback time.
    *
-   * @param mediaUrls List of mediaurl
+   * @param mediaUrls           List of mediaurl
    * @param timeoutMilliSeconds Timeout for the test
-   * @param isSeekTest True for Seek test
-   * @param numOfSeekIteration Number of seek operation to be done in seek test
-   * @param seekStartPosition The position at which seek start
-   * @param seekTimeUs Seek interval
    */
-  public void play(List<String> mediaUrls, long timeoutMilliSeconds, boolean isSeekTest,
-      int numOfSeekIteration, long seekStartPosition, long seekTimeUs)
+  public void play(List<String> mediaUrls, long timeoutMilliSeconds)
       throws TimeoutException, InterruptedException {
-    mListener.setSeekTestParams(isSeekTest, numOfSeekIteration, seekStartPosition, seekTimeUs);
     long startTime = System.currentTimeMillis();
     mActivity.runOnUiThread(() -> {
       mActivity.prepareMediaItems(mediaUrls);
