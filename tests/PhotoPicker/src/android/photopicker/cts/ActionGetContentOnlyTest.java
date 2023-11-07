@@ -210,8 +210,17 @@ public class ActionGetContentOnlyTest extends PhotoPickerBaseTest {
 
         String photoPickerAppName = "Media";
         UiObject mediaButton = sDevice.findObject(new UiSelector().text(photoPickerAppName));
-
-        assertWithMessage("Timed out waiting for " + photoPickerAppName + " app icon to appear")
+        if (!new UiScrollable(appList).setAsHorizontalList().scrollIntoView(mediaButton)) {
+            // While solving an accessibility bug the app_label was modified from 'Media' to
+            // 'Media picker' and after making the modification, since this test had the
+            // hardcoded value for the name as 'Media' it started failing. After fixing this some
+            // versions of the code became incompatible with this test and hence have modified
+            // the code to work with both names.
+            photoPickerAppName = "Media picker";
+            mediaButton = sDevice.findObject(new UiSelector().text(photoPickerAppName));
+        }
+        assertWithMessage("Timed out waiting for " + photoPickerAppName
+                + " app icon to appear")
                 .that(new UiScrollable(appList).setAsHorizontalList().scrollIntoView(mediaButton))
                 .isTrue();
         sDevice.waitForIdle();
