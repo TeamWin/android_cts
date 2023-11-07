@@ -82,7 +82,10 @@ import android.car.hardware.property.WindshieldWipersSwitch;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
+import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.ArraySet;
 import android.util.Log;
@@ -102,6 +105,7 @@ import com.google.common.collect.Sets;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -125,6 +129,9 @@ import java.util.stream.Collectors;
 public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
     private static final String TAG = CarPropertyManagerTest.class.getSimpleName();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private static final long WAIT_CALLBACK = 1500L;
     private static final int NO_EVENTS = 0;
@@ -6481,6 +6488,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             apis = {
                     "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents"
             })
+    @RequiresFlagsEnabled(Flags.FLAG_BATCHED_SUBSCRIPTIONS)
     public void testSubscribePropertyEventsWithInvalidProp() throws Exception {
         runWithShellPermissionIdentity(() -> {
             int invalidPropertyId = -1;
@@ -6499,6 +6507,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
                     "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents"
             })
+    @RequiresFlagsEnabled(Flags.FLAG_BATCHED_SUBSCRIPTIONS)
     public void testSubscribePropertyEventsWithDifferentExecutorForSamePropIdAreaId_notAllowed()
             throws Exception {
         runWithShellPermissionIdentity(() -> {
@@ -6532,6 +6541,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents"
             }
     )
+    @RequiresFlagsEnabled(Flags.FLAG_BATCHED_SUBSCRIPTIONS)
     public void testSubscribeOverlappingPropIdAreaIdInOneCall_notAllowed() throws Exception {
         runWithShellPermissionIdentity(() -> assertThrows(IllegalArgumentException.class, () ->
                 mCarPropertyManager.subscribePropertyEvents(
@@ -6546,9 +6556,16 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @ApiTest(
             apis = {
                     "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
-                    "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents"
+                    "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents",
+                    "android.car.hardware.property.Subscription.Builder#Builder",
+                    "android.car.hardware.property.Subscription.Builder#setUpdateRateUi",
+                    "android.car.hardware.property.Subscription.Builder#addAreaId",
+                    "android.car.hardware.property.Subscription.Builder#build",
+                    "android.car.hardware.property.Subscription.Builder#"
+                            + "disableVariableUpdateRate"
             }
     )
+    @RequiresFlagsEnabled({Flags.FLAG_BATCHED_SUBSCRIPTIONS, Flags.FLAG_VARIABLE_UPDATE_RATE})
     public void testSubscribePropertyEventsForContinuousPropertyWithBatchedRequest()
             throws Exception {
         runWithShellPermissionIdentity(
@@ -6589,19 +6606,23 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     assertThat(speedListener.receivedErrorWithErrorCode(vehicleSpeedDisplay))
                             .isEqualTo(NO_EVENTS);
 
+                    Subscription speedSubscription = new Subscription
+                            .Builder(vehicleSpeed)
+                            .setUpdateRateUi()
+                            .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL)
+                            .build();
+                    Subscription speedDisplaySubscription = new Subscription
+                            .Builder(vehicleSpeedDisplay)
+                            .setUpdateRateUi()
+                            .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL)
+                            .build();
+                    // We need to receive property update events based on update rate.
+                    speedSubscription.disableVariableUpdateRate();
+                    speedDisplaySubscription.disableVariableUpdateRate();
+
                     speedListener.resetCountDownLatch(UI_RATE_EVENT_COUNTER);
                     mCarPropertyManager.subscribePropertyEvents(
-                            List.of(new Subscription
-                                            .Builder(vehicleSpeed)
-                                            .setUpdateRateUi()
-                                            .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL)
-                                            .build(),
-                                    new Subscription
-                                            .Builder(vehicleSpeedDisplay)
-                                            .setUpdateRateUi()
-                                            .addAreaId(
-                                                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL)
-                                            .build()),
+                            List.of(speedSubscription, speedDisplaySubscription),
                             /* callbackExecutor= */ null, speedListener);
                     speedListener.assertOnChangeEventCalled();
                     mCarPropertyManager.unsubscribePropertyEvents(speedListener);
@@ -6619,13 +6640,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 });
     }
 
-    @Test
-    @ApiTest(
-            apis = {
-                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
-                    "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents"
-            })
-    public void testSubscribePropertyEventsForContinuousProperty() throws Exception {
+    private void subscribePropertyEventsForContinuousPropertyTestCase(boolean flagVUR)
+            throws Exception {
         runWithShellPermissionIdentity(
                 () -> {
                     int vehicleSpeed = VehiclePropertyIds.PERF_VEHICLE_SPEED;
@@ -6654,17 +6670,25 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             .isEqualTo(NO_EVENTS);
 
                     speedListenerUI.resetCountDownLatch(UI_RATE_EVENT_COUNTER);
+                    Subscription uiRateSubscription = new Subscription
+                            .Builder(VehiclePropertyIds.PERF_VEHICLE_SPEED)
+                            .setUpdateRateUi()
+                            .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).build();
+                    Subscription fastestRateSubscription = new Subscription
+                            .Builder(VehiclePropertyIds.PERF_VEHICLE_SPEED)
+                            .setUpdateRateFastest().addAreaId(
+                                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).build();
+                    if (flagVUR) {
+                        // If VUR is enabled, we disable VUR because we need the property events
+                        // to arrive according to update rate.
+                        uiRateSubscription.disableVariableUpdateRate();
+                        fastestRateSubscription.disableVariableUpdateRate();
+                    }
                     mCarPropertyManager.subscribePropertyEvents(
-                            List.of(new Subscription
-                                    .Builder(VehiclePropertyIds.PERF_VEHICLE_SPEED)
-                                    .setUpdateRateUi()
-                                    .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).build()),
+                            List.of(uiRateSubscription),
                             /* callbackExecutor= */ null, speedListenerUI);
                     mCarPropertyManager.subscribePropertyEvents(
-                            List.of(new Subscription
-                                    .Builder(VehiclePropertyIds.PERF_VEHICLE_SPEED)
-                                    .setUpdateRateFastest().addAreaId(
-                                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).build()),
+                            List.of(fastestRateSubscription),
                             /* callbackExecutor= */ null, speedListenerFast);
                     speedListenerUI.assertOnChangeEventCalled();
                     mCarPropertyManager.unsubscribePropertyEvents(speedListenerUI);
@@ -6683,12 +6707,157 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 });
     }
 
+
     @Test
     @ApiTest(
             apis = {
                     "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
-                    "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents"
+                    "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents",
+                    "android.car.hardware.property.Subscription.Builder#Builder",
+                    "android.car.hardware.property.Subscription.Builder#setUpdateRateUi",
+                    "android.car.hardware.property.Subscription.Builder#setUpdateRateFastest",
+                    "android.car.hardware.property.Subscription.Builder#addAreaId",
+                    "android.car.hardware.property.Subscription.Builder#build"
             })
+    @RequiresFlagsEnabled(Flags.FLAG_BATCHED_SUBSCRIPTIONS)
+    @RequiresFlagsDisabled(Flags.FLAG_VARIABLE_UPDATE_RATE)
+    public void testSubscribePropertyEventsForContinuousProperty() throws Exception {
+        subscribePropertyEventsForContinuousPropertyTestCase(false);
+    }
+
+    @Test
+    @ApiTest(
+            apis = {
+                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
+                    "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents",
+                    "android.car.hardware.property.Subscription.Builder#Builder",
+                    "android.car.hardware.property.Subscription.Builder#setUpdateRateUi",
+                    "android.car.hardware.property.Subscription.Builder#setUpdateRateFastest",
+                    "android.car.hardware.property.Subscription.Builder#addAreaId",
+                    "android.car.hardware.property.Subscription.Builder#build",
+                    "android.car.hardware.property.Subscription.Builder#"
+                            + "disableVariableUpdateRate"
+            })
+    @RequiresFlagsEnabled({Flags.FLAG_BATCHED_SUBSCRIPTIONS, Flags.FLAG_VARIABLE_UPDATE_RATE})
+    public void testSubscribePropertyEventsForContinuousProperty_disableVUR() throws Exception {
+        subscribePropertyEventsForContinuousPropertyTestCase(true);
+    }
+
+    private static class DuplicatePropertyEventChecker extends CarPropertyEventCounter {
+        private final Object mLock = new Object();
+        @GuardedBy("mLock")
+        private List<Object> mReceivedValues = new ArrayList<>();
+        @GuardedBy("mLock")
+        private CarPropertyValue mDuplicateValue;
+
+        @Override
+        public void onChangeEvent(CarPropertyValue value) {
+            super.onChangeEvent(value);
+            if (value.getStatus() != CarPropertyValue.STATUS_AVAILABLE) {
+                return;
+            }
+            synchronized (mLock) {
+                for (int i = 0; i < mReceivedValues.size(); i++) {
+                    if (Objects.deepEquals(mReceivedValues.get(i), value.getValue())) {
+                        mDuplicateValue = value;
+                        break;
+                    }
+                }
+                mReceivedValues.add(value.getValue());
+            }
+        }
+
+        CarPropertyValue getDuplicateValue() {
+            synchronized (mLock) {
+                return mDuplicateValue;
+            }
+        }
+    }
+
+    @Test
+    @ApiTest(
+            apis = {
+                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
+                    "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents",
+                    "android.car.hardware.property.Subscription.Builder#Builder",
+                    "android.car.hardware.property.Subscription.Builder#setUpdateRateFastest",
+                    "android.car.hardware.property.Subscription.Builder#addAreaId",
+                    "android.car.hardware.property.Subscription.Builder#build",
+                    "android.car.hardware.property.Subscription.Builder#"
+                            + "disableVariableUpdateRate",
+                    "android.car.hardware.property.CarPropertyConfig#getAreaIdConfig",
+                    "android.car.hardware.property.AreaIdConfig#isVariableUpdateRateSupported"
+            })
+    @RequiresFlagsEnabled({Flags.FLAG_BATCHED_SUBSCRIPTIONS, Flags.FLAG_VARIABLE_UPDATE_RATE})
+    public void testSubscribePropertyEventsForContinuousProperty_enableVUR() throws Exception {
+        runWithShellPermissionIdentity(
+                () -> {
+                    int vehicleSpeed = VehiclePropertyIds.PERF_VEHICLE_SPEED;
+                    CarPropertyConfig<?> carPropertyConfig =
+                            mCarPropertyManager.getCarPropertyConfig(
+                                    VehiclePropertyIds.PERF_VEHICLE_SPEED);
+                    assumeTrue("The CarPropertyConfig of vehicle speed does not exist",
+                            carPropertyConfig != null);
+
+                    // For global property, config for areaId: 0 must exist.
+                    AreaIdConfig areaIdConfig = carPropertyConfig.getAreaIdConfig(0);
+                    boolean vurSupported = areaIdConfig.isVariableUpdateRateSupported();
+                    assumeTrue("Variable Update Rate is not supported for PERF_VEHICLE_SPEED",
+                            vurSupported);
+
+                    long bufferMillis = 1_000; // 1 second
+                    long timeoutMillis = generateTimeoutMillis(carPropertyConfig.getMinSampleRate(),
+                            bufferMillis);
+                    DuplicatePropertyEventChecker vurEventCounter =
+                            new DuplicatePropertyEventChecker();
+                    CarPropertyEventCounter noVurEventCounter = new CarPropertyEventCounter(
+                            timeoutMillis);
+
+                    Subscription speedSubscription = new Subscription
+                            .Builder(vehicleSpeed)
+                            .setUpdateRateUi()
+                            .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).build();
+                    Subscription noVurSpeedSubscription = new Subscription
+                            .Builder(vehicleSpeed)
+                            .setUpdateRateUi()
+                            .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).build();
+                    noVurSpeedSubscription.disableVariableUpdateRate();
+
+                    mCarPropertyManager.subscribePropertyEvents(
+                            List.of(noVurSpeedSubscription), /* callbackExecutor= */ null,
+                            noVurEventCounter);
+                    mCarPropertyManager.subscribePropertyEvents(
+                            List.of(speedSubscription), /* callbackExecutor= */ null,
+                            vurEventCounter);
+
+                    noVurEventCounter.resetCountDownLatch(UI_RATE_EVENT_COUNTER);
+                    // Wait for no VUR subscription to receive some events.
+                    noVurEventCounter.assertOnChangeEventCalled();
+
+                    // Subscribe VUR last and unsubscribe VUR first so that it always gets less
+                    // event even if the property is changing all the time.
+                    mCarPropertyManager.unregisterCallback(vurEventCounter);
+                    mCarPropertyManager.unregisterCallback(noVurEventCounter);
+
+                    assertWithMessage("Subscription with Variable Update Rate enabled must not "
+                            + "receive more events than subscription with VUR disabled").that(
+                                    vurEventCounter.receivedEvent(vehicleSpeed)
+                            ).isAtMost(noVurEventCounter.receivedEvent(vehicleSpeed));
+                    assertWithMessage("Must not receive duplicate property update events when "
+                            + "VUR is enabled").that(vurEventCounter.getDuplicateValue()).isNull();
+                });
+    }
+
+    @Test
+    @ApiTest(
+            apis = {
+                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
+                    "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents",
+                    "android.car.hardware.property.Subscription.Builder#Builder",
+                    "android.car.hardware.property.Subscription.Builder#addAreaId",
+                    "android.car.hardware.property.Subscription.Builder#build"
+            })
+    @RequiresFlagsEnabled(Flags.FLAG_BATCHED_SUBSCRIPTIONS)
     public void testSubscribePropertyEventsForOnchangeProperty() throws Exception {
         runWithShellPermissionIdentity(
                 () -> {
@@ -6794,10 +6963,9 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             apis = {
                     "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
                     "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents"
-
             })
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_BATCHED_SUBSCRIPTIONS)
+    @RequiresFlagsEnabled({Flags.FLAG_BATCHED_SUBSCRIPTIONS, Flags.FLAG_VARIABLE_UPDATE_RATE})
     public void testUnsubscribePropertyEvents() throws Exception {
         runWithShellPermissionIdentity(
                 () -> {
@@ -6805,16 +6973,23 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     CarPropertyEventCounter speedListenerNormal = new CarPropertyEventCounter();
                     CarPropertyEventCounter speedListenerUI = new CarPropertyEventCounter();
 
-                    mCarPropertyManager.subscribePropertyEvents(List.of(
-                            new Subscription.Builder(vehicleSpeed).setUpdateRateNormal()
-                                    .build()), /* callbackExecutor= */ null, speedListenerNormal);
+                    // Disable VUR so that we can receive multiple events.
+                    Subscription normalRateSubscription = new Subscription.Builder(vehicleSpeed)
+                            .setUpdateRateNormal().build();
+                    normalRateSubscription.disableVariableUpdateRate();
+                    mCarPropertyManager.subscribePropertyEvents(List.of(normalRateSubscription),
+                            /* callbackExecutor= */ null, speedListenerNormal);
 
                     // test on unregistering a callback that was never registered
                     mCarPropertyManager.unsubscribePropertyEvents(speedListenerUI);
-                    mCarPropertyManager.subscribePropertyEvents(List.of(
-                            new Subscription.Builder(vehicleSpeed).setUpdateRateUi()
-                                    .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL)
-                                    .build()), /* callbackExecutor= */ null, speedListenerUI);
+
+                    // Disable VUR so that we can receive multiple events.
+                    Subscription uiRateSubscription = new Subscription.Builder(vehicleSpeed)
+                            .setUpdateRateUi().build();
+                    uiRateSubscription.disableVariableUpdateRate();
+                    mCarPropertyManager.subscribePropertyEvents(List.of(uiRateSubscription),
+                            /* callbackExecutor= */ null, speedListenerUI);
+
                     speedListenerUI.resetCountDownLatch(UI_RATE_EVENT_COUNTER);
                     speedListenerUI.assertOnChangeEventCalled();
                     mCarPropertyManager.unsubscribePropertyEvents(speedListenerNormal,
@@ -6843,7 +7018,6 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             apis = {
                     "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
                     "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents"
-
             })
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_BATCHED_SUBSCRIPTIONS)
