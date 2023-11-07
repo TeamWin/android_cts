@@ -19,6 +19,7 @@ package android.binder.cts;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.os.PersistableBundle;
 import android.os.RemoteException;
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -198,6 +199,11 @@ public class TestImpl extends ITest.Stub {
 
   @Override
   public RegularPolygon RepeatNullablePolygon(RegularPolygon in_value) {
+    return in_value;
+  }
+
+  @Override
+  public PersistableBundle RepeatPersistableBundle(PersistableBundle in_value) {
     return in_value;
   }
 

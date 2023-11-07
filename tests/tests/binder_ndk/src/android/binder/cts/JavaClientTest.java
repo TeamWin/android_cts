@@ -16,6 +16,7 @@
 
 package android.binder.cts;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -24,6 +25,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.os.PersistableBundle;
 import android.os.Process;
 import android.os.RemoteException;
 import android.util.Log;
@@ -338,6 +340,71 @@ public class JavaClientTest {
     }
 
     @Test
+    public void testRepeatDefaultPersistableBundle() throws RemoteException {
+        PersistableBundle bundle = new PersistableBundle();
+        PersistableBundle result = mInterface.RepeatPersistableBundle(bundle);
+        assertNotEquals(null, result);
+        assertEquals(bundle.size(), result.size());
+    }
+
+    @Test
+    public void testRepeatTypesPersistableBundle() throws RemoteException {
+        PersistableBundle bundle = new PersistableBundle();
+        boolean[] boolV = {true, false, true};
+        int[] intV = {123, 111, 321};
+        long[] longV = {123, 111, 321};
+        double[] doubleV = {123, 111, 321};
+        String[] stringV = {"hello", "world", "!"};
+        bundle.putBoolean("bool", true);
+        bundle.putInt("int", 11111);
+        bundle.putLong("long", 12345);
+        bundle.putDouble("double", 54321);
+        bundle.putString("string", "cool");
+        bundle.putBooleanArray("boolv", boolV);
+        bundle.putIntArray("intv", intV);
+        bundle.putLongArray("longv", longV);
+        bundle.putDoubleArray("doublev", doubleV);
+        bundle.putStringArray("stringv", stringV);
+        PersistableBundle innerBundle = new PersistableBundle();
+        innerBundle.putBoolean("bool", true);
+        bundle.putPersistableBundle("bundle", innerBundle);
+        PersistableBundle result = mInterface.RepeatPersistableBundle(bundle);
+        assertNotEquals(null, result);
+        assertEquals(bundle.size(), result.size());
+        assertEquals(true, result.getBoolean("bool"));
+        assertEquals(11111, result.getInt("int"));
+        assertEquals(12345, result.getLong("long"));
+        assertEquals(54321, result.getDouble("double"), 0.0);
+        assertEquals("cool", result.getString("string"));
+        assertArrayEquals(boolV, result.getBooleanArray("boolv"));
+        assertArrayEquals(intV, result.getIntArray("intv"));
+        assertArrayEquals(longV, result.getLongArray("longv"));
+        // no assertArrayEquals for double
+        double[] ret = result.getDoubleArray("doublev");
+        for (int i = 0; i < doubleV.length; i++) {
+          assertEquals(doubleV[i], ret[i], 0.0);
+        }
+        assertArrayEquals(stringV, result.getStringArray("stringv"));
+        assertEquals(innerBundle.size(), result.getPersistableBundle("bundle").size());
+    }
+
+    @Test
+    public void testEraseAllPersistableBundle() throws RemoteException {
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean("bool", true);
+        bundle.putInt("int", 11111);
+        bundle.putLong("long", 12345);
+        bundle.putDouble("double", 54321);
+        bundle.putString("string", "cool");
+        assertNotEquals(0, bundle.size());
+        bundle.remove("bool");
+        bundle.remove("int");
+        bundle.remove("long");
+        bundle.remove("double");
+        bundle.remove("string");
+    }
+
+    @Test
     public void testRepeatPresentNullablePolygon() throws RemoteException {
         RegularPolygon polygon = new RegularPolygon();
         polygon.name = "septagon";
@@ -604,6 +671,8 @@ public class JavaClientTest {
         foo.shouldContainTwoByteFoos = new byte[]{};
         foo.shouldContainTwoIntFoos = new int[]{};
         foo.shouldContainTwoLongFoos = new long[]{};
+        foo.bundle1 = new PersistableBundle();
+        foo.bundleArray = new PersistableBundle[]{};
 
         assertEquals(foo.f, mInterface.getF(foo));
     }
@@ -628,6 +697,9 @@ public class JavaClientTest {
         foo.shouldContainTwoByteFoos = new byte[]{ByteEnum.FOO, ByteEnum.FOO};
         foo.shouldContainTwoIntFoos = new int[]{IntEnum.FOO, IntEnum.FOO};
         foo.shouldContainTwoLongFoos = new long[]{LongEnum.FOO, LongEnum.FOO};
+
+        foo.bundle1 = new PersistableBundle();
+        foo.bundleArray = new PersistableBundle[]{};
 
         foo.u = SimpleUnion.e(new byte[]{ByteEnum.FOO, ByteEnum.FOO});
 
@@ -717,9 +789,12 @@ public class JavaClientTest {
         foo.shouldContainTwoByteFoos = new byte[]{};
         foo.shouldContainTwoIntFoos = new int[]{};
         foo.shouldContainTwoLongFoos = new long[]{};
+        foo.bundle1 = new PersistableBundle();
+        foo.bundleArray = new PersistableBundle[]{};
         mInterface.renameFoo(foo, "MYFOO");
         assertEquals("MYFOO", foo.a);
     }
+
     @Test
     public void testRenameBar() throws RemoteException {
         Foo foo = new Foo();
@@ -728,6 +803,8 @@ public class JavaClientTest {
         foo.shouldContainTwoByteFoos = new byte[]{};
         foo.shouldContainTwoIntFoos = new int[]{};
         foo.shouldContainTwoLongFoos = new long[]{};
+        foo.bundle1 = new PersistableBundle();
+        foo.bundleArray = new PersistableBundle[]{};
         mInterface.renameBar(foo, "MYBAR");
         assertEquals("MYBAR", foo.d.a);
     }
