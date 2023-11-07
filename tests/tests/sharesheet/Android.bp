@@ -28,7 +28,9 @@ android_test {
     static_libs: [
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
+        "flag-junit",
         "mockito-target-minus-junit4",
+        "android.service.chooser.flags-aconfig-java",
         "androidx.test.uiautomator_uiautomator",
     ],
 
