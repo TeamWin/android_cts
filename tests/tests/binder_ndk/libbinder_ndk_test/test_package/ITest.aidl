@@ -25,6 +25,7 @@ import test_package.RegularPolygon;
 import test_package.GenericBar;
 import test_package.ExtendableParcelable;
 import test_package.SimpleUnion;
+import android.os.PersistableBundle;
 
 // This test interface is used in order to test the all of the things that AIDL can generate which
 // build on top of the NDK.
@@ -77,6 +78,8 @@ interface ITest {
 
     RegularPolygon RepeatPolygon(in RegularPolygon value);
     @nullable RegularPolygon RepeatNullablePolygon(in @nullable RegularPolygon value);
+
+    PersistableBundle RepeatPersistableBundle(in PersistableBundle input);
 
     // Testing inout
     void RenamePolygon(inout RegularPolygon value, String newName);
