@@ -69,6 +69,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.server.wm.LockScreenSession;
 import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerStateHelper;
@@ -81,6 +82,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.window.flags.Flags;
 
 import com.google.testing.junit.testparameterinjector.TestParameter;
 import com.google.testing.junit.testparameterinjector.TestParameterInjector;
@@ -1537,6 +1539,7 @@ public class WallpaperManagerTest {
      * commands to be sent even when activity is not in focus
      * Note that there is no window to focus in this test
      */
+    @RequiresFlagsEnabled(Flags.FLAG_ALWAYS_UPDATE_WALLPAPER_PERMISSION)
     @Test
     public void testAlwaysUpdateWallpaperPermission_allowOutOfFocusWallpaperCommand() {
 
