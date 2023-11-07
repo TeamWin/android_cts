@@ -22,7 +22,7 @@
         <package android:name="android.virtualdevice.streamedtestapp" />
     </queries>
 
-    <application>
+    <application android:debuggable="true">
         <uses-library android:name="android.test.runner" />
     </application>
 
