@@ -231,6 +231,7 @@ public class ItsService extends Service implements SensorEventListener {
     private SparseArray<String> mPhysicalStreamMap = new SparseArray<String>();
     private SparseArray<Long> mStreamUseCaseMap = new SparseArray<Long>();
     private ImageReader mInputImageReader = null;
+    private ImageReader mExtensionPreviewImageReader = null;
     private CameraCharacteristics mCameraCharacteristics = null;
     private CameraExtensionCharacteristics mCameraExtensionCharacteristics = null;
     private HashMap<String, CameraCharacteristics> mPhysicalCameraChars =
@@ -2633,16 +2634,21 @@ public class ItsService extends Service implements SensorEventListener {
     private Surface configureAndCreateExtensionSession(
             Surface captureSurface,
             int extension,
-            CameraExtensionSession.StateCallback stateCallback) throws ItsException {
+            CameraExtensionSession.StateCallback stateCallback,
+            boolean has10bitOutput) throws ItsException {
         int captureWidth = mOutputImageReaders[0].getWidth();
         int captureHeight = mOutputImageReaders[0].getHeight();
         Size captureSize = new Size(captureWidth, captureHeight);
         Log.i(TAG, "Capture size: " + captureSize.toString());
         ArrayList outputConfig = new ArrayList<>();
-        SurfaceTexture preview = new SurfaceTexture(/*random int*/ 1);
         Size previewSize = pickPreviewResolution(captureSize, extension);
-        preview.setDefaultBufferSize(previewSize.getWidth(), previewSize.getHeight());
-        Surface previewSurface = new Surface(preview);
+        mExtensionPreviewImageReader = ImageReader.newInstance(
+                previewSize.getWidth(),
+                previewSize.getHeight(),
+                ImageFormat.PRIVATE,
+                MAX_CONCURRENT_READER_BUFFERS,
+                HardwareBuffer.USAGE_CPU_READ_OFTEN | HardwareBuffer.USAGE_COMPOSER_OVERLAY);
+        Surface previewSurface = mExtensionPreviewImageReader.getSurface();
         outputConfig.add(new OutputConfiguration(captureSurface));
         outputConfig.add(new OutputConfiguration(previewSurface));
         ExtensionSessionConfiguration extSessionConfig = new ExtensionSessionConfiguration(
@@ -2924,28 +2930,33 @@ public class ItsService extends Service implements SensorEventListener {
 
             JSONArray jsonOutputSpecs = ItsUtils.getOutputSpecs(params);
 
-            prepareImageReadersWithOutputSpecs(jsonOutputSpecs, /*inputSize*/null,
-                    /*inputFormat*/0, /*maxInputBuffers*/0, /*backgroundRequest*/ false);
+            boolean has10bitOutput = prepareImageReadersWithOutputSpecs(jsonOutputSpecs,
+                    /*inputSize*/null, /*inputFormat*/0, /*maxInputBuffers*/0,
+                    /*backgroundRequest*/ false);
             numSurfaces = mOutputImageReaders.length;
             numCaptureSurfaces = numSurfaces;
 
             Surface previewSurface = configureAndCreateExtensionSession(
                     mOutputImageReaders[0].getSurface(),
                     extension,
-                    sessionListener);
+                    sessionListener,
+                    has10bitOutput);
 
             mExtensionSession = sessionListener.waitAndGetSession(TIMEOUT_IDLE_MS);
 
             CaptureRequest.Builder captureBuilder = requests.get(0);
 
             if (params.optBoolean("waitAE", true)) {
-                // Set repeating request and wait for AE convergence.
+                if (mExtensionPreviewImageReader == null) {
+                    throw new ItsException("Preview ImageReader has not been initialized!");
+                }
+                // Set repeating request and wait for AE convergence, using another ImageReader.
                 Logt.i(TAG, "Waiting for AE to converge before taking extensions capture.");
-                captureBuilder.addTarget(previewSurface);
+                captureBuilder.addTarget(mExtensionPreviewImageReader.getSurface());
                 ImageReader.OnImageAvailableListener dropperListener =
                         createAvailableListenerDropper();
-                mOutputImageReaders[0].setOnImageAvailableListener(dropperListener,
-                                                                   mSaveHandlers[0]);
+                mExtensionPreviewImageReader.setOnImageAvailableListener(dropperListener,
+                        mSaveHandlers[0]);
                 mExtensionSession.setRepeatingRequest(captureBuilder.build(),
                         new HandlerExecutor(mResultHandler),
                         mExtAEResultListener);
@@ -2953,7 +2964,7 @@ public class ItsService extends Service implements SensorEventListener {
                 long timeout = TIMEOUT_CALLBACK * 1000;
                 waitForCallbacks(timeout);
                 mExtensionSession.stopRepeating();
-                captureBuilder.removeTarget(previewSurface);
+                captureBuilder.removeTarget(mExtensionPreviewImageReader.getSurface());
                 mResultThread.sleep(PIPELINE_WARMUP_TIME_MS);
             }
 
@@ -2968,6 +2979,11 @@ public class ItsService extends Service implements SensorEventListener {
             mCountCallbacksRemaining.set(2);
             long timeout = TIMEOUT_CALLBACK * 1000;
             waitForCallbacks(timeout);
+
+            if (mExtensionPreviewImageReader != null) {
+                mExtensionPreviewImageReader.close();
+                mExtensionPreviewImageReader = null;
+            }
 
             // Close session and wait until session is fully closed
             mExtensionSession.close();
