@@ -16,28 +16,35 @@
 
 package android.security.cts;
 
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.ActivityManager;
 import android.app.WallpaperManager;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.net.Uri;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.RequiresDevice;
+import android.server.wm.WindowManagerStateHelper;
 import android.util.Log;
 import android.view.Display;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import org.junit.After;
@@ -61,6 +68,8 @@ public class WallpaperManagerTest extends StsExtraBusinessLogicTestCase {
 
     private Context mContext;
     private WallpaperManager mWallpaperManager;
+
+    private WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
 
     @Before
     public void setUp() {
@@ -146,6 +155,34 @@ public class WallpaperManagerTest extends StsExtraBusinessLogicTestCase {
                 testImage.delete();
             }
         }
+    }
+
+    @Test
+    public void testWallpaperServiceBal_isBlocked() {
+        Intent intent = new Intent();
+        intent.setComponent(
+                new ComponentName("android.security.cts.wallpaper.bal",
+                        "android.security.cts.wallpaper.bal.MainActivity"));
+        intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+        // Press home key to ensure stopAppSwitches is called because the last-stop-app-switch-time
+        // is a criteria of allowing background start.
+        pressHomeButton();
+        SystemUtil.runWithShellPermissionIdentity(ActivityManager::resumeAppSwitches);
+        mWmState.waitForHomeActivityVisible();
+        SystemUtil.runWithShellPermissionIdentity(ActivityManager::resumeAppSwitches);
+
+        boolean result = false;
+        // The background activity will be launched 30s after the BalService starts. The
+        // waitForFocusedActivity only waits for 5s. So put it in a for loop.
+        for (int i = 0; i < 10; i++) {
+            result = mWmState.waitForFocusedActivity(
+                    "Empty Activity is launched",
+                    new ComponentName("android.security.cts.wallpaper.bal",
+                            "android.security.cts.wallpaper.bal.SpammyActivity"));
+            if (result) break;
+        }
+        assertFalse("Should not able to launch background activity", result);
     }
 
     private File unZipMaliciousImageFile() {
