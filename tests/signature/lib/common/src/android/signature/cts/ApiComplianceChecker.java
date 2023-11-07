@@ -17,6 +17,7 @@ package android.signature.cts;
 
 import android.signature.cts.JDiffClassDescription.JDiffField;
 import android.signature.cts.ReflectionHelper.DefaultTypeComparator;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -653,7 +654,17 @@ public class ApiComplianceChecker extends ApiPresenceChecker {
             try {
                 Class<?> runtimeClass =
                         ReflectionHelper.findMatchingClass(classDescription, classProvider);
-                interfaceChecker.queueForDeferredCheck(classDescription, runtimeClass);
+                if (runtimeClass == null) {
+                    // Do not treat a missing class from a base API as an error. While it is an
+                    // error it will be caught in the test for the base API so there is no point in
+                    // having this test fail too as it will just create toil for developers and
+                    // testers. Log a message just in case the missing class causes other test
+                    // failures.
+                    LogHelper.loge("Classloader is unable to find base API class "
+                            + classDescription.getAbsoluteClassName(), null);
+                } else {
+                    interfaceChecker.queueForDeferredCheck(classDescription, runtimeClass);
+                }
             } catch (ClassNotFoundException e) {
                 // Do nothing.
             }
