@@ -591,6 +591,14 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
         </receiver>
+        <receiver android:name="android.app.stubs.Receiver_getBindingUidImportance"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="ACTION_TEST_SERVICE_BINDING"/>
+                <action android:name="ACTION_TEST_PROVIDER"/>
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>
