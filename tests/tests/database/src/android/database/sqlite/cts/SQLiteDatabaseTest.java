@@ -2286,6 +2286,43 @@ public class SQLiteDatabaseTest {
         }
     }
 
+    // Return true if the actual version matches the expected version.
+    private static boolean versionIsOkay(int[] expected, int[] actual) {
+        return expected[0] == actual[0]
+                && expected[1] == actual[1]
+                && expected[2] >= actual[2];
+    }
+
+    @Test
+    public void testSqliteLibraryVersion() {
+        // SQLite uses semantic versioning in a form of MAJOR.MINOR.PATCH.  In general, the major
+        // and minor versions must match exactly but the actual patch version can be higher than
+        // what is expected.
+        String fullVersionStr = DatabaseUtils
+                .stringForQuery(mDatabase, "select sqlite_version()", null);
+        String[] strVersion = fullVersionStr.split("\\.");
+        final int versionSize = 3;
+        assertEquals("Unable to parse SQLite version " + fullVersionStr,
+                versionSize, strVersion.length);
+
+        int[] actual = new int[versionSize];
+        for (int i = 0; i < versionSize; i++) {
+            // This will throw NumberFormatException if the version string is not a sequence of
+            // unsigned integers.
+            actual[i] = Integer.parseUnsignedInt(strVersion[i]);
+        }
+
+        // Compare the actual version to the permitted SQLite release.  The test can compare to
+        // multiple releases here, if multiple releases are permitted.
+        final int[] expected = { 3, 42, 0 };
+        if (versionIsOkay(expected, actual)) {
+            return;
+        }
+
+        // The current version does not match any of the permitted versions.
+        fail("Invalid SQLite version " + fullVersionStr);
+    }
+
     // http://b/147928666
     @Test
     public void testDefaultLegacyAlterTableEnabled() {
