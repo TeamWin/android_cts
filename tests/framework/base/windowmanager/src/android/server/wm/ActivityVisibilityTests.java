@@ -202,7 +202,6 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
 
     @Test
     public void testTurnScreenOnActivity() {
-
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         final ActivitySessionClient activityClient = createManagedActivityClientSession();
         testTurnScreenOnActivity(lockScreenSession, activityClient,
@@ -215,7 +214,10 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         // (b/308213530).
         // Wait for the existing TurnScreenOnActivity to finish and the home activity to be in
         // stopped state as the display is OFF.
-        mWmState.waitForAllStoppedActivities();
+        if (supportsLockScreen()) {
+            mWmState.waitForAllStoppedActivities();
+        }
+
         // Start TURN_SCREEN_ON_ACTIVITY
         launchActivity(TURN_SCREEN_ON_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         mWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, true);
