@@ -151,6 +151,11 @@ public class BroadcastDeferralTest extends BaseBroadcastTest {
             // before we bind to it.
             AmUtils.waitForBroadcastBarrier();
 
+            // Adding a small delay before binding to the service to give opportunity for the
+            // broadcast to be received. We can't use a finish callback or flush the application
+            // threads to ensure broadcast delivery is completed as that would interfere with
+            // what we are trying to verify.
+            SystemClock.sleep(100);
             final long timestampMs = SystemClock.elapsedRealtime();
             connection2 = bindToHelperService(HELPER_PKG2);
             try {
