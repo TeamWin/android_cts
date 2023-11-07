@@ -39,11 +39,11 @@ import static android.media.AudioManager.VIBRATE_SETTING_ON;
 import static android.media.AudioManager.VIBRATE_SETTING_ONLY_SILENT;
 import static android.media.AudioManager.VIBRATE_TYPE_NOTIFICATION;
 import static android.media.AudioManager.VIBRATE_TYPE_RINGER;
+import static android.media.audio.Flags.autoPublicVolumeApiHardening;
 import static android.media.audio.cts.AudioTestUtil.resetVolumeIndex;
 import static android.provider.Settings.Global.APPLY_RAMPING_RINGER;
 import static android.provider.Settings.System.SOUND_EFFECTS_ENABLED;
 
-import static android.media.audio.Flags.autoPublicVolumeApiHardening;
 import static com.android.media.mediatestutils.TestUtils.getFutureForIntent;
 import static com.android.media.mediatestutils.TestUtils.getFutureForListener;
 
@@ -62,6 +62,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
+import android.app.AutomaticZenRule;
 import android.app.Instrumentation;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -104,6 +105,7 @@ import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.SettingsStateKeeperRule;
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.UserSettings.Namespace;
 import com.android.internal.annotations.GuardedBy;
 import com.android.media.mediatestutils.CancelAllFuturesRule;
@@ -267,10 +269,15 @@ public class AudioManagerTest {
         try {
             Utils.toggleNotificationPolicyAccess(
                     mContext.getPackageName(), getInstrumentation(), true);
-            mOriginalNotificationPolicy = mNm.getNotificationPolicy();
-            mOriginalZen = mNm.getCurrentInterruptionFilter();
-            mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> {
+                        mOriginalNotificationPolicy = mNm.getNotificationPolicy();
+                        mOriginalZen = mNm.getCurrentInterruptionFilter();
+                        mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+                        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+                    },
+                    Manifest.permission.STATUS_BAR_SERVICE);
         } finally {
             Utils.toggleNotificationPolicyAccess(
                     mContext.getPackageName(), getInstrumentation(), false);
@@ -299,8 +306,18 @@ public class AudioManagerTest {
             Utils.toggleNotificationPolicyAccess(
                     mContext.getPackageName(), getInstrumentation(), true);
             mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-            mNm.setNotificationPolicy(mOriginalNotificationPolicy);
-            setInterruptionFilter(mOriginalZen);
+
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> {
+                        mNm.setNotificationPolicy(mOriginalNotificationPolicy);
+                        setInterruptionFilter(mOriginalZen);
+                    },
+                    Manifest.permission.STATUS_BAR_SERVICE);
+
+            Map<String, AutomaticZenRule> rules = mNm.getAutomaticZenRules();
+            for (String ruleId : rules.keySet()) {
+                mNm.removeAutomaticZenRule(ruleId);
+            }
 
             // Recover the volume and the ringer mode that the test may have overwritten.
             for (Map.Entry<Integer, Integer> e : mOriginalStreamVolumes.entrySet()) {
