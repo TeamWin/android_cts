@@ -17,6 +17,7 @@
 package android.view.cts;
 
 import static android.server.wm.ActivityManagerTestBase.isTablet;
+import static android.view.flags.Flags.FLAG_TOOLKIT_SET_FRAME_RATE_READ_ONLY;
 import static android.view.flags.Flags.FLAG_VIEW_VELOCITY_API;
 
 import static org.junit.Assert.assertEquals;
@@ -4882,6 +4883,59 @@ public class ViewTest {
         mInstrumentation.waitForIdleSync();
         // the velocities should be reset once the view is drawn.
         assertTrue(view.getFrameContentVelocity() == 0);
+    }
+
+    /**
+     * Test for requested frame rate APIs
+     */
+    @Test
+    @RequiresFlagsEnabled(FLAG_TOOLKIT_SET_FRAME_RATE_READ_ONLY)
+    public void testFrameRateAPIsFlagEnabled() throws Throwable {
+        final MockView view = (MockView) mActivity.findViewById(R.id.mock_view);
+        view.reset();
+        mActivityRule.runOnUiThread(() -> {
+            // The values of the velocities should be 0 by default
+            assertEquals(view.getRequestedFrameRate(),
+                    view.REQUESTED_FRAME_RATE_CATEGORY_DEFAULT, 0.1);
+
+            view.setRequestedFrameRate(10);
+            assertEquals(view.getRequestedFrameRate(), 10, 0.1);
+
+            view.setRequestedFrameRate(view.REQUESTED_FRAME_RATE_CATEGORY_LOW);
+            assertEquals(view.getRequestedFrameRate(), view.REQUESTED_FRAME_RATE_CATEGORY_LOW, 0.1);
+
+            view.requestLayout();
+        });
+
+        mInstrumentation.waitForIdleSync();
+        // the value should be remained the same
+        assertEquals(view.getRequestedFrameRate(), view.REQUESTED_FRAME_RATE_CATEGORY_LOW, 0.1);
+    }
+
+    /**
+     * Test for requested frame rate APIs
+     */
+    @Test
+    @RequiresFlagsDisabled(FLAG_TOOLKIT_SET_FRAME_RATE_READ_ONLY)
+    public void testFrameRateAPIsFlagDisabled() throws Throwable {
+        final MockView view = (MockView) mActivity.findViewById(R.id.mock_view);
+        view.reset();
+        mActivityRule.runOnUiThread(() -> {
+            // The values of the velocities should be 0 by default
+            assertEquals(view.getRequestedFrameRate(), 0, 0.1);
+
+            view.setRequestedFrameRate(10);
+            assertEquals(view.getRequestedFrameRate(), 0, 0.1);
+
+            view.setRequestedFrameRate(-1);
+            assertEquals(view.getRequestedFrameRate(), 0, 0.1);
+
+            view.requestLayout();
+        });
+
+        mInstrumentation.waitForIdleSync();
+        // the value should be 0
+        assertEquals(view.getRequestedFrameRate(), 0, 0.1);
     }
 
     private void setVisibilityOnUiThread(final View view, final int visibility) throws Throwable {
