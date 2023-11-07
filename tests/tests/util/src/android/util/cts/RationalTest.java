@@ -29,10 +29,8 @@ import static org.junit.Assert.fail;
 import android.util.Rational;
 
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -44,7 +42,6 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 
 @SmallTest
-@RunWith(AndroidJUnit4.class)
 public class RationalTest {
 
     /** (1,1) */
