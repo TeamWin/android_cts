@@ -345,7 +345,8 @@ public abstract class AbstractUserAuthenticationTest extends PassFailButtons.Act
                     boolean keyUsed;
                     try {
                         if (requiresCryptoObject) {
-                            assertEquals(crypto.getOpId(), result.getCryptoObject().getOpId());
+                            assertEquals(crypto.getOperationHandle(),
+                                    result.getCryptoObject().getOperationHandle());
                         } else {
                             initializeKeystoreOperation(keyName);
                         }
