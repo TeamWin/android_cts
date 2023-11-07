@@ -741,13 +741,14 @@ def plot_gyro_events(gyro_events, plot_name, log_path):
   pylab.title(f'{plot_name}(mean of {_NUM_GYRO_PTS_TO_AVG} pts)')
   pylab.plot(times, x, 'r', label='x')
   pylab.plot(times, y, 'g', label='y')
-  pylab.ylim([np.amin(z), np.amax(z)])
+  pylab.ylim([np.amin(z)/4, np.amax(z)/4])  # zoom in 4x from z axis
   pylab.ylabel('gyro x,y movement (rads/s)')
   pylab.legend()
 
   # z on separate axes
   pylab.subplot(2, 1, 2)
   pylab.plot(times, z, 'b', label='z')
+  pylab.ylim([np.amin(z), np.amax(z)])
   pylab.xlabel('time (seconds)')
   pylab.ylabel('gyro z movement (rads/s)')
   pylab.legend()
