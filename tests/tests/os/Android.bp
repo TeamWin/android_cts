@@ -39,6 +39,7 @@ android_test {
         "platformprotosnano",
         "device-time-shell-utils",
         "flag-junit",
+        "ravenwood-junit",
         "android.os.flags-aconfig-java",
         "backstage_power_flags_lib",
     ],
@@ -76,4 +77,18 @@ android_test {
     aaptflags: ["-0 .policy"],
     min_sdk_version: "29",
     per_testcase_directory: true,
+}
+
+android_ravenwood_test {
+    name: "CtsOsTestCasesRavenwood",
+    defaults: ["cts_defaults"],
+    static_libs: [
+        "androidx.annotation_annotation",
+    ],
+    srcs: [
+        "src/android/os/cts/BundleTest.java",
+        "src/android/os/cts/ParcelTest.java",
+    ],
+    sdk_version: "test_current",
+    auto_gen_config: true,
 }
