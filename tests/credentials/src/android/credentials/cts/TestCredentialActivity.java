@@ -16,7 +16,16 @@
 
 package android.credentials.cts;
 
-
 import android.app.Activity;
+import android.content.Intent;
+import android.util.Log;
 
-public class TestCredentialActivity extends Activity {}
+public class TestCredentialActivity extends Activity {
+    private static final String TAG = "TestCredentialActivity";
+
+    /** Start the provided intent. */
+    public void startSettingsActivity(Intent intent) {
+        Log.d(TAG, "startSettingsActivity()");
+        startActivity(intent);
+    }
+}
