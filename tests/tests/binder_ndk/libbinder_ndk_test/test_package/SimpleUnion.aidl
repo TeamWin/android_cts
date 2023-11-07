@@ -2,6 +2,7 @@ package test_package;
 
 import test_package.Bar;
 import test_package.ByteEnum;
+import android.os.PersistableBundle;
 
 union SimpleUnion {
     const int kZero = 0;
@@ -20,4 +21,5 @@ union SimpleUnion {
     @nullable Bar f;
 
     const String S1 = "a string constant";
+    PersistableBundle g;
 }

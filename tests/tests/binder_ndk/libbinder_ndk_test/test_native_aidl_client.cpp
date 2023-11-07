@@ -28,15 +28,18 @@
 #include <aidl/test_package/RegularPolygon.h>
 #include <android/binder_ibinder_jni.h>
 #include <android/log.h>
+#include <android/persistable_bundle_aidl.h>
 #include <gtest/gtest.h>
-#include "itest_impl.h"
-#include "utilities.h"
-
 #include <stdio.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+
 #include <type_traits>
 
+#include "itest_impl.h"
+#include "utilities.h"
+
+using ::aidl::android::os::PersistableBundle;
 using ::aidl::test_package::Bar;
 using ::aidl::test_package::BpTest;
 using ::aidl::test_package::ByteEnum;
@@ -538,6 +541,262 @@ TEST_P(NdkBinderTest_Aidl, RepeatPresentNullablePolygon) {
   std::optional<RegularPolygon> outputPolygon;
   ASSERT_OK(iface->RepeatNullablePolygon(defaultPolygon, &outputPolygon));
   EXPECT_EQ(defaultPolygon, outputPolygon);
+}
+
+TEST_P(NdkBinderTest_Aidl, RepeatDefaultPersistableBundle) {
+  PersistableBundle defaultPBundle;
+  PersistableBundle outPBundle;
+  ASSERT_OK(iface->RepeatPersistableBundle(defaultPBundle, &outPBundle));
+  // The == operator checks the underlying pointers which should be different
+  EXPECT_NE(defaultPBundle, outPBundle);
+  // The deepEquals function checks the contents of the bundle, which should be
+  // the same
+  EXPECT_TRUE(defaultPBundle.deepEquals(outPBundle));
+}
+
+const bool kBoolVal = true;
+const int32_t kIntVal = 11111;
+const int64_t kLongVal = 12345;
+const double kDoubleVal = 54321;
+const std::string kStringVal = "cool";
+const std::vector<bool> kBoolVVal = {true, false, true};
+const std::vector<int32_t> kIntVVal = {1111, -2222, 3333};
+const std::vector<int64_t> kLongVVal = {11111, -22222, 33333};
+const std::vector<double> kDoubleVVal = {111111, -222222, 333333};
+const std::vector<std::string> kStringVVal = {"hello", "monkey", "!"};
+
+TEST_P(NdkBinderTest_Aidl, RepeatTypesPersistableBundle) {
+  PersistableBundle inPBundle;
+  PersistableBundle outPBundle;
+  // put all supported types && verify
+  inPBundle.putBoolean("bool", kBoolVal);
+  inPBundle.putInt("int", kIntVal);
+  inPBundle.putLong("long", kLongVal);
+  inPBundle.putDouble("double", kDoubleVal);
+  inPBundle.putString("string", kStringVal);
+  inPBundle.putBooleanVector("boolv", kBoolVVal);
+  inPBundle.putIntVector("intv", kIntVVal);
+  inPBundle.putLongVector("longv", kLongVVal);
+  inPBundle.putDoubleVector("doublev", kDoubleVVal);
+  inPBundle.putStringVector("stringv", kStringVVal);
+  PersistableBundle innerBundle;
+  innerBundle.putBoolean("bool", kBoolVal);
+  innerBundle.putInt("int", kIntVal);
+  inPBundle.putPersistableBundle("pbundle", innerBundle);
+  bool outBool = false;
+  int32_t outInt = 0;
+  int64_t outLong = 0;
+  double outDouble = 0;
+  std::string outString = std::string();
+  std::vector<bool> outBoolV = std::vector<bool>();
+  std::vector<int32_t> outIntV = std::vector<int32_t>();
+  std::vector<int64_t> outLongV = std::vector<int64_t>();
+  std::vector<double> outDoubleV = std::vector<double>();
+  std::vector<std::string> outStringV = std::vector<std::string>();
+  PersistableBundle outInnerBundle;
+  EXPECT_TRUE(inPBundle.getBoolean("bool", &outBool));
+  EXPECT_EQ(outBool, kBoolVal);
+  EXPECT_TRUE(inPBundle.getInt("int", &outInt));
+  EXPECT_EQ(outInt, kIntVal);
+  EXPECT_TRUE(inPBundle.getLong("long", &outLong));
+  EXPECT_EQ(outLong, kLongVal);
+  EXPECT_TRUE(inPBundle.getDouble("double", &outDouble));
+  EXPECT_EQ(outDouble, kDoubleVal);
+  EXPECT_TRUE(inPBundle.getString("string", &outString));
+  EXPECT_EQ(outString, kStringVal);
+  EXPECT_TRUE(inPBundle.getBooleanVector("boolv", &outBoolV));
+  EXPECT_EQ(outBoolV, kBoolVVal);
+  EXPECT_TRUE(inPBundle.getIntVector("intv", &outIntV));
+  EXPECT_EQ(outIntV, kIntVVal);
+  EXPECT_TRUE(inPBundle.getLongVector("longv", &outLongV));
+  EXPECT_EQ(outLongV, kLongVVal);
+  EXPECT_TRUE(inPBundle.getDoubleVector("doublev", &outDoubleV));
+  EXPECT_EQ(outDoubleV, kDoubleVVal);
+  EXPECT_TRUE(inPBundle.getStringVector("stringv", &outStringV));
+  EXPECT_EQ(outStringV, kStringVVal);
+  EXPECT_TRUE(inPBundle.getPersistableBundle("pbundle", &outInnerBundle));
+  EXPECT_TRUE(innerBundle.deepEquals(outInnerBundle));
+
+  ASSERT_OK(iface->RepeatPersistableBundle(inPBundle, &outPBundle));
+
+  // verify all supported types make it to/from the service
+  outBool = false;
+  outInt = 0;
+  outLong = 0;
+  outDouble = 0;
+  outString = std::string();
+  outBoolV.clear();
+  outIntV.clear();
+  outLongV.clear();
+  outDoubleV.clear();
+  outInnerBundle = PersistableBundle();
+  // The == operator checks the underlying pointers which should be different
+  EXPECT_NE(inPBundle, outPBundle);
+  // The deepEquals function checks the contents of the bundle, which should be
+  // the same
+  EXPECT_TRUE(inPBundle.deepEquals(outPBundle));
+  EXPECT_EQ(inPBundle.size(), outPBundle.size());
+
+  EXPECT_TRUE(outPBundle.getBoolean("bool", &outBool));
+  EXPECT_EQ(outBool, kBoolVal);
+  EXPECT_TRUE(outPBundle.getInt("int", &outInt));
+  EXPECT_EQ(outInt, kIntVal);
+  EXPECT_TRUE(outPBundle.getLong("long", &outLong));
+  EXPECT_EQ(outLong, kLongVal);
+  EXPECT_TRUE(outPBundle.getDouble("double", &outDouble));
+  EXPECT_EQ(outDouble, kDoubleVal);
+  EXPECT_TRUE(outPBundle.getString("string", &outString));
+  EXPECT_EQ(outString, kStringVal);
+  EXPECT_TRUE(outPBundle.getBooleanVector("boolv", &outBoolV));
+  EXPECT_EQ(outBoolV, kBoolVVal);
+  EXPECT_TRUE(outPBundle.getIntVector("intv", &outIntV));
+  EXPECT_EQ(outIntV, kIntVVal);
+  EXPECT_TRUE(outPBundle.getLongVector("longv", &outLongV));
+  EXPECT_EQ(outLongV, kLongVVal);
+  EXPECT_TRUE(outPBundle.getDoubleVector("doublev", &outDoubleV));
+  EXPECT_EQ(outDoubleV, kDoubleVVal);
+  EXPECT_TRUE(outPBundle.getPersistableBundle("pbundle", &outInnerBundle));
+  EXPECT_TRUE(innerBundle.deepEquals(outInnerBundle));
+}
+
+TEST_P(NdkBinderTest_Aidl, EraseAllPersistableBundle) {
+  PersistableBundle pBundle;
+  // fill it up, empty it out and verify sizes along the way
+  EXPECT_EQ(0, pBundle.size());
+  pBundle.putBoolean("bool", kBoolVal);
+  pBundle.putInt("int", kIntVal);
+  pBundle.putLong("long", kLongVal);
+  pBundle.putDouble("double", kDoubleVal);
+  pBundle.putString("string", kStringVal);
+  EXPECT_GT(pBundle.size(), 0);
+  EXPECT_GT(pBundle.erase("bool"), 0);
+  EXPECT_GT(pBundle.erase("int"), 0);
+  EXPECT_GT(pBundle.erase("long"), 0);
+  EXPECT_GT(pBundle.erase("double"), 0);
+  EXPECT_GT(pBundle.erase("string"), 0);
+  EXPECT_EQ(0, pBundle.size());
+}
+
+TEST_P(NdkBinderTest_Aidl, GetBoolKeysPersistableBundle) {
+  PersistableBundle pBundle;
+  pBundle.putBoolean("first", kBoolVal);
+  pBundle.putBoolean("second", kBoolVal);
+  pBundle.putBoolean("third", kBoolVal);
+  EXPECT_EQ(3, pBundle.size());
+  std::set<std::string> ret = pBundle.getBooleanKeys();
+  EXPECT_EQ(3, ret.size());
+  EXPECT_EQ(ret, std::set<std::string>({"first", "second", "third"}));
+}
+
+TEST_P(NdkBinderTest_Aidl, GetIntKeysPersistableBundle) {
+  PersistableBundle pBundle;
+  pBundle.putInt("first", kIntVal);
+  pBundle.putInt("second", kIntVal);
+  pBundle.putInt("third", kIntVal);
+  EXPECT_EQ(3, pBundle.size());
+  std::set<std::string> ret = pBundle.getIntKeys();
+  EXPECT_EQ(3, ret.size());
+  EXPECT_EQ(ret, std::set<std::string>({"first", "second", "third"}));
+}
+
+TEST_P(NdkBinderTest_Aidl, GetLongKeysPersistableBundle) {
+  PersistableBundle pBundle;
+  pBundle.putLong("first", kLongVal);
+  pBundle.putLong("second", kLongVal);
+  pBundle.putLong("third", kLongVal);
+  EXPECT_EQ(3, pBundle.size());
+  std::set<std::string> ret = pBundle.getLongKeys();
+  EXPECT_EQ(3, ret.size());
+  EXPECT_EQ(ret, std::set<std::string>({"first", "second", "third"}));
+}
+
+TEST_P(NdkBinderTest_Aidl, GetDoubleKeysPersistableBundle) {
+  PersistableBundle pBundle;
+  pBundle.putDouble("first", kDoubleVal);
+  pBundle.putDouble("second", kDoubleVal);
+  pBundle.putDouble("third", kDoubleVal);
+  EXPECT_EQ(3, pBundle.size());
+  std::set<std::string> ret = pBundle.getDoubleKeys();
+  EXPECT_EQ(3, ret.size());
+  EXPECT_EQ(ret, std::set<std::string>({"first", "second", "third"}));
+}
+
+TEST_P(NdkBinderTest_Aidl, GetStringKeysPersistableBundle) {
+  PersistableBundle pBundle;
+  pBundle.putString("first", kStringVal);
+  pBundle.putString("second", kStringVal);
+  pBundle.putString("third", kStringVal);
+  EXPECT_EQ(3, pBundle.size());
+  std::set<std::string> ret = pBundle.getStringKeys();
+  EXPECT_EQ(3, ret.size());
+  EXPECT_EQ(ret, std::set<std::string>({"first", "second", "third"}));
+}
+
+TEST_P(NdkBinderTest_Aidl, GetBooleanVectorKeysPersistableBundle) {
+  PersistableBundle pBundle;
+  pBundle.putBooleanVector("first", kBoolVVal);
+  pBundle.putBooleanVector("second", kBoolVVal);
+  pBundle.putBooleanVector("third", kBoolVVal);
+  EXPECT_EQ(3, pBundle.size());
+  std::set<std::string> ret = pBundle.getBooleanVectorKeys();
+  EXPECT_EQ(3, ret.size());
+  EXPECT_EQ(ret, std::set<std::string>({"first", "second", "third"}));
+}
+
+TEST_P(NdkBinderTest_Aidl, GetIntVectorKeysPersistableBundle) {
+  PersistableBundle pBundle;
+  pBundle.putIntVector("first", kIntVVal);
+  pBundle.putIntVector("second", kIntVVal);
+  pBundle.putIntVector("third", kIntVVal);
+  EXPECT_EQ(3, pBundle.size());
+  std::set<std::string> ret = pBundle.getIntVectorKeys();
+  EXPECT_EQ(3, ret.size());
+  EXPECT_EQ(ret, std::set<std::string>({"first", "second", "third"}));
+}
+
+TEST_P(NdkBinderTest_Aidl, GetLongVectorKeysPersistableBundle) {
+  PersistableBundle pBundle;
+  pBundle.putLongVector("first", kLongVVal);
+  pBundle.putLongVector("second", kLongVVal);
+  pBundle.putLongVector("third", kLongVVal);
+  EXPECT_EQ(3, pBundle.size());
+  std::set<std::string> ret = pBundle.getLongVectorKeys();
+  EXPECT_EQ(3, ret.size());
+  EXPECT_EQ(ret, std::set<std::string>({"first", "second", "third"}));
+}
+
+TEST_P(NdkBinderTest_Aidl, GetDoubleVectorKeysPersistableBundle) {
+  PersistableBundle pBundle;
+  pBundle.putDoubleVector("first", kDoubleVVal);
+  pBundle.putDoubleVector("second", kDoubleVVal);
+  pBundle.putDoubleVector("third", kDoubleVVal);
+  EXPECT_EQ(3, pBundle.size());
+  std::set<std::string> ret = pBundle.getDoubleVectorKeys();
+  EXPECT_EQ(3, ret.size());
+  EXPECT_EQ(ret, std::set<std::string>({"first", "second", "third"}));
+}
+
+TEST_P(NdkBinderTest_Aidl, GetStringVectorKeysPersistableBundle) {
+  PersistableBundle pBundle;
+  pBundle.putStringVector("first", kStringVVal);
+  pBundle.putStringVector("second", kStringVVal);
+  pBundle.putStringVector("third", kStringVVal);
+  EXPECT_EQ(3, pBundle.size());
+  std::set<std::string> ret = pBundle.getStringVectorKeys();
+  EXPECT_EQ(3, ret.size());
+  EXPECT_EQ(ret, std::set<std::string>({"first", "second", "third"}));
+}
+
+TEST_P(NdkBinderTest_Aidl, GetPersistableBundleKeysPersistableBundle) {
+  PersistableBundle pBundle;
+  PersistableBundle innerBundle;
+  pBundle.putPersistableBundle("first", innerBundle);
+  pBundle.putPersistableBundle("second", innerBundle);
+  pBundle.putPersistableBundle("third", innerBundle);
+  EXPECT_EQ(3, pBundle.size());
+  std::set<std::string> ret = pBundle.getPersistableBundleKeys();
+  EXPECT_EQ(3, ret.size());
+  EXPECT_EQ(ret, std::set<std::string>({"first", "second", "third"}));
 }
 
 TEST_P(NdkBinderTest_Aidl, InsAndOuts) {
