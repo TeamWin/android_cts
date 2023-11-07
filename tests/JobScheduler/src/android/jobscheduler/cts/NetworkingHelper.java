@@ -107,10 +107,12 @@ public class NetworkingHelper {
         mInitialLocationMode = Settings.Secure.getString(
                 mContext.getContentResolver(), Settings.Secure.LOCATION_MODE);
         mInitialWiFiState = mHasWifi && isWifiEnabled();
+
+        ensureSavedWifiNetwork();
     }
 
-    /** Ensures that the device has a wifi network saved. */
-    void ensureSavedWifiNetwork() throws Exception {
+    /** Ensures that the device has a wifi network saved if it has the wifi feature. */
+    private void ensureSavedWifiNetwork() throws Exception {
         if (!mHasWifi) {
             return;
         }
