@@ -37,6 +37,7 @@ android_test {
         "sts-device-util",
         "hamcrest-library",
         "NeneInternal",
+        "cts-wm-util",
     ],
     libs: [
         "android.test.runner",
@@ -92,6 +93,7 @@ android_test {
         ":CtsPermissionBackupAppCert123",
         ":CtsPermissionBackupAppCert4History124",
         ":CtsAppThatRequestCustomCameraPermission",
+        ":CtsWallpaperBalTestApp",
     ],
 }
 
