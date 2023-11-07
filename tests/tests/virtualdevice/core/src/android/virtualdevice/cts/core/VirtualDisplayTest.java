@@ -245,6 +245,7 @@ public class VirtualDisplayTest {
      * tries to create an auto-mirror display by default for public virtual displays.
      */
     @RequiresFlagsDisabled(Flags.FLAG_INTERACTIVE_SCREEN_MIRROR)
+    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void createVirtualDisplay_public_throwsException() {
         mVirtualDevice = createVirtualDevice(DEFAULT_VIRTUAL_DEVICE_PARAMS);
@@ -262,6 +263,7 @@ public class VirtualDisplayTest {
      * VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR flag if screen mirroring is disabled.
      */
     @RequiresFlagsDisabled(Flags.FLAG_INTERACTIVE_SCREEN_MIRROR)
+    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void createVirtualDisplay_autoMirror_throwsException() {
         mVirtualDevice = createVirtualDevice(DEFAULT_VIRTUAL_DEVICE_PARAMS);
@@ -280,6 +282,7 @@ public class VirtualDisplayTest {
      * disabled.
      */
     @RequiresFlagsDisabled(Flags.FLAG_INTERACTIVE_SCREEN_MIRROR)
+    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void createVirtualDisplay_publicAutoMirror_throwsException() {
         mVirtualDevice = createVirtualDevice(DEFAULT_VIRTUAL_DEVICE_PARAMS);
@@ -294,6 +297,7 @@ public class VirtualDisplayTest {
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_INTERACTIVE_SCREEN_MIRROR)
+    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void createVirtualDisplay_public_createsMirrorDisplay() {
         mVirtualDevice = createVirtualDevice(DEFAULT_VIRTUAL_DEVICE_PARAMS);
@@ -313,6 +317,7 @@ public class VirtualDisplayTest {
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_INTERACTIVE_SCREEN_MIRROR)
+    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void createVirtualDisplay_autoMirror_createsMirrorDisplay() {
         mVirtualDevice = createVirtualDevice(DEFAULT_VIRTUAL_DEVICE_PARAMS);
@@ -332,6 +337,7 @@ public class VirtualDisplayTest {
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_INTERACTIVE_SCREEN_MIRROR)
+    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void createVirtualDisplay_publicAutoMirror_createsMirrorDisplay() {
         mVirtualDevice = createVirtualDevice(DEFAULT_VIRTUAL_DEVICE_PARAMS);
@@ -352,6 +358,7 @@ public class VirtualDisplayTest {
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_INTERACTIVE_SCREEN_MIRROR)
+    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void createVirtualDisplay_ownContentOnly_doesNotCreateMirrorDisplay() {
         VirtualDisplay virtualDisplay = createVirtualDeviceAndDisplay(
@@ -366,6 +373,7 @@ public class VirtualDisplayTest {
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_INTERACTIVE_SCREEN_MIRROR)
+    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void createVirtualDisplay_autoMirrorAndOwnContentOnly_doesNotCreateMirrorDisplay() {
         VirtualDisplay virtualDisplay = createVirtualDeviceAndDisplay(
@@ -381,6 +389,7 @@ public class VirtualDisplayTest {
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_INTERACTIVE_SCREEN_MIRROR)
+    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void createVirtualDisplay_autoMirror_flagAlwaysUnlockedNotSet() {
         VirtualDeviceParams params = new VirtualDeviceParams.Builder()
@@ -395,6 +404,7 @@ public class VirtualDisplayTest {
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_INTERACTIVE_SCREEN_MIRROR)
+    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void createVirtualDisplay_public_flagAlwaysUnlockedNotSet() {
         VirtualDeviceParams params = new VirtualDeviceParams.Builder()
@@ -409,6 +419,7 @@ public class VirtualDisplayTest {
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_INTERACTIVE_SCREEN_MIRROR)
+    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void createVirtualDisplay_autoMirror_flagPresentationNotSet() {
         VirtualDisplay virtualDisplay = createVirtualDeviceAndDisplay(
@@ -422,6 +433,7 @@ public class VirtualDisplayTest {
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_INTERACTIVE_SCREEN_MIRROR)
+    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void createVirtualDisplay_public_flagPresentationNotSet() {
         VirtualDisplay virtualDisplay = createVirtualDeviceAndDisplay(
