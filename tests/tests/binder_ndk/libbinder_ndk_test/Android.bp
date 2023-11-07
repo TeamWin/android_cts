@@ -50,6 +50,9 @@ filegroup {
 aidl_interface {
     name: "libbinder_ndk_test_interface",
     srcs: [":libbinder_ndk_test_interface_srcs"],
+    headers: [
+        "PersistableBundle_aidl",
+    ],
     backend: {
         java: {
             sdk_version: "system_current",
@@ -172,6 +175,7 @@ cc_test_library {
         "test_parcel.cpp",
         "test_parcel_jni.cpp",
         "test_status.cpp",
+        "test_persistable_bundle.cpp",
     ],
     shared_libs: [
         "libbinder_ndk_test_interface-ndk",
