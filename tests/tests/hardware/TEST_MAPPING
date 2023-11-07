@@ -15,16 +15,6 @@
       "name": "CtsHardwareTestCases",
       "options": [
         {
-          // TODO(b/256805438)
-          "exclude-filter": "android.hardware.consumerir.cts.ConsumerIrTest#test_getCarrierFrequencies"
-        },
-        {
-          "exclude-filter": "android.hardware.consumerir.cts.ConsumerIrTest#test_timing"
-        },
-        {
-          "exclude-filter": "android.hardware.consumerir.cts.ConsumerIrTest#test_transmit"
-        },
-        {
           // TODO(b/221102945)
           "exclude-filter": "android.hardware.input.cts.tests.VirtualTouchscreenTest#sendTouchEvent"
         },
