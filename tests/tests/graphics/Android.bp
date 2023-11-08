@@ -39,7 +39,6 @@ android_test {
         "testng",
         "androidx.core_core",
         "com.android.text.flags-aconfig-java",
-        "android.view.flags-aconfig-java",
     ],
     jni_libs: ["libctsgraphics_jni"],
     srcs: [
