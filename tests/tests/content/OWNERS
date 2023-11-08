@@ -1,4 +1,7 @@
 # Bug component: 36137
+include platform/frameworks/base:/OWNERS
+include platform/frameworks/base:/core/java/android/content/OWNERS
+
 alexbuy@google.com
 chiuwinson@google.com
 patb@google.com
