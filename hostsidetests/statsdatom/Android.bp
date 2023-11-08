@@ -79,6 +79,8 @@ java_test_host {
     static_libs: [
         "cts-statsd-atom-host-test-utils",
         "perfetto_config-full",
+        "flag-junit-host",
+        "android.hardware.usb.flags-aconfig-java-host",
     ],
 
     data: [
