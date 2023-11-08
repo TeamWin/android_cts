@@ -46,6 +46,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.compat.CompatChanges;
 import android.app.role.RoleManager;
 import android.app.stubs.GetResultActivity;
 import android.app.stubs.R;
@@ -128,6 +129,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     final String TAG = NotificationManagerTest.class.getSimpleName();
     final boolean DEBUG = false;
 
+    private static final long ENFORCE_NO_CLEAR_FLAG_ON_MEDIA_NOTIFICATION = 264179692L;
     private static final String DELEGATE_POST_CLASS = TEST_APP + ".NotificationDelegateAndPost";
     private static final String REVOKE_CLASS = TEST_APP + ".NotificationRevoker";
 
@@ -2815,6 +2817,11 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testMediaStyle_setNoClearFlag() {
+        if (!CompatChanges.isChangeEnabled(ENFORCE_NO_CLEAR_FLAG_ON_MEDIA_NOTIFICATION)) {
+            Log.d(TAG, "Skipping testMediaStyle_setNoClearFlag(), SDK_INT="
+                    + Build.VERSION.SDK_INT);
+            return;
+        }
         int id = 99;
         final Notification notification =
                 new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -2831,6 +2838,11 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testCustomMediaStyle_setNoClearFlag() {
+        if (!CompatChanges.isChangeEnabled(ENFORCE_NO_CLEAR_FLAG_ON_MEDIA_NOTIFICATION)) {
+            Log.d(TAG, "Skipping testCustomMediaStyle_setNoClearFlag(), SDK_INT="
+                    + Build.VERSION.SDK_INT);
+            return;
+        }
         int id = 99;
         final Notification notification =
                 new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
