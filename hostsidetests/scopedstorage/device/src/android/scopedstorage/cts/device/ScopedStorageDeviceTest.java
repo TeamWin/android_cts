@@ -180,7 +180,7 @@ import java.util.List;
  * after all the links to new modules are created.
  */
 @RunWith(Parameterized.class)
-public class ScopedStorageDeviceTestCopy extends ScopedStorageBaseDeviceTest {
+public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     public static final String STR_DATA1 = "Just some random text";
 
     public static final byte[] BYTES_DATA1 = STR_DATA1.getBytes();
@@ -249,7 +249,7 @@ public class ScopedStorageDeviceTestCopy extends ScopedStorageBaseDeviceTest {
     /** Parameters data. */
     @Parameters(name = "volume={0}")
     public static Iterable<? extends Object> data() {
-        return ScopedStorageDeviceTestCopy.getTestParameters();
+        return ScopedStorageDeviceTest.getTestParameters();
     }
 
     @BeforeClass

@@ -85,7 +85,7 @@ import java.util.List;
  */
 @RunWith(Parameterized.class)
 @SdkSuppress(minSdkVersion = 31, codeName = "S")
-public class RedactUriDeviceTestCopy extends ScopedStorageBaseDeviceTest {
+public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
 
     /**
      * To help avoid flaky tests, give ourselves a unique nonce to be used for
