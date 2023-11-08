@@ -16,7 +16,10 @@
 
 package android.app.notification.current.cts;
 
+import static android.app.AutomaticZenRule.TYPE_BEDTIME;
+
 import android.app.AutomaticZenRule;
+import android.app.Flags;
 import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.net.Uri;
@@ -35,6 +38,10 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
             .appendPath("path")
             .appendPath("test")
             .build();
+    private final String mTriggerDescription = "Every Night, 10pm to 6am";
+    private final int mType = TYPE_BEDTIME;
+    private final boolean mAllowManualInvocation = true;
+    private final int mIconResId = 123;
     private final int mInterruptionFilter = NotificationManager.INTERRUPTION_FILTER_NONE;
     private final boolean mEnabled = true;
 
@@ -125,5 +132,149 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
                 policy, mInterruptionFilter, mEnabled);
         assertEquals(mInterruptionFilter, rule.getInterruptionFilter());
         assertEquals(rule.getZenPolicy(), policy);
+    }
+
+    public void testBuilder() {
+        if (!Flags.modesApi()) {
+            return;
+        }
+        AutomaticZenRule rule1 = new AutomaticZenRule.Builder(mName, mConditionId)
+                .setZenPolicy(mPolicy)
+                .setManualInvocationAllowed(mAllowManualInvocation)
+                .setOwner(mOwner)
+                .setType(mType)
+                .setConfigurationActivity(mConfigActivity)
+                .setInterruptionFilter(mInterruptionFilter)
+                .setTriggerDescription(mTriggerDescription)
+                .setIconResId(mIconResId)
+                .setEnabled(mEnabled)
+                .build();
+        assertEquals(mName, rule1.getName());
+        assertEquals(mOwner, rule1.getOwner());
+        assertEquals(mConditionId, rule1.getConditionId());
+        assertEquals(mInterruptionFilter, rule1.getInterruptionFilter());
+        assertEquals(mEnabled, rule1.isEnabled());
+        assertEquals(mPolicy, rule1.getZenPolicy());
+        assertEquals(mConfigActivity, rule1.getConfigurationActivity());
+        assertEquals(mType, rule1.getType());
+        assertEquals(mAllowManualInvocation, rule1.isManualInvocationAllowed());
+        assertEquals(mTriggerDescription, rule1.getTriggerDescription());
+        assertEquals(mIconResId, rule1.getIconResId());
+    }
+
+    public void testBuilder_fromBuilder() {
+        if (!Flags.modesApi()) {
+            return;
+        }
+        AutomaticZenRule rule1 = new AutomaticZenRule.Builder(
+                new AutomaticZenRule.Builder(mName, mConditionId)
+                        .setZenPolicy(mPolicy)
+                        .setManualInvocationAllowed(mAllowManualInvocation)
+                        .setOwner(mOwner)
+                        .setType(mType)
+                        .setConfigurationActivity(mConfigActivity)
+                        .setInterruptionFilter(mInterruptionFilter)
+                        .setTriggerDescription(mTriggerDescription)
+                        .setIconResId(mIconResId)
+                        .setEnabled(mEnabled)
+                        .build())
+                .build();
+        assertEquals(mName, rule1.getName());
+        assertEquals(mOwner, rule1.getOwner());
+        assertEquals(mConditionId, rule1.getConditionId());
+        assertEquals(mInterruptionFilter, rule1.getInterruptionFilter());
+        assertEquals(mEnabled, rule1.isEnabled());
+        assertEquals(mPolicy, rule1.getZenPolicy());
+        assertEquals(mConfigActivity, rule1.getConfigurationActivity());
+        assertEquals(mType, rule1.getType());
+        assertEquals(mAllowManualInvocation, rule1.isManualInvocationAllowed());
+        assertEquals(mTriggerDescription, rule1.getTriggerDescription());
+        assertEquals(mIconResId, rule1.getIconResId());
+    }
+
+    public void testWriteToParcelFromBuilder() {
+        if (!Flags.modesApi()) {
+            return;
+        }
+        AutomaticZenRule rule = new AutomaticZenRule.Builder(mName, mConditionId)
+                .setZenPolicy(mPolicy)
+                .setManualInvocationAllowed(mAllowManualInvocation)
+                .setOwner(mOwner)
+                .setType(mType)
+                .setConfigurationActivity(mConfigActivity)
+                .setInterruptionFilter(mInterruptionFilter)
+                .setTriggerDescription(mTriggerDescription)
+                .setIconResId(mIconResId)
+                .setEnabled(mEnabled)
+                .build();
+        Parcel parcel = Parcel.obtain();
+        rule.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        AutomaticZenRule rule1 = new AutomaticZenRule(parcel);
+        assertEquals(mName, rule1.getName());
+        assertEquals(mOwner, rule1.getOwner());
+        assertEquals(mConditionId, rule1.getConditionId());
+        assertEquals(mInterruptionFilter, rule1.getInterruptionFilter());
+        assertEquals(mEnabled, rule1.isEnabled());
+        assertEquals(mPolicy, rule1.getZenPolicy());
+        assertEquals(mConfigActivity, rule1.getConfigurationActivity());
+        assertEquals(mType, rule1.getType());
+        assertEquals(mAllowManualInvocation, rule1.isManualInvocationAllowed());
+        assertEquals(mIconResId, rule1.getIconResId());
+        assertTrue(rule1.getTriggerDescription().startsWith(mTriggerDescription));
+    }
+
+    public void testEquals() {
+        if (!Flags.modesApi()) {
+            return;
+        }
+        AutomaticZenRule rule = new AutomaticZenRule.Builder(mName, mConditionId)
+                .setZenPolicy(mPolicy)
+                .setManualInvocationAllowed(mAllowManualInvocation)
+                .setOwner(mOwner)
+                .setType(mType)
+                .setConfigurationActivity(mConfigActivity)
+                .setInterruptionFilter(mInterruptionFilter)
+                .setTriggerDescription(mTriggerDescription)
+                .setIconResId(mIconResId)
+                .build();
+        AutomaticZenRule rule2 = new AutomaticZenRule.Builder(mName, mConditionId)
+                .setZenPolicy(mPolicy)
+                .setManualInvocationAllowed(mAllowManualInvocation)
+                .setOwner(mOwner)
+                .setType(mType)
+                .setConfigurationActivity(mConfigActivity)
+                .setInterruptionFilter(mInterruptionFilter)
+                .setTriggerDescription(mTriggerDescription)
+                .setIconResId(mIconResId)
+                .build();
+        assertEquals(rule, rule2);
+    }
+
+    public void testHashCode() {
+        if (!Flags.modesApi()) {
+            return;
+        }
+        AutomaticZenRule rule = new AutomaticZenRule.Builder(mName, mConditionId)
+                .setZenPolicy(mPolicy)
+                .setManualInvocationAllowed(mAllowManualInvocation)
+                .setOwner(mOwner)
+                .setType(mType)
+                .setConfigurationActivity(mConfigActivity)
+                .setInterruptionFilter(mInterruptionFilter)
+                .setTriggerDescription(mTriggerDescription)
+                .setIconResId(mIconResId)
+                .build();
+        AutomaticZenRule rule2 = new AutomaticZenRule.Builder(mName, mConditionId)
+                .setZenPolicy(mPolicy)
+                .setManualInvocationAllowed(mAllowManualInvocation)
+                .setOwner(mOwner)
+                .setType(mType)
+                .setConfigurationActivity(mConfigActivity)
+                .setInterruptionFilter(mInterruptionFilter)
+                .setTriggerDescription(mTriggerDescription)
+                .setIconResId(mIconResId)
+                .build();
+        assertEquals(rule.hashCode(), rule2.hashCode());
     }
 }

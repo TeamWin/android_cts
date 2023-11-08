@@ -19,6 +19,7 @@ package android.app.notification.current.cts;
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL;
 import static android.Manifest.permission.REVOKE_RUNTIME_PERMISSIONS;
+import static android.app.AutomaticZenRule.TYPE_BEDTIME;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_ALARMS;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_ALL;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_NONE;
@@ -47,6 +48,7 @@ import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BA
 
 import android.Manifest;
 import android.app.AutomaticZenRule;
+import android.app.Flags;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -120,12 +122,27 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             TEST_APP + ".MatchesCallFilterTestActivity";
     private static final String MINIMAL_LISTENER_CLASS = TEST_APP + ".TestNotificationListener";
 
+    private final String NAME = "name";
+    private ComponentName CONFIG_ACTIVITY;
+    private final ZenPolicy POLICY = new ZenPolicy.Builder().allowAlarms(true).build();
+    private final Uri CONDITION_ID = new Uri.Builder().scheme("scheme")
+            .authority("authority")
+            .appendPath("path")
+            .appendPath("test")
+            .build();
+    private final String TRIGGER_DESC = "Every Night, 10pm to 6am";
+    private final int TYPE = TYPE_BEDTIME;
+    private final boolean ALLOW_MANUAL = true;
+    private final int ICON_RES_ID = 123;
+    private final int INTERRUPTION_FILTER = INTERRUPTION_FILTER_PRIORITY;
     private NotificationManager.Policy mOriginalPolicy;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         PermissionUtils.grantPermission(mContext.getPackageName(), POST_NOTIFICATIONS);
+
+        CONFIG_ACTIVITY = new ComponentName(mContext, AutomaticZenRuleActivity.class);
 
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -568,13 +585,21 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     }
 
     private boolean areRulesSame(AutomaticZenRule a, AutomaticZenRule b) {
-        return a.isEnabled() == b.isEnabled()
+        boolean isSame = a.isEnabled() == b.isEnabled()
                 && Objects.equals(a.getName(), b.getName())
                 && a.getInterruptionFilter() == b.getInterruptionFilter()
                 && Objects.equals(a.getConditionId(), b.getConditionId())
                 && Objects.equals(a.getOwner(), b.getOwner())
                 && Objects.equals(a.getZenPolicy(), b.getZenPolicy())
                 && Objects.equals(a.getConfigurationActivity(), b.getConfigurationActivity());
+        if (Flags.modesApi()) {
+            isSame = isSame
+                    && a.getType() == b.getType()
+                    && a.isManualInvocationAllowed() == b.isManualInvocationAllowed()
+                    && Objects.equals(a.getTriggerDescription(), b.getTriggerDescription())
+                    && a.getIconResId() == b.getIconResId();
+        }
+        return isSame;
     }
 
     private AutomaticZenRule createRule(String name, int filter) {
@@ -1879,5 +1904,29 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             fail("Notifications out of order. Actual order: Alice: " + rankA + " Bob: " + rankB
                     + " Charlie: " + rankC);
         }
+    }
+
+    public void testAddAutomaticZenRule_newFields() throws Exception {
+        if (!Flags.modesApi()) {
+            return;
+        }
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+
+        AutomaticZenRule ruleToCreate = new AutomaticZenRule.Builder(NAME, CONDITION_ID)
+                .setZenPolicy(POLICY)
+                .setManualInvocationAllowed(ALLOW_MANUAL)
+                .setOwner(null)
+                .setType(TYPE)
+                .setConfigurationActivity(CONFIG_ACTIVITY)
+                .setInterruptionFilter(INTERRUPTION_FILTER)
+                .setTriggerDescription(TRIGGER_DESC)
+                .setIconResId(ICON_RES_ID)
+                .build();
+        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
+
+        assertNotNull(id);
+        mRuleIds.add(id);
+        assertTrue(areRulesSame(ruleToCreate, mNotificationManager.getAutomaticZenRule(id)));
     }
 }

@@ -28,6 +28,7 @@ android_test {
         "compatibility-device-util-axt",
         "CtsAppTestStubsShared",
         "android.service.notification.flags-aconfig-java",
+        "android.app.flags-aconfig-java",
         "flag-junit",
     ],
     libs: [
