@@ -3,5 +3,10 @@
     {
       "name": "CtsUtilTestCases"
     }
+  ],
+  "ravenwood-presubmit": [
+    {
+      "name": "CtsUtilTestCasesRavenwood"
+    }
   ]
 }
