@@ -79,7 +79,7 @@ public abstract class StreamBase {
     // Stream attributes
     //
     /**
-     * The number of channels in this stream.
+     * The number of channels requested for this stream.
      */
     protected int mChannelCount;
 
@@ -138,11 +138,6 @@ public abstract class StreamBase {
     //
     // Attributes
     //
-
-    /**
-     * @return The number of channels associated with this stream.
-     */
-    public int getChannelCount() { return mChannelCount; }
 
     /**
      * @return The sample rate for this stream.
@@ -255,6 +250,13 @@ public abstract class StreamBase {
      * @return See StreamState constants
      */
     public abstract int getStreamState();
+
+    /**
+     * @return the ACTUAL number of channels in this stream
+     * (as opposed to the number requested).
+     * -1 if there is no valid stream.
+     */
+    public abstract int getChannelCount();
 
     /**
      * @return The last error callback result (these must match Oboe). See Oboe constants

@@ -72,6 +72,11 @@ public class JavaPlayer extends Player {
         return BuilderBase.SHARING_MODE_NOTSUPPORTED;
     }
 
+    @Override
+    public int getChannelCount() {
+        return mAudioTrack != null ? mAudioTrack.getChannelCount() : -1;
+    }
+
     /**
      * Allocates the array for the burst buffer.
      */

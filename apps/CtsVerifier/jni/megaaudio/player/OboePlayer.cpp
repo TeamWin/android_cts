@@ -211,6 +211,11 @@ JNIEXPORT jint JNICALL Java_org_hyphonate_megaaudio_player_OboePlayer_getSharing
     return ((OboePlayer*)(native_player))->getSharingMode();
 }
 
+JNIEXPORT jint JNICALL Java_org_hyphonate_megaaudio_player_OboePlayer_getChannelCountN(
+            JNIEnv *env, jobject thiz, jlong native_player) {
+    return ((OboePlayer*)(native_player))->getChannelCount();
+}
+
 JNIEXPORT jboolean JNICALL Java_org_hyphonate_megaaudio_player_OboePlayer_getTimestampN(
             JNIEnv *env, jobject thiz, jlong native_player, jobject timestamp) {
     return ((OboePlayer*)native_player)->getJavaTimestamp(timestamp);

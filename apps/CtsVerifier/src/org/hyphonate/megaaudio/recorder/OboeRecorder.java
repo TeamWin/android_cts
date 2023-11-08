@@ -51,6 +51,11 @@ public class OboeRecorder extends Recorder {
         return getSharingModeN(mNativeRecorder);
     }
 
+    @Override
+    public int getChannelCount() {
+        return getChannelCountN(mNativeRecorder);
+    }
+
     private int setupStream(RecorderBuilder builder) {
         mChannelCount = builder.getChannelCount();
         mSampleRate = builder.getSampleRate();
@@ -117,6 +122,8 @@ public class OboeRecorder extends Recorder {
     private native int getRoutedDeviceIdN(long nativeRecorder);
 
     private native int getSharingModeN(long nativeRecorder);
+
+    private native int getChannelCountN(long nativePlayer);
 
     private native int setupStreamN(long nativeRecorder, int channelCount, int sampleRate,
                                     int performanceMode, int sharingMode, int routeDeviceId,

@@ -119,6 +119,15 @@ public class DuplexAudioManager {
         mRecorderSharingMode = mode;
     }
 
+    public int getPlayerChannelCount() {
+        return mPlayer != null ? mPlayer.getChannelCount() : -1;
+    }
+
+    public int getRecorderChannelCount() {
+        return mRecorder != null ? mRecorder.getChannelCount() : -1;
+
+    }
+
     /**
      * Specifies the input preset to use for the recorder.
      * @param preset
