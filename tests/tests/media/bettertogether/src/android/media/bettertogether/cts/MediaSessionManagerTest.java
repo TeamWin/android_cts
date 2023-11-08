@@ -80,7 +80,6 @@ public class MediaSessionManagerTest {
     private AudioManager mAudioManager;
     private MediaSessionManager mSessionManager;
 
-    private static boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
     private static boolean sIsAtLeastU = ApiLevelUtil.isAtLeast(
             Build.VERSION_CODES.UPSIDE_DOWN_CAKE);
 
