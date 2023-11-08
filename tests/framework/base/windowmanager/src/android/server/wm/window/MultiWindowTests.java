@@ -265,7 +265,7 @@ public class MultiWindowTests extends ActivityManagerTestBase {
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
 
-        mWmState.assertFocusedActivity("Launched to side activity must be in front.",
+        mWmState.waitAndAssertFocusedActivity("Launched to side activity must be in front.",
                 TEST_ACTIVITY);
 
         // Set secondary split as launch root
@@ -273,13 +273,13 @@ public class MultiWindowTests extends ActivityManagerTestBase {
 
         // Launch another activity to side to cover first one.
         launchActivityInSecondarySplit(NO_RELAUNCH_ACTIVITY);
-        mWmState.assertFocusedActivity("Launched to side covering activity must be in front.",
-                NO_RELAUNCH_ACTIVITY);
+        mWmState.waitAndAssertFocusedActivity(
+                "Launched to side covering activity must be in front.", NO_RELAUNCH_ACTIVITY);
 
         // Launch activity that was first launched to side. It should be brought to front.
         launchActivity(TEST_ACTIVITY);
-        mWmState.assertFocusedActivity("Launched to side covering activity must be in front.",
-                TEST_ACTIVITY);
+        mWmState.waitAndAssertFocusedActivity(
+                "Launched to side covering activity must be in front.", TEST_ACTIVITY);
     }
 
     @Test
