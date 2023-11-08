@@ -16,6 +16,8 @@
 
 package android.server.wm.activity.lifecycle;
 
+import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
+
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
@@ -30,7 +32,7 @@ import java.util.function.BooleanSupplier;
  * expected activity states are reached.
  */
 public class EventTracker implements EventLog.EventTrackerCallback {
-    private static final int TIMEOUT = 5 * 1000;
+    private static final long TIMEOUT = 5 * 1000L * HW_TIMEOUT_MULTIPLIER;
     private EventLog mEventLog;
 
     public EventTracker(EventLog eventLog) {
