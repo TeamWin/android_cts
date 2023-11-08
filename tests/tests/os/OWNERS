@@ -1,4 +1,7 @@
 # Bug component: 25692
+include platform/frameworks/base:/OWNERS
+include platform/frameworks/base:/core/java/android/os/OWNERS
+
 per-file *Vibrat* = file:platform/frameworks/base:/services/core/java/com/android/server/vibrator/OWNERS
 per-file *NetworkTime* = file:platform/frameworks/base:/services/core/java/com/android/server/timezonedetector/OWNERS
 per-file *Sntp* = file:platform/frameworks/base:/services/core/java/com/android/server/timezonedetector/OWNERS
