@@ -2833,6 +2833,7 @@ public class PackageManagerTest {
         // Test that the code path is gone but the signing info is still available
         assertThat(packageInfo.applicationInfo.getCodePath()).isNull();
         assertThat(packageInfo.signingInfo).isNotNull();
+        assertThat(packageInfo.applicationInfo.targetSdkVersion).isGreaterThan(0);
         // Test that the app's data directory is preserved and matches dumpsys
         final String newDataDir = packageInfo.applicationInfo.dataDir;
         assertThat(newDataDir).isNotEmpty();
