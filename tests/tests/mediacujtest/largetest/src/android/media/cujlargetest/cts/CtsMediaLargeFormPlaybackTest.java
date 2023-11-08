@@ -50,6 +50,8 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
       MEDIA_DIR + "BigBuckBunny_640x480_vp9_5min.webm";
   private static final String MP4_ELEPHANTSDREAM_BIGBUCKBUNNY_CONCAT_1080P_AVC_30MIN_URI_STRING =
       MEDIA_DIR + "ElephantsDream_BigBuckBunny_concat_1080p_avc_30min.mp4";
+  private static final String WEBM_ELEPHANTSDREAM_DASH_3MIN_URI_STRING =
+      MEDIA_DIR + "ElephantsDream.mpd";
 
   CujTestParam mCujTestParam;
 
@@ -81,6 +83,11 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
             .setTimeoutMilliSeconds(1830000)
             .setPlayerListener(PlayerListener.createListenerForSeekTest(30, 10000, 30000)).build(),
             "Avc_1080p_30min_seekTest"},
+        {CujTestParam.builder().setMediaUrls(prepareVp9_Local_DASH_3minVideoList())
+            .setTimeoutMilliSeconds(210000)
+            .setPlayerListener(
+                PlayerListener.createListenerForAdaptivePlaybackTest(6, 15000)).build(),
+            "Vp9_DASH_3min_adaptivePlaybackTest"},
     }));
     return exhaustiveArgsList;
   }
@@ -102,6 +109,15 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
   public static List<String> prepareAvc_1080p_30minVideoList() {
     List<String> videoInput = Arrays.asList(
         MP4_ELEPHANTSDREAM_BIGBUCKBUNNY_CONCAT_1080P_AVC_30MIN_URI_STRING);
+    return videoInput;
+  }
+
+  /**
+   * Prepare Vp9 DASH 3min video list.
+   */
+  public static List<String> prepareVp9_Local_DASH_3minVideoList() {
+    List<String> videoInput = Arrays.asList(
+        WEBM_ELEPHANTSDREAM_DASH_3MIN_URI_STRING);
     return videoInput;
   }
 

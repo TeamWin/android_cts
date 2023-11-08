@@ -29,11 +29,18 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.media3.common.C;
+import androidx.media3.common.Format;
 import androidx.media3.common.Player;
 import androidx.media3.common.Player.Events;
+import androidx.media3.common.TrackSelectionOverride;
+import androidx.media3.common.TrackSelectionParameters;
+import androidx.media3.common.Tracks;
+import androidx.media3.common.VideoSize;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class PlayerListener implements Player.Listener {
@@ -55,6 +62,15 @@ public class PlayerListener implements Player.Listener {
   private boolean mOrientationChangeRequested;
   private int mStartOrientation;
   private int mCurrentOrientation;
+  private boolean mIsAdaptivePlaybackTest;
+  private boolean mResolutionChangeRequested;
+  private int mCurrentResolutionWidth;
+  private int mCurrentResolutionHeight;
+  private int mNumOfVideoTrack;
+  private int mIndexIncrement = C.INDEX_UNSET;
+  private int mCurrentTrackIndex = C.INDEX_UNSET;
+  private Tracks.Group mVideoTrackGroup;
+  private List<Format> mVideoFormatList;
 
   /**
    * Create player listener for playback test.
@@ -97,6 +113,22 @@ public class PlayerListener implements Player.Listener {
     PlayerListener playerListener = createListenerForPlaybackTest();
     playerListener.mIsOrientationTest = true;
     playerListener.mSendMessagePosition = sendMessagePosition;
+    return playerListener;
+  }
+
+  /**
+   * Create player listener for adaptive playback test.
+   *
+   * @param numOfVideoTrack     Number of video tracks in the input clip
+   * @param sendMessagePosition The position at which message will be send
+   */
+  public static PlayerListener createListenerForAdaptivePlaybackTest(int numOfVideoTrack,
+      long sendMessagePosition) {
+    PlayerListener playerListener = createListenerForPlaybackTest();
+    playerListener.mIsAdaptivePlaybackTest = true;
+    playerListener.mSendMessagePosition = sendMessagePosition;
+    playerListener.mNumOfVideoTrack = numOfVideoTrack;
+    playerListener.mIndexIncrement = 1;
     return playerListener;
   }
 
@@ -200,10 +232,26 @@ public class PlayerListener implements Player.Listener {
           assertNotEquals(mStartOrientation, currentDeviceOrientation);
           mOrientationChangeRequested = false;
           mStartOrientation = currentDeviceOrientation;
+        } else if (mResolutionChangeRequested) {
+          int configuredResolutionWidth = mVideoFormatList.get(mCurrentTrackIndex).width;
+          int configuredResolutionHeight = mVideoFormatList.get(mCurrentTrackIndex).height;
+          assertEquals(configuredResolutionWidth, mCurrentResolutionWidth);
+          assertEquals(configuredResolutionHeight, mCurrentResolutionHeight);
+          // Reversing the track iteration order
+          if (mCurrentTrackIndex == mVideoFormatList.size() - 1) {
+            mIndexIncrement *= -1;
+          }
+          mCurrentTrackIndex += mIndexIncrement;
+          mResolutionChangeRequested = false;
         } else {
           // At the first media transition player is not ready. So, add duration of
           // first clip when player is ready
           mExpectedTotalTime += player.getDuration();
+          // When player is ready, get the list of supported video Format(s) in the DASH mediaItem
+          if (mIsAdaptivePlaybackTest) {
+            mVideoFormatList = getVideoFormatList();
+            mCurrentTrackIndex = 0;
+          }
         }
       }
       synchronized (LISTENER_LOCK) {
@@ -228,6 +276,13 @@ public class PlayerListener implements Player.Listener {
             }).setLooper(Looper.getMainLooper()).setPosition(mSendMessagePosition)
             .setDeleteAfterDelivery(true)
             .send();
+      } else if (mIsAdaptivePlaybackTest) {
+        // Iterating forwards and then backwards for all the available video tracks
+        final int totalNumOfVideoTrackChange = mNumOfVideoTrack * 2;
+        // Create messages to be executed at different positions
+        for (int count = 1; count < totalNumOfVideoTrackChange; count++) {
+          createAdaptivePlaybackMessage(mSendMessagePosition * (count));
+        }
       }
       // Add duration on media transition.
       long duration = player.getDuration();
@@ -235,5 +290,71 @@ public class PlayerListener implements Player.Listener {
         mExpectedTotalTime += duration;
       }
     }
+  }
+
+  /**
+   * Called each time when getVideoSize() changes. onEvents(Player, Player.Events) will also be
+   * called to report this event along with other events that happen in the same Looper message
+   * queue iteration.
+   *
+   * @param videoSize The new size of the video.
+   */
+  public void onVideoSizeChanged(VideoSize videoSize) {
+    mCurrentResolutionWidth = videoSize.width;
+    mCurrentResolutionHeight = videoSize.height;
+  }
+
+  /**
+   * Create a message at given position to change the resolution
+   *
+   * @param sendMessagePosition Position at which message needs to be executed
+   */
+  private void createAdaptivePlaybackMessage(long sendMessagePosition) {
+    mActivity.mPlayer.createMessage((messageType, payload) -> {
+          TrackSelectionParameters currentParameters =
+              mActivity.mPlayer.getTrackSelectionParameters();
+          TrackSelectionParameters newParameters = currentParameters
+              .buildUpon()
+              .setOverrideForType(
+                  new TrackSelectionOverride(mVideoTrackGroup.getMediaTrackGroup(),
+                      mCurrentTrackIndex))
+              .build();
+          mActivity.mPlayer.setTrackSelectionParameters(newParameters);
+          mResolutionChangeRequested = true;
+        }).setLooper(Looper.getMainLooper()).setPosition(sendMessagePosition)
+        .setDeleteAfterDelivery(true).send();
+  }
+
+  /**
+   * Fetch only video tracks group from the given clip
+   *
+   * @param currentTracks Current tracks in the clip
+   * @return Video tracks group
+   */
+  private Tracks.Group getVideoTrackGroup(Tracks currentTracks) {
+    Tracks.Group videoTrackGroup = null;
+    for (Tracks.Group currentTrackGroup : currentTracks.getGroups()) {
+      if (currentTrackGroup.getType() == C.TRACK_TYPE_VIDEO) {
+        videoTrackGroup = currentTrackGroup;
+        break;
+      }
+    }
+    return videoTrackGroup;
+  }
+
+  /**
+   * Get all available formats from videoTrackGroup.
+   */
+  private List<Format> getVideoFormatList() {
+    Tracks currentTracks = mActivity.mPlayer.getCurrentTracks();
+    mVideoTrackGroup = getVideoTrackGroup(currentTracks);
+    List<Format> videoFormatList = new ArrayList<>();
+    // Populate the videoFormatList with video tracks
+    for (int trackIndex = 0; trackIndex < mVideoTrackGroup.length; trackIndex++) {
+      Format trackFormat = mVideoTrackGroup.getTrackFormat(trackIndex);
+      videoFormatList.add(trackFormat);
+    }
+    assertEquals(mNumOfVideoTrack, videoFormatList.size());
+    return videoFormatList;
   }
 }
