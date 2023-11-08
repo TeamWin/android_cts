@@ -688,9 +688,8 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
                 .execute();
         mWmState.waitForActivityState(STANDARD_ACTIVITY, STATE_RESUMED);
 
-        // Make sure the activity is finished.
-        assertEquals("Instance of the activity in its task must be cleared", 0,
-                mWmState.getActivityCountInTask(taskId, FINISH_ON_TASK_LAUNCH_ACTIVITY));
+        // Make sure the activity is removed.
+        mWmState.waitAndAssertActivityRemoved(FINISH_ON_TASK_LAUNCH_ACTIVITY);
     }
 
     @Test
