@@ -308,4 +308,10 @@
     <!-- b/303631162 -->
     <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.ims.cts.ImsCallingTest#testCallJoinExistingConferenceCallAfterCallSwap" />
     <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.ims.cts.ImsCallingTest#testCallJoinExistingConferenceCallAfterCallSwapFail" />
+
+    <!-- b/294251187 -->
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.SurfaceControlViewHostTests#testFocusWithTouch" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.SurfaceControlViewHostTests#testPopupWindowPosition" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.SurfaceControlViewHostTests#testFocusWithTouchCrossProcess" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.SurfaceControlViewHostTests#testChildWindowFocusable" />
 </configuration>
