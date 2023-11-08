@@ -24,6 +24,7 @@ import static android.app.NotificationManager.INTERRUPTION_FILTER_ALL;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_NONE;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_PRIORITY;
 import static android.app.NotificationManager.Policy.CONVERSATION_SENDERS_ANYONE;
+import static android.app.NotificationManager.Policy.CONVERSATION_SENDERS_IMPORTANT;
 import static android.app.NotificationManager.Policy.CONVERSATION_SENDERS_NONE;
 import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS;
 import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_CALLS;
@@ -34,6 +35,7 @@ import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_MESSAGES;
 import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_REMINDERS;
 import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_REPEAT_CALLERS;
 import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM;
+import static android.app.NotificationManager.Policy.PRIORITY_SENDERS_STARRED;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_AMBIENT;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_LIGHTS;
@@ -81,6 +83,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -117,6 +120,8 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             TEST_APP + ".MatchesCallFilterTestActivity";
     private static final String MINIMAL_LISTENER_CLASS = TEST_APP + ".TestNotificationListener";
 
+    private NotificationManager.Policy mOriginalPolicy;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -126,6 +131,30 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertNotNull(mListener);
 
         createChannels();
+
+        // Set up a known DND state for all tests:
+        // * DND off.
+        // * Alarms, Media, Calls (starred), Messages (starred), Repeat Calls, Conversations
+        //   (starred) allowed.
+        // * Some suppressed visual effects.
+        // (using the SystemUI permission so we're certain to update global state).
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mOriginalPolicy = mNotificationManager.getNotificationPolicy();
+
+                    mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
+                            PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA
+                                    | PRIORITY_CATEGORY_CALLS | PRIORITY_CATEGORY_MESSAGES
+                                    | PRIORITY_CATEGORY_REPEAT_CALLERS
+                                    | PRIORITY_CATEGORY_CONVERSATIONS,
+                            PRIORITY_SENDERS_STARRED, PRIORITY_SENDERS_STARRED,
+                            SUPPRESSED_EFFECT_AMBIENT | SUPPRESSED_EFFECT_PEEK
+                                    | SUPPRESSED_EFFECT_LIGHTS
+                                    | SUPPRESSED_EFFECT_FULL_SCREEN_INTENT,
+                            CONVERSATION_SENDERS_IMPORTANT));
+                    mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
+                },
+                Manifest.permission.STATUS_BAR_SERVICE);
     }
 
     @Override
@@ -140,7 +169,13 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL,
                 REVOKE_RUNTIME_PERMISSIONS);
 
-        mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
+        // Restore to the previous DND state.
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
+                    mNotificationManager.setNotificationPolicy(mOriginalPolicy);
+                },
+                Manifest.permission.STATUS_BAR_SERVICE);
 
         final ArrayList<ContentProviderOperation> operationList = new ArrayList<>();
         Uri aliceUri = lookupContact(ALICE_PHONE);
@@ -164,6 +199,8 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 Log.e(TAG, String.format("%s: %s", e, e.getMessage()));
             }
         }
+
+        deleteAllAutomaticZenRules();
 
         mListener.resetData();
         mNotificationHelper.disableListener(STUB_PACKAGE_NAME);
@@ -493,6 +530,13 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         mNotificationManager.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID_GAME);
     }
 
+    private void deleteAllAutomaticZenRules() {
+        Map<String, AutomaticZenRule> rules = mNotificationManager.getAutomaticZenRules();
+        for (String ruleId : rules.keySet()) {
+            mNotificationManager.removeAutomaticZenRule(ruleId);
+        }
+    }
+
     private void deleteSingleContact(Uri uri) {
         final ArrayList<ContentProviderOperation> operationList =
                 new ArrayList<ContentProviderOperation>();
@@ -656,26 +700,16 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             toggleNotificationPolicyAccess(mContext.getPackageName(),
                     InstrumentationRegistry.getInstrumentation(), true);
 
-            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                    PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA,
-                    0, 0));
-            // turn on manual DND
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
-            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
-
             // no custom ZenPolicy, so consolidatedPolicy should equal the default notif policy
             assertEquals(mNotificationManager.getConsolidatedNotificationPolicy(),
                     mNotificationManager.getNotificationPolicy());
-
-            // turn off manual DND
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
-            assertExpectedDndState(INTERRUPTION_FILTER_ALL);
 
             // setup custom ZenPolicy for an automatic rule
             AutomaticZenRule rule = createRule("test_consolidated_policy",
                     INTERRUPTION_FILTER_PRIORITY);
             rule.setZenPolicy(new ZenPolicy.Builder()
                     .allowReminders(true)
+                    .allowMedia(false)
                     .build());
             String id = mNotificationManager.addAutomaticZenRule(rule);
             mRuleIds.add(id);
@@ -691,20 +725,22 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             NotificationManager.Policy consolidatedPolicy =
                     mNotificationManager.getConsolidatedNotificationPolicy();
 
-            // alarms and media are allowed from default notification policy
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_ALARMS) != 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MEDIA) != 0);
-
             // reminders is allowed from the automatic rule's custom ZenPolicy
             assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_REMINDERS) != 0);
 
-            // other sounds aren't allowed
-            assertTrue((consolidatedPolicy.priorityCategories
-                    & PRIORITY_CATEGORY_CONVERSATIONS) == 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_CALLS) == 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MESSAGES) == 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_SYSTEM) == 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_EVENTS) == 0);
+            // media is disallowed from the automatic rule's custom ZenPolicy
+            assertFalse((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MEDIA) != 0);
+
+            // other stuff is from the default notification policy (see #setUp)
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_ALARMS) != 0);
+            assertTrue(
+                    (consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_CONVERSATIONS) != 0);
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_CALLS) != 0);
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_REPEAT_CALLERS)
+                    != 0);
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MESSAGES) != 0);
+            assertFalse((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_SYSTEM) != 0);
+            assertFalse((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_EVENTS) != 0);
         } finally {
             mNotificationManager.setInterruptionFilter(originalFilter);
             mNotificationManager.setNotificationPolicy(origPolicy);
@@ -717,10 +753,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         try {
             toggleNotificationPolicyAccess(mContext.getPackageName(),
                     InstrumentationRegistry.getInstrumentation(), true);
-
-            // default allows no sounds
-            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                    PRIORITY_CATEGORY_ALARMS, 0, 0));
 
             // setup custom ZenPolicy for two automatic rules
             AutomaticZenRule rule1 = createRule("test_consolidated_policyq",
@@ -766,12 +798,12 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_SYSTEM) != 0);
             assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MEDIA) != 0);
 
-            // other sounds aren't allowed (from default policy)
-            assertTrue((consolidatedPolicy.priorityCategories
-                    & PRIORITY_CATEGORY_CONVERSATIONS) == 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_CALLS) == 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MESSAGES) == 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_EVENTS) == 0);
+            // other stuff is from the default notification policy (see #setUp)
+            assertTrue(
+                    (consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_CONVERSATIONS) != 0);
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_CALLS) != 0);
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MESSAGES) != 0);
+            assertFalse((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_EVENTS) != 0);
         } finally {
             mNotificationManager.setInterruptionFilter(originalFilter);
             mNotificationManager.setNotificationPolicy(origPolicy);
@@ -1316,7 +1348,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             // set up: only starred contacts are allowed to call.
             mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
                     PRIORITY_CATEGORY_CALLS,
-                    NotificationManager.Policy.PRIORITY_SENDERS_STARRED, 0));
+                    PRIORITY_SENDERS_STARRED, 0));
             assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
 
             // now only Alice should be allowed to get through
@@ -1649,7 +1681,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         policy = new NotificationManager.Policy(
                 NotificationManager.Policy.PRIORITY_CATEGORY_MESSAGES,
                 policy.priorityCallSenders,
-                NotificationManager.Policy.PRIORITY_SENDERS_STARRED);
+                PRIORITY_SENDERS_STARRED);
         mNotificationManager.setNotificationPolicy(policy);
         sendNotifications(MODE_URI, false, false);
 
