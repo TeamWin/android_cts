@@ -21,7 +21,6 @@ import static org.junit.Assert.assertTrue;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
 import org.junit.After;
 import org.junit.Before;
@@ -50,16 +49,10 @@ public class ReadableSettingsFieldsTest extends BaseAppSecurityTest {
     private static final String TEST_APK_TARGET_R = "CtsReadSettingsFieldsAppTargetR.apk";
     private static final String TEST_APK_TARGET_S = "CtsReadSettingsFieldsAppTargetS.apk";
 
-    private DeviceTestRunOptions options;
-
     @Before
     public void setUp() throws Exception {
         new InstallMultiple().addFile(TEST_APK).run();
         assertTrue(getDevice().isPackageInstalled(TEST_PACKAGE));
-        options = new DeviceTestRunOptions(TEST_PACKAGE)
-            .setDevice(getDevice())
-            .setTestClassName(TEST_CLASS)
-            .setDisableHiddenApiCheck(true);
     }
 
     @After
@@ -69,150 +62,144 @@ public class ReadableSettingsFieldsTest extends BaseAppSecurityTest {
 
     @Test
     public void testSecureNonHiddenSettingsKeysAreReadable() throws DeviceNotAvailableException {
-        options.setTestMethodName("testSecureNonHiddenSettingsKeysAreReadable");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testSecureNonHiddenSettingsKeysAreReadable");
     }
 
     @Test
     public void testSystemNonHiddenSettingsKeysAreReadable() throws DeviceNotAvailableException {
-        options.setTestMethodName("testSystemNonHiddenSettingsKeysAreReadable");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testSystemNonHiddenSettingsKeysAreReadable");
     }
 
     @Test
     public void testGlobalNonHiddenSettingsKeysAreReadable() throws DeviceNotAvailableException {
-        options.setTestMethodName("testGlobalNonHiddenSettingsKeysAreReadable");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testGlobalNonHiddenSettingsKeysAreReadable");
     }
 
     @Test
     public void testSecureSomeHiddenSettingsKeysAreReadable() throws DeviceNotAvailableException {
-        options.setTestMethodName("testSecureSomeHiddenSettingsKeysAreReadable");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testSecureSomeHiddenSettingsKeysAreReadable");
     }
 
     @Test
     public void testSystemSomeHiddenSettingsKeysAreReadable() throws DeviceNotAvailableException {
-        options.setTestMethodName("testSystemSomeHiddenSettingsKeysAreReadable");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testSystemSomeHiddenSettingsKeysAreReadable");
     }
 
     @Test
     public void testGlobalSomeHiddenSettingsKeysAreReadable() throws DeviceNotAvailableException {
-        options.setTestMethodName("testGlobalSomeHiddenSettingsKeysAreReadable");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testGlobalSomeHiddenSettingsKeysAreReadable");
     }
 
     @Test
     public void testGlobalHiddenSettingsKeyNotReadableWithoutPermissions() throws
             DeviceNotAvailableException {
-        options.setTestMethodName("testGlobalHiddenSettingsKeyNotReadableWithoutPermissions");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testGlobalHiddenSettingsKeyNotReadableWithoutPermissions");
     }
 
     @Test
     public void testSecureHiddenSettingsKeysNotReadableWithoutAnnotation()
             throws DeviceNotAvailableException {
-        options.setTestMethodName("testSecureHiddenSettingsKeysNotReadableWithoutAnnotation");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testSecureHiddenSettingsKeysNotReadableWithoutAnnotation");
     }
 
     @Test
     public void testSystemHiddenSettingsKeysNotReadableWithoutAnnotation()
             throws DeviceNotAvailableException {
-        options.setTestMethodName("testSystemHiddenSettingsKeysNotReadableWithoutAnnotation");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testSystemHiddenSettingsKeysNotReadableWithoutAnnotation");
     }
 
     @Test
     public void testGlobalHiddenSettingsKeysNotReadableWithoutAnnotation()
             throws DeviceNotAvailableException {
-        options.setTestMethodName("testGlobalHiddenSettingsKeysNotReadableWithoutAnnotation");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testGlobalHiddenSettingsKeysNotReadableWithoutAnnotation");
     }
 
     @Test
     public void testSecureHiddenSettingsKeysReadableWhenTestOnly()
             throws DeviceNotAvailableException, FileNotFoundException {
         new InstallMultiple().addFile(TEST_APK_TEST_ONLY).addArg("-t").run();
-        options.setTestMethodName("testSecureHiddenSettingsKeysReadableWithoutAnnotation");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testSecureHiddenSettingsKeysReadableWithoutAnnotation");
     }
 
     @Test
     public void testSystemHiddenSettingsKeysReadableWhenTestOnly()
             throws DeviceNotAvailableException, FileNotFoundException {
         new InstallMultiple().addFile(TEST_APK_TEST_ONLY).addArg("-t").run();
-        options.setTestMethodName("testSystemHiddenSettingsKeysReadableWithoutAnnotation");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testSystemHiddenSettingsKeysReadableWithoutAnnotation");
     }
 
     @Test
     public void testGlobalHiddenSettingsKeysReadableWhenTestOnly()
             throws DeviceNotAvailableException, FileNotFoundException {
         new InstallMultiple().addFile(TEST_APK_TEST_ONLY).addArg("-t").run();
-        options.setTestMethodName("testGlobalHiddenSettingsKeysReadableWithoutAnnotation");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testGlobalHiddenSettingsKeysReadableWithoutAnnotation");
     }
 
     @Test
     public void testSettingsKeysNotReadableForAfterR()
             throws DeviceNotAvailableException, FileNotFoundException {
         new InstallMultiple().addFile(TEST_APK_TARGET_S).run();
-        options.setTestMethodName("testSettingsKeysNotReadableForAfterR");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testSettingsKeysNotReadableForAfterR");
     }
 
     @Test
     public void testSettingsKeysReadableForRMinus()
             throws DeviceNotAvailableException, FileNotFoundException {
         new InstallMultiple().addFile(TEST_APK_TARGET_R).run();
-        options.setTestMethodName("testSettingsKeysReadableForRMinus");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testSettingsKeysReadableForRMinus");
         new InstallMultiple().addFile(TEST_APK_TARGET_Q).run();
-        options.setTestMethodName("testSettingsKeysReadableForRMinus");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testSettingsKeysReadableForRMinus");
     }
 
     @Test
     public void testQueryGlobalSettingsNoHiddenKeysWithoutAnnotation()
             throws DeviceNotAvailableException {
-        options.setTestMethodName("testQueryGlobalSettingsNoHiddenKeysWithoutAnnotation");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testQueryGlobalSettingsNoHiddenKeysWithoutAnnotation");
     }
 
     @Test
     public void testQuerySystemSettingsNoHiddenKeysWithoutAnnotation()
             throws DeviceNotAvailableException {
-        options.setTestMethodName("testQuerySystemSettingsNoHiddenKeysWithoutAnnotation");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testQuerySystemSettingsNoHiddenKeysWithoutAnnotation");
     }
 
     @Test
     public void testQuerySecureSettingsNoHiddenKeysWithoutAnnotation()
             throws DeviceNotAvailableException {
-        options.setTestMethodName("testQuerySecureSettingsNoHiddenKeysWithoutAnnotation");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testQuerySecureSettingsNoHiddenKeysWithoutAnnotation");
     }
 
     @Test
     public void testListGlobalSettingsNoHiddenKeysWithoutAnnotation()
             throws DeviceNotAvailableException {
-        options.setTestMethodName("testListGlobalSettingsNoHiddenKeysWithoutAnnotation");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testListGlobalSettingsNoHiddenKeysWithoutAnnotation");
     }
 
     @Test
     public void testListSystemSettingsNoHiddenKeysWithoutAnnotation()
             throws DeviceNotAvailableException {
-        options.setTestMethodName("testListSystemSettingsNoHiddenKeysWithoutAnnotation");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testListSystemSettingsNoHiddenKeysWithoutAnnotation");
     }
 
     @Test
     public void testListSecureSettingsNoHiddenKeysWithoutAnnotation()
             throws DeviceNotAvailableException {
-        options.setTestMethodName("testListSecureSettingsNoHiddenKeysWithoutAnnotation");
-        runDeviceTests(options);
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testListSecureSettingsNoHiddenKeysWithoutAnnotation");
     }
 }
