@@ -22,6 +22,11 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <service android:name=".FakeService" android:exported="true" />
+        <receiver android:name=".FakeReceiver" android:exported="true" />
+        <provider android:name=".FakeProvider"
+                  android:authorities="com.test.sdk1_1.FakeProvider"
+                  android:exported="true" />
 
         <sdk-library android:name="com.test.sdk1" android:versionMajor="1" />
 
