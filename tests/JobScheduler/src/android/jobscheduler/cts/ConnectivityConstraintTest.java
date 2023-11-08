@@ -85,9 +85,6 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         mHasTelephony = packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
         mBuilder = new JobInfo.Builder(CONNECTIVITY_JOB_ID, kJobServiceComponent);
 
-        if (mHasWifi) {
-            mNetworkingHelper.ensureSavedWifiNetwork();
-        }
         setDataSaverEnabled(false);
         mNetworkingHelper.setAllNetworksEnabled(true);
     }

@@ -645,7 +645,6 @@ public class JobThrottlingTest {
         assumeTrue("device doesn't have battery", BatteryUtils.hasBattery());
         assumeFalse("not testable, since ethernet is connected", hasEthernetConnection());
         assumeTrue(mNetworkingHelper.hasWifiFeature());
-        mNetworkingHelper.ensureSavedWifiNetwork();
 
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
@@ -1074,7 +1073,6 @@ public class JobThrottlingTest {
 
         assumeTrue(BatteryUtils.hasBattery());
         assumeTrue(mNetworkingHelper.hasWifiFeature());
-        mNetworkingHelper.ensureSavedWifiNetwork();
 
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
