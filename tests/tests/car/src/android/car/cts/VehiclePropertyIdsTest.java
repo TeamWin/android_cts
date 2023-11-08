@@ -131,6 +131,8 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("ENGINE_RPM");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.ENGINE_IDLE_AUTO_STOP_ENABLED))
                 .isEqualTo("ENGINE_IDLE_AUTO_STOP_ENABLED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.IMPACT_DETECTED))
+                .isEqualTo("IMPACT_DETECTED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.WHEEL_TICK))
                 .isEqualTo("WHEEL_TICK");
         assertThat(VehiclePropertyIds.toString(

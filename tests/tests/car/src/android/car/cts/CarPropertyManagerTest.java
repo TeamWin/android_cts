@@ -67,6 +67,7 @@ import android.car.hardware.property.EvStoppingMode;
 import android.car.hardware.property.ForwardCollisionWarningState;
 import android.car.hardware.property.HandsOnDetectionDriverState;
 import android.car.hardware.property.HandsOnDetectionWarning;
+import android.car.hardware.property.ImpactSensorLocation;
 import android.car.hardware.property.LaneCenteringAssistCommand;
 import android.car.hardware.property.LaneCenteringAssistState;
 import android.car.hardware.property.LaneDepartureWarningState;
@@ -284,6 +285,16 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehicleAirbagLocation.LEFT_SIDE,
                             VehicleAirbagLocation.RIGHT_SIDE,
                             VehicleAirbagLocation.CURTAIN)
+                    .build();
+    private static final ImmutableSet<Integer> IMPACT_SENSOR_LOCATIONS =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            ImpactSensorLocation.FRONT,
+                            ImpactSensorLocation.FRONT_LEFT_DOOR_SIDE,
+                            ImpactSensorLocation.FRONT_RIGHT_DOOR_SIDE,
+                            ImpactSensorLocation.REAR_LEFT_DOOR_SIDE,
+                            ImpactSensorLocation.REAR_RIGHT_DOOR_SIDE,
+                            ImpactSensorLocation.REAR)
                     .build();
     private static final ImmutableSet<Integer> EMERGENCY_LANE_KEEP_ASSIST_STATES =
             ImmutableSet.<Integer>builder()
@@ -609,6 +620,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             ImmutableList.<Integer>builder()
                     .add(
                             VehiclePropertyIds.SEAT_AIRBAG_ENABLED)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_READ_IMPACT_SENSORS_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.IMPACT_DETECTED)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_CAR_SEATS_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -1249,6 +1265,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getVehicleDrivingAutomationCurrentLevelVerifier(),
              getSeatAirbagsDeployedVerifier(),
              getSeatBeltPretensionerDeployedVerifier(),
+             getImpactDetectedVerifier(),
              // TODO(b/273988725): Put all verifiers here.
         };
     }
@@ -3980,6 +3997,23 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addWritePermission(Car.PERMISSION_CAR_ENGINE_DETAILED)
                 .build()
                 .verify();
+    }
+    private VehiclePropertyVerifier<Integer> getImpactDetectedVerifier() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.IMPACT_DETECTED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class, mCarPropertyManager)
+                .setAllPossibleEnumValues(IMPACT_SENSOR_LOCATIONS)
+                .setBitMapEnumEnabled(true)
+                .addReadPermission(Car.PERMISSION_READ_IMPACT_SENSORS)
+                .build();
+    }
+
+    @Test
+    public void testImpactDetectedIfSupported() {
+        getImpactDetectedVerifier().verify();
     }
 
     @Test
@@ -7820,6 +7854,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         verifyExpectedPropertiesWhenPermissionsGranted(
                 PERMISSION_READ_CAR_SEAT_BELTS_PROPERTIES,
                 Car.PERMISSION_READ_CAR_SEAT_BELTS);
+    }
+
+    @Test
+    public void testPermissionReadImpactSensorsGranted() {
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_READ_IMPACT_SENSORS_PROPERTIES,
+                Car.PERMISSION_READ_IMPACT_SENSORS);
     }
 
     @Test
