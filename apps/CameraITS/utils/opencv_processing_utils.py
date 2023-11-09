@@ -20,8 +20,7 @@ import os
 import pathlib
 import cv2
 import numpy
-
-from scipy.spatial import distance
+import scipy.spatial
 
 import capture_request_utils
 import error_util
@@ -860,7 +859,7 @@ def correct_faces_for_crop(faces, img, crop):
 
 
 def eliminate_duplicate_centers(coordinates_list):
-  """Checks center coordinates of OpenCV's face rectangles
+  """Checks center coordinates of OpenCV's face rectangles.
 
   Method makes sure that the list of face rectangles' centers do not
   contain duplicates from the same face
@@ -873,9 +872,9 @@ def eliminate_duplicate_centers(coordinates_list):
   """
   output = set()
 
-  for i, xy1 in enumerate(coordinates_list):
-    for j, xy2 in enumerate(coordinates_list):
-      if distance.euclidean(xy1, xy2) < FACE_MIN_CENTER_DELTA:
+  for _, xy1 in enumerate(coordinates_list):
+    for _, xy2 in enumerate(coordinates_list):
+      if scipy.spatial.distance.euclidean(xy1, xy2) < FACE_MIN_CENTER_DELTA:
         continue
       if xy1 not in output:
         output.add(xy1)
