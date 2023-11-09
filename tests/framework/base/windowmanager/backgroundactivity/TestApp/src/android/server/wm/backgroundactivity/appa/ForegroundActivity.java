@@ -24,6 +24,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.server.wm.backgroundactivity.common.TestService;
 import android.util.Log;
 
 import java.time.Duration;
@@ -108,6 +109,7 @@ public class ForegroundActivity extends Activity {
     @Override
     public void onCreate(Bundle bundle) {
         super.onCreate(bundle);
+        TestService.sLatestForegroundActivity = this;
         mA = Components.get(getApplicationContext());
 
         Intent intent = getIntent();

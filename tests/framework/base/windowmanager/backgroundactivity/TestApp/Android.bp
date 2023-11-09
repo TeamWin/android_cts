@@ -22,6 +22,7 @@ java_library {
     static_libs: [
         "cts-wm-app-base",
         "cts-background-activity-common",
+        "cts-background-activity-common-lib",
         "cts_window-sidecar",
         "cts_window-extensions",
         "cts_window_jetpack_utils",
