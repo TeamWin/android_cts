@@ -146,8 +146,11 @@ genrule {
     tools: ["aprotoc"],
     cmd: "$(location aprotoc) " +
         "--encode=com.android.server.art.proto.DexUseProto " +
-        "art/libartservice/service/proto/dex_use.proto " +
-        "< $(in) > $(out)",
-    srcs: ["assets/package-dex-usage.textproto"],
+        "$(locations :libartservice_protos) " +
+        "< $(location assets/package-dex-usage.textproto) > $(out)",
+    srcs: [
+        ":libartservice_protos",
+        "assets/package-dex-usage.textproto",
+    ],
     out: ["package-dex-usage.pb"],
 }
