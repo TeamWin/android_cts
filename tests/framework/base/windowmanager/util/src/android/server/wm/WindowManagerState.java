@@ -499,7 +499,7 @@ public class WindowManagerState {
         return mIsHomeRecentsComponent;
     }
 
-    DisplayContent getDisplay(int displayId) {
+    public DisplayContent getDisplay(int displayId) {
         for (DisplayContent display : mDisplays) {
             if (display.mId == displayId) {
                 return display;
@@ -1904,6 +1904,10 @@ public class WindowManagerState {
             mOverrideConfiguration.setTo(extract(proto.overrideConfiguration));
             mFullConfiguration.setTo(extract(proto.fullConfiguration));
             mMergedOverrideConfiguration.setTo(extract(proto.mergedOverrideConfiguration));
+        }
+
+        public Configuration getFullConfiguration() {
+            return mFullConfiguration;
         }
 
         boolean isWindowingModeCompatible(int requestedWindowingMode) {
