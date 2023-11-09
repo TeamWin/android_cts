@@ -44,16 +44,16 @@ import com.android.compatibility.common.util.PollingCheck;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Tests if system settings app provides scanning settings.
- */
+/** Tests if system settings app provides scanning settings. */
 @AppModeFull(reason = "Test cases don't apply for Instant apps")
 public class ScanningSettingsTest extends AndroidTestCase {
     private static final String TAG = "ScanningSettingsTest";
 
-    private static final int TIMEOUT = 8_000;  // 8 seconds
+    private static final int TIMEOUT = 8_000; // 8 seconds
     private static final String SETTINGS_PACKAGE = "com.android.settings";
 
+    private static final String LOCATION_SERVICES_PREFERENCE_TITLE_RES =
+            "location_services_preference_title";
     private static final String WIFI_SCANNING_TITLE_RES =
             "location_scanning_wifi_always_scanning_title";
     private static final String BLUETOOTH_SCANNING_TITLE_RES =
@@ -80,14 +80,18 @@ public class ScanningSettingsTest extends AndroidTestCase {
         mPackageManager = mContext.getPackageManager();
         final Intent launcherIntent = new Intent(Intent.ACTION_MAIN);
         launcherIntent.addCategory(Intent.CATEGORY_HOME);
-        mLauncherPackage = mPackageManager.resolveActivity(launcherIntent,
-                PackageManager.MATCH_DEFAULT_ONLY).activityInfo.packageName;
+        mLauncherPackage =
+                mPackageManager.resolveActivity(launcherIntent, PackageManager.MATCH_DEFAULT_ONLY)
+                        .activityInfo
+                        .packageName;
     }
 
     @CddTest(requirement = "7.4.2/C-2-1")
     public void testWifiScanningSettings() throws Exception {
-        if (FeatureUtil.isTV() || FeatureUtil.isAutomotive()
-                || FeatureUtil.isWatch() || FeatureUtil.isArc()) {
+        if (FeatureUtil.isTV()
+                || FeatureUtil.isAutomotive()
+                || FeatureUtil.isWatch()
+                || FeatureUtil.isArc()) {
             return;
         }
         launchLocationServicesSettings();
@@ -106,29 +110,29 @@ public class ScanningSettingsTest extends AndroidTestCase {
         PollingCheck.check(
                 "Scan Always Available wasn't toggled from " + checked + " to " + !checked,
                 TIMEOUT,
-                () -> !checked == wifiManager.isScanAlwaysAvailable()
-        );
+                () -> !checked == wifiManager.isScanAlwaysAvailable());
 
         // Click the preference again to toggle the setting back.
         pref.click();
         PollingCheck.check(
                 "Scan Always Available wasn't toggled from " + !checked + " to " + checked,
                 TIMEOUT,
-                () -> checked == wifiManager.isScanAlwaysAvailable()
-        );
+                () -> checked == wifiManager.isScanAlwaysAvailable());
     }
 
     @CddTest(requirement = "7.4.3/C-4-1")
     public void testBleScanningSettings() throws PackageManager.NameNotFoundException {
-        if (FeatureUtil.isTV() || FeatureUtil.isAutomotive()
-                || FeatureUtil.isWatch() || FeatureUtil.isArc()) {
+        if (FeatureUtil.isTV()
+                || FeatureUtil.isAutomotive()
+                || FeatureUtil.isWatch()
+                || FeatureUtil.isArc()) {
             return;
         }
         launchLocationServicesSettings();
         launchScanningSettingsFragment(BLUETOOTH_SCANNING_TITLE_RES);
 
-        toggleSettingAndVerify(BLUETOOTH_SCANNING_TITLE_RES,
-                Settings.Global.BLE_SCAN_ALWAYS_AVAILABLE);
+        toggleSettingAndVerify(
+                BLUETOOTH_SCANNING_TITLE_RES, Settings.Global.BLE_SCAN_ALWAYS_AVAILABLE);
     }
 
     private void launchLocationServicesSettings() {
@@ -148,23 +152,28 @@ public class ScanningSettingsTest extends AndroidTestCase {
     private void launchScanningSettingsFragment(String name)
             throws PackageManager.NameNotFoundException {
         final Resources res = mPackageManager.getResourcesForApplication(SETTINGS_PACKAGE);
-        int resId = res.getIdentifier(name, "string", SETTINGS_PACKAGE);
-        UiObject2 pref = mDevice.findObject(By.text(res.getString(resId)));
+        int resIdMenu = res.getIdentifier(name, "string", SETTINGS_PACKAGE);
+        int resIdTitle =
+                res.getIdentifier(
+                        LOCATION_SERVICES_PREFERENCE_TITLE_RES, "string", SETTINGS_PACKAGE);
+        UiObject2 pref = mDevice.findObject(By.text(res.getString(resIdMenu)));
         while (pref == null) {
             // Scroll to preference if the UI is scrollable
-            UiObject2 scrollable = mDevice.findObject(By.scrollable(true));
+            UiObject2 scrollable =
+                    mDevice.findObject(
+                            By.scrollable(true).hasDescendant(By.desc(res.getString(resIdTitle))));
             if (scrollable != null) {
                 try {
                     pref =
                             scrollable.scrollUntil(
                                     Direction.DOWN,
-                                    Until.findObject(By.text(res.getString(resId))));
+                                    Until.findObject(By.text(res.getString(resIdMenu))));
                 } catch (StaleObjectException exception) {
                     // Ignore
                 }
             }
             if (pref == null) {
-                pref = mDevice.findObject(By.text(res.getString(resId)));
+                pref = mDevice.findObject(By.text(res.getString(resIdMenu)));
             }
         }
 
@@ -172,23 +181,24 @@ public class ScanningSettingsTest extends AndroidTestCase {
         pref.click();
 
         // Wait for the Scanning fragment to appear
-        mDevice.wait(Until.hasObject(
-                By.res("com.android.settings:id/settingslib_main_switch_bar")), TIMEOUT);
+        mDevice.wait(
+                Until.hasObject(By.res("com.android.settings:id/settingslib_main_switch_bar")),
+                TIMEOUT);
     }
 
-    private void clickAndWaitForSettingChange(UiObject2 pref, ContentResolver resolver,
-            String settingKey) {
+    private void clickAndWaitForSettingChange(
+            UiObject2 pref, ContentResolver resolver, String settingKey) {
         final CountDownLatch latch = new CountDownLatch(1);
         final HandlerThread handlerThread = new HandlerThread(TAG);
         handlerThread.start();
-        final ContentObserver observer = new ContentObserver(
-                new Handler(handlerThread.getLooper())) {
-            @Override
-            public void onChange(boolean selfChange) {
-                super.onChange(selfChange);
-                latch.countDown();
-            }
-        };
+        final ContentObserver observer =
+                new ContentObserver(new Handler(handlerThread.getLooper())) {
+                    @Override
+                    public void onChange(boolean selfChange) {
+                        super.onChange(selfChange);
+                        latch.countDown();
+                    }
+                };
         resolver.registerContentObserver(Settings.Global.getUriFor(settingKey), false, observer);
         pref.click();
         try {
