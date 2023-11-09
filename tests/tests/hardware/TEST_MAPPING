@@ -90,10 +90,6 @@
           "exclude-filter": "android.hardware.lights.cts.tests.LightsManagerTest#testControlSingleLight"
         },
         {
-          // TODO(b/186201063)
-          "exclude-filter": "android.hardware.input.cts.tests.AsusGamepadTest#testAllKeys"
-        },
-        {
           // TODO(b/186200527)
           "exclude-filter": "android.hardware.input.cts.tests.AsusGamepadTest#testAllMotions"
         },
@@ -124,14 +120,7 @@
           "exclude-filter": "android.hardware.input.cts.tests.RazerServalTest#testAllMotions"
         },
         {
-          // TODO(b/186513036)
-          "exclude-filter": "android.hardware.input.cts.tests.SonyDualshock3UsbTest#testAllKeys"
-        },
-        {
-          "exclude-filter": "android.hardware.input.cts.tests.SonyDualshock3UsbTest#testAllMotions"
-        },
-        {
-          // TODO(b/185139160)
+          // TODO(b/266108817) android.hardware.input.cts.tests unexpected timeouts
           "exclude-filter": "android.hardware.input.cts.tests.SonyDualshock4BluetoothTest#testAllMotions"
         },
         {
@@ -141,7 +130,15 @@
           "exclude-filter": "android.hardware.input.cts.tests.SonyDualSenseBluetoothTest#testAllMotions"
         },
         {
-          // TODO(b/187037561)
+          "exclude-filter": "android.hardware.input.cts.tests.AsusGamepadTest#testAllKeys"
+        },
+        {
+          "exclude-filter": "android.hardware.input.cts.tests.SonyDualshock3UsbTest#testAllKeys"
+        },
+        {
+          "exclude-filter": "android.hardware.input.cts.tests.SonyDualshock3UsbTest#testAllMotions"
+        },
+        {
           "exclude-filter": "android.hardware.input.cts.tests.SonyDualshock4UsbTest#testAllKeys"
         },
         {
@@ -163,6 +160,12 @@
           "exclude-filter": "android.hardware.input.cts.tests.SonyDualshock4ProUsbTest#testAllKeys"
         },
         {
+          "exclude-filter": "android.hardware.input.cts.tests.MicrosoftSculpttouchTest"
+        },
+        {
+          "exclude-filter": "android.hardware.input.cts.tests.MicrosoftDesignerKeyboardTest#testAllKeys"
+        },
+        {
           // TODO(b/190487022)
           "exclude-filter": "android.hardware.input.cts.tests.SonyDualshock4ProBluetoothTest#testVibrator"
         },
@@ -172,13 +175,6 @@
         },
         {
           "exclude-filter": "android.hardware.input.cts.tests.GameviceGv186Test#testAllMotions"
-        },
-        {
-          // TODO(b/188178813)
-          "exclude-filter": "android.hardware.input.cts.tests.MicrosoftSculpttouchTest"
-        },
-        {
-          "exclude-filter": "android.hardware.input.cts.tests.MicrosoftDesignerKeyboardTest#testAllKeys"
         }
       ]
     }
