@@ -424,13 +424,15 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
     }
 
     /**
-     * Test that the `dumpsys gpu` correctly indicates `angleInUse = 0` when ANGLE is disabled.
+     * Test that the `dumpsys gpu` correctly indicates `angleInUse = 0` when ANGLE is not the
+     * native driver and a package is assigned to use the native driver.
      * NOTE: This test will sometimes fail to start the `dumpsys gpu` activity, which results in
      * flaky failures.  To avoid that, only let this test run when ANGLE is NOT the default driver.
      */
     @Test
     public void testDumpsysAngleInWhenAngleDisabled() throws Exception {
         Assume.assumeTrue(isAnglePresent(getDevice()));
+        Assume.assumeFalse(isAngleNativeDriver());
 
         installApp(ANGLE_DUMPSYS_GPU_TEST_APP);
 
