@@ -15,12 +15,10 @@
 
 
 import logging
-import math
 import os.path
 
 import cv2
 from mobly import test_runner
-from scipy.spatial import distance
 
 import its_base_test
 import camera_properties_utils
