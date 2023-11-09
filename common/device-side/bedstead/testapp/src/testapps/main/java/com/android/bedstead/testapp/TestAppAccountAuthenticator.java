@@ -26,6 +26,7 @@ import android.os.Bundle;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -132,7 +133,7 @@ public final class TestAppAccountAuthenticator extends AbstractAccountAuthentica
             hasFeatures = false;
         } else {
             hasFeatures = Arrays.asList(accountManager.getUserData(account, "features")
-                    .split(",")).containsAll(Set.of(features));
+                    .split(",")).containsAll(new HashSet<>(Arrays.asList(features)));
         }
 
         Bundle result = new Bundle();

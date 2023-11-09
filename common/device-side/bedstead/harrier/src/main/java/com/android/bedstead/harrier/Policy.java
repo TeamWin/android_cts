@@ -468,11 +468,11 @@ public final class Policy {
                     existingAnnotations.length + 1);
             newAnnotations[newAnnotations.length - 1] = ensureHasDevicePolicyManagerRoleHolder(
                     roleHolderUser, /* isPrimary= */ true);
-            return Set.of(annotation,
+            return new HashSet<>(Arrays.asList(annotation,
                     new DynamicParameterizedAnnotation(
                     annotation.annotationType().getSimpleName() + "_DPMRH",
                     newAnnotations
-            ));
+            )));
         };
     }
 
@@ -923,7 +923,7 @@ public final class Policy {
 
         for (Annotation annotation : annotations) {
             shadowingAnnotations.addAll(
-                    sReverseShadowMap.getOrDefault(annotation.annotationType(), Set.of()));
+                    sReverseShadowMap.getOrDefault(annotation.annotationType(), new HashSet<>()));
         }
 
         annotations.removeIf(a -> shadowingAnnotations.contains(a.annotationType()));
