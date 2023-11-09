@@ -18,33 +18,44 @@ package android.server.wm.jetpack.embedding;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.assumeExtensionSupportedDevice;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.getWindowExtensions;
 import static android.server.wm.jetpack.second.Components.SECOND_UNTRUSTED_EMBEDDING_ACTIVITY;
 import static android.server.wm.jetpack.signed.Components.SIGNED_EMBEDDING_ACTIVITY;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRule;
-import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.assumeExtensionSupportedDevice;
-import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.getWindowExtensions;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.EXTRA_EMBED_ACTIVITY;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.startActivityFromActivity;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.startActivityOnDisplaySingleTop;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.Surface.ROTATION_0;
+import static android.view.Surface.ROTATION_90;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.UiAutomation;
 import android.content.ComponentName;
+import android.content.res.Configuration;
 import android.os.Bundle;
+import android.os.SystemProperties;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.Condition;
 import android.server.wm.NestedShellPermission;
+import android.server.wm.RotationSession;
 import android.server.wm.WindowManagerState;
 import android.server.wm.jetpack.utils.TestActivityKnownEmbeddingCerts;
 import android.server.wm.jetpack.utils.TestActivityLauncher;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
+import android.server.wm.jetpack.utils.TestLetterboxPortraitActivity;
+import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -196,6 +207,46 @@ public class ActivityEmbeddingPolicyTests extends ActivityManagerTestBase {
         } finally {
             automation.setAnimationScale(1f);
         }
+    }
+
+    @Test
+    public void testIgnoreOrientationRequestForActivityEmbeddingSplits() {
+        // Skip the test on devices without WM extensions.
+        assumeTrue(SystemProperties.getBoolean("persist.wm.extensions.enabled", false));
+
+        // Skip the test if this is not a large screen device
+        assumeTrue(getDisplayConfiguration().smallestScreenWidthDp
+                >= WindowManager.LARGE_SCREEN_SMALLEST_SCREEN_WIDTH_DP);
+
+        // Rotate the device to landscape
+        final RotationSession rotationSession = createManagedRotationSession();
+        final int[] rotations = { ROTATION_0, ROTATION_90 };
+        for (final int rotation : rotations) {
+            if (getDisplayConfiguration().orientation == ORIENTATION_LANDSCAPE) {
+                break;
+            }
+            rotationSession.set(rotation);
+        }
+        assumeTrue(getDisplayConfiguration().orientation == ORIENTATION_LANDSCAPE);
+
+        // Launch a fixed-portrait activity
+        TestLetterboxPortraitActivity activity =
+                new TestActivityLauncher<>(mContext, TestLetterboxPortraitActivity.class)
+                        .addIntentFlag(FLAG_ACTIVITY_NEW_TASK)
+                        .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
+                        .launch(mInstrumentation);
+
+        // The activity should be displayed in portrait while the display is remained in landscape.
+        assertEquals("The activity should be displayed in portrait", ORIENTATION_PORTRAIT,
+                activity.getResources().getConfiguration().orientation);
+        assertEquals("The display should be remained in landscape", ORIENTATION_LANDSCAPE,
+                getDisplayConfiguration().orientation);
+    }
+
+    private Configuration getDisplayConfiguration() {
+        mWmState.computeState();
+        WindowManagerState.DisplayContent display = mWmState.getDisplay(DEFAULT_DISPLAY);
+        return display.getFullConfiguration();
     }
 
     static void waitForOrFailWithRapidRetry(@NonNull String message,
