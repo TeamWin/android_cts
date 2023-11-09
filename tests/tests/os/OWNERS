@@ -8,4 +8,7 @@ per-file *Sntp* = file:platform/frameworks/base:/services/core/java/com/android/
 per-file *LowPowerStandby* = file:platform/frameworks/base:/services/core/java/com/android/server/power/OWNERS
 
 # Bug component: 826709 = per-file PerformanceHintManagerTest.java
-per-file *PerformanceHintManagerTest* = file:platform/hardware/interfaces:/power/OWNERS
+# Bug component: 46788 = per-file PowerManager_ThermalTest.java
+per-file *PerformanceHintManagerTest* = file:/platform/frameworks/base:/ADPF_OWNERS
+per-file *PowerManager_ThermalTest* = xwxw@google.com,lpy@google.com,wvw@google.com
+
