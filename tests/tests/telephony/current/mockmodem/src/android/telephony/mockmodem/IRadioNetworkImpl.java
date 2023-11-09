@@ -1032,6 +1032,30 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     }
 
     @Override
+    public void isSecurityAlgorithmsUpdatedEnabled(int serial) {
+        Log.d(TAG, "isSecurityAlgorithmsUpdatedEnabled");
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioNetworkResponse.isSecurityAlgorithmsUpdatedEnabledResponse(rsp, false);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to isSecurityAlgorithmsUpdatedEnabled from AIDL. Exception " + ex);
+        }
+    }
+
+    @Override
+    public void setSecurityAlgorithmsUpdatedEnabled(int serial, boolean enable) {
+        Log.d(TAG, "setSecurityAlgorithmsUpdatedEnabled");
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioNetworkResponse.setSecurityAlgorithmsUpdatedEnabledResponse(rsp);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to setSecurityAlgorithmsUpdatedEnabled from AIDL. Exception " + ex);
+        }
+    }
+
+    @Override
     public String getInterfaceHash() {
         return IRadioNetwork.HASH;
     }
