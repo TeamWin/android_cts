@@ -44,6 +44,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
+import static org.testng.Assert.assertThrows;
 import static org.testng.Assert.expectThrows;
 
 import android.app.UiAutomation;
@@ -939,6 +940,50 @@ public class PackageManagerShellCommandInstallTest {
         installPackage(TEST_SDK1);
 
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+    }
+
+    @Test
+    public void testCannotGetPackageInfoForSdkIfNotSystemOrShell() throws Exception {
+        onBeforeSdkTests();
+
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        // Normal access
+        assertThrows(PackageManager.NameNotFoundException.class,
+                () -> getPackageManager().getPackageInfo(TEST_SDK1_PACKAGE,
+                        PackageManager.PackageInfoFlags.of(MATCH_STATIC_SHARED_AND_SDK_LIBRARIES)));
+        assertThrows(PackageManager.NameNotFoundException.class,
+                () -> getPackageManager().getApplicationInfo(TEST_SDK1_PACKAGE,
+                        PackageManager.ApplicationInfoFlags.of(
+                                MATCH_STATIC_SHARED_AND_SDK_LIBRARIES)));
+
+        final List<SharedLibraryInfo> shareLibs = getPackageManager().getSharedLibraries(0);
+        SharedLibraryInfo sdk1 = findLibrary(shareLibs, TEST_SDK1_NAME, 1);
+        assertThat(sdk1).isNull();
+
+        PackageManager.Property property =
+                getPackageManager().getProperty("com.test.sdk1_1.TEST_PROPERTY",
+                        TEST_SDK1_PACKAGE);
+        assertThat(property).isNotNull();
+        assertThat(property.getName()).isEqualTo("com.test.sdk1_1.TEST_PROPERTY");
+        assertThat(property.getString()).isEqualTo("com.test.sdk1_1.testp1");
+
+        // Access as a shell
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            PackageInfo info = getPackageManager().getPackageInfo(TEST_SDK1_PACKAGE,
+                    PackageManager.PackageInfoFlags.of(MATCH_STATIC_SHARED_AND_SDK_LIBRARIES));
+
+            assertThat(info).isNotNull();
+            assertThat(info.packageName).isEqualTo(TEST_SDK1_PACKAGE);
+
+            ApplicationInfo appInfo = getPackageManager().getApplicationInfo(TEST_SDK1_PACKAGE,
+                    PackageManager.ApplicationInfoFlags.of(
+                            MATCH_STATIC_SHARED_AND_SDK_LIBRARIES));
+
+            assertThat(appInfo).isNotNull();
+            assertThat(appInfo.icon).isGreaterThan(0);
+        });
     }
 
     @Test

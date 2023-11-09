@@ -36,6 +36,9 @@
             android:authorities="${applicationId}.androidx-startup"
             tools:node="remove" />
 
+        <property android:name="com.test.sdk1_1.TEST_PROPERTY"
+                  android:value="com.test.sdk1_1.testp1" />
+
     </application>
 
 </manifest>
