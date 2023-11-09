@@ -61,6 +61,7 @@ import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.annotations.SystemUserOnly;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -79,6 +80,7 @@ import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireMultiUserSupport;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnPrivateProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.nene.TestApis;
@@ -92,6 +94,8 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayDeque;
@@ -109,8 +113,12 @@ public final class UserManagerTest {
     private static final String TAG = UserManagerTest.class.getSimpleName();
 
     @ClassRule
-    @Rule
     public static final DeviceState sDeviceState = new DeviceState();
+
+    @Rule
+    public TestRule chain = RuleChain
+            .outerRule(DeviceFlagsValueProvider.createCheckFlagsRule())
+            .around(sDeviceState);
 
     private final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
     private UserManager mUserManager;
@@ -1147,6 +1155,18 @@ public final class UserManagerTest {
                         null);
         mUserManager.requestQuietModeEnabled(false, profileHandle);
         broadcastReceiver.awaitForBroadcastOrFail();
+    }
+
+    @Test
+    @EnsureHasPrivateProfile
+    @RequireRunOnPrivateProfile
+    @ApiTest(apis = {"android.os.UserManager#getProfileLabel"})
+    @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
+    @RequiresFlagsEnabled(android.os.Flags.FLAG_ALLOW_PRIVATE_PROFILE)
+    public void testPrivateProfileLabel_shouldNotBeNull() {
+        final UserManager umOfProfile = sContext.getSystemService(UserManager.class);
+        assert umOfProfile != null;
+        assertThat(umOfProfile.getProfileLabel()).isNotNull();
     }
 
     private void presetQuietModeStatus(boolean enableQuietMode, UserHandle profileHandle) {
