@@ -147,7 +147,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     public void testStartBgActivity_usingStartActivitiesFromBackgroundPermission()
             throws Exception {
         // Disable SAW app op for shell, since that can also allow starting activities from bg.
-        AppOpsUtils.setOpMode(SHELL_PACKAGE, "android:system_alert_window", MODE_ERRORED);
+        grantSystemAlertWindow(SHELL_PACKAGE, false);
 
         // Launch the activity via a shell command, this way the system doesn't have info on which
         // app launched the activity and thus won't use instrumentation privileges to launch it. But
@@ -418,9 +418,9 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     @Test
     public void testPendingIntentActivity_whenSenderAllowsBal_isNotBlocked() throws Exception {
         // creator (appa) is not privileged
-        AppOpsUtils.setOpMode(APP_A.APP_PACKAGE_NAME, "android:system_alert_window", MODE_ERRORED);
+        grantSystemAlertWindow(APP_A, false);
         // sender (appb) is privileged, and grants
-        AppOpsUtils.setOpMode(APP_B.APP_PACKAGE_NAME, "android:system_alert_window", MODE_ALLOWED);
+        grantSystemAlertWindow(APP_B);
 
         startPendingIntentSenderActivity(APP_A, APP_B, /* allowBalBySender */ true);
         assertActivityFocused(APP_A.BACKGROUND_ACTIVITY);
@@ -430,9 +430,9 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     @Test
     public void testPendingIntentActivity_whenSenderDoesNotAllowBal_isBlocked() throws Exception {
         // creator (appa) is not privileged
-        AppOpsUtils.setOpMode(APP_A.APP_PACKAGE_NAME, "android:system_alert_window", MODE_ERRORED);
+        grantSystemAlertWindow(APP_A, false);
         // sender (appb) is privileged, but revokes
-        AppOpsUtils.setOpMode(APP_B.APP_PACKAGE_NAME, "android:system_alert_window", MODE_ALLOWED);
+        grantSystemAlertWindow(APP_B);
 
         startPendingIntentSenderActivity(APP_A, APP_B, /* allowBalBySender */ false);
 
@@ -1107,11 +1107,18 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     private static void grantSystemAlertWindow(Components app) throws Exception {
-        AppOpsUtils.setOpMode(app.APP_PACKAGE_NAME, "android:system_alert_window",
-                MODE_ALLOWED);
-        assertEquals(AppOpsUtils.getOpMode(app.APP_PACKAGE_NAME,
-                        "android:system_alert_window"),
-                MODE_ALLOWED);
+        grantSystemAlertWindow(app, true);
+    }
+
+    private static void grantSystemAlertWindow(Components app, boolean allow) throws Exception {
+        grantSystemAlertWindow(app.APP_PACKAGE_NAME, allow);
+    }
+
+    private static void grantSystemAlertWindow(String packageName, boolean allow) throws Exception {
+        final int mode = allow ? MODE_ALLOWED : MODE_ERRORED;
+        final String opStr = "android:system_alert_window";
+        AppOpsUtils.setOpMode(packageName, opStr, mode);
+        assertEquals(AppOpsUtils.getOpMode(packageName, opStr), mode);
     }
 
     private static void startBackgroundActivity(TestServiceClient service, Components app)
