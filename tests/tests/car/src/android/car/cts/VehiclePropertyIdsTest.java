@@ -177,6 +177,8 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("TRAILER_PRESENT");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.RANGE_REMAINING))
                 .isEqualTo("RANGE_REMAINING");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_BATTERY_AVERAGE_TEMPERATURE))
+                .isEqualTo("EV_BATTERY_AVERAGE_TEMPERATURE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.TIRE_PRESSURE)).
                 isEqualTo("TIRE_PRESSURE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.TIRE_PRESSURE_DISPLAY_UNITS))
