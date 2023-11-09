@@ -40,6 +40,7 @@ import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerTestBase;
 import android.server.wm.cts.R;
 import android.server.wm.settings.SettingsSession;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 
 import androidx.test.rule.ActivityTestRule;
@@ -102,7 +103,8 @@ public class BlurTests extends WindowManagerTestBase {
         WindowManagerState.WindowState windowState = mWmState.getWindowState(cn);
         WindowManagerState.Activity act = mWmState.getActivity(cn);
         mBackgroundActivityBounds = act.getBounds();
-        insetGivenFrame(windowState, WindowManagerState.InsetsSource::isCaptionBar,
+        insetGivenFrame(windowState,
+                insetsSource -> (insetsSource.is(WindowInsets.Type.captionBar())),
                 mBackgroundActivityBounds);
 
         // Wait for the first frame *after* the splash screen is removed to take screenshots.

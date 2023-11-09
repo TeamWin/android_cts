@@ -89,6 +89,7 @@ import android.server.wm.Condition;
 import android.server.wm.DumpOnFailure;
 import android.server.wm.TestJournalProvider;
 import android.server.wm.WindowManagerState;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
 import android.window.SplashScreen;
@@ -224,8 +225,8 @@ public class SplashscreenTests extends ActivityManagerTestBase {
             appBounds = new Rect(startingWindow.getFrame());
         }
 
-        insetGivenFrame(startingWindow, WindowManagerState.InsetsSource::isCaptionBar,
-                appBounds);
+        insetGivenFrame(startingWindow,
+                insetsSource -> (insetsSource.is(WindowInsets.Type.captionBar())), appBounds);
 
         assertFalse("Couldn't find splash screen bounds. Impossible to assert the colors",
                 appBounds.isEmpty());
