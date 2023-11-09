@@ -22,7 +22,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.GrammaticalInflectionManager;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.res.Configuration;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.TestJournalProvider;
@@ -42,12 +41,11 @@ import java.util.regex.Pattern;
 
 @RunWith(AndroidJUnit4.class)
 public class GrammaticalInflectionManagerTest extends ActivityManagerTestBase {
-    private static final String FLAG_SYSTEM_TERMS_OF_ADDRESS_ENABLED =
-            "grammatical_gender android.app.system_terms_of_address_enabled ";
     private static final String CMD_GET_GRAMMATICAL_GENDER =
             "cmd grammatical_inflection get-system-grammatical-gender";
     private static final String CMD_SET_GRAMMATICAL_GENDER_ENABLED =
             "cmd grammatical_inflection set-system-grammatical-gender";
+
     private final ComponentName TEST_APP_MAIN_ACTIVITY = new ComponentName(
             TestMainActivity.class.getPackageName(),
             TestMainActivity.class.getCanonicalName());
@@ -56,8 +54,6 @@ public class GrammaticalInflectionManagerTest extends ActivityManagerTestBase {
             TestHandleConfigChangeActivity.class.getCanonicalName());
 
     private String mOriginalGrammaticalGender;
-    private String mOriginalSystemTermsOfAddressFlag;
-
     private GrammaticalInflectionManager mGrammaticalInflectionManager;
 
     @Before
@@ -85,7 +81,6 @@ public class GrammaticalInflectionManagerTest extends ActivityManagerTestBase {
                 mOriginalGrammaticalGender = matcher.group(1);
             }
             setGrammaticalGender(mOriginalGrammaticalGender);
-            setSystemTermsOfAddressFlag(mOriginalSystemTermsOfAddressFlag);
         }
     }
 
@@ -133,23 +128,13 @@ public class GrammaticalInflectionManagerTest extends ActivityManagerTestBase {
 
     @Test
     public void testGetSystemGrammaticalGender_setMasculine_returnMasculine() {
-        mOriginalSystemTermsOfAddressFlag = SystemUtil.runShellCommand(
-                "device_config get " + FLAG_SYSTEM_TERMS_OF_ADDRESS_ENABLED);
         mOriginalGrammaticalGender = SystemUtil.runShellCommand(String.format(
                 CMD_GET_GRAMMATICAL_GENDER + " --user %d ", mContext.getUserId()));
 
-        if (!mOriginalSystemTermsOfAddressFlag.contains("true")) {
-            setSystemTermsOfAddressFlag("true");
-        }
         setGrammaticalGender(String.valueOf(Configuration.GRAMMATICAL_GENDER_MASCULINE));
 
         assertThat(mGrammaticalInflectionManager.getSystemGrammaticalGender())
                 .isEqualTo(Configuration.GRAMMATICAL_GENDER_MASCULINE);
-    }
-
-    private void setSystemTermsOfAddressFlag(String enabled) {
-        SystemUtil.runShellCommand(
-                "device_config put " + FLAG_SYSTEM_TERMS_OF_ADDRESS_ENABLED + enabled);
     }
 
     private void setGrammaticalGender(String grammaticalGender) {
