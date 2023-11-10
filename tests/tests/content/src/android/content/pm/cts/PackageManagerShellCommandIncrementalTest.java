@@ -107,7 +107,7 @@ public class PackageManagerShellCommandIncrementalTest {
     private static final String TEST_APK = "HelloWorld5.apk";
     private static final String TEST_APK_IDSIG = "HelloWorld5.apk.idsig";
     private static final String TEST_APK_PROFILEABLE = "HelloWorld5Profileable.apk";
-    private static final String TEST_APK_SHELL = "HelloWorldShell.apk";
+    private static final String TEST_APK_SYSTEM = "HelloWorldSystem.apk";
     private static final String TEST_APK_SPLIT0 = "HelloWorld5_mdpi-v4.apk";
     private static final String TEST_APK_SPLIT0_IDSIG = "HelloWorld5_mdpi-v4.apk.idsig";
     private static final String TEST_APK_SPLIT1 = "HelloWorld5_hdpi-v4.apk";
@@ -321,7 +321,7 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @Test
     public void testSystemInstallWithIdSig() throws Exception {
-        final String baseName = TEST_APK_SHELL;
+        final String baseName = TEST_APK_SYSTEM;
         final File file = new File(createApkPath(baseName));
         assertEquals(
                 "Failure [INSTALL_FAILED_SESSION_INVALID: Incremental installation of this "
