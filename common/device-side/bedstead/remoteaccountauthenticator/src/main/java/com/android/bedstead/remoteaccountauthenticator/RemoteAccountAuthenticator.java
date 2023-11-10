@@ -31,6 +31,8 @@ import com.android.bedstead.testapp.TestAppProvider;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -42,9 +44,9 @@ import java.util.stream.Stream;
 public final class RemoteAccountAuthenticator extends TestAppInstance {
 
     // TODO(263350665): Query account types from xml
-    private static final Set<String> ACCOUNT_TYPES = Set.of(
+    private static final Set<String> ACCOUNT_TYPES = new HashSet<>(Arrays.asList(
             "com.android.bedstead.remoteaccountauthenticator.account"
-    );
+    ));
 
     private static final String REMOTE_ACCOUNT_AUTHENTICATOR_PACKAGE_NAME =
             "com.android.RemoteAccountAuthenticator";

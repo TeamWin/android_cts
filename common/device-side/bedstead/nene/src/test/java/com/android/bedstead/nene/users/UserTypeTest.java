@@ -22,6 +22,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 @RunWith(JUnit4.class)
@@ -50,7 +52,7 @@ public class UserTypeTest {
     @Test
     public void baseType_returnsBaseType() {
         UserType.MutableUserType mutableUserType = new UserType.MutableUserType();
-        mutableUserType.mBaseType = Set.of(UserType.BaseType.FULL);
+        mutableUserType.mBaseType = new HashSet<>(Arrays.asList(UserType.BaseType.FULL));
         UserType userType = new UserType(mutableUserType);
 
         assertThat(userType.baseType()).containsExactly(UserType.BaseType.FULL);

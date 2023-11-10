@@ -59,6 +59,7 @@ import com.android.bedstead.nene.utils.Versions;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -338,7 +339,7 @@ public final class Users {
     private UserType managedProfileUserType() {
         UserType.MutableUserType managedProfileMutableUserType = new UserType.MutableUserType();
         managedProfileMutableUserType.mName = MANAGED_PROFILE_TYPE_NAME;
-        managedProfileMutableUserType.mBaseType = Set.of(UserType.BaseType.PROFILE);
+        managedProfileMutableUserType.mBaseType = new HashSet<>(Arrays.asList(UserType.BaseType.PROFILE));
         managedProfileMutableUserType.mEnabled = true;
         managedProfileMutableUserType.mMaxAllowed = -1;
         managedProfileMutableUserType.mMaxAllowedPerParent = 1;
@@ -349,7 +350,7 @@ public final class Users {
         UserType.MutableUserType managedProfileMutableUserType = new UserType.MutableUserType();
         managedProfileMutableUserType.mName = SYSTEM_USER_TYPE_NAME;
         managedProfileMutableUserType.mBaseType =
-                Set.of(UserType.BaseType.FULL, UserType.BaseType.SYSTEM);
+                new HashSet<>(Arrays.asList(UserType.BaseType.FULL, UserType.BaseType.SYSTEM));
         managedProfileMutableUserType.mEnabled = true;
         managedProfileMutableUserType.mMaxAllowed = -1;
         managedProfileMutableUserType.mMaxAllowedPerParent = -1;
@@ -359,7 +360,7 @@ public final class Users {
     private UserType secondaryUserType() {
         UserType.MutableUserType managedProfileMutableUserType = new UserType.MutableUserType();
         managedProfileMutableUserType.mName = SECONDARY_USER_TYPE_NAME;
-        managedProfileMutableUserType.mBaseType = Set.of(UserType.BaseType.FULL);
+        managedProfileMutableUserType.mBaseType = new HashSet<>(Arrays.asList(UserType.BaseType.FULL));
         managedProfileMutableUserType.mEnabled = true;
         managedProfileMutableUserType.mMaxAllowed = -1;
         managedProfileMutableUserType.mMaxAllowedPerParent = -1;
