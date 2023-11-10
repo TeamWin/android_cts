@@ -37,8 +37,8 @@ import android.text.style.SubscriptSpan;
 import android.text.style.TabStopSpan;
 import android.text.style.UnderlineSpan;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;

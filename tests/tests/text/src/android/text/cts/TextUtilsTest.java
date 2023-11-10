@@ -53,9 +53,9 @@ import android.text.style.TextAppearanceSpan;
 import android.text.style.URLSpan;
 import android.util.StringBuilderPrinter;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;
