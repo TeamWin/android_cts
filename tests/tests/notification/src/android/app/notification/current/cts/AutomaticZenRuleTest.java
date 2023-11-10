@@ -24,6 +24,7 @@ import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.net.Uri;
 import android.os.Parcel;
+import android.service.notification.ZenDeviceEffects;
 import android.service.notification.ZenPolicy;
 import android.test.AndroidTestCase;
 
@@ -60,6 +61,10 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
     public void testWriteToParcel() {
         AutomaticZenRule rule = new AutomaticZenRule(mName, mOwner, mConfigActivity, mConditionId,
                 mPolicy, mInterruptionFilter, mEnabled);
+        if (Flags.modesApi()) {
+            rule.setDeviceEffects(
+                    new ZenDeviceEffects.Builder().setShouldDimWallpaper(true).build());
+        }
         Parcel parcel = Parcel.obtain();
         rule.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
@@ -70,6 +75,10 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         assertEquals(mInterruptionFilter, rule1.getInterruptionFilter());
         assertEquals(mEnabled, rule1.isEnabled());
         assertEquals(mPolicy, rule1.getZenPolicy());
+        if (Flags.modesApi()) {
+            assertEquals(new ZenDeviceEffects.Builder().setShouldDimWallpaper(true).build(),
+                    rule1.getDeviceEffects());
+        }
         assertEquals(mConfigActivity, rule1.getConfigurationActivity());
 
         rule.setName(null);
@@ -140,6 +149,8 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         }
         AutomaticZenRule rule1 = new AutomaticZenRule.Builder(mName, mConditionId)
                 .setZenPolicy(mPolicy)
+                .setDeviceEffects(
+                        new ZenDeviceEffects.Builder().setShouldDimWallpaper(true).build())
                 .setManualInvocationAllowed(mAllowManualInvocation)
                 .setOwner(mOwner)
                 .setType(mType)
@@ -155,6 +166,8 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         assertEquals(mInterruptionFilter, rule1.getInterruptionFilter());
         assertEquals(mEnabled, rule1.isEnabled());
         assertEquals(mPolicy, rule1.getZenPolicy());
+        assertEquals(new ZenDeviceEffects.Builder().setShouldDimWallpaper(true).build(),
+                rule1.getDeviceEffects());
         assertEquals(mConfigActivity, rule1.getConfigurationActivity());
         assertEquals(mType, rule1.getType());
         assertEquals(mAllowManualInvocation, rule1.isManualInvocationAllowed());
@@ -169,6 +182,8 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         AutomaticZenRule rule1 = new AutomaticZenRule.Builder(
                 new AutomaticZenRule.Builder(mName, mConditionId)
                         .setZenPolicy(mPolicy)
+                        .setDeviceEffects(
+                                new ZenDeviceEffects.Builder().setShouldDimWallpaper(true).build())
                         .setManualInvocationAllowed(mAllowManualInvocation)
                         .setOwner(mOwner)
                         .setType(mType)
@@ -185,6 +200,8 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         assertEquals(mInterruptionFilter, rule1.getInterruptionFilter());
         assertEquals(mEnabled, rule1.isEnabled());
         assertEquals(mPolicy, rule1.getZenPolicy());
+        assertEquals(new ZenDeviceEffects.Builder().setShouldDimWallpaper(true).build(),
+                rule1.getDeviceEffects());
         assertEquals(mConfigActivity, rule1.getConfigurationActivity());
         assertEquals(mType, rule1.getType());
         assertEquals(mAllowManualInvocation, rule1.isManualInvocationAllowed());
@@ -198,6 +215,8 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         }
         AutomaticZenRule rule = new AutomaticZenRule.Builder(mName, mConditionId)
                 .setZenPolicy(mPolicy)
+                .setDeviceEffects(
+                        new ZenDeviceEffects.Builder().setShouldDimWallpaper(true).build())
                 .setManualInvocationAllowed(mAllowManualInvocation)
                 .setOwner(mOwner)
                 .setType(mType)
@@ -217,6 +236,8 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         assertEquals(mInterruptionFilter, rule1.getInterruptionFilter());
         assertEquals(mEnabled, rule1.isEnabled());
         assertEquals(mPolicy, rule1.getZenPolicy());
+        assertEquals(new ZenDeviceEffects.Builder().setShouldDimWallpaper(true).build(),
+                rule1.getDeviceEffects());
         assertEquals(mConfigActivity, rule1.getConfigurationActivity());
         assertEquals(mType, rule1.getType());
         assertEquals(mAllowManualInvocation, rule1.isManualInvocationAllowed());
@@ -230,6 +251,8 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         }
         AutomaticZenRule rule = new AutomaticZenRule.Builder(mName, mConditionId)
                 .setZenPolicy(mPolicy)
+                .setDeviceEffects(
+                        new ZenDeviceEffects.Builder().setShouldDimWallpaper(true).build())
                 .setManualInvocationAllowed(mAllowManualInvocation)
                 .setOwner(mOwner)
                 .setType(mType)
@@ -240,6 +263,8 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
                 .build();
         AutomaticZenRule rule2 = new AutomaticZenRule.Builder(mName, mConditionId)
                 .setZenPolicy(mPolicy)
+                .setDeviceEffects(
+                        new ZenDeviceEffects.Builder().setShouldDimWallpaper(true).build())
                 .setManualInvocationAllowed(mAllowManualInvocation)
                 .setOwner(mOwner)
                 .setType(mType)
@@ -257,6 +282,8 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         }
         AutomaticZenRule rule = new AutomaticZenRule.Builder(mName, mConditionId)
                 .setZenPolicy(mPolicy)
+                .setDeviceEffects(
+                        new ZenDeviceEffects.Builder().setShouldDimWallpaper(true).build())
                 .setManualInvocationAllowed(mAllowManualInvocation)
                 .setOwner(mOwner)
                 .setType(mType)
@@ -267,6 +294,8 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
                 .build();
         AutomaticZenRule rule2 = new AutomaticZenRule.Builder(mName, mConditionId)
                 .setZenPolicy(mPolicy)
+                .setDeviceEffects(
+                        new ZenDeviceEffects.Builder().setShouldDimWallpaper(true).build())
                 .setManualInvocationAllowed(mAllowManualInvocation)
                 .setOwner(mOwner)
                 .setType(mType)
