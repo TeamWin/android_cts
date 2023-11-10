@@ -22,10 +22,6 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 
     <application android:label="CtsWindowManagerJetpackTestCases">
-        <property
-            android:name="android.window.PROPERTY_ACTIVITY_EMBEDDING_SPLITS_ENABLED"
-            android:value="true"/>
-
         <uses-library android:name="android.test.runner" />
         <uses-library android:name="androidx.window.extensions"
                       android:required="false" />
