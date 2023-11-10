@@ -23,6 +23,7 @@ import static android.telephony.CarrierConfigManager.KEY_CARRIER_NAME_OVERRIDE_B
 import static android.telephony.CarrierConfigManager.KEY_CARRIER_NAME_STRING;
 import static android.telephony.CarrierConfigManager.KEY_CARRIER_VOLTE_PROVISIONED_BOOL;
 import static android.telephony.CarrierConfigManager.KEY_FORCE_HOME_NETWORK_BOOL;
+import static android.telephony.CarrierConfigManager.KEY_SATELLITE_CONNECTION_HYSTERESIS_SEC_INT;
 import static android.telephony.ServiceState.STATE_IN_SERVICE;
 
 import static androidx.test.InstrumentationRegistry.getContext;
@@ -210,6 +211,11 @@ public class CarrierConfigManagerTest {
                     config.getPersistableBundle(CarrierConfigManager
                             .KEY_CARRIER_SUPPORTED_SATELLITE_SERVICES_PER_PROVIDER_BUNDLE),
                     PersistableBundle.EMPTY);
+            assertEquals("KEY_SATELLITE_CONNECTION_HYSTERESIS_SEC_INT "
+                            + "doesn't match static default.",
+                    config.getInt(
+                            KEY_SATELLITE_CONNECTION_HYSTERESIS_SEC_INT),
+                    300);
 
             assertArrayEquals("KEY_CAPABILITIES_EXEMPT_FROM_SINGLE_DC_CHECK_INT_ARRAY"
                             + " doesn't match static default.",
