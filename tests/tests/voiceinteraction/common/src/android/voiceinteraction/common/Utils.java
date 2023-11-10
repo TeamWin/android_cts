@@ -15,7 +15,10 @@
  */
 package android.voiceinteraction.common;
 
+import static android.content.pm.PackageManager.FEATURE_PC;
+
 import android.app.VoiceInteractor.PickOptionRequest.Option;
+import android.content.Context;
 import android.content.LocusId;
 import android.os.Bundle;
 import android.os.Parcel;
@@ -302,5 +305,9 @@ public class Utils {
         final String property = PropertyUtil.getProperty("ro.hardware.virtual_device");
         Log.v(TAG, "virtual device property=" + property);
         return Objects.equals(property, "1");
+    }
+
+    public static boolean isPC(Context ctx) {
+        return ctx.getPackageManager().hasSystemFeature(FEATURE_PC);
     }
 }
