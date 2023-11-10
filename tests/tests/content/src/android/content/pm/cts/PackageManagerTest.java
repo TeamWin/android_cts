@@ -42,6 +42,7 @@ import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.GET_PROVIDERS;
 import static android.content.pm.PackageManager.GET_RECEIVERS;
 import static android.content.pm.PackageManager.GET_SERVICES;
+import static android.content.pm.PackageManager.GET_SIGNATURES;
 import static android.content.pm.PackageManager.MATCH_ANY_USER;
 import static android.content.pm.PackageManager.MATCH_APEX;
 import static android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS;
@@ -1139,13 +1140,13 @@ public class PackageManagerTest {
                 + " flag is specified", pkgInfo.signingInfo);
 
         pkgInfo = mPackageManager.getPackageArchiveInfo(apkPath,
-                PackageManager.PackageInfoFlags.of(PackageManager.GET_SIGNATURES));
+                PackageManager.PackageInfoFlags.of(GET_SIGNATURES));
         assertNotNull("Signatures should have been collected when GET_SIGNATURES"
                 + " flag is specified", pkgInfo.signatures);
 
         pkgInfo = mPackageManager.getPackageArchiveInfo(apkPath,
                 PackageManager.PackageInfoFlags.of(
-                        PackageManager.GET_SIGNATURES | PackageManager.GET_SIGNING_CERTIFICATES));
+                        GET_SIGNATURES | PackageManager.GET_SIGNING_CERTIFICATES));
         assertNotNull("SigningInfo should have been collected when"
                         + " GET_SIGNATURES and GET_SIGNING_CERTIFICATES flags are both specified",
                 pkgInfo.signingInfo);
@@ -1618,7 +1619,7 @@ public class PackageManagerTest {
         final int flags = PackageManager.MATCH_APEX
                 | PackageManager.MATCH_FACTORY_ONLY
                 | PackageManager.GET_SIGNING_CERTIFICATES
-                | PackageManager.GET_SIGNATURES;
+                | GET_SIGNATURES;
         PackageInfo packageInfo = mPackageManager.getPackageInfo(SHIM_APEX_PACKAGE_NAME,
                 PackageManager.PackageInfoFlags.of(flags));
         assertShimApexInfoIsCorrect(packageInfo);
@@ -1639,7 +1640,7 @@ public class PackageManagerTest {
         final int flags = PackageManager.MATCH_APEX
                 | PackageManager.MATCH_FACTORY_ONLY
                 | PackageManager.GET_SIGNING_CERTIFICATES
-                | PackageManager.GET_SIGNATURES;
+                | GET_SIGNATURES;
         List<PackageInfo> installedPackages = mPackageManager.getInstalledPackages(
                 PackageManager.PackageInfoFlags.of(flags));
         List<PackageInfo> shimApex = installedPackages.stream().filter(
@@ -2856,12 +2857,13 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
                 PackageManager.PackageInfoFlags.of(MATCH_KNOWN_PACKAGES));
         packageInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
-                PackageManager.PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES));
+                PackageManager.PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES | GET_SIGNATURES));
         assertThat(packageInfo.packageName).isEqualTo(HELLO_WORLD_PACKAGE_NAME);
         // Test that the code path is gone but the signing info is still available
         assertThat(packageInfo.applicationInfo.getCodePath()).isNull();
         assertThat(packageInfo.signingInfo).isNotNull();
         assertThat(packageInfo.applicationInfo.targetSdkVersion).isGreaterThan(0);
+        assertThat(packageInfo.signatures).isNotNull();
         // Test that the app's data directory is preserved and matches dumpsys
         final String newDataDir = packageInfo.applicationInfo.dataDir;
         assertThat(newDataDir).isNotEmpty();
