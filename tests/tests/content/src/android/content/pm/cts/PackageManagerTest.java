@@ -3012,12 +3012,6 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
      */
     @Test
     public void testInstallArchivedBroadcasts() throws Exception {
-        installPackage(HELLO_WORLD_APK);
-        byte[] archivedPackage = SystemUtil.runShellCommandByteOutput(
-                mInstrumentation.getUiAutomation(),
-                "pm get-archived-package-metadata " + HELLO_WORLD_PACKAGE_NAME);
-        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
-
         int currentUser = ActivityManager.getCurrentUser();
         PackageBroadcastReceiver addedBroadcastReceiver = new PackageBroadcastReceiver(
                 HELLO_WORLD_PACKAGE_NAME, currentUser, Intent.ACTION_PACKAGE_ADDED
@@ -3031,6 +3025,19 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         intentFilter.addDataScheme("package");
         mContext.registerReceiver(addedBroadcastReceiver, intentFilter);
         mContext.registerReceiver(removedBroadcastReceiver, intentFilter);
+
+        installPackage(HELLO_WORLD_APK);
+        // Make sure this broadcast is received so it doesn't affect the test later
+        addedBroadcastReceiver.assertBroadcastReceived();
+        byte[] archivedPackage = SystemUtil.runShellCommandByteOutput(
+                mInstrumentation.getUiAutomation(),
+                "pm get-archived-package-metadata " + HELLO_WORLD_PACKAGE_NAME);
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+        // Make sure this broadcast is received so it doesn't affect the test later
+        removedBroadcastReceiver.assertBroadcastReceived();
+
+        addedBroadcastReceiver.reset();
+        removedBroadcastReceiver.reset();
 
         assertEquals("Success\n", executeShellCommand(
                 String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
