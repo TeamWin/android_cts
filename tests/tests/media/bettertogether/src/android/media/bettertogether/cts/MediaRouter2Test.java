@@ -38,6 +38,7 @@ import static androidx.test.ext.truth.os.BundleSubject.assertThat;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeFalse;
 
 import android.Manifest;
 import android.annotation.NonNull;
@@ -65,6 +66,7 @@ import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
 import android.text.TextUtils;
 import android.view.KeyEvent;
@@ -603,6 +605,10 @@ public class MediaRouter2Test {
 
     @Test
     public void testVolumeAdjustmentEventsReachOnlyExistingActiveRemoteSession() throws Exception {
+        // TODO (b/308994839): Remove this once MediaRouter2 supports multiuser interaction.
+        // Change MediaSessionRecord check from MediaRouter2Manager to MediaRouter2.
+        assumeFalse("Shouldn't run in HSUM mode", UserManager.isHeadlessSystemUserMode());
+
         setUpStubProvider();
 
         List<String> sampleRouteFeature = new ArrayList<>();
