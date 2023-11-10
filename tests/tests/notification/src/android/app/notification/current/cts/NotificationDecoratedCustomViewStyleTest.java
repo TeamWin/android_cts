@@ -16,22 +16,26 @@
 
 package android.app.notification.current.cts;
 
+import static org.junit.Assert.assertNotNull;
+
 import android.app.Notification.DecoratedCustomViewStyle;
 import android.app.Notification.DecoratedMediaCustomViewStyle;
-import android.test.AndroidTestCase;
 
-public class NotificationDecoratedCustomViewStyleTest extends AndroidTestCase {
+import androidx.test.runner.AndroidJUnit4;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(AndroidJUnit4.class)
+public class NotificationDecoratedCustomViewStyleTest {
+
+    @Test
     public void testNotificationDecoratedCustomViewStyle_Constructor() {
         DecoratedCustomViewStyle customViewStyle = new DecoratedCustomViewStyle();
         assertNotNull(customViewStyle);
     }
 
+    @Test
     public void testNotificationDecoratedMediaCustomViewStyle_Constructor() {
         DecoratedMediaCustomViewStyle customViewStyle = new DecoratedMediaCustomViewStyle();
         assertNotNull(customViewStyle);

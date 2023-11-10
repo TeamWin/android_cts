@@ -66,5 +66,5 @@ android_test {
     ],
     sdk_version: "test_current",
     target_sdk_version: "current",
-    min_sdk_version: "29",
+    min_sdk_version: "34",
 }

@@ -15,12 +15,26 @@
  */
 package android.app.notification.current.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import android.app.Notification;
+import android.content.Context;
 import android.os.UserHandle;
 import android.service.notification.StatusBarNotification;
 import android.test.AndroidTestCase;
 
-public class StatusBarNotificationTest extends AndroidTestCase {
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class StatusBarNotificationTest {
     private static final int UID = 123;
     private static final int ID = 146;
     private static final String TAG = "tag";
@@ -31,10 +45,11 @@ public class StatusBarNotificationTest extends AndroidTestCase {
     private StatusBarNotification mSbn;
     private UserHandle mUserHandle;
     private Notification mNotification;
+    Context mContext;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mUserHandle = UserHandle.getUserHandleForUid(UID);
         mNotification = new Notification.Builder(mContext)
                 .setContentTitle("foo")
@@ -44,52 +59,64 @@ public class StatusBarNotificationTest extends AndroidTestCase {
                 mUserHandle, POST_TIME);
     }
 
+    @Test
     public void testGetUid() {
         assertEquals(UID, mSbn.getUid());
     }
 
+    @Test
     public void testGetUserId() {
         assertEquals(0, mSbn.getUserId());
     }
 
+    @Test
     public void testGetId() {
         assertEquals(ID, mSbn.getId());
     }
 
+    @Test
     public void testGetUser() {
         assertEquals(mUserHandle, mSbn.getUser());
     }
 
+    @Test
     public void testGetTag() {
         assertEquals(TAG, mSbn.getTag());
     }
 
+    @Test
     public void testGetPostTime() {
         assertEquals(POST_TIME, mSbn.getPostTime());
     }
 
+    @Test
     public void testGetPackageName() {
         assertEquals(PKG, mSbn.getPackageName());
     }
 
+    @Test
     public void testGetOpPkg() {
         assertEquals(OP_PKG, mSbn.getOpPkg());
     }
 
+    @Test
     public void testGetOverride_noOverride() {
         assertNull(mSbn.getOverrideGroupKey());
     }
 
+    @Test
     public void testOverrideGroupKey() {
         assertNull(mSbn.getOverrideGroupKey());
         mSbn.setOverrideGroupKey("override");
         assertEquals("override", mSbn.getOverrideGroupKey());
     }
     
+    @Test
     public void testIsClearable_clearable() {
         assertTrue(mSbn.isClearable());
     }
 
+    @Test
     public void testIsClearable_notClearableOngoingEvent() {
         Notification notification = new Notification.Builder(mContext)
                 .setContentTitle("foo")
@@ -102,15 +129,18 @@ public class StatusBarNotificationTest extends AndroidTestCase {
         assertFalse(sbn.isClearable());
     }
 
+    @Test
     public void testIsGroup_notGroup() {
         assertFalse(mSbn.isGroup());
     }
 
+    @Test
     public void testIsGroup_overrideGroupKey() {
         mSbn.setOverrideGroupKey("foo");
         assertTrue(mSbn.isGroup());
     }
 
+    @Test
     public void testIsGroup_notifGroup() {
         Notification notification = new Notification.Builder(mContext)
                 .setContentTitle("foo")
@@ -123,6 +153,7 @@ public class StatusBarNotificationTest extends AndroidTestCase {
         assertTrue(sbn.isGroup());
     }
 
+    @Test
     public void testIsGroup_sortKey() {
         Notification notification = new Notification.Builder(mContext)
                 .setContentTitle("foo")
@@ -135,10 +166,12 @@ public class StatusBarNotificationTest extends AndroidTestCase {
         assertTrue(sbn.isGroup());
     }
 
+    @Test
     public void testIsOngoing_notOngoing() {
         assertFalse(mSbn.isOngoing());
     }
 
+    @Test
     public void testIsOngoing_ongoingEvent() {
         Notification notification = new Notification.Builder(mContext)
                 .setContentTitle("foo")
@@ -151,10 +184,12 @@ public class StatusBarNotificationTest extends AndroidTestCase {
         assertTrue(sbn.isOngoing());
     }
 
+    @Test
     public void testGetNotification() {
         assertEquals(mNotification, mSbn.getNotification());
     }
 
+    @Test
     public void testClone() {
         mSbn.setOverrideGroupKey("bar");
 

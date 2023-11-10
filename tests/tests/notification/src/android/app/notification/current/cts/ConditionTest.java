@@ -16,13 +16,26 @@
 
 package android.app.notification.current.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import android.content.Context;
 import android.net.Uri;
 import android.os.Parcel;
 import android.service.notification.Condition;
-import android.test.AndroidTestCase;
 
-public class ConditionTest extends AndroidTestCase {
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class ConditionTest {
+    Context mContext;
     private final Uri mConditionId = new Uri.Builder().scheme("scheme")
             .authority("authority")
             .appendPath("path")
@@ -31,17 +44,19 @@ public class ConditionTest extends AndroidTestCase {
     private final String mSummary = "summary";
     private final int mState = Condition.STATE_FALSE;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
     }
 
+    @Test
     public void testDescribeContents() {
         final int expected = 0;
         Condition condition = new Condition(mConditionId, mSummary, mState);
         assertEquals(expected, condition.describeContents());
     }
 
+    @Test
     public void testConstructor() {
         Condition condition = new Condition(mConditionId, mSummary, mState);
         assertEquals(mConditionId, condition.id);
@@ -53,6 +68,7 @@ public class ConditionTest extends AndroidTestCase {
         assertEquals(Condition.FLAG_RELEVANT_ALWAYS, condition.flags);
     }
 
+    @Test
     public void testWriteToParcel() {
         Condition condition = new Condition(mConditionId, mSummary, mState);
         Parcel parcel = Parcel.obtain();
@@ -68,6 +84,7 @@ public class ConditionTest extends AndroidTestCase {
         assertEquals(Condition.FLAG_RELEVANT_ALWAYS, condition1.flags);
     }
 
+    @Test
     public void testCopy() {
         Condition condition = new Condition(mConditionId, mSummary, mState);
         Condition condition1 = condition.copy();
@@ -80,33 +97,39 @@ public class ConditionTest extends AndroidTestCase {
         assertEquals(Condition.FLAG_RELEVANT_ALWAYS, condition1.flags);
     }
 
+    @Test
     public void testIsValidId_null() {
         assertFalse(Condition.isValidId(null, null));
     }
 
+    @Test
     public void testIsValidId_noScheme() {
         String pkg = this.getClass().getPackage().toString();
         Uri uri = new Uri.Builder().authority(pkg).build();
         assertFalse(Condition.isValidId(uri, pkg));
     }
 
+    @Test
     public void testIsValidId_wrongAuthority() {
         String pkg = this.getClass().getPackage().toString();
         Uri uri = new Uri.Builder().authority(pkg).scheme(Condition.SCHEME).build();
         assertFalse(Condition.isValidId(uri, "different"));
     }
 
+    @Test
     public void testIsValidId() {
         String pkg = this.getClass().getPackage().toString();
         Uri uri = new Uri.Builder().authority(pkg).scheme(Condition.SCHEME).build();
         assertTrue(Condition.isValidId(uri, pkg));
     }
 
+    @Test
     public void testNewId() {
         assertTrue(Condition.isValidId(
                 Condition.newId(mContext).build(), mContext.getPackageName()));
     }
 
+    @Test
     public void testRelevanceToString() {
         assertNotNull(Condition.relevanceToString(Condition.FLAG_RELEVANT_ALWAYS));
     }

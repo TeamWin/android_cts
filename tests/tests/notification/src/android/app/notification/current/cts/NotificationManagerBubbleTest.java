@@ -32,7 +32,12 @@ import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_DOCUMENT;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
@@ -40,11 +45,11 @@ import android.app.Instrumentation;
 import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.PendingIntent;
-import android.app.stubs.shared.NotificationHelper.SEARCH_TYPE;
 import android.app.stubs.BubbledActivity;
 import android.app.stubs.BubblesTestService;
 import android.app.stubs.R;
 import android.app.stubs.SendBubbleActivity;
+import android.app.stubs.shared.NotificationHelper.SEARCH_TYPE;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -60,9 +65,15 @@ import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.SystemUtil;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -70,6 +81,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Tests bubbles related logic in NotificationManager.
  */
+@RunWith(AndroidJUnit4.class)
 public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
 
     private static final String TAG = NotificationManagerBubbleTest.class.getSimpleName();
@@ -83,9 +95,8 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
     private BroadcastReceiver mBubbleBroadcastReceiver;
     private boolean mBubblesEnabledSettingToRestore;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         PermissionUtils.grantPermission(STUB_PACKAGE_NAME, POST_NOTIFICATIONS);
         PermissionUtils.grantPermission(mContext.getPackageName(), POST_NOTIFICATIONS);
 
@@ -102,9 +113,8 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         sleep();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @After
+    public void tearDown() throws Exception {
 
         // Restore bubbles setting
         setBubblesGlobal(mBubblesEnabledSettingToRestore);
@@ -223,7 +233,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
      *
      * @return the SendBubbleActivity that was opened.
      */
-    private SendBubbleActivity startSendBubbleActivity() {
+    private SendBubbleActivity startSendBubbleActivity() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
         mBubbleBroadcastReceiver = new BroadcastReceiver() {
             @Override
@@ -252,11 +262,8 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
 
         // Make sure device is unlocked
         ensureDeviceUnlocked(sendBubbleActivity);
-        try {
-            latch.await(500, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        latch.await(500, TimeUnit.MILLISECONDS);
+
         return sendBubbleActivity;
     }
 
@@ -321,6 +328,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         mContext.unregisterReceiver(mBubbleBroadcastReceiver);
     }
 
+    @Test
     public void testCanBubble_ranking() throws Exception {
         if (!isBubblesFeatureSupported()) {
             return;
@@ -366,6 +374,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         mListener.resetData();
     }
 
+    @Test
     public void testAreBubblesAllowed_appNone() throws Exception {
         if (!isBubblesFeatureSupported()) {
             return;
@@ -375,6 +384,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         assertFalse(mNotificationManager.areBubblesAllowed());
     }
 
+    @Test
     public void testAreBubblesAllowed_appSelected() throws Exception {
         if (!isBubblesFeatureSupported()) {
             return;
@@ -384,6 +394,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         assertFalse(mNotificationManager.areBubblesAllowed());
     }
 
+    @Test
     public void testAreBubblesAllowed_appAll() throws Exception {
         if (!isBubblesFeatureSupported()) {
             return;
@@ -393,6 +404,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         assertTrue(mNotificationManager.areBubblesAllowed());
     }
 
+    @Test
     public void testGetBubblePreference_appNone() throws Exception {
         if (!isBubblesFeatureSupported()) {
             return;
@@ -402,6 +414,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         assertEquals(BUBBLE_PREFERENCE_NONE, mNotificationManager.getBubblePreference());
     }
 
+    @Test
     public void testGetBubblePreference_appSelected() throws Exception {
         if (!isBubblesFeatureSupported()) {
             return;
@@ -411,6 +424,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         assertEquals(BUBBLE_PREFERENCE_SELECTED, mNotificationManager.getBubblePreference());
     }
 
+    @Test
     public void testGetBubblePreference_appAll() throws Exception {
         if (!isBubblesFeatureSupported()) {
             return;
@@ -420,6 +434,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         assertEquals(BUBBLE_PREFERENCE_ALL, mNotificationManager.getBubblePreference());
     }
 
+    @Test
     public void testAreBubblesEnabled() {
         if (!isBubblesFeatureSupported()) {
             return;
@@ -429,6 +444,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         assertTrue(mNotificationManager.areBubblesEnabled());
     }
 
+    @Test
     public void testAreBubblesEnabled_false() {
         if (!isBubblesFeatureSupported()) {
             return;
@@ -438,6 +454,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         assertFalse(mNotificationManager.areBubblesEnabled());
     }
 
+    @Test
     public void testNotificationManagerBubblePolicy_flag_intentBubble()
             throws Exception {
         if (!isBubblesFeatureSupported()) {
@@ -456,6 +473,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationManagerBubblePolicy_noFlag_service()
             throws Exception {
         if (!isBubblesFeatureSupported()) {
@@ -479,6 +497,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationManagerBubblePolicy_noFlag_phonecall()
             throws Exception {
         if (!isBubblesFeatureSupported()) {
@@ -503,6 +522,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationManagerBubblePolicy_noFlag_foreground() throws Exception {
         if (!isBubblesFeatureSupported()) {
             return;
@@ -526,6 +546,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationManagerBubble_checkActivityFlagsDocumentLaunchMode()
             throws Exception {
         if (!isBubblesFeatureSupported()) {
@@ -562,6 +583,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationManagerBubblePolicy_flag_shortcutBubble()
             throws Exception {
         if (!isBubblesFeatureSupported()) {
@@ -583,6 +605,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationManagerBubblePolicy_noFlag_invalidShortcut()
             throws Exception {
         if (!isBubblesFeatureSupported()) {
@@ -603,6 +626,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationManagerBubblePolicy_noFlag_invalidNotif()
             throws Exception {
         if (!isBubblesFeatureSupported()) {
@@ -624,6 +648,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationManagerBubblePolicy_appAll_globalOn() throws Exception {
         if (!isBubblesFeatureSupported()) {
             return;
@@ -643,6 +668,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationManagerBubblePolicy_appAll_globalOff() throws Exception {
         if (!isBubblesFeatureSupported()) {
             return;
@@ -664,6 +690,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationManagerBubblePolicy_appAll_channelNo() throws Exception {
         if (!isBubblesFeatureSupported()) {
             return;
@@ -685,6 +712,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationManagerBubblePolicy_appSelected_channelNo() throws Exception {
         if (!isBubblesFeatureSupported()) {
             return;
@@ -706,6 +734,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationManagerBubblePolicy_appSelected_channelYes() throws Exception {
         if (!isBubblesFeatureSupported()) {
             return;
@@ -728,6 +757,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationManagerBubblePolicy_appNone_channelNo() throws Exception {
         if (!isBubblesFeatureSupported()) {
             return;
@@ -749,6 +779,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationManagerBubblePolicy_noFlag_shortcutRemoved()
             throws Exception {
         if (!isBubblesFeatureSupported()) {
@@ -772,6 +803,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationManagerBubbleNotificationSuppression() throws Exception {
         if (!isBubblesFeatureSupported()) {
             return;
@@ -817,6 +849,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationManagerBubble_checkIsBubbled_pendingIntent()
             throws Exception {
         if (!isBubblesFeatureSupported()) {
@@ -845,6 +878,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationManagerBubble_checkIsBubbled_shortcut()
             throws Exception {
         if (!isBubblesFeatureSupported()) {
@@ -878,6 +912,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
     }
 
     /** Verifies the bubble is suppressed when it should be. */
+    @Test
     public void testNotificationManagerBubble_setSuppressBubble()
             throws Exception {
         if (!isBubblesFeatureSupported()) {
@@ -923,6 +958,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
     }
 
     /** Verifies the bubble is not suppressed if dev didn't specify suppressable */
+    @Test
     public void testNotificationManagerBubble_setSuppressBubble_notSuppressable()
             throws Exception {
         if (!isBubblesFeatureSupported()) {
@@ -967,6 +1003,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
     }
 
     /** Verifies the bubble is not suppressed if the activity doesn't have a locusId. */
+    @Test
     public void testNotificationManagerBubble_setSuppressBubble_activityNoLocusId()
             throws Exception {
         if (!isBubblesFeatureSupported()) {
@@ -1010,6 +1047,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
     }
 
     /** Verifies the bubble is not suppressed if the notification doesn't have a locusId. */
+    @Test
     public void testNotificationManagerBubble_setSuppressBubble_notificationNoLocusId()
             throws Exception {
         if (!isBubblesFeatureSupported()) {
@@ -1056,6 +1094,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
     }
 
     /** Verifies the bubble is unsuppressed when the locus activity is hidden. */
+    @Test
     public void testNotificationManagerBubble_setSuppressBubble_dismissLocusActivity()
             throws Exception {
         if (!isBubblesFeatureSupported()) {
@@ -1111,7 +1150,10 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
     }
 
     /** Verifies that a regular activity can't specify a bubble in ActivityOptions */
-    public void testNotificationManagerBubble_launchBubble_activityOptions_fails() {
+    @Test
+    @SuppressWarnings("AssertThrowsMultipleStatements")
+    public void testNotificationManagerBubble_launchBubble_activityOptions_fails()
+            throws Exception {
         if (!isBubblesFeatureSupported()) {
             return;
         }
