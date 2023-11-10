@@ -327,9 +327,10 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                 }
                 numBytes += bytesRead;
             }
-            // The audio data will be zero on virtual device, so it would be better to skip to
-            // check the audio data.
-            if (Utils.isVirtualDevice()) {
+            // Skip audio data check on:
+            // - virtual device where the audio data will be zero
+            // - PC form factor which won't necessarily have a microphone connected when test is run
+            if (Utils.isVirtualDevice() || Utils.isPC(this)) {
                 return true;
             }
             for (byte b : buffer) {
