@@ -24,6 +24,7 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.platform.test.annotations.PlatinumTest;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds;
@@ -174,6 +175,10 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
         assertNotAudioRoute(mInCallCallbacks.getService(), CallAudioState.ROUTE_SPEAKER);
     }
 
+    /**
+     * Nominal outgoing test case; verifies an outgoing call can be placed on the device.
+     */
+    @PlatinumTest(focusArea = "telecom")
     public void testStartCallWithSpeakerphoneNotProvided_SpeakerphoneOffByDefault() {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
             return;

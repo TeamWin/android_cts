@@ -29,6 +29,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.platform.test.annotations.PlatinumTest;
 import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.Connection;
@@ -94,6 +95,12 @@ public class IncomingCallTest extends BaseTelecomTestWithMockServices {
                 call.getDetails().getCallerNumberVerificationStatus());
     }
 
+    /**
+     * Nominal incoming call test; verifies that an incoming call can be routed through Telecom and
+     * will be reported to the Dialer app.
+     * @throws Exception
+     */
+    @PlatinumTest(focusArea = "telecom")
     public void testAddNewIncomingCall_CorrectPhoneAccountHandle() throws Exception {
         if (!mShouldTestTelecom) {
             return;
