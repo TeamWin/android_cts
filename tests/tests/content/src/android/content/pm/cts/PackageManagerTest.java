@@ -2861,6 +2861,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         // Test that the code path is gone but the signing info is still available
         assertThat(packageInfo.applicationInfo.getCodePath()).isNull();
         assertThat(packageInfo.signingInfo).isNotNull();
+        assertThat(packageInfo.applicationInfo.targetSdkVersion).isGreaterThan(0);
         // Test that the app's data directory is preserved and matches dumpsys
         final String newDataDir = packageInfo.applicationInfo.dataDir;
         assertThat(newDataDir).isNotEmpty();
