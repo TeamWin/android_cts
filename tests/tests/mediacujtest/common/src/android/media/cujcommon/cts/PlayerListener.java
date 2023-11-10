@@ -20,6 +20,7 @@ import static android.media.cujcommon.cts.CujTestBase.ORIENTATIONS;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.pm.ActivityInfo;
@@ -36,6 +37,7 @@ import androidx.media3.common.TrackSelectionOverride;
 import androidx.media3.common.TrackSelectionParameters;
 import androidx.media3.common.Tracks;
 import androidx.media3.common.VideoSize;
+import androidx.media3.exoplayer.ExoPlayer;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -48,10 +50,12 @@ public class PlayerListener implements Player.Listener {
   private static final String LOG_TAG = PlayerListener.class.getSimpleName();
 
   public static final Object LISTENER_LOCK = new Object();
+  public static int CURRENT_MEDIA_INDEX = 0;
 
   public static boolean mPlaybackEnded;
   private long mExpectedTotalTime;
   private MainActivity mActivity;
+  private ScrollTestActivity mScrollActivity;
   private boolean mIsSeekTest;
   private int mNumOfSeekIteration;
   private long mSeekTimeUs;
@@ -71,6 +75,9 @@ public class PlayerListener implements Player.Listener {
   private int mCurrentTrackIndex = C.INDEX_UNSET;
   private Tracks.Group mVideoTrackGroup;
   private List<Format> mVideoFormatList;
+  private boolean mIsScrollTest;
+  private int mNumOfScrollIteration;
+  private boolean mScrollRequested;
 
   /**
    * Create player listener for playback test.
@@ -83,6 +90,8 @@ public class PlayerListener implements Player.Listener {
     playerListener.mSeed = 0;
     playerListener.mIsOrientationTest = false;
     playerListener.mSendMessagePosition = 0;
+    playerListener.mIsScrollTest = false;
+    playerListener.mNumOfScrollIteration = 0;
     return playerListener;
   }
 
@@ -133,6 +142,20 @@ public class PlayerListener implements Player.Listener {
   }
 
   /**
+   * Create player listener for scroll test.
+   *
+   * @param sendMessagePosition The position at which message will be send
+   */
+  public static PlayerListener createListenerForScrollTest(int numOfScrollIteration,
+      long sendMessagePosition) {
+    PlayerListener playerListener = createListenerForPlaybackTest();
+    playerListener.mIsScrollTest = true;
+    playerListener.mNumOfScrollIteration = numOfScrollIteration;
+    playerListener.mSendMessagePosition = sendMessagePosition;
+    return playerListener;
+  }
+
+  /**
    * Returns seed for Seek test.
    */
   private long getSeed() {
@@ -150,6 +173,13 @@ public class PlayerListener implements Player.Listener {
   }
 
   /**
+   * Returns True for Scroll test.
+   */
+  public boolean isScrollTest() {
+    return mIsScrollTest;
+  }
+
+  /**
    * Sets activity for test.
    */
   public void setActivity(MainActivity activity) {
@@ -158,6 +188,13 @@ public class PlayerListener implements Player.Listener {
       mActivity.setRequestedOrientation(ORIENTATIONS[0] /* SCREEN_ORIENTATION_PORTRAIT */);
       mStartOrientation = getDeviceOrientation(mActivity);
     }
+  }
+
+  /**
+   * Sets activity for scroll test.
+   */
+  public void setScrollActivity(ScrollTestActivity activity) {
+    this.mScrollActivity = activity;
   }
 
   /**
@@ -211,6 +248,18 @@ public class PlayerListener implements Player.Listener {
   }
 
   /**
+   * Scroll the View vertically.
+   *
+   * @param yIndex The yIndex to scroll the view vertically.
+   */
+  private void scrollView(int yIndex) {
+    mScrollActivity.mScrollView.scrollTo(0, yIndex);
+    if (CURRENT_MEDIA_INDEX == mNumOfScrollIteration) {
+      mScrollRequested = true;
+    }
+  }
+
+  /**
    * Called when player states changed.
    *
    * @param player The {@link Player} whose state changed. Use the getters to obtain the latest
@@ -259,7 +308,12 @@ public class PlayerListener implements Player.Listener {
           if (mPlaybackEnded) {
             throw new RuntimeException("mPlaybackEnded already set, player could be ended");
           }
-          mActivity.removePlayerListener();
+          if (!mIsScrollTest) {
+            mActivity.removePlayerListener();
+          } else {
+            assertTrue(mScrollRequested);
+            mScrollActivity.removePlayerListener();
+          }
           mPlaybackEnded = true;
           LISTENER_LOCK.notify();
         }
@@ -282,6 +336,28 @@ public class PlayerListener implements Player.Listener {
         // Create messages to be executed at different positions
         for (int count = 1; count < totalNumOfVideoTrackChange; count++) {
           createAdaptivePlaybackMessage(mSendMessagePosition * (count));
+        }
+      }
+      // In case of scroll test, send the message to scroll the view to change the surface
+      // positions. Scroll has two surfaceView (top and bottom), playback start on top view and
+      // after each mSendMessagePosition sec playback is switched to other view alternatively.
+      if (mIsScrollTest) {
+        int yIndex;
+        ExoPlayer currentPlayer;
+        if ((CURRENT_MEDIA_INDEX % 2) == 0) {
+          currentPlayer = mScrollActivity.mFirstPlayer;
+          yIndex = mScrollActivity.SURFACE_HEIGHT * 2;
+        } else {
+          currentPlayer = mScrollActivity.mSecondPlayer;
+          yIndex = 0;
+        }
+        CURRENT_MEDIA_INDEX++;
+        for (int i = 0; i < mNumOfScrollIteration; i++) {
+          currentPlayer.createMessage((messageType, payload) -> {
+                scrollView(yIndex);
+              }).setLooper(Looper.getMainLooper()).setPosition(mSendMessagePosition * (i + 1))
+              .setDeleteAfterDelivery(true)
+              .send();
         }
       }
       // Add duration on media transition.
