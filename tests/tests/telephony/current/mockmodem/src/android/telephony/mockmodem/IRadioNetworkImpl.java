@@ -1004,6 +1004,34 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     }
 
     @Override
+    public void isCellularIdentifierTransparencyEnabled(int serial) {
+        Log.d(TAG, "isCellularIdentifierTransparencyEnabled");
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioNetworkResponse.isCellularIdentifierTransparencyEnabledResponse(rsp, false);
+        } catch (RemoteException ex) {
+            Log.e(
+                TAG,
+                "Failed to isCellularIdentifierTransparencyEnabled from AIDL. Exception " + ex);
+        }
+    }
+
+    @Override
+    public void setCellularIdentifierTransparencyEnabled(int serial, boolean enable) {
+        Log.d(TAG, "setCellularIdentifierTransparencyEnabled");
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioNetworkResponse.setCellularIdentifierTransparencyEnabledResponse(rsp);
+        } catch (RemoteException ex) {
+            Log.e(
+                TAG,
+                "Failed to setCellularIdentifierTransparencyEnabled from AIDL. Exception " + ex);
+        }
+    }
+
+    @Override
     public String getInterfaceHash() {
         return IRadioNetwork.HASH;
     }
