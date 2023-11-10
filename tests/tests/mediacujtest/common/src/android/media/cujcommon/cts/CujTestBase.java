@@ -37,16 +37,30 @@ public class CujTestBase {
       ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,
   };
   protected MainActivity mActivity;
+  protected ScrollTestActivity mScrollActivity;
   public PlayerListener mListener;
+  private boolean mIsScrollTest;
 
   public CujTestBase(PlayerListener playerListener) {
-    ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class);
-    scenario.onActivity(activity -> {
-      this.mActivity = activity;
-    });
-    mListener = playerListener;
-    mActivity.addPlayerListener(mListener);
-    mListener.setActivity(mActivity);
+    if (!playerListener.isScrollTest()) {
+      ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class);
+      scenario.onActivity(activity -> {
+        this.mActivity = activity;
+      });
+      mListener = playerListener;
+      mActivity.addPlayerListener(mListener);
+      mListener.setActivity(mActivity);
+    } else {
+      mIsScrollTest = true;
+      ActivityScenario<ScrollTestActivity> scenario = ActivityScenario.launch(
+          ScrollTestActivity.class);
+      scenario.onActivity(activity -> {
+        this.mScrollActivity = activity;
+      });
+      mListener = playerListener;
+      mScrollActivity.addPlayerListener(mListener);
+      mListener.setScrollActivity(mScrollActivity);
+    }
   }
 
   /**
@@ -68,10 +82,18 @@ public class CujTestBase {
   public void play(List<String> mediaUrls, long timeoutMilliSeconds)
       throws TimeoutException, InterruptedException {
     long startTime = System.currentTimeMillis();
-    mActivity.runOnUiThread(() -> {
-      mActivity.prepareMediaItems(mediaUrls);
-      mActivity.run();
-    });
+    if (!mIsScrollTest) {
+      mActivity.runOnUiThread(() -> {
+        mActivity.prepareMediaItems(mediaUrls);
+        mActivity.run();
+      });
+    } else {
+      mScrollActivity.runOnUiThread(() -> {
+        mScrollActivity.prepareMediaItems(mediaUrls);
+        mScrollActivity.run();
+      });
+    }
+
     long endTime = System.currentTimeMillis() + timeoutMilliSeconds;
     // Wait for playback to finish
     synchronized (PlayerListener.LISTENER_LOCK) {
