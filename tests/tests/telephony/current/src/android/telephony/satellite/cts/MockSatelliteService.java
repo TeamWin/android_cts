@@ -107,7 +107,6 @@ public class MockSatelliteService extends SatelliteImplBase {
     @Nullable private List<String> mAllSatellitePlmnList;
     private boolean mIsSatelliteEnabledForCarrier;
     private android.telephony.satellite.stub.NtnSignalStrength mNtnSignalStrength;
-    private boolean mStartSendingNtnSignalStrength;
 
     private int[] mSupportedRadioTechnologies;
 
@@ -565,7 +564,7 @@ public class MockSatelliteService extends SatelliteImplBase {
         }
         if (mShouldRespondTelephony.get()) {
             runWithExecutor(() -> callback.accept(
-                    SatelliteServiceUtils.fromModemInterface(mNtnSignalStrength)));
+                    SatelliteServiceUtils.fromNtnSignalStrength(mNtnSignalStrength)));
         }
     }
 
@@ -576,9 +575,7 @@ public class MockSatelliteService extends SatelliteImplBase {
             if (mShouldRespondTelephony.get()) {
                 runWithExecutor(() -> resultCallback.accept(mErrorCode));
             }
-            return;
         }
-        mStartSendingNtnSignalStrength = true;
     }
 
     @Override
@@ -588,9 +585,7 @@ public class MockSatelliteService extends SatelliteImplBase {
             if (mShouldRespondTelephony.get()) {
                 runWithExecutor(() -> resultCallback.accept(mErrorCode));
             }
-            return;
         }
-        mStartSendingNtnSignalStrength = false;
     }
 
     public void setLocalSatelliteListener(@NonNull ILocalSatelliteListener listener) {
@@ -681,6 +676,17 @@ public class MockSatelliteService extends SatelliteImplBase {
         mNtnSignalStrength = ntnSignalStrength;
         mRemoteListeners.values().forEach(listener -> runWithExecutor(() ->
                 listener.onNtnSignalStrengthChanged(ntnSignalStrength)));
+    }
+
+    /**
+     * Called when satellite capabilities has changed.
+     * This API is used by CTS test cases to update satellite capabilities.
+     * @param satelliteCapabilities The new satellite capabilities.
+     */
+    public void sendOnSatelliteCapabilitiesChanged(SatelliteCapabilities satelliteCapabilities) {
+        logd("sendOnSatelliteCapabilitiesChanged");
+        mRemoteListeners.values().forEach(listener -> runWithExecutor(() ->
+                listener.onSatelliteCapabilitiesChanged(satelliteCapabilities)));
     }
 
     public void setWaitToSend(boolean wait) {

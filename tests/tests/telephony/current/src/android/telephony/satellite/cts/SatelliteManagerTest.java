@@ -35,6 +35,7 @@ import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.satellite.NtnSignalStrength;
 import android.telephony.satellite.NtnSignalStrengthCallback;
 import android.telephony.satellite.SatelliteCapabilities;
+import android.telephony.satellite.SatelliteCapabilitiesCallback;
 import android.telephony.satellite.SatelliteDatagram;
 import android.telephony.satellite.SatelliteManager;
 import android.util.Log;
@@ -803,12 +804,41 @@ public class SatelliteManagerTest extends SatelliteManagerTestBase {
             }
         };
 
+        // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
         assertThrows(SecurityException.class,
                 () -> sSatelliteManager.registerForNtnSignalStrengthChanged(
                         getContext().getMainExecutor(), callback));
+        assertThrows(SecurityException.class,
+                () -> sSatelliteManager.unregisterForNtnSignalStrengthChanged(callback));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_OEM_ENABLED_SATELLITE_FLAG)
+    public void testRegisterForSatelliteCapabilitiesChanged() {
+        if (!shouldTestSatellite()) return;
+
+        SatelliteCapabilitiesCallback callback =
+                capabilities -> logd("onSatelliteCapabilitiesChanged(" + capabilities + ")");
 
         // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
         assertThrows(SecurityException.class,
-                () -> sSatelliteManager.unregisterForNtnSignalStrengthChanged(callback));
+                () -> sSatelliteManager.registerForSatelliteCapabilitiesChanged(
+                        getContext().getMainExecutor(), callback));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_OEM_ENABLED_SATELLITE_FLAG)
+    public void testUnregisterForSatelliteCapabilitiesChanged() {
+        if (!shouldTestSatellite()) return;
+
+        SatelliteCapabilitiesCallback callback =
+                capabilities -> logd("onSatelliteCapabilitiesChanged(" + capabilities + ")");
+
+        // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
+        assertThrows(SecurityException.class,
+                () -> sSatelliteManager.registerForSatelliteCapabilitiesChanged(
+                        getContext().getMainExecutor(), callback));
+        assertThrows(SecurityException.class,
+                () -> sSatelliteManager.unregisterForSatelliteCapabilitiesChanged(callback));
     }
 }

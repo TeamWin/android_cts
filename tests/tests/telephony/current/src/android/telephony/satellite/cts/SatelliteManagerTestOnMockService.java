@@ -1165,6 +1165,8 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                     }
                 };
 
+        sMockSatelliteServiceManager.setSupportedRadioTechnologies(
+                new int[]{NTRadioTechnology.PROPRIETARY});
         sSatelliteManager.requestSatelliteCapabilities(getContext().getMainExecutor(), receiver);
 
         revokeSatellitePermission();
@@ -3048,6 +3050,75 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         revokeSatellitePermission();
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_OEM_ENABLED_SATELLITE_FLAG)
+    public void testRegisterForSatelliteCapabilitiesChanged() {
+        if (!shouldTestSatelliteWithMockService()) return;
+
+        logd("testRegisterForSatelliteCapabilitiesChanged: start");
+        grantSatellitePermission();
+
+        android.telephony.satellite.stub.SatelliteCapabilities capabilities =
+                new android.telephony.satellite.stub.SatelliteCapabilities();
+        int[] supportedRadioTechnologies =
+                new int[]{android.telephony.satellite.stub.NTRadioTechnology.NB_IOT_NTN};
+        capabilities.supportedRadioTechnologies = supportedRadioTechnologies;
+        int[] antennaPositionKeys = new int[]{
+                SatelliteManager.DISPLAY_MODE_OPENED, SatelliteManager.DISPLAY_MODE_CLOSED};
+        AntennaPosition[] antennaPositionValues = new AntennaPosition[] {
+                new AntennaPosition(new AntennaDirection(1, 1, 1),
+                        SatelliteManager.DEVICE_HOLD_POSITION_PORTRAIT),
+                new AntennaPosition(new AntennaDirection(2, 2, 2),
+                        SatelliteManager.DEVICE_HOLD_POSITION_LANDSCAPE_LEFT)
+        };
+
+        capabilities.isPointingRequired = POINTING_TO_SATELLITE_REQUIRED;
+        capabilities.maxBytesPerOutgoingDatagram = MAX_BYTES_PER_DATAGRAM;
+        capabilities.antennaPositionKeys = antennaPositionKeys;
+        capabilities.antennaPositionValues = antennaPositionValues;
+        SatelliteCapabilities frameworkCapabilities =
+                SatelliteServiceUtils.fromSatelliteCapabilities(capabilities);
+        SatelliteCapabilitiesCallbackTest satelliteCapabilitiesCallbackTest =
+                new SatelliteCapabilitiesCallbackTest();
+
+        /* register callback for satellite capabilities changed event */
+        @SatelliteManager.SatelliteResult int registerError =
+                sSatelliteManager.registerForSatelliteCapabilitiesChanged(
+                        getContext().getMainExecutor(), satelliteCapabilitiesCallbackTest);
+        assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerError);
+
+        /* Verify whether capability changed event has received */
+        sendOnSatelliteCapabilitiesChanged(capabilities);
+        assertTrue(satelliteCapabilitiesCallbackTest.waitUntilResult(1));
+        assertTrue(frameworkCapabilities
+                .equals(satelliteCapabilitiesCallbackTest.mSatelliteCapabilities));
+
+        /* Verify whether notified and requested capabilities are equal */
+        Pair<SatelliteCapabilities, Integer> pairResult = requestSatelliteCapabilities();
+        assertTrue(frameworkCapabilities.equals(pairResult.first));
+        assertNull(pairResult.second);
+
+        /* datagram size has changed */
+        capabilities.maxBytesPerOutgoingDatagram = MAX_BYTES_PER_DATAGRAM + 1;
+        frameworkCapabilities = SatelliteServiceUtils.fromSatelliteCapabilities(capabilities);
+
+        /* Verify changed capabilities are reflected */
+        sendOnSatelliteCapabilitiesChanged(capabilities);
+        assertTrue(satelliteCapabilitiesCallbackTest.waitUntilResult(1));
+        assertTrue(frameworkCapabilities
+                .equals(satelliteCapabilitiesCallbackTest.mSatelliteCapabilities));
+
+        pairResult = requestSatelliteCapabilities();
+        assertTrue(frameworkCapabilities.equals(pairResult.first));
+        assertNull(pairResult.second);
+
+        /* unregister non-terrestrial network signal strength changed event callback */
+        sSatelliteManager.unregisterForSatelliteCapabilitiesChanged(
+                satelliteCapabilitiesCallbackTest);
+
+        revokeSatellitePermission();
+    }
+
     /**
      * Before calling this function, caller need to make sure the modem is in LISTENING or IDLE
      * state.
@@ -3787,6 +3858,37 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         return new Pair<>(ntnSignalStrength.get(), callback.get());
     }
 
+    private Pair<SatelliteCapabilities, Integer> requestSatelliteCapabilities() {
+        final AtomicReference<SatelliteCapabilities> SatelliteCapabilities =
+                new AtomicReference<>();
+        final AtomicReference<Integer> callback = new AtomicReference<>();
+        CountDownLatch latch = new CountDownLatch(1);
+        OutcomeReceiver<SatelliteCapabilities, SatelliteManager.SatelliteException> receiver =
+                new OutcomeReceiver<>() {
+                    @Override
+                    public void onResult(SatelliteCapabilities result) {
+                        logd("onResult: result=" + result);
+                        SatelliteCapabilities.set(result);
+                        latch.countDown();
+                    }
+
+                    @Override
+                    public void onError(SatelliteManager.SatelliteException exception) {
+                        logd("onError: onError=" + exception);
+                        callback.set(exception.getErrorCode());
+                        latch.countDown();
+                    }
+                };
+
+        sSatelliteManager.requestSatelliteCapabilities(getContext().getMainExecutor(), receiver);
+        try {
+            assertTrue(latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+        return new Pair<>(SatelliteCapabilities.get(), callback.get());
+    }
+
     private abstract static class BaseReceiver extends BroadcastReceiver {
         protected CountDownLatch mLatch = new CountDownLatch(1);
 
@@ -3865,6 +3967,11 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
     private void sendOnNtnSignalStrengthChanged(
             @NtnSignalStrength.NtnSignalStrengthLevel int ntnSignalStrengthLevel) {
         sMockSatelliteServiceManager.sendOnNtnSignalStrengthChanged(toHAL(ntnSignalStrengthLevel));
+    }
+
+    private void sendOnSatelliteCapabilitiesChanged(
+            android.telephony.satellite.stub.SatelliteCapabilities satelliteCapabilities) {
+        sMockSatelliteServiceManager.sendOnSatelliteCapabilitiesChanged(satelliteCapabilities);
     }
 
     @Nullable

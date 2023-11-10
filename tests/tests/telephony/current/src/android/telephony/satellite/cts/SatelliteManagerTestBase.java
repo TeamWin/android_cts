@@ -45,6 +45,8 @@ import android.telephony.cts.TelephonyManagerTest.ServiceStateRadioStateListener
 import android.telephony.satellite.NtnSignalStrength;
 import android.telephony.satellite.NtnSignalStrengthCallback;
 import android.telephony.satellite.PointingInfo;
+import android.telephony.satellite.SatelliteCapabilities;
+import android.telephony.satellite.SatelliteCapabilitiesCallback;
 import android.telephony.satellite.SatelliteDatagram;
 import android.telephony.satellite.SatelliteDatagramCallback;
 import android.telephony.satellite.SatelliteManager;
@@ -567,6 +569,40 @@ public class SatelliteManagerTestBase {
                     }
                 } catch (Exception ex) {
                     loge("onNtnSignalStrengthChanged: Got exception=" + ex);
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    protected static class SatelliteCapabilitiesCallbackTest implements
+            SatelliteCapabilitiesCallback {
+        public SatelliteCapabilities mSatelliteCapabilities;
+        private final Semaphore mSemaphore = new Semaphore(0);
+
+        @Override
+        public void onSatelliteCapabilitiesChanged(
+                @NonNull SatelliteCapabilities satelliteCapabilities) {
+            logd("onSatelliteCapabilitiesChanged: satelliteCapabilities=" + satelliteCapabilities);
+            mSatelliteCapabilities = satelliteCapabilities;
+
+            try {
+                mSemaphore.release();
+            } catch (Exception e) {
+                loge("onSatelliteCapabilitiesChanged: Got exception, ex=" + e);
+            }
+        }
+
+        public boolean waitUntilResult(int expectedNumberOfEvents) {
+            for (int i = 0; i < expectedNumberOfEvents; i++) {
+                try {
+                    if (!mSemaphore.tryAcquire(TIMEOUT, TimeUnit.MILLISECONDS)) {
+                        loge("Timeout to receive onSatelliteCapabilitiesChanged");
+                        return false;
+                    }
+                } catch (Exception ex) {
+                    loge("onSatelliteCapabilitiesChanged: Got exception=" + ex);
                     return false;
                 }
             }
