@@ -6573,4 +6573,13 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     public void testIsWifiWepSupported() throws Exception {
         sWifiManager.isWifiWepSupported();
     }
+
+    /**
+     * Tests {@link WifiManager#isWpaPersonalSupported()} does not crash.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_WPA_PERSONAL_USAGE)
+    @Test
+    public void testIsWpaPersonalSupported() throws Exception {
+        sWifiManager.isWpaPersonalSupported();
+    }
 }
