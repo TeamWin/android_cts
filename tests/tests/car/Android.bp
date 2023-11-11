@@ -28,6 +28,7 @@ android_test {
         "androidx.test.core",
         "androidx.test.rules",
         "android-support-v4",
+        "car-integration-test-utils-lib",
         "compatibility-device-util-axt",
         "truth",
         "ctstestrunner-axt",
