@@ -24,6 +24,8 @@ import static android.view.View.SYSTEM_UI_CLEARABLE_FLAGS;
 import static android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;
 import static android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
 import static android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+import static android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+import static android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
 import static android.view.View.SYSTEM_UI_FLAG_VISIBLE;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -739,7 +741,8 @@ public class WindowInsetsBehaviorTests {
         final int swipeCount = 2;
         final boolean insideLimit = true;
         testSystemGestureExclusionLimit(swipeCount, insideLimit, SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                | SYSTEM_UI_FLAG_FULLSCREEN | SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        | SYSTEM_UI_FLAG_FULLSCREEN | SYSTEM_UI_FLAG_HIDE_NAVIGATION
+        | SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
         assertEquals("Swipe must not be canceled.", 0, mActionCancelPoints.size());
         assertEquals("Action up points.", swipeCount, mActionUpPoints.size());
@@ -754,7 +757,8 @@ public class WindowInsetsBehaviorTests {
         final int swipeCount = 2;
         final boolean insideLimit = false;
         testSystemGestureExclusionLimit(swipeCount, insideLimit, SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                | SYSTEM_UI_FLAG_FULLSCREEN | SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        | SYSTEM_UI_FLAG_FULLSCREEN | SYSTEM_UI_FLAG_HIDE_NAVIGATION
+        | SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
         assertEquals("Swipe must not be canceled.", 0, mActionCancelPoints.size());
         assertEquals("Action up points.", swipeCount, mActionUpPoints.size());
