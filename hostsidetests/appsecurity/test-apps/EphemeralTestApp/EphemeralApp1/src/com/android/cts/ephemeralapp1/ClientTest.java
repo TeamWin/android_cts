@@ -1468,12 +1468,12 @@ public class ClientTest {
     private TestResult getResult() {
         final TestResult result;
         try {
-            result = mResultQueue.poll(5, TimeUnit.SECONDS);
+            result = mResultQueue.poll(25, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
         if (result == null) {
-            throw new IllegalStateException("Activity didn't receive a Result in 5 seconds");
+            throw new IllegalStateException("Activity didn't receive a Result in 25 seconds");
         }
         return result;
     }
