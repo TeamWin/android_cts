@@ -29,6 +29,7 @@ import com.android.bedstead.harrier.annotations.FailureMode
 import com.android.bedstead.harrier.annotations.Postsubmit
 import com.android.bedstead.harrier.annotations.RequireFeature
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode
+import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser
 import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser
 import com.android.bedstead.harrier.annotations.UserTest
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner
@@ -55,6 +56,34 @@ import org.junit.runner.RunWith
 
 @RunWith(BedsteadJUnit4::class)
 class DeviceOwnerTest {
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @EnsureHasDeviceOwner
+    @RequireRunOnSystemUser
+    fun isDeviceOwnerApp_is_returnsTrue() {
+        assertThat(devicePolicyManager.isDeviceOwnerApp(deviceState.dpc().packageName()))
+            .isTrue()
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @EnsureHasDeviceOwner
+    @RequireRunOnSystemUser
+    fun isDeviceOwnerApp_isNot_returnsFalse() {
+        assertThat(devicePolicyManager.isDeviceOwnerApp("fake.package.name"))
+            .isFalse()
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @EnsureHasDeviceOwner
+    @RequireRunOnAdditionalUser
+    fun isDeviceOwnerApp_isButOnDifferentUser_returnsFalse() {
+        assertThat(devicePolicyManager.isDeviceOwnerApp(deviceState.dpc().packageName()))
+            .isFalse()
+    }
+
     @Test
     @Postsubmit(reason = "new test")
     @EnsureHasDeviceOwner
@@ -119,7 +148,10 @@ class DeviceOwnerTest {
     @EnsureHasNoDpc
     // This explicitly requires no pre-created accounts so we must skip if there are any
     @EnsureHasNoAccounts(
-        onUser = UserType.ANY, allowPreCreatedAccounts = false, failureMode = FailureMode.SKIP)
+        onUser = UserType.ANY,
+        allowPreCreatedAccounts = false,
+        failureMode = FailureMode.SKIP
+    )
     @RequireNotHeadlessSystemUserMode(reason = "No non-testonly dpc which supports headless")
     @Test
     fun setDeviceOwnerViaAdb_noAccounts_notTestOnly_sets() {
@@ -163,7 +195,8 @@ class DeviceOwnerTest {
             // After attempting and failing to set the device owner, it will remain as an active
             // admin for a short while
             Poll.forValue(
-                "Active admins") {
+                "Active admins"
+            ) {
                 TestApis.devicePolicy().getActiveAdmins(TestApis.users().system())
             }
                 .toMeet { !it.contains(TEST_ONLY_DPC_COMPONENT) }
@@ -296,14 +329,15 @@ class DeviceOwnerTest {
         }
     }
 
-    @ApiTest(apis = ["android.app.admin.DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED"])
+    @ApiTest(apis = ["android.app.admin.DevicePolicyManager#ACTION_DEVICE_OWNER_CHANGED"])
     @EnsureHasNoDpc
     @Postsubmit(reason = "new test")
     @Test
     fun setDeviceOwner_receivesOwnerChangedBroadcast() {
         try {
             deviceState.registerBroadcastReceiver(
-                DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED).use { broadcastReceiver ->
+                DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED
+            ).use { broadcastReceiver ->
                 RemoteDpc.setAsDeviceOwner()
                 broadcastReceiver.awaitForBroadcastOrFail()
             }
@@ -321,7 +355,9 @@ class DeviceOwnerTest {
         TestApis.users().createUser().forTesting(false).create().use {
             try {
                 Assert.assertThrows(
-                    "Error setting device owner.", NeneException::class.java) {
+                    "Error setting device owner.",
+                    NeneException::class.java
+                ) {
                     RemoteDpc.setAsDeviceOwner()
                 }
             } finally {
@@ -423,7 +459,7 @@ class DeviceOwnerTest {
         @ClassRule
         @Rule
         val deviceState = DeviceState()
-        
+
         private val context = TestApis.context().instrumentedContext()
         private val TEST_ONLY_DPC = deviceState.testApps()
             .query().whereIsDeviceAdmin().isTrue()
@@ -445,7 +481,9 @@ class DeviceOwnerTest {
             NOT_TEST_ONLY_DPC.packageName() + ".DeviceAdminReceiver"
         )
         private const val SET_DEVICE_OWNER_COMMAND = "dpm set-device-owner"
-        private val devicePolicyManager = context.getSystemService(DevicePolicyManager::class.java)!!
+        private val devicePolicyManager = context.getSystemService(
+            DevicePolicyManager::class.java
+        )!!
         private const val FEATURE_ALLOW = "android.account.DEVICE_OR_PROFILE_OWNER_ALLOWED"
         private const val FEATURE_DISALLOW = "android.account.DEVICE_OR_PROFILE_OWNER_DISALLOWED"
     }
