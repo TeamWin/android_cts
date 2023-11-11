@@ -17,7 +17,7 @@
 package android.secure_element.cts;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
 
@@ -70,17 +70,13 @@ public class SeServiceManagerTest {
         ServiceRegisterer serviceRegisterer =
                 serviceManager.getSeManagerServiceRegisterer();
 
-        assertThrows(SecurityException.class, () ->
+        // service not accessible to cts, so this is not very meaningful.
+        assertThrows(NullPointerException.class, () ->
                 serviceRegisterer.register(serviceRegisterer.get()));
-
-        IBinder seServiceBinder = serviceRegisterer.get();
-        assertNotNull(seServiceBinder);
-
-        seServiceBinder = serviceRegisterer.tryGet();
-        assertNotNull(seServiceBinder);
-
-        seServiceBinder = serviceRegisterer.getOrThrow();
-        assertNotNull(seServiceBinder);
+        assertNull(serviceRegisterer.get());
+        assertNull(serviceRegisterer.tryGet());
+        assertThrows(ServiceNotFoundException.class, () ->
+                serviceRegisterer.getOrThrow());
     }
 
     @Test
