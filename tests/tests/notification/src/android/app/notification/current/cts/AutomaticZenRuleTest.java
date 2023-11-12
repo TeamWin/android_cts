@@ -162,7 +162,7 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         assertEquals(mIconResId, rule1.getIconResId());
     }
 
-    public void testBuilder_fromBuilder() {
+    public void testBuilder_fromInstance() {
         if (!Flags.modesApi()) {
             return;
         }
