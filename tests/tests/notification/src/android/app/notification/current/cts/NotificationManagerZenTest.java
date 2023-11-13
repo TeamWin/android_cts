@@ -53,6 +53,8 @@ import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_OF
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_ON;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BAR;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.Manifest;
 import android.app.AutomaticZenRule;
 import android.app.Flags;
@@ -90,12 +92,13 @@ import androidx.test.uiautomator.UiDevice;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.SystemUtil;
 
+import com.google.common.collect.Iterables;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tests zen/dnd related logic in NotificationManager.
@@ -923,7 +926,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
 
             // delay for streams to get into correct mute states
-            Thread.sleep(1000);
+            Thread.sleep(2000);
             assertTrue("Music (media) stream should be muted",
                     mAudioManager.isStreamMute(AudioManager.STREAM_MUSIC));
             assertTrue("System stream should be muted",
@@ -966,7 +969,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
 
             // delay for streams to get into correct mute states
-            Thread.sleep(1000);
+            Thread.sleep(2000);
             assertFalse("Music (media) stream should not be muted",
                     mAudioManager.isStreamMute(AudioManager.STREAM_MUSIC));
             assertTrue("System stream should be muted",
@@ -2027,5 +2030,79 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                     br.getExtra(EXTRA_AUTOMATIC_ZEN_RULE_STATUS, 1, 500));
         }
         br.unregister();
+    }
+
+    public void testSetInterruptionFilter_usesAutomaticZenRule() {
+        // NMS: MANAGE_GLOBAL_ZEN_VIA_IMPLICIT_RULES
+        if (!android.app.Flags.modesApi() || !CompatChanges.isChangeEnabled(308670109L)) {
+            return;
+        }
+        assertThat(mNotificationManager.getAutomaticZenRules()).isEmpty();
+
+        mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
+
+        // The filter was applied, but through a rule.
+        assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
+        Map<String, AutomaticZenRule> zenRules = mNotificationManager.getAutomaticZenRules();
+        assertThat(zenRules).hasSize(1);
+        AutomaticZenRule rule = Iterables.getOnlyElement(zenRules.values());
+        assertThat(rule.getInterruptionFilter()).isEqualTo(INTERRUPTION_FILTER_PRIORITY);
+    }
+
+    public void testSetNotificationPolicy_usesAutomaticZenRule() {
+        // NMS: MANAGE_GLOBAL_ZEN_VIA_IMPLICIT_RULES
+        if (!android.app.Flags.modesApi() || !CompatChanges.isChangeEnabled(308670109L)) {
+            return;
+        }
+        assertThat(mNotificationManager.getAutomaticZenRules()).isEmpty();
+
+        NotificationManager.Policy policy = new NotificationManager.Policy(
+                PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_REPEAT_CALLERS,
+                0, 0);
+        mNotificationManager.setNotificationPolicy(policy);
+
+        // The policy was mapped to a rule.
+        Map<String, AutomaticZenRule> zenRules = mNotificationManager.getAutomaticZenRules();
+        assertThat(zenRules).hasSize(1);
+        ZenPolicy ruleZen = Iterables.getOnlyElement(zenRules.values()).getZenPolicy();
+        assertThat(ruleZen).isNotNull();
+
+        assertThat(ruleZen.getPriorityCategoryAlarms()).isEqualTo(ZenPolicy.STATE_ALLOW);
+        assertThat(ruleZen.getPriorityCategoryRepeatCallers()).isEqualTo(ZenPolicy.STATE_ALLOW);
+        assertThat(ruleZen.getPriorityCategoryCalls()).isEqualTo(ZenPolicy.STATE_DISALLOW);
+        assertThat(ruleZen.getPriorityCategoryMedia()).isEqualTo(ZenPolicy.STATE_DISALLOW);
+        assertThat(ruleZen.getPriorityCategorySystem()).isEqualTo(ZenPolicy.STATE_DISALLOW);
+    }
+
+    public void testSetInterruptionFilter_withSetNotificationPolicy_sharesAutomaticZenRule() {
+        // NMS: MANAGE_GLOBAL_ZEN_VIA_IMPLICIT_RULES
+        if (!android.app.Flags.modesApi() || !CompatChanges.isChangeEnabled(308670109L)) {
+            return;
+        }
+        assertThat(mNotificationManager.getAutomaticZenRules()).isEmpty();
+
+        NotificationManager.Policy policy = new NotificationManager.Policy(
+                PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_REPEAT_CALLERS,
+                0, 0);
+        mNotificationManager.setNotificationPolicy(policy);
+        mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
+
+        // The policy and interruption filter were mapped to the same rule.
+        Map<String, AutomaticZenRule> zenRules = mNotificationManager.getAutomaticZenRules();
+        assertThat(zenRules).hasSize(1);
+        AutomaticZenRule rule = Iterables.getOnlyElement(zenRules.values());
+        assertThat(rule.getInterruptionFilter()).isEqualTo(INTERRUPTION_FILTER_PRIORITY);
+        ZenPolicy ruleZen = rule.getZenPolicy();
+        assertThat(ruleZen).isNotNull();
+        assertThat(ruleZen.getPriorityCategoryAlarms()).isEqualTo(ZenPolicy.STATE_ALLOW);
+        assertThat(ruleZen.getPriorityCategoryCalls()).isEqualTo(ZenPolicy.STATE_DISALLOW);
+
+        // The rule was turned on, and is working.
+        assertThat(mNotificationManager.getCurrentInterruptionFilter()).isEqualTo(
+                INTERRUPTION_FILTER_PRIORITY);
+        NotificationManager.Policy activePolicy =
+                mNotificationManager.getConsolidatedNotificationPolicy();
+        assertThat(activePolicy.priorityCategories & PRIORITY_CATEGORY_ALARMS).isNotEqualTo(0);
+        assertThat(activePolicy.priorityCategories & PRIORITY_CATEGORY_CALLS).isEqualTo(0);
     }
 }
