@@ -2835,6 +2835,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         PackageInfo packageInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
                 PackageManager.PackageInfoFlags.of(0));
         final String oldDataDir = packageInfo.applicationInfo.dataDir;
+        final long firstInstallTime = packageInfo.firstInstallTime;
         // Launch activity to write data to the data dir and verify the stats
         launchMainActivity(HELLO_WORLD_PACKAGE_NAME);
         StorageStatsManager storageStatsManager =
@@ -2864,6 +2865,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         assertThat(packageInfo.signingInfo).isNotNull();
         assertThat(packageInfo.applicationInfo.targetSdkVersion).isGreaterThan(0);
         assertThat(packageInfo.signatures).isNotNull();
+        assertThat(packageInfo.firstInstallTime).isEqualTo(firstInstallTime);
         // Test that the app's data directory is preserved and matches dumpsys
         final String newDataDir = packageInfo.applicationInfo.dataDir;
         assertThat(newDataDir).isNotEmpty();
