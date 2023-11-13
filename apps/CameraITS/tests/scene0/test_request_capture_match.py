@@ -43,7 +43,7 @@ class RequestCaptureMatchTest(its_base_test.ItsBaseTest):
       camera_properties_utils.skip_unless(
           camera_properties_utils.manual_sensor(props) and
           camera_properties_utils.per_frame_control(props))
-      vendor_api_level = its_session_utils.get_vendor_api_level(self.dut.serial)
+      first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
 
       valid_formats = ['yuv', 'jpg']
       if camera_properties_utils.raw16(props):
@@ -117,7 +117,7 @@ class RequestCaptureMatchTest(its_base_test.ItsBaseTest):
                   's_req': s_req,
                   's_cap': s_cap
               })
-            if (vendor_api_level >= its_session_utils.ANDROID14_API_LEVEL and
+            if (first_api_level >= its_session_utils.ANDROID14_API_LEVEL and
                 s_cap < sens_range[0]):
               r_failed.append({
                   'format': fmt_cap,

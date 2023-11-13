@@ -131,12 +131,12 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
         hidden_physical_id=self.hidden_physical_id) as cam:
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
-      vendor_api_level = its_session_utils.get_vendor_api_level(self.dut.serial)
+      first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
       supported_stabilization_modes = props[
           'android.control.availableVideoStabilizationModes']
 
       camera_properties_utils.skip_unless(
-          vendor_api_level >= its_session_utils.ANDROID13_API_LEVEL and
+          first_api_level >= its_session_utils.ANDROID13_API_LEVEL and
           _VIDEO_STABILIZATION_MODE in supported_stabilization_modes)
 
       # Log ffmpeg version being used
