@@ -610,7 +610,6 @@ public class BluetoothAdapterTest {
 
     @Test
     public void test_BluetoothProfile_getProfileName() {
-        if (!mHasBluetooth) return;
         assertEquals("HEADSET",
                 BluetoothProfile.getProfileName(BluetoothProfile.HEADSET));
         assertEquals("A2DP",
