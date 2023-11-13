@@ -162,7 +162,7 @@ class TouchModeTest {
         // test would fail, but we don't have a better way to check that an event does not occur.
         // Due to the 2 expected touch mode events to occur, this test may take few seconds to run.
         uiDevice.pressHome()
-        WindowManagerStateHelper().waitForAppTransitionIdleOnDisplay(activity.display!!.displayId)
+        WindowManagerStateHelper().waitForAppTransitionIdleOnDisplay(activity.display.displayId)
         PollingCheck.waitFor(WindowUtil.WINDOW_FOCUS_TIMEOUT_MILLIS) { !activity.hasWindowFocus() }
 
         instrumentation.setInTouchMode(true)

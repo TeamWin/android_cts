@@ -48,7 +48,7 @@ class EmulateInputDevice {
     @Before
     fun setUp() {
         activityRule.scenario.onActivity { context = it }
-        val dm = DisplayMetrics().also { context.display!!.getRealMetrics(it) }
+        val dm = DisplayMetrics().also { context.display.getRealMetrics(it) }
         screenSize = Size(dm.widthPixels, dm.heightPixels)
     }
 
@@ -64,7 +64,7 @@ class EmulateInputDevice {
     fun useTouchscreenForFiveSeconds() {
         UinputTouchDevice(
                 instrumentation,
-                context.display!!,
+                context.display,
                 R.raw.test_touchscreen_register,
                 InputDevice.SOURCE_TOUCHSCREEN,
                 screenSize,
@@ -103,7 +103,7 @@ class EmulateInputDevice {
     fun useTouchpadWithFingersAndPalms() {
         UinputTouchDevice(
                 instrumentation,
-                context.display!!,
+                context.display,
                 R.raw.test_touchpad_register,
                 InputDevice.SOURCE_TOUCHPAD or InputDevice.SOURCE_MOUSE,
         ).use { touchpad ->
@@ -138,7 +138,7 @@ class EmulateInputDevice {
     fun pinchOnTouchpad() {
         UinputTouchDevice(
             instrumentation,
-            context.display!!,
+            context.display,
             R.raw.test_touchpad_register,
             InputDevice.SOURCE_TOUCHPAD or InputDevice.SOURCE_MOUSE
         ).use { touchpad ->
@@ -195,7 +195,7 @@ class EmulateInputDevice {
     private fun multiFingerSwipe(numFingers: Int) {
         UinputTouchDevice(
             instrumentation,
-            context.display!!,
+            context.display,
             R.raw.test_touchpad_register,
             InputDevice.SOURCE_TOUCHPAD or InputDevice.SOURCE_MOUSE
         ).use { touchpad ->
