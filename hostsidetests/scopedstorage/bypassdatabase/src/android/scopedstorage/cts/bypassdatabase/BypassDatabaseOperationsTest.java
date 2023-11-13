@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.scopedstorage.cts.device;
+package android.scopedstorage.cts.bypassdatabase;
 
 import static android.app.AppOpsManager.permissionToOp;
 import static android.scopedstorage.cts.lib.TestUtils.allowAppOpsToUid;
@@ -59,9 +59,7 @@ import org.junit.runners.Parameterized.Parameters;
 import java.io.File;
 
 /**
- * We are in process of splitting CtsScopedStorageDeviceOnlyTest module into multiple ones.
- * This is a temporary test class, and it will be deleted
- * after all the links to new modules are created.
+ * Device-side test suite to verify file path operations optionally bypassing database operations.
  */
 @RunWith(Parameterized.class)
 public class BypassDatabaseOperationsTest extends ScopedStorageBaseDeviceTest {

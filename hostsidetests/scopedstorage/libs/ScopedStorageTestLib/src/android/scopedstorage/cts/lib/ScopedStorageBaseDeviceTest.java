@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.scopedstorage.cts.device;
+package android.scopedstorage.cts.lib;
 
 import static android.scopedstorage.cts.lib.TestUtils.getExternalFilesDir;
 import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageState;
@@ -28,14 +28,13 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.provider.MediaStore;
-import android.scopedstorage.cts.lib.TestUtils;
 
 import static org.junit.Assume.assumeTrue;
 
 import java.util.Arrays;
 import java.util.List;
 
-class ScopedStorageBaseDeviceTest {
+public class ScopedStorageBaseDeviceTest {
     private static final String VOLUME_PUBLIC = "volume_public";
 
     private static void createPublicVolume() throws Exception {
@@ -51,7 +50,7 @@ class ScopedStorageBaseDeviceTest {
         }
     }
 
-    void setupExternalStorage(String volumeName) throws Exception {
+    public void setupExternalStorage(String volumeName) throws Exception {
         assertThat(volumeName).isNotNull();
 
         if (volumeName.equals(MediaStore.VOLUME_EXTERNAL)) {
@@ -74,7 +73,7 @@ class ScopedStorageBaseDeviceTest {
         setupDefaultDirectories();
     }
 
-    static List<String> getTestParameters() {
+    public static List<String> getTestParameters() {
         return Arrays.asList(
                 MediaStore.VOLUME_EXTERNAL,
                 VOLUME_PUBLIC

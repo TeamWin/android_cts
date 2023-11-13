@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.scopedstorage.cts.device;
+package android.scopedstorage.cts.redacturi;
 
 
 import static android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION;
@@ -79,9 +79,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * We are in process of splitting CtsScopedStorageDeviceOnlyTest module into multiple ones.
- * This is a temporary test class, and it will be deleted
- * after all the links to new modules are created.
+ * Device-side test suite to verify redacted URI operations.
  */
 @RunWith(Parameterized.class)
 @SdkSuppress(minSdkVersion = 31, codeName = "S")
