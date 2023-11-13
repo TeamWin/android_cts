@@ -65,6 +65,12 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
       "android.resource://android.media.cujsmalltest.cts/raw/ElephantsDream_360x640_avc_5s";
   private static final String MP4_BIGBUCKBUNNY_ASSET_360x640_AVC_URI_STRING =
       "android.resource://android.media.cujsmalltest.cts/raw/BigBuckBunny_360x640_avc_5s";
+  private static final String MKV_TEARS_OF_STEEL_ASSET_AAC_2CH_44KHZ_AAC_1CH_44KHZ_URI_STRING =
+      "android.resource://android.media.cujsmalltest.cts/raw/tearsofsteel_aac_2ch_44kHz_aac_1ch_44kHz_5sec";
+  private static final String MKV_TEARS_OF_STEEL_ASSET_SRT_SUBTITLES_ENG_FRENCH_URI_STRING =
+      "android.resource://android.media.cujsmalltest.cts/raw/tearsofsteel_srt_subtitles_eng_fre_5sec";
+  private static final String MKV_TEARS_OF_STEEL_ASSET_SSA_SUBTITLES_ENG_FRENCH_URI_STRING =
+      "android.resource://android.media.cujsmalltest.cts/raw/tearsofsteel_ssa_subtitles_eng_fre_5sec";
 
   CujTestParam mCujTestParam;
   private final String mTestType;
@@ -106,6 +112,21 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
             .setTimeoutMilliSeconds(90000)
             .setPlayerListener(PlayerListener.createListenerForScrollTest(2, 5000)).build(),
             "Avc_360x640_15sec_ScrollTest"},
+        {CujTestParam.builder().setMediaUrls(prepare_Aac_2ch_44khz_Aac_1ch_44khz_5secVideoList())
+            .setTimeoutMilliSeconds(45000)
+            .setPlayerListener(
+                PlayerListener.createListenerForSwitchAudioTracksTest(2, 3000)).build(),
+            "Aac_2ch_44kHz_Aac_1ch_44kHz_5sec_SwitchAudioTracksTest"},
+        {CujTestParam.builder().setMediaUrls(prepare_Srt_Subtitles_Eng_French_5secVideoList())
+            .setTimeoutMilliSeconds(45000)
+            .setPlayerListener(
+                PlayerListener.createListenerForSwitchSubtitleTracksTest(2, 3000)).build(),
+            "Srt_Subtitle_eng_french_5sec_SwitchSubtitleTracksTest"},
+        {CujTestParam.builder().setMediaUrls(prepare_Ssa_Subtitles_Eng_French_5secVideoList())
+            .setTimeoutMilliSeconds(45000)
+            .setPlayerListener(
+                PlayerListener.createListenerForSwitchSubtitleTracksTest(2, 3000)).build(),
+            "Ssa_Subtitle_eng_french_5sec_SwitchSubtitleTracksTest"},
     }));
     return exhaustiveArgsList;
   }
@@ -180,6 +201,33 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
     List<String> videoInput = Arrays.asList(
         MP4_FORBIGGERBLAZEA_ASSET_480P_HEVC_URI_STRING,
         MP4_FORBIGGERESCAPES_ASSET_480P_HEVC_URI_STRING);
+    return videoInput;
+  }
+
+  /**
+   * Prepare multiple audio tracks video list.
+   */
+  public static List<String> prepare_Aac_2ch_44khz_Aac_1ch_44khz_5secVideoList() {
+    List<String> videoInput = Arrays.asList(
+        MKV_TEARS_OF_STEEL_ASSET_AAC_2CH_44KHZ_AAC_1CH_44KHZ_URI_STRING);
+    return videoInput;
+  }
+
+  /**
+   * Prepare multiple srt subtitle tracks video list.
+   */
+  public static List<String> prepare_Srt_Subtitles_Eng_French_5secVideoList() {
+    List<String> videoInput = Arrays.asList(
+        MKV_TEARS_OF_STEEL_ASSET_SRT_SUBTITLES_ENG_FRENCH_URI_STRING);
+    return videoInput;
+  }
+
+  /**
+   * Prepare multiple ssa subtitle tracks video list.
+   */
+  public static List<String> prepare_Ssa_Subtitles_Eng_French_5secVideoList() {
+    List<String> videoInput = Arrays.asList(
+        MKV_TEARS_OF_STEEL_ASSET_SSA_SUBTITLES_ENG_FRENCH_URI_STRING);
     return videoInput;
   }
 
