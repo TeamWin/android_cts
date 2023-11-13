@@ -48,6 +48,7 @@ import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
 import android.platform.test.annotations.AppModeFull;
+import android.server.wm.WindowManagerStateHelper;
 import android.virtualdevice.cts.applaunch.util.EmptyActivity;
 import android.virtualdevice.cts.common.FakeAssociationRule;
 
@@ -106,6 +107,7 @@ public class VirtualDeviceHomeTest {
     private VirtualDeviceManager.VirtualDevice mVirtualDevice;
     private VirtualDisplay mVirtualDisplay;
     private Context mContext;
+    private WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
     @Mock
     private VirtualDeviceManager.ActivityListener mActivityListener;
 
@@ -139,6 +141,8 @@ public class VirtualDeviceHomeTest {
             EmptyActivity activity = launchTestActivity();
 
             activity.finish();
+            mWmState.waitAndAssertActivityRemoved(activity.getComponentName());
+
             assertActivityOnVirtualDisplay(homeComponent, 2);
         }
     }
@@ -177,6 +181,8 @@ public class VirtualDeviceHomeTest {
         EmptyActivity activity = launchTestActivity();
 
         activity.finish();
+        mWmState.waitAndAssertActivityRemoved(activity.getComponentName());
+
         assertActivityOnVirtualDisplay(CUSTOM_HOME_ACTIVITY, 2);
     }
 
@@ -200,6 +206,9 @@ public class VirtualDeviceHomeTest {
         mVirtualDevice.addActivityListener(mContext.getMainExecutor(), mActivityListener);
         mVirtualDisplay = mVirtualDevice.createVirtualDisplay(
                 HOME_DISPLAY_CONFIG, null, null);
+        int virtualDisplayId = mVirtualDisplay.getDisplay().getDisplayId();
+        mWmState.waitForWithAmState(state -> state.getDisplay(virtualDisplayId) != null,
+                "Waiting for virtual display to be created");
     }
 
     private EmptyActivity launchTestActivity() {
