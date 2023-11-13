@@ -372,7 +372,7 @@ public class LauncherAppsTest {
                 () ->
                         mPackageInstaller.requestArchive(
                                 ARCHIVE_PACKAGE_NAME,
-                                new IntentSender((IIntentSender) mIntentSender)),
+                                new IntentSender((IIntentSender) mIntentSender), 0),
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
 
@@ -414,7 +414,7 @@ public class LauncherAppsTest {
                 () ->
                         mPackageInstaller.requestArchive(
                                 ARCHIVE_PACKAGE_NAME,
-                                new IntentSender((IIntentSender) mIntentSender)),
+                                new IntentSender((IIntentSender) mIntentSender), 0),
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
 
@@ -470,7 +470,7 @@ public class LauncherAppsTest {
                 () ->
                         mPackageInstaller.requestArchive(
                                 ARCHIVE_PACKAGE_NAME,
-                                new IntentSender((IIntentSender) mIntentSender)),
+                                new IntentSender((IIntentSender) mIntentSender), 0),
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
         ComponentName archiveAppComponentName =
@@ -512,7 +512,7 @@ public class LauncherAppsTest {
                 () ->
                         mPackageInstaller.requestArchive(
                                 ARCHIVE_PACKAGE_NAME,
-                                new IntentSender((IIntentSender) mIntentSender)),
+                                new IntentSender((IIntentSender) mIntentSender), 0),
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
 
@@ -536,7 +536,7 @@ public class LauncherAppsTest {
                 () ->
                         mPackageInstaller.requestArchive(
                                 ARCHIVE_PACKAGE_NAME,
-                                new IntentSender((IIntentSender) mIntentSender)),
+                                new IntentSender((IIntentSender) mIntentSender), 0),
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
         ComponentName archiveAppComponentName =
@@ -558,7 +558,7 @@ public class LauncherAppsTest {
                 () ->
                         mPackageInstaller.requestArchive(
                                 ARCHIVE_PACKAGE_NAME,
-                                new IntentSender((IIntentSender) mIntentSender)),
+                                new IntentSender((IIntentSender) mIntentSender), 0),
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
         ComponentName archiveAppComponentName =
@@ -579,7 +579,7 @@ public class LauncherAppsTest {
                 () ->
                         mPackageInstaller.requestArchive(
                                 ARCHIVE_PACKAGE_NAME,
-                                new IntentSender((IIntentSender) mIntentSender)),
+                                new IntentSender((IIntentSender) mIntentSender), 0),
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
 
@@ -599,7 +599,7 @@ public class LauncherAppsTest {
                 () ->
                         mPackageInstaller.requestArchive(
                                 ARCHIVE_PACKAGE_NAME,
-                                new IntentSender((IIntentSender) mIntentSender)),
+                                new IntentSender((IIntentSender) mIntentSender), 0),
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
 
@@ -616,7 +616,7 @@ public class LauncherAppsTest {
         installPackage(ARCHIVE_APK_PATH);
         SystemUtil.runWithShellPermissionIdentity(
                 () -> mPackageInstaller.requestArchive(ARCHIVE_PACKAGE_NAME,
-                        new IntentSender((IIntentSender) mIntentSender)),
+                        new IntentSender((IIntentSender) mIntentSender), 0),
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
         LauncherUnarchiveBroadcastReceiver unarchiveReceiver =
