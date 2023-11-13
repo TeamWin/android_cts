@@ -31,8 +31,8 @@ import android.text.Spanned;
 import android.text.method.DigitsKeyListener;
 import android.view.KeyEvent;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

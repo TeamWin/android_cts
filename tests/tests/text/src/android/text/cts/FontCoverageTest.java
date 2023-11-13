@@ -24,8 +24,8 @@ import android.icu.lang.UCharacter;
 import android.icu.lang.UCharacterCategory;
 import android.icu.text.UnicodeSet;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
 

@@ -25,9 +25,9 @@ import static org.junit.Assert.assertTrue;
 import android.content.Context;
 import android.text.format.DateUtils;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
