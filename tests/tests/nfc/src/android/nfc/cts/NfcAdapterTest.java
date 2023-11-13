@@ -15,12 +15,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.nfc.*;
-import android.platform.test.annotations.RequiresFlagsEnabled;
-import android.platform.test.flag.junit.CheckFlagsRule;
-import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.nfc.tech.*;
 import android.os.Bundle;
 import android.os.RemoteException;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.core.app.ApplicationProvider;
@@ -281,6 +281,30 @@ public class NfcAdapterTest {
         // Verify the API does not crash or throw any exceptions.
         adapter.setReaderMode(true);
         adapter.setReaderMode(false);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_OBSERVE_MODE)
+    public void testIsObserveModeSupported() {
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        boolean result = adapter.isObserveModeSupported();
+        Assert.assertTrue(result);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_OBSERVE_MODE)
+    public void testAllowTransaction() {
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        boolean result = adapter.allowTransaction();
+        Assert.assertTrue(result);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_OBSERVE_MODE)
+    public void testDisallowTransaction() {
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        boolean result = adapter.disallowTransaction();
+        Assert.assertTrue(result);
     }
 
     private class CtsReaderCallback implements NfcAdapter.ReaderCallback {
