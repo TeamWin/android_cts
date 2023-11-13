@@ -87,7 +87,9 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
     @Override
     void onTearDown() {
         super.onTearDown();
-        mInputManager.unregisterInputDeviceListener(mInputDeviceChangedListener);
+        if (mInputManager != null) {
+            mInputManager.unregisterInputDeviceListener(mInputDeviceChangedListener);
+        }
         setNewSettingsUiFlag(mInstrumentation.getTargetContext(), "");
     }
 
