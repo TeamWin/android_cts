@@ -53,6 +53,9 @@ import android.os.Looper;
 import android.os.ParcelUuid;
 import android.os.PersistableBundle;
 import android.os.Process;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
@@ -80,6 +83,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -122,6 +126,9 @@ public class SubscriptionManagerTest {
     // time to wait for subscription plans to expire
     private static final int SUBSCRIPTION_PLAN_EXPIRY_MS = 50;
     private static final int SUBSCRIPTION_PLAN_CLEAR_WAIT_MS = 5000;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private int mSubId;
     private int mDefaultVoiceSubId;
@@ -338,6 +345,25 @@ public class SubscriptionManagerTest {
                         < subList.get(i).getSubscriptionId());
             }
         }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_WORK_PROFILE_API_SPLIT)
+    public void testForAllProfilesSubscriptionManager() {
+        SubscriptionManager allProfileSm = InstrumentationRegistry.getContext()
+                .getSystemService(SubscriptionManager.class).createForAllUserProfiles();
+
+        List<SubscriptionInfo> specificProfilesubList = ShellIdentityUtils
+                .invokeMethodWithShellPermissions(mSm,
+                        SubscriptionManager::getActiveSubscriptionInfoList);
+        // Assert when there is no sim card present or detected
+        assertNotNull("Active subscriber required", specificProfilesubList);
+
+        List<SubscriptionInfo> allProfileSubList = ShellIdentityUtils
+                .invokeMethodWithShellPermissions(allProfileSm,
+                        SubscriptionManager::getActiveSubscriptionInfoList);
+
+        assertTrue(allProfileSubList.size() >= specificProfilesubList.size());
     }
 
     @Test
