@@ -6,7 +6,8 @@
   ],
   "ravenwood-presubmit": [
     {
-      "name": "CtsUtilTestCasesRavenwood"
+      "name": "CtsUtilTestCasesRavenwood",
+      "host": true
     }
   ]
 }
