@@ -724,4 +724,41 @@ public class SurfaceViewTests extends ActivityTestBase {
             activity.reset();
         }
     }
+
+    @Test
+    public void surfaceViewDisabledClip() throws InterruptedException {
+        Assume.assumeTrue(Flags.clipSurfaceviews());
+
+        CountDownLatch latch = new CountDownLatch(1);
+        sRedCanvasCallback.setFence(latch);
+        ViewInitializer initializer = (View view) -> {
+            FrameLayout root = view.findViewById(R.id.frame_layout);
+            root.setBackgroundColor(Color.GREEN);
+            SurfaceView surfaceView = new SurfaceView(view.getContext());
+            surfaceView.setZOrderOnTop(true);
+            root.setClipChildren(false);
+            surfaceView.getHolder().addCallback(sRedCanvasCallback);
+            root.addView(surfaceView, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT));
+        };
+
+        DrawActivity activity = getActivity();
+        try {
+            TestPositionInfo testInfo = activity.enqueueRenderSpecAndWait(
+                    R.layout.frame_layout, null, initializer, true, false);
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+
+            BitmapAsserter asserter =
+                    new BitmapAsserter(this.getClass().getSimpleName(), name.getMethodName());
+            waitForScreenshottable();
+            Bitmap screenshot = mScreenshotter.takeScreenshot(testInfo);
+            asserter.assertBitmapIsVerified(
+                    screenshot,
+                    new ColorVerifier(Color.RED), getName(),
+                    "Verifying unclipped SurfaceView");
+        } finally {
+            activity.reset();
+        }
+    }
 }
