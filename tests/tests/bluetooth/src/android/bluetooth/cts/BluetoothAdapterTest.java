@@ -819,12 +819,6 @@ public class BluetoothAdapterTest {
         return SystemProperties.getBoolean(ENABLE_DUAL_MODE_AUDIO, false);
     }
 
-    private static void sleep(long t) {
-        try {
-            Thread.sleep(t);
-        } catch (InterruptedException e) { }
-    }
-
     private boolean waitForAdapterNameChange() {
         mAdapterNameChangedlock.lock();
         try {
