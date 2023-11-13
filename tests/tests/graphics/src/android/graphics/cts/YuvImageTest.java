@@ -452,6 +452,35 @@ public class YuvImageTest {
         }
     }
 
+    @Test
+    public void testCompressYuvToJpegRWithStrides() throws Exception {
+        String hdrInput = Utils.obtainPath(R.raw.raw_p010_image, 0);
+        String sdrInput = Utils.obtainPath(R.raw.raw_yuv420_image, 0);
+
+        final int stride = 1280;
+        final int padding = 20;
+        final int width = stride - padding;
+        final int height = 720;
+
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+
+        byte[] hdrData = Files.readAllBytes(Paths.get(hdrInput));
+        byte[] sdrData = Files.readAllBytes(Paths.get(sdrInput));
+
+        YuvImage hdrImage = new YuvImage(hdrData, ImageFormat.YCBCR_P010,
+                width, height, new int[] {stride * 2, stride * 2},
+                ColorSpace.get(ColorSpace.Named.BT2020_HLG));
+        YuvImage sdrImage = new YuvImage(sdrData, ImageFormat.YUV_420_888,
+                width, height, new int[] {stride, stride / 2, stride / 2});
+
+        assertTrue("Fail in JPEG/R compression.",
+                hdrImage.compressToJpegR(sdrImage, 90, stream));
+        byte[] jpegRData = stream.toByteArray();
+        Bitmap decoded = BitmapFactory.decodeByteArray(jpegRData, 0, jpegRData.length);
+        assertNotNull(decoded);
+        assertEquals(decoded.getWidth(), width);
+    }
+
     private void generateTestBitmaps(int width, int height) {
         Bitmap dst = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(dst);
