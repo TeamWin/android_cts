@@ -40,6 +40,7 @@ import static org.junit.Assert.assertNull;
 import android.Manifest;
 import android.app.AppOpsManager;
 import android.provider.MediaStore;
+import android.scopedstorage.cts.lib.ScopedStorageBaseDeviceTest;
 import android.scopedstorage.cts.lib.TestUtils;
 import android.util.Log;
 
@@ -58,10 +59,12 @@ import org.junit.runners.Parameterized.Parameters;
 import java.io.File;
 
 /**
- * Device-side test suite to verify file path operations optionally bypassing database operations.
+ * We are in process of splitting CtsScopedStorageDeviceOnlyTest module into multiple ones.
+ * This is a temporary test class, and it will be deleted
+ * after all the links to new modules are created.
  */
 @RunWith(Parameterized.class)
-public class BypassDatabaseOperationsTest extends ScopedStorageBaseDeviceTest {
+public class BypassDatabaseOperationsTestCopy extends ScopedStorageBaseDeviceTest {
     static final String TAG = "BypassDatabaseOperationsTest";
     // An app with READ_EXTERNAL_STORAGE permission. Targets current SDK and is preinstalled
     private static final TestApp APP_SYSTEM_GALLERY_DEFAULT = new TestApp("TestAppA",

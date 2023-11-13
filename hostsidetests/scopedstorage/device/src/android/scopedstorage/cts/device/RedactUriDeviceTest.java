@@ -48,6 +48,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.media.ExifInterface;
 import android.net.Uri;
+import android.scopedstorage.cts.lib.ScopedStorageBaseDeviceTest;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileUtils;
