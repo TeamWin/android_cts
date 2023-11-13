@@ -34,7 +34,6 @@ import android.speech.RecognitionSupportCallback;
 import android.support.test.uiautomator.UiDevice;
 
 import androidx.annotation.NonNull;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
@@ -43,10 +42,11 @@ import com.android.compatibility.common.util.PollingCheck;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
-@RunWith(AndroidJUnit4.class)
+
+// TODO(b/297249772): Re-enable once the limit is also re-enabled in
+// SpeechRecognitionManagerServiceImpl.
+// @RunWith(AndroidJUnit4.class)
 public class OnDeviceFrameworkSessionLimitTest {
 
     private static final long ACTIVITY_INIT_WAIT_TIMEOUT_MS = 5000L;
@@ -91,7 +91,9 @@ public class OnDeviceFrameworkSessionLimitTest {
         getNonNullUiAutomation(10_000).dropShellPermissionIdentity();
     }
 
-    @Test
+    // TODO(b/297249772): Re-enable once the limit is also re-enabled in
+    //  SpeechRecognitionManagerServiceImpl.
+    // @Test
     public void testFrameworkSessionLimit() {
         mUiDevice.waitForIdle();
         RecognitionSupportCallback supportCallback = new RecognitionSupportCallback() {
