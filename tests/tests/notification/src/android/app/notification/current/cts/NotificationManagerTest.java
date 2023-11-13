@@ -38,7 +38,13 @@ import static android.service.notification.NotificationListenerService.META_DATA
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.Manifest;
 import android.app.Notification;
@@ -91,6 +97,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.PollingCheck;
@@ -100,6 +107,13 @@ import com.android.test.notificationlistener.INLSControlService;
 import com.android.test.notificationlistener.INotificationUriAccessService;
 
 import com.google.common.base.Preconditions;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.FixMethodOrder;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -122,6 +136,8 @@ import java.util.concurrent.TimeoutException;
 
 /* This tests NotificationListenerService together with NotificationManager, as you need to have
  * notifications to manipulate in order to test the listener service. */
+@RunWith(AndroidJUnit4.class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class NotificationManagerTest extends BaseNotificationManagerTest {
     public static final String NOTIFICATIONPROVIDER = "com.android.test.notificationprovider";
     public static final String RICH_NOTIFICATION_ACTIVITY =
@@ -214,9 +230,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     @Nullable
     private List<String> mPreviousDefaultBrowser;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         PermissionUtils.grantPermission(mContext.getPackageName(), POST_NOTIFICATIONS);
         PermissionUtils.grantPermission(STUB_PACKAGE_NAME, POST_NOTIFICATIONS);
         PermissionUtils.grantPermission(TEST_APP, POST_NOTIFICATIONS);
@@ -243,10 +258,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-
+    @After
+    public void tearDown() throws Exception {
         // For trampoline tests
         if (mTrampolineConnection != null) {
             mContext.unbindService(mTrampolineConnection);
@@ -285,7 +298,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
     private PendingIntent getPendingIntent() {
         return PendingIntent.getActivity(
-                getContext(), 0, new Intent(getContext(), this.getClass()),
+                mContext, 0, new Intent(mContext, this.getClass()),
                 PendingIntent.FLAG_MUTABLE_UNAUDITED);
     }
 
@@ -293,14 +306,11 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         return n.getGroup() != null && (n.flags & Notification.FLAG_GROUP_SUMMARY) != 0;
     }
 
-    private void assertOnlySomeNotificationsAutogrouped(List<Integer> autoGroupedIds) {
+    private void assertOnlySomeNotificationsAutogrouped(List<Integer> autoGroupedIds)
+            throws Exception {
         String expectedGroupKey = null;
-        try {
-            // Posting can take ~100 ms
-            Thread.sleep(150);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        Thread.sleep(150);
+
         StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
         for (StatusBarNotification sbn : sbns) {
             if (isGroupSummary(sbn.getNotification())
@@ -321,14 +331,11 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
-    private void assertAllPostedNotificationsAutogrouped() {
+    private void assertAllPostedNotificationsAutogrouped() throws Exception {
         String expectedGroupKey = null;
-        try {
-            // Posting can take ~100 ms
-            Thread.sleep(150);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        // Posting can take ~100 ms
+        Thread.sleep(150);
+
         StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
         for (StatusBarNotification sbn : sbns) {
             // all notis should be in a group determined by autogrouping
@@ -397,7 +404,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             return;
         }
         assertEquals(expected.getId(), actual.getId());
-        assertEquals(expected.getName(), actual.getName());
+        assertEquals(expected.getName().toString(), actual.getName().toString());
         assertEquals(expected.getDescription(), actual.getDescription());
         assertEquals(expected.shouldVibrate(), actual.shouldVibrate());
         assertEquals(expected.shouldShowLights(), actual.shouldShowLights());
@@ -489,6 +496,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testCanSendFullScreenIntent_modeDefault_returnsIsPermissionGranted()
             throws Exception {
         final boolean isPermissionGranted = PermissionUtils.isPermissionGranted(STUB_PACKAGE_NAME,
@@ -496,14 +504,17 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         verifyCanUseFullScreenIntent(MODE_DEFAULT, /*canSend=*/ isPermissionGranted);
     }
 
+    @Test
     public void testCanSendFullScreenIntent_modeAllowed_returnsTrue() throws Exception {
         verifyCanUseFullScreenIntent(MODE_ALLOWED, /*canSend=*/ true);
     }
 
+    @Test
     public void testCanSendFullScreenIntent_modeErrored_returnsFalse() throws Exception {
         verifyCanUseFullScreenIntent(MODE_ERRORED, /*canSend=*/ false);
     }
 
+    @Test
     public void testCreateChannelGroup() throws Exception {
         final NotificationChannelGroup ncg = new NotificationChannelGroup("a group", "a label");
         final NotificationChannel channel =
@@ -519,7 +530,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             List<NotificationChannelGroup> ncgs =
                     mNotificationManager.getNotificationChannelGroups();
             assertEquals(1, ncgs.size());
-            assertEquals(ncg.getName(), ncgs.get(0).getName());
+            assertEquals(ncg.getName(), ncgs.get(0).getName().toString());
             assertEquals(ncg.getDescription(), ncgs.get(0).getDescription());
             assertEquals(channel.getId(), ncgs.get(0).getChannels().get(0).getId());
         } finally {
@@ -527,6 +538,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testGetChannelGroup() throws Exception {
         final NotificationChannelGroup ncg = new NotificationChannelGroup("a group", "a label");
         ncg.setDescription("bananas");
@@ -542,11 +554,12 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         NotificationChannelGroup actual =
                 mNotificationManager.getNotificationChannelGroup(ncg.getId());
         assertEquals(ncg.getId(), actual.getId());
-        assertEquals(ncg.getName(), actual.getName());
+        assertEquals(ncg.getName(), actual.getName().toString());
         assertEquals(ncg.getDescription(), actual.getDescription());
         assertEquals(channel.getId(), actual.getChannels().get(0).getId());
     }
 
+    @Test
     public void testGetChannelGroups() throws Exception {
         final NotificationChannelGroup ncg = new NotificationChannelGroup("a group", "a label");
         ncg.setDescription("bananas");
@@ -564,11 +577,11 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertEquals(2, actual.size());
         for (NotificationChannelGroup group : actual) {
             if (group.getId().equals(ncg.getId())) {
-                assertEquals(group.getName(), ncg.getName());
+                assertEquals(group.getName(), ncg.getName().toString());
                 assertEquals(group.getDescription(), ncg.getDescription());
                 assertEquals(0, group.getChannels().size());
             } else if (group.getId().equals(ncg2.getId())) {
-                assertEquals(group.getName(), ncg2.getName());
+                assertEquals(group.getName(), ncg2.getName().toString());
                 assertEquals(group.getDescription(), ncg2.getDescription());
                 assertEquals(1, group.getChannels().size());
                 assertEquals(channel.getId(), group.getChannels().get(0).getId());
@@ -578,6 +591,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testDeleteChannelGroup() throws Exception {
         final NotificationChannelGroup ncg = new NotificationChannelGroup("a group", "a label");
         final NotificationChannel channel =
@@ -592,6 +606,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertEquals(0, mNotificationManager.getNotificationChannelGroups().size());
     }
 
+    @Test
     public void testCreateChannel() throws Exception {
         final NotificationChannel channel =
                 new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
@@ -613,6 +628,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertFalse(createdChannel.canBypassDnd());
     }
 
+    @Test
     public void testCreateChannel_rename() throws Exception {
         NotificationChannel channel =
                 new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
@@ -629,6 +645,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 mNotificationManager.getNotificationChannel(mId).getImportance());
     }
 
+    @Test
     public void testCreateChannel_addToGroup() throws Exception {
         String oldGroup = null;
         String newGroup = "new group";
@@ -649,6 +666,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 newGroup, updatedChannel.getGroup());
     }
 
+    @Test
     public void testCreateChannel_cannotChangeGroup() throws Exception {
         String oldGroup = "old group";
         String newGroup = "new group";
@@ -669,6 +687,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 oldGroup, updatedChannel.getGroup());
     }
 
+    @Test
     public void testCreateSameChannelDoesNotUpdate() throws Exception {
         final NotificationChannel channel =
                 new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
@@ -681,6 +700,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         compareChannels(channel, createdChannel);
     }
 
+    @Test
     public void testCreateChannelAlreadyExistsNoOp() throws Exception {
         NotificationChannel channel =
                 new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
@@ -691,6 +711,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         compareChannels(channel, mNotificationManager.getNotificationChannel(channel.getId()));
     }
 
+    @Test
     public void testCreateChannelWithGroup() throws Exception {
         NotificationChannelGroup ncg = new NotificationChannelGroup("g", "n");
         mNotificationManager.createNotificationChannelGroup(ncg);
@@ -705,6 +726,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testCreateChannelWithBadGroup() throws Exception {
         NotificationChannel channel =
                 new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
@@ -716,6 +738,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testCreateChannelInvalidImportance() throws Exception {
         NotificationChannel channel =
                 new NotificationChannel(mId, "name", IMPORTANCE_UNSPECIFIED);
@@ -726,6 +749,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testDeleteChannel() throws Exception {
         NotificationChannel channel =
                 new NotificationChannel(mId, "name", IMPORTANCE_LOW);
@@ -735,6 +759,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertNull(mNotificationManager.getNotificationChannel(channel.getId()));
     }
 
+    @Test
     public void testCannotDeleteDefaultChannel() throws Exception {
         try {
             mNotificationManager.deleteNotificationChannel(NotificationChannel.DEFAULT_CHANNEL_ID);
@@ -744,6 +769,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testGetChannel() throws Exception {
         NotificationChannel channel1 =
                 new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
@@ -771,6 +797,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 mNotificationManager.getNotificationChannel(channel4.getId()));
     }
 
+    @Test
     public void testGetChannels() throws Exception {
         NotificationChannel channel1 =
                 new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
@@ -813,6 +840,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testRecreateDeletedChannel() throws Exception {
         NotificationChannel channel =
                 new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
@@ -828,6 +856,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 mNotificationManager.getNotificationChannel(newChannel.getId()));
     }
 
+    @Test
     public void testNotify() throws Exception {
         mNotificationManager.cancelAll();
 
@@ -847,6 +876,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotify_nonexistentChannel_ignored() {
         mNotificationManager.cancelAll();
         final int id = 404;
@@ -862,38 +892,36 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertThat(mNotificationManager.getActiveNotifications()).isEmpty();
     }
 
+    @Test
     public void testSuspendPackage_withoutShellPermission() throws Exception {
         if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
             return;
         }
 
-        try {
-            Process proc = Runtime.getRuntime().exec("cmd notification suspend_package "
-                    + mContext.getPackageName());
+        Process proc = Runtime.getRuntime().exec("cmd notification suspend_package "
+                + mContext.getPackageName());
 
-            // read output of command
-            BufferedReader reader =
-                    new BufferedReader(new InputStreamReader(proc.getInputStream()));
-            StringBuilder output = new StringBuilder();
-            String line = reader.readLine();
-            while (line != null) {
-                output.append(line);
-                line = reader.readLine();
-            }
-            reader.close();
-            final String outputString = output.toString();
-
-            proc.waitFor();
-
-            // check that the output string had an error / disallowed call since it didn't have
-            // shell permission to suspend the package
-            assertTrue(outputString, outputString.contains("error"));
-            assertTrue(outputString, outputString.contains("permission denied"));
-        } catch (InterruptedException e) {
-            fail("Unsuccessful shell command");
+        // read output of command
+        BufferedReader reader =
+                new BufferedReader(new InputStreamReader(proc.getInputStream()));
+        StringBuilder output = new StringBuilder();
+        String line = reader.readLine();
+        while (line != null) {
+            output.append(line);
+            line = reader.readLine();
         }
+        reader.close();
+        final String outputString = output.toString();
+
+        proc.waitFor();
+
+        // check that the output string had an error / disallowed call since it didn't have
+        // shell permission to suspend the package
+        assertTrue(outputString, outputString.contains("error"));
+        assertTrue(outputString, outputString.contains("permission denied"));
     }
 
+    @Test
     public void testSuspendPackage() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -999,6 +1027,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
      */
     @LargeTest
     @RequiresDevice
+    @Test
     public void testRankingUpdateSentWithPressure() throws Exception {
         if (onCuttlefish()) {
             return;
@@ -1111,6 +1140,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         mListener.removeTestPackage(PRESSURE_APP_07);
     }
 
+    @Test
     public void testSuspendedPackageSendsNotification() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -1151,6 +1181,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         mListener.resetData();
     }
 
+    @Test
     public void testShowBadging_ranking() throws Exception {
         final int originalBadging = Settings.Secure.getInt(
                 mContext.getContentResolver(), Settings.Secure.NOTIFICATION_BADGING);
@@ -1204,6 +1235,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testKeyChannelGroupOverrideImportanceExplanation_ranking() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -1242,6 +1274,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotify_blockedChannel() throws Exception {
         mNotificationManager.cancelAll();
 
@@ -1262,6 +1295,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertTrue(mNotificationHelper.isNotificationGone(id, SEARCH_TYPE.APP));
     }
 
+    @Test
     public void testCancel() throws Exception {
         final int id = 9;
         sendNotification(id, R.drawable.black);
@@ -1275,6 +1309,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertTrue(mNotificationHelper.isNotificationGone(id, SEARCH_TYPE.APP));
     }
 
+    @Test
     public void testCancelAll() throws Exception {
         sendNotification(1, R.drawable.black);
         sendNotification(2, R.drawable.blue);
@@ -1296,6 +1331,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
     }
 
+    @Test
     public void testNotifyWithTimeout() throws Exception {
         mNotificationManager.cancelAll();
         final int id = 128;
@@ -1320,12 +1356,9 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertTrue(mNotificationHelper.isNotificationGone(id, SEARCH_TYPE.APP));
     }
 
+    @Test
     public void testStyle() throws Exception {
-        Notification.Style style = new Notification.Style() {
-            public boolean areNotificationsVisiblyDifferent(Notification.Style other) {
-                return false;
-            }
-        };
+        Notification.Style style = new TestStyle();
 
         Notification.Builder builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID);
         style.setBuilder(builder);
@@ -1343,6 +1376,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertEquals(builderNotification, notification);
     }
 
+    @Test
     public void testStyle_getStandardView() throws Exception {
         Notification.Builder builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID);
         int layoutId = 0;
@@ -1355,7 +1389,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertEquals(layoutId, result.getLayoutId());
     }
 
-    private class TestStyle extends Notification.Style {
+    private static class TestStyle extends Notification.Style {
+        @SuppressWarnings("UnusedMethod")
         public boolean areNotificationsVisiblyDifferent(Notification.Style other) {
             return false;
         }
@@ -1366,15 +1401,17 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testMediaStyle_empty() {
         Notification.MediaStyle style = new Notification.MediaStyle();
         assertNotNull(style);
     }
 
+    @Test
     public void testMediaStyle() {
         mNotificationManager.cancelAll();
         final int id = 99;
-        MediaSession session = new MediaSession(getContext(), "media");
+        MediaSession session = new MediaSession(mContext, "media");
 
         final Notification notification =
                 new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -1382,10 +1419,10 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                         .setContentTitle("notify#" + id)
                         .setContentText("This is #" + id + "notification  ")
                         .addAction(new Notification.Action.Builder(
-                                Icon.createWithResource(getContext(), R.drawable.icon_black),
+                                Icon.createWithResource(mContext, R.drawable.icon_black),
                                 "play", getPendingIntent()).build())
                         .addAction(new Notification.Action.Builder(
-                                Icon.createWithResource(getContext(), R.drawable.icon_blue),
+                                Icon.createWithResource(mContext, R.drawable.icon_blue),
                                 "pause", getPendingIntent()).build())
                         .setStyle(new Notification.MediaStyle()
                                 .setShowActionsInCompactView(0, 1)
@@ -1396,6 +1433,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertNotNull(mNotificationHelper.findPostedNotification(null, id, SEARCH_TYPE.APP));
     }
 
+    @Test
     public void testInboxStyle() {
         final int id = 100;
 
@@ -1405,10 +1443,10 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                         .setContentTitle("notify#" + id)
                         .setContentText("This is #" + id + "notification  ")
                         .addAction(new Notification.Action.Builder(
-                                Icon.createWithResource(getContext(), R.drawable.icon_black),
+                                Icon.createWithResource(mContext, R.drawable.icon_black),
                                 "a1", getPendingIntent()).build())
                         .addAction(new Notification.Action.Builder(
-                                Icon.createWithResource(getContext(), R.drawable.icon_blue),
+                                Icon.createWithResource(mContext, R.drawable.icon_blue),
                                 "a2", getPendingIntent()).build())
                         .setStyle(new Notification.InboxStyle().addLine("line")
                                 .setSummaryText("summary"))
@@ -1418,6 +1456,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertNotNull(mNotificationHelper.findPostedNotification(null, id, SEARCH_TYPE.APP));
     }
 
+    @Test
     public void testBigTextStyle() {
         final int id = 101;
 
@@ -1427,10 +1466,10 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                         .setContentTitle("notify#" + id)
                         .setContentText("This is #" + id + "notification  ")
                         .addAction(new Notification.Action.Builder(
-                                Icon.createWithResource(getContext(), R.drawable.icon_black),
+                                Icon.createWithResource(mContext, R.drawable.icon_black),
                                 "a1", getPendingIntent()).build())
                         .addAction(new Notification.Action.Builder(
-                                Icon.createWithResource(getContext(), R.drawable.icon_blue),
+                                Icon.createWithResource(mContext, R.drawable.icon_blue),
                                 "a2", getPendingIntent()).build())
                         .setStyle(new Notification.BigTextStyle()
                                 .setBigContentTitle("big title")
@@ -1442,6 +1481,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertNotNull(mNotificationHelper.findPostedNotification(null, id, SEARCH_TYPE.APP));
     }
 
+    @Test
     public void testBigPictureStyle() {
         final int id = 102;
 
@@ -1451,16 +1491,16 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                         .setContentTitle("notify#" + id)
                         .setContentText("This is #" + id + "notification  ")
                         .addAction(new Notification.Action.Builder(
-                                Icon.createWithResource(getContext(), R.drawable.icon_black),
+                                Icon.createWithResource(mContext, R.drawable.icon_black),
                                 "a1", getPendingIntent()).build())
                         .addAction(new Notification.Action.Builder(
-                                Icon.createWithResource(getContext(), R.drawable.icon_blue),
+                                Icon.createWithResource(mContext, R.drawable.icon_blue),
                                 "a2", getPendingIntent()).build())
                         .setStyle(new Notification.BigPictureStyle()
                                 .setBigContentTitle("title")
                                 .bigPicture(Bitmap.createBitmap(100, 100, Bitmap.Config.RGB_565))
                                 .bigLargeIcon(
-                                        Icon.createWithResource(getContext(), R.drawable.icon_blue))
+                                        Icon.createWithResource(mContext, R.drawable.icon_blue))
                                 .setSummaryText("summary")
                                 .setContentDescription("content description"))
                         .build();
@@ -1469,6 +1509,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertNotNull(mNotificationHelper.findPostedNotification(null, id, SEARCH_TYPE.APP));
     }
 
+    @Test
     public void testAutogrouping() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -1485,6 +1526,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertAllPostedNotificationsAutogrouped();
     }
 
+    @Test
     public void testAutogrouping_autogroupStaysUntilAllNotificationsCanceled() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -1522,6 +1564,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertNotificationCount(0);
     }
 
+    @Test
     public void testAutogrouping_autogroupStaysUntilAllNotificationsAddedToGroup()
             throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
@@ -1571,6 +1614,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertOnlySomeNotificationsAutogrouped(postedIds);
     }
 
+    @Test
     public void testNewNotificationsAddedToAutogroup_ifOriginalNotificationsCanceled()
             throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
@@ -1622,6 +1666,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertOnlySomeNotificationsAutogrouped(postedIds);
     }
 
+    @Test
     public void testPostFullScreenIntent_permission() {
         int id = 6000;
 
@@ -1641,6 +1686,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertEquals(notification.fullScreenIntent, n.getNotification().fullScreenIntent);
     }
 
+    @Test
     public void testNotificationDelegate_grantAndPost() throws Exception {
         final Intent intent = new Intent(mContext, GetResultActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -1670,6 +1716,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertEquals(RESULT_OK, activity.getResult().resultCode);
     }
 
+    @Test
     public void testNotificationDelegate_grantAndPostAndCancel() throws Exception {
         final Intent intent = new Intent(mContext, GetResultActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -1701,6 +1748,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertEquals(RESULT_OK, activity.getResult().resultCode);
     }
 
+    @Test
     public void testNotificationDelegate_cannotCancelNotificationsPostedByDelegator()
             throws Exception {
         final Intent intent = new Intent(mContext, GetResultActivity.class);
@@ -1737,6 +1785,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertEquals(RESULT_OK, activity.getResult().resultCode);
     }
 
+    @Test
     public void testNotificationDelegate_grantAndReadChannels() throws Exception {
         final Intent intent = new Intent(mContext, GetResultActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -1766,6 +1815,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertEquals(RESULT_OK, activity.getResult().resultCode);
     }
 
+    @Test
     public void testNotificationDelegate_grantAndReadChannel() throws Exception {
         final Intent intent = new Intent(mContext, GetResultActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -1795,6 +1845,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertEquals(RESULT_OK, activity.getResult().resultCode);
     }
 
+    @Test
     public void testNotificationDelegate_grantAndRevoke() throws Exception {
         final Intent intent = new Intent(mContext, GetResultActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -1830,6 +1881,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationIcon() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -1864,6 +1916,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertNotNull(n);
     }
 
+    @Test
     public void testShouldHideSilentStatusIcons() throws Exception {
         try {
             mNotificationManager.shouldHideSilentStatusBarIcons();
@@ -1879,6 +1932,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
     /* Confirm that the optional methods of TestNotificationListener still exist and
      * don't fail. */
+    @Test
     public void testNotificationListenerMethods() {
         NotificationListenerService listener = new TestNotificationListener();
         listener.onListenerConnected();
@@ -1908,6 +1962,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         mContext.startActivity(activityIntent);
     }
 
+    @Test
     public void testNotificationUriPermissionsGranted() throws Exception {
         Uri background7Uri = Uri.parse(
                 "content://com.android.test.notificationprovider.provider/background7.png");
@@ -1972,6 +2027,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationUriPermissionsGrantedToNewListeners() throws Exception {
         Uri background7Uri = Uri.parse(
                 "content://com.android.test.notificationprovider.provider/background7.png");
@@ -1997,6 +2053,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationUriPermissionsRevokedFromRemovedListeners() throws Exception {
         Uri background7Uri = Uri.parse(
                 "content://com.android.test.notificationprovider.provider/background7.png");
@@ -2062,6 +2119,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationUriPermissionsRevokedOnlyFromRemovedListeners() throws Exception {
         Uri background7Uri = Uri.parse(
                 "content://com.android.test.notificationprovider.provider/background7.png");
@@ -2125,6 +2183,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationListenerRequestUnbind() throws Exception {
         final Intent intent = new Intent();
         intent.setComponent(NLS_CONTROL_SERVICE);
@@ -2159,6 +2218,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationListenerAutobindMetaData() throws Exception {
         final ServiceInfo info = mPackageManager.getServiceInfo(NO_AUTOBIND_NLS,
                 PackageManager.GET_META_DATA
@@ -2223,6 +2283,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationListener_setNotificationsShown() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -2251,6 +2312,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationListener_getNotificationChannels() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -2263,6 +2325,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationListener_getNotificationChannelGroups() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -2274,6 +2337,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationListener_updateNotificationChannel() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -2290,6 +2354,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationListener_getActiveNotifications() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -2318,6 +2383,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
 
+    @Test
     public void testNotificationListener_getCurrentRanking() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -2330,6 +2396,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertEquals(mListener.mRankingMap, mListener.getCurrentRanking());
     }
 
+    @Test
     public void testNotificationListener_cancelNotifications() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -2362,6 +2429,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationAssistant_cancelNotifications() throws Exception {
         mAssistant = mNotificationHelper.enableAssistant(STUB_PACKAGE_NAME);
         assertNotNull(mAssistant);
@@ -2381,6 +2449,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testNotificationManagerPolicy_priorityCategoriesToString() {
         String zeroString = NotificationManager.Policy.priorityCategoriesToString(0);
         assertEquals("priorityCategories of 0 produces empty string", "", zeroString);
@@ -2396,6 +2465,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 badNumberString);
     }
 
+    @Test
     public void testNotificationManagerPolicy_prioritySendersToString() {
         String zeroString = NotificationManager.Policy.prioritySendersToString(0);
         assertNotNull("prioritySenders of 1 returns a string", zeroString);
@@ -2407,6 +2477,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertNotNull("prioritySenders with a non-relevant int returns a string", badNumberString);
     }
 
+    @Test
     public void testNotificationManagerPolicy_suppressedEffectsToString() {
         String zeroString = NotificationManager.Policy.suppressedEffectsToString(0);
         assertEquals("suppressedEffects of 0 produces empty string", "", zeroString);
@@ -2422,6 +2493,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 badNumberString);
     }
 
+    @Test
     public void testOriginalChannelImportance() {
         NotificationChannel channel = new NotificationChannel(mId, "my channel", IMPORTANCE_HIGH);
 
@@ -2441,6 +2513,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertEquals(IMPORTANCE_HIGH, actual.getOriginalImportance());
     }
 
+    @Test
     public void testCreateConversationChannel() {
         final NotificationChannel channel =
                 new NotificationChannel(mId, "Messages", IMPORTANCE_DEFAULT);
@@ -2459,6 +2532,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 mNotificationManager.getNotificationChannel(channel.getId(), conversationId));
     }
 
+    @Test
     public void testConversationRankingFields() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -2483,6 +2557,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testDemoteConversationChannel() {
         final NotificationChannel channel =
                 new NotificationChannel(mId, "Messages", IMPORTANCE_DEFAULT);
@@ -2507,6 +2582,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 channel.getId(), conversationId).isDemoted());
     }
 
+    @Test
     public void testDeleteConversationChannels() throws Exception {
         setUpNotifListener();
         CountDownLatch postedLatch = mListener.setPostedCountDown(1);
@@ -2545,6 +2621,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
      * notification and triggering it.
      */
     @AsbSecurityTest(cveBugId = 185388103)
+    @Test
     public void testActivityStartFromRetrievedNotification_isBlocked() throws Exception {
         deactivateGracePeriod();
         EventCallback callback = new EventCallback();
@@ -2564,6 +2641,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
     }
 
+    @Test
     public void testActivityStartOnBroadcastTrampoline_isBlocked() throws Exception {
         deactivateGracePeriod();
         setUpNotifListener();
@@ -2587,6 +2665,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
     }
 
+    @Test
     public void testActivityStartOnServiceTrampoline_isBlocked() throws Exception {
         deactivateGracePeriod();
         setUpNotifListener();
@@ -2610,6 +2689,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
     }
 
+    @Test
     public void testActivityStartOnBroadcastTrampoline_whenApi30_isAllowed() throws Exception {
         deactivateGracePeriod();
         setUpNotifListener();
@@ -2633,6 +2713,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
     }
 
+    @Test
     public void testActivityStartOnServiceTrampoline_whenApi30_isAllowed() throws Exception {
         deactivateGracePeriod();
         setUpNotifListener();
@@ -2656,6 +2737,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
     }
 
+    @Test
     public void testActivityStartOnBroadcastTrampoline_whenDefaultBrowser_isBlocked()
             throws Exception {
         deactivateGracePeriod();
@@ -2681,6 +2763,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
     }
 
+    @Test
     public void testActivityStartOnBroadcastTrampoline_whenDefaultBrowserApi32_isAllowed()
             throws Exception {
         deactivateGracePeriod();
@@ -2706,6 +2789,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
     }
 
+    @Test
     public void testActivityStartOnServiceTrampoline_whenDefaultBrowser_isBlocked()
             throws Exception {
         deactivateGracePeriod();
@@ -2731,6 +2815,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
     }
 
+    @Test
     public void testActivityStartOnServiceTrampoline_whenDefaultBrowserApi32_isAllowed()
             throws Exception {
         deactivateGracePeriod();
@@ -2756,6 +2841,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
     }
 
+    @Test
     public void testGrantRevokeNotificationManagerApis_works() {
         SystemUtil.runWithShellPermissionIdentity(() -> {
             ComponentName componentName =
@@ -2777,6 +2863,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         });
     }
 
+    @Test
     public void testGrantRevokeNotificationManagerApis_exclusiveToPermissionController() {
         List<PackageInfo> allPackages = mPackageManager.getInstalledPackages(
                 PackageManager.MATCH_DISABLED_COMPONENTS
@@ -2800,6 +2887,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testChannelDeletion_cancelReason() throws Exception {
         setUpNotifListener();
         CountDownLatch notificationPostedLatch = mListener.setPostedCountDown(1);
@@ -2816,6 +2904,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 getCancellationReason(key));
     }
 
+    @Test
     public void testMediaStyle_setNoClearFlag() {
         if (!CompatChanges.isChangeEnabled(ENFORCE_NO_CLEAR_FLAG_ON_MEDIA_NOTIFICATION)) {
             Log.d(TAG, "Skipping testMediaStyle_setNoClearFlag(), SDK_INT="
@@ -2837,6 +2926,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertEquals(FLAG_NO_CLEAR, sbn.getNotification().flags & FLAG_NO_CLEAR);
     }
 
+    @Test
     public void testCustomMediaStyle_setNoClearFlag() {
         if (!CompatChanges.isChangeEnabled(ENFORCE_NO_CLEAR_FLAG_ON_MEDIA_NOTIFICATION)) {
             Log.d(TAG, "Skipping testCustomMediaStyle_setNoClearFlag(), SDK_INT="
@@ -2858,6 +2948,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertEquals(FLAG_NO_CLEAR, sbn.getNotification().flags & FLAG_NO_CLEAR);
     }
 
+    @Test
     public void testMediaStyleRemotePlayback_noPermission() throws Exception {
         int id = 99;
         final String deviceName = "device name";
@@ -2883,6 +2974,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 .containsKey(Notification.EXTRA_MEDIA_REMOTE_INTENT));
     }
 
+    @Test
     public void testMediaStyleRemotePlayback_hasPermission() throws Exception {
         int id = 99;
         final String deviceName = "device name";
@@ -2910,6 +3002,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 .getParcelable(Notification.EXTRA_MEDIA_REMOTE_INTENT));
     }
 
+    @Test
     public void testCustomMediaStyleRemotePlayback_noPermission() throws Exception {
         int id = 99;
         final String deviceName = "device name";
@@ -2935,6 +3028,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 .containsKey(Notification.EXTRA_MEDIA_REMOTE_INTENT));
     }
 
+    @Test
     public void testCustomMediaStyleRemotePlayback_hasPermission() throws Exception {
         int id = 99;
         final String deviceName = "device name";
@@ -2962,6 +3056,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 .getParcelable(Notification.EXTRA_MEDIA_REMOTE_INTENT));
     }
 
+    @Test
     public void testNoPermission() throws Exception {
         int id = 7;
         SystemUtil.runWithShellPermissionIdentity(
@@ -2981,6 +3076,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertTrue(mNotificationHelper.isNotificationGone(id, SEARCH_TYPE.APP));
     }
 
+    @Test
     public void testIsAmbient() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -3021,6 +3117,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertTrue(outRanking.isAmbient());
     }
 
+    @Test
     public void testFlagForegroundServiceNeedsRealFgs() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -3039,6 +3136,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertEquals(0, (sbn.getNotification().flags & FLAG_FOREGROUND_SERVICE));
     }
 
+    @Test
     public void testFlagUserInitiatedJobNeedsRealUij() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);

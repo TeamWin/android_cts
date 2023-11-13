@@ -55,6 +55,13 @@ import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BA
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.Manifest;
 import android.app.AutomaticZenRule;
 import android.app.Flags;
@@ -87,12 +94,18 @@ import android.service.notification.ZenPolicy;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.SystemUtil;
 
 import com.google.common.collect.Iterables;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -103,6 +116,7 @@ import java.util.Objects;
 /**
  * Tests zen/dnd related logic in NotificationManager.
  */
+@RunWith(AndroidJUnit4.class)
 public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
     private static final String TAG = NotificationManagerZenTest.class.getSimpleName();
@@ -120,7 +134,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     private static final String CHARLIE = "Charlie";
     private static final String CHARLIE_PHONE = "+13305551212";
     private static final String CHARLIE_EMAIL = "charlie@_foo._bar";
-    private static final int MODE_NONE = 0;
     private static final int MODE_URI = 1;
     private static final int MODE_PHONE = 2;
     private static final int MODE_EMAIL = 3;
@@ -149,9 +162,8 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     private final int INTERRUPTION_FILTER = INTERRUPTION_FILTER_PRIORITY;
     private NotificationManager.Policy mOriginalPolicy;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         PermissionUtils.grantPermission(mContext.getPackageName(), POST_NOTIFICATIONS);
 
         CONFIG_ACTIVITY = new ComponentName(mContext, AutomaticZenRuleActivity.class);
@@ -186,8 +198,8 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 Manifest.permission.STATUS_BAR_SERVICE);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         // Use test API to prevent PermissionManager from killing the test process when revoking
         // permission.
         SystemUtil.runWithShellPermissionIdentity(
@@ -235,8 +247,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         mNotificationHelper.disableListener(STUB_PACKAGE_NAME);
 
         deleteChannels();
-
-        super.tearDown();
     }
 
     private void sleep() {
@@ -629,6 +639,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
     // TESTS START
 
+    @Test
     public void testNotificationPolicyVisualEffectsEqual() {
         NotificationManager.Policy policy = new NotificationManager.Policy(0, 0, 0,
                 SUPPRESSED_EFFECT_SCREEN_ON);
@@ -660,6 +671,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertFalse(policy2.equals(policy));
     }
 
+    @Test
     public void testGetSuppressedVisualEffectsOff_ranking() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -682,6 +694,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testGetSuppressedVisualEffects_ranking() throws Exception {
         final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
         NotificationManager.Policy origPolicy = mNotificationManager.getNotificationPolicy();
@@ -730,6 +743,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
     }
 
+    @Test
     public void testConsolidatedNotificationPolicy() throws Exception {
         final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
         NotificationManager.Policy origPolicy = mNotificationManager.getNotificationPolicy();
@@ -784,6 +798,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testConsolidatedNotificationPolicyMultiRules() throws Exception {
         final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
         NotificationManager.Policy origPolicy = mNotificationManager.getNotificationPolicy();
@@ -847,6 +862,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testPostPCanToggleAlarmsMediaSystemTest() throws Exception {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
@@ -877,6 +893,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testPostRCanToggleConversationsTest() throws Exception {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
@@ -901,6 +918,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testTotalSilenceOnlyMuteStreams() throws Exception {
         final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
         NotificationManager.Policy origPolicy = mNotificationManager.getNotificationPolicy();
@@ -945,6 +963,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testAlarmsOnlyMuteStreams() throws Exception {
         final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
         NotificationManager.Policy origPolicy = mNotificationManager.getNotificationPolicy();
@@ -987,6 +1006,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testAddAutomaticZenRule_configActivity() throws Exception {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
@@ -999,6 +1019,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertTrue(areRulesSame(ruleToCreate, mNotificationManager.getAutomaticZenRule(id)));
     }
 
+    @Test
     public void testUpdateAutomaticZenRule_configActivity() throws Exception {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
@@ -1013,6 +1034,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertTrue(areRulesSame(ruleToCreate, mNotificationManager.getAutomaticZenRule(id)));
     }
 
+    @Test
     public void testRemoveAutomaticZenRule_configActivity() throws Exception {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
@@ -1028,6 +1050,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertEquals(0, mNotificationManager.getAutomaticZenRules().size());
     }
 
+    @Test
     public void testSetAutomaticZenRuleState() throws Exception {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
@@ -1047,6 +1070,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertExpectedDndState(ruleToCreate.getInterruptionFilter());
     }
 
+    @Test
     public void testSetAutomaticZenRuleState_turnOff() throws Exception {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
@@ -1075,6 +1099,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertExpectedDndState(INTERRUPTION_FILTER_ALL);
     }
 
+    @Test
     public void testSetAutomaticZenRuleState_deletedRule() throws Exception {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
@@ -1099,6 +1124,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertExpectedDndState(INTERRUPTION_FILTER_ALL);
     }
 
+    @Test
     public void testSetAutomaticZenRuleState_multipleRules() throws Exception {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
@@ -1132,6 +1158,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertExpectedDndState(ruleToCreate.getInterruptionFilter());
     }
 
+    @Test
     public void testSetNotificationPolicy_P_setOldFields() throws Exception {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
@@ -1154,6 +1181,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testSetNotificationPolicy_P_setNewFields() throws Exception {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
@@ -1176,6 +1204,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testSetNotificationPolicy_P_setOldNewFields() throws Exception {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
@@ -1207,6 +1236,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     }
 
 
+    @Test
     public void testMatchesCallFilter_noPermissions() {
         // make sure we definitely don't have contacts access
         boolean hadReadPerm = hasReadContactsPermission(TEST_APP);
@@ -1232,6 +1262,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testMatchesCallFilter_listenerPermissionOnly() throws Exception {
         boolean hadReadPerm = hasReadContactsPermission(TEST_APP);
         // minimal listener service so that it can be given listener permissions
@@ -1265,6 +1296,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testMatchesCallFilter_contactsPermissionOnly() throws Exception {
         // grant the notification app package contacts read access
         boolean hadReadPerm = hasReadContactsPermission(TEST_APP);
@@ -1289,6 +1321,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testMatchesCallFilter_zenOff() throws Exception {
         // zen mode is not on so nothing is filtered; matchesCallFilter should always pass
         toggleNotificationPolicyAccess(mContext.getPackageName(),
@@ -1308,6 +1341,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testMatchesCallFilter_noCallInterruptions() throws Exception {
         // when no call interruptions are allowed at all, or only alarms, matchesCallFilter
         // should always fail
@@ -1342,6 +1376,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testMatchesCallFilter_someCallers() throws Exception {
         // zen mode is active; check various configurations where some calls, but not all calls,
         // are allowed
@@ -1405,6 +1440,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testMatchesCallFilter_repeatCallers() throws Exception {
         // if repeat callers are allowed, an unknown number calling twice should go through
         toggleNotificationPolicyAccess(mContext.getPackageName(),
@@ -1469,6 +1505,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testMatchesCallFilter_repeatCallers_fromContact() throws Exception {
         // set up such that only repeat callers (and not any individuals) are allowed; make sure
         // that a call registered with a contact's lookup URI will return the correct info
@@ -1521,6 +1558,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testRepeatCallers_repeatCallNotIntercepted_contactAfterPhone() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
@@ -1591,6 +1629,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testMatchesCallFilter_allCallers() throws Exception {
         // allow all callers
         toggleNotificationPolicyAccess(mContext.getPackageName(),
@@ -1625,6 +1664,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testInterruptionFilterNoneInterceptsMessages() throws Exception {
         insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, true);
         insertSingleContact(BOB, BOB_PHONE, BOB_EMAIL, false);
@@ -1645,6 +1685,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertTrue(mListener.mIntercepted.get(charlie.getKey()));
     }
 
+    @Test
     public void testInterruptionFilterNoneInterceptsEventAlarmReminder() throws Exception {
         insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, true);
         insertSingleContact(BOB, BOB_PHONE, BOB_EMAIL, false);
@@ -1665,6 +1706,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertTrue(mListener.mIntercepted.get(charlie.getKey()));
     }
 
+    @Test
     public void testInterruptionFilterAllInterceptsNothing() throws Exception {
         insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, true);
         insertSingleContact(BOB, BOB_PHONE, BOB_EMAIL, false);
@@ -1707,6 +1749,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertFalse(mListener.mIntercepted.get(charlieMedia.getKey()));
     }
 
+    @Test
     public void testPriorityStarredMessages() throws Exception {
         insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, true);
         assertTrue(isStarred(lookupContact(ALICE_PHONE)));
@@ -1743,6 +1786,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertTrue(mListener.mIntercepted.get(charlie.getKey()));
     }
 
+    @Test
     public void testPriorityInterceptsAlarms() throws Exception {
         insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, true);
         insertSingleContact(BOB, BOB_PHONE, BOB_EMAIL, false);
@@ -1778,6 +1822,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertTrue(mListener.mIntercepted.get(charlie.getKey()));
     }
 
+    @Test
     public void testPriorityInterceptsMediaSystemOther() throws Exception {
         insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, true);
         insertSingleContact(BOB, BOB_PHONE, BOB_EMAIL, false);
@@ -1823,6 +1868,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     }
 
     @CddTest(requirements = {"2.2.3/3.8.4/H-1-1"})
+    @Test
     public void testContactAffinityByPhoneOrder() throws Exception {
         insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, true);
         insertSingleContact(BOB, BOB_PHONE, BOB_EMAIL, false);
@@ -1855,6 +1901,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     }
 
     @CddTest(requirements = {"2.2.3/3.8.4/H-1-1"})
+    @Test
     public void testContactUriByUriOrder() throws Exception {
         insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, true);
         insertSingleContact(BOB, BOB_PHONE, BOB_EMAIL, false);
@@ -1887,6 +1934,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     }
 
     @CddTest(requirements = {"2.2.3/3.8.4/H-1-1"})
+    @Test
     public void testContactUriByEmailOrder() throws Exception {
         insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, true);
         insertSingleContact(BOB, BOB_PHONE, BOB_EMAIL, false);
@@ -1918,6 +1966,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
     }
 
+    @Test
     public void testAddAutomaticZenRule_newFields() throws Exception {
         if (!Flags.modesApi()) {
             return;
@@ -1942,6 +1991,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertTrue(areRulesSame(ruleToCreate, mNotificationManager.getAutomaticZenRule(id)));
     }
 
+    @Test
     public void testSnoozeRule() throws Exception {
         if (!Flags.modesApi() || !CompatChanges.isChangeEnabled(308673617)) {
             Log.d(TAG, "Skipping testSnoozeRule() "
@@ -1972,6 +2022,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         br.unregister();
     }
 
+    @Test
     public void testUnsnoozeRule_disableEnable() throws Exception {
         if (!Flags.modesApi()) {
             Log.d(TAG, "Skipping testUnsnoozeRule_disableEnable() " + Flags.modesApi()
@@ -2032,7 +2083,8 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         br.unregister();
     }
 
-    public void testSetInterruptionFilter_usesAutomaticZenRule() {
+    @Test
+    public void testSetInterruptionFilter_usesAutomaticZenRule() throws Exception {
         // NMS: MANAGE_GLOBAL_ZEN_VIA_IMPLICIT_RULES
         if (!android.app.Flags.modesApi() || !CompatChanges.isChangeEnabled(308670109L)) {
             return;
@@ -2049,6 +2101,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertThat(rule.getInterruptionFilter()).isEqualTo(INTERRUPTION_FILTER_PRIORITY);
     }
 
+    @Test
     public void testSetNotificationPolicy_usesAutomaticZenRule() {
         // NMS: MANAGE_GLOBAL_ZEN_VIA_IMPLICIT_RULES
         if (!android.app.Flags.modesApi() || !CompatChanges.isChangeEnabled(308670109L)) {
@@ -2074,6 +2127,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertThat(ruleZen.getPriorityCategorySystem()).isEqualTo(ZenPolicy.STATE_DISALLOW);
     }
 
+    @Test
     public void testSetInterruptionFilter_withSetNotificationPolicy_sharesAutomaticZenRule() {
         // NMS: MANAGE_GLOBAL_ZEN_VIA_IMPLICIT_RULES
         if (!android.app.Flags.modesApi() || !CompatChanges.isChangeEnabled(308670109L)) {

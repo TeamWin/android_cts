@@ -16,15 +16,21 @@
 
 package android.app.notification.current.cts;
 
+import static org.junit.Assert.assertEquals;
+
 import android.app.NotificationManager;
 import android.os.Parcel;
 import android.service.notification.ZenPolicy;
 
+import androidx.test.runner.AndroidJUnit4;
+
 import junit.framework.Assert;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class ZenPolicyTest extends Assert {
+@RunWith(AndroidJUnit4.class)
+public class ZenPolicyTest {
 
     @Test
     public void testWriteToParcel() {

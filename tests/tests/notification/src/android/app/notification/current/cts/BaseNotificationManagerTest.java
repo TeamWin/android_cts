@@ -20,6 +20,11 @@ import static android.app.Notification.CATEGORY_CALL;
 import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_ALL;
 
+import static junit.framework.TestCase.assertTrue;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.Notification;
@@ -36,6 +41,7 @@ import android.app.stubs.shared.NotificationHelper.SEARCH_TYPE;
 import android.app.stubs.shared.TestNotificationAssistant;
 import android.app.stubs.shared.TestNotificationListener;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
@@ -48,10 +54,14 @@ import android.os.SystemClock;
 import android.provider.Telephony;
 import android.test.AndroidTestCase;
 import android.util.ArraySet;
+import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AmUtils;
+
+import org.junit.After;
+import org.junit.Before;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -61,7 +71,7 @@ import java.util.List;
 import java.util.Set;
 
 /* Base class for NotificationManager tests. Handles some of the common set up logic for tests. */
-public abstract class BaseNotificationManagerTest extends AndroidTestCase {
+public abstract class BaseNotificationManagerTest {
 
     static final String STUB_PACKAGE_NAME = "android.app.stubs";
     protected static final String NOTIFICATION_CHANNEL_ID = "NotificationManagerTest";
@@ -75,6 +85,7 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
 
     private static final String TAG = BaseNotificationManagerTest.class.getSimpleName();
 
+    protected Context mContext;
     protected PackageManager mPackageManager;
     protected AudioManager mAudioManager;
     protected RoleManager mRoleManager;
@@ -86,9 +97,9 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
     protected Instrumentation mInstrumentation;
     protected NotificationHelper mNotificationHelper;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void baseSetUp() throws Exception {
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mNotificationManager = mContext.getSystemService(NotificationManager.class);
         mNotificationHelper = new NotificationHelper(mContext);
         // clear the deck so that our getActiveNotifications results are predictable
@@ -118,10 +129,8 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
         setEnableServiceNotificationRateLimit(false);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-
+    @After
+    public void baseTearDown() throws Exception {
         setEnableServiceNotificationRateLimit(true);
 
         mNotificationManager.cancelAll();
@@ -154,12 +163,14 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
         }
     }
 
+    @SuppressWarnings("InlineMeInliner")
     protected void setUpNotifListener() {
         try {
             mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
             assertNotNull(mListener);
             mListener.resetData();
         } catch (Exception e) {
+            Log.e(TAG, "error in setUpNotifListener", e);
         }
     }
 
@@ -170,18 +181,14 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
         mNotificationHelper.runCommand(command, InstrumentationRegistry.getInstrumentation());
     }
 
-    protected void assertExpectedDndState(int expectedState) {
+    protected void assertExpectedDndState(int expectedState) throws Exception {
         int tries = 3;
         for (int i = tries; i >= 0; i--) {
             if (expectedState
                     == mNotificationManager.getCurrentInterruptionFilter()) {
                 break;
             }
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            Thread.sleep(100);
         }
 
         assertEquals(expectedState, mNotificationManager.getCurrentInterruptionFilter());

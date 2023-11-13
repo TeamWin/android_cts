@@ -15,28 +15,37 @@
  */
 package android.app.notification.current.cts;
 
-import android.app.Notification;
-import android.app.Notification.CarExtender;
-import android.app.Notification.CarExtender.Builder;
-import android.app.Notification.CarExtender.UnreadConversation;
-import android.app.PendingIntent;
-import android.app.RemoteInput;
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
-import android.test.AndroidTestCase;
+ import static org.junit.Assert.assertEquals;
+ import static org.junit.Assert.assertNotNull;
 
-public class NotificationCarExtenderTest extends AndroidTestCase {
+ import android.app.Notification;
+ import android.app.Notification.CarExtender;
+ import android.app.Notification.CarExtender.UnreadConversation;
+ import android.app.PendingIntent;
+ import android.app.RemoteInput;
+ import android.content.Context;
+ import android.content.Intent;
+ import android.graphics.Bitmap;
+ import android.graphics.Bitmap.Config;
+
+ import androidx.test.platform.app.InstrumentationRegistry;
+ import androidx.test.runner.AndroidJUnit4;
+
+ import org.junit.Before;
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+
+ @RunWith(AndroidJUnit4.class)
+ public class NotificationCarExtenderTest {
 
     private Context mContext;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mContext = getContext();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 
+    @Test
     public void testCarExtender_EmptyConstructor() {
         CarExtender extender = new Notification.CarExtender();
         assertNotNull(extender);
@@ -45,6 +54,7 @@ public class NotificationCarExtenderTest extends AndroidTestCase {
         assertEquals(null, extender.getUnreadConversation());
     }
 
+    @Test
     public void testCarExtender_Constructor() {
         Notification notification = new Notification();
         CarExtender extender = new Notification.CarExtender(notification);
@@ -54,11 +64,12 @@ public class NotificationCarExtenderTest extends AndroidTestCase {
         assertEquals(null, extender.getUnreadConversation());
     }
 
+    @Test
     public void testCarExtender() {
         final int testColor = 11;
         final Bitmap testIcon = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
         final UnreadConversation testConversation =
-            new Builder("testParticipant")
+            new CarExtender.Builder("testParticipant")
                 .addMessage("testMessage")
                 .setLatestTimestamp(System.currentTimeMillis())
                 .build();
@@ -73,11 +84,12 @@ public class NotificationCarExtenderTest extends AndroidTestCase {
         assertEquals(testConversation, extender.getUnreadConversation());
     }
 
+    @Test
     public void testCarExtender_extend() {
         final int testColor = 11;
         final Bitmap testIcon = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
         final UnreadConversation testConversation =
-            new Builder("testParticipant")
+            new CarExtender.Builder("testParticipant")
                 .addMessage("testMessage")
                 .setLatestTimestamp(System.currentTimeMillis())
                 .build();
@@ -104,6 +116,7 @@ public class NotificationCarExtenderTest extends AndroidTestCase {
             receiveCarExtender.getUnreadConversation().getMessages()[0]);
     }
 
+    @Test
     public void testCarExtender_UnreadConversationAndBuilder() {
         final long testTime = System.currentTimeMillis();
         final String testMessage = "testMessage";
@@ -119,7 +132,7 @@ public class NotificationCarExtenderTest extends AndroidTestCase {
         final RemoteInput testRemoteInput = new RemoteInput.Builder("key").build();
 
         final UnreadConversation testConversation =
-            new Builder(testParticipant)
+            new CarExtender.Builder(testParticipant)
                 .setLatestTimestamp(testTime)
                 .addMessage(testMessage)
                 .setReadPendingIntent(testPendingIntent)

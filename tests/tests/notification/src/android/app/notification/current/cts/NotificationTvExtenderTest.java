@@ -15,6 +15,11 @@
  */
 package android.app.notification.current.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.app.Notification;
 import android.app.Notification.TvExtender;
 import android.app.PendingIntent;
@@ -22,22 +27,28 @@ import android.content.Context;
 import android.content.Intent;
 import android.test.AndroidTestCase;
 
-public class NotificationTvExtenderTest extends AndroidTestCase {
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.Before;
+import org.junit.Test;
+
+public class NotificationTvExtenderTest {
 
     private Context mContext;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mContext = getContext();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 
+    @Test
     public void testTvExtender_EmptyConstructor() {
         TvExtender extender = new TvExtender();
         assertNotNull(extender);
         assertTrue(extender.isAvailableOnTv());
     }
 
+    @Test
     public void testTvExtender_NotifConstructor() {
         Notification notification = new Notification();
         TvExtender extender = new TvExtender(notification);
@@ -50,6 +61,7 @@ public class NotificationTvExtenderTest extends AndroidTestCase {
         assertFalse(extender.getSuppressShowOverApps());
     }
 
+    @Test
     public void testTvExtender_SetFields() {
         PendingIntent contentIntent = PendingIntent.getActivity(mContext, 0,
                 new Intent("contentIntent"), PendingIntent.FLAG_IMMUTABLE);
@@ -65,6 +77,7 @@ public class NotificationTvExtenderTest extends AndroidTestCase {
         assertTrue(extender.isSuppressShowOverApps());
     }
 
+    @Test
     public void testTvExtender_extend() {
         PendingIntent contentIntent = PendingIntent.getActivity(mContext, 0,
                 new Intent("contentIntent"), PendingIntent.FLAG_IMMUTABLE);

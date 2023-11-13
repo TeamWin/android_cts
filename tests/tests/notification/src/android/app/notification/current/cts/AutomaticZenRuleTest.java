@@ -18,6 +18,11 @@ package android.app.notification.current.cts;
 
 import static android.app.AutomaticZenRule.TYPE_BEDTIME;
 
+import static junit.framework.Assert.assertTrue;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import android.app.AutomaticZenRule;
 import android.app.Flags;
 import android.app.NotificationManager;
@@ -25,9 +30,14 @@ import android.content.ComponentName;
 import android.net.Uri;
 import android.os.Parcel;
 import android.service.notification.ZenPolicy;
-import android.test.AndroidTestCase;
 
-public class AutomaticZenRuleTest extends AndroidTestCase {
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class AutomaticZenRuleTest {
 
     private final String mName = "name";
     private final ComponentName mOwner = new ComponentName("pkg", "cls");
@@ -45,11 +55,7 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
     private final int mInterruptionFilter = NotificationManager.INTERRUPTION_FILTER_NONE;
     private final boolean mEnabled = true;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-
+    @Test
     public void testDescribeContents() {
         final int expected = 0;
         AutomaticZenRule rule = new AutomaticZenRule(mName, mOwner, mConditionId,
@@ -57,6 +63,7 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         assertEquals(expected, rule.describeContents());
     }
 
+    @Test
     public void testWriteToParcel() {
         AutomaticZenRule rule = new AutomaticZenRule(mName, mOwner, mConfigActivity, mConditionId,
                 mPolicy, mInterruptionFilter, mEnabled);
@@ -80,6 +87,7 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         assertNull(rule1.getName());
     }
 
+    @Test
     public void testSetConditionId() {
         final Uri newConditionId = new Uri.Builder().scheme("scheme")
                 .authority("authority2")
@@ -92,6 +100,7 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         assertEquals(newConditionId, rule.getConditionId());
     }
 
+    @Test
     public void testSetEnabled() {
         AutomaticZenRule rule = new AutomaticZenRule(mName, mOwner, mConfigActivity, mConditionId,
                 mPolicy, mInterruptionFilter, mEnabled);
@@ -99,6 +108,7 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         assertEquals(!mEnabled, rule.isEnabled());
     }
 
+    @Test
     public void testSetInterruptionFilter() {
         AutomaticZenRule rule = new AutomaticZenRule(mName, mOwner, mConfigActivity, mConditionId,
                 mPolicy, mInterruptionFilter, mEnabled);
@@ -109,6 +119,7 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testSetName() {
         AutomaticZenRule rule = new AutomaticZenRule(mName, mOwner, mConfigActivity, mConditionId,
                 mPolicy, mInterruptionFilter, mEnabled);
@@ -116,6 +127,7 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         assertEquals(mName + "new", rule.getName());
     }
 
+    @Test
     public void testSetConfigurationActivity() {
         ComponentName newConfigActivity = new ComponentName("pkg", "new!");
         AutomaticZenRule rule = new AutomaticZenRule(mName, mOwner, mConfigActivity, mConditionId,
@@ -124,6 +136,7 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         assertEquals(newConfigActivity, rule.getConfigurationActivity());
     }
 
+    @Test
     public void testCreateRuleWithZenPolicy() {
         ZenPolicy.Builder builder = new ZenPolicy.Builder();
         ZenPolicy policy = builder.build();
@@ -134,6 +147,7 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         assertEquals(rule.getZenPolicy(), policy);
     }
 
+    @Test
     public void testBuilder() {
         if (!Flags.modesApi()) {
             return;
@@ -162,6 +176,7 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         assertEquals(mIconResId, rule1.getIconResId());
     }
 
+    @Test
     public void testBuilder_fromInstance() {
         if (!Flags.modesApi()) {
             return;
@@ -192,6 +207,7 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         assertEquals(mIconResId, rule1.getIconResId());
     }
 
+    @Test
     public void testWriteToParcelFromBuilder() {
         if (!Flags.modesApi()) {
             return;
@@ -224,6 +240,7 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         assertTrue(rule1.getTriggerDescription().startsWith(mTriggerDescription));
     }
 
+    @Test
     public void testEquals() {
         if (!Flags.modesApi()) {
             return;
@@ -251,6 +268,7 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
         assertEquals(rule, rule2);
     }
 
+    @Test
     public void testHashCode() {
         if (!Flags.modesApi()) {
             return;

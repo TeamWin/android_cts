@@ -22,18 +22,24 @@ import android.content.pm.PackageManager
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.test.runner.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
 
-    override fun setUp() {
-        assertThat(mContext.applicationInfo.targetSdkVersion).isEqualTo(30)
-        super.setUp()
+    @Before
+    public fun setUp() {
+        assertThat(context.applicationInfo.targetSdkVersion).isEqualTo(30)
     }
 
+    @Test
     fun testWideIcon_inCollapsedState_isSquareForLegacyApps() {
         val icon = createBitmap(200, 100)
-        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+        val views = Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
                 .setLargeIcon(icon)
@@ -44,9 +50,10 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
         }
     }
 
+    @Test
     fun testWideIcon_inBigBaseState_isSquareForLegacyApps() {
         val icon = createBitmap(200, 100)
-        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+        val views = Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
                 .setLargeIcon(icon)
@@ -57,6 +64,7 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
         }
     }
 
+    @Test
     fun testWideIcon_inBigPicture_isSquareForLegacyApps() {
         if (skipIfPlatformDoesNotSupportNotificationStyles()) {
             return
@@ -64,7 +72,7 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
 
         val picture = createBitmap(40, 30)
         val icon = createBitmap(200, 100)
-        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+        val views = Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
                 .setLargeIcon(icon)
@@ -76,9 +84,10 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
         }
     }
 
+    @Test
     fun testWideIcon_inBigText_isSquareForLegacyApps() {
         val bitmap = createBitmap(200, 100)
-        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+        val views = Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
                 .setLargeIcon(bitmap)
@@ -90,13 +99,14 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
         }
     }
 
+    @Test
     fun testPromoteBigPicture_withoutLargeIcon() {
                 if (skipIfPlatformDoesNotSupportNotificationStyles()) {
             return
         }
 
         val picture = createBitmap(40, 30)
-        val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+        val builder = Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
                 .setStyle(Notification.BigPictureStyle()
@@ -117,6 +127,7 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
         }
     }
 
+    @Test
     fun testPromoteBigPicture_withLargeIcon() {
         if (skipIfPlatformDoesNotSupportNotificationStyles()) {
             return
@@ -124,7 +135,7 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
 
         val picture = createBitmap(40, 30)
         val icon = createBitmap(80, 65)
-        val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+        val builder = Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
                 .setLargeIcon(icon)
@@ -148,6 +159,7 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
         }
     }
 
+    @Test
     fun testPromoteBigPicture_withBigLargeIcon() {
         if (skipIfPlatformDoesNotSupportNotificationStyles()) {
             return
@@ -157,7 +169,7 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
         val inputWidth = 400
         val inputHeight = 300
         val bigIcon = createBitmap(inputWidth, inputHeight)
-        val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+        val builder = Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
                 .setStyle(Notification.BigPictureStyle()
@@ -183,16 +195,17 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
     }
 
     fun testBaseTemplate_hasExpandedStateWithoutActions() {
-        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+        val views = Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
                 .createBigContentView()
         assertThat(views).isNotNull()
     }
 
+    @Test
     fun testDecoratedCustomViewStyle_collapsedState() {
         val customContent = makeCustomContent()
-        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+        val views = Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
                 .setCustomContentView(customContent)
@@ -210,9 +223,10 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
         }
     }
 
+    @Test
     fun testDecoratedCustomViewStyle_expandedState() {
         val customContent = makeCustomContent()
-        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+        val views = Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
                 .setCustomBigContentView(customContent)
@@ -234,9 +248,10 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
         }
     }
 
+    @Test
     fun testCustomViewNotification_collapsedState_isNotDecoratedForLegacyApps() {
         val customContent = makeCustomContent()
-        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+        val views = Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
                 .setCustomContentView(customContent)
@@ -253,9 +268,10 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
         }
     }
 
+    @Test
     fun testCustomViewNotification_expandedState_isNotDecoratedForLegacyApps() {
         val customContent = makeCustomContent()
-        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+        val views = Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
                 .setCustomBigContentView(customContent)
@@ -276,9 +292,10 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
         }
     }
 
+    @Test
     fun testCustomViewNotification_headsUpState_isNotDecoratedForLegacyApps() {
         val customContent = makeCustomContent()
-        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+        val views = Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
                 .setCustomHeadsUpContentView(customContent)
@@ -301,8 +318,8 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
      * If the current platform does not support notification styles, skip this test without failure.
      */
     private fun skipIfPlatformDoesNotSupportNotificationStyles(): Boolean {
-        return mContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) ||
-                        mContext.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+        return context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) ||
+                        context.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
     }
 
     companion object {

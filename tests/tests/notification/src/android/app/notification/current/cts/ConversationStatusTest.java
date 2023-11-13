@@ -19,24 +19,32 @@ package android.app.notification.current.cts;
 import static android.app.people.ConversationStatus.ACTIVITY_GAME;
 import static android.app.people.ConversationStatus.AVAILABILITY_BUSY;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import android.app.people.ConversationStatus;
 import android.content.Context;
 import android.graphics.drawable.Icon;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class ConversationStatusTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class ConversationStatusTest {
 
     private Context mContext;
 
+    @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 
+    @Test
     public void testCreation()  {
         final ConversationStatus cs =
                 new ConversationStatus.Builder("id", ACTIVITY_GAME)
@@ -53,9 +61,10 @@ public class ConversationStatusTest extends AndroidTestCase {
         assertEquals(100, cs.getStartTimeMillis());
         assertEquals(1000, cs.getEndTimeMillis());
         assertEquals(android.R.drawable.btn_default, cs.getIcon().getResId());
-        assertEquals("playing chess", cs.getDescription());
+        assertEquals("playing chess", cs.getDescription().toString());
     }
 
+    @Test
     public void testParcelEmpty()  {
         final ConversationStatus orig = new ConversationStatus.Builder("id", 100).build();
 
@@ -75,6 +84,7 @@ public class ConversationStatusTest extends AndroidTestCase {
         assertNull(cs.getDescription());
     }
 
+    @Test
     public void testParcel()  {
         final ConversationStatus orig =
                 new ConversationStatus.Builder("id", ACTIVITY_GAME)
@@ -98,7 +108,7 @@ public class ConversationStatusTest extends AndroidTestCase {
         assertEquals(100, cs.getStartTimeMillis());
         assertEquals(1000, cs.getEndTimeMillis());
         assertEquals(android.R.drawable.btn_default, cs.getIcon().getResId());
-        assertEquals("playing chess", cs.getDescription());
+        assertEquals("playing chess", cs.getDescription().toString());
     }
 }
 

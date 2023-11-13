@@ -19,14 +19,25 @@ package android.app.notification.current.cts;
 import static android.service.notification.NotificationStats.DISMISSAL_PEEK;
 import static android.service.notification.NotificationStats.DISMISS_SENTIMENT_NEGATIVE;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.os.Parcel;
 import android.service.notification.NotificationStats;
 import android.test.AndroidTestCase;
 
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 
 /** Test the public NotificationStats api. */
-public class NotificationStatsTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class NotificationStatsTest {
 
+    @Test
     public void testGetDismissalSentiment() {
         NotificationStats notificationStats = new NotificationStats();
 
@@ -47,6 +58,7 @@ public class NotificationStatsTest extends AndroidTestCase {
                 notificationStats.getDismissalSentiment());
     }
 
+    @Test
     public void testConstructor() {
         NotificationStats stats = new NotificationStats();
 
@@ -60,6 +72,7 @@ public class NotificationStatsTest extends AndroidTestCase {
         assertEquals(NotificationStats.DISMISS_SENTIMENT_UNKNOWN, stats.getDismissalSentiment());
     }
 
+    @Test
     public void testSeen() {
         NotificationStats stats = new NotificationStats();
         stats.setSeen();
@@ -67,6 +80,7 @@ public class NotificationStatsTest extends AndroidTestCase {
         assertFalse(stats.hasInteracted());
     }
 
+    @Test
     public void testDirectReplied() {
         NotificationStats stats = new NotificationStats();
         stats.setDirectReplied();
@@ -74,6 +88,7 @@ public class NotificationStatsTest extends AndroidTestCase {
         assertTrue(stats.hasInteracted());
     }
 
+    @Test
     public void testExpanded() {
         NotificationStats stats = new NotificationStats();
         stats.setExpanded();
@@ -81,6 +96,7 @@ public class NotificationStatsTest extends AndroidTestCase {
         assertTrue(stats.hasInteracted());
     }
 
+    @Test
     public void testSnoozed() {
         NotificationStats stats = new NotificationStats();
         stats.setSnoozed();
@@ -88,6 +104,7 @@ public class NotificationStatsTest extends AndroidTestCase {
         assertTrue(stats.hasInteracted());
     }
 
+    @Test
     public void testViewedSettings() {
         NotificationStats stats = new NotificationStats();
         stats.setViewedSettings();
@@ -95,6 +112,7 @@ public class NotificationStatsTest extends AndroidTestCase {
         assertTrue(stats.hasInteracted());
     }
 
+    @Test
     public void testDismissalSurface() {
         NotificationStats stats = new NotificationStats();
         stats.setDismissalSurface(DISMISSAL_PEEK);
@@ -102,6 +120,7 @@ public class NotificationStatsTest extends AndroidTestCase {
         assertFalse(stats.hasInteracted());
     }
 
+    @Test
     public void testDismissalSentiment() {
         NotificationStats stats = new NotificationStats();
         stats.setDismissalSentiment(DISMISS_SENTIMENT_NEGATIVE);
@@ -109,6 +128,7 @@ public class NotificationStatsTest extends AndroidTestCase {
         assertFalse(stats.hasInteracted());
     }
 
+    @Test
     public void testWriteToParcel() {
         NotificationStats stats = new NotificationStats();
         stats.setViewedSettings();
