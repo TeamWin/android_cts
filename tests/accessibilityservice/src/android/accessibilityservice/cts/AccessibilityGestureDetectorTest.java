@@ -19,10 +19,7 @@ import static android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplay
 import static android.accessibilityservice.cts.utils.GestureUtils.add;
 import static android.accessibilityservice.cts.utils.GestureUtils.click;
 import static android.accessibilityservice.cts.utils.GestureUtils.diff;
-import static android.accessibilityservice.cts.utils.GestureUtils.endTimeOf;
 import static android.accessibilityservice.cts.utils.GestureUtils.getGestureBuilder;
-import static android.accessibilityservice.cts.utils.GestureUtils.longClick;
-import static android.accessibilityservice.cts.utils.GestureUtils.startingAt;
 import static android.app.UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES;
 
 import static org.junit.Assume.assumeTrue;
@@ -544,15 +541,11 @@ public class AccessibilityGestureDetectorTest {
     }
 
     private GestureDescription doubleTap(int displayId) {
-        StrokeDescription tap1 = click(mTapLocation);
-        StrokeDescription tap2 = startingAt(endTimeOf(tap1) + 20, click(mTapLocation));
-        return getGestureBuilder(displayId, tap1, tap2).build();
+        return GestureUtils.doubleTap(mTapLocation, displayId);
     }
 
     private GestureDescription doubleTapAndHold(int displayId) {
-        StrokeDescription tap1 = click(mTapLocation);
-        StrokeDescription tap2 = startingAt(endTimeOf(tap1) + 20, longClick(mTapLocation));
-        return getGestureBuilder(displayId, tap1, tap2).build();
+        return GestureUtils.doubleTapAndHold(mTapLocation, displayId);
     }
 
     private GestureDescription twoFingerSingleTap(int displayId) {
