@@ -1484,11 +1484,11 @@ public final class ActivityManagerAppExitInfoTest {
         mContext.startActivity(intent1);
         sleep(1000);
 
-        // Launch Home to make sure the HeartbeatActivity is in cached mode
-        Intent intentHome = new Intent(Intent.ACTION_MAIN);
-        intentHome.addCategory(Intent.CATEGORY_HOME);
-        intentHome.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intentHome);
+        // Launch another activity to make sure the HeartbeatActivity is in cached mode
+        Intent intent2 = new Intent(Intent.ACTION_MAIN);
+        intent2.setClassName(STUB_PACKAGE_NAME, STUB_PACKAGE_NAME + ".NonLauncherActivity");
+        intent2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent2);
 
         // Wait until the HeartbeatService finishes
         awaitForLatch(mLatch, HEARTBEAT_COUNTDOWN * HEARTBEAT_INTERVAL, "heartbeat");
