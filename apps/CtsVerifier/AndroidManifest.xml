@@ -6843,6 +6843,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_input"/>
             <meta-data android:name="ApiTest" android:value="android.view.InputDevice#getUsiVersion" />
+            <meta-data android:name="display_mode" android:value="single_display_mode" />
         </activity>
 
         <!-- Components used for CTS Verifying Capture Content For Notes APIs. -->
