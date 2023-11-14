@@ -51,7 +51,6 @@ per-file PkgInstallSignatureVerificationTest.java = cbrubaker@google.com,mpgroov
 per-file StatsdAppSecurityAtomTest.java = yaochen@google.com
 
 # Package Manager
-per-file AuthBoundKeyTest.java = file:test-apps/AuthBoundKeyApp/OWNERS
 per-file ApplicationVisibilityTest.java = file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
 per-file BaseInstallMultiple.java =  file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
 per-file EphemeralTest.java =  file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
