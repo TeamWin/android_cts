@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.scopedstorage.cts.device;
+package android.scopedstorage.cts.redacturi;
 
 
 import static android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION;
@@ -48,12 +48,13 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.media.ExifInterface;
 import android.net.Uri;
+import android.scopedstorage.cts.lib.ScopedStorageBaseDeviceTest;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
-import android.system.Os;
 import android.provider.MediaStore;
+import android.system.Os;
 
 import androidx.test.filters.SdkSuppress;
 
@@ -93,7 +94,8 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
 
     static final String IMAGE_FILE_NAME = "ScopedStorageDeviceTest_file_" + NONCE + ".jpg";
 
-    static final String FUZZER_HEIC_FILE_NAME = "ScopedStorageDeviceTest_file_fuzzer_" + NONCE + ".heic";
+    static final String FUZZER_HEIC_FILE_NAME =
+            "ScopedStorageDeviceTest_file_fuzzer_" + NONCE + ".heic";
 
     // An app with no permissions
     private static final TestApp APP_B_NO_PERMS = new TestApp("TestAppB",
@@ -469,7 +471,7 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
             assertUriIsUnredacted(img);
 
             try (ParcelFileDescriptor pfd =
-                    getContentResolver().openFileDescriptor(redactedUri, "r")) {
+                         getContentResolver().openFileDescriptor(redactedUri, "r")) {
                 FileDescriptor fd = pfd.getFileDescriptor();
                 ExifInterface redactedExifInf = new ExifInterface(fd);
                 assertUriIsRedacted(redactedExifInf);
@@ -549,7 +551,7 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
         assertTrue(fileSize == 4407744);
         for (int index = 0; index < start.length && index < end.length; index++) {
             for (int c = start[index]; c < end[index]; c++) {
-                assertTrue("It should be zero!", data[c] == (byte)0);
+                assertTrue("It should be zero!", data[c] == (byte) 0);
             }
         }
     }
