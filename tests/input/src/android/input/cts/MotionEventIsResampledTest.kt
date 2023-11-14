@@ -60,7 +60,7 @@ class MotionEventIsResampledTest {
     @get:Rule
     val testName = TestName()
     @get:Rule
-    val virtualDisplayRule = VirtualDisplayActivityScenarioRule(testName)
+    val virtualDisplayRule = VirtualDisplayActivityScenarioRule<CaptureEventActivity>(testName)
     @get:Rule
     val checkFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
 
@@ -92,8 +92,9 @@ class MotionEventIsResampledTest {
         val pointer = Point(x, y)
 
         // ACTION_DOWN
+        val pointerId = 0
         touchScreen.sendBtnTouch(true)
-        touchScreen.sendDown(0 /*id*/, pointer)
+        touchScreen.sendDown(pointerId, pointer)
         touchScreen.sync()
         verifier.assertReceivedDown()
 
@@ -108,7 +109,7 @@ class MotionEventIsResampledTest {
             touchScreen.delay(3)
 
             pointer.offset(step, 0)
-            touchScreen.sendMove(0 /*id*/, pointer)
+            touchScreen.sendMove(pointerId, pointer)
             touchScreen.sync()
         }
 
@@ -144,7 +145,7 @@ class MotionEventIsResampledTest {
 
         // ACTION_UP
         touchScreen.sendBtnTouch(false)
-        touchScreen.sendUp(0 /*id*/)
+        touchScreen.sendUp(pointerId)
         touchScreen.sync()
         verifier.assertReceivedUp()
 

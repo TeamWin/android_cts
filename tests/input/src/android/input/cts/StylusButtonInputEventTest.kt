@@ -62,7 +62,8 @@ class StylusButtonInputEventTest {
 
         val INITIAL_SYSTEM_KEY = KeyEvent.KEYCODE_UNKNOWN
         val LINUX_TO_ANDROID_KEYCODE_MAP =
-            mapOf<Int /* Linux keycode */, Int /* Android keycode */>(
+            // map from Linux keycode to Android keycode
+            mapOf<Int, Int>(
                 0x14b to KeyEvent.KEYCODE_STYLUS_BUTTON_PRIMARY, // BTN_STYLUS
                 0x14c to KeyEvent.KEYCODE_STYLUS_BUTTON_SECONDARY, // BTN_STYLUS2
                 0x149 to KeyEvent.KEYCODE_STYLUS_BUTTON_TERTIARY, // BTN_STYLUS3
@@ -76,7 +77,8 @@ class StylusButtonInputEventTest {
 
     @get:Rule val debugInputRule = DebugInputRule()
     @get:Rule val testName = TestName()
-    @get:Rule val virtualDisplayRule = VirtualDisplayActivityScenarioRule(testName)
+    @get:Rule val virtualDisplayRule =
+        VirtualDisplayActivityScenarioRule<CaptureEventActivity>(testName)
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private lateinit var statusBarManager: StatusBarManager
     private lateinit var initialStylusButtonsEnabledSetting: String
