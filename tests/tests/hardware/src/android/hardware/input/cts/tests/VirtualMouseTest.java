@@ -28,8 +28,9 @@ import android.hardware.input.VirtualMouse;
 import android.hardware.input.VirtualMouseButtonEvent;
 import android.hardware.input.VirtualMouseRelativeEvent;
 import android.hardware.input.VirtualMouseScrollEvent;
-import android.hardware.input.cts.VirtualDeviceUtils;
-import android.view.InputDevice;
+import android.hardware.input.cts.virtualcreators.VirtualDisplayCreator;
+import android.hardware.input.cts.virtualcreators.VirtualInputDeviceCreator;
+import android.hardware.input.cts.virtualcreators.VirtualInputEventCreator;
 import android.view.MotionEvent;
 
 import androidx.test.filters.SmallTest;
@@ -73,29 +74,23 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
                 .setAction(VirtualMouseButtonEvent.ACTION_BUTTON_RELEASE)
                 .setButtonCode(VirtualMouseButtonEvent.BUTTON_PRIMARY)
                 .build());
-        final MotionEvent buttonPressEvent = createMotionEvent(MotionEvent.ACTION_BUTTON_PRESS,
-                startPosition.x, startPosition.y, /* relativeX= */ 0f, /* relativeY= */ 0f,
-                /* vScroll= */ 0f, /* hScroll= */ 0f, MotionEvent.BUTTON_PRIMARY,
-                /* pressure= */ 1.0f);
+        final MotionEvent buttonPressEvent = VirtualInputEventCreator.createMouseEvent(
+                MotionEvent.ACTION_BUTTON_PRESS, startPosition.x, startPosition.y,
+                MotionEvent.BUTTON_PRIMARY, 1f /* pressure */);
         buttonPressEvent.setActionButton(MotionEvent.BUTTON_PRIMARY);
-        final MotionEvent buttonReleaseEvent = createMotionEvent(MotionEvent.ACTION_BUTTON_RELEASE,
-                startPosition.x, startPosition.y, /* relativeX= */ 0f, /* relativeY= */ 0f,
-                /* vScroll= */ 0f, /* hScroll= */ 0f, /* buttonState= */ 0, /* pressure= */ 0.0f);
+        final MotionEvent buttonReleaseEvent = VirtualInputEventCreator.createMouseEvent(
+                MotionEvent.ACTION_BUTTON_RELEASE, startPosition.x, startPosition.y,
+                0 /* buttonState */, 0f /* pressure */);
         buttonReleaseEvent.setActionButton(MotionEvent.BUTTON_PRIMARY);
         verifyEvents(Arrays.asList(
-                createMotionEvent(MotionEvent.ACTION_DOWN, startPosition.x, startPosition.y,
-                        /* relativeX= */ 0f, /* relativeY= */ 0f, /* vScroll= */ 0f,
-                        /* hScroll= */ 0f, MotionEvent.BUTTON_PRIMARY, /* pressure= */ 1.0f),
+                VirtualInputEventCreator.createMouseEvent(MotionEvent.ACTION_DOWN, startPosition.x,
+                        startPosition.y, MotionEvent.BUTTON_PRIMARY, 1f /* pressure */),
                 buttonPressEvent,
                 buttonReleaseEvent,
-                createMotionEvent(MotionEvent.ACTION_UP, startPosition.x, startPosition.y,
-                        /* relativeX= */ 0f, /* relativeY= */ 0f, /* vScroll= */ 0f,
-                        /* hScroll= */ 0f, /* buttonState= */ 0, /* pressure= */ 0.0f),
-                createMotionEvent(MotionEvent.ACTION_HOVER_ENTER, startPosition.x,
-                        startPosition.y, /* relativeX= */ 0f, /* relativeY= */ 0f,
-                        /* vScroll= */ 0f, /* hScroll= */ 0f, /* buttonState= */ 0,
-                        /* pressure= */ 0.0f))
-        );
+                VirtualInputEventCreator.createMouseEvent(MotionEvent.ACTION_UP, startPosition.x,
+                        startPosition.y, 0 /* buttonState */, 0f /* pressure */),
+                VirtualInputEventCreator.createMouseEvent(MotionEvent.ACTION_HOVER_ENTER,
+                        startPosition.x, startPosition.y, 0 /* buttonState */, 0f /* pressure */)));
     }
 
     @Test
@@ -110,9 +105,9 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
         final float firstStopPositionX = startPosition.x + relativeChangeX;
         final float firstStopPositionY = startPosition.y + relativeChangeY;
         verifyEvents(Arrays.asList(
-                createMotionEvent(MotionEvent.ACTION_HOVER_ENTER, firstStopPositionX,
-                        firstStopPositionY, relativeChangeX, relativeChangeY, /* vScroll= */ 0f,
-                        /* hScroll= */ 0f, /* buttonState= */ 0, /* pressure= */ 0.0f)));
+                VirtualInputEventCreator.createMouseEvent(MotionEvent.ACTION_HOVER_ENTER,
+                        firstStopPositionX, firstStopPositionY, 0 /* buttonState */,
+                        0f /* pressure */, relativeChangeX, relativeChangeY, 0f /* vScroll */)));
         final PointF cursorPosition1 = mVirtualMouse.getCursorPosition();
         assertEquals("getCursorPosition() should return the updated x position",
                 firstStopPositionX, cursorPosition1.x, EPSILON);
@@ -126,10 +121,9 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
                 .setRelativeX(-relativeChangeX)
                 .build());
         verifyEvents(Arrays.asList(
-                createMotionEvent(MotionEvent.ACTION_HOVER_MOVE, secondStopPositionX,
-                        secondStopPositionY, -relativeChangeX,
-                        -relativeChangeY, /* vScroll= */ 0f,
-                        /* hScroll= */ 0f, /* buttonState= */ 0, /* pressure= */ 0.0f)));
+                VirtualInputEventCreator.createMouseEvent(MotionEvent.ACTION_HOVER_MOVE,
+                        secondStopPositionX, secondStopPositionY, 0 /* buttonState */,
+                        0f /* pressure */, -relativeChangeX, -relativeChangeY, 0f /* vScroll */)));
         final PointF cursorPosition2 = mVirtualMouse.getCursorPosition();
         assertEquals("getCursorPosition() should return the updated x position",
                 secondStopPositionX, cursorPosition2.x, EPSILON);
@@ -147,14 +141,11 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
                 .setXAxisMovement(moveX)
                 .build());
         verifyEvents(Arrays.asList(
-                createMotionEvent(MotionEvent.ACTION_HOVER_ENTER, startPosition.x,
-                        startPosition.y, /* relativeX= */ 0f, /* relativeY= */ 0f,
-                        /* vScroll= */ 0f, /* hScroll= */ 0f, /* buttonState= */ 0,
-                        /* pressure= */ 0f),
-                createMotionEvent(MotionEvent.ACTION_SCROLL, startPosition.x,
-                        startPosition.y, /* relativeX= */ 0f, /* relativeY= */ 0f,
-                        /* vScroll= */ 1f, /* hScroll= */ 0f, /* buttonState= */ 0,
-                        /* pressure= */ 0f)));
+                VirtualInputEventCreator.createMouseEvent(MotionEvent.ACTION_HOVER_ENTER,
+                        startPosition.x, startPosition.y, 0 /* buttonState */, 0f /* pressure */),
+                VirtualInputEventCreator.createMouseEvent(MotionEvent.ACTION_SCROLL,
+                        startPosition.x, startPosition.y, 0 /* buttonState */, 0f /* pressure */,
+                        0f /* relativeX */, 0f /* relativeY */, 1f /* vScroll */)));
     }
 
     @Test
@@ -200,57 +191,26 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
     public void testStartingCursorPosition() {
         // The virtual display is 100x100px, running from [0,99]. Half of this is 49.5, and
         // we assume the pointer for a new display begins at the center.
-        final Point size = VirtualDeviceUtils.getDisplaySize(mVirtualDisplay);
+        final Point size = VirtualDisplayCreator.getDisplaySize(mVirtualDisplay);
         final PointF startPosition = new PointF((size.x - 1) / 2f, (size.y - 1) / 2f);
         // Trigger a position update without moving the cursor off the starting position.
         mVirtualMouse.sendButtonEvent(new VirtualMouseButtonEvent.Builder()
                 .setAction(VirtualMouseButtonEvent.ACTION_BUTTON_PRESS)
                 .setButtonCode(VirtualMouseButtonEvent.BUTTON_PRIMARY)
                 .build());
-        final MotionEvent buttonPressEvent = createMotionEvent(MotionEvent.ACTION_BUTTON_PRESS,
-                startPosition.x, startPosition.y, /* relativeX= */ 0f, /* relativeY= */ 0f,
-                /* vScroll= */ 0f, /* hScroll= */ 0f, MotionEvent.BUTTON_PRIMARY,
-                /* pressure= */ 1.0f);
+        final MotionEvent buttonPressEvent = VirtualInputEventCreator.createMouseEvent(
+                MotionEvent.ACTION_BUTTON_PRESS, startPosition.x, startPosition.y,
+                MotionEvent.BUTTON_PRIMARY, 1f /* pressure */);
         buttonPressEvent.setActionButton(MotionEvent.BUTTON_PRIMARY);
         verifyEvents(Arrays.asList(
-                createMotionEvent(MotionEvent.ACTION_DOWN, startPosition.x, startPosition.y,
-                        /* relativeX= */ 0f, /* relativeY= */ 0f, /* vScroll= */ 0f,
-                        /* hScroll= */ 0f, MotionEvent.BUTTON_PRIMARY, /* pressure= */ 1.0f),
+                VirtualInputEventCreator.createMouseEvent(MotionEvent.ACTION_DOWN, startPosition.x,
+                        startPosition.y, MotionEvent.BUTTON_PRIMARY, 1f /* pressure */),
                 buttonPressEvent));
 
         final PointF position = mVirtualMouse.getCursorPosition();
 
         assertEquals("Cursor position x differs", startPosition.x, position.x, EPSILON);
         assertEquals("Cursor position y differs", startPosition.y, position.y, EPSILON);
-    }
-
-    private MotionEvent createMotionEvent(int action, float x, float y, float relativeX,
-            float relativeY, float vScroll, float hScroll, int buttonState, float pressure) {
-        final MotionEvent.PointerProperties pointerProperties = new MotionEvent.PointerProperties();
-        pointerProperties.toolType = MotionEvent.TOOL_TYPE_MOUSE;
-        final MotionEvent.PointerCoords pointerCoords = new MotionEvent.PointerCoords();
-        pointerCoords.setAxisValue(MotionEvent.AXIS_X, x);
-        pointerCoords.setAxisValue(MotionEvent.AXIS_Y, y);
-        pointerCoords.setAxisValue(MotionEvent.AXIS_RELATIVE_X, relativeX);
-        pointerCoords.setAxisValue(MotionEvent.AXIS_RELATIVE_Y, relativeY);
-        pointerCoords.setAxisValue(MotionEvent.AXIS_PRESSURE, pressure);
-        pointerCoords.setAxisValue(MotionEvent.AXIS_VSCROLL, vScroll);
-        pointerCoords.setAxisValue(MotionEvent.AXIS_HSCROLL, hScroll);
-        return MotionEvent.obtain(
-                /* downTime= */ 0,
-                /* eventTime= */ 0,
-                action,
-                /* pointerCount= */ 1,
-                new MotionEvent.PointerProperties[]{pointerProperties},
-                new MotionEvent.PointerCoords[]{pointerCoords},
-                /* metaState= */ 0,
-                buttonState,
-                /* xPrecision= */ 1f,
-                /* yPrecision= */ 1f,
-                /* deviceId= */ 0,
-                /* edgeFlags= */ 0,
-                InputDevice.SOURCE_MOUSE,
-                /* flags= */ 0);
     }
 
     @Test
@@ -260,13 +220,13 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
 
     @Test
     public void createVirtualMouse_unownedDisplay_throwsException() {
-        VirtualDisplay unownedDisplay = VirtualDeviceUtils.createUnownedVirtualDisplay();
+        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
         assertThrows(SecurityException.class,
                 () -> createVirtualMouse(unownedDisplay.getDisplay().getDisplayId()));
         unownedDisplay.release();
     }
 
     private VirtualMouse createVirtualMouse(int displayId) {
-        return VirtualDeviceUtils.createMouse(mVirtualDevice, DEVICE_NAME, displayId);
+        return VirtualInputDeviceCreator.createMouse(mVirtualDevice, DEVICE_NAME, displayId);
     }
 }

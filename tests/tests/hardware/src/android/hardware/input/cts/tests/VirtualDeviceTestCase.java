@@ -26,9 +26,12 @@ import android.app.KeyguardManager;
 import android.companion.virtual.VirtualDeviceManager;
 import android.content.Context;
 import android.graphics.Point;
+import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.input.InputManager;
-import android.hardware.input.cts.VirtualDeviceUtils;
+import android.hardware.input.cts.virtualcreators.VirtualDeviceCreator;
+import android.hardware.input.cts.virtualcreators.VirtualDisplayCreator;
+import android.hardware.input.cts.virtualcreators.VirtualInputDeviceCreator;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.server.wm.WakeUpAndUnlockRule;
@@ -83,9 +86,12 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
 
     @Override
     void onBeforeLaunchActivity() {
-        mVirtualDevice = VirtualDeviceUtils.createVirtualDevice(
+        mVirtualDevice = VirtualDeviceCreator.createVirtualDevice(
                 mFakeAssociationRule.getAssociationInfo().getId());
-        mVirtualDisplay = VirtualDeviceUtils.createVirtualDisplay(mVirtualDevice);
+        mVirtualDisplay = VirtualDisplayCreator.createVirtualDisplay(mVirtualDevice,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                    | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY
+                    | DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED);
         if (mVirtualDisplay == null) {
             fail("Could not create virtual display");
         }
@@ -94,7 +100,8 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
     @Override
     void onSetUp() {
         mInputManager = mInstrumentation.getTargetContext().getSystemService(InputManager.class);
-        VirtualDeviceUtils.prepareInputDevice(mInputManager, this::onSetUpVirtualInputDevice);
+        VirtualInputDeviceCreator.prepareInputDevice(mInputManager,
+                this::onSetUpVirtualInputDevice);
         // Wait for any pending transitions
         WindowManagerStateHelper windowManagerStateHelper = new WindowManagerStateHelper();
         windowManagerStateHelper.waitForAppTransitionIdleOnDisplay(mTestActivity.getDisplayId());

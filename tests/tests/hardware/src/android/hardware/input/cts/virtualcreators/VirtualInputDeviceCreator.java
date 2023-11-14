@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,15 @@
  * limitations under the License.
  */
 
-package android.hardware.input.cts;
+package android.hardware.input.cts.virtualcreators;
+
+import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeNotNull;
-import static org.junit.Assume.assumeTrue;
 
-import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
-import android.companion.virtual.VirtualDeviceParams;
-import android.content.Context;
-import android.content.pm.PackageManager;
 import android.graphics.Point;
-import android.graphics.SurfaceTexture;
-import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
-import android.hardware.display.VirtualDisplayConfig;
 import android.hardware.input.InputManager;
 import android.hardware.input.VirtualDpad;
 import android.hardware.input.VirtualDpadConfig;
@@ -44,8 +36,6 @@ import android.hardware.input.VirtualTouchscreen;
 import android.hardware.input.VirtualTouchscreenConfig;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.Surface;
-import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -54,56 +44,22 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Static utilities for operations related to a {@link VirtualDevice}.
+ * Static utilities for creating virtual input devices.
  */
-public final class VirtualDeviceUtils {
+public final class VirtualInputDeviceCreator {
+
     public static final int PRODUCT_ID = 1;
     public static final int VENDOR_ID = 1;
 
-    public static VirtualDevice createVirtualDevice(int associationId) {
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PackageManager packageManager = context.getPackageManager();
-        assumeTrue(VirtualDeviceTestUtils.isVirtualDeviceManagerConfigEnabled(context));
-        // Virtual input devices only operate on virtual displays
-        assumeTrue(packageManager.hasSystemFeature(
-                PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
-        assumeFalse("Skipping test: VirtualDisplay window policy doesn't support freeform.",
-                packageManager.hasSystemFeature(PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT));
-
-        final VirtualDeviceManager virtualDeviceManager =
-                context.getSystemService(VirtualDeviceManager.class);
-        assumeNotNull(virtualDeviceManager);
-        return virtualDeviceManager.createVirtualDevice(associationId,
-                new VirtualDeviceParams.Builder().build());
-    }
-
-    public static VirtualDisplay createVirtualDisplay(VirtualDevice virtualDevice) {
-        return virtualDevice.createVirtualDisplay(
-                new VirtualDisplayConfig.Builder("testDisplay", 100, 100, 240)
-                        .setSurface(new Surface(new SurfaceTexture(1)))
-                        .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
-                                | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY
-                                | DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED)
-                        .build(),
-                /* executor= */ Runnable::run,
-                /* callback= */ null);
-    }
-
-    public static VirtualDisplay createUnownedVirtualDisplay() {
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DisplayManager displayManager = context.getSystemService(DisplayManager.class);
-        return displayManager.createVirtualDisplay(
-                VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder().build());
-    }
-
-    public static Point getDisplaySize(VirtualDisplay virtualDisplay) {
-        Point size = new Point();
-        virtualDisplay.getDisplay().getSize(size);
-        return size;
+    public static VirtualTouchscreen createTouchscreen(VirtualDevice virtualDevice, String name,
+            VirtualDisplay display) {
+        final Point size = VirtualDisplayCreator.getDisplaySize(display);
+        return createTouchscreen(virtualDevice, name, size.x, size.y,
+                display.getDisplay().getDisplayId());
     }
 
     public static VirtualTouchscreen createTouchscreen(VirtualDevice virtualDevice, String name,
-            int displayId, int width, int height) {
+            int width, int height, int displayId) {
         final VirtualTouchscreenConfig touchscreenConfig =
                 new VirtualTouchscreenConfig.Builder(width, height)
                         .setVendorId(VENDOR_ID)
@@ -176,7 +132,56 @@ public final class VirtualDeviceUtils {
         }
     }
 
-    private VirtualDeviceUtils() {
+    public static VirtualTouchscreen createAndPrepareTouchscreen(VirtualDevice virtualDevice,
+            String name, VirtualDisplay display) {
+        VirtualTouchscreen[] devices = new VirtualTouchscreen[1];
+        prepareInputDevice(() -> devices[0] = createTouchscreen(virtualDevice, name, display));
+        assertThat(devices[0]).isNotNull();
+        return devices[0];
+    }
+
+    public static VirtualMouse createAndPrepareMouse(VirtualDevice virtualDevice, String name,
+            int displayId) {
+        VirtualMouse[] devices = new VirtualMouse[1];
+        prepareInputDevice(() -> devices[0] = createMouse(virtualDevice, name, displayId));
+        assertThat(devices[0]).isNotNull();
+        return devices[0];
+    }
+
+    public static VirtualKeyboard createAndPrepareKeyboard(VirtualDevice virtualDevice, String name,
+            int displayId) {
+        VirtualKeyboard[] devices = new VirtualKeyboard[1];
+        prepareInputDevice(() -> devices[0] = createKeyboard(virtualDevice, name, displayId));
+        assertThat(devices[0]).isNotNull();
+        return devices[0];
+    }
+
+    public static VirtualDpad createAndPrepareDpad(VirtualDevice virtualDevice, String name,
+            int displayId) {
+        VirtualDpad[] devices = new VirtualDpad[1];
+        prepareInputDevice(() -> devices[0] = createDpad(virtualDevice, name, displayId));
+        assertThat(devices[0]).isNotNull();
+        return devices[0];
+    }
+
+    public static VirtualNavigationTouchpad createAndPrepareNavigationTouchpad(
+            VirtualDevice virtualDevice, String name, int displayId,
+            int width, int height) {
+        VirtualNavigationTouchpad[] devices = new VirtualNavigationTouchpad[1];
+        prepareInputDevice(() -> devices[0] = createNavigationTouchpad(virtualDevice, name,
+                displayId, width, height));
+        assertThat(devices[0]).isNotNull();
+        return devices[0];
+    }
+
+    private VirtualInputDeviceCreator() {
+    }
+
+    private static void prepareInputDevice(Runnable deviceCreator) {
+        prepareInputDevice(
+                InstrumentationRegistry.getInstrumentation().getTargetContext().getSystemService(
+                        InputManager.class),
+                deviceCreator);
     }
 
     private static class InputDeviceWaiter implements InputManager.InputDeviceListener,
