@@ -907,6 +907,10 @@ public final class UserManagerTest {
                 assertThat(mUserManager.getRemainingCreatableProfileCount(type))
                         .isEqualTo(initialRemainingCount - profilesCreated.size());
             }
+        } catch (UserManager.UserOperationException e) {
+            // Not all devices and user types support these profiles; skip if this one doesn't.
+            assumeNoException("Couldn't create managed profile", e);
+            return;
         } finally {
             profilesCreated.forEach(this::removeUser);
         }
