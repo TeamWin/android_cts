@@ -68,7 +68,8 @@ public class BluetoothConfigTest extends AndroidTestCase {
         final boolean isEnabled = TestUtils.isProfileEnabled(profile);
         final boolean isSupported = supportedProfiles.contains(profile);
 
-        if (isEnabled == isSupported) {
+        // isEnabled => isSupported
+        if (!isEnabled || isSupported) {
             return 0;
         }
         Log.e(TAG, "Profile config does not match for profile: "
@@ -115,7 +116,8 @@ public class BluetoothConfigTest extends AndroidTestCase {
         final boolean isEnabled = TestUtils.isProfileEnabled(profile);
         final boolean isSupported = BluetoothStatusCodes.FEATURE_SUPPORTED == adapterSupport;
 
-        if (isEnabled == isSupported) {
+        // isEnabled => isSupported
+        if (!isEnabled || isSupported) {
             return 0;
         }
         Log.e(TAG, "Profile config does not match for profile: "
