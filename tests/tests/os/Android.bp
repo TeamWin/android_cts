@@ -97,6 +97,7 @@ android_ravenwood_test {
         "src/android/os/cts/ParcelTest.java",
         "src/android/os/cts/ParcelUuidTest.java",
         "src/android/os/cts/PatternMatcherTest.java",
+        "src/android/os/cts/PersistableBundleTest.java",
         "src/android/os/cts/ProcessTest.java",
         "src/android/os/cts/RemoteExceptionTest.java",
         "src/android/os/cts/SystemClockTest.java",
