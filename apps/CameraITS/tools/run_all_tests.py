@@ -29,6 +29,7 @@ import image_processing_utils
 import its_session_utils
 import numpy as np
 import yaml
+import lighting_control_utils
 
 YAML_FILE_DIR = os.environ['CAMERA_ITS_TOP']
 CONFIG_FILE = os.path.join(YAML_FILE_DIR, 'config.yml')
@@ -985,6 +986,16 @@ def main():
   if tablet_id:
     cmd = f'adb -s {tablet_id} shell input keyevent KEYCODE_POWER'
     subprocess.Popen(cmd.split())
+
+  # establish connection with lighting controller
+  lighting_cntl = test_params_content.get('lighting_cntl', 'None')
+  lighting_ch = test_params_content.get('lighting_ch', 'None')
+  arduino_serial_port = lighting_control_utils.lighting_control(
+    lighting_cntl, lighting_ch)
+
+  # turn OFF lights
+  lighting_control_utils.set_lighting_state(
+    arduino_serial_port, lighting_ch, 'OFF')
 
   if num_testbeds is not None:
     if testbed_index == _MAIN_TESTBED:
