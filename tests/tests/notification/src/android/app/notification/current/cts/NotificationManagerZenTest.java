@@ -2084,6 +2084,55 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     }
 
     @Test
+    public void testGetAutomaticZenRules() {
+        assertThat(mNotificationManager.getAutomaticZenRules()).isEmpty();
+
+        AutomaticZenRule rule1 = createRule("One");
+        AutomaticZenRule rule2 = createRule("Two");
+        if (Flags.modesApi()) {
+            rule1 = new AutomaticZenRule.Builder(rule1)
+                    .setType(AutomaticZenRule.TYPE_DRIVING)
+                    .setManualInvocationAllowed(true)
+                    .build();
+            rule2 = new AutomaticZenRule.Builder(rule2)
+                    .setTriggerDescription("On the twelfth day of Christmas")
+                    .setIconResId(R.drawable.icon_green)
+                    .build();
+        }
+        mNotificationManager.addAutomaticZenRule(rule1);
+        mNotificationManager.addAutomaticZenRule(rule2);
+
+        Map<String, AutomaticZenRule> rules = mNotificationManager.getAutomaticZenRules();
+
+        assertThat(rules).hasSize(2);
+        assertAllPublicSetFieldsEqual(
+                Iterables.find(rules.values(), r -> r.getName().equals("One")),
+                rule1);
+        assertAllPublicSetFieldsEqual(
+                Iterables.find(rules.values(), r -> r.getName().equals("Two")),
+                rule2);
+    }
+
+    private static void assertAllPublicSetFieldsEqual(AutomaticZenRule r1, AutomaticZenRule r2) {
+        // Cannot test for exact equality because some extra fields (e.g. packageName,
+        // creationTime) come back. So we verify everything that the client app can set.
+        assertThat(r1.getConditionId()).isEqualTo(r2.getConditionId());
+        assertThat(r1.getConfigurationActivity()).isEqualTo(r2.getConfigurationActivity());
+        assertThat(r1.getInterruptionFilter()).isEqualTo(r2.getInterruptionFilter());
+        assertThat(r1.getName()).isEqualTo(r2.getName());
+        assertThat(r1.getOwner()).isEqualTo(r2.getOwner());
+        assertThat(r1.getZenPolicy()).isEqualTo(r2.getZenPolicy());
+        assertThat(r1.isEnabled()).isEqualTo(r2.isEnabled());
+
+        if (Flags.modesApi()) {
+            assertThat(r1.getIconResId()).isEqualTo(r2.getIconResId());
+            assertThat(r1.getTriggerDescription()).isEqualTo(r2.getTriggerDescription());
+            assertThat(r1.getType()).isEqualTo(r2.getType());
+            assertThat(r1.isManualInvocationAllowed()).isEqualTo(r2.isManualInvocationAllowed());
+        }
+    }
+
+    @Test
     public void testSetInterruptionFilter_usesAutomaticZenRule() throws Exception {
         // NMS: MANAGE_GLOBAL_ZEN_VIA_IMPLICIT_RULES
         if (!android.app.Flags.modesApi() || !CompatChanges.isChangeEnabled(308670109L)) {
