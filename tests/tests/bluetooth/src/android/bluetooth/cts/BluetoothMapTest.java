@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
@@ -113,8 +114,7 @@ public class BluetoothMapTest {
 
     @Test
     public void test_closeProfileProxy() {
-        if (!(mHasBluetooth && mIsMapSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsMapSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMap);
         assertTrue(mIsProfileReady);
@@ -126,8 +126,7 @@ public class BluetoothMapTest {
 
     @Test
     public void test_getConnectedDevices() {
-        if (!(mHasBluetooth && mIsMapSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsMapSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMap);
 
@@ -140,8 +139,7 @@ public class BluetoothMapTest {
 
     @Test
     public void test_getConnectionPolicy() {
-        if (!(mHasBluetooth && mIsMapSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsMapSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMap);
 
@@ -160,8 +158,7 @@ public class BluetoothMapTest {
 
     @Test
     public void test_getConnectionState() {
-        if (!(mHasBluetooth && mIsMapSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsMapSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMap);
 
@@ -180,8 +177,7 @@ public class BluetoothMapTest {
 
     @Test
     public void test_getDevicesMatchingConnectionStates() {
-        if (!(mHasBluetooth && mIsMapSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsMapSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMap);
 
@@ -195,8 +191,7 @@ public class BluetoothMapTest {
 
     @Test
     public void test_setConnectionPolicy() {
-        if (!(mHasBluetooth && mIsMapSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsMapSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMap);
 
