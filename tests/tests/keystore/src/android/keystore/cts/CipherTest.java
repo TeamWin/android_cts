@@ -25,6 +25,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.KeyguardManager;
 import android.content.Context;
@@ -60,6 +61,7 @@ import java.security.Provider.Service;
 import java.security.Security;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.MGF1ParameterSpec;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -1257,6 +1259,31 @@ public class CipherTest {
                 // Expected behavior
                 assertThat(e.getCause()).isInstanceOf(IllegalStateException.class);
             }
+        }
+    }
+
+    @Test
+    public void testAuthBoundKeysAreInvalidatedByLockRemoval() throws Exception {
+        assumeTrue(TestUtils.hasSecureLockScreen(getContext()));
+
+        List<ImportedKey> importedKeys = new ArrayList<>();
+        try (DeviceLockSession dl = new DeviceLockSession()) {
+            for (String algorithm : BASIC_ALGORITHMS) {
+                KeyProtection importParams =
+                        TestUtils.getMinimalWorkingImportParametersForCipheringWith(algorithm,
+                                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT,
+                                /* ivProvidedWhenEncrypting= */ false,
+                                /* isUnlockedDeviceRequired= */ false,
+                                /* isUserAuthRequired= */ true);
+                ImportedKey key = importDefaultKatKey(algorithm, importParams);
+                importedKeys.add(key);
+                assertTrue(TestUtils.keyExists(key.getAlias()));
+            }
+        } // DeviceLockSession#close() removes the secure lock screen.
+
+        // Removing the secure lock screen should have invalidated the auth-bound keys.
+        for (ImportedKey key : importedKeys) {
+            assertFalse(TestUtils.keyExists(key.getAlias()));
         }
     }
 
