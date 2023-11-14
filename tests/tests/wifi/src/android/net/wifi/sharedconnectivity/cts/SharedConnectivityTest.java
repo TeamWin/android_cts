@@ -495,6 +495,42 @@ public class SharedConnectivityTest {
         }
     }
 
+    @Test
+    public void getHotspotNetworkConnectionStatus_withoutUpdate_returnsNull()
+            throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        grantPermission();
+        try {
+            SharedConnectivityManager manager = getManager(context);
+            TestSharedConnectivityClientCallback callback =
+                    new TestSharedConnectivityClientCallback();
+            manager.registerCallback(Runnable::run, callback);
+            assertServiceConnected(callback);
+
+            assertThat(callback.getHotspotNetworkConnectionStatus()).isNull();
+        } finally {
+            dropPermission();
+        }
+    }
+
+    @Test
+    public void getKnownNetworkConnectionStatus_withoutUpdate_returnsNull()
+            throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        grantPermission();
+        try {
+            SharedConnectivityManager manager = getManager(context);
+            TestSharedConnectivityClientCallback callback =
+                    new TestSharedConnectivityClientCallback();
+            manager.registerCallback(Runnable::run, callback);
+            assertServiceConnected(callback);
+
+            assertThat(callback.getKnownNetworkConnectionStatus()).isNull();
+        } finally {
+            dropPermission();
+        }
+    }
+
     private SharedConnectivityManager getManager(Context context) {
         return SharedConnectivityManager.create(context, SERVICE_PACKAGE_NAME,
                 SERVICE_INTENT_ACTION);
