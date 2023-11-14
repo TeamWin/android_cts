@@ -25,6 +25,7 @@ import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestRule;
 import android.platform.test.annotations.AppModeFull;
 import android.util.ArraySet;
+import android.util.FeatureFlagUtils;
 import android.util.Log;
 import android.util.Range;
 import android.util.Size;
@@ -40,6 +41,8 @@ import java.util.Set;
 
 import static org.junit.Assert.*;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,17 +52,31 @@ import org.junit.runners.JUnit4;
 public class CameraExtensionCharacteristicsTest {
     private static final String TAG = "CameraExtensionManagerTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
-    private static final List<Integer> EXTENSIONS = Arrays.asList(
-            CameraExtensionCharacteristics.EXTENSION_AUTOMATIC,
-            CameraExtensionCharacteristics.EXTENSION_BEAUTY,
-            CameraExtensionCharacteristics.EXTENSION_BOKEH,
-            CameraExtensionCharacteristics.EXTENSION_HDR,
-            CameraExtensionCharacteristics.EXTENSION_NIGHT);
+    private ArrayList<Integer> mExtensionList = new ArrayList<>();
 
     private final Context mContext = InstrumentationRegistry.getTargetContext();
 
     @Rule
     public final Camera2AndroidTestRule mTestRule = new Camera2AndroidTestRule(mContext);
+
+    @Before
+    public void setUp() throws Exception {
+        mExtensionList.addAll(Arrays.asList(
+                CameraExtensionCharacteristics.EXTENSION_AUTOMATIC,
+                CameraExtensionCharacteristics.EXTENSION_BEAUTY,
+                CameraExtensionCharacteristics.EXTENSION_BOKEH,
+                CameraExtensionCharacteristics.EXTENSION_HDR,
+                CameraExtensionCharacteristics.EXTENSION_NIGHT));
+        if (FeatureFlagUtils.isEnabled(mContext,
+                "com.android.internal.camera.flags.concert_mode")) {
+            mExtensionList.add(CameraExtensionCharacteristics.EXTENSION_EYES_FREE_VIDEOGRAPHY);
+        }
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        mExtensionList.clear();
+    }
 
     private void openDevice(String cameraId) throws Exception {
         mTestRule.setCamera(CameraTestUtils.openCamera(
@@ -140,7 +157,7 @@ public class CameraExtensionCharacteristicsTest {
             }
             CameraExtensionCharacteristics extensionChars =
                     mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
-            ArrayList<Integer> unsupportedExtensions = new ArrayList<>(EXTENSIONS);
+            ArrayList<Integer> unsupportedExtensions = new ArrayList<>(mExtensionList);
             List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
             if (!extensionsAdvertised && !supportedExtensions.isEmpty()) {
                 extensionsAdvertised = true;
