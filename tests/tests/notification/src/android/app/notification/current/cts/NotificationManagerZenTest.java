@@ -86,6 +86,10 @@ import android.os.Build;
 import android.os.RemoteException;
 import android.permission.PermissionManager;
 import android.permission.cts.PermissionUtils;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.ContactsContract;
 import android.service.notification.Condition;
 import android.service.notification.NotificationListenerService;
@@ -104,6 +108,7 @@ import com.google.common.collect.Iterables;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -161,6 +166,9 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     private final int ICON_RES_ID = 123;
     private final int INTERRUPTION_FILTER = INTERRUPTION_FILTER_PRIORITY;
     private NotificationManager.Policy mOriginalPolicy;
+
+    @Rule(order = 0)
+    public final CheckFlagsRule checkFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setUp() throws Exception {
@@ -638,6 +646,18 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     }
 
     // TESTS START
+
+    @Test
+    @RequiresFlagsDisabled({Flags.FLAG_MODES_API, Flags.FLAG_MODES_UI})
+    public void testAreAutomaticZenRulesUserManaged_flagsOff() {
+        assertFalse(mNotificationManager.areAutomaticZenRulesUserManaged());
+    }
+
+    @Test
+    @RequiresFlagsEnabled({Flags.FLAG_MODES_API, Flags.FLAG_MODES_UI})
+    public void testAreAutomaticZenRulesUserManaged_flagsOn() {
+        assertTrue(mNotificationManager.areAutomaticZenRulesUserManaged());
+    }
 
     @Test
     public void testNotificationPolicyVisualEffectsEqual() {
