@@ -51,6 +51,7 @@ import android.view.accessibility.AccessibilityNodeInfo.CollectionInfo;
 import android.view.accessibility.AccessibilityNodeInfo.CollectionItemInfo;
 import android.view.accessibility.AccessibilityNodeInfo.RangeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.TouchDelegateInfo;
+import android.view.accessibility.Flags;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -374,7 +375,9 @@ public class AccessibilityNodeInfoTest {
         info.setEnabled(true);
         info.setPassword(true);
         info.setScrollable(true);
-        info.setGranularScrollingSupported(true);
+        if (Flags.granularScrolling()) {
+            info.setGranularScrollingSupported(true);
+        }
 
         // 10 Boolean properties
         info.setAccessibilityFocused(true);
@@ -609,9 +612,11 @@ public class AccessibilityNodeInfoTest {
                 receivedInfo.isPassword());
         assertSame("scrollable has incorrect value", expectedInfo.isScrollable(),
                 receivedInfo.isScrollable());
-        assertSame("supportsGranularScrolling has incorrect value",
-                expectedInfo.isGranularScrollingSupported(),
-                receivedInfo.isGranularScrollingSupported());
+        if (Flags.granularScrolling()) {
+            assertSame("supportsGranularScrolling has incorrect value",
+                    expectedInfo.isGranularScrollingSupported(),
+                    receivedInfo.isGranularScrollingSupported());
+        }
 
         // 10 Boolean properties
         assertSame("AccessibilityFocused has incorrect value",
@@ -729,8 +734,10 @@ public class AccessibilityNodeInfoTest {
         assertFalse("enabled not properly recycled", info.isEnabled());
         assertFalse("password not properly recycled", info.isPassword());
         assertFalse("scrollable not properly recycled", info.isScrollable());
-        assertFalse("granularScrollingSupported is not properly recycled",
-                info.isGranularScrollingSupported());
+        if (Flags.granularScrolling()) {
+            assertFalse("granularScrollingSupported is not properly recycled",
+                    info.isGranularScrollingSupported());
+        }
 
         // 10 Boolean properties
         assertFalse("accessibility focused not properly recycled", info.isAccessibilityFocused());
