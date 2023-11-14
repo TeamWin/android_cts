@@ -119,6 +119,23 @@ public class LauncherAppsTest {
     private static final String ARCHIVE_APK_PATH =
             SAMPLE_APK_BASE + "CtsContentMockLauncherTestApp.apk";
 
+    private static final String ACTIVITY_LABEL_TITLE = "Launcher Activity";
+    private static final String ACTIVITY_LABEL_PACKAGE_NAME =
+            "android.content.cts.mocklauncherapp.activitylabel";
+    private static final String ACTIVITY_LABEL_APK_PATH =
+            SAMPLE_APK_BASE + "CtsContentMockLauncherActivityLabelTestApp.apk";
+
+    private static final String APPLICATION_LABEL_TITLE = "Launcher Application";
+    private static final String APPLICATION_LABEL_PACKAGE_NAME =
+            "android.content.cts.mocklauncherapp.applicationlabel";
+    private static final String APPLICATION_LABEL_APK_PATH =
+            SAMPLE_APK_BASE + "CtsContentMockLauncherApplicationLabelTestApp.apk";
+
+    private static final String INVISIBLE_LABELS_PACKAGE_NAME =
+            "android.content.cts.mocklauncherapp.invisiblelabels";
+    private static final String INVISIBLE_LABELS_APK_PATH =
+            SAMPLE_APK_BASE + "CtsContentMockLauncherInvisibleLabelsTestApp.apk";
+
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
@@ -274,6 +291,56 @@ public class LauncherAppsTest {
         assertNotNull(info.getActivityInfo());
         assertEquals(info.getName(), info.getActivityInfo().name);
         assertEquals(info.getComponentName().getPackageName(), info.getActivityInfo().packageName);
+    }
+
+    @Test
+    @AppModeFull(reason = "Need special permission")
+    public void testGetActivityListAndGetLabel_ActivityLabel() {
+        try {
+            installPackage(ACTIVITY_LABEL_APK_PATH);
+            List<LauncherActivityInfo> activities =
+                    mLauncherApps.getActivityList(ACTIVITY_LABEL_PACKAGE_NAME, USER_HANDLE);
+
+            assertThat(activities).hasSize(1);
+            LauncherActivityInfo launcherActivityInfo = activities.get(0);
+            assertThat(launcherActivityInfo.getLabel().toString()).isEqualTo(ACTIVITY_LABEL_TITLE);
+        } finally {
+            uninstallPackage(ACTIVITY_LABEL_PACKAGE_NAME);
+        }
+    }
+
+    @Test
+    @AppModeFull(reason = "Need special permission")
+    public void testGetActivityListAndGetLabel_emptyActivityLabel_ApplicationLabel() {
+        try {
+            installPackage(APPLICATION_LABEL_APK_PATH);
+            List<LauncherActivityInfo> activities =
+                    mLauncherApps.getActivityList(APPLICATION_LABEL_PACKAGE_NAME, USER_HANDLE);
+
+            assertThat(activities).hasSize(1);
+            LauncherActivityInfo launcherActivityInfo = activities.get(0);
+            assertThat(launcherActivityInfo.getLabel().toString())
+                    .isEqualTo(APPLICATION_LABEL_TITLE);
+        } finally {
+            uninstallPackage(APPLICATION_LABEL_PACKAGE_NAME);
+        }
+    }
+
+    @Test
+    @AppModeFull(reason = "Need special permission")
+    public void testGetActivityListAndGetLabel_emptyLabels_PackageName() {
+        try {
+            installPackage(INVISIBLE_LABELS_APK_PATH);
+            List<LauncherActivityInfo> activities =
+                    mLauncherApps.getActivityList(INVISIBLE_LABELS_PACKAGE_NAME, USER_HANDLE);
+
+            assertThat(activities).hasSize(1);
+            LauncherActivityInfo launcherActivityInfo = activities.get(0);
+            assertThat(launcherActivityInfo.getLabel().toString())
+                    .isEqualTo(INVISIBLE_LABELS_PACKAGE_NAME);
+        } finally {
+            uninstallPackage(INVISIBLE_LABELS_PACKAGE_NAME);
+        }
     }
 
     @Test
