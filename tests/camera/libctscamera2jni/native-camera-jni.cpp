@@ -242,7 +242,7 @@ class CaptureSessionListener {
     }
 
     static void onWindowPrepared(
-            void* obj, ACameraWindowType* anw, ACameraCaptureSession* session) {
+            void* obj, ANativeWindow* anw, ACameraCaptureSession* session) {
         ALOGV("%s", __FUNCTION__);
         if (obj == nullptr) {
             ALOGE("%s ctx ptr is null ?", __FUNCTION__);
