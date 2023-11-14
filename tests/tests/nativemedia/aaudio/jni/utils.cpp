@@ -218,17 +218,19 @@ void StreamBuilderHelper::streamCommand(
 InputStreamBuilderHelper::InputStreamBuilderHelper(
         aaudio_sharing_mode_t requestedSharingMode,
         aaudio_performance_mode_t requestedPerfMode,
-        aaudio_format_t requestedFormat)
+        aaudio_format_t requestedFormat,
+        int32_t requestedSampleRate)
         : StreamBuilderHelper{AAUDIO_DIRECTION_INPUT,
-            48000, 1, requestedFormat, requestedSharingMode, requestedPerfMode} {}
+            requestedSampleRate, 1, requestedFormat, requestedSharingMode, requestedPerfMode} {}
 
 
 OutputStreamBuilderHelper::OutputStreamBuilderHelper(
         aaudio_sharing_mode_t requestedSharingMode,
         aaudio_performance_mode_t requestedPerfMode,
-        aaudio_format_t requestedFormat)
+        aaudio_format_t requestedFormat,
+        int32_t requestedSampleRate)
         : StreamBuilderHelper{AAUDIO_DIRECTION_OUTPUT,
-            48000, 2, requestedFormat, requestedSharingMode, requestedPerfMode} {}
+            requestedSampleRate, 2, requestedFormat, requestedSharingMode, requestedPerfMode} {}
 
 void OutputStreamBuilderHelper::initBuilder() {
     StreamBuilderHelper::initBuilder();
