@@ -41,15 +41,12 @@ class CtsAngleCommon {
     static final String ANGLE_DRIVER_TEST_PKG = "com.android.angleintegrationtest.drivertest";
     static final String ANGLE_DRIVER_TEST_SEC_PKG =
             "com.android.angleintegrationtest.drivertestsecondary";
-    static final String ANGLE_GAME_DRIVER_TEST_PKG =
-            "com.android.angleintegrationtest.gamedrivertest";
     static final String ANGLE_DRIVER_TEST_CLASS = "AngleDriverTestActivity";
     static final String ANGLE_DRIVER_TEST_DEFAULT_METHOD = "testUseDefaultDriver";
     static final String ANGLE_DRIVER_TEST_ANGLE_METHOD = "testUseAngleDriver";
     static final String ANGLE_DRIVER_TEST_NATIVE_METHOD = "testUseNativeDriver";
     static final String ANGLE_DRIVER_TEST_APP = "CtsAngleDriverTestCases.apk";
     static final String ANGLE_DRIVER_TEST_SEC_APP = "CtsAngleDriverTestCasesSecondary.apk";
-    static final String ANGLE_GAME_DRIVER_TEST_APP = "CtsAngleGameDriverTestCases.apk";
     static final String ANGLE_DUMPSYS_GPU_TEST_PKG =
             "com.android.angleintegrationtest.dumpsysgputest";
     static final String ANGLE_DUMPSYS_GPU_TEST_CLASS = "AngleDumpsysGpuTestActivity";
@@ -158,26 +155,6 @@ class CtsAngleCommon {
      */
     static void setProperty(ITestDevice device, String property, String value) throws Exception {
         device.executeShellCommand("setprop " + property + " " + value);
-    }
-
-    static void setGameModeBatteryConfig(ITestDevice device, String packageName, boolean useAngle)
-            throws Exception {
-        device.executeShellCommand("device_config put game_overlay " + packageName
-                + " mode=3,useAngle=" + Boolean.toString(useAngle));
-    }
-
-    static void setGameModeStandardConfig(ITestDevice device, String packageName, boolean useAngle)
-            throws Exception {
-        device.executeShellCommand("device_config put game_overlay " + packageName
-                + " mode=1,useAngle=" + Boolean.toString(useAngle));
-    }
-
-    static void setGameModeBattery(ITestDevice device, String packageName) throws Exception {
-        device.executeShellCommand("cmd game mode battery " + packageName);
-    }
-
-    static void setGameModeStandard(ITestDevice device, String packageName) throws Exception {
-        device.executeShellCommand("cmd game mode standard " + packageName);
     }
 
     /**
