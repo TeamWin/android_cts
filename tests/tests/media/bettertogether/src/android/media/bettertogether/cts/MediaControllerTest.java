@@ -833,11 +833,16 @@ public class MediaControllerTest {
         @Override
         public void onCommand(String command, Bundle extras, ResultReceiver cb) {
             synchronized (mWaitLock) {
+                final RemoteUserInfo currentControllerInfo = mSession.getCurrentControllerInfo();
+                if (!compareRemoteUserInfo(mControllerInfo, currentControllerInfo)) {
+                    // Ignore this command we did not send
+                    return;
+                }
                 mOnCommandCalled = true;
                 mCommand = command;
                 mExtras = extras;
                 mCommandCallback = cb;
-                mCallerInfo = mSession.getCurrentControllerInfo();
+                mCallerInfo = currentControllerInfo;
                 mWaitLock.notify();
             }
         }
