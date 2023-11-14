@@ -34,7 +34,6 @@ import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
 
 import android.content.ComponentName;
 import android.content.res.Configuration;
@@ -184,7 +183,7 @@ public class CompatScaleTests extends ActivityManagerTestBase {
         // Launch activity with down/up scaling *disabled* and get the sizes it reports and its
         // Window state.
         try (var session = new BaseActivitySessionCloseable(ACTIVITY_UNDER_TEST)) {
-            mAppSizesNormal = getActivityReportedSizes();
+            mAppSizesNormal = session.getActivitySession().getConfigInfo().sizeInfo;
             mWindowStateNormal = getPackageWindowState();
         }
 
@@ -193,7 +192,7 @@ public class CompatScaleTests extends ActivityManagerTestBase {
             // and its Window state.
             try (var down = new CompatChangeCloseable("DOWNSCALED", PACKAGE_UNDER_TEST);
                     var session = new BaseActivitySessionCloseable(ACTIVITY_UNDER_TEST)) {
-                mAppSizesDownscaled = getActivityReportedSizes();
+                mAppSizesDownscaled = session.getActivitySession().getConfigInfo().sizeInfo;
                 mWindowStateDownscaled = getPackageWindowState();
             }
             test_scalesCorrectly_inCompatDownscalingMode();
@@ -204,7 +203,7 @@ public class CompatScaleTests extends ActivityManagerTestBase {
                 // reports and its Window state.
                 try (var up = new CompatChangeCloseable("DOWNSCALED_INVERSE", PACKAGE_UNDER_TEST);
                         var session = new BaseActivitySessionCloseable(ACTIVITY_UNDER_TEST)) {
-                    mAppSizesUpscaled = getActivityReportedSizes();
+                    mAppSizesUpscaled = session.getActivitySession().getConfigInfo().sizeInfo;
                     mWindowStateUpscaled = getPackageWindowState();
                 }
                 test_scalesCorrectly_inCompatUpscalingMode();
@@ -412,13 +411,6 @@ public class CompatScaleTests extends ActivityManagerTestBase {
                 mWindowStateNormal.getRequestedHeight(),
                 mInvCompatScale,
                 mWindowStateUpscaled.getRequestedHeight());
-    }
-
-    private CommandSession.SizeInfo getActivityReportedSizes() {
-        final CommandSession.SizeInfo details =
-                getLastReportedSizesForActivity(ACTIVITY_UNDER_TEST);
-        collector.checkThat(details, notNullValue());
-        return details;
     }
 
     private WindowManagerState.WindowState getPackageWindowState() {
