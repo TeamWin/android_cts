@@ -23,6 +23,7 @@ import static android.bluetooth.BluetoothA2dp.DYNAMIC_BUFFER_SUPPORT_NONE;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
@@ -119,6 +120,26 @@ public class BluetoothA2dpTest {
         assertTrue(mIsProfileReady);
 
         mAdapter.closeProfileProxy(BluetoothProfile.A2DP, mBluetoothA2dp);
+        assertTrue(waitForProfileDisconnect());
+        assertFalse(mIsProfileReady);
+    }
+
+    @Test
+    public void test_closeProfileProxy_onDifferentAdapter() {
+        if (!(mHasBluetooth && mIsA2dpSupported)) return;
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothA2dp);
+        assertTrue(mIsProfileReady);
+
+
+        Context context = mContext.createAttributionContext("test");
+        BluetoothManager manager = context.getSystemService(BluetoothManager.class);
+        BluetoothAdapter adapter = manager.getAdapter();
+
+        assertNotEquals(mAdapter, adapter);
+
+        adapter.closeProfileProxy(BluetoothProfile.A2DP, mBluetoothA2dp);
         assertTrue(waitForProfileDisconnect());
         assertFalse(mIsProfileReady);
     }
