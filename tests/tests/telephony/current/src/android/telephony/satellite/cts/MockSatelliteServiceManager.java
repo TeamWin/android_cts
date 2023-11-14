@@ -78,6 +78,8 @@ class MockSatelliteServiceManager {
             "cmd phone set-satellite-pointing-ui-class-name";
     private static final String SET_SATELLITE_DEVICE_ALIGN_TIMEOUT_DURATION_CMD =
             "cmd phone set-satellite-device-aligned-timeout-duration -t ";
+    private static final String SET_SHOULD_SEND_DATAGRAM_TO_MODEM_IN_DEMO_MODE =
+            "cmd phone set-should-send-datagram-to-modem-in-demo-mode ";
     private static final long TIMEOUT = 5000;
     @NonNull private ActivityManager mActivityManager;
     @NonNull private UidImportanceListener mUidImportanceListener = new UidImportanceListener();
@@ -984,6 +986,20 @@ class MockSatelliteServiceManager {
             return "true".equals(result);
         } catch (Exception e) {
             loge("setDeviceAlignedTimeoutDuration: e=" + e);
+            return false;
+        }
+    }
+
+    boolean setShouldSendDatagramToModemInDemoMode(boolean shouldSendToDemoMode) {
+        try {
+            String result = TelephonyUtils.executeShellCommand(mInstrumentation,
+                    SET_SHOULD_SEND_DATAGRAM_TO_MODEM_IN_DEMO_MODE
+                            + (shouldSendToDemoMode ? "true" : "false"));
+            logd("setShouldSendDatagramToModemInDemoMode(" + shouldSendToDemoMode + "): result = "
+                    + result);
+            return true;
+        } catch (Exception e) {
+            loge("setShouldSendDatagramToModemInDemoMode: e=" + e);
             return false;
         }
     }
