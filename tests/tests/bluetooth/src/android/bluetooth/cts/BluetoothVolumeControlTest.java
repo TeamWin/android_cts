@@ -27,6 +27,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -159,8 +160,7 @@ public class BluetoothVolumeControlTest {
 
     @Test
     public void testCloseProfileProxy() {
-        if (!(mHasBluetooth && mIsVolumeControlSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsVolumeControlSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothVolumeControl);
         assertTrue(mIsProfileReady);
@@ -172,8 +172,7 @@ public class BluetoothVolumeControlTest {
 
     @Test
     public void testGetConnectedDevices() {
-        if (!(mHasBluetooth && mIsVolumeControlSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsVolumeControlSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothVolumeControl);
 
@@ -186,8 +185,7 @@ public class BluetoothVolumeControlTest {
 
     @Test
     public void testGetDevicesMatchingConnectionStates() {
-        if (!(mHasBluetooth && mIsVolumeControlSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsVolumeControlSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothVolumeControl);
 
@@ -201,8 +199,7 @@ public class BluetoothVolumeControlTest {
 
     @Test
     public void testRegisterUnregisterCallback() {
-        if (!(mHasBluetooth && mIsVolumeControlSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsVolumeControlSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothVolumeControl);
 
@@ -237,8 +234,7 @@ public class BluetoothVolumeControlTest {
 
     @Test
     public void testSetVolumeOffset() {
-        if (!(mHasBluetooth && mIsVolumeControlSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsVolumeControlSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothVolumeControl);
 
@@ -254,8 +250,7 @@ public class BluetoothVolumeControlTest {
     @RequiresFlagsEnabled(Flags.FLAG_LEAUDIO_BROADCAST_VOLUME_CONTROL_FOR_CONNECTED_DEVICES)
     @Test
     public void testSetDeviceVolume() {
-        if (!(mHasBluetooth && mIsVolumeControlSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsVolumeControlSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothVolumeControl);
 
@@ -276,8 +271,7 @@ public class BluetoothVolumeControlTest {
 
     @Test
     public void testIsVolumeOffsetAvailable() {
-        if (!(mHasBluetooth && mIsVolumeControlSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsVolumeControlSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothVolumeControl);
 
@@ -290,8 +284,7 @@ public class BluetoothVolumeControlTest {
 
     @Test
     public void testVolumeOffsetCallback() {
-        if (!(mHasBluetooth && mIsVolumeControlSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsVolumeControlSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothVolumeControl);
 
@@ -307,8 +300,7 @@ public class BluetoothVolumeControlTest {
     @RequiresFlagsEnabled(Flags.FLAG_LEAUDIO_BROADCAST_VOLUME_CONTROL_FOR_CONNECTED_DEVICES)
     @Test
     public void testDeviceVolumeChangedCallback() {
-        if (!(mHasBluetooth && mIsVolumeControlSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsVolumeControlSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothVolumeControl);
 
@@ -322,8 +314,7 @@ public class BluetoothVolumeControlTest {
 
     @Test
     public void testGetConnectionState() {
-        if (!(mHasBluetooth && mIsVolumeControlSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsVolumeControlSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothVolumeControl);
 
@@ -342,8 +333,7 @@ public class BluetoothVolumeControlTest {
 
     @Test
     public void testGetConnectionPolicy() {
-        if (!(mHasBluetooth && mIsVolumeControlSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsVolumeControlSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothVolumeControl);
 
@@ -362,8 +352,7 @@ public class BluetoothVolumeControlTest {
 
     @Test
     public void testSetConnectionPolicy() {
-        if (!(mHasBluetooth && mIsVolumeControlSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsVolumeControlSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothVolumeControl);
 
