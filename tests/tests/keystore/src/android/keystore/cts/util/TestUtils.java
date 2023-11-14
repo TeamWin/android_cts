@@ -59,6 +59,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.UnrecoverableEntryException;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -636,6 +637,17 @@ public class TestUtils {
                 alias,
                 new KeyPair(originalCert.getPublicKey(), originalPrivateKey),
                 keystoreBacked);
+    }
+
+    /** Returns true if a key with the given alias exists. */
+    public static boolean keyExists(String alias) throws Exception {
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null);
+        try {
+            return keyStore.getEntry(alias, null) != null;
+        } catch (UnrecoverableKeyException e) {
+            return false;
+        }
     }
 
     public static byte[] drain(InputStream in) throws IOException {
