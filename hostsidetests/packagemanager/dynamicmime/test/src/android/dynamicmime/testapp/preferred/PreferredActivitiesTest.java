@@ -63,8 +63,8 @@ public class PreferredActivitiesTest extends BaseDynamicMimeTest {
     private static final String NAV_BAR_INTERACTION_MODE_RES_NAME = "config_navBarInteractionMode";
     private static final int NAV_BAR_INTERACTION_MODE_GESTURAL = 2;
 
-    private static final String BUTTON_ALWAYS_RES_ID = "android:id/button_always";
-    private static final BySelector BUTTON_ALWAYS = By.res(BUTTON_ALWAYS_RES_ID);
+    private static final String BUTTON_ALWAYS_RES_ID = ".*:id/button_always.*";
+    private static final BySelector BUTTON_ALWAYS = By.res(Pattern.compile(BUTTON_ALWAYS_RES_ID));
     private static final UiSelector BUTTON_ALWAYS_UI_SELECTOR =
             new UiSelector().resourceId(BUTTON_ALWAYS_RES_ID);
     private static final BySelector RESOLVER_DIALOG = By.res(Pattern.compile(".*:id/contentPanel.*"));
