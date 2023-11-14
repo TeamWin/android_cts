@@ -46,6 +46,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -220,7 +221,13 @@ public class ManifestTestListAdapter extends TestListAdapter {
             }
         }
 
-        return mDisplayModesTests.getOrDefault(sCurrentDisplayMode.toString(), new ArrayList<>());
+        if (mTestFilter != null) {
+            // Filter test rows dynamically when the filter is specified.
+            return getRowsWithDisplayMode(sCurrentDisplayMode.toString());
+        } else {
+            return mDisplayModesTests.getOrDefault(
+                    sCurrentDisplayMode.toString(), new ArrayList<>());
+        }
     }
 
     /**
@@ -585,6 +592,17 @@ public class ManifestTestListAdapter extends TestListAdapter {
         return false;
     }
 
+    /** Checks whether the title of the test matches the test filter. */
+    private boolean macthTestFilter(String testTitle) {
+        if (mTestFilter == null) {
+            return true;
+        }
+        return testTitle != null
+                && testTitle
+                        .toLowerCase(Locale.getDefault())
+                        .contains(mTestFilter.toLowerCase(Locale.getDefault()));
+    }
+
     private boolean isVisibleBackgroundNonProfileUser() {
         if (!SdkLevel.isAtLeastU()) {
             Log.d(LOG_TAG, "isVisibleBagroundNonProfileUser() returning false on pre-UDC device");
@@ -637,7 +655,8 @@ public class ManifestTestListAdapter extends TestListAdapter {
                     && hasAllActions(test.requiredActions)
                     && matchAllConfigs(mContext, test.requiredConfigs)
                     && matchDisplayMode(test.displayMode, mode)
-                    && !matchAnyExcludedUserType(test.excludedUserTypes)) {
+                    && !matchAnyExcludedUserType(test.excludedUserTypes)
+                    && macthTestFilter(test.title)) {
                 if (test.applicableFeatures == null || hasAnyFeature(test.applicableFeatures)) {
                     // Add suffix in test name if the test is in the folded mode.
                     test.testName = setTestNameSuffix(mode, test.testName);

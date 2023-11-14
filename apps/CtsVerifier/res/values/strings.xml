@@ -33,6 +33,9 @@
     <string name="fail_and_next_button_text">Fail and Next</string>
     <string name="yes_string">Yes</string>
     <string name="no_string">No</string>
+    <string name="search_label">TestListActivity</string>
+    <string name="search_hint">Search Tests</string>
+    <string name="search_title">Search</string>
 
     <!-- Strings for CtsReportLog warning -->
     <string name="reportlog_warning_title">CTS-Verifier Report Log</string>
