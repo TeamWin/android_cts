@@ -1098,8 +1098,12 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         final Intent intent = new Intent();
         intent.setClassName(activity.getPackageName(), activity.getClassName());
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        ActivityOptions options = ActivityOptions.makeBasic()
+                .setPendingIntentCreatorBackgroundActivityStartMode(
+                    ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
         return PendingIntent.getActivity(mContext, 1 /* requestCode */, intent,
-                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE,
+                options.toBundle());
     }
 
     public static class ImmediateLaunchTestActivity extends Activity {}
