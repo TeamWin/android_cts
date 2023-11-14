@@ -992,6 +992,26 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     }
 
     /**
+     * Test manual flash strength level control.
+     */
+    @Test
+    public void testManualFlashStrengthLevelControl() throws Exception {
+        for (String id : getCameraIdsUnderTest()) {
+            try {
+                if (!mAllStaticInfo.get(id).isManualFlashStrengthControlSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support manual flash "
+                            + "strength control, skipping");
+                    continue;
+                }
+                openDevice(id);
+                manualFlashStrengthControlTestByCamera();
+            } finally {
+                closeDevice();
+            }
+        }
+    }
+
+    /**
      * Test settings override controls.
      */
     @Test
@@ -3259,6 +3279,49 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                         ratio, listener, NUM_FRAMES_VERIFIED, zoomRatioDelta);
             }
         }
+    }
+
+    private void manualFlashStrengthControlTestByCamera() throws Exception {
+        Size maxPrevSize = mOrderedPreviewSizes.get(0);
+        int singleMaxLevel = mStaticInfo.getCharacteristics().get(
+                CameraCharacteristics.FLASH_SINGLE_STRENGTH_MAX_LEVEL);
+        int torchMaxLevel = mStaticInfo.getCharacteristics().get(
+                CameraCharacteristics.FLASH_TORCH_STRENGTH_MAX_LEVEL);
+        int strengthLevel = singleMaxLevel - 1;
+
+        SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
+        CaptureRequest.Builder requestBuilder =
+                mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+
+        // Single mode
+        requestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+        requestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_SINGLE);
+        requestBuilder.set(CaptureRequest.FLASH_STRENGTH_LEVEL, strengthLevel);
+
+        CaptureRequest request;
+        updatePreviewSurface(maxPrevSize);
+        configurePreviewOutput(requestBuilder);
+        request = requestBuilder.build();
+        mSession.capture(request, resultListener, mHandler);
+        waitForSettingsApplied(resultListener, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
+        CaptureResult result =
+                resultListener.getCaptureResultForRequest(request, NUM_RESULTS_WAIT_TIMEOUT);
+        int resultStrengthLevel = getValueNotNull(result, CaptureResult.FLASH_STRENGTH_LEVEL);
+        assertTrue(resultStrengthLevel == strengthLevel);
+        assertTrue(resultStrengthLevel <= singleMaxLevel);
+
+        // Torch mode
+        strengthLevel = torchMaxLevel - 1;
+        requestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+        requestBuilder.set(CaptureRequest.FLASH_STRENGTH_LEVEL, strengthLevel);
+        CaptureRequest torchRequest = requestBuilder.build();
+        mSession.setRepeatingRequest(torchRequest, resultListener, mHandler);
+        waitForSettingsApplied(resultListener, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
+        result = resultListener.getCaptureResultForRequest(
+                torchRequest, NUM_RESULTS_WAIT_TIMEOUT);
+        resultStrengthLevel = getValueNotNull(result, CaptureResult.FLASH_STRENGTH_LEVEL);
+        assertTrue(resultStrengthLevel == strengthLevel);
+        assertTrue(resultStrengthLevel <= torchMaxLevel);
     }
 
     private void autoframingTestByCamera() throws Exception {
