@@ -880,13 +880,4 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         mWmState.waitForWindowSurfaceShown(getWindowName(activityBehind), visible);
         mWmState.assertVisibility(activityBehind, visible);
     }
-
-    /**
-     * Checks whether the device has automotive split-screen multitasking feature enabled
-     */
-    private boolean hasAutomotiveSplitscreenMultitaskingFeature() {
-        return mContext.getPackageManager()
-                .hasSystemFeature(/* PackageManager.FEATURE_CAR_SPLITSCREEN_MULTITASKING */
-                        "android.software.car.splitscreen_multitasking") && isCar();
-    }
 }
