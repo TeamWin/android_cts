@@ -64,7 +64,7 @@ import java.io.File;
  * after all the links to new modules are created.
  */
 @RunWith(Parameterized.class)
-public class BypassDatabaseOperationsTestCopy extends ScopedStorageBaseDeviceTest {
+public class BypassDatabaseOperationsTest extends ScopedStorageBaseDeviceTest {
     static final String TAG = "BypassDatabaseOperationsTest";
     // An app with READ_EXTERNAL_STORAGE permission. Targets current SDK and is preinstalled
     private static final TestApp APP_SYSTEM_GALLERY_DEFAULT = new TestApp("TestAppA",
