@@ -22,13 +22,17 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assert.fail; import static org.junit.Assume.assumeNotNull;
 
+import android.os.Flags;
 import android.os.HandlerThread;
 import android.os.PerformanceHintManager;
 import android.os.PerformanceHintManager.Session;
 import android.os.Process;
+import android.os.WorkDuration;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -39,6 +43,7 @@ import com.android.compatibility.common.util.ApiTest;
 import com.google.common.base.Strings;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -48,6 +53,10 @@ public class PerformanceHintManagerTest {
 
     private final long DEFAULT_TARGET_NS = 16666666L;
     private PerformanceHintManager mPerformanceHintManager;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     static {
         System.loadLibrary("ctsos_jni");
@@ -292,6 +301,37 @@ public class PerformanceHintManagerTest {
         }
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ADPF_GPU_REPORT_ACTUAL_WORK_DURATION)
+    @ApiTest(apis = {"android.os.PerformanceHintManager.Session#reportActualWorkDuration"})
+    public void testReportActualWorkDurationWithWorkDurationClass() {
+        Session s = createSession();
+        assumeNotNull(s);
+        s.updateTargetWorkDuration(16);
+        WorkDuration workDuration = new WorkDuration(1000, 15, 11, 8);
+        s.reportActualWorkDuration(workDuration);
+    }
+
+    @Test
+    // TODO(b/304828176): Support NDK API annotation.
+    @ApiTest(apis = {"APerformanceHint_reportActualWorkDuration2"})
+    public void testNativeReportActualWorkDuration2() {
+        final String resultMessage = nativeTestReportActualWorkDuration2();
+        if (!Strings.isNullOrEmpty(resultMessage)) {
+            fail(resultMessage);
+        }
+    }
+
+    @Test
+    // TODO(b/304828176): Support NDK API annotation.
+    @ApiTest(apis = {"APerformanceHint_reportActualWorkDuration2"})
+    public void testNativeReportActualWorkDuration2WithIllegalArgument() {
+        final String resultMessage = nativeTestReportActualWorkDuration2WithIllegalArgument();
+        if (!Strings.isNullOrEmpty(resultMessage)) {
+            fail(resultMessage);
+        }
+    }
+
     private native String nativeTestCreateHintSession();
     private native String nativeTestGetPreferredUpdateRateNanos();
     private native String nativeUpdateTargetWorkDuration();
@@ -300,5 +340,6 @@ public class PerformanceHintManagerTest {
     private native String nativeReportActualWorkDurationWithIllegalArgument();
     private native String nativeTestSetThreadsWithInvalidTid();
     private native String nativeSetPreferPowerEfficiency();
-
+    private native String nativeTestReportActualWorkDuration2();
+    private native String nativeTestReportActualWorkDuration2WithIllegalArgument();
 }

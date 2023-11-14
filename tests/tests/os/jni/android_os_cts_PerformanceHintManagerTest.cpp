@@ -200,6 +200,117 @@ static jstring nativeSetPreferPowerEfficiency(JNIEnv* env, jobject) {
     return nullptr;
 }
 
+static jstring nativeTestReportActualWorkDuration2(JNIEnv* env, jobject) {
+    APerformanceHintManager* manager = APerformanceHint_getManager();
+    if (!manager) return toJString(env, "null manager");
+    SessionWrapper wrapper = createSession(manager);
+    if (wrapper.session() == nullptr) return nullptr;
+
+    AWorkDuration* workDuration1 = AWorkDuration_create();
+    AWorkDuration_setWorkPeriodStartTimestampNanos(workDuration1, 1000);
+    AWorkDuration_setActualTotalDurationNanos(workDuration1, 14);
+    AWorkDuration_setActualCpuDurationNanos(workDuration1, 11);
+    AWorkDuration_setActualGpuDurationNanos(workDuration1, 8);
+
+    int result = APerformanceHint_reportActualWorkDuration2(wrapper.session(), workDuration1);
+    if (result != 0) {
+        return toJString(env,
+                         "APerformanceHint_reportActualWorkDuration2("
+                         "{workPeriodStartTimestampNanos = 1000, actualTotalDurationNanos = 14, "
+                         "actualCpuDurationNanos = 11, actualGpuDurationNanos = 8}) did not "
+                         "return 0");
+    }
+    AWorkDuration_release(workDuration1);
+
+    AWorkDuration* workDuration2 = AWorkDuration_create();
+    AWorkDuration_setWorkPeriodStartTimestampNanos(workDuration2, 1016);
+    AWorkDuration_setActualTotalDurationNanos(workDuration2, 14);
+    AWorkDuration_setActualCpuDurationNanos(workDuration2, 12);
+    AWorkDuration_setActualGpuDurationNanos(workDuration2, 4);
+    result = APerformanceHint_reportActualWorkDuration2(wrapper.session(), workDuration2);
+    if (result != 0) {
+        return toJString(env,
+                         "APerformanceHint_reportActualWorkDuration2("
+                         "{workPeriodStartTimestampNanos = 1016, actualTotalDurationNanos = 14, "
+                         "actualCpuDurationNanos = 12, actualGpuDurationNanos = 4}) did not "
+                         "return 0");
+    }
+    AWorkDuration_release(workDuration2);
+
+    return nullptr;
+}
+
+static jstring nativeTestReportActualWorkDuration2WithIllegalArgument(JNIEnv* env, jobject) {
+    APerformanceHintManager* manager = APerformanceHint_getManager();
+    if (!manager) return toJString(env, "null manager");
+    SessionWrapper wrapper = createSession(manager);
+    if (wrapper.session() == nullptr) return nullptr;
+
+    AWorkDuration* workDuration0 = AWorkDuration_create();
+    AWorkDuration_setWorkPeriodStartTimestampNanos(workDuration0, -1);
+    AWorkDuration_setActualTotalDurationNanos(workDuration0, 14);
+    AWorkDuration_setActualCpuDurationNanos(workDuration0, 11);
+    AWorkDuration_setActualGpuDurationNanos(workDuration0, 8);
+
+    int result = APerformanceHint_reportActualWorkDuration2(wrapper.session(), workDuration0);
+    if (result != EINVAL) {
+        return toJString(env,
+                         "APerformanceHint_reportActualWorkDuration2("
+                         "{workPeriodStartTimestampNanos = -1, actualTotalDurationNanos = 14, "
+                         "actualCpuDurationNanos = 11, actualGpuDurationNanos = 8}) did not "
+                         "return EINVAL");
+    }
+    AWorkDuration_release(workDuration0);
+
+    AWorkDuration* workDuration1 = AWorkDuration_create();
+    AWorkDuration_setWorkPeriodStartTimestampNanos(workDuration1, 1000);
+    AWorkDuration_setActualTotalDurationNanos(workDuration1, -1);
+    AWorkDuration_setActualCpuDurationNanos(workDuration1, 11);
+    AWorkDuration_setActualGpuDurationNanos(workDuration1, 8);
+
+    result = APerformanceHint_reportActualWorkDuration2(wrapper.session(), workDuration1);
+    if (result != EINVAL) {
+        return toJString(env,
+                         "APerformanceHint_reportActualWorkDuration2("
+                         "{workPeriodStartTimestampNanos = 1000, actualTotalDurationNanos = -1, "
+                         "actualCpuDurationNanos = 11, actualGpuDurationNanos = 8}) did not "
+                         "return EINVAL");
+    }
+    AWorkDuration_release(workDuration1);
+
+    AWorkDuration* workDuration2 = AWorkDuration_create();
+    AWorkDuration_setWorkPeriodStartTimestampNanos(workDuration2, 1000);
+    AWorkDuration_setActualTotalDurationNanos(workDuration2, 14);
+    AWorkDuration_setActualCpuDurationNanos(workDuration2, -1);
+    AWorkDuration_setActualGpuDurationNanos(workDuration2, 8);
+    result = APerformanceHint_reportActualWorkDuration2(wrapper.session(), workDuration2);
+    if (result != EINVAL) {
+        return toJString(env,
+                         "APerformanceHint_reportActualWorkDuration2("
+                         "{workPeriodStartTimestampNanos = 1000, actualTotalDurationNanos = 14, "
+                         "actualCpuDurationNanos = -1, actualGpuDurationNanos = 8}) did not "
+                         "return EINVAL");
+    }
+    AWorkDuration_release(workDuration2);
+
+    AWorkDuration* workDuration3 = AWorkDuration_create();
+    AWorkDuration_setWorkPeriodStartTimestampNanos(workDuration3, 1000);
+    AWorkDuration_setActualTotalDurationNanos(workDuration3, 14);
+    AWorkDuration_setActualCpuDurationNanos(workDuration3, 11);
+    AWorkDuration_setActualGpuDurationNanos(workDuration3, -1);
+    result = APerformanceHint_reportActualWorkDuration2(wrapper.session(), workDuration3);
+    if (result != EINVAL) {
+        return toJString(env,
+                         "APerformanceHint_reportActualWorkDuration2("
+                         "{workPeriodStartTimestampNanos = 1000, actualTotalDurationNanos = 14, "
+                         "actualCpuDurationNanos = 11, actualGpuDurationNanos = -1}) did not "
+                         "return EINVAL");
+    }
+    AWorkDuration_release(workDuration3);
+
+    return nullptr;
+}
+
 static JNINativeMethod gMethods[] = {
     {"nativeTestCreateHintSession", "()Ljava/lang/String;",
      (void*)nativeTestCreateHintSession},
@@ -217,6 +328,10 @@ static JNINativeMethod gMethods[] = {
      (void*)nativeTestSetThreadsWithInvalidTid},
     {"nativeSetPreferPowerEfficiency", "()Ljava/lang/String;",
      (void*)nativeSetPreferPowerEfficiency},
+    {"nativeTestReportActualWorkDuration2", "()Ljava/lang/String;",
+     (void*)nativeTestReportActualWorkDuration2},
+    {"nativeTestReportActualWorkDuration2WithIllegalArgument", "()Ljava/lang/String;",
+     (void*)nativeTestReportActualWorkDuration2WithIllegalArgument},
 };
 
 int register_android_os_cts_PerformanceHintManagerTest(JNIEnv *env) {
