@@ -26,11 +26,18 @@ import static com.google.common.truth.Truth.assertThat;
 import android.net.InetAddresses;
 import android.net.LinkAddress;
 import android.os.Parcel;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.telephony.PreciseDataConnectionState;
 import android.telephony.data.ApnSetting;
 import android.telephony.data.DataCallResponse;
 import android.telephony.data.NetworkSliceInfo;
 import android.telephony.data.TrafficDescriptor;
 
+import com.android.internal.telephony.flags.Flags;
+
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.net.InetAddress;
@@ -75,6 +82,13 @@ public class DataCallResponseTest {
             82, 80, 82, 73, 83, 69};
     private static final List<TrafficDescriptor> TRAFFIC_DESCRIPTORS =
             Arrays.asList(new TrafficDescriptor(DNN, OS_APP_ID));
+    private static final int TEST_VALIDATED = PreciseDataConnectionState.NETWORK_VALIDATION_SUCCESS;
+    private static final int TEST_VALIDATE_FAILED =
+            PreciseDataConnectionState.NETWORK_VALIDATION_FAILURE;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Test
     public void testConstructorAndGetters() {
@@ -222,6 +236,174 @@ public class DataCallResponseTest {
                 .setPduSessionId(PDU_SESSION_ID)
                 .setSliceInfo(SLICE_INFO)
                 .setTrafficDescriptors(TRAFFIC_DESCRIPTORS)
+                .build();
+
+        Parcel stateParcel = Parcel.obtain();
+        response.writeToParcel(stateParcel, 0);
+        stateParcel.setDataPosition(0);
+
+        DataCallResponse parcelResponse = DataCallResponse.CREATOR.createFromParcel(stateParcel);
+        assertThat(response).isEqualTo(parcelResponse);
+    }
+
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_NETWORK_VALIDATION)
+    public void testConstructorAndGettersForNetworkValidation() {
+        DataCallResponse response = new DataCallResponse.Builder()
+                .setCause(CAUSE)
+                .setRetryDurationMillis(RETRY)
+                .setId(ID)
+                .setLinkStatus(LINK_STATUS)
+                .setProtocolType(PROTOCOL_TYPE)
+                .setInterfaceName(IF_NAME)
+                .setAddresses(ADDRESSES)
+                .setDnsAddresses(DNSES)
+                .setGatewayAddresses(GATEWAYS)
+                .setPcscfAddresses(PCSCFS)
+                .setMtuV4(MTU_V4)
+                .setMtuV6(MTU_V6)
+                .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
+                .setPduSessionId(PDU_SESSION_ID)
+                .setSliceInfo(SLICE_INFO)
+                .setTrafficDescriptors(TRAFFIC_DESCRIPTORS)
+                .setNetworkValidationStatus(TEST_VALIDATED)
+                .build();
+
+        assertThat(response.getCause()).isEqualTo(CAUSE);
+        assertThat(response.getRetryDurationMillis()).isEqualTo(RETRY);
+        assertThat(response.getId()).isEqualTo(ID);
+        assertThat(response.getLinkStatus()).isEqualTo(LINK_STATUS);
+        assertThat(response.getProtocolType()).isEqualTo(PROTOCOL_TYPE);
+        assertThat(response.getInterfaceName()).isEqualTo(IF_NAME);
+        assertThat(response.getAddresses()).isEqualTo(ADDRESSES);
+        assertThat(response.getDnsAddresses()).isEqualTo(DNSES);
+        assertThat(response.getGatewayAddresses()).isEqualTo(GATEWAYS);
+        assertThat(response.getPcscfAddresses()).isEqualTo(PCSCFS);
+        assertThat(response.getMtuV4()).isEqualTo(MTU_V4);
+        assertThat(response.getMtuV6()).isEqualTo(MTU_V6);
+        assertThat(response.getHandoverFailureMode()).isEqualTo(HANDOVER_FAILURE_MODE_DO_FALLBACK);
+        assertThat(response.getPduSessionId()).isEqualTo(PDU_SESSION_ID);
+        assertThat(response.getSliceInfo()).isEqualTo(SLICE_INFO);
+        assertThat(response.getTrafficDescriptors()).isEqualTo(TRAFFIC_DESCRIPTORS);
+        assertThat(response.getNetworkValidationStatus()).isEqualTo(TEST_VALIDATED);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_NETWORK_VALIDATION)
+    public void testEqualsForNetworkValidation() {
+        DataCallResponse response = new DataCallResponse.Builder()
+                .setCause(CAUSE)
+                .setRetryDurationMillis(RETRY)
+                .setId(ID)
+                .setLinkStatus(LINK_STATUS)
+                .setProtocolType(PROTOCOL_TYPE)
+                .setInterfaceName(IF_NAME)
+                .setAddresses(ADDRESSES)
+                .setDnsAddresses(DNSES)
+                .setGatewayAddresses(GATEWAYS)
+                .setPcscfAddresses(PCSCFS)
+                .setMtuV4(MTU_V4)
+                .setMtuV6(MTU_V6)
+                .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
+                .setPduSessionId(PDU_SESSION_ID)
+                .setSliceInfo(SLICE_INFO)
+                .setTrafficDescriptors(TRAFFIC_DESCRIPTORS)
+                .setNetworkValidationStatus(TEST_VALIDATED)
+                .build();
+
+        DataCallResponse equalsResponse = new DataCallResponse.Builder()
+                .setCause(CAUSE)
+                .setRetryDurationMillis(RETRY)
+                .setId(ID)
+                .setLinkStatus(LINK_STATUS)
+                .setProtocolType(PROTOCOL_TYPE)
+                .setInterfaceName(IF_NAME)
+                .setAddresses(ADDRESSES)
+                .setDnsAddresses(DNSES)
+                .setGatewayAddresses(GATEWAYS)
+                .setPcscfAddresses(PCSCFS)
+                .setMtuV4(MTU_V4)
+                .setMtuV6(MTU_V6)
+                .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
+                .setPduSessionId(PDU_SESSION_ID)
+                .setSliceInfo(SLICE_INFO)
+                .setTrafficDescriptors(TRAFFIC_DESCRIPTORS)
+                .setNetworkValidationStatus(TEST_VALIDATED)
+                .build();
+
+        assertThat(response).isEqualTo(equalsResponse);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_NETWORK_VALIDATION)
+    public void testNotEqualsForNetworkValidation() {
+        DataCallResponse response = new DataCallResponse.Builder()
+                .setCause(CAUSE)
+                .setRetryDurationMillis(RETRY)
+                .setId(ID)
+                .setLinkStatus(LINK_STATUS)
+                .setProtocolType(PROTOCOL_TYPE)
+                .setInterfaceName(IF_NAME)
+                .setAddresses(ADDRESSES)
+                .setDnsAddresses(DNSES)
+                .setGatewayAddresses(GATEWAYS)
+                .setPcscfAddresses(PCSCFS)
+                .setMtuV4(MTU_V4)
+                .setMtuV6(MTU_V6)
+                .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
+                .setPduSessionId(PDU_SESSION_ID)
+                .setSliceInfo(SLICE_INFO)
+                .setTrafficDescriptors(TRAFFIC_DESCRIPTORS)
+                .setNetworkValidationStatus(TEST_VALIDATED)
+                .build();
+
+        DataCallResponse notEqualsResponse = new DataCallResponse.Builder()
+                .setCause(CAUSE)
+                .setRetryDurationMillis(RETRY)
+                .setId(ID)
+                .setLinkStatus(LINK_STATUS)
+                .setProtocolType(PROTOCOL_TYPE)
+                .setInterfaceName(IF_NAME)
+                .setAddresses(ADDRESSES)
+                .setDnsAddresses(DNSES)
+                .setGatewayAddresses(GATEWAYS)
+                .setPcscfAddresses(PCSCFS)
+                .setMtuV4(MTU_V4)
+                .setMtuV6(MTU_V6)
+                .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
+                .setPduSessionId(PDU_SESSION_ID)
+                .setSliceInfo(SLICE_INFO)
+                .setTrafficDescriptors(TRAFFIC_DESCRIPTORS)
+                .setNetworkValidationStatus(TEST_VALIDATE_FAILED)
+                .build();
+
+        assertThat(response).isNotEqualTo(notEqualsResponse);
+        assertThat(response).isNotEqualTo(null);
+        assertThat(response).isNotEqualTo(new String[1]);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_NETWORK_VALIDATION)
+    public void testParcelForNetworkValidation() {
+        DataCallResponse response = new DataCallResponse.Builder()
+                .setCause(CAUSE)
+                .setRetryDurationMillis(RETRY)
+                .setId(ID)
+                .setLinkStatus(LINK_STATUS)
+                .setProtocolType(PROTOCOL_TYPE)
+                .setInterfaceName(IF_NAME)
+                .setAddresses(ADDRESSES)
+                .setDnsAddresses(DNSES)
+                .setGatewayAddresses(GATEWAYS)
+                .setPcscfAddresses(PCSCFS)
+                .setMtuV4(MTU_V4)
+                .setMtuV6(MTU_V6)
+                .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
+                .setPduSessionId(PDU_SESSION_ID)
+                .setSliceInfo(SLICE_INFO)
+                .setTrafficDescriptors(TRAFFIC_DESCRIPTORS)
+                .setNetworkValidationStatus(TEST_VALIDATED)
                 .build();
 
         Parcel stateParcel = Parcel.obtain();

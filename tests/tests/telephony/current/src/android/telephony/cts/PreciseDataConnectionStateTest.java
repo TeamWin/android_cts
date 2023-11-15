@@ -20,6 +20,9 @@ import static org.junit.Assert.assertEquals;
 
 import android.net.LinkProperties;
 import android.os.Parcel;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.PreciseDataConnectionState;
 import android.telephony.TelephonyManager;
@@ -28,6 +31,9 @@ import android.telephony.data.EpsQos;
 import android.telephony.data.NrQos;
 import android.telephony.data.Qos;
 
+import com.android.internal.telephony.flags.Flags;
+
+import org.junit.Rule;
 import org.junit.Test;
 
 public class PreciseDataConnectionStateTest {
@@ -41,6 +47,8 @@ public class PreciseDataConnectionStateTest {
     private static final int DATA_FAIL_CAUSE = 0;
     private static final Qos DEFAULT_QOS;
     private static final Qos DEFAULT_NR_QOS;
+    private static final int DEFAULT_NETWORK_VALIDATION_STATUS =
+            PreciseDataConnectionState.NETWORK_VALIDATION_SUCCESS;
 
     static {
         APN_SETTING = new ApnSetting.Builder()
@@ -61,6 +69,10 @@ public class PreciseDataConnectionStateTest {
                 5 /* 5QI */,
                 200 /* averaging window */);
     }
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private PreciseDataConnectionState makeTestPreciseDataConnectionState() {
         return makeTestPreciseDataConnectionState(DEFAULT_QOS);
@@ -105,4 +117,48 @@ public class PreciseDataConnectionStateTest {
         assertEquals(DATA_FAIL_CAUSE, pdcs.getLastCauseCode());
         assertEquals(DEFAULT_QOS, pdcs.getDefaultQos());
     }
+
+
+    private PreciseDataConnectionState makeTestPreciseDataConnectionStateForNetworkValidation() {
+        return new PreciseDataConnectionState.Builder()
+                .setTransportType(TRANSPORT_TYPE)
+                .setId(DATA_CALL_ID)
+                .setState(CONNECTION_STATE)
+                .setNetworkType(NETWORK_TYPE)
+                .setApnSetting(APN_SETTING)
+                .setLinkProperties(LINK_PROPERTIES)
+                .setFailCause(DATA_FAIL_CAUSE)
+                .setDefaultQos(DEFAULT_QOS)
+                .setNetworkValidationStatus(DEFAULT_NETWORK_VALIDATION_STATUS)
+                .build();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_NETWORK_VALIDATION)
+    public void testParcelForNetworkValidation() {
+        PreciseDataConnectionState pdcs = makeTestPreciseDataConnectionStateForNetworkValidation();
+        Parcel stateParcel = Parcel.obtain();
+        pdcs.writeToParcel(stateParcel, 0);
+        stateParcel.setDataPosition(0);
+
+        final PreciseDataConnectionState stateFromParcel =
+                PreciseDataConnectionState.CREATOR.createFromParcel(stateParcel);
+        assertEquals(pdcs, stateFromParcel);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_NETWORK_VALIDATION)
+    public void testPreciseDataConnectionStateGettersForNetworkValidation() {
+        PreciseDataConnectionState pdcs = makeTestPreciseDataConnectionStateForNetworkValidation();
+        assertEquals(TRANSPORT_TYPE, pdcs.getTransportType());
+        assertEquals(DATA_CALL_ID, pdcs.getId());
+        assertEquals(CONNECTION_STATE, pdcs.getState());
+        assertEquals(NETWORK_TYPE, pdcs.getNetworkType());
+        assertEquals(APN_SETTING, pdcs.getApnSetting());
+        assertEquals(LINK_PROPERTIES, pdcs.getLinkProperties());
+        assertEquals(DATA_FAIL_CAUSE, pdcs.getLastCauseCode());
+        assertEquals(DEFAULT_QOS, pdcs.getDefaultQos());
+        assertEquals(DEFAULT_NETWORK_VALIDATION_STATUS, pdcs.getNetworkValidationStatus());
+    }
+
 }

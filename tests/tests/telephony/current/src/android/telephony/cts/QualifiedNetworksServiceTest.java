@@ -18,18 +18,35 @@ package android.telephony.cts;
 
 import static org.junit.Assert.assertEquals;
 
+import android.net.NetworkCapabilities;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.AccessNetworkConstants;
+import android.telephony.data.DataServiceCallback;
 import android.telephony.data.QualifiedNetworksService;
 
+import com.android.internal.telephony.flags.Flags;
+
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public class QualifiedNetworksServiceTest {
     private static final int SLOT_INDEX = 0;
     private static final int APN_TYPES = 0;
     private static final int EMERGENCY_PREFERRED_TRANPORT =
             AccessNetworkConstants.TRANSPORT_TYPE_WLAN;
+    private static final int REQUEST_TIMEOUT_MS = 500;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private class TestQns extends QualifiedNetworksService {
         TestQns() {
@@ -59,6 +76,13 @@ public class QualifiedNetworksServiceTest {
             public int getPreferredTransportForEmergencyDataNetwork() {
                 return mPreferredTransportForEmergencyDataNetwork;
             }
+
+
+            @Override
+            public void requestNetworkValidation(int networkCapability, Executor executor,
+                                                 Consumer<Integer> resultCodeCallback) {
+                resultCodeCallback.accept(DataServiceCallback.RESULT_ERROR_UNSUPPORTED);
+            }
         }
     }
 
@@ -87,5 +111,20 @@ public class QualifiedNetworksServiceTest {
         nap.reportEmergencyDataNetworkPreferredTransportChanged(EMERGENCY_PREFERRED_TRANPORT);
         assertEquals(((TestQns.TestNap) nap).getPreferredTransportForEmergencyDataNetwork(),
                 EMERGENCY_PREFERRED_TRANPORT);
+    }
+
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_NETWORK_VALIDATION)
+    public void testRequestNetworkValidation() throws InterruptedException {
+        QualifiedNetworksService qns = new TestQns();
+        QualifiedNetworksService.NetworkAvailabilityProvider nap =
+                qns.onCreateNetworkAvailabilityProvider(SLOT_INDEX);
+
+        LinkedBlockingQueue<Integer> resultCodeCallback = new LinkedBlockingQueue<>(1);
+        nap.requestNetworkValidation(NetworkCapabilities.NET_CAPABILITY_IMS,
+                Runnable::run, resultCodeCallback::offer);
+        Integer result = resultCodeCallback.poll(REQUEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        assertEquals(result.intValue(), DataServiceCallback.RESULT_ERROR_UNSUPPORTED);
     }
 }
