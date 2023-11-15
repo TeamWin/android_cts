@@ -16,7 +16,6 @@
 
 package android.virtualdevice.cts.applaunch;
 
-import static android.Manifest.permission.ACTIVITY_EMBEDDING;
 import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
 import static android.Manifest.permission.CHANGE_COMPONENT_ENABLED_STATE;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
@@ -24,13 +23,20 @@ import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
+import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createActivityOptions;
 import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -48,6 +54,7 @@ import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
 import android.platform.test.annotations.AppModeFull;
+import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerStateHelper;
 import android.virtualdevice.cts.applaunch.util.EmptyActivity;
 import android.virtualdevice.cts.common.FakeAssociationRule;
@@ -56,6 +63,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -66,6 +74,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+/**
+ * Tests for home support on displays created by virtual devices.
+ */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class VirtualDeviceHomeTest {
@@ -74,8 +85,15 @@ public class VirtualDeviceHomeTest {
             createDefaultVirtualDisplayConfigBuilder()
                     .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
                             | DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED
-                            | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY
-                            | DisplayManager.VIRTUAL_DISPLAY_FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS)
+                            | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY)
+                    .setHomeSupported(true)
+                    .build();
+
+    private static final VirtualDisplayConfig UNTRUSTED_HOME_DISPLAY_CONFIG =
+            createDefaultVirtualDisplayConfigBuilder()
+                    .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                            | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY)
+                    .setHomeSupported(true)
                     .build();
 
     private static final ComponentName EMPTY_ACTIVITY = new ComponentName(
@@ -90,12 +108,9 @@ public class VirtualDeviceHomeTest {
             "android.virtualdevice.streamedtestapp",
             "android.virtualdevice.streamedtestapp.CustomHomeActivity");
 
-    private ComponentName mHomeComponent = null;
-
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
             InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-            ACTIVITY_EMBEDDING,
             ADD_TRUSTED_DISPLAY,
             CHANGE_COMPONENT_ENABLED_STATE,
             CREATE_VIRTUAL_DEVICE);
@@ -103,13 +118,14 @@ public class VirtualDeviceHomeTest {
     @Rule
     public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
 
+    private ComponentName mHomeComponent = null;
     private VirtualDeviceManager mVirtualDeviceManager;
     private VirtualDeviceManager.VirtualDevice mVirtualDevice;
     private VirtualDisplay mVirtualDisplay;
     private Context mContext;
-    private WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
     @Mock
     private VirtualDeviceManager.ActivityListener mActivityListener;
+    private final WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
 
     @Before
     public void setUp() throws Exception {
@@ -121,7 +137,7 @@ public class VirtualDeviceHomeTest {
         assumeTrue(packageManager.hasSystemFeature(
                 PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         mVirtualDeviceManager = mContext.getSystemService(VirtualDeviceManager.class);
-        assumeTrue(mVirtualDeviceManager != null);
+        assumeNotNull(mVirtualDeviceManager);
     }
 
     @After
@@ -131,6 +147,35 @@ public class VirtualDeviceHomeTest {
         }
     }
 
+    /**
+     * Home activities and wallpaper are not shown on untrusted displays.
+     */
+    @ApiTest(apis = {"android.hardware.display.VirtualDisplayConfig.Builder#setHomeSupported"})
+    @Test
+    public void virtualDeviceHome_untrustedVirtualDisplay() {
+        createVirtualDeviceAndHomeDisplay(UNTRUSTED_HOME_DISPLAY_CONFIG);
+
+        verify(mActivityListener, never()).onTopActivityChanged(anyInt(), any(), anyInt());
+        assertThat(isWallpaperOnVirtualDisplay(mWmState)).isFalse();
+    }
+
+    /**
+     * Wallpaper is shown on virtual displays that support home.
+     */
+    @ApiTest(apis = {"android.hardware.display.VirtualDisplayConfig.Builder#setHomeSupported"})
+    @Test
+    public void virtualDeviceHome_showsWallpaper() {
+        createVirtualDeviceAndHomeDisplay();
+        assertThat(mWmState.waitForWithAmState(
+                this::isWallpaperOnVirtualDisplay, "Wallpaper is on virtual display"))
+                .isTrue();
+    }
+
+    /**
+     * The device-default secondary home activity is started on virtual displays that support home
+     * if the didn't specify a custom home component. That activity is at the hierarchy root.
+     */
+    @ApiTest(apis = {"android.hardware.display.VirtualDisplayConfig.Builder#setHomeSupported"})
     @Test
     public void virtualDeviceHome_noCustomHomeComponent() {
         try (HomeActivitySession session = new HomeActivitySession(DEFAULT_HOME_ACTIVITY)) {
@@ -147,6 +192,12 @@ public class VirtualDeviceHomeTest {
         }
     }
 
+    /**
+     * The device-default secondary home activity is started on virtual displays that support home
+     * if the didn't specify a custom home component. That activity is resolved when a home intent
+     * is sent to the relevant display.
+     */
+    @ApiTest(apis = {"android.hardware.display.VirtualDisplayConfig.Builder#setHomeSupported"})
     @Test
     public void virtualDeviceHome_noCustomHomeComponent_sendHomeIntent() {
         try (HomeActivitySession session = new HomeActivitySession(DEFAULT_HOME_ACTIVITY)) {
@@ -161,6 +212,12 @@ public class VirtualDeviceHomeTest {
         }
     }
 
+
+    /**
+     * The device-default secondary home activity is started on virtual displays that support home
+     * if they specified an invalid custom home component.
+     */
+    @ApiTest(apis = {"android.companion.virtual.VirtualDeviceParams.Builder#setHomeComponent"})
     @Test
     public void virtualDeviceHome_invalidCustomHomeComponent_fallbackToDefaultSecondaryHome() {
         try (HomeActivitySession session = new HomeActivitySession(DEFAULT_HOME_ACTIVITY)) {
@@ -171,6 +228,11 @@ public class VirtualDeviceHomeTest {
         }
     }
 
+    /**
+     * The explicitly specified custom home activity is started on virtual displays that support
+     * home. That activity is at the hierarchy root.
+     */
+    @ApiTest(apis = {"android.companion.virtual.VirtualDeviceParams.Builder#setHomeComponent"})
     @Test
     public void virtualDeviceHome_withCustomHomeComponent() {
         mHomeComponent = CUSTOM_HOME_ACTIVITY;
@@ -186,6 +248,11 @@ public class VirtualDeviceHomeTest {
         assertActivityOnVirtualDisplay(CUSTOM_HOME_ACTIVITY, 2);
     }
 
+    /**
+     * The explicitly specified custom home activity is started on virtual displays that support
+     * home. That activity is resolved when a home intent is sent to the relevant display.
+     */
+    @ApiTest(apis = {"android.companion.virtual.VirtualDeviceParams.Builder#setHomeComponent"})
     @Test
     public void virtualDeviceHome_withCustomHomeComponent_sendHomeIntent() {
         mHomeComponent = CUSTOM_HOME_ACTIVITY;
@@ -200,12 +267,17 @@ public class VirtualDeviceHomeTest {
     }
 
     private void createVirtualDeviceAndHomeDisplay() {
+        createVirtualDeviceAndHomeDisplay(HOME_DISPLAY_CONFIG);
+    }
+
+    private void createVirtualDeviceAndHomeDisplay(VirtualDisplayConfig virtualDisplayConfig) {
+        assertThat(virtualDisplayConfig.isHomeSupported()).isTrue();
         mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
                 mFakeAssociationRule.getAssociationInfo().getId(),
                 new VirtualDeviceParams.Builder().setHomeComponent(mHomeComponent).build());
         mVirtualDevice.addActivityListener(mContext.getMainExecutor(), mActivityListener);
         mVirtualDisplay = mVirtualDevice.createVirtualDisplay(
-                HOME_DISPLAY_CONFIG, null, null);
+                virtualDisplayConfig, null, null);
         int virtualDisplayId = mVirtualDisplay.getDisplay().getDisplayId();
         mWmState.waitForWithAmState(state -> state.getDisplay(virtualDisplayId) != null,
                 "Waiting for virtual display to be created");
@@ -238,7 +310,11 @@ public class VirtualDeviceHomeTest {
                 eq(mVirtualDisplay.getDisplay().getDisplayId()),
                 eq(componentName),
                 eq(mContext.getUserId()));
+    }
 
+    private boolean isWallpaperOnVirtualDisplay(WindowManagerState state) {
+        return state.getMatchingWindowType(TYPE_WALLPAPER).stream().anyMatch(
+                w -> w.getDisplayId() == mVirtualDisplay.getDisplay().getDisplayId());
     }
 
     /**
@@ -303,7 +379,7 @@ public class VirtualDeviceHomeTest {
         private ComponentName resolveHomeIntent(Intent intent) {
             final ResolveInfo resolveInfo =
                     mContext.getPackageManager().resolveActivity(intent, MATCH_DEFAULT_ONLY);
-            assumeTrue(resolveInfo != null);
+            assumeNotNull(resolveInfo);
             ActivityInfo activityInfo = resolveInfo.activityInfo;
             return new ComponentName(activityInfo.packageName, activityInfo.name);
         }
