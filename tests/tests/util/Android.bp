@@ -32,6 +32,7 @@ android_test {
         "ctstestrunner-axt",
         "cts-install-lib",
         "core-test-rules", // for libcore.dalvik.system.CloseGuardSupport
+        "ravenwood-junit",
     ],
     srcs: ["src/**/*.java"],
     platform_apis: true,
@@ -74,6 +75,7 @@ android_ravenwood_test {
         "src/android/util/cts/SparseIntArrayTest.java",
         "src/android/util/cts/SparseLongArrayTest.java",
         "src/android/util/cts/StringBuilderPrinterTest.java",
+        "src/android/util/cts/XmlTest.java",
     ],
     sdk_version: "test_current",
     auto_gen_config: true,
