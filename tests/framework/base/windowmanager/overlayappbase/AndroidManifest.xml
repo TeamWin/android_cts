@@ -31,7 +31,8 @@
             android:exported="true"/>
         <activity
             android:name="android.server.wm.overlay.ExitAnimationActivity"
-            android:exported="true"/>
+            android:exported="true"
+            android:screenOrientation="nosensor" />
         <activity
             android:name="android.server.wm.overlay.ToastActivity"
             android:exported="true"/>
