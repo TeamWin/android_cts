@@ -36,9 +36,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.concurrent.TimeUnit;
+
 @RunWith(AndroidJUnit4.class)
 public class GwpAsanServiceTest {
-    @Rule public final ServiceTestRule mServiceRule = new ServiceTestRule();
+    // Increase service bind time to deal with slower coverage builds: b/310330730
+    @Rule public final ServiceTestRule mServiceRule =
+        ServiceTestRule.withTimeout(15, TimeUnit.SECONDS);
     private Context mContext;
 
     @Before
