@@ -19,6 +19,7 @@ package android.scopedstorage.cts.host;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.SystemUserOnly;
 
 import com.android.modules.utils.build.testing.DeviceSdkLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -276,6 +277,23 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
         } finally {
             revokePermissions("android.permission.READ_EXTERNAL_STORAGE",
                     "android.permission.WRITE_EXTERNAL_STORAGE");
+        }
+    }
+
+    @Test
+    @SystemUserOnly(reason = "shell can only access app-private data files for user 0.")
+    public void testAccessAppPrivateDataFromShell() throws Exception {
+        final ITestDevice device = getDevice();
+        final boolean isAdbRoot = device.isAdbRoot();
+        try {
+            if (isAdbRoot) {
+                device.disableAdbRoot();
+            }
+            runDeviceTest("testAccessAppPrivateDataFromShell");
+        } finally {
+            if (isAdbRoot) {
+                device.enableAdbRoot();
+            }
         }
     }
 

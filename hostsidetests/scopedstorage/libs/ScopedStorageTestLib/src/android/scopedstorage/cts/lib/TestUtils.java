@@ -1612,6 +1612,18 @@ public class TestUtils {
     }
 
     /**
+     * Creates and returns the Android cache sub-directory belonging to the calling package.
+     */
+    public static File getExternalCacheDir() {
+        final String packageName = getContext().getPackageName();
+        final File res = new File(getAndroidDataDir(), packageName + "/cache");
+        if (!res.equals(getContext().getExternalCacheDir())) {
+            res.mkdirs();
+        }
+        return res;
+    }
+
+    /**
      * Creates and returns the Android obb sub-directory belonging to the calling package.
      */
     public static File getExternalObbDir() {
