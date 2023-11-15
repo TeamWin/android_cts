@@ -93,6 +93,7 @@ public class InputDeviceKeyLayoutMapTest {
                 "KEYBOARD_BACKLIGHT_DOWN",
                 "KEYBOARD_BACKLIGHT_TOGGLE",
                 "KEYBOARD_BACKLIGHT_UP",
+                "LANGUAGE_SWITCH",
                 "MACRO_1",
                 "MACRO_2",
                 "MACRO_3",
