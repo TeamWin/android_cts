@@ -33,6 +33,7 @@ import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.accessibilityservice.cts.activities.AccessibilityWindowQueryActivity;
+import android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplaySession;
 import android.accessibilityservice.cts.utils.GestureUtils;
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -93,10 +94,14 @@ public class AccessibilityGestureDetectorTest {
     private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
 
+    private GestureUtils.DumpOnFailureRule mGestureUtilsDumpOnFailureRule =
+            new GestureUtils.DumpOnFailureRule();
+
     @Rule
     public final RuleChain mRuleChain = RuleChain
             .outerRule(mServiceRule)
-            .around(mDumpOnFailureRule);
+            .around(mDumpOnFailureRule)
+            .around(mGestureUtilsDumpOnFailureRule);
 
     // Test AccessibilityService that collects gestures.
     GestureDetectionStubAccessibilityService mService; 
@@ -116,6 +121,7 @@ public class AccessibilityGestureDetectorTest {
     public static void oneTimeSetup() {
         sInstrumentation = InstrumentationRegistry.getInstrumentation();
         sUiAutomation = sInstrumentation.getUiAutomation(FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        GestureUtils.randomize();
     }
 
     @AfterClass
