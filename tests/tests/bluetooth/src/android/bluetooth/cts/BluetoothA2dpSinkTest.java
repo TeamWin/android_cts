@@ -18,7 +18,11 @@ package android.bluetooth.cts;
 
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothA2dpSink;
@@ -26,21 +30,31 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
-import android.test.AndroidTestCase;
+import android.content.Context;
 import android.util.Log;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class BluetoothA2dpSinkTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+@LargeTest
+public class BluetoothA2dpSinkTest {
     private static final String TAG = BluetoothA2dpSinkTest.class.getSimpleName();
 
     private static final int PROXY_CONNECTION_TIMEOUT_MS = 500;  // ms timeout for Proxy Connect
 
+    private Context mContext;
     private boolean mHasBluetooth;
     private BluetoothAdapter mAdapter;
     private UiAutomation mUiAutomation;;
@@ -51,9 +65,9 @@ public class BluetoothA2dpSinkTest extends AndroidTestCase {
     private Condition mConditionProfileConnection;
     private ReentrantLock mProfileConnectionlock;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
         mHasBluetooth = TestUtils.hasBluetooth();
         if (!mHasBluetooth) return;
@@ -64,7 +78,7 @@ public class BluetoothA2dpSinkTest extends AndroidTestCase {
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
 
-        BluetoothManager manager = getContext().getSystemService(BluetoothManager.class);
+        BluetoothManager manager = mContext.getSystemService(BluetoothManager.class);
         mAdapter = manager.getAdapter();
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
 
@@ -73,13 +87,12 @@ public class BluetoothA2dpSinkTest extends AndroidTestCase {
         mIsProfileReady = false;
         mBluetoothA2dpSink = null;
 
-        mAdapter.getProfileProxy(getContext(), new BluetoothA2dpSinkServiceListener(),
+        mAdapter.getProfileProxy(mContext, new BluetoothA2dpSinkServiceListener(),
                 BluetoothProfile.A2DP_SINK);
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
-        super.tearDown();
         if (!(mHasBluetooth && mIsA2dpSinkSupported)) {
             return;
         }
@@ -92,6 +105,7 @@ public class BluetoothA2dpSinkTest extends AndroidTestCase {
         mAdapter = null;
     }
 
+    @Test
     public void test_closeProfileProxy() {
         if (!(mHasBluetooth && mIsA2dpSinkSupported)) return;
 
@@ -104,6 +118,7 @@ public class BluetoothA2dpSinkTest extends AndroidTestCase {
         assertFalse(mIsProfileReady);
     }
 
+    @Test
     public void test_getConnectedDevices() {
         if (!(mHasBluetooth && mIsA2dpSinkSupported)) return;
 
@@ -116,6 +131,7 @@ public class BluetoothA2dpSinkTest extends AndroidTestCase {
         assertThrows(SecurityException.class, () -> mBluetoothA2dpSink.getConnectedDevices());
     }
 
+    @Test
     public void test_getDevicesMatchingConnectionStates() {
         if (!(mHasBluetooth && mIsA2dpSinkSupported)) return;
 
@@ -127,6 +143,7 @@ public class BluetoothA2dpSinkTest extends AndroidTestCase {
                 new ArrayList<BluetoothDevice>());
     }
 
+    @Test
     public void test_getConnectionState() {
         if (!(mHasBluetooth && mIsA2dpSinkSupported)) return;
 
@@ -143,6 +160,7 @@ public class BluetoothA2dpSinkTest extends AndroidTestCase {
                 () -> mBluetoothA2dpSink.getConnectionState(testDevice));
     }
 
+    @Test
     public void test_getConnectionPolicy() {
         if (!(mHasBluetooth && mIsA2dpSinkSupported)) return;
 
@@ -162,6 +180,7 @@ public class BluetoothA2dpSinkTest extends AndroidTestCase {
                 mBluetoothA2dpSink.getConnectionPolicy(testDevice));
     }
 
+    @Test
     public void test_setConnectionPolicy() {
         if (!(mHasBluetooth && mIsA2dpSinkSupported)) return;
 
@@ -183,6 +202,7 @@ public class BluetoothA2dpSinkTest extends AndroidTestCase {
                 testDevice, BluetoothProfile.CONNECTION_POLICY_FORBIDDEN));
     }
 
+    @Test
     public void test_isAudioPlaying() {
         if (!(mHasBluetooth && mIsA2dpSinkSupported)) return;
 
