@@ -85,7 +85,7 @@ public class ClipDescriptionTest {
 
     @UiThreadTest
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ClipboardManager.class)
     public void testGetTimestamp() {
         final ClipboardManager clipboardManager = (ClipboardManager)
                 InstrumentationRegistry.getTargetContext().getSystemService(
@@ -104,7 +104,7 @@ public class ClipDescriptionTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ClipboardManager.class)
     public void testIsStyledText() {
         ClipDescription clipDescription = new ClipDescription(
                 "label", new String[] { ClipDescription.MIMETYPE_TEXT_PLAIN });
@@ -131,7 +131,7 @@ public class ClipDescriptionTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ClipboardManager.class)
     public void testNotStyledText() {
         ClipDescription clipDescription = new ClipDescription(
                 "label", new String[] { ClipDescription.MIMETYPE_TEXT_PLAIN });
@@ -169,7 +169,7 @@ public class ClipDescriptionTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ClipboardManager.class)
     public void testClassificationNotPerformedForVeryLongText() {
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < 100; i++) {
@@ -190,7 +190,7 @@ public class ClipDescriptionTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ClipboardManager.class)
     public void testClassificationConfidenceValuesAreValid() throws InterruptedException {
         ClipData clipData = ClipData.newPlainText(
                 "label", "Hi Sam, try www.android.com on 05/04/2021 then visit "

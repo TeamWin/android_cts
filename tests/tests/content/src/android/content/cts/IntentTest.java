@@ -348,7 +348,7 @@ public class IntentTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ContentResolver.class)
     public void testResolveType1() {
         final ContentResolver contentResolver = mContext.getContentResolver();
         assertNull(mIntent.resolveType(mContext));
@@ -362,7 +362,7 @@ public class IntentTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ContentResolver.class)
     public void testResolveType2() {
         final ContentResolver contentResolver = mContext.getContentResolver();
         assertNull(mIntent.resolveType(contentResolver));
@@ -410,7 +410,7 @@ public class IntentTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testParseIntent() throws XmlPullParserException, IOException,
         NameNotFoundException {
         mIntent = null;
@@ -480,7 +480,7 @@ public class IntentTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ContentResolver.class)
     public void testResolveTypeIfNeeded() {
         ContentResolver contentResolver = mContext.getContentResolver();
         assertNull(mIntent.resolveTypeIfNeeded(contentResolver));
@@ -730,7 +730,7 @@ public class IntentTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testResolveActivityInfo() throws NameNotFoundException {
         final PackageManager pm = mContext.getPackageManager();
         assertEquals(null, mIntent.resolveActivityInfo(pm, 1));
@@ -933,7 +933,7 @@ public class IntentTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testResolveActivityEmpty() {
         final Intent emptyIntent = new Intent();
 
@@ -943,7 +943,7 @@ public class IntentTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testResolveActivitySingleMatch() {
         final Intent intent = new Intent("android.content.cts.action.TEST_ACTION");
         intent.addCategory("android.content.cts.category.TEST_CATEGORY");
@@ -955,7 +955,7 @@ public class IntentTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testResolveActivityShortcutMatch() {
         final Intent intent = new Intent("android.content.cts.action.TEST_ACTION");
         intent.setComponent(
@@ -969,7 +969,7 @@ public class IntentTest {
 
     @AppModeFull
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testResolveActivityMultipleMatch() {
         final Intent intent = new Intent("android.content.cts.action.TEST_ACTION");
 
@@ -1515,7 +1515,7 @@ public class IntentTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = PendingIntent.class)
     public void testCreateChooser() {
         Intent target = Intent.createChooser(mIntent, null);
         assertEquals(Intent.ACTION_CHOOSER, target.getAction());

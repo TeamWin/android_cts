@@ -80,7 +80,7 @@ public class CursorJoinerTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testCursorJoinerAndIterator() {
         Cursor cursor1 = getCursor(TABLE_NAME_1, null, null);
         Cursor cursor2 = getCursor(TABLE_NAME_2, null, null);
@@ -156,7 +156,7 @@ public class CursorJoinerTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testNext() {
         String[] columnNames = new String[] { "number" };
         Cursor cursor1 = getCursor(TABLE_NAME_1, null, columnNames);

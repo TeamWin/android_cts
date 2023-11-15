@@ -32,7 +32,7 @@ public class SystemClockTest {
     @Rule public RavenwoodRule mRavenwood = new RavenwoodRule();
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(reason = "Requires kernel support")
     public void testCurrentThreadTimeMillis() throws InterruptedException {
 
         long start = SystemClock.currentThreadTimeMillis();
@@ -53,7 +53,7 @@ public class SystemClockTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(reason = "Requires kernel support")
     public void testSetCurrentTimeMillis() {
 
         long start = SystemClock.currentThreadTimeMillis();
@@ -64,7 +64,7 @@ public class SystemClockTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(reason = "Requires kernel support")
     public void testSleep_currentThreadTimeMillis() {
         long start = SystemClock.currentThreadTimeMillis();
         SystemClock.sleep(100);

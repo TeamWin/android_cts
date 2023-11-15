@@ -118,7 +118,7 @@ public class CursorWrapperTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testGetCount() {
         CursorWrapper cursorWrapper = new CursorWrapper(getCursor());
         int defaultCount = cursorWrapper.getCount();
@@ -322,7 +322,7 @@ public class CursorWrapperTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testGettingValues() {
         final byte NUMBER_BLOB_UNIT = 99;
         final String STRING_TEXT = "Test String";
