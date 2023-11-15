@@ -173,4 +173,15 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
         return new Point(location[0] + view.getWidth() / 2,
                 location[1] + view.getHeight() / 2);
     }
+
+    protected void runWithPermission(Runnable runnable, String... permissions) {
+        mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(permissions);
+        try {
+            runnable.run();
+        } finally {
+            // Revert the permissions needed for the test again.
+            mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
+                    ADD_TRUSTED_DISPLAY, CREATE_VIRTUAL_DEVICE);
+        }
+    }
 }

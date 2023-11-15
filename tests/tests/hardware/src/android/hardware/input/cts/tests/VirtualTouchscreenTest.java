@@ -16,8 +16,12 @@
 
 package android.hardware.input.cts.tests;
 
+import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
+import static android.Manifest.permission.INJECT_EVENTS;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.InputDevice.SOURCE_TOUCHSCREEN;
+
+import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 
@@ -177,6 +181,19 @@ public class VirtualTouchscreenTest extends VirtualDeviceTestCase {
     }
 
     @Test
+    public void close_multipleCallsSucceed() {
+        mVirtualTouchscreen.close();
+        mVirtualTouchscreen.close();
+        mVirtualTouchscreen.close();
+    }
+
+    @Test
+    public void createVirtualTouchscreen_duplicateName_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> createVirtualTouchscreen(mVirtualDisplay));
+    }
+
+    @Test
     public void createVirtualTouchscreen_defaultDisplay_throwsException() {
         assertThrows(SecurityException.class,
                 () -> VirtualInputDeviceCreator.createTouchscreen(mVirtualDevice, DEVICE_NAME,
@@ -186,9 +203,27 @@ public class VirtualTouchscreenTest extends VirtualDeviceTestCase {
     @Test
     public void createVirtualTouchscreen_unownedDisplay_throwsException() {
         VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
-        assertThrows(SecurityException.class,
-                () -> createVirtualTouchscreen(unownedDisplay));
+        assertThrows(SecurityException.class, () -> createVirtualTouchscreen(unownedDisplay));
         unownedDisplay.release();
+    }
+
+    @Test
+    public void createVirtualTouchscreen_defaultDisplay_injectEvents_succeeds() {
+        mVirtualTouchscreen.close();
+        runWithPermission(
+                () -> assertThat(VirtualInputDeviceCreator.createTouchscreen(mVirtualDevice,
+                        DEVICE_NAME, 100 /* width */, 100 /* height */, DEFAULT_DISPLAY))
+                        .isNotNull(),
+                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
+    }
+
+    @Test
+    public void createVirtualTouchscreen_unownedVirtualDisplay_injectEvents_succeeds() {
+        mVirtualTouchscreen.close();
+        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
+        runWithPermission(
+                () -> assertThat(createVirtualTouchscreen(unownedDisplay)).isNotNull(),
+                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
     }
 
     private VirtualTouchscreen createVirtualTouchscreen(VirtualDisplay display) {

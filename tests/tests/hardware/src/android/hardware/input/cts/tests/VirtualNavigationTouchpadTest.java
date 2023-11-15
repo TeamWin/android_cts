@@ -16,7 +16,11 @@
 
 package android.hardware.input.cts.tests;
 
+import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
+import static android.Manifest.permission.INJECT_EVENTS;
 import static android.view.Display.DEFAULT_DISPLAY;
+
+import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 
@@ -117,6 +121,19 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
     }
 
     @Test
+    public void close_multipleCallsSucceed() {
+        mVirtualNavigationTouchpad.close();
+        mVirtualNavigationTouchpad.close();
+        mVirtualNavigationTouchpad.close();
+    }
+
+    @Test
+    public void createVirtualNavigationTouchpad_duplicateName_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> createVirtualNavigationTouchpad(mVirtualDisplay.getDisplay().getDisplayId()));
+    }
+
+    @Test
     public void createVirtualNavigationTouchpad_defaultDisplay_throwsException() {
         assertThrows(SecurityException.class,
                 () -> createVirtualNavigationTouchpad(DEFAULT_DISPLAY));
@@ -128,6 +145,25 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
         assertThrows(SecurityException.class,
                 () -> createVirtualNavigationTouchpad(unownedDisplay.getDisplay().getDisplayId()));
         unownedDisplay.release();
+    }
+
+    @Test
+    public void createVirtualNavigationTouchpad_defaultDisplay_injectEvents_succeeds() {
+        mVirtualNavigationTouchpad.close();
+        runWithPermission(
+                () -> assertThat(createVirtualNavigationTouchpad(DEFAULT_DISPLAY)).isNotNull(),
+                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
+    }
+
+    @Test
+    public void createVirtualNavigationTouchpad_unownedVirtualDisplay_injectEvents_succeeds() {
+        mVirtualNavigationTouchpad.close();
+        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
+        runWithPermission(
+                () -> assertThat(createVirtualNavigationTouchpad(
+                        unownedDisplay.getDisplay().getDisplayId()))
+                        .isNotNull(),
+                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
     }
 
     @Test
