@@ -1090,12 +1090,20 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      */
     private void killCecProcess() {
         try {
+            boolean processQuit = false;
             checkCecClient();
             sendConsoleMessage(CecClientMessage.QUIT_CLIENT.toString());
-            mOutputConsole.close();
-            mInputConsole.close();
+            if (checkConsoleOutput(
+                    CecClientMessage.CLIENT_CONSOLE_END.toString(), MILLISECONDS_TO_READY)) {
+                mOutputConsole.close();
+                mInputConsole.close();
+                if (mCecClient.waitFor(MILLISECONDS_TO_READY, TimeUnit.MILLISECONDS)) {
+                    /* The cec-client process is quit */
+                    processQuit = true;
+                }
+            }
             mCecClientInitialised = false;
-            if (!mCecClient.waitFor(MILLISECONDS_TO_READY, TimeUnit.MILLISECONDS)) {
+            if (!processQuit) {
                 /* Use a pkill cec-client if the cec-client process is not dead in spite of the
                  * quit above.
                  */
