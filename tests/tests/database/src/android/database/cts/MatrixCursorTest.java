@@ -16,16 +16,26 @@
 
 package android.database.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.database.CursorIndexOutOfBoundsException;
 import android.database.MatrixCursor;
 import android.database.MatrixCursor.RowBuilder;
 
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.ArrayList;
 
-import junit.framework.TestCase;
-
-public class MatrixCursorTest extends TestCase {
+@RunWith(AndroidJUnit4.class)
+public class MatrixCursorTest {
     private static final String COLUMN0_NAME = "column0";
 
     private static final String COLUMN1_NAME = "column1";
@@ -40,18 +50,19 @@ public class MatrixCursorTest extends TestCase {
 
     private MatrixCursor mMatrixCursor;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         mMatrixCursor = new MatrixCursor(new String[] { COLUMN0_NAME, COLUMN1_NAME, COLUMN2_NAME });
     }
 
+    @Test
     public void testMatrixCursor() {
         new MatrixCursor(new String[0]);
 
         new MatrixCursor(new String[] { COLUMN0_NAME }, 10);
     }
 
+    @Test
     public void testNewRow() {
         assertEquals(0, mMatrixCursor.getCount());
         RowBuilder builder = mMatrixCursor.newRow();
@@ -94,6 +105,7 @@ public class MatrixCursorTest extends TestCase {
         assertEquals(2, mMatrixCursor.getCount());
     }
 
+    @Test
     public void testAddRow() {
         assertEquals(0, mMatrixCursor.getCount());
 
@@ -155,6 +167,7 @@ public class MatrixCursorTest extends TestCase {
         }
     }
 
+    @Test
     public void testGetColumnNames() {
         String[] names = mMatrixCursor.getColumnNames();
         assertEquals(3, names.length);
@@ -168,6 +181,7 @@ public class MatrixCursorTest extends TestCase {
         assertEquals(COLUMN2_INDEX, mMatrixCursor.getColumnIndex(COLUMN2_NAME));
     }
 
+    @Test
     public void testGetters() {
         mMatrixCursor.addRow(new Short[] { Short.MIN_VALUE, 0, Short.MAX_VALUE });
         mMatrixCursor.moveToLast();

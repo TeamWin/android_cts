@@ -16,26 +16,40 @@
 
 package android.database.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.database.ContentObservable;
 import android.database.ContentObserver;
 import android.net.Uri;
-import android.test.InstrumentationTestCase;
+import android.platform.test.ravenwood.RavenwoodRule;
 
-public class ContentObservableTest extends InstrumentationTestCase {
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class ContentObservableTest {
+    @Rule public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
     private static final Uri CONTENT_URI = Uri.parse("content://uri");
 
     ContentObservable mContentObservable;
     MyContentObserver mObserver;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
+    @Before
+    public void setUp() throws Exception {
         mContentObservable = new ContentObservable();
         mObserver = new MyContentObserver();
     }
 
+    @Test
     public void testNotifyChange() {
         mContentObservable.registerObserver(mObserver);
         mObserver.resetStatus();
@@ -68,6 +82,7 @@ public class ContentObservableTest extends InstrumentationTestCase {
         assertTrue(second.hasChanged());
     }
 
+    @Test
     public void testDispatchChange() {
         mContentObservable.registerObserver(mObserver);
         mObserver.resetStatus();
@@ -92,6 +107,7 @@ public class ContentObservableTest extends InstrumentationTestCase {
         assertFalse(mObserver.hasChanged());
     }
 
+    @Test
     public void testDispatchChangeWithUri() {
         mContentObservable.registerObserver(mObserver);
         mObserver.resetStatus();

@@ -17,14 +17,21 @@
 package android.database.cts;
 
 import android.database.DataSetObserver;
-import android.test.AndroidTestCase;
 
-public class DataSetObserverTest extends AndroidTestCase {
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class DataSetObserverTest {
+    @Test
     public void testOnChanged() {
         MockDataSetObserver dataSetObserver = new MockDataSetObserver();
         dataSetObserver.onChanged();
     }
 
+    @Test
     public void testOnInvalidated() {
         MockDataSetObserver dataSetObserver = new MockDataSetObserver();
         dataSetObserver.onInvalidated();
