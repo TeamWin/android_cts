@@ -17,6 +17,7 @@
 package android.hdmicec.cts.targetprep;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
+import android.hdmicec.cts.CecClientMessage;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
@@ -153,13 +154,17 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
                         break;
                     }
                     mCecClient = RunUtil.getDefault().runCmdInBackground(launchCommand);
-                    try (BufferedReader inputConsole =
+                    BufferedReader inputConsole =
                             new BufferedReader(
-                                    new InputStreamReader(mCecClient.getInputStream()))) {
-
+                                    new InputStreamReader(mCecClient.getInputStream()));
+                    BufferedWriter outputConsole =
+                            new BufferedWriter(
+                                    new OutputStreamWriter(mCecClient.getOutputStream()));
+                    try {
                         /* Wait for the client to become ready */
                         if (cecClientWrapper.checkConsoleOutput(
-                                "waiting for input", TIMEOUT_MILLIS, inputConsole)) {
+                                CecClientMessage.CLIENT_CONSOLE_READY.toString(),
+                                TIMEOUT_MILLIS, inputConsole)) {
 
                             device.executeShellCommand(sendVendorCommand.toString());
                             if (cecClientWrapper.checkConsoleOutput(
@@ -167,10 +172,6 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
                                 if (targetDeviceType != HdmiCecConstants.CEC_DEVICE_TYPE_TV) {
                                     // Timeout in milliseconds
                                     long getVersionTimeout = 3000;
-                                    BufferedWriter outputConsole =
-                                            new BufferedWriter(
-                                                    new OutputStreamWriter(
-                                                            mCecClient.getOutputStream()));
 
                                     String getVersionMessage = "tx 10:9f";
                                     cecClientWrapper.sendConsoleMessage(
@@ -209,8 +210,26 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
                         }
                     } finally {
                         /* Kill the unwanted cec-client process. */
-                        Process killProcess = mCecClient.destroyForcibly();
-                        killProcess.waitFor(60, TimeUnit.SECONDS);
+                        boolean processQuit = false;
+                        cecClientWrapper.sendConsoleMessage(
+                                CecClientMessage.QUIT_CLIENT.toString(), outputConsole);
+                        if (cecClientWrapper.checkConsoleOutput(
+                                CecClientMessage.CLIENT_CONSOLE_END.toString(),
+                                TIMEOUT_MILLIS, inputConsole)) {
+                            outputConsole.close();
+                            inputConsole.close();
+                            if (mCecClient.waitFor(10, TimeUnit.SECONDS)) {
+                                /* The cec-client process is quit */
+                                processQuit = true;
+                            }
+                        }
+                        if (!processQuit) {
+                            /* Use destryForcibly if the cec-client process is not dead
+                             * in spite of the quit above.
+                             */
+                            Process killProcess = mCecClient.destroyForcibly();
+                            killProcess.waitFor(60, TimeUnit.SECONDS);
+                        }
                     }
                 } while (portBeingRetried);
                 launchCommand.remove(port);
