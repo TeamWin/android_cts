@@ -27,8 +27,16 @@ import static android.os.PatternMatcher.PATTERN_PREFIX;
 import static android.os.PatternMatcher.PATTERN_SIMPLE_GLOB;
 import static android.os.PatternMatcher.PATTERN_SUFFIX;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.ComponentName;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentFilter.AuthorityEntry;
@@ -40,15 +48,21 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.PatternMatcher;
 import android.platform.test.annotations.AppModeSdkSandbox;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
 import android.platform.test.annotations.PlatinumTest;
-import android.provider.Contacts.People;
-import android.test.AndroidTestCase;
+import android.platform.test.ravenwood.RavenwoodRule;
+import android.test.mock.MockContext;
 import android.util.Printer;
 import android.util.StringBuilderPrinter;
 import android.util.Xml;
 
-import com.android.internal.util.FastXmlSerializer;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlSerializer;
@@ -64,10 +78,13 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Predicate;
 
+@RunWith(AndroidJUnit4.class)
 @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 @PlatinumTest(focusArea = "pm")
-public class IntentFilterTest extends AndroidTestCase {
+public class IntentFilterTest {
+    @Rule public final RavenwoodRule mRavenwood = new RavenwoodRule();
 
+    private Context mContext;
     private IntentFilter mIntentFilter;
     private static final String ACTION = "testAction";
     private static final String CATEGORY = "testCategory";
@@ -79,14 +96,26 @@ public class IntentFilterTest extends AndroidTestCase {
     private static final String HOST = "testHost";
     private static final int PORT = 80;
     private static final String DATA_PATH = "testDataPath";
-    private static final Uri URI = People.CONTENT_URI;
+    private static final Uri URI = Uri.parse("content://com.example/people");
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
+        if (mRavenwood.isUnderRavenwood()) {
+            // TODO: replace with mockito when better supported
+            mContext = new MockContext() {
+                @Override
+                public String getPackageName() {
+                    return "android.content.cts";
+                }
+            };
+        } else {
+            mContext = InstrumentationRegistry.getTargetContext();
+        }
+
         mIntentFilter = new IntentFilter();
     }
 
+    @Test
     public void testConstructor() throws MalformedMimeTypeException {
 
         IntentFilter filter = new IntentFilter();
@@ -132,6 +161,7 @@ public class IntentFilterTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testCategories() {
         for (int i = 0; i < 10; i++) {
             mIntentFilter.addCategory(CATEGORY + i);
@@ -173,6 +203,7 @@ public class IntentFilterTest extends AndroidTestCase {
                         "category1", "category2", "category3"}, null, null));
     }
 
+    @Test
     public void testMimeTypes() throws Exception {
         IntentFilter filter = new Match(null, null, new String[]{"which1/what1"}, null, null,
                 null);
@@ -229,6 +260,7 @@ public class IntentFilterTest extends AndroidTestCase {
                         null));
     }
 
+    @Test
     public void testDynamicMimeTypes() {
         IntentFilter filter = new Match()
                 .addDynamicMimeTypes(new String[] { "which1/what1" });
@@ -287,6 +319,7 @@ public class IntentFilterTest extends AndroidTestCase {
                         null));
     }
 
+    @Test
     public void testClearDynamicMimeTypesWithStaticType() {
         IntentFilter filter = new Match()
                 .addMimeTypes(new String[] {"which1/what1"})
@@ -316,6 +349,7 @@ public class IntentFilterTest extends AndroidTestCase {
                 new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, "which1/what2", null));
     }
 
+    @Test
     public void testClearDynamicMimeTypesWithAction() {
         IntentFilter filter = new Match()
                 .addActions(new String[] {"action1"})
@@ -340,12 +374,14 @@ public class IntentFilterTest extends AndroidTestCase {
                         null));
     }
 
+    @Test
     public void testAccessPriority() {
         final int expected = 1;
         mIntentFilter.setPriority(expected);
         assertEquals(expected, mIntentFilter.getPriority());
     }
 
+    @Test
     public void testDataSchemes() {
         for (int i = 0; i < 10; i++) {
             mIntentFilter.addDataScheme(DATA_SCHEME + i);
@@ -376,13 +412,14 @@ public class IntentFilterTest extends AndroidTestCase {
                 MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme3:foo"));
     }
 
+    @Test
     public void testCreate() {
         IntentFilter filter = IntentFilter.create(ACTION, DATA_STATIC_TYPE);
         assertNotNull(filter);
         verifyContent(filter, ACTION, DATA_STATIC_TYPE);
     }
 
-
+    @Test
     public void testSchemeSpecificParts() throws Exception {
         IntentFilter filter = new Match(null, null, null, new String[]{"scheme"},
                 null, null, null, null, new String[]{"ssp1", "2ssp"},
@@ -520,6 +557,7 @@ public class IntentFilterTest extends AndroidTestCase {
                 new int[]{matchType});
     }
 
+    @Test
     public void testSchemeSpecificPartsWithWildCards() throws Exception {
         IntentFilter filter = new Match(null, null, null, new String[]{"scheme"},
                 null, null, null, null, new String[]{"ssp1"},
@@ -538,6 +576,7 @@ public class IntentFilterTest extends AndroidTestCase {
                 MatchCondition.data(IntentFilter.NO_MATCH_DATA, "*:*", false));
     }
 
+    @Test
     public void testAuthorities() {
         for (int i = 0; i < 10; i++) {
             mIntentFilter.addDataAuthority(HOST + i, String.valueOf(PORT + i));
@@ -590,6 +629,7 @@ public class IntentFilterTest extends AndroidTestCase {
                 MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme1://authority1:200/"));
     }
 
+    @Test
     public void testAuthoritiesWithWildcards() throws Exception {
         IntentFilter filter = new Match(null, null, null, new String[]{"scheme1"},
                 new String[]{"authority1"}, new String[]{null});
@@ -633,6 +673,7 @@ public class IntentFilterTest extends AndroidTestCase {
                 MatchCondition.data(IntentFilter.MATCH_CATEGORY_HOST, "scheme1://*", true));
     }
 
+    @Test
     public void testDataTypes() throws MalformedMimeTypeException {
         for (int i = 0; i < 10; i++) {
             mIntentFilter.addDataType(DATA_STATIC_TYPE + i);
@@ -652,6 +693,7 @@ public class IntentFilterTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testDynamicDataTypes() throws MalformedMimeTypeException {
         for (int i = 0; i < 10; i++) {
             mIntentFilter.addDynamicDataType(DATA_DYNAMIC_TYPE + i);
@@ -672,6 +714,7 @@ public class IntentFilterTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testClearDynamicDataTypes() throws MalformedMimeTypeException {
         for (int i = 0; i < 10; i++) {
             mIntentFilter.addDataType(DATA_STATIC_TYPE + i);
@@ -698,6 +741,7 @@ public class IntentFilterTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testMimeGroups() {
         for (int i = 0; i < 10; i++) {
             mIntentFilter.addMimeGroup(MIME_GROUP + i);
@@ -716,6 +760,7 @@ public class IntentFilterTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAppEnumerationMatchesMimeGroups() {
         IntentFilter filter = new Match(new String[]{ACTION}, null, null, new String[]{"scheme1"},
                 new String[]{"authority1"}, null).addMimeGroups(new String[]{"test"});
@@ -730,6 +775,7 @@ public class IntentFilterTest extends AndroidTestCase {
                         ACTION, null, "*/*", "scheme1://authority1", true));
     }
 
+    @Test
     public void testMatchData() throws MalformedMimeTypeException {
         int expected = IntentFilter.MATCH_CATEGORY_EMPTY + IntentFilter.MATCH_ADJUSTMENT_NORMAL;
         assertEquals(expected, mIntentFilter.matchData(null, null, null));
@@ -762,6 +808,7 @@ public class IntentFilterTest extends AndroidTestCase {
         assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.matchData(null, DATA_SCHEME, uri));
     }
 
+    @Test
     public void testActions() {
         for (int i = 0; i < 10; i++) {
             mIntentFilter.addAction(ACTION + i);
@@ -800,6 +847,7 @@ public class IntentFilterTest extends AndroidTestCase {
                         false, Arrays.asList("action2")));
     }
 
+    @Test
     public void testActionWildCards() throws Exception {
         IntentFilter filter =
                 new Match(new String[]{"action1", "action2"}, null, null, null, null, null);
@@ -818,6 +866,7 @@ public class IntentFilterTest extends AndroidTestCase {
 
     }
 
+    @Test
     public void testAppEnumerationContactProviders() throws Exception {
         // sample contact source
         IntentFilter filter = new Match(new String[]{Intent.ACTION_VIEW},
@@ -837,6 +886,7 @@ public class IntentFilterTest extends AndroidTestCase {
                         true));
     }
 
+    @Test
     public void testAppEnumerationDocumentEditor() throws Exception {
         // sample document editor
         IntentFilter filter = new Match(
@@ -870,6 +920,7 @@ public class IntentFilterTest extends AndroidTestCase {
 
     }
 
+    @Test
     public void testAppEnumerationDeepLinks() throws Exception {
         // Sample app that supports deep-links
         IntentFilter filter = new Match(
@@ -899,6 +950,7 @@ public class IntentFilterTest extends AndroidTestCase {
                         true));
     }
 
+    @Test
     public void testAppEnumerationCustomShareSheet() throws Exception {
         // Sample share target
         IntentFilter filter = new Match(
@@ -928,6 +980,7 @@ public class IntentFilterTest extends AndroidTestCase {
                         true));
     }
 
+    @Test
     public void testAppEnumerationNoHostMatchesWildcardHost() throws Exception {
         IntentFilter filter = new Match(
                 new String[]{Intent.ACTION_VIEW},
@@ -953,6 +1006,7 @@ public class IntentFilterTest extends AndroidTestCase {
                         true));
     }
 
+    @Test
     public void testAppEnumerationNoPortMatchesPortFilter() throws Exception {
         IntentFilter filter = new Match(
                 new String[]{Intent.ACTION_VIEW},
@@ -970,6 +1024,7 @@ public class IntentFilterTest extends AndroidTestCase {
                         true));
     }
 
+    @Test
     public void testAppEnumerationBrowser() throws Exception {
         IntentFilter appWithWebLink = new Match(
                 new String[]{Intent.ACTION_VIEW},
@@ -1033,12 +1088,13 @@ public class IntentFilterTest extends AndroidTestCase {
                 true));
     }
 
+    @Test
     public void testWriteToXml() throws IllegalArgumentException, IllegalStateException,
             IOException, MalformedMimeTypeException, XmlPullParserException {
         XmlSerializer xml;
         ByteArrayOutputStream out;
 
-        xml = new FastXmlSerializer();
+        xml = Xml.newSerializer();
         out = new ByteArrayOutputStream();
         xml.setOutput(out, "utf-8");
         mIntentFilter.addAction(ACTION);
@@ -1068,6 +1124,7 @@ public class IntentFilterTest extends AndroidTestCase {
         out.close();
     }
 
+    @Test
     public void testMatchCategories() {
         assertNull(mIntentFilter.matchCategories(null));
         Set<String> cat = new HashSet<String>();
@@ -1085,6 +1142,7 @@ public class IntentFilterTest extends AndroidTestCase {
         assertEquals(expected, mIntentFilter.matchCategories(cat));
     }
 
+    @Test
     public void testMatchDataAuthority() {
         assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.matchDataAuthority(null));
         mIntentFilter.addDataAuthority(HOST, String.valueOf(PORT));
@@ -1092,10 +1150,13 @@ public class IntentFilterTest extends AndroidTestCase {
         assertEquals(IntentFilter.MATCH_CATEGORY_PORT, mIntentFilter.matchDataAuthority(uri));
     }
 
+    @Test
     public void testDescribeContents() {
         assertEquals(0, mIntentFilter.describeContents());
     }
 
+    @Test
+    @IgnoreUnderRavenwood
     public void testReadFromXml()
             throws NameNotFoundException, XmlPullParserException, IOException {
         XmlPullParser parser = null;
@@ -1136,6 +1197,7 @@ public class IntentFilterTest extends AndroidTestCase {
         assertEquals("test", mIntentFilter.getDataPath(2).getPath());
     }
 
+    @Test
     public void testDataPaths() {
         for (int i = 0; i < 10; i++) {
             mIntentFilter.addDataPath(DATA_PATH + i, PatternMatcher.PATTERN_PREFIX);
@@ -1265,6 +1327,8 @@ public class IntentFilterTest extends AndroidTestCase {
                 MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme1://authority1:200/"));
     }
 
+    @Test
+    @IgnoreUnderRavenwood
     public void testMatchWithIntent() throws MalformedMimeTypeException {
         final ContentResolver resolver = mContext.getContentResolver();
 
@@ -1301,6 +1365,7 @@ public class IntentFilterTest extends AndroidTestCase {
 
     }
 
+    @Test
     public void testMatchWithIntentData() throws MalformedMimeTypeException {
         Set<String> cat = new HashSet<String>();
         assertEquals(IntentFilter.NO_MATCH_ACTION, mIntentFilter.match(ACTION, null, null, null,
@@ -1360,6 +1425,7 @@ public class IntentFilterTest extends AndroidTestCase {
                 DATA_SCHEME, URI, cat, null));
     }
 
+    @Test
     public void testWriteToParcel() throws MalformedMimeTypeException {
         mIntentFilter.addAction(ACTION);
         mIntentFilter.addCategory(CATEGORY);
@@ -1388,6 +1454,7 @@ public class IntentFilterTest extends AndroidTestCase {
         assertEquals(mIntentFilter.getMimeGroup(0), target.getMimeGroup(0));
     }
 
+    @Test
     public void testAddDataType() throws MalformedMimeTypeException {
         try {
             mIntentFilter.addDataType("test");
@@ -1582,6 +1649,7 @@ public class IntentFilterTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testPaths() throws Exception {
         IntentFilter filter = new Match(null, null, null,
                 new String[]{"scheme"}, new String[]{"authority"}, null,
@@ -1778,6 +1846,7 @@ public class IntentFilterTest extends AndroidTestCase {
                         IntentFilter.NO_MATCH_DATA, "scheme://authority/a1b"));
     }
 
+    @Test
     public void testDump() throws MalformedMimeTypeException {
         TestPrinter printer = new TestPrinter();
         String prefix = "TestIntentFilter";
@@ -1794,6 +1863,7 @@ public class IntentFilterTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAsPredicate() throws Exception {
         final Predicate<Intent> pred = new IntentFilter(ACTION).asPredicate();
 
@@ -1801,6 +1871,8 @@ public class IntentFilterTest extends AndroidTestCase {
         assertFalse(pred.test(new Intent(CATEGORY)));
     }
 
+    @Test
+    @IgnoreUnderRavenwood
     public void testAsPredicateWithTypeResolution() throws Exception {
         final ContentResolver resolver = mContext.getContentResolver();
         final Predicate<Intent> pred = new IntentFilter(ACTION, DATA_STATIC_TYPE)

@@ -4922,4 +4922,16 @@ public class ParcelTest {
         }
         p.recycle();
     }
+
+    @Test
+    public void testReadEmpty() {
+        Parcel p = Parcel.obtain();
+        assertEquals(false, p.readBoolean());
+        assertEquals(0, p.readByte());
+        assertEquals(0, p.readInt());
+        assertEquals(0, p.readLong());
+        assertEquals(0f, p.readFloat(), DELTA_FLOAT);
+        assertEquals(0d, p.readDouble(), DELTA_DOUBLE);
+        assertNull(p.readString());
+    }
 }

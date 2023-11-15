@@ -73,6 +73,7 @@ java_defaults {
         "Nene",
         "Harrier",
         "platformprotosnano",
+        "ravenwood-junit",
         "CtsContentUtils",
     ],
     // Use multi-dex as the compatibility-common-util-devicesidelib dependency
@@ -226,4 +227,33 @@ android_test {
         ":TestInstallerApp",
     ],
     test_config: "CtsPackageManagerTest.xml",
+}
+
+android_ravenwood_test {
+    name: "CtsContentTestCasesRavenwood",
+    defaults: ["cts_defaults"],
+    libs: [
+        "android.test.mock",
+    ],
+    static_libs: [
+        "androidx.annotation_annotation",
+        "androidx.test.rules",
+        "androidx.test.uiautomator_uiautomator",
+    ],
+    srcs: [
+        "src/android/content/cts/util/XmlUtils.java",
+        "src/android/content/cts/ClipDataTest.java",
+        "src/android/content/cts/ClipDescriptionTest.java",
+        "src/android/content/cts/ComponentNameTest.java",
+        "src/android/content/cts/ContentUrisTest.java",
+        "src/android/content/cts/ContentValuesTest.java",
+        "src/android/content/cts/IntentTest.java",
+        "src/android/content/cts/IntentFilterTest.java",
+        "src/android/content/cts/MockActivity.java",
+        "src/android/content/cts/MockService.java",
+        "src/android/content/cts/MockReceiver.java",
+        "src/android/content/cts/MockContentProvider.java",
+        "src/android/content/cts/UriMatcherTest.java",
+    ],
+    auto_gen_config: true,
 }

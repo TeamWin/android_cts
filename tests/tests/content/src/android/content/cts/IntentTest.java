@@ -19,6 +19,13 @@ package android.content.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.app.PendingIntent;
 import android.content.ClipData;
@@ -34,18 +41,26 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.XmlResourceParser;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.os.ServiceManager;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeSdkSandbox;
-import android.provider.Contacts.People;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
+import android.test.mock.MockContext;
 import android.util.AttributeSet;
 import android.util.Xml;
 
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -56,13 +71,15 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Set;
 
+@RunWith(AndroidJUnit4.class)
 @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
-public class IntentTest extends AndroidTestCase {
+public class IntentTest {
+    @Rule public final RavenwoodRule mRavenwood = new RavenwoodRule();
 
     private Intent mIntent;
     private static final String TEST_ACTION = "android.content.IntentTest_test";
-    private static final Uri TEST_URI = People.CONTENT_URI;
-    private static final Uri ANOTHER_TEST_URI = People.CONTENT_FILTER_URI;
+    private static final Uri TEST_URI = Uri.parse("content://com.example/people");
+    private static final Uri ANOTHER_TEST_URI = Uri.parse("content://com.example/places");
     private static final String TEST_EXTRA_NAME = "testExtraName";
     private Context mContext;
     private PackageManager mPm;
@@ -76,17 +93,30 @@ public class IntentTest extends AndroidTestCase {
     private static final String ANOTHER_TEST_CATEGORY = "testAnotherCategory";
     private static final String TEST_PACKAGE = "android.content.cts";
     private static final String ANOTHER_TEST_PACKAGE = "android.database.cts";
+    private static final double DELTA_FLOAT = 0.0f;
+    private static final double DELTA_DOUBLE = 0.0d;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
+        if (mRavenwood.isUnderRavenwood()) {
+            // TODO: replace with mockito when better supported
+            mContext = new MockContext() {
+                @Override
+                public String getPackageName() {
+                    return "android.content.cts";
+                }
+            };
+        } else {
+            mContext = InstrumentationRegistry.getTargetContext();
+            mPm = mContext.getPackageManager();
+        }
+
         mIntent = new Intent();
-        mContext = getContext();
-        mPm = mContext.getPackageManager();
         mComponentName = new ComponentName(mContext, MockActivity.class);
         mAnotherComponentName = new ComponentName(mContext, "tmp");
     }
 
+    @Test
     public void testConstructor() {
         mIntent = new Intent();
         assertNotNull(mIntent);
@@ -118,6 +148,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(mComponentName, mIntent.getComponent());
     }
 
+    @Test
     public void testRemoveExtra() {
         mIntent = new Intent();
         mIntent.putExtra(TEST_EXTRA_NAME, "testvalue");
@@ -126,12 +157,14 @@ public class IntentTest extends AndroidTestCase {
         assertNull(mIntent.getStringExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testGetCharSequenceExtra() {
         final CharSequence expected = "CharSequencetest";
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getCharSequenceExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testReadFromParcel() {
         mIntent.setAction(TEST_ACTION);
         mIntent.setData(TEST_URI);
@@ -154,6 +187,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(mIntent.toURI(), target.toURI());
     }
 
+    @Test
     public void testGetParcelableArrayListExtra() {
         final ArrayList<Intent> expected = new ArrayList<Intent>();
         Intent intent = new Intent(TEST_ACTION);
@@ -165,6 +199,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected, target);
     }
 
+    @Test
     public void testGetParcelableArrayListExtraTypeSafe_withMismatchingType_returnsNull() {
         final ArrayList<TestParcelable> original = new ArrayList<>();
         original.add(new TestParcelable(0));
@@ -173,6 +208,7 @@ public class IntentTest extends AndroidTestCase {
         assertNull(mIntent.getParcelableArrayListExtra(TEST_EXTRA_NAME, Intent.class));
     }
 
+    @Test
     public void testGetParcelableArrayListExtraTypeSafe_withMatchingType_returnsObject() {
         final ArrayList<TestParcelable> original = new ArrayList<>();
         original.add(new TestParcelable(0));
@@ -183,6 +219,7 @@ public class IntentTest extends AndroidTestCase {
                 mIntent.getParcelableArrayListExtra(TEST_EXTRA_NAME, TestParcelable.class));
     }
 
+    @Test
     public void testGetParcelableArrayListExtraTypeSafe_withBaseType_returnsObject() {
         final ArrayList<TestParcelable> original = new ArrayList<>();
         original.add(new TestParcelable(0));
@@ -193,22 +230,26 @@ public class IntentTest extends AndroidTestCase {
                 mIntent.getParcelableArrayListExtra(TEST_EXTRA_NAME, Parcelable.class));
     }
 
+    @Test
     public void testFilterHashCode() {
         mIntent.filterHashCode();
     }
 
+    @Test
     public void testGetCategories() {
         mIntent.addCategory(TEST_CATEGORY);
         final Set<String> target = mIntent.getCategories();
         assertEquals(TEST_CATEGORY, target.toArray()[0]);
     }
 
+    @Test
     public void testGetScheme() {
         assertNull(mIntent.getScheme());
         mIntent.setData(TEST_URI);
         assertEquals(TEST_URI.getScheme(), mIntent.getScheme());
     }
 
+    @Test
     public void testGetIntegerArrayListExtra() {
         final ArrayList<Integer> expected = new ArrayList<Integer>();
         expected.add(0);
@@ -216,6 +257,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected, mIntent.getIntegerArrayListExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testHasExtra() {
         mIntent = new Intent();
         assertFalse(mIntent.hasExtra(TEST_EXTRA_NAME));
@@ -223,6 +265,7 @@ public class IntentTest extends AndroidTestCase {
         assertTrue(mIntent.hasExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testGetIntArrayExtra() {
         final int[] expected = { 1, 2, 3 };
         assertNull(mIntent.getIntArrayExtra(TEST_EXTRA_NAME));
@@ -230,17 +273,20 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected, mIntent.getIntArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testSetClassName1() {
         final Intent intent = mIntent.setClassName(mContext, MockActivity.class.getName());
         assertEquals(mComponentName, mIntent.getComponent());
         assertSame(mIntent, intent);
     }
 
+    @Test
     public void testSetClassName2() {
         mIntent.setClassName(mContext.getPackageName(), MockActivity.class.getName());
         assertEquals(mComponentName, mIntent.getComponent());
     }
 
+    @Test
     public void testGetIntExtra() {
         final int expected = 0;
         mIntent = new Intent();
@@ -250,6 +296,7 @@ public class IntentTest extends AndroidTestCase {
 
     }
 
+    @Test
     public void testPutIntegerArrayListExtra() {
         final ArrayList<Integer> expected = new ArrayList<Integer>();
         expected.add(0);
@@ -258,11 +305,13 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected, mIntent.getIntegerArrayListExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testAccessType() {
         mIntent.setType(TEST_TYPE);
         assertEquals(TEST_TYPE, mIntent.getType());
     }
 
+    @Test
     public void testGetBundleExtra() {
         final Bundle expected = new Bundle();
         expected.putBoolean("testTrue", true);
@@ -272,6 +321,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected, mIntent.getBundleExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testGetCharArrayExtra() {
         final char[] expected = { 'a', 'b', 'c' };
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
@@ -282,12 +332,14 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected[2], actual[2]);
     }
 
+    @Test
     public void testGetDoubleArrayExtra() {
         final double[] expected = { 1d, 2d };
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getDoubleArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testPutStringArrayListExtra() {
         final ArrayList<String> expected = new ArrayList<String>();
         expected.add("testString");
@@ -295,6 +347,8 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected, mIntent.getStringArrayListExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
+    @IgnoreUnderRavenwood
     public void testResolveType1() {
         final ContentResolver contentResolver = mContext.getContentResolver();
         assertNull(mIntent.resolveType(mContext));
@@ -307,6 +361,8 @@ public class IntentTest extends AndroidTestCase {
         assertNull(mIntent.resolveType(mContext));
     }
 
+    @Test
+    @IgnoreUnderRavenwood
     public void testResolveType2() {
         final ContentResolver contentResolver = mContext.getContentResolver();
         assertNull(mIntent.resolveType(contentResolver));
@@ -319,35 +375,42 @@ public class IntentTest extends AndroidTestCase {
         assertNull(mIntent.resolveType(contentResolver));
     }
 
+    @Test
     public void testAccessComponent() {
         mIntent.setComponent(mComponentName);
         assertEquals(mComponentName, mIntent.getComponent());
     }
 
+    @Test
     public void testGetDataString() {
         assertNull(mIntent.getDataString());
         mIntent.setData(TEST_URI);
         assertEquals(TEST_URI.toString(), mIntent.getDataString());
     }
 
+    @Test
     public void testGetIdentifer() {
         assertNull(mIntent.getIdentifier());
         mIntent.setIdentifier(TEST_IDENTIFIER);
         assertEquals(TEST_IDENTIFIER, mIntent.getIdentifier());
     }
 
+    @Test
     public void testHasCategory() {
         assertFalse(mIntent.hasCategory(TEST_CATEGORY));
         mIntent.addCategory(TEST_CATEGORY);
         assertTrue(mIntent.hasCategory(TEST_CATEGORY));
     }
 
+    @Test
     public void testGetLongArrayExtra() {
         final long[] expected = { 1l, 2l, 3l };
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getLongArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
+    @IgnoreUnderRavenwood
     public void testParseIntent() throws XmlPullParserException, IOException,
         NameNotFoundException {
         mIntent = null;
@@ -409,12 +472,15 @@ public class IntentTest extends AndroidTestCase {
         assertEquals("two", mIntent.getStringExtra("another_string"));
     }
 
+    @Test
     public void testSetClass() {
         assertNull(mIntent.getComponent());
         mIntent.setClass(mContext, MockActivity.class);
         assertEquals(mComponentName, mIntent.getComponent());
     }
 
+    @Test
+    @IgnoreUnderRavenwood
     public void testResolveTypeIfNeeded() {
         ContentResolver contentResolver = mContext.getContentResolver();
         assertNull(mIntent.resolveTypeIfNeeded(contentResolver));
@@ -434,6 +500,7 @@ public class IntentTest extends AndroidTestCase {
         assertNull(mIntent.resolveTypeIfNeeded(contentResolver));
     }
 
+    @Test
     public void testPutExtra1() {
         assertFalse(mIntent.getBooleanExtra(TEST_EXTRA_NAME, false));
         mIntent.putExtra(TEST_EXTRA_NAME, true);
@@ -442,12 +509,14 @@ public class IntentTest extends AndroidTestCase {
         assertFalse(mIntent.getBooleanExtra(TEST_EXTRA_NAME, false));
     }
 
+    @Test
     public void testPutExtra2() {
         final byte expected = Byte.valueOf("1");
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getByteExtra(TEST_EXTRA_NAME, Byte.valueOf("1")));
     }
 
+    @Test
     public void testPutExtra3() {
         assertEquals('a', mIntent.getCharExtra(TEST_EXTRA_NAME, 'a'));
         final char expected = 'a';
@@ -455,6 +524,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected, mIntent.getCharExtra(TEST_EXTRA_NAME, 'a'));
     }
 
+    @Test
     public void testPutExtra4() {
         final Short expected = Short.valueOf("2");
         assertEquals(Short.valueOf("1").shortValue(), mIntent.getShortExtra(
@@ -463,6 +533,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected.shortValue(), mIntent.getShortExtra(TEST_EXTRA_NAME, Short.valueOf("1")));
     }
 
+    @Test
     public void testPutExtra5() {
         final int expected = 2;
         assertEquals(1, mIntent.getIntExtra(TEST_EXTRA_NAME, 1));
@@ -470,6 +541,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected, mIntent.getIntExtra(TEST_EXTRA_NAME, 1));
     }
 
+    @Test
     public void testPutExtra6() {
         final long expected = 2l;
         assertEquals(1l, mIntent.getLongExtra(TEST_EXTRA_NAME, 1l));
@@ -477,20 +549,23 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected, mIntent.getLongExtra(TEST_EXTRA_NAME, 1l));
     }
 
+    @Test
     public void testPutExtra7() {
         final float expected = 2f;
-        assertEquals(1f, mIntent.getFloatExtra(TEST_EXTRA_NAME, 1f));
+        assertEquals(1f, mIntent.getFloatExtra(TEST_EXTRA_NAME, 1f), DELTA_FLOAT);
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
-        assertEquals(expected, mIntent.getFloatExtra(TEST_EXTRA_NAME, 1f));
+        assertEquals(expected, mIntent.getFloatExtra(TEST_EXTRA_NAME, 1f), DELTA_FLOAT);
     }
 
+    @Test
     public void testPutExtra8() {
         final double expected = 2d;
-        assertEquals(1d, mIntent.getDoubleExtra(TEST_EXTRA_NAME, 1d));
+        assertEquals(1d, mIntent.getDoubleExtra(TEST_EXTRA_NAME, 1d), DELTA_DOUBLE);
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
-        assertEquals(expected, mIntent.getDoubleExtra(TEST_EXTRA_NAME, 1d));
+        assertEquals(expected, mIntent.getDoubleExtra(TEST_EXTRA_NAME, 1d), DELTA_DOUBLE);
     }
 
+    @Test
     public void testPutExtra9() {
         final String expected = "testString";
         assertNull(mIntent.getStringExtra(TEST_EXTRA_NAME));
@@ -498,6 +573,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected, mIntent.getStringExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testPutExtra10() {
         final CharSequence expected = "testString";
         assertNull(mIntent.getCharSequenceExtra(TEST_EXTRA_NAME));
@@ -505,18 +581,21 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected, mIntent.getCharSequenceExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testPutExtra11() {
         final Intent expected = new Intent(TEST_ACTION);
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getParcelableExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testPutExtra12() {
         final Intent[] expected = { new Intent(TEST_ACTION), new Intent(mContext, MockActivity.class) };
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getParcelableArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testPutExtra13() {
         final TestSerializable expected = new TestSerializable();
         expected.Name = "testName";
@@ -526,60 +605,70 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected.Name, target.Name);
     }
 
+    @Test
     public void testPutExtra14() {
         final boolean[] expected = { true, true, false };
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getBooleanArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testPutExtra15() {
         final byte[] expected = TEST_ACTION.getBytes();
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getByteArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testPutExtra16() {
         final short[] expected = { 1, 2, 3 };
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getShortArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testPutExtra17() {
         final char[] expected = { '1', '2', '3' };
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getCharArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testPutExtra18() {
         final int[] expected = { 1, 2, 3 };
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getIntArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testPutExtra19() {
         final long[] expected = { 1l, 2l, 3l };
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getLongArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testPutExtra20() {
         final float[] expected = { 1f, 2f, 3f };
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getFloatArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testPutExtra21() {
         final double[] expected = { 1d, 2d, 3d };
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getDoubleArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testPutExtra22() {
         final String[] expected = { "1d", "2d", "3d" };
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getStringArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testPutExtra23() {
         final Bundle expected = new Bundle();
         expected.putString("key", "value");
@@ -587,37 +676,44 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected, mIntent.getBundleExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     @SuppressWarnings("deprecation")
     public void testPutExtra24() {
-        final IBinder expected = ServiceManager.getService("activity");
+        final IBinder expected = new Binder();
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getIBinderExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testAddCategory() {
         assertFalse(mIntent.hasCategory(TEST_CATEGORY));
         mIntent.addCategory(TEST_CATEGORY);
         assertTrue(mIntent.hasCategory(TEST_CATEGORY));
     }
 
+    @Test
     public void testPutParcelableArrayListExtra() {
         ArrayList<Intent> expected = new ArrayList<Intent>();
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getParcelableArrayListExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testToString() {
         assertNotNull(mIntent.toString());
     }
 
+    @Test
     public void testAccessData() {
         mIntent.setData(TEST_URI);
         assertEquals(TEST_URI, mIntent.getData());
     }
 
+    @Test
     public void testSetExtrasClassLoader() {
     }
 
+    @Test
     public void testGetStringArrayListExtra() {
         final ArrayList<String> expected = new ArrayList<String>();
         expected.add("testString");
@@ -625,6 +721,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected, mIntent.getStringArrayListExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testGetCharSequenceArrayListExtra() {
         final ArrayList<CharSequence> expected = new ArrayList<CharSequence>();
         expected.add("testCharSequence");
@@ -632,6 +729,8 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected, mIntent.getCharSequenceArrayListExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
+    @IgnoreUnderRavenwood
     public void testResolveActivityInfo() throws NameNotFoundException {
         final PackageManager pm = mContext.getPackageManager();
         assertEquals(null, mIntent.resolveActivityInfo(pm, 1));
@@ -642,34 +741,40 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(target.targetActivity, mIntent.resolveActivityInfo(pm, 1).targetActivity);
     }
 
+    @Test
     public void testGetParcelableExtra() {
         final Intent expected = new Intent(TEST_ACTION);
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getParcelableExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testGetParcelableExtraTypeSafe_withMismatchingType_returnsNull() {
         mIntent.putExtra(TEST_EXTRA_NAME, new TestParcelable(42));
         assertNull(mIntent.getParcelableExtra(TEST_EXTRA_NAME, Intent.class));
     }
 
+    @Test
     public void testGetParcelableExtraTypeSafe_withMatchingType_returnsObject() {
         final TestParcelable original = new TestParcelable(42);
         mIntent.putExtra(TEST_EXTRA_NAME, original);
         assertEquals(original, mIntent.getParcelableExtra(TEST_EXTRA_NAME, TestParcelable.class));
     }
 
+    @Test
     public void testGetParcelableExtraTypeSafe_withBaseType_returnsObject() {
         final TestParcelable original = new TestParcelable(42);
         mIntent.putExtra(TEST_EXTRA_NAME, original);
         assertEquals(original, mIntent.getParcelableExtra(TEST_EXTRA_NAME, Parcelable.class));
     }
 
+    @Test
     public void testAccessAction() {
         mIntent.setAction(TEST_ACTION);
         assertEquals(TEST_ACTION, mIntent.getAction());
     }
 
+    @Test
     public void testAddFlags() {
         final int flag = 1;
         int expected = 0;
@@ -678,6 +783,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected, mIntent.getFlags());
     }
 
+    @Test
     public void testDescribeContents() {
         final int expected = 0;
         assertEquals(expected, mIntent.describeContents());
@@ -685,6 +791,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(mIntent.getExtras().describeContents(), mIntent.describeContents());
     }
 
+    @Test
     public void testGetShortExtra() {
 
         final Short expected = Short.valueOf("2");
@@ -694,6 +801,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected.shortValue(), mIntent.getShortExtra(TEST_EXTRA_NAME, Short.valueOf("1")));
     }
 
+    @Test
     public void testClone() {
         mIntent.setAction(TEST_ACTION);
         mIntent.setClass(mContext, MockActivity.class);
@@ -715,13 +823,15 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(excepted, actual.getStringExtra(key));
     }
 
+    @Test
     public void testGetDoubleExtra() {
         final double expected = 2d;
-        assertEquals(1d, mIntent.getDoubleExtra(TEST_EXTRA_NAME, 1d));
+        assertEquals(1d, mIntent.getDoubleExtra(TEST_EXTRA_NAME, 1d), DELTA_DOUBLE);
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
-        assertEquals(expected, mIntent.getDoubleExtra(TEST_EXTRA_NAME, 1d));
+        assertEquals(expected, mIntent.getDoubleExtra(TEST_EXTRA_NAME, 1d), DELTA_DOUBLE);
     }
 
+    @Test
     public void testCloneFilter() {
         mIntent.setAction(TEST_ACTION);
         mIntent.setClass(mContext, MockActivity.class);
@@ -742,6 +852,7 @@ public class IntentTest extends AndroidTestCase {
         assertNull(actual.getStringExtra(key));
     }
 
+    @Test
     public void testGetIntentOld() throws URISyntaxException {
         String uri = "test";
         mIntent = Intent.getIntentOld(uri);
@@ -776,9 +887,9 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(b, mIntent.getByteExtra("testbyte", defaulttByte));
         assertEquals('a', mIntent.getCharExtra("testchar", 'b'));
         final float testFloat = 1f;
-        assertEquals(testFloat, mIntent.getFloatExtra("testfloat", 2f));
+        assertEquals(testFloat, mIntent.getFloatExtra("testfloat", 2f), DELTA_FLOAT);
         final double testDouble = 1d;
-        assertEquals(testDouble, mIntent.getDoubleExtra("testdouble", 2d));
+        assertEquals(testDouble, mIntent.getDoubleExtra("testdouble", 2d), DELTA_DOUBLE);
 
         final long testLong = 1;
         assertEquals(testLong, mIntent.getLongExtra("testlong", 2l));
@@ -789,18 +900,21 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(1, mIntent.getIntExtra("testint", 2));
     }
 
+    @Test
     public void testGetParcelableArrayExtra() {
         final Intent[] expected = { new Intent(TEST_ACTION), new Intent(mContext, MockActivity.class) };
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertArrayEquals(expected, mIntent.getParcelableArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testGetParcelableArrayExtraTypeSafe_withMismatchingType_returnsNull() {
         mIntent.putExtra(TEST_EXTRA_NAME, new TestParcelable[] {new TestParcelable(42)});
         roundtrip();
         assertNull(mIntent.getParcelableArrayExtra(TEST_EXTRA_NAME, Intent.class));
     }
 
+    @Test
     public void testGetParcelableArrayExtraTypeSafe_withMatchingType_returnsObject() {
         final TestParcelable[] original = { new TestParcelable(1), new TestParcelable(2) };
         mIntent.putExtra(TEST_EXTRA_NAME, original);
@@ -809,6 +923,7 @@ public class IntentTest extends AndroidTestCase {
                 mIntent.getParcelableArrayExtra(TEST_EXTRA_NAME, TestParcelable.class));
     }
 
+    @Test
     public void testGetParcelableArrayExtraTypeSafe_withBaseType_returnsObject() {
         final TestParcelable[] original = { new TestParcelable(1), new TestParcelable(2) };
         mIntent.putExtra(TEST_EXTRA_NAME, original);
@@ -817,6 +932,8 @@ public class IntentTest extends AndroidTestCase {
                 mIntent.getParcelableArrayExtra(TEST_EXTRA_NAME, Parcelable.class));
     }
 
+    @Test
+    @IgnoreUnderRavenwood
     public void testResolveActivityEmpty() {
         final Intent emptyIntent = new Intent();
 
@@ -825,6 +942,8 @@ public class IntentTest extends AndroidTestCase {
         assertNull(target);
     }
 
+    @Test
+    @IgnoreUnderRavenwood
     public void testResolveActivitySingleMatch() {
         final Intent intent = new Intent("android.content.cts.action.TEST_ACTION");
         intent.addCategory("android.content.cts.category.TEST_CATEGORY");
@@ -835,6 +954,8 @@ public class IntentTest extends AndroidTestCase {
         assertEquals("android.content.cts.MockActivity", target.getClassName());
     }
 
+    @Test
+    @IgnoreUnderRavenwood
     public void testResolveActivityShortcutMatch() {
         final Intent intent = new Intent("android.content.cts.action.TEST_ACTION");
         intent.setComponent(
@@ -847,6 +968,8 @@ public class IntentTest extends AndroidTestCase {
     }
 
     @AppModeFull
+    @Test
+    @IgnoreUnderRavenwood
     public void testResolveActivityMultipleMatch() {
         final Intent intent = new Intent("android.content.cts.action.TEST_ACTION");
 
@@ -865,6 +988,7 @@ public class IntentTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetCharExtra() {
         assertEquals('a', mIntent.getCharExtra(TEST_EXTRA_NAME, 'a'));
         final char expected = 'b';
@@ -872,6 +996,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected, mIntent.getCharExtra(TEST_EXTRA_NAME, 'a'));
     }
 
+    @Test
     public void testGetIntent() throws URISyntaxException {
         mIntent = Intent.getIntent("test#");
         assertEquals(Intent.ACTION_VIEW, mIntent.getAction());
@@ -959,7 +1084,7 @@ public class IntentTest extends AndroidTestCase {
         mIntent.putExtra(TEST_EXTRA_NAME, testDouble);
         uri = mIntent.toURI();
         target = Intent.getIntent(uri);
-        assertEquals(testDouble, target.getDoubleExtra(TEST_EXTRA_NAME, 2));
+        assertEquals(testDouble, target.getDoubleExtra(TEST_EXTRA_NAME, 2), DELTA_DOUBLE);
 
         final int testInt = 1;
         mIntent.putExtra(TEST_EXTRA_NAME, testInt);
@@ -981,6 +1106,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(testShort, target.getShortExtra(TEST_EXTRA_NAME, defaultShort));
     }
 
+    @Test
     public void testToURI() {
         mIntent = new Intent();
         assertEquals("", mIntent.toURI());
@@ -1057,6 +1183,7 @@ public class IntentTest extends AndroidTestCase {
         return baseIntent;
     }
 
+    @Test
     public void testUris() {
         checkIntentUri(
                 "intent:#Intent;action=android.test.FOO;end",
@@ -1342,6 +1469,11 @@ public class IntentTest extends AndroidTestCase {
         }
     }
 
+    private void failNotEquals(String msg, Object expected, Object actual) {
+        fail(msg + ": expected " + Objects.toString(expected)
+                + " actual " + Objects.toString(actual));
+    }
+
     private void checkIntentUri(String intentSchemeUri, String androidAppSchemeUri, Intent intent) {
         if (intentSchemeUri != null) {
             try {
@@ -1375,12 +1507,15 @@ public class IntentTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAccessFlags() {
         int expected = 1;
         mIntent.setFlags(expected);
         assertEquals(expected, mIntent.getFlags());
     }
 
+    @Test
+    @IgnoreUnderRavenwood
     public void testCreateChooser() {
         Intent target = Intent.createChooser(mIntent, null);
         assertEquals(Intent.ACTION_CHOOSER, target.getAction());
@@ -1437,18 +1572,21 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(anotherUri, clipData.getItemAt(0).getUri());
     }
 
+    @Test
     public void testGetFloatArrayExtra() {
         final float[] expected = { 1f, 2f, 3f };
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getFloatArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testSetDataAndType() {
         mIntent.setDataAndType(TEST_URI, TEST_TYPE);
         assertEquals(TEST_URI, mIntent.getData());
         assertEquals(TEST_TYPE, mIntent.getType());
     }
 
+    @Test
     public void testSetData() {
         mIntent.setData(TEST_URI);
         assertEquals(TEST_URI, mIntent.getData());
@@ -1460,6 +1598,7 @@ public class IntentTest extends AndroidTestCase {
         assertNull(mIntent.getType());
     }
 
+    @Test
     public void testSetType() {
         mIntent.setType(TEST_TYPE);
         assertEquals(TEST_TYPE, mIntent.getType());
@@ -1471,6 +1610,7 @@ public class IntentTest extends AndroidTestCase {
         assertNull(mIntent.getData());
     }
 
+    @Test
     public void testGetStringExtra() {
         final String expected = "testString";
         assertNull(mIntent.getStringExtra(TEST_EXTRA_NAME));
@@ -1481,6 +1621,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test that fillIn has no effect when no fields are set.
      */
+    @Test
     public void testFillIn_blank() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1492,6 +1633,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test that fillIn copies the action field.
      */
+    @Test
     public void testFillIn_action() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1504,6 +1646,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test that fillIn does not copy action when its already set in target Intent.
      */
+    @Test
     public void testFillIn_actionSet() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1519,6 +1662,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test that fillIn copies action when {@link Intent#FILL_IN_ACTION} flag is set.
      */
+    @Test
     public void testFillIn_actionOverride() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1534,6 +1678,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test that fillIn copies data.
      */
+    @Test
     public void testFillIn_data() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1545,6 +1690,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test that fillIn does not copy data when already its already set in target Intent.
      */
+    @Test
     public void testFillIn_dataSet() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1557,6 +1703,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test that fillIn overrides data when {@link Intent#FILL_IN_DATA} flag is set.
      */
+    @Test
     public void testFillIn_dataOverride() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1569,6 +1716,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test that fillIn copies data type.
      */
+    @Test
     public void testFillIn_dataType() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1580,6 +1728,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test that fillIn does not copy data type when already its already set in target Intent.
      */
+    @Test
     public void testFillIn_dataTypeSet() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1592,6 +1741,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test that fillIn overrides data type when {@link Intent#FILL_IN_DATA} flag is set.
      */
+    @Test
     public void testFillIn_dataTypeOverride() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1604,6 +1754,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test that fillIn copies identifier.
      */
+    @Test
     public void testFillIn_identifier() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1615,6 +1766,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test that fillIn does not copy identifier when already its already set in target Intent.
      */
+    @Test
     public void testFillIn_identifierSet() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1627,6 +1779,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test that fillIn overrides identifier when {@link Intent#FILL_IN_IDENTIFIER} flag is set.
      */
+    @Test
     public void testFillIn_identifierOverride() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1641,6 +1794,7 @@ public class IntentTest extends AndroidTestCase {
      * Test component is not copied by fillIn method when {@link Intent#FILL_IN_COMPONENT} flag is
      * not set.
      */
+    @Test
     public void testFillIn_componentNoCopy() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1652,6 +1806,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test that fillIn copies component when {@link Intent#FILL_IN_COMPONENT} flag is set.
      */
+    @Test
     public void testFillIn_componentOverride() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1665,6 +1820,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test that fillIn copies categories.
      */
+    @Test
     public void testFillIn_category() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1680,6 +1836,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test fillIn does not copy categories by default when already set.
      */
+    @Test
     public void testFillIn_categorySet() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1696,6 +1853,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test that fillIn adds categories when {@link Intent#FILL_IN_CATEGORIES} flag is set.
      */
+    @Test
     public void testFillIn_categoryOverride() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1712,6 +1870,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test fillIn copies package.
      */
+    @Test
     public void testFillIn_package() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1723,6 +1882,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test fillIn does not copy package by default when already set.
      */
+    @Test
     public void testFillIn_packageSet() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1735,6 +1895,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test that fillIn overrides package when {@link Intent#FILL_IN_PACKAGE} flag is set.
      */
+    @Test
     public void testFillIn_packageOverride() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1747,6 +1908,7 @@ public class IntentTest extends AndroidTestCase {
     /**
      * Test that fillIn copies extras.
      */
+    @Test
     public void testFillIn_extras() {
         Intent sourceIntent = new Intent();
         Intent destIntent = new Intent();
@@ -1757,6 +1919,7 @@ public class IntentTest extends AndroidTestCase {
         assertTrue(destIntent.getExtras().getBoolean(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testGetExtras() {
         assertNull(mIntent.getExtras());
         final String expected = "testString";
@@ -1765,6 +1928,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected, mIntent.getExtras().getString(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testGetBooleanExtra() {
         assertFalse(mIntent.getBooleanExtra(TEST_EXTRA_NAME, false));
         mIntent.putExtra(TEST_EXTRA_NAME, true);
@@ -1773,37 +1937,43 @@ public class IntentTest extends AndroidTestCase {
         assertFalse(mIntent.getBooleanExtra(TEST_EXTRA_NAME, false));
     }
 
+    @Test
     public void testGetFloatExtra() {
         float expected = 2f;
-        assertEquals(1f, mIntent.getFloatExtra(TEST_EXTRA_NAME, 1f));
+        assertEquals(1f, mIntent.getFloatExtra(TEST_EXTRA_NAME, 1f), DELTA_FLOAT);
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
-        assertEquals(expected, mIntent.getFloatExtra(TEST_EXTRA_NAME, 1f));
+        assertEquals(expected, mIntent.getFloatExtra(TEST_EXTRA_NAME, 1f), DELTA_FLOAT);
     }
 
+    @Test
     public void testGetShortArrayExtra() {
         final short[] expected = { 1, 2, 3 };
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getShortArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testGetStringArrayExtra() {
         final String[] expected = { "1d", "2d", "3d" };
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getStringArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testGetCharSequenceArrayExtra() {
         final String[] expected = { "1d", "2d", "3d" };
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getCharSequenceArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testGetByteArrayExtra() {
         final byte[] expected = TEST_ACTION.getBytes();
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getByteArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testHasFileDescriptors() {
         Bundle bundle = mIntent.getExtras();
         assertEquals(bundle != null && bundle.hasFileDescriptors(), mIntent.hasFileDescriptors());
@@ -1813,12 +1983,14 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(bundle != null && bundle.hasFileDescriptors(), mIntent.hasFileDescriptors());
     }
 
+    @Test
     public void testGetBooleanArrayExtra() {
         final boolean[] expected = { true, true, false };
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getBooleanArrayExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testGetLongExtra() {
         final long expected = 2l;
         assertEquals(1l, mIntent.getLongExtra(TEST_EXTRA_NAME, 1l));
@@ -1826,6 +1998,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected, mIntent.getLongExtra(TEST_EXTRA_NAME, 1l));
     }
 
+    @Test
     public void testRemoveCategory() {
         assertNull(mIntent.getCategories());
         mIntent.addCategory(TEST_CATEGORY);
@@ -1836,6 +2009,7 @@ public class IntentTest extends AndroidTestCase {
         assertFalse(mIntent.hasCategory(TEST_CATEGORY));
     }
 
+    @Test
     public void testFilterEquals() {
         assertFalse(mIntent.filterEquals(null));
 
@@ -1895,6 +2069,7 @@ public class IntentTest extends AndroidTestCase {
         assertFalse(mIntent.filterEquals(target));
     }
 
+    @Test
     public void testPutExtras1() {
         final Intent intent = new Intent();
         mIntent.putExtras(intent);
@@ -1904,6 +2079,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(intent.getExtras().toString(), mIntent.getExtras().toString());
     }
 
+    @Test
     public void testPutExtras2() {
         final Bundle bundle = new Bundle();
         mIntent.putExtras(bundle);
@@ -1917,12 +2093,14 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(bundle, mIntent.getBundleExtra(TEST_EXTRA_NAME));
     }
 
+    @Test
     public void testGetByteExtra() {
         final byte expected = Byte.valueOf("1");
         mIntent.putExtra(TEST_EXTRA_NAME, expected);
         assertEquals(expected, mIntent.getByteExtra(TEST_EXTRA_NAME, Byte.valueOf("1")));
     }
 
+    @Test
     public void testGetSerializableExtra() {
         TestSerializable expected = new TestSerializable();
         expected.Name = "testName";
@@ -1932,12 +2110,14 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(expected.Name, target.Name);
     }
 
+    @Test
     public void testGetSerializableExtraTypeSafe_withMismatchingType_returnsNull() {
         mIntent.putExtra(TEST_EXTRA_NAME, new TestSerializable());
         roundtrip();
         assertNull(mIntent.getSerializableExtra(TEST_EXTRA_NAME, Long.class));
     }
 
+    @Test
     public void testGetSerializableExtraTypeSafe_withMatchingType_returnsObject() {
         String original = "Hello, World!";
         mIntent.putExtra(TEST_EXTRA_NAME, original);
@@ -1945,6 +2125,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(original, mIntent.getSerializableExtra(TEST_EXTRA_NAME, String.class));
     }
 
+    @Test
     public void testGetSerializableExtraTypeSafe_withBaseType_returnsObject() {
         String original = "Hello, World!";
         mIntent.putExtra(TEST_EXTRA_NAME, original);
@@ -1952,6 +2133,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(original, mIntent.getSerializableExtra(TEST_EXTRA_NAME, Serializable.class));
     }
 
+    @Test
     public void testReplaceExtras() {
         Bundle extras = new Bundle();
         String bundleKey = "testKey";
@@ -1974,6 +2156,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals(intentValue, actualValue);
     }
 
+    @Test
     public void testNormalizeMimeType() {
         assertEquals(null, Intent.normalizeMimeType(null));
         assertEquals("text/plain", Intent.normalizeMimeType("text/plain; charset=UTF-8"));
@@ -1981,6 +2164,7 @@ public class IntentTest extends AndroidTestCase {
         assertEquals("foo/bar", Intent.normalizeMimeType("   foo/bar    "));
     }
 
+    @Test
     public void testEncoding() throws URISyntaxException {
         // This doesn't validate setPackage, as it's not possible to have both an explicit package
         // and a selector but the inner selector Intent later on will cover setPackage
@@ -2032,12 +2216,12 @@ public class IntentTest extends AndroidTestCase {
         mIntent.setExtrasClassLoader(getClass().getClassLoader());
     }
 
-    private static class TestSerializable implements Serializable {
+    public static class TestSerializable implements Serializable {
         static final long serialVersionUID = 1l;
         public String Name;
     }
 
-    private static class TestParcelable implements Parcelable {
+    public static class TestParcelable implements Parcelable {
         public final int value;
 
         TestParcelable(int value) {

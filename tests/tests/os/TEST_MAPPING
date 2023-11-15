@@ -115,5 +115,11 @@
         }
       ]
     }
+  ],
+  "ravenwood-presubmit": [
+    {
+      "name": "CtsOsTestCasesRavenwood",
+      "host": true
+    }
   ]
 }

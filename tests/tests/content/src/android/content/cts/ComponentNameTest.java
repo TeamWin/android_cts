@@ -16,18 +16,54 @@
 
 package android.content.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.Parcel;
 import android.os.Process;
 import android.platform.test.annotations.AppModeSdkSandbox;
-import android.test.AndroidTestCase;
+import android.platform.test.ravenwood.RavenwoodRule;
+import android.test.mock.MockContext;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test {@link ComponentName}.
  */
-public class ComponentNameTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class ComponentNameTest {
+    @Rule public final RavenwoodRule mRavenwood = new RavenwoodRule();
 
+    private Context mContext;
+
+    @Before
+    public void setUp() {
+        if (mRavenwood.isUnderRavenwood()) {
+            // TODO: replace with mockito when better supported
+            mContext = new MockContext() {
+                @Override
+                public String getPackageName() {
+                    return "android.content.cts";
+                }
+            };
+        } else {
+            mContext = InstrumentationRegistry.getTargetContext();
+        }
+    }
+
+    @Test
     @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testConstructor() {
         // new the ComponentName instance
@@ -88,11 +124,13 @@ public class ComponentNameTest extends AndroidTestCase {
         new ComponentName(parcel);
     }
 
+    @Test
     public void testFlattenToString() {
         assertEquals("android.content.cts/android.content.cts.ComponentNameTest",
                 getComponentName().flattenToString());
     }
 
+    @Test
     @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testGetShortClassName() {
         // SDK running in the sandbox cannot declare components. ComponentName created from the
@@ -114,6 +152,7 @@ public class ComponentNameTest extends AndroidTestCase {
         assertEquals(".View", actual);
     }
 
+    @Test
     @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testReadFromParcel() {
         ComponentName expected = getComponentName();
@@ -129,11 +168,13 @@ public class ComponentNameTest extends AndroidTestCase {
         assertNull(expected);
     }
 
+    @Test
     public void testGetPackageName() {
         final String actual = getComponentName().getPackageName();
         assertEquals("android.content.cts", actual);
     }
 
+    @Test
     @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testUnflattenFromString() {
         final ComponentName componentName = getComponentName();
@@ -143,6 +184,7 @@ public class ComponentNameTest extends AndroidTestCase {
         assertEquals(componentName, actual);
     }
 
+    @Test
     @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testFlattenToShortString() {
         // SDK running in the sandbox cannot declare components. ComponentName created from the
@@ -164,6 +206,7 @@ public class ComponentNameTest extends AndroidTestCase {
         assertEquals("com.android.view/.View", actual);
     }
 
+    @Test
     @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testEquals() {
         // new the ComponentName instances, both are the same.
@@ -180,23 +223,27 @@ public class ComponentNameTest extends AndroidTestCase {
         assertFalse(componentName1.equals(null));
     }
 
+    @Test
     @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testToString() {
         assertNotNull(getComponentName().toString());
     }
 
+    @Test
     public void testToShortString() {
         // Test normal string
         final String shortString = getComponentName().toShortString();
         assertEquals("{android.content.cts/android.content.cts.ComponentNameTest}", shortString);
     }
 
+    @Test
     public void testGetClassName() {
         // set the expected value
         final String className = getComponentName().getClassName();
         assertEquals("android.content.cts.ComponentNameTest", className);
     }
 
+    @Test
     @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testHashCode() {
         final ComponentName componentName = getComponentName();
@@ -210,6 +257,7 @@ public class ComponentNameTest extends AndroidTestCase {
         assertEquals(hashCode1, hashCode2);
     }
 
+    @Test
     public void testWriteToParcel() {
         // Test normal status
         final ComponentName componentName = getComponentName();
@@ -221,6 +269,7 @@ public class ComponentNameTest extends AndroidTestCase {
         assertEquals("android.content.cts.ComponentNameTest", parcel.readString());
     }
 
+    @Test
     @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testWriteNullDataToParcel() {
         // Test null data
@@ -229,6 +278,7 @@ public class ComponentNameTest extends AndroidTestCase {
         assertEquals(0, parcel.dataAvail());
     }
 
+    @Test
     @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testDescribeContents() {
         assertEquals(0, getComponentName().describeContents());
