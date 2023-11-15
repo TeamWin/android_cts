@@ -16,20 +16,30 @@
 
 package android.database.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.database.CursorIndexOutOfBoundsException;
 import android.database.MatrixCursor;
 import android.database.MatrixCursor.RowBuilder;
 
-import junit.framework.TestCase;
+import androidx.test.runner.AndroidJUnit4;
 
-public class MatrixCursor_RowBuilderTest extends TestCase {
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class MatrixCursor_RowBuilderTest {
     private static final int COLUMN0_INDEX = 0;
 
     private static final int COLUMN1_INDEX = 1;
 
     private static final int COLUMN2_INDEX = 2;
 
+    @Test
     public void testAdd() {
         MatrixCursor cursor = new MatrixCursor(new String[] { "column0", "column1", "column2" });
         assertEquals(0, cursor.getCount());
