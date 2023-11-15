@@ -16,6 +16,8 @@
 
 package android.credentials.cts;
 
+import static android.credentials.flags.Flags.FLAG_NEW_SETTINGS_INTENTS;
+
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
@@ -31,6 +33,7 @@ import android.net.Uri;
 import android.os.StrictMode;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.DeviceConfig;
@@ -92,6 +95,7 @@ public class CtsSettingsIntentTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(FLAG_NEW_SETTINGS_INTENTS)
     public void testCredentialManagerSettingsIntent() throws Exception {
         StrictMode.setVmPolicy(
                 new StrictMode.VmPolicy.Builder().permitUnsafeIntentLaunch().penaltyLog().build());
@@ -119,6 +123,7 @@ public class CtsSettingsIntentTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(FLAG_NEW_SETTINGS_INTENTS)
     public void testCredentialManagerAutofillSettingsIntent() throws Exception {
         StrictMode.setVmPolicy(
                 new StrictMode.VmPolicy.Builder().permitUnsafeIntentLaunch().penaltyLog().build());
