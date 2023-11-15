@@ -539,6 +539,7 @@ class PackageManagerShellCommandMultiUserTest {
 
     @Test
     fun testUninstallWithoutKeepDataOnOneUser() {
+        val preInstallTime = System.currentTimeMillis()
         testUninstallSetup()
         // Delete app on secondary user
         uninstallPackageAsUser(TEST_APP_PACKAGE, secondaryUser)
@@ -546,6 +547,9 @@ class PackageManagerShellCommandMultiUserTest {
         assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id())).isEqualTo("false")
         assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser)).isTrue()
         assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser)).isFalse()
+        assertThat(getFirstInstallTimeAsUser(TEST_APP_PACKAGE, primaryUser))
+                .isGreaterThan(preInstallTime)
+        assertThat(getFirstInstallTimeAsUser(TEST_APP_PACKAGE, secondaryUser)).isEqualTo(0)
         runWithShellPermissionIdentity(
             uiAutomation,
             {
@@ -569,6 +573,7 @@ class PackageManagerShellCommandMultiUserTest {
 
     @Test
     fun testUninstallWithKeepDataOnOneUser() {
+        val preInstallTime = System.currentTimeMillis()
         testUninstallSetup()
         // Delete app on secondary user with DELETE_KEEP_DATA
         uninstallPackageWithKeepData(TEST_APP_PACKAGE, secondaryUser)
@@ -576,6 +581,10 @@ class PackageManagerShellCommandMultiUserTest {
         assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id())).isEqualTo("false")
         assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser)).isTrue()
         assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser)).isFalse()
+        assertThat(getFirstInstallTimeAsUser(TEST_APP_PACKAGE, primaryUser))
+                .isGreaterThan(preInstallTime)
+        assertThat(getFirstInstallTimeAsUser(TEST_APP_PACKAGE, secondaryUser))
+                .isGreaterThan(preInstallTime)
         runWithShellPermissionIdentity(
             uiAutomation,
             {
@@ -599,6 +608,7 @@ class PackageManagerShellCommandMultiUserTest {
 
     @Test
     fun testUninstallWithKeepDataOnBothUsers() {
+        val preInstallTime = System.currentTimeMillis()
         testUninstallSetup()
         // Delete app on both users with DELETE_KEEP_DATA
         uninstallPackageWithKeepData(TEST_APP_PACKAGE, primaryUser)
@@ -607,6 +617,10 @@ class PackageManagerShellCommandMultiUserTest {
         assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id())).isEqualTo("false")
         assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser)).isFalse()
         assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser)).isFalse()
+        assertThat(getFirstInstallTimeAsUser(TEST_APP_PACKAGE, primaryUser))
+                .isGreaterThan(preInstallTime)
+        assertThat(getFirstInstallTimeAsUser(TEST_APP_PACKAGE, secondaryUser))
+                .isGreaterThan(preInstallTime)
         runWithShellPermissionIdentity(
             uiAutomation,
             {
@@ -629,6 +643,7 @@ class PackageManagerShellCommandMultiUserTest {
 
     @Test
     fun testUninstallWithKeepDataOnOneUsersAndWithoutKeepDataOnAnotherUser() {
+        val preInstallTime = System.currentTimeMillis()
         testUninstallSetup()
         // Delete app on primary users without DELETE_KEEP_DATA
         uninstallPackageAsUser(TEST_APP_PACKAGE, primaryUser)
@@ -638,6 +653,9 @@ class PackageManagerShellCommandMultiUserTest {
         assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id())).isEqualTo("false")
         assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser)).isFalse()
         assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser)).isFalse()
+        assertThat(getFirstInstallTimeAsUser(TEST_APP_PACKAGE, primaryUser)).isEqualTo(0)
+        assertThat(getFirstInstallTimeAsUser(TEST_APP_PACKAGE, secondaryUser))
+                .isGreaterThan(preInstallTime)
         runWithShellPermissionIdentity(
             uiAutomation,
             {
@@ -755,7 +773,7 @@ class PackageManagerShellCommandMultiUserTest {
     private fun getFirstInstallTimeAsUser(packageName: String, user: UserReference) =
         context.createContextAsUser(user.userHandle(), 0)
             .packageManager
-            .getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
+            .getPackageInfo(packageName, PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong()))
             .firstInstallTime
 
     private fun installPackage(baseName: String) {
