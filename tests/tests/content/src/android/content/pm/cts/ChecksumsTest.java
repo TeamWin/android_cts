@@ -587,13 +587,34 @@ public class ChecksumsTest {
             final int sessionId = installer.createSession(params);
             Session session = installer.openSession(sessionId);
             writeFileToSession(session, "file", TEST_FIXED_APK);
-            try {
-                session.setChecksums("file", Arrays.asList(TEST_FIXED_APK_DIGESTS),
-                        hexStringToBytes("1eec9e86"));
-                Assert.fail("setChecksums should throw exception.");
-            } catch (IllegalArgumentException e) {
-                // expected
-            }
+
+            assertThrows(IllegalArgumentException.class, () -> session.setChecksums("file",
+                    Arrays.asList(TEST_FIXED_APK_DIGESTS), hexStringToBytes("1eec9e86")));
+        } finally {
+            dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testInstallerSignedChecksumsInvalidChecksum() throws Exception {
+        final Checksum[] invalidChecksums = new Checksum[]{new Checksum(
+                TYPE_PARTIAL_MERKLE_ROOT_1M_SHA256, hexStringToBytes(
+                "6b866e8a54a3e358dfc20007960fb96123845f6c6d6c45f5fddf8"
+                        + "8150d71677f4c3081a58921c88651f7376118aca312cf764"
+                        + "b391cdfb8a18c6710f9f27916a0a0"))};
+
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
+        adoptShellPermissionIdentity();
+        try {
+            final PackageInstaller installer = getPackageInstaller();
+            final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+            params.installFlags |= PackageManager.INSTALL_REPLACE_EXISTING;
+
+            final int sessionId = installer.createSession(params);
+            Session session = installer.openSession(sessionId);
+            writeFileToSession(session, "file", TEST_FIXED_APK);
+            assertThrows(IllegalArgumentException.class, () -> session.setChecksums("file",
+                    Arrays.asList(invalidChecksums), NO_SIGNATURE));
         } finally {
             dropShellPermissionIdentity();
         }
