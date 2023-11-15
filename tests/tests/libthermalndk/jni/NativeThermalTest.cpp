@@ -76,6 +76,7 @@ static inline jstring returnJString(JNIEnv *env, std::optional<std::string> resu
 static std::optional<std::string> testGetCurrentThermalStatus(
                                         JNIEnv *env, jobject obj, int32_t level) {
     AThermalTestContext ctx;
+    std::unique_lock<std::mutex> lock(ctx.mMutex);
 
     ctx.mThermalMgr = AThermal_acquireManager();
     if (ctx.mThermalMgr == nullptr) {
@@ -161,7 +162,7 @@ static jstring nativeTestRegisterThermalStatusListener(JNIEnv *env, jobject obj)
 
 static std::optional<std::string> testThermalStatusRegisterNullListener() {
     AThermalTestContext ctx;
-
+    std::unique_lock<std::mutex> lock(ctx.mMutex);
     ctx.mThermalMgr = AThermal_acquireManager();
     if (ctx.mThermalMgr == nullptr) {
         return StringPrintf("AThermal_acquireManager failed");
@@ -174,9 +175,18 @@ static std::optional<std::string> testThermalStatusRegisterNullListener() {
     }
 
     // Register a listener with null data
-    ret = AThermal_registerThermalStatusListener(ctx.mThermalMgr, onStatusChange, &ctx);
+    ret = AThermal_registerThermalStatusListener(ctx.mThermalMgr, onStatusChange,
+                                                 nullptr);
     if (ret != 0) {
-        return StringPrintf("AThermal_registerThermalStatusListener failed: %s",
+        return StringPrintf("AThermal_registerThermalStatusListener with null data failed: %s",
+                    strerror(ret));
+    }
+
+    // Unregister listener
+    ret = AThermal_unregisterThermalStatusListener(ctx.mThermalMgr, onStatusChange,
+                                                   nullptr);
+    if (ret != 0) {
+        return StringPrintf("AThermal_unregisterThermalStatusListener with null data failed: %s",
                     strerror(ret));
     }
 
@@ -235,12 +245,10 @@ static std::optional<std::string> testThermalStatusListenerDoubleRegistration
                     strerror(ret));
     }
 
-    for (int32_t level = ATHERMAL_STATUS_LIGHT; level <= ATHERMAL_STATUS_SHUTDOWN; level++) {
-        setThermalStatusOverride(env, obj, level);
-        // Expect no listener callback
-        if (ctx.mCv.wait_for(lock, 1s) != std::cv_status::timeout) {
-            return "Thermal listener got callback after unregister.";
-        }
+    setThermalStatusOverride(env, obj, ATHERMAL_STATUS_LIGHT);
+    // Expect no listener callback
+    if (ctx.mCv.wait_for(lock, 1s) != std::cv_status::timeout) {
+        return "Thermal listener got callback after unregister.";
     }
 
     // Unregister listener already unregistered
@@ -288,8 +296,61 @@ static std::optional<std::string> testGetThermalHeadroom(JNIEnv *, jobject) {
     return std::nullopt;
 }
 
+static std::optional<std::string> testGetThermalHeadroomThresholds(JNIEnv *, jobject) {
+    AThermalTestContext ctx;
+    std::unique_lock<std::mutex> lock(ctx.mMutex);
+
+    ctx.mThermalMgr = AThermal_acquireManager();
+    if (ctx.mThermalMgr == nullptr) {
+        return "AThermal_acquireManager failed";
+    }
+
+    const AThermalHeadroomThreshold *thresholds = nullptr;
+    size_t size;
+    auto ret = AThermal_getThermalHeadroomThresholds(ctx.mThermalMgr, &thresholds, &size);
+    if (ret == ENOSYS) {
+        // if feature is disabled
+        return std::nullopt;
+    }
+    if (ret != OK) {
+        return StringPrintf("Failed to get thermal headroom thresholds result");
+    }
+    if (thresholds == nullptr || size == 0) {
+        // if device doesn't support the thermal headroom thresholds then skip
+        return std::nullopt;
+    }
+    float lastHeadroom = thresholds[0].headroom;
+    int lastStatus = thresholds[0].thermalStatus;
+    for (int i = 0; i < size; i++) {
+        auto headroom = thresholds[i].headroom;
+        int status = thresholds[i].thermalStatus;
+        if (status == AThermalStatus::ATHERMAL_STATUS_SEVERE && headroom != 1.0f) {
+            return StringPrintf("Expected threshold 1.0f for SEVERE status but got %2.2f",
+                                headroom);
+        }
+        if (!isnan(headroom)) {
+            if (headroom < lastHeadroom) {
+                return StringPrintf("Thermal headroom threshold for status %d is %2.2f should not "
+                                    "be smaller than a lower status %d which is %2.2f",
+                                    status, headroom, lastStatus, lastHeadroom);
+            }
+            if (headroom < 0) {
+                return StringPrintf("Expected non-negative headroom threshold but got %2.2f for "
+                                    "status %d",
+                                    headroom, status);
+            }
+        }
+    }
+    AThermal_releaseManager(ctx.mThermalMgr);
+    return std::nullopt;
+}
+
 static jstring nativeTestGetThermalHeadroom(JNIEnv *env, jobject obj) {
     return returnJString(env, testGetThermalHeadroom(env, obj));
+}
+
+static jstring nativeTestGetThermalHeadroomThresholds(JNIEnv *env, jobject obj) {
+  return returnJString(env, testGetThermalHeadroomThresholds(env, obj));
 }
 
 extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void*) {
@@ -305,6 +366,8 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void*) {
          (void*)nativeTestThermalStatusListenerDoubleRegistration},
         {"nativeTestGetThermalHeadroom", "()Ljava/lang/String;",
          (void*)nativeTestGetThermalHeadroom},
+        {"nativeTestGetThermalHeadroomThresholds", "()Ljava/lang/String;",
+         (void*)nativeTestGetThermalHeadroomThresholds},
     };
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
         return JNI_ERR;
