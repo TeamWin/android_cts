@@ -27,6 +27,46 @@ java_defaults {
 android_test_helper_app {
     name: "CtsContentMockLauncherTestApp",
     defaults: ["launcher_defaults"],
+    manifest: "AndroidManifest.xml",
+    srcs: ["src/**/*.java"],
+    sdk_version: "current",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsContentMockLauncherActivityLabelTestApp",
+    defaults: ["launcher_defaults"],
+    manifest: "AndroidManifestActivityLabel.xml",
+    srcs: ["src/**/*.java"],
+    sdk_version: "current",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsContentMockLauncherApplicationLabelTestApp",
+    defaults: ["launcher_defaults"],
+    manifest: "AndroidManifestApplicationLabel.xml",
+    srcs: ["src/**/*.java"],
+    sdk_version: "current",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsContentMockLauncherInvisibleLabelsTestApp",
+    defaults: ["launcher_defaults"],
+    manifest: "AndroidManifestInvisibleLabels.xml",
     srcs: ["src/**/*.java"],
     sdk_version: "current",
     // tag this module as a cts test artifact
