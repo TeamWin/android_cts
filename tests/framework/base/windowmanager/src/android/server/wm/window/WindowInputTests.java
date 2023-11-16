@@ -150,6 +150,8 @@ public class WindowInputTests {
                     mActivity.addWindow(mView, p);
                 });
         mInstrumentation.waitForIdleSync();
+        assertTrue("Failed to reach stable window geometry",
+                waitForStableWindowGeometry(5, TimeUnit.SECONDS));
 
         // The window location will be picked randomly from the selectBounds. Because the x, y of
         // LayoutParams is the offset from the gravity edge, make sure it offsets to (0,0) in case
