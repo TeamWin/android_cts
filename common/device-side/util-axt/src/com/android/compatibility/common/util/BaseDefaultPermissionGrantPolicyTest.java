@@ -116,8 +116,9 @@ public abstract class BaseDefaultPermissionGrantPolicyTest extends BusinessLogic
             addSplitFromNonDangerousPermissions(packagesToVerify, pregrantUidStates);
         }
 
-        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
-                || ApiLevelUtil.codenameStartsWith("T")) {
+        if ((ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                || ApiLevelUtil.codenameStartsWith("T"))
+                && runtimePermNames.contains(Manifest.permission.POST_NOTIFICATIONS)) {
             addImplicitlyGrantedPermission(Manifest.permission.POST_NOTIFICATIONS,
                     Build.VERSION_CODES.TIRAMISU, packagesToVerify, pregrantUidStates);
         }
