@@ -26,12 +26,10 @@ import static android.multiuser.cts.TestingUtils.getBooleanProperty;
 import static android.multiuser.cts.TestingUtils.getContextForOtherUser;
 import static android.multiuser.cts.TestingUtils.getContextForUser;
 import static android.multiuser.cts.TestingUtils.sContext;
-import static android.os.Flags.FLAG_ALLOW_PRIVATE_PROFILE;
 import static android.os.UserManager.USER_OPERATION_SUCCESS;
 import static android.os.UserManager.USER_TYPE_FULL_SECONDARY;
 import static android.os.UserManager.USER_TYPE_PROFILE_CLONE;
 import static android.os.UserManager.USER_TYPE_PROFILE_MANAGED;
-import static android.os.UserManager.USER_TYPE_PROFILE_PRIVATE;
 
 import static com.android.bedstead.harrier.UserType.ADDITIONAL_USER;
 import static com.android.bedstead.nene.types.OptionalBoolean.FALSE;
@@ -43,7 +41,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
@@ -76,7 +73,6 @@ import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPrivateProfile;
-import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
@@ -1084,7 +1080,7 @@ public final class UserManagerTest {
     @EnsureHasPrivateProfile
     @EnsureHasPermission({MODIFY_QUIET_MODE})
     // TODO(b/301574823) : Limit this test to only when private space is supported.
-    public void testRequestQuietMode_shouldSendProfileUnavailableBroadcast() {
+    public void testRequestQuietModeOnPrivateProfile_shouldSendProfileUnavailableBroadcast() {
         assumeTrue(android.os.Flags.allowPrivateProfile());
         final UserHandle profileHandle = sDeviceState.privateProfile().userHandle();
         presetQuietModeStatus(false, profileHandle);
@@ -1098,14 +1094,12 @@ public final class UserManagerTest {
     @EnsureHasPrivateProfile
     @EnsureHasPermission({MODIFY_QUIET_MODE})
     // TODO(b/301574823) : Limit this test to only when private space is supported.
-    public void testRequestQuietMode_shouldSendProfileAvailableBroadcast() {
+    public void testRequestQuietModeOnPrivateProfile_disableQuietMode_needUserCredentials() {
         assumeTrue(android.os.Flags.allowPrivateProfile());
         final UserHandle profileHandle = sDeviceState.privateProfile().userHandle();
         presetQuietModeStatus(true, profileHandle);
-        BlockingBroadcastReceiver broadcastReceiver = sDeviceState
-                .registerBroadcastReceiver(Intent.ACTION_PROFILE_AVAILABLE, /* checker= */null);
-        mUserManager.requestQuietModeEnabled(false, profileHandle);
-        broadcastReceiver.awaitForBroadcastOrFail();
+        assertThat(mUserManager.requestQuietModeEnabled(false, profileHandle))
+                .isFalse();
     }
 
     @Test
