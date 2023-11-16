@@ -48,8 +48,6 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.net.Uri;
-import android.os.Build;
-import android.os.SystemProperties;
 import android.util.DisplayMetrics;
 import android.util.Size;
 import android.util.TypedValue;
@@ -59,7 +57,6 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.RequiresDevice;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.BitmapUtils;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
@@ -250,13 +247,8 @@ public class ImageDecoderTest {
     @Test
     @RequiresDevice
     public void testDecode10BitHeif() {
-        assumeTrue(
-            "This test only applies to Android 13 (T) or newer. Skip the test.",
-            ApiLevelUtil.isFirstApiAtLeast(Build.VERSION_CODES.TIRAMISU));
-        assumeTrue(
-            "Test only applies to VNDK version 33 (T) or newer. Skip the test.",
-            SystemProperties.getInt("ro.vndk.version", Build.VERSION_CODES.CUR_DEVELOPMENT)
-                >= Build.VERSION_CODES.TIRAMISU);
+        assumeTrue("HEIF is not supported on this device, skip this test.",
+                ImageDecoder.isMimeTypeSupported("image/heif"));
         assumeTrue("No 10-bit HEVC decoder, skip the test.", has10BitHEVCDecoder());
 
         Bitmap.Config expectedConfig = Bitmap.Config.RGBA_1010102;
@@ -311,13 +303,8 @@ public class ImageDecoderTest {
     @Test
     @RequiresDevice
     public void testDecode10BitHeifWithLowRam() {
-        assumeTrue(
-            "This test only applies to Android 13 (T) or newer. Skip the test.",
-            ApiLevelUtil.isFirstApiAtLeast(Build.VERSION_CODES.TIRAMISU));
-        assumeTrue(
-            "Test only applies to VNDK version 33 (T) or newer. Skip the test.",
-            SystemProperties.getInt("ro.vndk.version", Build.VERSION_CODES.CUR_DEVELOPMENT)
-                >= Build.VERSION_CODES.TIRAMISU);
+        assumeTrue("HEIF is not supported on this device, skip this test.",
+                ImageDecoder.isMimeTypeSupported("image/heif"));
         assumeTrue("No 10-bit HEVC decoder, skip the test.", has10BitHEVCDecoder());
 
         ImageDecoder.Source src = ImageDecoder.createSource(getResources(), R.raw.heifimage_10bit);

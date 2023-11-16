@@ -39,10 +39,8 @@ import android.graphics.Rect;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
-import android.os.Build;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
-import android.os.SystemProperties;
 import android.platform.test.annotations.RequiresDevice;
 import android.system.ErrnoException;
 import android.system.Os;
@@ -53,7 +51,6 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.BitmapUtils;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
@@ -1015,12 +1012,8 @@ public class BitmapFactoryTest {
     @Test
     @RequiresDevice
     public void testDecode10BitHEIF10BitBitmap() {
-        assumeTrue(
-            "Test needs Android T.", ApiLevelUtil.isFirstApiAtLeast(Build.VERSION_CODES.TIRAMISU));
-        assumeTrue(
-            "Test needs VNDK at least T.",
-            SystemProperties.getInt("ro.vndk.version", Build.VERSION_CODES.CUR_DEVELOPMENT)
-                >= Build.VERSION_CODES.TIRAMISU);
+        assumeTrue("HEIF is not supported on this device, skip this test.",
+                ImageDecoder.isMimeTypeSupported("image/heif"));
         assumeTrue("No 10-bit HEVC decoder, skip the test.", has10BitHEVCDecoder());
 
         Config expectedConfig = Config.RGBA_1010102;
@@ -1062,12 +1055,8 @@ public class BitmapFactoryTest {
     @Test
     @RequiresDevice
     public void testDecode10BitHEIFTo8BitBitmap() {
-        assumeTrue(
-            "Test needs Android T.", ApiLevelUtil.isFirstApiAtLeast(Build.VERSION_CODES.TIRAMISU));
-        assumeTrue(
-            "Test needs VNDK at least T.",
-            SystemProperties.getInt("ro.vndk.version", Build.VERSION_CODES.CUR_DEVELOPMENT)
-                >= Build.VERSION_CODES.TIRAMISU);
+        assumeTrue("HEIF is not supported on this device, skip this test.",
+                ImageDecoder.isMimeTypeSupported("image/heif"));
         assumeTrue("No 10-bit HEVC decoder, skip the test.", has10BitHEVCDecoder());
 
         // When TV does not support P010, color type of output is RGBA_8888 when decoding 10-bit
