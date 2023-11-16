@@ -32,6 +32,8 @@ import static android.content.pm.PackageManager.TRUST_ALL;
 import static android.content.pm.PackageManager.TRUST_NONE;
 import static android.security.Flags.FLAG_DEPRECATE_FSV_SIG;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -97,6 +99,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -590,6 +593,37 @@ public class ChecksumsTest {
 
             assertThrows(IllegalArgumentException.class, () -> session.setChecksums("file",
                     Arrays.asList(TEST_FIXED_APK_DIGESTS), hexStringToBytes("1eec9e86")));
+        } finally {
+            dropShellPermissionIdentity();
+        }
+    }
+
+    private static byte[] createRandomArray(int size) {
+        byte[] array = new byte[size];
+        (new SecureRandom()).nextBytes(array);
+        return array;
+    }
+
+    @Test
+    public void testInstallerSignedChecksumsSignatureTooBig() throws Exception {
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
+        adoptShellPermissionIdentity();
+        try {
+            final PackageInstaller installer = getPackageInstaller();
+            final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+            params.installFlags |= PackageManager.INSTALL_REPLACE_EXISTING;
+
+            final int sessionId = installer.createSession(params);
+            Session session = installer.openSession(sessionId);
+            writeFileToSession(session, "file", TEST_FIXED_APK);
+
+            try {
+                session.setChecksums("file",
+                        Arrays.asList(TEST_FIXED_APK_DIGESTS), createRandomArray(50000));
+                Assert.fail("setChecksums should throw exception.");
+            } catch (IllegalArgumentException e) {
+                assertThat(e.getMessage()).contains("Invalid signature");
+            }
         } finally {
             dropShellPermissionIdentity();
         }
