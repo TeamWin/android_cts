@@ -39,9 +39,6 @@
                  android:requestLegacyExternalStorage="true"
                  android:enableOnBackInvokedCallback="false"
                  android:testOnly="true">
-        <property
-            android:name="android.window.PROPERTY_ACTIVITY_EMBEDDING_SPLITS_ENABLED"
-            android:value="true"/>
         <uses-library android:name="android.test.runner"/>
         <uses-library android:name="androidx.window.extensions"
             android:required="false" />
@@ -569,10 +566,6 @@
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
         <activity android:name="android.server.wm.SplitActivityLifecycleTest$ActivityC"
                   android:exported="true"
-                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
-        <activity android:name="android.server.wm.SplitActivityLifecycleTest$PortraitActivity"
-                  android:exported="true"
-                  android:screenOrientation="portrait"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
         <activity android:name="android.server.wm.SplitActivityLifecycleTest$TranslucentActivity"
                   android:exported="true"
