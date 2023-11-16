@@ -123,3 +123,16 @@ android_test_helper_app {
         "general-tests",
     ],
 }
+
+android_test_helper_app {
+    name: "CtsContentShellTestApp",
+    defaults: ["cts_defaults"],
+    sdk_version: "current",
+    manifest: "AndroidManifestShell.xml",
+    certificate: "platform",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+}

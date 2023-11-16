@@ -255,6 +255,8 @@ public class PackageManagerTest {
             + "CtsContentLongLabelNameTestApp.apk";
     private static final String LONG_USES_PERMISSION_NAME_APK = SAMPLE_APK_BASE
             + "CtsContentLongUsesPermissionNameTestApp.apk";
+    private static final String SHELL_NAME_APK = SAMPLE_APK_BASE
+            + "CtsContentShellTestApp.apk";
 
     private static final String TEST_ICON = SAMPLE_APK_BASE + "icon.png";
     private static final String TEST_ICON_MONO = SAMPLE_APK_BASE + "icon_mono.png";
@@ -277,6 +279,9 @@ public class PackageManagerTest {
     private static final String HELLO_WORLD_UPDATED_APK = SAMPLE_APK_BASE + "HelloWorld7.apk";
     private static final String HELLO_WORLD_LOTS_OF_FLAGS_APK =
             SAMPLE_APK_BASE + "HelloWorldLotsOfFlags.apk";
+    private static final String HELLO_WORLD_NON_UPDATABLE_SYSTEM_APK = SAMPLE_APK_BASE
+            + "HelloWorldNonUpdatableSystem.apk";
+
     private static final String MOCK_LAUNCHER_PACKAGE_NAME = "android.content.cts.mocklauncherapp";
     private static final String MOCK_LAUNCHER_APK = SAMPLE_APK_BASE
             + "CtsContentMockLauncherTestApp.apk";
@@ -2054,6 +2059,20 @@ public class PackageManagerTest {
 
         assertThat(installResult.contains(expectedErrorCode)).isTrue();
         assertThat(installResult.contains(expectedErrorMessage)).isTrue();
+    }
+
+    @Test
+    public void testUpdateShellFailed() {
+        assertThat(SystemUtil.runShellCommand("pm install -t -g " + SHELL_NAME_APK)).contains(
+                "Installation of this package is not allowed");
+    }
+
+    @Test
+    public void testInstallNonUpdatableSystemFailed() {
+        installPackage(HELLO_WORLD_APK);
+        assertThat(SystemUtil.runShellCommand(
+                "pm install -t -g " + HELLO_WORLD_NON_UPDATABLE_SYSTEM_APK)).contains(
+                "Non updatable system package");
     }
 
     private String installPackageWithResult(String apkPath) {

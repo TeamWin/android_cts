@@ -131,10 +131,10 @@ android_test {
 
 //-----------------------------------------------------------
 android_test {
-    name: "HelloWorldShell",
+    name: "HelloWorldSystem",
     defaults: ["hello_world_defaults"],
     srcs: ["src_shell/**/*.java"],
-    manifest: "AndroidManifestShell.xml",
+    manifest: "AndroidManifestSystem.xml",
     test_suites: [
         "vts10",
         "general-tests",
@@ -317,6 +317,18 @@ android_test {
     defaults: ["hello_world_defaults"],
     srcs: ["src5/**/*.java"],
     manifest: "AndroidManifestWithSufficient.xml",
+    test_suites: [
+        "general-tests",
+    ],
+    v4_signature: true,
+}
+
+//-----------------------------------------------------------
+android_test {
+    name: "HelloWorldNonUpdatableSystem",
+    defaults: ["hello_world_defaults"],
+    srcs: ["src5/**/*.java"],
+    manifest: "AndroidManifestWithNonUpdatableSystem.xml",
     test_suites: [
         "general-tests",
     ],
