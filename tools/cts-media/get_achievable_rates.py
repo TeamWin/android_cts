@@ -327,7 +327,7 @@ class Data:
         for info in zip.infolist():
           if re.search(r'/GenericDeviceInfo.deviceinfo.json$', info.filename):
             resultInfo = info
-          elif re.search(r'/Cts(Media|Video)TestCases\.reportlog\.json$', info.filename):
+          elif re.search(r'/Cts(Media|Video)(Decoder)?TestCases\.reportlog\.json$', info.filename):
             testInfos.append(info)
         if resultInfo:
           try:
