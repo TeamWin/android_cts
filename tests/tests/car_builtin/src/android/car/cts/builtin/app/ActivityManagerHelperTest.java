@@ -555,12 +555,4 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
 
         return foundSimpleActivity;
     }
-
-    /**
-     * Checks whether the device has automotive splitscreen multitasking feature enabled.
-     */
-    private boolean hasAutomotiveSplitscreenMultitaskingFeature() {
-        PackageManager pm = mContext.getPackageManager();
-        return isCar() && pm.hasSystemFeature("android.software.car.splitscreen_multitasking");
-    }
 }

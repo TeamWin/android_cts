@@ -3320,4 +3320,13 @@ public abstract class ActivityManagerTestBase {
                         predicate).findFirst();
         insetsOptional.ifPresent(insets -> insets.insetGivenFrame(inOutBounds));
     }
+
+    /**
+     * Checks whether the device has automotive split-screen multitasking feature enabled
+     */
+    protected boolean hasAutomotiveSplitscreenMultitaskingFeature() {
+        return mContext.getPackageManager()
+                .hasSystemFeature(/* PackageManager.FEATURE_CAR_SPLITSCREEN_MULTITASKING */
+                        "android.software.car.splitscreen_multitasking") && isCar();
+    }
 }
