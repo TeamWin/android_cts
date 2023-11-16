@@ -979,6 +979,10 @@ class GLSurfaceViewFactory extends VideoViewFactory {
         return glSurfaceViewThread.getByteBuffer();
     }
 
+    public Object getSyncToken() {
+        return surfaceSyncToken;
+    }
+
     /* Does all GL operations. */
     private class GLSurfaceViewThread extends Thread
             implements SurfaceTexture.OnFrameAvailableListener {
@@ -1219,11 +1223,13 @@ class GLSurfaceViewFactory extends VideoViewFactory {
 
         /* Reads the pixels to a ByteBuffer. */
         public void saveFrame() {
-            byteBufferIsReady = false;
-            byteBuffer.clear();
-            GLES20.glReadPixels(0, 0, VIEW_WIDTH, VIEW_HEIGHT, GLES20.GL_RGBA,
-                    GLES20.GL_UNSIGNED_BYTE, byteBuffer);
-            byteBufferIsReady = true;
+            synchronized (surfaceSyncToken) {
+                byteBufferIsReady = false;
+                byteBuffer.clear();
+                GLES20.glReadPixels(0, 0, VIEW_WIDTH, VIEW_HEIGHT, GLES20.GL_RGBA,
+                        GLES20.GL_UNSIGNED_BYTE, byteBuffer);
+                byteBufferIsReady = true;
+            }
         }
 
         public int getTextureId() {
@@ -1517,10 +1523,14 @@ class GLSurfaceViewSnapshot extends VideoViewSnapshot {
         try {
             final ByteBuffer byteBuffer = glSurfaceViewFactory.getByteBuffer();
             bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-            byteBuffer.rewind();
-            bitmap.copyPixelsFromBuffer(byteBuffer);
-            bitmapIsReady = true;
-            byteBuffer.clear();
+
+            final Object syncToken = glSurfaceViewFactory.getSyncToken();
+            synchronized (syncToken) {
+                byteBuffer.rewind();
+                bitmap.copyPixelsFromBuffer(byteBuffer);
+                bitmapIsReady = true;
+                byteBuffer.clear();
+            }
         } catch (NullPointerException exception) {
             Log.e(TAG, "glSurfaceViewFactory or byteBuffer may have been released", exception);
             bitmap = null;
