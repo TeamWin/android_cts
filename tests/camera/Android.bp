@@ -56,6 +56,7 @@ android_test {
     // Include both the 32 and 64 bit versions
     compile_multilib: "both",
     static_libs: [
+        "collector-device-lib-platform",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "cts-hardware-lib",
