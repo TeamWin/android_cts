@@ -62,6 +62,10 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.Settings;
 import android.server.wm.backgroundactivity.appa.Components;
 import android.server.wm.backgroundactivity.common.CommonComponents.Event;
@@ -78,10 +82,12 @@ import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
 
 import com.android.compatibility.common.util.AppOpsUtils;
+import com.android.window.flags.Flags;
 
 import org.junit.Assume;
 import org.junit.AssumptionViolatedException;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.List;
@@ -97,6 +103,10 @@ import java.util.concurrent.TimeoutException;
  */
 @Presubmit
 public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private static final String TAG = "BackgroundActivityLaunchTest";
 
@@ -484,21 +494,60 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
+    @RequiresFlagsDisabled(Flags.FLAG_BAL_REQUIRE_OPT_IN_BY_PENDING_INTENT_CREATOR)
     public void testPendingIntentActivity_appAIsForeground_isNotBlocked() throws Exception {
         // Start AppA foreground activity
-        startActivity(APP_A.FOREGROUND_ACTIVITY);
-        assertTaskStackHasComponents(APP_A.FOREGROUND_ACTIVITY, APP_A.FOREGROUND_ACTIVITY);
+        Components appA = APP_A;
+        startActivity(appA.FOREGROUND_ACTIVITY);
+        assertTaskStackHasComponents(appA.FOREGROUND_ACTIVITY, appA.FOREGROUND_ACTIVITY);
 
         // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
         // activity in App A
-        TestServiceClient serviceA = getTestService(APP_A);
-        PendingIntent pi = generatePendingIntent(serviceA, APP_A.BACKGROUND_ACTIVITY);
+        TestServiceClient serviceA = getTestService(appA);
+        PendingIntent pi = generatePendingIntent(serviceA, appA.BACKGROUND_ACTIVITY);
         TestServiceClient serviceB = getTestService(APP_B);
         sendPendingIntent(pi, serviceB);
 
-        assertActivityFocused(APP_A.BACKGROUND_ACTIVITY);
-        assertTaskStackHasComponents(APP_A.FOREGROUND_ACTIVITY, APP_A.FOREGROUND_ACTIVITY);
-        assertTaskStackHasComponents(APP_A.BACKGROUND_ACTIVITY, APP_A.BACKGROUND_ACTIVITY);
+        assertActivityFocused(appA.BACKGROUND_ACTIVITY);
+        assertTaskStackHasComponents(appA.FOREGROUND_ACTIVITY, appA.FOREGROUND_ACTIVITY);
+        assertTaskStackHasComponents(appA.BACKGROUND_ACTIVITY, appA.BACKGROUND_ACTIVITY);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_BAL_REQUIRE_OPT_IN_BY_PENDING_INTENT_CREATOR)
+    public void testPendingIntentActivity_appAIsForeground_isBlocked() throws Exception {
+        // Start AppA foreground activity
+        Components appA = APP_A;
+        startActivity(appA.FOREGROUND_ACTIVITY);
+        assertTaskStackHasComponents(appA.FOREGROUND_ACTIVITY, appA.FOREGROUND_ACTIVITY);
+
+        // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
+        // activity in App A
+        TestServiceClient serviceA = getTestService(appA);
+        PendingIntent pi = generatePendingIntent(serviceA, appA.BACKGROUND_ACTIVITY);
+        TestServiceClient serviceB = getTestService(APP_B);
+        sendPendingIntent(pi, serviceB);
+
+        assertActivityNotFocused(appA.BACKGROUND_ACTIVITY);
+    }
+
+    @Test
+    public void testPendingIntentActivity_appA33IsForeground_isNotBlocked() throws Exception {
+        // Start AppA foreground activity
+        Components appA = APP_A_33;
+        startActivity(appA.FOREGROUND_ACTIVITY);
+        assertTaskStackHasComponents(appA.FOREGROUND_ACTIVITY, appA.FOREGROUND_ACTIVITY);
+
+        // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
+        // activity in App A
+        TestServiceClient serviceA = getTestService(appA);
+        PendingIntent pi = generatePendingIntent(serviceA, appA.BACKGROUND_ACTIVITY);
+        TestServiceClient serviceB = getTestService(APP_B);
+        sendPendingIntent(pi, serviceB);
+
+        assertActivityFocused(appA.BACKGROUND_ACTIVITY);
+        assertTaskStackHasComponents(appA.FOREGROUND_ACTIVITY, appA.FOREGROUND_ACTIVITY);
+        assertTaskStackHasComponents(appA.BACKGROUND_ACTIVITY, appA.BACKGROUND_ACTIVITY);
     }
 
     @Test
