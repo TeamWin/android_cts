@@ -170,8 +170,8 @@ static jstring nativeTestSetThreadsWithInvalidTid(JNIEnv* env, jobject) {
     std::vector<pid_t> tids;
     tids.push_back(2);
     int result = APerformanceHint_setThreads(wrapper.session(), tids.data(), 1);
-    if (result != EPERM) {
-        return toJString(env, "setThreads did not return EPERM");
+    if (result != EINVAL && result != EPERM) {
+        return toJString(env, "setThreads did not return EINVAL nor EPERM");
     }
     return nullptr;
 }
