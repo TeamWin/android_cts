@@ -16,6 +16,7 @@
 
 package android.media.audio.cts;
 
+import android.content.ContentProvider;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
@@ -171,11 +172,13 @@ public class RingtoneTest extends InstrumentationTestCase {
         // Test an actual ringtone
         Uri uri = RingtoneManager.getValidRingtoneUri(mContext);
         assertNotNull("ringtone was unexpectedly null", uri);
-        RingtoneManager.setActualDefaultRingtoneUri(mContext, RingtoneManager.TYPE_RINGTONE, uri);
+        Uri uriWithUser = ContentProvider.maybeAddUserId(uri, mContext.getUserId());
+        RingtoneManager.setActualDefaultRingtoneUri(mContext, RingtoneManager.TYPE_RINGTONE,
+                uriWithUser);
         mRingtone = RingtoneManager.getRingtone(mContext, Settings.System.DEFAULT_RINGTONE_URI);
         assertTrue(mRingtone.getStreamType() == AudioManager.STREAM_RING);
         mRingtone.play();
-        assertTrue("couldn't play ringtone " + uri, mRingtone.isPlaying());
+        assertTrue("couldn't play ringtone " + uriWithUser, mRingtone.isPlaying());
         mRingtone.stop();
         assertFalse(mRingtone.isPlaying());
     }
