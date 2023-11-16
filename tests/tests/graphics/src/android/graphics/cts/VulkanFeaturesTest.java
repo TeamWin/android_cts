@@ -24,6 +24,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.pm.FeatureInfo;
 import android.content.pm.PackageManager;
+import android.util.ArrayMap;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -32,6 +33,11 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.PropertyUtil;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -87,10 +93,145 @@ public class VulkanFeaturesTest {
 
     private static final int API_LEVEL_BEFORE_ANDROID_HARDWARE_BUFFER_REQ = 28;
 
+    private static final int DEQP_LEVEL_FOR_V = 0x7E80301;
+    private static final int DEQP_LEVEL_FOR_U = 0x7E70301;
+    private static final int DEQP_LEVEL_FOR_T = 0x7E60301;
+    private static final int DEQP_LEVEL_FOR_S = 0x7E50301;
+    private static final int DEQP_LEVEL_FOR_R = 0x7E40301;
+    private static final int DEQP_LEVEL_BEFORE_R = 0;
+
+    private static final Map<Integer, String[]> DEQP_EXTENSIONS_MAP = new ArrayMap<>();
+    static {
+        DEQP_EXTENSIONS_MAP.put(
+                DEQP_LEVEL_FOR_V,
+                new String[] {
+                    "VK_KHR_cooperative_matrix",
+                    "VK_KHR_maintenance5",
+                    "VK_KHR_map_memory2",
+                    "VK_KHR_ray_tracing_position_fetch",
+                    "VK_GOOGLE_user_type"});
+        DEQP_EXTENSIONS_MAP.put(
+                DEQP_LEVEL_FOR_U,
+                new String[] {
+                    "VK_KHR_fragment_shader_barycentric",
+                    "VK_KHR_ray_tracing_maintenance1",
+                    "VK_KHR_video_decode_h264",
+                    "VK_KHR_video_decode_h265",
+                    "VK_KHR_video_decode_queue",
+                    "VK_KHR_video_queue"});
+        DEQP_EXTENSIONS_MAP.put(
+                DEQP_LEVEL_FOR_T,
+                new String[] {
+                    "VK_KHR_dynamic_rendering",
+                    "VK_KHR_format_feature_flags2",
+                    "VK_KHR_global_priority",
+                    "VK_KHR_maintenance4",
+                    "VK_KHR_portability_subset",
+                    "VK_KHR_present_id",
+                    "VK_KHR_present_wait",
+                    "VK_KHR_shader_subgroup_uniform_control_flow",
+                    "VK_KHR_portability_enumeration"});
+        DEQP_EXTENSIONS_MAP.put(
+                DEQP_LEVEL_FOR_S,
+                new String[] {
+                    "VK_KHR_copy_commands2",
+                    "VK_KHR_shader_terminate_invocation",
+                    "VK_KHR_ray_tracing_pipeline",
+                    "VK_KHR_ray_query",
+                    "VK_KHR_acceleration_structure",
+                    "VK_KHR_pipeline_library",
+                    "VK_KHR_deferred_host_operations",
+                    "VK_KHR_fragment_shading_rate",
+                    "VK_KHR_zero_initialize_workgroup_memory",
+                    "VK_KHR_workgroup_memory_explicit_layout",
+                    "VK_KHR_synchronization2",
+                    "VK_KHR_shader_integer_dot_product"});
+        DEQP_EXTENSIONS_MAP.put(
+                DEQP_LEVEL_FOR_R,
+                new String[] {
+                    "VK_KHR_swapchain",
+                    "VK_KHR_swapchain_mutable_format",
+                    "VK_KHR_display_swapchain",
+                    "VK_KHR_sampler_mirror_clamp_to_edge",
+                    "VK_KHR_external_memory_win32",
+                    "VK_KHR_external_memory_fd",
+                    "VK_KHR_win32_keyed_mutex",
+                    "VK_KHR_external_semaphore_win32",
+                    "VK_KHR_external_semaphore_fd",
+                    "VK_KHR_push_descriptor",
+                    "VK_KHR_shader_float16_int8",
+                    "VK_KHR_incremental_present",
+                    "VK_KHR_8bit_storage",
+                    "VK_KHR_create_renderpass2",
+                    "VK_KHR_shared_presentable_image",
+                    "VK_KHR_external_fence_win32",
+                    "VK_KHR_external_fence_fd",
+                    "VK_KHR_image_format_list",
+                    "VK_KHR_driver_properties",
+                    "VK_KHR_shader_float_controls",
+                    "VK_KHR_depth_stencil_resolve",
+                    "VK_KHR_draw_indirect_count",
+                    "VK_KHR_shader_atomic_int64",
+                    "VK_KHR_vulkan_memory_model",
+                    "VK_KHR_uniform_buffer_standard_layout",
+                    "VK_KHR_imageless_framebuffer",
+                    "VK_KHR_shader_subgroup_extended_types",
+                    "VK_KHR_buffer_device_address",
+                    "VK_KHR_separate_depth_stencil_layouts",
+                    "VK_KHR_timeline_semaphore",
+                    "VK_KHR_spirv_1_4",
+                    "VK_KHR_pipeline_executable_properties",
+                    "VK_KHR_shader_clock",
+                    "VK_KHR_performance_query",
+                    "VK_KHR_shader_non_semantic_info",
+                    "VK_KHR_surface",
+                    "VK_KHR_display",
+                    "VK_KHR_xlib_surface",
+                    "VK_KHR_xcb_surface",
+                    "VK_KHR_wayland_surface",
+                    "VK_KHR_mir_surface",
+                    "VK_KHR_android_surface",
+                    "VK_KHR_win32_surface",
+                    "VK_KHR_get_surface_capabilities2",
+                    "VK_KHR_get_display_properties2",
+                    "VK_KHR_surface_protected_capabilities",
+                    "VK_GOOGLE_decorate_string",
+                    "VK_GOOGLE_hlsl_functionality1"});
+        DEQP_EXTENSIONS_MAP.put(
+                DEQP_LEVEL_BEFORE_R,
+                new String[] {
+                    "VK_KHR_multiview",
+                    "VK_KHR_device_group",
+                    "VK_KHR_shader_draw_parameters",
+                    "VK_KHR_maintenance1",
+                    "VK_KHR_external_memory",
+                    "VK_KHR_external_semaphore",
+                    "VK_KHR_16bit_storage",
+                    "VK_KHR_descriptor_update_template",
+                    "VK_KHR_external_fence",
+                    "VK_KHR_maintenance2",
+                    "VK_KHR_variable_pointers",
+                    "VK_KHR_dedicated_allocation",
+                    "VK_KHR_storage_buffer_storage_class",
+                    "VK_KHR_relaxed_block_layout",
+                    "VK_KHR_get_memory_requirements2",
+                    "VK_KHR_sampler_ycbcr_conversion",
+                    "VK_KHR_bind_memory2",
+                    "VK_KHR_maintenance3",
+                    "VK_KHR_get_physical_device_properties2",
+                    "VK_KHR_device_group_creation",
+                    "VK_KHR_external_memory_capabilities",
+                    "VK_KHR_external_semaphore_capabilities",
+                    "VK_KHR_external_fence_capabilities",
+                    "VK_ANDROID_external_memory_android_hardware_buffer",
+                    "VK_GOOGLE_display_timing"});
+    }
+
     private PackageManager mPm;
     private FeatureInfo mVulkanHardwareLevel = null;
     private FeatureInfo mVulkanHardwareVersion = null;
     private FeatureInfo mVulkanHardwareCompute = null;
+    private FeatureInfo mVulkanDeqpLevel = null;
     private JSONObject mVkJSON = null;
     private JSONObject mVulkanDevices[];
     private JSONObject mBestDevice = null;
@@ -113,6 +254,11 @@ public class VulkanFeaturesTest {
                     }
                 } else if (PackageManager.FEATURE_VULKAN_HARDWARE_COMPUTE.equals(feature.name)) {
                     mVulkanHardwareCompute = feature;
+                    if (DEBUG) {
+                        Log.d(TAG, feature.name + "=" + feature.version);
+                    }
+                } else if (PackageManager.FEATURE_VULKAN_DEQP_LEVEL.equals(feature.name)) {
+                    mVulkanDeqpLevel = feature;
                     if (DEBUG) {
                         Log.d(TAG, feature.name + "=" + feature.version);
                     }
@@ -291,12 +437,57 @@ public class VulkanFeaturesTest {
     @CddTest(requirement = "7.1.4.2")
     @Test
     public void testVulkanVariantSupport() throws JSONException {
-        if (mVulkanHardwareVersion == null) {
-            return;
-        }
+        assumeTrue("Skipping because Vulkan is not supported", mVulkanHardwareVersion != null);
+
         int expectedVariant = 0x0;
         int actualVariant = (mVulkanHardwareVersion.version >> 29) & 0x7;
         assertEquals(expectedVariant, actualVariant);
+    }
+
+    @CddTest(requirement = "7.1.4.2")
+    @Test
+    public void testVulkanExposedDeviceExtensions() throws JSONException {
+        assumeTrue("Skipping because Vulkan is not supported", mVulkanHardwareVersion != null);
+
+        // Determine the set of device-side extensions that can be exposed
+        //   Note this only includes VK_KHR, VK_GOOGLE, VK_ANDROID
+        final int deviceDeqpLevel = mVulkanDeqpLevel.version;
+        Set<String> allowedDeviceExtensions = new HashSet<String>();
+        for (Integer level : DEQP_EXTENSIONS_MAP.keySet()) {
+            if (deviceDeqpLevel >= level) {
+                allowedDeviceExtensions.addAll(Arrays.asList(DEQP_EXTENSIONS_MAP.get(level)));
+            }
+        }
+
+        // Get the set of all device-side extensions exposed by the device
+        final JSONArray deviceExtensions = mBestDevice.getJSONArray("extensions");
+        // Search for any device extensions that should not be exposed
+        Set<String> untestedExtensions = new HashSet<String>();
+        for (int i = 0; i < deviceExtensions.length(); i++) {
+            JSONObject extension = deviceExtensions.getJSONObject(i);
+            String deviceExtension = extension.getString("extensionName");
+            boolean vk_android = deviceExtension.startsWith("VK_ANDROID");
+            boolean vk_google = deviceExtension.startsWith("VK_GOOGLE");
+            boolean vk_khr = deviceExtension.startsWith("VK_KHR");
+            if (!vk_android && !vk_google && !vk_khr) {
+                if (DEBUG) {
+                    Log.d(TAG, "Device extension exposed is not KHR, GOOGLE, or ANDROID: "
+                            + deviceExtension);
+                }
+                continue;
+            }
+            if (!allowedDeviceExtensions.contains(deviceExtension)) {
+                if (DEBUG) {
+                    Log.d(TAG, "Device extension exposed on device not found in dEQP level "
+                            + deviceDeqpLevel + ": " + deviceExtension);
+                }
+                untestedExtensions.add(deviceExtension);
+            }
+        }
+
+        assertEquals("This device exposes the extensions:\n" + untestedExtensions
+                + "\n that are not tested under its claimed dEQP level: " + deviceDeqpLevel,
+                0, untestedExtensions.size());
     }
 
     private static native String nativeGetABPSupport();
