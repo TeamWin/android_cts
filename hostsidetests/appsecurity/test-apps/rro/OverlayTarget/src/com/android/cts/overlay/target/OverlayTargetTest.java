@@ -89,7 +89,7 @@ public class OverlayTargetTest {
     public void overlayEnabled_activityInBackground_toForeground() throws Exception {
         final OverlayTargetActivity targetActivity = mActivityTestRule.getActivity();
         // Activity goes into background
-        launchHome();
+        launchSimpleActivity();
         mInstrumentation.waitForIdleSync();
         final CountDownLatch latch = new CountDownLatch(1);
         targetActivity.setConfigurationChangedCallback((activity, config) -> {
@@ -137,9 +137,11 @@ public class OverlayTargetTest {
                 () -> expected.equals(getStateForOverlay(overlayPackage)));
     }
 
-    private static void launchHome() {
-        SystemUtil.runShellCommand("am start -W -a android.intent.action.MAIN"
-                + " -c android.intent.category.HOME");
+    private void launchSimpleActivity() {
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.setClass(mInstrumentation.getTargetContext(), SimpleActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mInstrumentation.startActivitySync(intent);
     }
 
     private static String getStateForOverlay(String overlayPackage) {
