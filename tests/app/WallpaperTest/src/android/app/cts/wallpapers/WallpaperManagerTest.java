@@ -46,6 +46,7 @@ import static org.mockito.Mockito.verify;
 
 import android.app.Activity;
 import android.app.WallpaperColors;
+import android.app.WallpaperInfo;
 import android.app.WallpaperManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -117,6 +118,11 @@ public class WallpaperManagerTest {
     private BroadcastReceiver mBroadcastReceiver;
     private CountDownLatch mCountDownLatch;
     private boolean mEnableWcg;
+
+    // WallpaperInfo object for the built-in default wallpaper of the device.
+    // Always null if the device uses ImageWallpaper by default.
+    private WallpaperInfo mDefaultWallpaperInfo;
+
     private static final WindowManagerStateHelper sWindowManagerStateHelper =
             new WindowManagerStateHelper();
 
@@ -157,6 +163,9 @@ public class WallpaperManagerTest {
                 new IntentFilter(Intent.ACTION_WALLPAPER_CHANGED));
         mEnableWcg = mWallpaperManager.shouldEnableWideColorGamut();
         mWallpaperManager.clear(FLAG_SYSTEM | FLAG_LOCK);
+        if (mDefaultWallpaperInfo == null) {
+            mDefaultWallpaperInfo = mWallpaperManager.getWallpaperInfo(FLAG_SYSTEM);
+        }
 
         assertWithMessage("Home screen wallpaper must be set after setUp()").that(
                 mWallpaperManager.getWallpaperId(FLAG_SYSTEM)).isAtLeast(0);
@@ -597,8 +606,8 @@ public class WallpaperManagerTest {
 
     @Test
     public void setStaticWallpaper_doesNotSetWallpaperInfo() throws IOException {
-        assertThat(mWallpaperManager.getWallpaperInfo(FLAG_SYSTEM)).isNull();
-        assertThat(mWallpaperManager.getWallpaperInfo(FLAG_LOCK)).isNull();
+        assertNullOrDefaultWallpaper(FLAG_SYSTEM);
+        assertNullOrDefaultWallpaper(FLAG_LOCK);
 
         mWallpaperManager.setResource(R.drawable.icon_red, FLAG_SYSTEM);
         mWallpaperManager.setResource(R.drawable.icon_green, FLAG_LOCK);
@@ -609,8 +618,8 @@ public class WallpaperManagerTest {
 
     @Test
     public void setLiveWallpaper_homeScreen_setsHomeWallpaperInfo() {
-        assertThat(mWallpaperManager.getWallpaperInfo(FLAG_SYSTEM)).isNull();
-        assertThat(mWallpaperManager.getWallpaperInfo(FLAG_LOCK)).isNull();
+        assertNullOrDefaultWallpaper(FLAG_SYSTEM);
+        assertNullOrDefaultWallpaper(FLAG_LOCK);
 
         runWithShellPermissionIdentity(() -> {
             setWallpaperComponentAndWait(DEFAULT_COMPONENT_NAME, FLAG_SYSTEM);
@@ -618,8 +627,7 @@ public class WallpaperManagerTest {
 
         assertWithMessage("Home screen").that(
                 mWallpaperManager.getWallpaperInfo(FLAG_SYSTEM)).isNotNull();
-        assertWithMessage("Lock screen").that(
-                mWallpaperManager.getWallpaperInfo(FLAG_LOCK)).isNull();
+        assertNullOrDefaultWallpaper(FLAG_LOCK);
     }
 
     @Test
@@ -641,15 +649,14 @@ public class WallpaperManagerTest {
     @Test
     public void setLiveWallpaper_lockScreen_multiEngine_setsLockWallpaperInfo() {
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
-        assertThat(mWallpaperManager.getWallpaperInfo(FLAG_SYSTEM)).isNull();
-        assertThat(mWallpaperManager.getWallpaperInfo(FLAG_LOCK)).isNull();
+        assertNullOrDefaultWallpaper(FLAG_SYSTEM);
+        assertNullOrDefaultWallpaper(FLAG_LOCK);
 
         runWithShellPermissionIdentity(() -> {
             setWallpaperComponentAndWait(DEFAULT_COMPONENT_NAME, FLAG_LOCK);
         });
 
-        assertWithMessage("Home screen").that(
-                mWallpaperManager.getWallpaperInfo(FLAG_SYSTEM)).isNull();
+        assertNullOrDefaultWallpaper(FLAG_SYSTEM);
         assertWithMessage("Lock screen").that(
                 mWallpaperManager.getWallpaperInfo(FLAG_LOCK)).isNotNull();
     }
@@ -1694,6 +1701,13 @@ public class WallpaperManagerTest {
             mWallpaperManager.removeOnColorsChangedListener(callback);
             bmp.recycle();
         }
+    }
+
+    private void assertNullOrDefaultWallpaper(int which) {
+        WallpaperInfo wallpaperInfo = mWallpaperManager.getWallpaperInfo(which);
+        if (mDefaultWallpaperInfo == null) assertThat(wallpaperInfo).isNull();
+        if (wallpaperInfo == null) return;
+        assertThat(wallpaperInfo.getComponent()).isEqualTo(mDefaultWallpaperInfo.getComponent());
     }
 
     private void setWallpaperComponentAndWait(ComponentName component, int which) {
