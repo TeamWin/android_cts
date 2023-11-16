@@ -3391,7 +3391,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
                     new String[]{HELLO_WORLD_PACKAGE_NAME}, true, null, null, null,
                     FLAG_SUSPEND_QUARANTINED);
             assertEquals("", String.join(",", notset));
-        });
+        }, android.Manifest.permission.QUARANTINE_APPS);
 
         // Flag treatment.
         ApplicationInfo appInfo = mPackageManager.getApplicationInfo(HELLO_WORLD_PACKAGE_NAME, 0);
@@ -3475,14 +3475,14 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         }
 
         if (enabled) {
-            assertThat(runCommand("pm list packages -q")).contains(HELLO_WORLD_PACKAGE_NAME);
+            assertTrue(isPackageQuarantined(HELLO_WORLD_PACKAGE_NAME));
             assertTrue(servicesResult.toString(), servicesResult.size() == 0);
             assertTrue(providersResult1.toString(), providersResult1.size() == 0);
             assertTrue(providersResult2.toString(), providersResult2.size() == 0);
             assertTrue(providersResult3.toString(), providersResult3.size() == 0);
             assertFalse(providerFound);
         } else {
-            assertThat(runCommand("pm list packages -q")).doesNotContain(HELLO_WORLD_PACKAGE_NAME);
+            assertFalse(isPackageQuarantined(HELLO_WORLD_PACKAGE_NAME));
             assertEquals(servicesResult.toString(), 1, servicesResult.size());
             assertEquals("com.example.helloworld.TestService",
                     servicesResult.get(0).serviceInfo.name);
@@ -3500,6 +3500,12 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
                     contentProvider.name);
             assertTrue(providerFound);
         }
+    }
+
+    private boolean isPackageQuarantined(String packageName) {
+        return SystemUtil.runWithShellPermissionIdentity(
+                () -> mPackageManager.isPackageQuarantined(packageName),
+                android.Manifest.permission.QUARANTINE_APPS);
     }
 
     private void sendIntent(IntentSender intentSender) throws IntentSender.SendIntentException {
