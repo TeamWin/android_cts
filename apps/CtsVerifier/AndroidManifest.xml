@@ -214,7 +214,9 @@
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
             <meta-data android:name="CddTest"
-                       android:value="2.2.4/8.3/H-1-1|2.3.4/8.3/T-1-1|2.4.4/8.3/W-SR|8.3/C-SR" />
+                       android:value="2.2.4/8.3/H-1-1|2.3.4/8.3/T-1-1|
+                                      2.4.4/8.3/W-SR-1,8.3/W-SR-2|
+                                      8.3/C-SR-1,C-SR-2" />
             <meta-data android:name="ApiTest" android:value="android.os.PowerManager#isPowerSaveMode" />
         </activity>
 
