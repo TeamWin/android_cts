@@ -94,6 +94,7 @@ import android.provider.ContactsContract;
 import android.service.notification.Condition;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
+import android.service.notification.ZenDeviceEffects;
 import android.service.notification.ZenPolicy;
 import android.util.Log;
 
@@ -2145,11 +2146,29 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertThat(r1.isEnabled()).isEqualTo(r2.isEnabled());
 
         if (Flags.modesApi()) {
+            assertThat(r1.getDeviceEffects()).isEqualTo(r2.getDeviceEffects());
             assertThat(r1.getIconResId()).isEqualTo(r2.getIconResId());
             assertThat(r1.getTriggerDescription()).isEqualTo(r2.getTriggerDescription());
             assertThat(r1.getType()).isEqualTo(r2.getType());
             assertThat(r1.isManualInvocationAllowed()).isEqualTo(r2.isManualInvocationAllowed());
         }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void addAutomaticZenRule_withDeviceEffects_stored() {
+        ZenDeviceEffects effects = new ZenDeviceEffects.Builder()
+                .setShouldDisplayGrayscale(true)
+                .setShouldUseNightMode(true)
+                .build();
+
+        AutomaticZenRule newRule = createRule("With effects");
+        newRule.setDeviceEffects(effects);
+
+        String ruleId = mNotificationManager.addAutomaticZenRule(newRule);
+        AutomaticZenRule readRule = mNotificationManager.getAutomaticZenRule(ruleId);
+
+        assertThat(readRule.getDeviceEffects()).isEqualTo(effects);
     }
 
     @Test
