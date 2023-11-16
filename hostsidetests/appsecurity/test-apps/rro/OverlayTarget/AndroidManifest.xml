@@ -20,6 +20,7 @@
         <uses-library android:name="android.test.runner" />
         <activity android:name=".OverlayTargetActivity" android:exported="false"
                   android:configChanges="@integer/config_changes_assets_paths" />
+        <activity android:name=".SimpleActivity" android:exported="true" />
         <service android:name=".OverlayTargetService" android:exported="false" />
     </application>
 
