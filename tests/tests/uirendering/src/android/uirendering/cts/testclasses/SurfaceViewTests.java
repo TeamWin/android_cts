@@ -35,7 +35,6 @@ import android.uirendering.cts.bitmapverifiers.RectVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
 import android.uirendering.cts.testinfrastructure.DrawActivity;
-import android.uirendering.cts.testinfrastructure.Tracer;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import android.uirendering.cts.util.BitmapAsserter;
 import android.view.AttachedSurfaceControl;
@@ -58,7 +57,6 @@ import com.android.graphics.hwui.flags.Flags;
 
 import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -69,9 +67,6 @@ import java.util.concurrent.TimeUnit;
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class SurfaceViewTests extends ActivityTestBase {
-
-    @Rule
-    public final Tracer name = new Tracer();
 
     static final CanvasCallback sGreenCanvasCallback =
             new CanvasCallback((canvas, width, height) -> canvas.drawColor(Color.GREEN));
@@ -571,7 +566,7 @@ public class SurfaceViewTests extends ActivityTestBase {
             assertFalse(transactionCommitted.await(1, TimeUnit.SECONDS));
             Bitmap screenshot = mScreenshotter.takeScreenshot(testInfo);
             BitmapAsserter asserter =
-                    new BitmapAsserter(this.getClass().getSimpleName(), name.getMethodName());
+                    new BitmapAsserter(this.getClass().getSimpleName(), getName());
             asserter.assertBitmapIsVerified(
                     screenshot, new ColorVerifier(Color.RED, 2), getName(), "");
             activity.runOnUiThread(() -> {
@@ -627,7 +622,7 @@ public class SurfaceViewTests extends ActivityTestBase {
             assertTrue(latch.await(5, TimeUnit.SECONDS));
 
             BitmapAsserter asserter =
-                    new BitmapAsserter(this.getClass().getSimpleName(), name.getMethodName());
+                    new BitmapAsserter(this.getClass().getSimpleName(), getName());
 
             // Layout the SurfaceView way offscreen which would cause it to get quick rejected.
             WidgetTestUtils.runOnMainAndDrawSync(surfaceViewGreen, () -> {
@@ -674,7 +669,7 @@ public class SurfaceViewTests extends ActivityTestBase {
             assertTrue(latch.await(5, TimeUnit.SECONDS));
 
             BitmapAsserter asserter =
-                    new BitmapAsserter(this.getClass().getSimpleName(), name.getMethodName());
+                    new BitmapAsserter(this.getClass().getSimpleName(), getName());
             waitForScreenshottable();
             Bitmap screenshot = mScreenshotter.takeScreenshot(testInfo);
             asserter.assertBitmapIsVerified(
@@ -712,7 +707,7 @@ public class SurfaceViewTests extends ActivityTestBase {
             assertTrue(latch.await(5, TimeUnit.SECONDS));
 
             BitmapAsserter asserter =
-                    new BitmapAsserter(this.getClass().getSimpleName(), name.getMethodName());
+                    new BitmapAsserter(this.getClass().getSimpleName(), getName());
             waitForScreenshottable();
             Bitmap screenshot = mScreenshotter.takeScreenshot(testInfo);
             asserter.assertBitmapIsVerified(
@@ -750,13 +745,91 @@ public class SurfaceViewTests extends ActivityTestBase {
             assertTrue(latch.await(5, TimeUnit.SECONDS));
 
             BitmapAsserter asserter =
-                    new BitmapAsserter(this.getClass().getSimpleName(), name.getMethodName());
+                    new BitmapAsserter(this.getClass().getSimpleName(), getName());
             waitForScreenshottable();
             Bitmap screenshot = mScreenshotter.takeScreenshot(testInfo);
             asserter.assertBitmapIsVerified(
                     screenshot,
                     new ColorVerifier(Color.RED), getName(),
                     "Verifying unclipped SurfaceView");
+        } finally {
+            activity.reset();
+        }
+    }
+
+    @Test
+    public void surfaceViewScaledClipZAbove() throws InterruptedException {
+        Assume.assumeTrue(Flags.clipSurfaceviews());
+
+        Rect clipRect = new Rect(21, 20, 60, 60);
+        CountDownLatch latch = new CountDownLatch(1);
+        sRedCanvasCallback.setFence(latch);
+        ViewInitializer initializer = (View view) -> {
+            FrameLayout root = view.findViewById(R.id.frame_layout);
+            root.setBackgroundColor(Color.GREEN);
+            SurfaceView surfaceView = new SurfaceView(view.getContext());
+            surfaceView.setZOrderOnTop(true);
+            surfaceView.setClipBounds(clipRect);
+            surfaceView.getHolder().setFixedSize(30, 250);
+            surfaceView.getHolder().addCallback(sRedCanvasCallback);
+            root.addView(surfaceView, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT));
+        };
+
+        DrawActivity activity = getActivity();
+        try {
+            TestPositionInfo testInfo = activity.enqueueRenderSpecAndWait(
+                    R.layout.frame_layout, null, initializer, true, false);
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+
+            BitmapAsserter asserter =
+                    new BitmapAsserter(this.getClass().getSimpleName(), getName());
+            waitForScreenshottable();
+            Bitmap screenshot = mScreenshotter.takeScreenshot(testInfo);
+            asserter.assertBitmapIsVerified(
+                    screenshot,
+                    new RectVerifier(Color.GREEN, Color.RED, clipRect), getName(),
+                    "Verifying red clipped SurfaceView");
+        } finally {
+            activity.reset();
+        }
+    }
+
+    @Test
+    public void surfaceViewScaledClipZBelow() throws InterruptedException {
+        Assume.assumeTrue(Flags.clipSurfaceviews());
+
+        Rect clipRect = new Rect(20, 20, 60, 60);
+        CountDownLatch latch = new CountDownLatch(1);
+        sRedCanvasCallback.setFence(latch);
+        ViewInitializer initializer = (View view) -> {
+            FrameLayout root = view.findViewById(R.id.frame_layout);
+            root.setBackgroundColor(Color.GREEN);
+            SurfaceView surfaceView = new SurfaceView(view.getContext());
+            surfaceView.setZOrderOnTop(false);
+            surfaceView.setClipBounds(clipRect);
+            surfaceView.getHolder().setFixedSize(30, 250);
+            surfaceView.getHolder().addCallback(sRedCanvasCallback);
+            root.addView(surfaceView, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT));
+        };
+
+        DrawActivity activity = getActivity();
+        try {
+            TestPositionInfo testInfo = activity.enqueueRenderSpecAndWait(
+                    R.layout.frame_layout, null, initializer, true, false);
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+
+            BitmapAsserter asserter =
+                    new BitmapAsserter(this.getClass().getSimpleName(), getName());
+            waitForScreenshottable();
+            Bitmap screenshot = mScreenshotter.takeScreenshot(testInfo);
+            asserter.assertBitmapIsVerified(
+                    screenshot,
+                    new RectVerifier(Color.GREEN, Color.RED, clipRect), getName(),
+                    "Verifying red clipped SurfaceView");
         } finally {
             activity.reset();
         }

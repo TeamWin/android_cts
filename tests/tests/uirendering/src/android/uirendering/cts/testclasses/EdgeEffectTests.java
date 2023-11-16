@@ -38,7 +38,6 @@ import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.bitmapverifiers.PerPixelBitmapVerifier;
 import android.uirendering.cts.bitmapverifiers.RegionVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
-import android.uirendering.cts.testinfrastructure.Tracer;
 import android.uirendering.cts.util.MockVsyncHelper;
 import android.view.ContextThemeWrapper;
 import android.view.animation.AnimationUtils;
@@ -51,7 +50,6 @@ import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -60,9 +58,6 @@ import org.junit.runner.RunWith;
 public class EdgeEffectTests extends ActivityTestBase {
     private static final int WIDTH = 90;
     private static final int HEIGHT = 90;
-
-    @Rule
-    public Tracer name = new Tracer();
 
     private Context mThemeContext;
     private float mPreviousDurationScale;
