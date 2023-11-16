@@ -1156,7 +1156,7 @@ public class IntentFilterTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testReadFromXml()
             throws NameNotFoundException, XmlPullParserException, IOException {
         XmlPullParser parser = null;
@@ -1328,7 +1328,7 @@ public class IntentFilterTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ContentResolver.class)
     public void testMatchWithIntent() throws MalformedMimeTypeException {
         final ContentResolver resolver = mContext.getContentResolver();
 
@@ -1872,7 +1872,7 @@ public class IntentFilterTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ContentResolver.class)
     public void testAsPredicateWithTypeResolution() throws Exception {
         final ContentResolver resolver = mContext.getContentResolver();
         final Predicate<Intent> pred = new IntentFilter(ACTION, DATA_STATIC_TYPE)

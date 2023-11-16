@@ -2830,7 +2830,7 @@ public class ParcelTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testWriteFileDescriptor() {
         Parcel p;
         FileDescriptor fIn = FileDescriptor.in;
@@ -2851,7 +2851,7 @@ public class ParcelTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptor() {
         Parcel p;
         FileDescriptor fIn = FileDescriptor.in;
@@ -2870,7 +2870,7 @@ public class ParcelTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptorInRange_outsideRange() {
         Parcel p = Parcel.obtain();
         int i0 = p.dataPosition();
@@ -2887,7 +2887,7 @@ public class ParcelTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptorInRange_partiallyInsideRange() {
         Parcel p = Parcel.obtain();
         int i0 = p.dataPosition();
@@ -2905,7 +2905,7 @@ public class ParcelTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptorInRange_insideRange() {
         Parcel p = Parcel.obtain();
         int i0 = p.dataPosition();
@@ -2925,7 +2925,7 @@ public class ParcelTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptorInRange_zeroLength() {
         Parcel p = Parcel.obtain();
         int i0 = p.dataPosition();
@@ -2946,7 +2946,7 @@ public class ParcelTest {
      * this case.
      */
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptorInRange_withUnsortedFdObjects() {
         Parcel p = Parcel.obtain();
         int i0 = p.dataPosition();
@@ -2962,7 +2962,7 @@ public class ParcelTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptorInRange_limitOutOfBounds() {
         Parcel p = Parcel.obtain();
         int i0 = p.dataPosition();
@@ -2976,7 +2976,7 @@ public class ParcelTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptorInRange_offsetOutOfBounds() {
         Parcel p = Parcel.obtain();
         int i0 = p.dataPosition();
@@ -2989,7 +2989,7 @@ public class ParcelTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptorInRange_offsetOutOfBoundsAndZeroLength() {
         Parcel p = Parcel.obtain();
         int i0 = p.dataPosition();
@@ -3002,7 +3002,7 @@ public class ParcelTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptorInRange_zeroLengthParcel() {
         Parcel p = Parcel.obtain();
 
@@ -3011,7 +3011,7 @@ public class ParcelTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptorInRange_negativeLength() {
         Parcel p = Parcel.obtain();
         int i0 = p.dataPosition();
@@ -3024,7 +3024,7 @@ public class ParcelTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptorInRange_negativeOffset() {
         Parcel p = Parcel.obtain();
         p.writeFileDescriptor(FileDescriptor.in);

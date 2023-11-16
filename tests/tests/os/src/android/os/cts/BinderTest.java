@@ -28,6 +28,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.IInterface;
 import android.os.Process;
+import android.os.WorkSource;
 import android.platform.test.annotations.IgnoreUnderRavenwood;
 import android.platform.test.ravenwood.RavenwoodRule;
 
@@ -89,7 +90,7 @@ public class BinderTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(reason = "Requires kernel support")
     public void testJoinThreadPool() {
         final CountDownLatch waitLatch = new CountDownLatch(1);
         final CountDownLatch alertLatch = new CountDownLatch(1);
@@ -225,14 +226,14 @@ public class BinderTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = WorkSource.class)
     public void testClearCallingWorkSource() {
         final long token = Binder.clearCallingWorkSource();
         Binder.restoreCallingWorkSource(token);
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = WorkSource.class)
     public void testSetCallingWorkSourceUid() {
         final int otherUid = android.os.Process.myUid() + 1;
         assertFalse(Binder.getCallingWorkSourceUid() == otherUid);

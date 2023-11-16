@@ -68,7 +68,7 @@ public class ClipDataTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = android.util.TimeUtils.class)
     public void testToString_metadata() {
         ClipDescription description = new ClipDescription("secret-label",
                 new String[]{"text/plain"});

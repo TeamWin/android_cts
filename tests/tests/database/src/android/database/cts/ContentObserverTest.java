@@ -44,7 +44,7 @@ public class ContentObserverTest {
     private static final Uri CONTENT_URI = Uri.parse("content://uri");
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = HandlerThread.class)
     public void testContentObserver() throws InterruptedException {
         // Test constructor with null handler, dispatchChange will directly invoke onChange.
         MyContentObserver contentObserver;
@@ -88,7 +88,7 @@ public class ContentObserverTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = HandlerThread.class)
     public void testContentObserverWithUri() throws InterruptedException {
         // Test constructor with null handler, dispatchChange will directly invoke onChange.
         MyContentObserverWithUri contentObserver;

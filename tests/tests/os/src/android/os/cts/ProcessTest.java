@@ -129,7 +129,7 @@ public class ProcessTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(reason = "Requires kernel support")
     public void testMiscMethods() {
         /*
          * Test setThreadPriority(int) and setThreadPriority(int, int)
@@ -192,7 +192,7 @@ public class ProcessTest {
      * and any additional processes created by that app be able to kill each other's processes.
      */
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(reason = "Requires kernel support")
     public void testKillProcess() throws Exception {
         long time = 0;
         int servicePid = 0;
@@ -227,7 +227,7 @@ public class ProcessTest {
      * Send a signal to the given process.
      */
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(reason = "Requires kernel support")
     public void testSendSignal() throws Exception {
         int servicePid = 0;
         try {
@@ -268,7 +268,7 @@ public class ProcessTest {
      * Tests that the reserved UID is not taken by an actual package.
      */
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testReservedVirtualUid() {
         PackageManager pm = mContext.getPackageManager();
         final String name = pm.getNameForUid(Process.SDK_SANDBOX_VIRTUAL_UID);

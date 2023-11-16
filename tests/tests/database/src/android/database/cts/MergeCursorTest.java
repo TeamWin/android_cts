@@ -125,7 +125,7 @@ public class MergeCursorTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testCursorSwiching() {
         mDatabase.execSQL("CREATE TABLE " + TABLE5_NAME + " (_id INTEGER PRIMARY KEY,"
                 + TABLE3_COLUMNS + ");");
@@ -154,7 +154,7 @@ public class MergeCursorTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testGetValues() {
         byte NUMBER_BLOB_UNIT = 99;
         String[] TEST_STRING = new String[] {"Test String1", "Test String2"};
@@ -253,7 +253,7 @@ public class MergeCursorTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testDeactivate() throws IllegalStateException {
         createCursors();
         MergeCursor mergeCursor = new MergeCursor(mCursors);
@@ -316,7 +316,7 @@ public class MergeCursorTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testRequery() {
         final String TEST_VALUE1 = Integer.toString(MAX_VALUE + 1);
         final String TEST_VALUE2 = Integer.toString(MAX_VALUE + 2);

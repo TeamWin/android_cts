@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.Instrumentation;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.database.AbstractCursor;
 import android.database.CharArrayBuffer;
@@ -181,7 +182,7 @@ public class AbstractCursorTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ContentResolver.class)
     public void testSetNotificationUri() {
         final Uri testUri = Settings.System.getUriFor(Settings.System.TIME_12_24);
         mDatabaseCursor.setNotificationUri(getInstrumentation().getContext().getContentResolver(),
@@ -189,7 +190,7 @@ public class AbstractCursorTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ContentResolver.class)
     public void testSetNotificationUris_selfNotify() throws Exception {
         final Uri testUri1 = Settings.System.getUriFor(Settings.System.TIME_12_24);
         final Uri testUri2 = Settings.Global.getUriFor(
@@ -208,7 +209,7 @@ public class AbstractCursorTest {
 
     @Test
     @AppModeFull
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ContentResolver.class)
     public void testSetNotificationsUris() throws Exception {
         final Uri queryUri = Uri.parse("content://com.android.cts.providerapp");
         try (Cursor cursor = mContext.getContentResolver().query(queryUri, null, null, null)) {
@@ -224,7 +225,7 @@ public class AbstractCursorTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = ContentResolver.class)
     public void testGetNotificationUris() throws Exception {
         final Uri[] notificationUris = new Uri[] {
                 Settings.Global.getUriFor(Settings.Global.MODE_RINGER),
@@ -367,7 +368,7 @@ public class AbstractCursorTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = CursorWindow.class)
     public void testGetWindow() {
         CursorWindow window = new CursorWindow(false);
         assertEquals(0, window.getNumRows());
@@ -412,7 +413,7 @@ public class AbstractCursorTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testGetColumnNames() {
         String[] names = mDatabaseCursor.getColumnNames();
         assertEquals(COLUMN_NAMES1.length, names.length);
@@ -423,14 +424,14 @@ public class AbstractCursorTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testGetColumnName() {
         assertEquals(COLUMN_NAMES1[0], mDatabaseCursor.getColumnName(0));
         assertEquals(COLUMN_NAMES1[1], mDatabaseCursor.getColumnName(1));
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testGetColumnIndexOrThrow() {
         final String COLUMN_FAKE = "fake_name";
         assertEquals(POSITION0, mDatabaseCursor.getColumnIndex(COLUMN_NAMES1[POSITION0]));
@@ -447,14 +448,14 @@ public class AbstractCursorTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testGetColumnIndex() {
         assertEquals(POSITION0, mDatabaseCursor.getColumnIndex(COLUMN_NAMES1[POSITION0]));
         assertEquals(POSITION1, mDatabaseCursor.getColumnIndex(COLUMN_NAMES1[POSITION1]));
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testGetColumnCount() {
         assertEquals(COLUMN_NAMES1.length, mDatabaseCursor.getColumnCount());
     }
@@ -469,7 +470,7 @@ public class AbstractCursorTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = CursorWindow.class)
     public void testCopyStringToBuffer() {
         CharArrayBuffer ca = new CharArrayBuffer(1000);
         mTestAbstractCursor.moveToFirst();
