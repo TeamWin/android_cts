@@ -32,6 +32,7 @@ android_test {
         "ctsdeviceutillegacy-axt",
         "ctstestrunner-axt",
         "flag-junit",
+        "ravenwood-junit",
         "mockito-target-minus-junit4",
         "androidx.test.rules",
         "androidx.test.uiautomator_uiautomator",
@@ -63,4 +64,19 @@ android_test {
         ":TestIme",
     ],
     per_testcase_directory: true,
+}
+
+android_ravenwood_test {
+    name: "CtsTextTestCasesRavenwood",
+    defaults: ["cts_defaults"],
+    static_libs: [
+        "androidx.annotation_annotation",
+        "androidx.test.rules",
+        "mockito_ravenwood",
+    ],
+    srcs: [
+        "src/android/text/cts/TextUtilsTest.java",
+        "src/android/text/cts/TextUtils_SimpleStringSplitterTest.java",
+    ],
+    auto_gen_config: true,
 }
