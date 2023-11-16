@@ -377,7 +377,7 @@ open class PackageInstallerTestBase {
      * @param resId The resource ID of the button to click
      */
     fun clickInstallerUIButton(resId: String) {
-        clickInstallerUIButton(By.res(PACKAGE_INSTALLER_PACKAGE_NAME, resId))
+        clickInstallerUIButton(By.res(SYSTEM_PACKAGE_NAME, resId))
     }
 
     /**
