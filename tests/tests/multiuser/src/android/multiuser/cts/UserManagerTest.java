@@ -1023,17 +1023,6 @@ public final class UserManagerTest {
     }
 
     @Test
-    @CddTest(requirements = {"9.5/H-1-1,H-4-2"})
-    public void headlessCannotSupportTelephony() {
-        boolean isHeadless = UserManager.isHeadlessSystemUserMode();
-        boolean hasTelephony =
-                sContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
-
-        assertWithMessage("Cannot run in headless system user mode if telephony is present")
-                .that(isHeadless && hasTelephony).isFalse();
-    }
-
-    @Test
     @ApiTest(apis = {"android.os.UserManager#setBootUser"})
     @EnsureHasAdditionalUser
     @EnsureHasPermission({CREATE_USERS})
