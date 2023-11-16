@@ -23,6 +23,8 @@ public class Components extends ComponentsBase {
 
     public static final ComponentName SECOND_ACTIVITY = component("SecondActivity");
 
+    public static final ComponentName PORTRAIT_ACTIVITY = component("PortraitActivity");
+
     public static final ComponentName SECOND_ACTIVITY_UNKNOWN_EMBEDDING_CERTS =
             component("SecondActivityUnknownEmbeddingCerts");
 
