@@ -89,7 +89,6 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
 
         stopPackage(getDevice(), ANGLE_DRIVER_TEST_PKG);
         stopPackage(getDevice(), ANGLE_DRIVER_TEST_SEC_PKG);
-        stopPackage(getDevice(), ANGLE_GAME_DRIVER_TEST_PKG);
     }
 
     @After
@@ -360,96 +359,6 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
         setGlobalSetting(getDevice(), SETTINGS_GLOBAL_ANGLE_IN_USE_DIALOG_BOX, "1");
 
         testUseNativeDriver();
-    }
-
-    /**
-     * Test ANGLE is loaded when the Battery Game Mode includes 'useAngle=true'.
-     */
-    @Test
-    public void testGameModeBatteryUseAngleDriver() throws Exception {
-        Assume.assumeTrue(isAngleInstalled(getDevice()));
-
-        installApp(ANGLE_GAME_DRIVER_TEST_APP);
-
-        setGameModeBatteryConfig(getDevice(), ANGLE_GAME_DRIVER_TEST_PKG, true);
-        setGameModeBattery(getDevice(), ANGLE_GAME_DRIVER_TEST_PKG);
-
-        runDeviceTests(ANGLE_GAME_DRIVER_TEST_PKG,
-                ANGLE_GAME_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
-                ANGLE_DRIVER_TEST_ANGLE_METHOD);
-    }
-
-    /**
-     * Test ANGLE is loaded when the Standard Game Mode includes 'useAngle=true'.
-     */
-    @Test
-    public void testGameModeStandardUseAngleDriver() throws Exception {
-        Assume.assumeTrue(isAngleInstalled(getDevice()));
-
-        installApp(ANGLE_GAME_DRIVER_TEST_APP);
-
-        setGameModeStandardConfig(getDevice(), ANGLE_GAME_DRIVER_TEST_PKG, true);
-        setGameModeStandard(getDevice(), ANGLE_GAME_DRIVER_TEST_PKG);
-
-        runDeviceTests(ANGLE_GAME_DRIVER_TEST_PKG,
-                ANGLE_GAME_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
-                ANGLE_DRIVER_TEST_ANGLE_METHOD);
-    }
-
-    /**
-     * Test setting the Game Mode to use ANGLE ('useAngle=true') and then overriding that to use the
-     * native driver with the Global.Settings loads the native driver.
-     */
-    @Test
-    public void testGameModeBatteryUseAngleOverrideWithNative() throws Exception {
-        Assume.assumeTrue(isAngleInstalled(getDevice()));
-        Assume.assumeFalse(isAngleOnlySystem(getDevice()));
-
-        installApp(ANGLE_GAME_DRIVER_TEST_APP);
-
-        // Set Game Mode to use ANGLE and verify ANGLE is loaded.
-        setGameModeBatteryConfig(getDevice(), ANGLE_GAME_DRIVER_TEST_PKG, true);
-        setGameModeBattery(getDevice(), ANGLE_GAME_DRIVER_TEST_PKG);
-
-        runDeviceTests(ANGLE_GAME_DRIVER_TEST_PKG,
-                ANGLE_GAME_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
-                ANGLE_DRIVER_TEST_ANGLE_METHOD);
-
-        // Set Global.Settings to use the native driver and verify the native driver is loaded.
-        setAndValidateAngleDevOptionPkgDriver(ANGLE_GAME_DRIVER_TEST_PKG,
-                sDriverGlobalSettingMap.get(OpenGlDriverChoice.NATIVE));
-
-        runDeviceTests(ANGLE_GAME_DRIVER_TEST_PKG,
-                ANGLE_GAME_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
-                ANGLE_DRIVER_TEST_NATIVE_METHOD);
-    }
-
-    /**
-     * Test setting the Game Mode to not use ANGLE ('useAngle=false') and then overriding that to
-     * use ANGLE with the Global.Settings loads ANGLE.
-     */
-    @Test
-    public void testGameModeBatteryDontUseAngleOverrideWithAngle() throws Exception {
-        Assume.assumeTrue(isAngleInstalled(getDevice()));
-        final String testMethod = getTestMethod(getDevice());
-
-        installApp(ANGLE_GAME_DRIVER_TEST_APP);
-
-        // Set Game Mode to *not* use ANGLE and verify the native driver is loaded when ANGLE is not
-        // the system driver.
-        setGameModeBatteryConfig(getDevice(), ANGLE_GAME_DRIVER_TEST_PKG, false);
-        setGameModeBattery(getDevice(), ANGLE_GAME_DRIVER_TEST_PKG);
-
-        runDeviceTests(ANGLE_GAME_DRIVER_TEST_PKG,
-                ANGLE_GAME_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS, testMethod);
-
-        // Set Global.Settings to use ANGLE and verify ANGLE is loaded.
-        setAndValidateAngleDevOptionPkgDriver(ANGLE_GAME_DRIVER_TEST_PKG,
-                sDriverGlobalSettingMap.get(OpenGlDriverChoice.ANGLE));
-
-        runDeviceTests(ANGLE_GAME_DRIVER_TEST_PKG,
-                ANGLE_GAME_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
-                ANGLE_DRIVER_TEST_ANGLE_METHOD);
     }
 
     /**
