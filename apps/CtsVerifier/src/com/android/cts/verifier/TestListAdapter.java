@@ -18,7 +18,6 @@ package com.android.cts.verifier;
 
 import static com.android.cts.verifier.ReportExporter.LOGS_DIRECTORY;
 import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
-import static com.android.cts.verifier.TestListActivity.sInitialLaunch;
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -399,10 +398,7 @@ public abstract class TestListAdapter extends BaseAdapter {
                 String displayMode,
                 boolean passInEitherMode) {
             this.title = title;
-            if (!sInitialLaunch) {
-                testName = setTestNameSuffix(sCurrentDisplayMode, testName);
-            }
-            this.testName = testName;
+            this.testName = setTestNameSuffix(sCurrentDisplayMode, testName);
             this.intent = intent;
             this.requiredActions = requiredActions;
             this.requiredFeatures = requiredFeatures;
@@ -431,7 +427,7 @@ public abstract class TestListAdapter extends BaseAdapter {
     }
 
     public void loadTestResults() {
-        new RefreshTestResultsTask(false).execute();
+        new RefreshTestResultsTask().execute();
     }
 
     public void clearTestResults() {
@@ -446,37 +442,20 @@ public abstract class TestListAdapter extends BaseAdapter {
         histories.merge(null, mHistories.get(name));
 
         new SetTestResultTask(
-                name,
-                testResult.getResult(),
-                testResult.getDetails(),
-                testResult.getReportLog(),
-                histories,
-                mScreenshotsMetadata.get(name))
+                        name,
+                        testResult.getResult(),
+                        testResult.getDetails(),
+                        testResult.getReportLog(),
+                        histories,
+                        mScreenshotsMetadata.get(name))
                 .execute();
     }
 
     class RefreshTestResultsTask extends AsyncTask<Void, Void, RefreshResult> {
 
-        private boolean mIsFromMainView;
-
-        RefreshTestResultsTask(boolean isFromMainView) {
-            mIsFromMainView = isFromMainView;
-        }
-
         @Override
         protected RefreshResult doInBackground(Void... params) {
-            List<TestListItem> rows = getRows();
-            // When initial launch, needs to fetch tests in the unfolded/folded mode
-            // to be stored in mDisplayModesTests as the basis for the future switch.
-            if (sInitialLaunch) {
-                sInitialLaunch = false;
-            }
-
-            if (mIsFromMainView) {
-                rows = mDisplayModesTests.get(sCurrentDisplayMode);
-            }
-
-            return getRefreshResults(rows);
+            return getRefreshResults(getRows());
         }
 
         @Override
@@ -526,13 +505,13 @@ public abstract class TestListAdapter extends BaseAdapter {
     protected abstract List<TestListItem> getRows();
 
     static final String[] REFRESH_PROJECTION = {
-            TestResultsProvider._ID,
-            TestResultsProvider.COLUMN_TEST_NAME,
-            TestResultsProvider.COLUMN_TEST_RESULT,
-            TestResultsProvider.COLUMN_TEST_DETAILS,
-            TestResultsProvider.COLUMN_TEST_METRICS,
-            TestResultsProvider.COLUMN_TEST_RESULT_HISTORY,
-            TestResultsProvider.COLUMN_TEST_SCREENSHOTS_METADATA,
+        TestResultsProvider._ID,
+        TestResultsProvider.COLUMN_TEST_NAME,
+        TestResultsProvider.COLUMN_TEST_RESULT,
+        TestResultsProvider.COLUMN_TEST_DETAILS,
+        TestResultsProvider.COLUMN_TEST_METRICS,
+        TestResultsProvider.COLUMN_TEST_RESULT_HISTORY,
+        TestResultsProvider.COLUMN_TEST_SCREENSHOTS_METADATA,
     };
 
     RefreshResult getRefreshResults(List<TestListItem> items) {
@@ -639,12 +618,12 @@ public abstract class TestListAdapter extends BaseAdapter {
                 ContentResolver resolver = mContext.getContentResolver();
 
                 try (Cursor cursor =
-                             resolver.query(
-                                     TestResultsProvider.getTestNameUri(mContext, mTestName),
-                                     new String[] {TestResultsProvider.COLUMN_TEST_RESULT_HISTORY},
-                                     null,
-                                     null,
-                                     null)) {
+                        resolver.query(
+                                TestResultsProvider.getTestNameUri(mContext, mTestName),
+                                new String[] {TestResultsProvider.COLUMN_TEST_RESULT_HISTORY},
+                                null,
+                                null,
+                                null)) {
                     if (cursor.moveToFirst()) {
                         do {
                             TestResultHistoryCollection historyCollection =
@@ -723,7 +702,7 @@ public abstract class TestListAdapter extends BaseAdapter {
 
     /** Gets {@link TestListItem} with the given test name. */
     public TestListItem getItemByName(String testName) {
-        for (TestListItem item: mRows) {
+        for (TestListItem item : mRows) {
             if (item != null && item.testName != null && item.testName.equals(testName)) {
                 return item;
             }
@@ -850,10 +829,11 @@ public abstract class TestListAdapter extends BaseAdapter {
 
     public boolean allTestsPassed() {
         for (TestListItem item : mRows) {
-            if (item != null && item.isTest()
+            if (item != null
+                    && item.isTest()
                     && (!mTestResults.containsKey(item.testName)
-                    || (mTestResults.get(item.testName)
-                    != TestResult.TEST_RESULT_PASSED))) {
+                            || (mTestResults.get(item.testName)
+                                    != TestResult.TEST_RESULT_PASSED))) {
                 return false;
             }
         }
@@ -923,10 +903,13 @@ public abstract class TestListAdapter extends BaseAdapter {
         if (deviceStateManager == null) {
             return false;
         }
-        Set<Integer> supportedStates = Arrays.stream(
-                deviceStateManager.getSupportedStates()).boxed().collect(Collectors.toSet());
-        int identifier = mContext.getResources().getIdentifier(
-                "config_foldedDeviceStates", "array", "android");
+        Set<Integer> supportedStates =
+                Arrays.stream(deviceStateManager.getSupportedStates())
+                        .boxed()
+                        .collect(Collectors.toSet());
+        int identifier =
+                mContext.getResources()
+                        .getIdentifier("config_foldedDeviceStates", "array", "android");
         int[] foldedDeviceStates = mContext.getResources().getIntArray(identifier);
         return Arrays.stream(foldedDeviceStates).anyMatch(supportedStates::contains);
     }
