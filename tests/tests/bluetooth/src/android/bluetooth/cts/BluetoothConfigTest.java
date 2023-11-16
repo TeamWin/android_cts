@@ -19,30 +19,43 @@ package android.bluetooth.cts;
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
 import static android.Manifest.permission.BLUETOOTH_PRIVILEGED;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothStatusCodes;
+import android.content.Context;
 import android.sysprop.BluetoothProperties;
-import android.test.AndroidTestCase;
 import android.util.Log;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 
-public class BluetoothConfigTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+@SmallTest
+public class BluetoothConfigTest {
     private static final String TAG = MethodHandles.lookup().lookupClass().getSimpleName();
 
+    private Context mContext;
     private boolean mHasBluetooth;
     private BluetoothAdapter mAdapter;
     private UiAutomation mUiAutomation;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
         mHasBluetooth = TestUtils.hasBluetooth();
         if (!mHasBluetooth) return;
@@ -50,14 +63,13 @@ public class BluetoothConfigTest extends AndroidTestCase {
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
 
-        BluetoothManager manager = getContext().getSystemService(BluetoothManager.class);
+        BluetoothManager manager = mContext.getSystemService(BluetoothManager.class);
         mAdapter = manager.getAdapter();
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
-        super.tearDown();
         if (!mHasBluetooth) return;
 
         mAdapter = null;
@@ -79,6 +91,7 @@ public class BluetoothConfigTest extends AndroidTestCase {
         return 1;
     }
 
+    @Test
     public void testProfileEnabledValueInList() {
         if (!mHasBluetooth) {
             return;
@@ -127,6 +140,7 @@ public class BluetoothConfigTest extends AndroidTestCase {
         return 1;
     }
 
+    @Test
     public void testProfileEnabledValue() {
         if (!mHasBluetooth) {
             return;
@@ -143,6 +157,7 @@ public class BluetoothConfigTest extends AndroidTestCase {
                 0, wrong_config);
     }
 
+    @Test
     public void testBleCDDRequirement() {
         if (!mHasBluetooth) {
             return;
