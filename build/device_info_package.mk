@@ -33,6 +33,7 @@ DEVICE_INFO_ACTIVITIES += \
   $(DEVICE_INFO_PACKAGE).ConfigurationDeviceInfo \
   $(DEVICE_INFO_PACKAGE).ConnectivityDeviceInfo \
   $(DEVICE_INFO_PACKAGE).CpuDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).DefaultAppDeviceInfo \
   $(DEVICE_INFO_PACKAGE).DeviceIdleDeviceInfo \
   $(DEVICE_INFO_PACKAGE).FeatureDeviceInfo \
   $(DEVICE_INFO_PACKAGE).GenericDeviceInfo \
