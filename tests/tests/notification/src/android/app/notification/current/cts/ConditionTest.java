@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Flags;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Parcel;
@@ -43,6 +44,7 @@ public class ConditionTest {
             .build();
     private final String mSummary = "summary";
     private final int mState = Condition.STATE_FALSE;
+    private final int mSource = Flags.modesApi() ? Condition.SOURCE_USER_ACTION : 0;
 
     @Before
     public void setUp() throws Exception {
@@ -59,6 +61,9 @@ public class ConditionTest {
     @Test
     public void testConstructor() {
         Condition condition = new Condition(mConditionId, mSummary, mState);
+        if (Flags.modesApi()) {
+            condition = new Condition(mConditionId, mSummary, mState, mSource);
+        }
         assertEquals(mConditionId, condition.id);
         assertEquals(mSummary, condition.summary);
         assertEquals("", condition.line1);
@@ -66,35 +71,50 @@ public class ConditionTest {
         assertEquals(mState, condition.state);
         assertEquals(-1, condition.icon);
         assertEquals(Condition.FLAG_RELEVANT_ALWAYS, condition.flags);
+        if (Flags.modesApi()) {
+            assertEquals(mSource, condition.source);
+        }
     }
 
     @Test
     public void testWriteToParcel() {
-        Condition condition = new Condition(mConditionId, mSummary, mState);
+        Condition original = new Condition(mConditionId, mSummary, mState);
+        if (Flags.modesApi()) {
+            original = new Condition(mConditionId, mSummary, mState, mSource);
+        }
         Parcel parcel = Parcel.obtain();
-        condition.writeToParcel(parcel, 0);
+        original.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
-        Condition condition1 = new Condition(parcel);
-        assertEquals(mConditionId, condition1.id);
-        assertEquals(mSummary, condition1.summary);
-        assertEquals("", condition1.line1);
-        assertEquals("", condition1.line2);
-        assertEquals(mState, condition1.state);
-        assertEquals(-1, condition1.icon);
-        assertEquals(Condition.FLAG_RELEVANT_ALWAYS, condition1.flags);
+        Condition copy = new Condition(parcel);
+        assertEquals(mConditionId, copy.id);
+        assertEquals(mSummary, copy.summary);
+        assertEquals("", copy.line1);
+        assertEquals("", copy.line2);
+        assertEquals(mState, copy.state);
+        assertEquals(-1, copy.icon);
+        assertEquals(Condition.FLAG_RELEVANT_ALWAYS, copy.flags);
+        if (Flags.modesApi()) {
+            assertEquals(mSource, copy.source);
+        }
     }
 
     @Test
     public void testCopy() {
-        Condition condition = new Condition(mConditionId, mSummary, mState);
-        Condition condition1 = condition.copy();
-        assertEquals(mConditionId, condition1.id);
-        assertEquals(mSummary, condition1.summary);
-        assertEquals("", condition1.line1);
-        assertEquals("", condition1.line2);
-        assertEquals(mState, condition1.state);
-        assertEquals(-1, condition1.icon);
-        assertEquals(Condition.FLAG_RELEVANT_ALWAYS, condition1.flags);
+        Condition original = new Condition(mConditionId, mSummary, mState);
+        if (Flags.modesApi()) {
+            original = new Condition(mConditionId, mSummary, mState, mSource);
+        }
+        Condition copy = original.copy();
+        assertEquals(mConditionId, copy.id);
+        assertEquals(mSummary, copy.summary);
+        assertEquals("", copy.line1);
+        assertEquals("", copy.line2);
+        assertEquals(mState, copy.state);
+        assertEquals(-1, copy.icon);
+        assertEquals(Condition.FLAG_RELEVANT_ALWAYS, copy.flags);
+        if (Flags.modesApi()) {
+            assertEquals(mSource, copy.source);
+        }
     }
 
     @Test
@@ -132,5 +152,14 @@ public class ConditionTest {
     @Test
     public void testRelevanceToString() {
         assertNotNull(Condition.relevanceToString(Condition.FLAG_RELEVANT_ALWAYS));
+    }
+
+    @Test
+    public void testSourceDefault() {
+        if (!Flags.modesApi()) {
+            return;
+        }
+        Condition condition = new Condition(mConditionId, mSummary, mState);
+        assertEquals(Condition.SOURCE_UNKNOWN, condition.source);
     }
 }
