@@ -102,6 +102,9 @@ public abstract class TestListAdapter extends BaseAdapter {
      */
     protected Map<String, List<TestListItem>> mDisplayModesTests = new HashMap<>();
 
+    /** A keyword to help filter out test cases by the test name. */
+    protected String mTestFilter;
+
     /** {@link ListView} row that is either a test category header or a test. */
     public static class TestListItem {
 
@@ -449,6 +452,10 @@ public abstract class TestListAdapter extends BaseAdapter {
                         histories,
                         mScreenshotsMetadata.get(name))
                 .execute();
+    }
+
+    void setTestFilter(String testFilter) {
+        mTestFilter = testFilter;
     }
 
     class RefreshTestResultsTask extends AsyncTask<Void, Void, RefreshResult> {
