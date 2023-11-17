@@ -2878,14 +2878,14 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             Log.d(TAG, "Turn off WiFi");
             mWifiManager.setWifiEnabled(false);
             PollingCheck.check(
-                "Wifi turn off failed!", 2_000,
+                    "Wifi turn off failed!", WIFI_OFF_ON_TIMEOUT_MILLIS,
                 () -> mWifiManager.isWifiEnabled() == false);
         }
         if (mWifiManager.isWifiApEnabled()) {
             mTetheringManager.stopTethering(ConnectivityManager.TETHERING_WIFI);
             Log.d(TAG, "Turn off tethered Hotspot");
             PollingCheck.check(
-                "SoftAp turn off failed!", 2_000,
+                    "SoftAp turn off failed!", WIFI_OFF_ON_TIMEOUT_MILLIS,
                 () -> mWifiManager.isWifiApEnabled() == false);
         }
     }
@@ -3056,7 +3056,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 turnOffWifiAndTetheredHotspotIfEnabled();
                 mWifiManager.setWifiEnabled(true);
                 PollingCheck.check(
-                    "Wifi turn on failed!", 2_000,
+                        "Wifi turn on failed!", WIFI_OFF_ON_TIMEOUT_MILLIS,
                     () -> mWifiManager.isWifiEnabled() == true);
                 turnOffWifiAndTetheredHotspotIfEnabled();
                 verifyRegisterSoftApCallback(executor, callback);
@@ -3125,7 +3125,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 turnOffWifiAndTetheredHotspotIfEnabled();
                 mWifiManager.setWifiEnabled(true);
                 PollingCheck.check(
-                    "Wifi turn on failed!", 2_000,
+                        "Wifi turn on failed!", WIFI_OFF_ON_TIMEOUT_MILLIS,
                     () -> mWifiManager.isWifiEnabled() == true);
                 turnOffWifiAndTetheredHotspotIfEnabled();
                 verifyRegisterSoftApCallback(executor, callback);
