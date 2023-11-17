@@ -19,6 +19,12 @@ package android.bluetooth.cts;
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
 import static android.Manifest.permission.BLUETOOTH_PRIVILEGED;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -26,22 +32,32 @@ import android.bluetooth.BluetoothHeadset;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothStatusCodes;
+import android.content.Context;
 import android.content.pm.PackageManager;
-import android.test.AndroidTestCase;
 import android.util.Log;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class BluetoothHeadsetTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+@LargeTest
+public class BluetoothHeadsetTest {
     private static final String TAG = BluetoothHeadsetTest.class.getSimpleName();
 
     private static final int PROXY_CONNECTION_TIMEOUT_MS = 500;  // ms timeout for Proxy Connect
 
+    private Context mContext;
     private boolean mHasBluetooth;
     private BluetoothAdapter mAdapter;
     private UiAutomation mUiAutomation;;
@@ -52,10 +68,11 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
     private Condition mConditionProfileConnection;
     private ReentrantLock mProfileConnectionlock;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
-        mHasBluetooth = getContext().getPackageManager().hasSystemFeature(
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+
+        mHasBluetooth = mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_BLUETOOTH);
         if (!mHasBluetooth) return;
 
@@ -65,7 +82,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
 
-        BluetoothManager manager = getContext().getSystemService(BluetoothManager.class);
+        BluetoothManager manager = mContext.getSystemService(BluetoothManager.class);
         mAdapter = manager.getAdapter();
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
 
@@ -74,13 +91,12 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
         mIsProfileReady = false;
         mBluetoothHeadset = null;
 
-        mAdapter.getProfileProxy(getContext(), new BluetoothHeadsetServiceListener(),
+        mAdapter.getProfileProxy(mContext, new BluetoothHeadsetServiceListener(),
                 BluetoothProfile.HEADSET);
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
-        super.tearDown();
         if (!(mHasBluetooth && mIsHeadsetSupported)) {
             return;
         }
@@ -93,6 +109,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
         mUiAutomation.dropShellPermissionIdentity();
     }
 
+    @Test
     public void test_closeProfileProxy() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
@@ -105,6 +122,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
         assertFalse(mIsProfileReady);
     }
 
+    @Test
     public void test_getConnectedDevices() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
@@ -115,6 +133,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
                 new ArrayList<BluetoothDevice>());
     }
 
+    @Test
     public void test_getDevicesMatchingConnectionStates() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
@@ -126,6 +145,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
                 new ArrayList<BluetoothDevice>());
     }
 
+    @Test
     public void test_getConnectionState() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
@@ -138,6 +158,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
                 BluetoothProfile.STATE_DISCONNECTED);
     }
 
+    @Test
     public void test_isAudioConnected() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
@@ -154,6 +175,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
         assertFalse(mBluetoothHeadset.isAudioConnected(testDevice));
     }
 
+    @Test
     public void test_isNoiseReductionSupported() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
@@ -170,6 +192,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
         assertFalse(mBluetoothHeadset.isNoiseReductionSupported(testDevice));
     }
 
+    @Test
     public void test_isVoiceRecognitionSupported() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
@@ -186,6 +209,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
         assertFalse(mBluetoothHeadset.isVoiceRecognitionSupported(testDevice));
     }
 
+    @Test
     public void test_sendVendorSpecificResultCode() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
@@ -209,6 +233,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
         assertFalse(mBluetoothHeadset.sendVendorSpecificResultCode(testDevice, "", ""));
     }
 
+    @Test
     public void test_connect() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
@@ -227,6 +252,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
         assertFalse(mBluetoothHeadset.connect(testDevice));
     }
 
+    @Test
     public void test_disconnect() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
@@ -245,6 +271,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
         assertFalse(mBluetoothHeadset.disconnect(testDevice));
     }
 
+    @Test
     public void test_getConnectionPolicy() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
@@ -265,6 +292,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
                 mBluetoothHeadset.getConnectionPolicy(testDevice));
     }
 
+    @Test
     public void test_setConnectionPolicy() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
@@ -288,6 +316,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
                         testDevice, BluetoothProfile.CONNECTION_POLICY_FORBIDDEN));
     }
 
+    @Test
     public void test_getAudioState() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
@@ -307,6 +336,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
                 mBluetoothHeadset.getAudioState(testDevice));
     }
 
+    @Test
     public void test_connectAudio() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
@@ -323,6 +353,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
                 mBluetoothHeadset.connectAudio());
     }
 
+    @Test
     public void test_disconnectAudio() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
@@ -339,6 +370,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
                 mBluetoothHeadset.disconnectAudio());
     }
 
+    @Test
     public void test_startScoUsingVirtualVoiceCall() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
@@ -349,6 +381,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
         assertFalse(mBluetoothHeadset.startScoUsingVirtualVoiceCall());
     }
 
+    @Test
     public void test_stopScoUsingVirtualVoiceCall() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
@@ -359,6 +392,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
         assertFalse(mBluetoothHeadset.stopScoUsingVirtualVoiceCall());
     }
 
+    @Test
     public void test_isInbandRingingEnabled() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
@@ -370,6 +404,7 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
         assertFalse(mBluetoothHeadset.isInbandRingingEnabled());
     }
 
+    @Test
     public void test_setGetAudioRouteAllowed() {
         if (!(mHasBluetooth && mIsHeadsetSupported)) return;
 
