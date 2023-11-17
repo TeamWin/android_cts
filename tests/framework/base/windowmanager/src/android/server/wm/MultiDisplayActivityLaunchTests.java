@@ -742,17 +742,20 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
                 .setTargetActivity(TEST_ACTIVITY).setNewTask(true)
                 .setDisplayId(DEFAULT_DISPLAY).execute();
         final int rootTaskId = mWmState.getFrontRootTaskId(DEFAULT_DISPLAY);
+        final int taskId = mWmState.getRootTask(rootTaskId).getTaskId();
 
         getLaunchActivityBuilder().setUseInstrumentation()
                 .setTargetActivity(BROADCAST_RECEIVER_ACTIVITY).setNewTask(true)
                 .setDisplayId(DEFAULT_DISPLAY).execute();
+
+        mayLaunchHomeActivityForCar();
 
         final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
         getLaunchActivityBuilder().setUseInstrumentation().setWithShellPermission(true)
                 .setTargetActivity(TEST_ACTIVITY).setNewTask(true)
                 .setDisplayId(newDisplay.mId).execute();
         assertNotEquals("Top focus root task should not be on default display",
-                rootTaskId, mWmState.getFocusedTaskId());
+                taskId, mWmState.getRootTask(mWmState.getFocusedTaskId()).getTaskId());
 
         mBroadcastActionTrigger.launchActivityNewTask(getActivityName(TEST_ACTIVITY));
         waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
