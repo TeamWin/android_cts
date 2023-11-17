@@ -16,7 +16,11 @@
 
 package android.hardware.input.cts.tests;
 
+import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
+import static android.Manifest.permission.INJECT_EVENTS;
 import static android.view.Display.DEFAULT_DISPLAY;
+
+import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
@@ -214,6 +218,19 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
     }
 
     @Test
+    public void close_multipleCallsSucceed() {
+        mVirtualMouse.close();
+        mVirtualMouse.close();
+        mVirtualMouse.close();
+    }
+
+    @Test
+    public void createVirtualMouse_duplicateName_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> createVirtualMouse(mVirtualDisplay.getDisplay().getDisplayId()));
+    }
+
+    @Test
     public void createVirtualMouse_defaultDisplay_throwsException() {
         assertThrows(SecurityException.class, () -> createVirtualMouse(DEFAULT_DISPLAY));
     }
@@ -224,6 +241,24 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
         assertThrows(SecurityException.class,
                 () -> createVirtualMouse(unownedDisplay.getDisplay().getDisplayId()));
         unownedDisplay.release();
+    }
+
+    @Test
+    public void createVirtualMouse_defaultDisplay_injectEvents_succeeds() {
+        mVirtualMouse.close();
+        runWithPermission(
+                () -> assertThat(createVirtualMouse(DEFAULT_DISPLAY)).isNotNull(),
+                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
+    }
+
+    @Test
+    public void createVirtualMouse_unownedVirtualDisplay_injectEvents_succeeds() {
+        mVirtualMouse.close();
+        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
+        runWithPermission(
+                () -> assertThat(createVirtualMouse(unownedDisplay.getDisplay().getDisplayId()))
+                        .isNotNull(),
+                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
     }
 
     private VirtualMouse createVirtualMouse(int displayId) {

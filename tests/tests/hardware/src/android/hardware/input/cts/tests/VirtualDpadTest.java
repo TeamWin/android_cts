@@ -16,7 +16,11 @@
 
 package android.hardware.input.cts.tests;
 
+import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
+import static android.Manifest.permission.INJECT_EVENTS;
 import static android.view.Display.DEFAULT_DISPLAY;
+
+import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 
@@ -113,6 +117,19 @@ public class VirtualDpadTest extends VirtualDeviceTestCase {
     }
 
     @Test
+    public void close_multipleCallsSucceed() {
+        mVirtualDpad.close();
+        mVirtualDpad.close();
+        mVirtualDpad.close();
+    }
+
+    @Test
+    public void createVirtualDpad_duplicateName_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> createVirtualDpad(mVirtualDisplay.getDisplay().getDisplayId()));
+    }
+
+    @Test
     public void createVirtualDpad_defaultDisplay_throwsException() {
         assertThrows(SecurityException.class, () -> createVirtualDpad(DEFAULT_DISPLAY));
     }
@@ -123,6 +140,24 @@ public class VirtualDpadTest extends VirtualDeviceTestCase {
         assertThrows(SecurityException.class,
                 () -> createVirtualDpad(unownedDisplay.getDisplay().getDisplayId()));
         unownedDisplay.release();
+    }
+
+    @Test
+    public void createVirtualDpad_defaultDisplay_injectEvents_succeeds() {
+        mVirtualDpad.close();
+        runWithPermission(
+                () -> assertThat(createVirtualDpad(DEFAULT_DISPLAY)).isNotNull(),
+                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
+    }
+
+    @Test
+    public void createVirtualDpad_unownedVirtualDisplay_injectEvents_succeeds() {
+        mVirtualDpad.close();
+        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
+        runWithPermission(
+                () -> assertThat(createVirtualDpad(unownedDisplay.getDisplay().getDisplayId()))
+                        .isNotNull(),
+                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
     }
 
     private VirtualDpad createVirtualDpad(int displayId) {

@@ -16,7 +16,11 @@
 
 package android.hardware.input.cts.tests;
 
+import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
+import static android.Manifest.permission.INJECT_EVENTS;
 import static android.view.Display.DEFAULT_DISPLAY;
+
+import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 
@@ -104,6 +108,19 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
     }
 
     @Test
+    public void close_multipleCallsSucceed() {
+        mVirtualKeyboard.close();
+        mVirtualKeyboard.close();
+        mVirtualKeyboard.close();
+    }
+
+    @Test
+    public void createVirtualKeyboard_duplicateName_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> createVirtualKeyboard(mVirtualDisplay.getDisplay().getDisplayId()));
+    }
+
+    @Test
     public void createVirtualKeyboard_defaultDisplay_throwsException() {
         assertThrows(SecurityException.class, () -> createVirtualKeyboard(DEFAULT_DISPLAY));
     }
@@ -114,6 +131,24 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
         assertThrows(SecurityException.class,
                 () -> createVirtualKeyboard(unownedDisplay.getDisplay().getDisplayId()));
         unownedDisplay.release();
+    }
+
+    @Test
+    public void createVirtualKeyboard_defaultDisplay_injectEvents_succeeds() {
+        mVirtualKeyboard.close();
+        runWithPermission(
+                () -> assertThat(createVirtualKeyboard(DEFAULT_DISPLAY)).isNotNull(),
+                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
+    }
+
+    @Test
+    public void createVirtualKeyboard_unownedVirtualDisplay_injectEvents_succeeds() {
+        mVirtualKeyboard.close();
+        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
+        runWithPermission(
+                () -> assertThat(createVirtualKeyboard(unownedDisplay.getDisplay().getDisplayId()))
+                        .isNotNull(),
+                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
     }
 
     private VirtualKeyboard createVirtualKeyboard(int displayId) {
