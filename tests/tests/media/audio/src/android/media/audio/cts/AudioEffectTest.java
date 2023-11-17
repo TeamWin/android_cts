@@ -63,7 +63,6 @@ public class AudioEffectTest extends PostProcTestBase {
 
     @Override
     protected void tearDown() throws Exception {
-        super.tearDown();
         releaseEffect();
         terminateMediaPlayerLooper();
         terminateListenerLooper();
@@ -669,7 +668,6 @@ public class AudioEffectTest extends PostProcTestBase {
             assertFalse("Effect1 has control", effect1.hasControl());
             assertTrue("Effect1 can enable",
                     effect1.setEnabled(true) == AudioEffect.ERROR_INVALID_OPERATION);
-            // Note: all effects under test are disabled at setup
             assertFalse("Effect1 has enabled", effect2.getEnabled());
 
         } catch (IllegalArgumentException e) {
