@@ -60,13 +60,14 @@ static int32_t measureLatency(AAudioStream *stream) {
 }
 
 using CbTestParams = std::tuple<aaudio_sharing_mode_t, int32_t,
-                                aaudio_performance_mode_t, int32_t, aaudio_format_t>;
+                                aaudio_performance_mode_t, int32_t, aaudio_format_t, int32_t>;
 enum {
     PARAM_SHARING_MODE = 0,
     PARAM_FRAMES_PER_CB,
     PARAM_PERF_MODE,
     PARAM_ALLOW_MMAP,
-    PARAM_AUDIO_FORMAT
+    PARAM_AUDIO_FORMAT,
+    PARAM_SAMPLE_RATE
 };
 
 enum {
@@ -100,6 +101,7 @@ static std::string getTestName(const ::testing::TestParamInfo<CbTestParams>& inf
             + "__" + performanceModeToString(std::get<PARAM_PERF_MODE>(info.param))
             + "__" + allowMMapToString(std::get<PARAM_ALLOW_MMAP>(info.param))
             + "__" + audioFormatToString(std::get<PARAM_AUDIO_FORMAT>(info.param))
+            + "__" + std::to_string(std::get<PARAM_SAMPLE_RATE>(info.param))
             ;
 }
 
@@ -222,7 +224,8 @@ void AAudioInputStreamCallbackTest::SetUp() {
     mHelper.reset(new InputStreamBuilderHelper(
                     std::get<PARAM_SHARING_MODE>(GetParam()),
                     std::get<PARAM_PERF_MODE>(GetParam()),
-                    std::get<PARAM_AUDIO_FORMAT>(GetParam()))
+                    std::get<PARAM_AUDIO_FORMAT>(GetParam()),
+                    std::get<PARAM_SAMPLE_RATE>(GetParam()))
                     );
     mHelper->initBuilder();
 
@@ -253,6 +256,8 @@ TEST_P(AAudioInputStreamCallbackTest, testRecording) {
     // Try both methods of stopping a stream.
     const int kNumMethods = 2;
 
+    constexpr int kMaxXRunCount = 0;
+
     // Start/stop more than once to see if it fails after the first time.
     // Also check to make sure we do not get callbacks after the stop.
     for (int loopIndex = 0; loopIndex < kNumMethods; loopIndex++) {
@@ -266,6 +271,8 @@ TEST_P(AAudioInputStreamCallbackTest, testRecording) {
 
         ASSERT_EQ(AAUDIO_OK, mCbData->callbackError);
         ASSERT_GE(mCbData->callbackCount, kExpectedCallbackCount);
+
+        ASSERT_LE(AAudioStream_getXRunCount(stream()), kMaxXRunCount);
 
         switch (loopIndex % kNumMethods) {
             case 0:
@@ -303,40 +310,56 @@ INSTANTIATE_TEST_CASE_P(SPM, AAudioInputStreamCallbackTest,
                         AAUDIO_UNSPECIFIED,
                         AAUDIO_PERFORMANCE_MODE_NONE,
                         MMAP_ALLOWED,
-                        AAUDIO_FORMAT_UNSPECIFIED),
+                        AAUDIO_FORMAT_UNSPECIFIED,
+                        48000),
                 // cb buffer size: arbitrary prime number < 96
-                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 67,
-                        AAUDIO_PERFORMANCE_MODE_NONE, MMAP_ALLOWED,
-                        AAUDIO_FORMAT_UNSPECIFIED),
-                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 67,
-                        AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_ALLOWED,
-                        AAUDIO_FORMAT_UNSPECIFIED),
-                std::make_tuple(AAUDIO_SHARING_MODE_EXCLUSIVE, 67,
-                        AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_ALLOWED,
-                        AAUDIO_FORMAT_UNSPECIFIED),
-                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 67,
-                        AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_NOT_ALLOWED,
-                        AAUDIO_FORMAT_PCM_I16),
-                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 67,
-                        AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_NOT_ALLOWED,
-                        AAUDIO_FORMAT_PCM_FLOAT),
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 67, AAUDIO_PERFORMANCE_MODE_NONE, MMAP_ALLOWED,
+                        AAUDIO_FORMAT_UNSPECIFIED, 48000),
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 67, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_ALLOWED,
+                        AAUDIO_FORMAT_UNSPECIFIED, 48000),
+                std::make_tuple(AAUDIO_SHARING_MODE_EXCLUSIVE, 67, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_ALLOWED,
+                        AAUDIO_FORMAT_UNSPECIFIED, 48000),
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 67, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_NOT_ALLOWED,
+                        AAUDIO_FORMAT_PCM_I16, 48000),
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 67, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_NOT_ALLOWED,
+                        AAUDIO_FORMAT_PCM_FLOAT, 48000),
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 67, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_ALLOWED,
+                        AAUDIO_FORMAT_UNSPECIFIED, 44100),
+                std::make_tuple(AAUDIO_SHARING_MODE_EXCLUSIVE, 67, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_ALLOWED,
+                        AAUDIO_FORMAT_UNSPECIFIED, 44100),
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 67, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_NOT_ALLOWED,
+                        AAUDIO_FORMAT_UNSPECIFIED, 44100),
                 // cb buffer size: arbitrary prime number > 192
-                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 223,
-                        AAUDIO_PERFORMANCE_MODE_NONE, MMAP_ALLOWED,
-                        AAUDIO_FORMAT_UNSPECIFIED),
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 223, AAUDIO_PERFORMANCE_MODE_NONE, MMAP_ALLOWED,
+                        AAUDIO_FORMAT_UNSPECIFIED, 48000),
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 223, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_ALLOWED,
+                        AAUDIO_FORMAT_UNSPECIFIED, 48000),
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 223, AAUDIO_PERFORMANCE_MODE_NONE, MMAP_ALLOWED,
+                        AAUDIO_FORMAT_UNSPECIFIED, 11025),
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 223, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_ALLOWED,
+                        AAUDIO_FORMAT_UNSPECIFIED, 11025),
                 // Recording in POWER_SAVING mode isn't supported, b/62291775.
                 std::make_tuple(
                         AAUDIO_SHARING_MODE_SHARED,
                         AAUDIO_UNSPECIFIED,
                         AAUDIO_PERFORMANCE_MODE_LOW_LATENCY,
                         MMAP_ALLOWED,
-                        AAUDIO_FORMAT_UNSPECIFIED),
+                        AAUDIO_FORMAT_UNSPECIFIED,
+                        48000),
                 std::make_tuple(
                         AAUDIO_SHARING_MODE_EXCLUSIVE,
                         AAUDIO_UNSPECIFIED,
                         AAUDIO_PERFORMANCE_MODE_LOW_LATENCY,
                         MMAP_ALLOWED,
-                        AAUDIO_FORMAT_UNSPECIFIED)),
+                        AAUDIO_FORMAT_UNSPECIFIED,
+                        48000),
+                std::make_tuple(
+                        AAUDIO_SHARING_MODE_EXCLUSIVE,
+                        AAUDIO_UNSPECIFIED,
+                        AAUDIO_PERFORMANCE_MODE_LOW_LATENCY,
+                        MMAP_ALLOWED,
+                        AAUDIO_FORMAT_UNSPECIFIED,
+                        88200)),
         &getTestName);
 
 
@@ -379,7 +402,8 @@ void AAudioOutputStreamCallbackTest::SetUp() {
     mHelper.reset(new OutputStreamBuilderHelper(
                     std::get<PARAM_SHARING_MODE>(GetParam()),
                     std::get<PARAM_PERF_MODE>(GetParam()),
-                    std::get<PARAM_AUDIO_FORMAT>(GetParam()))
+                    std::get<PARAM_AUDIO_FORMAT>(GetParam()),
+                    std::get<PARAM_SAMPLE_RATE>(GetParam()))
                     );
     mHelper->initBuilder();
 
@@ -411,6 +435,9 @@ TEST_P(AAudioOutputStreamCallbackTest, testPlayback) {
     // Try all 3 methods of stopping/pausing a stream.
     constexpr int kNumMethods = 3;
 
+    // Pausing or stopping an output stream without setting returnStop sometimes results in a xRun.
+    constexpr int kMaxXRunCount = 1;
+
     // Start/stop more than once to see if it fails after the first time.
     // Also check to make sure we do not get callbacks after the stop.
     for (int loopIndex = 0; loopIndex < kNumMethods; loopIndex++) {
@@ -424,6 +451,8 @@ TEST_P(AAudioOutputStreamCallbackTest, testPlayback) {
 
         ASSERT_EQ(AAUDIO_OK, mCbData->callbackError);
         ASSERT_GE(mCbData->callbackCount, kExpectedCallbackCount);
+
+        ASSERT_LE(AAudioStream_getXRunCount(stream()), kMaxXRunCount);
 
         switch (loopIndex % kNumMethods) {
             case 0:
@@ -472,37 +501,60 @@ INSTANTIATE_TEST_CASE_P(SPM, AAudioOutputStreamCallbackTest,
                         AAUDIO_UNSPECIFIED,
                         AAUDIO_PERFORMANCE_MODE_NONE,
                         MMAP_ALLOWED,
-                        AAUDIO_FORMAT_UNSPECIFIED),
+                        AAUDIO_FORMAT_UNSPECIFIED,
+                        48000),
                 // cb buffer size: arbitrary prime number < 96
                 std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 67, AAUDIO_PERFORMANCE_MODE_NONE, MMAP_ALLOWED,
-                        AAUDIO_FORMAT_UNSPECIFIED),
+                        AAUDIO_FORMAT_UNSPECIFIED, 48000),
                 std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 67, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_ALLOWED,
-                        AAUDIO_FORMAT_UNSPECIFIED),
+                        AAUDIO_FORMAT_UNSPECIFIED, 48000),
                 std::make_tuple(AAUDIO_SHARING_MODE_EXCLUSIVE, 67, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_ALLOWED,
-                        AAUDIO_FORMAT_UNSPECIFIED),
+                        AAUDIO_FORMAT_UNSPECIFIED, 48000),
                 std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 67, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_NOT_ALLOWED,
-                        AAUDIO_FORMAT_PCM_I16),
+                        AAUDIO_FORMAT_PCM_I16, 48000),
                 std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 67, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_NOT_ALLOWED,
-                        AAUDIO_FORMAT_PCM_FLOAT),
+                        AAUDIO_FORMAT_PCM_FLOAT, 48000),
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 67, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_ALLOWED,
+                        AAUDIO_FORMAT_UNSPECIFIED, 44100),
+                std::make_tuple(AAUDIO_SHARING_MODE_EXCLUSIVE, 67, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_ALLOWED,
+                        AAUDIO_FORMAT_UNSPECIFIED, 44100),
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 67, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_NOT_ALLOWED,
+                        AAUDIO_FORMAT_UNSPECIFIED, 44100),
                 // cb buffer size: arbitrary prime number > 192
                 std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 223, AAUDIO_PERFORMANCE_MODE_NONE, MMAP_ALLOWED,
-                        AAUDIO_FORMAT_UNSPECIFIED),
+                        AAUDIO_FORMAT_UNSPECIFIED, 48000),
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 223, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_ALLOWED,
+                        AAUDIO_FORMAT_UNSPECIFIED, 48000),
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 223, AAUDIO_PERFORMANCE_MODE_NONE, MMAP_ALLOWED,
+                        AAUDIO_FORMAT_UNSPECIFIED, 11025),
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, 223, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, MMAP_ALLOWED,
+                        AAUDIO_FORMAT_UNSPECIFIED, 11025),
                 std::make_tuple(
                         AAUDIO_SHARING_MODE_SHARED,
                         AAUDIO_UNSPECIFIED,
                         AAUDIO_PERFORMANCE_MODE_POWER_SAVING,
                         MMAP_ALLOWED,
-                        AAUDIO_FORMAT_UNSPECIFIED),
+                        AAUDIO_FORMAT_UNSPECIFIED,
+                        48000),
                 std::make_tuple(
                         AAUDIO_SHARING_MODE_SHARED,
                         AAUDIO_UNSPECIFIED,
                         AAUDIO_PERFORMANCE_MODE_LOW_LATENCY,
                         MMAP_ALLOWED,
-                        AAUDIO_FORMAT_UNSPECIFIED),
+                        AAUDIO_FORMAT_UNSPECIFIED,
+                        48000),
                 std::make_tuple(
                         AAUDIO_SHARING_MODE_EXCLUSIVE,
                         AAUDIO_UNSPECIFIED,
                         AAUDIO_PERFORMANCE_MODE_LOW_LATENCY,
                         MMAP_ALLOWED,
-                        AAUDIO_FORMAT_UNSPECIFIED)),
+                        AAUDIO_FORMAT_UNSPECIFIED,
+                        48000),
+                std::make_tuple(
+                        AAUDIO_SHARING_MODE_EXCLUSIVE,
+                        AAUDIO_UNSPECIFIED,
+                        AAUDIO_PERFORMANCE_MODE_LOW_LATENCY,
+                        MMAP_ALLOWED,
+                        AAUDIO_FORMAT_UNSPECIFIED,
+                        88200)),
         &getTestName);
