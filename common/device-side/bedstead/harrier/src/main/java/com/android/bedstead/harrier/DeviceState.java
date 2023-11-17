@@ -4032,14 +4032,14 @@ public final class DeviceState extends HarrierRule {
                         .findFirst();
 
         if (account.isPresent()) {
-            accounts(onUser).setFeatures(account.get(), Set.of(features));
+            accounts(onUser).setFeatures(account.get(), new HashSet<>(Arrays.asList(features)));
             mAccounts.put(key, account.get());
             TestApis.devicePolicy().calculateHasIncompatibleAccounts();
             return account.get();
         }
 
         AccountReference createdAccount = accounts(onUser).addAccount()
-                .features(Set.of(features))
+                .features(new HashSet<>(Arrays.asList(features)))
                 .add();
         mCreatedAccounts.add(createdAccount);
         mAccounts.put(key, createdAccount);
@@ -4184,7 +4184,7 @@ public final class DeviceState extends HarrierRule {
     private boolean trySetUserRestrictionWithDeviceOwner(String restriction) {
         ensureHasDeviceOwner(FailureMode.FAIL,
                 /* isPrimary= */ false, EnsureHasDeviceOwner.HeadlessDeviceOwnerType.NONE,
-                /* affiliationIds= */ Set.of(), /* type= */ DeviceOwnerType.DEFAULT,
+                /* affiliationIds= */ new HashSet<>(), /* type= */ DeviceOwnerType.DEFAULT,
                 EnsureHasDeviceOwner.DEFAULT_KEY, new TestAppProvider().query());
 
         RemotePolicyManager dpc = deviceOwner();
@@ -4202,7 +4202,7 @@ public final class DeviceState extends HarrierRule {
     private boolean trySetUserRestrictionWithProfileOwner(UserReference onUser, String restriction) {
         ensureHasProfileOwner(onUser,
                 /* isPrimary= */ false, /* isParentInstance= */ false,
-                /* affiliationIds= */ Set.of(), EnsureHasProfileOwner.DEFAULT_KEY,
+                /* affiliationIds= */ new HashSet<>(), EnsureHasProfileOwner.DEFAULT_KEY,
                 new TestAppProvider().query());
 
         RemotePolicyManager dpc = profileOwner(onUser);
@@ -4220,7 +4220,7 @@ public final class DeviceState extends HarrierRule {
     private boolean tryClearUserRestrictionWithDeviceOwner(String restriction) {
         ensureHasDeviceOwner(FailureMode.FAIL,
                 /* isPrimary= */ false, EnsureHasDeviceOwner.HeadlessDeviceOwnerType.NONE,
-                /* affiliationIds= */ Set.of(), /* type= */ DeviceOwnerType.DEFAULT,
+                /* affiliationIds= */ new HashSet<>(), /* type= */ DeviceOwnerType.DEFAULT,
                 EnsureHasDeviceOwner.DEFAULT_KEY, new TestAppProvider().query());
 
         RemotePolicyManager dpc = deviceOwner();
@@ -4238,7 +4238,7 @@ public final class DeviceState extends HarrierRule {
     private boolean tryClearUserRestrictionWithProfileOwner(UserReference onUser, String restriction) {
         ensureHasProfileOwner(onUser,
                 /* isPrimary= */ false, /* isParentInstance= */ false,
-                /* affiliationIds= */ Set.of(), EnsureHasProfileOwner.DEFAULT_KEY,
+                /* affiliationIds= */ new HashSet<>(), EnsureHasProfileOwner.DEFAULT_KEY,
                 new TestAppProvider().query());
 
         RemotePolicyManager dpc = profileOwner(onUser);
