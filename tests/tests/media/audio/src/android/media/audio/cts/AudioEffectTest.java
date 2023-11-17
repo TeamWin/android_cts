@@ -30,7 +30,6 @@ import android.media.audiofx.Equalizer;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.media.cts.NonMediaMainlineTest;
-import android.media.cts.PostProcTestBase;
 
 import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;

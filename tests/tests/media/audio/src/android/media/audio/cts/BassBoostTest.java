@@ -21,7 +21,6 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.audiofx.BassBoost;
 import android.media.cts.NonMediaMainlineTest;
-import android.media.cts.PostProcTestBase;
 import android.os.Looper;
 import android.test.AndroidTestCase;
 import android.util.Log;
