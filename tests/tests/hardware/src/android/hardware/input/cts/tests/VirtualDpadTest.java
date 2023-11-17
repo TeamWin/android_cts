@@ -124,6 +124,12 @@ public class VirtualDpadTest extends VirtualDeviceTestCase {
     }
 
     @Test
+    public void createVirtualDpad_nullArguments_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.createVirtualDpad(null));
+    }
+
+    @Test
     public void createVirtualDpad_duplicateName_throwsException() {
         assertThrows(IllegalArgumentException.class,
                 () -> createVirtualDpad(mVirtualDisplay.getDisplay().getDisplayId()));

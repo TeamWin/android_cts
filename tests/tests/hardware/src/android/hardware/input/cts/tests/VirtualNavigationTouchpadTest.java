@@ -128,6 +128,12 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
     }
 
     @Test
+    public void createVirtualNavigationTouchpad_nullArguments_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.createVirtualNavigationTouchpad(null));
+    }
+
+    @Test
     public void createVirtualNavigationTouchpad_duplicateName_throwsException() {
         assertThrows(IllegalArgumentException.class,
                 () -> createVirtualNavigationTouchpad(mVirtualDisplay.getDisplay().getDisplayId()));

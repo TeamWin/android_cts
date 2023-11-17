@@ -115,6 +115,12 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
     }
 
     @Test
+    public void createVirtualKeyboard_nullArguments_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.createVirtualKeyboard(null));
+    }
+
+    @Test
     public void createVirtualKeyboard_duplicateName_throwsException() {
         assertThrows(IllegalArgumentException.class,
                 () -> createVirtualKeyboard(mVirtualDisplay.getDisplay().getDisplayId()));
