@@ -19,29 +19,46 @@ package android.bluetooth.cts;
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
 import static android.Manifest.permission.BLUETOOTH_PRIVILEGED;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothPbap;
 import android.bluetooth.BluetoothProfile;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.sysprop.BluetoothProperties;
-import android.test.AndroidTestCase;
 import android.util.Log;
 
-import androidx.test.InstrumentationRegistry;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class BluetoothPbapTest extends AndroidTestCase {
+
+@RunWith(AndroidJUnit4.class)
+@LargeTest
+public class BluetoothPbapTest {
     private static final String TAG = BluetoothPbapTest.class.getSimpleName();
 
     private static final int PROXY_CONNECTION_TIMEOUT_MS = 500;  // ms timeout for Proxy Connect
 
+    private Context mContext;
     private boolean mHasBluetooth;
     private BluetoothAdapter mAdapter;
     private UiAutomation mUiAutomation;
@@ -52,10 +69,11 @@ public class BluetoothPbapTest extends AndroidTestCase {
     private Condition mConditionProfileConnection;
     private ReentrantLock mProfileConnectionlock;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
-        mHasBluetooth = getContext().getPackageManager().hasSystemFeature(
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+
+        mHasBluetooth = mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_BLUETOOTH);
 
         if (!mHasBluetooth) return;
@@ -66,7 +84,7 @@ public class BluetoothPbapTest extends AndroidTestCase {
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
 
-        BluetoothManager manager = getContext().getSystemService(BluetoothManager.class);
+        BluetoothManager manager = mContext.getSystemService(BluetoothManager.class);
         mAdapter = manager.getAdapter();
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
 
@@ -75,13 +93,12 @@ public class BluetoothPbapTest extends AndroidTestCase {
         mIsProfileReady = false;
         mBluetoothPbap = null;
 
-        mAdapter.getProfileProxy(getContext(), new BluetoothPbapServiceListener(),
+        mAdapter.getProfileProxy(mContext, new BluetoothPbapServiceListener(),
                 BluetoothProfile.PBAP);
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
-        super.tearDown();
         if (!(mHasBluetooth && mIsPbapSupported)) {
             return;
         }
@@ -94,6 +111,7 @@ public class BluetoothPbapTest extends AndroidTestCase {
         mAdapter = null;
     }
 
+    @Test
     public void test_closeProfileProxy() {
         if (!(mHasBluetooth && mIsPbapSupported)) return;
 
@@ -106,6 +124,7 @@ public class BluetoothPbapTest extends AndroidTestCase {
         assertFalse(mIsProfileReady);
     }
 
+    @Test
     public void test_getConnectedDevices() {
         if (!(mHasBluetooth && mIsPbapSupported)) return;
 
@@ -119,6 +138,7 @@ public class BluetoothPbapTest extends AndroidTestCase {
         assertTrue(connectedDevices.isEmpty());
     }
 
+    @Test
     public void test_getConnectionState() {
         if (!(mHasBluetooth && mIsPbapSupported)) return;
 
@@ -138,6 +158,7 @@ public class BluetoothPbapTest extends AndroidTestCase {
                 mBluetoothPbap.getConnectionState(testDevice));
     }
 
+    @Test
     public void test_getDevicesMatchingConnectionStates() {
         if (!(mHasBluetooth && mIsPbapSupported)) return;
 
@@ -152,6 +173,7 @@ public class BluetoothPbapTest extends AndroidTestCase {
         assertTrue(connectedDevices.isEmpty());
     }
 
+    @Test
     public void test_setConnectionPolicy() {
         if (!(mHasBluetooth && mIsPbapSupported)) return;
 
