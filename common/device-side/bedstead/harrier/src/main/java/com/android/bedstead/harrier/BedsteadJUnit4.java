@@ -61,6 +61,7 @@ import com.android.queryable.annotations.Query;
 
 import com.google.auto.value.AutoAnnotation;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -693,7 +694,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
             }
 
             if (enterprisePolicy.delegatedScopes().length > 0) {
-                Set<String> newDelegatedScopes = Set.of(enterprisePolicy.delegatedScopes());
+                ImmutableSet<String> newDelegatedScopes = ImmutableSet.copyOf(enterprisePolicy.delegatedScopes());
                 if (!delegatedScopes.isEmpty()
                         && !delegatedScopes.containsAll(newDelegatedScopes)) {
                     throw new IllegalStateException("Cannot merge multiple policies which define "
