@@ -53,6 +53,7 @@ import java.io.File
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.regex.Pattern
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -369,7 +370,16 @@ open class PackageInstallerTestBase {
      * @param resId The resource ID of the button to click
      */
     fun clickInstallerUIButton(resId: String) {
-        clickInstallerUIButton(By.res(PACKAGE_INSTALLER_PACKAGE_NAME, resId))
+        clickInstallerUIButton(getBySelector(resId))
+    }
+
+    private fun getBySelector(id: String): BySelector {
+        // Normally, we wouldn't need to look for buttons from 2 different packages.
+        // However, to fix b/297132020, AlertController was replaced with AlertDialog and shared
+        // to selective partners, leading to fragmentation in which button surfaces in an OEM's
+        // installer app.
+        return By.res(Pattern.compile(String.format(
+                    "(?:^%s|^%s):id/%s", PACKAGE_INSTALLER_PACKAGE_NAME, SYSTEM_PACKAGE_NAME, id)))
     }
 
     /**
