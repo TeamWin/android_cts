@@ -18,31 +18,47 @@ package android.bluetooth.cts;
 
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothHidHost;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.sysprop.BluetoothProperties;
-import android.test.AndroidTestCase;
 import android.util.Log;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class BluetoothHidHostTest extends AndroidTestCase {
+
+@RunWith(AndroidJUnit4.class)
+@LargeTest
+public class BluetoothHidHostTest {
     private static final String TAG = BluetoothHidHostTest.class.getSimpleName();
     private static final int PROXY_CONNECTION_TIMEOUT_MS = 500; // ms timeout for Proxy Connect
 
+    private Context mContext;
     private boolean mHasBluetooth;
     private boolean mIsHidHostSupported;
     private BluetoothAdapter mAdapter;
@@ -53,12 +69,14 @@ public class BluetoothHidHostTest extends AndroidTestCase {
     private Condition mConditionProfileConnection;
     private ReentrantLock mProfileConnectionlock;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
         if (!ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) return;
 
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+
         mHasBluetooth =
-                getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH);
+                mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH);
         if (!mHasBluetooth) return;
 
         mIsHidHostSupported = BluetoothProperties.isProfileHidHostEnabled().orElse(false);
@@ -67,7 +85,7 @@ public class BluetoothHidHostTest extends AndroidTestCase {
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
 
-        BluetoothManager manager = getContext().getSystemService(BluetoothManager.class);
+        BluetoothManager manager = mContext.getSystemService(BluetoothManager.class);
         mAdapter = manager.getAdapter();
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
 
@@ -77,10 +95,10 @@ public class BluetoothHidHostTest extends AndroidTestCase {
         mHidHost = null;
 
         mAdapter.getProfileProxy(
-                getContext(), new BluetoothHidHostListener(), BluetoothProfile.HID_HOST);
+                mContext, new BluetoothHidHostListener(), BluetoothProfile.HID_HOST);
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
         if (!(mHasBluetooth && mIsHidHostSupported)) {
             return;
@@ -93,6 +111,7 @@ public class BluetoothHidHostTest extends AndroidTestCase {
         mAdapter = null;
     }
 
+    @Test
     public void test_closeProfileProxy() {
         if (!(mHasBluetooth && mIsHidHostSupported)) return;
 
@@ -105,6 +124,7 @@ public class BluetoothHidHostTest extends AndroidTestCase {
         assertFalse(mIsProfileReady);
     }
 
+    @Test
     public void test_getConnectedDevices() {
         if (!(mHasBluetooth && mIsHidHostSupported)) return;
 
@@ -118,6 +138,7 @@ public class BluetoothHidHostTest extends AndroidTestCase {
         assertTrue(connectedDevices.isEmpty());
     }
 
+    @Test
     public void test_getDevicesMatchingConnectionStates() {
         if (!(mHasBluetooth && mIsHidHostSupported)) return;
 
@@ -131,6 +152,7 @@ public class BluetoothHidHostTest extends AndroidTestCase {
         assertTrue(connectedDevices.isEmpty());
     }
 
+    @Test
     public void test_getConnectionState() {
         if (!(mHasBluetooth && mIsHidHostSupported)) return;
 
@@ -151,6 +173,7 @@ public class BluetoothHidHostTest extends AndroidTestCase {
         assertEquals(BluetoothProfile.STATE_DISCONNECTED, mHidHost.getConnectionState(testDevice));
     }
 
+    @Test
     public void test_getConnectionPolicy() {
         if (!(mHasBluetooth && mIsHidHostSupported)) return;
 
@@ -173,6 +196,7 @@ public class BluetoothHidHostTest extends AndroidTestCase {
                 mHidHost.getConnectionPolicy(testDevice));
     }
 
+    @Test
     public void test_setConnectionPolicy() {
         if (!(mHasBluetooth && mIsHidHostSupported)) return;
 
