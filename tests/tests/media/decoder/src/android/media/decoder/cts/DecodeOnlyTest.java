@@ -73,8 +73,8 @@ import java.util.function.Supplier;
 @RunWith(AndroidJUnit4.class)
 @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
 public class DecodeOnlyTest extends MediaTestBase {
-    public static final boolean IS_BOARD_AT_LEAST_U =
-            SystemProperties.getInt("ro.board.api_level", Build.VERSION_CODES.CUR_DEVELOPMENT)
+    public static final boolean WAS_LAUNCHED_ON_U_OR_LATER =
+            SystemProperties.getInt("ro.board.first_api_level", Build.VERSION_CODES.CUR_DEVELOPMENT)
                     >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
 
     private static final String MEDIA_DIR_STRING = WorkDir.getMediaDirString();
@@ -108,7 +108,8 @@ public class DecodeOnlyTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledPerfectSeekInitialPeekOnAvc() throws Exception {
         // Tunnel mode requires vendor support of the DECODE_ONLY feature
-        Assume.assumeTrue("Board API level is not Android 14 or later.", IS_BOARD_AT_LEAST_U);
+        Assume.assumeTrue("First board API level is not Android 14 or later.",
+                WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledPerfectSeek(AVC_VIDEO, true);
     }
 
@@ -116,7 +117,8 @@ public class DecodeOnlyTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledPerfectSeekInitialPeekOnVp9() throws Exception {
         // Tunnel mode requires vendor support of the DECODE_ONLY feature
-        Assume.assumeTrue("Board API level is not Android 14 or later.", IS_BOARD_AT_LEAST_U);
+        Assume.assumeTrue("First board API level is not Android 14 or later.",
+                WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledPerfectSeek(VP9_VIDEO, true);
     }
 
@@ -124,7 +126,8 @@ public class DecodeOnlyTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledPerfectSeekInitialPeekOnHevc() throws Exception {
         // Tunnel mode requires vendor support of the DECODE_ONLY feature
-        Assume.assumeTrue("Board API level is not Android 14 or later.", IS_BOARD_AT_LEAST_U);
+        Assume.assumeTrue("First board API level is not Android 14 or later.",
+                WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledPerfectSeek(HEVC_VIDEO, true);
     }
 
@@ -132,7 +135,8 @@ public class DecodeOnlyTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledPerfectSeekInitialPeekOffAvc() throws Exception {
         // Tunnel mode requires vendor support of the DECODE_ONLY feature
-        Assume.assumeTrue("Board API level is not Android 14 or later.", IS_BOARD_AT_LEAST_U);
+        Assume.assumeTrue("First board API level is not Android 14 or later.",
+                WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledPerfectSeek(AVC_VIDEO, false);
     }
 
@@ -140,7 +144,8 @@ public class DecodeOnlyTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledPerfectSeekInitialPeekOffVp9() throws Exception {
         // Tunnel mode requires vendor support of the DECODE_ONLY feature
-        Assume.assumeTrue("Board API level is not Android 14 or later.", IS_BOARD_AT_LEAST_U);
+        Assume.assumeTrue("First board API level is not Android 14 or later.",
+                WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledPerfectSeek(VP9_VIDEO, false);
     }
 
@@ -148,7 +153,8 @@ public class DecodeOnlyTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledPerfectSeekInitialPeekOffHevc() throws Exception {
         // Tunnel mode requires vendor support of the DECODE_ONLY feature
-        Assume.assumeTrue("Board API level is not Android 14 or later.", IS_BOARD_AT_LEAST_U);
+        Assume.assumeTrue("First board API level is not Android 14 or later.",
+                WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledPerfectSeek(HEVC_VIDEO, false);
     }
 
@@ -159,7 +165,8 @@ public class DecodeOnlyTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledTrickPlayHevc() throws Exception {
         // Tunnel mode requires vendor support of the DECODE_ONLY feature
-        Assume.assumeTrue("Board API level is not Android 14 or later.", IS_BOARD_AT_LEAST_U);
+        Assume.assumeTrue("First board API level is not Android 14 or later.",
+                WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledTrickPlay(HEVC_VIDEO);
     }
 
@@ -167,7 +174,8 @@ public class DecodeOnlyTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledTrickPlayAvc() throws Exception {
         // Tunnel mode requires vendor support of the DECODE_ONLY feature
-        Assume.assumeTrue("Board API level is not Android 14 or later.", IS_BOARD_AT_LEAST_U);
+        Assume.assumeTrue("First board API level is not Android 14 or later.",
+                WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledTrickPlay(AVC_VIDEO);
     }
 
@@ -175,7 +183,8 @@ public class DecodeOnlyTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledTrickPlayVp9() throws Exception {
         // Tunnel mode requires vendor support of the DECODE_ONLY feature
-        Assume.assumeTrue("Board API level is not Android 14 or later.", IS_BOARD_AT_LEAST_U);
+        Assume.assumeTrue("First board API level is not Android 14 or later.",
+                WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledTrickPlay(VP9_VIDEO);
     }
 
