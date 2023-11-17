@@ -20,26 +20,43 @@ import static android.Manifest.permission.BLUETOOTH_CONNECT;
 import static android.Manifest.permission.BLUETOOTH_PRIVILEGED;
 import static android.Manifest.permission.TETHER_PRIVILEGED;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothPan;
 import android.bluetooth.BluetoothProfile;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.sysprop.BluetoothProperties;
-import android.test.AndroidTestCase;
 import android.util.Log;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class BluetoothPanTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+@LargeTest
+public class BluetoothPanTest {
     private static final String TAG = BluetoothPanTest.class.getSimpleName();
 
     private static final int PROXY_CONNECTION_TIMEOUT_MS = 500;  // ms timeout for Proxy Connect
 
+    private Context mContext;
     private boolean mHasBluetooth;
     private BluetoothAdapter mAdapter;
 
@@ -49,10 +66,11 @@ public class BluetoothPanTest extends AndroidTestCase {
     private Condition mConditionProfileConnection;
     private ReentrantLock mProfileConnectionlock;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
-        mHasBluetooth = getContext().getPackageManager().hasSystemFeature(
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+
+        mHasBluetooth = mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_BLUETOOTH);
         if (!mHasBluetooth) return;
 
@@ -62,7 +80,7 @@ public class BluetoothPanTest extends AndroidTestCase {
 
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
 
-        BluetoothManager manager = getContext().getSystemService(BluetoothManager.class);
+        BluetoothManager manager = mContext.getSystemService(BluetoothManager.class);
         mAdapter = manager.getAdapter();
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
 
@@ -71,13 +89,12 @@ public class BluetoothPanTest extends AndroidTestCase {
         mIsProfileReady = false;
         mBluetoothPan = null;
 
-        mAdapter.getProfileProxy(getContext(), new BluetoothPanServiceListener(),
+        mAdapter.getProfileProxy(mContext, new BluetoothPanServiceListener(),
                 BluetoothProfile.PAN);
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
-        super.tearDown();
         if (!(mHasBluetooth && mIsPanSupported)) {
             return;
         }
@@ -90,6 +107,7 @@ public class BluetoothPanTest extends AndroidTestCase {
         TestUtils.dropPermissionAsShellUid();
     }
 
+    @Test
     public void test_closeProfileProxy() {
         if (!(mHasBluetooth && mIsPanSupported)) return;
 
@@ -102,6 +120,7 @@ public class BluetoothPanTest extends AndroidTestCase {
         assertFalse(mIsProfileReady);
     }
 
+    @Test
     public void test_getConnectedDevices() {
         if (!(mHasBluetooth && mIsPanSupported)) return;
 
@@ -115,6 +134,7 @@ public class BluetoothPanTest extends AndroidTestCase {
         assertTrue(connectedDevices.isEmpty());
     }
 
+    @Test
     public void test_getDevicesMatchingConnectionStates() {
         if (!(mHasBluetooth && mIsPanSupported)) return;
 
@@ -129,6 +149,7 @@ public class BluetoothPanTest extends AndroidTestCase {
         assertTrue(connectedDevices.isEmpty());
     }
 
+    @Test
     public void test_getConnectionState() {
         if (!(mHasBluetooth && mIsPanSupported)) return;
 
@@ -148,6 +169,7 @@ public class BluetoothPanTest extends AndroidTestCase {
                 mBluetoothPan.getConnectionState(testDevice));
     }
 
+    @Test
     public void test_setConnectionPolicy() {
         if (!(mHasBluetooth && mIsPanSupported)) return;
 
@@ -169,6 +191,7 @@ public class BluetoothPanTest extends AndroidTestCase {
                 testDevice, BluetoothProfile.CONNECTION_POLICY_FORBIDDEN));
     }
 
+    @Test
     public void test_setAndCheckBluetoothTethering() {
         if (!(mHasBluetooth && mIsPanSupported)) return;
 
