@@ -441,6 +441,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
      */
     @Test
     public void testStackFocusSwitchOnDisplayRemoved3() {
+        assumeFalse(hasAutomotiveSplitscreenMultitaskingFeature());
         // Start an activity on default display to determine default stack.
         launchActivity(BROADCAST_RECEIVER_ACTIVITY);
         final int focusedStackWindowingMode = mWmState.getFrontRootTaskWindowingMode(
@@ -767,6 +768,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
     @Test
     public void testAppTransitionForActivityOnDifferentDisplay() {
         assumeFalse(ENABLE_SHELL_TRANSITIONS);
+        assumeFalse(hasAutomotiveSplitscreenMultitaskingFeature());
         final TestActivitySession<StandardActivity> transitionActivitySession =
                 createManagedTestActivitySession();
         // Create new simulated display.
