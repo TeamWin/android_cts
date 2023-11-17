@@ -30,6 +30,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
+import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
@@ -40,6 +41,7 @@ import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
+import java.util.regex.Pattern
 import org.junit.After
 import org.junit.Before
 
@@ -144,17 +146,13 @@ open class PackageSchemeTestBase {
         mScenario!!.onActivity {
             val button: UiObject2?
             val btnName: String
-            // When the installed package is found, the dialog box shown is owned by
-            // com.android.packageinstaller (ag/19602120). On the other hand, when an error
-            // dialog box is shown due to app not being present or due to
-            // visibility constraints, the dialog box is owned by the system
             if (packageHasVisibility && needTargetApp) {
-                button = mUiDevice.wait(Until.findObject(By.res(PACKAGE_INSTALLER_PACKAGE_NAME,
-                        NEGATIVE_BTN_ID)), DEFAULT_TIMEOUT)
+                button = mUiDevice.wait(
+                    Until.findObject(getBySelector(NEGATIVE_BTN_ID)), DEFAULT_TIMEOUT)
                 btnName = "Cancel"
             } else {
-                button = mUiDevice.wait(Until.findObject(By.res(SYSTEM_PACKAGE_NAME,
-                        POSITIVE_BTN_ID)), DEFAULT_TIMEOUT)
+                button = mUiDevice.wait(
+                    Until.findObject(getBySelector(POSITIVE_BTN_ID)), DEFAULT_TIMEOUT)
                 btnName = "OK"
             }
             assertWithMessage("$btnName not found").that(button).isNotNull()
@@ -215,5 +213,14 @@ open class PackageSchemeTestBase {
     private fun getAppInstallIntent(): Intent {
         return Intent(Intent.ACTION_INSTALL_PACKAGE)
             .setData(Uri.parse("package:$TARGET_APP_PKG_NAME"))
+    }
+
+    private fun getBySelector(id: String): BySelector {
+        // Normally, we wouldn't need to look for buttons from 2 different packages.
+        // However, to fix b/297132020, AlertController was replaced with AlertDialog and shared
+        // to selective partners, leading to fragmentation in which button surfaces in an OEM's
+        // installer app.
+        return By.res(Pattern.compile(String.format("(?:^%s|^%s):id/%s",
+                PACKAGE_INSTALLER_PACKAGE_NAME, SYSTEM_PACKAGE_NAME, id)))
     }
 }
