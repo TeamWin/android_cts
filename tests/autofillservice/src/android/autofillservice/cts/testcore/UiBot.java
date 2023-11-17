@@ -246,7 +246,7 @@ public class UiBot {
     @Deprecated
     // TODO: remove once we're sure no more OEM is getting failure due to screen size
     public void setScreenResolution() {
-        if (true) {
+        if (false) {
             Log.w(TAG, "setScreenResolution(): ignored");
             return;
         }
@@ -266,7 +266,7 @@ public class UiBot {
     @Deprecated
     // TODO: remove once we're sure no more OEM is getting failure due to screen size
     public void resetScreenResolution() {
-        if (true) {
+        if (false) {
             Log.w(TAG, "resetScreenResolution(): ignored");
             return;
         }
