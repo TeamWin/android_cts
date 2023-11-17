@@ -961,7 +961,7 @@ public abstract class ActivityManagerTestBase {
         mWmState.computeState();
         final List<Task> rootTasks = mWmState.getRootTasks();
         for (Task rootTask : rootTasks) {
-            if (rootTask.getTaskId() == taskId) {
+            if (rootTask.getRootTaskId() == taskId) {
                 return rootTask;
             }
         }
