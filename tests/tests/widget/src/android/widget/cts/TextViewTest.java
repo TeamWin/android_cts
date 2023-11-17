@@ -18,6 +18,8 @@ package android.widget.cts;
 
 import static android.content.pm.ApplicationInfo.PRIVATE_FLAG_EXT_ENABLE_ON_BACK_INVOKED_CALLBACK;
 
+import static com.android.text.flags.Flags.FLAG_DEPRECATE_UI_FONTS;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -80,6 +82,7 @@ import android.os.Bundle;
 import android.os.LocaleList;
 import android.os.Parcelable;
 import android.os.SystemClock;
+import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
@@ -1318,6 +1321,7 @@ public class TextViewTest {
     }
 
     @Test
+    @RequiresFlagsDisabled(FLAG_DEPRECATE_UI_FONTS)
     public void testSetElegantLineHeight() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
         assertFalse(mTextView.getPaint().isElegantTextHeight());

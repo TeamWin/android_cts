@@ -36,8 +36,8 @@
 
   <hhea>
     <tableVersion value="0x00010000"/>
-    <ascent value="1000"/>
-    <descent value="-200"/>
+    <ascent value="100"/>
+    <descent value="-20"/>
     <lineGap value="0"/>
     <caretSlopeRise value="1"/>
     <caretSlopeRun value="0"/>
