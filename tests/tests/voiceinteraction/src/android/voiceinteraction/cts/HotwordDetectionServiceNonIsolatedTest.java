@@ -31,6 +31,7 @@ import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRul
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,7 +43,7 @@ import java.util.Objects;
  */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "No real use case for instant mode hotword detection service")
-public class HotwordDetectionServiceNonIsolatedTest {
+public class HotwordDetectionServiceNonIsolatedTest extends AbstractHdsTestCase {
 
     private static final String TAG = "HotwordDetectionServiceNonIsolatedTest";
 
@@ -55,6 +56,22 @@ public class HotwordDetectionServiceNonIsolatedTest {
             new VoiceInteractionServiceConnectedRule(
                     getInstrumentation().getTargetContext(), getTestVoiceInteractionService());
 
+    private NonIsolatedHotwordDetectionVoiceInteractionService mService;
+
+    @Before
+    public void setup() {
+        // VoiceInteractionServiceConnectedRule handles the service connected, we should be
+        // able to get service
+        mService = (NonIsolatedHotwordDetectionVoiceInteractionService)
+                BaseVoiceInteractionService.getService();
+
+        // Check we can get the service, we need service object to call the service provided method
+        Objects.requireNonNull(mService);
+
+        // Set whether voice activation permission enabled.
+        mService.setVoiceActivationPermissionEnabled(mVoiceActivationPermissionEnabled);
+    }
+
     public String getTestVoiceInteractionService() {
         Log.d(TAG, "getTestVoiceInteractionService()");
         return CTS_SERVICE_PACKAGE + "/" + SERVICE_COMPONENT;
@@ -63,21 +80,12 @@ public class HotwordDetectionServiceNonIsolatedTest {
     @Test
     public void testHotwordDetectionService_noIsolatedTags_triggerFailure()
             throws Throwable {
-        // VoiceInteractionServiceConnectedRule handles the service connected, we should be able
-        // to get service.
-        NonIsolatedHotwordDetectionVoiceInteractionService service =
-                (NonIsolatedHotwordDetectionVoiceInteractionService)
-                        BaseVoiceInteractionService.getService();
-
-        // Check we can get the service, we need service object to call the service provided method
-        Objects.requireNonNull(service);
-
         // Create alwaysOnHotwordDetector
-        service.createAlwaysOnHotwordDetector();
+        mService.createAlwaysOnHotwordDetector();
 
         // Wait the result and verify expected result
-        service.waitSandboxedDetectionServiceInitializedCalledOrException();
+        mService.waitSandboxedDetectionServiceInitializedCalledOrException();
         // Verify IllegalStateException throws
-        assertThat(service.isCreateDetectorIllegalStateExceptionThrow()).isTrue();
+        assertThat(mService.isCreateDetectorIllegalStateExceptionThrow()).isTrue();
     }
 }
