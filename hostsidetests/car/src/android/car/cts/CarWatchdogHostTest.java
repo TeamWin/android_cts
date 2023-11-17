@@ -16,6 +16,7 @@
 
 package android.car.cts;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.cts.statsdatom.lib.ConfigUtils;
@@ -30,8 +31,10 @@ import com.android.os.AtomsProto.CarWatchdogIoOveruseStats;
 import com.android.os.AtomsProto.CarWatchdogIoOveruseStatsReported;
 import com.android.os.AtomsProto.CarWatchdogKillStatsReported;
 import com.android.os.StatsLog.EventMetricData;
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
 import org.junit.After;
 import org.junit.Before;
@@ -49,6 +52,17 @@ import java.util.regex.Pattern;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
+
+    /**
+     * CarWatchdog device-side test package.
+     */
+    protected static final String WATCHDOG_TEST_PKG = "android.car.cts.watchdog.test";
+
+    /**
+     * CarWatchdog device-side test class.
+     */
+    protected static final String WATCHDOG_TEST_CLASS =
+            "android.car.cts.app.watchdog.CarWatchdogDeviceAppTest";
 
     /**
      * CarWatchdog app package.
@@ -90,7 +104,14 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
      */
     private static final String RESET_RESOURCE_OVERUSE_CMD = String.format(
             "dumpsys android.automotive.watchdog.ICarWatchdog/default "
-                    + "--reset_resource_overuse_stats %s,%s", APP_PKG, WATCHDOG_APP_SHARED_USER_ID);
+                    + "--reset_resource_overuse_stats %s,%s,%s",
+                    APP_PKG, WATCHDOG_APP_SHARED_USER_ID, WATCHDOG_TEST_PKG);
+
+    /**
+     * The command to kill a package due to resource overuse.
+     */
+    private static final String RESOURCE_OVERUSE_KILL_CMD =
+            String.format("cmd car_service watchdog-resource-overuse-kill %s", WATCHDOG_TEST_PKG);
 
     /**
      * The command to get I/O overuse foreground bytes threshold in the adb shell.
@@ -118,9 +139,17 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
     private static final String APPLY_DISABLE_DISPLAY_POWER_POLICY_CMD =
             "cmd car_service apply-power-policy cts_car_watchdog_disable_display";
 
+    private static final String REBOOT_CMD = "cmd car_service power-off --skip-garagemode --reboot";
+    public static final String PRIORITIZE_APP_PERFORMANCE_TEXT =
+            "'Prioritize app performance' app settings is used to determine whether or not app "
+                    + "performance should be prioritized over system stability or long-term "
+                    + "hardware stability.";
     private static final String START_CUSTOM_COLLECTION_SUCCESS_MSG =
             "Successfully started custom perf collection";
+    private static final String KEY_PACKAGES_DISABLED_ON_RESOURCE_OVERUSE =
+            "android.car.KEY_PACKAGES_DISABLED_ON_RESOURCE_OVERUSE";
 
+    private static final long BROADCAST_DELAY_MS = TimeUnit.SECONDS.toMillis(10);
     private static final long FIFTY_MEGABYTES = 1024 * 1024 * 50;
     private static final long TWO_HUNDRED_MEGABYTES = 1024 * 1024 * 200;
 
@@ -139,8 +168,12 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
     // (on <= Android T releases), a custom collection cannot be started. Thus, retry starting
     // custom collection for at least twice this duration.
     private static final long START_CUSTOM_COLLECTION_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(60);
+    private static final long DEVICE_RESPONSE_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(2);
     private static final long WATCHDOG_ACTION_TIMEOUT_MS = 30_000;
 
+    /* Used in order to pass instrumentation arguments to the device-side test */
+    private DeviceTestRunOptions mDeviceTestRunOptions;
+    private int mCurrentUser;
     private boolean mDidModifyDateTime;
     private long mOriginalForegroundBytes;
 
@@ -156,6 +189,10 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
 
     @Before
     public void setUp() throws Exception {
+        mDeviceTestRunOptions = new DeviceTestRunOptions(WATCHDOG_TEST_PKG)
+            .setTestClassName(WATCHDOG_TEST_CLASS)
+            .setDevice(getDevice());
+        mCurrentUser = getCurrentUserId();
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         executeCommand(DEFINE_ENABLE_DISPLAY_POWER_POLICY_CMD);
@@ -177,6 +214,85 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         executeCommand(RESET_RESOURCE_OVERUSE_CMD);
         executeCommand(STOP_CUSTOM_PERF_COLLECTION_CMD);
         executeCommand("%s %d", SET_IO_OVERUSE_FOREGROUNG_BYTES_CMD, mOriginalForegroundBytes);
+    }
+
+    @Test
+    public void testKillableSettingPersistedOnDevice() throws Exception {
+        try {
+            assertWithMessage("%s Must toggle on 'Prioritize app performance' app settings.",
+                    PRIORITIZE_APP_PERFORMANCE_TEXT)
+                    .that(runDeviceTest("testSetPackageKillableStateAsNo")).isTrue();
+
+            rebootDeviceAndWait();
+
+            assertWithMessage("%s 'Prioritize app performance' app settings should be toggled on "
+                            + "after reboot.", PRIORITIZE_APP_PERFORMANCE_TEXT)
+                    .that(runDeviceTest("testVerifyPackageKillableStateAsNo")).isTrue();
+        } finally {
+            runDeviceTest("testSetPackageKillableStateAsYes");
+        }
+    }
+
+    @Test
+    public void testResourceOveruseConfigurationPersistedOnDevice() throws Exception {
+        try {
+            assertWithMessage("Must write initial resource overuse configurations to disk")
+                    .that(runDeviceTest("testWriteResourceOveruseConfigurationsToDisk")).isTrue();
+
+            assertWithMessage("Must set the test resource overuse configurations")
+                    .that(runDeviceTest("testSetResourceOveruseConfigurations")).isTrue();
+
+            rebootDeviceAndWait();
+
+            assertWithMessage("Must persist resource overuse configurations across system reboot")
+                    .that(runDeviceTest("testVerifyResourceOveruseConfigurationsPersisted"))
+                    .isTrue();
+        } finally {
+            runDeviceTest("testResetOriginalResourceOveruseConfigurations");
+        }
+    }
+
+    @Test
+    public void testResourceOveruseStatsPersistedOnDevice() throws Exception {
+        try {
+            assertWithMessage("Must return valid resource overuse stats for initial write")
+                    .that(runDeviceTest("testVerifyInitialResourceOveruseStats")).isTrue();
+
+            rebootDeviceAndWait();
+            startCustomCollection();
+
+            assertWithMessage("Must return aggregated resource overuse stats for writes made across"
+                    + " system reboot")
+                    .that(runDeviceTest("testVerifyResourceOveruseStatsAfterReboot")).isTrue();
+        } finally {
+            runDeviceTest("testDeleteTestFile");
+            executeCommand(STOP_CUSTOM_PERF_COLLECTION_CMD);
+        }
+    }
+
+    @Test
+    public void testVerifyPackagesDisabledOnResourceOveruseSettingsString() throws Exception {
+        assertWithMessage("%s settings default value", KEY_PACKAGES_DISABLED_ON_RESOURCE_OVERUSE)
+                .that(readPackagesDisabledOnResourceOveruseSettings())
+                .doesNotContain(WATCHDOG_TEST_PKG);
+
+        executeCommand(RESOURCE_OVERUSE_KILL_CMD);
+
+        assertWithMessage("%s settings value after killing test package due to resource overuse",
+                KEY_PACKAGES_DISABLED_ON_RESOURCE_OVERUSE)
+                .that(readPackagesDisabledOnResourceOveruseSettings()).contains(WATCHDOG_TEST_PKG);
+
+        String result = executeCommand("pm enable --user %d %s", mCurrentUser, WATCHDOG_TEST_PKG);
+        assertWithMessage("Package enable command result").that(result).contains("enabled");
+
+        // CarService updates KEY_PACKAGES_DISABLED_ON_RESOURCE_OVERUSE settings value on receiving
+        // package enabled broadcast. This broadcast may take few seconds to reach CarService.
+        PollingCheck.check(String.format("%s settings value after enabling test package",
+                        KEY_PACKAGES_DISABLED_ON_RESOURCE_OVERUSE),
+                BROADCAST_DELAY_MS, () -> {
+                    return !readPackagesDisabledOnResourceOveruseSettings()
+                            .contains(WATCHDOG_TEST_PKG);
+                });
     }
 
     @Test
@@ -410,5 +526,32 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
                     String result = executeCommand(START_CUSTOM_PERF_COLLECTION_CMD);
                     return result.contains(START_CUSTOM_COLLECTION_SUCCESS_MSG) || result.isEmpty();
                 });
+    }
+
+    private void rebootDeviceAndWait() throws Exception {
+        /* ADB doesn't trigger AAOS specific shutdown procedure on all devices when
+         * performing "adb reboot". CarWatchdog listens for shutdown/suspend enter and writes I/O
+         * overuse stats and user package settings to DB when state changes. Perform system reboot
+         * with |REBOOT_CMD|, which will trigger the system to enter garage mode, force suspend,
+         * and reboot.
+         *
+         * TODO(b/200084065): Use the regular reboot command, once it follows the AAOS shutdown
+         *  process.
+         */
+        executeCommand(REBOOT_CMD);
+        /* Check if device shows as unavailable (as expected after reboot). */
+        assertThat(getDevice().waitForDeviceNotAvailable(DEVICE_RESPONSE_TIMEOUT_MS)).isTrue();
+        getDevice().waitForDeviceAvailable(DEVICE_RESPONSE_TIMEOUT_MS);
+    }
+
+    private boolean runDeviceTest(String testMethodName) throws DeviceNotAvailableException {
+        mDeviceTestRunOptions.setTestMethodName(testMethodName);
+        return runDeviceTests(mDeviceTestRunOptions);
+    }
+
+    private String readPackagesDisabledOnResourceOveruseSettings() throws Exception {
+        String value = executeCommand("settings get --user %d secure %s", mCurrentUser,
+                        KEY_PACKAGES_DISABLED_ON_RESOURCE_OVERUSE).trim();
+        return value.equals("null") ? "" : value;
     }
 }
