@@ -482,6 +482,8 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         mStartButtons[TESTROUTE_USB] = (Button) findViewById(R.id.audio_loopback_usbpath_btn);
         mStartButtons[TESTROUTE_USB].setOnClickListener(mBtnClickListener);
 
+        findViewById(R.id.audio_loopback_calibrate_button).setOnClickListener(mBtnClickListener);
+
         mTestInstructions = (TextView) findViewById(R.id.audio_loopback_instructions);
 
         mAudioManager = getSystemService(AudioManager.class);
@@ -555,6 +557,12 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         mTestStatusText = (TextView) findViewById(R.id.audio_loopback_status_text);
         mProgressBar = (ProgressBar) findViewById(R.id.audio_loopback_progress_bar);
         showWait(false);
+    }
+
+    void startCalibrationDialog() {
+        AudioLoopbackCalibrationDialog calibrationDialog =
+                new AudioLoopbackCalibrationDialog(this);
+        calibrationDialog.show();
     }
 
     //
@@ -971,6 +979,8 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
                 startAudioTest(mMessageHandler, TESTROUTE_ANALOG_JACK);
             }  else if (id == R.id.audio_loopback_usbpath_btn) {
                 startAudioTest(mMessageHandler, TESTROUTE_USB);
+            } else if (id == R.id.audio_loopback_calibrate_button) {
+                startCalibrationDialog();
             }
         }
     }

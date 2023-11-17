@@ -5690,6 +5690,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_ok">Ok</string>
     <string name="audio_general_start">Start</string>
     <string name="audio_general_stop">Stop</string>
+    <string name="audio_general_done">Done</string>
     <string name="audio_general_status">Status</string>
     <string name="audio_general_pass">PASS</string>
     <string name="audio_general_teststatus_pass">Test Status: PASS</string>
@@ -5700,7 +5701,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_required">Required</string>
     <string name="audio_general_run">Run</string>
     <string name="audio_general_cancel">Cancel</string>
-
+    <string name="audio_general_left">Left</string>
+    <string name="audio_general_right">Right</string>
     <string name="audio_general_Input">Input</string>
     <string name="audio_general_Output">Output</string>
 
@@ -5726,6 +5728,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_datapaths_mmap_shared">MMAP Shared</string>
     <string name="audio_datapaths_mmap_exclusive">MMAP Exclusive</string>
     <string name="audio_datapaths_invalid_transfer">Invalid Transfer Type</string>
+
+    <string name="audio_datapaths_calibrate">Calibrate Audio</string>
+    <string name="audio_datapaths_calibratetitle">Calibrate Loopback Audio</string>
 
     <string name="audio_datapaths_internal_test">Audio Data Paths Internal Test</string>
     <string name="audio_datapaths_internal_info">This test verifies basic functionality over a set of audio routes
@@ -5788,6 +5793,8 @@ You should be prompted to select credentials; choose the ones you just installed
         run the test again.</string>
     <string name="audio_datapaths_noio">"No valid datapaths. PASS."</string>
     <string name="audio_datapaths_results">%1$s\n%2$s -> %3$s</string>
+
+    <string name="audio_loopback_calibrate_default">Default</string>
 
     <!-- Audio Loopback Latency Test -->
     <string name="audio_loopback_latency_test">Audio Loopback Latency Test</string>

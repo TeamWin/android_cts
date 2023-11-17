@@ -77,6 +77,11 @@ public class JavaRecorder extends Recorder {
         return BuilderBase.SHARING_MODE_NOTSUPPORTED;
     }
 
+    @Override
+    public int getChannelCount() {
+        return mAudioRecord != null ?  mAudioRecord.getChannelCount() : -1;
+    }
+
     /**
      * The buff to receive the recorder samples
      */

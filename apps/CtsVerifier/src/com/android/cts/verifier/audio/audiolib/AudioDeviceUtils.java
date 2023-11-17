@@ -24,6 +24,7 @@ import java.util.HashMap;
  * Utility methods for AudioDevices
  */
 public class AudioDeviceUtils {
+    public static final String TAG = "AudioDeviceUtils";
     /*
      * Channel Mask Utilities
      */
@@ -92,5 +93,25 @@ public class AudioDeviceUtils {
         }
 
         return sb.toString();
+    }
+
+    /**
+     * @param deviceInfo Specifies the audio device to characterize.
+     * @return true if the device is (probably) a Mic
+     */
+    public static boolean isMicDevice(AudioDeviceInfo deviceInfo) {
+        if (deviceInfo == null || !deviceInfo.isSource()) {
+            return false;
+        }
+
+        switch (deviceInfo.getType()) {
+            case AudioDeviceInfo.TYPE_BUILTIN_MIC:
+            case AudioDeviceInfo.TYPE_WIRED_HEADSET:
+            case AudioDeviceInfo.TYPE_USB_HEADSET:
+                return true;
+
+            default:
+                return false;
+        }
     }
 }

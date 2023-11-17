@@ -131,6 +131,8 @@ public abstract class AudioDataPathsBaseActivity
 
         mIsLessThanV = Build.VERSION.SDK_INT <= Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
 
+        findViewById(R.id.audio_datapaths_calibrate_button).setOnClickListener(this);
+
         mStartBtn = findViewById(R.id.audio_datapaths_start);
         mStartBtn.setOnClickListener(this);
         mCancelButton = findViewById(R.id.audio_datapaths_cancel);
@@ -1169,6 +1171,10 @@ public abstract class AudioDataPathsBaseActivity
             mTestManager.clearTestState();
             showDeviceView();
             mTestManager.displayTestDevices();
+        } else if (id == R.id.audio_datapaths_calibrate_button) {
+            AudioLoopbackCalibrationDialog calibrationDialog =
+                    new AudioLoopbackCalibrationDialog(this);
+            calibrationDialog.show();
         }
     }
 

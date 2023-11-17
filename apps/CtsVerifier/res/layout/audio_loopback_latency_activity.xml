@@ -66,6 +66,12 @@
                         android:id="@+id/audio_loopback_level_text" />
                 </LinearLayout>
 
+                <Button
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/audio_datapaths_calibrate"
+                    android:id="@+id/audio_loopback_calibrate_button"/>
+
                 <LinearLayout
                     android:orientation="horizontal"
                     android:layout_width="match_parent"

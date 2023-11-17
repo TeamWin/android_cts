@@ -41,6 +41,7 @@ public:
     int32_t getRoutedDeviceId();
 
     int32_t getSharingMode();
+    int32_t getChannelCount();
 
 protected:
     OboeStream(int32_t subtype) : mSubtype(subtype), mStreamStarted(false) {}

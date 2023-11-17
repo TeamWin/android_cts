@@ -142,3 +142,9 @@ int32_t OboeStream::getSharingMode() {
                                ? (int32_t) mAudioStream->getSharingMode()
                                : SHARING_MODE_INVALID);
 }
+
+int32_t OboeStream::getChannelCount() {
+    return (int32_t) (mAudioStream != nullptr
+                               ? (int32_t) mAudioStream->getChannelCount()
+                               : -1);
+}
