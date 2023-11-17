@@ -70,6 +70,7 @@ public class DropBoxTests {
     private CountDownLatch mEnabledTagLatch = new CountDownLatch(0);
     private CountDownLatch mLowPriorityTagLatch = new CountDownLatch(0);
     private CountDownLatch mAnotherLowPriorityTagLatch = new CountDownLatch(0);
+    private CountDownLatch mTestPermissionLatch = new CountDownLatch(0);
 
     private ArrayList<DropBoxEntryAddedData> mEnabledBuffer;
     private ArrayList<DropBoxEntryAddedData> mLowPriorityBuffer;
@@ -99,6 +100,8 @@ public class DropBoxTests {
             } else if (ANOTHER_LOW_PRIORITY_TAG.equals(data.tag)) {
                 mAnotherLowPriorityBuffer.add(data);
                 mAnotherLowPriorityTagLatch.countDown();
+            } else if (GET_ENTRY_TAG.equals(data.tag)) {
+                mTestPermissionLatch.countDown();
             }
         }
     };
@@ -331,9 +334,14 @@ public class DropBoxTests {
     }
 
     @Test
-    public void testReadDropBoxPermission() {
-        long currTime = System.currentTimeMillis();
+    public void testReadDropBoxPermission() throws Exception {
+        mTestPermissionLatch = new CountDownLatch(1);
+
+        final long currTime = System.currentTimeMillis();
         mDropBoxManager.addText(GET_ENTRY_TAG, "0");
+
+        assertTrue(mTestPermissionLatch.await(BROADCAST_RATE_LIMIT * 3 / 2,
+                TimeUnit.MILLISECONDS));
         assertNotNull(mDropBoxManager.getNextEntry(GET_ENTRY_TAG, currTime));
     }
 
