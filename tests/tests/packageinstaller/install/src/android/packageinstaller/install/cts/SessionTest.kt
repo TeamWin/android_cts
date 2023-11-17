@@ -30,8 +30,10 @@ import android.content.pm.PackageInstaller.STATUS_SUCCESS
 import android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL
 import android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
 import android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+import android.os.Build
 import android.platform.test.annotations.AppModeFull
 import androidx.test.InstrumentationRegistry
+import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.AppOpsUtils
 import com.android.compatibility.common.util.SystemUtil
@@ -58,6 +60,10 @@ class SessionTest : PackageInstallerTestBase() {
      * Check the session should not pass the status receiver from an immutable PendingIntent
      */
     @Test(expected = IllegalArgumentException::class)
+    @SdkSuppress(
+        minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+        codeName = "VanillaIceCream"
+    )
     fun sessionWithImmutablePendingIntent() {
         val sessionParam = PackageInstaller.SessionParams(MODE_FULL_INSTALL)
         val sessionId = pi.createSession(sessionParam)
