@@ -15,17 +15,26 @@
  */
 package android.bluetooth.cts;
 
-import android.bluetooth.BluetoothCodecConfig;
+import static org.junit.Assert.assertEquals;
+
 import android.bluetooth.BufferConstraint;
 import android.bluetooth.BufferConstraints;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.test.AndroidTestCase;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class BufferConstraintsTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class BufferConstraintsTest {
     private BufferConstraints mBufferConstraints;
     private List<BufferConstraint> mBufferConstraintList;
     private boolean mHasBluetooth;
@@ -33,16 +42,15 @@ public class BufferConstraintsTest extends AndroidTestCase {
     private static final int MAXIMUM_BUFFER_TIME = 2;
     private static final int MINIMUM_BUFFER_TIME = 3;
 
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
-        mHasBluetooth = getContext().getPackageManager().hasSystemFeature(
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        mHasBluetooth = context.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_BLUETOOTH);
     }
 
-    public void tearDown() throws Exception {
-        super.tearDown();
-    }
-
+    @Test
+    @SmallTest
     public void test_forCodec() {
         if (!mHasBluetooth) {
             // Skip the test if bluetooth is not present.
