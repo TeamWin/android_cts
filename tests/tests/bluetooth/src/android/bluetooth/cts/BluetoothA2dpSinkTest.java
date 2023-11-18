@@ -23,6 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothA2dpSink;
@@ -107,8 +108,7 @@ public class BluetoothA2dpSinkTest {
 
     @Test
     public void test_closeProfileProxy() {
-        if (!(mHasBluetooth && mIsA2dpSinkSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSinkSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dpSink);
         assertTrue(mIsProfileReady);
@@ -120,8 +120,7 @@ public class BluetoothA2dpSinkTest {
 
     @Test
     public void test_getConnectedDevices() {
-        if (!(mHasBluetooth && mIsA2dpSinkSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSinkSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dpSink);
 
@@ -133,8 +132,7 @@ public class BluetoothA2dpSinkTest {
 
     @Test
     public void test_getDevicesMatchingConnectionStates() {
-        if (!(mHasBluetooth && mIsA2dpSinkSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSinkSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dpSink);
 
@@ -145,8 +143,7 @@ public class BluetoothA2dpSinkTest {
 
     @Test
     public void test_getConnectionState() {
-        if (!(mHasBluetooth && mIsA2dpSinkSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSinkSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dpSink);
 
@@ -162,8 +159,7 @@ public class BluetoothA2dpSinkTest {
 
     @Test
     public void test_getConnectionPolicy() {
-        if (!(mHasBluetooth && mIsA2dpSinkSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSinkSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dpSink);
 
@@ -182,8 +178,7 @@ public class BluetoothA2dpSinkTest {
 
     @Test
     public void test_setConnectionPolicy() {
-        if (!(mHasBluetooth && mIsA2dpSinkSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSinkSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dpSink);
 
@@ -204,8 +199,7 @@ public class BluetoothA2dpSinkTest {
 
     @Test
     public void test_isAudioPlaying() {
-        if (!(mHasBluetooth && mIsA2dpSinkSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSinkSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dpSink);
 
