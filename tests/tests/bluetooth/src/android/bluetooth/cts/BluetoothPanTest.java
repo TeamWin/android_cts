@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -109,8 +110,7 @@ public class BluetoothPanTest {
 
     @Test
     public void test_closeProfileProxy() {
-        if (!(mHasBluetooth && mIsPanSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsPanSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPan);
         assertTrue(mIsProfileReady);
@@ -122,8 +122,7 @@ public class BluetoothPanTest {
 
     @Test
     public void test_getConnectedDevices() {
-        if (!(mHasBluetooth && mIsPanSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsPanSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPan);
 
@@ -136,8 +135,7 @@ public class BluetoothPanTest {
 
     @Test
     public void test_getDevicesMatchingConnectionStates() {
-        if (!(mHasBluetooth && mIsPanSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsPanSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPan);
 
@@ -151,8 +149,7 @@ public class BluetoothPanTest {
 
     @Test
     public void test_getConnectionState() {
-        if (!(mHasBluetooth && mIsPanSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsPanSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPan);
 
@@ -171,8 +168,7 @@ public class BluetoothPanTest {
 
     @Test
     public void test_setConnectionPolicy() {
-        if (!(mHasBluetooth && mIsPanSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsPanSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPan);
 
@@ -193,8 +189,7 @@ public class BluetoothPanTest {
 
     @Test
     public void test_setAndCheckBluetoothTethering() {
-        if (!(mHasBluetooth && mIsPanSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsPanSupported);
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED,
                 TETHER_PRIVILEGED);
         assertTrue(waitForProfileConnect());
