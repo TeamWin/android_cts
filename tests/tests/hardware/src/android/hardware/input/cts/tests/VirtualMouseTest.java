@@ -225,6 +225,12 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
     }
 
     @Test
+    public void createVirtualMouse_nullArguments_throwsEception() {
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.createVirtualMouse(null));
+    }
+
+    @Test
     public void createVirtualMouse_duplicateName_throwsException() {
         assertThrows(IllegalArgumentException.class,
                 () -> createVirtualMouse(mVirtualDisplay.getDisplay().getDisplayId()));

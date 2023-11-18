@@ -188,6 +188,12 @@ public class VirtualTouchscreenTest extends VirtualDeviceTestCase {
     }
 
     @Test
+    public void createVirtualTouchscreen_nullArguments_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.createVirtualTouchscreen(null));
+    }
+
+    @Test
     public void createVirtualTouchscreen_duplicateName_throwsException() {
         assertThrows(IllegalArgumentException.class,
                 () -> createVirtualTouchscreen(mVirtualDisplay));

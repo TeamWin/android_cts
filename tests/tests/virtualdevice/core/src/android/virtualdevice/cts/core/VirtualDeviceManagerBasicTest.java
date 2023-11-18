@@ -968,61 +968,6 @@ public class VirtualDeviceManagerBasicTest {
                 () -> mVirtualDevice.removeActivityListener(null));
     }
 
-    @Test
-    public void createVirtualMouse_nullArguments_shouldThrow() {
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
-
-        assertThrows(NullPointerException.class,
-                () -> mVirtualDevice.createVirtualMouse(null));
-    }
-
-    @Test
-    public void createVirtualTouchscreen_nullArguments_shouldThrow() {
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
-
-        assertThrows(NullPointerException.class,
-                () -> mVirtualDevice.createVirtualTouchscreen(null));
-    }
-
-    @Test
-    public void createVirtualDpad_nullArguments_shouldThrow() {
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
-
-        assertThrows(NullPointerException.class,
-                () -> mVirtualDevice.createVirtualDpad(null));
-    }
-
-    @Test
-    public void createVirtualKeyboard_nullArguments_shouldThrow() {
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
-
-        assertThrows(NullPointerException.class,
-                () -> mVirtualDevice.createVirtualKeyboard(null));
-    }
-
-    @Test
-    public void createVirtualNavigationTouchpad_nullArguments_shouldThrow() {
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
-
-        assertThrows(NullPointerException.class,
-                () -> mVirtualDevice.createVirtualNavigationTouchpad(null));
-    }
-
     private void assertDeviceCreated(int deviceId) {
         verify(mVirtualDeviceListener, timeout(TIMEOUT_MS).times(1))
                 .onVirtualDeviceCreated(deviceId);
