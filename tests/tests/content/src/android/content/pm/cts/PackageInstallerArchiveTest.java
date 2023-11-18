@@ -278,6 +278,27 @@ public class PackageInstallerArchiveTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
+    public void testGetArchiveTimeMillis() throws Exception {
+        installPackage(PACKAGE_NAME, APK_PATH);
+        final long timestampBeforeArchive = System.currentTimeMillis();
+        runWithShellPermissionIdentity(
+                () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
+                        new IntentSender((IIntentSender) mIntentSender)),
+                Manifest.permission.DELETE_PACKAGES);
+
+        assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+        final long timestampAfterArchive = System.currentTimeMillis();
+
+        // Test that the archiveTimeMillis field is valid
+        PackageInfo pi = mPackageManager.getPackageInfo(PACKAGE_NAME,
+                PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES));
+        assertThat(pi).isNotNull();
+        assertThat(pi.getArchiveTimeMillis()).isGreaterThan(timestampBeforeArchive);
+        assertThat(pi.getArchiveTimeMillis()).isLessThan(timestampAfterArchive);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
     public void unarchiveApp() throws Exception {
         installPackage(PACKAGE_NAME, APK_PATH);
         runWithShellPermissionIdentity(
