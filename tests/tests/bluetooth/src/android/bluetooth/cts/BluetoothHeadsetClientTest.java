@@ -23,6 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
@@ -111,8 +112,7 @@ public class BluetoothHeadsetClientTest {
 
     @Test
     public void test_closeProfileProxy() {
-        if (!(mHasBluetooth && mIsHeadsetClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsHeadsetClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadsetClient);
         assertTrue(mIsProfileReady);
@@ -124,8 +124,7 @@ public class BluetoothHeadsetClientTest {
 
     @Test
     public void test_getConnectedDevices() {
-        if (!(mHasBluetooth && mIsHeadsetClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsHeadsetClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadsetClient);
 
@@ -138,8 +137,7 @@ public class BluetoothHeadsetClientTest {
 
     @Test
     public void test_getDevicesMatchingConnectionStates() {
-        if (!(mHasBluetooth && mIsHeadsetClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsHeadsetClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadsetClient);
 
@@ -153,8 +151,7 @@ public class BluetoothHeadsetClientTest {
 
     @Test
     public void test_getConnectionState() {
-        if (!(mHasBluetooth && mIsHeadsetClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsHeadsetClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadsetClient);
 
@@ -173,8 +170,7 @@ public class BluetoothHeadsetClientTest {
 
     @Test
     public void test_getConnectionPolicy() {
-        if (!(mHasBluetooth && mIsHeadsetClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsHeadsetClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadsetClient);
 
@@ -193,8 +189,7 @@ public class BluetoothHeadsetClientTest {
 
     @Test
     public void test_setConnectionPolicy() {
-        if (!(mHasBluetooth && mIsHeadsetClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsHeadsetClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadsetClient);
 
@@ -215,8 +210,7 @@ public class BluetoothHeadsetClientTest {
 
     @Test
     public void test_getNetworkServiceState() {
-        if (!(mHasBluetooth && mIsHeadsetClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsHeadsetClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadsetClient);
 
@@ -229,8 +223,7 @@ public class BluetoothHeadsetClientTest {
 
     @Test
     public void test_createNetworkServiceStateFromParcel() {
-        if (!(mHasBluetooth && mIsHeadsetClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsHeadsetClientSupported);
         BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
 
         Parcel p = Parcel.obtain();

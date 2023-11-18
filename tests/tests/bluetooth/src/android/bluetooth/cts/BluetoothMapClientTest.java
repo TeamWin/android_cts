@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.PendingIntent;
 import android.app.UiAutomation;
@@ -125,8 +126,7 @@ public class BluetoothMapClientTest {
 
     @Test
     public void test_closeProfileProxy() {
-        if (!(mHasBluetooth && mIsMapClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsMapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMapClient);
         assertTrue(mIsProfileReady);
@@ -138,8 +138,7 @@ public class BluetoothMapClientTest {
 
     @Test
     public void test_getConnectedDevices() {
-        if (!(mHasBluetooth && mIsMapClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsMapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMapClient);
 
@@ -152,8 +151,7 @@ public class BluetoothMapClientTest {
 
     @Test
     public void test_getConnectionPolicy() {
-        if (!(mHasBluetooth && mIsMapClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsMapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMapClient);
 
@@ -172,8 +170,7 @@ public class BluetoothMapClientTest {
 
     @Test
     public void test_getConnectionState() {
-        if (!(mHasBluetooth && mIsMapClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsMapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMapClient);
 
@@ -192,8 +189,7 @@ public class BluetoothMapClientTest {
 
     @Test
     public void test_getDevicesMatchingConnectionStates() {
-        if (!(mHasBluetooth && mIsMapClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsMapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMapClient);
 
@@ -207,8 +203,7 @@ public class BluetoothMapClientTest {
 
     @Test
     public void test_sendMessage() {
-        if (!(mHasBluetooth && mIsMapClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsMapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMapClient);
 
@@ -235,8 +230,7 @@ public class BluetoothMapClientTest {
 
     @Test
     public void test_setConnectionPolicy() {
-        if (!(mHasBluetooth && mIsMapClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsMapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMapClient);
 

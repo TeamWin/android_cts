@@ -34,6 +34,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
@@ -121,8 +122,7 @@ public class BluetoothHidDeviceTest {
 
     @Test
     public void test_closeProfileProxy() {
-        if (!(mHasBluetooth && mIsHidSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsHidSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHidDevice);
         assertTrue(mIsProfileReady);
@@ -134,8 +134,7 @@ public class BluetoothHidDeviceTest {
 
     @Test
     public void test_getDevicesMatchingConnectionStates() {
-        if (!(mHasBluetooth && mIsHidSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsHidSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHidDevice);
 
@@ -153,8 +152,7 @@ public class BluetoothHidDeviceTest {
 
     @Test
     public void test_getConnectionState() {
-        if (!(mHasBluetooth && mIsHidSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsHidSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHidDevice);
 
@@ -173,8 +171,7 @@ public class BluetoothHidDeviceTest {
 
     @Test
     public void test_connect() {
-        if (!(mHasBluetooth && mIsHidSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsHidSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHidDevice);
 
@@ -187,8 +184,7 @@ public class BluetoothHidDeviceTest {
 
     @Test
     public void test_disconnect() {
-        if (!(mHasBluetooth && mIsHidSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsHidSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHidDevice);
 
@@ -201,8 +197,7 @@ public class BluetoothHidDeviceTest {
 
     @Test
     public void test_getConnectedDevices() {
-        if (!(mHasBluetooth && mIsHidSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsHidSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHidDevice);
 
@@ -215,8 +210,7 @@ public class BluetoothHidDeviceTest {
 
     @Test
     public void test_setConnectionPolicy() {
-        if (!(mHasBluetooth && mIsHidSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsHidSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHidDevice);
 

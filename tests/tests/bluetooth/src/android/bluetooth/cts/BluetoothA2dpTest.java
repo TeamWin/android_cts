@@ -29,6 +29,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothA2dp;
@@ -113,8 +114,7 @@ public class BluetoothA2dpTest {
 
     @Test
     public void test_closeProfileProxy() {
-        if (!(mHasBluetooth && mIsA2dpSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dp);
         assertTrue(mIsProfileReady);
@@ -146,8 +146,7 @@ public class BluetoothA2dpTest {
 
     @Test
     public void test_getConnectedDevices() {
-        if (!(mHasBluetooth && mIsA2dpSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dp);
 
@@ -157,8 +156,7 @@ public class BluetoothA2dpTest {
 
     @Test
     public void test_getDevicesMatchingConnectionStates() {
-        if (!(mHasBluetooth && mIsA2dpSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dp);
 
@@ -169,8 +167,7 @@ public class BluetoothA2dpTest {
 
     @Test
     public void test_getConnectionState() {
-        if (!(mHasBluetooth && mIsA2dpSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dp);
 
@@ -182,8 +179,7 @@ public class BluetoothA2dpTest {
 
     @Test
     public void test_isA2dpPlaying() {
-        if (!(mHasBluetooth && mIsA2dpSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dp);
 
@@ -194,8 +190,7 @@ public class BluetoothA2dpTest {
 
     @Test
     public void test_getCodecStatus() {
-        if (!(mHasBluetooth && mIsA2dpSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSupported);
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dp);
@@ -210,8 +205,7 @@ public class BluetoothA2dpTest {
 
     @Test
     public void test_setCodecConfigPreference() {
-        if (!(mHasBluetooth && mIsA2dpSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dp);
 
@@ -222,8 +216,7 @@ public class BluetoothA2dpTest {
 
     @Test
     public void test_setOptionalCodecsEnabled() {
-        if (!(mHasBluetooth && mIsA2dpSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dp);
 
@@ -243,8 +236,7 @@ public class BluetoothA2dpTest {
 
     @Test
     public void test_getConnectionPolicy() {
-        if (!(mHasBluetooth && mIsA2dpSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSupported);
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dp);
@@ -264,8 +256,7 @@ public class BluetoothA2dpTest {
 
     @Test
     public void test_setConnectionPolicy() {
-        if (!(mHasBluetooth && mIsA2dpSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSupported);
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dp);
@@ -287,8 +278,7 @@ public class BluetoothA2dpTest {
 
     @Test
     public void test_getDynamicBufferSupport() {
-        if (!(mHasBluetooth && mIsA2dpSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSupported);
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dp);
@@ -305,8 +295,7 @@ public class BluetoothA2dpTest {
 
     @Test
     public void test_getBufferConstraints() {
-        if (!(mHasBluetooth && mIsA2dpSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSupported);
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dp);
@@ -319,8 +308,7 @@ public class BluetoothA2dpTest {
 
     @Test
     public void test_setBufferLengthMillis() {
-        if (!(mHasBluetooth && mIsA2dpSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSupported);
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dp);
@@ -335,8 +323,7 @@ public class BluetoothA2dpTest {
 
     @Test
     public void test_optionalCodecs() {
-        if (!(mHasBluetooth && mIsA2dpSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSupported);
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dp);
@@ -369,8 +356,7 @@ public class BluetoothA2dpTest {
 
     @Test
     public void test_setAvrcpAbsoluteVolume() {
-        if (!(mHasBluetooth && mIsA2dpSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsA2dpSupported);
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dp);
