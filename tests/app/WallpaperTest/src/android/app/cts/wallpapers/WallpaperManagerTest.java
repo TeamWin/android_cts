@@ -70,6 +70,8 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.server.wm.LockScreenSession;
 import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerStateHelper;
@@ -141,6 +143,9 @@ public class WallpaperManagerTest {
 
     private static final WindowManagerStateHelper sWindowManagerStateHelper =
             new WindowManagerStateHelper();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Rule
     public ActivityTestRule<WallpaperTestActivity> mActivityTestRule = new ActivityTestRule<>(
