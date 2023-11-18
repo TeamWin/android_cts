@@ -23,6 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
@@ -108,7 +109,7 @@ public class BluetoothSapTest {
 
     @Test
     public void test_closeProfileProxy() {
-        if (!(mHasBluetooth && mIsSapSupported)) return;
+        assumeTrue(mHasBluetooth && mIsSapSupported);
 
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothSap);
@@ -122,7 +123,7 @@ public class BluetoothSapTest {
     @Test
     @MediumTest
     public void test_getConnectedDevices() {
-        if (!mHasBluetooth || !mIsSapSupported) return;
+        assumeTrue(mHasBluetooth && mIsSapSupported);
 
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothSap);
@@ -136,7 +137,7 @@ public class BluetoothSapTest {
     @Test
     @MediumTest
     public void test_getDevicesMatchingConnectionStates() {
-        if (!mHasBluetooth || !mIsSapSupported) return;
+        assumeTrue(mHasBluetooth && mIsSapSupported);
 
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothSap);
@@ -153,7 +154,7 @@ public class BluetoothSapTest {
     @Test
     @MediumTest
     public void test_getConnectionState() {
-        if (!mHasBluetooth || !mIsSapSupported) return;
+        assumeTrue(mHasBluetooth && mIsSapSupported);
 
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothSap);
@@ -171,7 +172,7 @@ public class BluetoothSapTest {
     @Test
     @MediumTest
     public void test_setgetConnectionPolicy() {
-        if (!mHasBluetooth || !mIsSapSupported) return;
+        assumeTrue(mHasBluetooth && mIsSapSupported);
 
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothSap);

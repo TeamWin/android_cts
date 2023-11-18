@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
@@ -110,8 +111,7 @@ public class BluetoothPbapClientTest {
 
     @Test
     public void test_closeProfileProxy() {
-        if (!(mHasBluetooth && mIsPbapClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsPbapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPbapClient);
         assertTrue(mIsProfileReady);
@@ -123,8 +123,7 @@ public class BluetoothPbapClientTest {
 
     @Test
     public void test_getConnectedDevices() {
-        if (!(mHasBluetooth && mIsPbapClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsPbapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPbapClient);
 
@@ -137,8 +136,7 @@ public class BluetoothPbapClientTest {
 
     @Test
     public void test_getConnectionPolicy() {
-        if (!(mHasBluetooth && mIsPbapClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsPbapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPbapClient);
 
@@ -157,8 +155,7 @@ public class BluetoothPbapClientTest {
 
     @Test
     public void test_getConnectionState() {
-        if (!(mHasBluetooth && mIsPbapClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsPbapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPbapClient);
 
@@ -177,8 +174,7 @@ public class BluetoothPbapClientTest {
 
     @Test
     public void test_getDevicesMatchingConnectionStates() {
-        if (!(mHasBluetooth && mIsPbapClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsPbapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPbapClient);
 
@@ -192,8 +188,7 @@ public class BluetoothPbapClientTest {
 
     @Test
     public void test_setConnectionPolicy() {
-        if (!(mHasBluetooth && mIsPbapClientSupported)) return;
-
+        assumeTrue(mHasBluetooth && mIsPbapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPbapClient);
 

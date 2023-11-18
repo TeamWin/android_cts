@@ -16,6 +16,7 @@
 package android.bluetooth.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeTrue;
 
 import android.bluetooth.BufferConstraint;
 import android.bluetooth.BufferConstraints;
@@ -52,10 +53,8 @@ public class BufferConstraintsTest {
     @Test
     @SmallTest
     public void test_forCodec() {
-        if (!mHasBluetooth) {
-            // Skip the test if bluetooth is not present.
-            return;
-        }
+        // Skip the test if bluetooth is not present.
+        assumeTrue(mHasBluetooth);
 
         mBufferConstraintList = new ArrayList<BufferConstraint>();
         for (int i = 0; i < BufferConstraints.BUFFER_CODEC_MAX_NUM; i++) {
