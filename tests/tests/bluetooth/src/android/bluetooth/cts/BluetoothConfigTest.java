@@ -21,6 +21,7 @@ import static android.Manifest.permission.BLUETOOTH_PRIVILEGED;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
@@ -93,9 +94,8 @@ public class BluetoothConfigTest {
 
     @Test
     public void testProfileEnabledValueInList() {
-        if (!mHasBluetooth) {
-            return;
-        }
+        assumeTrue(mHasBluetooth);
+
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         final List<Integer> pList = mAdapter.getSupportedProfiles();
         int wrong_config_in_list = checkIsProfileEnabledInList(BluetoothProfile.A2DP, pList)
@@ -142,9 +142,8 @@ public class BluetoothConfigTest {
 
     @Test
     public void testProfileEnabledValue() {
-        if (!mHasBluetooth) {
-            return;
-        }
+        assumeTrue(mHasBluetooth);
+
         int wrong_config =
             checkIsProfileEnabled(BluetoothProfile.LE_AUDIO,
                     mAdapter.isLeAudioSupported())
@@ -159,9 +158,7 @@ public class BluetoothConfigTest {
 
     @Test
     public void testBleCDDRequirement() {
-        if (!mHasBluetooth) {
-            return;
-        }
+        assumeTrue(mHasBluetooth);
 
         // If device implementations return true for isLeAudioSupported():
         // [C-7-5] MUST enable simultaneously:
