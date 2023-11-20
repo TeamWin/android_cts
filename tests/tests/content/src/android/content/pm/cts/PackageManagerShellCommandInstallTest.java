@@ -799,6 +799,83 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
+    public void testDontKillRemovedWithRemovedSplit() throws Exception {
+        assumeFalse(mStreaming);
+        installSplitsBatch(new String[]{TEST_HW7, TEST_HW7_SPLIT0, TEST_HW7_SPLIT1});
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        assertEquals("base, config.hdpi, config.mdpi", getSplits(TEST_APP_PACKAGE));
+
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            final PackageInstaller installer = getPackageInstaller();
+            final SessionParams params = new SessionParams(SessionParams.MODE_INHERIT_EXISTING);
+            params.setAppPackageName(TEST_APP_PACKAGE);
+            params.setDontKillApp(true);
+
+            final int sessionId = installer.createSession(params);
+            PackageInstaller.Session session = installer.openSession(sessionId);
+            assertTrue((session.getInstallFlags() & PackageManager.INSTALL_DONT_KILL_APP) != 0);
+            session.removeSplit("config.mdpi");
+
+            final CompletableFuture<Boolean> result = new CompletableFuture<>();
+            session.commit(new IntentSender((IIntentSender) new IIntentSender.Stub() {
+                @Override
+                public void send(int code, Intent intent, String resolvedType,
+                                 IBinder whitelistToken, IIntentReceiver finishedReceiver,
+                                 String requiredPermission, Bundle options) throws RemoteException {
+                    boolean dontKillApp =
+                            (session.getInstallFlags() & PackageManager.INSTALL_DONT_KILL_APP) != 0;
+                    result.complete(dontKillApp);
+                }
+            }));
+
+            // We are removing a split apk. Flag should be removed.
+            assertFalse(result.get());
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testDontKillRemovedWithReplacedSplit() throws Exception {
+        assumeFalse(mStreaming);
+        installSplitsBatch(new String[]{TEST_HW7, TEST_HW7_SPLIT0, TEST_HW7_SPLIT1});
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        assertEquals("base, config.hdpi, config.mdpi", getSplits(TEST_APP_PACKAGE));
+
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            final PackageInstaller installer = getPackageInstaller();
+            final SessionParams params = new SessionParams(SessionParams.MODE_INHERIT_EXISTING);
+            params.setAppPackageName(TEST_APP_PACKAGE);
+            params.setDontKillApp(true);
+
+            final int sessionId = installer.createSession(params);
+            PackageInstaller.Session session = installer.openSession(sessionId);
+            assertTrue((session.getInstallFlags() & PackageManager.INSTALL_DONT_KILL_APP) != 0);
+
+            writeFileToSession(session, "split_config.mdpi", TEST_HW7_SPLIT1);
+
+            final CompletableFuture<Boolean> result = new CompletableFuture<>();
+            session.commit(new IntentSender((IIntentSender) new IIntentSender.Stub() {
+                @Override
+                public void send(int code, Intent intent, String resolvedType,
+                                 IBinder whitelistToken, IIntentReceiver finishedReceiver,
+                                 String requiredPermission, Bundle options) throws RemoteException {
+                    boolean dontKillApp =
+                            (session.getInstallFlags() & PackageManager.INSTALL_DONT_KILL_APP) != 0;
+                    result.complete(dontKillApp);
+                }
+            }));
+
+            // We are replacing an existing split apk. Flag should be removed.
+            assertFalse(result.get());
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
     public void testDataLoaderParamsApiV1() throws Exception {
         assumeTrue(mStreaming);
 
