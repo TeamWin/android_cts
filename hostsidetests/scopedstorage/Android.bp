@@ -304,6 +304,53 @@ android_test_helper_app {
     ],
 }
 
+android_test_helper_app {
+    name: "CtsScopedStorageGeneralTestOnlyApp",
+    manifest: "ScopedStorageTestHelper/TestAppGeneralOnly.xml",
+    static_libs: ["cts-scopedstorage-lib"],
+    sdk_version: "test_current",
+    target_sdk_version: "33",
+    min_sdk_version: "29",
+    srcs: ["ScopedStorageTestHelper/src/**/*.java"],
+    // Tag as a CTS artifact
+    test_suites: [
+        "general-tests",
+        "mts-mediaprovider",
+        "cts",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsScopedStorageTestAppELegacy",
+    manifest: "ScopedStorageTestHelper/TestAppELegacy.xml",
+    static_libs: ["cts-scopedstorage-lib"],
+    sdk_version: "test_current",
+    target_sdk_version: "28",
+    min_sdk_version: "28",
+    srcs: ["ScopedStorageTestHelper/src/**/*.java"],
+    // Tag as a CTS artifact
+    test_suites: [
+        "general-tests",
+        "mts-mediaprovider",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsScopedStorageTestAppE",
+    manifest: "ScopedStorageTestHelper/TestAppE.xml",
+    static_libs: ["cts-scopedstorage-lib"],
+    sdk_version: "test_current",
+    target_sdk_version: "33",
+    min_sdk_version: "29",
+    srcs: ["ScopedStorageTestHelper/src/**/*.java"],
+    // Tag as a CTS artifact
+    test_suites: [
+        "general-tests",
+        "mts-mediaprovider",
+        "cts",
+    ],
+}
+
 java_test_host {
     name: "CtsScopedStorageCoreHostTest",
     srcs: [
@@ -567,16 +614,18 @@ android_test {
         ":CtsScopedStorageTestAppB",
         ":CtsScopedStorageTestAppFileManager",
         ":CtsScopedStorageTestAppDLegacy",
-        ":CtsScopedStorageTestAppC",
-        ":CtsScopedStorageTestAppCLegacy",
+        ":CtsScopedStorageGeneralTestOnlyApp",
+        ":CtsScopedStorageTestAppE",
+        ":CtsScopedStorageTestAppELegacy",
     ],
     data: [
         ":CtsScopedStorageTestAppA",
         ":CtsScopedStorageTestAppB",
         ":CtsScopedStorageTestAppFileManager",
         ":CtsScopedStorageTestAppDLegacy",
-        ":CtsScopedStorageTestAppC",
-        ":CtsScopedStorageTestAppCLegacy",
+        ":CtsScopedStorageGeneralTestOnlyApp",
+        ":CtsScopedStorageTestAppE",
+        ":CtsScopedStorageTestAppELegacy",
     ],
     per_testcase_directory: true,
 }

@@ -756,16 +756,32 @@ public class TestUtils {
             Install.single(testApp).commit();
             assertThat(InstallUtils.getInstalledVersion(packageName)).isEqualTo(1);
             if (grantStoragePermission) {
-                grantPermission(packageName, Manifest.permission.READ_EXTERNAL_STORAGE);
-                if (SdkLevel.isAtLeastT()) {
-                    grantPermission(packageName, Manifest.permission.READ_MEDIA_IMAGES);
-                    grantPermission(packageName, Manifest.permission.READ_MEDIA_AUDIO);
-                    grantPermission(packageName, Manifest.permission.READ_MEDIA_VIDEO);
-                }
+                addressStoragePermissions(packageName, true);
             }
             Log.d(TAG, String.format("Successfully installed %s app", testApp.getPackageName()));
         } finally {
             uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Grants or revokes storage read permissions.
+     */
+    public static void addressStoragePermissions(String packageName, boolean grantPermission) {
+        if (grantPermission) {
+            grantPermission(packageName, Manifest.permission.READ_EXTERNAL_STORAGE);
+            if (SdkLevel.isAtLeastT()) {
+                grantPermission(packageName, Manifest.permission.READ_MEDIA_IMAGES);
+                grantPermission(packageName, Manifest.permission.READ_MEDIA_AUDIO);
+                grantPermission(packageName, Manifest.permission.READ_MEDIA_VIDEO);
+            }
+        } else {
+            revokePermission(packageName, Manifest.permission.READ_EXTERNAL_STORAGE);
+            if (SdkLevel.isAtLeastT()) {
+                revokePermission(packageName, Manifest.permission.READ_MEDIA_IMAGES);
+                revokePermission(packageName, Manifest.permission.READ_MEDIA_AUDIO);
+                revokePermission(packageName, Manifest.permission.READ_MEDIA_VIDEO);
+            }
         }
     }
 
