@@ -1,14 +1,15 @@
 package android.companion.cts.core
-
 import android.Manifest
 import android.companion.CompanionDeviceService.DEVICE_EVENT_BLE_APPEARED
 import android.companion.CompanionDeviceService.DEVICE_EVENT_BLE_DISAPPEARED
 import android.companion.CompanionDeviceService.DEVICE_EVENT_BT_CONNECTED
 import android.companion.CompanionDeviceService.DEVICE_EVENT_BT_DISCONNECTED
+import android.companion.Flags.FLAG_DEVICE_PRESENCE
 import android.companion.cts.common.MAC_ADDRESS_A
 import android.companion.cts.common.PrimaryCompanionService
 import android.companion.cts.common.toUpperCaseString
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.RequiresFlagsEnabled
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlin.test.assertEquals
 import org.junit.Test
@@ -23,6 +24,7 @@ import org.junit.runner.RunWith
  */
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 @RunWith(AndroidJUnit4::class)
+@RequiresFlagsEnabled(FLAG_DEVICE_PRESENCE)
 class DeviceEventTest : CoreTestBase() {
     @Test
     fun test_ble_device_event() {
