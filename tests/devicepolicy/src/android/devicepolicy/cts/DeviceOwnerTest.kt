@@ -48,7 +48,7 @@ import com.android.compatibility.common.util.ApiTest
 import com.android.eventlib.truth.EventLogsSubject.assertThat
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assert
-import org.junit.Assume.assumeTrue
+import org.junit.Assume.assumeFalse
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -446,7 +446,7 @@ class DeviceOwnerTest {
         try {
             r.run()
         } catch (e: SecurityException) {
-            assumeTrue(
+            assumeFalse(
                 "Escrow token disabled",
                 e.message?.contains("Escrow token is disabled on the current user") ?: false
             )
