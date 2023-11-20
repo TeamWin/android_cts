@@ -42,3 +42,16 @@ android_test {
     ],
     per_testcase_directory: true,
 }
+
+android_ravenwood_test {
+    name: "CtsAccountManagerTestCasesRavenwood",
+    defaults: ["cts_defaults"],
+    static_libs: [
+        "androidx.annotation_annotation",
+        "androidx.test.rules",
+    ],
+    srcs: [
+        "src/android/accounts/cts/AccountTest.java",
+    ],
+    auto_gen_config: true,
+}
