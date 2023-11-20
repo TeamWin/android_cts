@@ -5928,9 +5928,9 @@
                 android.media.AudioRecord.OnRoutingChangedListener#onRoutingChanged" />
         </activity>
 
-        <activity android:name=".audio.AudioDataPathsInternalActivity"
+        <activity android:name=".audio.AudioDataPathsSpeakerMicActivity"
             android:exported="true"
-            android:label="@string/audio_datapaths_internal_test">
+            android:label="@string/audio_datapaths_speakermic_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
