@@ -3410,7 +3410,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
                     new String[]{HELLO_WORLD_PACKAGE_NAME}, true, null, null, null,
                     FLAG_SUSPEND_QUARANTINED);
             assertEquals("", String.join(",", notset));
-        }, android.Manifest.permission.QUARANTINE_APPS);
+        });
 
         // Flag treatment.
         ApplicationInfo appInfo = mPackageManager.getApplicationInfo(HELLO_WORLD_PACKAGE_NAME, 0);
