@@ -418,9 +418,10 @@ public class EncoderConfigParams {
         public Builder setProfile(int profile) {
             this.mProfile = profile;
             // encoder profile requires also level to be set prior to Android U,
-            // but this can be a default/unknown value
+            // but this can be a default/unknown value. Setting this to 1 as all
+            // codecs use a value of 1 for lowest level.
             if (mLevel < 0) {
-                mLevel = 0;
+                mLevel = 1;
             }
             return this;
         }
