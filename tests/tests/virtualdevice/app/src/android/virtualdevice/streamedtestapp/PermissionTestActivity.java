@@ -17,10 +17,20 @@
 package android.virtualdevice.streamedtestapp;
 
 import android.app.Activity;
+import android.content.Intent;
 
 /**
- * An empty activity acting as home on the default device. It needs to be in a separate apk because
- * WM has special handling for home activities that are being instrumented.
+ * Activity used for testing permission requests on different devices. It needs to be in a separate
+ * apk because CTS is automatically granted runtime permissions.
  */
-public class HomeActivity extends Activity {
+
+public class PermissionTestActivity extends Activity {
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        String permission = getIntent().getStringExtra(Intent.EXTRA_PERMISSION_NAME);
+        String[] permissions = { permission };
+        requestPermissions(permissions, 10001);
+    }
 }

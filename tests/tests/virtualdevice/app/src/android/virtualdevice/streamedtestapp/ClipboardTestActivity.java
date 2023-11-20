@@ -16,28 +16,25 @@
 
 package android.virtualdevice.streamedtestapp;
 
-import static android.virtualdevice.cts.common.ClipboardTestConstants.ACTION_READ;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.ACTION_WRITE;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_CLIP_DATA;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_DEVICE_ID;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_HAS_CLIP_DATA;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_RESULT_RECEIVER;
+import static android.content.Intent.EXTRA_RESULT_RECEIVER;
+import static android.virtualdevice.cts.common.StreamedAppConstants.ACTION_READ;
+import static android.virtualdevice.cts.common.StreamedAppConstants.ACTION_WRITE;
+import static android.virtualdevice.cts.common.StreamedAppConstants.EXTRA_CLIP_DATA;
+import static android.virtualdevice.cts.common.StreamedAppConstants.EXTRA_DEVICE_ID;
+import static android.virtualdevice.cts.common.StreamedAppConstants.EXTRA_HAS_CLIP_DATA;
 
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.ResultReceiver;
+import android.os.RemoteCallback;
 
-import androidx.annotation.Nullable;
-
+/**
+ * Activity used for testing clipboard access on different devices. It needs to be in a separate
+ * apk because the virtual device owner always has access to its clipboard.
+ */
 public class ClipboardTestActivity extends Activity {
-
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
 
     @Override
     protected void onResume() {
@@ -71,10 +68,10 @@ public class ClipboardTestActivity extends Activity {
             clipboardManager.setPrimaryClip(clip);
         }
 
-        ResultReceiver resultReceiver =
-                getIntent().getParcelableExtra(EXTRA_RESULT_RECEIVER, ResultReceiver.class);
+        RemoteCallback resultReceiver =
+                getIntent().getParcelableExtra(EXTRA_RESULT_RECEIVER, RemoteCallback.class);
         if (resultReceiver != null) {
-            resultReceiver.send(Activity.RESULT_OK, result);
+            resultReceiver.sendResult(result);
         }
         finish();
     }

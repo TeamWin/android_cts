@@ -14,74 +14,52 @@
  * limitations under the License.
  */
 
-package android.virtualdevice.cts;
+package android.virtualdevice.cts.applaunch;
 
-import static android.Manifest.permission.ADD_ALWAYS_UNLOCKED_DISPLAY;
-import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
-import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.Manifest.permission.READ_CLIPBOARD_IN_BACKGROUND;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAULT;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_CLIPBOARD;
-import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.ACTION_READ;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.ACTION_WRITE;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_DEVICE_ID;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_HAS_CLIP_DATA;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_RESULT_RECEIVER;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_CLIP_DATA;
-import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createActivityOptions;
-import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder;
-import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createResultReceiver;
-import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.isVirtualDeviceManagerConfigEnabled;
+import static android.content.Intent.EXTRA_RESULT_RECEIVER;
+import static android.virtualdevice.cts.common.StreamedAppConstants.ACTION_READ;
+import static android.virtualdevice.cts.common.StreamedAppConstants.ACTION_WRITE;
+import static android.virtualdevice.cts.common.StreamedAppConstants.CLIPBOARD_TEST_ACTIVITY;
+import static android.virtualdevice.cts.common.StreamedAppConstants.EXTRA_DEVICE_ID;
+import static android.virtualdevice.cts.common.StreamedAppConstants.EXTRA_HAS_CLIP_DATA;
+import static android.virtualdevice.cts.common.StreamedAppConstants.EXTRA_CLIP_DATA;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
 import android.companion.virtual.flags.Flags;
 import android.content.ClipData;
 import android.content.ClipboardManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
-import android.hardware.display.VirtualDisplayConfig;
 import android.os.Bundle;
-import android.os.ResultReceiver;
+import android.os.RemoteCallback;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
-import android.platform.test.flag.junit.CheckFlagsRule;
-import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.server.wm.LockScreenSession;
-import android.server.wm.TouchHelper;
-import android.server.wm.WindowManagerStateHelper;
 import android.view.Display;
-import android.virtualdevice.cts.common.FakeAssociationRule;
-import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
+import android.virtualdevice.cts.common.VirtualDeviceRule;
 
-import androidx.annotation.Nullable;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.FeatureUtil;
 
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -90,7 +68,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
-
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for clipboard access on virtual devices.
@@ -101,52 +79,13 @@ public class StreamedAppClipboardTest {
 
     private static final ClipData CLIP_DATA = ClipData.newPlainText("label", "Hello World");
 
-    private static final int EVENT_TIMEOUT_MS = 5000;
-
-    private static final VirtualDisplayConfig VIRTUAL_DISPLAY_CONFIG =
-            createDefaultVirtualDisplayConfigBuilder()
-                    .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
-                            | DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED
-                            | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY)
-                    .build();
+    private static final long TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(3);
 
     @Rule
-    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
-            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-            ADD_ALWAYS_UNLOCKED_DISPLAY,
-            ADD_TRUSTED_DISPLAY,
-            CREATE_VIRTUAL_DEVICE,
+    public VirtualDeviceRule mRule = VirtualDeviceRule.withAdditionalPermissions(
             READ_CLIPBOARD_IN_BACKGROUND);
 
-    @Rule
-    public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
-
-    @Rule
-    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
-
-    private VirtualDeviceManager mVirtualDeviceManager;
-
-    private final WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
-    private final TouchHelper mTouchHelper =
-            new TouchHelper(InstrumentationRegistry.getInstrumentation(), mWmState);
-
     private final ArrayList<DeviceEnvironment> mDeviceEnvironments = new ArrayList<>();
-
-    @Before
-    public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        final PackageManager packageManager = context.getPackageManager();
-        assumeTrue(isVirtualDeviceManagerConfigEnabled(context));
-        assumeTrue(packageManager.hasSystemFeature(
-                PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
-        // TODO(b/261155110): Re-enable tests once freeform mode is supported in Virtual Display.
-        assumeFalse("Skipping test: VirtualDisplay window policy doesn't support freeform.",
-                packageManager.hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT));
-
-        mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
-        assumeNotNull(mVirtualDeviceManager);
-    }
 
     @After
     public void tearDown() {
@@ -158,7 +97,7 @@ public class StreamedAppClipboardTest {
     /** The virtual device owner has access to its device's clipboard. */
     @Test
     public void deviceOwnerCanAccessClipboard() {
-        DeviceEnvironment virtualDevice = new DeviceEnvironment(mVirtualDeviceManager);
+        DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_DEFAULT);
         virtualDevice.mClipboardManager.setPrimaryClip(CLIP_DATA);
 
         virtualDevice.verifyClipChanged();
@@ -169,7 +108,7 @@ public class StreamedAppClipboardTest {
     /** Activities running on the virtual device can read that device's clipboard. */
     @Test
     public void streamedAppCanReadClipboard() {
-        DeviceEnvironment virtualDevice = new DeviceEnvironment(mVirtualDeviceManager);
+        DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_DEFAULT);
         virtualDevice.mClipboardManager.setPrimaryClip(CLIP_DATA);
 
         verifyClipData(virtualDevice.readClipboardFromActivity());
@@ -178,7 +117,7 @@ public class StreamedAppClipboardTest {
     /** Activities running on the virtual device can write that device's clipboard. */
     @Test
     public void streamedAppCanWriteClipboard() {
-        DeviceEnvironment virtualDevice = new DeviceEnvironment(mVirtualDeviceManager);
+        DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_DEFAULT);
         virtualDevice.writeClipboardFromActivity();
 
         virtualDevice.verifyClipChanged();
@@ -193,11 +132,11 @@ public class StreamedAppClipboardTest {
     @Test
     public void streamedAppCanReadClipboard_hostDeviceIsLocked() {
         assumeTrue(FeatureUtil.hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN));
-        DeviceEnvironment virtualDevice = new DeviceEnvironment(mVirtualDeviceManager);
+        DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_DEFAULT);
         virtualDevice.mClipboardManager.setPrimaryClip(CLIP_DATA);
 
         try (LockScreenSession session = new LockScreenSession(
-                InstrumentationRegistry.getInstrumentation(), mWmState)) {
+                InstrumentationRegistry.getInstrumentation(), mRule.getWmState())) {
             session.setLockCredential().gotoKeyguard();
 
             verifyClipData(virtualDevice.readClipboardFromActivity());
@@ -211,10 +150,10 @@ public class StreamedAppClipboardTest {
     @Test
     public void streamedAppCanWriteClipboard_hostDeviceIsLocked() {
         assumeTrue(FeatureUtil.hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN));
-        DeviceEnvironment virtualDevice = new DeviceEnvironment(mVirtualDeviceManager);
+        DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_DEFAULT);
 
         try (LockScreenSession session = new LockScreenSession(
-                InstrumentationRegistry.getInstrumentation(), mWmState)) {
+                InstrumentationRegistry.getInstrumentation(), mRule.getWmState())) {
             session.setLockCredential().gotoKeyguard();
 
             virtualDevice.writeClipboardFromActivity();
@@ -229,7 +168,7 @@ public class StreamedAppClipboardTest {
     @Test
     public void clipboardsAreIsolated() {
         DeviceEnvironment defaultDevice = new DeviceEnvironment();
-        DeviceEnvironment virtualDevice = new DeviceEnvironment(mVirtualDeviceManager);
+        DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_DEFAULT);
 
         defaultDevice.mClipboardManager.setPrimaryClip(CLIP_DATA);
         assertThat(virtualDevice.mClipboardManager.hasPrimaryClip()).isFalse();
@@ -246,7 +185,7 @@ public class StreamedAppClipboardTest {
         DeviceEnvironment defaultDevice = new DeviceEnvironment();
         defaultDevice.mClipboardManager.setPrimaryClip(CLIP_DATA);
 
-        DeviceEnvironment virtualDevice = new DeviceEnvironment(mVirtualDeviceManager);
+        DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_DEFAULT);
 
         assertThat(virtualDevice.readClipboardFromActivity(defaultDevice.mDeviceId)).isNull();
     }
@@ -255,7 +194,7 @@ public class StreamedAppClipboardTest {
     @Test
     public void streamedAppCanNotWriteDefaultDeviceClipboard() {
         DeviceEnvironment defaultDevice = new DeviceEnvironment();
-        DeviceEnvironment virtualDevice = new DeviceEnvironment(mVirtualDeviceManager);
+        DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_DEFAULT);
 
         virtualDevice.writeClipboardFromActivity(defaultDevice.mDeviceId);
 
@@ -268,8 +207,7 @@ public class StreamedAppClipboardTest {
     @Test
     public void customPolicy_clipboardsAreShared() {
         DeviceEnvironment defaultDevice = new DeviceEnvironment();
-        DeviceEnvironment virtualDevice =
-                new DeviceEnvironment(mVirtualDeviceManager, DEVICE_POLICY_CUSTOM);
+        DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_CUSTOM);
 
         defaultDevice.mClipboardManager.setPrimaryClip(CLIP_DATA);
         assertThat(virtualDevice.mClipboardManager.hasPrimaryClip()).isTrue();
@@ -294,8 +232,7 @@ public class StreamedAppClipboardTest {
     @Test
     public void customPolicy_streamedAppReadsFromDefaultDeviceClipboard() {
         DeviceEnvironment defaultDevice = new DeviceEnvironment();
-        DeviceEnvironment virtualDevice =
-                new DeviceEnvironment(mVirtualDeviceManager, DEVICE_POLICY_CUSTOM);
+        DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_CUSTOM);
 
         defaultDevice.mClipboardManager.setPrimaryClip(CLIP_DATA);
 
@@ -310,8 +247,7 @@ public class StreamedAppClipboardTest {
     @Test
     public void customPolicy_streamedAppWritesToDefaultDeviceClipboard() {
         DeviceEnvironment defaultDevice = new DeviceEnvironment();
-        DeviceEnvironment virtualDevice =
-                new DeviceEnvironment(mVirtualDeviceManager, DEVICE_POLICY_CUSTOM);
+        DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_CUSTOM);
 
         virtualDevice.writeClipboardFromActivity(virtualDevice.mDeviceId);
 
@@ -323,8 +259,8 @@ public class StreamedAppClipboardTest {
     /** Activities running on the virtual device cannot read another virtual device's clipboard. */
     @Test
     public void streamedAppCanNotReadAnotherVirtualDeviceClipboard() {
-        DeviceEnvironment virtualDevice = new DeviceEnvironment(mVirtualDeviceManager);
-        DeviceEnvironment anotherVirtualDevice = new DeviceEnvironment(mVirtualDeviceManager);
+        DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_DEFAULT);
+        DeviceEnvironment anotherVirtualDevice = new DeviceEnvironment(DEVICE_POLICY_DEFAULT);
         anotherVirtualDevice.mClipboardManager.setPrimaryClip(CLIP_DATA);
 
         assertThat(virtualDevice.readClipboardFromActivity(anotherVirtualDevice.mDeviceId))
@@ -334,8 +270,8 @@ public class StreamedAppClipboardTest {
     /** Activities running on the virtual device cannot write another virtual device's clipboard. */
     @Test
     public void streamedAppCanNotWriteAnotherVirtualDeviceClipboard() {
-        DeviceEnvironment virtualDevice = new DeviceEnvironment(mVirtualDeviceManager);
-        DeviceEnvironment anotherVirtualDevice = new DeviceEnvironment(mVirtualDeviceManager);
+        DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_DEFAULT);
+        DeviceEnvironment anotherVirtualDevice = new DeviceEnvironment(DEVICE_POLICY_DEFAULT);
 
         virtualDevice.writeClipboardFromActivity(anotherVirtualDevice.mDeviceId);
 
@@ -346,7 +282,7 @@ public class StreamedAppClipboardTest {
     @Test
     public void defaultDeviceAppCanNotReadVirtualDeviceClipboard() {
         DeviceEnvironment defaultDevice = new DeviceEnvironment();
-        DeviceEnvironment virtualDevice = new DeviceEnvironment(mVirtualDeviceManager);
+        DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_DEFAULT);
         virtualDevice.mClipboardManager.setPrimaryClip(CLIP_DATA);
 
         assertThat(defaultDevice.readClipboardFromActivity(virtualDevice.mDeviceId)).isNull();
@@ -356,7 +292,7 @@ public class StreamedAppClipboardTest {
     @Test
     public void defaultDeviceAppCanNotWriteVirtualDeviceClipboard() {
         DeviceEnvironment defaultDevice = new DeviceEnvironment();
-        DeviceEnvironment virtualDevice = new DeviceEnvironment(mVirtualDeviceManager);
+        DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_DEFAULT);
 
         defaultDevice.writeClipboardFromActivity(virtualDevice.mDeviceId);
 
@@ -371,8 +307,7 @@ public class StreamedAppClipboardTest {
     @Test
     public void customPolicy_defaultDeviceAppCanReadVirtualDeviceClipboard() {
         DeviceEnvironment defaultDevice = new DeviceEnvironment();
-        DeviceEnvironment virtualDevice =
-                new DeviceEnvironment(mVirtualDeviceManager, DEVICE_POLICY_CUSTOM);
+        DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_CUSTOM);
 
         virtualDevice.mClipboardManager.setPrimaryClip(CLIP_DATA);
 
@@ -387,8 +322,7 @@ public class StreamedAppClipboardTest {
     @Test
     public void customPolicy_defaultDeviceAppCanWriteVirtualDeviceClipboard() {
         DeviceEnvironment defaultDevice = new DeviceEnvironment();
-        DeviceEnvironment virtualDevice =
-                new DeviceEnvironment(mVirtualDeviceManager, DEVICE_POLICY_CUSTOM);
+        DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_CUSTOM);
 
         defaultDevice.writeClipboardFromActivity(virtualDevice.mDeviceId);
 
@@ -411,22 +345,15 @@ public class StreamedAppClipboardTest {
      */
     private final class DeviceEnvironment {
 
-        private static final ComponentName CLIPBOARD_TEST_ACTIVITY =
-                new ComponentName("android.virtualdevice.streamedtestapp",
-                        "android.virtualdevice.streamedtestapp.ClipboardTestActivity");
         private final Context mContext;
         private ClipboardManager mClipboardManager;
-        @Nullable
-        private VirtualDevice mVirtualDevice;
         private final int mDisplayId;
         private final int mDeviceId;
         @Mock
         private ClipboardManager.OnPrimaryClipChangedListener mOnPrimaryClipChangedListener;
         @Mock
-        private VirtualDeviceManager.ActivityListener mActivityListener;
-        @Mock
-        private VirtualDeviceTestUtils.OnReceiveResultListener mOnReceiveResultListener;
-        private ResultReceiver mResultReceiver;
+        private RemoteCallback.OnResultListener mResultReceiver;
+        private RemoteCallback mRemoteCallback;
 
         DeviceEnvironment() {
             MockitoAnnotations.initMocks(this);
@@ -436,45 +363,36 @@ public class StreamedAppClipboardTest {
             initialize();
         }
 
-        DeviceEnvironment(VirtualDeviceManager virtualDeviceManager) {
-            this(virtualDeviceManager, DEVICE_POLICY_DEFAULT);
-        }
-
-        DeviceEnvironment(VirtualDeviceManager virtualDeviceManager,
-                @VirtualDeviceParams.DevicePolicy int clipboardPolicy) {
+        DeviceEnvironment(@VirtualDeviceParams.DevicePolicy int clipboardPolicy) {
             MockitoAnnotations.initMocks(this);
-            mVirtualDevice = virtualDeviceManager.createVirtualDevice(
-                    mFakeAssociationRule.getAssociationInfo().getId(),
+            VirtualDevice virtualDevice = mRule.createManagedVirtualDevice(
                     new VirtualDeviceParams.Builder()
                             .setLockState(VirtualDeviceParams.LOCK_STATE_ALWAYS_UNLOCKED)
                             .setDevicePolicy(POLICY_TYPE_CLIPBOARD, clipboardPolicy)
                             .build());
-            VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                    VIRTUAL_DISPLAY_CONFIG, null, null);
+            VirtualDisplay virtualDisplay = mRule.createManagedVirtualDisplayWithFlags(
+                    virtualDevice,
+                    DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                            | DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED
+                            | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY);
             mDisplayId = virtualDisplay.getDisplay().getDisplayId();
-            mDeviceId = mVirtualDevice.getDeviceId();
+            mDeviceId = virtualDevice.getDeviceId();
             mContext = getApplicationContext().createDeviceContext(mDeviceId);
-            mVirtualDevice.addActivityListener(mContext.getMainExecutor(), mActivityListener);
-            mWmState.waitForWithAmState(state -> state.getDisplay(mDisplayId) != null,
-                    "Waiting for new display to be created");
             initialize();
         }
 
         private void initialize() {
+            mRemoteCallback = new RemoteCallback(mResultReceiver);
             mDeviceEnvironments.add(this);
             mClipboardManager = mContext.getSystemService(ClipboardManager.class);
             mClipboardManager.clearPrimaryClip();
             assertThat(mClipboardManager.hasPrimaryClip()).isFalse();
             mClipboardManager.addPrimaryClipChangedListener(mOnPrimaryClipChangedListener);
-            mResultReceiver = createResultReceiver(mOnReceiveResultListener);
         }
 
         private void close() {
-            mWmState.waitForActivityRemoved(CLIPBOARD_TEST_ACTIVITY);
+            mRule.getWmState().waitForActivityRemoved(CLIPBOARD_TEST_ACTIVITY);
             mClipboardManager.removePrimaryClipChangedListener(mOnPrimaryClipChangedListener);
-            if (mVirtualDevice != null) {
-                mVirtualDevice.close();
-            }
         }
 
         public ClipData readClipboardFromActivity() {
@@ -483,11 +401,9 @@ public class StreamedAppClipboardTest {
 
         public ClipData readClipboardFromActivity(int deviceId) {
             launchTestActivity(ACTION_READ, deviceId);
-            mTouchHelper.tapOnDisplayCenter(mDisplayId);
 
             ArgumentCaptor<Bundle> bundle = ArgumentCaptor.forClass(Bundle.class);
-            verify(mOnReceiveResultListener, timeout(EVENT_TIMEOUT_MS)).onReceiveResult(anyInt(),
-                    bundle.capture());
+            verify(mResultReceiver, timeout(TIMEOUT_MILLIS)).onResult(bundle.capture());
             ClipData clipData = bundle.getValue().getParcelable(EXTRA_CLIP_DATA, ClipData.class);
             if (clipData == null) {
                 assertThat(bundle.getValue().getBoolean(EXTRA_HAS_CLIP_DATA, true)).isFalse();
@@ -508,24 +424,19 @@ public class StreamedAppClipboardTest {
         private void launchTestActivity(String action, int deviceId) {
             final Intent intent = new Intent(action)
                     .setComponent(CLIPBOARD_TEST_ACTIVITY)
-                    .putExtra(EXTRA_RESULT_RECEIVER, mResultReceiver)
+                    .putExtra(EXTRA_RESULT_RECEIVER, mRemoteCallback)
                     .putExtra(EXTRA_DEVICE_ID, deviceId)
                     .putExtra(EXTRA_CLIP_DATA, CLIP_DATA)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
-            mContext.startActivity(intent, createActivityOptions(mDisplayId));
-            if (mVirtualDevice != null) {
-                verify(mActivityListener, timeout(EVENT_TIMEOUT_MS).atLeastOnce())
-                        .onTopActivityChanged(eq(mDisplayId), eq(CLIPBOARD_TEST_ACTIVITY),
-                                eq(mContext.getUserId()));
-            }
+            mContext.startActivity(intent, VirtualDeviceRule.createActivityOptions(mDisplayId));
         }
 
         private void verifyClipChanged() {
             // We use atLeastOnce for onPrimaryClipChanged because it can fire more than once as
             // text classification results on the clipboard content become available.
-            verify(mOnPrimaryClipChangedListener,
-                    timeout(EVENT_TIMEOUT_MS).atLeastOnce()).onPrimaryClipChanged();
+            verify(mOnPrimaryClipChangedListener, timeout(TIMEOUT_MILLIS).atLeastOnce())
+                    .onPrimaryClipChanged();
         }
     }
 }
