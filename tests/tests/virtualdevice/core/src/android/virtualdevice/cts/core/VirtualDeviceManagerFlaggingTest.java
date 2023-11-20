@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package android.virtualdevice.cts;
+package android.virtualdevice.cts.core;
 
-import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.isVirtualDeviceManagerConfigEnabled;
+import static android.virtualdevice.cts.common.VirtualDeviceRule.isVirtualDeviceManagerConfigEnabled;
+
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
@@ -29,19 +31,13 @@ import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class VirtualDeviceManagerFlaggingTest {
-    private Context mContext;
-
-    @Before
-    public void setUp() {
-        mContext = getApplicationContext();
-    }
+    private final Context mContext = getApplicationContext();
 
     @Test
     public void getSystemService_enableVirtualDeviceManagerFalse_returnsNull() {
@@ -49,10 +45,7 @@ public class VirtualDeviceManagerFlaggingTest {
         assumeFalse(isVirtualDeviceManagerConfigEnabled(mContext));
 
         // config_enableVirtualDeviceManager is false so VirtualDeviceManager shouldn't be started.
-        assertNull(
-                "VirtualDeviceManager.class started in spite of setting "
-                        + "config_enableVirtualDeviceManager false.",
-                mContext.getSystemService(VirtualDeviceManager.class));
+        assertThat(mContext.getSystemService(VirtualDeviceManager.class)).isNull();
     }
 
     @Test
@@ -61,9 +54,6 @@ public class VirtualDeviceManagerFlaggingTest {
         assumeTrue(isVirtualDeviceManagerConfigEnabled(mContext));
 
         // config_enableVirtualDeviceManager is true so VirtualDeviceManager should be started.
-        assertNotNull(
-                "VirtualDeviceManager.class not started in spite of setting "
-                        + "config_enableVirtualDeviceManager true.",
-                mContext.getSystemService(VirtualDeviceManager.class));
+        assertThat(mContext.getSystemService(VirtualDeviceManager.class)).isNotNull();
     }
 }
