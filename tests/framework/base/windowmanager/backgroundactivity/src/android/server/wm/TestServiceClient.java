@@ -89,6 +89,11 @@ public class TestServiceClient implements ITestService {
         sendPendingIntent(pendingIntent, Bundle.EMPTY);
     }
 
+    public void sendPendingIntentWithActivity(PendingIntent pendingIntent, Bundle sendOptions)
+            throws RemoteException {
+        mTestService.sendPendingIntentWithActivity(pendingIntent, sendOptions);
+    }
+
     @Override
     public void startActivityIntent(Intent intent) throws RemoteException {
         mTestService.startActivityIntent(intent);

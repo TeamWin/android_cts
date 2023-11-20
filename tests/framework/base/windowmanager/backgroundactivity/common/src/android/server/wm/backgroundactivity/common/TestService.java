@@ -18,6 +18,7 @@ package android.server.wm.backgroundactivity.common;
 
 import static android.server.wm.backgroundactivity.common.CommonComponents.EVENT_NOTIFIER_EXTRA;
 
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ComponentName;
@@ -36,6 +37,9 @@ import java.util.UUID;
 public class TestService extends Service {
     static final String TAG = TestService.class.getName();
     private final ITestService mBinder = new MyBinder();
+
+    // The latest ForegroundActivity created. It is stored to start a PendingIntent.
+    public static Activity sLatestForegroundActivity;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -92,6 +96,19 @@ public class TestService extends Service {
         public void sendPendingIntent(PendingIntent pendingIntent, Bundle sendOptions) {
             try {
                 pendingIntent.send(sendOptions);
+            } catch (Exception e) {
+                Log.e(TAG, "sendPendingIntent failed", e);
+                throw new AssertionError(e);
+            }
+        }
+
+        @Override
+        public void sendPendingIntentWithActivity(PendingIntent pendingIntent,
+                Bundle sendOptions) {
+            try {
+                sLatestForegroundActivity.startIntentSenderForResult(
+                        pendingIntent.getIntentSender(), /*requestCode*/1, /*fillinIntent*/
+                        null, /*flagsMask*/0, /*flagsValue*/0, /*extraFlags*/0);
             } catch (Exception e) {
                 Log.e(TAG, "sendPendingIntent failed", e);
                 throw new AssertionError(e);
