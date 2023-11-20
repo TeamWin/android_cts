@@ -16,7 +16,6 @@
 
 package android.virtualdevice.cts.sensor;
 
-import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.hardware.Sensor.TYPE_ACCELEROMETER;
 import static android.hardware.SensorDirectChannel.RATE_NORMAL;
 import static android.hardware.SensorDirectChannel.RATE_STOP;
@@ -49,7 +48,6 @@ import android.companion.virtual.sensor.VirtualSensorDirectChannelCallback;
 import android.companion.virtual.sensor.VirtualSensorDirectChannelWriter;
 import android.companion.virtual.sensor.VirtualSensorEvent;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.hardware.HardwareBuffer;
 import android.hardware.Sensor;
 import android.hardware.SensorDirectChannel;
@@ -60,13 +58,10 @@ import android.os.MemoryFile;
 import android.os.SharedMemory;
 import android.platform.test.annotations.AppModeFull;
 import android.system.ErrnoException;
-import android.virtualdevice.cts.common.FakeAssociationRule;
+import android.virtualdevice.cts.common.VirtualDeviceRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
-
-import com.android.compatibility.common.util.AdoptShellPermissionsRule;
-import com.android.internal.os.BackgroundThread;
 
 import org.junit.After;
 import org.junit.Before;
@@ -107,14 +102,7 @@ public class VirtualSensorTest {
     private static final int SHARED_MEMORY_SIZE = SENSOR_EVENT_COUNT * SENSOR_EVENT_SIZE;
 
     @Rule
-    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
-            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-            CREATE_VIRTUAL_DEVICE);
-
-    @Rule
-    public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
-
-    private VirtualDeviceManager mVirtualDeviceManager;
+    public VirtualDeviceRule mVirtualDeviceRule = VirtualDeviceRule.createDefault();
     @Nullable
     private VirtualDeviceManager.VirtualDevice mVirtualDevice;
 
@@ -133,18 +121,12 @@ public class VirtualSensorTest {
     private VirtualSensorDirectChannelCallback mVirtualSensorDirectChannelCallback;
     private VirtualSensorEventListener mSensorEventListener = new VirtualSensorEventListener();
 
-    // Synchronize the IO to reduce test flakiness.
-    private final Object mSharedMemoryLock = new Object();
+    private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         MockitoAnnotations.initMocks(this);
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        final PackageManager packageManager = context.getPackageManager();
-        assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
-        mSensorManager = context.getSystemService(SensorManager.class);
-
-        mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
+        mSensorManager = mContext.getSystemService(SensorManager.class);
     }
 
     private VirtualSensor setUpVirtualSensor(VirtualSensorConfig sensorConfig) {
@@ -155,16 +137,14 @@ public class VirtualSensorTest {
             builder = builder
                     .addVirtualSensorConfig(sensorConfig)
                     .setVirtualSensorCallback(
-                            BackgroundThread.getExecutor(), mVirtualSensorCallback);
+                            mContext.getMainExecutor(), mVirtualSensorCallback);
             if (sensorConfig.getDirectChannelTypesSupported() > 0) {
                 builder = builder.setVirtualSensorDirectChannelCallback(
-                        BackgroundThread.getExecutor(), mVirtualSensorDirectChannelCallback);
+                        mContext.getMainExecutor(), mVirtualSensorDirectChannelCallback);
             }
         }
-        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
-                mFakeAssociationRule.getAssociationInfo().getId(), builder.build());
-        Context deviceContext = InstrumentationRegistry.getInstrumentation().getContext()
-                .createDeviceContext(mVirtualDevice.getDeviceId());
+        mVirtualDevice = mVirtualDeviceRule.createManagedVirtualDevice(builder.build());
+        Context deviceContext = mContext.createDeviceContext(mVirtualDevice.getDeviceId());
         mVirtualDeviceSensorManager = deviceContext.getSystemService(SensorManager.class);
         if (sensorConfig == null) {
             return null;
@@ -186,9 +166,6 @@ public class VirtualSensorTest {
 
     @After
     public void tearDown() {
-        if (mVirtualDevice != null) {
-            mVirtualDevice.close();
-        }
         if (mMemoryFile != null) {
             mMemoryFile.close();
         }
@@ -280,11 +257,9 @@ public class VirtualSensorTest {
                         new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, SECOND_SENSOR_NAME)
                                 .build())
                 .setVirtualSensorCallback(
-                        BackgroundThread.getExecutor(), mVirtualSensorCallback);
-        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
-                mFakeAssociationRule.getAssociationInfo().getId(), builder.build());
-        Context deviceContext = InstrumentationRegistry.getInstrumentation().getContext()
-                .createDeviceContext(mVirtualDevice.getDeviceId());
+                        mContext.getMainExecutor(), mVirtualSensorCallback);
+        mVirtualDevice = mVirtualDeviceRule.createManagedVirtualDevice(builder.build());
+        Context deviceContext = mContext.createDeviceContext(mVirtualDevice.getDeviceId());
         mVirtualDeviceSensorManager = deviceContext.getSystemService(SensorManager.class);
 
         List<VirtualSensor> virtualSensors = mVirtualDevice.getVirtualSensorList();
@@ -317,11 +292,10 @@ public class VirtualSensorTest {
     }
 
     @Test
-    public void closeVirtualDevice_removesSensor() throws Exception {
+    public void closeVirtualDevice_removesSensor() {
         mVirtualSensor = setUpVirtualSensor(
                 new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME).build());
         mVirtualDevice.close();
-        mVirtualDevice = null;
 
         // The virtual device ID is no longer valid, SensorManager falls back to default device.
         Sensor sensor = mVirtualDeviceSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
@@ -535,19 +509,18 @@ public class VirtualSensorTest {
     @Test
     public void directConnection_memoryFile_notValidForAnotherVirtualDevice() throws Exception {
         setUpDirectChannel();
-        VirtualDeviceManager.VirtualDevice secondVirtualDevice = mVirtualDevice;
 
+        // Creates a new virtual device, while the direct channel is associated with the Sensor
+        // manager of the first virtual device.
         mVirtualSensor = setUpVirtualSensor(
                 new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME)
                         .setDirectChannelTypesSupported(TYPE_MEMORY_FILE)
                         .setHighestDirectReportRateLevel(RATE_NORMAL)
                         .build());
 
-        // The channel is configured for the second device and the sensor does not belong to it.
+        // The channel is configured for the first device and the sensor does not belong to it.
         Sensor sensor = mVirtualDeviceSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
         assertThat(mDirectChannel.configure(sensor, RATE_NORMAL)).isEqualTo(0);
-
-        secondVirtualDevice.close();
     }
 
     @Test
@@ -656,7 +629,8 @@ public class VirtualSensorTest {
             writeDirectChannelEvents(reportToken, sharedMemory.getValue());
             return null;
         }).when(mVirtualSensorDirectChannelCallback)
-                .onDirectChannelConfigured(eq(channelHandle.getValue()), any(), anyInt(), anyInt());
+                .onDirectChannelConfigured(
+                        eq(channelHandle.getValue()), any(), eq(RATE_NORMAL), anyInt());
 
         Sensor sensor = mVirtualDeviceSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
         int reportToken = mDirectChannel.configure(sensor, RATE_NORMAL);
@@ -701,14 +675,11 @@ public class VirtualSensorTest {
                         reportToken + eventCount * 0.02f,
                         reportToken + eventCount * 0.03f,
                 };
-                synchronized (mSharedMemoryLock) {
-                    assertThat(
-                            mVirtualSensorDirectChannelWriter.writeSensorEvent(sensor,
-                                    new VirtualSensorEvent.Builder(values)
-                                            .setTimestampNanos(System.nanoTime())
-                                            .build()))
-                            .isTrue();
-                }
+                assertThat(mVirtualSensorDirectChannelWriter.writeSensorEvent(sensor,
+                        new VirtualSensorEvent.Builder(values)
+                                .setTimestampNanos(System.nanoTime())
+                                .build()))
+                        .isTrue();
                 try {
                     Thread.sleep(random.nextInt(10));  // Sleep random time of 0-20ms.
                 } catch (InterruptedException e) {
@@ -717,7 +688,7 @@ public class VirtualSensorTest {
             }
             return null;
         }).when(mVirtualSensorDirectChannelCallback)
-                .onDirectChannelConfigured(anyInt(), any(), anyInt(), anyInt());
+                .onDirectChannelConfigured(anyInt(), any(), eq(RATE_NORMAL), anyInt());
 
         setUpDirectChannel();
 
@@ -780,13 +751,11 @@ public class VirtualSensorTest {
         event.order(ByteOrder.nativeOrder());
         Random random = new Random();
         ByteBuffer memoryMapping = null;
-        synchronized (mSharedMemoryLock) {
-            try {
-                memoryMapping = sharedMemory.mapReadWrite();
-            } catch (ErrnoException e) {
-                sharedMemory.close();
-                fail("Could not map the shared memory for IO: " + e);
-            }
+        try {
+            memoryMapping = sharedMemory.mapReadWrite();
+        } catch (ErrnoException e) {
+            sharedMemory.close();
+            fail("Could not map the shared memory for IO: " + e);
         }
 
         while (eventCount < SENSOR_EVENT_COUNT * 2) {
@@ -811,10 +780,8 @@ public class VirtualSensorTest {
             }
 
             offset += SENSOR_EVENT_SIZE;
-            synchronized (mSharedMemoryLock) {
-                if (offset + SENSOR_EVENT_SIZE >= sharedMemory.getSize()) {
-                    offset = 0;
-                }
+            if (offset + SENSOR_EVENT_SIZE >= sharedMemory.getSize()) {
+                offset = 0;
             }
         }
     }
@@ -826,10 +793,8 @@ public class VirtualSensorTest {
         byteBuffer.order(ByteOrder.nativeOrder());
 
         while (eventCount < SENSOR_EVENT_COUNT * 2) {
-            synchronized (mSharedMemoryLock) {
-                assertThat(mMemoryFile.readBytes(byteBuffer.array(), offset, 0, SENSOR_EVENT_SIZE))
-                        .isEqualTo(SENSOR_EVENT_SIZE);
-            }
+            assertThat(mMemoryFile.readBytes(byteBuffer.array(), offset, 0, SENSOR_EVENT_SIZE))
+                    .isEqualTo(SENSOR_EVENT_SIZE);
             byteBuffer.position(0);
             int eventSize = byteBuffer.getInt();
             int actualReportToken = byteBuffer.getInt();
