@@ -40,10 +40,6 @@
           "exclude-filter": "android.hardware.cts.LowRamDeviceTest#testMinSharedDataPartitionSize"
         },
         {
-          // TODO(b/209025827)
-          "exclude-filter": "android.hardware.cts.DataSpaceTest#getDataSpaceWithoutSetDataSpace"
-        },
-        {
           // TODO(b/206945621)
           "exclude-filter": "android.hardware.input.cts.tests.SonyDualSenseUsbTest#testAllMotions"
         },
