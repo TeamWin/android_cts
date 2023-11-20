@@ -14,14 +14,9 @@
  * limitations under the License.
  */
 
-package android.virtualdevice.cts;
+package android.virtualdevice.cts.audio;
 
-import static android.Manifest.permission.ACTIVITY_EMBEDDING;
-import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
-import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.Manifest.permission.MODIFY_AUDIO_ROUTING;
-import static android.Manifest.permission.READ_CLIPBOARD_IN_BACKGROUND;
-import static android.Manifest.permission.WAKE_LOCK;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_AUDIO;
 import static android.media.AudioAttributes.CONTENT_TYPE_SPEECH;
@@ -33,26 +28,21 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.util.concurrent.Uninterruptibles.getUninterruptibly;
 
 import static org.junit.Assume.assumeNotNull;
-import static org.junit.Assume.assumeTrue;
 
 import android.annotation.NonNull;
 import android.annotation.Nullable;
-import android.companion.virtual.VirtualDeviceManager;
+import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.AudioPlaybackConfiguration;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
-import android.virtualdevice.cts.common.FakeAssociationRule;
+import android.virtualdevice.cts.common.VirtualDeviceRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.platform.app.InstrumentationRegistry;
-
-import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -80,43 +70,42 @@ public class TextToSpeechTest {
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
 
     @Rule
-    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
-            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-            ACTIVITY_EMBEDDING,
-            ADD_TRUSTED_DISPLAY,
-            CREATE_VIRTUAL_DEVICE,
-            READ_CLIPBOARD_IN_BACKGROUND,
+    public VirtualDeviceRule mVirtualDeviceRule = VirtualDeviceRule.withAdditionalPermissions(
             // Modify audio routing permission is needed because without it, the audio session id
             // entry in AudioPlaybackConfiguration is redacted.
-            MODIFY_AUDIO_ROUTING,
-            WAKE_LOCK);
+            MODIFY_AUDIO_ROUTING);
 
-    @Rule
-    public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
-
-    private VirtualDeviceManager mVirtualDeviceManager;
     private AudioManager mAudioManager;
 
     private SpeechPlaybackObserver mSpeechPlaybackObserver;
 
+    private int mVirtualDeviceAudioSessionId;
+    private TextToSpeech mTextToSpeech;
+
     @Before
     public void setUp() {
         Context context = getApplicationContext();
-        final PackageManager packageManager = context.getPackageManager();
-        assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
-        assumeTrue(packageManager.hasSystemFeature(
-                PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
-        mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
-        assumeNotNull(mVirtualDeviceManager);
         mAudioManager = context.getSystemService(AudioManager.class);
         assumeNotNull(mAudioManager);
         mSpeechPlaybackObserver = new SpeechPlaybackObserver();
         mAudioManager.registerAudioPlaybackCallback(mSpeechPlaybackObserver, /*handler=*/null);
 
+        mVirtualDeviceAudioSessionId = mAudioManager.generateAudioSessionId();
+        VirtualDevice virtualDevice = mVirtualDeviceRule.createManagedVirtualDevice(
+                new VirtualDeviceParams.Builder()
+                        .setDevicePolicy(POLICY_TYPE_AUDIO, DEVICE_POLICY_CUSTOM)
+                        .setAudioPlaybackSessionId(mVirtualDeviceAudioSessionId)
+                        .build());
+        Context virtualDeviceContext = virtualDevice.createContext();
+        mTextToSpeech = initializeTextToSpeech(virtualDeviceContext);
+        assumeNotNull(mTextToSpeech);
     }
 
     @After
     public void tearDown() {
+        if (mTextToSpeech != null) {
+            mTextToSpeech.shutdown();
+        }
         if (mAudioManager != null) {
             mAudioManager.unregisterAudioPlaybackCallback(mSpeechPlaybackObserver);
         }
@@ -124,70 +113,35 @@ public class TextToSpeechTest {
 
     @Test
     public void textToSpeechWithVirtualDeviceContext_hasVdmSpecificSessionId() throws Exception {
-        // Create virtual device with device specific audio session id.
-        int virtualDeviceAudioSessionId = mAudioManager.generateAudioSessionId();
-        try (VirtualDeviceManager.VirtualDevice virtualDevice =
-                     createVirtualDeviceWithPlaybackSessionId(
-                             virtualDeviceAudioSessionId)) {
-            Context virtualDeviceContext = virtualDevice.createContext();
+        mTextToSpeech.speak(TTS_TEXT, TextToSpeech.QUEUE_ADD, /*params=*/null, UTTERANCE_ID);
 
-            // Instantiate TTS with device-specific context.
-            TextToSpeech tts = initializeTextToSpeech(virtualDeviceContext);
-            assumeNotNull(tts);
+        // Wait for audio playback with SPEECH content.
+        AudioPlaybackConfiguration ttsAudioPlaybackConfig = getUninterruptibly(
+                mSpeechPlaybackObserver.getSpeechAudioPlaybackConfigFuture(),
+                TIMEOUT.getSeconds(), TimeUnit.SECONDS);
 
-            try {
-                tts.speak(TTS_TEXT, TextToSpeech.QUEUE_ADD, /*params=*/null, UTTERANCE_ID);
-
-                // Wait for audio playback with SPEECH content.
-                AudioPlaybackConfiguration ttsAudioPlaybackConfig =
-                        getUninterruptibly(
-                                mSpeechPlaybackObserver.getSpeechAudioPlaybackConfigFuture(),
-                                TIMEOUT.getSeconds(), TimeUnit.SECONDS);
-
-                // Verify the SPEECH playback has audio session id corresponding to virtual device.
-                assertThat(ttsAudioPlaybackConfig.getSessionId()).isEqualTo(
-                        virtualDeviceAudioSessionId);
-            } finally {
-                tts.shutdown();
-            }
-        }
+        // Verify the SPEECH playback has audio session id corresponding to virtual device.
+        assertThat(ttsAudioPlaybackConfig.getSessionId()).isEqualTo(mVirtualDeviceAudioSessionId);
     }
 
     @Test
     public void textToSpeechWithVirtualDeviceContext_explicitSessionIdOverridesVdmSessionId()
             throws Exception {
-        // Create virtual device with device specific audio session id.
-        int virtualDeviceAudioSessionId = mAudioManager.generateAudioSessionId();
-        try (VirtualDeviceManager.VirtualDevice virtualDevice =
-                     createVirtualDeviceWithPlaybackSessionId(
-                             virtualDeviceAudioSessionId)) {
-            Context virtualDeviceContext = virtualDevice.createContext();
+        // Issue TTS.speak request with explicitly configured audio session id.
+        int explicitlyRequestedAudioSessionId = mAudioManager.generateAudioSessionId();
+        mTextToSpeech.speak(TTS_TEXT, TextToSpeech.QUEUE_ADD,
+                createAudioSessionIdParamForTts(explicitlyRequestedAudioSessionId),
+                UTTERANCE_ID);
 
-            // Instantiate TTS with device-specific context.
-            TextToSpeech tts = initializeTextToSpeech(virtualDeviceContext);
-            assumeNotNull(tts);
+        // Wait for audio playback with SPEECH content.
+        AudioPlaybackConfiguration ttsAudioPlaybackConfig = getUninterruptibly(
+                mSpeechPlaybackObserver.getSpeechAudioPlaybackConfigFuture(),
+                TIMEOUT.getSeconds(), TimeUnit.SECONDS);
 
-            try {
-                // Issue TTS.speak request with explicitly configured audio session id.
-                int explicitlyRequestedAudioSessionId = mAudioManager.generateAudioSessionId();
-                tts.speak(TTS_TEXT, TextToSpeech.QUEUE_ADD,
-                        createAudioSessionIdParamForTts(explicitlyRequestedAudioSessionId),
-                        UTTERANCE_ID);
-
-                // Wait for audio playback with SPEECH content.
-                AudioPlaybackConfiguration ttsAudioPlaybackConfig =
-                        getUninterruptibly(
-                                mSpeechPlaybackObserver.getSpeechAudioPlaybackConfigFuture(),
-                                TIMEOUT.getSeconds(), TimeUnit.SECONDS);
-
-                // Verify that explicitly requested audio session id has overridden the virtual
-                // device audio session id.
-                assertThat(ttsAudioPlaybackConfig.getSessionId()).isEqualTo(
-                        explicitlyRequestedAudioSessionId);
-            } finally {
-                tts.shutdown();
-            }
-        }
+        // Verify that explicitly requested audio session id has overridden the virtual
+        // device audio session id.
+        assertThat(ttsAudioPlaybackConfig.getSessionId())
+                .isEqualTo(explicitlyRequestedAudioSessionId);
     }
 
     private static Bundle createAudioSessionIdParamForTts(int sessionId) {
@@ -213,16 +167,6 @@ public class TextToSpeechTest {
         }
         tts.setLanguage(Locale.US);
         return tts;
-    }
-
-    private VirtualDeviceManager.VirtualDevice createVirtualDeviceWithPlaybackSessionId(
-            int audioPlaybackSessionId) {
-        return mVirtualDeviceManager.createVirtualDevice(
-                mFakeAssociationRule.getAssociationInfo().getId(),
-                new VirtualDeviceParams.Builder()
-                        .setDevicePolicy(POLICY_TYPE_AUDIO, DEVICE_POLICY_CUSTOM)
-                        .setAudioPlaybackSessionId(audioPlaybackSessionId)
-                        .build());
     }
 
     /**

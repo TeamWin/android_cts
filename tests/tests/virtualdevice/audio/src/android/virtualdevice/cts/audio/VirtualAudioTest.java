@@ -13,18 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.virtualdevice.cts;
+package android.virtualdevice.cts.audio;
 
-import static android.Manifest.permission.ACTIVITY_EMBEDDING;
-import static android.Manifest.permission.ADD_ALWAYS_UNLOCKED_DISPLAY;
-import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
 import static android.Manifest.permission.CAPTURE_AUDIO_OUTPUT;
-import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.Manifest.permission.MODIFY_AUDIO_ROUTING;
-import static android.Manifest.permission.REAL_GET_TASKS;
-import static android.Manifest.permission.WAKE_LOCK;
-import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
-import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED;
 import static android.media.AudioFormat.CHANNEL_IN_MONO;
 import static android.media.AudioFormat.CHANNEL_OUT_MONO;
 import static android.media.AudioFormat.ENCODING_PCM_16BIT;
@@ -36,69 +28,48 @@ import static android.media.AudioTrack.PLAYSTATE_PLAYING;
 import static android.media.AudioTrack.PLAYSTATE_STOPPED;
 import static android.media.AudioTrack.WRITE_BLOCKING;
 import static android.media.AudioTrack.WRITE_NON_BLOCKING;
-import static android.virtualdevice.cts.common.AudioHelper.AMPLITUDE;
-import static android.virtualdevice.cts.common.AudioHelper.BUFFER_SIZE_IN_BYTES;
-import static android.virtualdevice.cts.common.AudioHelper.BYTE_ARRAY;
-import static android.virtualdevice.cts.common.AudioHelper.BYTE_BUFFER;
-import static android.virtualdevice.cts.common.AudioHelper.BYTE_VALUE;
-import static android.virtualdevice.cts.common.AudioHelper.CHANNEL_COUNT;
-import static android.virtualdevice.cts.common.AudioHelper.FLOAT_ARRAY;
-import static android.virtualdevice.cts.common.AudioHelper.FLOAT_VALUE;
-import static android.virtualdevice.cts.common.AudioHelper.FREQUENCY;
-import static android.virtualdevice.cts.common.AudioHelper.NUMBER_OF_SAMPLES;
-import static android.virtualdevice.cts.common.AudioHelper.SAMPLE_RATE;
-import static android.virtualdevice.cts.common.AudioHelper.SHORT_ARRAY;
-import static android.virtualdevice.cts.common.AudioHelper.SHORT_VALUE;
-import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createActivityOptions;
-
-import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
+import static android.virtualdevice.cts.audio.AudioHelper.AMPLITUDE;
+import static android.virtualdevice.cts.audio.AudioHelper.BUFFER_SIZE_IN_BYTES;
+import static android.virtualdevice.cts.audio.AudioHelper.BYTE_ARRAY;
+import static android.virtualdevice.cts.audio.AudioHelper.BYTE_BUFFER;
+import static android.virtualdevice.cts.audio.AudioHelper.BYTE_VALUE;
+import static android.virtualdevice.cts.audio.AudioHelper.CHANNEL_COUNT;
+import static android.virtualdevice.cts.audio.AudioHelper.FLOAT_ARRAY;
+import static android.virtualdevice.cts.audio.AudioHelper.FLOAT_VALUE;
+import static android.virtualdevice.cts.audio.AudioHelper.FREQUENCY;
+import static android.virtualdevice.cts.audio.AudioHelper.NUMBER_OF_SAMPLES;
+import static android.virtualdevice.cts.audio.AudioHelper.SAMPLE_RATE;
+import static android.virtualdevice.cts.audio.AudioHelper.SHORT_ARRAY;
+import static android.virtualdevice.cts.audio.AudioHelper.SHORT_VALUE;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import android.app.Activity;
-import android.app.Instrumentation;
-import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
-import android.companion.virtual.VirtualDeviceParams;
 import android.companion.virtual.audio.AudioCapture;
 import android.companion.virtual.audio.AudioInjection;
 import android.companion.virtual.audio.VirtualAudioDevice;
 import android.companion.virtual.audio.VirtualAudioDevice.AudioConfigurationChangeCallback;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
-import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
-import android.virtualdevice.cts.common.ActivityResultReceiver;
-import android.virtualdevice.cts.common.AudioHelper;
-import android.virtualdevice.cts.common.FakeAssociationRule;
-import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
+import android.virtualdevice.cts.common.VirtualDeviceRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.AdoptShellPermissionsRule;
-
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -124,37 +95,18 @@ public class VirtualAudioTest {
      */
     public static final double POWER_THRESHOLD_FOR_ABSENT = 0.02f;
 
-    private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =
-            new VirtualDeviceParams.Builder().build();
-
     @Rule
-    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
-            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-            ACTIVITY_EMBEDDING,
-            ADD_ALWAYS_UNLOCKED_DISPLAY,
-            ADD_TRUSTED_DISPLAY,
-            CREATE_VIRTUAL_DEVICE,
-            REAL_GET_TASKS,
-            WAKE_LOCK,
-            MODIFY_AUDIO_ROUTING,
-            CAPTURE_AUDIO_OUTPUT);
-    @Rule
-    public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
+    public VirtualDeviceRule mVirtualDeviceRule = VirtualDeviceRule.withAdditionalPermissions(
+            MODIFY_AUDIO_ROUTING, CAPTURE_AUDIO_OUTPUT);
 
     private VirtualDevice mVirtualDevice;
     private VirtualDisplay mVirtualDisplay;
     private VirtualAudioDevice mVirtualAudioDevice;
 
     @Mock
-    private VirtualDisplay.Callback mVirtualDisplayCallback;
-    @Mock
     private AudioConfigurationChangeCallback mAudioConfigurationChangeCallback;
     @Mock
-    private ActivityResultReceiver.Callback mActivityResultCallback;
-    @Mock
     private AudioActivity.ResultCallback mAudioResultCallback;
-    @Captor
-    private ArgumentCaptor<Intent> mIntentCaptor;
 
     private static AudioFormat createCaptureFormat(int encoding) {
         return new AudioFormat.Builder()
@@ -173,47 +125,18 @@ public class VirtualAudioTest {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         MockitoAnnotations.initMocks(this);
-        Context context = getApplicationContext();
-        final PackageManager packageManager = context.getPackageManager();
-        assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
-        assumeTrue(packageManager.hasSystemFeature(
-                PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
-        assumeFalse("Skipping test: not supported on automotive", isAutomotive());
-        // TODO(b/261155110): Re-enable tests once freeform mode is supported in Virtual Display.
-        assumeFalse("Skipping test: VirtualDisplay window policy doesn't support freeform.",
-                packageManager.hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT));
 
-        VirtualDeviceManager vdm = context.getSystemService(VirtualDeviceManager.class);
-        mVirtualDevice = vdm.createVirtualDevice(
-                mFakeAssociationRule.getAssociationInfo().getId(),
-                DEFAULT_VIRTUAL_DEVICE_PARAMS);
-        mVirtualDisplay = mVirtualDevice.createVirtualDisplay(
-                VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder()
-                        .setFlags(VIRTUAL_DISPLAY_FLAG_TRUSTED)
-                        .build(),
-                Runnable::run,
-                mVirtualDisplayCallback);
-    }
-
-    @After
-    public void tearDown() {
-        if (mVirtualDevice != null) {
-            mVirtualDevice.close();
-        }
-        if (mVirtualDisplay != null) {
-            mVirtualDisplay.release();
-        }
-        if (mVirtualAudioDevice != null) {
-            mVirtualAudioDevice.close();
-        }
+        mVirtualDevice = mVirtualDeviceRule.createManagedVirtualDevice();
+        mVirtualDisplay = mVirtualDeviceRule.createManagedVirtualDisplay(
+                mVirtualDevice, VirtualDeviceRule.TRUSTED_VIRTUAL_DISPLAY_CONFIG);
+        mVirtualAudioDevice = mVirtualDevice.createVirtualAudioDevice(
+                mVirtualDisplay, Runnable::run, mAudioConfigurationChangeCallback);
     }
 
     @Test
     public void audioCapture_createCorrectly() {
-        mVirtualAudioDevice = mVirtualDevice.createVirtualAudioDevice(
-                mVirtualDisplay, /* executor= */ null, /* callback= */ null);
         AudioFormat audioFormat = createCaptureFormat(ENCODING_PCM_16BIT);
         AudioCapture audioCapture = mVirtualAudioDevice.startAudioCapture(audioFormat);
         assertThat(audioCapture).isNotNull();
@@ -228,8 +151,6 @@ public class VirtualAudioTest {
 
     @Test
     public void audioInjection_createCorrectly() {
-        mVirtualAudioDevice = mVirtualDevice.createVirtualAudioDevice(
-                mVirtualDisplay, /* executor= */ null, /* callback= */ null);
         AudioFormat audioFormat = createInjectionFormat(ENCODING_PCM_16BIT);
         AudioInjection audioInjection = mVirtualAudioDevice.startAudioInjection(audioFormat);
         assertThat(audioInjection).isNotNull();
@@ -250,12 +171,10 @@ public class VirtualAudioTest {
 
     @Test
     public void audioCapture_receivesAudioConfigurationChangeCallback() {
-        mVirtualAudioDevice = mVirtualDevice.createVirtualAudioDevice(
-                mVirtualDisplay, /* executor= */ null, mAudioConfigurationChangeCallback);
         AudioFormat audioFormat = createCaptureFormat(ENCODING_PCM_16BIT);
         mVirtualAudioDevice.startAudioCapture(audioFormat);
 
-        AudioActivity activity = startAudioActivity(mVirtualDisplay);
+        AudioActivity activity = startAudioActivity();
         activity.playAudio(BYTE_BUFFER);
         verify(mAudioResultCallback, timeout(5000)).onCompleted();
         verify(mAudioConfigurationChangeCallback, timeout(5000).atLeastOnce())
@@ -265,12 +184,10 @@ public class VirtualAudioTest {
 
     @Test
     public void audioInjection_receivesAudioConfigurationChangeCallback() {
-        mVirtualAudioDevice = mVirtualDevice.createVirtualAudioDevice(
-                mVirtualDisplay, /* executor= */ null, mAudioConfigurationChangeCallback);
         AudioFormat audioFormat = createInjectionFormat(ENCODING_PCM_16BIT);
         AudioInjection audioInjection = mVirtualAudioDevice.startAudioInjection(audioFormat);
 
-        AudioActivity activity = startAudioActivity(mVirtualDisplay);
+        AudioActivity activity = startAudioActivity();
         activity.recordAudio(BYTE_BUFFER);
 
         ByteBuffer byteBuffer = AudioHelper.createAudioData(
@@ -323,14 +240,12 @@ public class VirtualAudioTest {
 
     @Test
     public void audioInjection_writeByteBuffer_appShouldRecordInjectedFrequency() {
-        runAudioInjectionTest(BYTE_BUFFER, /* writeMode= */
-                WRITE_BLOCKING, /* timestamp= */ 0);
+        runAudioInjectionTest(BYTE_BUFFER, /* writeMode= */ WRITE_BLOCKING, /* timestamp= */ 0);
     }
 
     @Test
     public void audioInjection_writeByteBufferWithTimestamp_appShouldRecordInjectedFrequency() {
-        runAudioInjectionTest(BYTE_BUFFER, /* writeMode= */
-                WRITE_BLOCKING, /* timestamp= */ 50);
+        runAudioInjectionTest(BYTE_BUFFER, /* writeMode= */ WRITE_BLOCKING, /* timestamp= */ 50);
     }
 
     @Test
@@ -340,8 +255,7 @@ public class VirtualAudioTest {
 
     @Test
     public void audioInjection_writeByteArrayBlocking_appShouldRecordInjectedData() {
-        runAudioInjectionTest(BYTE_ARRAY, /* writeMode= */ WRITE_BLOCKING, /* timestamp= */
-                0);
+        runAudioInjectionTest(BYTE_ARRAY, /* writeMode= */ WRITE_BLOCKING, /* timestamp= */ 0);
     }
 
     @Test
@@ -351,29 +265,20 @@ public class VirtualAudioTest {
 
     @Test
     public void audioInjection_writeShortArrayBlocking_appShouldRecordInjectedData() {
-        runAudioInjectionTest(SHORT_ARRAY, /* writeMode= */
-                WRITE_BLOCKING, /* timestamp= */ 0);
+        runAudioInjectionTest(SHORT_ARRAY, /* writeMode= */ WRITE_BLOCKING, /* timestamp= */ 0);
     }
 
     @Test
     public void audioInjection_writeFloatArray_appShouldRecordInjectedData() {
-        runAudioInjectionTest(FLOAT_ARRAY, /* writeMode= */
-                WRITE_BLOCKING, /* timestamp= */ 0);
-    }
-
-    private boolean isAutomotive() {
-        return getApplicationContext().getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+        runAudioInjectionTest(FLOAT_ARRAY, /* writeMode= */ WRITE_BLOCKING, /* timestamp= */ 0);
     }
 
     private void runAudioCaptureTest(@AudioHelper.DataType int dataType, int readMode) {
-        mVirtualAudioDevice = mVirtualDevice.createVirtualAudioDevice(
-                mVirtualDisplay, /* executor= */ null, /* callback= */ null);
         int encoding = dataType == FLOAT_ARRAY ? ENCODING_PCM_FLOAT : ENCODING_PCM_16BIT;
         AudioCapture audioCapture = mVirtualAudioDevice.startAudioCapture(
                 createCaptureFormat(encoding));
 
-        AudioActivity audioActivity = startAudioActivity(mVirtualDisplay);
+        AudioActivity audioActivity = startAudioActivity();
         audioActivity.playAudio(dataType);
 
         AudioHelper.CapturedAudio capturedAudio = null;
@@ -411,13 +316,11 @@ public class VirtualAudioTest {
 
     private void runAudioInjectionTest(@AudioHelper.DataType int dataType, int writeMode,
             long timestamp) {
-        mVirtualAudioDevice = mVirtualDevice.createVirtualAudioDevice(
-                mVirtualDisplay, /* executor= */ null, /* callback= */ null);
         int encoding = dataType == FLOAT_ARRAY ? ENCODING_PCM_FLOAT : ENCODING_PCM_16BIT;
         AudioInjection audioInjection = mVirtualAudioDevice.startAudioInjection(
                 createInjectionFormat(encoding));
 
-        AudioActivity audioActivity = startAudioActivity(mVirtualDisplay);
+        AudioActivity audioActivity = startAudioActivity();
         audioActivity.recordAudio(dataType);
 
         int remaining;
@@ -503,14 +406,9 @@ public class VirtualAudioTest {
         stopAudioActivity(audioActivity);
     }
 
-    private AudioActivity startAudioActivity(VirtualDisplay virtualDisplay) {
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-
-        Bundle options = createActivityOptions(virtualDisplay.getDisplay().getDisplayId());
-        AudioActivity audioActivity = (AudioActivity) instrumentation.startActivitySync(
-                new Intent(getApplicationContext(), AudioActivity.class)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK),
-                options);
+    private AudioActivity startAudioActivity() {
+        AudioActivity audioActivity = mVirtualDeviceRule.startActivityOnDisplaySync(
+                mVirtualDisplay, AudioActivity.class);
         audioActivity.registerResultCallback(mAudioResultCallback);
         return audioActivity;
     }

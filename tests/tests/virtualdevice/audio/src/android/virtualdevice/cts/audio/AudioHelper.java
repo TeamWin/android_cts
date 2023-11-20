@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.virtualdevice.cts.common;
+package android.virtualdevice.cts.audio;
 
 import static android.media.AudioRecord.READ_BLOCKING;
 import static android.media.AudioRecord.READ_NON_BLOCKING;
@@ -31,7 +31,7 @@ import java.nio.ByteOrder;
 /**
  * Utility methods for creating and processing audio data.
  */
-public final class AudioHelper {
+final class AudioHelper {
 
     @IntDef({
             BYTE_BUFFER,
@@ -61,7 +61,7 @@ public final class AudioHelper {
     public static final int NUMBER_OF_SAMPLES = computeNumSamples(/* timeMs= */ 1000, SAMPLE_RATE,
             CHANNEL_COUNT);
 
-    public static class CapturedAudio {
+    static class CapturedAudio {
         private int mSamplingRate;
         private int mChannelCount;
         private ByteBuffer mCapturedData;
@@ -69,7 +69,7 @@ public final class AudioHelper {
         private short mShortValue;
         private float mFloatValue;
 
-        public CapturedAudio(AudioRecord audioRecord) {
+        CapturedAudio(AudioRecord audioRecord) {
             mSamplingRate = audioRecord.getSampleRate();
             mChannelCount = audioRecord.getChannelCount();
             ByteBuffer byteBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE_IN_BYTES).order(
@@ -86,7 +86,7 @@ public final class AudioHelper {
             }
         }
 
-        public CapturedAudio(AudioCapture audioCapture, ByteBuffer byteBuffer, int readMode) {
+        CapturedAudio(AudioCapture audioCapture, ByteBuffer byteBuffer, int readMode) {
             mSamplingRate = audioCapture.getFormat().getSampleRate();
             mChannelCount = audioCapture.getFormat().getChannelCount();
             while (true) {
@@ -106,7 +106,7 @@ public final class AudioHelper {
             }
         }
 
-        public CapturedAudio(AudioCapture audioCapture, byte[] audioData, int readMode) {
+        CapturedAudio(AudioCapture audioCapture, byte[] audioData, int readMode) {
             while (true) {
                 int bytesRead;
                 if (readMode == READ_BLOCKING || readMode == READ_NON_BLOCKING) {
@@ -127,7 +127,7 @@ public final class AudioHelper {
             }
         }
 
-        public CapturedAudio(AudioCapture audioCapture, short[] audioData, int readMode) {
+        CapturedAudio(AudioCapture audioCapture, short[] audioData, int readMode) {
             while (true) {
                 int bytesRead;
                 if (readMode == READ_BLOCKING || readMode == READ_NON_BLOCKING) {
@@ -148,7 +148,7 @@ public final class AudioHelper {
             }
         }
 
-        public CapturedAudio(AudioCapture audioCapture, float[] audioData, int readMode) {
+        CapturedAudio(AudioCapture audioCapture, float[] audioData, int readMode) {
             while (true) {
                 int bytesRead = audioCapture.read(audioData, 0, audioData.length, readMode);
                 if (bytesRead == 0) {
@@ -164,28 +164,28 @@ public final class AudioHelper {
             }
         }
 
-        public double getPowerSpectrum(int frequency) {
+        double getPowerSpectrum(int frequency) {
             return getCapturedPowerSpectrum(mSamplingRate, mChannelCount, mCapturedData, frequency);
         }
 
-        public byte getByteValue() {
+        byte getByteValue() {
             return mByteValue;
         }
 
-        public short getShortValue() {
+        short getShortValue() {
             return mShortValue;
         }
 
-        public float getFloatValue() {
+        float getFloatValue() {
             return mFloatValue;
         }
     }
 
-    public static int computeNumSamples(int timeMs, int samplingRate, int channelCount) {
+    static int computeNumSamples(int timeMs, int samplingRate, int channelCount) {
         return (int) ((long) timeMs * samplingRate * channelCount / 1000);
     }
 
-    public static ByteBuffer createAudioData(int samplingRate, int numSamples, int channelCount,
+    static ByteBuffer createAudioData(int samplingRate, int numSamples, int channelCount,
             double signalFrequencyHz, float amplitude) {
         ByteBuffer playBuffer =
                 ByteBuffer.allocateDirect(numSamples * 2).order(ByteOrder.nativeOrder());
@@ -201,7 +201,7 @@ public final class AudioHelper {
         return playBuffer;
     }
 
-    public static double getCapturedPowerSpectrum(
+    static double getCapturedPowerSpectrum(
             int samplingFreq, int channelCount, ByteBuffer capturedData,
             int expectedSignalFreq) {
         if (capturedData == null) {
