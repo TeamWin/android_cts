@@ -29,15 +29,15 @@ import org.hyphonate.megaaudio.recorder.AudioSinkProvider;
 import org.hyphonate.megaaudio.recorder.Recorder;
 import org.hyphonate.megaaudio.recorder.sinks.AppCallbackAudioSinkProvider;
 
-public class AudioDataPathsInternalActivity extends AudioDataPathsBaseActivity {
+public class AudioDataPathsSpeakerMicActivity extends AudioDataPathsBaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        setContentView(R.layout.audio_datapaths_internal);
+        setContentView(R.layout.audio_datapaths_speakermic);
 
         super.onCreate(savedInstanceState);
 
-        setInfoResources(
-                R.string.audio_datapaths_internal_test, R.string.audio_datapaths_internal_info, -1);
+        setInfoResources(R.string.audio_datapaths_speakermic_test,
+                R.string.audio_datapaths_speakermic_info, -1);
     }
 
     void gatherTestModules(TestManager testManager) {

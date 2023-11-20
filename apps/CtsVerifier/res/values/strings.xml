@@ -5732,8 +5732,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_datapaths_calibrate">Calibrate Audio</string>
     <string name="audio_datapaths_calibratetitle">Calibrate Loopback Audio</string>
 
-    <string name="audio_datapaths_internal_test">Audio Data Paths Internal Test</string>
-    <string name="audio_datapaths_internal_info">This test verifies basic functionality over a set of audio routes
+    <string name="audio_datapaths_speakermic_test">Audio Data Paths Speaker/Mic Test</string>
+    <string name="audio_datapaths_speakermic_info">This test verifies basic functionality over a set of audio routes
         \n\nTest Setup:
         \n • It may be necessary to go to the \"Sound &amp; vibration\" settings panel to set the volume level for the output device.
         \n   With no audio peripherals connected, adjust the \"Media volume\" to max.
