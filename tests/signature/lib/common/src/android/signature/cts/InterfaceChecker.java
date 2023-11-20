@@ -84,6 +84,9 @@ class InterfaceChecker {
         HIDDEN_INTERFACE_METHOD_ALLOW_LIST.add("public abstract void android.view.inputmethod.InputMethodSession.notifyImeHidden()");
         HIDDEN_INTERFACE_METHOD_ALLOW_LIST.add("public abstract void android.view.inputmethod.InputMethodSession.removeImeSurface()");
         HIDDEN_INTERFACE_METHOD_ALLOW_LIST.add("public abstract void android.bluetooth.BluetoothProfile.close()");
+        HIDDEN_INTERFACE_METHOD_ALLOW_LIST.add("public abstract android.bluetooth.BluetoothAdapter android.bluetooth.BluetoothProfile.getAdapter()");
+        HIDDEN_INTERFACE_METHOD_ALLOW_LIST.add("public abstract void android.bluetooth.BluetoothProfile.onServiceConnected(android.os.IBinder)");
+        HIDDEN_INTERFACE_METHOD_ALLOW_LIST.add("public abstract void android.bluetooth.BluetoothProfile.onServiceDisconnected()");
     }
 
     private final ResultObserver resultObserver;
