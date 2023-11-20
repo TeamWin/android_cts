@@ -18,6 +18,7 @@ package android.companion.cts.core
 
 import android.companion.AssociationRequest
 import android.companion.CompanionDeviceManager.FLAG_CALL_METADATA
+import android.companion.Flags
 import android.companion.cts.common.ASSOCIATION_TAG
 import android.companion.cts.common.ASSOCIATION_TAG_INVALID
 import android.companion.cts.common.MAC_ADDRESS_A
@@ -26,6 +27,7 @@ import android.companion.cts.common.RecordingCallback.OnAssociationPending
 import android.companion.cts.common.SIMPLE_EXECUTOR
 import android.companion.cts.common.getAssociationForPackage
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.RequiresFlagsEnabled
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -82,6 +84,7 @@ class AssociateTest : CoreTestBase() {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ASSOCIATION_TAG)
     fun test_association_invalid_tag() {
         targetApp.associate(MAC_ADDRESS_A)
         val association = cdm.myAssociations[0]
@@ -92,6 +95,7 @@ class AssociateTest : CoreTestBase() {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ASSOCIATION_TAG)
     fun test_association_tag_different_packages() = with(testApp) {
         associate(MAC_ADDRESS_A)
 
@@ -116,6 +120,7 @@ class AssociateTest : CoreTestBase() {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ASSOCIATION_TAG)
     fun test_association_tag() = with(targetApp) {
         associate(MAC_ADDRESS_A)
         val association = withShellPermissionIdentity {
