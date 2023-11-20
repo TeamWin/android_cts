@@ -16,17 +16,22 @@
 
 package android.car.cts.permissiontest.cluster;
 
+import static android.car.feature.Flags.FLAG_CLUSTER_HEALTH_MONITORING;
+
 import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 
+import android.app.Activity;
 import android.car.Car;
 import android.car.cluster.ClusterHomeManager;
 import android.car.cts.permissiontest.AbstractCarManagerPermissionTest;
 import android.content.Intent;
 import android.os.Bundle;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 
 import org.junit.After;
 import org.junit.Before;
@@ -60,6 +65,9 @@ public final class ClusterHomeManagerPermissionTest extends AbstractCarManagerPe
 
     @Mock
     private Executor mMockExecutor;
+
+    @Mock
+    private Activity mActivity;
 
     @Before
     public void setUp() {
@@ -123,6 +131,23 @@ public final class ClusterHomeManagerPermissionTest extends AbstractCarManagerPe
     public void testStopFixedActivityMode_requiresPermission() {
         SecurityException thrown = assertThrows(SecurityException.class,
                 () -> mClusterHomeManager.stopFixedActivityMode());
+        assertThat(thrown.getMessage()).isEqualTo(EXPECTED_ERROR_MESSAGE);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_CLUSTER_HEALTH_MONITORING)
+    public void testSendHeartbeat_requiresPermission() {
+        SecurityException thrown = assertThrows(SecurityException.class,
+                () -> mClusterHomeManager.sendHeartbeat(
+                        System.nanoTime(), /* appMetadata= */ null));
+        assertThat(thrown.getMessage()).isEqualTo(EXPECTED_ERROR_MESSAGE);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_CLUSTER_HEALTH_MONITORING)
+    public void testStartVisibilityMonitoring_requiresPermission() {
+        SecurityException thrown = assertThrows(SecurityException.class,
+                () -> mClusterHomeManager.startVisibilityMonitoring(mActivity));
         assertThat(thrown.getMessage()).isEqualTo(EXPECTED_ERROR_MESSAGE);
     }
 }
