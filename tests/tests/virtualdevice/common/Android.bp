@@ -21,7 +21,6 @@ android_library {
     min_sdk_version: "30",
     srcs: [
         "src/**/*.java",
-        "//cts/tests/tests/virtualdevice:CtsVirtualDevicesTestAidl",
     ],
     static_libs: [
         "androidx.test.ext.junit",
