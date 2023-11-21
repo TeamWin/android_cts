@@ -64,7 +64,7 @@ public class SettingsMultiPaneDeepLinkTest {
         boolean isFlagEnabled =
                 FeatureFlagUtils.isEnabled(targetContext, "settings_support_large_screen");
         final boolean shouldEnableLargeScreenOptimization =
-                SystemProperties.getBoolean("persist.settings.large_screen_opt.enabled", true);
+                SystemProperties.getBoolean("persist.settings.large_screen_opt.enabled", false);
         boolean isSplitSupported = SplitController.getInstance(targetContext)
                 .getSplitSupportStatus() == SplitController.SplitSupportStatus.SPLIT_AVAILABLE;
         mIsSplitSupported = isFlagEnabled && isSplitSupported
