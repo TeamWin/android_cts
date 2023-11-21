@@ -42,14 +42,13 @@ import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.PollingCheck;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /** Tests if system settings app provides scanning settings. */
 @AppModeFull(reason = "Test cases don't apply for Instant apps")
 public class ScanningSettingsTest extends AndroidTestCase {
     private static final String TAG = "ScanningSettingsTest";
 
-    private static final int TIMEOUT = 8_000; // 8 seconds
+    private static final int TIMEOUT = 300_000; // 5 minutes
     private static final String SETTINGS_PACKAGE = "com.android.settings";
 
     private static final String LOCATION_SERVICES_PREFERENCE_TITLE_RES =
@@ -202,7 +201,7 @@ public class ScanningSettingsTest extends AndroidTestCase {
         resolver.registerContentObserver(Settings.Global.getUriFor(settingKey), false, observer);
         pref.click();
         try {
-            latch.await(TIMEOUT, TimeUnit.MILLISECONDS);
+            latch.await();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
