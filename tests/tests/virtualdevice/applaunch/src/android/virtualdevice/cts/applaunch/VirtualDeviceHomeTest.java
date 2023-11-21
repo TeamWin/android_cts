@@ -130,10 +130,12 @@ public class VirtualDeviceHomeTest {
     @ApiTest(apis = {"android.hardware.display.VirtualDisplayConfig.Builder#setHomeSupported"})
     @Test
     public void virtualDeviceHome_showsWallpaper() {
-        createVirtualDeviceAndHomeDisplay(/* homeComponent= */ null);
-        assertThat(mRule.getWmState().waitForWithAmState(
-                this::isWallpaperOnVirtualDisplay, "Wallpaper is on virtual display"))
-                .isTrue();
+        try (HomeActivitySession ignored = new HomeActivitySession(DEFAULT_HOME_ACTIVITY)) {
+            createVirtualDeviceAndHomeDisplay(/* homeComponent= */ null);
+            assertThat(mRule.getWmState().waitForWithAmState(
+                    this::isWallpaperOnVirtualDisplay, "Wallpaper is on virtual display"))
+                    .isTrue();
+        }
     }
 
     /**
