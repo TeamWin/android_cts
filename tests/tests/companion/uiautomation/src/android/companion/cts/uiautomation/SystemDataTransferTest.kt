@@ -17,7 +17,6 @@
 package android.companion.cts.uiautomation
 
 import android.Manifest.permission.MANAGE_COMPANION_DEVICES
-import android.Manifest.permission.READ_DEVICE_CONFIG
 import android.annotation.CallSuper
 import android.app.Activity.RESULT_CANCELED
 import android.app.Activity.RESULT_OK
@@ -25,7 +24,6 @@ import android.companion.AssociationInfo
 import android.companion.CompanionDeviceManager
 import android.companion.CompanionException
 import android.companion.cts.common.CompanionActivity
-import android.companion.utils.FeatureUtils
 import android.content.Intent
 import android.os.OutcomeReceiver
 import android.platform.test.annotations.AppModeFull
@@ -45,7 +43,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import libcore.util.EmptyArray
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -64,9 +61,6 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
     @CallSuper
     override fun setUp() {
         super.setUp()
-        assumeTrue(withShellPermissionIdentity(READ_DEVICE_CONFIG) {
-            FeatureUtils.isPermSyncEnabled()
-        })
         withShellPermissionIdentity(MANAGE_COMPANION_DEVICES) {
             cdm.enableSecureTransport(false)
         }
@@ -260,7 +254,8 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         assertNotNull(associationData)
         val association: AssociationInfo? = associationData.getParcelableExtra(
                 CompanionDeviceManager.EXTRA_ASSOCIATION,
-                AssociationInfo::class.java)
+                AssociationInfo::class.java
+        )
         assertNotNull(association)
 
         return association
