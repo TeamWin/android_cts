@@ -467,7 +467,7 @@ public class NotificationAssistantServiceTest {
         Thread.sleep(SLEEP_TIME);
 
         assertTrue(String.format("snoozed notification <%s> was not removed", sbn.getKey()),
-                mNotificationListenerService.mRemoved.containsKey(sbn.getKey()));
+                mNotificationListenerService.mRemovedReasons.containsKey(sbn.getKey()));
 
         assertEquals(String.format("snoozed notification <%s> was not observed by NAS",
                         sbn.getKey()), sbn.getKey(), mNotificationAssistantService.mSnoozedKey);

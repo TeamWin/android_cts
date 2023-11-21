@@ -35,7 +35,8 @@ public class TestNotificationListener extends NotificationListenerService {
     private ArrayList<String> mTestPackages = new ArrayList<>();
 
     public ArrayList<StatusBarNotification> mPosted = new ArrayList<>();
-    public Map<String, Integer> mRemoved = new HashMap<>();
+    public ArrayList<StatusBarNotification> mRemoved = new ArrayList<>();
+    public Map<String, Integer> mRemovedReasons = new HashMap<>();
     public RankingMap mRankingMap;
     public Map<String, Boolean> mIntercepted = new HashMap<>();
 
@@ -89,6 +90,7 @@ public class TestNotificationListener extends NotificationListenerService {
     public void resetData() {
         Log.d(TAG, "resetData() called");
         mPosted.clear();
+        mRemovedReasons.clear();
         mRemoved.clear();
         mIntercepted.clear();
     }
@@ -148,7 +150,8 @@ public class TestNotificationListener extends NotificationListenerService {
                     + " testPackages=" + listToString(mTestPackages));
         }
         mPosted.remove(sbn);
-        mRemoved.put(sbn.getKey(), -1 );
+        mRemovedReasons.put(sbn.getKey(), -1);
+        mRemoved.add(sbn);
         maybeUpdateLatch(mRemovedLatch);
     }
 
@@ -166,7 +169,8 @@ public class TestNotificationListener extends NotificationListenerService {
         mRankingMap = rankingMap;
         updateInterceptedRecords(rankingMap);
         mPosted.remove(sbn);
-        mRemoved.put(sbn.getKey(), reason);
+        mRemovedReasons.put(sbn.getKey(), reason);
+        mRemoved.add(sbn);
         maybeUpdateLatch(mRemovedLatch);
     }
 
@@ -211,7 +215,7 @@ public class TestNotificationListener extends NotificationListenerService {
         return "TestNotificationListener{"
                 + "mTestPackages=[" + listToString(mTestPackages)
                 + "], mPosted=[" + listToString(mPosted)
-                + ", mRemoved=[" + listToString(mRemoved.values())
+                + ", mRemoved=[" + listToString(mRemovedReasons.values())
                 + "]}";
     }
 

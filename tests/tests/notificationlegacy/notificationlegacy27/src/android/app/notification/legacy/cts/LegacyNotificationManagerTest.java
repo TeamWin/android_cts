@@ -325,7 +325,7 @@ public class LegacyNotificationManagerTest {
 
         assertTrue(mHelper.isNotificationGone(sbn.getKey()));
         assertEquals((Integer) NotificationListenerService.REASON_CHANNEL_BANNED,
-                mListener.mRemoved.get(sbn.getKey()));
+                mListener.mRemovedReasons.get(sbn.getKey()));
     }
 
     private void sendNotification(final int id, final int icon) throws Exception {

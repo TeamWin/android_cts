@@ -52,7 +52,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Telephony;
-import android.test.AndroidTestCase;
 import android.util.ArraySet;
 import android.util.Log;
 
@@ -138,8 +137,10 @@ public abstract class BaseNotificationManagerTest {
                 && !mNotificationManager.isNotificationPolicyAccessGranted()) {
             toggleNotificationPolicyAccess(mContext.getPackageName(), mInstrumentation, true);
         }
-        for (String id : mRuleIds) {
-            mNotificationManager.removeAutomaticZenRule(id);
+        if (mRuleIds != null) {
+            for (String id : mRuleIds) {
+                mNotificationManager.removeAutomaticZenRule(id);
+            }
         }
 
         assertExpectedDndState(INTERRUPTION_FILTER_ALL);

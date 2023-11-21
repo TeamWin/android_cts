@@ -350,8 +350,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
     private int getCancellationReason(String key) {
         for (int tries = 3; tries-- > 0; ) {
-            if (mListener.mRemoved.containsKey(key)) {
-                return mListener.mRemoved.get(key);
+            if (mListener.mRemovedReasons.containsKey(key)) {
+                return mListener.mRemovedReasons.get(key);
             }
             try {
                 Thread.sleep(1000);
