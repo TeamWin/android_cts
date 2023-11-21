@@ -17,16 +17,19 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.virtualdevice.streamedtestapp">
-    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!--
+    * This permission is only used to trigger a permission request dialog in some test cases of
+    * VirtualDevicePermissionTest. This app otherwise does not use this permission.
+    -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <application>
         <activity android:name=".MainActivity"
             android:allowEmbedded="true"
             android:exported="true" />
 
-        <activity
-            android:name=".HomeActivity"
-            android:allowEmbedded="true"
+        <activity android:name=".HomeActivity"
             android:launchMode="singleTop"
             android:enabled="false"
             android:exported="true" >
@@ -38,13 +41,14 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".CustomHomeActivity"
-            android:allowEmbedded="true"
+        <activity android:name=".CustomHomeActivity"
             android:launchMode="singleTop"
             android:exported="true" />
 
         <activity android:name=".ClipboardTestActivity"
+            android:exported="true"/>
+
+        <activity android:name=".PermissionTestActivity"
             android:exported="true"/>
 
         <activity android:name=".NoEmbedActivity"

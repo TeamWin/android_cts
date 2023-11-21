@@ -16,15 +16,29 @@
 
 package android.virtualdevice.cts.common;
 
-public class ClipboardTestConstants {
+import android.content.ComponentName;
+
+public class StreamedAppConstants {
+
+    public static final String STREAMED_APP_PACKAGE = "android.virtualdevice.streamedtestapp";
+
+    public static final ComponentName CLIPBOARD_TEST_ACTIVITY = new ComponentName(
+            STREAMED_APP_PACKAGE, STREAMED_APP_PACKAGE + ".ClipboardTestActivity");
+
+    public static final ComponentName PERMISSION_TEST_ACTIVITY = new ComponentName(
+            STREAMED_APP_PACKAGE, STREAMED_APP_PACKAGE + ".PermissionTestActivity");
+
+    public static final ComponentName DEFAULT_HOME_ACTIVITY = new ComponentName(
+            STREAMED_APP_PACKAGE, STREAMED_APP_PACKAGE + ".HomeActivity");
+
+    public static final ComponentName CUSTOM_HOME_ACTIVITY = new ComponentName(
+            STREAMED_APP_PACKAGE, STREAMED_APP_PACKAGE + ".CustomHomeActivity");
+
     // The test activity should attempt to write a ClipData to the clipboard.
     public static final String ACTION_WRITE = "writeClipboard";
 
     // The test activity should attempt to read the clipboard contents and send them back.
     public static final String ACTION_READ = "readClipboard";
-
-    // A parecelable containing a ResultReceiver used to send a result back to the caller.
-    public static final String EXTRA_RESULT_RECEIVER = "resultReceiver";
 
     // A boolean used to return the result of hasPrimaryClip()
     public static final String EXTRA_HAS_CLIP_DATA = "hasClipData";
@@ -34,4 +48,7 @@ public class ClipboardTestConstants {
 
     // The id of the device whose clipboard to access.
     public static final String EXTRA_DEVICE_ID = "deviceId";
+
+    // The name of the permission to request.
+    public static final String EXTRA_PERMISSION_NAME = "permissionName";
 }
