@@ -21,6 +21,7 @@ import static android.Manifest.permission.GET_INTENT_SENDER_INTENT;
 import static android.Manifest.permission.INSTALL_PACKAGES;
 import static android.Manifest.permission.INSTALL_TEST_ONLY_PACKAGE;
 import static android.Manifest.permission.OVERRIDE_COMPAT_CHANGE_CONFIG_ON_RELEASE_BUILD;
+import static android.Manifest.permission.SUSPEND_APPS;
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.content.Context.RECEIVER_EXPORTED;
 import static android.content.Intent.FLAG_EXCLUDE_STOPPED_PACKAGES;
@@ -124,6 +125,7 @@ import android.content.pm.ServiceInfo;
 import android.content.pm.SharedLibraryInfo;
 import android.content.pm.Signature;
 import android.content.pm.SigningInfo;
+import android.content.pm.SuspendDialogInfo;
 import android.content.pm.cts.PackageManagerShellCommandInstallTest.PackageBroadcastReceiver;
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.content.res.Configuration;
@@ -3525,10 +3527,80 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         }
     }
 
+    @Test
+    @RequiresFlagsEnabled(FLAG_QUARANTINED_ENABLED)
+    public void testQasPrecedence() throws Exception {
+        var ctsPackageName = mContext.getPackageName();
+
+        installPackage(HELLO_WORLD_APK);
+
+        // Suspend by shell.
+        SystemUtil.runShellCommand("pm suspend " + HELLO_WORLD_PACKAGE_NAME);
+        assertTrue("package is suspended by shell", isPackageSuspended(HELLO_WORLD_PACKAGE_NAME));
+        assertFalse("package is not quarantined", isPackageQuarantined(HELLO_WORLD_PACKAGE_NAME));
+
+        // QAS as cts.
+        var builder = new SuspendDialogInfo.Builder();
+        builder.setTitle("qas-ed by cts");
+        builder.setMessage("test message");
+        builder.setNeutralButtonText("test neutral message");
+        var dialogInfo = builder.build();
+
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            String[] notset = mPackageManager.setPackagesSuspended(
+                    new String[]{HELLO_WORLD_PACKAGE_NAME}, true,
+                    null, null, dialogInfo, FLAG_SUSPEND_QUARANTINED);
+            assertEquals("", String.join(",", notset));
+        }, SUSPEND_APPS);
+        assertTrue("package is quarantined by both shell and cts",
+                isPackageQuarantined(HELLO_WORLD_PACKAGE_NAME));
+        assertEquals(ctsPackageName,
+                mPackageManager.getSuspendingPackage(HELLO_WORLD_PACKAGE_NAME));
+
+        // Un-suspend as shell.
+        SystemUtil.runShellCommand("pm unsuspend " + HELLO_WORLD_PACKAGE_NAME);
+        assertTrue("package is still quarantined by cts",
+                isPackageQuarantined(HELLO_WORLD_PACKAGE_NAME));
+        // Still "cts" package.
+        assertEquals(ctsPackageName,
+                mPackageManager.getSuspendingPackage(HELLO_WORLD_PACKAGE_NAME));
+
+        // No effect.
+        SystemUtil.runShellCommand("pm unsuspend " + HELLO_WORLD_PACKAGE_NAME);
+        assertTrue("package is still quarantined by cts",
+                isPackageQuarantined(HELLO_WORLD_PACKAGE_NAME));
+        assertEquals(ctsPackageName,
+                mPackageManager.getSuspendingPackage(HELLO_WORLD_PACKAGE_NAME));
+
+        // QAS as shell.
+        SystemUtil.runShellCommand("pm suspend-quarantine --dialogMessage shell-message "
+                + HELLO_WORLD_PACKAGE_NAME);
+        assertTrue("package is quarantined by shell and cts",
+                isPackageQuarantined(HELLO_WORLD_PACKAGE_NAME));
+
+        // Un-quarantine by cts.
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            String[] notset =
+            mPackageManager.setPackagesSuspended(new String[]{HELLO_WORLD_PACKAGE_NAME}, false,
+              null, null, null, FLAG_SUSPEND_QUARANTINED);
+            assertEquals("", String.join(",", notset));
+        }, SUSPEND_APPS);
+        assertEquals("com.android.shell",
+                mPackageManager.getSuspendingPackage(HELLO_WORLD_PACKAGE_NAME));
+
+        // Unsuspend by shell.
+        SystemUtil.runShellCommand("pm unsuspend " + HELLO_WORLD_PACKAGE_NAME);
+        assertFalse("not quarantined anymore", isPackageQuarantined(HELLO_WORLD_PACKAGE_NAME));
+    }
+
+    private boolean isPackageSuspended(String packageName) {
+        return SystemUtil.runWithShellPermissionIdentity(
+                () -> mPackageManager.isPackageSuspended(packageName));
+    }
+
     private boolean isPackageQuarantined(String packageName) {
         return SystemUtil.runWithShellPermissionIdentity(
-                () -> mPackageManager.isPackageQuarantined(packageName),
-                android.Manifest.permission.QUARANTINE_APPS);
+                () -> mPackageManager.isPackageQuarantined(packageName));
     }
 
     private void sendIntent(IntentSender intentSender) throws IntentSender.SendIntentException {
