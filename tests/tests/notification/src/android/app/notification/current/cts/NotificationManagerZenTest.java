@@ -142,7 +142,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     private final String TRIGGER_DESC = "Every Night, 10pm to 6am";
     private final int TYPE = TYPE_BEDTIME;
     private final boolean ALLOW_MANUAL = true;
-    private final int ICON_RES_ID = 123;
+    private final int ICON_RES_ID = android.app.notification.current.cts.R.drawable.ic_android;
     private final int INTERRUPTION_FILTER = INTERRUPTION_FILTER_PRIORITY;
     private NotificationManager.Policy mOriginalPolicy;
 
