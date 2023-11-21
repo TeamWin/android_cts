@@ -23,7 +23,7 @@ import static android.Manifest.permission.RECEIVE_SANDBOXED_DETECTION_TRAINING_D
 import static android.Manifest.permission.RECEIVE_SANDBOX_TRIGGER_AUDIO;
 import static android.Manifest.permission.RECORD_AUDIO;
 import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
-import static android.service.voice.HotwordDetectionServiceFailure.ERROR_CODE_ON_DETECTED_SECURITY_EXCEPTION;
+import static android.service.voice.HotwordDetectionServiceFailure.ERROR_CODE_SHUTDOWN_HDS_ON_VOICE_ACTIVATION_OP_DISABLED;
 import static android.service.voice.HotwordDetectionServiceFailure.ERROR_CODE_ON_TRAINING_DATA_EGRESS_LIMIT_EXCEEDED;
 import static android.service.voice.HotwordDetectionServiceFailure.ERROR_CODE_ON_TRAINING_DATA_SECURITY_EXCEPTION;
 import static android.voiceinteraction.common.Utils.AUDIO_EGRESS_DETECTED_RESULT;
@@ -1386,7 +1386,7 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
             // wait onFailure() called and verify the result
             mService.waitOnFailureCalled();
             verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
-                    ERROR_CODE_ON_DETECTED_SECURITY_EXCEPTION);
+                    ERROR_CODE_SHUTDOWN_HDS_ON_VOICE_ACTIVATION_OP_DISABLED);
         } finally {
             softwareHotwordDetector.destroy();
             // Drop identity adopted.
@@ -1417,7 +1417,7 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
             // wait onFailure() called and verify the result
             mService.waitOnFailureCalled();
             verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
-                    ERROR_CODE_ON_DETECTED_SECURITY_EXCEPTION);
+                    ERROR_CODE_SHUTDOWN_HDS_ON_VOICE_ACTIVATION_OP_DISABLED);
         } finally {
             softwareHotwordDetector.destroy();
             // Drop identity adopted.
@@ -1454,7 +1454,7 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
             // wait onFailure() called and verify the result
             mService.waitOnFailureCalled();
             verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
-                    ERROR_CODE_ON_DETECTED_SECURITY_EXCEPTION);
+                    ERROR_CODE_SHUTDOWN_HDS_ON_VOICE_ACTIVATION_OP_DISABLED);
         } finally {
             alwaysOnHotwordDetector.destroy();
             // Drop identity adopted.
@@ -1462,6 +1462,132 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
                     .dropShellPermissionIdentity();
         }
     }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VOICE_ACTIVATION_PERMISSION_APIS)
+    public void testSoftwareDetector_voiceActivationOpDisabledDuringDetection_shutdownHds()
+            throws Throwable {
+        // Create SoftwareHotwordDetector.
+        HotwordDetector softwareHotwordDetector =
+                createSoftwareHotwordDetector(/* useOnFailure= */ true);
+
+        // Update HotwordDetectionService options to delay detection by a bit.
+        runWithShellPermissionIdentity(() -> {
+            PersistableBundle options = Helper.createFakePersistableBundleData();
+            options.putInt(Utils.KEY_DETECTION_DELAY_MS, 2000);
+            softwareHotwordDetector.updateState(options,
+                    Helper.createFakeSharedMemoryData());
+        });
+
+        try {
+            // Adopt necessary permissions.
+            adoptShellPermissionIdentityForHotwordWithVoiceActivation();
+            mService.initOnFailureLatch();
+
+            // Trigger test detection event.
+            softwareHotwordDetector.startRecognition();
+
+            // Reset voice activation op during detection being run (should shutdown HDS).
+            setVoiceActivationOpForShellIdentity(/* allow= */ false);
+
+            // wait onFailure() called and verify the result
+            mService.waitOnFailureCalled();
+            verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
+                    ERROR_CODE_SHUTDOWN_HDS_ON_VOICE_ACTIVATION_OP_DISABLED);
+        } finally {
+            softwareHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VOICE_ACTIVATION_PERMISSION_APIS)
+    public void testSoftwareExternalDetector_voiceActivationOpDisabledDuringDetection_shutdownHds()
+            throws Throwable {
+        // Create SoftwareHotwordDetector.
+        HotwordDetector softwareHotwordDetector =
+                createSoftwareHotwordDetector(/* useOnFailure= */ true);
+
+        // Update HotwordDetectionService options to delay detection by a bit.
+        runWithShellPermissionIdentity(() -> {
+            PersistableBundle options = Helper.createFakePersistableBundleData();
+            options.putInt(Utils.KEY_DETECTION_DELAY_MS, 2000);
+            softwareHotwordDetector.updateState(options,
+                    Helper.createFakeSharedMemoryData());
+        });
+
+        try {
+            // Adopt necessary permissions.
+            adoptShellPermissionIdentityForHotwordWithVoiceActivation();
+            mService.initOnFailureLatch();
+
+            // Trigger test detection event.
+            softwareHotwordDetector.startRecognition(Helper.createFakeAudioStream(),
+                    Helper.createFakeAudioFormat(), Helper.createFakePersistableBundleData());
+
+            // Reset voice activation op during detection being run (should shutdown HDS).
+            setVoiceActivationOpForShellIdentity(/* allow= */ false);
+
+            // wait onFailure() called and verify the result
+            mService.waitOnFailureCalled();
+            verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
+                    ERROR_CODE_SHUTDOWN_HDS_ON_VOICE_ACTIVATION_OP_DISABLED);
+        } finally {
+            softwareHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VOICE_ACTIVATION_PERMISSION_APIS)
+    public void testAlwaysOnHotwordDetector_voiceActivationOpDisabledDuringDetection_shutdownHds()
+            throws Throwable {
+        // Create SoftwareHotwordDetector.
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ true);
+
+        // Update HotwordDetectionService options to delay detection by a bit.
+        runWithShellPermissionIdentity(() -> {
+            PersistableBundle options = Helper.createFakePersistableBundleData();
+            options.putInt(Utils.KEY_DETECTION_DELAY_MS, 2000);
+            alwaysOnHotwordDetector.updateState(options,
+                    Helper.createFakeSharedMemoryData());
+        });
+
+        try {
+            // Adopt necessary permissions.
+            adoptShellPermissionIdentityForHotwordWithVoiceActivation();
+            mService.initOnFailureLatch();
+
+            // Trigger test detection event.
+            alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
+                    /* status= */ 0, /* soundModelHandle= */ 100,
+                    /* halEventReceivedMillis */ 12345, /* captureAvailable= */ true,
+                    /* captureSession= */ 101, /* captureDelayMs= */ 1000,
+                    /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
+                    Helper.createFakeAudioFormat(), new byte[1024],
+                    Helper.createFakeKeyphraseRecognitionExtraList());
+
+            // Reset voice activation op during detection being run (should shutdown HDS).
+            setVoiceActivationOpForShellIdentity(/* allow= */ false);
+
+            // wait onFailure() called and verify the result
+            mService.waitOnFailureCalled();
+            verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
+                    ERROR_CODE_SHUTDOWN_HDS_ON_VOICE_ACTIVATION_OP_DISABLED);
+        } finally {
+            alwaysOnHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
 
     @Test
     @CddTest(requirements = {"9.8/H-1-15"})
