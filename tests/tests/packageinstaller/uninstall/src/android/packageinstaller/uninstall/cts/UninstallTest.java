@@ -107,7 +107,7 @@ public class UninstallTest {
 
         // Register uninstall event receiver
         mLatch = new CountDownLatch(1);
-        mReceiver = new UninstallStatusReceiver(mLatch);
+        mReceiver = new UninstallStatusReceiver(mLatch, mContext);
         mContext.registerReceiver(mReceiver, new IntentFilter(RECEIVER_ACTION),
                 Context.RECEIVER_EXPORTED);
 
@@ -222,33 +222,7 @@ public class UninstallTest {
 
         startUninstall();
 
-        assertNotNull("Uninstall prompt not shown",
-                waitFor(Until.findObject(By.textContains("Do you want to uninstall this app?"))));
-        // The app's name should be shown to the user.
-        assertNotNull(mUiDevice.findObject(By.text("Empty Test App")));
-
-        // Confirm uninstall
-        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
-            UiObject2 clickableView = mUiDevice
-                    .findObject(By.focusable(true).hasDescendant(By.text("OK")));
-            if (!clickableView.isFocused()) {
-                mUiDevice.pressKeyCode(KeyEvent.KEYCODE_DPAD_DOWN);
-            }
-            for (int i = 0; i < 100; i++) {
-                if (clickableView.isFocused()) {
-                    break;
-                }
-                Thread.sleep(100);
-            }
-            mUiDevice.pressKeyCode(KeyEvent.KEYCODE_DPAD_CENTER);
-        } else {
-            UiObject2 clickableView = mUiDevice.findObject(By.text("OK"));
-            if (clickableView == null) {
-              dumpWindowHierarchy();
-              fail("OK button not shown");
-            }
-            clickableView.click();
-        }
+        clickInstallerButton();
 
         for (int i = 0; i < 30; i++) {
             // We can't detect the confirmation Toast with UiAutomator, so we'll poll
@@ -262,7 +236,16 @@ public class UninstallTest {
     }
 
     @Test
-    public void testUninstallApi() throws InterruptedException {
+    public void testUninstallApiConfirmationRequired() throws Exception {
+        testUninstallApi(true);
+    }
+
+    @Test
+    public void testUninstallApiConfirmationNotRequired() throws Exception {
+        testUninstallApi(false);
+    }
+
+    public void testUninstallApi(boolean needUserConfirmation) throws Exception {
         assertTrue("Package is not installed", isInstalled());
 
         PackageInstaller pi = mContext.getPackageManager().getPackageInstaller();
@@ -274,12 +257,16 @@ public class UninstallTest {
                 PendingIntent.getBroadcast(mContext, 1, broadcastIntent,
                         PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 
-        SystemUtil.runWithShellPermissionIdentity(() -> {
+        if (needUserConfirmation) {
             pi.uninstall(pkg, 0, pendingIntent.getIntentSender());
-        });
+            clickInstallerButton();
+        } else {
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                pi.uninstall(pkg, 0, pendingIntent.getIntentSender());
+            });
+        }
 
-        mLatch.await(10, TimeUnit.SECONDS);
-        assertFalse("Package is not uninstalled", isInstalled());
+        assertTrue("Package is not uninstalled", mLatch.await(10, TimeUnit.SECONDS));
     }
 
     private boolean isInstalled() {
@@ -295,19 +282,57 @@ public class UninstallTest {
         }
     }
 
-    public static class UninstallStatusReceiver extends BroadcastReceiver {
+    private void clickInstallerButton() throws Exception {
+        assertNotNull("Uninstall prompt not shown",
+            waitFor(Until.findObject(By.textContains("Do you want to uninstall this app?"))));
+        // The app's name should be shown to the user.
+        assertNotNull(mUiDevice.findObject(By.text("Empty Test App")));
+
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+            UiObject2 clickableView = mUiDevice.findObject(By.focusable(true)
+                                                    .hasDescendant(By.text("OK")));
+            if (!clickableView.isFocused()) {
+                mUiDevice.pressKeyCode(KeyEvent.KEYCODE_DPAD_DOWN);
+            }
+            for (int i = 0; i < 100; i++) {
+                if (clickableView.isFocused()) {
+                    break;
+                }
+                Thread.sleep(100);
+            }
+            mUiDevice.pressKeyCode(KeyEvent.KEYCODE_DPAD_CENTER);
+        } else {
+            UiObject2 clickableView = mUiDevice.wait(Until.findObject(By.text("OK")), 1000);
+            if (clickableView == null) {
+                dumpWindowHierarchy();
+                fail("OK button not shown");
+            }
+            clickableView.click();
+        }
+    }
+
+    private static class UninstallStatusReceiver extends BroadcastReceiver {
 
         private final CountDownLatch mLatch;
+        private final Context mContext;
 
-        public UninstallStatusReceiver(CountDownLatch latch) {
+        private UninstallStatusReceiver(CountDownLatch latch, Context context) {
             mLatch = latch;
+            mContext = context;
         }
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -100)
-                    == PackageInstaller.STATUS_SUCCESS) {
-                mLatch.countDown();
+            int statusCode = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -100);
+            switch (statusCode) {
+                case PackageInstaller.STATUS_SUCCESS -> mLatch.countDown();
+                case PackageInstaller.STATUS_PENDING_USER_ACTION -> {
+                    Intent extraIntent = intent.getParcelableExtra(Intent.EXTRA_INTENT);
+                    if (extraIntent != null) {
+                        mContext.startActivity(extraIntent.addFlags(FLAG_ACTIVITY_NEW_TASK));
+                    }
+                }
+                default -> Log.e(UninstallTest.LOG_TAG, "Unexpected status: " + statusCode);
             }
         }
     }
