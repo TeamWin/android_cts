@@ -25,10 +25,10 @@ import android.hdmicec.cts.LogicalAddress;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-import org.junit.runner.RunWith;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
+import org.junit.runner.RunWith;
 
 import java.util.concurrent.TimeUnit;
 
@@ -40,6 +40,7 @@ public final class HdmiCecStandbyTest extends BaseHdmiCecCtsTest {
     public RuleChain ruleChain =
             RuleChain.outerRule(CecRules.requiresCec(this))
                     .around(CecRules.requiresLeanback(this))
+                    .around(CecRules.requiresPhysicalDevice(this))
                     .around(
                             CecRules.requiresDeviceType(
                                     this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE))

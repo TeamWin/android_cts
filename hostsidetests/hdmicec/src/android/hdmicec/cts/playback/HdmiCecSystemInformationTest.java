@@ -33,8 +33,6 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
-import java.util.concurrent.TimeUnit;
-
 /** HDMI CEC system information tests (Section 11.2.6) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
@@ -43,6 +41,7 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
     public RuleChain ruleChain =
             RuleChain.outerRule(CecRules.requiresCec(this))
                     .around(CecRules.requiresLeanback(this))
+                    .around(CecRules.requiresPhysicalDevice(this))
                     .around(
                             CecRules.requiresDeviceType(
                                     this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE))
