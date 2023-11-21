@@ -298,7 +298,7 @@ fun openUnusedAppsNotification() {
         expandNotificationsWatch(UiAutomatorUtils.getUiDevice())
         waitFindObject(uiAutomation, notifSelector).click()
         // In wear os, notification has one additional button to open it
-        waitFindObject(uiAutomation, By.text("Open")).click()
+        waitFindObject(uiAutomation, By.textContains("Open")).click()
     } else {
         val permissionPkg: String = InstrumentationRegistry.getTargetContext()
             .packageManager.permissionControllerPackageName
