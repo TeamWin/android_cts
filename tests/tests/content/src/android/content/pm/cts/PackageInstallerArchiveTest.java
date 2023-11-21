@@ -239,6 +239,19 @@ public class PackageInstallerArchiveTest {
     }
 
     @Test
+    public void archiveApp_systemApp() throws NameNotFoundException {
+        PackageManager.NameNotFoundException e =
+                runWithShellPermissionIdentity(
+                        () -> assertThrows(
+                                PackageManager.NameNotFoundException.class,
+                                () -> mPackageInstaller.requestArchive("android",
+                                        new IntentSender((IIntentSender) mArchiveIntentSender))),
+                        Manifest.permission.DELETE_PACKAGES);
+
+        assertThat(e).hasMessageThat().isEqualTo("System apps cannot be archived.");
+    }
+
+    @Test
     public void matchArchivedPackages() throws Exception {
         installPackage(PACKAGE_NAME, APK_PATH);
 
@@ -644,6 +657,13 @@ public class PackageInstallerArchiveTest {
 
         assertThat(
                 mContext.getPackageManager().isAppArchivable(PACKAGE_NAME)).isFalse();
+
+    }
+
+    @Test
+    public void isAppArchivable_systemApp() throws NameNotFoundException {
+        assertThat(
+                mContext.getPackageManager().isAppArchivable("android")).isFalse();
 
     }
 
