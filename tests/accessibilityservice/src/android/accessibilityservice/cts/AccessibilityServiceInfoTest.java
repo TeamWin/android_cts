@@ -30,12 +30,16 @@ import android.accessibilityservice.AccessibilityServiceInfo;
 import android.os.Parcel;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.view.accessibility.AccessibilityEvent;
 
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
+import com.android.server.accessibility.Flags;
 import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import org.junit.Rule;
@@ -57,6 +61,9 @@ public class AccessibilityServiceInfoTest extends StsExtraBusinessLogicTestCase 
     @Rule
     public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @MediumTest
     @Test
@@ -201,6 +208,30 @@ public class AccessibilityServiceInfoTest extends StsExtraBusinessLogicTestCase 
 
         assertWithMessage("info.getId()").that(info.getId()).isNull();
         assertWithMessage("info.toString()").that(info.toString()).isNotNull();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_RESETTABLE_DYNAMIC_PROPERTIES)
+    public void testDynamicallyConfigurableProperties_doNotPersist() {
+        try {
+            final int flag = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS;
+            final InstrumentedAccessibilityService service =
+                    InstrumentedAccessibilityService.enableService(
+                            InstrumentedAccessibilityService.class);
+            final AccessibilityServiceInfo info = service.getServiceInfo();
+            assertThat(info.flags & flag).isEqualTo(0);
+            info.flags |= flag;
+            service.setServiceInfo(info);
+            assertThat(service.getServiceInfo().flags & flag).isEqualTo(flag);
+            InstrumentedAccessibilityService.disableAllServices();
+
+            final InstrumentedAccessibilityService reenabledService =
+                    InstrumentedAccessibilityService.enableService(
+                            InstrumentedAccessibilityService.class);
+            assertThat(reenabledService.getServiceInfo().flags & flag).isEqualTo(0);
+        } finally {
+            InstrumentedAccessibilityService.disableAllServices();
+        }
     }
 
     /**
