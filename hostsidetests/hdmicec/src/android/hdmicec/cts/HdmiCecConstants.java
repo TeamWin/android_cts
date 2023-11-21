@@ -144,9 +144,10 @@ public final class HdmiCecConstants {
     public static final String HDMI_CEC_FEATURE = "feature:android.hardware.hdmi.cec";
     public static final String LEANBACK_FEATURE = "feature:android.software.leanback";
 
-    // CEC Device property list
+    // Device property list used in CTS
     public static final String HDMI_DEVICE_TYPE_PROPERTY = "ro.hdmi.device_type";
     public static final String PROPERTY_ARC_SUPPORT = "persist.sys.hdmi.property_arc_support";
+    public static final String PROPERTY_BUILD_FINGERPRINT = "ro.system.build.fingerprint";
 
     /*
      * The default name of local directory into which the port to device mapping files are stored.
