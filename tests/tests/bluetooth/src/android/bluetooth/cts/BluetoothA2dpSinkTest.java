@@ -107,7 +107,7 @@ public class BluetoothA2dpSinkTest {
     }
 
     @Test
-    public void test_closeProfileProxy() {
+    public void closeProfileProxy() {
         assumeTrue(mHasBluetooth && mIsA2dpSinkSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dpSink);
@@ -119,7 +119,7 @@ public class BluetoothA2dpSinkTest {
     }
 
     @Test
-    public void test_getConnectedDevices() {
+    public void getConnectedDevices() {
         assumeTrue(mHasBluetooth && mIsA2dpSinkSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dpSink);
@@ -131,7 +131,7 @@ public class BluetoothA2dpSinkTest {
     }
 
     @Test
-    public void test_getDevicesMatchingConnectionStates() {
+    public void getDevicesMatchingConnectionStates() {
         assumeTrue(mHasBluetooth && mIsA2dpSinkSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dpSink);
@@ -142,7 +142,7 @@ public class BluetoothA2dpSinkTest {
     }
 
     @Test
-    public void test_getConnectionState() {
+    public void getConnectionState() {
         assumeTrue(mHasBluetooth && mIsA2dpSinkSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dpSink);
@@ -158,7 +158,7 @@ public class BluetoothA2dpSinkTest {
     }
 
     @Test
-    public void test_getConnectionPolicy() {
+    public void getConnectionPolicy() {
         assumeTrue(mHasBluetooth && mIsA2dpSinkSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dpSink);
@@ -177,7 +177,7 @@ public class BluetoothA2dpSinkTest {
     }
 
     @Test
-    public void test_setConnectionPolicy() {
+    public void setConnectionPolicy() {
         assumeTrue(mHasBluetooth && mIsA2dpSinkSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dpSink);
@@ -198,7 +198,7 @@ public class BluetoothA2dpSinkTest {
     }
 
     @Test
-    public void test_isAudioPlaying() {
+    public void isAudioPlaying() {
         assumeTrue(mHasBluetooth && mIsA2dpSinkSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dpSink);

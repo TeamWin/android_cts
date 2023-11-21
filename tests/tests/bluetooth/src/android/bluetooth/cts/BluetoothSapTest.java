@@ -108,7 +108,7 @@ public class BluetoothSapTest {
     }
 
     @Test
-    public void test_closeProfileProxy() {
+    public void closeProfileProxy() {
         assumeTrue(mHasBluetooth && mIsSapSupported);
 
         assertTrue(waitForProfileConnect());
@@ -122,7 +122,7 @@ public class BluetoothSapTest {
 
     @Test
     @MediumTest
-    public void test_getConnectedDevices() {
+    public void getConnectedDevices() {
         assumeTrue(mHasBluetooth && mIsSapSupported);
 
         assertTrue(waitForProfileConnect());
@@ -136,7 +136,7 @@ public class BluetoothSapTest {
 
     @Test
     @MediumTest
-    public void test_getDevicesMatchingConnectionStates() {
+    public void getDevicesMatchingConnectionStates() {
         assumeTrue(mHasBluetooth && mIsSapSupported);
 
         assertTrue(waitForProfileConnect());
@@ -153,7 +153,7 @@ public class BluetoothSapTest {
 
     @Test
     @MediumTest
-    public void test_getConnectionState() {
+    public void getConnectionState() {
         assumeTrue(mHasBluetooth && mIsSapSupported);
 
         assertTrue(waitForProfileConnect());
@@ -171,7 +171,7 @@ public class BluetoothSapTest {
 
     @Test
     @MediumTest
-    public void test_setgetConnectionPolicy() {
+    public void setgetConnectionPolicy() {
         assumeTrue(mHasBluetooth && mIsSapSupported);
 
         assertTrue(waitForProfileConnect());
