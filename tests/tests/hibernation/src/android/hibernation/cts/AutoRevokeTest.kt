@@ -689,6 +689,12 @@ class AutoRevokeTest {
         } else {
             "Remove permissions"
         }
+
+        if (hasFeatureWatch()) {
+            return waitFindObject(
+                    By.checkable(true).hasDescendant(By.textStartsWith(autoRevokeText)))
+        }
+
         val parent = waitFindObject(
             By.clickable(true)
                 .hasDescendant(By.textStartsWith(autoRevokeText))
