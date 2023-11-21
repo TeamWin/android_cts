@@ -99,7 +99,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_setAlias_getAlias() {
+    public void setAlias_getAlias() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -151,7 +151,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_getIdentityAddress() {
+    public void getIdentityAddress() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -161,7 +161,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_getConnectionHandle() {
+    public void getConnectionHandle() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -176,7 +176,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_getAnonymizedAddress() {
+    public void getAnonymizedAddress() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -184,7 +184,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_getBatteryLevel() {
+    public void getBatteryLevel() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -199,7 +199,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_isBondingInitiatedLocally() {
+    public void isBondingInitiatedLocally() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -214,7 +214,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_prepareToEnterProcess() {
+    public void prepareToEnterProcess() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -222,7 +222,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_setPin() {
+    public void setPin() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -240,7 +240,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_connect_disconnect() {
+    public void connect_disconnect() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -250,7 +250,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_cancelBondProcess() {
+    public void cancelBondProcess() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -263,7 +263,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_createBond() {
+    public void createBond() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -276,7 +276,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_createBondOutOfBand() {
+    public void createBondOutOfBand() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -293,7 +293,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_getUuids() {
+    public void getUuids() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -307,7 +307,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_isEncrypted() {
+    public void isEncrypted() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -323,7 +323,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_removeBond() {
+    public void removeBond() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -339,7 +339,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_setPinByteArray() {
+    public void setPinByteArray() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -359,7 +359,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_connectGatt() {
+    public void connectGatt() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -373,7 +373,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_fetchUuidsWithSdp() {
+    public void fetchUuidsWithSdp() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -389,7 +389,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_messageAccessPermission() {
+    public void messageAccessPermission() {
         // Skip the test if bluetooth or companion device are not present
         // or if MAP is not enabled.
         assumeTrue(mHasBluetooth && mHasCompanionDevice
@@ -415,7 +415,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_phonebookAccessPermission() {
+    public void phonebookAccessPermission() {
         // Skip the test if bluetooth or companion device are not present
         // or if PBAP is not enabled.
         assumeTrue(mHasBluetooth && mHasCompanionDevice
@@ -441,7 +441,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_simAccessPermission() {
+    public void simAccessPermission() {
         // Skip the test if bluetooth or companion device are not present
         // or if SAP is not enabled.
         assumeTrue(mHasBluetooth && mHasCompanionDevice
@@ -467,7 +467,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_isRequestAudioPolicyAsSinkSupported() {
+    public void isRequestAudioPolicyAsSinkSupported() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -481,7 +481,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_setGetAudioPolicy() {
+    public void setGetAudioPolicy() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
@@ -528,7 +528,7 @@ public class BluetoothDeviceTest {
     }
 
     @Test
-    public void test_getPackageNameOfBondingApplication() {
+    public void getPackageNameOfBondingApplication() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
 
