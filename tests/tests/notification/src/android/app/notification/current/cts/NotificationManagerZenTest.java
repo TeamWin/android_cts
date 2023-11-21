@@ -70,6 +70,7 @@ import android.app.Flags;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.WallpaperManager;
 import android.app.compat.CompatChanges;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.GetResultActivity;
@@ -82,10 +83,12 @@ import android.content.OperationApplicationException;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
+import android.hardware.display.ColorDisplayManager;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.PowerManager;
 import android.os.RemoteException;
 import android.permission.PermissionManager;
 import android.permission.cts.PermissionUtils;
@@ -2175,7 +2178,10 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         mNotificationManager.setAutomaticZenRuleState(id, condition);
 
         // snooze the rule
-        mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
+        });
+
         assertEquals(AUTOMATIC_RULE_STATUS_ACTIVATED,
                 br.getExtra(EXTRA_AUTOMATIC_ZEN_RULE_STATUS, 0, 500));
         assertEquals(AUTOMATIC_RULE_STATUS_DEACTIVATED,
@@ -2309,6 +2315,130 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         AutomaticZenRule readRule = mNotificationManager.getAutomaticZenRule(ruleId);
 
         assertThat(readRule.getDeviceEffects()).isEqualTo(effects);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void setAutomaticZenRuleState_ruleWithGrayscale_applied() throws Exception {
+        assertThat(isColorDisplayManagerSaturationActivated()).isFalse();
+
+        AutomaticZenRule rule = createRule("Grayscale");
+        rule.setDeviceEffects(new ZenDeviceEffects.Builder()
+                .setShouldDisplayGrayscale(true)
+                .build());
+        String ruleId = mNotificationManager.addAutomaticZenRule(rule);
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "yeah", Condition.STATE_TRUE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(isColorDisplayManagerSaturationActivated()).isTrue();
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "nope", Condition.STATE_FALSE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(isColorDisplayManagerSaturationActivated()).isFalse();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void setAutomaticZenRuleState_ruleWithDimWallpaper_applied() throws Exception {
+        assertThat(getWallpaperManagerDimAmount()).isZero();
+
+        AutomaticZenRule rule = createRule("Dim wallpaper");
+        rule.setDeviceEffects(new ZenDeviceEffects.Builder().setShouldDimWallpaper(true).build());
+        String ruleId = mNotificationManager.addAutomaticZenRule(rule);
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "yeah", Condition.STATE_TRUE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(getWallpaperManagerDimAmount()).isNonZero();
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "nope", Condition.STATE_FALSE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(getWallpaperManagerDimAmount()).isZero();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void setAutomaticZenRuleState_ruleWithDisableAmbientDisplay_applied() throws Exception {
+        assertThat(isPowerManagerAmbientDisplaySuppressed()).isFalse();
+
+        AutomaticZenRule rule = createRule("Disable ambient display");
+        rule.setDeviceEffects(new ZenDeviceEffects.Builder()
+                .setShouldSuppressAmbientDisplay(true)
+                .build());
+        String ruleId = mNotificationManager.addAutomaticZenRule(rule);
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "yeah", Condition.STATE_TRUE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(isPowerManagerAmbientDisplaySuppressed()).isTrue();
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "nope", Condition.STATE_FALSE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(isPowerManagerAmbientDisplaySuppressed()).isFalse();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void setAutomaticZenRuleState_multipleRulesWithDeviceEffects_effectsMerged()
+            throws Exception {
+        AutomaticZenRule withDisableAmbientDisplay = createRule("Disable ambient display");
+        withDisableAmbientDisplay.setDeviceEffects(new ZenDeviceEffects.Builder()
+                .setShouldSuppressAmbientDisplay(true)
+                .build());
+        String withDisableAmbientDisplayId = mNotificationManager.addAutomaticZenRule(
+                withDisableAmbientDisplay);
+
+        AutomaticZenRule withDimWallpaper = createRule("With dim wallpaper");
+        withDimWallpaper.setDeviceEffects(new ZenDeviceEffects.Builder()
+                .setShouldDimWallpaper(true)
+                .build());
+        String withDimWallpaperId = mNotificationManager.addAutomaticZenRule(withDimWallpaper);
+
+        mNotificationManager.setAutomaticZenRuleState(withDisableAmbientDisplayId,
+                new Condition(withDisableAmbientDisplay.getConditionId(), "ad",
+                        Condition.STATE_TRUE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(isPowerManagerAmbientDisplaySuppressed()).isTrue();
+        assertThat(getWallpaperManagerDimAmount()).isZero();
+
+        mNotificationManager.setAutomaticZenRuleState(withDimWallpaperId,
+                new Condition(withDimWallpaper.getConditionId(), "dw", Condition.STATE_TRUE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(isPowerManagerAmbientDisplaySuppressed()).isTrue();
+        assertThat(getWallpaperManagerDimAmount()).isNonZero();
+
+        mNotificationManager.setAutomaticZenRuleState(withDisableAmbientDisplayId,
+                new Condition(withDisableAmbientDisplay.getConditionId(), "ad",
+                        Condition.STATE_FALSE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(isPowerManagerAmbientDisplaySuppressed()).isFalse();
+        assertThat(getWallpaperManagerDimAmount()).isNonZero();
+    }
+
+    private float getWallpaperManagerDimAmount() {
+        WallpaperManager wallpaperManager = mContext.getSystemService(WallpaperManager.class);
+        return SystemUtil.runWithShellPermissionIdentity(
+                () -> wallpaperManager.getWallpaperDimAmount(),
+                Manifest.permission.SET_WALLPAPER_DIM_AMOUNT);
+    }
+
+    private boolean isPowerManagerAmbientDisplaySuppressed() {
+        PowerManager powerManager = mContext.getSystemService(PowerManager.class);
+        return SystemUtil.runWithShellPermissionIdentity(
+                () -> powerManager.isAmbientDisplaySuppressed(),
+                Manifest.permission.READ_DREAM_STATE);
+    }
+
+    private boolean isColorDisplayManagerSaturationActivated() {
+        ColorDisplayManager colorDisplayManager = mContext.getSystemService(
+                ColorDisplayManager.class);
+        return SystemUtil.runWithShellPermissionIdentity(
+                () -> colorDisplayManager.isSaturationActivated(),
+                Manifest.permission.CONTROL_DISPLAY_COLOR_TRANSFORMS);
     }
 
     @Test
