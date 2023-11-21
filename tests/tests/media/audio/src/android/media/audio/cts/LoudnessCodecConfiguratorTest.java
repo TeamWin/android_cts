@@ -16,9 +16,12 @@
 
 package android.media.audio.cts;
 
+import static android.media.MediaFormat.KEY_AAC_DRC_EFFECT_TYPE;
+import static android.media.MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL;
 import static android.media.audio.Flags.FLAG_LOUDNESS_CONFIGURATOR_API;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -51,6 +54,7 @@ import org.junit.runner.RunWith;
 import java.time.Duration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 @NonMainlineTest
 @RunWith(AndroidJUnit4.class)
@@ -72,6 +76,8 @@ public class LoudnessCodecConfiguratorTest {
 
     private final AtomicInteger mCodecUpdateCallNumber = new AtomicInteger(0);
 
+    private final AtomicReference<Bundle> mLastCodecUpdate = new AtomicReference<>();
+
     private final class MyLoudnessCodecUpdateListener
             implements LoudnessCodecConfigurator.OnLoudnessCodecUpdateListener {
         @Override
@@ -79,6 +85,7 @@ public class LoudnessCodecConfiguratorTest {
         public Bundle onLoudnessCodecUpdate(@NonNull MediaCodec mediaCodec,
                                             @NonNull Bundle codecValues) {
             mCodecUpdateCallNumber.incrementAndGet();
+            mLastCodecUpdate.set(codecValues);
             return codecValues;
         }
     }
@@ -129,6 +136,18 @@ public class LoudnessCodecConfiguratorTest {
         Thread.sleep(TEST_LOUDNESS_CALLBACK_TIMEOUT.toMillis());
 
         assertEquals(3, mCodecUpdateCallNumber.get());
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_LOUDNESS_CONFIGURATOR_API)
+    public void getLoudnessCodecParams_returnsCurrentParameters() throws Exception {
+        mAt = createAndStartAudioTrack();
+
+        // to make sure the device id is propagated
+        Thread.sleep(TEST_LOUDNESS_CALLBACK_TIMEOUT.toMillis());
+
+        assertFalse(mLcc.getLoudnessCodecParams(createAndStartAudioTrack(),
+                createAndConfigureMediaCodec()).isDefinitelyEmpty());
     }
 
     @Test
@@ -211,6 +230,23 @@ public class LoudnessCodecConfiguratorTest {
         assertEquals(3, mCodecUpdateCallNumber.get());
     }
 
+    @Test
+    @RequiresFlagsEnabled(FLAG_LOUDNESS_CONFIGURATOR_API)
+    public void setAudioTrack_withRegisteredCodec_checkParameters() throws Exception {
+        mAt = createAndStartAudioTrack();
+
+        mLcc.addMediaCodec(createAndConfigureMediaCodec());
+        mLcc.setAudioTrack(mAt);
+        Thread.sleep(TEST_LOUDNESS_CALLBACK_TIMEOUT.toMillis());
+
+        assertEquals(1, mCodecUpdateCallNumber.get());
+        Bundle lastUpdate = mLastCodecUpdate.get();
+        assertNotNull(lastUpdate);
+        assertTrue(lastUpdate.getInt(KEY_AAC_DRC_TARGET_REFERENCE_LEVEL) != 0);
+        assertTrue(lastUpdate.getInt(KEY_AAC_DRC_EFFECT_TYPE) != 0);
+    }
+
+
     private static AudioTrack createAndStartAudioTrack() {
         final int bufferSizeInBytes =
                  TEST_AUDIO_TRACK_SAMPLERATE * TEST_AUDIO_TRACK_CHANNELS * Short.BYTES;
@@ -236,6 +272,7 @@ public class LoudnessCodecConfiguratorTest {
         return track;
     }
 
+    /** Creates a decoder for xHE-AAC content. */
     private MediaCodec createAndConfigureMediaCodec() throws Exception {
         AssetFileDescriptor testFd = InstrumentationRegistry.getInstrumentation().getContext()
                 .getResources()
