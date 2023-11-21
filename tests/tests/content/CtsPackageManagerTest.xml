@@ -51,6 +51,8 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="cleanup" value="true" />
         <option name="push" value="CtsPackageManagerTestCases.apk->/data/local/tmp/cts/content/CtsPackageManagerTestCases.apk" />
+        <option name="push" value="CtsPackageManagerTestCases_hdpi-v4.apk->/data/local/tmp/cts/content/CtsPackageManagerTestCases_hdpi-v4.apk" />
+        <option name="push" value="CtsPackageManagerTestCases_mdpi-v4.apk->/data/local/tmp/cts/content/CtsPackageManagerTestCases_mdpi-v4.apk" />
         <option name="push" value="CtsContentEmptyTestApp.apk->/data/local/tmp/cts/content/CtsContentEmptyTestApp.apk" />
         <option name="push" value="CtsContentLongPackageNameTestApp.apk->/data/local/tmp/cts/content/CtsContentLongPackageNameTestApp.apk" />
         <option name="push" value="CtsContentLongSharedUserIdTestApp.apk->/data/local/tmp/cts/content/CtsContentLongSharedUserIdTestApp.apk" />
