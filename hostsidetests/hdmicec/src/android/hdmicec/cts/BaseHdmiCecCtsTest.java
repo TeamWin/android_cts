@@ -147,6 +147,11 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
                     testPointer,
                     deviceType);
         }
+
+        /** This rule will skip the test if the DUT is an emulator. */
+        public static TestRule requiresPhysicalDevice(BaseHostJUnit4Test testPointer) {
+            return RequiredDeviceTypeRule.requiredPhysicalDevice(testPointer);
+        }
     }
 
     /** @deprecated not used anymore **/
