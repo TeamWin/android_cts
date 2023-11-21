@@ -97,7 +97,7 @@ public class VirtualSensorTest {
     private static final String VIRTUAL_SENSOR_NAME = "VirtualAccelerometer";
     private static final String VIRTUAL_SENSOR_VENDOR = "VirtualDeviceVendor";
 
-    private static final int CUSTOM_SENSOR_TYPE = 9999;
+    private static final int CUSTOM_SENSOR_TYPE = Sensor.TYPE_DEVICE_PRIVATE_BASE + 9999;
 
     private static final int SENSOR_TIMEOUT_MILLIS = 1000;
 
