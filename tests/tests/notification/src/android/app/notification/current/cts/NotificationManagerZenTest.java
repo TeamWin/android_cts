@@ -26,6 +26,7 @@ import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_DEACTIVATED;
 import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_DISABLED;
 import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_ENABLED;
 import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_UNKNOWN;
+import static android.app.NotificationManager.EXTRA_AUTOMATIC_ZEN_RULE_ID;
 import static android.app.NotificationManager.EXTRA_AUTOMATIC_ZEN_RULE_STATUS;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_ALARMS;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_ALL;
@@ -52,6 +53,7 @@ import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_PEEK;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_OFF;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_ON;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BAR;
+import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -78,6 +80,7 @@ import android.content.ContentProviderOperation;
 import android.content.Intent;
 import android.content.OperationApplicationException;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
@@ -91,6 +94,7 @@ import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.ContactsContract;
+import android.provider.Settings;
 import android.service.notification.Condition;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
@@ -2246,5 +2250,19 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 mNotificationManager.getConsolidatedNotificationPolicy();
         assertThat(activePolicy.priorityCategories & PRIORITY_CATEGORY_ALARMS).isNotEqualTo(0);
         assertThat(activePolicy.priorityCategories & PRIORITY_CATEGORY_CALLS).isEqualTo(0);
+    }
+
+    @RequiresFlagsEnabled({Flags.FLAG_MODES_API, Flags.FLAG_MODES_UI})
+    @Test
+    public void testIndividualRuleIntent_resolvesToActivity() {
+        AutomaticZenRule ruleToCreate = createRule("testIndividualRuleIntent_resolvesToActivity");
+        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
+        mRuleIds.add(id);
+        final PackageManager pm = mContext.getPackageManager();
+        final Intent intent = new Intent(Settings.ACTION_AUTOMATIC_ZEN_RULE_SETTINGS);
+        intent.setData(Uri.parse("package:" + STUB_PACKAGE_NAME));
+        intent.putExtra(EXTRA_AUTOMATIC_ZEN_RULE_ID, id);
+        final ResolveInfo resolveInfo = pm.resolveActivity(intent, MATCH_DEFAULT_ONLY);
+        assertNotNull(resolveInfo);
     }
 }

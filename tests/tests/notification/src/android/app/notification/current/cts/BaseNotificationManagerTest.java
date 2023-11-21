@@ -134,6 +134,10 @@ public abstract class BaseNotificationManagerTest {
         setEnableServiceNotificationRateLimit(true);
 
         mNotificationManager.cancelAll();
+        if (mRuleIds != null && !mRuleIds.isEmpty()
+                && !mNotificationManager.isNotificationPolicyAccessGranted()) {
+            toggleNotificationPolicyAccess(mContext.getPackageName(), mInstrumentation, true);
+        }
         for (String id : mRuleIds) {
             mNotificationManager.removeAutomaticZenRule(id);
         }
