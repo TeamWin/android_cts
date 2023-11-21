@@ -119,7 +119,8 @@ public class VirtualSensorTest {
     private VirtualSensorCallback mVirtualSensorCallback;
     @Mock
     private VirtualSensorDirectChannelCallback mVirtualSensorDirectChannelCallback;
-    private VirtualSensorEventListener mSensorEventListener = new VirtualSensorEventListener();
+    private final VirtualSensorEventListener mSensorEventListener =
+            new VirtualSensorEventListener();
 
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
@@ -697,7 +698,7 @@ public class VirtualSensorTest {
         verifyDirectChannelEvents(reportToken);
     }
 
-    private class VirtualSensorEventListener implements SensorEventListener {
+    private static class VirtualSensorEventListener implements SensorEventListener {
         private final BlockingQueue<SensorEvent> mEvents = new LinkedBlockingQueue<>();
 
         @Override

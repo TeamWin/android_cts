@@ -361,7 +361,7 @@ public class VirtualDeviceParamsTest {
     }
 
     @Test
-    public void setDevicePolcy_overwritePreviousValue_shouldReturnValueFromLastCall() {
+    public void setDevicePolicy_overwritePreviousValue_shouldReturnValueFromLastCall() {
         VirtualDeviceParams params = new VirtualDeviceParams.Builder()
                 .setName(VIRTUAL_DEVICE_NAME)
                 .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)

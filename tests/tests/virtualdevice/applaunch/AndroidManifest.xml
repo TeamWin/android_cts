@@ -41,23 +41,6 @@
                 <action android:name="android.virtualdevice.applaunch.INTERCEPTED_RECEIVER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name="android.virtualdevice.cts.applaunch.util.EmptyActivity"
-            android:allowEmbedded="true"
-            android:exported="false" />
-        <activity
-            android:name="android.virtualdevice.cts.applaunch.util.SecondActivity"
-            android:allowEmbedded="true"
-            android:exported="false" />
-        <service android:name="android.virtualdevice.cts.applaunch.util.TestService" />
-        <activity
-            android:name="android.virtualdevice.cts.applaunch.util.InterceptedActivity"
-            android:allowEmbedded="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.virtualdevice.applaunch.util.INTERCEPTED_RECEIVER" />
-            </intent-filter>
-        </activity>
         <service android:name=".AppComponents$TestService" />
     </application>
 

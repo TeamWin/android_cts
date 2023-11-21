@@ -54,7 +54,7 @@ import android.hardware.display.VirtualDisplayConfig;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.server.wm.WindowManagerState;
-import android.virtualdevice.cts.applaunch.util.EmptyActivity;
+import android.virtualdevice.cts.applaunch.AppComponents.EmptyActivity;
 import android.virtualdevice.cts.common.VirtualDeviceRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;

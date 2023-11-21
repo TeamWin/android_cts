@@ -25,10 +25,6 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application>
-        <activity android:name=".MainActivity"
-            android:allowEmbedded="true"
-            android:exported="true" />
-
         <activity android:name=".HomeActivity"
             android:launchMode="singleTop"
             android:enabled="false"
@@ -50,24 +46,6 @@
 
         <activity android:name=".PermissionTestActivity"
             android:exported="true"/>
-
-        <activity android:name=".NoEmbedActivity"
-            android:exported="true" />
-
-        <activity android:name=".CannotDisplayOnRemoteActivity"
-            android:allowEmbedded="true"
-            android:canDisplayOnRemoteDevices="false"
-            android:exported="true" />
-
-        <activity android:name=".ReporterActivityA"
-            android:exported="true" />
-
-        <activity android:name=".ReporterActivityB"
-            android:exported="true" />
-        <activity android:name=".RestrictToDisplayCategoryActivity"
-            android:allowEmbedded="true"
-            android:exported="true"
-            android:requiredDisplayCategory="automotive"/>
 
         <service android:name=".StreamedAppService"
             android:exported="true" />

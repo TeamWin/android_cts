@@ -20,7 +20,6 @@ android_test_helper_app {
     name: "CtsVirtualDeviceStreamedTestApp",
     srcs: [
         "src/**/*.java",
-        "//cts/tests/tests/virtualdevice:CtsVirtualDevicesTestAidl",
     ],
     static_libs: [
         "CtsVirtualDeviceCommonLib",

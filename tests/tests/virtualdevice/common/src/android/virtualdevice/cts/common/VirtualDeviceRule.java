@@ -52,7 +52,6 @@ import android.os.Bundle;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.server.wm.WindowManagerStateHelper;
 import android.view.Surface;
-import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.internal.app.BlockedAppStreamingActivity;
@@ -87,7 +86,7 @@ public class VirtualDeviceRule implements TestRule {
     public static final VirtualDisplayConfig DEFAULT_VIRTUAL_DISPLAY_CONFIG =
             createDefaultVirtualDisplayConfigBuilder().build();
     public static final VirtualDisplayConfig TRUSTED_VIRTUAL_DISPLAY_CONFIG =
-            VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder()
+            createDefaultVirtualDisplayConfigBuilder()
                     .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
                             | DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED
                             | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY)
@@ -302,12 +301,12 @@ public class VirtualDeviceRule implements TestRule {
         } finally {
             // Revert the permissions needed for the test again.
             uiAutomation.adoptShellPermissionIdentity(
-                    currentPermissions.toArray(new String[currentPermissions.size()]));
+                    currentPermissions.toArray(new String[0]));
         }
     }
 
     /**
-     * Starts the activity for the given class on the given virtul display and blocks until it is
+     * Starts the activity for the given class on the given virtual display and blocks until it is
      * successfully launched there.
      */
     public <T extends Activity> T startActivityOnDisplaySync(
@@ -343,9 +342,9 @@ public class VirtualDeviceRule implements TestRule {
     }
 
     /**
-     * Creates activity options for launching activities on the given display.
+     * Checks that the given activity is in fact shown on the given display.
      */
-    public <T extends Activity> void assertActivityOnDisplay(T activity, int displayId) {
+    public void assertActivityOnDisplay(Activity activity, int displayId) {
         mWmState.assertActivityDisplayed(activity.getComponentName());
         assertThat(activity.getDisplay().getDisplayId()).isEqualTo(displayId);
     }
