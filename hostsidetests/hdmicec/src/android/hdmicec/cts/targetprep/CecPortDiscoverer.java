@@ -37,12 +37,12 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /* Sets up the CEC tests by discovering which port the CEC adapter connected to */
 public class CecPortDiscoverer extends BaseTargetPreparer {
@@ -69,7 +69,8 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
             throws TargetSetupError, DeviceNotAvailableException {
         ITestDevice device = testInfo.getDevice();
         if (!device.hasFeature("feature:android.hardware.hdmi.cec")
-                || !device.hasFeature("feature:android.software.leanback")) {
+                || !device.hasFeature("feature:android.software.leanback")
+                || isTvEmulator(device)) {
             // We are testing non-HDMI devices, so don't check for adapter availability
             return;
         }
@@ -79,6 +80,18 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
             }
             initValidClient(device);
         }
+    }
+
+    /**
+     * Check if the DUT is an emulator.
+     * @param device The DUT.
+     * @return true If the DUT is an emulator.
+     * @throws DeviceNotAvailableException
+     */
+    public static boolean isTvEmulator(ITestDevice device) throws DeviceNotAvailableException {
+        return !device.executeShellCommand("getprop " + HdmiCecConstants.PROPERTY_BUILD_FINGERPRINT
+                        + " | grep \"cf_x86\"")
+                .isEmpty();
     }
 
     /** {@inheritDoc} */
