@@ -29,20 +29,11 @@ android_test {
     ],
 
     static_libs: [
-        "androidx.test.ext.junit",
-        "compatibility-device-util-axt",
-        "cts-wm-util",
-        "ctstestrunner-axt",
         "CtsVirtualDeviceCommonLib",
-        "junit",
-        "flag-junit",
-        "android.companion.virtual.flags-aconfig-java",
-        "platform-compat-test-rules",
     ],
 
     srcs: [
         "src/**/*.java",
-        ":CtsVirtualDevicesTestAidl",
     ],
 
     // Tag this module as a cts test artifact
@@ -50,8 +41,6 @@ android_test {
         "cts",
         "general-tests",
     ],
-    data: [
-        ":CtsVirtualDeviceStreamedTestApp",
-    ],
+
     per_testcase_directory: true,
 }

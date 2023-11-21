@@ -14,39 +14,33 @@
  * limitations under the License.
  */
 
-package android.virtualdevice.cts;
+package android.virtualdevice.cts.core;
 
-import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
-import android.annotation.Nullable;
+import android.app.Instrumentation;
 import android.app.KeyguardManager;
-import android.companion.virtual.VirtualDeviceManager;
-import android.companion.virtual.VirtualDeviceParams;
+import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.platform.test.annotations.AppModeFull;
 import android.server.wm.LockScreenSession;
 import android.server.wm.WindowManagerStateHelper;
-import android.virtualdevice.cts.common.FakeAssociationRule;
+import android.virtualdevice.cts.common.VirtualDeviceRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.FeatureUtil;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.MockitoAnnotations;
 
 /** Tests to verify that virtual device contexts always report insecure / unlocked device. */
 @RunWith(AndroidJUnit4.class)
@@ -54,55 +48,30 @@ import org.mockito.MockitoAnnotations;
 public class VirtualDeviceKeyguardTest {
 
     @Rule
-    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
-            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-            CREATE_VIRTUAL_DEVICE);
+    public VirtualDeviceRule mVirtualDeviceRule = VirtualDeviceRule.createDefault();
 
-    @Rule
-    public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
+    private static final Instrumentation sInstrumentation = getInstrumentation();
 
-    @Nullable
-    private VirtualDeviceManager.VirtualDevice mVirtualDevice;
+    private final Context mContext = sInstrumentation.getContext();
+    private final WindowManagerStateHelper mWmState = mVirtualDeviceRule.getWmState();
+
     private KeyguardManager mDefaultDeviceKeyguardManager;
     private KeyguardManager mVirtualDeviceKeyguardManager;
 
-    private final WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
-
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
-        assumeTrue(FeatureUtil.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
+        mDefaultDeviceKeyguardManager = mContext.getSystemService(KeyguardManager.class);
 
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        mDefaultDeviceKeyguardManager = context.getSystemService(KeyguardManager.class);
-
-        VirtualDeviceManager virtualDeviceManager =
-                context.getSystemService(VirtualDeviceManager.class);
-        assumeNotNull(virtualDeviceManager);
-
-        mVirtualDevice = virtualDeviceManager.createVirtualDevice(
-                mFakeAssociationRule.getAssociationInfo().getId(),
-                new VirtualDeviceParams.Builder().build());
-        Context deviceContext = InstrumentationRegistry.getInstrumentation().getContext()
-                .createDeviceContext(mVirtualDevice.getDeviceId());
+        VirtualDevice virtualDevice = mVirtualDeviceRule.createManagedVirtualDevice();
+        Context deviceContext = mContext.createDeviceContext(virtualDevice.getDeviceId());
         mVirtualDeviceKeyguardManager = deviceContext.getSystemService(KeyguardManager.class);
-    }
-
-    @After
-    public void tearDown() {
-        if (mVirtualDevice != null) {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .adoptShellPermissionIdentity(CREATE_VIRTUAL_DEVICE);
-            mVirtualDevice.close();
-        }
     }
 
     @Test
     public void deviceIsNotSecure() {
         assumeTrue(supportsLockScreen());
 
-        try (LockScreenSession session = new LockScreenSession(
-                InstrumentationRegistry.getInstrumentation(), mWmState)) {
+        try (LockScreenSession session = new LockScreenSession(sInstrumentation, mWmState)) {
             session.disableLockScreen();
 
             assertThat(mDefaultDeviceKeyguardManager.isDeviceSecure()).isFalse();
@@ -117,8 +86,7 @@ public class VirtualDeviceKeyguardTest {
     public void deviceIsSecureAndLocked() {
         assumeTrue(supportsSecureLock());
 
-        try (LockScreenSession session = new LockScreenSession(
-                InstrumentationRegistry.getInstrumentation(), mWmState)) {
+        try (LockScreenSession session = new LockScreenSession(sInstrumentation, mWmState)) {
             session.setLockCredential().gotoKeyguard();
 
             assertThat(mDefaultDeviceKeyguardManager.isDeviceSecure()).isTrue();
@@ -133,11 +101,11 @@ public class VirtualDeviceKeyguardTest {
     public void deviceIsSecureNotLocked() {
         assumeTrue(supportsSecureLock());
 
-        try (LockScreenSession session = new LockScreenSession(
-                InstrumentationRegistry.getInstrumentation(), mWmState)) {
+        try (LockScreenSession session = new LockScreenSession(sInstrumentation, mWmState)) {
             session.setLockCredential().gotoKeyguard();
             mWmState.assertKeyguardShowingAndNotOccluded();
-            session.unlockDevice().enterAndConfirmLockCredential();
+            mVirtualDeviceRule.runWithTemporaryPermission(
+                    () -> session.unlockDevice().enterAndConfirmLockCredential());
             mWmState.waitAndAssertKeyguardGone();
 
             assertThat(mDefaultDeviceKeyguardManager.isDeviceSecure()).isTrue();
@@ -168,8 +136,7 @@ public class VirtualDeviceKeyguardTest {
     private boolean getSupportsInsecureLockScreen() {
         boolean insecure;
         try {
-            insecure = InstrumentationRegistry.getInstrumentation().getContext().getResources()
-                    .getBoolean(Resources.getSystem().getIdentifier(
+            insecure = mContext.getResources().getBoolean(Resources.getSystem().getIdentifier(
                             "config_supportsInsecureLockScreen", "bool", "android"));
         } catch (Resources.NotFoundException e) {
             insecure = true;

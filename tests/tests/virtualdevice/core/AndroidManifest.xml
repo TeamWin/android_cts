@@ -18,10 +18,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.virtualdevice.cts.core">
 
-    <queries>
-        <package android:name="android.virtualdevice.streamedtestapp" />
-    </queries>
-
     <application android:debuggable="true">
         <uses-library android:name="android.test.runner" />
     </application>
