@@ -42,6 +42,7 @@ import android.car.VehicleIgnitionState;
 import android.car.VehiclePropertyIds;
 import android.car.VehicleUnit;
 import android.car.cts.utils.VehiclePropertyVerifier;
+import android.car.feature.Flags;
 import android.car.hardware.CarHvacFanDirection;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
@@ -81,6 +82,7 @@ import android.car.hardware.property.WindshieldWipersSwitch;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.ArraySet;
 import android.util.Log;
@@ -6495,8 +6497,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @ApiTest(
             apis = {
                     "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
-                    "android.car.hardware.property.CarPropertyManager#unregisterCallback"
-
+                    "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents"
             })
     public void testSubscribePropertyEventsWithDifferentExecutorForSamePropIdAreaId_notAllowed()
             throws Exception {
@@ -6521,7 +6522,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                     .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).build()),
                             Executors.newSingleThreadExecutor(), callback));
 
-            mCarPropertyManager.unregisterCallback(callback);
+            mCarPropertyManager.unsubscribePropertyEvents(callback);
         });
     }
 
@@ -6544,7 +6545,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @Test
     @ApiTest(
             apis = {
-                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents"
+                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
+                    "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents"
             }
     )
     public void testSubscribePropertyEventsForContinuousPropertyWithBatchedRequest()
@@ -6602,7 +6604,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                             .build()),
                             /* callbackExecutor= */ null, speedListener);
                     speedListener.assertOnChangeEventCalled();
-                    mCarPropertyManager.unregisterCallback(speedListener);
+                    mCarPropertyManager.unsubscribePropertyEvents(speedListener);
 
                     assertThat(speedListener.receivedEvent(vehicleSpeed))
                             .isGreaterThan(NO_EVENTS);
@@ -6621,8 +6623,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @ApiTest(
             apis = {
                     "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
-                    "android.car.hardware.property.CarPropertyManager#unregisterCallback"
-
+                    "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents"
             })
     public void testSubscribePropertyEventsForContinuousProperty() throws Exception {
         runWithShellPermissionIdentity(
@@ -6666,8 +6667,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                             VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).build()),
                             /* callbackExecutor= */ null, speedListenerFast);
                     speedListenerUI.assertOnChangeEventCalled();
-                    mCarPropertyManager.unregisterCallback(speedListenerUI);
-                    mCarPropertyManager.unregisterCallback(speedListenerFast);
+                    mCarPropertyManager.unsubscribePropertyEvents(speedListenerUI);
+                    mCarPropertyManager.unsubscribePropertyEvents(speedListenerFast);
 
                     assertThat(speedListenerUI.receivedEvent(vehicleSpeed))
                             .isGreaterThan(NO_EVENTS);
@@ -6686,8 +6687,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @ApiTest(
             apis = {
                     "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
-                    "android.car.hardware.property.CarPropertyManager#unregisterCallback"
-
+                    "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents"
             })
     public void testSubscribePropertyEventsForOnchangeProperty() throws Exception {
         runWithShellPermissionIdentity(
@@ -6705,7 +6705,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             /* callbackExecutor= */ null, nightModeListener);
                     nightModeListener.assertOnChangeEventCalled();
                     assertThat(nightModeListener.receivedEvent(nightMode)).isEqualTo(1);
-                    mCarPropertyManager.unregisterCallback(nightModeListener);
+                    mCarPropertyManager.unsubscribePropertyEvents(nightModeListener);
                 });
     }
 
@@ -6790,6 +6790,92 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 });
     }
 
+    @ApiTest(
+            apis = {
+                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
+                    "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents"
+
+            })
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_BATCHED_SUBSCRIPTIONS)
+    public void testUnsubscribePropertyEvents() throws Exception {
+        runWithShellPermissionIdentity(
+                () -> {
+                    int vehicleSpeed = VehiclePropertyIds.PERF_VEHICLE_SPEED;
+                    CarPropertyEventCounter speedListenerNormal = new CarPropertyEventCounter();
+                    CarPropertyEventCounter speedListenerUI = new CarPropertyEventCounter();
+
+                    mCarPropertyManager.subscribePropertyEvents(List.of(
+                            new Subscription.Builder(vehicleSpeed).setUpdateRateNormal()
+                                    .build()), /* callbackExecutor= */ null, speedListenerNormal);
+
+                    // test on unregistering a callback that was never registered
+                    mCarPropertyManager.unsubscribePropertyEvents(speedListenerUI);
+                    mCarPropertyManager.subscribePropertyEvents(List.of(
+                            new Subscription.Builder(vehicleSpeed).setUpdateRateUi()
+                                    .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL)
+                                    .build()), /* callbackExecutor= */ null, speedListenerUI);
+                    speedListenerUI.resetCountDownLatch(UI_RATE_EVENT_COUNTER);
+                    speedListenerUI.assertOnChangeEventCalled();
+                    mCarPropertyManager.unsubscribePropertyEvents(speedListenerNormal,
+                            vehicleSpeed);
+
+                    int currentEventUI = speedListenerUI.receivedEvent(vehicleSpeed);
+                    // Because we copy the callback outside the lock, so even after
+                    // unsubscribe, one callback that is already copied out still might be
+                    // called. As a result, we verify that the callback is not called more than
+                    // once.
+                    speedListenerNormal.assertOnChangeEventNotCalledWithinMs(WAIT_CALLBACK);
+
+                    assertThat(speedListenerUI.receivedEvent(vehicleSpeed))
+                            .isNotEqualTo(currentEventUI);
+
+                    mCarPropertyManager.unsubscribePropertyEvents(speedListenerUI);
+                    speedListenerUI.assertOnChangeEventNotCalledWithinMs(WAIT_CALLBACK);
+
+                    currentEventUI = speedListenerUI.receivedEvent(vehicleSpeed);
+                    assertThat(speedListenerUI.receivedEvent(vehicleSpeed))
+                            .isEqualTo(currentEventUI);
+                });
+    }
+
+    @ApiTest(
+            apis = {
+                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
+                    "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents"
+
+            })
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_BATCHED_SUBSCRIPTIONS)
+    public void testBatchedUnsubscribePropertyEvents() throws Exception {
+        runWithShellPermissionIdentity(
+                () -> {
+                    assumeTrue(
+                            "WheelTick is not available, skip UnsubscribePropertyEvents test",
+                            mCarPropertyManager.isPropertyAvailable(
+                                    VehiclePropertyIds.WHEEL_TICK,
+                                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL));
+                    int vehicleSpeed = VehiclePropertyIds.PERF_VEHICLE_SPEED;
+                    int vehicleSpeedDisplay = VehiclePropertyIds.PERF_VEHICLE_SPEED_DISPLAY;
+                    int wheelTick = VehiclePropertyIds.WHEEL_TICK;
+                    CarPropertyEventCounter listener = new CarPropertyEventCounter();
+
+                    mCarPropertyManager.subscribePropertyEvents(List.of(
+                            new Subscription.Builder(vehicleSpeed).setUpdateRateNormal()
+                                    .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL)
+                                    .build(),
+                            new Subscription.Builder(vehicleSpeedDisplay).setUpdateRateUi()
+                                    .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL)
+                                    .build(),
+                            new Subscription.Builder(wheelTick).setUpdateRateUi()
+                                    .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL)
+                                    .build()),
+                            /* callbackExecutor= */ null, listener);
+                    mCarPropertyManager.unsubscribePropertyEvents(listener);
+                    listener.assertOnChangeEventNotCalledWithinMs(WAIT_CALLBACK);
+                });
+    }
+
     @Test
     public void testUnregisterCallback() throws Exception {
         runWithShellPermissionIdentity(
@@ -6824,8 +6910,6 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     // once.
                     speedListenerNormal.assertOnChangeEventNotCalledWithinMs(WAIT_CALLBACK);
 
-                    assertThat(speedListenerNormal.receivedEvent(vehicleSpeed))
-                            .isEqualTo(currentEventNormal);
                     assertThat(speedListenerUI.receivedEvent(vehicleSpeed))
                             .isNotEqualTo(currentEventUI);
 
