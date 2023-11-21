@@ -17,6 +17,7 @@
 package android.server.wm.activity.lifecycle;
 
 import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
+import static android.server.wm.StateLogger.logAlways;
 
 import static org.junit.Assert.fail;
 
@@ -56,17 +57,25 @@ public class EventTracker implements EventLog.EventTrackerCallback {
      */
     public void waitAndAssertActivityCurrentState(Class<? extends Activity> activityClass,
             String expectedState) {
-        final boolean waitResult = waitForConditionWithTimeout(() -> {
+        final boolean waitResult = waitForActivityCurrentState(activityClass, expectedState);
+        if (!waitResult) {
+            fail("Lifecycle state did not settle with the expected current state of "
+                    + expectedState + " : " + mEventLog.getActivityLog(activityClass));
+        }
+    }
+
+    /**
+     * Blocking call that will wait for the activity transition settles with the
+     * expected state.
+     */
+    public boolean waitForActivityCurrentState(Class<? extends Activity> activityClass,
+            String expectedState) {
+        return waitForConditionWithTimeout(() -> {
             List<String> activityLog = mEventLog.getActivityLog(activityClass);
             if (activityLog.isEmpty()) return false;
             String currentState = activityLog.get(activityLog.size() - 1);
             return expectedState.equals(currentState);
         });
-
-        if (!waitResult) {
-            fail("Lifecycle state did not settle with the expected current state of "
-                    + expectedState + " : " + mEventLog.getActivityLog(activityClass));
-        }
     }
 
     /**
@@ -118,6 +127,7 @@ public class EventTracker implements EventLog.EventTrackerCallback {
             final long waitMs = timeout - System.currentTimeMillis();
             if (waitMs <= 0) {
                 // Timeout expired.
+                logAlways("waitForConditionWithTimeout expired.");
                 return false;
             }
             try {

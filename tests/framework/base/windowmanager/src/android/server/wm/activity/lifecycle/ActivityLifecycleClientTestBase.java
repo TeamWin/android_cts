@@ -45,9 +45,9 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.server.wm.MultiDisplayTestBase;
 import android.server.wm.ObjectTracker;
 import android.server.wm.cts.R;
-import android.server.wm.MultiDisplayTestBase;
 import android.transition.Transition;
 import android.transition.TransitionListenerAdapter;
 import android.util.Pair;
@@ -264,6 +264,16 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
             Class<? extends Activity> activityClass, String expectedState) {
         log("Start waitAndAssertActivityCurrentState");
         mTransitionTracker.waitAndAssertActivityCurrentState(activityClass, expectedState);
+    }
+
+    /**
+     * Blocking call that will wait for the activity transition settles with the
+     * expected state.
+     */
+    final void waitForActivityCurrentState(
+            Class<? extends Activity> activityClass, String expectedState) {
+        log("Start waitForActivityCurrentState");
+        mTransitionTracker.waitForActivityCurrentState(activityClass, expectedState);
     }
 
     /**
