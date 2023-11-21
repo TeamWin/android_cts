@@ -329,9 +329,9 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
                 getLaunchActivityBuilder().
                         setTargetActivity(getComponentName(SecondActivity.class)));
 
-        final int displayWindowingMode = getDisplayWindowingModeByActivity(
+        final int defaultWindowingMode = getDefaultWindowingModeByActivity(
                 getComponentName(LifecycleConfigChangeHandlingActivity.class));
-        if (displayWindowingMode == WINDOWING_MODE_FULLSCREEN) {
+        if (defaultWindowingMode == WINDOWING_MODE_FULLSCREEN) {
             // Wait for the activity to receive the change.
             waitForActivityTransitions(LifecycleConfigChangeHandlingActivity.class,
                     Arrays.asList(ON_TOP_POSITION_LOST, ON_MULTI_WINDOW_MODE_CHANGED));
@@ -358,7 +358,7 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
                 Arrays.asList(ON_TOP_POSITION_GAINED, ON_MULTI_WINDOW_MODE_CHANGED);
         waitForActivityTransitions(LifecycleConfigChangeHandlingActivity.class, expectedSequence);
 
-        if (displayWindowingMode == WINDOWING_MODE_FULLSCREEN) {
+        if (defaultWindowingMode == WINDOWING_MODE_FULLSCREEN) {
             assertTransitionObserved(getTransitionLog(),
                     transition(LifecycleConfigChangeHandlingActivity.class,
                             ON_MULTI_WINDOW_MODE_CHANGED), "exitSplitScreen");
