@@ -144,7 +144,7 @@ public class BluetoothGattServerCallbackTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void test_allMethods() {
+    public void allMethods() {
         mCallbacks.onConnectionStateChange(mBluetoothDevice, BluetoothProfile.STATE_CONNECTED,
                 BluetoothProfile.STATE_CONNECTED);
         mCallbacks.onServiceAdded(BluetoothGatt.GATT_SUCCESS, mBluetoothGattService);

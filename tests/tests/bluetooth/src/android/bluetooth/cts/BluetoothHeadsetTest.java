@@ -111,7 +111,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_closeProfileProxy() {
+    public void closeProfileProxy() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadset);
@@ -123,7 +123,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_getConnectedDevices() {
+    public void getConnectedDevices() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadset);
@@ -133,7 +133,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_getDevicesMatchingConnectionStates() {
+    public void getDevicesMatchingConnectionStates() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadset);
@@ -144,7 +144,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_getConnectionState() {
+    public void getConnectionState() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadset);
@@ -156,7 +156,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_isAudioConnected() {
+    public void isAudioConnected() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadset);
@@ -172,7 +172,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_isNoiseReductionSupported() {
+    public void isNoiseReductionSupported() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadset);
@@ -188,7 +188,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_isVoiceRecognitionSupported() {
+    public void isVoiceRecognitionSupported() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadset);
@@ -204,7 +204,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_sendVendorSpecificResultCode() {
+    public void sendVendorSpecificResultCode() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadset);
@@ -227,7 +227,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_connect() {
+    public void connect() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadset);
@@ -245,7 +245,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_disconnect() {
+    public void disconnect() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadset);
@@ -263,7 +263,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_getConnectionPolicy() {
+    public void getConnectionPolicy() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadset);
@@ -283,7 +283,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_setConnectionPolicy() {
+    public void setConnectionPolicy() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHeadset);
@@ -306,7 +306,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_getAudioState() {
+    public void getAudioState() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         assertTrue(waitForProfileConnect());
@@ -325,7 +325,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_connectAudio() {
+    public void connectAudio() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         assertTrue(waitForProfileConnect());
@@ -341,7 +341,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_disconnectAudio() {
+    public void disconnectAudio() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         assertTrue(waitForProfileConnect());
@@ -357,7 +357,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_startScoUsingVirtualVoiceCall() {
+    public void startScoUsingVirtualVoiceCall() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         assertTrue(waitForProfileConnect());
@@ -367,7 +367,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_stopScoUsingVirtualVoiceCall() {
+    public void stopScoUsingVirtualVoiceCall() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         assertTrue(waitForProfileConnect());
@@ -377,7 +377,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_isInbandRingingEnabled() {
+    public void isInbandRingingEnabled() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         assertTrue(waitForProfileConnect());
@@ -388,7 +388,7 @@ public class BluetoothHeadsetTest {
     }
 
     @Test
-    public void test_setGetAudioRouteAllowed() {
+    public void setGetAudioRouteAllowed() {
         assumeTrue(mHasBluetooth && mIsHeadsetSupported);
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         assertTrue(waitForProfileConnect());
