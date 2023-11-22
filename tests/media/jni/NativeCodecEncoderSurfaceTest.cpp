@@ -355,22 +355,19 @@ bool CodecEncoderSurfaceTest::dequeueEncoderOutput(size_t bufferIndex,
 bool CodecEncoderSurfaceTest::tryEncoderOutput(long timeOutUs) {
     if (mIsCodecInAsyncMode) {
         if (!hasSeenError() && !mSawEncOutputEOS) {
-            int retry = 0;
             while (mReviseLatency) {
-                if (mAsyncHandleEncoder.hasOutputFormatChanged()) {
-                    int actualLatency;
-                    mReviseLatency = false;
-                    if (AMediaFormat_getInt32(mAsyncHandleEncoder.getOutputFormat(),
-                                              AMEDIAFORMAT_KEY_LATENCY, &actualLatency)) {
-                        if (mLatency < actualLatency) {
-                            mLatency = actualLatency;
-                            return !hasSeenError();
-                        }
+                if (!mAsyncHandleEncoder.waitOnFormatChange()) {
+                    mErrorLogs.append("taking too long to receive onOutputFormatChanged callback");
+                    return false;
+                }
+                int actualLatency;
+                mReviseLatency = false;
+                if (AMediaFormat_getInt32(mAsyncHandleEncoder.getOutputFormat(),
+                                          AMEDIAFORMAT_KEY_LATENCY, &actualLatency)) {
+                    if (mLatency < actualLatency) {
+                        mLatency = actualLatency;
+                        return !hasSeenError();
                     }
-                } else {
-                    if (retry > kRetryLimit) return false;
-                    usleep(kQDeQTimeOutUs);
-                    retry++;
                 }
             }
             callbackObject element = mAsyncHandleEncoder.getOutput();
@@ -622,6 +619,9 @@ bool CodecEncoderSurfaceTest::testSimpleEncode(const char* encoder, const char* 
                        StringFormat("Decoder output count is not equal to decoder input count\n "
                                     "Input count : %s, Output count : %s\n",
                                     mDecInputCount, mDecOutputCount))
+        RETURN_IF_TRUE((mMaxBFrames == 0 && !mOutputBuff->isPtsStrictlyIncreasing(INT32_MIN)),
+                       std::string{"Output timestamps are not strictly increasing \n"}.append(
+                               ref->getErrorMsg()))
         /* TODO(b/153127506)
          *  Currently disabling all encoder output checks. Added checks only for encoder timeStamp
          *  is in increasing order or not.
