@@ -105,28 +105,28 @@ public class BluetoothGattServerTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetConnectedDevices() {
+    public void getConnectedDevices() {
         assertThrows(UnsupportedOperationException.class,
                 () -> mBluetoothGattServer.getConnectedDevices());
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetConnectionState() {
+    public void getConnectionState() {
         assertThrows(UnsupportedOperationException.class,
                 () -> mBluetoothGattServer.getConnectionState(null));
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetDevicesMatchingConnectionStates() {
+    public void getDevicesMatchingConnectionStates() {
         assertThrows(UnsupportedOperationException.class,
                 () -> mBluetoothGattServer.getDevicesMatchingConnectionStates(null));
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetService() {
+    public void getService() {
         // Service is null after initialization with public constructor
         assertNull(mBluetoothGattServer.getService(TEST_UUID));
         BluetoothGattCharacteristic characteristic = new BluetoothGattCharacteristic(TEST_UUID,
@@ -148,13 +148,13 @@ public class BluetoothGattServerTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetServices() {
+    public void getServices() {
         assertEquals(mBluetoothGattServer.getServices(), new ArrayList<BluetoothGattService>());
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testReadPhy() {
+    public void readPhy() {
         BluetoothDevice testDevice = mBluetoothAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
         mUIAutomation.dropShellPermissionIdentity();
         assertThrows(SecurityException.class, () -> mBluetoothGattServer.readPhy(testDevice));
@@ -162,7 +162,7 @@ public class BluetoothGattServerTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testSetPreferredPhy() {
+    public void setPreferredPhy() {
         BluetoothDevice testDevice = mBluetoothAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
         mUIAutomation.dropShellPermissionIdentity();
         assertThrows(SecurityException.class, () -> mBluetoothGattServer.setPreferredPhy(testDevice,
@@ -172,7 +172,7 @@ public class BluetoothGattServerTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testNotifyCharacteristicChanged_withValueOverMaxLength() {
+    public void notifyCharacteristicChanged_withValueOverMaxLength() {
         BluetoothDevice testDevice = mBluetoothAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
         BluetoothGattCharacteristic characteristic = new BluetoothGattCharacteristic(TEST_UUID,
                 0x0A, 0x11);

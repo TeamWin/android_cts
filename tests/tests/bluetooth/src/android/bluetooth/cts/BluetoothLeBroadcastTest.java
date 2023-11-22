@@ -253,7 +253,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testCloseProfileProxy() {
+    public void closeProfileProxy() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
         assertTrue(mIsProfileReady);
@@ -265,7 +265,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetConnectedDevices() {
+    public void getConnectedDevices() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -276,7 +276,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetDevicesMatchingConnectionStates() {
+    public void getDevicesMatchingConnectionStates() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -287,7 +287,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetConnectionState() {
+    public void getConnectionState() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -298,7 +298,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testRegisterUnregisterCallback() {
+    public void registerUnregisterCallback() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -319,7 +319,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testRegisterCallbackNoPermission() {
+    public void registerCallbackNoPermission() {
         TestUtils.dropPermissionAsShellUid();
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
 
@@ -359,7 +359,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testCallbackCalls() {
+    public void callbackCalls() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -468,7 +468,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testStartBroadcast() {
+    public void startBroadcast() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -497,7 +497,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"3.5/C-0-9", "7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testStartBroadcastWithoutPrivilegedPermission() {
+    public void startBroadcastWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -520,7 +520,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testStartBroadcastGroup() {
+    public void startBroadcastGroup() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -551,7 +551,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"3.5/C-0-9", "7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testStartBroadcastGroupWithoutPrivilegedPermission() {
+    public void startBroadcastGroupWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -580,7 +580,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testUpdateBroadcast() {
+    public void updateBroadcast() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -597,7 +597,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"3.5/C-0-9", "7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testUpdateBroadcastWithoutPrivilegedPermission() {
+    public void updateBroadcastWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -618,7 +618,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testUpdateBroadcastGroup() {
+    public void updateBroadcastGroup() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -642,7 +642,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"3.5/C-0-9", "7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testUpdateBroadcastGroupWithoutPrivilegedPermission() {
+    public void updateBroadcastGroupWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -670,7 +670,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testStopBroadcast() {
+    public void stopBroadcast() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -685,7 +685,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"3.5/C-0-9", "7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testStopBroadcastWithoutPrivilegedPermission() {
+    public void stopBroadcastWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -704,7 +704,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testIsPlaying() {
+    public void isPlaying() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -713,7 +713,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"3.5/C-0-9", "7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testIsPlayingWithoutPrivilegedPermission() {
+    public void isPlayingWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -729,7 +729,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetAllBroadcastMetadata() {
+    public void getAllBroadcastMetadata() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -740,7 +740,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"3.5/C-0-9", "7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetAllBroadcastMetadataWithoutPrivilegedPermission() {
+    public void getAllBroadcastMetadataWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -756,7 +756,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetMaximumNumberOfBroadcasts() {
+    public void getMaximumNumberOfBroadcasts() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -765,7 +765,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"3.5/C-0-9", "7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetMaximumNumberOfBroadcastsWithoutPrivilegedPermission() {
+    public void getMaximumNumberOfBroadcastsWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -781,7 +781,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetMaximumStreamsPerBroadcast() {
+    public void getMaximumStreamsPerBroadcast() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -790,7 +790,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"3.5/C-0-9", "7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetMaximumStreamsPerBroadcastWithoutPrivilegedPermission() {
+    public void getMaximumStreamsPerBroadcastWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -806,7 +806,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetMaximumSubgroupsPerBroadcast() {
+    public void getMaximumSubgroupsPerBroadcast() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -815,7 +815,7 @@ public class BluetoothLeBroadcastTest {
 
     @CddTest(requirements = {"3.5/C-0-9", "7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetMaximumSubgroupsPerBroadcastWithoutPrivilegedPermission() {
+    public void getMaximumSubgroupsPerBroadcastWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 

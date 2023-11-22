@@ -75,7 +75,7 @@ public class LeL2capSocketTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testOpenInsecureLeL2capServerSocketOnce() {
+    public void openInsecureLeL2capServerSocketOnce() {
         assertTrue("Bluetooth is not enabled", mAdapter.isEnabled());
         try {
             final BluetoothServerSocket serverSocket = mAdapter.listenUsingInsecureL2capChannel();
@@ -89,7 +89,7 @@ public class LeL2capSocketTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testOpenInsecureLeL2capServerSocketRepeatedly() {
+    public void openInsecureLeL2capServerSocketRepeatedly() {
         assertTrue("Bluetooth is not enabled", mAdapter.isEnabled());
         try {
             for (int i = 0; i < NUM_ITERATIONS_FOR_REPEATED_TEST; i++) {
@@ -106,7 +106,7 @@ public class LeL2capSocketTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testOpenSecureLeL2capServerSocketOnce() {
+    public void openSecureLeL2capServerSocketOnce() {
         assertTrue("Bluetooth is not enabled", mAdapter.isEnabled());
         try {
             final BluetoothServerSocket serverSocket = mAdapter.listenUsingL2capChannel();
@@ -120,7 +120,7 @@ public class LeL2capSocketTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testOpenSecureLeL2capServerSocketRepeatedly() {
+    public void openSecureLeL2capServerSocketRepeatedly() {
         assertTrue("Bluetooth is not enabled", mAdapter.isEnabled());
         try {
             for (int i = 0; i < NUM_ITERATIONS_FOR_REPEATED_TEST; i++) {
