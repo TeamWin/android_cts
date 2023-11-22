@@ -136,7 +136,7 @@ public class HearingAidProfileTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void test_closeProfileProxy() {
+    public void closeProfileProxy() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mService);
         assertTrue(mIsProfileReady);
@@ -152,7 +152,7 @@ public class HearingAidProfileTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void test_getProxyServiceConnect() {
+    public void getProxyServiceConnect() {
         waitForProfileConnect();
         assertTrue(mIsProfileReady);
         assertNotNull(mService);
@@ -164,7 +164,7 @@ public class HearingAidProfileTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void test_getConnectionState() {
+    public void getConnectionState() {
         waitForProfileConnect();
         assertTrue(mIsProfileReady);
         assertNotNull(mService);
@@ -185,7 +185,7 @@ public class HearingAidProfileTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void test_setVolume() {
+    public void setVolume() {
         waitForProfileConnect();
         assertTrue(mIsProfileReady);
         assertNotNull(mService);
@@ -200,7 +200,7 @@ public class HearingAidProfileTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void test_getDeviceSide() {
+    public void getDeviceSide() {
         waitForProfileConnect();
         assertTrue(mIsProfileReady);
         assertNotNull(mService);
@@ -220,7 +220,7 @@ public class HearingAidProfileTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void test_getDeviceMode() {
+    public void getDeviceMode() {
         waitForProfileConnect();
         assertTrue(mIsProfileReady);
         assertNotNull(mService);
@@ -241,7 +241,7 @@ public class HearingAidProfileTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void test_getAdvertisementServiceData() {
+    public void getAdvertisementServiceData() {
         waitForProfileConnect();
         assertTrue(mIsProfileReady);
         assertNotNull(mService);
@@ -263,7 +263,7 @@ public class HearingAidProfileTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void test_getAdvertisementDeviceMode() {
+    public void getAdvertisementDeviceMode() {
         waitForProfileConnect();
         assertTrue(mIsProfileReady);
         assertNotNull(mService);
@@ -283,7 +283,7 @@ public class HearingAidProfileTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void test_getAdvertisementDeviceSide() {
+    public void getAdvertisementDeviceSide() {
         waitForProfileConnect();
         assertTrue(mIsProfileReady);
         assertNotNull(mService);
@@ -303,7 +303,7 @@ public class HearingAidProfileTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void test_getTruncatedHiSyncId() {
+    public void getTruncatedHiSyncId() {
         waitForProfileConnect();
         assertTrue(mIsProfileReady);
         assertNotNull(mService);
@@ -324,7 +324,7 @@ public class HearingAidProfileTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void test_isCsipSupported() {
+    public void isCsipSupported() {
         waitForProfileConnect();
         assertTrue(mIsProfileReady);
         assertNotNull(mService);
@@ -345,7 +345,7 @@ public class HearingAidProfileTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void test_isLikelyPairOfBluetoothHearingAid() {
+    public void isLikelyPairOfBluetoothHearingAid() {
         waitForProfileConnect();
         assertTrue(mIsProfileReady);
         assertNotNull(mService);
@@ -374,7 +374,7 @@ public class HearingAidProfileTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void test_getConnectedDevices() {
+    public void getConnectedDevices() {
         waitForProfileConnect();
         assertTrue(mIsProfileReady);
         assertNotNull(mService);
@@ -396,7 +396,7 @@ public class HearingAidProfileTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void test_getDevicesMatchingConnectionStates() {
+    public void getDevicesMatchingConnectionStates() {
         waitForProfileConnect();
         assertTrue(mIsProfileReady);
         assertNotNull(mService);
@@ -419,7 +419,7 @@ public class HearingAidProfileTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void test_getConnectionStateChangedIntent() {
+    public void getConnectionStateChangedIntent() {
         waitForProfileConnect();
         assertTrue(mIsProfileReady);
         assertNotNull(mService);
@@ -446,10 +446,10 @@ public class HearingAidProfileTest {
         mIntentReceiver = new HearingAidIntentReceiver();
         mContext.registerReceiver(mIntentReceiver, filter);
 
-        Log.d(TAG, "test_getConnectionStateChangedIntent: disable adapter and wait");
+        Log.d(TAG, "getConnectionStateChangedIntent: disable adapter and wait");
         assertTrue(BTAdapterUtils.disableAdapter(mBluetoothAdapter, mContext));
 
-        Log.d(TAG, "test_getConnectionStateChangedIntent: enable adapter and wait");
+        Log.d(TAG, "getConnectionStateChangedIntent: enable adapter and wait");
         assertTrue(BTAdapterUtils.enableAdapter(mBluetoothAdapter, mContext));
 
         int sanityCount = WAIT_FOR_INTENT_TIMEOUT_MS;
@@ -462,7 +462,7 @@ public class HearingAidProfileTest {
         // Tear down
         mContext.unregisterReceiver(mIntentReceiver);
 
-        Log.d(TAG, "test_getConnectionStateChangedIntent: number of bonded device="
+        Log.d(TAG, "getConnectionStateChangedIntent: number of bonded device="
               + numDevices + ", mIntentCallbackDeviceList.size()="
               + mIntentCallbackDeviceList.size());
         for (BluetoothDevice device : mIntentCallbackDeviceList) {
