@@ -216,6 +216,25 @@ public class PackageInstallerArchiveTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
+    public void archiveApp_uninstallationWorksCorrectly() throws Exception {
+        installPackage(PACKAGE_NAME, APK_PATH);
+
+        runWithShellPermissionIdentity(
+                () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
+                        new IntentSender((IIntentSender) mArchiveIntentSender)),
+                Manifest.permission.DELETE_PACKAGES);
+        assertThat(mArchiveIntentSender.mStatus.get(5, TimeUnit.SECONDS)).isEqualTo(
+                PackageInstaller.STATUS_SUCCESS);
+
+        uninstallPackage(PACKAGE_NAME);
+
+        assertThrows(PackageManager.NameNotFoundException.class,
+                () -> mPackageManager.getPackageInfo(PACKAGE_NAME,
+                        PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)));
+    }
+
+    @Test
     public void archiveApp_noInstaller() throws NameNotFoundException {
         installPackageWithNoInstaller(PACKAGE_NAME, APK_PATH);
 
