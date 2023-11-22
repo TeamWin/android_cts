@@ -33,6 +33,8 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.stream.IntStream;
 import java.util.zip.CRC32;
 
@@ -125,43 +127,40 @@ public class OutputManager {
             msg.append(String.format("test pts list size is %d \n", testList.size()));
             res = false;
         }
-        if (!res || !refList.equals(testList)) {
-            res = false;
-            ArrayList<Long> refCopyList = new ArrayList<>(refList);
-            ArrayList<Long> testCopyList = new ArrayList<>(testList);
-            refCopyList.removeAll(testList);
-            testCopyList.removeAll(refList);
-            if (refCopyList.size() != 0) {
-                msg.append("Some of the frame/access-units present in ref list are not present "
-                        + "in test list. Possibly due to frame drops. \n");
-                msg.append("List of timestamps that are dropped by the component :- \n");
-                msg.append("pts :- [[ ");
-                for (int i = 0; i < refCopyList.size(); i++) {
-                    msg.append(String.format("{ %d us }, ", refCopyList.get(i)));
-                }
-                msg.append(" ]]\n");
+        for (int i = 0; i < Math.min(refList.size(), testList.size()); i++) {
+            if (!Objects.equals(refList.get(i), testList.get(i))) {
+                msg.append(String.format(Locale.getDefault(),
+                        "Frame idx %d, ref pts %dus, test pts %dus \n", i, refList.get(i),
+                        testList.get(i)));
+                res = false;
             }
-            if (testCopyList.size() != 0) {
-                msg.append("Test list contains frame/access-units that are not present in"
-                        + " ref list, Possible due to duplicate transmissions. \n");
-                msg.append("List of timestamps that are additionally present in test list"
-                        + " are :- \n");
-                msg.append("pts :- [[ ");
-                for (int i = 0; i < testCopyList.size(); i++) {
-                    msg.append(String.format("{ %d us }, ", testCopyList.get(i)));
-                }
-                msg.append(" ]]\n");
+        }
+        if (refList.size() < testList.size()) {
+            for (int i = refList.size(); i < testList.size(); i++) {
+                msg.append(String.format(Locale.getDefault(),
+                        "Frame idx %d, ref pts EMPTY, test pts %dus \n", i, testList.get(i)));
             }
+        } else if (refList.size() > testList.size()) {
+            for (int i = testList.size(); i < refList.size(); i++) {
+                msg.append(String.format(Locale.getDefault(),
+                        "Frame idx %d, ref pts %dus, test pts EMPTY \n", i, refList.get(i)));
+            }
+        }
+        if (!res) {
+            msg.append("Are frames for which timestamps differ between reference and test. \n");
         }
         return res;
     }
 
     public boolean isOutPtsListIdenticalToInpPtsList(boolean requireSorting) {
-        Collections.sort(mInpPtsList);
+        ArrayList<Long> inpPtsListCopy = new ArrayList<>(mInpPtsList);
+        Collections.sort(inpPtsListCopy);
         if (requireSorting) {
-            Collections.sort(mOutPtsList);
+            ArrayList<Long> outPtsListCopy = new ArrayList<>(mOutPtsList);
+            Collections.sort(outPtsListCopy);
+            return arePtsListsIdentical(inpPtsListCopy, outPtsListCopy, mErrorLogs);
         }
-        return arePtsListsIdentical(mInpPtsList, mOutPtsList, mErrorLogs);
+        return arePtsListsIdentical(inpPtsListCopy, mOutPtsList, mErrorLogs);
     }
 
     public int getOutStreamSize() {
@@ -449,15 +448,21 @@ public class OutputManager {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        OutputManager that = (OutputManager) o;
+        if (!this.equalsPtsList(o)) return false;
+        if (!this.equalsByteOutput(o)) return false;
+        return true;
+    }
 
-        if (!this.equalsInterlaced(o)) return false;
+    public boolean equalsPtsList(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        OutputManager that = (OutputManager) o;
         return arePtsListsIdentical(mOutPtsList, that.mOutPtsList, mSharedErrorLogs);
     }
 
     // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
     // produce multiple progressive frames?) For now, do not verify timestamps.
-    public boolean equalsInterlaced(Object o) {
+    public boolean equalsByteOutput(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         OutputManager that = (OutputManager) o;

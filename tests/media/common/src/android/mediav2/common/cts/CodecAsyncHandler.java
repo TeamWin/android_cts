@@ -26,6 +26,7 @@ import android.util.Pair;
 import androidx.annotation.NonNull;
 
 import java.util.LinkedList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -59,9 +60,12 @@ public class CodecAsyncHandler extends MediaCodec.Callback {
 
     public void clearQueues() {
         mLock.lock();
-        mCbInputQueue.clear();
-        mCbOutputQueue.clear();
-        mLock.unlock();
+        try {
+            mCbInputQueue.clear();
+            mCbOutputQueue.clear();
+        } finally {
+            mLock.unlock();
+        }
     }
 
     public void resetContext() {
@@ -76,9 +80,12 @@ public class CodecAsyncHandler extends MediaCodec.Callback {
     public void onInputBufferAvailable(@NonNull MediaCodec codec, int bufferIndex) {
         assertTrue(bufferIndex >= 0);
         mLock.lock();
-        mCbInputQueue.add(new Pair<>(bufferIndex, null));
-        mCondition.signalAll();
-        mLock.unlock();
+        try {
+            mCbInputQueue.add(new Pair<>(bufferIndex, null));
+            mCondition.signalAll();
+        } finally {
+            mLock.unlock();
+        }
     }
 
     @Override
@@ -86,26 +93,38 @@ public class CodecAsyncHandler extends MediaCodec.Callback {
             @NonNull MediaCodec.BufferInfo info) {
         assertTrue(bufferIndex >= 0);
         mLock.lock();
-        mCbOutputQueue.add(new Pair<>(bufferIndex, info));
-        mCondition.signalAll();
-        mLock.unlock();
+        try {
+            mCbOutputQueue.add(new Pair<>(bufferIndex, info));
+            mCondition.signalAll();
+        } finally {
+            mLock.unlock();
+        }
     }
 
     @Override
     public void onError(@NonNull MediaCodec codec, MediaCodec.CodecException e) {
-        mLock.lock();
         mErrorMsg = "###################  Async Error Details  #####################\n";
         mErrorMsg += e.toString() + "\n";
-        mSignalledError = true;
-        mCondition.signalAll();
-        mLock.unlock();
+        mLock.lock();
+        try {
+            mSignalledError = true;
+            mCondition.signalAll();
+        } finally {
+            mLock.unlock();
+        }
         Log.e(LOG_TAG, "received media codec error : " + e.getMessage());
     }
 
     @Override
     public void onOutputFormatChanged(@NonNull MediaCodec codec, @NonNull MediaFormat format) {
-        mOutFormat = format;
-        mSignalledOutFormatChanged = true;
+        mLock.lock();
+        try {
+            mOutFormat = format;
+            mSignalledOutFormatChanged = true;
+            mCondition.signalAll();
+        } finally {
+            mLock.unlock();
+        }
         Log.i(LOG_TAG, "Output format changed: " + format);
     }
 
@@ -117,59 +136,91 @@ public class CodecAsyncHandler extends MediaCodec.Callback {
         }
     }
 
+    public void waitOnFormatChange() throws InterruptedException {
+        int retry = CodecTestBase.RETRY_LIMIT;
+        mLock.lock();
+        try {
+            while (!mSignalledError) {
+                if (mSignalledOutFormatChanged || retry == 0) break;
+                if (!mCondition.await(CodecTestBase.Q_DEQ_TIMEOUT_US, TimeUnit.MICROSECONDS)) {
+                    retry--;
+                }
+            }
+        } finally {
+            mLock.unlock();
+        }
+        if (!mSignalledError) {
+            assertTrue("taking too long to receive onOutputFormatChanged callback",
+                    mSignalledOutFormatChanged);
+        }
+    }
+
     public Pair<Integer, MediaCodec.BufferInfo> getInput() throws InterruptedException {
         Pair<Integer, MediaCodec.BufferInfo> element = null;
         mLock.lock();
-        while (!mSignalledError) {
-            if (mCbInputQueue.isEmpty()) {
-                mCondition.await();
-            } else {
-                element = mCbInputQueue.remove(0);
-                break;
+        try {
+            while (!mSignalledError) {
+                if (mCbInputQueue.isEmpty()) {
+                    mCondition.await();
+                } else {
+                    element = mCbInputQueue.remove(0);
+                    break;
+                }
             }
+        } finally {
+            mLock.unlock();
         }
-        mLock.unlock();
         return element;
     }
 
     public Pair<Integer, MediaCodec.BufferInfo> getOutput() throws InterruptedException {
         Pair<Integer, MediaCodec.BufferInfo> element = null;
         mLock.lock();
-        while (!mSignalledError) {
-            if (mCbOutputQueue.isEmpty()) {
-                mCondition.await();
-            } else {
-                element = mCbOutputQueue.remove(0);
-                break;
+        try {
+            while (!mSignalledError) {
+                if (mCbOutputQueue.isEmpty()) {
+                    mCondition.await();
+                } else {
+                    element = mCbOutputQueue.remove(0);
+                    break;
+                }
             }
+        } finally {
+            mLock.unlock();
         }
-        mLock.unlock();
         return element;
     }
 
     public Pair<Integer, MediaCodec.BufferInfo> getWork() throws InterruptedException {
         Pair<Integer, MediaCodec.BufferInfo> element = null;
         mLock.lock();
-        while (!mSignalledError) {
-            if (mCbInputQueue.isEmpty() && mCbOutputQueue.isEmpty()) {
-                mCondition.await();
-            } else {
-                if (!mCbOutputQueue.isEmpty()) {
-                    element = mCbOutputQueue.remove(0);
+        try {
+            while (!mSignalledError) {
+                if (mCbInputQueue.isEmpty() && mCbOutputQueue.isEmpty()) {
+                    mCondition.await();
                 } else {
-                    element = mCbInputQueue.remove(0);
+                    if (!mCbOutputQueue.isEmpty()) {
+                        element = mCbOutputQueue.remove(0);
+                    } else {
+                        element = mCbInputQueue.remove(0);
+                    }
+                    break;
                 }
-                break;
             }
+        } finally {
+            mLock.unlock();
         }
-        mLock.unlock();
         return element;
     }
 
     public boolean isInputQueueEmpty() {
+        boolean isEmpty = true;
         mLock.lock();
-        boolean isEmpty = mCbInputQueue.isEmpty();
-        mLock.unlock();
+        try {
+            isEmpty = mCbInputQueue.isEmpty();
+        } finally {
+            mLock.unlock();
+        }
         return isEmpty;
     }
 
