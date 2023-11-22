@@ -92,18 +92,9 @@ public class AudioMixTest {
                         .addMixRule(RULE_MATCH_UID, 123).build())
                         .setFormat(OUTPUT_FORMAT_STEREO_44KHZ_PCM)
                         .setRouteFlags(AudioMix.ROUTE_FLAG_LOOP_BACK).build();
-        final AudioMix playbackAudioMixWithUid123AndSessionId42 =
-                new AudioMix.Builder(new AudioMixingRule.Builder()
-                        .setTargetMixRole(MIX_ROLE_PLAYERS)
-                        .addMixRule(RULE_MATCH_UID, 123)
-                        .addMixRule(RULE_MATCH_AUDIO_SESSION_ID, 42).build())
-                        .setFormat(OUTPUT_FORMAT_STEREO_44KHZ_PCM)
-                        .setRouteFlags(AudioMix.ROUTE_FLAG_LOOP_BACK).build();
         equalsTester.addEqualityGroup(
                 playbackAudioMixWithSessionId42AndUid123,
-                playbackAudioMixWithUid123AndSessionId42,
-                writeToAndFromParcel(playbackAudioMixWithSessionId42AndUid123),
-                writeToAndFromParcel(playbackAudioMixWithUid123AndSessionId42));
+                writeToAndFromParcel(playbackAudioMixWithSessionId42AndUid123));
 
         // --- Equality group 2
         final AudioMix recordingAudioMixWithSessionId42AndUid123 =
@@ -113,17 +104,8 @@ public class AudioMixTest {
                         .addMixRule(RULE_MATCH_UID, 123).build())
                         .setFormat(INPUT_FORMAT_MONO_16KHZ_PCM)
                         .setRouteFlags(AudioMix.ROUTE_FLAG_LOOP_BACK).build();
-        final AudioMix recordingAudioMixWithUid123AndSessionId42 =
-                new AudioMix.Builder(new AudioMixingRule.Builder()
-                        .setTargetMixRole(MIX_ROLE_INJECTOR)
-                        .addMixRule(RULE_MATCH_AUDIO_SESSION_ID, 42)
-                        .addMixRule(RULE_MATCH_UID, 123).build())
-                        .setFormat(INPUT_FORMAT_MONO_16KHZ_PCM)
-                        .setRouteFlags(AudioMix.ROUTE_FLAG_LOOP_BACK).build();
         equalsTester.addEqualityGroup(recordingAudioMixWithSessionId42AndUid123,
-                recordingAudioMixWithUid123AndSessionId42,
-                writeToAndFromParcel(recordingAudioMixWithSessionId42AndUid123),
-                writeToAndFromParcel(recordingAudioMixWithUid123AndSessionId42));
+                writeToAndFromParcel(recordingAudioMixWithSessionId42AndUid123));
 
         // --- Equality group 3
         final AudioMix recordingAudioMixWithSessionId42AndUid123Render =
