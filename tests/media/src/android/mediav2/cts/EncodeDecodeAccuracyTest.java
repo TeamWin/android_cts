@@ -342,24 +342,14 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
     private void tryEncoderOutput(long timeOutUs) throws InterruptedException {
         if (mIsCodecInAsyncMode) {
             if (!mAsyncHandleEncoder.hasSeenError() && !mSawOutputEOSEnc) {
-                int retry = 0;
                 while (mReviseLatency) {
-                    if (mAsyncHandleEncoder.hasOutputFormatChanged()) {
-                        mReviseLatency = false;
-                        int actualLatency = mAsyncHandleEncoder.getOutputFormat()
-                                .getInteger(MediaFormat.KEY_LATENCY, mLatency);
-                        if (mLatency < actualLatency) {
-                            mLatency = actualLatency;
-                            return;
-                        }
-                    } else {
-                        if (retry > CodecTestBase.RETRY_LIMIT) {
-                            throw new InterruptedException("did not receive output format " +
-                                    "changed for encoder after " + CodecTestBase.Q_DEQ_TIMEOUT_US *
-                                    CodecTestBase.RETRY_LIMIT + " us");
-                        }
-                        Thread.sleep(CodecTestBase.Q_DEQ_TIMEOUT_US / 1000);
-                        retry++;
+                    mAsyncHandleEncoder.waitOnFormatChange();
+                    mReviseLatency = false;
+                    int actualLatency = mAsyncHandleEncoder.getOutputFormat()
+                            .getInteger(MediaFormat.KEY_LATENCY, mLatency);
+                    if (mLatency < actualLatency) {
+                        mLatency = actualLatency;
+                        return;
                     }
                 }
                 Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandleEncoder.getOutput();
