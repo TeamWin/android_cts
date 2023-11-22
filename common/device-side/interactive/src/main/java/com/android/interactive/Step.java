@@ -22,6 +22,8 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.SYSTEM_APP
 import static com.android.interactive.Automator.AUTOMATION_FILE;
 
 import android.graphics.PixelFormat;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -247,27 +249,32 @@ public abstract class Step<E> {
      * Adds a button to the interaction prompt.
      */
     protected void addButton(String title, Runnable onClick) {
-        Button btn = new Button(TestApis.context().instrumentedContext());
-        btn.setText(title);
-        btn.setOnClickListener(v -> onClick.run());
+        // Push to UI thread to avoid animation issues when adding the button
+        new Handler(Looper.getMainLooper()).post(() -> {
+            Button btn = new Button(TestApis.context().instrumentedContext());
+            btn.setText(title);
+            btn.setOnClickListener(v -> onClick.run());
 
-        GridLayout layout = mInstructionView.findViewById(R.id.buttons);
-        layout.addView(btn);
+            GridLayout layout = mInstructionView.findViewById(R.id.buttons);
+            layout.addView(btn);
+        });
     }
 
     /**
      * Adds small button with a single up/down arrow, used for moving the text box to the
      * bottom of the screen in case it covers some critical area of the app
      */
-
     protected void addSwapButton() {
-        Button btn = new Button(TestApis.context().instrumentedContext());
-        // up/down arrow
-        btn.setText("\u21F5");
-        btn.setOnClickListener(v -> swap());
+        // Push to UI thread to avoid animation issues when adding the button
+        new Handler(Looper.getMainLooper()).post(() -> {
+            Button btn = new Button(TestApis.context().instrumentedContext());
+            // up/down arrow
+            btn.setText("\u21F5");
+            btn.setOnClickListener(v -> swap());
 
-        GridLayout layout = mInstructionView.findViewById(R.id.buttons);
-        layout.addView(btn);
+            GridLayout layout = mInstructionView.findViewById(R.id.buttons);
+            layout.addView(btn);
+        });
     }
 
     /**
