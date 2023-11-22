@@ -110,7 +110,7 @@ public class BluetoothPbapClientTest {
     }
 
     @Test
-    public void test_closeProfileProxy() {
+    public void closeProfileProxy() {
         assumeTrue(mHasBluetooth && mIsPbapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPbapClient);
@@ -122,7 +122,7 @@ public class BluetoothPbapClientTest {
     }
 
     @Test
-    public void test_getConnectedDevices() {
+    public void getConnectedDevices() {
         assumeTrue(mHasBluetooth && mIsPbapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPbapClient);
@@ -135,7 +135,7 @@ public class BluetoothPbapClientTest {
     }
 
     @Test
-    public void test_getConnectionPolicy() {
+    public void getConnectionPolicy() {
         assumeTrue(mHasBluetooth && mIsPbapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPbapClient);
@@ -154,7 +154,7 @@ public class BluetoothPbapClientTest {
     }
 
     @Test
-    public void test_getConnectionState() {
+    public void getConnectionState() {
         assumeTrue(mHasBluetooth && mIsPbapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPbapClient);
@@ -173,7 +173,7 @@ public class BluetoothPbapClientTest {
     }
 
     @Test
-    public void test_getDevicesMatchingConnectionStates() {
+    public void getDevicesMatchingConnectionStates() {
         assumeTrue(mHasBluetooth && mIsPbapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPbapClient);
@@ -187,7 +187,7 @@ public class BluetoothPbapClientTest {
     }
 
     @Test
-    public void test_setConnectionPolicy() {
+    public void setConnectionPolicy() {
         assumeTrue(mHasBluetooth && mIsPbapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPbapClient);

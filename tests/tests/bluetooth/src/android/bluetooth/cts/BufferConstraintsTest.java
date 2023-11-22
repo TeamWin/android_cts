@@ -52,7 +52,7 @@ public class BufferConstraintsTest {
 
     @Test
     @SmallTest
-    public void test_forCodec() {
+    public void forCodec() {
         // Skip the test if bluetooth is not present.
         assumeTrue(mHasBluetooth);
 
