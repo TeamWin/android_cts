@@ -267,6 +267,16 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     }
 
     /**
+     * Blocking call that will wait for the activity transition settles with the
+     * expected state.
+     */
+    final void waitForActivityCurrentState(
+            Class<? extends Activity> activityClass, String expectedState) {
+        log("Start waitForActivityCurrentState");
+        mTransitionTracker.waitForActivityCurrentState(activityClass, expectedState);
+    }
+
+    /**
      * Blocking call that will wait for activities to perform the expected sequence of transitions.
      * @see EventTracker#waitForActivityTransitions(Class, List)
      */
