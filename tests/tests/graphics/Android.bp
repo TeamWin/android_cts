@@ -38,6 +38,7 @@ android_test {
         "SurfaceFlingerProperties",
         "testng",
         "androidx.core_core",
+        "framework_graphics_flags_java_lib",
         "com.android.text.flags-aconfig-java",
     ],
     jni_libs: ["libctsgraphics_jni"],
