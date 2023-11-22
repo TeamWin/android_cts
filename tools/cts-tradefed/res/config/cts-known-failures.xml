@@ -314,4 +314,7 @@
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.SurfaceControlViewHostTests#testPopupWindowPosition" />
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.SurfaceControlViewHostTests#testFocusWithTouchCrossProcess" />
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.SurfaceControlViewHostTests#testChildWindowFocusable" />
+
+    <!-- b/294253316 -->
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.WindowUntrustedTouchTest#testWhenOneCustomToastWindowAndOneSawWindowBelowThreshold_blocksTouch" />
 </configuration>
