@@ -108,7 +108,7 @@ public class BluetoothLeAudioCodecConfigMetadataTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testCreateCodecConfigMetadataFromBuilder() {
+    public void createCodecConfigMetadataFromBuilder() {
         BluetoothLeAudioCodecConfigMetadata codecMetadata =
                 new BluetoothLeAudioCodecConfigMetadata.Builder()
                         .setAudioLocation(TEST_AUDIO_LOCATION_FRONT_LEFT)
@@ -126,7 +126,7 @@ public class BluetoothLeAudioCodecConfigMetadataTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testCreateCodecConfigMetadataFromCopy() {
+    public void createCodecConfigMetadataFromCopy() {
         BluetoothLeAudioCodecConfigMetadata codecMetadata =
                 new BluetoothLeAudioCodecConfigMetadata.Builder()
                         .setAudioLocation(TEST_AUDIO_LOCATION_FRONT_LEFT)
@@ -146,7 +146,7 @@ public class BluetoothLeAudioCodecConfigMetadataTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testCreateCodecConfigMetadataFromBytes() {
+    public void createCodecConfigMetadataFromBytes() {
         BluetoothLeAudioCodecConfigMetadata codecMetadata =
                 BluetoothLeAudioCodecConfigMetadata.fromRawBytes(TEST_METADATA_BYTES);
         byte[] metadataBytes = codecMetadata.getRawMetadata();

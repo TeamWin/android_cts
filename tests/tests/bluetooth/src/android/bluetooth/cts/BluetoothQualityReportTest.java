@@ -204,7 +204,7 @@ public final class BluetoothQualityReportTest {
     }
 
     @Test
-    public void testBqrMonitor() {
+    public void bqrMonitor() {
         BQRParameters bqrp = BQRParameters.getInstance();
         Assert.assertNotNull(bqrp);
 
@@ -224,7 +224,7 @@ public final class BluetoothQualityReportTest {
     }
 
     @Test
-    public void testBqrApproachLsto() {
+    public void bqrApproachLsto() {
         BQRParameters bqrp = BQRParameters.getInstance();
         Assert.assertNotNull(bqrp);
 
@@ -246,7 +246,7 @@ public final class BluetoothQualityReportTest {
     }
 
     @Test
-    public void testBqrA2dpChoppy() {
+    public void bqrA2dpChoppy() {
         BQRParameters bqrp = BQRParameters.getInstance();
         Assert.assertNotNull(bqrp);
 
@@ -268,7 +268,7 @@ public final class BluetoothQualityReportTest {
     }
 
     @Test
-    public void testBqrScoChoppy() {
+    public void bqrScoChoppy() {
         BQRParameters bqrp = BQRParameters.getInstance();
         Assert.assertNotNull(bqrp);
 
@@ -290,7 +290,7 @@ public final class BluetoothQualityReportTest {
     }
 
     @Test
-    public void testBqrConnectFail() {
+    public void bqrConnectFail() {
         BQRParameters bqrp = BQRParameters.getInstance();
         Assert.assertNotNull(bqrp);
 
@@ -335,7 +335,7 @@ public final class BluetoothQualityReportTest {
     }
 
     @Test
-    public void testDefaultNameAddress() {
+    public void defaultNameAddress() {
         BQRParameters bqrp = BQRParameters.getInstance();
         Assert.assertNotNull(bqrp);
 
@@ -359,7 +359,7 @@ public final class BluetoothQualityReportTest {
     }
 
     @Test
-    public void testInvalidQualityReportId() {
+    public void invalidQualityReportId() {
         BQRParameters bqrp = BQRParameters.getInstance();
         Assert.assertNotNull(bqrp);
 
@@ -380,7 +380,7 @@ public final class BluetoothQualityReportTest {
     }
 
     @Test
-    public void testRawDataNull() {
+    public void rawDataNull() {
         BluetoothClass bluetoothClass = getBluetoothClassHelper(mRemoteCoD);
 
         Assert.assertThrows(
@@ -397,7 +397,7 @@ public final class BluetoothQualityReportTest {
     }
 
     @Test
-    public void testInvalidRawData() {
+    public void invalidRawData() {
         BQRParameters bqrp = BQRParameters.getInstance();
         Assert.assertNotNull(bqrp);
 
@@ -464,7 +464,7 @@ public final class BluetoothQualityReportTest {
     }
 
     @Test
-    public void testReadWriteBqrParcel() {
+    public void readWriteBqrParcel() {
         BQRParameters bqrp = BQRParameters.getInstance();
         Assert.assertNotNull(bqrp);
 
@@ -511,7 +511,7 @@ public final class BluetoothQualityReportTest {
     }
 
     @Test
-    public void testReadWriteBqrCommonParcel() {
+    public void readWriteBqrCommonParcel() {
         BQRParameters bqrp = BQRParameters.getInstance();
         Assert.assertNotNull(bqrp);
 
@@ -571,7 +571,7 @@ public final class BluetoothQualityReportTest {
     }
 
     @Test
-    public void testReadWriteBqrVsApproachLstoParcel() {
+    public void readWriteBqrVsApproachLstoParcel() {
         BQRParameters bqrp = BQRParameters.getInstance();
         Assert.assertNotNull(bqrp);
 
@@ -619,7 +619,7 @@ public final class BluetoothQualityReportTest {
     }
 
     @Test
-    public void testReadWriteBqrVsA2dpChoppyParcel() {
+    public void readWriteBqrVsA2dpChoppyParcel() {
         BQRParameters bqrp = BQRParameters.getInstance();
         Assert.assertNotNull(bqrp);
 
@@ -667,7 +667,7 @@ public final class BluetoothQualityReportTest {
     }
 
     @Test
-    public void testReadWriteBqrVsScoChoppyParcel() {
+    public void readWriteBqrVsScoChoppyParcel() {
         BQRParameters bqrp = BQRParameters.getInstance();
         Assert.assertNotNull(bqrp);
 
@@ -727,7 +727,7 @@ public final class BluetoothQualityReportTest {
     }
 
     @Test
-    public void testReadWriteBqrConnectFailParcel() {
+    public void readWriteBqrConnectFailParcel() {
         BQRParameters bqrp = BQRParameters.getInstance();
         Assert.assertNotNull(bqrp);
 

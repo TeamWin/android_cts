@@ -121,7 +121,7 @@ public class BluetoothLeScanTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void testBasicBleScan() {
+    public void basicBleScan() {
         long scanStartMillis = SystemClock.elapsedRealtime();
         Collection<ScanResult> scanResults = scan();
         long scanEndMillis = SystemClock.elapsedRealtime();
@@ -137,7 +137,7 @@ public class BluetoothLeScanTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void testScanFilter() {
+    public void scanFilter() {
         List<ScanFilter> filters = new ArrayList<ScanFilter>();
         ScanFilter filter = createScanFilter();
         if (filter == null) {
@@ -162,7 +162,7 @@ public class BluetoothLeScanTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void testScanFromSourceWithoutFilters() {
+    public void scanFromSourceWithoutFilters() {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(
                         android.Manifest.permission.BLUETOOTH_CONNECT,
@@ -183,7 +183,7 @@ public class BluetoothLeScanTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void testScanFromSourceWithFilters() {
+    public void scanFromSourceWithFilters() {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(
                         android.Manifest.permission.BLUETOOTH_CONNECT,
@@ -243,7 +243,7 @@ public class BluetoothLeScanTest {
 //    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
 //    @MediumTest
 //    @Test
-//    public void testOpportunisticScan() {
+//    public void opportunisticScan() {
 //        ScanSettings opportunisticScanSettings = new ScanSettings.Builder()
 //                .setScanMode(ScanSettings.SCAN_MODE_OPPORTUNISTIC)
 //                .build();
@@ -292,7 +292,7 @@ public class BluetoothLeScanTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void testBatchScan() {
+    public void batchScan() {
         Assume.assumeTrue(isBleBatchScanSupported());
 
         ScanSettings batchScanSettings = new ScanSettings.Builder()
@@ -323,7 +323,7 @@ public class BluetoothLeScanTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void testStartScanPendingIntent_nullnull() throws Exception {
+    public void startScanPendingIntent_nullnull() throws Exception {
         Assume.assumeTrue(isBleBatchScanSupported());
 
         Intent broadcastIntent = new Intent();
@@ -343,7 +343,7 @@ public class BluetoothLeScanTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
-    public void testStartScanPendingIntent() throws Exception {
+    public void startScanPendingIntent() throws Exception {
         Assume.assumeTrue(isBleBatchScanSupported());
 
         ScanSettings batchScanSettings = new ScanSettings.Builder()
