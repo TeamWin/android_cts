@@ -679,23 +679,11 @@ class ItsSession(object):
     logging.debug('VideoRecordingObject: %s', data)
     return data[_OBJ_VALUE_STR]
 
-  def do_preview_recording(self, video_size, duration, stabilize,
-                           zoom_ratio=None, ae_target_fps_min=None,
-                           ae_target_fps_max=None):
-    """Issue a preview request and read back the preview recording object.
-
-    The resolution of the preview and its recording will be determined by
-    video_size. The duration is the time in seconds for which the preview will
-    be recorded. The recorded object consists of a path on the device at
-    which the recorded video is saved.
+  def _execute_preview_recording(self, cmd):
+    """Send preview recording command over socket and retrieve output object.
 
     Args:
-      video_size: str; Preview resolution at which to record. ex. "1920x1080"
-      duration: int; The time in seconds for which the video will be recorded.
-      stabilize: boolean; Whether the preview should be stabilized or not
-      zoom_ratio: float; zoom ratio. None if default zoom
-      ae_target_fps_min: int; CONTROL_AE_TARGET_FPS_RANGE min. Set if not None
-      ae_target_fps_max: int; CONTROL_AE_TARGET_FPS_RANGE max. Set if not None
+      cmd: dict; Mapping from command key to corresponding value
     Returns:
       video_recorded_object: The recorded object returned from ItsService which
       contains path at which the recording is saved on the device, quality of
@@ -713,7 +701,37 @@ class ItsSession(object):
         }
       }
     """
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
+    self.sock.settimeout(timeout)
 
+    data, _ = self.__read_response_from_socket()
+    logging.debug('VideoRecordingObject: %s', str(data))
+    if data[_TAG_STR] != 'recordingResponse':
+      raise error_util.CameraItsError(
+          f'Invalid response from command{cmd[_CMD_NAME_STR]}')
+    return data[_OBJ_VALUE_STR]
+
+  def do_preview_recording(self, video_size, duration, stabilize,
+                           zoom_ratio=None, ae_target_fps_min=None,
+                           ae_target_fps_max=None):
+    """Issue a preview request and read back the preview recording object.
+
+    The resolution of the preview and its recording will be determined by
+    video_size. The duration is the time in seconds for which the preview will
+    be recorded. The recorded object consists of a path on the device at
+    which the recorded video is saved.
+
+    Args:
+      video_size: str; Preview resolution at which to record. ex. "1920x1080"
+      duration: int; The time in seconds for which the video will be recorded.
+      stabilize: boolean; Whether the preview should be stabilized or not
+      zoom_ratio: float; static zoom ratio. None if default zoom
+      ae_target_fps_min: int; CONTROL_AE_TARGET_FPS_RANGE min. Set if not None
+      ae_target_fps_max: int; CONTROL_AE_TARGET_FPS_RANGE max. Set if not None
+    Returns:
+      video_recorded_object: The recorded object returned from ItsService
+    """
     cmd = {
         _CMD_NAME_STR: 'doPreviewRecording',
         _CAMERA_ID_STR: self._camera_id,
@@ -729,16 +747,57 @@ class ItsSession(object):
     if ae_target_fps_min and ae_target_fps_max:
       cmd['aeTargetFpsMin'] = ae_target_fps_min
       cmd['aeTargetFpsMax'] = ae_target_fps_max
-    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
-    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
-    self.sock.settimeout(timeout)
+    return self._execute_preview_recording(cmd)
 
-    data, _ = self.__read_response_from_socket()
-    logging.debug('VideoRecordingObject: %s', str(data))
-    if data[_TAG_STR] != 'recordingResponse':
-      raise error_util.CameraItsError(
-          f'Invalid response from command{cmd[_CMD_NAME_STR]}')
-    return data[_OBJ_VALUE_STR]
+  def do_preview_recording_with_dynamic_zoom(self, video_size, stabilize,
+                                             sweep_zoom,
+                                             ae_target_fps_min=None,
+                                             ae_target_fps_max=None):
+    """Issue a preview request with dynamic zoom and read back output object.
+
+    The resolution of the preview and its recording will be determined by
+    video_size. The duration will be determined by the duration at each zoom
+    ratio and the total number of zoom ratios. The recorded object consists
+    of a path on the device at which the recorded video is saved.
+
+    Args:
+      video_size: str; Preview resolution at which to record. ex. "1920x1080"
+      stabilize: boolean; Whether the preview should be stabilized or not
+      sweep_zoom: tuple of (zoom_start, zoom_end, step_size, step_duration).
+        Used to control zoom ratio during recording.
+        zoom_start (float) is the starting zoom ratio during recording
+        zoom_end (float) is the ending zoom ratio during recording
+        step_size (float) is the step for zoom ratio during recording
+        step_duration (float) sleep in ms between zoom ratios
+      ae_target_fps_min: int; CONTROL_AE_TARGET_FPS_RANGE min. Set if not None
+      ae_target_fps_max: int; CONTROL_AE_TARGET_FPS_RANGE max. Set if not None
+    Returns:
+      video_recorded_object: The recorded object returned from ItsService
+    """
+    cmd = {
+        _CMD_NAME_STR: 'doPreviewRecording',
+        _CAMERA_ID_STR: self._camera_id,
+        'videoSize': video_size,
+        'recordingDuration': 0,  # for interoperability
+        'stabilize': stabilize
+    }
+    zoom_start, zoom_end, step_size, step_duration = sweep_zoom
+    if (not self.zoom_ratio_within_range(zoom_start) or
+        not self.zoom_ratio_within_range(zoom_end)):
+      raise AssertionError(
+          f'Starting zoom ratio {zoom_start} or '
+          f'ending zoom ratio {zoom_end} out of range'
+      )
+    if zoom_start > zoom_end or step_size < 0:
+      raise NotImplementedError('Only increasing zoom ratios are supported')
+    cmd['zoomStart'] = zoom_start
+    cmd['zoomEnd'] = zoom_end
+    cmd['stepSize'] = step_size
+    cmd['stepDuration'] = step_duration
+    if ae_target_fps_min and ae_target_fps_max:
+      cmd['aeTargetFpsMin'] = ae_target_fps_min
+      cmd['aeTargetFpsMax'] = ae_target_fps_max
+    return self._execute_preview_recording(cmd)
 
   def get_supported_video_qualities(self, camera_id):
     """Get all supported video qualities for this camera device.
