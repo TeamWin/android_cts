@@ -49,13 +49,13 @@ public class BluetoothGattCharacteristicTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void test_getInstanceId() {
+    public void getInstanceId() {
         assertEquals(mBluetoothGattCharacteristic.getInstanceId(), 0);
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void test_getService() {
+    public void getService() {
         // Service is null after initialization with public constructor
         assertNull(mBluetoothGattCharacteristic.getService());
         BluetoothGattService service = new BluetoothGattService(TEST_UUID,

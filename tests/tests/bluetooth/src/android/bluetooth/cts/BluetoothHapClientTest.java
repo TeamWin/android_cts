@@ -121,7 +121,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void test_closeProfileProxy() {
+    public void closeProfileProxy() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
         assertTrue(mIsProfileReady);
