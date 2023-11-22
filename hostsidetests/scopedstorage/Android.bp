@@ -698,11 +698,11 @@ android_test {
     ],
     java_resources: [
         ":CtsScopedStorageTestAppB",
-        ":CtsScopedStorageTestAppC",
+        ":CtsScopedStorageTestAppE",
     ],
     data: [
         ":CtsScopedStorageTestAppB",
-        ":CtsScopedStorageTestAppC",
+        ":CtsScopedStorageTestAppE",
     ],
     per_testcase_directory: true,
 }
