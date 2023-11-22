@@ -940,12 +940,21 @@ public class PackageInstallerArchiveTest {
             if (!intent.getAction().equals(Intent.ACTION_UNARCHIVE_PACKAGE)) {
                 return;
             }
-
+            if (sUnarchiveId == null) {
+                sUnarchiveId = new CompletableFuture<>();
+            }
             sUnarchiveId.complete(intent.getIntExtra(PackageInstaller.EXTRA_UNARCHIVE_ID, -1));
+            if (sUnarchiveReceiverPackageName == null) {
+                sUnarchiveReceiverPackageName = new CompletableFuture<>();
+            }
             sUnarchiveReceiverPackageName.complete(
                     intent.getStringExtra(PackageInstaller.EXTRA_UNARCHIVE_PACKAGE_NAME));
+            if (sUnarchiveReceiverAllUsers == null) {
+                sUnarchiveReceiverAllUsers = new CompletableFuture<>();
+            }
             sUnarchiveReceiverAllUsers.complete(
-                    intent.getBooleanExtra(PackageInstaller.EXTRA_UNARCHIVE_ALL_USERS, true));
+                    intent.getBooleanExtra(PackageInstaller.EXTRA_UNARCHIVE_ALL_USERS,
+                            true /* defaultValue */));
         }
     }
 
