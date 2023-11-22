@@ -103,7 +103,7 @@ public class BluetoothLeBroadcastSettingsTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testCreateBroadcastSettingsFromBuilder() {
+    public void createBroadcastSettingsFromBuilder() {
         BluetoothLeAudioContentMetadata publicBroadcastMetadata =
                 new BluetoothLeAudioContentMetadata.Builder()
                         .setProgramInfo(TEST_PROGRAM_INFO).build();
@@ -157,7 +157,7 @@ public class BluetoothLeBroadcastSettingsTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testCreateBroadcastSettingsFromCopy() {
+    public void createBroadcastSettingsFromCopy() {
         BluetoothLeAudioContentMetadata publicBroadcastMetadata =
                 new BluetoothLeAudioContentMetadata.Builder()
                         .setProgramInfo(TEST_PROGRAM_INFO).build();

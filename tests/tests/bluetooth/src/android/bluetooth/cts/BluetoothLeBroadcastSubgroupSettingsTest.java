@@ -92,7 +92,7 @@ public class BluetoothLeBroadcastSubgroupSettingsTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testCreateBroadcastSubgroupSettingsFromBuilder() {
+    public void createBroadcastSubgroupSettingsFromBuilder() {
         BluetoothLeAudioContentMetadata contentMetadata =
                 new BluetoothLeAudioContentMetadata.Builder()
                         .setProgramInfo(TEST_PROGRAM_INFO).setLanguage(TEST_LANGUAGE).build();
@@ -108,7 +108,7 @@ public class BluetoothLeBroadcastSubgroupSettingsTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testCreateBroadcastSubgroupFromCopy() {
+    public void createBroadcastSubgroupFromCopy() {
         BluetoothLeAudioContentMetadata contentMetadata =
                 new BluetoothLeAudioContentMetadata.Builder()
                         .setProgramInfo(TEST_PROGRAM_INFO).setLanguage(TEST_LANGUAGE).build();

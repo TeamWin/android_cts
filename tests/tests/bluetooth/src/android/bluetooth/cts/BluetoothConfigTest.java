@@ -93,7 +93,7 @@ public class BluetoothConfigTest {
     }
 
     @Test
-    public void testProfileEnabledValueInList() {
+    public void profileEnabledValueInList() {
         assumeTrue(mHasBluetooth);
 
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
@@ -141,7 +141,7 @@ public class BluetoothConfigTest {
     }
 
     @Test
-    public void testProfileEnabledValue() {
+    public void profileEnabledValue() {
         assumeTrue(mHasBluetooth);
 
         int wrong_config =
@@ -157,7 +157,7 @@ public class BluetoothConfigTest {
     }
 
     @Test
-    public void testBleCDDRequirement() {
+    public void bleCDDRequirement() {
         assumeTrue(mHasBluetooth);
 
         // If device implementations return true for isLeAudioSupported():

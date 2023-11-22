@@ -112,7 +112,7 @@ public class ScanFilterTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testSetNameFilter() {
+    public void setNameFilter() {
         ScanFilter filter = mFilterBuilder.setDeviceName(LOCAL_NAME).build();
         assertEquals(LOCAL_NAME, filter.getDeviceName());
         assertTrue("setName filter fails", filter.matches(mScanResult));
@@ -123,7 +123,7 @@ public class ScanFilterTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testDeviceAddressFilter() {
+    public void deviceAddressFilter() {
         ScanFilter filter = mFilterBuilder.setDeviceAddress(DEVICE_MAC).build();
         assertEquals(DEVICE_MAC, filter.getDeviceAddress());
         assertTrue("device filter fails", filter.matches(mScanResult));
@@ -134,7 +134,7 @@ public class ScanFilterTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testSetServiceUuidFilter() {
+    public void setServiceUuidFilter() {
         ScanFilter filter = mFilterBuilder.setServiceUuid(
                 ParcelUuid.fromString(UUID1)).build();
         assertEquals(UUID1, filter.getServiceUuid().toString());
@@ -156,7 +156,7 @@ public class ScanFilterTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testSetServiceSolicitationUuidFilter() {
+    public void setServiceSolicitationUuidFilter() {
         ScanFilter filter = mFilterBuilder.setServiceSolicitationUuid(
                 ParcelUuid.fromString(UUID1)).build();
         assertEquals(UUID1, filter.getServiceSolicitationUuid().toString());
@@ -177,7 +177,7 @@ public class ScanFilterTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testSetServiceDataFilter() {
+    public void setServiceDataFilter() {
         byte[] setServiceData = new byte[] {
                 0x50, 0x64 };
         ParcelUuid serviceDataUuid = ParcelUuid.fromString(UUID2);
@@ -209,7 +209,7 @@ public class ScanFilterTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testSetManufacturerSpecificData() {
+    public void setManufacturerSpecificData() {
         byte[] manufacturerData = new byte[] {
                 0x02, 0x15 };
         int manufacturerId = 0xE0;
@@ -245,7 +245,7 @@ public class ScanFilterTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testSetAdvertisingDataTypeWithData() {
+    public void setAdvertisingDataTypeWithData() {
         byte[] adData = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
         byte[] adDataMask = {(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
                 (byte) 0xFF};
@@ -265,7 +265,7 @@ public class ScanFilterTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testReadWriteParcel() {
+    public void readWriteParcel() {
         ScanFilter filter = mFilterBuilder.build();
         testReadWriteParcelForFilter(filter);
 
@@ -319,14 +319,14 @@ public class ScanFilterTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testDescribeContents() {
+    public void describeContents() {
         final int expected = 0;
         assertEquals(expected, new ScanFilter.Builder().build().describeContents());
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testBuilderSetTransportBlockFilter() {
+    public void builderSetTransportBlockFilter() {
         final int orgId = OrganizationId.BLUETOOTH_SIG;
         final int tdsFlag = 0x2;
         final int tdsFlagMask = 0b11;
