@@ -127,7 +127,7 @@ public class ApexSignatureVerificationTest extends BaseHostJUnit4Test {
         for (Map.Entry<String, File> entry : mExtractedTestDirMap.entrySet()) {
             final File pubKeyFile = FileUtil.findFile(entry.getValue(), APEX_PUB_KEY_NAME);
 
-            assertWithMessage("apex:" + entry.getKey() + " do not contain pubkey").that(
+            assertWithMessage("apex:" + entry.getKey() + " does not contain pubkey").that(
                     pubKeyFile.exists()).isTrue();
         }
     }
@@ -152,7 +152,9 @@ public class ApexSignatureVerificationTest extends BaseHostJUnit4Test {
 
             while (it.hasNext()) {
                 final File wellKnownKey = (File) it.next();
-                mExpect.withMessage(entry.getKey() + " must not use well known pubkey")
+                mExpect.withMessage(
+                        entry.getKey() + " must not use well known pubkey "
+                                + wellKnownKey.getName())
                         .that(areKeysMatching(pubKeyFile, wellKnownKey)).isFalse();
             }
         }
