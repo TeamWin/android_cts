@@ -198,7 +198,7 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testCloseProfileProxy() {
+    public void closeProfileProxy() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
         assertTrue(mIsProfileReady);
@@ -211,7 +211,7 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testAddSource() {
+    public void addSource() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -279,7 +279,7 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetAllSources() {
+    public void getAllSources() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -300,7 +300,7 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testSetConnectionPolicy() {
+    public void setConnectionPolicy() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -322,7 +322,7 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetMaximumSourceCapacity() {
+    public void getMaximumSourceCapacity() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -339,7 +339,7 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testIsSearchInProgress() {
+    public void isSearchInProgress() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -349,7 +349,7 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testModifySource() {
+    public void modifySource() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -399,7 +399,7 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testRegisterCallback() {
+    public void registerCallback() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -465,7 +465,7 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testStartSearchingForSources() {
+    public void startSearchingForSources() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -501,7 +501,7 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetConnectedDevices() {
+    public void getConnectedDevices() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -521,7 +521,7 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetDevicesMatchingConnectionStates() {
+    public void getDevicesMatchingConnectionStates() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -547,7 +547,7 @@ public class BluetoothLeBroadcastAssistantTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetConnectionState() {
+    public void getConnectionState() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 
@@ -567,7 +567,7 @@ public class BluetoothLeBroadcastAssistantTest {
     @RequiresFlagsEnabled(Flags.FLAG_LEAUDIO_BROADCAST_MONITOR_SOURCE_SYNC_STATUS)
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testOnSourceLostCallback() {
+    public void onSourceLostCallback() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcastAssistant);
 

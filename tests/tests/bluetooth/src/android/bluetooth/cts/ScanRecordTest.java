@@ -46,7 +46,7 @@ public class ScanRecordTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testParser() {
+    public void parser() {
         Assume.assumeTrue(TestUtils.isBleSupported(
                 InstrumentationRegistry.getInstrumentation().getContext()));
 

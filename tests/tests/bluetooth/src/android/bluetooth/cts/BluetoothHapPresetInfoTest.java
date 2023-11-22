@@ -72,7 +72,7 @@ public class BluetoothHapPresetInfoTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testCreateHapPresetInfo() {
+    public void createHapPresetInfo() {
         BluetoothHapPresetInfo presetInfo = createBluetoothHapPresetInfoForTest(TEST_PRESET_INDEX,
                 TEST_PRESET_NAME, true /* isAvailable */, false /* isWritable */);
         assertEquals(TEST_PRESET_INDEX, presetInfo.getIndex());
