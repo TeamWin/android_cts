@@ -18,6 +18,7 @@ package android.content.pm.cts;
 
 import static android.Manifest.permission.DELETE_PACKAGES;
 import static android.Manifest.permission.GET_INTENT_SENDER_INTENT;
+import static android.Manifest.permission.INSTALL_PACKAGES;
 import static android.Manifest.permission.INSTALL_TEST_ONLY_PACKAGE;
 import static android.Manifest.permission.OVERRIDE_COMPAT_CHANGE_CONFIG_ON_RELEASE_BUILD;
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
@@ -2186,7 +2187,7 @@ public class PackageManagerTest {
             if (expectedResultStartsWith != null) {
                 assertThat(statusMessage.get()).startsWith(expectedResultStartsWith);
             }
-        });
+        }, INSTALL_PACKAGES);
     }
 
     @Test
