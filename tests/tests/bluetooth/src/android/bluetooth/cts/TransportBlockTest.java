@@ -55,7 +55,7 @@ public class TransportBlockTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testInit() {
+    public void init() {
         Parcel parcel = Parcel.obtain();
         TransportBlock data = new TransportBlock(1, 0, 2, new byte[] {
                 (byte) 0xF0, 0x00 });
@@ -69,7 +69,7 @@ public class TransportBlockTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testInitEmpty() {
+    public void initEmpty() {
         Parcel parcel = Parcel.obtain();
         TransportBlock data = new TransportBlock(1, 0, 0, null);
         data.writeToParcel(parcel, 0);
@@ -82,7 +82,7 @@ public class TransportBlockTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testTotalBytes() {
+    public void totalBytes() {
         Parcel parcel = Parcel.obtain();
         TransportBlock data = new TransportBlock(1, 0, 2, new byte[] {
                 (byte) 0xF0, 0x00 });
@@ -98,7 +98,7 @@ public class TransportBlockTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testGetValues() {
+    public void getValues() {
         Parcel parcel = Parcel.obtain();
         TransportBlock data = new TransportBlock(1, 3, 2, new byte[] {
                 (byte) 0xF0, 0x00 });
@@ -119,7 +119,7 @@ public class TransportBlockTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testToByteArray() {
+    public void toByteArray() {
         Parcel parcel = Parcel.obtain();
         TransportBlock data = new TransportBlock(1, 0, 2, new byte[] {
                 (byte) 0xF0, 0x00 });
