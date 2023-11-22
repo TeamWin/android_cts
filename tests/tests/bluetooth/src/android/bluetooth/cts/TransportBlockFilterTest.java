@@ -76,7 +76,7 @@ public class TransportBlockFilterTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testEmptyTransportBlockFilterFromBuilder() {
+    public void emptyTransportBlockFilterFromBuilder() {
         TransportBlockFilter filter = new TransportBlockFilter.Builder(
                 OrganizationId.BLUETOOTH_SIG).build();
         assertEquals(OrganizationId.BLUETOOTH_SIG, filter.getOrgId());
@@ -89,7 +89,7 @@ public class TransportBlockFilterTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testCreateTransportBlockFilterFromBuilder() {
+    public void createTransportBlockFilterFromBuilder() {
         TransportBlockFilter filter = new TransportBlockFilter.Builder(
                 OrganizationId.WIFI_ALLIANCE_SERVICE_ADVERTISEMENT)
                 .setTdsFlags(TEST_TDS_FLAG, TEST_TDS_FLAG_MASK)
@@ -105,7 +105,7 @@ public class TransportBlockFilterTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testCreateWifiNanTransportBlockFilterFromBuilder() {
+    public void createWifiNanTransportBlockFilterFromBuilder() {
         TransportBlockFilter filter = new TransportBlockFilter.Builder(
                 OrganizationId.WIFI_ALLIANCE_NEIGHBOR_AWARENESS_NETWORKING)
                 .setTdsFlags(TEST_TDS_FLAG, TEST_TDS_FLAG_MASK)
@@ -121,7 +121,7 @@ public class TransportBlockFilterTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testCannotSetWifiNanHashForWrongOrgId() {
+    public void cannotSetWifiNanHashForWrongOrgId() {
         TransportBlockFilter.Builder builder = new TransportBlockFilter.Builder(
                 OrganizationId.WIFI_ALLIANCE_SERVICE_ADVERTISEMENT)
                 .setTdsFlags(TEST_TDS_FLAG, TEST_TDS_FLAG_MASK);
@@ -131,7 +131,7 @@ public class TransportBlockFilterTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testSetTransportDataNonWifiNan() {
+    public void setTransportDataNonWifiNan() {
         TransportBlockFilter.Builder builder = new TransportBlockFilter.Builder(
                 OrganizationId.WIFI_ALLIANCE_SERVICE_ADVERTISEMENT)
                 .setTdsFlags(TEST_TDS_FLAG, TEST_TDS_FLAG_MASK);
@@ -147,7 +147,7 @@ public class TransportBlockFilterTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testSetTransportDataWifiNan() {
+    public void setTransportDataWifiNan() {
         TransportBlockFilter.Builder builder = new TransportBlockFilter.Builder(
                 OrganizationId.WIFI_ALLIANCE_NEIGHBOR_AWARENESS_NETWORKING)
                 .setTdsFlags(TEST_TDS_FLAG, TEST_TDS_FLAG_MASK);

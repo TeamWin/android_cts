@@ -90,7 +90,7 @@ public class DistanceMeasurementManagerTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testStartMeasurementSession() {
+    public void startMeasurementSession() {
         DistanceMeasurementParams params = new DistanceMeasurementParams.Builder(mDevice)
                 .setDurationSeconds(15)
                 .setFrequency(DistanceMeasurementParams.REPORT_FREQUENCY_LOW)
@@ -103,7 +103,7 @@ public class DistanceMeasurementManagerTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testGetSupportedMethods() {
+    public void getSupportedMethods() {
         List<DistanceMeasurementMethod> list = mDistanceMeasurementManager.getSupportedMethods();
         assertNotNull(list);
     }
