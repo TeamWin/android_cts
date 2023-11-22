@@ -275,6 +275,8 @@ bool CodecEncoderTest::dequeueOutput(size_t bufferIndex, AMediaCodecBufferInfo* 
             size_t buffSize;
             uint8_t* buf = AMediaCodec_getOutputBuffer(mCodec, bufferIndex, &buffSize);
             RETURN_IF_NULL(buf, std::string{"AMediaCodec_getOutputBuffer returned nullptr"})
+            // NdkMediaCodec calls ABuffer::data, which already adds offset
+            info->offset = 0;
             mOutputBuff->saveToMemory(buf, info);
         }
         if ((info->flags & AMEDIACODEC_BUFFER_FLAG_KEY_FRAME) != 0) {

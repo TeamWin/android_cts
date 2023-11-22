@@ -116,7 +116,7 @@ public class HDREncoderTestBase extends CodecEncoderTestBase {
         int frameLimit = 4;
         if (mHdrDynamicInfo != null) {
             mTotalMetadataQueued = new ArrayList<>();
-            mHdrDynamicInfoReceived = new HashMap();
+            mHdrDynamicInfoReceived = new HashMap<>();
             Long lastHdr10PlusFramePts =
                     Collections.max(mHdrDynamicInfo.entrySet(), Map.Entry.comparingByKey())
                             .getKey();
