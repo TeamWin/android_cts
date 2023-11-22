@@ -42,6 +42,7 @@ import android.app.AppOpsManager;
 import android.app.Instrumentation;
 import android.app.usage.StorageStats;
 import android.app.usage.StorageStatsManager;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -98,6 +99,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 @AppModeFull
@@ -737,6 +739,91 @@ public class PackageInstallerArchiveTest {
         assertThat(
                 mContext.getPackageManager().isAppArchivable("android")).isFalse();
 
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
+    public void startUnarchival_intentIsNotRelatedToArchivedApp()
+            throws NameNotFoundException, ExecutionException, InterruptedException {
+        installPackage(PACKAGE_NAME, APK_PATH);
+        runWithShellPermissionIdentity(
+                () ->
+                        mPackageInstaller.requestArchive(
+                                PACKAGE_NAME,
+                                new IntentSender((IIntentSender) mArchiveIntentSender)),
+                Manifest.permission.DELETE_PACKAGES);
+        assertThat(mArchiveIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+        ComponentName archiveComponentName =
+                new ComponentName(PACKAGE_NAME, "ClassRandom.MainActivity");
+        Intent callingIntent =
+                new Intent(Intent.ACTION_MAIN)
+                        .addCategory(Intent.CATEGORY_LAUNCHER)
+                        .setClassName(PACKAGE_NAME, archiveComponentName.getClassName())
+                        .setFlags(
+                                Intent.FLAG_ACTIVITY_NEW_TASK
+                                        | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+
+        ActivityNotFoundException e =
+                assertThrows(
+                        ActivityNotFoundException.class,
+                        () -> mContext.startActivity(callingIntent));
+
+        assertThat(e)
+                .hasMessageThat()
+                .contains(
+                        TextUtils.formatSimple(
+                                "Unable to find explicit activity class %s",
+                                archiveComponentName.toShortString()));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
+    public void startUnarchival_appIsNotDefaultLauncher_permissionDeniedForUnarchival()
+            throws NameNotFoundException, ExecutionException, InterruptedException {
+        installPackage(PACKAGE_NAME, APK_PATH);
+        runWithShellPermissionIdentity(
+                () ->
+                        mPackageInstaller.requestArchive(
+                                PACKAGE_NAME,
+                                new IntentSender((IIntentSender) mArchiveIntentSender)),
+                Manifest.permission.DELETE_PACKAGES);
+        assertThat(mArchiveIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+        ComponentName archiveComponentName = new ComponentName(PACKAGE_NAME, ACTIVITY_NAME);
+        Intent callingIntent =
+                new Intent(Intent.ACTION_MAIN)
+                        .addCategory(Intent.CATEGORY_LAUNCHER)
+                        .setClassName(PACKAGE_NAME, archiveComponentName.getClassName())
+                        .setFlags(
+                                Intent.FLAG_ACTIVITY_NEW_TASK
+                                        | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+
+        SecurityException e =
+                assertThrows(
+                        SecurityException.class,
+                        () -> mContext.startActivity(callingIntent));
+
+        assertThat(e).hasMessageThat().contains("Not allowed to start activity Intent");
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
+    public void startUnarchival_success() throws Exception {
+        installPackage(PACKAGE_NAME, APK_PATH);
+        runWithShellPermissionIdentity(
+                () ->
+                        mPackageInstaller.requestArchive(
+                                PACKAGE_NAME,
+                                new IntentSender((IIntentSender) mArchiveIntentSender)),
+                Manifest.permission.DELETE_PACKAGES);
+        assertThat(mArchiveIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+        ComponentName archiveComponentName = new ComponentName(PACKAGE_NAME, ACTIVITY_NAME);
+
+        SystemUtil.runShellCommand(
+                TextUtils.formatSimple(
+                        "am start -n %s", archiveComponentName.flattenToShortString()));
+
+        assertThat(sUnarchiveReceiverPackageName.get()).isEqualTo(PACKAGE_NAME);
+        assertThat(sUnarchiveReceiverAllUsers.get()).isFalse();
     }
 
     private void launchTestActivity() {
