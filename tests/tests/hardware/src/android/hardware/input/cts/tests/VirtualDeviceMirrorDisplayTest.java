@@ -22,7 +22,6 @@ import static org.junit.Assert.assertEquals;
 
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.flags.Flags;
-import android.compat.testing.PlatformCompatChangeRule;
 import android.content.Context;
 import android.graphics.PointF;
 import android.hardware.display.DisplayManager;
@@ -58,8 +57,6 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 
-import libcore.junit.util.compat.CoreCompatChangeRule.EnableCompatChanges;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,14 +65,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@RequiresFlagsEnabled(Flags.FLAG_INTERACTIVE_SCREEN_MIRROR)
+@RequiresFlagsEnabled({Flags.FLAG_INTERACTIVE_SCREEN_MIRROR, Flags.FLAG_CONSISTENT_DISPLAY_FLAGS})
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class VirtualDeviceMirrorDisplayTest extends InputTestCase {
     private static final String DEVICE_NAME = "automirror-inputdevice";
     private static final float EPSILON = 0.001f;
-    private static final long MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER =
-            294837146L;
 
     @Rule
     public final AdoptShellPermissionsRule mAdoptShellPermissionsRule =
@@ -86,8 +81,6 @@ public class VirtualDeviceMirrorDisplayTest extends InputTestCase {
     public final FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
     @Rule
     public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
-    @Rule
-    public PlatformCompatChangeRule mCompatChangeRule = new PlatformCompatChangeRule();
 
     private VirtualDevice mVirtualDevice;
     private VirtualDisplay mVirtualDisplay;
@@ -118,7 +111,6 @@ public class VirtualDeviceMirrorDisplayTest extends InputTestCase {
         }
     }
 
-    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void virtualMouse_scrollEvent() {
         try (VirtualMouse mouse = VirtualInputDeviceCreator.createAndPrepareMouse(mVirtualDevice,
@@ -142,7 +134,6 @@ public class VirtualDeviceMirrorDisplayTest extends InputTestCase {
         }
     }
 
-    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void virtualMouse_relativeEvent() {
         try (VirtualMouse mouse = VirtualInputDeviceCreator.createAndPrepareMouse(mVirtualDevice,
@@ -186,7 +177,6 @@ public class VirtualDeviceMirrorDisplayTest extends InputTestCase {
         }
     }
 
-    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void virtualMouse_buttonEvent() {
         try (VirtualMouse mouse = VirtualInputDeviceCreator.createAndPrepareMouse(mVirtualDevice,
@@ -223,7 +213,6 @@ public class VirtualDeviceMirrorDisplayTest extends InputTestCase {
         }
     }
 
-    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void virtualTouchscreen_touchEvent() {
         try (VirtualTouchscreen touchscreen =
@@ -292,7 +281,6 @@ public class VirtualDeviceMirrorDisplayTest extends InputTestCase {
         }
     }
 
-    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void virtualKeyboard_keyEvent() {
         try (VirtualKeyboard keyboard =
@@ -317,7 +305,6 @@ public class VirtualDeviceMirrorDisplayTest extends InputTestCase {
         }
     }
 
-    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void virtualDpad_keyEvent() {
         try (VirtualDpad dpad = VirtualInputDeviceCreator.createAndPrepareDpad(mVirtualDevice,
@@ -355,7 +342,6 @@ public class VirtualDeviceMirrorDisplayTest extends InputTestCase {
         }
     }
 
-    @EnableCompatChanges({MAKE_VIRTUAL_DISPLAY_FLAGS_CONSISTENT_WITH_DISPLAY_MANAGER})
     @Test
     public void virtualNavigationTouchpad_touchEvent() {
         final int touchPadWidth = 50;

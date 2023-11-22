@@ -39,7 +39,6 @@ import android.app.UiAutomation;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
-import android.compat.testing.PlatformCompatChangeRule;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -129,7 +128,6 @@ public class VirtualDeviceRule implements TestRule {
         mRuleChain = RuleChain
                 .outerRule(mFakeAssociationRule)
                 .around(DeviceFlagsValueProvider.createCheckFlagsRule())
-                .around(new PlatformCompatChangeRule())
                 .around(new AdoptShellPermissionsRule(
                         sInstrumentation.getUiAutomation(), permissions))
                 .around(mTrackerRule);
