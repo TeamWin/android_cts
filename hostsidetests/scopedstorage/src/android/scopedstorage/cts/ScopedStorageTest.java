@@ -47,6 +47,7 @@ import static android.scopedstorage.cts.lib.TestUtils.getContentResolver;
 import static android.scopedstorage.cts.lib.TestUtils.getDcimDir;
 import static android.scopedstorage.cts.lib.TestUtils.getDefaultTopLevelDirs;
 import static android.scopedstorage.cts.lib.TestUtils.getDownloadDir;
+import static android.scopedstorage.cts.lib.TestUtils.getExternalCacheDir;
 import static android.scopedstorage.cts.lib.TestUtils.getExternalFilesDir;
 import static android.scopedstorage.cts.lib.TestUtils.getExternalMediaDir;
 import static android.scopedstorage.cts.lib.TestUtils.getExternalStorageDir;
@@ -1036,6 +1037,29 @@ public class ScopedStorageTest {
         } finally {
             deleteFilesAs(APP_B_NO_PERMS, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
         }
+    }
+
+    @Test
+    public void testAccessAppPrivateDataFromShell() throws Exception {
+        assumeTrue(SdkLevel.isAtLeastS());
+        final File dataFile = new File(getExternalFilesDir(), "test_data");
+        assertTrue(dataFile.createNewFile());
+        assertTrue(dataFile.exists());
+
+        final File cacheFile = new File(getExternalCacheDir(), "test_cache");
+        assertTrue(cacheFile.createNewFile());
+        assertTrue(cacheFile.exists());
+
+        // We use deletion as a proxy for 'access'.
+        final String deleteDataFileCommand = String.format("rm %s",
+                dataFile.getAbsolutePath());
+        executeShellCommand(deleteDataFileCommand);
+        assertFalse(dataFile.exists());
+
+        final String deleteCacheFileCommand = String.format("rm %s",
+                cacheFile.getAbsolutePath());
+        executeShellCommand(deleteCacheFileCommand);
+        assertFalse(cacheFile.exists());
     }
 
     @Test
