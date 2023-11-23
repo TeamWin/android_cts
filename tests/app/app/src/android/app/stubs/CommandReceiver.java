@@ -28,6 +28,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.media.session.MediaSession;
+import android.media.session.PlaybackState;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcel;
@@ -69,6 +70,7 @@ public class CommandReceiver extends BroadcastReceiver {
     public static final int COMMAND_EMPTY = 22;
     public static final int COMMAND_START_FOREGROUND_SERVICE_SPOOF_PACKAGE_NAME = 23;
     public static final int COMMAND_CREATE_ACTIVE_MEDIA_SESSION = 24;
+    public static final int COMMAND_CREATE_ACTIVE_MEDIA_SESSION_FGS_DELEGATE = 25;
 
     public static final String KEY_PENDING_INTENT = "android.app.stubs.key.PENDING_INTENT";
 
@@ -190,6 +192,10 @@ public class CommandReceiver extends BroadcastReceiver {
                 break;
             case COMMAND_CREATE_ACTIVE_MEDIA_SESSION:
                 doStartMediaPlayback(context, intent.getParcelableExtra(
+                        Intent.EXTRA_REMOTE_CALLBACK, RemoteCallback.class));
+                break;
+            case COMMAND_CREATE_ACTIVE_MEDIA_SESSION_FGS_DELEGATE:
+                doStartMediaPlaybackFgsDelegate(context, intent.getParcelableExtra(
                         Intent.EXTRA_REMOTE_CALLBACK, RemoteCallback.class));
                 break;
         }
@@ -483,6 +489,47 @@ public class CommandReceiver extends BroadcastReceiver {
         mMediaSession.setActive(true);
 
         callback.sendResult(null);
+    }
+
+    /**
+     * Use FGS delegate to promote the app's procstate and provide keep-alive.
+     * @param context
+     * @param callback
+     */
+    private void doStartMediaPlaybackFgsDelegate(Context context, RemoteCallback callback) {
+        final MediaSession mediaSession = new MediaSession(context, TAG);
+        mediaSession.setCallback(new MediaSession.Callback() {
+            @Override
+            public void onPlay() {
+                super.onPlay();
+                setPlaybackState(PlaybackState.STATE_PLAYING, mediaSession);
+            }
+
+            @Override
+            public void onPause() {
+                super.onPause();
+                setPlaybackState(PlaybackState.STATE_PAUSED, mediaSession);
+            }
+
+            @Override
+            public void onStop() {
+                super.onStop();
+                setPlaybackState(PlaybackState.STATE_STOPPED, mediaSession);
+                mediaSession.release();
+            }
+        });
+        mediaSession.setActive(true);
+        callback.sendResult(null);
+    }
+
+    private void setPlaybackState(int state, MediaSession mediaSession) {
+        final long allActions = PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE
+                | PlaybackState.ACTION_PLAY_PAUSE | PlaybackState.ACTION_STOP
+                | PlaybackState.ACTION_SKIP_TO_NEXT | PlaybackState.ACTION_SKIP_TO_PREVIOUS
+                | PlaybackState.ACTION_FAST_FORWARD | PlaybackState.ACTION_REWIND;
+        PlaybackState playbackState = new PlaybackState.Builder().setActions(allActions)
+                .setState(state, 0L, 0.0f).build();
+        mediaSession.setPlaybackState(playbackState);
     }
 
     private String getTargetPackage(Intent intent) {
