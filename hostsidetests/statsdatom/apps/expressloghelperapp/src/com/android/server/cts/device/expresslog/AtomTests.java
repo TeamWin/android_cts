@@ -24,10 +24,6 @@ public class AtomTests {
 
     private static final int TEST_UID = 123;
 
-    static {
-        System.loadLibrary("expresslog_helperapp_jni");
-    }
-
     @Test
     public void testCounterMetric() throws Exception {
         Counter.logIncrement("tex_test.value_telemetry_express_test_counter");
