@@ -16,17 +16,13 @@
 
 package android.virtualdevice.cts.core;
 
-import static android.virtualdevice.cts.common.VirtualDeviceRule.isVirtualDeviceManagerConfigEnabled;
-
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
-
 import android.companion.virtual.VirtualDeviceManager;
 import android.content.Context;
+import android.content.res.Resources;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -36,24 +32,22 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
-public class VirtualDeviceManagerFlaggingTest {
-    private final Context mContext = getApplicationContext();
+public class VirtualDeviceManagerConfigTest {
 
     @Test
-    public void getSystemService_enableVirtualDeviceManagerFalse_returnsNull() {
-        // Continue this test only if this flag is set to false.
-        assumeFalse(isVirtualDeviceManagerConfigEnabled(mContext));
+    public void virtualDeviceManagerIsNull_iff_configIsDisabled() {
+        final Context context = getApplicationContext();
 
-        // config_enableVirtualDeviceManager is false so VirtualDeviceManager shouldn't be started.
-        assertThat(mContext.getSystemService(VirtualDeviceManager.class)).isNull();
-    }
+        final boolean isVirtualDeviceManagerConfigEnabled = context.getResources().getBoolean(
+                Resources.getSystem().getIdentifier(
+                        "config_enableVirtualDeviceManager",
+                        "bool",
+                        "android"));
 
-    @Test
-    public void getSystemService_enableVirtualDeviceManagerTrue_returnsNonNull() {
-        // Continue this test only if this flag is set to true.
-        assumeTrue(isVirtualDeviceManagerConfigEnabled(mContext));
+        final boolean isVirtualDeviceManagerNonNull =
+                context.getSystemService(VirtualDeviceManager.class) != null;
 
-        // config_enableVirtualDeviceManager is true so VirtualDeviceManager should be started.
-        assertThat(mContext.getSystemService(VirtualDeviceManager.class)).isNotNull();
+        // VirtualDeviceManager should be started iff config_enableVirtualDeviceManager is true.
+        assertThat(isVirtualDeviceManagerNonNull).isEqualTo(isVirtualDeviceManagerConfigEnabled);
     }
 }
