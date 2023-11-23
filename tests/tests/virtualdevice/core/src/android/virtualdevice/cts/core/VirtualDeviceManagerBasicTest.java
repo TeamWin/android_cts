@@ -162,8 +162,9 @@ public class VirtualDeviceManagerBasicTest {
     @RequiresFlagsDisabled(Flags.FLAG_VDM_PUBLIC_APIS)
     @Test
     public void createVirtualDevice_removeAssociation_shouldCloseVirtualDevice() {
-        // TODO(b/282629983): Re-enable test for HSUM once CDM Listener supports more users.
-        assumeFalse(UserManager.isHeadlessSystemUserMode());
+        if (!Flags.persistentDeviceIdApi()) {
+            assumeFalse(UserManager.isHeadlessSystemUserMode());
+        }
 
         VirtualDisplay display = mRule.createManagedVirtualDisplay(mVirtualDevice);
 
@@ -201,8 +202,9 @@ public class VirtualDeviceManagerBasicTest {
     @RequiresFlagsDisabled(Flags.FLAG_VDM_PUBLIC_APIS)
     @Test
     public void createVirtualDevice_removeAssociationAndClose_isSafe() {
-        // TODO(b/282629983): Re-enable test for HSUM once CDM Listener supports more users.
-        assumeFalse(UserManager.isHeadlessSystemUserMode());
+        if (!Flags.persistentDeviceIdApi()) {
+            assumeFalse(UserManager.isHeadlessSystemUserMode());
+        }
 
         VirtualDisplay display = mRule.createManagedVirtualDisplay(mVirtualDevice);
 
@@ -214,8 +216,9 @@ public class VirtualDeviceManagerBasicTest {
     @RequiresFlagsEnabled(Flags.FLAG_VDM_PUBLIC_APIS)
     @Test
     public void createVirtualDevice_removeAssociationAndClose_isSafe_withListener() {
-        // TODO(b/282629983): Re-enable test for HSUM once CDM Listener supports more users.
-        assumeFalse(UserManager.isHeadlessSystemUserMode());
+        if (!Flags.persistentDeviceIdApi()) {
+            assumeFalse(UserManager.isHeadlessSystemUserMode());
+        }
 
         mRule.dropCompanionDeviceAssociation();
         assertDeviceClosed(mVirtualDevice.getDeviceId());
