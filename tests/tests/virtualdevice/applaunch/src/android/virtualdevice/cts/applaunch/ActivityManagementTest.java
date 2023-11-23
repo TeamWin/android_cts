@@ -131,6 +131,7 @@ public class ActivityManagementTest {
     @Test
     @ApiTest(apis = {"android.companion.virtual.VirtualDeviceManager#launchPendingIntent"})
     public void launchPendingIntent_multipleActivities_shouldLaunchOnSameDisplay() {
+        mRule.assumeActivityLaunchSupported(mVirtualDisplayId);
         PendingIntent pendingIntent = PendingIntent.getActivities(
                 mContext,
                 /* requestCode= */ 1,
@@ -152,6 +153,7 @@ public class ActivityManagementTest {
 
     @Test
     public void launchPendingIntent_activityIntent_shouldLaunchActivity() throws Exception {
+        mRule.assumeActivityLaunchSupported(mVirtualDisplayId);
         Service service = TestService.startService(mContext);
         Intent intent = new Intent(Intent.ACTION_MAIN).setClass(service, EmptyActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(
@@ -168,6 +170,7 @@ public class ActivityManagementTest {
     @Test
     public void launchPendingIntent_serviceIntentTrampolineActivity_shouldLaunchActivity()
             throws Exception {
+        mRule.assumeActivityLaunchSupported(mVirtualDisplayId);
         TestService service = TestService.startService(mContext);
         Intent intent = new Intent(TestService.ACTION_START_TRAMPOLINE_ACTIVITY)
                 .setClass(service, EmptyActivity.class);
@@ -184,6 +187,7 @@ public class ActivityManagementTest {
 
     @Test
     public void launchPendingIntent_serviceIntentNoTrampoline_shouldBeNoOp() throws Exception {
+        mRule.assumeActivityLaunchSupported(mVirtualDisplayId);
         Service service = TestService.startService(mContext);
         Intent intent = new Intent(Intent.ACTION_MAIN).setClass(service, TestService.class);
         PendingIntent pendingIntent = PendingIntent.getService(

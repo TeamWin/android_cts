@@ -16,8 +16,6 @@
 
 package android.virtualdevice.cts.applaunch;
 
-import static android.virtualdevice.cts.common.VirtualDeviceRule.createActivityOptions;
-
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -95,7 +93,7 @@ public class ActivityInterceptionTest {
 
     @Test
     public void noInterceptorRegistered_activityShouldLaunch() {
-        mContext.startActivity(mInterceptedIntent, createActivityOptions(mVirtualDisplay));
+        mRule.sendIntentToDisplay(mInterceptedIntent, mVirtualDisplay);
 
         assertActivityOnDisplay(new ComponentName(mContext, InterceptedActivity.class),
                 mVirtualDisplay.getDisplay().getDisplayId());
@@ -108,13 +106,13 @@ public class ActivityInterceptionTest {
         mVirtualDevice.registerIntentInterceptor(
                 intentFilter, mContext.getMainExecutor(), mInterceptor);
 
-        mContext.startActivity(mInterceptedIntent, createActivityOptions(mVirtualDisplay));
+        mRule.sendIntentToDisplay(mInterceptedIntent, mVirtualDisplay);
 
         assertIntentIntercepted();
 
         // Unregister interceptor and verify intent is not intercepted
         mVirtualDevice.unregisterIntentInterceptor(mInterceptor);
-        mContext.startActivity(mInterceptedIntent, createActivityOptions(mVirtualDisplay));
+        mRule.sendIntentToDisplay(mInterceptedIntent, mVirtualDisplay);
         verifyNoMoreInteractions(mInterceptor);
     }
 
@@ -124,7 +122,7 @@ public class ActivityInterceptionTest {
         mVirtualDevice.registerIntentInterceptor(
                 intentFilter, mContext.getMainExecutor(), mInterceptor);
 
-        mContext.startActivity(mInterceptedIntent, createActivityOptions(mVirtualDisplay));
+        mRule.sendIntentToDisplay(mInterceptedIntent, mVirtualDisplay);
 
         assertActivityOnDisplay(new ComponentName(mContext, InterceptedActivity.class),
                 mVirtualDisplay.getDisplay().getDisplayId());
@@ -145,7 +143,7 @@ public class ActivityInterceptionTest {
         mVirtualDevice.registerIntentInterceptor(
                 intentFilterOther, mContext.getMainExecutor(), interceptorOther);
 
-        mContext.startActivity(mInterceptedIntent, createActivityOptions(mVirtualDisplay));
+        mRule.sendIntentToDisplay(mInterceptedIntent, mVirtualDisplay);
 
         assertIntentIntercepted();
         verifyZeroInteractions(interceptorOther);

@@ -429,7 +429,7 @@ public class StreamedAppClipboardTest {
                     .putExtra(EXTRA_CLIP_DATA, CLIP_DATA)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
-            mContext.startActivity(intent, VirtualDeviceRule.createActivityOptions(mDisplayId));
+            mRule.sendIntentToDisplay(intent, mDisplayId);
         }
 
         private void verifyClipChanged() {

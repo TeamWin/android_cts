@@ -16,7 +16,6 @@
 
 package android.virtualdevice.cts.applaunch;
 
-import static android.virtualdevice.cts.common.VirtualDeviceRule.createActivityOptions;
 import static android.virtualdevice.cts.common.VirtualDeviceRule.createDefaultVirtualDisplayConfigBuilder;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -129,11 +128,10 @@ public class RestrictActivityTest {
         final int displayId = createVirtualDeviceAndDisplayWithCategories(displayCategories);
         final Intent intent = new Intent(mContext, clazz)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        Activity activity = mRule.startActivityOnDisplaySync(displayId, clazz);
+        assertActivityOnDisplay(activity.getComponentName(), displayId);
         assertThat(mActivityManager.isActivityStartAllowedOnDisplay(mContext, displayId, intent))
                 .isTrue();
-        Activity activity =
-                getInstrumentation().startActivitySync(intent, createActivityOptions(displayId));
-        assertActivityOnDisplay(activity.getComponentName(), displayId);
     }
 
     private <T extends Activity> void assertActivityLaunchBlocked(
@@ -141,10 +139,10 @@ public class RestrictActivityTest {
         final int displayId = createVirtualDeviceAndDisplayWithCategories(displayCategories);
         final Intent intent = new Intent(mContext, clazz)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        mRule.sendIntentToDisplay(intent, displayId);
+        assertActivityOnDisplay(VirtualDeviceRule.BLOCKED_ACTIVITY_COMPONENT, displayId);
         assertThat(mActivityManager.isActivityStartAllowedOnDisplay(mContext, displayId, intent))
                 .isFalse();
-        mContext.startActivity(intent, createActivityOptions(displayId));
-        assertActivityOnDisplay(VirtualDeviceRule.BLOCKED_ACTIVITY_COMPONENT, displayId);
     }
 
     private int createVirtualDeviceAndDisplayWithCategories(
