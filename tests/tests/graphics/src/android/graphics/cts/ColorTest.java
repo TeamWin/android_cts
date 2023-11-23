@@ -142,6 +142,19 @@ public class ColorTest {
                 android.R.color.system_accent3_800,
                 android.R.color.system_accent3_900,
                 android.R.color.system_accent3_1000,
+                android.R.color.system_error_0,
+                android.R.color.system_error_10,
+                android.R.color.system_error_50,
+                android.R.color.system_error_100,
+                android.R.color.system_error_200,
+                android.R.color.system_error_300,
+                android.R.color.system_error_400,
+                android.R.color.system_error_500,
+                android.R.color.system_error_600,
+                android.R.color.system_error_700,
+                android.R.color.system_error_800,
+                android.R.color.system_error_900,
+                android.R.color.system_error_1000,
         };
 
         int[] materialSystemColors = {
@@ -244,7 +257,10 @@ public class ColorTest {
                 android.R.color.system_palette_key_color_secondary_dark,
                 android.R.color.system_palette_key_color_tertiary_dark,
                 android.R.color.system_palette_key_color_neutral_dark,
-                android.R.color.system_palette_key_color_neutral_variant_dark
+                android.R.color.system_palette_key_color_neutral_variant_dark,
+                android.R.color.system_surface_disabled,
+                android.R.color.system_on_surface_disabled,
+                android.R.color.system_outline_disabled,
         };
 
         List<Integer> expectedColorStateLists = Arrays.asList(
