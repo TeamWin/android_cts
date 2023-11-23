@@ -161,6 +161,8 @@ public class PackageManagerShellCommandInstallTest {
     private static final String TEST_SDK1_DIFFERENT_SIGNER = "HelloWorldSdk1DifferentSigner.apk";
     private static final String TEST_SDK2 = "HelloWorldSdk2.apk";
     private static final String TEST_SDK2_UPDATED = "HelloWorldSdk2Updated.apk";
+
+    private static final String TEST_USING_SDK1_OPTIONAL = "HelloWorldUsingSdk1Optional.apk";
     private static final String TEST_USING_SDK1 = "HelloWorldUsingSdk1.apk";
     private static final String TEST_USING_SDK1_AND_SDK2 = "HelloWorldUsingSdk1And2.apk";
 
@@ -1289,29 +1291,31 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     @RequiresFlagsEnabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testAppUsingSdkInstallAndUpdate_allowAppInstallWithoutSDK() throws Exception {
+    public void testAppUsingSdkOptionalInstallInstall_allowAppInstallWithoutSDK()
+            throws Exception {
         onBeforeSdkTests();
 
-        testAppUsingSdkInstallAndUpdate(true /* enableSdkLibIndependence */);
+        // Try to install without required SDK1.
+        installPackage(TEST_USING_SDK1_OPTIONAL);
+        assertTrue(isAppInstalled(TEST_SDK_USER_PACKAGE));
     }
 
     @Test
     @RequiresFlagsDisabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testAppUsingSdkInstallAndUpdate_blockAppInstallWithoutSDK() throws Exception {
+    public void testAppUsingSdkOptionalInstall_blockAppInstallWithoutSDK() throws Exception {
         onBeforeSdkTests();
 
-        testAppUsingSdkInstallAndUpdate(false /* enableSdkLibIndependence */);
+        // Try to install without required SDK1.
+        installPackage(TEST_USING_SDK1_OPTIONAL, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
     }
 
-    public void testAppUsingSdkInstallAndUpdate(boolean enableSdkLibIndependence) throws Exception {
+    @Test
+    public void testAppUsingSdkRequiredInstallAndUpdate() throws Exception {
+        onBeforeSdkTests();
         // Try to install without required SDK1.
-        if (enableSdkLibIndependence) {
-            installPackage(TEST_USING_SDK1);
-            assertTrue(isAppInstalled(TEST_SDK_USER_PACKAGE));
-        } else {
-            installPackage(TEST_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-            assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
-        }
+        installPackage(TEST_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
 
         // Now install the required SDK1.
         installPackage(TEST_SDK1);
@@ -1343,12 +1347,8 @@ public class PackageManagerShellCommandInstallTest {
         }
 
         // Try to install without required SDK2.
-        if (enableSdkLibIndependence) {
-            installPackage(TEST_USING_SDK1_AND_SDK2);
-        } else {
-            installPackage(TEST_USING_SDK1_AND_SDK2,
-                    "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-        }
+        installPackage(TEST_USING_SDK1_AND_SDK2,
+                "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
 
         // Now install the required SDK2.
         installPackage(TEST_SDK2);
@@ -1384,23 +1384,9 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
-    @RequiresFlagsDisabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testAppUsingSdkInstallGroupInstall_blockAppInstallWithoutSDK() throws Exception {
+    public void testAppUsingSdkRequiredInstallGroupInstall() throws Exception {
         onBeforeSdkTests();
 
-        testAppUsingSdkInstallGroupInstall(false /* enableSdkLibIndependence */);
-    }
-
-    @Test
-    @RequiresFlagsEnabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testAppUsingSdkInstallGroupInstall_allowAppInstallWithoutSDK() throws Exception {
-        onBeforeSdkTests();
-
-        testAppUsingSdkInstallGroupInstall(true /* enableSdkLibIndependence */);
-    }
-
-    private void testAppUsingSdkInstallGroupInstall(boolean enableSdkLibIndependence)
-            throws Exception {
         // Install/uninstall the sdk to grab its certDigest.
         installPackage(TEST_SDK1);
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
@@ -1408,13 +1394,8 @@ public class PackageManagerShellCommandInstallTest {
         uninstallPackageSilently(TEST_SDK1_PACKAGE);
 
         // Try to install without required SDK1.
-        if (enableSdkLibIndependence) {
-            installPackage(TEST_USING_SDK1);
-            assertTrue(isAppInstalled(TEST_SDK_USER_PACKAGE));
-        } else {
-            installPackage(TEST_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-            assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
-        }
+        installPackage(TEST_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
 
         // Parent session
         String parentSessionId = createSession("--multi-package");
@@ -1465,8 +1446,7 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
-    @RequiresFlagsDisabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testUninstallSdkWhileAppUsing_blockUninstall() throws Exception {
+    public void testUninstallSdkRequiredWhileAppUsing_blockUninstall() throws Exception {
         onBeforeSdkTests();
 
         // Install the required SDK1.
@@ -1486,7 +1466,7 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     @RequiresFlagsEnabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testUninstallSdkWhileAppUsing_allowUninstall() throws Exception {
+    public void testUninstallSdkOptionalWhileAppUsing_allowUninstall() throws Exception {
         onBeforeSdkTests();
 
         // Install the required SDK1.
@@ -1495,8 +1475,8 @@ public class PackageManagerShellCommandInstallTest {
 
         overrideUsesSdkLibraryCertificateDigest(getPackageCertDigest(TEST_SDK1_PACKAGE));
 
-        // Install the package.
-        installPackage(TEST_USING_SDK1);
+        // Install the package optional using sdk1
+        installPackage(TEST_USING_SDK1_OPTIONAL);
 
         uninstallPackage(TEST_SDK1_PACKAGE, "Success");
         assertThat(isSdkInstalled(TEST_SDK1_NAME, 1)).isFalse();
@@ -1594,42 +1574,16 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
-    @RequiresFlagsDisabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testAppUsingSdkUsingSdkInstallAndUpdate_blockAppInstallWithoutSDK()
-            throws Exception {
+    public void testAppUsingSdkRequiredUsingSdkInstallAndUpdate() throws Exception {
         onBeforeSdkTests();
 
-        testAppUsingSdkUsingSdkInstallAndUpdate(false /* enableSdkLibIndependence */);
-    }
-
-    @Test
-    @RequiresFlagsEnabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testAppUsingSdkUsingSdkInstallAndUpdate_allowAppInstallWithoutSDK()
-            throws Exception {
-        onBeforeSdkTests();
-
-        testAppUsingSdkUsingSdkInstallAndUpdate(true /* enableSdkLibIndependence */);
-    }
-
-    public void testAppUsingSdkUsingSdkInstallAndUpdate(boolean enableSdkLibIndependence)
-            throws Exception {
         // Try to install without required SDK1.
-        if (enableSdkLibIndependence) {
-            installPackage(TEST_USING_SDK3);
-            assertTrue(isAppInstalled(TEST_SDK_USER_PACKAGE));
-        } else {
-            installPackage(TEST_USING_SDK3, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-            assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
-        }
+        installPackage(TEST_USING_SDK3, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
 
         // Try to install SDK3 without required SDK1.
-        if (enableSdkLibIndependence) {
-            installPackage(TEST_SDK3_USING_SDK1);
-            assertTrue(isSdkInstalled(TEST_SDK3_NAME, 3));
-        } else {
-            installPackage(TEST_SDK3_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-            assertFalse(isSdkInstalled(TEST_SDK3_NAME, 3));
-        }
+        installPackage(TEST_SDK3_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        assertFalse(isSdkInstalled(TEST_SDK3_NAME, 3));
 
         // Now install the required SDK1.
         installPackage(TEST_SDK1);
@@ -1665,12 +1619,8 @@ public class PackageManagerShellCommandInstallTest {
         }
 
         // Try to install updated SDK3 without required SDK2.
-        if (enableSdkLibIndependence) {
-            installPackage(TEST_SDK3_USING_SDK1_AND_SDK2);
-        } else {
-            installPackage(TEST_SDK3_USING_SDK1_AND_SDK2,
-                    "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-        }
+        installPackage(TEST_SDK3_USING_SDK1_AND_SDK2,
+                "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
 
         // Now install the required SDK2.
         installPackage(TEST_SDK2);
@@ -1707,33 +1657,12 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testSdkUsingSdkInstallAndUpdate_allowAppInstallWithoutSDK() throws Exception {
-        onBeforeSdkTests();
-
-        testSdkUsingSdkInstallAndUpdate(true /* enableSdkLibIndependence */);
-    }
-
-    @Test
-    @RequiresFlagsDisabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testSdkUsingSdkInstallAndUpdate_blockAppInstallWithoutSDK() throws Exception {
-        onBeforeSdkTests();
-
-        testSdkUsingSdkInstallAndUpdate(false /* enableSdkLibIndependence */);
-    }
-
-    public void testSdkUsingSdkInstallAndUpdate(boolean enableSdkLibIndependence) throws Exception {
+    public void testSdkUsingSdkRequiredInstallAndUpdate() throws Exception {
         onBeforeSdkTests();
 
         // Try to install without required SDK1.
-        if (enableSdkLibIndependence) {
-            installPackage(TEST_SDK3_USING_SDK1);
-            assertTrue(isSdkInstalled(TEST_SDK3_NAME, 3));
-        } else {
-            installPackage(TEST_SDK3_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-            assertFalse(isSdkInstalled(TEST_SDK3_NAME, 3));
-        }
-
+        installPackage(TEST_SDK3_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        assertFalse(isSdkInstalled(TEST_SDK3_NAME, 3));
 
         // Now install the required SDK1.
         installPackage(TEST_SDK1);
@@ -1764,13 +1693,8 @@ public class PackageManagerShellCommandInstallTest {
         }
 
         // Try to install without required SDK2.
-
-        if (enableSdkLibIndependence) {
-            installPackage(TEST_SDK3_USING_SDK1_AND_SDK2);
-        } else {
-            installPackage(TEST_SDK3_USING_SDK1_AND_SDK2,
-                    "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-        }
+        installPackage(TEST_SDK3_USING_SDK1_AND_SDK2,
+                "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
 
         // Now install the required SDK2.
         installPackage(TEST_SDK2);

@@ -249,6 +249,19 @@ android_test {
 
 //-----------------------------------------------------------
 android_test {
+    name: "HelloWorldUsingSdk1Optional",
+    defaults: ["hello_world_defaults"],
+    srcs: ["sdk_user/**/*.java"],
+    manifest: "AndroidManifestUsingSdk1Optional.xml",
+    test_suites: [
+        "vts10",
+        "general-tests",
+    ],
+    v4_signature: true,
+}
+
+//-----------------------------------------------------------
+android_test {
     name: "HelloWorldUsingSdk1",
     defaults: ["hello_world_defaults"],
     srcs: ["sdk_user/**/*.java"],
