@@ -131,14 +131,10 @@ public class StreamedAppClipboardTest {
      */
     @Test
     public void streamedAppCanReadClipboard_hostDeviceIsLocked() {
-        assumeTrue(FeatureUtil.hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN));
         DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_DEFAULT);
         virtualDevice.mClipboardManager.setPrimaryClip(CLIP_DATA);
 
-        try (LockScreenSession session = new LockScreenSession(
-                InstrumentationRegistry.getInstrumentation(), mRule.getWmState())) {
-            session.setLockCredential().gotoKeyguard();
-
+        try (SecureLockScreenSession unused = new SecureLockScreenSession()) {
             verifyClipData(virtualDevice.readClipboardFromActivity());
         }
     }
@@ -149,13 +145,9 @@ public class StreamedAppClipboardTest {
      */
     @Test
     public void streamedAppCanWriteClipboard_hostDeviceIsLocked() {
-        assumeTrue(FeatureUtil.hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN));
         DeviceEnvironment virtualDevice = new DeviceEnvironment(DEVICE_POLICY_DEFAULT);
 
-        try (LockScreenSession session = new LockScreenSession(
-                InstrumentationRegistry.getInstrumentation(), mRule.getWmState())) {
-            session.setLockCredential().gotoKeyguard();
-
+        try (SecureLockScreenSession unused = new SecureLockScreenSession()) {
             virtualDevice.writeClipboardFromActivity();
 
             virtualDevice.verifyClipChanged();
@@ -437,6 +429,25 @@ public class StreamedAppClipboardTest {
             // text classification results on the clipboard content become available.
             verify(mOnPrimaryClipChangedListener, timeout(TIMEOUT_MILLIS).atLeastOnce())
                     .onPrimaryClipChanged();
+        }
+    }
+
+    /**
+     * A secure lock screen session that cleans up after itself.
+     */
+    private class SecureLockScreenSession extends LockScreenSession {
+        SecureLockScreenSession() {
+            super(InstrumentationRegistry.getInstrumentation(), mRule.getWmState());
+            assumeTrue(FeatureUtil.hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN));
+            setLockCredential().gotoKeyguard();
+            mRule.getWmState().assertKeyguardShowingAndNotOccluded();
+        }
+
+        @Override
+        public void close() {
+            mRule.runWithTemporaryPermission(() -> unlockDevice().enterAndConfirmLockCredential());
+            mRule.getWmState().waitAndAssertKeyguardGone();
+            super.close();
         }
     }
 }
