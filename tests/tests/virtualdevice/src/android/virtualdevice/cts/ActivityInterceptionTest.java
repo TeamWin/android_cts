@@ -165,7 +165,8 @@ public class ActivityInterceptionTest {
                 mInterceptor);
 
         // Starting test on EmptyActivity
-        Intent startIntent = new Intent(mContext, EmptyActivity.class)
+        Intent startIntent = new Intent(Intent.ACTION_MAIN)
+                .setComponent(new ComponentName(mContext, EmptyActivity.class))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
@@ -212,7 +213,8 @@ public class ActivityInterceptionTest {
                 interceptorOther);
 
         // Starting test on EmptyActivity
-        Intent startIntent = new Intent(mContext, EmptyActivity.class)
+        Intent startIntent = new Intent(Intent.ACTION_MAIN)
+                .setComponent(new ComponentName(mContext, EmptyActivity.class))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                         | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
@@ -260,7 +262,8 @@ public class ActivityInterceptionTest {
                 mInterceptor);
 
         // Starting test on EmptyActivity
-        Intent startIntent = new Intent(mContext, EmptyActivity.class)
+        Intent startIntent = new Intent(Intent.ACTION_MAIN)
+                .setComponent(new ComponentName(mContext, EmptyActivity.class))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                         | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
@@ -301,7 +304,8 @@ public class ActivityInterceptionTest {
                 Executors.newSingleThreadExecutor(), interceptorOther);
 
         // Starting test on EmptyActivity
-        Intent startIntent = new Intent(mContext, EmptyActivity.class)
+        Intent startIntent = new Intent(Intent.ACTION_MAIN)
+                .setComponent(new ComponentName(mContext, EmptyActivity.class))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                         | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
