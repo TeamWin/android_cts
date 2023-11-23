@@ -4465,7 +4465,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Set \'%s\' user restriction by turning on the switch below.
     </string>
     <string name="disallow_add_user">Disallow add user</string>
-    <string name="disallow_add_user_action">Accessing the multiple users settings page, or if the device allows access to the page, then attempting to add a new user </string>
+    <string name="disallow_add_user_action">Accessing the multiple users settings page, or if the device allows access to the page, then attempting to enable the feature </string>
     <string name="disallow_adjust_volume">Disallow adjust volume</string>
     <string name="disallow_adjust_volume_action">Adjusting the volume\n
         NOTE: If the device does not support volume adjustment in Settings app please skip this test and mark it as passing.\n</string>
