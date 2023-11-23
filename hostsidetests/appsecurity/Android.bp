@@ -171,3 +171,40 @@ filegroup {
     name: "CtsHostsideTestsAppSecurityUtil",
     srcs: ["src/android/appsecurity/cts/Utils.java"],
 }
+
+// The ApexSignatureVerificationTest is split into a separate java_test_host
+// to make it possible to run this test as part of GTS as well.
+// See b/301094654
+java_test_host {
+    name: "GtsApexSignatureVerificationTest",
+    defaults: ["cts_defaults"],
+
+    srcs: [
+        "src/android/appsecurity/cts/ApexSignatureVerificationTest.java",
+    ],
+    libs: [
+        "cts-tradefed",
+        "tradefed",
+        "compatibility-host-util",
+        "truth-prebuilt",
+        "hamcrest-library",
+    ],
+
+    static_libs: [
+        "CompatChangeGatingTestBase",
+        "CtsPkgInstallerConstants",
+        "cts-host-utils",
+        "cts-statsd-atom-host-test-utils",
+        "sts-host-util",
+    ],
+
+    java_resource_dirs: ["res"],
+
+    // tag this module as a cts test artifact
+    test_suites: [
+        "general-tests",
+        "gts",
+    ],
+    per_testcase_directory: true,
+    test_config: "AndroidTest_ApexSignatureVerificationTest.xml",
+}
