@@ -215,6 +215,7 @@ android_test {
         ":HelloWorldUsingSdk1",
         ":HelloWorldUsingSdk1And2",
         ":HelloWorldUsingSdk1Optional",
+        ":HelloWorldUsingSdk1OptionalSdk2",
         ":HelloWorldUsingSdk3",
         ":HelloWorldNoAppStorage",
         ":HelloWorldLotsOfFlags",
