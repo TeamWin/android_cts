@@ -82,6 +82,12 @@ public class TelephonyManagerTestOnMockModem {
         sMockModemManager = new MockModemManager();
         assertNotNull(sMockModemManager);
         assertTrue(sMockModemManager.connectMockModemService());
+
+        final PackageManager pm = getContext().getPackageManager();
+        if (pm.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            //Wait for Telephony FW and RIL initialization are done
+            TimeUnit.SECONDS.sleep(4);
+        }
     }
 
     @AfterClass
