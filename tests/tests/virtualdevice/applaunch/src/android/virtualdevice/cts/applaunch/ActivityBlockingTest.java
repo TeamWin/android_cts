@@ -99,12 +99,12 @@ public class ActivityBlockingTest {
     @Test
     public void nonTrustedDisplay_startNonEmbeddableActivity_shouldThrowSecurityException() {
         createVirtualDeviceAndNonTrustedDisplay();
+        mRule.assumeActivityLaunchSupported(mVirtualDisplay.getDisplay().getDisplayId());
         assertThat(mActivityManager.isActivityStartAllowedOnDisplay(
                 mContext, mVirtualDisplay.getDisplay().getDisplayId(), mMonitoredIntent))
                 .isFalse();
         assertThrows(SecurityException.class,
-                () -> mContext.startActivity(mMonitoredIntent,
-                        VirtualDeviceRule.createActivityOptions(mVirtualDisplay)));
+                () -> mRule.sendIntentToDisplay(mMonitoredIntent, mVirtualDisplay));
     }
 
     @Test
@@ -389,7 +389,7 @@ public class ActivityBlockingTest {
     private void assertActivityLaunchBlocked(Intent intent) {
         assertThat(mActivityManager.isActivityStartAllowedOnDisplay(
                 mContext, mVirtualDisplay.getDisplay().getDisplayId(), intent)).isFalse();
-        mContext.startActivity(intent, VirtualDeviceRule.createActivityOptions(mVirtualDisplay));
+        mRule.sendIntentToDisplay(intent, mVirtualDisplay);
         assertBlockedAppStreamingActivityLaunched();
     }
 
@@ -397,9 +397,9 @@ public class ActivityBlockingTest {
      * Assert that no activity is launched with the given intent.
      */
     private void assertNoActivityLaunched(Intent intent) {
+        mRule.sendIntentToDisplay(intent, mVirtualDisplay);
         assertThat(mActivityManager.isActivityStartAllowedOnDisplay(
                 mContext, mVirtualDisplay.getDisplay().getDisplayId(), intent)).isFalse();
-        mContext.startActivity(intent, VirtualDeviceRule.createActivityOptions(mVirtualDisplay));
         verify(mActivityListener, never()).onTopActivityChanged(
                 eq(mVirtualDisplay.getDisplay().getDisplayId()), any(), anyInt());
         reset(mActivityListener);
@@ -409,9 +409,9 @@ public class ActivityBlockingTest {
      * Assert that launching an activity is successful with the given intent.
      */
     private void assertActivityLaunchAllowed(Intent intent) {
+        mRule.sendIntentToDisplay(intent, mVirtualDisplay);
         assertThat(mActivityManager.isActivityStartAllowedOnDisplay(
                 mContext, mVirtualDisplay.getDisplay().getDisplayId(), intent)).isTrue();
-        mContext.startActivity(intent, VirtualDeviceRule.createActivityOptions(mVirtualDisplay));
         assertActivityLaunched(intent.getComponent());
     }
 

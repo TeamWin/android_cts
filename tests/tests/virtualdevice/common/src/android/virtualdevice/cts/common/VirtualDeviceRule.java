@@ -50,6 +50,7 @@ import android.hardware.display.VirtualDisplayConfig;
 import android.os.Bundle;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.server.wm.WindowManagerStateHelper;
+import android.view.Display;
 import android.view.Surface;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
@@ -136,11 +137,6 @@ public class VirtualDeviceRule implements TestRule {
     @Override
     public Statement apply(final Statement base, final Description description) {
         assumeNotNull(mVirtualDeviceManager);
-        assumeTrue(mPackageManager.hasSystemFeature(
-                PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
-        // TODO(b/261155110): Re-enable tests once freeform mode is supported in Virtual Display
-        assumeFalse("Skipping test: VirtualDisplay window policy doesn't support freeform.",
-                mPackageManager.hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT));
         assumeFalse("Skipping test: not supported on automotive",
                 mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
         return mRuleChain.apply(base, description);
@@ -305,10 +301,26 @@ public class VirtualDeviceRule implements TestRule {
     }
 
     /**
+     * Sends the given intent to the given virtual display.
+     */
+    public void sendIntentToDisplay(Intent intent, VirtualDisplay virtualDisplay) {
+        sendIntentToDisplay(intent, virtualDisplay.getDisplay().getDisplayId());
+    }
+
+    /**
+     * Sends the given intent to the given display.
+     */
+    public void sendIntentToDisplay(Intent intent, int displayId) {
+        assumeActivityLaunchSupported(displayId);
+        mContext.startActivity(intent, createActivityOptions(displayId));
+    }
+
+    /**
      * Starts the activity for the given class on the given display and blocks until it is
      * successfully launched there.
      */
     public <T extends Activity> T startActivityOnDisplaySync(int displayId, Class<T> clazz) {
+        assumeActivityLaunchSupported(displayId);
         return (T) sInstrumentation.startActivitySync(new Intent(mContext, clazz)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK),
                 createActivityOptions(displayId));
@@ -334,6 +346,19 @@ public class VirtualDeviceRule implements TestRule {
     public void assertActivityOnDisplay(Activity activity, int displayId) {
         mWmState.assertActivityDisplayed(activity.getComponentName());
         assertThat(activity.getDisplay().getDisplayId()).isEqualTo(displayId);
+    }
+
+    /**
+     * Skips the test if the device doesn't support virtual displays that can host activities.
+     */
+    public void assumeActivityLaunchSupported(int displayId) {
+        if (displayId != Display.DEFAULT_DISPLAY) {
+            assumeTrue(mPackageManager.hasSystemFeature(
+                    PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
+            // TODO(b/261155110): Re-enable once freeform mode is supported on virtual displays.
+            assumeFalse("Skipping test: VirtualDisplay window policy doesn't support freeform.",
+                    mPackageManager.hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT));
+        }
     }
 
     /**

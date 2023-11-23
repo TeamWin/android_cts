@@ -311,7 +311,7 @@ public class VirtualDevicePermissionTest {
                 .putExtra(EXTRA_PERMISSION_NAME, permissionName)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
-        mContext.startActivity(intent, VirtualDeviceRule.createActivityOptions(displayId));
+        mRule.sendIntentToDisplay(intent, displayId);
     }
 
     private void createVirtualDeviceAndDisplay(VirtualDeviceParams params) {

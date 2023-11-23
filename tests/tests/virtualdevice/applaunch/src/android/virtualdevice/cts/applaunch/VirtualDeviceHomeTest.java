@@ -252,7 +252,7 @@ public class VirtualDeviceHomeTest {
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.addCategory(Intent.CATEGORY_HOME);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent, VirtualDeviceRule.createActivityOptions(mVirtualDisplay));
+        mRule.sendIntentToDisplay(intent, mVirtualDisplay);
     }
 
     private void assertActivityOnVirtualDisplay(ComponentName componentName) {
