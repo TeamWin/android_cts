@@ -17,10 +17,13 @@
 package android.voiceinteraction.cts;
 
 import static android.Manifest.permission.CAPTURE_AUDIO_HOTWORD;
+import static android.Manifest.permission.MANAGE_APP_OPS_MODES;
 import static android.Manifest.permission.MANAGE_HOTWORD_DETECTION;
+import static android.Manifest.permission.RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA;
+import static android.Manifest.permission.RECEIVE_SANDBOX_TRIGGER_AUDIO;
 import static android.Manifest.permission.RECORD_AUDIO;
 import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
-import static android.Manifest.permission.RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA;
+import static android.service.voice.HotwordDetectionServiceFailure.ERROR_CODE_ON_DETECTED_SECURITY_EXCEPTION;
 import static android.service.voice.HotwordDetectionServiceFailure.ERROR_CODE_ON_TRAINING_DATA_EGRESS_LIMIT_EXCEEDED;
 import static android.service.voice.HotwordDetectionServiceFailure.ERROR_CODE_ON_TRAINING_DATA_SECURITY_EXCEPTION;
 import static android.voiceinteraction.common.Utils.AUDIO_EGRESS_DETECTED_RESULT;
@@ -56,8 +59,11 @@ import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
 import android.os.Process;
 import android.os.SystemClock;
+import android.permission.flags.Flags;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetectionService;
 import android.service.voice.HotwordDetectionServiceFailure;
@@ -65,7 +71,6 @@ import android.service.voice.HotwordDetector;
 import android.service.voice.HotwordRejectedResult;
 import android.service.voice.HotwordTrainingData;
 import android.service.voice.SandboxedDetectionInitializer;
-import android.service.voice.flags.Flags;
 import android.soundtrigger.cts.instrumentation.SoundTriggerInstrumentationObserver;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
@@ -106,7 +111,7 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "No real use case for instant mode hotword detection service")
-public class HotwordDetectionServiceBasicTest {
+public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
 
     private static final String TAG = "HotwordDetectionServiceTest";
     // The VoiceInteractionService used by this test
@@ -114,17 +119,30 @@ public class HotwordDetectionServiceBasicTest {
             "android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService";
 
     private final CountDownLatch mLatch = new CountDownLatch(1);
+
+    private String mOpNoted = "";
+
     private final AppOpsManager mAppOpsManager = sInstrumentation.getContext()
             .getSystemService(AppOpsManager.class);
 
     private final AppOpsManager.OnOpNotedListener mOnOpNotedListener =
             (op, uid, pkgName, attributionTag, flags, result) -> {
                 Log.d(TAG, "Get OnOpNotedListener callback op = " + op + ", uid = " + uid);
-                // We adopt ShellPermissionIdentity to pass the permission check, so the uid should
-                // be the shell uid.
-                if (Process.SHELL_UID == uid) {
-                    mLatch.countDown();
+                // We adopt ShellPermissionIdentity for RECORD_AUDIO to pass the permission check,
+                // so the uid should be the shell uid.
+                if (Process.SHELL_UID == uid && op.equals(AppOpsManager.OPSTR_RECORD_AUDIO)) {
+                    if (mLatch != null) {
+                        mLatch.countDown();
+                    }
                 }
+                // We do not adopt ShellPermissionIdentity for RECEIVE_SANDBOX_TRIGGER_AUDIO so the
+                // uid should be the current process uid.
+                if (Process.myUid() == uid && op.equals(RECEIVE_SANDBOX_TRIGGER_AUDIO_OP_STR)) {
+                    if (mLatch != null) {
+                        mLatch.countDown();
+                    }
+                }
+                mOpNoted = op;
             };
 
     private CtsBasicVoiceInteractionService mService;
@@ -146,6 +164,9 @@ public class HotwordDetectionServiceBasicTest {
 
     @Rule
     public RequiredFeatureRule REQUIRES_MIC_RULE = new RequiredFeatureRule(FEATURE_MICROPHONE);
+
+    @Rule
+    public CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private SoundTrigger.Keyphrase[] mKeyphraseArray;
     private final SoundTriggerInstrumentationObserver mInstrumentationObserver =
@@ -196,15 +217,15 @@ public class HotwordDetectionServiceBasicTest {
         // Check the test can get the service
         Objects.requireNonNull(mService);
 
+        // Set whether voice activation permission check is enabled.
+        mService.setVoiceActivationPermissionEnabled(mVoiceActivationPermissionEnabled);
+
         mKeyphraseArray = Helper.createKeyphraseArray(mService);
 
         // Hook up SoundTriggerInjection to inject/observe STHAL operations.
         // Requires MANAGE_SOUND_TRIGGER
         runWithShellPermissionIdentity(() ->
                 mInstrumentationObserver.attachInstrumentation());
-
-        // Reset training data egress count for each test.
-        runWithShellPermissionIdentity(() -> mService.resetHotwordTrainingDataEgressCountForTest());
 
         // Wait the original HotwordDetectionService finish clean up to avoid flaky
         // This also waits for mic indicator disappear
@@ -219,6 +240,13 @@ public class HotwordDetectionServiceBasicTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        // Reset training data egress count for each test.
+        runWithShellPermissionIdentity(() -> mService.resetHotwordTrainingDataEgressCountForTest());
+
+        // Set voice activation op to true for shell after each test.
+        runWithShellPermissionIdentity(() ->
+                setVoiceActivationOpForShellIdentity(/* allow= */ true));
+
         mService.resetState();
         mService = null;
     }
@@ -912,7 +940,6 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ALLOW_TRAINING_DATA_EGRESS_FROM_HDS)
     public void testHotwordDetectionService_dspDetectorTrainingData_opAndPermGranted()
             throws Throwable {
         // Create AlwaysOnHotwordDetector
@@ -945,7 +972,6 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ALLOW_TRAINING_DATA_EGRESS_FROM_HDS)
     public void testHotwordDetectionService_softwareDetectorTrainingData_opAndPermGranted()
             throws Throwable {
         // Create SoftwareHotwordDetector.
@@ -978,7 +1004,6 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ALLOW_TRAINING_DATA_EGRESS_FROM_HDS)
     public void testHotwordDetectionService_softwareExternalDetectionTrainingData_opAndPermGranted()
             throws Throwable {
         // Create SoftwareHotwordDetector.
@@ -1011,7 +1036,6 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ALLOW_TRAINING_DATA_EGRESS_FROM_HDS)
     public void testHotwordDetectionService_dspDetectorTrainingData_opNotGranted()
             throws Throwable {
         // Create AlwaysOnHotwordDetector
@@ -1040,7 +1064,6 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ALLOW_TRAINING_DATA_EGRESS_FROM_HDS)
     public void testHotwordDetectionService_softwareDetectorTrainingData_opNotGranted()
             throws Throwable {
         // Create SoftwareHotwordDetector.
@@ -1069,7 +1092,6 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ALLOW_TRAINING_DATA_EGRESS_FROM_HDS)
     public void testHotwordDetectionService_softwareExternalDetectionTrainingData_opNotGranted()
             throws Throwable {
         // Create SoftwareHotwordDetector.
@@ -1098,7 +1120,6 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ALLOW_TRAINING_DATA_EGRESS_FROM_HDS)
     public void testHotwordDetectionService_dspDetectorTrainingData_permNotGranted()
             throws Throwable {
         // Create AlwaysOnHotwordDetector
@@ -1127,7 +1148,6 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ALLOW_TRAINING_DATA_EGRESS_FROM_HDS)
     public void testHotwordDetectionService_softwareDetectorTrainingData_permNotGranted()
             throws Throwable {
         // Create SoftwareHotwordDetector.
@@ -1156,7 +1176,6 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ALLOW_TRAINING_DATA_EGRESS_FROM_HDS)
     public void testHotwordDetectionService_softwareExternalDetectionTrainingData_permNotGranted()
             throws Throwable {
         // Create SoftwareHotwordDetector.
@@ -1186,7 +1205,6 @@ public class HotwordDetectionServiceBasicTest {
 
 
     @Test(timeout = 120000)
-    @RequiresFlagsEnabled(Flags.FLAG_ALLOW_TRAINING_DATA_EGRESS_FROM_HDS)
     public void testHotwordDetectionService_dspDetectorTrainingData_whenLimitExceeded()
             throws Throwable {
         // Create AlwaysOnHotwordDetector
@@ -1230,7 +1248,6 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test(timeout = 120000)
-    @RequiresFlagsEnabled(Flags.FLAG_ALLOW_TRAINING_DATA_EGRESS_FROM_HDS)
     public void testHotwordDetectionService_softwareDetectorTrainingData_whenLimitExceeded()
             throws Throwable {
         // Create SoftwareHotwordDetector.
@@ -1274,7 +1291,6 @@ public class HotwordDetectionServiceBasicTest {
     }
 
     @Test(timeout = 120000)
-    @RequiresFlagsEnabled(Flags.FLAG_ALLOW_TRAINING_DATA_EGRESS_FROM_HDS)
     public void testHotwordDetectionService_softwareExternalTrainingData_whenLimitExceeded()
             throws Throwable {
         // Create SoftwareHotwordDetector.
@@ -1315,6 +1331,137 @@ public class HotwordDetectionServiceBasicTest {
         }
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VOICE_ACTIVATION_PERMISSION_APIS)
+    public void testCreateAlwaysOnHotwordDetector_withoutVoiceActivationPerm_throwsException()
+            throws Throwable {
+        // Ensure that the voice interaction service does not add additional voice activation
+        // permission when creating hotword detector.
+        mService.setVoiceActivationPermissionEnabled(false);
+
+        mService.createAlwaysOnHotwordDetector();
+
+        // Wait the result and verify expected result
+        mService.waitSandboxedDetectionServiceInitializedCalledOrException();
+
+        // Verify SecurityException throws
+        assertThat(mService.isCreateDetectorSecurityExceptionThrow()).isTrue();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VOICE_ACTIVATION_PERMISSION_APIS)
+    public void testCreateSoftwareHotwordDetector_withoutVoiceActivationPerm_throwsException()
+            throws Throwable {
+        // Ensure that the voice interaction service does not add additional voice activation
+        // permission when creating hotword detector.
+        mService.setVoiceActivationPermissionEnabled(false);
+
+        mService.createSoftwareHotwordDetector();
+
+        // Wait the result and verify expected result
+        mService.waitSandboxedDetectionServiceInitializedCalledOrException();
+
+        // Verify SecurityException throws
+        assertThat(mService.isCreateDetectorSecurityExceptionThrow()).isTrue();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VOICE_ACTIVATION_PERMISSION_APIS)
+    public void testSoftwareHotwordDetector_onDetect_withoutVoiceActivationOp_throwsException()
+            throws Throwable {
+        // Create SoftwareHotwordDetector.
+        HotwordDetector softwareHotwordDetector =
+                createSoftwareHotwordDetector(/* useOnFailure= */ true);
+
+        try {
+            // Adopt necessary permissions.
+            adoptShellPermissionIdentityForHotwordWithVoiceActivation();
+            mService.initOnFailureLatch();
+
+            // Disable voice activation op.
+            setVoiceActivationOpForShellIdentity(/* allow= */ false);
+
+            softwareHotwordDetector.startRecognition();
+
+            // wait onFailure() called and verify the result
+            mService.waitOnFailureCalled();
+            verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
+                    ERROR_CODE_ON_DETECTED_SECURITY_EXCEPTION);
+        } finally {
+            softwareHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VOICE_ACTIVATION_PERMISSION_APIS)
+    public void testSoftwareExternalHotwordDetector_onDetect_withoutVoiceActivOp_throwsException()
+            throws Throwable {
+        // Create SoftwareHotwordDetector.
+        HotwordDetector softwareHotwordDetector =
+                createSoftwareHotwordDetector(/* useOnFailure= */ true);
+
+        try {
+            // Adopt necessary permissions.
+            adoptShellPermissionIdentityForHotwordWithVoiceActivation();
+            mService.initOnFailureLatch();
+
+            // Disable voice activation op.
+            setVoiceActivationOpForShellIdentity(/* allow= */ false);
+
+            softwareHotwordDetector.startRecognition(Helper.createFakeAudioStream(),
+                    Helper.createFakeAudioFormat(), Helper.createFakePersistableBundleData());
+
+            // wait onFailure() called and verify the result
+            mService.waitOnFailureCalled();
+            verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
+                    ERROR_CODE_ON_DETECTED_SECURITY_EXCEPTION);
+        } finally {
+            softwareHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VOICE_ACTIVATION_PERMISSION_APIS)
+    public void testAlwaysOnHotwordDetector_onDetect_withoutVoiceActivationOp_throwsException()
+            throws Throwable {
+        // Create SoftwareHotwordDetector.
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetector(/* useOnFailure= */ true);
+
+        try {
+            // Adopt necessary permissions.
+            adoptShellPermissionIdentityForHotwordWithVoiceActivation();
+            mService.initOnFailureLatch();
+
+            // Disable voice activation op.
+            setVoiceActivationOpForShellIdentity(/* allow= */ false);
+
+            // Trigger test detection event.
+            alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
+                    /* status= */ 0, /* soundModelHandle= */ 100,
+                    /* halEventReceivedMillis */ 12345, /* captureAvailable= */ true,
+                    /* captureSession= */ 101, /* captureDelayMs= */ 1000,
+                    /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
+                    Helper.createFakeAudioFormat(), new byte[1024],
+                    Helper.createFakeKeyphraseRecognitionExtraList());
+
+            // wait onFailure() called and verify the result
+            mService.waitOnFailureCalled();
+            verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
+                    ERROR_CODE_ON_DETECTED_SECURITY_EXCEPTION);
+        } finally {
+            alwaysOnHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
 
     @Test
     @CddTest(requirements = {"9.8/H-1-15"})
@@ -2414,11 +2561,20 @@ public class HotwordDetectionServiceBasicTest {
                 RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA);
     }
 
+    private void adoptShellPermissionIdentityForHotwordWithVoiceActivation() {
+        // Drop any identity adopted earlier.
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.dropShellPermissionIdentity();
+        // need to retain the identity until the callback is triggered
+        uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD,
+                RECEIVE_SANDBOX_TRIGGER_AUDIO, MANAGE_APP_OPS_MODES);
+    }
 
     private void startWatchingNoted() {
         runWithShellPermissionIdentity(() -> {
             if (mAppOpsManager != null) {
-                mAppOpsManager.startWatchingNoted(new String[]{AppOpsManager.OPSTR_RECORD_AUDIO},
+                mAppOpsManager.startWatchingNoted(new String[]{
+                        AppOpsManager.OPSTR_RECORD_AUDIO, RECEIVE_SANDBOX_TRIGGER_AUDIO_OP_STR},
                         mOnOpNotedListener);
             }
         });
@@ -2439,26 +2595,55 @@ public class HotwordDetectionServiceBasicTest {
             // TODO: test Auto indicator
         } else if (sPkgMgr.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             // The privacy chips/indicators are not implemented on Wear
+        }  else if (mVoiceActivationPermissionEnabled) {
+            boolean isNoted = mLatch.await(Helper.CLEAR_CHIP_MS, TimeUnit.MILLISECONDS);
+            assertThat(isNoted).isEqualTo(shouldNote);
+            if (isNoted) {
+                assertThat(mOpNoted).isEqualTo(RECEIVE_SANDBOX_TRIGGER_AUDIO_OP_STR);
+            }
         } else {
             boolean isNoted = mLatch.await(Helper.CLEAR_CHIP_MS, TimeUnit.MILLISECONDS);
             assertThat(isNoted).isEqualTo(shouldNote);
+            if (isNoted) {
+                assertThat(mOpNoted).isEqualTo(AppOpsManager.OPSTR_RECORD_AUDIO);
+            }
         }
     }
 
     /**
      * This method sets the training data app op for shell identity.
      * <p> This should be used if
-     * {@link HotwordDetectionServiceBasicTest#adoptShellPermissionIdentityForHotword()} has been
-     * called. When adopting shell permission identity, both permissions and app-op checks are
-     * redirected from the  test app to the shell identity (uid: 2000, package name:
+     * {@link HotwordDetectionServiceBasicTest#adoptShellPermissionIdentityForHotwordWithTrainingData()}
+     * has been called. When adopting shell permission identity, both permissions and app-op checks
+     * are redirected from the  test app to the shell identity (uid: 2000, package name:
      * "com.android.shell"). </p>
      */
     private void setTrainingDataAppOpForShellIdentity(boolean allow) {
-        // Shell uid is 2000.
         runWithShellPermissionIdentity(() -> {
-            mAppOpsManager.setUidMode("android:RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA", 2000,
+            mAppOpsManager.setUidMode(RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA_OP_STR,
+                    Process.SHELL_UID,
                     allow ? AppOpsManager.MODE_ALLOWED : AppOpsManager.opToDefaultMode(
-                            "android:RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA"));
+                            RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA_OP_STR));
         });
+    }
+
+    /**
+     * This method sets the voice activation app op for shell identity.
+     * <p> This should be used if
+     * {@link HotwordDetectionServiceBasicTest#adoptShellPermissionIdentityForHotwordWithVoiceActivation()}
+     * has been called and should only be called while the permission identity is in effect. When
+     * adopting shell permission identity, both permissions and app-op checks are redirected from
+     *  the test app to the shell identity (uid: 2000, package name:
+     * "com.android.shell"). </p>
+     */
+    private void setVoiceActivationOpForShellIdentity(boolean allow) {
+        // We expect this call to be made after
+        // adoptShellPermissionIdentityForHotwordWithVoiceActivation() is in effect so that we have
+        // MANAGE_OP_MODES permission. While we could wrap this call run with shell permission
+        // identity, that would OVERRIDE any existing permission adopted and break the flow of
+        // running tests.
+        mAppOpsManager.setUidMode(RECEIVE_SANDBOX_TRIGGER_AUDIO_OP_STR,
+                    Process.SHELL_UID,
+                    allow ? AppOpsManager.MODE_ALLOWED : AppOpsManager.MODE_ERRORED);
     }
 }
