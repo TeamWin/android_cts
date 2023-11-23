@@ -132,7 +132,7 @@ public class VirtualDeviceManagerBasicTest {
 
     @After
     public void tearDown() {
-        if (mVirtualDevice != null && mVirtualDevice.getDeviceId() != DEVICE_ID_INVALID) {
+        if (mVirtualDevice != null) {
             mVirtualDevice.close();
         }
         if (mAnotherVirtualDevice != null) {
@@ -194,7 +194,9 @@ public class VirtualDeviceManagerBasicTest {
 
         mVirtualDevice.close();
 
-        assertThat(mVirtualDevice.getDeviceId()).isEqualTo(DEVICE_ID_INVALID);
+        // Ensure the virtual device can no longer setup new functionality
+        assertThrows(SecurityException.class, () -> mVirtualDevice.createVirtualDisplay(
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG, null,  null));
     }
 
     @Test
@@ -207,7 +209,9 @@ public class VirtualDeviceManagerBasicTest {
         mVirtualDevice.close();
         mVirtualDevice.close();
 
-        assertThat(mVirtualDevice.getDeviceId()).isEqualTo(DEVICE_ID_INVALID);
+        // Ensure the virtual device can no longer setup new functionality
+        assertThrows(SecurityException.class, () -> mVirtualDevice.createVirtualDisplay(
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG, null,  null));
     }
 
     @Test
@@ -256,7 +260,6 @@ public class VirtualDeviceManagerBasicTest {
 
         // Ensure device is closed properly and the display is removed
         assertThat(display.getDisplay().isValid()).isFalse();
-        assertThat(mVirtualDevice.getDeviceId()).isEqualTo(DEVICE_ID_INVALID);
 
         // Ensure the virtual device can no longer setup new functionality
         assertThrows(SecurityException.class, () -> mVirtualDevice.createVirtualDisplay(
@@ -302,7 +305,9 @@ public class VirtualDeviceManagerBasicTest {
 
         mVirtualDevice.close();
 
-        assertThat(mVirtualDevice.getDeviceId()).isEqualTo(DEVICE_ID_INVALID);
+        // Ensure the virtual device can no longer setup new functionality
+        assertThrows(SecurityException.class, () -> mVirtualDevice.createVirtualDisplay(
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG, null,  null));
     }
 
     @Test
@@ -343,7 +348,9 @@ public class VirtualDeviceManagerBasicTest {
         mFakeAssociationRule.disassociate();
         latch.await(5, TimeUnit.SECONDS);
 
-        assertThat(mVirtualDevice.getDeviceId()).isEqualTo(DEVICE_ID_INVALID);
+        // Ensure the virtual device can no longer setup new functionality
+        assertThrows(SecurityException.class, () -> mVirtualDevice.createVirtualDisplay(
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG, null,  null));
     }
 
     @Test
@@ -384,7 +391,9 @@ public class VirtualDeviceManagerBasicTest {
         mVirtualDevice.close();
         latch.await(5, TimeUnit.SECONDS);
 
-        assertThat(mVirtualDevice.getDeviceId()).isEqualTo(DEVICE_ID_INVALID);
+        // Ensure the virtual device can no longer setup new functionality
+        assertThrows(SecurityException.class, () -> mVirtualDevice.createVirtualDisplay(
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG, null,  null));
     }
 
     /**
@@ -865,4 +874,3 @@ public class VirtualDeviceManagerBasicTest {
         }
     }
 }
-
