@@ -44,7 +44,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
@@ -137,7 +136,6 @@ public class VirtualDeviceRule implements TestRule {
 
     @Override
     public Statement apply(final Statement base, final Description description) {
-        assumeTrue(isVirtualDeviceManagerConfigEnabled(mContext));
         assumeNotNull(mVirtualDeviceManager);
         assumeTrue(mPackageManager.hasSystemFeature(
                 PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
@@ -147,17 +145,6 @@ public class VirtualDeviceRule implements TestRule {
         assumeFalse("Skipping test: not supported on automotive",
                 mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
         return mRuleChain.apply(base, description);
-    }
-
-    /**
-     * Returns whether VirtualDeviceManager is enabled on the device or not.
-     */
-    public static boolean isVirtualDeviceManagerConfigEnabled(Context context) {
-        return context.getResources().getBoolean(
-                Resources.getSystem().getIdentifier(
-                        "config_enableVirtualDeviceManager",
-                        "bool",
-                        "android"));
     }
 
     /**
