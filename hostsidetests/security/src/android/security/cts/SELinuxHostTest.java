@@ -929,6 +929,18 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
                 PropertyUtil.isVendorApiLevelNewerThan(mDevice, 27) /* includeVendorSepolicy */);
     }
 
+    /**
+     * Tests that all labels on /dev have the dev_type attribute.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testDevTypeViolators() throws Exception {
+        int vsrVersion = getVSRApiLevel(getDevice());
+        assumeTrue("Skipping test: dev_tyoe is enforced for W or later", vsrVersion > 35);
+        assertSepolicyTests("TestDevTypeViolations", "/sepolicy_tests", true);
+    }
+
    /**
      * Tests that the policy defines no booleans (runtime conditional policy).
      *
