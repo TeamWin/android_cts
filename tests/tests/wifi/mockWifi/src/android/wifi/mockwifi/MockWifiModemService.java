@@ -25,8 +25,6 @@ import android.util.Log;
 import android.wifi.mockwifi.nl80211.IClientInterfaceImp;
 import android.wifi.mockwifi.nl80211.WifiNL80211ManagerImp;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -63,7 +61,7 @@ public class MockWifiModemService extends Service {
     @Override
     public void onCreate() {
         Log.d(TAG, "Mock Wifi Modem Service Created");
-        sContext = InstrumentationRegistry.getInstrumentation().getContext();
+        sContext = getBaseContext();
         sLatches = new CountDownLatch[LATCH_MAX];
         for (int i = 0; i < LATCH_MAX; i++) {
             if (i == LATCH_WIFI_INTERFACES_READY) {

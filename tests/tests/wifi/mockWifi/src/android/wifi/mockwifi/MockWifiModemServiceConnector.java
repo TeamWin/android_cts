@@ -54,6 +54,8 @@ public class MockWifiModemServiceConnector {
     private boolean mFrameworkIsBoundToService;
     private String mModemServiceName;
 
+    private Context mContext;
+
     private class MockWifiModemServiceConnection implements ServiceConnection {
 
         private final CountDownLatch mLatch;
@@ -78,8 +80,8 @@ public class MockWifiModemServiceConnector {
         }
     }
 
-    public MockWifiModemServiceConnector(Instrumentation instrumentation) {
-        mInstrumentation = instrumentation;
+    public MockWifiModemServiceConnector(Context context) {
+        mContext = context;
     }
 
     private boolean isReturnResultTrue(String result) {
@@ -97,10 +99,8 @@ public class MockWifiModemServiceConnector {
             mMockWifiModemServiceConn = new MockWifiModemServiceConnection(latch);
         }
 
-        mInstrumentation
-                .getContext()
-                .bindService(
-                        new Intent(mInstrumentation.getContext(), MockWifiModemService.class),
+        mContext.bindService(
+                        new Intent(mContext, MockWifiModemService.class),
                         mMockWifiModemServiceConn,
                         Context.BIND_AUTO_CREATE);
         try {
@@ -125,8 +125,7 @@ public class MockWifiModemServiceConnector {
 
     private boolean setMockWifiModemService() throws Exception {
         String result =
-                SystemUtil.runShellCommand(mInstrumentation,
-                        constructSetMockWifiModemServiceCommand());
+                SystemUtil.runShellCommand(constructSetMockWifiModemServiceCommand());
         Log.d(TAG, "setMockWifiModemService result: |" + result + "|");
         if (isReturnResultTrue(result)) {
             mFrameworkIsBoundToService = true;
@@ -137,8 +136,7 @@ public class MockWifiModemServiceConnector {
 
     private String getMockWifiModemServiceNameFromFramework() throws Exception {
         String serviceName =
-                SystemUtil.runShellCommand(
-                        mInstrumentation, COMMAND_GET_MOCK_WIFI_MODEM_SERVICE_FROM_FRAMEWORK);
+                SystemUtil.runShellCommand(COMMAND_GET_MOCK_WIFI_MODEM_SERVICE_FROM_FRAMEWORK);
         Log.d(TAG, "getMockWifiModemServiceNameFromFramework : " + serviceName);
         return serviceName;
     }
@@ -218,7 +216,7 @@ public class MockWifiModemServiceConnector {
         // Remove local connection
         Log.d(TAG, "disconnectMockWifiModemService" + isComplete);
         if (mMockWifiModemServiceConn != null) {
-            mInstrumentation.getContext().unbindService(mMockWifiModemServiceConn);
+            mContext.unbindService(mMockWifiModemServiceConn);
             mMockWifiModemService = null;
         }
 
@@ -239,8 +237,7 @@ public class MockWifiModemServiceConnector {
 
     private boolean clearMockWifiModemServiceOverride() throws Exception {
         String result =
-                SystemUtil.runShellCommand(mInstrumentation,
-                        COMMAND_CLEAR_MOCK_WIFI_MODEM_SERVICE_IN_FRAMEWORK);
+                SystemUtil.runShellCommand(COMMAND_CLEAR_MOCK_WIFI_MODEM_SERVICE_IN_FRAMEWORK);
         return isReturnResultTrue(result);
     }
 
@@ -250,7 +247,7 @@ public class MockWifiModemServiceConnector {
         if (TextUtils.isEmpty(mockedMethods)) {
             return false;
         }
-        String configuredMethodResult = SystemUtil.runShellCommand(mInstrumentation,
+        String configuredMethodResult = SystemUtil.runShellCommand(
                 constructSetConfiguredMockMethodCommand(mockedMethods));
         return isReturnResultTrue(configuredMethodResult);
     }
