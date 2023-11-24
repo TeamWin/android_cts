@@ -20,8 +20,6 @@ import android.content.Context;
 import android.util.Log;
 import android.wifi.mockwifi.nl80211.IClientInterfaceImp;
 
-import androidx.test.InstrumentationRegistry;
-
 import java.util.concurrent.TimeUnit;
 
 public class MockWifiModemManager {
@@ -31,8 +29,8 @@ public class MockWifiModemManager {
     private static MockWifiModemServiceConnector sServiceConnector;
     private MockWifiModemService mMockWifiModemService;
 
-    public MockWifiModemManager() {
-        sContext = InstrumentationRegistry.getInstrumentation().getContext();
+    public MockWifiModemManager(Context context) {
+        sContext = context;
     }
 
     private void waitForWifiFrameworkDone(int delayInSec) throws Exception {
@@ -46,10 +44,10 @@ public class MockWifiModemManager {
      *
      * @return boolean true if the operation is successful, otherwise false.
      */
-    public boolean connectMockWifiModemService() throws Exception {
+    public boolean connectMockWifiModemService(Context context) throws Exception {
         if (sServiceConnector == null) {
             sServiceConnector =
-                    new MockWifiModemServiceConnector(InstrumentationRegistry.getInstrumentation());
+                    new MockWifiModemServiceConnector(context);
         }
 
         if (sServiceConnector == null) {
