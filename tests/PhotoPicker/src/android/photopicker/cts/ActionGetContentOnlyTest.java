@@ -34,6 +34,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.photopicker.cts.util.PhotoPickerComponentUtils;
 import android.photopicker.cts.util.UiAssertionUtils;
+import android.provider.MediaStore;
 import android.util.Pair;
 
 import androidx.test.uiautomator.UiObject;
@@ -195,6 +196,20 @@ public class ActionGetContentOnlyTest extends PhotoPickerBaseTest {
     public void testPickerSupportedFromDocumentsUi() throws Exception {
         final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");
+        mActivity.startActivityForResult(Intent.createChooser(intent, TAG), REQUEST_CODE);
+
+        findAndClickMediaIcon();
+
+        // Should open Picker
+        UiAssertionUtils.assertThatShowsPickerUi(intent.getType());
+    }
+
+    @Test
+    public void testPickerLaunchTabWithGetContent() throws Exception {
+        final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");
+        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_LAUNCH_TAB, MediaStore.PICK_IMAGES_TAB_ALBUMS);
+
         mActivity.startActivityForResult(Intent.createChooser(intent, TAG), REQUEST_CODE);
 
         findAndClickMediaIcon();

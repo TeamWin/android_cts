@@ -207,6 +207,7 @@ public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
         final GetResultActivity.Result res = mActivity.getResult();
         assertThat(res.resultCode).isEqualTo(Activity.RESULT_CANCELED);
     }
+
     private void addOrderedSelectionFlag(Intent intent) {
         intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, MediaStore.getPickImagesMaxLimit());
         intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_IN_ORDER, true);
@@ -220,5 +221,34 @@ public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
         }
 
         mActivity.startActivityForResult(intent, REQUEST_CODE);
+    }
+
+    @Test
+    public void testExtraPickerLaunchTabOptions() throws Exception {
+        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+
+        for (int launchOption: new int [] {
+                MediaStore.PICK_IMAGES_TAB_ALBUMS,
+                MediaStore.PICK_IMAGES_TAB_IMAGES
+        }) {
+            intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_LAUNCH_TAB, launchOption);
+            mActivity.startActivityForResult(intent, REQUEST_CODE);
+
+            UiAssertionUtils.assertThatShowsPickerUi(
+                    intent.getType(), intent.getExtras().getInt(
+                            MediaStore.EXTRA_PICK_IMAGES_LAUNCH_TAB), sDevice);
+            sDevice.pressBack();
+        }
+    }
+
+    @Test
+    public void testExtraPickerLaunchTabInvalidOption() throws Exception {
+        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_LAUNCH_TAB, -1);
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+
+        final GetResultActivity.Result res = mActivity.getResult();
+        assertThat(res.resultCode).isEqualTo(Activity.RESULT_CANCELED);
+
     }
 }
