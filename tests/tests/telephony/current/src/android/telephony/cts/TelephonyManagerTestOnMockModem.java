@@ -147,6 +147,12 @@ public class TelephonyManagerTestOnMockModem {
         sCallStateChangeCallbackHandler =
                 new Handler(sCallStateChangeCallbackHandlerThread.getLooper());
         mShaId = getShaId(TelephonyUtils.CTS_APP_PACKAGE);
+
+        final PackageManager pm = getContext().getPackageManager();
+        if (pm.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            //Wait for Telephony FW and RIL initialization are done
+            TimeUnit.SECONDS.sleep(4);
+        }
     }
 
     @AfterClass
