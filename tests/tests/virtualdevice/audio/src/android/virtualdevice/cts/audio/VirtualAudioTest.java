@@ -45,6 +45,7 @@ import static android.virtualdevice.cts.audio.AudioHelper.SHORT_VALUE;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -55,6 +56,7 @@ import android.companion.virtual.audio.AudioCapture;
 import android.companion.virtual.audio.AudioInjection;
 import android.companion.virtual.audio.VirtualAudioDevice;
 import android.companion.virtual.audio.VirtualAudioDevice.AudioConfigurationChangeCallback;
+import android.content.pm.PackageManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -65,6 +67,8 @@ import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.common.VirtualDeviceRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import com.android.compatibility.common.util.FeatureUtil;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -275,6 +279,8 @@ public class VirtualAudioTest {
     }
 
     private void runAudioCaptureTest(@AudioHelper.DataType int dataType, int readMode) {
+        // Automotive has its own audio policies that don't play well with the VDM-created ones.
+        assumeFalse(FeatureUtil.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
         int encoding = dataType == FLOAT_ARRAY ? ENCODING_PCM_FLOAT : ENCODING_PCM_16BIT;
         AudioCapture audioCapture = mVirtualAudioDevice.startAudioCapture(
                 createCaptureFormat(encoding));

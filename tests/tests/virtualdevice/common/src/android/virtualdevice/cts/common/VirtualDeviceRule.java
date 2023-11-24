@@ -137,8 +137,6 @@ public class VirtualDeviceRule implements TestRule {
     @Override
     public Statement apply(final Statement base, final Description description) {
         assumeNotNull(mVirtualDeviceManager);
-        assumeFalse("Skipping test: not supported on automotive",
-                mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
         return mRuleChain.apply(base, description);
     }
 
