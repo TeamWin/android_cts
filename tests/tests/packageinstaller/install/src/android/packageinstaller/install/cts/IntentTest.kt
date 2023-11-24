@@ -16,7 +16,6 @@
 package android.packageinstaller.install.cts
 
 import android.app.Activity.RESULT_CANCELED
-import android.app.Activity.RESULT_FIRST_USER
 import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.content.pm.InstallSourceInfo
@@ -159,7 +158,7 @@ class IntentTest : PackageInstallerTestBase() {
             clickInstallerUIButton(INSTALL_BUTTON_ID)
 
             // Install should not have succeeded
-            assertEquals(RESULT_FIRST_USER, installation.get(TIMEOUT, TimeUnit.MILLISECONDS))
+            assertEquals(RESULT_CANCELED, installation.get(TIMEOUT, TimeUnit.MILLISECONDS))
             assertNotInstalled()
         } finally {
             setSecureFrp(false)
