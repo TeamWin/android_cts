@@ -124,6 +124,9 @@ public class VirtualSensorTest {
 
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
+    // Synchronize the IO to reduce test flakiness.
+    private final Object mDirectChannelIoLock = new Object();
+
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
@@ -676,11 +679,13 @@ public class VirtualSensorTest {
                         reportToken + eventCount * 0.02f,
                         reportToken + eventCount * 0.03f,
                 };
-                assertThat(mVirtualSensorDirectChannelWriter.writeSensorEvent(sensor,
-                        new VirtualSensorEvent.Builder(values)
-                                .setTimestampNanos(System.nanoTime())
-                                .build()))
-                        .isTrue();
+                synchronized (mDirectChannelIoLock) {
+                    assertThat(mVirtualSensorDirectChannelWriter.writeSensorEvent(sensor,
+                            new VirtualSensorEvent.Builder(values)
+                                    .setTimestampNanos(System.nanoTime())
+                                    .build()))
+                            .isTrue();
+                }
                 try {
                     Thread.sleep(random.nextInt(10));  // Sleep random time of 0-20ms.
                 } catch (InterruptedException e) {
@@ -772,7 +777,9 @@ public class VirtualSensorTest {
             event.putFloat(reportToken + eventCount * 0.03f);
 
             memoryMapping.position(offset);
-            memoryMapping.put(event.array(), 0, SENSOR_EVENT_SIZE);
+            synchronized (mDirectChannelIoLock) {
+                memoryMapping.put(event.array(), 0, SENSOR_EVENT_SIZE);
+            }
             try {
                 Thread.sleep(random.nextInt(10));  // Sleep random time of 0-20ms.
             } catch (InterruptedException e) {
@@ -794,8 +801,10 @@ public class VirtualSensorTest {
         byteBuffer.order(ByteOrder.nativeOrder());
 
         while (eventCount < SENSOR_EVENT_COUNT * 2) {
-            assertThat(mMemoryFile.readBytes(byteBuffer.array(), offset, 0, SENSOR_EVENT_SIZE))
-                    .isEqualTo(SENSOR_EVENT_SIZE);
+            synchronized (mDirectChannelIoLock) {
+                assertThat(mMemoryFile.readBytes(byteBuffer.array(), offset, 0, SENSOR_EVENT_SIZE))
+                        .isEqualTo(SENSOR_EVENT_SIZE);
+            }
             byteBuffer.position(0);
             int eventSize = byteBuffer.getInt();
             int actualReportToken = byteBuffer.getInt();
