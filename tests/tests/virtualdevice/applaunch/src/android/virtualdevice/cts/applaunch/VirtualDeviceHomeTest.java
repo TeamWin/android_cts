@@ -30,6 +30,7 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -38,6 +39,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import android.app.WallpaperManager;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceParams;
 import android.companion.virtual.flags.Flags;
@@ -110,6 +112,7 @@ public class VirtualDeviceHomeTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
+        assumeTrue(isHomeSupportedOnVirtualDisplay());
     }
 
     /**
@@ -125,17 +128,31 @@ public class VirtualDeviceHomeTest {
     }
 
     /**
-     * Wallpaper is shown on virtual displays that support home.
+     * Wallpaper is shown on virtual displays that support home without a custom home component.
      */
     @ApiTest(apis = {"android.hardware.display.VirtualDisplayConfig.Builder#setHomeSupported"})
     @Test
-    public void virtualDeviceHome_showsWallpaper() {
+    public void virtualDeviceHome_noHomeComponent_showsWallpaper() {
+        assumeTrue(WallpaperManager.getInstance(mContext).isWallpaperSupported());
         try (HomeActivitySession ignored = new HomeActivitySession(DEFAULT_HOME_ACTIVITY)) {
             createVirtualDeviceAndHomeDisplay(/* homeComponent= */ null);
             assertThat(mRule.getWmState().waitForWithAmState(
                     this::isWallpaperOnVirtualDisplay, "Wallpaper is on virtual display"))
                     .isTrue();
         }
+    }
+
+    /**
+     * Wallpaper is shown on virtual displays that support home with a custom home component.
+     */
+    @ApiTest(apis = {"android.hardware.display.VirtualDisplayConfig.Builder#setHomeSupported"})
+    @Test
+    public void virtualDeviceHome_withHomeComponent_showsWallpaper() {
+        assumeTrue(WallpaperManager.getInstance(mContext).isWallpaperSupported());
+        createVirtualDeviceAndHomeDisplay(CUSTOM_HOME_ACTIVITY);
+        assertThat(mRule.getWmState().waitForWithAmState(
+                this::isWallpaperOnVirtualDisplay, "Wallpaper is on virtual display"))
+                .isTrue();
     }
 
     /**
@@ -171,7 +188,7 @@ public class VirtualDeviceHomeTest {
     public void virtualDeviceHome_noCustomHomeComponent_sendHomeIntent() {
         try (HomeActivitySession session = new HomeActivitySession(DEFAULT_HOME_ACTIVITY)) {
             final ComponentName homeComponent = session.getCurrentSecondaryHomeComponent();
-            createVirtualDeviceAndHomeDisplay(homeComponent);
+            createVirtualDeviceAndHomeDisplay(/* homeComponent= */ null);
             assertActivityOnVirtualDisplay(homeComponent);
 
             EmptyActivity activity =
@@ -265,6 +282,17 @@ public class VirtualDeviceHomeTest {
     private boolean isWallpaperOnVirtualDisplay(WindowManagerState state) {
         return state.getMatchingWindowType(TYPE_WALLPAPER).stream().anyMatch(
                 w -> w.getDisplayId() == mVirtualDisplay.getDisplay().getDisplayId());
+    }
+
+    private boolean isHomeSupportedOnVirtualDisplay() {
+        try {
+            return mContext.getResources().getBoolean(
+                    Resources.getSystem().getIdentifier(
+                            "config_supportsSystemDecorsOnSecondaryDisplays", "bool", "android"));
+        } catch (Resources.NotFoundException e) {
+            // Assume this device support system decorations.
+            return true;
+        }
     }
 
     /**
