@@ -265,7 +265,7 @@ public class MockWifiTest {
     public void testMockSignalPollOnMockWifi() throws Exception {
         int testRssi = -30;
 
-        MockWifiModemManager sMockModemManager = new MockWifiModemManager();
+        MockWifiModemManager sMockModemManager = new MockWifiModemManager(sContext);
         assertNotNull(sMockModemManager);
 
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -278,7 +278,7 @@ public class MockWifiTest {
             String ifaceName = wifiLinkProperties.getInterfaceName();
             WifiInfo wifiInfo = sWifiManager.getConnectionInfo();
 
-            assertTrue(sMockModemManager.connectMockWifiModemService());
+            assertTrue(sMockModemManager.connectMockWifiModemService(sContext));
             assertTrue(sMockModemManager.configureClientInterfaceMock(ifaceName,
                     new IClientInterfaceImp.ClientInterfaceMock() {
                         @Override
