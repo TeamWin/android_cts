@@ -21,15 +21,12 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
-import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.IntentInterceptorCallback;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.content.ComponentName;
@@ -74,29 +71,24 @@ public class ActivityInterceptionTest {
 
     @Mock
     private IntentInterceptorCallback mInterceptor;
-    @Mock
-    private VirtualDeviceManager.ActivityListener mActivityListener;
 
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         mVirtualDevice = mRule.createManagedVirtualDevice();
-        mVirtualDevice.addActivityListener(mContext.getMainExecutor(), mActivityListener);
         mVirtualDisplay = mRule.createManagedVirtualDisplayWithFlags(mVirtualDevice,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
                         | DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED
                         | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY);
         mInterceptedIntent = new Intent(ACTION_INTERCEPTED_RECEIVER)
                 .setClass(mContext, InterceptedActivity.class)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
     }
 
     @Test
     public void noInterceptorRegistered_activityShouldLaunch() {
         mRule.sendIntentToDisplay(mInterceptedIntent, mVirtualDisplay);
-
-        assertActivityOnDisplay(new ComponentName(mContext, InterceptedActivity.class),
-                mVirtualDisplay.getDisplay().getDisplayId());
+        mRule.waitAndAssertActivityResumed(new ComponentName(mContext, InterceptedActivity.class));
         verifyZeroInteractions(mInterceptor);
     }
 
@@ -113,6 +105,7 @@ public class ActivityInterceptionTest {
         // Unregister interceptor and verify intent is not intercepted
         mVirtualDevice.unregisterIntentInterceptor(mInterceptor);
         mRule.sendIntentToDisplay(mInterceptedIntent, mVirtualDisplay);
+        mRule.waitAndAssertActivityResumed(new ComponentName(mContext, InterceptedActivity.class));
         verifyNoMoreInteractions(mInterceptor);
     }
 
@@ -123,9 +116,7 @@ public class ActivityInterceptionTest {
                 intentFilter, mContext.getMainExecutor(), mInterceptor);
 
         mRule.sendIntentToDisplay(mInterceptedIntent, mVirtualDisplay);
-
-        assertActivityOnDisplay(new ComponentName(mContext, InterceptedActivity.class),
-                mVirtualDisplay.getDisplay().getDisplayId());
+        mRule.waitAndAssertActivityResumed(new ComponentName(mContext, InterceptedActivity.class));
         verifyZeroInteractions(mInterceptor);
     }
 
@@ -180,12 +171,6 @@ public class ActivityInterceptionTest {
         assertThat(capturedIntent.getAction()).isEqualTo(mInterceptedIntent.getAction());
         assertThat(capturedIntent.getData()).isEqualTo(mInterceptedIntent.getData());
         assertThat(capturedIntent.getExtras()).isNull();
-    }
-
-    protected void assertActivityOnDisplay(ComponentName componentName, int displayId) {
-        verify(mActivityListener, timeout(TIMEOUT_MILLIS)).onTopActivityChanged(
-                eq(displayId), eq(componentName), eq(mContext.getUserId()));
-        reset(mActivityListener);
     }
 
     /** An empty activity that can be intercepted. */

@@ -282,8 +282,19 @@ public class DeviceAssociationTest {
         Activity activity = mRule.startActivityOnDisplaySync(mVirtualDisplay, EmptyActivity.class);
         activity.finish();
 
-        mRule.getWmState().waitForActivityRemoved(activity.getComponentName());
+        mRule.waitAndAssertActivityRemoved(activity.getComponentName());
         assertThat(getApplicationContext().getDeviceId()).isEqualTo(DEVICE_ID_DEFAULT);
+    }
+
+    @Test
+    public void applicationContext_activityOnDefaultDeviceDestroyed_returnsVirtual() {
+        mRule.startActivityOnDisplaySync(mVirtualDisplay, EmptyActivity.class);
+        Activity activity = mRule.startActivityOnDisplaySync(DEFAULT_DISPLAY, SecondActivity.class);
+
+        activity.finish();
+
+        mRule.waitAndAssertActivityRemoved(activity.getComponentName());
+        assertThat(getApplicationContext().getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
     }
 
     @Test

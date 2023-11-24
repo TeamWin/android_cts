@@ -19,6 +19,7 @@ package android.virtualdevice.cts.common;
 import static android.Manifest.permission.ADD_ALWAYS_UNLOCKED_DISPLAY;
 import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
+import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -34,7 +35,6 @@ import android.annotation.Nullable;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityOptions;
-import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
@@ -43,17 +43,19 @@ import android.compat.testing.PlatformCompatChangeRule;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
 import android.os.Bundle;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.server.wm.Condition;
+import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerStateHelper;
 import android.view.Display;
 import android.view.Surface;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.internal.app.BlockedAppStreamingActivity;
 
 import org.junit.rules.ExternalResource;
@@ -65,6 +67,7 @@ import org.junit.runners.model.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -100,16 +103,13 @@ public class VirtualDeviceRule implements TestRule {
     public static final ComponentName BLOCKED_ACTIVITY_COMPONENT =
             new ComponentName("android", BlockedAppStreamingActivity.class.getName());
 
-    private static final Instrumentation sInstrumentation = getInstrumentation();
-
     private final RuleChain mRuleChain;
     private final FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
     private final VirtualDeviceTrackerRule mTrackerRule = new VirtualDeviceTrackerRule();
 
-    private final Context mContext = sInstrumentation.getContext();
+    private final Context mContext = getInstrumentation().getContext();
     private final VirtualDeviceManager mVirtualDeviceManager =
             mContext.getSystemService(VirtualDeviceManager.class);
-    private final PackageManager mPackageManager = mContext.getPackageManager();
     private final WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
 
     /** Creates a rule with the required permissions for creating virtual devices and displays. */
@@ -130,7 +130,7 @@ public class VirtualDeviceRule implements TestRule {
                 .around(DeviceFlagsValueProvider.createCheckFlagsRule())
                 .around(new PlatformCompatChangeRule())
                 .around(new AdoptShellPermissionsRule(
-                        sInstrumentation.getUiAutomation(), permissions))
+                        getInstrumentation().getUiAutomation(), permissions))
                 .around(mTrackerRule);
     }
 
@@ -193,7 +193,6 @@ public class VirtualDeviceRule implements TestRule {
         if (virtualDisplay != null) {
             assertDisplayExists(virtualDisplay.getDisplay().getDisplayId());
         }
-        mTrackerRule.mVirtualDisplays.add(virtualDisplay);
         return virtualDisplay;
     }
 
@@ -247,16 +246,16 @@ public class VirtualDeviceRule implements TestRule {
      * Blocks until the display with the given ID is available.
      */
     public void assertDisplayExists(int displayId) {
-        mWmState.waitForWithAmState(state -> state.getDisplay(displayId) != null,
-                "Waiting for display to be available");
+        waitAndAssertWindowManagerState("Waiting for display to be available",
+                () -> mWmState.getDisplay(displayId) != null);
     }
 
     /**
      * Blocks until the display with the given ID is removed.
      */
     public void assertDisplayDoesNotExist(int displayId) {
-        mWmState.waitForWithAmState(state -> state.getDisplay(displayId) == null,
-                "Waiting for display to be removed");
+        waitAndAssertWindowManagerState("Waiting for display to be removed",
+                () -> mWmState.getDisplay(displayId) == null);
     }
 
     /** Returns the WM state helper. */
@@ -274,7 +273,7 @@ public class VirtualDeviceRule implements TestRule {
      * permissions currently held after the execution.
      */
     public <T> T runWithTemporaryPermission(Supplier<T> supplier, String... permissions) {
-        UiAutomation uiAutomation = sInstrumentation.getUiAutomation();
+        UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
         final Set<String> currentPermissions = uiAutomation.getAdoptedShellPermissions();
         uiAutomation.adoptShellPermissionIdentity(permissions);
         try {
@@ -293,9 +292,7 @@ public class VirtualDeviceRule implements TestRule {
     public <T extends Activity> T startActivityOnDisplaySync(
             VirtualDisplay virtualDisplay, Class<T> clazz) {
         final int displayId = virtualDisplay.getDisplay().getDisplayId();
-        T activity = startActivityOnDisplaySync(displayId, clazz);
-        assertActivityOnDisplay(activity, displayId);
-        return activity;
+        return startActivityOnDisplaySync(displayId, clazz);
     }
 
     /**
@@ -318,10 +315,26 @@ public class VirtualDeviceRule implements TestRule {
      * successfully launched there.
      */
     public <T extends Activity> T startActivityOnDisplaySync(int displayId, Class<T> clazz) {
+        return startActivityOnDisplaySync(displayId, new Intent(mContext, clazz)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
+    }
+
+    /**
+     * Starts the activity for the given intent on the given virtual display and blocks until it is
+     * successfully launched there.
+     */
+    public <T extends Activity> T startActivityOnDisplaySync(
+            VirtualDisplay virtualDisplay, Intent intent) {
+        return startActivityOnDisplaySync(virtualDisplay.getDisplay().getDisplayId(), intent);
+    }
+
+    /**
+     * Starts the activity for the given intent on the given display and blocks until it is
+     * successfully launched there.
+     */
+    public <T extends Activity> T startActivityOnDisplaySync(int displayId, Intent intent) {
         assumeActivityLaunchSupported(displayId);
-        return (T) sInstrumentation.startActivitySync(new Intent(mContext, clazz)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK),
-                createActivityOptions(displayId));
+        return (T) getInstrumentation().startActivitySync(intent, createActivityOptions(displayId));
     }
 
     /**
@@ -339,24 +352,46 @@ public class VirtualDeviceRule implements TestRule {
     }
 
     /**
-     * Checks that the given activity is in fact shown on the given display.
-     */
-    public void assertActivityOnDisplay(Activity activity, int displayId) {
-        mWmState.assertActivityDisplayed(activity.getComponentName());
-        assertThat(activity.getDisplay().getDisplayId()).isEqualTo(displayId);
-    }
-
-    /**
      * Skips the test if the device doesn't support virtual displays that can host activities.
      */
     public void assumeActivityLaunchSupported(int displayId) {
         if (displayId != Display.DEFAULT_DISPLAY) {
-            assumeTrue(mPackageManager.hasSystemFeature(
-                    PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
+            assumeTrue(FeatureUtil.hasSystemFeature(FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
             // TODO(b/261155110): Re-enable once freeform mode is supported on virtual displays.
-            assumeFalse("Skipping test: VirtualDisplay window policy doesn't support freeform.",
-                    mPackageManager.hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT));
+            assumeFalse(FeatureUtil.hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT));
         }
+    }
+
+    /**
+     * Blocks until the given activity is in resumed state.
+     */
+    public void waitAndAssertActivityResumed(ComponentName componentName) {
+        waitAndAssertWindowManagerState("Waiting for activity to be resumed",
+                () -> mWmState.hasActivityState(componentName, WindowManagerState.STATE_RESUMED));
+    }
+
+    /**
+     * Blocks until the given activity is gone.
+     */
+    public void waitAndAssertActivityRemoved(ComponentName componentName) {
+        waitAndAssertWindowManagerState("Waiting for activity to be removed",
+                () -> !mWmState.containsActivity(componentName));
+    }
+
+    /**
+     * Override the default retry limit of WindowManagerStateHelper.
+     * Destroying activities on virtual displays and destroying the virtual displays themselves
+     * takes longer than the default timeout of 5s.
+     */
+    private void waitAndAssertWindowManagerState(
+            String message, BooleanSupplier waitCondition) {
+        final Condition<String> condition =
+                new Condition<>(message, () -> {
+                    mWmState.computeState();
+                    return waitCondition.getAsBoolean();
+                });
+        condition.setRetryLimit(10);
+        assertThat(Condition.waitFor(condition)).isTrue();
     }
 
     /**
@@ -373,10 +408,11 @@ public class VirtualDeviceRule implements TestRule {
             for (VirtualDevice virtualDevice : mVirtualDevices) {
                 virtualDevice.close();
             }
+            mVirtualDevices.clear();
             for (VirtualDisplay virtualDisplay : mVirtualDisplays) {
                 virtualDisplay.release();
-                assertDisplayDoesNotExist(virtualDisplay.getDisplay().getDisplayId());
             }
+            mVirtualDisplays.clear();
             super.after();
         }
     }

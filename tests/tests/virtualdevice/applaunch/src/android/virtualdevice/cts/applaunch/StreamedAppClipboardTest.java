@@ -383,7 +383,6 @@ public class StreamedAppClipboardTest {
         }
 
         private void close() {
-            mRule.getWmState().waitForActivityRemoved(CLIPBOARD_TEST_ACTIVITY);
             mClipboardManager.removePrimaryClipChangedListener(mOnPrimaryClipChangedListener);
         }
 

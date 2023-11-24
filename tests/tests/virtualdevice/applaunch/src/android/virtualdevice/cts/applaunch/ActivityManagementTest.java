@@ -88,7 +88,7 @@ public class ActivityManagementTest {
 
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         MockitoAnnotations.initMocks(this);
         mVirtualDevice = mRule.createManagedVirtualDevice();
         mVirtualDevice.addActivityListener(mContext.getMainExecutor(), mActivityListener);
@@ -110,6 +110,7 @@ public class ActivityManagementTest {
 
         mVirtualDevice.removeActivityListener(mActivityListener);
         activity.finish();
+        mRule.waitAndAssertActivityRemoved(mEmptyActivityComponent);
 
         verifyNoMoreInteractions(mActivityListener);
     }
@@ -124,6 +125,7 @@ public class ActivityManagementTest {
         assertActivityOnVirtualDisplay(mEmptyActivityComponent);
 
         activity.finish();
+        mRule.waitAndAssertActivityRemoved(mEmptyActivityComponent);
 
         verify(mActivityListener, timeout(TIMEOUT_MILLIS)).onDisplayEmpty(mVirtualDisplayId);
     }
