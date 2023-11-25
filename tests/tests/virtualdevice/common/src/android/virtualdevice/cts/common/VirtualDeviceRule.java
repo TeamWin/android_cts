@@ -16,7 +16,6 @@
 
 package android.virtualdevice.cts.common;
 
-import static android.Manifest.permission.ADD_ALWAYS_UNLOCKED_DISPLAY;
 import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
@@ -77,8 +76,7 @@ public class VirtualDeviceRule implements TestRule {
     /** General permissions needed for created virtual devices and displays. */
     private static final String[] REQUIRED_PERMISSIONS = new String[] {
             CREATE_VIRTUAL_DEVICE,
-            ADD_TRUSTED_DISPLAY,
-            ADD_ALWAYS_UNLOCKED_DISPLAY
+            ADD_TRUSTED_DISPLAY
     };
 
     public static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =
