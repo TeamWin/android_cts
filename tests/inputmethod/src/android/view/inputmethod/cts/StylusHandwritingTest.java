@@ -19,6 +19,7 @@ package android.view.inputmethod.cts;
 import static android.provider.Settings.Secure.STYLUS_HANDWRITING_DEFAULT_VALUE;
 import static android.provider.Settings.Secure.STYLUS_HANDWRITING_ENABLED;
 import static android.view.inputmethod.Flags.FLAG_HOME_SCREEN_HANDWRITING_DELEGATOR;
+import static android.view.inputmethod.Flags.initiationWithoutInputConnection;
 import static android.view.inputmethod.InputMethodInfo.ACTION_STYLUS_HANDWRITING_SETTINGS;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
@@ -843,7 +844,6 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     stream,
                     editorMatcher("onStartStylusHandwriting", unfocusedMarker),
                     TIMEOUT);
-
             verifyStylusHandwritingWindowIsShown(stream, imeSession);
 
             TestUtils.injectStylusUpEvent(unfocusedEditText, endX, endY);
@@ -1360,6 +1360,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             final int endX = startX + 2 * touchSlop;
             final int endY = startY + 2 * touchSlop;
             final int number = 5;
+
             TestUtils.injectStylusDownEvent(delegateView, startX, startY);
             TestUtils.injectStylusMoveEvents(delegateView, startX, startY, endX, endY, number);
 
@@ -1367,14 +1368,32 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             notExpectEvent(
                     stream, editorMatcher("onStartInputView", editTextMarker),
                     NOT_EXPECT_TIMEOUT);
+
             if (setAllowedDelegatorPackage) {
-                expectEvent(
-                        stream, editorMatcher("onStartStylusHandwriting", editTextMarker), TIMEOUT);
+                if (initiationWithoutInputConnection()) {
+                    // There will be no active InputConnection when handwriting starts
+                    expectEvent(
+                            stream,
+                            event -> "onStartStylusHandwriting".equals(event.getEventName()),
+                            TIMEOUT);
+                } else {
+                    expectEvent(
+                            stream, editorMatcher("onStartStylusHandwriting", editTextMarker),
+                            TIMEOUT);
+                }
                 verifyStylusHandwritingWindowIsShown(stream, imeSession);
             } else {
-                notExpectEvent(
-                        stream, editorMatcher("onStartStylusHandwriting", editTextMarker),
-                        NOT_EXPECT_TIMEOUT);
+                if (initiationWithoutInputConnection()) {
+                    // There will be no active InputConnection if handwriting starts
+                    notExpectEvent(
+                            stream,
+                            event -> "onStartStylusHandwriting".equals(event.getEventName()),
+                            NOT_EXPECT_TIMEOUT);
+                } else {
+                    notExpectEvent(
+                            stream, editorMatcher("onStartStylusHandwriting", editTextMarker),
+                            NOT_EXPECT_TIMEOUT);
+                }
             }
         }
     }
@@ -1451,13 +1470,30 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             notExpectEvent(
                     stream, editorMatcher("onStartInputView", editTextMarker), NOT_EXPECT_TIMEOUT);
             if (setHomeDelegatorAllowed) {
-                expectEvent(
-                        stream, editorMatcher("onStartStylusHandwriting", editTextMarker), TIMEOUT);
+                if (initiationWithoutInputConnection()) {
+                    // There will be no active InputConnection when handwriting starts.
+                    expectEvent(
+                            stream,
+                            event -> "onStartStylusHandwriting".equals(event.getEventName()),
+                            TIMEOUT);
+                } else {
+                    expectEvent(
+                            stream, editorMatcher("onStartStylusHandwriting", editTextMarker),
+                            TIMEOUT);
+                }
                 verifyStylusHandwritingWindowIsShown(stream, imeSession);
             } else {
-                notExpectEvent(
-                        stream, editorMatcher("onStartStylusHandwriting", editTextMarker),
-                        NOT_EXPECT_TIMEOUT);
+                if (initiationWithoutInputConnection()) {
+                    // There will be no active InputConnection if handwriting starts.
+                    notExpectEvent(
+                            stream,
+                            event -> "onStartStylusHandwriting".equals(event.getEventName()),
+                            NOT_EXPECT_TIMEOUT);
+                } else {
+                    notExpectEvent(
+                            stream, editorMatcher("onStartStylusHandwriting", editTextMarker),
+                            NOT_EXPECT_TIMEOUT);
+                }
             }
         }
     }
