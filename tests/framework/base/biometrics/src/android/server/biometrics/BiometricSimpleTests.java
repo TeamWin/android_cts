@@ -556,8 +556,19 @@ public class BiometricSimpleTests extends BiometricTestBase {
             final long startTime = SystemClock.elapsedRealtime();
 
             credentialSession.verifyCredential();
-            final long lastAuthTime = mBiometricManager.getLastAuthenticationTime(
-                    DEVICE_CREDENTIAL);
+
+            // There's a race between the auth token being sent to keystore2 and the
+            // getLastAuthenticationTime() call, so retry if we don't get a valid time.
+            long lastAuthTime = BiometricManager.BIOMETRIC_NO_AUTHENTICATION;
+            for (int i = 0; i < 10; i++) {
+                lastAuthTime = mBiometricManager.getLastAuthenticationTime(
+                        DEVICE_CREDENTIAL);
+                if (lastAuthTime != BiometricManager.BIOMETRIC_NO_AUTHENTICATION) {
+                    break;
+                }
+
+                Thread.sleep(100);
+            }
 
             assertThat(lastAuthTime).isGreaterThan(startTime);
         }
