@@ -84,7 +84,6 @@ public class ActionUserSelectImagesForAppTest extends PhotoPickerBaseTest {
         if (sCloudMediaPreviouslyEnabled) {
             sPreviouslyAllowedCloudProviders = getAllowedProvidersDeviceConfig();
         }
-        sPreviouslySetCloudProvider = getCurrentCloudProvider();
 
         try {
             sPreviouslySetCloudProvider = getCurrentCloudProvider();
