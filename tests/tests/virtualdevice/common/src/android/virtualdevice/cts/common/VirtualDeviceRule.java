@@ -42,6 +42,7 @@ import android.compat.testing.PlatformCompatChangeRule;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.SurfaceTexture;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
@@ -234,10 +235,12 @@ public class VirtualDeviceRule implements TestRule {
      */
     @NonNull
     public static VirtualDisplayConfig.Builder createDefaultVirtualDisplayConfigBuilder() {
+        SurfaceTexture texture = new SurfaceTexture(1);
+        texture.setDefaultBufferSize(DEFAULT_VIRTUAL_DISPLAY_WIDTH, DEFAULT_VIRTUAL_DISPLAY_HEIGHT);
         return new VirtualDisplayConfig.Builder(
                 DEFAULT_VIRTUAL_DISPLAY_NAME, DEFAULT_VIRTUAL_DISPLAY_WIDTH,
                 DEFAULT_VIRTUAL_DISPLAY_HEIGHT, DEFAULT_VIRTUAL_DISPLAY_DPI)
-                .setSurface(new Surface());
+                .setSurface(new Surface(texture));
     }
 
     /**
