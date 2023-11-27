@@ -24,13 +24,10 @@ android_library {
     ],
     static_libs: [
         "androidx.test.ext.junit",
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
         "cts-wm-util",
         "junit",
         "flag-junit",
         "android.companion.virtual.flags-aconfig-java",
-        "platform-compat-test-rules",
     ],
     manifest: "AndroidManifest.xml",
 }
