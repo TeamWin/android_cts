@@ -26,6 +26,7 @@ import static android.app.cts.wallpapers.WallpaperManagerTestUtils.WallpaperStat
 import static android.app.cts.wallpapers.util.WallpaperTestUtils.isSimilar;
 import static android.content.pm.PackageManager.FEATURE_LIVE_WALLPAPER;
 import static android.content.pm.PackageManager.FEATURE_SECURE_LOCK_SCREEN;
+import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.opengl.cts.Egl14Utils.getMaxTextureSize;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
@@ -1316,6 +1317,9 @@ public class WallpaperManagerTest {
      */
     @Test
     public void testSystemAndLockWallpaperVisibility_onHomeScreen() {
+        assumeFalse("Test requires support for different lock and home screen wallpapers",
+                mContext.getPackageManager().hasSystemFeature(FEATURE_WATCH));
+
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         assumeTrue("Skipping testSystemAndLockWallpaperVisibility_onHomeScreen:"
                         + " FEATURE_LIVE_WALLPAPER missing.",
@@ -1352,6 +1356,9 @@ public class WallpaperManagerTest {
      */
     @Test
     public void testSystemAndLockWallpaperVisibility_onLockScreen() throws Exception {
+        assumeFalse("Test requires support for different lock and home screen wallpapers",
+                mContext.getPackageManager().hasSystemFeature(FEATURE_WATCH));
+
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         assumeTrue("Skipping assert_SystemWallpaperHidden_LockWallpaperShow_OnLockscreen:"
                         + " FEATURE_SECURE_LOCK_SCREEN missing.",
