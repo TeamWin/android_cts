@@ -59,6 +59,7 @@ import android.car.hardware.property.DriverDistractionState;
 import android.car.hardware.property.DriverDistractionWarning;
 import android.car.hardware.property.DriverDrowsinessAttentionState;
 import android.car.hardware.property.DriverDrowsinessAttentionWarning;
+import android.car.hardware.property.ElectronicStabilityControlState;
 import android.car.hardware.property.EmergencyLaneKeepAssistState;
 import android.car.hardware.property.ErrorState;
 import android.car.hardware.property.EvChargeState;
@@ -471,6 +472,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             LowSpeedCollisionWarningState.NO_WARNING,
                             LowSpeedCollisionWarningState.WARNING)
                     .build();
+    private static final ImmutableSet<Integer> ELECTRONIC_STABILITY_CONTROL_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            ElectronicStabilityControlState.OTHER,
+                            ElectronicStabilityControlState.ENABLED,
+                            ElectronicStabilityControlState.ACTIVATED)
+                    .build();
     private static final ImmutableSet<Integer> ALL_POSSIBLE_HVAC_FAN_DIRECTIONS =
             generateAllPossibleHvacFanDirections();
     private static final ImmutableSet<Integer> VEHICLE_SEAT_OCCUPANCY_STATES = ImmutableSet.of(
@@ -747,7 +755,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     .add(
                             VehiclePropertyIds.ABS_ACTIVE,
                             VehiclePropertyIds.TRACTION_CONTROL_ACTIVE,
-                            VehiclePropertyIds.ELECTRONIC_STABILITY_CONTROL_ENABLED)
+                            VehiclePropertyIds.ELECTRONIC_STABILITY_CONTROL_ENABLED,
+                            VehiclePropertyIds.ELECTRONIC_STABILITY_CONTROL_STATE)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_CAR_DYNAMICS_STATE_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -1299,6 +1308,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getLowSpeedCollisionWarningStateVerifier(),
              getValetModeEnabledVerifier(),
              getElectronicStabilityControlEnabledVerifier(),
+             getElectronicStabilityControlStateVerifier(),
              // TODO(b/273988725): Put all verifiers here.
         };
     }
@@ -6673,6 +6683,37 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @Test
     public void testLowSpeedCollisionWarningStateWithErrorState() {
         verifyEnumValuesAreDistinct(LOW_SPEED_COLLISION_WARNING_STATES, ERROR_STATES);
+    }
+
+    private VehiclePropertyVerifier<Integer> getElectronicStabilityControlStateVerifier() {
+        ImmutableSet<Integer> combinedCarPropertyValues = ImmutableSet.<Integer>builder()
+                .addAll(ELECTRONIC_STABILITY_CONTROL_STATES)
+                .addAll(ERROR_STATES)
+                .build();
+
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.ELECTRONIC_STABILITY_CONTROL_STATE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class, mCarPropertyManager)
+                .setAllPossibleEnumValues(combinedCarPropertyValues)
+                .setDependentOnProperty(VehiclePropertyIds.ELECTRONIC_STABILITY_CONTROL_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_CAR_DYNAMICS_STATE,
+                                Car.PERMISSION_CONTROL_CAR_DYNAMICS_STATE))
+                .verifyErrorStates()
+                .addReadPermission(Car.PERMISSION_CAR_DYNAMICS_STATE)
+                .build();
+    }
+
+    @Test
+    public void testElectronicStabilityControlStateIfSupported() {
+        getElectronicStabilityControlStateVerifier().verify();
+    }
+
+    @Test
+    public void testElectronicStabilityControlStateWithErrorState() {
+        verifyEnumValuesAreDistinct(ELECTRONIC_STABILITY_CONTROL_STATES, ERROR_STATES);
     }
 
     private VehiclePropertyVerifier<Boolean> getElectronicStabilityControlEnabledVerifier() {
