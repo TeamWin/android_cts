@@ -679,6 +679,16 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     .add(
                             VehiclePropertyIds.SEAT_BELT_PRETENSIONER_DEPLOYED)
                     .build();
+    private static final ImmutableList<Integer> PERMISSION_READ_VALET_MODE_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.VALET_MODE_ENABLED)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_VALET_MODE_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.VALET_MODE_ENABLED)
+                    .build();
     private static final ImmutableList<Integer> PERMISSION_IDENTIFICATION_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add(
@@ -1281,6 +1291,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getEvBatteryAverageTemperatureVerifier(),
              getLowSpeedCollisionWarningEnabledVerifier(),
              getLowSpeedCollisionWarningStateVerifier(),
+             getValetModeEnabledVerifier(),
              // TODO(b/273988725): Put all verifiers here.
         };
     }
@@ -5423,6 +5434,24 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         getSeatBeltPretensionerDeployedVerifier().verify();
     }
 
+    private VehiclePropertyVerifier<Boolean> getValetModeEnabledVerifier() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.VALET_MODE_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class, mCarPropertyManager)
+                .addReadPermission(Car.PERMISSION_READ_VALET_MODE)
+                .addReadPermission(Car.PERMISSION_CONTROL_VALET_MODE)
+                .addWritePermission(Car.PERMISSION_CONTROL_VALET_MODE)
+                .build();
+    }
+
+    @Test
+    public void testValetModeEnabledIfSupported() {
+        getValetModeEnabledVerifier().verify();
+    }
+
     @Test
     @ApiTest(
             apis = {
@@ -8121,6 +8150,20 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         verifyExpectedPropertiesWhenPermissionsGranted(
                 PERMISSION_CAR_DRIVING_STATE_PROPERTIES,
                 Car.PERMISSION_CAR_DRIVING_STATE);
+    }
+
+    @Test
+    public void testPermissionReadValetModeGranted() {
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_READ_VALET_MODE_PROPERTIES,
+                Car.PERMISSION_READ_VALET_MODE);
+    }
+
+    @Test
+    public void testPermissionControlValetModeGranted() {
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_VALET_MODE_PROPERTIES,
+                Car.PERMISSION_CONTROL_VALET_MODE);
     }
 
     @Test
