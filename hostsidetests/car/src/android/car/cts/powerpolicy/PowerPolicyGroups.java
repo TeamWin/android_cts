@@ -22,8 +22,8 @@ import com.android.car.power.CarPowerDumpProto.PolicyReaderProto.IdToPolicyGroup
 import com.android.car.power.CarPowerDumpProto.PolicyReaderProto.IdToPolicyGroup.PolicyGroup.StateToDefaultPolicy;
 import com.android.tradefed.log.LogUtil;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -38,7 +38,15 @@ public final class PowerPolicyGroups {
         }
     }
 
-    public void add(String id, String waitForVHALPolicy, String onPolicy) throws Exception {
+    /**
+     * Add a policy group
+     * @param id policy group ID
+     * @param waitForVHALPolicy ID of default policy for wait for VHAL power state
+     * @param onPolicy ID of default policy for on power state
+     * @throws IllegalArgumentException if a policy group with {@code id} already exists
+     */
+    public void add(String id, String waitForVHALPolicy, String onPolicy)
+            throws IllegalArgumentException {
         if (mPolicyGroups.containsKey(id)) {
             throw new IllegalArgumentException(id + " policy group already exists");
         }
@@ -67,7 +75,12 @@ public final class PowerPolicyGroups {
         return mPolicyGroups.equals(peer.mPolicyGroups);
     }
 
-    public static PowerPolicyGroups parse(ArrayList<String> defStrs) throws Exception {
+    /**
+     * Parse an array of strings representing power policy groups in order to define them
+     * @param defStrs strings representing power policy group definitions
+     * @return the {@code PowerPolicyGroups} object with the new power policy group definitions
+     */
+    public static PowerPolicyGroups parse(List<String> defStrs) {
         PowerPolicyGroups policyGroups = new PowerPolicyGroups();
         String groupId = null;
         String waitForVHALPolicy = null;
@@ -136,7 +149,7 @@ public final class PowerPolicyGroups {
         return policyGroups;
     }
 
-    private static String parsePolicyGroupDef(String stateName, String defStr) throws Exception {
+    private static String parsePolicyGroupDef(String stateName, String defStr) {
         String[] tokens = defStr.trim().split("(\\s*)(-{1,2})(>?)(\\s*)");
         if (tokens.length != 3) {
             throw new IllegalArgumentException("malformatted policy group def str: " + defStr);
