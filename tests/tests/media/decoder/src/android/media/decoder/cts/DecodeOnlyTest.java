@@ -231,7 +231,7 @@ public class DecodeOnlyTest extends MediaTestBase {
                     ByteBuffer inputBuffer = videoCodec.getInputBuffer(index);
                     int sampleSize = videoExtractor.readSampleData(inputBuffer, 0);
                     long presentationTime = videoExtractor.getSampleTime();
-                    int flags = videoExtractor.getSampleFlags();
+                    int flags = 0;
                     if (sampleSize < 0) {
                         flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
                         sampleSize = 0;
@@ -346,7 +346,7 @@ public class DecodeOnlyTest extends MediaTestBase {
                 ByteBuffer inputBuffer = videoCodec.getInputBuffer(index);
                 int sampleSize = videoExtractor.readSampleData(inputBuffer, 0);
                 long presentationTime = videoExtractor.getSampleTime();
-                int flags = videoExtractor.getSampleFlags();
+                int flags = 0;
                 if (sampleSize < 0) {
                     flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
                     sampleSize = 0;
@@ -488,7 +488,7 @@ public class DecodeOnlyTest extends MediaTestBase {
                 ByteBuffer inputBuffer = codec.getInputBuffer(index);
                 int sampleSize = videoExtractor.readSampleData(inputBuffer, 0);
                 long presentationTime = videoExtractor.getSampleTime();
-                int flags = videoExtractor.getSampleFlags();
+                int flags = 0;
                 if (sampleSize < 0) {
                     flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
                     sampleSize = 0;
@@ -787,7 +787,7 @@ public class DecodeOnlyTest extends MediaTestBase {
             ByteBuffer audioInputBuffer = mAudioCodec.getInputBuffer(index);
             int audioSampleSize = mAudioExtractor.readSampleData(audioInputBuffer, 0);
             long presentationTime = mAudioExtractor.getSampleTime();
-            int flags = mAudioExtractor.getSampleFlags();
+            int flags = 0;
             if (audioSampleSize < 0) {
                 flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
                 audioSampleSize = 0;
