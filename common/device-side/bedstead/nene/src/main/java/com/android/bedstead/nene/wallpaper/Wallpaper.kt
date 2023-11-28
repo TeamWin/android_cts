@@ -35,7 +35,7 @@ object Wallpaper {
     /**
      * Get the {@code Bitmap} value of the current wallpaper.
      */
-    fun getBitmap(): Bitmap {
+    fun getBitmap(): Bitmap? {
         try {
             return BitmapUtils.getWallpaperBitmap(sContext)
         } catch (e: Exception) {
