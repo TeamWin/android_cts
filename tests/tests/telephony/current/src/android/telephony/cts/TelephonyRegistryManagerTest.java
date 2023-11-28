@@ -9,6 +9,10 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.CallAttributes;
 import android.telephony.CallState;
 import android.telephony.PhoneStateListener;
@@ -29,8 +33,10 @@ import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.internal.telephony.flags.Flags;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.List;
@@ -45,13 +51,17 @@ public class TelephonyRegistryManagerTest {
     private TelephonyRegistryManager mTelephonyRegistryMgr;
     private static final long TIMEOUT_MILLIS = 1000;
 
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
+
     @Before
     public void setUp() throws Exception {
         assumeTrue(InstrumentationRegistry.getContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_TELEPHONY));
 
         mTelephonyRegistryMgr = (TelephonyRegistryManager) InstrumentationRegistry.getContext()
-            .getSystemService(Context.TELEPHONY_REGISTRY_SERVICE);
+                .getSystemService(Context.TELEPHONY_REGISTRY_SERVICE);
     }
 
     /**
@@ -252,7 +262,35 @@ public class TelephonyRegistryManagerTest {
     }
 
     @Test
+    @RequiresFlagsDisabled(Flags.FLAG_NOTIFY_DATA_ACTIVITY_CHANGED_WITH_SLOT)
     public void testNotifyDataActivityChanged() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+
+        LinkedBlockingQueue<Integer> queue = new LinkedBlockingQueue<>(1);
+        PhoneStateListener psl = new PhoneStateListener(context.getMainExecutor()) {
+            @Override
+            public void onDataActivity(int activity) {
+                queue.offer(activity);
+            }
+        };
+        TelephonyManager tm = context.getSystemService(TelephonyManager.class);
+        tm.listen(psl, PhoneStateListener.LISTEN_DATA_ACTIVITY);
+        // clear the initial result from registering the listener.
+        queue.poll(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+
+        int testValue = TelephonyManager.DATA_ACTIVITY_DORMANT;
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyRegistryMgr,
+                (trm) -> trm.notifyDataActivityChanged(
+                        SubscriptionManager.getDefaultSubscriptionId(),
+                        testValue));
+
+        int result = queue.poll(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        assertEquals(testValue, result);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_NOTIFY_DATA_ACTIVITY_CHANGED_WITH_SLOT)
+    public void testNotifyDataActivityChangedWithSlot() throws Exception {
         Context context = InstrumentationRegistry.getContext();
 
         LinkedBlockingQueue<Integer> queue = new LinkedBlockingQueue<>(1);
