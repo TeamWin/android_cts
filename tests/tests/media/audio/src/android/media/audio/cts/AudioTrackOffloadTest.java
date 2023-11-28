@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.annotation.Nullable;
 import android.annotation.RawRes;
+import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
@@ -58,6 +59,19 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
     private static final int AUDIOTRACK_DEFAULT_CHANNEL_MASK = AudioFormat.CHANNEL_OUT_STEREO;
 
     private static final AudioAttributes DEFAULT_ATTR = new AudioAttributes.Builder().build();
+
+    // flag to indicate if AAC related tests need to be run or not.
+    private boolean mTestAacSupport = false;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        boolean isWatch = getContext().getPackageManager()
+                            .hasSystemFeature(PackageManager.FEATURE_WATCH);
+        if (isWatch) {
+            mTestAacSupport = true;
+        }
+    }
 
     public void testIsOffloadSupportedNullFormat() throws Exception {
         try {
@@ -123,6 +137,15 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
         testAudioTrackOffload(R.raw.testopus,
                 /* bitRateInkbps= */ 118, // Average
                 getAudioFormatWithEncoding(AudioFormat.ENCODING_OPUS));
+    }
+
+    public void testAacLCAudioTrackOffload() throws Exception {
+        if (!mTestAacSupport) {
+            return;
+        }
+        testAudioTrackOffload(R.raw.sine40dblong_44k_128kbps_LC,
+                /* bitRateInkbps= */ 128,
+                getAudioFormatWithEncoding(AudioFormat.ENCODING_AAC_LC));
     }
 
     @CddTest(requirement="5.5.4")
