@@ -69,6 +69,7 @@ import android.os.PersistableBundle;
 import android.telecom.Call;
 import android.telecom.PhoneAccount;
 import android.telecom.TelecomManager;
+import android.telecom.cts.TestUtils;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.BarringInfo;
 import android.telephony.CarrierConfigManager;
@@ -77,6 +78,7 @@ import android.telephony.DomainSelectionService;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.telephony.cts.util.TelephonyUtils;
 import android.telephony.ims.ImsManager;
 import android.telephony.ims.ImsMmTelManager;
 import android.telephony.ims.ImsReasonInfo;
@@ -169,6 +171,9 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
             return;
         }
 
+        TestUtils.setSystemDialerOverride(
+                InstrumentationRegistry.getInstrumentation(), INCALL_COMPONENT);
+
         MockModemManager.enforceMockModemDeveloperSetting();
         sMockModemManager = new MockModemManager();
         assertNotNull(sMockModemManager);
@@ -235,6 +240,8 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
             TimeUnit.MILLISECONDS.sleep(WAIT_UPDATE_TIMEOUT_MS);
         }
+
+        TestUtils.clearSystemDialerOverride(InstrumentationRegistry.getInstrumentation());
     }
 
     @Before
@@ -280,6 +287,8 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
             sIsBound = false;
             imsService.waitForExecutorFinish();
         }
+
+        TelephonyUtils.endBlockSuppression(InstrumentationRegistry.getInstrumentation());
     }
 
     @Test
