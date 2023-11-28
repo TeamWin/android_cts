@@ -3023,7 +3023,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.assertNoDatasets();
 
         // Delete username
-        mUiBot.setTextByRelativeId(ID_USERNAME, "");
+        mUiBot.clearTextByRelativeId(ID_USERNAME);
 
         mActivity.expectAutoFill("dude", "sweet");
 

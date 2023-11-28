@@ -630,6 +630,24 @@ public class UiBot {
     }
 
     /**
+     * Sets a new text on a view.
+     *
+     * <p><b>Note:</b> First clear the view to the first character of the old string, then clear to
+     * empty. This is to accommodate the fix for the bug where views are reset to empty, causing
+     * save dialog to not show. The fix for this bug is to ignore sudden resets to empty, therefore
+     * CTS tests simulating field clearing have to progressively clear the field instead of
+     * resetting to empty at once.
+     */
+    public void clearTextByRelativeId(String id) throws Exception {
+        final UiObject2 object = waitForObject(By.res(mPackageName, id));
+        String oldText = object.getText();
+        if (!oldText.isEmpty()) {
+            object.setText(String.valueOf(oldText.charAt(0)));
+            object.setText("");
+        }
+    }
+
+    /**
      * Asserts the save snackbar is showing and returns it.
      */
     public UiObject2 assertSaveShowing(int type) throws Exception {
