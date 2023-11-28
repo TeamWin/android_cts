@@ -25,7 +25,9 @@
         <package android:name="android.scopedstorage.cts.testapp.B.noperms" />
         <package android:name="android.scopedstorage.cts.testapp.filemanager" />
         <package android:name="android.scopedstorage.cts.testapp.D" />
-        <package android:name="android.scopedstorage.cts.testapp.C" />
+        <package android:name="android.scopedstorage.cts.testapp.general.only" />
+        <package android:name="android.scopedstorage.cts.testapp.E.legacy" />
+        <package android:name="android.scopedstorage.cts.testapp.E" />
     </queries>
 
     <application android:label="General Scoped Storage Device Tests">

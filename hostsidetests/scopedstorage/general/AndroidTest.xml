@@ -22,6 +22,8 @@
         <option name="test-file-name" value="CtsScopedStorageTestAppB.apk" />
         <option name="test-file-name" value="CtsScopedStorageTestAppFileManager.apk" />
         <option name="test-file-name" value="CtsScopedStorageTestAppDLegacy.apk" />
+        <option name="test-file-name" value="CtsScopedStorageTestAppELegacy.apk" />
+        <option name="test-file-name" value="CtsScopedStorageTestAppE.apk" />
     </target_preparer>
 
     <option
