@@ -365,14 +365,14 @@ public class PixelCopyTest {
         // Since we only sample mid-pixel of each qudrant, filtering
         // quality isn't tested
         Window window = waitForWindowProducerActivity();
-        Bitmap bitmap = Bitmap.createBitmap(30, 30, Config.ARGB_8888);
+        Bitmap bitmap = Bitmap.createBitmap(20, 20, Config.ARGB_8888);
         PixelCopyViewProducerActivity activity = mWindowSourceActivityRule.getActivity();
         do {
             int result = mCopyHelper.request(window, bitmap);
             assertEquals("Scaled copy request failed", PixelCopy.SUCCESS, result);
             // Make sure nothing messed with the bitmap
-            assertEquals(30, bitmap.getWidth());
-            assertEquals(30, bitmap.getHeight());
+            assertEquals(20, bitmap.getWidth());
+            assertEquals(20, bitmap.getHeight());
             assertEquals(Config.ARGB_8888, bitmap.getConfig());
             assertBitmapQuadColor(bitmap,
                     Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
