@@ -1619,7 +1619,7 @@ public class WallpaperManagerTest {
      * @param which FLAG_LOCK, FLAG_SYSTEM or a combination of both.
      */
     private void verifyColorListenerInvokedClearing(int which) {
-        ensureCleanState();
+        ensureCleanState(which);
 
         final CountDownLatch latch = new CountDownLatch(1);
 
