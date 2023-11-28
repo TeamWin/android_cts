@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  ~ Copyright (C) 2021 The Android Open Source Project
+  ~ Copyright (C) 2023 The Android Open Source Project
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -16,20 +16,16 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.scopedstorage.cts.testapp.SystemGallery30BypassDB"
-    android:versionCode="1"
-    android:versionName="1.0" >
+          package="android.scopedstorage.cts.testapp.E.legacy"
+          android:versionCode="1"
+          android:versionName="1.0" >
 
-  <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="30" />
+    <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="28" />
 
-  <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-  <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-  <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-  <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
-    <application android:label="TestAppSystemGallery30BypassDB" android:requestRawExternalStorageAccess="true">
+    <application android:label="TestAppELegacy">
         <activity android:name="android.scopedstorage.cts.ScopedStorageTestHelper" android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -40,12 +36,12 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="android.scopedstorage.cts.testapp.SystemGallery30BypassDB"
+            android:authorities="android.scopedstorage.cts.testapp.E.legacy"
             android:exported="false"
             android:grantUriPermissions="true">
-          <meta-data
-              android:name="android.support.FILE_PROVIDER_PATHS"
-              android:resource="@xml/file_paths" />
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
         </provider>
     </application>
 </manifest>
