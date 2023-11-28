@@ -27,6 +27,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -43,7 +44,6 @@ import android.view.Display;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -173,11 +173,10 @@ public class DreamServiceTest extends ActivityManagerTestBase {
         mDreamCoordinator.stopDream();
     }
 
-    @Ignore("b/272364949: PIP_ACTIVITY doesn't exist.")
     @Test
     public void testDreamDoesNotForcePictureInPicture() {
-        // TODO(b/272364949): This fails because PIP_ACTIVITY doesn't exist. Re-enable
-        //  test after fixing test setup.
+        assumeTrue(supportsPip());
+
         // Launch a PIP activity
         launchActivity(PIP_ACTIVITY, extraString(EXTRA_ENTER_PIP_ON_PAUSE, "true"));
 
