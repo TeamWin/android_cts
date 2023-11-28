@@ -160,17 +160,18 @@ import com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexis
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnBackgroundDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnCloneProfileAlongsideManagedProfileUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance;
-import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnPrivateProfileAlongsideManagedProfileUsingParentInstance;
-import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnPrivateProfileAlongsideOrganizationOwnedProfileUsingParentInstance;
-import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnFinancedDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnOrganizationOwnedProfileOwner;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfOrganizationOwnedProfileOwner;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfOrganizationOwnedProfileOwnerUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwnerUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwnerWithNoDeviceOwner;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnPrivateProfileAlongsideManagedProfileUsingParentInstance;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnPrivateProfileAlongsideOrganizationOwnedProfileUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerProfileWithNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerProfile;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSingleDeviceOwnerUser;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSystemDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnUnaffiliatedDeviceOwnerSecondaryUser;
 import com.android.bedstead.harrier.policies.DisallowBluetooth;
 import com.android.bedstead.nene.TestApis;
@@ -188,6 +189,7 @@ import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.NotFoundException;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
+import com.android.queryable.annotations.BooleanQuery;
 import com.android.queryable.annotations.IntegerQuery;
 import com.android.queryable.annotations.Query;
 import com.android.queryable.annotations.StringQuery;
@@ -793,10 +795,21 @@ public class DeviceStateTest {
     }
 
     @Test
-    @IncludeRunOnDeviceOwnerUser
-    public void includeRunOnDeviceOwnerUserAnnotation_isRunningOnDeviceOwnerUser() {
+    @IncludeRunOnSystemDeviceOwnerUser
+    public void includeRunOnSystemDeviceOwnerUserAnnotation_isRunningOnSystemDeviceOwnerUser() {
         assertThat(TestApis.devicePolicy().getDeviceOwner().user())
                 .isEqualTo(TestApis.users().instrumented());
+        assertThat(TestApis.devicePolicy().getDeviceOwner().user())
+                .isEqualTo(TestApis.users().system());
+    }
+
+    @Test
+    @IncludeRunOnSingleDeviceOwnerUser
+    public void includeRunOnSingleDeviceOwnerUserAnnotation_isRunningOnSingleDeviceOwnerUser() {
+        assertThat(TestApis.devicePolicy().getDeviceOwner().user())
+                .isEqualTo(TestApis.users().instrumented());
+        assertThat(TestApis.devicePolicy().getDeviceOwner().user())
+                .isEqualTo(TestApis.users().main());
     }
 
     @Test
@@ -1067,6 +1080,13 @@ public class DeviceStateTest {
                 TestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME),
                 TestApis.users().instrumented())
         ).isNull();
+    }
+
+    @Test
+    @RequireHeadlessSystemUserMode(reason = "Test")
+    @IncludeRunOnSingleDeviceOwnerUser
+    public void ensureOnSingleUser_headlessDeviceTypeModeIsSingleUser() {
+        assertThat(sDeviceState.dpc().user().isMain()).isTrue();
     }
 
     @Test
@@ -1635,6 +1655,22 @@ public class DeviceStateTest {
     @Test
     public void additionalQueryParameters_ensureHasDeviceOwner_isRespected() {
         assertThat(sDeviceState.dpc().testApp().targetSdkVersion()).isEqualTo(28);
+    }
+
+    @EnsureHasDeviceOwner(isPrimary = true, key = "dpc", dpc = @Query(isHeadlessDOSingleUser =
+            @BooleanQuery(isEqualTo = TRUE)))
+    @Test
+    public void additionalQueryParameters_isHeadlessDOSingleUser_isRespected() {
+        assertThat(sDeviceState.dpc().testApp().metadata().getString(
+                "headless_do_single_user")).isEqualTo("true");
+    }
+
+    @EnsureHasDeviceOwner(isPrimary = true, key = "dpc", dpc = @Query(isHeadlessDOSingleUser =
+            @BooleanQuery(isEqualTo = FALSE)))
+    @Test
+    public void additionalQueryParameters_isNotHeadlessDOSingleUser_isRespected() {
+        assertThat(sDeviceState.dpc().testApp().metadata().getString(
+                "headless_do_single_user")).isNull();
     }
 
     @EnsureHasProfileOwner(key = EnsureHasProfileOwnerKt.DEFAULT_KEY, isPrimary = true)

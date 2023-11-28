@@ -126,6 +126,7 @@ import com.android.bedstead.harrier.annotations.RequirePackageRespondsToIntent;
 import com.android.bedstead.harrier.annotations.RequireQuickSettingsSupport;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnVisibleBackgroundNonProfileUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnSingleUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnVisibleBackgroundNonProfileUser;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireStorageEncryptionSupported;
@@ -610,6 +611,11 @@ public final class DeviceState extends HarrierRule {
             if (annotation instanceof RequireRunOnAdditionalUser requireRunOnAdditionalUserAnnotation) {
                 requireRunOnAdditionalUser(
                         requireRunOnAdditionalUserAnnotation.switchedToUser());
+                continue;
+            }
+
+            if (annotation instanceof RequireRunOnSingleUser) {
+                requireRunOnSingleUser();
                 continue;
             }
 
@@ -1615,6 +1621,11 @@ public final class DeviceState extends HarrierRule {
         }
 
         mAdditionalUser = additionalUserOrNull();
+    }
+
+    private void requireRunOnSingleUser() {
+        checkFailOrSkip("This test requires running on a single user on a headless device",
+                TestApis.users().instrumented().equals(TestApis.users().main()), FailureMode.SKIP);
     }
 
     private void requireRunOnUser(String[] userTypes, OptionalBoolean switchedToUser) {
@@ -3124,15 +3135,21 @@ public final class DeviceState extends HarrierRule {
             affiliationIds.add("DEFAULT_AFFILIATED"); // To ensure headless PO + DO are affiliated
         }
 
-        UserReference userReference = TestApis.users().system();
+        UserReference deviceOwnerUser;
 
-        if (isPrimary && mPrimaryPolicyManager != null && !userReference.equals(
+        if (headlessDeviceOwnerType == EnsureHasDeviceOwner.HeadlessDeviceOwnerType.SINGLE_USER) {
+            deviceOwnerUser = TestApis.users().main();
+        } else {
+            deviceOwnerUser = TestApis.users().system();
+        }
+
+        if (isPrimary && mPrimaryPolicyManager != null && !deviceOwnerUser.equals(
                 mPrimaryPolicyManager.user())) {
             throw new IllegalStateException(
                     "Only one DPC can be marked as primary per test (current primary is "
                             + mPrimaryPolicyManager + ")");
         }
-        if (!userReference.equals(TestApis.users().instrumented())) {
+        if (!deviceOwnerUser.equals(TestApis.users().instrumented())) {
             // INTERACT_ACROSS_USERS_FULL is required for RemoteDPC
             ensureCanGetPermission(INTERACT_ACROSS_USERS_FULL);
         }
@@ -3222,7 +3239,7 @@ public final class DeviceState extends HarrierRule {
                 ensureHasNoAccounts(UserType.SYSTEM_USER, /* allowPreCreatedAccounts= */ true,
                         FailureMode.FAIL);
             }
-            ensureHasNoProfileOwner(userReference);
+            ensureHasNoProfileOwner(deviceOwnerUser);
 
             if (!mHasChangedDeviceOwner) {
                 recordDeviceOwner();
@@ -3230,7 +3247,8 @@ public final class DeviceState extends HarrierRule {
                 mHasChangedDeviceOwnerType = true;
             }
 
-            mDeviceOwner = RemoteDpc.setAsDeviceOwner(dpcQuery).devicePolicyController();
+            mDeviceOwner = RemoteDpc.setAsDeviceOwner(dpcQuery,
+                        deviceOwnerUser).devicePolicyController();
         }
 
         if (isPrimary) {

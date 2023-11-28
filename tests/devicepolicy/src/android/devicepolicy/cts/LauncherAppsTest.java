@@ -37,10 +37,10 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
-import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwnerWithNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnPrimaryUserWithNoDpc;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerProfileWithNoDeviceOwner;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSystemDeviceOwnerUser;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivityReference;
@@ -91,7 +91,8 @@ public final class LauncherAppsTest {
     }
 
     @Test
-    @IncludeRunOnDeviceOwnerUser // Device Owner devices should not show hidden apps
+    @IncludeRunOnSystemDeviceOwnerUser
+    // Device Owner devices should not show hidden apps
     @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner // Work profiles should not show hidden apps
     public void getActivityList_activityIsDisabled_isNotIncludedInList() {
         // We install on the DPC user so that this installs in the work profile when there is one

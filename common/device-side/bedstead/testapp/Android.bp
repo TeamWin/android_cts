@@ -130,6 +130,7 @@ java_genrule {
         ":RemoteAccountAuthenticatorApp",
         ":MLCTestApp",
         ":MultipleActivitiesTestApp",
+        ":HeadlessDOSingleUserTestApp"
     ],
     out: ["TestApp_Apps.res.zip"],
     tools: [
@@ -157,6 +158,7 @@ java_genrule {
         " && cp $(location :RemoteAccountAuthenticatorApp) $(genDir)/res/raw" +
         " && cp $(location :MLCTestApp) $(genDir)/res/raw" +
         " && cp $(location :MultipleActivitiesTestApp) $(genDir)/res/raw" +
+        " && cp $(location :HeadlessDOSingleUserTestApp) $(genDir)/res/raw" +
         " && $(location index_testapps) --directory $(genDir)/res/raw --aapt2 $(location aapt2)" +
         " && $(location soong_zip) -o $(out) -C $(genDir)/res -D $(genDir)/res/raw",
 }
@@ -192,6 +194,19 @@ android_test_helper_app {
     defaults: ["mts-target-sdk-version-current"],
     resource_dirs: ["src/testapps/main/res/device_admin"],
     manifest: "manifests/DeviceAdminManifest.xml",
+    additional_manifests: ["CommonManifest.xml"],
+    min_sdk_version: "29",
+    sdk_version: "test_current",
+}
+
+android_test_helper_app {
+    name: "HeadlessDOSingleUserTestApp",
+    static_libs: [
+        "TestApp_TestApps",
+    ],
+    defaults: ["mts-target-sdk-version-current"],
+    resource_dirs: ["src/testapps/main/res/device_admin"],
+    manifest: "manifests/HeadlessDOSingleUserManifest.xml",
     additional_manifests: ["CommonManifest.xml"],
     min_sdk_version: "29",
     sdk_version: "test_current",

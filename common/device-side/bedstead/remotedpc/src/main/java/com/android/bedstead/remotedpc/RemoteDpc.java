@@ -192,9 +192,16 @@ public class RemoteDpc extends RemotePolicyManager {
     }
 
     /**
-     * Sets RemoteDPC as the Device Owner based on TestAppQuery
+     * Sets RemoteDPC as the Device Owner on the system user based on TestAppQuery
      */
     public static RemoteDpc setAsDeviceOwner(TestAppQueryBuilder dpcQuery) {
+        return setAsDeviceOwner(dpcQuery, TestApis.users().system());
+    }
+
+    /**
+     * Sets RemoteDPC as the Device Owner on the given user based on TestAppQuery
+     */
+    public static RemoteDpc setAsDeviceOwner(TestAppQueryBuilder dpcQuery, UserReference user) {
         // We make sure that the query has RemoteDpc filter specified,
         // this is useful for the case where the user calls the method directly
         // and does not specify the RemoteDpc filter.
@@ -210,11 +217,11 @@ public class RemoteDpc extends RemotePolicyManager {
         }
 
         TestApp testApp = dpcQuery.get();
-        testApp.install(TestApis.users().system());
+        testApp.install(user);
         Log.i(LOG_TAG, "Installing RemoteDPC app: " + testApp.packageName());
         ComponentName componentName =
                 new ComponentName(testApp.packageName(), TEST_APP_CLASS_NAME);
-        DeviceOwner deviceOwner = TestApis.devicePolicy().setDeviceOwner(componentName);
+        DeviceOwner deviceOwner = TestApis.devicePolicy().setDeviceOwner(componentName, user);
         return new RemoteDpc(testApp, deviceOwner);
     }
 

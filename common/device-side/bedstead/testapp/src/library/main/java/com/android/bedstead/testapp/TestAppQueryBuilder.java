@@ -55,6 +55,7 @@ public final class TestAppQueryBuilder implements Queryable {
     BooleanQueryHelper<TestAppQueryBuilder> mIsDeviceAdmin = new BooleanQueryHelper<>(this);
     StringQueryHelper<TestAppQueryBuilder> mSharedUserId = new StringQueryHelper<>(this);
     SetQueryHelper<TestAppQueryBuilder, ReceiverInfo> mReceivers = new SetQueryHelper<>(this);
+    BooleanQueryHelper<TestAppQueryBuilder> mIsHeadlessDOSingleUser = new BooleanQueryHelper<>(this);
     private boolean mAllowInternalBedsteadTestApps = false;
 
     /**
@@ -91,6 +92,8 @@ public final class TestAppQueryBuilder implements Queryable {
         queryBuilder = queryBuilder.whereMaxSdkVersion().matchesAnnotation(query.maxSdkVersion());
         queryBuilder = queryBuilder.wherePackageName().matchesAnnotation(query.packageName());
         queryBuilder = queryBuilder.whereIsDeviceAdmin().matchesAnnotation(query.isDeviceAdmin());
+        queryBuilder = queryBuilder.whereIsHeadlessDOSingleUser().matchesAnnotation(
+                query.isHeadlessDOSingleUser());
         return queryBuilder;
     }
 
@@ -166,6 +169,13 @@ public final class TestAppQueryBuilder implements Queryable {
      */
     public BooleanQuery<TestAppQueryBuilder> whereIsDeviceAdmin() {
         return mIsDeviceAdmin;
+    }
+
+    /**
+     * Query for an app which is a headless device owner single user.
+     */
+    public BooleanQuery<TestAppQueryBuilder> whereIsHeadlessDOSingleUser() {
+        return mIsHeadlessDOSingleUser;
     }
 
     /**
@@ -255,7 +265,8 @@ public final class TestAppQueryBuilder implements Queryable {
                 && Queryable.isEmptyQuery(mTestOnly)
                 && Queryable.isEmptyQuery(mCrossProfile)
                 && Queryable.isEmptyQuery(mIsDeviceAdmin)
-                && Queryable.isEmptyQuery(mSharedUserId);
+                && Queryable.isEmptyQuery(mSharedUserId)
+                && Queryable.isEmptyQuery(mIsHeadlessDOSingleUser);
     }
 
     private boolean matches(TestAppDetails details) {
@@ -317,6 +328,13 @@ public final class TestAppQueryBuilder implements Queryable {
             return false;
         }
 
+        // TODO(b/320666412): Enable querying test apps using xml content
+        boolean isHeadlessDOSingleUser = details.mMetadata.getString("headless_do_single_user",
+                "false").equals("true");
+        if (!BooleanQueryHelper.matches(mIsHeadlessDOSingleUser, isHeadlessDOSingleUser)) {
+            return false;
+        }
+
         if (mSharedUserId.isEmpty()) {
             if (details.sharedUserId() != null) {
                 return false;
@@ -353,7 +371,8 @@ public final class TestAppQueryBuilder implements Queryable {
                 mSharedUserId.describeQuery("sharedUserId"),
                 mTestOnly.describeQuery("testOnly"),
                 mCrossProfile.describeQuery("crossProfile"),
-                mIsDeviceAdmin.describeQuery("isDeviceAdmin")
+                mIsDeviceAdmin.describeQuery("isDeviceAdmin"),
+                mIsHeadlessDOSingleUser.describeQuery("isHeadlessDOSingleUser")
         ) + "}";
     }
 
@@ -367,7 +386,8 @@ public final class TestAppQueryBuilder implements Queryable {
                 mTargetSdkVersion.toAnnotation(),
                 mMinSdkVersion.toAnnotation(),
                 mMaxSdkVersion.toAnnotation(),
-                mIsDeviceAdmin.toAnnotation());
+                mIsDeviceAdmin.toAnnotation(),
+                mIsHeadlessDOSingleUser.toAnnotation());
     }
 
     @AutoAnnotation
@@ -376,8 +396,10 @@ public final class TestAppQueryBuilder implements Queryable {
             com.android.queryable.annotations.IntegerQuery targetSdkVersion,
             com.android.queryable.annotations.IntegerQuery minSdkVersion,
             com.android.queryable.annotations.IntegerQuery maxSdkVersion,
-            com.android.queryable.annotations.BooleanQuery isDeviceAdmin) {
+            com.android.queryable.annotations.BooleanQuery isDeviceAdmin,
+            com.android.queryable.annotations.BooleanQuery isHeadlessDOSingleUser) {
         return new AutoAnnotation_TestAppQueryBuilder_query(
-                packageName, targetSdkVersion, minSdkVersion, maxSdkVersion, isDeviceAdmin);
+                packageName, targetSdkVersion, minSdkVersion, maxSdkVersion, isDeviceAdmin,
+                isHeadlessDOSingleUser);
     }
 }

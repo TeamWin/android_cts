@@ -31,6 +31,8 @@ java_library_host {
         "NeneCommon",
         "QueryableCommon",
         "truth",
+        "flag-junit-host",
+        "device_policy_aconfig_flags_lib_host",
     ],
 
     plugins: ["auto_annotation_plugin"],
@@ -50,6 +52,8 @@ android_library {
         "NeneCommonAndroid",
         "QueryableCommonAndroid",
         "truth",
+        "flag-junit",
+        "device_policy_aconfig_flags_lib",
     ],
 
     manifest: "src/main/AndroidManifest.xml",
