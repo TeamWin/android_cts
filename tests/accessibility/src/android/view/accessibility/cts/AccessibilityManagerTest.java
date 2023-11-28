@@ -18,12 +18,17 @@ package android.view.accessibility.cts;
 
 import static android.accessibility.cts.common.InstrumentedAccessibilityService.TIMEOUT_SERVICE_ENABLE;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+
+import android.Manifest;
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
@@ -32,9 +37,12 @@ import android.app.Instrumentation;
 import android.app.Service;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.os.Handler;
 import android.platform.test.annotations.AsbSecurityTest;
+import android.view.InputEvent;
+import android.view.MotionEvent;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityManager.AccessibilityServicesStateChangeListener;
@@ -58,6 +66,9 @@ import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -200,6 +211,32 @@ public class AccessibilityManagerTest extends StsExtraBusinessLogicTestCase {
 
         assertTrue(mAccessibilityManager.removeAccessibilityServicesStateChangeListener(listener));
         assertFalse(mAccessibilityManager.removeAccessibilityServicesStateChangeListener(listener));
+    }
+
+    @AsbSecurityTest(cveBugId = {309426390})
+    @Test
+    public void testInjectInputEventToInputFilter_throwsWithoutInjectEventsPermission()
+            throws Exception {
+        // Ensure the test itself doesn't have INJECT_EVENTS permission before
+        // calling the method that requires it and expecting failure.
+        assertThat(sInstrumentation.getContext().checkSelfPermission(
+                Manifest.permission.INJECT_EVENTS)).isEqualTo(PackageManager.PERMISSION_DENIED);
+
+        // Use reflection to directly invoke IAccessibilityManager#injectInputEventToInputFilter.
+        final AccessibilityManager accessibilityManager = (AccessibilityManager)
+                sInstrumentation.getContext().getSystemService(Service.ACCESSIBILITY_SERVICE);
+        final Field serviceField = AccessibilityManager.class.getDeclaredField("mService");
+        serviceField.setAccessible(true);
+        final Method injectInputEventToInputFilter =
+                Class.forName("android.view.accessibility.IAccessibilityManager")
+                        .getDeclaredMethod("injectInputEventToInputFilter", InputEvent.class);
+
+        final InvocationTargetException exception = assertThrows(InvocationTargetException.class,
+                () -> injectInputEventToInputFilter.invoke(
+                        serviceField.get(accessibilityManager),
+                        MotionEvent.obtain(0, 0, 0, 0, 0, 0)));
+        assertThat(exception).hasCauseThat().isInstanceOf(SecurityException.class);
+        assertThat(exception).hasCauseThat().hasMessageThat().contains("INJECT_EVENTS");
     }
 
     @Test
