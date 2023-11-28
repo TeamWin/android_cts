@@ -22,9 +22,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Insets;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Display;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 
 import androidx.test.uiautomator.UiDevice;
@@ -247,7 +250,30 @@ public class ActivityManagerMemoryClassTest
     private int getScreenSize() {
         Context context = getInstrumentation().getTargetContext();
         Configuration config = context.getResources().getConfiguration();
-        return config.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
+        final int configScreenSize = config.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
+        final int minScreenSizeDp = Math.min(config.screenWidthDp, config.screenHeightDp);
+        // The insets size may affect screenSizeDp in different orientations. E.g., the short side
+        // is 720dp as the width in portrait orientation, but when the short side is the height in
+        // landscape orientation, the value will be smaller than 720dp because the insets of
+        // system bars may occupy a little space. Then the screen size from Configuration will be
+        // LARGE in landscape and XLARGE in portrait. So below calculation allows to return a
+        // smaller size definition if the size excluding insets is lower than the size threshold.
+        final Insets insets = getActivity().getWindowManager().getCurrentWindowMetrics()
+                .getWindowInsets().getInsetsIgnoringVisibility(WindowInsets.Type.systemBars());
+        final int insetsSize = Math.max(insets.top + insets.bottom, insets.left + insets.right);
+        final int toleranceSizeDp = (int) (insetsSize /
+                ((float) config.densityDpi / DisplayMetrics.DENSITY_DEFAULT) + 0.5f);
+        Log.i("ActivityManagerMemoryClassTest", "getScreenSize: config=" + config
+                + " insets=" + insets + " toleranceSizeDp=" + toleranceSizeDp);
+        if (configScreenSize == Configuration.SCREENLAYOUT_SIZE_XLARGE
+                && (minScreenSizeDp - toleranceSizeDp < 720)) {
+            return Configuration.SCREENLAYOUT_SIZE_LARGE;
+        }
+        if (configScreenSize == Configuration.SCREENLAYOUT_SIZE_LARGE
+                && (minScreenSizeDp - toleranceSizeDp < 480)) {
+            return Configuration.SCREENLAYOUT_SIZE_NORMAL;
+        }
+        return configScreenSize;
     }
 
     private void assertMemoryForScreenDensity(int memoryClass, int screenDensity, int screenSize) {
