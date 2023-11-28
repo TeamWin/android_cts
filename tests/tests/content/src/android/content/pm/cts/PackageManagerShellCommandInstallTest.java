@@ -1020,7 +1020,7 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
-    public void testCannotGetPackageInfoForSdkIfNotSystemOrShell() throws Exception {
+    public void testGetPackageInfoForSdk_notSystemOrShell() throws Exception {
         onBeforeSdkTests();
 
         installPackage(TEST_SDK1);
@@ -1030,21 +1030,41 @@ public class PackageManagerShellCommandInstallTest {
         assertThrows(PackageManager.NameNotFoundException.class,
                 () -> getPackageManager().getPackageInfo(TEST_SDK1_PACKAGE,
                         PackageManager.PackageInfoFlags.of(MATCH_STATIC_SHARED_AND_SDK_LIBRARIES)));
+    }
+
+    @Test
+    public void testGetApplicationInfoForSdk_notSystemOrShell() throws Exception {
+        onBeforeSdkTests();
+
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        // Normal access
         assertThrows(PackageManager.NameNotFoundException.class,
                 () -> getPackageManager().getApplicationInfo(TEST_SDK1_PACKAGE,
                         PackageManager.ApplicationInfoFlags.of(
                                 MATCH_STATIC_SHARED_AND_SDK_LIBRARIES)));
+    }
 
-        final List<SharedLibraryInfo> shareLibs = getPackageManager().getSharedLibraries(0);
-        SharedLibraryInfo sdk1 = findLibrary(shareLibs, TEST_SDK1_NAME, 1);
-        assertThat(sdk1).isNull();
+    @Test
+    public void testSharedLibraryAccess_notSystemOrShell() throws Exception {
+        onBeforeSdkTests();
 
-        PackageManager.Property property =
-                getPackageManager().getProperty("com.test.sdk1_1.TEST_PROPERTY",
-                        TEST_SDK1_PACKAGE);
-        assertThat(property).isNotNull();
-        assertThat(property.getName()).isEqualTo("com.test.sdk1_1.TEST_PROPERTY");
-        assertThat(property.getString()).isEqualTo("com.test.sdk1_1.testp1");
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        // Normal access
+        List<SharedLibraryInfo> shareLibs = getPackageManager().getSharedLibraries(/*flags=*/ 0);
+        SharedLibraryInfo sdk = findLibrary(shareLibs, TEST_SDK1_NAME, 1);
+        assertThat(sdk).isNull();
+    }
+
+    @Test
+    public void testGetPackageInfoForSdk_systemOrShell() throws Exception {
+        onBeforeSdkTests();
+
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
 
         // Access as a shell
         SystemUtil.runWithShellPermissionIdentity(() -> {
@@ -1053,14 +1073,54 @@ public class PackageManagerShellCommandInstallTest {
 
             assertThat(info).isNotNull();
             assertThat(info.packageName).isEqualTo(TEST_SDK1_PACKAGE);
+        });
+    }
 
+    @Test
+    public void testGetApplicationInfoForSdk_systemOrShell() throws Exception {
+        onBeforeSdkTests();
+
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        // Access as a shell
+        SystemUtil.runWithShellPermissionIdentity(() -> {
             ApplicationInfo appInfo = getPackageManager().getApplicationInfo(TEST_SDK1_PACKAGE,
                     PackageManager.ApplicationInfoFlags.of(
                             MATCH_STATIC_SHARED_AND_SDK_LIBRARIES));
 
             assertThat(appInfo).isNotNull();
             assertThat(appInfo.icon).isGreaterThan(0);
+
+            assertThat(appInfo.targetSdkVersion).isEqualTo(34);
+            assertThat(appInfo.minSdkVersion).isEqualTo(30);
         });
+    }
+
+    @Test
+    public void testSharedLibraryAccess_systemOrShell() throws Exception {
+        onBeforeSdkTests();
+
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        // Access as a shell
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            List<SharedLibraryInfo> shareLibs = getPackageManager().getSharedLibraries(/*flags=*/
+                    0);
+            SharedLibraryInfo sdk = findLibrary(shareLibs, TEST_SDK1_NAME, 1);
+            assertThat(sdk).isNotNull();
+        });
+    }
+
+    @Test
+    public void testGetProperty() throws Exception {
+        PackageManager.Property property =
+                getPackageManager().getProperty("com.test.sdk1_1.TEST_PROPERTY",
+                        TEST_SDK1_PACKAGE);
+        assertThat(property).isNotNull();
+        assertThat(property.getName()).isEqualTo("com.test.sdk1_1.TEST_PROPERTY");
+        assertThat(property.getString()).isEqualTo("com.test.sdk1_1.testp1");
     }
 
     @Test
