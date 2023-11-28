@@ -10,8 +10,10 @@ import android.companion.cts.common.PrimaryCompanionService
 import android.companion.cts.common.toUpperCaseString
 import android.platform.test.annotations.AppModeFull
 import android.platform.test.annotations.RequiresFlagsEnabled
+import android.platform.test.flag.junit.DeviceFlagsValueProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlin.test.assertEquals
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -26,6 +28,8 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 @RequiresFlagsEnabled(FLAG_DEVICE_PRESENCE)
 class DeviceEventTest : CoreTestBase() {
+    @get:Rule
+    val checkFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
     @Test
     fun test_ble_device_event() {
         targetApp.associate(MAC_ADDRESS_A)
