@@ -172,7 +172,8 @@ public final class PolicyTransparencyTestActivity extends PassFailButtons.Activi
         }
         ((TextView) findViewById(R.id.widget_label)).setText(widgetLabel);
         ((TextView) findViewById(R.id.test_instructions)).setText(
-                getString(R.string.policy_transparency_test_instructions, setStep));
+                getString(R.string.policy_transparency_test_instructions,
+                        setStep, userAction, note));
         updateWidget(widgetId);
     }
 
