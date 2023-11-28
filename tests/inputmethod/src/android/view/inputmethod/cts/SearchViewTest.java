@@ -49,6 +49,7 @@ import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -181,6 +182,7 @@ public class SearchViewTest extends EndToEndImeTestBase {
 
     @Test
     public void testShowImeWhenSearchViewFocusInListView() throws Exception {
+        Assume.assumeFalse(isPreventImeStartup());
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
