@@ -34,6 +34,7 @@ import android.media.cts.NdkMediaCodec;
 import android.media.cts.OutputSurface;
 import android.media.cts.SdkMediaCodec;
 import android.media.cts.TestArgs;
+import android.media.cts.TestUtils;
 import android.opengl.GLES20;
 import android.os.Build;
 import android.platform.test.annotations.PlatinumTest;
@@ -293,6 +294,15 @@ public class EncodeDecodeTest {
                 assumeTrue("Color conversion related tests are not valid on cuttlefish releases "
                         + "through android T", IS_AFTER_T);
             }
+            // Pre Android U, this test only checked the 1st codec (which is usually a hardware
+            // codec) and software codecs exercised a problem in the underlying graphis code.
+            // So we will only run this for CTS mode or if we're on versions after Android T
+            // (where the graphics code is fixed)
+            if (TestUtils.isMtsMode()) {
+                assumeTrue("Color conversion related tests are skipped in MTS on releases "
+                        + "through android T", IS_AFTER_T);
+            }
+
             SurfaceToSurfaceWrapper wrapper =
                     new SurfaceToSurfaceWrapper(obj, persisent, useNdk);
             Thread th = new Thread(wrapper, "codec test");
