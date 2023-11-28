@@ -264,6 +264,14 @@
         <activity android:name="android.security.cts.CVE_2023_20953.PocActivity"
             android:exported="true" />
 
+        <activity android:name="android.security.cts.CVE_2023_20916.PocActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <activity android:name="android.security.cts.CVE_2021_0642.PocActivity"
             android:exported="true">
             <intent-filter>
