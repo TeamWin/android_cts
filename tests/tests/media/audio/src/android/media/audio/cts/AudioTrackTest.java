@@ -2349,13 +2349,14 @@ public class AudioTrackTest {
             Thread.sleep(lastCheckMs);
             final int position2 = track.getPlaybackHeadPosition();
 
-            final int tolerance60MsInFrames = sampleRate * 60 / 1000;
+            final int toleranceMs = isLowLatencyDevice() ? 60 : 100;
+            final int toleranceInFrames = toleranceMs * sampleRate / 1000;
             final int expected = lastCheckMs * sampleRate / 1000;
             final int actual = position2 - position1;
 
             // Log.d(TAG, "Variable Playback: expected(" + expected + ")  actual(" + actual
             //        + ")  diff(" + (expected - actual) + ")");
-            assertEquals(expected, actual, tolerance60MsInFrames);
+            assertEquals(expected, actual, toleranceInFrames);
             track.stop();
         }
         track.release();
