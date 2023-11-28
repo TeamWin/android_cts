@@ -16,6 +16,7 @@
 
 package android.media.audio.cts;
 
+import android.content.pm.PackageManager;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -55,6 +56,11 @@ public class AudioTrack_ListenerTest extends CtsAndroidTestCase {
             super.handleMessage(msg);
         }
     };
+
+    private boolean isLowLatencyDevice() {
+        return getContext().getPackageManager()
+            .hasSystemFeature(PackageManager.FEATURE_AUDIO_LOW_LATENCY);
+    }
 
     public void testAudioTrackCallback() throws Exception {
         doTest("streaming_local_looper", true /*localTrack*/, false /*customHandler*/,
@@ -184,10 +190,11 @@ public class AudioTrack_ListenerTest extends CtsAndroidTestCase {
         assertEquals(markerPeriods, markerList.size());
         assertEquals(updatePeriods, periodicList.size());
         // verify actual playback head positions returned.
-        // the max diff should really be around 24 ms,
+        // the max diff should really be around 24 ms (on h/w implementations),
         // but system load and stability will affect this test;
-        // we use 80ms limit here for failure.
-        final int tolerance80MsInFrames = TEST_SR * 80 / 1000;
+        // we use 80ms or 100ms limit here for failure.
+        final int toleranceMs = isLowLatencyDevice() ? 80 : 100;
+        final int toleranceInFrames = toleranceMs * TEST_SR / 1000;
 
         AudioHelper.Statistics markerStat = new AudioHelper.Statistics();
         for (int i = 0; i < markerPeriods; ++i) {
@@ -195,7 +202,7 @@ public class AudioTrack_ListenerTest extends CtsAndroidTestCase {
             final int actual = markerList.get(i);
             // Log.d(TAG, "Marker: expected(" + expected + ")  actual(" + actual
             //        + ")  diff(" + (actual - expected) + ")");
-            assertEquals(expected, actual, tolerance80MsInFrames);
+            assertEquals(expected, actual, toleranceInFrames);
             markerStat.add((double)(actual - expected) * 1000 / TEST_SR);
         }
 
@@ -205,7 +212,7 @@ public class AudioTrack_ListenerTest extends CtsAndroidTestCase {
             final int actual = periodicList.get(i);
             // Log.d(TAG, "Update: expected(" + expected + ")  actual(" + actual
             //        + ")  diff(" + (actual - expected) + ")");
-            assertEquals(expected, actual, tolerance80MsInFrames);
+            assertEquals(expected, actual, toleranceInFrames);
             periodicStat.add((double)(actual - expected) * 1000 / TEST_SR);
         }
 
