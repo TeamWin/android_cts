@@ -1090,6 +1090,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getInfoVinVerifier(),
              getInfoMakeVerifier(),
              getInfoModelVerifier(),
+             getInfoModelYearVerifier(),
              getInfoFuelCapacityVerifier(),
              getInfoFuelTypeVerifier(),
              getInfoEvBatteryCapacityVerifier(),
@@ -1708,8 +1709,24 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    public void testInfoModelYearIfSupported() {
+    public void testInfoModelIfSupported() {
         getInfoModelVerifier().verify();
+    }
+
+    private VehiclePropertyVerifier<Integer> getInfoModelYearVerifier() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.INFO_MODEL_YEAR,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                        Integer.class, mCarPropertyManager)
+                .addReadPermission(Car.PERMISSION_CAR_INFO)
+                .build();
+    }
+
+    @Test
+    public void testInfoModelYearIfSupported() {
+        getInfoModelYearVerifier().verify();
     }
 
     private VehiclePropertyVerifier<Float> getInfoFuelCapacityVerifier() {
