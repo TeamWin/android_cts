@@ -148,8 +148,8 @@
     <option name="compatibility:exclude-filter" value="CtsAutoFillServiceTestCases android.autofillservice.cts.SessionLifecycleTest#testSaveRemainsWhenAutofilledAppIsKilled" />
     <option name="compatibility:exclude-filter" value="CtsAutoFillServiceTestCases android.autofillservice.cts.servicebehavior.MultiScreenLoginTest#testSaveBothFieldsAtOnceWithClientStateOnBothRequests" />
 
-    <!-- b/284365711 -->
-    <option name="compatibility:exclude-filter" value="CtsBluetoothMultiDevicesTestCases BluetoothMultiDevicesTest#test_isolated_gatt_server" />
+    <!-- b/284365711, b/285449475 -->
+    <option name="compatibility:exclude-filter" value="CtsBluetoothMultiDevicesTestCases BluetoothMultiDevicesTest" />
 
     <!-- b/284406623 Exclude uwb tests since there is a vendor partition dependency -->
     <option name="compatibility:exclude-filter" value="CtsUwbMultiDeviceTestCase_UwbManagerTests" />
