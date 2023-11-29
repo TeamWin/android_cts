@@ -901,7 +901,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
-    public void testConsolidatedNotificationPolicy_newFields() throws Exception {
+    public void testConsolidatedNotificationPolicy_mergesAllowChannels() throws Exception {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
