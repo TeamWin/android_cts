@@ -70,6 +70,7 @@ import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -96,6 +97,7 @@ public class ImeInsetsVisibilityTest extends EndToEndImeTestBase {
 
     @Test
     public void testImeVisibilityWhenImeFocusableChildPopup() throws Exception {
+        Assume.assumeFalse(isPreventImeStartup());
         final InputMethodManager imm = getImmOrFail();
 
         try (MockImeSession imeSession = MockImeSession.create(
@@ -143,6 +145,7 @@ public class ImeInsetsVisibilityTest extends EndToEndImeTestBase {
 
     @Test
     public void testImeVisibilityWhenImeFocusableGravityBottomChildPopup() throws Exception {
+        Assume.assumeFalse(isPreventImeStartup());
         final InputMethodManager imm = getImmOrFail();
 
         try (MockImeSession imeSession = MockImeSession.create(
@@ -191,6 +194,7 @@ public class ImeInsetsVisibilityTest extends EndToEndImeTestBase {
 
     @Test
     public void testImeVisibilityWhenImeFocusableChildPopupOverlaps() throws Exception {
+        Assume.assumeFalse(isPreventImeStartup());
         final InputMethodManager imm = getImmOrFail();
 
         try (MockImeSession imeSession = MockImeSession.create(
@@ -240,6 +244,7 @@ public class ImeInsetsVisibilityTest extends EndToEndImeTestBase {
     @AppModeFull(reason = "Instant apps cannot rely on ACTION_CLOSE_SYSTEM_DIALOGS")
     @Test
     public void testEditTextPositionAndPersistWhenAboveImeWindowShown() throws Exception {
+        Assume.assumeFalse(isPreventImeStartup());
         final InputMethodManager imm = getImmOrFail();
 
         try (MockImeSession imeSession = MockImeSession.create(
