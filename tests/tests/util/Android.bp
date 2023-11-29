@@ -61,6 +61,7 @@ android_ravenwood_test {
         "src/android/util/cts/LogPrinterTest.java",
         "src/android/util/cts/LogTest.java",
         "src/android/util/cts/LongSparseArrayTest.java",
+        "src/android/util/cts/LruCacheTest.java",
         "src/android/util/cts/MutableTest.java",
         "src/android/util/cts/PairTest.java",
         "src/android/util/cts/PatternsTest.java",
