@@ -6573,12 +6573,12 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     }
 
     /**
-     * Tests {@link WifiManager#isWifiWepSupported()} does not crash.
+     * Tests {@link WifiManager#isWepSupported()} does not crash.
      */
     @RequiresFlagsEnabled(Flags.FLAG_WEP_USAGE)
     @Test
-    public void testIsWifiWepSupported() throws Exception {
-        sWifiManager.isWifiWepSupported();
+    public void testIsWepSupported() throws Exception {
+        sWifiManager.isWepSupported();
     }
 
     /**
