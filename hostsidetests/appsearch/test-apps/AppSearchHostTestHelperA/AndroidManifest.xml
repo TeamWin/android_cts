@@ -19,7 +19,7 @@
     <application>
         <uses-library android:name="android.test.runner" />
     </application>
-
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
     <instrumentation
         android:name="androidx.test.runner.AndroidJUnitRunner"
         android:targetPackage="android.appsearch.app.helper_a"  />
