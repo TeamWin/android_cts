@@ -170,10 +170,12 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
                 R.string.enterprise_privacy_admin_granted_microphone_access,
                 R.string.enterprise_privacy_admin_granted_microphone_access_info,
                 Manifest.permission.RECORD_AUDIO));
-        adapter.add(buildAdminGrantedPermissionTest(ENTERPRISE_PRIVACY_CAMERA_ACCESS,
-                R.string.enterprise_privacy_admin_granted_camera_access,
-                R.string.enterprise_privacy_admin_granted_camera_access_info,
-                Manifest.permission.CAMERA));
+        if (FeatureUtil.supportCameraFeature(this)) {
+            adapter.add(buildAdminGrantedPermissionTest(ENTERPRISE_PRIVACY_CAMERA_ACCESS,
+                    R.string.enterprise_privacy_admin_granted_camera_access,
+                    R.string.enterprise_privacy_admin_granted_camera_access_info,
+                    Manifest.permission.CAMERA));
+        }
         adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_DEFAULT_APPS,
                 R.string.enterprise_privacy_default_apps,
                 R.string.enterprise_privacy_default_apps_info,
