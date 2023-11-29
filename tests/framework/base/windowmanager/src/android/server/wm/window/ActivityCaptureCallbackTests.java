@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
+import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerTestBase;
@@ -190,8 +191,8 @@ public class ActivityCaptureCallbackTests extends WindowManagerTestBase {
         }
 
         @Override
-        protected void onStart() {
-            super.onStart();
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
             registerScreenCaptureCallback(Executors.newSingleThreadExecutor(), mCallback);
         }
     }
