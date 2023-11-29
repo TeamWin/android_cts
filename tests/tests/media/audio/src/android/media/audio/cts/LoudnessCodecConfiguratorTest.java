@@ -23,6 +23,7 @@ import static android.media.audio.Flags.FLAG_LOUDNESS_CONFIGURATOR_API;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import android.content.res.AssetFileDescriptor;
@@ -126,12 +127,21 @@ public class LoudnessCodecConfiguratorTest {
 
     @Test
     @RequiresFlagsEnabled(FLAG_LOUDNESS_CONFIGURATOR_API)
+    public void addUnconfiguredMediaCodec_returnsFalse() throws Exception {
+        mAt = createAndStartAudioTrack();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> mLcc.addMediaCodec(createMediaCodec(/*configure*/false)));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_LOUDNESS_CONFIGURATOR_API)
     public void setAudioTrack_withRegisteredCodecs_triggersUpdate() throws Exception {
         mAt = createAndStartAudioTrack();
 
-        mLcc.addMediaCodec(createAndConfigureMediaCodec());
-        mLcc.addMediaCodec(createAndConfigureMediaCodec());
-        mLcc.addMediaCodec(createAndConfigureMediaCodec());
+        mLcc.addMediaCodec(createMediaCodec(/*configure*/true));
+        mLcc.addMediaCodec(createMediaCodec(/*configure*/true));
+        mLcc.addMediaCodec(createMediaCodec(/*configure*/true));
         mLcc.setAudioTrack(mAt);
         Thread.sleep(TEST_LOUDNESS_CALLBACK_TIMEOUT.toMillis());
 
@@ -147,7 +157,7 @@ public class LoudnessCodecConfiguratorTest {
         Thread.sleep(TEST_LOUDNESS_CALLBACK_TIMEOUT.toMillis());
 
         assertFalse(mLcc.getLoudnessCodecParams(createAndStartAudioTrack(),
-                createAndConfigureMediaCodec()).isDefinitelyEmpty());
+                createMediaCodec(/*configure*/true)).isDefinitelyEmpty());
     }
 
     @Test
@@ -156,9 +166,9 @@ public class LoudnessCodecConfiguratorTest {
         LoudnessCodecConfigurator lcc2 = LoudnessCodecConfigurator.create(
                 Executors.newSingleThreadExecutor(), new MyLoudnessCodecUpdateListener());
 
-        mLcc.addMediaCodec(createAndConfigureMediaCodec());
-        mLcc.addMediaCodec(createAndConfigureMediaCodec());
-        lcc2.addMediaCodec(createAndConfigureMediaCodec());
+        mLcc.addMediaCodec(createMediaCodec(/*configure*/true));
+        mLcc.addMediaCodec(createMediaCodec(/*configure*/true));
+        lcc2.addMediaCodec(createMediaCodec(/*configure*/true));
         mLcc.setAudioTrack(createAndStartAudioTrack());
         lcc2.setAudioTrack(createAndStartAudioTrack());
         Thread.sleep(TEST_LOUDNESS_CALLBACK_TIMEOUT.toMillis());
@@ -168,8 +178,16 @@ public class LoudnessCodecConfiguratorTest {
 
     @Test
     @RequiresFlagsEnabled(FLAG_LOUDNESS_CONFIGURATOR_API)
+    public void removeUnregisteredCodec_returnsFalse() throws Exception {
+        mLcc.addMediaCodec(createMediaCodec(/*configure*/true));
+        assertThrows(IllegalArgumentException.class,
+                () -> mLcc.removeMediaCodec(createMediaCodec(/*configure*/true)));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_LOUDNESS_CONFIGURATOR_API)
     public void setAudioTrack_withRemovedCodecs_noUpdate() throws Exception {
-        final MediaCodec mediaCodec = createAndConfigureMediaCodec();
+        final MediaCodec mediaCodec = createMediaCodec(/*configure*/true);
         mAt = createAndStartAudioTrack();
 
         mLcc.addMediaCodec(mediaCodec);
@@ -185,12 +203,12 @@ public class LoudnessCodecConfiguratorTest {
     public void addMediaCodec_afterSetAudioTrack_triggersNewUpdate() throws Exception {
         mAt = createAndStartAudioTrack();
 
-        mLcc.addMediaCodec(createAndConfigureMediaCodec());
-        mLcc.addMediaCodec(createAndConfigureMediaCodec());
+        mLcc.addMediaCodec(createMediaCodec(/*configure*/true));
+        mLcc.addMediaCodec(createMediaCodec(/*configure*/true));
         mLcc.setAudioTrack(mAt);
         Thread.sleep(TEST_LOUDNESS_CALLBACK_TIMEOUT.toMillis());
 
-        mLcc.addMediaCodec(createAndConfigureMediaCodec());
+        mLcc.addMediaCodec(createMediaCodec(/*configure*/true));
         Thread.sleep(TEST_LOUDNESS_CALLBACK_TIMEOUT.toMillis());
 
         assertEquals(3, mCodecUpdateCallNumber.get());
@@ -201,12 +219,12 @@ public class LoudnessCodecConfiguratorTest {
     public void addMediaCodec_afterRemovingAudioTrack_noSecondUpdate() throws Exception {
         mAt = createAndStartAudioTrack();
 
-        mLcc.addMediaCodec(createAndConfigureMediaCodec());
+        mLcc.addMediaCodec(createMediaCodec(/*configure*/true));
         mLcc.setAudioTrack(mAt);
         Thread.sleep(TEST_LOUDNESS_CALLBACK_TIMEOUT.toMillis());
 
         mLcc.setAudioTrack(null);
-        mLcc.addMediaCodec(createAndConfigureMediaCodec());
+        mLcc.addMediaCodec(createMediaCodec(/*configure*/true));
         Thread.sleep(TEST_LOUDNESS_CALLBACK_TIMEOUT.toMillis());
 
         assertEquals(1, mCodecUpdateCallNumber.get());
@@ -217,14 +235,14 @@ public class LoudnessCodecConfiguratorTest {
     public void addMediaCodec_afterReplaceAudioTrack_triggersNewUpdate() throws Exception {
         mAt = createAndStartAudioTrack();
 
-        mLcc.addMediaCodec(createAndConfigureMediaCodec());
+        mLcc.addMediaCodec(createMediaCodec(/*configure*/true));
         mLcc.setAudioTrack(mAt);
         Thread.sleep(TEST_LOUDNESS_CALLBACK_TIMEOUT.toMillis());
 
         mAt.release();
         mAt = createAndStartAudioTrack();
         mLcc.setAudioTrack(mAt);
-        mLcc.addMediaCodec(createAndConfigureMediaCodec());
+        mLcc.addMediaCodec(createMediaCodec(/*configure*/true));
         Thread.sleep(TEST_LOUDNESS_CALLBACK_TIMEOUT.toMillis());
 
         assertEquals(3, mCodecUpdateCallNumber.get());
@@ -235,7 +253,7 @@ public class LoudnessCodecConfiguratorTest {
     public void setAudioTrack_withRegisteredCodec_checkParameters() throws Exception {
         mAt = createAndStartAudioTrack();
 
-        mLcc.addMediaCodec(createAndConfigureMediaCodec());
+        mLcc.addMediaCodec(createMediaCodec(/*configure*/true));
         mLcc.setAudioTrack(mAt);
         Thread.sleep(TEST_LOUDNESS_CALLBACK_TIMEOUT.toMillis());
 
@@ -273,7 +291,7 @@ public class LoudnessCodecConfiguratorTest {
     }
 
     /** Creates a decoder for xHE-AAC content. */
-    private MediaCodec createAndConfigureMediaCodec() throws Exception {
+    private MediaCodec createMediaCodec(boolean configure) throws Exception {
         AssetFileDescriptor testFd = InstrumentationRegistry.getInstrumentation().getContext()
                 .getResources()
                 .openRawResourceFd(R.raw.noise_2ch_48khz_tlou_19lufs_anchor_17lufs_mp4);
@@ -290,8 +308,10 @@ public class LoudnessCodecConfiguratorTest {
         assertTrue("not an audio file", mime.startsWith(TEST_MEDIA_AUDIO_CODEC_PREFIX));
         final MediaCodec mediaCodec = MediaCodec.createDecoderByType(mime);
 
-        Log.v(TAG, "configuring with " + format);
-        mediaCodec.configure(format, null /* surface */, null /* crypto */, 0 /* flags */);
+        if (configure) {
+            Log.v(TAG, "configuring with " + format);
+            mediaCodec.configure(format, null /* surface */, null /* crypto */, 0 /* flags */);
+        }
 
         return mediaCodec;
     }
