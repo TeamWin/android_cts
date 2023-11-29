@@ -59,7 +59,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class NetworkingHelper {
+public class NetworkingHelper implements AutoCloseable {
     private static final String TAG = "JsNetworkingUtils";
 
     private static final String RESTRICT_BACKGROUND_GET_CMD =
@@ -394,6 +394,11 @@ public class NetworkingHelper {
         }
 
         setLocationMode(mInitialLocationMode);
+    }
+
+    @Override
+    public void close() throws Exception {
+        tearDown();
     }
 
     private String unquoteSSID(String ssid) {

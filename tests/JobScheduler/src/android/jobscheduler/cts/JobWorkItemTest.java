@@ -48,13 +48,17 @@ public class JobWorkItemTest extends BaseJobSchedulerTest {
         // JobWorkItem hasn't been scheduled yet. Delivery count should be 0.
         assertEquals(0, expectedJwi.getDeliveryCount());
 
-        kTestEnvironment.setExpectedExecutions(1);
-        kTestEnvironment.setExpectedWork(new MockJobService.TestWorkItem[]{
-                new MockJobService.TestWorkItem(TEST_INTENT)});
-        kTestEnvironment.readyToWork();
-        mJobScheduler.enqueue(jobInfo, expectedJwi);
-        runSatisfiedJob(JOB_ID);
-        assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
+        try (NetworkingHelper networkingHelper =
+                     new NetworkingHelper(getInstrumentation(), getContext())) {
+            networkingHelper.setAllNetworksEnabled(true);
+            kTestEnvironment.setExpectedExecutions(1);
+            kTestEnvironment.setExpectedWork(new MockJobService.TestWorkItem[]{
+                    new MockJobService.TestWorkItem(TEST_INTENT)});
+            kTestEnvironment.readyToWork();
+            mJobScheduler.enqueue(jobInfo, expectedJwi);
+            runSatisfiedJob(JOB_ID);
+            assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
+        }
 
         List<JobWorkItem> executedJwis = kTestEnvironment.getLastReceivedWork();
         assertEquals(1, executedJwis.size());
