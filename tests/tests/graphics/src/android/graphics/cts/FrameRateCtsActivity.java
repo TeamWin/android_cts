@@ -440,7 +440,8 @@ public class FrameRateCtsActivity extends Activity {
         List<Float> seamedRefreshRates = new ArrayList<>();
         Display.Mode[] modes = display.getSupportedModes();
         for (Display.Mode otherMode : modes) {
-            if (!DisplayUtil.isModeSwitchSeamless(mode, otherMode)) {
+            if (hasSameResolution(mode, otherMode)
+                    && !DisplayUtil.isModeSwitchSeamless(mode, otherMode)) {
                 seamedRefreshRates.add(otherMode.getRefreshRate());
             }
         }
