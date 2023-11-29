@@ -117,6 +117,8 @@ public class PackageInstallerArchiveTest {
     private static final String NO_ACTIVITY_APK_PATH =
             SAMPLE_APK_BASE + "CtsIntentResolutionTestApp.apk";
 
+    private static final String SYSTEM_PACKAGE_NAME = "android";
+
     private static final int TIMEOUT = 30000;
     private static final int SECOND = 1000;
 
@@ -451,7 +453,6 @@ public class PackageInstallerArchiveTest {
 
     // TODO(b/312452414) Move to PackageInstallerActivity directory.
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
     public void unarchiveApp_weakPermissions() throws Exception {
         installPackage(PACKAGE_NAME, APK_PATH);
         runWithShellPermissionIdentity(
@@ -483,7 +484,7 @@ public class PackageInstallerArchiveTest {
 
         assertThat(waitFor(Until.findObject(By.textContains("Restore")))).isNotNull();
 
-        UiObject2 clickableView = mUiDevice.findObject(By.text("Restore"));
+        UiObject2 clickableView = mUiDevice.findObject(By.res(SYSTEM_PACKAGE_NAME, "button1"));
         if (clickableView == null) {
             Assert.fail("Restore button not shown");
         }
