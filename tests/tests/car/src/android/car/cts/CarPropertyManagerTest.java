@@ -1498,8 +1498,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(possibleEnumValues)
                 .setDependentOnProperty(VehiclePropertyIds.HANDS_ON_DETECTION_ENABLED,
-                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
-                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
+                        ImmutableSet.of(Car.PERMISSION_READ_DRIVER_MONITORING_SETTINGS,
+                                Car.PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS))
                 .verifyErrorStates()
                 .addReadPermission(Car.PERMISSION_READ_DRIVER_MONITORING_STATES)
                 .build();
@@ -1529,8 +1529,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Integer.class, mCarPropertyManager)
                 .setAllPossibleEnumValues(possibleEnumValues)
                 .setDependentOnProperty(VehiclePropertyIds.HANDS_ON_DETECTION_ENABLED,
-                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
-                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
+                        ImmutableSet.of(Car.PERMISSION_READ_DRIVER_MONITORING_SETTINGS,
+                                Car.PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS))
                 .verifyErrorStates()
                 .addReadPermission(Car.PERMISSION_READ_DRIVER_MONITORING_STATES)
                 .build();
