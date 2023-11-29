@@ -19,6 +19,7 @@ import static android.Manifest.permission.WRITE_MEDIA_STORAGE;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
+import static android.content.pm.PackageManager.FEATURE_WATCH;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
@@ -728,9 +729,9 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
     public void testDownload_onMediaStoreDownloadsDeleted() throws Exception {
         final PackageManager pm = mContext.getPackageManager();
 
-        // skip this test for automotive devices which uses FrameworkPackageStubs for
+        // skip this test for automotive and wearable devices which uses FrameworkPackageStubs for
         // a fake DocumentsUI package.
-        assumeFalse(pm.hasSystemFeature(FEATURE_AUTOMOTIVE));
+        assumeFalse(pm.hasSystemFeature(FEATURE_AUTOMOTIVE) || pm.hasSystemFeature(FEATURE_WATCH));
 
         // setup for activity
         GetResultActivity activity = setUpForActivity();
