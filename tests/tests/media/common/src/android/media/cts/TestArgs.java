@@ -20,13 +20,17 @@ import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import java.util.regex.Pattern;
+
 /**
  * Contains arguments passed to the tests.
  */
 public final class TestArgs {
     private final static String TAG = "TestArgs";
     private static final String CODEC_PREFIX_KEY = "codec-prefix";
+    public static final String CODEC_FILTER_KEY = "codec-filter";
     private static final String CODEC_PREFIX;
+    public static Pattern codecFilter;
     private static final String MEDIA_TYPE_PREFIX_KEY = "media-type-prefix";
     private static final String MEDIA_TYPE_PREFIX;
 
@@ -34,6 +38,10 @@ public final class TestArgs {
         android.os.Bundle args = InstrumentationRegistry.getArguments();
         CODEC_PREFIX = args.getString(CODEC_PREFIX_KEY);
         MEDIA_TYPE_PREFIX = args.getString(MEDIA_TYPE_PREFIX_KEY);
+        String codecFilterStr = args.getString(CODEC_FILTER_KEY);
+        if (codecFilterStr != null) {
+            codecFilter = Pattern.compile(codecFilterStr);
+        }
     }
 
     public static boolean shouldSkipMediaType(String mediaType) {
@@ -45,7 +53,8 @@ public final class TestArgs {
     }
 
     public static boolean shouldSkipCodec(String name) {
-        if (CODEC_PREFIX != null && !name.startsWith(CODEC_PREFIX)) {
+        if ((CODEC_PREFIX != null && !name.startsWith(CODEC_PREFIX))
+                || (codecFilter != null && codecFilter.matcher(name).matches())) {
             Log.d(TAG, "Skipping tests for codec: " + name + " as codec prefix is " + CODEC_PREFIX);
             return true;
         }
