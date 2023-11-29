@@ -26,6 +26,7 @@ import static android.car.hardware.property.CarPropertyManager.SetPropertyResult
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
 
@@ -6865,17 +6866,184 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     int nightMode = VehiclePropertyIds.NIGHT_MODE;
                     CarPropertyConfig<?> carPropertyConfig =
                             mCarPropertyManager.getCarPropertyConfig(nightMode);
-                    assumeTrue("The CarPropertyConfig of night mode does not exist",
-                            carPropertyConfig != null);
-                    CarPropertyEventCounter nightModeListener = new CarPropertyEventCounter();
-                    nightModeListener.resetCountDownLatch(ONCHANGE_RATE_EVENT_COUNTER);
+                    // Night mode is required in CDD.
+                    assertWithMessage("Night mode property is not supported")
+                            .that(carPropertyConfig).isNotNull();
+
+                    CarPropertyEventCounter listener = new CarPropertyEventCounter();
+                    listener.resetCountDownLatch(ONCHANGE_RATE_EVENT_COUNTER);
                     mCarPropertyManager.subscribePropertyEvents(
                             List.of(new Subscription.Builder(nightMode).addAreaId(0).build()),
-                            /* callbackExecutor= */ null, nightModeListener);
-                    nightModeListener.assertOnChangeEventCalled();
-                    assertThat(nightModeListener.receivedEvent(nightMode)).isEqualTo(1);
-                    mCarPropertyManager.unsubscribePropertyEvents(nightModeListener);
+                            /* callbackExecutor= */ null, listener);
+
+                    listener.assertOnChangeEventCalled();
+                    assertWithMessage("Must receive expected number of initial value events").that(
+                            listener.receivedEvent(nightMode)).isEqualTo(1);
+
+                    mCarPropertyManager.unsubscribePropertyEvents(listener);
                 });
+    }
+
+    @Test
+    @ApiTest(
+            apis = {
+                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
+                    "android.car.hardware.property.CarPropertyManager#unregisterCallback"
+            })
+    @RequiresFlagsEnabled({Flags.FLAG_BATCHED_SUBSCRIPTIONS, Flags.FLAG_VARIABLE_UPDATE_RATE})
+    public void testSubscribePropertyEvents_withPropertyIdCallback() throws Exception {
+        runWithShellPermissionIdentity(
+                () -> {
+                    // Test for on_change properties
+                    int tirePressure = VehiclePropertyIds.TIRE_PRESSURE;
+                    CarPropertyConfig<?> carPropertyConfig =
+                            mCarPropertyManager.getCarPropertyConfig(tirePressure);
+
+                    assumeFalse("Tire pressure property is not supported",
+                            carPropertyConfig == null);
+
+                    int areaIdCount = carPropertyConfig.getAreaIdConfigs().size();
+
+                    assertWithMessage("No area IDs are defined for tire pressure").that(areaIdCount)
+                            .isNotEqualTo(0);
+
+                    // We should receive the current tire pressure value for all areaIds.
+                    CarPropertyEventCounter listener = new CarPropertyEventCounter();
+                    listener.resetCountDownLatch(areaIdCount);
+                    mCarPropertyManager.subscribePropertyEvents(tirePressure, listener);
+
+                    // VUR might be enabled if property supports it, we only guarantee to receive
+                    // the initial property value events.
+                    listener.assertOnChangeEventCalled();
+                    assertWithMessage("Must receive expected number of initial value events").that(
+                            listener.receivedEvent(tirePressure)).isAtLeast(areaIdCount);
+
+                    mCarPropertyManager.unregisterCallback(listener);
+                }, Car.PERMISSION_TIRES);
+    }
+
+    @Test
+    @ApiTest(
+            apis = {
+                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
+                    "android.car.hardware.property.CarPropertyManager#unregisterCallback"
+            })
+    @RequiresFlagsEnabled({Flags.FLAG_BATCHED_SUBSCRIPTIONS, Flags.FLAG_VARIABLE_UPDATE_RATE})
+    public void testSubscribePropertyEvents_withPropertyIdAreaIdCallback() throws Exception {
+        runWithShellPermissionIdentity(
+                () -> {
+                    // Test for on_change properties
+                    int tirePressure = VehiclePropertyIds.TIRE_PRESSURE;
+                    CarPropertyConfig<Float> carPropertyConfig = (CarPropertyConfig<Float>)
+                            mCarPropertyManager.getCarPropertyConfig(tirePressure);
+
+                    assumeFalse("Tire pressure property is not supported",
+                            carPropertyConfig == null);
+
+                    List<AreaIdConfig<Float>> areaIdConfigs = carPropertyConfig.getAreaIdConfigs();
+                    int areaIdCount = areaIdConfigs.size();
+
+                    assertWithMessage("No area IDs are defined for tire pressure").that(areaIdCount)
+                            .isNotEqualTo(0);
+
+                    // We test the first areaId.
+                    int areaId = areaIdConfigs.get(0).getAreaId();
+
+                    // We should receive the current tire pressure value for all areaIds.
+                    CarPropertyEventCounter listener = new CarPropertyEventCounter();
+                    listener.resetCountDownLatch(1);
+                    mCarPropertyManager.subscribePropertyEvents(tirePressure, areaId, listener);
+
+                    // VUR might be enabled if property supports it, we only guarantee to receive
+                    // the initial property value events.
+                    listener.assertOnChangeEventCalled();
+                    assertWithMessage("Must receive expected number of initial value events").that(
+                            listener.receivedEvent(tirePressure)).isAtLeast(1);
+
+                    mCarPropertyManager.unregisterCallback(listener);
+                }, Car.PERMISSION_TIRES);
+    }
+
+    @Test
+    @ApiTest(
+            apis = {
+                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
+                    "android.car.hardware.property.CarPropertyManager#unregisterCallback"
+            })
+    @RequiresFlagsEnabled({Flags.FLAG_BATCHED_SUBSCRIPTIONS, Flags.FLAG_VARIABLE_UPDATE_RATE})
+    public void testSubscribePropertyEvents_withPropertyIdUpdateRateHzCallback() throws Exception {
+        runWithShellPermissionIdentity(
+                () -> {
+                    // Test for on_change properties
+                    int tirePressure = VehiclePropertyIds.TIRE_PRESSURE;
+                    CarPropertyConfig<?> carPropertyConfig =
+                            mCarPropertyManager.getCarPropertyConfig(tirePressure);
+
+                    assumeFalse("Tire pressure property is not supported",
+                            carPropertyConfig == null);
+
+                    int areaIdCount = carPropertyConfig.getAreaIdConfigs().size();
+
+                    assertWithMessage("No area IDs are defined for tire pressure").that(areaIdCount)
+                            .isNotEqualTo(0);
+
+                    // We should receive the current tire pressure value for all areaIds.
+                    CarPropertyEventCounter listener = new CarPropertyEventCounter();
+                    listener.resetCountDownLatch(areaIdCount);
+                    mCarPropertyManager.subscribePropertyEvents(
+                            tirePressure, /* updateRateHz= */ 10f, listener);
+
+                    // VUR might be enabled if property supports it, we only guarantee to receive
+                    // the initial property value events.
+                    listener.assertOnChangeEventCalled();
+                    assertWithMessage("Must receive expected number of initial value events").that(
+                            listener.receivedEvent(tirePressure)).isAtLeast(areaIdCount);
+
+                    mCarPropertyManager.unregisterCallback(listener);
+                }, Car.PERMISSION_TIRES);
+    }
+
+
+    @Test
+    @ApiTest(
+            apis = {
+                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
+                    "android.car.hardware.property.CarPropertyManager#unregisterCallback"
+            })
+    @RequiresFlagsEnabled({Flags.FLAG_BATCHED_SUBSCRIPTIONS, Flags.FLAG_VARIABLE_UPDATE_RATE})
+    public void testSubscribePropertyEvents_withPropertyIdAreaIdUpdateRateHzCallback()
+            throws Exception {
+        runWithShellPermissionIdentity(
+                () -> {
+                    // Test for on_change properties
+                    int tirePressure = VehiclePropertyIds.TIRE_PRESSURE;
+                    CarPropertyConfig<Float> carPropertyConfig = (CarPropertyConfig<Float>)
+                            mCarPropertyManager.getCarPropertyConfig(tirePressure);
+
+                    assumeFalse("Tire pressure property is not supported",
+                            carPropertyConfig == null);
+
+                    List<AreaIdConfig<Float>> areaIdConfigs = carPropertyConfig.getAreaIdConfigs();
+                    int areaIdCount = areaIdConfigs.size();
+
+                    assertWithMessage("No area IDs are defined for tire pressure").that(areaIdCount)
+                            .isNotEqualTo(0);
+
+                    // We test the first areaId.
+                    int areaId = areaIdConfigs.get(0).getAreaId();
+                    CarPropertyEventCounter listener = new CarPropertyEventCounter();
+                    listener.resetCountDownLatch(1);
+                    mCarPropertyManager.subscribePropertyEvents(
+                            tirePressure, areaId, UI_RATE_EVENT_COUNTER, listener);
+
+                    // VUR might be enabled if property supports it, we only guarantee to receive
+                    // the initial property value events.
+                    listener.assertOnChangeEventCalled();
+                    assertWithMessage("Must receive expected number of property events").that(
+                            listener.receivedEvent(tirePressure)).isAtLeast(1);
+
+                    mCarPropertyManager.unregisterCallback(listener);
+                }, Car.PERMISSION_TIRES);
     }
 
     @Test
