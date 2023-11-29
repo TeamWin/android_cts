@@ -425,6 +425,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @ApiTest(apis = {"android.inputmethodservice.InputMethodService#showSoftInput"})
     @Test
     public void testSoftInputStateAlwaysVisibleFocusEditorAfterLaunch() throws Exception {
+        Assume.assumeFalse(isPreventImeStartup());
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         try (MockImeSession imeSession = createTestImeSession()) {
             final ImeEventStream stream = imeSession.openEventStream();
