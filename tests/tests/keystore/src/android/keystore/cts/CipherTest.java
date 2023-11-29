@@ -750,7 +750,7 @@ public class CipherTest {
     }
 
     // TODO(b/299298338): remove this test, which tests for the wrong behavior
-    @RequiresFlagsDisabled(android.security.Flags.FLAG_FIX_UNLOCKED_DEVICE_REQUIRED_KEYS)
+    @RequiresFlagsDisabled(android.security.Flags.FLAG_FIX_UNLOCKED_DEVICE_REQUIRED_KEYS_V2)
     @Test
     public void testUnlockedDeviceRequiredKeysRequireSecureLockScreen() throws Exception {
         for (String algorithm : BASIC_ALGORITHMS) {
@@ -759,7 +759,7 @@ public class CipherTest {
         }
     }
 
-    @RequiresFlagsEnabled(android.security.Flags.FLAG_FIX_UNLOCKED_DEVICE_REQUIRED_KEYS)
+    @RequiresFlagsEnabled(android.security.Flags.FLAG_FIX_UNLOCKED_DEVICE_REQUIRED_KEYS_V2)
     @Test
     public void testUnlockedDeviceRequiredKeysDoNotRequireSecureLockScreen() throws Exception {
         for (String algorithm : BASIC_ALGORITHMS) {
@@ -768,7 +768,7 @@ public class CipherTest {
     }
 
     // TODO(b/299298338): remove this test, which tests for the wrong behavior
-    @RequiresFlagsDisabled(android.security.Flags.FLAG_FIX_UNLOCKED_DEVICE_REQUIRED_KEYS)
+    @RequiresFlagsDisabled(android.security.Flags.FLAG_FIX_UNLOCKED_DEVICE_REQUIRED_KEYS_V2)
     @Test
     public void testUnlockedDeviceRequiredKeysAreInvalidatedByLockRemoval() throws Exception {
         assumeTrue(TestUtils.hasSecureLockScreen(getContext()));
@@ -786,7 +786,7 @@ public class CipherTest {
         }
     }
 
-    @RequiresFlagsEnabled(android.security.Flags.FLAG_FIX_UNLOCKED_DEVICE_REQUIRED_KEYS)
+    @RequiresFlagsEnabled(android.security.Flags.FLAG_FIX_UNLOCKED_DEVICE_REQUIRED_KEYS_V2)
     @Test
     public void testUnlockedDeviceRequiredKeysAreNotInvalidatedByLockRemoval() throws Exception {
         assumeTrue(TestUtils.hasSecureLockScreen(getContext()));
