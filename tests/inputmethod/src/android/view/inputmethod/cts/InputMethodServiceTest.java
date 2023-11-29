@@ -104,6 +104,7 @@ import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -210,6 +211,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
 
     @Test
     public void testSwitchInputMethod_verifiesEnabledState() throws Exception {
+        Assume.assumeFalse(isPreventImeStartup());
         SystemUtil.runShellCommand("ime disable " + OTHER_IME_ID);
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
@@ -233,6 +235,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
     }
     @Test
     public void testSwitchInputMethodWithSubtype_verifiesEnabledState() throws Exception {
+        Assume.assumeFalse(isPreventImeStartup());
         SystemUtil.runShellCommand("ime disable " + OTHER_IME_ID);
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
