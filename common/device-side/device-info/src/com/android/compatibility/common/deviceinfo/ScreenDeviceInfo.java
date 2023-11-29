@@ -18,16 +18,22 @@ package com.android.compatibility.common.deviceinfo;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.hardware.devicestate.DeviceStateManager;
+import android.os.Build;
 import android.os.Bundle;
-import android.server.wm.jetpack.utils.SidecarUtil;
 import android.server.wm.jetpack.utils.ExtensionUtil;
+import android.server.wm.jetpack.utils.SidecarUtil;
 import android.server.wm.jetpack.utils.Version;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
 
+import androidx.annotation.RequiresApi;
+
 import com.android.compatibility.common.util.DeviceInfoStore;
 import com.android.compatibility.common.util.DummyActivity;
+
+import java.io.IOException;
 
 /**
  * Screen device info collector.
@@ -39,6 +45,7 @@ public final class ScreenDeviceInfo extends DeviceInfo {
         DisplayMetrics metrics = new DisplayMetrics();
         WindowManager windowManager =
                 (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+
         Display display = windowManager.getDefaultDisplay();
         display.getRealMetrics(metrics);
 
@@ -55,6 +62,11 @@ public final class ScreenDeviceInfo extends DeviceInfo {
 
         // Add WindowManager Jetpack Library version and available display features.
         addDisplayFeaturesIfPresent(store);
+
+        // Add device states from DeviceStateManager if available.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            addDeviceStatesIfAvailable(store);
+        }
     }
 
     private void addDisplayFeaturesIfPresent(DeviceInfoStore store) throws Exception {
@@ -82,6 +94,17 @@ public final class ScreenDeviceInfo extends DeviceInfo {
                     new Bundle());
             int[] displayFeatureTypes = SidecarUtil.getSidecarDisplayFeatureTypes(activity);
             store.addArrayResult("display_features", displayFeatureTypes);
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    private void addDeviceStatesIfAvailable(DeviceInfoStore store) throws IOException {
+        DeviceStateManager deviceStateManager = getContext().getSystemService(
+                DeviceStateManager.class);
+
+        // Get the supported device states on device if DeviceStateManager is available
+        if (deviceStateManager != null) {
+            store.addArrayResult("device_states", deviceStateManager.getSupportedStates());
         }
     }
 
