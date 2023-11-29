@@ -26,6 +26,7 @@ import static android.widget.RemoteViews.MARGIN_START;
 import static android.widget.RemoteViews.MARGIN_TOP;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
 import static junit.framework.Assert.fail;
 
@@ -1997,15 +1998,25 @@ public class RemoteViewsTest {
                 () -> mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult)));
     }
 
-    // Change the night mode and return the previous mode
-    private String changeNightMode(boolean nightMode) {
+    private String getCurrentNightMode() {
         final String nightModeText = runShellCommand("cmd uimode night");
         final String[] nightModeSplit = nightModeText.split(":");
         if (nightModeSplit.length != 2) {
             fail("Failed to get initial night mode value from " + nightModeText);
         }
-        String previousMode = nightModeSplit[1].trim();
-        runShellCommand("cmd uimode night " + (nightMode ? "yes" : "no"));
+        return nightModeSplit[1].trim();
+    }
+
+    // Change the night mode and return the previous mode
+    private String changeNightMode(boolean nightMode) throws Exception {
+        String previousMode = getCurrentNightMode();
+        String wantedNightMode = nightMode ? "yes" : "no";
+        runShellCommand("cmd uimode night " + wantedNightMode);
+        waitUntil(
+                /* message= */ "Night mode did not change to " + wantedNightMode,
+                /* timeoutSecond= */ 5,
+                /* predicate= */ () -> wantedNightMode.equals(getCurrentNightMode())
+        );
         return previousMode;
     }
 
