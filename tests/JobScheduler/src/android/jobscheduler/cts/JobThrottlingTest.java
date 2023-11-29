@@ -436,6 +436,7 @@ public class JobThrottlingTest {
         try (TestNotificationListener.NotificationHelper notificationHelper =
                      new TestNotificationListener.NotificationHelper(
                              mContext, TestAppInterface.TEST_APP_PACKAGE)) {
+            mNetworkingHelper.setAllNetworksEnabled(true);
             mTestAppInterface.postUiInitiatingNotification(
                     Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
                     Map.of(TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY));
