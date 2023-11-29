@@ -140,14 +140,14 @@ public class VibrationEffectXmlSerializationTest {
 
                 <!-- comment before root tag -->
 
-                <vibration>
+                <vibration-effect>
                     <!--
                             multi-lined
                             comment
                     -->
                     <predefined-effect name="click"/>
                     <!-- comment before closing root tag -->
-                </vibration>
+                </vibration-effect>
 
                 <!-- comment after root tag -->
                 """))
@@ -161,14 +161,14 @@ public class VibrationEffectXmlSerializationTest {
 
                 <!-- comment before root tag -->
 
-                <vibration>
+                <vibration-effect>
                     <!--
                             multi-lined
                             comment
                     -->
                     <predefined-effect name="click"/>
                     <!-- comment before closing root tag -->
-                </vibration>
+                </vibration-effect>
 
                 <!-- comment after root tag -->
                 """).getVibrationEffects())
@@ -180,19 +180,19 @@ public class VibrationEffectXmlSerializationTest {
                 <!-- comment before root tag -->
                 <vibration-select>
                     <!-- comment before vibration tag -->
-                    <vibration>
+                    <vibration-effect>
                         <!--
                                 multi-lined
                                 comment
                         -->
                         <predefined-effect name="click"/>
                         <!-- comment before closing vibration tag -->
-                    </vibration>
+                    </vibration-effect>
                     <!-- comment after vibration tag -->
-                    <vibration>
+                    <vibration-effect>
                         <!-- single-lined comment-->
                         <predefined-effect name="tick"/>
-                    </vibration>
+                    </vibration-effect>
                     <!-- comment before closing root tag -->
                 </vibration-select>
                 <!-- comment after root tag -->
@@ -211,12 +211,12 @@ public class VibrationEffectXmlSerializationTest {
         // Malformed vibration tag
         assertFailedParse("<vibration");
         // Open vibration tag is never closed
-        assertFailedParse("<vibration>");
+        assertFailedParse("<vibration-effect>");
         // Open predefined-effect tag is never closed before vibration is closed
-        assertFailedParse("<vibration><predefined-effect name=\"click\"></vibration>");
+        assertFailedParse("<vibration-effect><predefined-effect name=\"click\"></vibration-effect>");
         // Root tags mismatch
-        assertFailedParse("<vibration-select></vibration>");
-        assertFailedParse("<vibration></vibration-select>");
+        assertFailedParse("<vibration-select></vibration-effect>");
+        assertFailedParse("<vibration-effect></vibration-select>");
     }
 
     @Test
@@ -224,16 +224,16 @@ public class VibrationEffectXmlSerializationTest {
         assertFailedParse(
                 """
                 # some invalid initial text
-                <vibration>
+                <vibration-effect>
                     <predefined-effect name="click"/>
-                </vibration>
+                </vibration-effect>
                 """);
         assertFailedParse(
                 """
                 <invalid-first-tag/>
-                <vibration>
+                <vibration-effect>
                     <predefined-effect name="click"/>
-                </vibration>
+                </vibration-effect>
                 """);
         assertFailedParse(
                 """
@@ -244,14 +244,14 @@ public class VibrationEffectXmlSerializationTest {
         assertFailedParse(
                 """
                 <supposed-to-be-vibration-select>
-                    <vibration><predefined-effect name="click"/></vibration>
+                    <vibration-effect><predefined-effect name="click"/></vibration-effect>
                 </supposed-to-be-vibration-select>
                 """);
         assertFailedParse(
                 """
                 <rand-tag-name>
                     <vibration-select>
-                        <vibration><predefined-effect name="click"/></vibration>
+                        <vibration-effect><predefined-effect name="click"/></vibration-effect>
                     </vibration-select>
                 </rand-tag-name>
                 """);
@@ -261,40 +261,40 @@ public class VibrationEffectXmlSerializationTest {
     public void testParseInvalidElementsOnEndIsNull() throws Exception {
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <predefined-effect name="click"/>
-                </vibration>
+                </vibration-effect>
                 # some invalid text
                 """);
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <predefined-effect name="click"/>
-                </vibration>
+                </vibration-effect>
                 <invalid-trailing-tag/>
                 """);
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <predefined-effect name="click"/>
                     <invalid-trailing-end-tag/>
-                </vibration>
+                </vibration-effect>
                 """);
         assertFailedParse(
                 """
                 <vibration-select>
-                    <vibration>
+                    <vibration-effect>
                         <predefined-effect name="click"/>
-                    </vibration>
+                    </vibration-effect>
                     <invalid-trailing-end-tag/>
                 </vibration-select>
                 """);
         assertFailedParse(
                 """
                 <vibration-select>
-                    <vibration>
+                    <vibration-effect>
                         <predefined-effect name="click"/>
-                    </vibration>
+                    </vibration-effect>
                 </vibration-select>
                 <invalid-trailing-end-tag/>
                 """);
@@ -314,12 +314,12 @@ public class VibrationEffectXmlSerializationTest {
     public void testParseMultipleVibrationTagsIsNull() throws Exception {
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <predefined-effect name="click"/>
-                </vibration>
-                <vibration>
+                </vibration-effect>
+                <vibration-effect>
                     <predefined-effect name="click"/>
-                </vibration>
+                </vibration-effect>
                 """);
     }
 
@@ -328,14 +328,14 @@ public class VibrationEffectXmlSerializationTest {
         assertFailedParse(
                 """
                 <vibration-select>
-                    <vibration>
+                    <vibration-effect>
                         <predefined-effect name="click"/>
-                    </vibration>
+                    </vibration-effect>
                 </vibration-select>
                 <vibration-select>
-                    <vibration>
+                    <vibration-effect>
                         <predefined-effect name="tick"/>
-                    </vibration>
+                    </vibration-effect>
                 </vibration-select>
                 """);
     }
@@ -343,20 +343,20 @@ public class VibrationEffectXmlSerializationTest {
     @Test
     public void testParseEffectTagWrongAttributesIsNull() throws Exception {
         // Missing name attribute
-        assertFailedParse("<vibration><predefined-effect/></vibration>");
+        assertFailedParse("<vibration-effect><predefined-effect/></vibration-effect>");
 
         // Wrong attribute
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <predefined-effect id="0"/>
-                </vibration>
+                </vibration-effect>
                 """);
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <predefined-effect name="click" extra="0"/>
-                </vibration>
+                </vibration-effect>
                 """);
     }
 
@@ -365,19 +365,19 @@ public class VibrationEffectXmlSerializationTest {
         assertFailedParse(
                 """
                 <vibration-select>
-                    <predefined-effect name="click"/></vibration>
+                    <predefined-effect name="click"/></vibration-effect>
                 </vibration-select>
                 """);
         assertFailedParse(
                 """
                 <vibration-select>
-                    <vibration><predefined-effect name="bad_click"/></vibration>
+                    <vibration-effect><predefined-effect name="bad_click"/></vibration-effect>
                 </vibration-select>
                 """);
         assertFailedParse(
                 """
                 <vibration-select>
-                    <vibration><predefined-effect name="click" rand_attr="100"/></vibration>
+                    <vibration-effect><predefined-effect name="click" rand_attr="100"/></vibration-effect>
                 </vibration-select>
                 """);
     }
@@ -387,17 +387,17 @@ public class VibrationEffectXmlSerializationTest {
         // Hidden effect id
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <predefined-effect name="texture_tick"/>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Non-default fallback flag
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <predefined-effect name="tick" fallback="false"/>
-                </vibration>
+                </vibration-effect>
                 """);
     }
 
@@ -406,25 +406,25 @@ public class VibrationEffectXmlSerializationTest {
         // Missing name attribute
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <primitive-effect scale="1" delayMs="10"/>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Wrong attribute "delay" instead of "delayMs"
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <primitive-effect name="click" delay="10"/>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Wrong attribute
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <primitive-effect name="click" extra="0"/>
-                </vibration>
+                </vibration-effect>
                 """);
     }
 
@@ -433,23 +433,23 @@ public class VibrationEffectXmlSerializationTest {
         // Waveform with wrong attribute
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect extra="0">
                         <waveform-entry durationMs="10" amplitude="10"/>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Repeating with wrong attribute
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <repeating extra="0">
                             <waveform-entry durationMs="10" amplitude="10"/>
                         </repeating>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
     }
 
@@ -458,41 +458,41 @@ public class VibrationEffectXmlSerializationTest {
         // Missing amplitude attribute
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <waveform-entry durationMs="10"/>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Missing durationMs attribute
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <waveform-entry amplitude="100"/>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Wrong attribute "duration" instead of "durationMs"
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <waveform-entry amplitude="100" duration="10"/>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Wrong attribute
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <waveform-entry amplitude="100" durationMs="10" extra="0"/>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
     }
 
@@ -501,9 +501,9 @@ public class VibrationEffectXmlSerializationTest {
         // Invalid effect name
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <predefined-effect name="lick"/>
-                </vibration>
+                </vibration-effect>
                 """);
     }
 
@@ -511,28 +511,28 @@ public class VibrationEffectXmlSerializationTest {
     public void testParsePredefinedFollowedAnyEffectIsNull() throws Exception {
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <predefined-effect name="click"/>
                     <predefined-effect name="tick"/>
-                </vibration>
+                </vibration-effect>
                 """);
 
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <predefined-effect name="click"/>
                     <primitive-effect name="click"/>
-                </vibration>
+                </vibration-effect>
                 """);
 
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <predefined-effect name="click"/>
                     <waveform-effect>
                         <waveform-entry amplitude="default" durationMs="10"/>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
     }
 
@@ -540,11 +540,11 @@ public class VibrationEffectXmlSerializationTest {
     public void testParseRepeatingPredefinedEffectsIsNull() throws Exception {
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <repeating>
                         <predefined-effect name="click"/>
                     </repeating>
-                </vibration>
+                </vibration-effect>
                 """);
     }
 
@@ -553,33 +553,33 @@ public class VibrationEffectXmlSerializationTest {
         // Predefined inside predefined effect
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <predefined-effect name="click">
                         <predefined-effect name="click"/>
                     </predefined-effect>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Primitive inside predefined effect.
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <predefined-effect name="click">
                         <primitive-effect name="click"/>
                     </predefined-effect>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Waveform inside predefined effect.
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <predefined-effect name="click">
                         <waveform-effect>
                             <waveform-entry amplitude="default" durationMs="10"/>
                         </waveform-effect>"
                     </predefined-effect>"
-                </vibration>
+                </vibration-effect>
                 """);
     }
 
@@ -588,43 +588,43 @@ public class VibrationEffectXmlSerializationTest {
         // Invalid primitive name.
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <primitive-effect name="lick"/>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Invalid primitive scale.
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <primitive-effect name="click" scale="-1"/>
-                </vibration>
+                </vibration-effect>
                 """);
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <primitive-effect name="click" scale="2"/>
-                </vibration>
+                </vibration-effect>
                 """);
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <primitive-effect name="click" scale="NaN"/>
-                </vibration>
+                </vibration-effect>
                 """);
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <primitive-effect name="click" scale="Infinity"/>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Invalid primitive delay.
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <primitive-effect name="click" delayMs="-1"/>
-                </vibration>
+                </vibration-effect>
                 """);
     }
 
@@ -632,19 +632,19 @@ public class VibrationEffectXmlSerializationTest {
     public void testParsePrimitiveFollowedByOtherEffectsIsNull() throws Exception {
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <primitive-effect name="click"/>
                     <predefined-effect name="click"/>
-                </vibration>
+                </vibration-effect>
                 """);
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <primitive-effect name="click"/>
                     <waveform-effect>
                         <waveform-entry amplitude="default" durationMs="10"/>
                     </waveform-effect>"
-                </vibration>
+                </vibration-effect>
                 """);
     }
 
@@ -653,33 +653,33 @@ public class VibrationEffectXmlSerializationTest {
         // Predefined inside primitive effect.
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <primitive-effect name="click">
                         <predefined-effect name="click"/>
                     </primitive-effect>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Primitive inside primitive effect.
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <primitive-effect name="click">
                         <primitive-effect name="click"/>
                     </primitive-effect>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Waveform inside primitive effect.
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <primitive-effect name="click">
                         <waveform-effect>
                             <waveform-entry amplitude="default" durationMs="10"/>
                         </waveform-effect>
                     </primitive-effect>
-                </vibration>
+                </vibration-effect>
                 """);
     }
 
@@ -687,12 +687,12 @@ public class VibrationEffectXmlSerializationTest {
     public void testParseRepeatingPrimitivesIsNull() throws Exception {
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <primitive-effect name="click"/>
                     <repeating>
                         <primitive-effect name="tick"/>
                     </repeating>
-                </vibration>
+                </vibration-effect>
                 """);
     }
 
@@ -701,21 +701,21 @@ public class VibrationEffectXmlSerializationTest {
         // Invalid amplitude.
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <waveform-entry durationMs="10" amplitude="-1"/>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Invalid duration.
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <waveform-entry durationMs="-1" amplitude="default"/>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
     }
 
@@ -724,60 +724,60 @@ public class VibrationEffectXmlSerializationTest {
         // Primitive inside waveform or repeating.
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <waveform-entry durationMs="10" amplitude="default"/>
                         <primitive-effect name="click"/>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <waveform-entry durationMs="10" amplitude="default"/>
                         <repeating><primitive-effect name="click"/></repeating>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Predefined inside waveform or repeating.
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <waveform-entry durationMs="10" amplitude="default"/>
                         <predefined-effect name="click"/>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <waveform-entry durationMs="10" amplitude="default"/>
                         <repeating>
                             <predefined-effect name="click"/>
                         </repeating>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Waveform effect inside waveform or repeating.
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <waveform-entry durationMs="10" amplitude="default"/>
                         <waveform-effect>
                             <waveform-entry durationMs="10" amplitude="default"/>
                         </waveform-effect>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <waveform-entry durationMs="10" amplitude="default"/>
                         <repeating>
@@ -786,7 +786,7 @@ public class VibrationEffectXmlSerializationTest {
                             </waveform-effect>
                         </repeating>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
     }
 
@@ -795,26 +795,26 @@ public class VibrationEffectXmlSerializationTest {
         // Empty waveform.
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect></waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Empty repeating block.
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <waveform-entry durationMs="0" amplitude="10"/>
                         <repeating/>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Waveform with multiple repeating blocks.
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <repeating>
                             <waveform-entry durationMs="10" amplitude="default"/>
@@ -823,32 +823,32 @@ public class VibrationEffectXmlSerializationTest {
                             <waveform-entry durationMs="100" amplitude="default"/>
                         </repeating>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Waveform with entries after repeating block.
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <repeating>
                             <waveform-entry durationMs="10" amplitude="default"/>
                         </repeating>
                         <waveform-entry durationMs="100" amplitude="default"/>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
 
         // Waveform with total duration zero.
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <waveform-entry durationMs="0" amplitude="10"/>
                         <waveform-entry durationMs="0" amplitude="20"/>
                         <waveform-entry durationMs="0" amplitude="30"/>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
     }
 
@@ -856,34 +856,34 @@ public class VibrationEffectXmlSerializationTest {
     public void testParseWaveformFollowedAnyEffectIsNull() throws Exception {
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <waveform-entry durationMs="10" amplitude="default"/>
                     </waveform-effect>
                     <predefined-effect name="tick"/>
-                </vibration>
+                </vibration-effect>
                 """);
 
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <waveform-entry durationMs="10" amplitude="default"/>
                     </waveform-effect>
                     <primitive-effect name="click"/>
-                </vibration>
+                </vibration-effect>
                 """);
 
         assertFailedParse(
                 """
-                <vibration>
+                <vibration-effect>
                     <waveform-effect>
                         <waveform-entry durationMs="10" amplitude="default"/>
                     </waveform-effect>
                     <waveform-effect>
                         <waveform-entry amplitude="default" durationMs="10"/>
                     </waveform-effect>
-                </vibration>
+                </vibration-effect>
                 """);
     }
 
@@ -978,12 +978,12 @@ public class VibrationEffectXmlSerializationTest {
                         },
                         """
                         <vibration-select>
-                            <vibration>
+                            <vibration-effect>
                                 <waveform-effect>
                                     <waveform-entry durationMs="10" amplitude="0"/>
                                     <waveform-entry durationMs="20" amplitude="default"/>
                                 </waveform-effect>
-                            </vibration>
+                            </vibration-effect>
                         </vibration-select>
                         """,
                 },
@@ -1003,22 +1003,22 @@ public class VibrationEffectXmlSerializationTest {
                         },
                         """
                         <vibration-select>
-                            <vibration>
+                            <vibration-effect>
                                 <waveform-effect>
                                     <waveform-entry durationMs="1" amplitude="0"/>
                                     <waveform-entry durationMs="2" amplitude="default"/>
                                     <waveform-entry durationMs="3" amplitude="0"/>
                                     <waveform-entry durationMs="4" amplitude="default"/>
                                 </waveform-effect>
-                            </vibration>
-                            <vibration>
+                            </vibration-effect>
+                            <vibration-effect>
                                 <primitive-effect name="tick"/>
                                 <primitive-effect name="click" scale="0.123"/>
                                 <primitive-effect name="low_tick" delayMs="900"/>
                                 <primitive-effect name="spin" scale="0.404" delayMs="9"/>
-                            </vibration>
-                            <vibration><predefined-effect name="click"/></vibration>
-                            <vibration>
+                            </vibration-effect>
+                            <vibration-effect><predefined-effect name="click"/></vibration-effect>
+                            <vibration-effect>
                                 <waveform-effect>
                                     <waveform-entry durationMs="1" amplitude="0"/>
                                     <repeating>
@@ -1027,7 +1027,7 @@ public class VibrationEffectXmlSerializationTest {
                                         <waveform-entry durationMs="3" amplitude="default"/>
                                     </repeating>
                                 </waveform-effect>
-                            </vibration>
+                            </vibration-effect>
                         </vibration-select>
                         """
                 }
@@ -1042,14 +1042,14 @@ public class VibrationEffectXmlSerializationTest {
                         VibrationEffect.createWaveform(new long[]{10, 20, 30, 40},
                                 /* repeat= */ -1),
                         """
-                        <vibration>
+                        <vibration-effect>
                             <waveform-effect>
                                 <waveform-entry durationMs="10" amplitude="0"/>
                                 <waveform-entry durationMs="20" amplitude="default"/>
                                 <waveform-entry durationMs="30" amplitude="0"/>
                                 <waveform-entry durationMs="40" amplitude="default"/>
                             </waveform-effect>
-                        </vibration>
+                        </vibration-effect>
                         """,
                 },
                 new Object[]{
@@ -1057,7 +1057,7 @@ public class VibrationEffectXmlSerializationTest {
                         VibrationEffect.createWaveform(new long[]{100, 200, 300, 400},
                                 /* repeat= */ 2),
                         """
-                        <vibration>
+                        <vibration-effect>
                             <waveform-effect>
                                 <waveform-entry durationMs="100" amplitude="0"/>
                                 <waveform-entry durationMs="200" amplitude="default"/>
@@ -1066,7 +1066,7 @@ public class VibrationEffectXmlSerializationTest {
                                     <waveform-entry durationMs="400" amplitude="default"/>
                                 </repeating>
                             </waveform-effect>
-                        </vibration>
+                        </vibration-effect>
                         """,
                 },
                 new Object[]{
@@ -1075,13 +1075,13 @@ public class VibrationEffectXmlSerializationTest {
                                 new int[]{1, VibrationEffect.DEFAULT_AMPLITUDE, 250},
                                 /* repeat= */ -1),
                         """
-                        <vibration>
+                        <vibration-effect>
                             <waveform-effect>
                                 <waveform-entry amplitude="1" durationMs="100"/>
                                 <waveform-entry amplitude="default" durationMs="200"/>
                                 <waveform-entry durationMs="300" amplitude="250"/>
                             </waveform-effect>
-                        </vibration>
+                        </vibration-effect>
                         """,
                 },
                 new Object[]{
@@ -1089,7 +1089,7 @@ public class VibrationEffectXmlSerializationTest {
                         VibrationEffect.createWaveform(new long[]{123, 456, 789, 0},
                                 new int[]{254, 1, 255, 0}, /* repeat= */ 0),
                         """
-                        <vibration>
+                        <vibration-effect>
                             <waveform-effect>
                                 <repeating>
                                     <waveform-entry durationMs="123" amplitude="254"/>
@@ -1098,14 +1098,14 @@ public class VibrationEffectXmlSerializationTest {
                                     <waveform-entry durationMs="0" amplitude="0"/>
                                 </repeating>
                             </waveform-effect>
-                        </vibration>
+                        </vibration-effect>
                         """,
                 },
                 new Object[]{
                         // Predefined effect
                         VibrationEffect.createPredefined(EFFECT_CLICK),
                         """
-                        <vibration><predefined-effect name="click"/></vibration>
+                        <vibration-effect><predefined-effect name="click"/></vibration-effect>
                         """,
                 },
                 new Object[]{
@@ -1117,12 +1117,12 @@ public class VibrationEffectXmlSerializationTest {
                                 .addPrimitive(PRIMITIVE_SPIN, 0.6364f, 7)
                                 .compose(),
                         """
-                        <vibration>
+                        <vibration-effect>
                             <primitive-effect name="click"/>
                             <primitive-effect name="tick" scale="0.2497"/>
                             <primitive-effect name="low_tick" delayMs="356"/>
                             <primitive-effect name="spin" scale="0.6364" delayMs="7"/>
-                        </vibration>
+                        </vibration-effect>
                         """,
                 },
         };
