@@ -1,5 +1,7 @@
 package android.nfc.cts;
 
+import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
+
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -21,6 +23,7 @@ import android.os.RemoteException;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.provider.Settings;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.core.app.ApplicationProvider;
@@ -294,17 +297,37 @@ public class NfcAdapterTest {
     @Test
     @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_OBSERVE_MODE)
     public void testAllowTransaction() {
-        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-        boolean result = adapter.allowTransaction();
-        Assert.assertTrue(result);
+        try {
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().adoptShellPermissionIdentity(WRITE_SECURE_SETTINGS);
+            Settings.Secure.putString(mContext.getContentResolver(),
+                    "nfc_payment_default_component",
+                    "android.nfc.cts/android.nfc.cts.CtsMyHostApduService");
+            NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+            boolean result = adapter.allowTransaction();
+            Assert.assertTrue(result);
+        } finally {
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().dropShellPermissionIdentity();
+        }
     }
 
     @Test
     @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_OBSERVE_MODE)
     public void testDisallowTransaction() {
-        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-        boolean result = adapter.disallowTransaction();
-        Assert.assertTrue(result);
+        try {
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().adoptShellPermissionIdentity(WRITE_SECURE_SETTINGS);
+            Settings.Secure.putString(mContext.getContentResolver(),
+                    "nfc_payment_default_component",
+                    "android.nfc.cts/android.nfc.cts.CtsMyHostApduService");
+            NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+            boolean result = adapter.disallowTransaction();
+            Assert.assertTrue(result);
+        } finally {
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().dropShellPermissionIdentity();
+        }
     }
 
     private class CtsReaderCallback implements NfcAdapter.ReaderCallback {
