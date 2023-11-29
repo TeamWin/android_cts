@@ -29,7 +29,6 @@ import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction
 import static android.view.cts.util.ASurfaceControlTestUtils.reparent;
 
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -91,7 +90,6 @@ public class ASurfaceControlBackPressureTest {
     @Before
     public void setup() {
         mActivity = mActivityRule.getActivity();
-        assumeFalse(mActivity.isOnWatch());
     }
 
     @After
