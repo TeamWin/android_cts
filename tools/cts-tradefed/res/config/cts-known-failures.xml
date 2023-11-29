@@ -317,4 +317,7 @@
 
     <!-- b/294253316 -->
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.WindowUntrustedTouchTest#testWhenOneCustomToastWindowAndOneSawWindowBelowThreshold_blocksTouch" />
+
+    <!-- b/307489638 -->
+    <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.satellite.cts.SatelliteManagerTestOnMockService" />
 </configuration>
