@@ -941,6 +941,9 @@ public class ItsService extends Service implements SensorEventListener {
                 } else if ("getSupportedVideoQualities".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
                     doGetSupportedVideoQualities(cameraId);
+                } else if ("doGetSupportedVideoSizesCapped".equals(cmdObj.getString("cmdName"))) {
+                    String cameraId = cmdObj.getString("cameraId");
+                    doGetSupportedVideoSizesCapped(cameraId);
                 } else if ("getSupportedPreviewSizes".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
                     doGetSupportedPreviewSizes(cameraId);
@@ -2241,6 +2244,33 @@ public class ItsService extends Service implements SensorEventListener {
             appendSupportProfile(profiles, entry.getValue(), entry.getKey(), cameraId);
         }
         mSocketRunnableObj.sendResponse("supportedVideoQualities", profiles.toString());
+    }
+
+    private void doGetSupportedVideoSizesCapped(String id) throws ItsException {
+        int cameraId = Integer.parseInt(id);
+        StringBuilder profiles = new StringBuilder();
+        // s1440p which is the max supported stream size in a combination, when preview
+        // stabilization is on.
+        Size maxPreviewSize = new Size(1920, 1440);
+        ArrayList<Size> outputSizes = new ArrayList<Size>();
+        for (Map.Entry<Integer, String> entry : CAMCORDER_PROFILE_QUALITIES_MAP.entrySet()) {
+            if (CamcorderProfile.hasProfile(cameraId, entry.getKey())) {
+                CamcorderProfile camcorderProfile = getCamcorderProfile(cameraId, entry.getKey());
+                assert(camcorderProfile != null);
+                Size videoSize = new Size(camcorderProfile.videoFrameWidth,
+                        camcorderProfile.videoFrameHeight);
+                outputSizes.add(videoSize);
+            }
+        }
+        Log.i(TAG, "Supported video sizes: " + outputSizes.toString());
+        String response = outputSizes.stream()
+                .distinct()
+                .filter(s -> s.getWidth() * s.getHeight()
+                        <= maxPreviewSize.getWidth() * maxPreviewSize.getHeight())
+                .sorted(Comparator.comparingInt(s -> s.getWidth() * s.getHeight()))
+                .map(Size::toString)
+                .collect(Collectors.joining(";"));
+        mSocketRunnableObj.sendResponse("supportedVideoSizes", response);
     }
 
     private void appendSupportProfile(StringBuilder profiles, String name, int profile,
