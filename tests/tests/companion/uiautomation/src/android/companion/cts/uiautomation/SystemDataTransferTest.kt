@@ -23,6 +23,7 @@ import android.app.Activity.RESULT_OK
 import android.companion.AssociationInfo
 import android.companion.CompanionDeviceManager
 import android.companion.CompanionException
+import android.companion.Flags
 import android.companion.cts.common.CompanionActivity
 import android.content.Intent
 import android.os.OutcomeReceiver
@@ -40,6 +41,7 @@ import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import libcore.util.EmptyArray
@@ -79,6 +81,9 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         val association1 = associate()
 
         // First time request permission transfer should prompt a dialog
+        if (Flags.permSyncUserConsent()) {
+            assertFalse(cdm.isPermissionTransferUserConsented(association1.id))
+        }
         val pendingUserConsent = cdm.buildPermissionTransferUserConsentIntent(association1.id)
         assertNotNull(pendingUserConsent)
         CompanionActivity.startIntentSender(pendingUserConsent)
@@ -86,6 +91,9 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         confirmationUi.clickPositiveButton()
         val (resultCode: Int, _: Intent?) = CompanionActivity.waitForActivityResult()
         assertEquals(expected = RESULT_OK, actual = resultCode)
+        if (Flags.permSyncUserConsent()) {
+            assertTrue(cdm.isPermissionTransferUserConsented(association1.id))
+        }
 
         // Second time request permission transfer should get non null IntentSender
         val pendingUserConsent2 = cdm.buildPermissionTransferUserConsentIntent(association1.id)
@@ -104,6 +112,9 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         val association1 = associate()
 
         // First time request permission transfer should prompt a dialog
+        if (Flags.permSyncUserConsent()) {
+            assertFalse(cdm.isPermissionTransferUserConsented(association1.id))
+        }
         val pendingUserConsent = cdm.buildPermissionTransferUserConsentIntent(association1.id)
         assertNotNull(pendingUserConsent)
         CompanionActivity.startIntentSender(pendingUserConsent)
@@ -111,6 +122,9 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         confirmationUi.clickNegativeButton()
         val (resultCode: Int, _: Intent?) = CompanionActivity.waitForActivityResult()
         assertEquals(expected = RESULT_CANCELED, actual = resultCode)
+        if (Flags.permSyncUserConsent()) {
+            assertFalse(cdm.isPermissionTransferUserConsented(association1.id))
+        }
 
         // Second time request permission transfer should get non null IntentSender
         val pendingUserConsent2 = cdm.buildPermissionTransferUserConsentIntent(association1.id)
