@@ -118,6 +118,15 @@ public class PhotoPickerFilesUtils {
         return uriList;
     }
 
+    /**
+     * Return media id from a given Uri
+     * @param Uri uri to parse
+     * @return String media id
+     */
+    public static String getMediaId(Uri uri) throws Exception {
+        return uri.getLastPathSegment();
+    }
+
     public static void deleteMedia(Uri uri, Context context) throws Exception {
         try {
             ProviderTestUtils.setOwner(uri, context.getPackageName());
