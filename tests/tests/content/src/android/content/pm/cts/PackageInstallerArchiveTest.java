@@ -340,7 +340,7 @@ public class PackageInstallerArchiveTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
-    public void testGetArchiveTimeMillis() throws Exception {
+    public void archiveApp_getArchiveTimeMillis() throws Exception {
         installPackage(PACKAGE_NAME, APK_PATH);
         final long timestampBeforeArchive = System.currentTimeMillis();
         runWithShellPermissionIdentity(
@@ -357,6 +357,32 @@ public class PackageInstallerArchiveTest {
         assertThat(pi).isNotNull();
         assertThat(pi.getArchiveTimeMillis()).isGreaterThan(timestampBeforeArchive);
         assertThat(pi.getArchiveTimeMillis()).isLessThan(timestampAfterArchive);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
+    public void archiveApp_archiveStateClearedAfterUpdate() throws Exception {
+        installPackage(PACKAGE_NAME, APK_PATH);
+        runWithShellPermissionIdentity(
+                () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
+                        new IntentSender((IIntentSender) mArchiveIntentSender)),
+                Manifest.permission.DELETE_PACKAGES);
+
+        assertThat(mArchiveIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+
+        // Test that the archiveTimeMillis field is valid
+        PackageInfo pi = mPackageManager.getPackageInfo(PACKAGE_NAME,
+                PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES));
+        assertThat(pi).isNotNull();
+        assertThat(pi.getArchiveTimeMillis()).isGreaterThan(0);
+        assertThat(pi.applicationInfo.isArchived).isTrue();
+
+        // reinstall the app
+        installPackage(PACKAGE_NAME, APK_PATH);
+        pi = mPackageManager.getPackageInfo(PACKAGE_NAME, PackageInfoFlags.of(0));
+        assertThat(pi).isNotNull();
+        assertThat(pi.getArchiveTimeMillis()).isEqualTo(0);
+        assertThat(pi.applicationInfo.isArchived).isFalse();
     }
 
     @Test
