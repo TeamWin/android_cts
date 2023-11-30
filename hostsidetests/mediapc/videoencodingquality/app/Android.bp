@@ -1,4 +1,4 @@
-// Copyright (C) 2021 The Android Open Source Project
+// Copyright (C) 2023 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,23 +16,21 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-java_test_host {
-    name: "CtsVideoEncodingQualityHostTestCases",
-    srcs: ["src/*.java"],
+android_test {
+    name: "VideoEncodingApp",
+    defaults: ["cts_defaults"],
+    compile_multilib: "both",
     static_libs: [
-        "compatibility-host-util",
-        "cts-host-utils",
+        "compatibility-device-util-axt",
+        "ctsmediav2common",
+        "ctstestrunner-axt",
     ],
-    libs: [
-        "cts-tradefed",
-        "cts-shim-host-lib",
-        "tradefed",
-    ],
+    platform_apis: true,
+    srcs: ["src/**/*.java"],
+    // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
     ],
-    data: [
-        ":VideoEncodingApp",
-    ],
+    min_sdk_version: "29",
 }
