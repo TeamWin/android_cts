@@ -1431,14 +1431,9 @@ public class PerformanceClassEvaluator {
                     reqMet);
         }
 
-        public void setFrontLogicalMultiCameraReqMet(boolean reqMet) {
-            this.setMeasuredValue(RequirementConstants.FRONT_CAMERA_LOGICAL_MULTI_CAMERA_REQ_MET,
-                    reqMet);
-        }
-
         /**
          * [2.2.7.2/7.5/H-1-13] MUST support LOGICAL_MULTI_CAMERA capability for the primary
-         * cameras if there are greater than 1 RGB cameras facing the same direction.
+         * rear-facing camera if there are greater than 1 RGB rear-facing cameras.
          */
         public static LogicalMultiCameraRequirement createLogicalMultiCameraReq() {
             RequiredMeasurement<Boolean> rearRequirement = RequiredMeasurement
@@ -1447,15 +1442,9 @@ public class PerformanceClassEvaluator {
                 .setPredicate(RequirementConstants.BOOLEAN_EQ)
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
                 .build();
-            RequiredMeasurement<Boolean> frontRequirement = RequiredMeasurement
-                .<Boolean>builder()
-                .setId(RequirementConstants.FRONT_CAMERA_LOGICAL_MULTI_CAMERA_REQ_MET)
-                .setPredicate(RequirementConstants.BOOLEAN_EQ)
-                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
-                .build();
 
             return new LogicalMultiCameraRequirement(RequirementConstants.R7_5__H_1_13,
-                    rearRequirement, frontRequirement);
+                    rearRequirement);
         }
     }
 
