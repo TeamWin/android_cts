@@ -250,16 +250,26 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             fis.read(buffer, 0, 8);
             if (isSame(buffer, FAKE_HOTWORD_AUDIO_DATA,
                     buffer.length)) {
-                Log.d(TAG, "call callback.onDetected");
-                if (mIsTestAudioEgress) {
-                    if (mUseIllegalAudioEgressCopyBufferSize) {
-                        callback.onDetected(
-                                Utils.AUDIO_EGRESS_DETECTED_RESULT_WRONG_COPY_BUFFER_SIZE);
+                Runnable sendDetect = () -> {
+                    Log.d(TAG, "call callback.onDetected");
+                    if (mIsTestAudioEgress) {
+                        if (mUseIllegalAudioEgressCopyBufferSize) {
+                            callback.onDetected(
+                                    Utils.AUDIO_EGRESS_DETECTED_RESULT_WRONG_COPY_BUFFER_SIZE);
+                        } else {
+                            callback.onDetected(Utils.AUDIO_EGRESS_DETECTED_RESULT);
+                        }
                     } else {
-                        callback.onDetected(Utils.AUDIO_EGRESS_DETECTED_RESULT);
+                        callback.onDetected(DETECTED_RESULT);
                     }
-                } else {
-                    callback.onDetected(DETECTED_RESULT);
+                };
+
+                synchronized (mLock) {
+                    if (mDetectionDelayMs > 0) {
+                        mHandler.postDelayed(sendDetect, mDetectionDelayMs);
+                    } else {
+                        sendDetect.run();
+                    }
                 }
             }
         } catch (IOException e) {
