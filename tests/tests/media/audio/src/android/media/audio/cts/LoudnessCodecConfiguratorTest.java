@@ -156,7 +156,7 @@ public class LoudnessCodecConfiguratorTest {
         // to make sure the device id is propagated
         Thread.sleep(TEST_LOUDNESS_CALLBACK_TIMEOUT.toMillis());
 
-        assertFalse(mLcc.getLoudnessCodecParams(createAndStartAudioTrack(),
+        assertFalse(mLcc.getLoudnessCodecParams(mAt,
                 createMediaCodec(/*configure*/true)).isDefinitelyEmpty());
     }
 
