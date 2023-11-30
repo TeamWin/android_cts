@@ -232,6 +232,10 @@ android_test {
         ":TestInstallerApp",
     ],
     test_config: "CtsPackageManagerTest.xml",
+    package_splits: [
+        "mdpi-v4",
+        "hdpi-v4",
+    ],
 }
 
 android_ravenwood_test {
