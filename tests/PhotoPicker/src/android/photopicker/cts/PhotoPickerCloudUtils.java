@@ -18,6 +18,7 @@ package android.photopicker.cts;
 
 import static android.Manifest.permission.READ_DEVICE_CONFIG;
 import static android.Manifest.permission.WRITE_DEVICE_CONFIG;
+import static android.photopicker.cts.PhotoPickerBaseTest.INVALID_CLOUD_PROVIDER;
 import static android.photopicker.cts.PickerProviderMediaGenerator.syncCloudProvider;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findAddButton;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findItemList;
@@ -28,8 +29,10 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.UiAutomation;
 import android.content.ClipData;
 import android.content.Context;
+import android.os.UserHandle;
 import android.provider.DeviceConfig;
 import android.provider.MediaStore;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 
@@ -47,7 +50,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class PhotoPickerCloudUtils {
-    private static final String NAMESPACE_MEDIAPROVIDER = "mediaprovider";
+    public static final String NAMESPACE_MEDIAPROVIDER = "mediaprovider";
+    public static final String NAMESPACE_STORAGE_NATIVE_BOOT = "storage_native_boot";
     private static final String KEY_ALLOWED_CLOUD_PROVIDERS = "allowed_cloud_providers";
     private static final String KEY_CLOUD_MEDIA_FEATURE_ENABLED = "cloud_media_feature_enabled";
     private static final String DISABLE_DEVICE_CONFIG_SYNC =
@@ -133,37 +137,61 @@ public class PhotoPickerCloudUtils {
         assertThat(mediaIds).containsNoneIn(Collections.singletonList(notContained));
     }
 
-    public static boolean isCloudMediaEnabled() {
-        return Boolean.parseBoolean(readDeviceConfigProp(KEY_CLOUD_MEDIA_FEATURE_ENABLED));
+    /**
+     * @return true if cloud is enabled in the device config of the given namespace,
+     * otherwise false.
+     */
+    public static boolean isCloudMediaEnabled(@NonNull String namespace) {
+        return Boolean.parseBoolean(readDeviceConfigProp(namespace,
+                KEY_CLOUD_MEDIA_FEATURE_ENABLED));
     }
 
+    /**
+     * @return the allowed providers in the device config of the given namespace.
+     */
     @Nullable
-    static String getAllowedProvidersDeviceConfig() {
-        return readDeviceConfigProp(KEY_ALLOWED_CLOUD_PROVIDERS);
+    static String getAllowedProvidersDeviceConfig(@NonNull String namespace) {
+        return readDeviceConfigProp(namespace, KEY_ALLOWED_CLOUD_PROVIDERS);
     }
 
+    /**
+     * Enables cloud media and sets the allowed cloud provider in the namespace storage_native_boot
+     * and mediaprovider.
+     */
     static void enableCloudMediaAndSetAllowedCloudProviders(@NonNull String allowedPackagesJoined) {
-        writeDeviceConfigProp(KEY_ALLOWED_CLOUD_PROVIDERS, allowedPackagesJoined);
+        enableCloudMediaAndSetAllowedCloudProviders(NAMESPACE_MEDIAPROVIDER, allowedPackagesJoined);
+        enableCloudMediaAndSetAllowedCloudProviders(
+                NAMESPACE_STORAGE_NATIVE_BOOT, allowedPackagesJoined);
+    }
+
+    /**
+     * Enables cloud media and sets the allowed cloud provider in the given namespace.
+     */
+    static void enableCloudMediaAndSetAllowedCloudProviders(@NonNull String namespace,
+            @NonNull String allowedPackagesJoined) {
+        writeDeviceConfigProp(namespace, KEY_ALLOWED_CLOUD_PROVIDERS, allowedPackagesJoined);
         assertWithMessage("Failed to update the allowed cloud providers device config")
-                .that(getAllowedProvidersDeviceConfig())
+                .that(getAllowedProvidersDeviceConfig(namespace))
                 .isEqualTo(allowedPackagesJoined);
 
-        writeDeviceConfigProp(KEY_CLOUD_MEDIA_FEATURE_ENABLED, true);
+        writeDeviceConfigProp(namespace, KEY_CLOUD_MEDIA_FEATURE_ENABLED, true);
         assertWithMessage("Failed to update the cloud media feature device config")
-                .that(isCloudMediaEnabled())
+                .that(isCloudMediaEnabled(namespace))
                 .isTrue();
     }
 
-
-    static void disableCloudMediaAndClearAllowedCloudProviders() {
-        writeDeviceConfigProp(KEY_CLOUD_MEDIA_FEATURE_ENABLED, false);
+    /**
+     * Disable cloud media in the given namespace.
+     */
+    static void disableCloudMediaAndClearAllowedCloudProviders(@NonNull String namespace) {
+        writeDeviceConfigProp(namespace, KEY_CLOUD_MEDIA_FEATURE_ENABLED, false);
         assertWithMessage("Failed to update the cloud media feature device config")
-                .that(isCloudMediaEnabled())
+                .that(isCloudMediaEnabled(namespace))
                 .isFalse();
 
-        deleteDeviceConfigProp(KEY_ALLOWED_CLOUD_PROVIDERS);
+        deleteDeviceConfigProp(namespace, KEY_ALLOWED_CLOUD_PROVIDERS);
         assertWithMessage("Failed to delete the allowed cloud providers device config")
-                .that(getAllowedProvidersDeviceConfig())
+                .that(getAllowedProvidersDeviceConfig(namespace))
                 .isNull();
     }
 
@@ -173,49 +201,104 @@ public class PhotoPickerCloudUtils {
     }
 
     @Nullable
-    private static String readDeviceConfigProp(@NonNull String name) {
+    private static String readDeviceConfigProp(@NonNull String namespace, @NonNull String name) {
         getUiAutomation().adoptShellPermissionIdentity(READ_DEVICE_CONFIG);
         try {
-            return DeviceConfig.getProperty(NAMESPACE_MEDIAPROVIDER, name);
+            return DeviceConfig.getProperty(namespace, name);
         } finally {
             getUiAutomation().dropShellPermissionIdentity();
         }
     }
 
-    private static void writeDeviceConfigProp(@NonNull String name, boolean value) {
-        writeDeviceConfigProp(name, Boolean.toString(value));
+    private static void writeDeviceConfigProp(@NonNull String namespace,
+            @NonNull String key, boolean value) {
+        writeDeviceConfigProp(namespace, key, Boolean.toString(value));
     }
 
-    private static void writeDeviceConfigProp(@NonNull String name, @NonNull String value) {
-
+    private static void writeDeviceConfigProp(@NonNull String namespace, @NonNull String name,
+            @NonNull String value) {
         getUiAutomation().adoptShellPermissionIdentity(WRITE_DEVICE_CONFIG);
 
         try {
-            DeviceConfig.setProperty(NAMESPACE_MEDIAPROVIDER, name, value,
+            DeviceConfig.setProperty(namespace, name, value,
                     /* makeDefault*/ false);
         } finally {
             getUiAutomation().dropShellPermissionIdentity();
         }
     }
 
-    private static void deleteDeviceConfigProp(@NonNull String name) {
+    private static void deleteDeviceConfigProp(@NonNull String namespace, @NonNull String name) {
         try {
             getUiAutomation().adoptShellPermissionIdentity(WRITE_DEVICE_CONFIG);
             if (SdkLevel.isAtLeastU()) {
-                DeviceConfig.deleteProperty(NAMESPACE_MEDIAPROVIDER, name);
+                DeviceConfig.deleteProperty(namespace, name);
             } else {
                 // DeviceConfig.deleteProperty API is only available from T onwards.
                 try {
                     UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
                             .executeShellCommand(
                                     String.format("device_config delete %s %s",
-                                            NAMESPACE_MEDIAPROVIDER, name));
+                                            namespace, name));
                 } catch (IOException e) {
-                    Log.e(TAG, "Could not delete device_config " + name, e);
+                    Log.e(TAG, String.format("Could not delete device_config %s / %s",
+                            namespace, name), e);
                 }
             }
         } finally {
             getUiAutomation().dropShellPermissionIdentity();
         }
+    }
+
+    /**
+     * Set cloud provider in the device to the provided authority.
+     * If the provided cloud authority equals {@link PhotoPickerBaseTest#INVALID_CLOUD_PROVIDER},
+     * the cloud provider will not be updated.
+     */
+    public static void setCloudProvider(@Nullable UiDevice sDevice,
+            @Nullable String authority) throws IOException {
+        if (INVALID_CLOUD_PROVIDER.equals(authority)) {
+            Log.w(TAG, "Cloud provider is invalid. "
+                    + "Ignoring the request to set the cloud provider to invalid");
+            return;
+        }
+        if (authority == null) {
+            sDevice.executeShellCommand(
+                    "content call"
+                            + " --user " + UserHandle.myUserId()
+                            + " --uri content://media/ --method set_cloud_provider --extra"
+                            + " cloud_provider:n:null");
+        } else {
+            sDevice.executeShellCommand(
+                    "content call"
+                            + " --user " + UserHandle.myUserId()
+                            + " --uri content://media/ --method set_cloud_provider --extra"
+                            + " cloud_provider:s:"
+                            + authority);
+        }
+    }
+
+    /**
+     * @return the current cloud provider.
+     */
+    public static String getCurrentCloudProvider(UiDevice sDevice) throws IOException {
+        final String out =
+                sDevice.executeShellCommand(
+                        "content call"
+                                + " --user " + UserHandle.myUserId()
+                                + " --uri content://media/ --method get_cloud_provider");
+        return extractCloudProvider(out);
+    }
+
+    private static String extractCloudProvider(String out) {
+        String[] splitOutput;
+        if (TextUtils.isEmpty(out) || ((splitOutput = out.split("=")).length < 2)) {
+            throw new RuntimeException("Could not get current cloud provider. Output: " + out);
+        }
+        String cloudprovider = splitOutput[1];
+        cloudprovider = cloudprovider.substring(0, cloudprovider.length() - 3);
+        if (cloudprovider.equals("null")) {
+            return null;
+        }
+        return cloudprovider;
     }
 }

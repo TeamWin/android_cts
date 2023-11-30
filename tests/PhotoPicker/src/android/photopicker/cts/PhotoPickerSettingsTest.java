@@ -16,13 +16,10 @@
 
 package android.photopicker.cts;
 
-import static android.photopicker.cts.PhotoPickerCloudUtils.disableCloudMediaAndClearAllowedCloudProviders;
-import static android.photopicker.cts.PhotoPickerCloudUtils.enableCloudMediaAndSetAllowedCloudProviders;
-import static android.photopicker.cts.PhotoPickerCloudUtils.getAllowedProvidersDeviceConfig;
-import static android.photopicker.cts.PhotoPickerCloudUtils.isCloudMediaEnabled;
+import static android.photopicker.cts.PhotoPickerCloudUtils.disableDeviceConfigSync;
+import static android.photopicker.cts.util.PhotoPickerComponentUtils.PICKER_SETTINGS_ACTIVITY_COMPONENT;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.REGEX_PACKAGE_NAME;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.SHORT_TIMEOUT;
-import static android.photopicker.cts.util.PhotoPickerComponentUtils.PICKER_SETTINGS_ACTIVITY_COMPONENT;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.isPhotoPickerVisible;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.verifySettingsActionBarIsVisible;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.verifySettingsActivityIsVisible;
@@ -45,6 +42,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.uiautomator.UiObject;
@@ -67,8 +65,6 @@ import org.junit.runner.RunWith;
 @RunWith(BedsteadJUnit4.class)
 public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
     private static final String TAG = PhotoPickerSettingsTest.class.getSimpleName();
-    private static boolean sCloudMediaPreviouslyEnabled;
-    private static String sPreviouslyAllowedCloudProviders;
     private static final String EXTRA_TAB_USER_ID = "user_id";
     private static final String TAB_CONTAINER_RESOURCE_ID =
             REGEX_PACKAGE_NAME + ":id/tab_container";
@@ -78,6 +74,8 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
     private static final String DEFAULT_APP_LABEL = "Photo Picker Device Tests";
     private static int sPhotoPickerSettingsActivityState;
     private Intent mSettingsIntent;
+    @Nullable
+    private static DeviceStatePreserver sDeviceStatePreserver;
 
     @Before
     public void setUp() throws Exception {
@@ -90,11 +88,9 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
 
         // Only enable cloud media in S+ because R cannot use Device Config APIs.
         if (SdkLevel.isAtLeastS()) {
-            // Store the current CMP configs, so that we can reset them at the end of the test.
-            sCloudMediaPreviouslyEnabled = isCloudMediaEnabled();
-            if (sCloudMediaPreviouslyEnabled) {
-                sPreviouslyAllowedCloudProviders = getAllowedProvidersDeviceConfig();
-            }
+            sDeviceStatePreserver = new DeviceStatePreserver(sDevice);
+            sDeviceStatePreserver.saveCurrentCloudProviderState();
+            disableDeviceConfigSync();
 
             // Enable Settings menu item in PhotoPickerActivity's overflow menu.
             PhotoPickerCloudUtils.enableCloudMediaAndSetAllowedCloudProviders(
@@ -113,11 +109,7 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
 
         // Reset CloudMedia configs.
         if (SdkLevel.isAtLeastS()) {
-            if (sCloudMediaPreviouslyEnabled) {
-                enableCloudMediaAndSetAllowedCloudProviders(sPreviouslyAllowedCloudProviders);
-            } else {
-                disableCloudMediaAndClearAllowedCloudProviders();
-            }
+            sDeviceStatePreserver.restoreCloudProviderState();
         }
     }
 
