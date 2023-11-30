@@ -44,7 +44,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -617,12 +616,6 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
     }
 
     private int[] prepareUsers(int users) throws DeviceNotAvailableException {
-        if (getDevice().isHeadlessSystemUserMode()) {
-            // Prepare an additional user to account for headless system user.
-            int[] ids = Utils.prepareMultipleUsers(getDevice(), users + 1);
-            // Do not return system user since it does not have full user capabilities.
-            return Arrays.copyOfRange(ids, 1, ids.length);
-        }
         return Utils.prepareMultipleUsers(getDevice(), users);
     }
 }
