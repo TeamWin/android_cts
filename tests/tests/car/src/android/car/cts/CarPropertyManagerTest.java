@@ -43,6 +43,7 @@ import android.car.VehicleIgnitionState;
 import android.car.VehiclePropertyIds;
 import android.car.VehicleUnit;
 import android.car.cts.utils.VehiclePropertyVerifier;
+import android.car.cts.utils.VehiclePropertyVerifiers;
 import android.car.feature.Flags;
 import android.car.hardware.CarHvacFanDirection;
 import android.car.hardware.CarPropertyConfig;
@@ -72,7 +73,6 @@ import android.car.hardware.property.LaneCenteringAssistCommand;
 import android.car.hardware.property.LaneCenteringAssistState;
 import android.car.hardware.property.LaneDepartureWarningState;
 import android.car.hardware.property.LaneKeepAssistState;
-import android.car.hardware.property.LocationCharacterization;
 import android.car.hardware.property.LowSpeedCollisionWarningState;
 import android.car.hardware.property.PropertyNotAvailableException;
 import android.car.hardware.property.Subscription;
@@ -252,19 +252,6 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     EvStoppingMode.STATE_CREEP, EvStoppingMode.STATE_ROLL,
                     EvStoppingMode.STATE_HOLD).build();
 
-    private static final ImmutableSet<Integer> LOCATION_CHARACTERIZATIONS =
-            ImmutableSet.<Integer>builder()
-                    .add(
-                            LocationCharacterization.PRIOR_LOCATIONS,
-                            LocationCharacterization.GYROSCOPE_FUSION,
-                            LocationCharacterization.ACCELEROMETER_FUSION,
-                            LocationCharacterization.COMPASS_FUSION,
-                            LocationCharacterization.WHEEL_SPEED_FUSION,
-                            LocationCharacterization.STEERING_ANGLE_FUSION,
-                            LocationCharacterization.CAR_SPEED_FUSION,
-                            LocationCharacterization.DEAD_RECKONED,
-                            LocationCharacterization.RAW_GNSS_ONLY)
-                    .build();
     private static final ImmutableSet<Integer> HVAC_TEMPERATURE_DISPLAY_UNITS =
             ImmutableSet.<Integer>builder().add(VehicleUnit.CELSIUS,
                     VehicleUnit.FAHRENHEIT).build();
@@ -989,16 +976,6 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
     private static final int VEHICLE_PROPERTY_GROUP_MASK = 0xf0000000;
     private static final int VEHICLE_PROPERTY_GROUP_VENDOR = 0x20000000;
-    private static final int LOCATION_CHARACTERIZATION_VALID_VALUES_MASK =
-            LocationCharacterization.PRIOR_LOCATIONS
-            | LocationCharacterization.GYROSCOPE_FUSION
-            | LocationCharacterization.ACCELEROMETER_FUSION
-            | LocationCharacterization.COMPASS_FUSION
-            | LocationCharacterization.WHEEL_SPEED_FUSION
-            | LocationCharacterization.STEERING_ANGLE_FUSION
-            | LocationCharacterization.CAR_SPEED_FUSION
-            | LocationCharacterization.DEAD_RECKONED
-            | LocationCharacterization.RAW_GNSS_ONLY;
 
     /** contains property Ids for the properties required by CDD */
     private final ArraySet<Integer> mPropertyIds = new ArraySet<>();
@@ -2528,37 +2505,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     private VehiclePropertyVerifier<Integer> getLocationCharacterizationVerifier() {
-        return VehiclePropertyVerifier.newBuilder(
-                        VehiclePropertyIds.LOCATION_CHARACTERIZATION,
-                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
-                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
-                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        Integer.class, mCarPropertyManager)
-                .setCarPropertyValueVerifier(
-                        (carPropertyConfig, propertyId, areaId, timestampNanos, value) -> {
-                            boolean deadReckonedIsSet = (value
-                                    & LocationCharacterization.DEAD_RECKONED)
-                                    == LocationCharacterization.DEAD_RECKONED;
-                            boolean rawGnssOnlyIsSet = (value
-                                    & LocationCharacterization.RAW_GNSS_ONLY)
-                                    == LocationCharacterization.RAW_GNSS_ONLY;
-                            assertWithMessage("LOCATION_CHARACTERIZATION must not be 0 "
-                                    + "Found value: " + value)
-                                    .that(value)
-                                    .isNotEqualTo(0);
-                            assertWithMessage("LOCATION_CHARACTERIZATION must not have any bits "
-                                    + "set outside of the bit flags defined in "
-                                    + "LocationCharacterization. Found value: " + value)
-                                    .that(value & LOCATION_CHARACTERIZATION_VALID_VALUES_MASK)
-                                    .isEqualTo(value);
-                            assertWithMessage("LOCATION_CHARACTERIZATION must have one of "
-                                    + "DEAD_RECKONED or RAW_GNSS_ONLY set. They both cannot be set "
-                                    + "either. Found value: " + value)
-                                    .that(deadReckonedIsSet ^ rawGnssOnlyIsSet)
-                                    .isTrue();
-                        })
-                .addReadPermission(ACCESS_FINE_LOCATION)
-                .build();
+        return VehiclePropertyVerifiers.getLocationCharacterizationVerifier(
+                mCarPropertyManager);
     }
 
     @Test
