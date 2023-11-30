@@ -60,6 +60,7 @@ import android.hardware.camera2.params.SessionConfiguration;
 import android.media.ExifInterface;
 import android.media.Image;
 import android.media.ImageReader;
+import android.os.Build;
 import android.os.SystemClock;
 import android.util.Range;
 import android.util.Size;
@@ -1695,7 +1696,13 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
             for (Integer extension : supportedExtensions) {
                 Set<CaptureRequest.Key> supportedRequestKeys =
                         extensionChars.getAvailableCaptureRequestKeys(extension);
-                if (!supportedRequestKeys.containsAll(Arrays.asList(FOCUS_CAPTURE_REQUEST_SET))) {
+                // The night extension is required to support AF controls starting with Android V
+                if ((Build.VERSION.DEVICE_INITIAL_SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM)
+                    && (extension == CameraExtensionCharacteristics.EXTENSION_NIGHT)) {
+                    assertTrue(supportedRequestKeys.containsAll(
+                            Arrays.asList(FOCUS_CAPTURE_REQUEST_SET)));
+                } else if (!supportedRequestKeys.containsAll(
+                        Arrays.asList(FOCUS_CAPTURE_REQUEST_SET))) {
                     continue;
                 }
                 Set<CaptureResult.Key> supportedResultKeys =
@@ -1876,7 +1883,13 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
             for (Integer extension : supportedExtensions) {
                 Set<CaptureRequest.Key> supportedRequestKeys =
                         extensionChars.getAvailableCaptureRequestKeys(extension);
-                if (!supportedRequestKeys.containsAll(Arrays.asList(ZOOM_CAPTURE_REQUEST_SET))) {
+                // The Night extension is required to support zoom controls start with Android V
+                if ((Build.VERSION.DEVICE_INITIAL_SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM)
+                        && (extension == CameraExtensionCharacteristics.EXTENSION_NIGHT)) {
+                    assertTrue(supportedRequestKeys.containsAll(
+                            Arrays.asList(ZOOM_CAPTURE_REQUEST_SET)));
+                } else if (!supportedRequestKeys.containsAll(
+                        Arrays.asList(ZOOM_CAPTURE_REQUEST_SET))) {
                     continue;
                 }
                 Set<CaptureResult.Key> supportedResultKeys =
