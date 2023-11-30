@@ -24,6 +24,7 @@ import static org.junit.Assert.fail;
 import android.os.Bundle;
 import android.os.DeadObjectException;
 import android.os.RemoteException;
+import android.os.UserHandle;
 import android.telecom.CallAttributes;
 import android.telecom.CallEndpoint;
 import android.telecom.CallException;
@@ -78,6 +79,27 @@ public class AppControlWrapper {
             Log.e(TAG, "failed to get isBound", e);
         }
         return false;
+    }
+
+    public UserHandle getProcessUserHandle() {
+        Log.i(TAG, "getProcessUserHandle");
+        try {
+            return mBinder.getProcessUserHandle();
+        } catch (RemoteException e) {
+            Log.e(TAG, "failed to get getProcessUserHandle", e);
+        }
+        return null;
+    }
+
+
+    public int getProcessUid() {
+        Log.i(TAG, "getProcessUserHandle");
+        try {
+            return mBinder.getProcessUid();
+        } catch (RemoteException e) {
+            Log.e(TAG, "failed to getProcessUid", e);
+        }
+        return -1;
     }
 
     /**
@@ -291,6 +313,28 @@ public class AppControlWrapper {
         if (transactionResult != null
                 && transactionResult.getResult().equals(TestAppTransaction.Failure)) {
             fail(transactionResult.getTestAppException().getMessage());
+        }
+    }
+
+    public boolean isNotificationPostedForCall(String callId) throws RemoteException {
+        Log.i(TAG, "isNotificationPostedForCall");
+        try {
+            BooleanTransaction transactionResult = mBinder.isNotificationPostedForCall(callId);
+            maybeFailTest(transactionResult);
+            return transactionResult.getBoolResult();
+        } catch (RemoteException e) {
+           handleRemoteException(e, "isNotificationPostedForCall");
+        }
+        return false;
+    }
+
+    public void removeNotificationForCall(String callId) throws RemoteException {
+        Log.i(TAG, "removeNotificationForCall");
+        try {
+            NoDataTransaction transactionResult = mBinder.removeNotificationForCall(callId);
+            maybeFailTest(transactionResult);
+        } catch (RemoteException e) {
+           handleRemoteException(e, "removeNotificationForCall");
         }
     }
 }
