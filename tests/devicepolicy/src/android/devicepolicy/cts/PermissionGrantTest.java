@@ -786,6 +786,8 @@ public final class PermissionGrantTest {
     @PolicyAppliesTest(policy = SetPermissionPolicy.class)
     public void setPermissionPolicy_sensorPermissions_autoGrantPermission_denies(
             @SensorPermissionTestParameter String permission) {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         // The IT admin cannot grant sensor permissions on work profile devices (PO).
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
@@ -810,6 +812,8 @@ public final class PermissionGrantTest {
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = SetPermissionPolicy.class)
     public void setPermissionPolicy_smsPermission_autoGrantPermission_denies() {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         // The IT admin cannot grant sms permission on work profile devices (PO).
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
@@ -1135,6 +1139,8 @@ public final class PermissionGrantTest {
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = SetPermissionPolicy.class)
     public void setPermissionPolicy_autoGrant_checkMultiplePermissionsInGroup_allPermissionsGranted() {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         int existingPermissionPolicy =
                 sDeviceState.dpc().devicePolicyManager().getPermissionPolicy(
                         sDeviceState.dpc().componentName());
