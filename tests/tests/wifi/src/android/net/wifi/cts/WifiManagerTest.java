@@ -6589,4 +6589,72 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     public void testIsWpaPersonalSupported() throws Exception {
         sWifiManager.isWpaPersonalSupported();
     }
+
+    /**
+     * Tests {@link WifiManager#setWepAllowed()} and
+     * {@link WifiManager#queryWepAllowed()}.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_WEP_USAGE)
+    @Test
+    public void testSetAndQueryWepAllowed() throws Exception {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        Mutable<Boolean> isQuerySucceeded = new Mutable<Boolean>(false);
+        boolean currentWepAllowed = false;
+        boolean isRestoreRequired = false;
+        long now, deadline;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            Mutable<Boolean> isWepAllowed = new Mutable<Boolean>(false);
+            sWifiManager.queryWepAllowed(mExecutor,
+                    new Consumer<Boolean>() {
+                    @Override
+                    public void accept(Boolean value) {
+                        synchronized (mLock) {
+                            isWepAllowed.value = value;
+                            isQuerySucceeded.value = true;
+                            mLock.notify();
+                        }
+                    }
+                });
+            synchronized (mLock) {
+                now = System.currentTimeMillis();
+                deadline = now + TEST_WAIT_DURATION_MS;
+                while (!isQuerySucceeded.value && now < deadline) {
+                    mLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+            assertTrue(isQuerySucceeded.value);
+            // Reset for next query
+            isQuerySucceeded.value = false;
+            currentWepAllowed = isWepAllowed.value;
+            isRestoreRequired = true;
+            sWifiManager.setWepAllowed(!currentWepAllowed);
+            sWifiManager.queryWepAllowed(mExecutor,
+                    new Consumer<Boolean>() {
+                    @Override
+                    public void accept(Boolean value) {
+                        synchronized (mLock) {
+                            isWepAllowed.value = value;
+                            isQuerySucceeded.value = true;
+                            mLock.notify();
+                        }
+                    }
+                });
+            synchronized (mLock) {
+                now = System.currentTimeMillis();
+                deadline = now + TEST_WAIT_DURATION_MS;
+                while (!isQuerySucceeded.value && now < deadline) {
+                    mLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+            assertEquals(isWepAllowed.value, !currentWepAllowed);
+        } finally {
+            if (isRestoreRequired) {
+                sWifiManager.setWepAllowed(currentWepAllowed);
+            }
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
 }
