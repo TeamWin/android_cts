@@ -3531,11 +3531,12 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
     @RequiresFlagsEnabled(FLAG_QUARANTINED_ENABLED)
     public void testQasPrecedence() throws Exception {
         var ctsPackageName = mContext.getPackageName();
+        var userId = mContext.getUserId();
 
         installPackage(HELLO_WORLD_APK);
 
         // Suspend by shell.
-        SystemUtil.runShellCommand("pm suspend " + HELLO_WORLD_PACKAGE_NAME);
+        SystemUtil.runShellCommand("pm suspend --user " + userId + " " + HELLO_WORLD_PACKAGE_NAME);
         assertTrue("package is suspended by shell", isPackageSuspended(HELLO_WORLD_PACKAGE_NAME));
         assertFalse("package is not quarantined", isPackageQuarantined(HELLO_WORLD_PACKAGE_NAME));
 
@@ -3558,7 +3559,8 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
                 mPackageManager.getSuspendingPackage(HELLO_WORLD_PACKAGE_NAME));
 
         // Un-suspend as shell.
-        SystemUtil.runShellCommand("pm unsuspend " + HELLO_WORLD_PACKAGE_NAME);
+        SystemUtil.runShellCommand("pm unsuspend --user " + userId + " "
+                + HELLO_WORLD_PACKAGE_NAME);
         assertTrue("package is still quarantined by cts",
                 isPackageQuarantined(HELLO_WORLD_PACKAGE_NAME));
         // Still "cts" package.
@@ -3566,7 +3568,8 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
                 mPackageManager.getSuspendingPackage(HELLO_WORLD_PACKAGE_NAME));
 
         // No effect.
-        SystemUtil.runShellCommand("pm unsuspend " + HELLO_WORLD_PACKAGE_NAME);
+        SystemUtil.runShellCommand("pm unsuspend --user " + userId + " "
+                + HELLO_WORLD_PACKAGE_NAME);
         assertTrue("package is still quarantined by cts",
                 isPackageQuarantined(HELLO_WORLD_PACKAGE_NAME));
         assertEquals(ctsPackageName,
@@ -3574,22 +3577,23 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
 
         // QAS as shell.
         SystemUtil.runShellCommand("pm suspend-quarantine --dialogMessage shell-message "
-                + HELLO_WORLD_PACKAGE_NAME);
+                + "--user " + userId + " " + HELLO_WORLD_PACKAGE_NAME);
         assertTrue("package is quarantined by shell and cts",
                 isPackageQuarantined(HELLO_WORLD_PACKAGE_NAME));
 
         // Un-quarantine by cts.
         SystemUtil.runWithShellPermissionIdentity(() -> {
             String[] notset =
-            mPackageManager.setPackagesSuspended(new String[]{HELLO_WORLD_PACKAGE_NAME}, false,
-              null, null, null, FLAG_SUSPEND_QUARANTINED);
+                    mPackageManager.setPackagesSuspended(new String[]{HELLO_WORLD_PACKAGE_NAME},
+                            false, null, null, null, FLAG_SUSPEND_QUARANTINED);
             assertEquals("", String.join(",", notset));
         }, SUSPEND_APPS);
         assertEquals("com.android.shell",
                 mPackageManager.getSuspendingPackage(HELLO_WORLD_PACKAGE_NAME));
 
         // Unsuspend by shell.
-        SystemUtil.runShellCommand("pm unsuspend " + HELLO_WORLD_PACKAGE_NAME);
+        SystemUtil.runShellCommand("pm unsuspend --user " + userId + " "
+                + HELLO_WORLD_PACKAGE_NAME);
         assertFalse("not quarantined anymore", isPackageQuarantined(HELLO_WORLD_PACKAGE_NAME));
     }
 
