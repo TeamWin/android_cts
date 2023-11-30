@@ -248,6 +248,7 @@ android_ravenwood_test {
         "androidx.annotation_annotation",
         "androidx.test.rules",
         "androidx.test.uiautomator_uiautomator",
+        "compatibility-device-util-axt",
     ],
     srcs: [
         "src/android/content/cts/util/XmlUtils.java",
@@ -263,6 +264,15 @@ android_ravenwood_test {
         "src/android/content/cts/MockReceiver.java",
         "src/android/content/cts/MockContentProvider.java",
         "src/android/content/cts/UriMatcherTest.java",
+        "src/android/content/pm/cts/ActivityInfoTest.java",
+        "src/android/content/pm/cts/ApplicationInfoTest.java",
+        "src/android/content/pm/cts/ComponentInfoTest.java",
+        "src/android/content/pm/cts/PackageInfoTest.java",
+        "src/android/content/pm/cts/PackageItemInfoTest.java",
+        "src/android/content/pm/cts/ProviderInfoTest.java",
+        "src/android/content/pm/cts/ResolveInfoTest.java",
+        "src/android/content/pm/cts/ServiceInfoTest.java",
+        "src/android/content/pm/cts/SignatureTest.java",
     ],
     auto_gen_config: true,
 }
