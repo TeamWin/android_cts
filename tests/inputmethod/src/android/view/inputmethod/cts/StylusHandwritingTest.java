@@ -18,6 +18,7 @@ package android.view.inputmethod.cts;
 
 import static android.provider.Settings.Secure.STYLUS_HANDWRITING_DEFAULT_VALUE;
 import static android.provider.Settings.Secure.STYLUS_HANDWRITING_ENABLED;
+import static android.view.inputmethod.Flags.FLAG_HOME_SCREEN_HANDWRITING_DELEGATOR;
 import static android.view.inputmethod.InputMethodInfo.ACTION_STYLUS_HANDWRITING_SETTINGS;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
@@ -35,6 +36,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
+import static org.mockito.Mockito.mock;
 
 import android.Manifest;
 import android.app.Activity;
@@ -49,8 +51,12 @@ import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeSdkSandbox;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Pair;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -86,6 +92,7 @@ import com.android.cts.mockime.MockImeSession;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -117,12 +124,19 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     // A timeout greater than HandwritingModeController#HANDWRITING_DELEGATION_IDLE_TIMEOUT_MS.
     private static final long DELEGATION_AFTER_IDLE_TIMEOUT_MS = 3100;
     private static final int NUMBER_OF_INJECTED_EVENTS = 5;
+    private static final String TEST_LAUNCHER_COMPONENT =
+            "android.view.inputmethod.ctstestlauncher/"
+                    + "android.view.inputmethod.ctstestlauncher.LauncherActivity";
 
     private Context mContext;
     private int mHwInitialState;
     private boolean mShouldRestoreInitialHwState;
+    private String mDefaultLauncherToRestore;
 
     private static final GestureNavSwitchHelper sGestureNavRule = new GestureNavSwitchHelper();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setup() {
@@ -152,6 +166,10 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                 Settings.Secure.putInt(mContext.getContentResolver(),
                         STYLUS_HANDWRITING_ENABLED, mHwInitialState);
             }, Manifest.permission.WRITE_SECURE_SETTINGS);
+        }
+        if (mDefaultLauncherToRestore != null) {
+            setDefaultLauncher(mDefaultLauncherToRestore);
+            mDefaultLauncherToRestore = null;
         }
     }
 
@@ -1328,6 +1346,89 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     }
 
     /**
+     * Inject stylus events on top of a handwriting initiation delegator view in the default
+     * launcher activity, and verify stylus handwriting is started on the delegate editor (in a
+     * different package].
+     * TODO(b/210039666): Support instant apps for this test.
+     */
+    @Test
+    @RequiresFlagsEnabled(FLAG_HOME_SCREEN_HANDWRITING_DELEGATOR)
+    @AppModeFull(reason = "Launching external activity from this test is not yet supported.")
+    public void testHandwriting_delegateFromHomePackage() throws Exception {
+        testHandwriting_delegateFromHomePackage(/* setHomeDelegatorAllowed= */ true);
+    }
+
+    /**
+     * Inject stylus events on top of a handwriting initiation delegator view in the default
+     * launcher activity, and verify stylus handwriting is not started on the delegate editor (in a
+     * different package] because {@link View#setHomeScreenHandwritingDelegatorAllowed} wasn't set.
+     * TODO(b/210039666): Support instant apps for this test.
+     */
+    @Test
+    @RequiresFlagsEnabled(FLAG_HOME_SCREEN_HANDWRITING_DELEGATOR)
+    @AppModeFull(reason = "Launching external activity from this test is not yet supported.")
+    public void testHandwriting_delegateFromHomePackage_fail() throws Exception {
+        testHandwriting_delegateFromHomePackage(/* setHomeDelegatorAllowed= */ false);
+    }
+
+    public void testHandwriting_delegateFromHomePackage(boolean setHomeDelegatorAllowed)
+            throws Exception {
+        mDefaultLauncherToRestore = getDefaultLauncher();
+        setDefaultLauncher(TEST_LAUNCHER_COMPONENT);
+
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            ImeEventStream stream = imeSession.openEventStream();
+
+            String editTextMarker = getTestMarker();
+
+            // Start launcher activity
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_HOME);
+            intent.addCategory(Intent.CATEGORY_DEFAULT);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            // LauncherActivity passes these three extras to the ctstestapp MainActivity
+            intent.putExtra(MockTestActivityUtil.EXTRA_KEY_PRIVATE_IME_OPTIONS, editTextMarker);
+            intent.putExtra(MockTestActivityUtil.EXTRA_HANDWRITING_DELEGATE, true);
+            intent.putExtra(
+                    MockTestActivityUtil.EXTRA_HOME_HANDWRITING_DELEGATOR_ALLOWED,
+                    setHomeDelegatorAllowed);
+            InstrumentationRegistry.getInstrumentation().getContext().startActivity(intent);
+
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+            addVirtualStylusIdForTestSession();
+
+            // Launcher activity displays a full screen handwriting delegator view. Stylus events
+            // are injected in the center of the screen to trigger the delegator callback, which
+            // launches the ctstestapp MainActivity with the delegate editor with editTextMarker.
+            DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
+            int touchSlop = getTouchSlop();
+            int startX = metrics.widthPixels / 2;
+            int startY = metrics.heightPixels / 2;
+            int endX = startX + 2 * touchSlop;
+            int endY = startY + 2 * touchSlop;
+            View mockView = mock(View.class);
+            TestUtils.injectStylusDownEvent(mockView, startX, startY);
+            TestUtils.injectStylusMoveEvents(mockView, startX, startY, endX, endY, 5);
+
+            // Keyboard shouldn't show up.
+            notExpectEvent(
+                    stream, editorMatcher("onStartInputView", editTextMarker), NOT_EXPECT_TIMEOUT);
+            if (setHomeDelegatorAllowed) {
+                expectEvent(
+                        stream, editorMatcher("onStartStylusHandwriting", editTextMarker), TIMEOUT);
+                verifyStylusHandwritingWindowIsShown(stream, imeSession);
+            } else {
+                notExpectEvent(
+                        stream, editorMatcher("onStartStylusHandwriting", editTextMarker),
+                        NOT_EXPECT_TIMEOUT);
+            }
+        }
+    }
+
+    /**
      * Verify that system times-out Handwriting session after given timeout.
      */
     @Test
@@ -2219,6 +2320,22 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             mContext.getSystemService(InputMethodManager.class)
                     .addVirtualStylusIdForTestSession();
         }, Manifest.permission.TEST_INPUT_METHOD);
+    }
+
+    private String getDefaultLauncher() throws Exception {
+        final String prefix = "Launcher: ComponentInfo{";
+        final String postfix = "}";
+        for (String s :
+                SystemUtil.runShellCommand("cmd shortcut get-default-launcher").split("\n")) {
+            if (s.startsWith(prefix) && s.endsWith(postfix)) {
+                return s.substring(prefix.length(), s.length() - postfix.length());
+            }
+        }
+        throw new Exception("Default launcher not found");
+    }
+
+    private void setDefaultLauncher(String component) {
+        SystemUtil.runShellCommand("cmd package set-home-activity " + component);
     }
 
     private static final class CustomEditorView extends View {
