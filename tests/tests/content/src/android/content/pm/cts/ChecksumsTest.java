@@ -26,6 +26,7 @@ import static android.content.pm.Checksum.TYPE_WHOLE_MERKLE_ROOT_4K_SHA256;
 import static android.content.pm.Checksum.TYPE_WHOLE_SHA1;
 import static android.content.pm.Checksum.TYPE_WHOLE_SHA256;
 import static android.content.pm.Checksum.TYPE_WHOLE_SHA512;
+import static android.content.pm.Flags.FLAG_QUARANTINED_ENABLED;
 import static android.content.pm.PackageInstaller.LOCATION_DATA_APP;
 import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
 import static android.content.pm.PackageManager.TRUST_ALL;
@@ -66,6 +67,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.ExceptionUtils;
@@ -76,6 +78,8 @@ import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CpuFeatures;
+import com.android.compatibility.common.util.FileUtils;
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.internal.util.HexDump;
 import com.android.server.pm.ApkChecksums;
 import com.android.server.pm.PackageManagerShellCommandDataLoader;
@@ -94,6 +98,7 @@ import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -399,6 +404,32 @@ public class ChecksumsTest {
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         // No usable hashes as verity-in-v2-signature does not cover the whole file.
+        assertEquals(checksums.length, 0, Arrays.toString(checksums));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_QUARANTINED_ENABLED)
+    public void testArchivedDefaultChecksums() throws Exception {
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
+        installPackage(TEST_FIXED_APK);
+        assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
+
+        byte[] archivedPackage = SystemUtil.runShellCommandByteOutput(
+                getUiAutomation(),
+                "pm get-archived-package-metadata " + FIXED_PACKAGE_NAME);
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
+
+        // Install as archived.
+        Assert.assertEquals("Success\n", executeShellCommand(
+                String.format("pm install-archived -r -i %s -t -S %s",
+                        getContext().getPackageName(), archivedPackage.length), archivedPackage));
+        assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
+
+        LocalListener receiver = new LocalListener();
+        PackageManager pm = getPackageManager();
+        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver);
+        ApkChecksum[] checksums = receiver.getResult();
+        assertNotNull(checksums);
         assertEquals(checksums.length, 0, Arrays.toString(checksums));
     }
 
@@ -1514,6 +1545,20 @@ public class ChecksumsTest {
         }
     }
 
+    private String executeShellCommand(String command, byte[] input) throws IOException {
+        final ParcelFileDescriptor[] pfds =
+                getUiAutomation().executeShellCommandRw(command);
+        ParcelFileDescriptor stdout = pfds[0];
+        ParcelFileDescriptor stdin = pfds[1];
+        try (FileOutputStream outputStream = new ParcelFileDescriptor.AutoCloseOutputStream(
+                stdin)) {
+            outputStream.write(input);
+        }
+        try (InputStream inputStream = new ParcelFileDescriptor.AutoCloseInputStream(stdout)) {
+            return new String(FileUtils.readInputStreamFully(inputStream));
+        }
+    }
+
     private static String createApkPath(String baseName) {
         return TEST_APK_PATH + baseName;
     }
@@ -1668,6 +1713,10 @@ public class ChecksumsTest {
 
         @Override
         public void onChecksumsReady(@NonNull List<ApkChecksum> checksumsList) {
+            if (checksumsList == null) {
+                mResult.offer(null);
+                return;
+            }
             ApkChecksum[] checksums = checksumsList.toArray(new ApkChecksum[checksumsList.size()]);
             Arrays.sort(checksums, (ApkChecksum lhs, ApkChecksum rhs) ->  {
                 final String lhsSplit = lhs.getSplitName();
