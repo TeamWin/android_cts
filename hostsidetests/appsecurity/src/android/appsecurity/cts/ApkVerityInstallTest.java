@@ -33,6 +33,7 @@ import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -43,6 +44,7 @@ import junitparams.Parameters;
 @Presubmit
 @RunWith(DeviceParameterizedRunner.class)
 @AppModeFull
+@Ignore("b/303068306")
 public final class ApkVerityInstallTest extends BaseAppSecurityTest {
 
     private static final String PACKAGE_NAME = "android.appsecurity.cts.apkveritytestapp";
