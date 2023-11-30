@@ -135,6 +135,7 @@ java_genrule_host {
         "d8"
     ],
     srcs: [
+        "src/**/*",
         ":cts-tf-dalvik-buildutil",
         ":vmtests-generated-resources",
         ":vmtests-mains",
