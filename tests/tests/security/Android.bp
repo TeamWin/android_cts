@@ -94,6 +94,7 @@ android_test {
         ":CtsPermissionBackupAppCert34",
         ":CtsPermissionBackupAppCert123",
         ":CtsPermissionBackupAppCert4History124",
+        ":TileServiceNullBindingTestApp",
     ],
 }
 
