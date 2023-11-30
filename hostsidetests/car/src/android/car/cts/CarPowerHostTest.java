@@ -20,6 +20,12 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.car.feature.Flags;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.host.HostFlagsValueProvider;
+
 import com.android.car.power.CarPowerDumpProto;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ProtoUtils;
@@ -28,10 +34,13 @@ import com.android.tradefed.result.InputStreamSource;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.util.StreamUtil;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.Callable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class CarPowerHostTest extends CarHostJUnit4TestCase {
@@ -39,7 +48,11 @@ public final class CarPowerHostTest extends CarHostJUnit4TestCase {
     private static final int SUSPEND_SEC = 3;
     private static final long WAIT_FOR_SUSPEND_MS = SUSPEND_SEC * 1000 + 2000;
     private static final String POWER_ON = "ON";
+    private static final String POWER_STATE_PATTERN =
+            "mCurrentState:.*CpmsState=([A-Z_]+)\\(\\d+\\)";
     private static final String CMD_DUMPSYS_POWER =
+            "dumpsys car_service --services CarPowerManagementService";
+    private static final String CMD_DUMPSYS_POWER_PROTO =
             "dumpsys car_service --services CarPowerManagementService --proto";
     private static final String ANDROID_CLIENT_SERVICE = "android.car.cts.app/.CarPowerTestService";
     private static final String TEST_COMMAND_HEADER =
@@ -51,9 +64,16 @@ public final class CarPowerHostTest extends CarHostJUnit4TestCase {
     private static final String LISTENER_WC_SET_MSG = "Listener with completion set";
     private static final String S2R_WAKEUP_MSG = "Exit Deep Sleep simulation";
     private static final String S2D_WAKEUP_MSG = "Exit Hibernation simulation";
+    private boolean mUseProtoDump;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            HostFlagsValueProvider.createCheckFlagsRule(this::getDevice);
 
     @Test
-    public void testPowerStateOnAfterBootUp() throws Exception {
+    @RequiresFlagsEnabled(Flags.FLAG_CAR_DUMP_TO_PROTO)
+    public void testPowerStateOnAfterBootUp_protoDump() throws Exception {
+        setUseProtoDump(true);
         rebootDevice();
 
         PollingCheck.check("Power state is not ON", TIMEOUT_MS,
@@ -61,7 +81,19 @@ public final class CarPowerHostTest extends CarHostJUnit4TestCase {
     }
 
     @Test
-    public void testSetListenerWithoutCompletion_suspendToRam() throws Exception {
+    @RequiresFlagsDisabled(Flags.FLAG_CAR_DUMP_TO_PROTO)
+    public void testPowerStateOnAfterBootUp_textDump() throws Exception {
+        setUseProtoDump(false);
+        rebootDevice();
+
+        PollingCheck.check("Power state is not ON", TIMEOUT_MS,
+                () -> getPowerState().equals(POWER_ON));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CAR_DUMP_TO_PROTO)
+    public void testSetListenerWithoutCompletion_suspendToRam_protoDump() throws Exception {
+        setUseProtoDump(true);
         testSetListenerInternal(/* listenerName= */ "listener-s2r", /* suspendType= */ "s2r",
                 /* completionType= */ "without-completion",
                 /* isSuspendAvailable= */ () -> isSuspendToRamAvailable(),
@@ -75,7 +107,25 @@ public final class CarPowerHostTest extends CarHostJUnit4TestCase {
     }
 
     @Test
-    public void testSetListenerWithoutCompletion_suspendToDisk() throws Exception {
+    @RequiresFlagsDisabled(Flags.FLAG_CAR_DUMP_TO_PROTO)
+    public void testSetListenerWithoutCompletion_suspendToRam_textDump() throws Exception {
+        setUseProtoDump(false);
+        testSetListenerInternal(/* listenerName= */ "listener-s2r", /* suspendType= */ "s2r",
+                /* completionType= */ "without-completion",
+                /* isSuspendAvailable= */ () -> isSuspendToRamAvailable(),
+                /* suspendDevice= */ () -> {
+                    try {
+                        suspendDeviceToRam();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CAR_DUMP_TO_PROTO)
+    public void testSetListenerWithoutCompletion_suspendToDisk_protoDump() throws Exception {
+        setUseProtoDump(true);
         testSetListenerInternal(/* listenerName= */ "listener-s2d", /* suspendType= */ "s2d",
                 /* completionType= */ "without-completion",
                 /* isSuspendAvailable= */ () -> isSuspendToDiskAvailable(),
@@ -89,7 +139,25 @@ public final class CarPowerHostTest extends CarHostJUnit4TestCase {
     }
 
     @Test
-    public void testSetListenerWithCompletion_suspendToRam() throws Exception {
+    @RequiresFlagsDisabled(Flags.FLAG_CAR_DUMP_TO_PROTO)
+    public void testSetListenerWithoutCompletion_suspendToDisk_textDump() throws Exception {
+        setUseProtoDump(false);
+        testSetListenerInternal(/* listenerName= */ "listener-s2d", /* suspendType= */ "s2d",
+                /* completionType= */ "without-completion",
+                /* isSuspendAvailable= */ () -> isSuspendToDiskAvailable(),
+                /* suspendDevice= */ () -> {
+                    try {
+                        suspendDeviceToDisk();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CAR_DUMP_TO_PROTO)
+    public void testSetListenerWithCompletion_suspendToRam_protoDump() throws Exception {
+        setUseProtoDump(true);
         testSetListenerInternal(/* listenerName= */ "listener-wc-s2r", /* suspendType= */ "s2r",
                 /* completionType= */ "with-completion",
                 /* isSuspendAvailable= */ () -> isSuspendToRamAvailable(),
@@ -103,7 +171,25 @@ public final class CarPowerHostTest extends CarHostJUnit4TestCase {
     }
 
     @Test
-    public void testSetListenerWithCompletion_suspendToDisk() throws Exception {
+    @RequiresFlagsDisabled(Flags.FLAG_CAR_DUMP_TO_PROTO)
+    public void testSetListenerWithCompletion_suspendToRam_textDump() throws Exception {
+        setUseProtoDump(false);
+        testSetListenerInternal(/* listenerName= */ "listener-wc-s2r", /* suspendType= */ "s2r",
+                /* completionType= */ "with-completion",
+                /* isSuspendAvailable= */ () -> isSuspendToRamAvailable(),
+                /* suspendDevice= */ () -> {
+                    try {
+                        suspendDeviceToRam();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CAR_DUMP_TO_PROTO)
+    public void testSetListenerWithCompletion_suspendToDisk_protoDump() throws Exception {
+        setUseProtoDump(true);
         testSetListenerInternal(/* listenerName= */ "listener-wc-s2d", /* suspendType= */ "s2d",
                 /* completionType= */ "with-completion",
                 /* isSuspendAvailable= */ () -> isSuspendToDiskAvailable(),
@@ -116,6 +202,26 @@ public final class CarPowerHostTest extends CarHostJUnit4TestCase {
                 });
     }
 
+    @Test
+    @RequiresFlagsDisabled(Flags.FLAG_CAR_DUMP_TO_PROTO)
+    public void testSetListenerWithCompletion_suspendToDisk_textDump() throws Exception {
+        setUseProtoDump(false);
+        testSetListenerInternal(/* listenerName= */ "listener-wc-s2d", /* suspendType= */ "s2d",
+                /* completionType= */ "with-completion",
+                /* isSuspendAvailable= */ () -> isSuspendToDiskAvailable(),
+                /* suspendDevice= */ () -> {
+                    try {
+                        suspendDeviceToDisk();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+    }
+
+    private void setUseProtoDump(boolean useProtoDump) {
+        mUseProtoDump = useProtoDump;
+    }
+
     private void rebootDevice() throws Exception {
         executeCommand("svc power reboot");
         getDevice().waitForDeviceAvailable();
@@ -123,14 +229,29 @@ public final class CarPowerHostTest extends CarHostJUnit4TestCase {
 
     @SuppressWarnings("LiteProtoToString")
     private String getPowerState() throws Exception {
-        CarPowerDumpProto carPowerDump =
-                ProtoUtils.getProto(getDevice(), CarPowerDumpProto.parser(), CMD_DUMPSYS_POWER);
-        boolean hasPowerState = carPowerDump.getCurrentState().hasStateName();
-        if (hasPowerState) {
-            return carPowerDump.getCurrentState().getStateName();
+        if (mUseProtoDump) {
+            CarPowerDumpProto carPowerDump = ProtoUtils.getProto(getDevice(),
+                    CarPowerDumpProto.parser(), CMD_DUMPSYS_POWER_PROTO);
+            boolean hasPowerState = carPowerDump.getCurrentState().hasStateName();
+            if (hasPowerState) {
+                return carPowerDump.getCurrentState().getStateName();
+            }
+            throw new IllegalStateException(
+                    "Proto doesn't have current_state.state_name field\n proto:" + carPowerDump);
+        } else {
+            Pattern pattern = Pattern.compile(POWER_STATE_PATTERN);
+            String cpmsDump =
+                    executeCommand("dumpsys car_service --services CarPowerManagementService");
+            String[] lines = cpmsDump.split("\\r?\\n");
+
+            for (String line : lines) {
+                Matcher matcher = pattern.matcher(line);
+                if (matcher.find()) {
+                    return matcher.group(1);
+                }
+            }
+            throw new IllegalStateException("Power state is not found:\n" + cpmsDump);
         }
-        throw new IllegalStateException("Proto doesn't have current_state.state_name field\n proto:"
-                + carPowerDump);
     }
 
     private void testSetListenerInternal(String listenerName, String suspendType,
@@ -161,16 +282,44 @@ public final class CarPowerHostTest extends CarHostJUnit4TestCase {
             });
     }
 
+    private boolean isSuspendSupported(String suspendType) throws Exception {
+        String suspendDumpHeader;
+        if (suspendType.equals("S2R")) {
+            suspendDumpHeader = "kernel support S2R: ";
+        } else if (suspendType.equals("S2D")) {
+            suspendDumpHeader = "kernel support S2D: ";
+        } else {
+            throw new IllegalArgumentException(
+                    "Suspend type %s" + suspendType + " is not supported");
+        }
+        String cpmsDump = executeCommand(CMD_DUMPSYS_POWER);
+        String[] lines = cpmsDump.split("\n");
+        for (String line : lines) {
+            if (line.contains(suspendDumpHeader)) {
+                return line.split(":")[1].trim().equals("true");
+            }
+        }
+        return false;
+    }
+
     private boolean isSuspendToRamAvailable() throws Exception {
-        CarPowerDumpProto carPowerDump =
-                ProtoUtils.getProto(getDevice(), CarPowerDumpProto.parser(), CMD_DUMPSYS_POWER);
-        return carPowerDump.getKernelSupportsDeepSleep();
+        if (mUseProtoDump) {
+            CarPowerDumpProto carPowerDump = ProtoUtils.getProto(getDevice(),
+                    CarPowerDumpProto.parser(), CMD_DUMPSYS_POWER_PROTO);
+            return carPowerDump.getKernelSupportsDeepSleep();
+        } else {
+            return isSuspendSupported("S2R");
+        }
     }
 
     private boolean isSuspendToDiskAvailable() throws Exception {
-        CarPowerDumpProto carPowerDump =
-                ProtoUtils.getProto(getDevice(), CarPowerDumpProto.parser(), CMD_DUMPSYS_POWER);
-        return carPowerDump.getKernelSupportsHibernation();
+        if (mUseProtoDump) {
+            CarPowerDumpProto carPowerDump = ProtoUtils.getProto(getDevice(),
+                    CarPowerDumpProto.parser(), CMD_DUMPSYS_POWER_PROTO);
+            return carPowerDump.getKernelSupportsHibernation();
+        } else {
+            return isSuspendSupported("S2D");
+        }
     }
 
     private void setPowerStateListener(String listenerName, String completionType,
