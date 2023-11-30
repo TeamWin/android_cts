@@ -33,7 +33,11 @@ import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.provider.ContactsContract;
+import android.provider.DeviceConfig;
 import android.provider.MediaStore;
+import android.util.Log;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import java.lang.reflect.Method;
 import java.util.Set;
@@ -43,6 +47,7 @@ import java.util.Set;
  */
 public class JobInfoTest extends BaseJobSchedulerTest {
     private static final int JOB_ID = JobInfoTest.class.hashCode();
+    private static final String TAG = JobInfoTest.class.getSimpleName();
 
     @Override
     public void tearDown() throws Exception {
@@ -100,20 +105,33 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         if (applicationInfo == null) {
             fail("Couldn't get ApplicationInfo");
         }
-        boolean targetSdkIsAfterU =
-                applicationInfo.targetSdkVersion > Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
-        if (targetSdkIsAfterU) {
-            assertScheduleFailsWithException("Successfully scheduled a job with a modified bias",
-                    ji, SecurityException.class);
+        if (isAconfigFlagEnabled(
+                "com.android.server.job.throw_on_unsupported_bias_usage")) {
+            // TODO(309023462): create separate tests for target SDK gated changes
+            boolean targetSdkIsAfterU =
+                    applicationInfo.targetSdkVersion > Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
+            if (targetSdkIsAfterU) {
+                assertScheduleFailsWithException(
+                        "Successfully scheduled a job with a modified bias",
+                        ji, SecurityException.class);
+            } else {
+                mJobScheduler.schedule(ji);
+
+                assertEquals("Bias wasn't changed to default",
+                        0, getBias(mJobScheduler.getPendingJob(JOB_ID)));
+            }
         } else {
             mJobScheduler.schedule(ji);
-            JobInfo scheduledJob = mJobScheduler.getPendingJob(JOB_ID);
 
-            Method getBiasMethod = JobInfo.class.getDeclaredMethod("getBias");
-            getBiasMethod.setAccessible(true);
-            Integer bias = (Integer) getBiasMethod.invoke(scheduledJob);
-            assertEquals("Bias wasn't changed to default", 0, (int) bias);
+            assertEquals("Bias wasn't changed to default",
+                    0, getBias(mJobScheduler.getPendingJob(JOB_ID)));
         }
+    }
+
+    private int getBias(JobInfo job) throws Exception {
+        Method getBiasMethod = JobInfo.class.getDeclaredMethod("getBias");
+        getBiasMethod.setAccessible(true);
+        return (Integer) getBiasMethod.invoke(job);
     }
 
     public void testCharging() {
@@ -970,5 +988,13 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                         + ", wanted " + expectedExceptionClass.getSimpleName());
             }
         }
+    }
+
+    private boolean isAconfigFlagEnabled(String fullFlagName) {
+        final String ogValue = SystemUtil.runWithShellPermissionIdentity(
+                () -> DeviceConfig.getProperty("backstage_power", fullFlagName));
+        final boolean enabled = Boolean.parseBoolean(ogValue);
+        Log.d(TAG, fullFlagName + "=" + ogValue  + " ... enabled=" + enabled);
+        return enabled;
     }
 }
