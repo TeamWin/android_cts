@@ -106,6 +106,7 @@ public final class UserRestrictionsTest extends BaseDevicePolicyTest {
 
     @Test
     public void testUserRestrictions_primaryProfileOwnerOnly() throws Exception {
+        assumeHasMainUser();
         setPoAsUser(mPrimaryUserId);
 
         try {
@@ -229,6 +230,7 @@ public final class UserRestrictionsTest extends BaseDevicePolicyTest {
     @Test
     public void testUserRestrictions_layering_profileOwnerNoLeaking() throws Exception {
         assumeSupportsMultiUser();
+        assumeHasMainUser();
 
         // Set PO on the main user.
         setPoAsUser(mPrimaryUserId);

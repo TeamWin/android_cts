@@ -107,6 +107,7 @@ import com.android.bedstead.harrier.annotations.RequireFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagNotEnabled;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagValue;
 import com.android.bedstead.harrier.annotations.RequireHasDefaultBrowser;
+import com.android.bedstead.harrier.annotations.RequireHasMainUser;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireInstantApp;
 import com.android.bedstead.harrier.annotations.RequireLowRamDevice;
@@ -917,6 +918,11 @@ public final class DeviceState extends HarrierRule {
 
             if (annotation instanceof RequireHeadlessSystemUserMode requireHeadlessSystemUserModeAnnotation) {
                 requireHeadlessSystemUserMode(requireHeadlessSystemUserModeAnnotation.reason());
+                continue;
+            }
+
+            if (annotation instanceof RequireHasMainUser requireHasMainUser) {
+                requireHasMainUser(requireHasMainUser.reason());
                 continue;
             }
 
@@ -3677,6 +3683,10 @@ public final class DeviceState extends HarrierRule {
 
     private void requireHeadlessSystemUserMode(String reason) {
         assumeTrue(reason, TestApis.users().isHeadlessSystemUserMode());
+    }
+
+    private void requireHasMainUser(String reason) {
+        assumeTrue(reason, TestApis.users().main() != null);
     }
 
     private void requireLowRamDevice(String reason, FailureMode failureMode) {
