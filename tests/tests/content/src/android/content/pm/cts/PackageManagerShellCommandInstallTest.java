@@ -1115,6 +1115,11 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testGetProperty() throws Exception {
+        onBeforeSdkTests();
+
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
         PackageManager.Property property =
                 getPackageManager().getProperty("com.test.sdk1_1.TEST_PROPERTY",
                         TEST_SDK1_PACKAGE);
