@@ -18,6 +18,9 @@ package android.virtualdevice.cts.camera;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -27,6 +30,7 @@ import android.companion.virtual.camera.VirtualCameraCallback;
 import android.companion.virtual.camera.VirtualCameraConfig;
 import android.content.Context;
 import android.graphics.ImageFormat;
+import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -34,13 +38,17 @@ import android.virtualdevice.cts.common.VirtualDeviceRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.Arrays;
 import java.util.concurrent.Executor;
 
 @RequiresFlagsEnabled({android.companion.virtual.flags.Flags.FLAG_VIRTUAL_CAMERA,
@@ -62,21 +70,34 @@ public class VirtualCameraTest {
     @Mock
     private VirtualCameraCallback mVirtualCameraCallback;
 
+    @Mock
+    private CameraDevice.StateCallback mStateCallback;
+
+    @Captor
+    private ArgumentCaptor<CameraDevice> mCameraDeviceCaptor;
+
     private CameraManager mCameraManager;
     private VirtualDevice mVirtualDevice;
     private VirtualCamera mVirtualCamera;
     private final Executor mExecutor = getApplicationContext().getMainExecutor();
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         MockitoAnnotations.initMocks(this);
         Context context = getApplicationContext();
         mCameraManager = context.getSystemService(CameraManager.class);
+        assertThat(mCameraManager).isNotNull();
+        mCameraManager.registerAvailabilityCallback(mExecutor, mMockCameraAvailabilityCallback);
         mVirtualDevice = mRule.createManagedVirtualDevice();
         VirtualCameraConfig config = VirtualCameraUtils.createVirtualCameraConfig(CAMERA_WIDTH,
                 CAMERA_HEIGHT, CAMERA_FORMAT, CAMERA_DISPLAY_NAME_RES_ID, mExecutor,
                 mVirtualCameraCallback);
         mVirtualCamera = mVirtualDevice.createVirtualCamera(config);
+    }
+
+    @After
+    public void tearDown() {
+        mCameraManager.unregisterAvailabilityCallback(mMockCameraAvailabilityCallback);
     }
 
     @Test
@@ -87,19 +108,66 @@ public class VirtualCameraTest {
     }
 
     @Test
-    public void virtualCamera_triggersCameraAvailabilityCallbacks() throws Exception {
-        try {
-            mCameraManager.registerAvailabilityCallback(mExecutor, mMockCameraAvailabilityCallback);
+    public void virtualCamera_triggersCameraAvailabilityCallbacks() {
+        String virtualCameraId = mVirtualCamera.getId();
+        verify(mMockCameraAvailabilityCallback, timeout(TIMEOUT_MILLIS))
+                .onCameraAvailable(virtualCameraId);
 
-            String virtualCameraId = mVirtualCamera.getId();
-            verify(mMockCameraAvailabilityCallback, timeout(TIMEOUT_MILLIS))
-                    .onCameraAvailable(virtualCameraId);
+        mVirtualCamera.close();
+        verify(mMockCameraAvailabilityCallback, timeout(TIMEOUT_MILLIS))
+                .onCameraUnavailable(virtualCameraId);
+    }
 
-            mVirtualCamera.close();
-            verify(mMockCameraAvailabilityCallback, timeout(TIMEOUT_MILLIS))
-                    .onCameraUnavailable(virtualCameraId);
-        } finally {
-            mCameraManager.unregisterAvailabilityCallback(mMockCameraAvailabilityCallback);
-        }
+    @Test
+    public void virtualCamera_virtualDeviceCloseRemovesCamera() throws Exception {
+        mVirtualDevice.close();
+
+        verify(mMockCameraAvailabilityCallback, timeout(TIMEOUT_MILLIS))
+                .onCameraUnavailable(mVirtualCamera.getId());
+        assertThat(Arrays.stream(mCameraManager.getCameraIdList()).toList())
+                .doesNotContain(mVirtualCamera.getId());
+    }
+
+    @Test
+    public void virtualCamera_presentInListOfCameras() throws Exception {
+        assertThat(Arrays.stream(mCameraManager.getCameraIdList()).toList())
+                .contains(mVirtualCamera.getId());
+    }
+
+    @Test
+    public void virtualCamera_close_notPresentInListOfCameras() throws Exception {
+        mVirtualCamera.close();
+
+        assertThat(Arrays.stream(mCameraManager.getCameraIdList()).toList())
+                .doesNotContain(mVirtualCamera.getId());
+    }
+
+    @Test
+    public void virtualCamera_openCamera_triggersOnOpenedCallback() throws Exception {
+        mCameraManager.openCamera(mVirtualCamera.getId(), directExecutor(), mStateCallback);
+
+        verify(mStateCallback, timeout(TIMEOUT_MILLIS)).onOpened(mCameraDeviceCaptor.capture());
+        assertThat(mCameraDeviceCaptor.getValue().getId()).isEqualTo(mVirtualCamera.getId());
+    }
+
+    @Test
+    public void virtualCamera_close_triggersOnDisconnectedCallback() throws Exception {
+        mCameraManager.openCamera(mVirtualCamera.getId(), directExecutor(), mStateCallback);
+        mVirtualCamera.close();
+
+        verify(mStateCallback, timeout(TIMEOUT_MILLIS))
+                .onDisconnected(mCameraDeviceCaptor.capture());
+        assertThat(mCameraDeviceCaptor.getValue().getId()).isEqualTo(mVirtualCamera.getId());
+    }
+
+    @Test
+    public void virtualCamera_cameraDeviceClose_triggersOnClosedCallback() throws Exception {
+        mCameraManager.openCamera(mVirtualCamera.getId(), directExecutor(), mStateCallback);
+        verify(mStateCallback, timeout(TIMEOUT_MILLIS)).onOpened(mCameraDeviceCaptor.capture());
+
+        mCameraDeviceCaptor.getValue().close();
+
+        verify(mStateCallback, timeout(TIMEOUT_MILLIS)).onClosed(mCameraDeviceCaptor.capture());
+        assertThat(mCameraDeviceCaptor.getValue().getId()).isEqualTo(mVirtualCamera.getId());
     }
 }
