@@ -344,6 +344,9 @@
     <!-- b/198682652 -->
     <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.cts.TelephonyCallbackTest#testOnLinkCapacityEstimateChangedByRegisterPhoneStateListener" />
 
+    <!-- b/312897429, b/301377549 -->
+    <option name="compatibility:exclude-filter" value="CtsDevicePolicyTestCases[run-on-work-profile] android.devicepolicy.cts.RingtoneTest" />
+
     <!-- b/238849936 -->
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.PinnedStackTests#testPipFromTaskWithMultipleActivitiesAndFinishOriginalTask" />
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.SplitActivityLifecycleTest#testTranslucentAdjacentTaskFragment" />
