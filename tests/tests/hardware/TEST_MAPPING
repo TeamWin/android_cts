@@ -164,5 +164,24 @@
         }
       ]
     }
+  ],
+  "postsubmit": [
+    {
+      "name": "CtsHardwareTestCases",
+      "options": [
+        {
+          "include-filter": "android.hardware.input.cts.tests.VirtualNavigationTouchpadTest#sendFlingDown_motionEventNotConsumed_getsConvertedToDpadDown"
+        },
+        {
+          "include-filter": "android.hardware.input.cts.tests.VirtualNavigationTouchpadTest#sendFlingLeft_motionEventNotConsumed_getsConvertedToDpadLeft"
+        },
+        {
+          "include-filter": "android.hardware.input.cts.tests.VirtualNavigationTouchpadTest#sendFlingRight_motionEventNotConsumed_getsConvertedToDpadRight"
+        },
+        {
+          "include-filter": "android.hardware.input.cts.tests.VirtualNavigationTouchpadTest#sendFlingUp_motionEventNotConsumed_getsConvertedToDpadUp"
+        }
+      ]
+    }
   ]
 }
