@@ -50,12 +50,15 @@ import androidx.test.uiautomator.UiObjectNotFoundException;
 import androidx.test.uiautomator.UiSelector;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -76,6 +79,9 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
     private Intent mSettingsIntent;
     @Nullable
     private static DeviceStatePreserver sDeviceStatePreserver;
+
+    @ClassRule @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
 
     @Before
     public void setUp() throws Exception {
@@ -145,6 +151,7 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
     @RequireRunOnWorkProfile
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testSettingsLaunchedInPersonalProfile_WorkEnabled() throws Exception {
+        mSettingsIntent.putExtra(EXTRA_TAB_USER_ID, sDeviceState.initialUser().id());
         launchSettingsActivityWithRetry(/* retryCount */ 3, /* backoffSeedInMillis */ 500);
         verifySettingsActivityIsVisible();
 
