@@ -34,6 +34,8 @@ import static org.junit.Assume.assumeTrue;
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothA2dp;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothCodecConfig;
+import android.bluetooth.BluetoothCodecType;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
@@ -50,6 +52,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -186,6 +189,32 @@ public class BluetoothA2dpTest {
         BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
 
         assertFalse(mBluetoothA2dp.isA2dpPlaying(testDevice));
+    }
+
+    @Test
+    public void getSupportedCodecTypes() {
+        assumeTrue(mHasBluetooth && mIsA2dpSupported);
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothA2dp);
+
+        assertThrows(SecurityException.class, () -> mBluetoothA2dp
+                .getSupportedCodecTypes());
+
+        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
+        List<BluetoothCodecType> supportedCodecTypes =
+                mBluetoothA2dp.getSupportedCodecTypes();
+        assertNotNull(supportedCodecTypes);
+
+        // getSupportedCodecTypes must not return null objects.
+        for (BluetoothCodecType codecType : supportedCodecTypes) {
+            assertNotNull(codecType);
+        }
+
+        // Supported codecs must contain at least the
+        // mandatory SBC codec.
+        assertTrue(supportedCodecTypes.contains(
+                BluetoothCodecType.createFromType(
+                        BluetoothCodecConfig.SOURCE_CODEC_TYPE_SBC)));
     }
 
     @Test
