@@ -39,6 +39,7 @@ import static org.junit.Assert.fail;
 
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
+import android.app.UiAutomation;
 import android.app.role.RoleManager;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -52,6 +53,7 @@ import android.os.UserHandle;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
@@ -91,6 +93,9 @@ public final class Package {
             TestApis.context().instrumentedContext().getPackageManager();
     private static final RoleManager sRoleManager = TestApis.context().instrumentedContext()
             .getSystemService(RoleManager.class);
+
+    private static final UiAutomation sUiAutomation =
+            InstrumentationRegistry.getInstrumentation().getUiAutomation();
 
     private final String mPackageName;
 
@@ -399,24 +404,14 @@ public final class Package {
             throw new NeneException("Cannot deny permission from current package");
         }
 
-        try {
-            ShellCommand.builderForUser(user, "pm revoke")
-                    .addOperand(packageName())
-                    .addOperand(permission)
-                    .allowEmptyOutput(true)
-                    .validate(String::isEmpty)
-                    .execute();
+        sUiAutomation.revokeRuntimePermission(packageName(), permission);
 
-            assertWithMessage("Error denying permission " + permission
-                    + " to package " + this + " on user " + user
-                    + ". Command appeared successful but not revoked.")
-                    .that(hasPermission(user, permission)).isFalse();
+        assertWithMessage("Error denying permission " + permission
+                + " to package " + this + " on user " + user
+                + ". Command appeared successful but not revoked.")
+                .that(hasPermission(user, permission)).isFalse();
 
-            return this;
-        } catch (AdbException e) {
-            throw new NeneException("Error denying permission " + permission + " to package "
-                    + this + " on user " + user, e);
-        }
+        return this;
     }
 
     void checkCanGrantOrRevokePermission(UserReference user, String permission) {
