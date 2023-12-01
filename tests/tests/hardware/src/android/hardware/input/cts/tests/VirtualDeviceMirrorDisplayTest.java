@@ -34,6 +34,8 @@ import android.hardware.input.VirtualMouseButtonEvent;
 import android.hardware.input.VirtualMouseRelativeEvent;
 import android.hardware.input.VirtualMouseScrollEvent;
 import android.hardware.input.VirtualNavigationTouchpad;
+import android.hardware.input.VirtualStylus;
+import android.hardware.input.VirtualStylusMotionEvent;
 import android.hardware.input.VirtualTouchEvent;
 import android.hardware.input.VirtualTouchscreen;
 import android.hardware.input.cts.virtualcreators.VirtualDeviceCreator;
@@ -225,7 +227,7 @@ public class VirtualDeviceMirrorDisplayTest extends InputTestCase {
             final float y = mDisplayHeight / 2f;
 
             // The number of move events that are sent between the down and up event.
-            int moveEventCount = 5;
+            final int moveEventCount = 5;
             List<InputEvent> expectedEvents = new ArrayList<>(moveEventCount + 2);
             // The builder is used for all events in this test. So properties all events have in
             // common are set here.
@@ -378,6 +380,68 @@ public class VirtualDeviceMirrorDisplayTest extends InputTestCase {
                     VirtualInputEventCreator.createNavigationTouchpadMotionEvent(
                             MotionEvent.ACTION_UP, x, y, computedSize /* size */,
                             inputSize /* axisSize */)));
+        }
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_STYLUS)
+    @Test
+    public void virtualStylus_touchEvent() {
+        try (VirtualStylus stylus = VirtualInputDeviceCreator.createAndPrepareStylus(mVirtualDevice,
+                DEVICE_NAME, mVirtualDisplay)) {
+            // We expect to get the exact coordinates in the view that were injected using the
+            // stylus. Touch resampling could result in the generation of additional "fake" touch
+            // events. To disable resampling, request unbuffered dispatch.
+            mTestActivity.getWindow().getDecorView().requestUnbufferedDispatch(
+                    InputDevice.SOURCE_STYLUS);
+
+            final int x = 50;
+            final int y = 50;
+            final int toolType = VirtualStylusMotionEvent.TOOL_TYPE_STYLUS;
+            // The number of move events that are sent between the down and up event.
+            final int moveEventCount = 5;
+            List<InputEvent> expectedEvents = new ArrayList<>(moveEventCount + 2);
+            // The builder is used for all events in this test. So properties all events have in
+            // common are set here.
+            VirtualStylusMotionEvent.Builder builder = new VirtualStylusMotionEvent.Builder()
+                    .setToolType(toolType);
+
+            // Down event
+            stylus.sendMotionEvent(builder
+                    .setAction(VirtualStylusMotionEvent.ACTION_DOWN)
+                    .setX(x)
+                    .setY(y)
+                    .setPressure(255)
+                    .build());
+            expectedEvents.add(
+                    VirtualInputEventCreator.createStylusEvent(MotionEvent.ACTION_DOWN,
+                            toolType, x, y, 1f /* pressure */, 0 /* buttonState */));
+
+            // Next we send a bunch of ACTION_MOVE events. Each one with a different x and y
+            // coordinate.
+            builder.setAction(VirtualStylusMotionEvent.ACTION_MOVE);
+            for (int i = 1; i <= moveEventCount; i++) {
+                builder.setX(x + i)
+                        .setY(y + i)
+                        .setPressure(255);
+                stylus.sendMotionEvent(builder.build());
+                expectedEvents.add(
+                        VirtualInputEventCreator.createStylusEvent(MotionEvent.ACTION_MOVE,
+                                toolType, x + i, y + i, 1f /* pressure */,
+                                0 /* buttonState */));
+            }
+
+            // Up event
+            stylus.sendMotionEvent(builder
+                    .setAction(VirtualStylusMotionEvent.ACTION_UP)
+                    .setX(x + moveEventCount)
+                    .setY(y + moveEventCount)
+                    .build());
+            expectedEvents.add(
+                    VirtualInputEventCreator.createStylusEvent(MotionEvent.ACTION_UP,
+                            toolType, x + moveEventCount, y + moveEventCount, 1f /* pressure */,
+                            0 /* buttonState */));
+
+            verifyEvents(expectedEvents);
         }
     }
 }
