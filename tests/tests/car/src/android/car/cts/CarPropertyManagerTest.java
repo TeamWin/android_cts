@@ -697,6 +697,16 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     .add(
                             VehiclePropertyIds.VALET_MODE_ENABLED)
                     .build();
+    private static final ImmutableList<Integer> PERMISSION_READ_HEAD_UP_DISPLAY_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.HEAD_UP_DISPLAY_ENABLED)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_HEAD_UP_DISPLAY_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.HEAD_UP_DISPLAY_ENABLED)
+                    .build();
     private static final ImmutableList<Integer> PERMISSION_IDENTIFICATION_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add(
@@ -1304,6 +1314,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getElectronicStabilityControlStateVerifier(),
              getCrossTrafficMonitoringEnabledVerifier(),
              getCrossTrafficMonitoringWarningStateVerifier(),
+             getHeadUpDisplayEnabledVerifier(),
              // TODO(b/273988725): Put all verifiers here.
         };
     }
@@ -5435,6 +5446,24 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         getValetModeEnabledVerifier().verify();
     }
 
+    private VehiclePropertyVerifier<Boolean> getHeadUpDisplayEnabledVerifier() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.HEAD_UP_DISPLAY_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class, mCarPropertyManager)
+                .addReadPermission(Car.PERMISSION_READ_HEAD_UP_DISPLAY)
+                .addReadPermission(Car.PERMISSION_CONTROL_HEAD_UP_DISPLAY)
+                .addWritePermission(Car.PERMISSION_CONTROL_HEAD_UP_DISPLAY)
+                .build();
+    }
+
+    @Test
+    public void testHeadUpDisplayEnabledIfSupported() {
+        getHeadUpDisplayEnabledVerifier().verify();
+    }
+
     @Test
     @ApiTest(
             apis = {
@@ -8247,6 +8276,20 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         verifyExpectedPropertiesWhenPermissionsGranted(
                 PERMISSION_CONTROL_VALET_MODE_PROPERTIES,
                 Car.PERMISSION_CONTROL_VALET_MODE);
+    }
+
+    @Test
+    public void testPermissionReadHeadUpDisplayGranted() {
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_READ_HEAD_UP_DISPLAY_PROPERTIES,
+                Car.PERMISSION_READ_HEAD_UP_DISPLAY);
+    }
+
+    @Test
+    public void testPermissionControlHeadUpDisplayGranted() {
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_HEAD_UP_DISPLAY_PROPERTIES,
+                Car.PERMISSION_CONTROL_HEAD_UP_DISPLAY);
     }
 
     @Test
