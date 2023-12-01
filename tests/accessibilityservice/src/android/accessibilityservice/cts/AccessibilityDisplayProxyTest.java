@@ -340,8 +340,10 @@ public class AccessibilityDisplayProxyTest {
 
     @After
     public void tearDown() throws TimeoutException {
-        mUiAutomation.adoptShellPermissionIdentity(
-                MANAGE_ACCESSIBILITY, CREATE_VIRTUAL_DEVICE, WAKE_LOCK);
+        if (mUiAutomation != null) {
+            mUiAutomation.adoptShellPermissionIdentity(
+                    MANAGE_ACCESSIBILITY, CREATE_VIRTUAL_DEVICE, WAKE_LOCK);
+        }
         if (mA11yProxy != null) {
             mA11yManager.unregisterDisplayProxy(mA11yProxy);
         }
