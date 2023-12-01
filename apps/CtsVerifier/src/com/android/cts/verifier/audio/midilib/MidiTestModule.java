@@ -37,6 +37,8 @@ public abstract class MidiTestModule {
     public static final int TESTSTATUS_FAILED_OVERRUN = 4;
     public static final int TESTSTATUS_FAILED_DEVICE = 5;
     public static final int TESTSTATUS_FAILED_JNI = 6;
+    public static final int TESTSTATUS_FAILED_SETUP = 7;
+    public static final int TESTSTATUS_FAILED_SEND = 8;
 
     public static final int TESTID_NONE = 0;
     public static final int TESTID_USBLOOPBACK = 1;

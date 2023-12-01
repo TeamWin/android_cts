@@ -306,6 +306,12 @@ public abstract class MidiTestActivityBase
             case MidiTestModule.TESTSTATUS_FAILED_JNI:
                 return appResources.getString(R.string.midiFailedJNILbl);
 
+            case MidiTestModule.TESTSTATUS_FAILED_SETUP:
+                return appResources.getString(R.string.midiFailedSetupLbl);
+
+            case MidiTestModule.TESTSTATUS_FAILED_SEND:
+                return appResources.getString(R.string.midiFailedSendLbl);
+
             default:
                 return "Unknown Test Status.";
         }
