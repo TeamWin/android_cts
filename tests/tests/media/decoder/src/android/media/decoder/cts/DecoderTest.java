@@ -3726,9 +3726,6 @@ public class DecoderTest extends MediaTestBase {
         // Allow the playback to advance past the PTS gap and back to normal operation
         Thread.sleep(500);
 
-        // Simulate the end of playback by pretending that we have no more audio data
-        mMediaCodecPlayer.stopDrainingAudioOutputBuffers(true);
-
         // Sleep till framePosition stabilizes, i.e. playback is complete
         {
             long endOfPlayackTimeoutMs = 20000;
@@ -3842,13 +3839,9 @@ public class DecoderTest extends MediaTestBase {
         Thread.sleep(200);
         mMediaCodecPlayer.stopDrainingAudioOutputBuffers(false);
 
-        // After 200 ms, simulate the end of playback by pretending that we have no more audio data
-        Thread.sleep(200);
-        mMediaCodecPlayer.stopDrainingAudioOutputBuffers(true);
-
         // Sleep till framePosition stabilizes, i.e. playback is complete
         {
-            long endOfPlayackTimeoutMs = 3000;
+            long endOfPlayackTimeoutMs = 20000;
             long startTimeMs = System.currentTimeMillis();
             AudioTimestamp previousTimestamp;
             do {
