@@ -26,6 +26,7 @@ import sys
 import time
 import unicodedata
 
+from mobly.controllers.android_device_lib import adb
 import numpy
 
 import camera_properties_utils
@@ -56,6 +57,7 @@ LEGACY_TABLET_NAME = 'dragon'
 TABLET_REQUIREMENTS_URL = 'https://source.android.com/docs/compatibility/cts/camera-its-box#tablet-requirements'
 BRIGHTNESS_ERROR_MSG = ('Tablet brightness not set as per '
                         f'{TABLET_REQUIREMENTS_URL} in the config file')
+VIDEO_SCENES = ('scene_video',)
 NOT_YET_MANDATED_MESSAGE = 'Not yet mandated test'
 RESULT_OK_STATUS = '-1'
 
@@ -2297,17 +2299,22 @@ def load_scene(cam, props, scene, tablet, chart_distance, lighting_check=True,
   if not tablet:
     logging.info('Manual run: no tablet to load scene on.')
     return
-  # Calculate camera_fov which will determine the image to load on tablet.
+  # Calculate camera_fov, which determines the image/video to load on tablet.
   camera_fov = cam.calc_camera_fov(props)
   file_name = cam.get_file_name_to_load(chart_distance, camera_fov, scene)
   if 'scene' not in file_name:
     file_name = f'scene{file_name}'
+  if scene in VIDEO_SCENES:
+    root_file_name, _ = os.path.splitext(file_name)
+    file_name = root_file_name + '.mp4'
   logging.debug('Displaying %s on the tablet', file_name)
 
-  # Display the scene on the tablet depending on camera_fov
+  # Display the image/video on the tablet using the default media player.
+  view_file_type = 'image/png' if scene not in VIDEO_SCENES else 'video/mp4'
+  uri_prefix = 'file://mnt' if scene not in VIDEO_SCENES else ''
   tablet.adb.shell(
-      'am start -a android.intent.action.VIEW -t image/png '
-      f'-d file://mnt/sdcard/Download/{file_name}')
+      f'am start -a android.intent.action.VIEW -t {view_file_type} '
+      f'-d {uri_prefix}/sdcard/Download/{file_name}')
   time.sleep(LOAD_SCENE_DELAY_SEC)
   rfov_camera_in_rfov_box = (
       math.isclose(
@@ -2430,6 +2437,34 @@ def get_media_performance_class(device_id):
 def raise_mpc_assertion_error(required_mpc, test_name, found_mpc):
   raise AssertionError(f'With MPC >= {required_mpc}, {test_name} must be run. '
                        f'Found MPC: {found_mpc}')
+
+
+def stop_video_playback(tablet):
+  """Force-stop activities used for video playback on the tablet.
+
+  Args:
+    tablet: a controller object for the ITS tablet.
+  """
+  try:
+    activities_unencoded = tablet.adb.shell(
+        ['dumpsys', 'activity', 'recents', '|',
+         'grep', '"baseIntent=Intent.*act=android.intent.action"']
+    )
+  except adb.AdbError as e:
+    logging.warning('ADB error when finding intent activities: %s. '
+                    'Please close the default video player manually.', e)
+    return
+  activity_lines = (
+      str(activities_unencoded.decode('utf-8')).strip().splitlines()
+  )
+  for activity_line in activity_lines:
+    activity = activity_line.split('cmp=')[-1].split('/')[0]
+    try:
+      tablet.adb.shell(['am', 'force-stop', activity])
+    except adb.AdbError as e:
+      logging.warning('ADB error when killing intent activity %s: %s. '
+                      'Please close the default video player manually.',
+                      activity, e)
 
 
 def raise_not_yet_mandated_error(message, api_level, mandated_api_level):
