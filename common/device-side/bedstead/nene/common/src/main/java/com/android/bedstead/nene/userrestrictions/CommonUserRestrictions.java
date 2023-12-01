@@ -249,6 +249,9 @@ public final class CommonUserRestrictions {
     /** See {@code android.os.UserManager#DISALLOW_CONFIG_DEFAULT_APPS} */
     public static final String DISALLOW_CONFIG_DEFAULT_APPS = "disallow_config_default_apps";
 
+    /** See {@code android.os.UserManager#DISALLOW_SIM_GLOBALLY} */
+    public static final String DISALLOW_SIM_GLOBALLY = "no_sim_globally";
+
     /** See {@code Manifest#ACTION_USER_RESTRICTIONS_CHANGED} */
     public static final String ACTION_USER_RESTRICTIONS_CHANGED =
             "android.os.action.USER_RESTRICTIONS_CHANGED";
