@@ -187,9 +187,7 @@ public class IntentFiltersTestHelper {
         }
 
         if (pm.hasSystemFeature(PackageManager.FEATURE_NFC)) {
-            forwardedIntentsFromManaged.addAll(Arrays.asList(
-                    new Intent(Settings.ACTION_NFC_SETTINGS),
-                    new Intent(Settings.ACTION_NFCSHARING_SETTINGS)));
+            forwardedIntentsFromManaged.add(new Intent(Settings.ACTION_NFC_SETTINGS));
         }
 
         if (pm.hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION)) {
