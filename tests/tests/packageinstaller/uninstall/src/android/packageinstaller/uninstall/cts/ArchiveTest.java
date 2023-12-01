@@ -39,6 +39,8 @@ import android.content.pm.Flags;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.PackageInfoFlags;
+import android.os.Handler;
+import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.util.Log;
@@ -64,6 +66,7 @@ import org.junit.runner.RunWith;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
@@ -78,6 +81,10 @@ public class ArchiveTest {
     private static final String SYSTEM_PACKAGE_NAME = "android";
 
     private static final long TIMEOUT_MS = 30000;
+
+    private static CompletableFuture<Integer> sUnarchiveId;
+    private static CompletableFuture<String> sUnarchiveReceiverPackageName;
+    private static CompletableFuture<Boolean> sUnarchiveReceiverAllUsers;
 
     private Context mContext;
     private UiDevice mUiDevice;
@@ -101,6 +108,9 @@ public class ArchiveTest {
         }
         mUiDevice.executeShellCommand("wm dismiss-keyguard");
         AppOpsUtils.reset(mContext.getPackageName());
+        sUnarchiveId = new CompletableFuture<>();
+        sUnarchiveReceiverPackageName = new CompletableFuture<>();
+        sUnarchiveReceiverAllUsers = new CompletableFuture<>();
     }
 
     @After
@@ -151,19 +161,7 @@ public class ArchiveTest {
         installPackage(ARCHIVE_APK);
         assertFalse(mPackageManager.getPackageInfo(ARCHIVE_APK_PACKAGE_NAME,
                 PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).applicationInfo.isArchived);
-
-        mUiDevice.waitForIdle();
-        // wake up the screen
-        mUiDevice.wakeUp();
-        // unlock the keyguard or the expected window is by systemui or other alert window
-        mUiDevice.pressMenu();
-        // dismiss the system alert window for requesting permissions
-        mUiDevice.pressBack();
-        // return to home/launcher to prevent from being obscured by systemui or other alert window
-        mUiDevice.pressHome();
-        // Wait for device idle
-        mUiDevice.waitForIdle();
-
+        prepareDevice();
         LocalIntentSender sender = new LocalIntentSender();
         runWithShellPermissionIdentity(
                 () -> mPackageInstaller.requestArchive(ARCHIVE_APK_PACKAGE_NAME,
@@ -205,6 +203,70 @@ public class ArchiveTest {
                 PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).applicationInfo.isArchived);
     }
 
+    @Test
+    public void unarchiveApp_weakPermissions() throws Exception {
+        installPackage(ARCHIVE_APK);
+        LocalIntentSender archiveSender = new LocalIntentSender();
+        runWithShellPermissionIdentity(
+                () -> mPackageInstaller.requestArchive(ARCHIVE_APK_PACKAGE_NAME,
+                        archiveSender.getIntentSender(), 0),
+                Manifest.permission.DELETE_PACKAGES);
+        Intent archiveIntent = archiveSender.getResult();
+        assertThat(archiveIntent.getIntExtra(PackageInstaller.EXTRA_STATUS, -100)).isEqualTo(
+                PackageInstaller.STATUS_SUCCESS);
+
+        SessionListener sessionListener = new SessionListener();
+        mPackageInstaller.registerSessionCallback(sessionListener,
+                new Handler(Looper.getMainLooper()));
+
+        LocalIntentSender unarchiveSender = new LocalIntentSender();
+        runWithShellPermissionIdentity(
+                () -> mPackageInstaller.requestUnarchive(ARCHIVE_APK_PACKAGE_NAME,
+                        unarchiveSender.getIntentSender()),
+                Manifest.permission.REQUEST_INSTALL_PACKAGES);
+        Intent unarchiveIntent = unarchiveSender.pollResult(5, TimeUnit.SECONDS);
+        assertThat(unarchiveIntent.getStringExtra(PackageInstaller.EXTRA_PACKAGE_NAME)).isEqualTo(
+                ARCHIVE_APK_PACKAGE_NAME);
+        assertThat(unarchiveIntent.getIntExtra(PackageInstaller.EXTRA_UNARCHIVE_STATUS,
+                -100)).isEqualTo(
+                PackageInstaller.STATUS_PENDING_USER_ACTION);
+
+        Intent unarchiveExtraIntent = unarchiveIntent.getParcelableExtra(Intent.EXTRA_INTENT,
+                Intent.class);
+        unarchiveExtraIntent.addFlags(FLAG_ACTIVITY_CLEAR_TASK | FLAG_ACTIVITY_NEW_TASK);
+        prepareDevice();
+        mContext.startActivity(unarchiveExtraIntent);
+        mUiDevice.waitForIdle();
+
+        assertThat(waitFor(Until.findObject(By.textContains("Restore")))).isNotNull();
+
+        UiObject2 clickableView = mUiDevice.findObject(By.res(SYSTEM_PACKAGE_NAME, "button1"));
+        if (clickableView == null) {
+            Assert.fail("Restore button not shown");
+        }
+        clickableView.click();
+
+        assertThat(sUnarchiveReceiverPackageName.get(10, TimeUnit.SECONDS)).isEqualTo(
+                ARCHIVE_APK_PACKAGE_NAME);
+        int unarchiveId = sUnarchiveId.get(10, TimeUnit.MILLISECONDS);
+
+        mPackageInstaller.abandonSession(unarchiveId);
+    }
+
+    private void prepareDevice() throws Exception {
+        mUiDevice.waitForIdle();
+        // wake up the screen
+        mUiDevice.wakeUp();
+        // unlock the keyguard or the expected window is by systemui or other alert window
+        mUiDevice.pressMenu();
+        // dismiss the system alert window for requesting permissions
+        mUiDevice.pressBack();
+        // return to home/launcher to prevent from being obscured by systemui or other alert window
+        mUiDevice.pressHome();
+        // Wait for device idle
+        mUiDevice.waitForIdle();
+    }
+
     private void installPackage(String path) {
         assertEquals("Success\n", SystemUtil.runShellCommand(
                 String.format("pm install -r -i %s -t -g %s", mContext.getPackageName(),
@@ -225,8 +287,55 @@ public class ArchiveTest {
     }
 
     public static class UnarchiveBroadcastReceiver extends BroadcastReceiver {
+
         @Override
         public void onReceive(Context context, Intent intent) {
+            if (!intent.getAction().equals(Intent.ACTION_UNARCHIVE_PACKAGE)) {
+                return;
+            }
+            if (sUnarchiveId == null) {
+                sUnarchiveId = new CompletableFuture<>();
+            }
+            sUnarchiveId.complete(intent.getIntExtra(PackageInstaller.EXTRA_UNARCHIVE_ID, -1));
+            if (sUnarchiveReceiverPackageName == null) {
+                sUnarchiveReceiverPackageName = new CompletableFuture<>();
+            }
+            sUnarchiveReceiverPackageName.complete(
+                    intent.getStringExtra(PackageInstaller.EXTRA_UNARCHIVE_PACKAGE_NAME));
+            if (sUnarchiveReceiverAllUsers == null) {
+                sUnarchiveReceiverAllUsers = new CompletableFuture<>();
+            }
+            sUnarchiveReceiverAllUsers.complete(
+                    intent.getBooleanExtra(PackageInstaller.EXTRA_UNARCHIVE_ALL_USERS,
+                            true /* defaultValue */));
+        }
+    }
+
+    static class SessionListener extends PackageInstaller.SessionCallback {
+
+        final CompletableFuture<Integer> mSessionIdCreated = new CompletableFuture<>();
+        final CompletableFuture<Integer> mSessionIdFinished = new CompletableFuture<>();
+
+        @Override
+        public void onCreated(int sessionId) {
+            mSessionIdCreated.complete(sessionId);
+        }
+
+        @Override
+        public void onBadgingChanged(int sessionId) {
+        }
+
+        @Override
+        public void onActiveChanged(int sessionId, boolean active) {
+        }
+
+        @Override
+        public void onProgressChanged(int sessionId, float progress) {
+        }
+
+        @Override
+        public void onFinished(int sessionId, boolean success) {
+            mSessionIdFinished.complete(sessionId);
         }
     }
 }
