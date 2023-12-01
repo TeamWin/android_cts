@@ -357,5 +357,6 @@
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyTestCases android.devicepolicy.cts.SupportMessageTest#setShortSupportMessage_tooLongText_isTruncated[IncludeRunOnDeviceOwnerUser]" />
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyTestCases[run-on-secondary-user] android.devicepolicy.cts.SupportMessageTest#setShortSupportMessage_tooLongText_isTruncated[IncludeRunOnUnaffiliatedProfileOwnerSecondaryUser]" />
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyTestCases[run-on-work-profile] android.devicepolicy.cts.SupportMessageTest#setShortSupportMessage_tooLongText_isTruncated[IncludeRunOnProfileOwnerProfileWithNoDeviceOwner]" />
+    <option name="compatibility:exclude-filter" value="CtsDevicePolicyTestCases[run-on-secondary-user] android.devicepolicy.cts.SupportMessageTest#setShortSupportMessage_tooLongText_isTruncated[IncludeRunOnAffiliatedProfileOwnerSecondaryUser]" />
 
 </configuration>
