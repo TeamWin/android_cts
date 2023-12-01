@@ -152,7 +152,6 @@ public class MediaProjectionActivity extends Activity {
             // before pressing "Start recording" button.
             if (!selectEntireScreenOption()) {
                 Log.e(TAG, "Couldn't select entire screen option");
-                return;
             }
         }
         pressStartRecording(isWatch);
