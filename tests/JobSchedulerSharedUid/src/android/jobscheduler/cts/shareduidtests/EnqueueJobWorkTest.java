@@ -117,8 +117,9 @@ public class EnqueueJobWorkTest extends ConstraintTest {
         TestWorkItem[] work = new TestWorkItem[] { new TestWorkItem(work1) };
         kTestEnvironment.setExpectedExecutions(1);
         kTestEnvironment.setExpectedWork(work);
-        mJobScheduler.enqueue(mBuilder.setOverrideDeadline(0).build(), new JobWorkItem(work1));
+        mJobScheduler.enqueue(mBuilder.build(), new JobWorkItem(work1));
         kTestEnvironment.readyToWork();
+        runSatisfiedJob(ENQUEUE_WORK_JOB_ID);
         assertTrue("Job with work enqueued did not fire.",
                 kTestEnvironment.awaitExecution());
         compareWork(work, kTestEnvironment.getLastReceivedWork());
@@ -145,7 +146,7 @@ public class EnqueueJobWorkTest extends ConstraintTest {
                 new TestWorkItem(work7), new TestWorkItem(work8) };
         kTestEnvironment.setExpectedExecutions(1);
         kTestEnvironment.setExpectedWork(work);
-        JobInfo ji = mBuilder.setOverrideDeadline(0).build();
+        JobInfo ji = mBuilder.build();
         mJobScheduler.enqueue(ji, new JobWorkItem(work1));
         mJobScheduler.enqueue(ji, new JobWorkItem(work2));
         mJobScheduler.enqueue(ji, new JobWorkItem(work3));
@@ -155,6 +156,7 @@ public class EnqueueJobWorkTest extends ConstraintTest {
         mJobScheduler.enqueue(ji, new JobWorkItem(work7));
         mJobScheduler.enqueue(ji, new JobWorkItem(work8));
         kTestEnvironment.readyToWork();
+        runSatisfiedJob(ENQUEUE_WORK_JOB_ID);
         assertTrue("Job with work enqueued did not fire.",
                 kTestEnvironment.awaitExecution());
         compareWork(work, kTestEnvironment.getLastReceivedWork());
@@ -173,7 +175,7 @@ public class EnqueueJobWorkTest extends ConstraintTest {
         Intent work6 = new Intent("work6");
         Intent work7 = new Intent("work7");
         Intent work8 = new Intent("work8");
-        JobInfo ji = mBuilder.setOverrideDeadline(0).build();
+        JobInfo ji = mBuilder.build();
         TestWorkItem[] work = new TestWorkItem[]{
                 new TestWorkItem(work1), new TestWorkItem(work2), new TestWorkItem(work3),
                 new TestWorkItem(work4, ji, new TestWorkItem[] {
@@ -187,6 +189,7 @@ public class EnqueueJobWorkTest extends ConstraintTest {
         mJobScheduler.enqueue(ji, new JobWorkItem(work3));
         mJobScheduler.enqueue(ji, new JobWorkItem(work4));
         kTestEnvironment.readyToWork();
+        runSatisfiedJob(ENQUEUE_WORK_JOB_ID);
         assertTrue("Job with work enqueued did not fire.",
                 kTestEnvironment.awaitExecution());
         compareWork(work, kTestEnvironment.getLastReceivedWork());
@@ -215,11 +218,11 @@ public class EnqueueJobWorkTest extends ConstraintTest {
 
         // now enqueue more work and also change the job's constraints
         ji = new JobInfo.Builder(ENQUEUE_WORK_JOB_ID, kJobServiceComponent)
-                .setOverrideDeadline(0)
                 .build();
         mJobScheduler.enqueue(ji, new JobWorkItem(work2));
 
         kTestEnvironment.readyToWork();
+        runSatisfiedJob(ENQUEUE_WORK_JOB_ID);
         assertTrue("Job with work enqueued did not start",
                 kTestEnvironment.awaitExecution());
         compareWork(work, kTestEnvironment.getLastReceivedWork());
@@ -236,10 +239,11 @@ public class EnqueueJobWorkTest extends ConstraintTest {
                 new TestWorkItem(work2, TestWorkItem.FLAG_DELAY_COMPLETE_PUSH_BACK) };
         kTestEnvironment.setExpectedExecutions(1);
         kTestEnvironment.setExpectedWork(work);
-        JobInfo ji = mBuilder.setOverrideDeadline(0).build();
+        JobInfo ji = mBuilder.build();
         mJobScheduler.enqueue(ji, new JobWorkItem(work1));
         mJobScheduler.enqueue(ji, new JobWorkItem(work2));
         kTestEnvironment.readyToWork();
+        runSatisfiedJob(ENQUEUE_WORK_JOB_ID);
         assertTrue("Job with work enqueued did not fire.",
                 kTestEnvironment.awaitExecution());
         compareWork(work, kTestEnvironment.getLastReceivedWork());
@@ -257,10 +261,11 @@ public class EnqueueJobWorkTest extends ConstraintTest {
                 new TestWorkItem(work2, TestWorkItem.FLAG_DELAY_COMPLETE_PUSH_TOP) };
         kTestEnvironment.setExpectedExecutions(1);
         kTestEnvironment.setExpectedWork(work);
-        JobInfo ji = mBuilder.setOverrideDeadline(0).build();
+        JobInfo ji = mBuilder.build();
         mJobScheduler.enqueue(ji, new JobWorkItem(work1));
         mJobScheduler.enqueue(ji, new JobWorkItem(work2));
         kTestEnvironment.readyToWork();
+        runSatisfiedJob(ENQUEUE_WORK_JOB_ID);
         assertTrue("Job with work enqueued did not fire.",
                 kTestEnvironment.awaitExecution());
         compareWork(work, kTestEnvironment.getLastReceivedWork());
@@ -291,7 +296,7 @@ public class EnqueueJobWorkTest extends ConstraintTest {
                 new TestWorkItem(work8) };
         kTestEnvironment.setExpectedExecutions(1);
         kTestEnvironment.setExpectedWork(work);
-        JobInfo ji = mBuilder.setOverrideDeadline(0).build();
+        JobInfo ji = mBuilder.build();
         mJobScheduler.enqueue(ji, new JobWorkItem(work1));
         mJobScheduler.enqueue(ji, new JobWorkItem(work2));
         mJobScheduler.enqueue(ji, new JobWorkItem(work3));
@@ -301,6 +306,7 @@ public class EnqueueJobWorkTest extends ConstraintTest {
         mJobScheduler.enqueue(ji, new JobWorkItem(work7));
         mJobScheduler.enqueue(ji, new JobWorkItem(work8));
         kTestEnvironment.readyToWork();
+        runSatisfiedJob(ENQUEUE_WORK_JOB_ID);
         assertTrue("Job with work enqueued did not fire.",
                 kTestEnvironment.awaitExecution());
         compareWork(work, kTestEnvironment.getLastReceivedWork());
@@ -322,7 +328,7 @@ public class EnqueueJobWorkTest extends ConstraintTest {
         kTestEnvironment.setExpectedExecutions(1);
         kTestEnvironment.setExpectedWaitForStop();
         kTestEnvironment.setExpectedWork(initialWork);
-        JobInfo ji = mBuilder.setOverrideDeadline(0).build();
+        JobInfo ji = mBuilder.build();
         mJobScheduler.enqueue(ji, new JobWorkItem(work1));
         mJobScheduler.enqueue(ji, new JobWorkItem(work2));
         mJobScheduler.enqueue(ji, new JobWorkItem(work3));
@@ -331,6 +337,7 @@ public class EnqueueJobWorkTest extends ConstraintTest {
 
         // Now wait for the job to get to the point where it is processing the last
         // work and waiting for it to be stopped.
+        runSatisfiedJob(ENQUEUE_WORK_JOB_ID);
         assertTrue("Job with work enqueued did not wait to stop.",
                 kTestEnvironment.awaitWaitingForStop());
 
@@ -377,7 +384,7 @@ public class EnqueueJobWorkTest extends ConstraintTest {
         kTestEnvironment.setExpectedExecutions(1);
         kTestEnvironment.setExpectedWaitForStop();
         kTestEnvironment.setExpectedWork(initialWork);
-        JobInfo ji = mBuilder.setOverrideDeadline(0).build();
+        JobInfo ji = mBuilder.build();
         mJobScheduler.enqueue(ji, new JobWorkItem(work1));
         mJobScheduler.enqueue(ji, new JobWorkItem(work2));
         mJobScheduler.enqueue(ji, new JobWorkItem(work3));
@@ -386,6 +393,7 @@ public class EnqueueJobWorkTest extends ConstraintTest {
 
         // Now wait for the job to get to the point where it is processing the last
         // work and waiting for it to be stopped.
+        runSatisfiedJob(ENQUEUE_WORK_JOB_ID);
         assertTrue("Job with work enqueued did not wait to stop.",
                 kTestEnvironment.awaitWaitingForStop());
 
@@ -446,7 +454,7 @@ public class EnqueueJobWorkTest extends ConstraintTest {
                 new TestWorkItem(work2, new Uri[] { mFirstUri }, new Uri[] { mSecondUri}) };
         kTestEnvironment.setExpectedExecutions(1);
         kTestEnvironment.setExpectedWork(work);
-        JobInfo ji = mBuilder.setOverrideDeadline(0).setRequiresStorageNotLow(true).build();
+        JobInfo ji = mBuilder.setRequiresStorageNotLow(true).build();
         mJobScheduler.enqueue(ji, new JobWorkItem(work1));
         mJobScheduler.enqueue(ji, new JobWorkItem(work2));
 
@@ -462,6 +470,7 @@ public class EnqueueJobWorkTest extends ConstraintTest {
 
         // Now allow the job to run.
         setStorageState(false);
+        runSatisfiedJob(ENQUEUE_WORK_JOB_ID);
 
         assertTrue("Job with work enqueued did not fire.",
                 kTestEnvironment.awaitExecution());
