@@ -565,6 +565,69 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * Pretty prints a multimap to make it easier for a person to read it.
+     *
+     * It makes assumptions about the inputs: it assumes the keys are classes and the values are jar
+     * files where they exist. It also assumes that for any given class there will be 2 or more jar
+     * files where they are found.
+     *
+     * @return  the string pretty formatted
+     */
+    private String prettyPrint(Multimap<String, String> classesToJars) {
+        if (classesToJars.isEmpty()) {
+            return "No findings";
+        }
+
+        final HashMultimap<Collection<String>, String> jarsToClasses = HashMultimap.create();
+        classesToJars.asMap().forEach((className, jarFiles) ->
+                jarsToClasses.put(jarFiles, className)
+        );
+
+        StringBuilder sb = new StringBuilder();
+        jarsToClasses.asMap().forEach((jars, classes) -> {
+                    sb.append("The following jar files:\n");
+                    jars.forEach((jar) -> sb.append("    ").append(jar).append('\n'));
+                    sb.append("Contain the following duplicate classes:\n");
+                    classes.forEach((klass) -> sb.append("    ").append(klass).append('\n'));
+                    sb.append("End of duplications.\n\n");
+                }
+        );
+        sb.append("This can result in runtime breakages (now or in a future release)."
+                + " Read more at http://go/fixing-strict-java-packages\n");
+        return sb.toString();
+    }
+
+    /**
+     * Pretty prints a nested multimap to make it easier for a person to read it.
+     *
+     * It makes assumptions about the inputs: it assumes the outer keys are apk files (coming from
+     * APK in apexes) and the outer values are a Multimap with keys being a jar file and values
+     * classes that are defined in that jar and that also exist in the apk file.
+     *
+     * @return  the string pretty formatted
+     */
+    private String prettyPrint(
+            HashMultimap<String, Multimap<String, String>> apkToJarToClasses) {
+        if (apkToJarToClasses.isEmpty()) {
+            return "No findings";
+        }
+        StringBuilder sb = new StringBuilder();
+        apkToJarToClasses.forEach((apk, jarToClasses) -> {
+            jarToClasses.asMap().forEach((jar, classes) -> {
+                sb.append("The apk in apex and jar file:\n");
+                sb.append("    ").append(apk).append('\n');
+                sb.append("    ").append(jar).append('\n');
+                sb.append("contain the following duplicate class definitions:\n");
+                classes.forEach(klass -> sb.append("     ").append(klass).append('\n'));
+                sb.append("End of duplications.\n\n");
+            });
+        });
+        sb.append("This can result in runtime breakages (now or in a future release)."
+                + " Read more at http://go/fixing-strict-java-packages\n");
+        return sb.toString();
+    }
+
+    /**
      * Ensure that there are no duplicate classes among jars listed in BOOTCLASSPATH.
      */
     @Test
@@ -591,7 +654,9 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
         Multimap<String, String> filtered = Multimaps.filterKeys(duplicates,
                 duplicate -> !overlapBurndownList.contains(duplicate));
 
-        assertThat(filtered).isEmpty();
+        assertWithMessage(prettyPrint(filtered))
+                .that(filtered)
+                .isEmpty();
     }
 
     /**
@@ -621,7 +686,9 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 duplicate -> !overlapBurndownList.contains(duplicate)
                         && !jarsInSameApex(duplicates.get(duplicate)));
 
-        assertThat(filtered).isEmpty();
+        assertWithMessage(prettyPrint(filtered))
+                .that(filtered)
+                .isEmpty();
     }
 
     /**
@@ -632,7 +699,10 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
         Multimap<String, String> duplicates = getDuplicateClasses(sBootclasspathJars);
         Multimap<String, String> filtered =
                 Multimaps.filterValues(duplicates, jar -> jar.startsWith("/apex/"));
-        assertThat(filtered).isEmpty();
+
+        assertWithMessage(prettyPrint(filtered))
+                .that(filtered)
+                .isEmpty();
     }
 
     /**
@@ -644,7 +714,9 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
         Multimap<String, String> filtered =
                 Multimaps.filterValues(duplicates, jar -> jar.startsWith("/apex/"));
 
-        assertThat(filtered).isEmpty();
+        assertWithMessage(prettyPrint(filtered))
+                .that(filtered)
+                .isEmpty();
     }
 
     /**
@@ -663,7 +735,9 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 duplicate -> !BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST.contains(duplicate));
         filtered = Multimaps.filterValues(filtered, jar -> jar.startsWith("/apex/"));
 
-        assertThat(filtered).isEmpty();
+        assertWithMessage(prettyPrint(filtered))
+                .that(filtered)
+                .isEmpty();
     }
 
     /**
@@ -706,7 +780,9 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     }
                     return true;
                 });
-        assertThat(filtered).isEmpty();
+        assertWithMessage(prettyPrint(filtered))
+                .that(filtered)
+                .isEmpty();
     }
 
     /**
@@ -756,7 +832,10 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                         FileUtil.deleteFile(apkFile);
                     }
                 });
-        assertThat(perApkClasspathDuplicates).isEmpty();
+
+        assertWithMessage(prettyPrint(perApkClasspathDuplicates))
+                .that(perApkClasspathDuplicates)
+                .isEmpty();
     }
 
     /**
