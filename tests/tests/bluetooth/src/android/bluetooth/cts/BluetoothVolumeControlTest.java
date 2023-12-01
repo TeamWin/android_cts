@@ -267,6 +267,12 @@ public class BluetoothVolumeControlTest {
         } catch (Exception e) {
             fail("Exception caught from connect(): " + e.toString());
         }
+
+        // volume expect in range [0, 255]
+        assertThrows(IllegalArgumentException.class, () ->
+                        mBluetoothVolumeControl.setDeviceVolume(mTestDevice, -1, true));
+        assertThrows(IllegalArgumentException.class, () ->
+                        mBluetoothVolumeControl.setDeviceVolume(mTestDevice, 256, true));
     }
 
     @Test
