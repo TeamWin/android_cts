@@ -120,6 +120,10 @@ public class PackageInstallerArchiveTest {
     private static final int TIMEOUT = 30000;
     private static final int SECOND = 1000;
 
+    private static final String ACTION_UNARCHIVE_ERROR_DIALOG =
+            "android.intent.action.UNARCHIVE_ERROR_DIALOG";
+
+
     private static CompletableFuture<Integer> sUnarchiveId;
     private static CompletableFuture<String> sUnarchiveReceiverPackageName;
     private static CompletableFuture<Boolean> sUnarchiveReceiverAllUsers;
@@ -474,7 +478,7 @@ public class PackageInstallerArchiveTest {
         assertThat(mUnarchiveIntentSender.mStatus.get(10, TimeUnit.MILLISECONDS)).isEqualTo(
                 PackageInstaller.STATUS_PENDING_USER_ACTION);
 
-        Intent extraIntent = mUnarchiveIntentSender.mPermissionIntent.get(10,
+        Intent extraIntent = mUnarchiveIntentSender.mIntent.get(10,
                 TimeUnit.MILLISECONDS);
         extraIntent.addFlags(FLAG_ACTIVITY_CLEAR_TASK | FLAG_ACTIVITY_NEW_TASK);
         prepareDevice();
@@ -558,6 +562,8 @@ public class PackageInstallerArchiveTest {
                 PACKAGE_NAME);
         assertThat(mUnarchiveIntentSender.mStatus.get(10, TimeUnit.MILLISECONDS)).isEqualTo(
                 PackageInstaller.UNARCHIVAL_OK);
+        assertThat(mUnarchiveIntentSender.mIntent.get(10, TimeUnit.MILLISECONDS)).isNull();
+
         mPackageInstaller.abandonSession(unarchiveId);
     }
 
@@ -593,6 +599,8 @@ public class PackageInstallerArchiveTest {
                 PACKAGE_NAME);
         assertThat(mUnarchiveIntentSender.mStatus.get(10, TimeUnit.MILLISECONDS)).isEqualTo(
                 PackageInstaller.UNARCHIVAL_GENERIC_ERROR);
+        assertThat(mUnarchiveIntentSender.mIntent.get(10,
+                TimeUnit.MILLISECONDS).getAction()).isEqualTo(ACTION_UNARCHIVE_ERROR_DIALOG);
 
         assertThat(sessionListener.mSessionIdFinished.get(5, TimeUnit.SECONDS)).isEqualTo(
                 draftSessionId);
@@ -978,7 +986,7 @@ public class PackageInstallerArchiveTest {
 
         final CompletableFuture<String> mPackage = new CompletableFuture<>();
         final CompletableFuture<Integer> mStatus = new CompletableFuture<>();
-        final CompletableFuture<Intent> mPermissionIntent = new CompletableFuture<>();
+        final CompletableFuture<Intent> mIntent = new CompletableFuture<>();
 
         @Override
         public void send(int code, Intent intent, String resolvedType,
@@ -987,10 +995,7 @@ public class PackageInstallerArchiveTest {
             mPackage.complete(intent.getStringExtra(PackageInstaller.EXTRA_PACKAGE_NAME));
             int status = intent.getIntExtra(PackageInstaller.EXTRA_UNARCHIVE_STATUS, -100);
             mStatus.complete(status);
-            if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
-                mPermissionIntent.complete(
-                        intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent.class));
-            }
+            mIntent.complete(intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent.class));
         }
 
     }
