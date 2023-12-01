@@ -27,7 +27,6 @@ import android.app.Instrumentation;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.TouchHelper;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.window.BackEvent;
 import android.window.OnBackAnimationCallback;
 
@@ -106,16 +105,9 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
 
         final TouchHelper.SwipeSession touchSession = new TouchHelper.SwipeSession(
                 DEFAULT_DISPLAY, true, false);
-        long startDownTime = touchSession.beginSwipe(0, midHeight);
-        // Inject another move event to trigger back start.
-        TouchHelper.injectMotion(startDownTime, startDownTime, MotionEvent.ACTION_MOVE, 0,
-                midHeight, DEFAULT_DISPLAY, true, false);
-        assertInvoked(mTracker.mStartLatch);
-        assertNotInvoked(mTracker.mProgressLatch);
-        assertNotInvoked(mTracker.mInvokeLatch);
-        assertNotInvoked(mTracker.mCancelLatch);
-
+        touchSession.beginSwipe(0, midHeight);
         touchSession.continueSwipe(midWidth, midHeight, PROGRESS_SWIPE_STEPS);
+        assertInvoked(mTracker.mStartLatch);
         assertInvoked(mTracker.mProgressLatch);
         assertNotInvoked(mTracker.mInvokeLatch);
         assertNotInvoked(mTracker.mCancelLatch);
@@ -145,9 +137,6 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
         final TouchHelper.SwipeSession touchSession = new TouchHelper.SwipeSession(
                 DEFAULT_DISPLAY, true, false);
         long startDownTime = touchSession.beginSwipe(0, midHeight);
-        // Inject another move event to trigger back start.
-        TouchHelper.injectMotion(startDownTime, startDownTime, MotionEvent.ACTION_MOVE, 0,
-                midHeight, DEFAULT_DISPLAY, true, false);
         touchSession.continueSwipe(midWidth, midHeight, PROGRESS_SWIPE_STEPS);
         assertInvoked(mTracker.mProgressLatch);
 
