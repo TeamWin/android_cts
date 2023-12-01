@@ -41,7 +41,7 @@ class MockModemServiceConnector {
     private static final String COMMAND_MODEM_SERVICE_UNKNOWN = "unknown";
     private static final String COMMAND_MODEM_SERVICE_DEFAULT = "default";
 
-    private static final int BIND_LOCAL_MOCKMODEM_SERVICE_TIMEOUT_MS = 5000;
+    private static final int BIND_LOCAL_MOCKMODEM_SERVICE_TIMEOUT_MS = 25000;
     private static final int BIND_RADIO_INTERFACE_READY_TIMEOUT_MS = 5000;
 
     private class MockModemServiceConnection implements ServiceConnection {
