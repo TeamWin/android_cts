@@ -106,7 +106,7 @@
           "exclude-filter": "android.hardware.input.cts.tests.RazerServalTest#testAllMotions"
         },
         {
-          // TODO(b/266108817) android.hardware.input.cts.tests unexpected timeouts
+          // TODO(b/266108817): android.hardware.input.cts.tests unexpected timeouts
           "exclude-filter": "android.hardware.input.cts.tests.SonyDualshock4BluetoothTest#testAllMotions"
         },
         {
