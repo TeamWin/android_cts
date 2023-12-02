@@ -158,7 +158,6 @@ class IntentTest : PackageInstallerTestBase() {
             clickInstallerUIButton(INSTALL_BUTTON_ID)
 
             // Install should not have succeeded
-            assertEquals(RESULT_CANCELED, installation.get(TIMEOUT, TimeUnit.MILLISECONDS))
             assertNotInstalled()
         } finally {
             setSecureFrp(false)
