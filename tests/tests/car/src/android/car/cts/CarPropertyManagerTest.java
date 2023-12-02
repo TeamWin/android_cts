@@ -56,6 +56,7 @@ import android.car.hardware.property.CruiseControlCommand;
 import android.car.hardware.property.CruiseControlState;
 import android.car.hardware.property.CruiseControlType;
 import android.car.hardware.property.DriverDrowsinessAttentionState;
+import android.car.hardware.property.DriverDrowsinessAttentionWarning;
 import android.car.hardware.property.EmergencyLaneKeepAssistState;
 import android.car.hardware.property.ErrorState;
 import android.car.hardware.property.EvChargeState;
@@ -335,6 +336,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             DriverDrowsinessAttentionState.KSS_RATING_8_SLEEPY_SOME_EFFORT,
                             DriverDrowsinessAttentionState.KSS_RATING_9_VERY_SLEEPY)
                      .build();
+    private static final ImmutableSet<Integer> DRIVER_DROWSINESS_ATTENTION_WARNINGS =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            DriverDrowsinessAttentionWarning.OTHER,
+                            DriverDrowsinessAttentionWarning.NO_WARNING,
+                            DriverDrowsinessAttentionWarning.WARNING)
+                    .build();
 
     private static final ImmutableSet<Integer> ERROR_STATES =
             ImmutableSet.<Integer>builder()
@@ -454,7 +462,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     .add(
                             VehiclePropertyIds.HANDS_ON_DETECTION_DRIVER_STATE,
                             VehiclePropertyIds.HANDS_ON_DETECTION_WARNING,
-                            VehiclePropertyIds.DRIVER_DROWSINESS_ATTENTION_STATE)
+                            VehiclePropertyIds.DRIVER_DROWSINESS_ATTENTION_STATE,
+                            VehiclePropertyIds.DRIVER_DROWSINESS_ATTENTION_WARNING)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CAR_ENERGY_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -1142,6 +1151,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getDriverDrowsinessAttentionSystemEnabledVerifier(),
              getDriverDrowsinessAttentionStateVerifier(),
              getDriverDrowsinessAttentionWarningEnabledVerifier(),
+             getDriverDrowsinessAttentionWarningVerifier(),
              getWheelTickVerifier(),
              getInfoVinVerifier(),
              getInfoMakeVerifier(),
@@ -1788,6 +1798,40 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testDriverDrowsinessAttentionWarningEnabledIfSupported() {
         getDriverDrowsinessAttentionWarningEnabledVerifier().verify();
+    }
+
+    private VehiclePropertyVerifier<Integer> getDriverDrowsinessAttentionWarningVerifier() {
+        ImmutableSet<Integer> possibleEnumValues = ImmutableSet.<Integer>builder()
+                .addAll(DRIVER_DROWSINESS_ATTENTION_WARNINGS)
+                .addAll(ERROR_STATES)
+                .build();
+
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.DRIVER_DROWSINESS_ATTENTION_WARNING,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class, mCarPropertyManager)
+                .setAllPossibleEnumValues(possibleEnumValues)
+                .setDependentOnProperty(
+                        VehiclePropertyIds.DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_DRIVER_MONITORING_SETTINGS,
+                                Car.PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS))
+                .verifyErrorStates()
+                .addReadPermission(Car.PERMISSION_READ_DRIVER_MONITORING_STATES)
+                .build();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
+    public void testDriverDrowsinessAttentionWarningIfSupported() {
+        getDriverDrowsinessAttentionWarningVerifier().verify();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
+    public void testDriverDrowsinessAttentionWarningAndErrorStateDontIntersect() {
+        verifyEnumValuesAreDistinct(DRIVER_DROWSINESS_ATTENTION_WARNINGS, ERROR_STATES);
     }
 
     public VehiclePropertyVerifier<Long[]> getWheelTickVerifier() {
