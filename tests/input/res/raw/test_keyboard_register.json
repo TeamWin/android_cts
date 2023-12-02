@@ -9,7 +9,7 @@
     "configuration":[
         {"type": "UI_SET_EVBIT", "data": ["EV_KEY"]},
         {"type": "UI_SET_KEYBIT", "data": [
-            "KEY_Q", "KEY_W", "KEY_E", "KEY_A", "KEY_B", "KEY_C", "KEY_BACKSPACE", "KEY_GRAVE",
+            "KEY_Q", "KEY_W", "KEY_E", "KEY_A", "KEY_B", "KEY_C", "KEY_BACKSPACE", "KEY_ESC",
             "KEY_LEFTALT", "KEY_LEFTMETA", "KEY_LEFT"
         ]}
     ]
