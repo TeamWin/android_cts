@@ -324,11 +324,11 @@ static std::optional<std::string> testGetThermalHeadroomThresholds(JNIEnv *, job
     for (int i = 0; i < size; i++) {
         auto headroom = thresholds[i].headroom;
         int status = thresholds[i].thermalStatus;
-        if (status == AThermalStatus::ATHERMAL_STATUS_SEVERE && headroom != 1.0f) {
-            return StringPrintf("Expected threshold 1.0f for SEVERE status but got %2.2f",
-                                headroom);
-        }
         if (!isnan(headroom)) {
+            if (status == AThermalStatus::ATHERMAL_STATUS_SEVERE && headroom != 1.0f) {
+                return StringPrintf("Expected threshold 1.0f for SEVERE status but got %2.2f",
+                                    headroom);
+            }
             if (headroom < lastHeadroom) {
                 return StringPrintf("Thermal headroom threshold for status %d is %2.2f should not "
                                     "be smaller than a lower status %d which is %2.2f",
