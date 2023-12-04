@@ -278,6 +278,38 @@ public class NfcAdapterTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_NFC_SET_DISCOVERY_TECH)
+    public void testResetDiscoveryTechnology() {
+        try {
+            NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+            Activity activity = createAndResumeActivity();
+            adapter.resetDiscoveryTechnology(activity);
+        } catch (Exception e) {
+            throw new IllegalStateException("Unexpected Exception: " + e);
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_NFC_SET_DISCOVERY_TECH)
+    public void testSetDiscoveryTechnology() {
+        try {
+            NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+            Activity activity = createAndResumeActivity();
+            adapter.setDiscoveryTechnology(activity,
+                    NfcAdapter.FLAG_READER_NFC_A | NfcAdapter.FLAG_READER_NFC_B
+                    | NfcAdapter.FLAG_READER_NFC_F,
+                    NfcAdapter.FLAG_LISTEN_NFC_PASSIVE_A | NfcAdapter.FLAG_LISTEN_NFC_PASSIVE_B
+                    | NfcAdapter.FLAG_LISTEN_NFC_PASSIVE_F);
+            adapter.resetDiscoveryTechnology(activity);
+            adapter.setDiscoveryTechnology(activity, NfcAdapter.FLAG_READER_DISABLE,
+                    NfcAdapter.FLAG_LISTEN_KEEP);
+            adapter.resetDiscoveryTechnology(activity);
+        } catch (Exception e) {
+            throw new IllegalStateException("Unexpected Exception: " + e);
+        }
+    }
+
+    @Test
     @RequiresFlagsEnabled(Flags.FLAG_ENABLE_NFC_MAINLINE)
     public void testSetReaderMode() {
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
