@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class CtsRecognitionService extends RecognitionService {
@@ -77,6 +78,8 @@ public class CtsRecognitionService extends RecognitionService {
     public static Queue<Consumer<SupportCallback>> sConsumerQueue = new ArrayDeque<>();
     public static List<Intent> sDownloadTriggers = new ArrayList<>();
 
+    public static AtomicInteger sBindCount = new AtomicInteger(0);
+
     static final int MAX_CONCURRENT_SESSIONS_COUNT = 3;
 
     private final Random mRandom = new Random();
@@ -93,6 +96,19 @@ public class CtsRecognitionService extends RecognitionService {
                     .add(RecognizerMethod.RECOGNIZER_METHOD_START_LISTENING);
         }
         sIsActive.set(false);
+    }
+
+    @Override
+    public void onBindInternal() {
+        Log.d(TAG, "onBind");
+        sBindCount.incrementAndGet();
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        Log.d(TAG, "onUnbind");
+        sBindCount.decrementAndGet();
+        return super.onUnbind(intent);
     }
 
     @Override

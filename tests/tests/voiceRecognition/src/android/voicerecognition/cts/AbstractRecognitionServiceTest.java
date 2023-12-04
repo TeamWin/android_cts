@@ -58,6 +58,10 @@ import com.android.compatibility.common.util.PollingCheck;
 
 import com.google.common.collect.ImmutableList;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+import junitparams.naming.TestCaseName;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -70,10 +74,6 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import junitparams.naming.TestCaseName;
 
 /** Abstract implementation for {@link android.speech.SpeechRecognizer} CTS tests. */
 @RunWith(JUnitParamsRunner.class)
@@ -202,6 +202,11 @@ abstract class AbstractRecognitionServiceTest {
                 .isEqualTo(List.of("pt", "de"));
         assertThat(rs.getOnlineLanguages())
                 .isEqualTo(List.of("zh", "fr"));
+        assertThat(CtsRecognitionService.sBindCount.get()).isGreaterThan(0);
+
+        mActivity.destroyRecognizerDefault();
+        mUiDevice.waitForIdle();
+        PollingCheck.waitFor(() -> CtsRecognitionService.sBindCount.get() == 0);
     }
 
     @Test
@@ -218,6 +223,11 @@ abstract class AbstractRecognitionServiceTest {
         PollingCheck.waitFor(SEQUENCE_TEST_WAIT_TIMEOUT_MS,
                 () -> CtsRecognitionService.sDownloadTriggers.size() > 0);
         assertThat(CtsRecognitionService.sDownloadTriggers).hasSize(1);
+        assertThat(CtsRecognitionService.sBindCount.get()).isGreaterThan(0);
+
+        mActivity.destroyRecognizerDefault();
+        mUiDevice.waitForIdle();
+        PollingCheck.waitFor(() -> CtsRecognitionService.sBindCount.get() == 0);
     }
 
     @Test
@@ -246,6 +256,11 @@ abstract class AbstractRecognitionServiceTest {
         assertThat(listener.mCallbacks)
                 .containsExactlyElementsIn(mdei.mExpectedCallbacks)
                 .inOrder();
+        assertThat(CtsRecognitionService.sBindCount.get()).isGreaterThan(0);
+
+        mActivity.destroyRecognizerDefault();
+        mUiDevice.waitForIdle();
+        PollingCheck.waitFor(() -> CtsRecognitionService.sBindCount.get() == 0);
     }
 
     static ModelDownloadExecutionInfo.Scenario[] modelDownloadScenarios() {
@@ -498,6 +513,10 @@ abstract class AbstractRecognitionServiceTest {
             assertThat(ri.mErrorCodesReceived).isEqualTo(sei.mExpectedErrorCodesReceived);
         }
         assertThat(CtsRecognitionService.sInstructedCallbackMethods).isEmpty();
+
+        mActivity.destroyAllRecognizers();
+        mUiDevice.waitForIdle();
+        PollingCheck.waitFor(() -> CtsRecognitionService.sBindCount.get() == 0);
     }
 
     private static void prepareDevice() {
