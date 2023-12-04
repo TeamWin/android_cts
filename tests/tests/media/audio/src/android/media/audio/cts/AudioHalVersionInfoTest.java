@@ -125,6 +125,10 @@ public class AudioHalVersionInfoTest {
      */
     @Test
     public void test_VERSIONS_contains() throws Exception {
+        // supported AIDL versions
+        assertTrue(AudioHalVersionInfo.VERSIONS.contains(AudioHalVersionInfo.AIDL_1_0));
+
+        // supported HIDL versions
         assertTrue(AudioHalVersionInfo.VERSIONS.contains(AudioHalVersionInfo.HIDL_7_1));
         assertTrue(AudioHalVersionInfo.VERSIONS.contains(AudioHalVersionInfo.HIDL_7_0));
         assertTrue(AudioHalVersionInfo.VERSIONS.contains(AudioHalVersionInfo.HIDL_6_0));
@@ -138,9 +142,6 @@ public class AudioHalVersionInfoTest {
      */
     @Test
     public void test_VERSIONS_not_contains() throws Exception {
-        // TODO: move AIDL to test_VERSIONS_contains() once we support AIDL.
-        assertFalse(AudioHalVersionInfo.VERSIONS.contains(AudioHalVersionInfo.AIDL_1_0));
-
         assertFalse(AudioHalVersionInfo.VERSIONS.contains(AudioHalVersionInfo.HIDL_2_0));
     }
 }
