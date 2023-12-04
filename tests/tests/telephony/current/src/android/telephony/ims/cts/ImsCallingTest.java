@@ -1354,6 +1354,15 @@ public class ImsCallingTest extends ImsCallingBase {
         if (!ImsUtils.shouldTestImsCall()) {
             return;
         }
+
+        boolean supportDomainSelection =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(sTelephonyManager,
+                        (tm) -> tm.isDomainSelectionSupported());
+
+        if (supportDomainSelection) {
+            return;
+        }
+
         LinkedBlockingQueue<List<CallState>> queue = new LinkedBlockingQueue<>();
         ImsCallingTest.TestTelephonyCallbackForCallStateChange testCb =
                 new ImsCallingTest.TestTelephonyCallbackForCallStateChange(queue);
@@ -1761,7 +1770,8 @@ public class ImsCallingTest extends ImsCallingBase {
     private void resetCallSessionObjects() {
         mCall1 = mCall2 = mCall3 = mConferenceCall = null;
         mCallSession1 = mCallSession2 = mCallSession3 = mConfCallSession = null;
-        if (sServiceConnector.getCarrierService().getMmTelFeature() == null) {
+        if (sServiceConnector.getCarrierService() == null
+                || sServiceConnector.getCarrierService().getMmTelFeature() == null) {
             return;
         }
         ConferenceHelper confHelper = sServiceConnector.getCarrierService().getMmTelFeature()

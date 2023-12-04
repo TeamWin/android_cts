@@ -76,9 +76,13 @@ import android.telephony.CarrierConfigManager;
 import android.telephony.DisconnectCause;
 import android.telephony.DomainSelectionService;
 import android.telephony.NetworkRegistrationInfo;
+import android.telephony.PreciseCallState;
 import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
+import android.telephony.cts.InCallServiceStateValidator;
 import android.telephony.cts.util.TelephonyUtils;
+import android.telephony.emergency.EmergencyNumber;
 import android.telephony.ims.ImsManager;
 import android.telephony.ims.ImsMmTelManager;
 import android.telephony.ims.ImsReasonInfo;
@@ -87,6 +91,8 @@ import android.telephony.ims.stub.ImsFeatureConfiguration;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
 import android.telephony.mockmodem.MockEmergencyRegResult;
 import android.telephony.mockmodem.MockModemManager;
+import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseArray;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -103,6 +109,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -1082,6 +1089,125 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
         // LTE should have higher priority in scan list to trigger EPS fallback.
         verifyScanPsPreferred();
+    }
+
+    @Test
+    public void testOutGoingEmergencyCall() throws Exception {
+        // Setup pre-condition
+        PersistableBundle bundle = getDefaultPersistableBundle();
+        overrideCarrierConfig(bundle);
+
+        MockEmergencyRegResult regResult = getEmergencyRegResult(EUTRAN, REGISTRATION_STATE_HOME,
+                NetworkRegistrationInfo.DOMAIN_CS | NetworkRegistrationInfo.DOMAIN_PS,
+                true, true, 0, 0, "", "");
+        sMockModemManager.setEmergencyRegResult(sTestSlot, regResult);
+
+        TestTelephonyCallbackForCallStateChange testCb =
+                new TestTelephonyCallbackForCallStateChange();
+
+        TelephonyManager telephonyManager = (TelephonyManager) getContext()
+                .getSystemService(Context.TELEPHONY_SERVICE);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                telephonyManager, (tm) -> tm.registerTelephonyCallback(Runnable::run, testCb));
+
+        bindImsService();
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+
+        // Place outgoing emergency call
+        placeOutgoingCall(TEST_EMERGENCY_NUMBER);
+        TimeUnit.MILLISECONDS.sleep(WAIT_REQUEST_TIMEOUT_MS);
+
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+        Call call = getCall(mCurrentCallId);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
+
+        assertTrue(testCb.waitForOutgoingEmergencyCall(TEST_EMERGENCY_NUMBER));
+        assertTrue(testCb.waitForCallActive());
+
+        TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService().getMmTelFeature()
+                .getImsCallsession();
+        isCallActive(call, callSession);
+
+        call.disconnect();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(call, callSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        waitForUnboundService();
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                telephonyManager, (tm) -> tm.unregisterTelephonyCallback(testCb));
+    }
+
+    private class TestTelephonyCallbackForCallStateChange extends TelephonyCallback implements
+            TelephonyCallback.PreciseCallStateListener,
+            TelephonyCallback.OutgoingEmergencyCallListener {
+
+        private EmergencyNumber mLastOutgoingEmergencyNumber;
+        private Semaphore mOutgoingEmergencyCallSemaphore = new Semaphore(0);
+        private Semaphore mActiveCallStateSemaphore = new Semaphore(0);
+
+        @Override
+        public void onPreciseCallStateChanged(@NonNull PreciseCallState callState) {
+            Log.i(LOG_TAG, "onPreciseCallStateChanged: state=" + callState);
+            if (callState.getForegroundCallState() == PreciseCallState.PRECISE_CALL_STATE_ACTIVE) {
+                mActiveCallStateSemaphore.release();
+            }
+        }
+
+        @Override
+        public void onOutgoingEmergencyCall(EmergencyNumber emergencyNumber, int subscriptionId) {
+            Log.i(LOG_TAG, "onOutgoingEmergencyCall: emergencyNumber=" + emergencyNumber);
+            mLastOutgoingEmergencyNumber = emergencyNumber;
+            mOutgoingEmergencyCallSemaphore.release();
+        }
+
+        public boolean waitForCallActive() {
+            try {
+                if (!mActiveCallStateSemaphore.tryAcquire(
+                        WAIT_LATCH_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                    Log.e(LOG_TAG, "Timed out to receive active call state");
+                    return false;
+                }
+            } catch (InterruptedException ex) {
+                Log.e(LOG_TAG, "waitForCallActive: ex=" + ex);
+                return false;
+            }
+            return true;
+        }
+
+        public boolean waitForOutgoingEmergencyCall(String expectedNumber) {
+            try {
+                if (!mOutgoingEmergencyCallSemaphore.tryAcquire(
+                        WAIT_LATCH_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                    Log.e(LOG_TAG, "Timed out to receive OutgoingEmergencyCall");
+                    return false;
+                }
+            } catch (InterruptedException ex) {
+                Log.e(LOG_TAG, "waitForOutgoingEmergencyCall: ex=" + ex);
+                return false;
+            }
+
+            // At this point we can only be sure that we got AN update, but not necessarily the one
+            // we are looking for; wait until we see the state we want before verifying further.
+            waitUntilConditionIsTrueOrTimeout(
+                    new Condition() {
+                        @Override
+                        public Object expected() {
+                            return true;
+                        }
+
+                        @Override
+                        public Object actual() {
+                            return mLastOutgoingEmergencyNumber != null
+                                    && mLastOutgoingEmergencyNumber.getNumber().equals(
+                                            expectedNumber);
+                        }
+                    },
+                    WAIT_LATCH_TIMEOUT_MS,
+                    "Expected emergency number: " + expectedNumber);
+            return TextUtils.equals(expectedNumber, mLastOutgoingEmergencyNumber.getNumber());
+        }
     }
 
     private void verifyCsDialed() throws Exception {
