@@ -18,7 +18,6 @@ package android.app.appsearch.testutil;
 
 import android.annotation.NonNull;
 import android.app.appsearch.Features;
-import android.content.Context;
 import android.os.Build;
 
 /**
@@ -80,7 +79,7 @@ public class MainlineFeaturesImpl implements Features {
     }
 
     @Override
-    public int getMaxIndexedProperties(@NonNull Context context) {
+    public int getMaxIndexedProperties() {
         return 64;
     }
 }
