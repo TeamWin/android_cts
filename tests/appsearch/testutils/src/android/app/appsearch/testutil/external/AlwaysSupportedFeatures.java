@@ -18,7 +18,6 @@ package com.android.server.appsearch.external.localstorage;
 
 import android.annotation.NonNull;
 import android.app.appsearch.Features;
-import android.content.Context;
 
 /**
  * An implementation of {@link Features}. This implementation always returns true. This is
@@ -76,7 +75,7 @@ public class AlwaysSupportedFeatures implements Features {
     }
 
     @Override
-    public int getMaxIndexedProperties(@NonNull Context unused) {
+    public int getMaxIndexedProperties() {
         return 64;
     }
 }
