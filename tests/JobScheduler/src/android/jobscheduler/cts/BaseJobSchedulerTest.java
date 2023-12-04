@@ -124,7 +124,8 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
         super.setUp();
         mDeviceConfigStateHelper =
                 new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_JOB_SCHEDULER);
-        mDeviceConfigStateHelper.set("fc_enable_flexibility", "false");
+        // Disable flex behavior.
+        mDeviceConfigStateHelper.set("fc_applied_constraints", "0");
         kTestEnvironment.setUp();
         kTriggerTestEnvironment.setUp();
         mJobScheduler.cancelAll();
