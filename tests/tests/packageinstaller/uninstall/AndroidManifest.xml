@@ -22,10 +22,19 @@
 
     <queries>
         <package android:name="android.packageinstaller.emptytestapp.cts" />
+        <package android:name="android.packageinstaller.archive.cts.archiveapp" />
     </queries>
 
     <application android:label="Cts Package Uninstaller Tests">
         <uses-library android:name="android.test.runner" />
+
+        <receiver android:name="android.packageinstaller.uninstall.cts.ArchiveTest$UnarchiveBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.UNARCHIVE_PACKAGE"/>
+            </intent-filter>
+        </receiver>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
