@@ -92,6 +92,7 @@ public class WindowInsetsBehaviorTests {
     private static final String ARGUMENT_KEY_FORCE_ENABLE = "force_enable_gesture_navigation";
     private static final String NAV_BAR_INTERACTION_MODE_RES_NAME = "config_navBarInteractionMode";
     private static final int STEPS = 10;
+    private static final int INTERVAL_CLICKS = 300;
 
     // The minimum value of the system gesture exclusion limit is 200 dp. The value here should be
     // greater than that, so that we can test if the limit can be changed by DeviceConfig or not.
@@ -405,11 +406,10 @@ public class WindowInsetsBehaviorTests {
         return 2;
     }
 
-    private int clickAllOfHorizontalSamplePoints(Rect viewBoundary, int y,
+    private int clickAllOfHorizontalSamplePoints(Rect viewBoundary, int y, double interval,
             Consumer<Point> callback) {
         final int theLeftestLine = viewBoundary.left + 1;
         final int theRightestLine = viewBoundary.right - 1;
-        final float interval = mDensityPerCm;
 
         int count = 0;
         for (int i = theLeftestLine; i < theRightestLine; i += interval) {
@@ -430,14 +430,20 @@ public class WindowInsetsBehaviorTests {
     }
 
     private int clickAllOfSamplePoints(Rect viewBoundary, Consumer<Point> callback) {
+        if (viewBoundary.isEmpty()) {
+            return 0;
+        }
         final int theToppestLine = viewBoundary.top + 1;
         final int theBottomestLine = viewBoundary.bottom - 1;
-        final float interval = mDensityPerCm;
+        final int width = viewBoundary.width();
+        final int height = viewBoundary.height();
+        final double interval = height / Math.sqrt((double) height / width * INTERVAL_CLICKS);
         int count = 0;
         for (int i = theToppestLine; i < theBottomestLine; i += interval) {
-            count += clickAllOfHorizontalSamplePoints(viewBoundary, i, callback);
+            count += clickAllOfHorizontalSamplePoints(viewBoundary, i, interval, callback);
         }
-        count += clickAllOfHorizontalSamplePoints(viewBoundary, theBottomestLine, callback);
+        count += clickAllOfHorizontalSamplePoints(
+                viewBoundary, theBottomestLine, interval, callback);
 
         return count;
     }
