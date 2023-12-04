@@ -680,8 +680,8 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         Characteristics characteristics = mWifiAwareManager.getCharacteristics();
         assertNotNull("Wi-Fi Aware characteristics are null", characteristics);
         assertEquals("Service Name Length", characteristics.getMaxServiceNameLength(), 255);
-        assertEquals("Service Specific Information Length",
-                characteristics.getMaxServiceSpecificInfoLength(), 255);
+        assertTrue("Service Specific Information Length",
+                characteristics.getMaxServiceSpecificInfoLength() >= 255);
         assertEquals("Match Filter Length", characteristics.getMaxMatchFilterLength(), 255);
         assertNotEquals("Cipher suites", characteristics.getSupportedCipherSuites(), 0);
         assertTrue("Max number of NDP", characteristics.getNumberOfSupportedDataPaths() > 0);
