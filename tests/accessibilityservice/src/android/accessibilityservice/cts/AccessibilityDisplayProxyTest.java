@@ -364,6 +364,12 @@ public class AccessibilityDisplayProxyTest {
             mNonProxiedConcurrentActivity.runOnUiThread(
                     () -> mNonProxiedConcurrentActivity.finish());
         }
+        try {
+            sInstrumentation.getContext().unregisterReceiver(mReceiver);
+        } catch (IllegalArgumentException e) {
+            // Ignore this exception when unregistering fails. The test has failed before the
+            // receiver could be registered.
+        }
         removeAppStreamingRole();
     }
 
@@ -1036,8 +1042,8 @@ public class AccessibilityDisplayProxyTest {
     public void onAccessibilityStateChanged_registerProxy_isNotCalledForNonProxiedApp()
             throws TimeoutException, InterruptedException {
         try {
-            startActivityInSeparateProcess();
             registerBroadcastReceiverForAction(ACCESSIBILITY_STATE);
+            startActivityInSeparateProcess();
             final CountDownLatch a11yDisabled = new CountDownLatch(1);
             mReceiver.setLatchAndExpectedEnabledResult(a11yDisabled,
                     ACCESSIBILITY_STATE,
@@ -1056,7 +1062,6 @@ public class AccessibilityDisplayProxyTest {
 
             assertThat(a11yEnabled.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isFalse();
         } finally {
-            sInstrumentation.getContext().unregisterReceiver(mReceiver);
             stopSeparateProcess();
         }
     }
@@ -1234,7 +1239,6 @@ public class AccessibilityDisplayProxyTest {
 
             assertThat(serviceEnabled.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
         } finally {
-            sInstrumentation.getContext().unregisterReceiver(mReceiver);
             if (mNonProxyServiceRule.getService() != null) {
                 mNonProxyServiceRule.getService().disableSelfAndRemove();
             } else if (enabledServices != null) {
@@ -1283,7 +1287,6 @@ public class AccessibilityDisplayProxyTest {
 
             assertThat(touchExplorationDisabled.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
         } finally {
-            sInstrumentation.getContext().unregisterReceiver(mReceiver);
             final InstrumentedAccessibilityService service = mNonProxyServiceRule.getService();
             if (service != null) {
                 // Reset touch exploration for the non-proxy service.
@@ -1313,7 +1316,6 @@ public class AccessibilityDisplayProxyTest {
             assertThat(servicesChanged.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isFalse();
 
         } finally {
-            sInstrumentation.getContext().unregisterReceiver(mReceiver);
             stopSeparateProcess();
         }
     }
@@ -1341,7 +1343,6 @@ public class AccessibilityDisplayProxyTest {
 
             assertThat(touchExplorationEnabled.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isFalse();
         } finally {
-            sInstrumentation.getContext().unregisterReceiver(mReceiver);
             service.disableSelfAndRemove();
             stopSeparateProcess();
         }
@@ -1376,7 +1377,6 @@ public class AccessibilityDisplayProxyTest {
             startActivityInSeparateProcess(mVirtualDisplayId);
             assertThat(serviceEnabled.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
         } finally {
-            sInstrumentation.getContext().unregisterReceiver(mReceiver);
             stopSeparateProcess();
         }
     }
