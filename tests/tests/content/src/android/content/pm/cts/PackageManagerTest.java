@@ -48,6 +48,7 @@ import static android.content.pm.PackageManager.GET_SERVICES;
 import static android.content.pm.PackageManager.GET_SIGNATURES;
 import static android.content.pm.PackageManager.MATCH_ANY_USER;
 import static android.content.pm.PackageManager.MATCH_APEX;
+import static android.content.pm.PackageManager.MATCH_ARCHIVED_PACKAGES;
 import static android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS;
 import static android.content.pm.PackageManager.MATCH_DISABLED_UNTIL_USED_COMPONENTS;
 import static android.content.pm.PackageManager.MATCH_FACTORY_ONLY;
@@ -2130,8 +2131,17 @@ public class PackageManagerTest {
         SystemUtil.runShellCommand("pm uninstall -k --user " + userId + " " + packageName);
     }
 
-    private static boolean isAppInstalled(String packageName) throws IOException {
-        final String commandResult = SystemUtil.runShellCommand("pm list packages");
+    private static boolean isAppInstalled(String packageName) {
+        return isPackagePresent(packageName, /*matchAllPackages=*/false);
+    }
+
+    private static boolean isPackagePresent(String packageName) {
+        return isPackagePresent(packageName, /*matchAllPackages=*/true);
+    }
+
+    private static boolean isPackagePresent(String packageName, boolean matchAllPackages) {
+        final String commandResult =
+                SystemUtil.runShellCommand("pm list packages" + (matchAllPackages ? " -a" : ""));
         final int prefixLength = "package:".length();
         return Arrays.stream(commandResult.split("\\r?\\n")).anyMatch(
                 line -> line.length() > prefixLength && line.substring(prefixLength).equals(
@@ -2934,6 +2944,12 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
                         HELLO_WORLD_APK)));
         assertThat(SystemUtil.runShellCommand(
                 String.format("pm archive %s", HELLO_WORLD_PACKAGE_NAME))).isEqualTo("Success\n");
+        // Check "installed" flag.
+        var applicationInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
+                PackageManager.PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).applicationInfo;
+        assertEquals(applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED, 0);
+        // Check archive state.
+        assertTrue(applicationInfo.isArchived);
 
         byte[] archivedPackage = SystemUtil.runShellCommandByteOutput(
                 mInstrumentation.getUiAutomation(),
@@ -2944,7 +2960,14 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         assertEquals("Success\n", executeShellCommand(
                 String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
                         archivedPackage.length), archivedPackage));
-        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        assertTrue(isPackagePresent(HELLO_WORLD_PACKAGE_NAME));
+        // Check "installed" flag once again.
+        applicationInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
+                PackageManager.PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).applicationInfo;
+        assertEquals(applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED, 0);
+        // Check archive state once again.
+        assertTrue(applicationInfo.isArchived);
+
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
 
         // Try to install archived without installer.
@@ -2971,7 +2994,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         assertEquals("Success\n", executeShellCommand(
                 String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
                         archivedPackage.length), archivedPackage));
-        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        assertTrue(isPackagePresent(HELLO_WORLD_PACKAGE_NAME));
         assertDataAppExists(HELLO_WORLD_PACKAGE_NAME);
         // Wrong signature.
         assertThat(SystemUtil.runShellCommand(
@@ -2981,7 +3004,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         assertThat(SystemUtil.runShellCommand(
                 "pm install -t -p " + HELLO_WORLD_PACKAGE_NAME + " -g "
                         + HELLO_WORLD_UPDATED_APK)).startsWith(
-                "Failure [INSTALL_FAILED_INTERNAL_ERROR");
+                "Failure [INSTALL_FAILED_INVALID_APK: Missing existing base package");
         // Unarchive/full install succeeds.
         assertEquals("Success\n", SystemUtil.runShellCommand(
                 "pm install -t -g " + HELLO_WORLD_UPDATED_APK));
@@ -2992,7 +3015,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         // Full uninstall.
         assertEquals("Success\n",
                 SystemUtil.runShellCommand("pm uninstall " + HELLO_WORLD_PACKAGE_NAME));
-        assertFalse(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        assertFalse(isPackagePresent(HELLO_WORLD_PACKAGE_NAME));
     }
 
     @Test
@@ -3007,7 +3030,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         assertEquals("Success\n", executeShellCommand(
                 String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
                         archivedPackage.length), archivedPackage));
-        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        assertTrue(isPackagePresent(HELLO_WORLD_PACKAGE_NAME));
         String pkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME, "    pkgFlags=[");
         assertThat(pkgFlags).contains("ALLOW_CLEAR_USER_DATA");
         assertThat(pkgFlags).contains("ALLOW_BACKUP");
@@ -3027,7 +3050,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         assertEquals("Success\n", executeShellCommand(
                 String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
                         archivedPackageFlags.length), archivedPackageFlags));
-        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        assertTrue(isPackagePresent(HELLO_WORLD_PACKAGE_NAME));
         pkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME, "    pkgFlags=[");
         assertThat(pkgFlags).contains("ALLOW_CLEAR_USER_DATA");
         privatePkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME,
@@ -3108,7 +3131,13 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
 
         // Install a default APK.
         installArchived(archivedPackage);
-        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        assertTrue(isPackagePresent(HELLO_WORLD_PACKAGE_NAME));
+        // Check "installed" flag.
+        var applicationInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
+                PackageManager.PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).applicationInfo;
+        assertEquals(applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED, 0);
+        // Check archive state.
+        assertTrue(applicationInfo.isArchived);
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
     }
 
@@ -3127,7 +3156,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         // Uninstall and retry.
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
         installArchived(archivedPackage);
-        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        assertTrue(isPackagePresent(HELLO_WORLD_PACKAGE_NAME));
         assertDataAppExists(HELLO_WORLD_PACKAGE_NAME);
         // Wrong signature.
         assertThat(SystemUtil.runShellCommand(
@@ -3137,7 +3166,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         assertThat(SystemUtil.runShellCommand(
                 "pm install -t -p " + HELLO_WORLD_PACKAGE_NAME + " -g "
                         + HELLO_WORLD_UPDATED_APK)).startsWith(
-                "Failure [INSTALL_FAILED_INTERNAL_ERROR");
+                "Failure [INSTALL_FAILED_INVALID_APK: Missing existing base package");
         // Unarchive/full install succeeds.
         assertEquals("Success\n", SystemUtil.runShellCommand(
                 "pm install -t -g " + HELLO_WORLD_UPDATED_APK));
@@ -3148,7 +3177,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         // Full uninstall.
         assertEquals("Success\n",
                 SystemUtil.runShellCommand("pm uninstall " + HELLO_WORLD_PACKAGE_NAME));
-        assertFalse(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        assertFalse(isPackagePresent(HELLO_WORLD_PACKAGE_NAME));
     }
 
     @Test
@@ -3162,7 +3191,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
 
         // Install a default APK.
         installArchived(archivedPackage);
-        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        assertTrue(isPackagePresent(HELLO_WORLD_PACKAGE_NAME));
         String pkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME, "    pkgFlags=[");
         assertThat(pkgFlags).contains("ALLOW_CLEAR_USER_DATA");
         assertThat(pkgFlags).contains("ALLOW_BACKUP");
@@ -3178,7 +3207,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
 
         // Install an APK with non default flags.
         installArchived(archivedPackageFlags);
-        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        assertTrue(isPackagePresent(HELLO_WORLD_PACKAGE_NAME));
         pkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME, "    pkgFlags=[");
         assertThat(pkgFlags).contains("ALLOW_CLEAR_USER_DATA");
         privatePkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME,
@@ -3267,7 +3296,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
 
         // Install archived.
         installArchived(archivedPackage);
-        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        assertTrue(isPackagePresent(HELLO_WORLD_PACKAGE_NAME));
 
         // Wrong signature (we are using cts-testkey1).
         assertThat(SystemUtil.runShellCommand(

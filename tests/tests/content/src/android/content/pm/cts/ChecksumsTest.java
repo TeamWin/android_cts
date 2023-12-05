@@ -423,14 +423,13 @@ public class ChecksumsTest {
         Assert.assertEquals("Success\n", executeShellCommand(
                 String.format("pm install-archived -r -i %s -t -S %s",
                         getContext().getPackageName(), archivedPackage.length), archivedPackage));
-        assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
+        assertTrue(isPackagePresent(FIXED_PACKAGE_NAME));
 
         LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
-        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver);
-        ApkChecksum[] checksums = receiver.getResult();
-        assertNotNull(checksums);
-        assertEquals(checksums.length, 0, Arrays.toString(checksums));
+        assertThrows(PackageManager.NameNotFoundException.class, () ->
+                pm.requestChecksums(
+                        FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver));
     }
 
     @LargeTest
@@ -1611,8 +1610,18 @@ public class ChecksumsTest {
         return executeShellCommand("pm uninstall " + packageName);
     }
 
-    private boolean isAppInstalled(String packageName) throws IOException {
-        final String commandResult = executeShellCommand("pm list packages");
+    private static boolean isAppInstalled(String packageName) throws IOException {
+        return isPackagePresent(packageName, /*matchAllPackages=*/false);
+    }
+
+    private static boolean isPackagePresent(String packageName) throws IOException {
+        return isPackagePresent(packageName, /*matchAllPackages=*/true);
+    }
+
+    private static boolean isPackagePresent(String packageName, boolean matchAllPackages)
+            throws IOException {
+        final String commandResult =
+                executeShellCommand("pm list packages" + (matchAllPackages ? " -a" : ""));
         final int prefixLength = "package:".length();
         return Arrays.stream(commandResult.split("\\r?\\n"))
                 .anyMatch(line -> line.substring(prefixLength).equals(packageName));

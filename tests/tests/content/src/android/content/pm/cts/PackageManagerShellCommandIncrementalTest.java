@@ -1193,7 +1193,7 @@ public class PackageManagerShellCommandIncrementalTest {
     }
 
     static String parsePackageDump(String packageName, String prefix) throws IOException {
-        final String commandResult = executeShellCommand("pm dump " + packageName);
+        final String commandResult = executeShellCommand("pm dump-package " + packageName);
         final int prefixLength = prefix.length();
         Optional<String> maybeSplits = Arrays.stream(commandResult.split("\\r?\\n"))
                 .filter(line -> line.startsWith(prefix)).findFirst();
