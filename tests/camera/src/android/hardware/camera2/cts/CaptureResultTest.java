@@ -631,6 +631,11 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         // Only present on logical cameras that switch between lenses when going trhough zoom ratios
         waiverKeys.add(CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_SENSOR_CROP_REGION);
 
+        // Only present on devices that support low light boose AE mode
+        if (!staticInfo.isAeModeLowLightBoostSupported()) {
+            waiverKeys.add(CaptureResult.CONTROL_LOW_LIGHT_BOOST_STATE);
+        }
+
         // LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID not required if key is not supported.
         if (!staticInfo.isLogicalMultiCamera() ||
                 !staticInfo.isActivePhysicalCameraIdSupported()) {
@@ -1027,6 +1032,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         resultKeys.add(CaptureResult.CONTROL_SETTINGS_OVERRIDE);
         resultKeys.add(CaptureResult.CONTROL_AUTOFRAMING);
         resultKeys.add(CaptureResult.CONTROL_AUTOFRAMING_STATE);
+        resultKeys.add(CaptureResult.CONTROL_LOW_LIGHT_BOOST_STATE);
         resultKeys.add(CaptureResult.EDGE_MODE);
         resultKeys.add(CaptureResult.FLASH_MODE);
         resultKeys.add(CaptureResult.FLASH_STATE);
