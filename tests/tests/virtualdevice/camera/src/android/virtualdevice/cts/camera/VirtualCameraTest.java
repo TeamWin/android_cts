@@ -124,13 +124,13 @@ public class VirtualCameraTest {
 
         verify(mMockCameraAvailabilityCallback, timeout(TIMEOUT_MILLIS))
                 .onCameraUnavailable(mVirtualCamera.getId());
-        assertThat(Arrays.stream(mCameraManager.getCameraIdList()).toList())
+        assertThat(Arrays.stream(mCameraManager.getCameraIdListNoLazy()).toList())
                 .doesNotContain(mVirtualCamera.getId());
     }
 
     @Test
     public void virtualCamera_presentInListOfCameras() throws Exception {
-        assertThat(Arrays.stream(mCameraManager.getCameraIdList()).toList())
+        assertThat(Arrays.stream(mCameraManager.getCameraIdListNoLazy()).toList())
                 .contains(mVirtualCamera.getId());
     }
 
@@ -138,7 +138,7 @@ public class VirtualCameraTest {
     public void virtualCamera_close_notPresentInListOfCameras() throws Exception {
         mVirtualCamera.close();
 
-        assertThat(Arrays.stream(mCameraManager.getCameraIdList()).toList())
+        assertThat(Arrays.stream(mCameraManager.getCameraIdListNoLazy()).toList())
                 .doesNotContain(mVirtualCamera.getId());
     }
 
