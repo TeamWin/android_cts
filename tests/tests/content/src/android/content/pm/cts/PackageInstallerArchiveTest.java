@@ -788,6 +788,7 @@ public class PackageInstallerArchiveTest {
 
         assertThat(sUnarchiveReceiverPackageName.get()).isEqualTo(PACKAGE_NAME);
         assertThat(sUnarchiveReceiverAllUsers.get()).isFalse();
+        mPackageInstaller.abandonSession(sUnarchiveId.get());
     }
 
     private void launchTestActivity() {
