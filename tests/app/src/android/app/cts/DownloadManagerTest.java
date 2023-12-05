@@ -698,7 +698,7 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
 
     @Test
     public void testDownload_onMediaStoreDownloadsDeleted() throws Exception {
-        assumeFalse(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK));
+        assumeDocumentsUiAvailableOnFormFactor();
 
         // prepare file
         File file = new File(Environment.getExternalStoragePublicDirectory(
