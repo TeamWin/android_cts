@@ -1027,7 +1027,6 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         resultKeys.add(CaptureResult.CONTROL_SETTINGS_OVERRIDE);
         resultKeys.add(CaptureResult.CONTROL_AUTOFRAMING);
         resultKeys.add(CaptureResult.CONTROL_AUTOFRAMING_STATE);
-        resultKeys.add(CaptureResult.CONTROL_LOW_LIGHT_BOOST_STATE);
         resultKeys.add(CaptureResult.EDGE_MODE);
         resultKeys.add(CaptureResult.FLASH_MODE);
         resultKeys.add(CaptureResult.FLASH_STATE);
