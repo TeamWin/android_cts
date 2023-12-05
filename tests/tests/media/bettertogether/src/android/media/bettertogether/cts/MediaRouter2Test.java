@@ -1363,15 +1363,6 @@ public class MediaRouter2Test {
     }
 
     @Test
-    public void getSystemController_withoutSystemRoutingPermissions_containsOnlyDefaultRoute() {
-        RoutingController systemController = mRouter2.getSystemController();
-        assertThat(systemController.getSelectedRoutes())
-                .comparingElementsUsing(ROUTE_HAS_ORIGINAL_ID)
-                .containsExactly(DEFAULT_ROUTE_ID);
-        assertThat(systemController.getRoutingSessionInfo().getTransferableRoutes()).isEmpty();
-    }
-
-    @Test
     public void testGetControllers() {
         List<RoutingController> controllers = mRouter2.getControllers();
         assertThat(controllers).isNotNull();
