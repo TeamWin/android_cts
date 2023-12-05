@@ -40,6 +40,8 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+
 
 import android.Manifest;
 import android.content.ContentValues;
@@ -58,6 +60,7 @@ import android.system.Os;
 import androidx.test.filters.SdkSuppress;
 
 import com.android.cts.install.lib.TestApp;
+import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -477,6 +480,7 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
 
     @Test
     public void testOpenOnRedactedUri_readFuzzer() throws Exception {
+        assumeTrue(SdkLevel.isAtLeastV());
         final File img = stageFuzzerImageFileWithMetadata(FUZZER_HEIC_FILE_NAME);
         final Uri redactedUri = getRedactedUri(img);
         try {
