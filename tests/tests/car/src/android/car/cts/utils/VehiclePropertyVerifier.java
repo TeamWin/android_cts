@@ -1678,25 +1678,25 @@ public class VehiclePropertyVerifier<T> {
         verifyHvacTemperatureIsValid(suggestedTempInFahrenheit, minTempInFahrenheitTimesTen,
                 maxTempInFahrenheitTimesTen, incrementInFahrenheitTimesTen);
 
-        int suggestedTempInCelsiusTimesTen = suggestedTempInCelsius.intValue() * 10;
-        int suggestedTempInFahrenheitTimesTen = suggestedTempInFahrenheit.intValue() * 10;
+        int suggestedTempInCelsiusTimesTen = (int) (suggestedTempInCelsius * 10f);
+        int suggestedTempInFahrenheitTimesTen = (int) (suggestedTempInFahrenheit * 10f);
         int numIncrementsCelsius =
-                (suggestedTempInCelsiusTimesTen - minTempInCelsiusTimesTen)
-                        / incrementInCelsiusTimesTen;
+                Math.round((suggestedTempInCelsiusTimesTen - minTempInCelsiusTimesTen)
+                        / incrementInCelsiusTimesTen.floatValue());
         int numIncrementsFahrenheit =
-                (suggestedTempInFahrenheitTimesTen - minTempInFahrenheitTimesTen)
-                        / incrementInFahrenheitTimesTen;
+                Math.round((suggestedTempInFahrenheitTimesTen - minTempInFahrenheitTimesTen)
+                        / incrementInFahrenheitTimesTen.floatValue());
         assertWithMessage(
-                        "The temperature in Celsius must be equivalent to the temperature in"
-                            + " Fahrenheit.")
+                        "The temperature in celsius must map to the same temperature in fahrenheit"
+                            + " using the HVAC_TEMPERATURE_SET config array: "
+                            + hvacTemperatureSetConfigArray)
                 .that(numIncrementsFahrenheit)
                 .isEqualTo(numIncrementsCelsius);
     }
 
     public static void verifyHvacTemperatureIsValid(float temp, int minTempTimesTen,
             int maxTempTimesTen, int incrementTimesTen) {
-        Float tempMultiplied = temp * 10.0f;
-        int intTempTimesTen = tempMultiplied.intValue();
+        int intTempTimesTen = (int) (temp * 10f);
         assertWithMessage(
                         "The temperature value " + intTempTimesTen + " must be at least "
                             + minTempTimesTen + " and at most " + maxTempTimesTen)
