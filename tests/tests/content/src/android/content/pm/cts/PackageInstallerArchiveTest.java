@@ -17,7 +17,6 @@
 package android.content.pm.cts;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
-import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.MATCH_ARCHIVED_PACKAGES;
@@ -80,9 +79,7 @@ import android.text.TextUtils;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
-import androidx.test.uiautomator.SearchCondition;
 import androidx.test.uiautomator.UiDevice;
-import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
 
 import com.android.compatibility.common.util.FeatureUtil;
@@ -91,9 +88,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import com.google.common.truth.Expect;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -116,13 +111,8 @@ public class PackageInstallerArchiveTest {
     private static final String NO_ACTIVITY_APK_PATH =
             SAMPLE_APK_BASE + "CtsIntentResolutionTestApp.apk";
 
-    private static final String SYSTEM_PACKAGE_NAME = "android";
-
-    private static final int TIMEOUT = 30000;
-    private static final int SECOND = 1000;
-
     private static final String ACTION_UNARCHIVE_ERROR_DIALOG =
-            "android.intent.action.UNARCHIVE_ERROR_DIALOG";
+            "com.android.intent.action.UNARCHIVE_ERROR_DIALOG";
 
 
     private static CompletableFuture<Integer> sUnarchiveId;
@@ -460,7 +450,6 @@ public class PackageInstallerArchiveTest {
     }
 
     @Test
-    @Ignore("b/312496640")
     public void unarchiveApp_missingPermissions() throws Exception {
         installPackage(PACKAGE_NAME, APK_PATH);
         assertThat(
@@ -478,84 +467,6 @@ public class PackageInstallerArchiveTest {
                 + "com.android.permission.REQUEST_INSTALL_PACKAGES permission to request an "
                 + "unarchival."
         );
-    }
-
-    // TODO(b/312452414) Move to PackageInstallerActivity directory.
-    @Test
-    public void unarchiveApp_weakPermissions() throws Exception {
-        installPackage(PACKAGE_NAME, APK_PATH);
-        runWithShellPermissionIdentity(
-                () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
-                        new IntentSender((IIntentSender) mArchiveIntentSender), 0),
-                Manifest.permission.DELETE_PACKAGES);
-        assertThat(mArchiveIntentSender.mStatus.get(5, TimeUnit.SECONDS)).isEqualTo(
-                PackageInstaller.STATUS_SUCCESS);
-
-        SessionListener sessionListener = new SessionListener();
-        mPackageInstaller.registerSessionCallback(sessionListener,
-                new Handler(Looper.getMainLooper()));
-
-        runWithShellPermissionIdentity(
-                () -> mPackageInstaller.requestUnarchive(PACKAGE_NAME,
-                        new IntentSender((IIntentSender) mUnarchiveIntentSender)),
-                Manifest.permission.REQUEST_INSTALL_PACKAGES);
-        assertThat(mUnarchiveIntentSender.mPackage.get(5, TimeUnit.SECONDS)).isEqualTo(
-                PACKAGE_NAME);
-        assertThat(mUnarchiveIntentSender.mStatus.get(10, TimeUnit.MILLISECONDS)).isEqualTo(
-                PackageInstaller.STATUS_PENDING_USER_ACTION);
-
-        Intent extraIntent = mUnarchiveIntentSender.mIntent.get(10,
-                TimeUnit.MILLISECONDS);
-        extraIntent.addFlags(FLAG_ACTIVITY_CLEAR_TASK | FLAG_ACTIVITY_NEW_TASK);
-        prepareDevice();
-        mContext.startActivity(extraIntent);
-        mUiDevice.waitForIdle();
-
-        assertThat(waitFor(Until.findObject(By.textContains("Restore")))).isNotNull();
-
-        UiObject2 clickableView = mUiDevice.findObject(By.res(SYSTEM_PACKAGE_NAME, "button1"));
-        if (clickableView == null) {
-            Assert.fail("Restore button not shown");
-        }
-        clickableView.click();
-
-        assertThat(sUnarchiveReceiverPackageName.get(10, TimeUnit.SECONDS)).isEqualTo(PACKAGE_NAME);
-        int unarchiveId = sUnarchiveId.get(10, TimeUnit.MILLISECONDS);
-
-        mPackageInstaller.abandonSession(unarchiveId);
-    }
-
-    private UiObject2 waitFor(SearchCondition<UiObject2> condition)
-            throws InterruptedException {
-        final long start = System.currentTimeMillis();
-        while (System.currentTimeMillis() - start < TIMEOUT) {
-            try {
-                var result = mUiDevice.wait(condition, SECOND);
-                if (result == null) {
-                    continue;
-                }
-                return result;
-            } catch (Throwable e) {
-                Thread.sleep(1000);
-            }
-        }
-        Assert.fail("Unable to wait for the activity");
-        return null;
-    }
-
-
-    private void prepareDevice() throws Exception {
-        mUiDevice.waitForIdle();
-        // wake up the screen
-        mUiDevice.wakeUp();
-        // unlock the keyguard or the expected window is by systemui or other alert window
-        mUiDevice.pressMenu();
-        // dismiss the system alert window for requesting permissions
-        mUiDevice.pressBack();
-        // return to home/launcher to prevent from being obscured by systemui or other alert window
-        mUiDevice.pressHome();
-        // Wait for device idle
-        mUiDevice.waitForIdle();
     }
 
     @Test
