@@ -137,6 +137,10 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
             .setPlayerListener(
                 PlayerListener.createListenerForMessageNotificationTest(4000)).build(),
             "Hevc_720p_15sec_MessageNotificationTest"},
+        {CujTestParam.builder().setMediaUrls(prepareHevc_720p_15secVideoListForPinchToZoomTest())
+            .setTimeoutMilliSeconds(45000)
+            .setPlayerListener(PlayerListener.createListenerForPinchToZoomTest(3000)).build(),
+            "Hevc_720p_15sec_PinchToZoomTest"},
     }));
     return exhaustiveArgsList;
   }
@@ -245,6 +249,15 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
    * Prepare Hevc 720p 15sec video list for notification test.
    */
   public static List<String> prepareHevc_720p_15secVideoListForNotificationTest() {
+    List<String> videoInput = Arrays.asList(
+        MP4_FORBIGGERJOYRIDES_ASSET_720P_HEVC_URI_STRING);
+    return videoInput;
+  }
+
+  /**
+   * Prepare Hevc 720p 15sec video list for Pinch To Zoom Test.
+   */
+  public static List<String> prepareHevc_720p_15secVideoListForPinchToZoomTest() {
     List<String> videoInput = Arrays.asList(
         MP4_FORBIGGERJOYRIDES_ASSET_720P_HEVC_URI_STRING);
     return videoInput;
