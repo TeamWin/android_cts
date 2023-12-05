@@ -1787,7 +1787,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
+    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
     public void testDriverDrowsinessAttentionSystemEnabledIfSupported() {
         getDriverDrowsinessAttentionSystemEnabledVerifier().verify();
     }
@@ -1815,13 +1815,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
+    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
     public void testDriverDrowsinessAttentionStateVerifierIfSupported() {
         getDriverDrowsinessAttentionStateVerifier().verify();
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
+    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
     public void testDriverDrowsinessAttentionStateAndErrorStateDontIntersect() {
         verifyEnumValuesAreDistinct(HANDS_ON_DETECTION_DRIVER_STATES, ERROR_STATES);
     }
@@ -1840,7 +1840,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
+    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
     public void testDriverDrowsinessAttentionWarningEnabledIfSupported() {
         getDriverDrowsinessAttentionWarningEnabledVerifier().verify();
     }
@@ -1868,13 +1868,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
+    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
     public void testDriverDrowsinessAttentionWarningIfSupported() {
         getDriverDrowsinessAttentionWarningVerifier().verify();
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
+    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
     public void testDriverDrowsinessAttentionWarningAndErrorStateDontIntersect() {
         verifyEnumValuesAreDistinct(DRIVER_DROWSINESS_ATTENTION_WARNINGS, ERROR_STATES);
     }
@@ -1893,7 +1893,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
+    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
     public void testDriverDistractionSystemEnabledIfSupported() {
         getDriverDistractionSystemEnabledVerifier().verify();
     }
@@ -1921,13 +1921,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
+    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
     public void testDriverDistractionStateVerifierIfSupported() {
         getDriverDistractionStateVerifier().verify();
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
+    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
     public void testDriverDistractionStateAndErrorStateDontIntersect() {
         verifyEnumValuesAreDistinct(DRIVER_DISTRACTION_STATES, ERROR_STATES);
     }
@@ -1946,7 +1946,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
+    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
     public void testDriverDistractionWarningEnabledIfSupported() {
         getDriverDistractionWarningEnabledVerifier().verify();
     }
@@ -1974,13 +1974,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
+    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
     public void testDriverDistractionWarningIfSupported() {
         getDriverDistractionWarningVerifier().verify();
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
+    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
     public void testDriverDistractionWarningAndErrorStateDontIntersect() {
         verifyEnumValuesAreDistinct(DRIVER_DISTRACTION_WARNINGS, ERROR_STATES);
     }
