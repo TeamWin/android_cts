@@ -137,22 +137,8 @@ public final class AutoFillServiceTestCase {
 
         @Override
         protected TestRule getMainTestRule() {
-            // Don't try to set orientation when device is in half-opened state
-            // The assumeFalse line in @Before would skip the half-opened tests.
-            if(!Helper.isDeviceInState(sContext, Helper.DeviceStateEnum.HALF_FOLDED)) {
-                try {
-                    // Set orientation as portrait before auto-launch an activity,
-                    // otherwise some tests might fail due to elements not fitting
-                    // in, IME orientation, etc...
-                    // Many tests will hold Activity in afterActivityLaunched() by
-                    // overriding ActivityRule. If rotating after the activity has
-                    // started, these tests will keep the old activity. All actions
-                    // on the wrong activity did not happen as expected.
-                    getDropdownUiBot().setScreenOrientation(UiBot.PORTRAIT);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
+            // Tries to set the orientation, noop if nothing happens
+            getDropdownUiBot().maybeSetScreenOrientation(UiBot.PORTRAIT);
             return getActivityRule();
         }
 
@@ -516,7 +502,7 @@ public final class AutoFillServiceTestCase {
 
             // Set orientation as portrait, otherwise some tests might fail due to elements not
             // fitting in, IME orientation, etc...
-            mUiBot.setScreenOrientation(UiBot.PORTRAIT);
+            mUiBot.maybeSetScreenOrientation(UiBot.PORTRAIT);
 
             // Clear Clipboard
             // TODO(b/117768051): remove try/catch once fixed
