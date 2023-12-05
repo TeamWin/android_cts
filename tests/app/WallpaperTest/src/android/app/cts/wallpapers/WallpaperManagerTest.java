@@ -1546,6 +1546,7 @@ public class WallpaperManagerTest {
      */
     @RequiresFlagsEnabled(Flags.FLAG_ALWAYS_UPDATE_WALLPAPER_PERMISSION)
     @Test
+    @Ignore("b/313534425")
     public void testAlwaysUpdateWallpaperPermission_allowOutOfFocusWallpaperCommand() {
 
         /* Clear previous wallpaper commands */
