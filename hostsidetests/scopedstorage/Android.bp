@@ -285,6 +285,21 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
+    name: "CtsTestAppWithAccessMediaOwnerPackageNamePermission",
+    manifest: "ScopedStorageTestHelper/TestAppWithAccessMediaOwnerPackageNamePermission.xml",
+    static_libs: ["cts-scopedstorage-lib"],
+    sdk_version: "test_current",
+    target_sdk_version: "33",
+    min_sdk_version: "30",
+    srcs: ["ScopedStorageTestHelper/src/**/*.java"],
+    // Tag as a CTS artifact
+    test_suites: [
+        "general-tests",
+        "mts-mediaprovider",
+    ],
+}
+
+android_test_helper_app {
     name: "CtsScopedStorageGeneralTestOnlyApp",
     manifest: "ScopedStorageTestHelper/TestAppGeneralOnly.xml",
     static_libs: ["cts-scopedstorage-lib"],
@@ -421,6 +436,7 @@ java_test_host {
         ":CtsLegacyStorageTestAppRequestLegacy",
         ":CtsLegacyStorageTestAppPreserveLegacy",
         ":CtsTestAppWithQueryAllPackagesPermission",
+        ":CtsTestAppWithAccessMediaOwnerPackageNamePermission",
         ":CtsTestAppWithQueriesTag",
     ],
 }
@@ -538,6 +554,7 @@ android_test {
         ":CtsScopedStorageTestAppDLegacy",
         ":CtsScopedStorageTestAppFileManager",
         ":CtsTestAppWithQueryAllPackagesPermission",
+        ":CtsTestAppWithAccessMediaOwnerPackageNamePermission",
         ":CtsTestAppWithQueriesTag",
     ],
     data: [
@@ -547,6 +564,7 @@ android_test {
         ":CtsScopedStorageTestAppB34",
         ":CtsScopedStorageTestAppDLegacy",
         ":CtsTestAppWithQueryAllPackagesPermission",
+        ":CtsTestAppWithAccessMediaOwnerPackageNamePermission",
         ":CtsTestAppWithQueriesTag",
     ],
     per_testcase_directory: true,
