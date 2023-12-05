@@ -249,6 +249,18 @@ public final class FakeAppSearchConfig implements FrameworkAppSearchConfig {
         return DEFAULT_SHOULD_RETRIEVE_PARENT_INFO;
     }
 
+    @Override
+    public boolean getUseNewQualifiedIdJoinIndex() {
+        throwIfClosed();
+        return DEFAULT_USE_NEW_QUALIFIED_ID_JOIN_INDEX;
+    }
+
+    @Override
+    public boolean getBuildPropertyExistenceMetadataHits() {
+        throwIfClosed();
+        return DEFAULT_BUILD_PROPERTY_EXISTENCE_METADATA_HITS;
+    }
+
     private void throwIfClosed() {
         if (mIsClosed.get()) {
             throw new IllegalStateException(

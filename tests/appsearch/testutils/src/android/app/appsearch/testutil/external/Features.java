@@ -16,7 +16,6 @@
 package android.app.appsearch;
 
 import android.annotation.NonNull;
-import android.content.Context;
 
 /**
  * A class that encapsulates all features that are only supported in certain cases (e.g. only on
@@ -183,8 +182,6 @@ public interface Features {
      * API level and AppSearch backend.
      *
      * <p>A property is defined as all values that are present at a particular path.
-     *
-     * @param context to check mainline module version, as support varies by module version.
      */
-    int getMaxIndexedProperties(@NonNull Context context);
+    int getMaxIndexedProperties();
 }
