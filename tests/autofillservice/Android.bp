@@ -23,6 +23,7 @@ android_test {
         "androidx.annotation_annotation",
         "androidx.autofill_autofill",
         "androidx.test.ext.junit",
+        "androidx.credentials_credentials",
         "compatibility-device-util-axt",
         "ctsdeviceutillegacy-axt",
         "ctstestrunner-axt",

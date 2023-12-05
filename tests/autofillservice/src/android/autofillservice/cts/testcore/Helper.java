@@ -124,6 +124,7 @@ public final class Helper {
     public static final String ID_USERNAME = "username";
     public static final String ID_PASSWORD_LABEL = "password_label";
     public static final String ID_PASSWORD = "password";
+    public static final String ID_CARD_NUMBER = "card_number";
     public static final String ID_LOGIN = "login";
     public static final String ID_OUTPUT = "output";
     public static final String ID_STATIC_TEXT = "static_text";

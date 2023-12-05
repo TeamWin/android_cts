@@ -64,15 +64,15 @@ public class LoginActivity extends AbstractAutoFillActivity {
 
     private LinearLayout mUsernameContainer;
     private TextView mUsernameLabel;
-    private EditText mUsernameEditText;
+    EditText mUsernameEditText;
     private TextView mPasswordLabel;
-    private EditText mPasswordEditText;
+    EditText mPasswordEditText;
     private TextView mOutput;
     private Button mLoginButton;
     private Button mSaveButton;
     private Button mCancelButton;
     private Button mClearButton;
-    private FillExpectation mExpectation;
+    FillExpectation mExpectation;
 
     // State used to synchronously get the result of a login attempt.
     private CountDownLatch mLoginLatch;
@@ -248,6 +248,9 @@ public class LoginActivity extends AbstractAutoFillActivity {
         if (mExpectation.ccPasswordWatcher != null) {
             mExpectation.ccPasswordWatcher.assertAutoFilled();
         }
+        if (mExpectation.mCustomFieldWatcher != null) {
+            mExpectation.mCustomFieldWatcher.assertAutoFilled();
+        }
     }
 
     public void forceAutofillOnUsername() {
@@ -408,15 +411,23 @@ public class LoginActivity extends AbstractAutoFillActivity {
     /**
      * Holder for the expected auto-fill values.
      */
-    private final class FillExpectation {
+    final class FillExpectation {
         private final OneTimeTextWatcher ccUsernameWatcher;
         private final OneTimeTextWatcher ccPasswordWatcher;
+        final OneTimeTextWatcher mCustomFieldWatcher;
 
-        private FillExpectation(String username, String password) {
+        FillExpectation(String username, String password) {
             ccUsernameWatcher = username == null ? null
                     : new OneTimeTextWatcher("username", mUsernameEditText, username);
             ccPasswordWatcher = password == null ? null
                     : new OneTimeTextWatcher("password", mPasswordEditText, password);
+            mCustomFieldWatcher = null;
+        }
+
+        FillExpectation(String type, String value, EditText customField) {
+            ccUsernameWatcher = null;
+            ccPasswordWatcher = null;
+            mCustomFieldWatcher = new OneTimeTextWatcher(type, customField, value);
         }
 
         private FillExpectation(String username) {
