@@ -5203,4 +5203,39 @@ public class CameraTestUtils extends Assert {
                     externalCameraConnected);
         }
     }
+
+    /**
+     * Verifies the presence of keys in the supportedKeys list.
+     *
+     * @param keys list of keys to be checked
+     * @param supportedKeys list utilized to verify presence of keys
+     * @param expectedResult true if keys should be present, false if not
+     *
+     */
+    public static <T> void checkKeysAreSupported(T[] keys, Set<T> supportedKeys,
+            boolean expectedResult) {
+        String errorMsg = expectedResult ? " key should be present "
+                : " key should not be present ";
+        for (T currKey : keys) {
+            assertTrue(currKey + errorMsg
+                    + " among the supported keys!",
+                    supportedKeys.contains(currKey) == expectedResult);
+        }
+    }
+
+
+    /**
+     * Verifies the presence of keys in the supportedKeys list.
+     *
+     * @param keys list of keys to be checked
+     * @param supportedKeys list utilized to verify presence of keys
+     * @param expectedResult true if keys should be present, false if not
+     *
+     */
+    public static <T> void checkKeysAreSupported(List<T[]> keys, Set<T> supportedKeys,
+            boolean expectedResult) {
+        for (T[] k : keys) {
+            checkKeysAreSupported(k, supportedKeys, expectedResult);
+        }
+    }
 }
