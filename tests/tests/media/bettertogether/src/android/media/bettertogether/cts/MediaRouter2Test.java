@@ -40,12 +40,10 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
 
-import android.Manifest;
 import android.annotation.NonNull;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.MediaRoute2Info;
 import android.media.MediaRoute2ProviderService;
@@ -1432,16 +1430,6 @@ public class MediaRouter2Test {
             mRouter2.unregisterRouteCallback(routeCallback);
             mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0);
         }
-    }
-
-    @Test
-    public void testGettingSystemMediaRouter2WithoutPermissionThrowsSecurityException() {
-        // Make sure that the permission is not given.
-        assertThat(mContext.checkSelfPermission(Manifest.permission.MEDIA_CONTENT_CONTROL))
-                .isNotEqualTo(PackageManager.PERMISSION_GRANTED);
-
-        assertThrows(SecurityException.class,
-                () -> MediaRouter2.getInstance(mContext, mContext.getPackageName()));
     }
 
     @Test

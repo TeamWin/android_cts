@@ -28,6 +28,7 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.MediaRouter2;
+import android.os.Looper;
 import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -97,5 +98,48 @@ public class MediaRouter2DeviceTest {
         assertThrows(
                 SecurityException.class,
                 () -> MediaRouter2.getInstance(mContext, MEDIA_ROUTER_PROVIDER_1_PACKAGE));
+    }
+
+    @RequiresFlagsEnabled({
+        Flags.FLAG_ENABLE_CROSS_USER_ROUTING_IN_MEDIA_ROUTER2,
+        Flags.FLAG_ENABLE_PRIVILEGED_ROUTING_FOR_MEDIA_ROUTING_CONTROL
+    })
+    @Test
+    public void getInstance_withinUser_withMediaRoutingControl_flagEnabled_returnsInstance() {
+        mInstrumentation
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.MEDIA_ROUTING_CONTROL);
+        try {
+            assertThat(
+                            MediaRouter2.getInstance(
+                                    mContext,
+                                    Looper.getMainLooper(),
+                                    mContext.getPackageName(),
+                                    mContext.getUser()))
+                    .isNotNull();
+        } finally {
+            mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    @RequiresFlagsEnabled({
+        Flags.FLAG_ENABLE_CROSS_USER_ROUTING_IN_MEDIA_ROUTER2,
+        Flags.FLAG_ENABLE_PRIVILEGED_ROUTING_FOR_MEDIA_ROUTING_CONTROL
+    })
+    @Test
+    public void getInstance_withinUser_withoutMediaRoutingControl_throwsSecurityException() {
+        assertThat(mContext.checkCallingOrSelfPermission(Manifest.permission.MEDIA_ROUTING_CONTROL))
+                .isEqualTo(PackageManager.PERMISSION_DENIED);
+        assertThat(mContext.checkCallingOrSelfPermission(Manifest.permission.MEDIA_CONTENT_CONTROL))
+                .isEqualTo(PackageManager.PERMISSION_DENIED);
+
+        assertThrows(
+                SecurityException.class,
+                () ->
+                        MediaRouter2.getInstance(
+                                mContext,
+                                Looper.getMainLooper(),
+                                mContext.getPackageName(),
+                                mContext.getUser()));
     }
 }
