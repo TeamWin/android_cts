@@ -56,6 +56,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.net.Uri;
@@ -6552,6 +6553,37 @@ public class TelephonyManagerTest {
             "android.telephony.TelephonyManager#isSmsCapable"})
     public void testIsDeviceSmsCapable_isIdenticalToIsSmsCapable() {
         assertEquals(mTelephonyManager.isDeviceSmsCapable(), mTelephonyManager.isSmsCapable());
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_RESET_MOBILE_NETWORK_SETTINGS)
+    @ApiTest(apis = {
+            "android.telephony.TelephonyManager#ACTION_RESET_MOBILE_NETWORK_SETTINGS"})
+    public void testActionResetMobileNetworkSettings_shouldBeSupported() {
+        PackageManager packageManager = getContext().getPackageManager();
+        Intent intent = new Intent(TelephonyManager.ACTION_RESET_MOBILE_NETWORK_SETTINGS);
+
+        List<ResolveInfo> resolvedActivities = packageManager.queryIntentActivities(intent,
+                PackageManager.MATCH_DEFAULT_ONLY);
+        final String errorMessage =
+                "TelephonyManager.ACTION_RESET_MOBILE_NETWORK_SETTINGS should be supported to "
+                        + "launch setting to reset mobile networks!";
+        assertTrue(errorMessage, !resolvedActivities.isEmpty());
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_RESET_MOBILE_NETWORK_SETTINGS)
+    @ApiTest(apis = {
+            "android.telephony.TelephonyManager#ACTION_RESET_MOBILE_NETWORK_SETTINGS"})
+    public void testActionResetMobileNetworkSettings_requiresNoPermission() {
+        // Try to startActivity with the action and make sure no exceptions are thrown.
+        // Exceptions may include:
+        // 1. SecurityException if additional permission are required for the action
+        // 2. ActivityNotFoundException if the action is not supported
+        Intent intent = new Intent(TelephonyManager.ACTION_RESET_MOBILE_NETWORK_SETTINGS);
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getContext().startActivity(intent);
     }
 
     private Integer getSecondTestSubId() {
