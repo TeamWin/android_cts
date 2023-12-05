@@ -421,13 +421,15 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     private static final ImmutableList<Integer>
             PERMISSION_READ_DRIVER_MONITORING_SETTINGS_PROPERTIES = ImmutableList.<Integer>builder()
                     .add(
-                            VehiclePropertyIds.HANDS_ON_DETECTION_ENABLED)
+                            VehiclePropertyIds.HANDS_ON_DETECTION_ENABLED,
+                            VehiclePropertyIds.DRIVER_DROWSINESS_ATTENTION_SYSTEM_ENABLED)
                     .build();
     private static final ImmutableList<Integer>
             PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add(
-                            VehiclePropertyIds.HANDS_ON_DETECTION_ENABLED)
+                            VehiclePropertyIds.HANDS_ON_DETECTION_ENABLED,
+                            VehiclePropertyIds.DRIVER_DROWSINESS_ATTENTION_SYSTEM_ENABLED)
                     .build();
     private static final ImmutableList<Integer>
             PERMISSION_READ_DRIVER_MONITORING_STATES_PROPERTIES = ImmutableList.<Integer>builder()
@@ -1118,6 +1120,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getHandsOnDetectionEnabledVerifier(),
              getHandsOnDetectionDriverStateVerifier(),
              getHandsOnDetectionWarningVerifier(),
+             getDriverDrowsinessAttentionSystemEnabledVerifier(),
              getWheelTickVerifier(),
              getInfoVinVerifier(),
              getInfoMakeVerifier(),
@@ -1693,6 +1696,24 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @Test
     public void testHandsOnDetectionWarningAndErrorStateDontIntersect() {
         verifyEnumValuesAreDistinct(HANDS_ON_DETECTION_WARNINGS, ERROR_STATES);
+    }
+
+    private VehiclePropertyVerifier<Boolean> getDriverDrowsinessAttentionSystemEnabledVerifier() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.DRIVER_DROWSINESS_ATTENTION_SYSTEM_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class, mCarPropertyManager)
+                .addReadPermission(Car.PERMISSION_READ_DRIVER_MONITORING_SETTINGS)
+                .addReadPermission(Car.PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS)
+                .addWritePermission(Car.PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS)
+                .build();
+    }
+
+    @Test
+    public void testDriverDrowsinessAttentionSystemEnabledIfSupported() {
+        getDriverDrowsinessAttentionSystemEnabledVerifier().verify();
     }
 
     public VehiclePropertyVerifier<Long[]> getWheelTickVerifier() {
