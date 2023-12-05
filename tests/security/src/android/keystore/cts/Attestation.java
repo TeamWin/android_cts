@@ -93,11 +93,13 @@ public abstract class Attestation {
                 throw new CertificateParsingException("Unable to parse EAT extension", cbe);
             }
         }
-        if (x509Cert.getExtensionValue(CRL_DP_OID) != null) {
+        Attestation attestation = new Asn1Attestation(x509Cert, strictParsing);
+        if (x509Cert.getExtensionValue(CRL_DP_OID) != null
+                && attestation.getKeymasterVersion() >= KM_VERSION_KEYMINT_3) {
             throw new CertificateParsingException(
                     "CRL Distribution Points extension found in leaf certificate.");
         }
-        return new Asn1Attestation(x509Cert, strictParsing);
+        return attestation;
     }
 
     Attestation(X509Certificate x509Cert) {
