@@ -35,7 +35,6 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNotNull;
 
 import android.content.Context;
-import android.content.cts.R;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -46,14 +45,16 @@ import android.os.Parcel;
 import android.os.Process;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 import android.util.StringBuilderPrinter;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SystemUtil;
 
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -63,6 +64,9 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull // TODO(Instant) Figure out which APIs should work.
 public class ApplicationInfoTest {
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
     private static final String SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME = "com.android.cts.stub";
     private static final String DIRECT_BOOT_UNAWARE_PACKAGE_NAME =
             "android.content.cts.directbootunaware";
@@ -76,15 +80,12 @@ public class ApplicationInfoTest {
     private static final String STUB_PACKAGE_APK = SAMPLE_APK_BASE
             + "CtsSyncAccountAccessStubs.apk";
 
-    private String mPackageName;
-
-    @Before
-    public void setUp() throws Exception {
-        mPackageName = getContext().getPackageName();
-    }
-
     private Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
+
+    private String getPackageName() {
+        return getContext().getPackageName();
     }
 
     @Test
@@ -92,15 +93,16 @@ public class ApplicationInfoTest {
         ApplicationInfo info = new ApplicationInfo();
         // simple test to ensure packageName is copied by copy constructor
         // TODO: consider expanding to check all member variables
-        info.packageName = mPackageName;
+        info.packageName = "com.example";
         ApplicationInfo copy = new ApplicationInfo(info);
         assertEquals(info.packageName, copy.packageName);
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testWriteToParcel() throws NameNotFoundException {
         ApplicationInfo applicationInfo = getContext().getPackageManager().getApplicationInfo(
-                mPackageName, PackageManager.ApplicationInfoFlags.of(0));
+                getPackageName(), PackageManager.ApplicationInfoFlags.of(0));
 
         Parcel p = Parcel.obtain();
         applicationInfo.writeToParcel(p, 0);
@@ -130,9 +132,10 @@ public class ApplicationInfoTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testDescribeContents() throws NameNotFoundException {
         ApplicationInfo applicationInfo = getContext().getPackageManager().getApplicationInfo(
-                mPackageName, PackageManager.ApplicationInfoFlags.of(0));
+                getPackageName(), PackageManager.ApplicationInfoFlags.of(0));
 
         assertEquals(0, applicationInfo.describeContents());
     }
@@ -152,24 +155,30 @@ public class ApplicationInfoTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testLoadDescription() throws NameNotFoundException {
         ApplicationInfo applicationInfo = getContext().getPackageManager().getApplicationInfo(
-                mPackageName, PackageManager.ApplicationInfoFlags.of(0));
+                getPackageName(), PackageManager.ApplicationInfoFlags.of(0));
 
         assertNull(applicationInfo.loadDescription(getContext().getPackageManager()));
 
-        applicationInfo.descriptionRes = R.string.hello_world;
-        assertEquals(getContext().getResources().getString(R.string.hello_world),
+        final int resHelloWorld = getContext().getResources()
+                .getIdentifier("hello_world", "string", getContext().getPackageName());
+        applicationInfo.descriptionRes = resHelloWorld;
+        assertEquals(getContext().getResources().getString(resHelloWorld),
                 applicationInfo.loadDescription(getContext().getPackageManager()));
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void verifyOwnInfo() throws NameNotFoundException {
         ApplicationInfo applicationInfo = getContext().getPackageManager().getApplicationInfo(
-                mPackageName, PackageManager.ApplicationInfoFlags.of(0));
+                getPackageName(), PackageManager.ApplicationInfoFlags.of(0));
 
         assertEquals("Android TestCase", applicationInfo.nonLocalizedLabel);
-        assertEquals(R.drawable.size_48x48, applicationInfo.icon);
+        final int resSize4848 = getContext().getResources()
+                .getIdentifier("size_48x48", "drawable", getContext().getPackageName());
+        assertEquals(resSize4848, applicationInfo.icon);
         assertEquals("android.content.cts.MockApplication", applicationInfo.name);
         int flags = FLAG_MULTIARCH | FLAG_SUPPORTS_RTL;
         assertEquals(flags, applicationInfo.flags & flags);
@@ -182,6 +191,7 @@ public class ApplicationInfoTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void verifyDefaultValues() throws NameNotFoundException {
         // Make sure we install the original version of com.android.cts.stub.
         installPackage(STUB_PACKAGE_APK);
@@ -221,18 +231,21 @@ public class ApplicationInfoTest {
     }
 
     @Test(expected=IllegalArgumentException.class)
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void setOwnAppCategory() throws Exception {
         getContext().getPackageManager().setApplicationCategoryHint(getContext().getPackageName(),
                 CATEGORY_MAPS);
     }
 
     @Test(expected=IllegalArgumentException.class)
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void setAppCategoryByNotInstaller() throws Exception {
         getContext().getPackageManager().setApplicationCategoryHint(
                 SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME, CATEGORY_MAPS);
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testDirectBootUnawareAppIsNotEncryptionAware() throws Exception {
         ApplicationInfo applicationInfo = getContext().getPackageManager().getApplicationInfo(
                 DIRECT_BOOT_UNAWARE_PACKAGE_NAME, PackageManager.ApplicationInfoFlags.of(0));
@@ -240,6 +253,7 @@ public class ApplicationInfoTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testDirectBootUnawareAppCategoryIsAccessibility() throws Exception {
         ApplicationInfo applicationInfo = getContext().getPackageManager().getApplicationInfo(
                 DIRECT_BOOT_UNAWARE_PACKAGE_NAME, PackageManager.ApplicationInfoFlags.of(0));
@@ -247,6 +261,7 @@ public class ApplicationInfoTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testDefaultAppCategoryIsUndefined() throws Exception {
         final ApplicationInfo applicationInfo = getContext().getPackageManager().getApplicationInfo(
                 NO_APPLICATION_PACKAGE_NAME, PackageManager.ApplicationInfoFlags.of(0));
@@ -254,6 +269,7 @@ public class ApplicationInfoTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testPartiallyDirectBootAwareAppIsEncryptionAware() throws Exception {
         ApplicationInfo applicationInfo = getContext().getPackageManager().getApplicationInfo(
                 PARTIALLY_DIRECT_BOOT_AWARE_PACKAGE_NAME,
@@ -262,12 +278,13 @@ public class ApplicationInfoTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testWriteToParcelDontSquash() throws Exception {
         // Make sure ApplicationInfo.writeToParcel() doesn't do the "squashing",
         // because Parcel.allowSquashing() isn't called.
 
         ApplicationInfo applicationInfo = getContext().getPackageManager().getApplicationInfo(
-                mPackageName, PackageManager.ApplicationInfoFlags.of(0));
+                getPackageName(), PackageManager.ApplicationInfoFlags.of(0));
 
         final Parcel p = Parcel.obtain();
         applicationInfo.writeToParcel(p, 0);
@@ -295,12 +312,13 @@ public class ApplicationInfoTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testWriteToParcelSquash() throws Exception {
         // Make sure ApplicationInfo.writeToParcel() does the "squashing", after
         // Parcel.allowSquashing() is called.
 
         ApplicationInfo applicationInfo = getContext().getPackageManager().getApplicationInfo(
-                mPackageName, PackageManager.ApplicationInfoFlags.of(0));
+                getPackageName(), PackageManager.ApplicationInfoFlags.of(0));
 
         final Parcel p = Parcel.obtain();
 
@@ -322,6 +340,7 @@ public class ApplicationInfoTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testIsProduct() throws Exception {
         // The product flag is supported since P. Suppose that devices lauch on Android P may not
         // have product partition.
@@ -339,6 +358,7 @@ public class ApplicationInfoTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testIsVendor() throws Exception {
         final String systemPath = Environment.getRootDirectory().getAbsolutePath();
         final String vendorPath = Environment.getVendorDirectory().getAbsolutePath();
@@ -352,6 +372,7 @@ public class ApplicationInfoTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testIsOem() throws Exception {
         final String systemPath = Environment.getRootDirectory().getAbsolutePath();
         final String oemPath = Environment.getOemDirectory().getAbsolutePath();
