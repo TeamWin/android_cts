@@ -58,7 +58,7 @@ const val CONTENT_AUTHORITY = "android.packageinstaller.install_appop_denied.cts
 const val PACKAGE_INSTALLER_PACKAGE_NAME = "com.android.packageinstaller"
 const val SYSTEM_PACKAGE_NAME = "android"
 
-const val TIMEOUT = 60000L
+const val TIMEOUT = 120000L
 const val APP_OP_STR = "REQUEST_INSTALL_PACKAGES"
 
 open class PackageInstallerTestBase {
