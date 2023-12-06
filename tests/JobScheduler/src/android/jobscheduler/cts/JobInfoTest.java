@@ -34,7 +34,6 @@ import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.provider.ContactsContract;
-import android.provider.DeviceConfig;
 import android.provider.MediaStore;
 import android.util.Log;
 
@@ -170,8 +169,12 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         mJobScheduler.schedule(ji);
     }
 
-    @RequiresFlagsEnabled(Flags.FLAG_JOB_DEBUG_INFO_APIS)
+    // TODO(315035390): migrate to JUnit4
+    @RequiresFlagsEnabled(Flags.FLAG_JOB_DEBUG_INFO_APIS) // Doesn't work for JUnit3
     public void testDebugTags() {
+        if (!isAconfigFlagEnabled(Flags.FLAG_JOB_DEBUG_INFO_APIS)) {
+            return;
+        }
         // Confirm defaults
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent).build();
         assertEquals(0, ji.getDebugTags().size());
@@ -815,8 +818,12 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         mJobScheduler.schedule(ji);
     }
 
-    @RequiresFlagsEnabled(Flags.FLAG_JOB_DEBUG_INFO_APIS)
+    // TODO(315035390): migrate to JUnit4
+    @RequiresFlagsEnabled(Flags.FLAG_JOB_DEBUG_INFO_APIS) // Doesn't work for JUnit3
     public void testTraceTag() {
+        if (!isAconfigFlagEnabled(Flags.FLAG_JOB_DEBUG_INFO_APIS)) {
+            return;
+        }
         // Confirm defaults
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent).build();
         assertNull(ji.getTraceTag());
@@ -1061,8 +1068,8 @@ public class JobInfoTest extends BaseJobSchedulerTest {
     }
 
     private boolean isAconfigFlagEnabled(String fullFlagName) {
-        final String ogValue = SystemUtil.runWithShellPermissionIdentity(
-                () -> DeviceConfig.getProperty("backstage_power", fullFlagName));
+        final String ogValue = SystemUtil.runShellCommand(
+                "cmd jobscheduler get-aconfig-flag-state " + fullFlagName).trim();
         final boolean enabled = Boolean.parseBoolean(ogValue);
         Log.d(TAG, fullFlagName + "=" + ogValue  + " ... enabled=" + enabled);
         return enabled;
