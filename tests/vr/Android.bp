@@ -37,7 +37,7 @@ android_test {
         ":CtsVerifierMockVrListenerServiceFiles",
     ],
     sdk_version: "test_current",
-    min_sdk_version: "14",
+    min_sdk_version: "19",
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
