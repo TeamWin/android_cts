@@ -17,19 +17,19 @@
 package com.android.cts.releaseparser;
 
 import com.android.cts.releaseparser.ReleaseProto.*;
+import com.android.tools.smali.dexlib2.AccessFlags;
+import com.android.tools.smali.dexlib2.DexFileFactory;
+import com.android.tools.smali.dexlib2.Opcodes;
+import com.android.tools.smali.dexlib2.iface.Annotation;
+import com.android.tools.smali.dexlib2.iface.AnnotationElement;
+import com.android.tools.smali.dexlib2.iface.ClassDef;
+import com.android.tools.smali.dexlib2.iface.DexFile;
+import com.android.tools.smali.dexlib2.iface.Method;
+import com.android.tools.smali.dexlib2.iface.value.TypeEncodedValue;
 import com.android.tradefed.testtype.IRemoteTest;
 
 import junit.framework.Test;
 
-import org.jf.dexlib2.AccessFlags;
-import org.jf.dexlib2.DexFileFactory;
-import org.jf.dexlib2.Opcodes;
-import org.jf.dexlib2.iface.Annotation;
-import org.jf.dexlib2.iface.AnnotationElement;
-import org.jf.dexlib2.iface.ClassDef;
-import org.jf.dexlib2.iface.DexFile;
-import org.jf.dexlib2.iface.Method;
-import org.jf.dexlib2.iface.value.TypeEncodedValue;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite.SuiteClasses;
 
