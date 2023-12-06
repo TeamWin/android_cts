@@ -488,6 +488,27 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_BAL_REQUIRE_OPT_IN_BY_PENDING_INTENT_CREATOR)
+    public void testPI_onlyCreatorAllowsBALwithoutOptInForResult_isNotBlocked() throws Exception {
+        // creator (appa) is not privileged
+        grantSystemAlertWindow(APP_A, false);
+        // sender (appb) is privileged, and grants
+        grantSystemAlertWindow(APP_B);
+
+        startActivity(APP_A.FOREGROUND_ACTIVITY);
+
+        pressHomeAndWaitHomeResumed();
+
+        TestServiceClient serviceB = getTestService(APP_B);
+        PendingIntent pi = serviceB.generatePendingIntent(APP_B.BACKGROUND_ACTIVITY);
+        TestServiceClient serviceA = getTestService(APP_A);
+        // there is no explicit opt-in, but using sendPendingIntentForResult implicitly grants
+        serviceA.sendPendingIntentWithActivityForResult(pi, Bundle.EMPTY);
+
+        assertActivityFocused(APP_B.BACKGROUND_ACTIVITY);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_BAL_REQUIRE_OPT_IN_BY_PENDING_INTENT_CREATOR)
     public void testPI_onlyCreatorAllowsBALwithoutOptIn_isBlocked() throws Exception {
         // creator (appa) is not privileged
         grantSystemAlertWindow(APP_A, false);

@@ -89,9 +89,22 @@ public class TestServiceClient implements ITestService {
         sendPendingIntent(pendingIntent, Bundle.EMPTY);
     }
 
+    /**
+     * @see android.server.wm.backgroundactivity.common.TestService#sendPendingIntentWithActivity(
+     *          PendingIntent, Bundle)
+     */
     public void sendPendingIntentWithActivity(PendingIntent pendingIntent, Bundle sendOptions)
             throws RemoteException {
         mTestService.sendPendingIntentWithActivity(pendingIntent, sendOptions);
+    }
+
+    /**
+     * @see android.server.wm.backgroundactivity.common.TestService#sendPendingIntentWithActivityForResult(
+     *          PendingIntent, Bundle)
+     */
+    public void sendPendingIntentWithActivityForResult(PendingIntent pendingIntent,
+            Bundle sendOptions) throws RemoteException {
+        mTestService.sendPendingIntentWithActivityForResult(pendingIntent, sendOptions);
     }
 
     @Override
