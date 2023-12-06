@@ -109,9 +109,11 @@ class ZoomTest(its_base_test.ItsBaseTest):
         for i, z in enumerate(z_list):
           req['android.control.zoomRatio'] = z
           logging.debug('zoom ratio: %.3f', z)
-          cam.do_3a(zoom_ratio=z)
+          cam.do_3a(fmt=fmt, width=size[0], height=size[1],
+                    zoom_ratio=z, reuse_session=True)
           cap = cam.do_capture(
-              req, {'format': fmt, 'width': size[0], 'height': size[1]})
+              req, {'format': fmt, 'width': size[0], 'height': size[1]},
+              reuse_session=True)
 
           img = image_processing_utils.convert_capture_to_rgb_image(
               cap, props=props)

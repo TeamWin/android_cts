@@ -38,6 +38,8 @@ ANDROID13_API_LEVEL = 33
 ANDROID14_API_LEVEL = 34
 ANDROID15_API_LEVEL = 35
 CHART_DISTANCE_NO_SCALING = 0
+IMAGE_FORMAT_JPEG = 256
+IMAGE_FORMAT_YUV_420_888 = 35
 LOAD_SCENE_DELAY_SEC = 3
 SCALING_TO_FILE_ATOL = 0.01
 SINGLE_CAPTURE_NCAP = 1
@@ -1171,7 +1173,8 @@ class ItsSession(object):
                  cap_request,
                  out_surfaces=None,
                  reprocess_format=None,
-                 repeat_request=None):
+                 repeat_request=None,
+                 reuse_session=False):
     """Issue capture request(s), and read back the image(s) and metadata.
 
     The main top-level function for capturing one or more images using the
@@ -1308,6 +1311,8 @@ class ItsSession(object):
       reprocess_format: (Optional) The reprocessing format. If not
         None,reprocessing will be enabled.
       repeat_request: Repeating request list.
+      reuse_session: True if ItsService.java should try to use
+        the existing CameraCaptureSession.
 
     Returns:
       An object, list of objects, or list of lists of objects, where each
@@ -1359,6 +1364,7 @@ class ItsSession(object):
           'width': max_yuv_size[0],
           'height': max_yuv_size[1]
       }]
+    cmd['reuseSession'] = reuse_session
 
     ncap = len(cmd['captureRequests'])
     nsurf = 1 if out_surfaces is None else len(cmd['outputSurfaces'])
@@ -1604,6 +1610,9 @@ class ItsSession(object):
 
   # pylint: disable=dangerous-default-value
   def do_3a(self,
+            fmt=None,
+            width=None,
+            height=None,
             regions_ae=[[0, 0, 1, 1, 1]],
             regions_awb=[[0, 0, 1, 1, 1]],
             regions_af=[[0, 0, 1, 1, 1]],
@@ -1616,7 +1625,8 @@ class ItsSession(object):
             ev_comp=0,
             auto_flash=False,
             mono_camera=False,
-            zoom_ratio=None):
+            zoom_ratio=None,
+            reuse_session=False):
     """Perform a 3A operation on the device.
 
     Triggers some or all of AE, AWB, and AF, and returns once they have
@@ -1626,6 +1636,9 @@ class ItsSession(object):
     Throws an assertion if 3A fails to converge.
 
     Args:
+      fmt: Format to configure a CameraCaptureSession.
+      width: Width to configure a CameraCaptureSession.
+      height: Height to configure a CameraCaptureSession.
       regions_ae: List of weighted AE regions.
       regions_awb: List of weighted AWB regions.
       regions_af: List of weighted AF regions.
@@ -1639,6 +1652,8 @@ class ItsSession(object):
       auto_flash: AE control boolean to enable auto flash.
       mono_camera: Boolean for monochrome camera.
       zoom_ratio: Zoom ratio. None if default zoom
+      reuse_session: True if ItsService.java should try to use
+        the existing CameraCaptureSession.
 
       Region format in args:
          Arguments are lists of weighted regions; each weighted region is a
@@ -1660,6 +1675,15 @@ class ItsSession(object):
     logging.debug('Running vendor 3A on device')
     cmd = {}
     cmd[_CMD_NAME_STR] = 'do3A'
+    if fmt:
+      if fmt == 'yuv':
+        cmd['format'] = IMAGE_FORMAT_YUV_420_888
+      elif fmt == 'jpeg' or fmt == 'jpg':
+        cmd['format'] = IMAGE_FORMAT_JPEG
+    if width:
+      cmd['width'] = width
+    if height:
+      cmd['height'] = height
     cmd['regions'] = {
         'ae': sum(regions_ae, []),
         'awb': sum(regions_awb, []),
@@ -1681,6 +1705,7 @@ class ItsSession(object):
         cmd['zoomRatio'] = zoom_ratio
       else:
         raise AssertionError(f'Zoom ratio {zoom_ratio} out of range')
+    cmd['reuseSession'] = reuse_session
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
     # Wait for each specified 3A to converge.
