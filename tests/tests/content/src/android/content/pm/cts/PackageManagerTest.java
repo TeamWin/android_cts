@@ -3454,6 +3454,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         // Default filtration of activities.
         List<ResolveInfo> activitiesResult;
         {
+            // 1. queryIntentActivities
             final Intent intent = new Intent(ACTIVITY_ACTION_NAME);
             intent.setPackage(HELLO_WORLD_PACKAGE_NAME);
             activitiesResult = mPackageManager.queryIntentActivities(intent,
@@ -3461,6 +3462,20 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
             assertEquals(activitiesResult.toString(), 1, activitiesResult.size());
             assertEquals("com.example.helloworld.MainActivity",
                     activitiesResult.get(0).activityInfo.name);
+
+            // 2. getActivityInfo
+            var componentInfo = activitiesResult.get(0).getComponentInfo();
+            var activityInfo = mPackageManager.getActivityInfo(
+                    new ComponentName(componentInfo.packageName, componentInfo.name),
+                    PackageManager.ComponentInfoFlags.of(0));
+            assertNotNull(activityInfo);
+            assertEquals(activityInfo.name, activitiesResult.get(0).activityInfo.name);
+
+            // 3. PackageManager.getPackageInfo(<PKG>, GET_ACTIVITIES)
+            var packageInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
+                    PackageManager.PackageInfoFlags.of(GET_ACTIVITIES));
+            assertEquals(1, packageInfo.activities.length);
+            assertEquals("com.example.helloworld.MainActivity", packageInfo.activities[0].name);
         }
 
         // Default filtration of services.
