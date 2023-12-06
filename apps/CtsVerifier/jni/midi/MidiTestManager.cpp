@@ -17,6 +17,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <chrono>
 
 #define TAG "MidiTestManager"
 #include <android/log.h>
@@ -32,6 +33,7 @@ static const bool DEBUG = true;
 static const bool DEBUG_MIDIDATA = true;
 
 static const int MAX_PACKET_SIZE = 1024;
+static const int TIMEOUT_SECONDS = 5;
 
 //
 // MIDI Messages
@@ -130,7 +132,7 @@ MidiTestManager::MidiTestManager()
     : mTestModuleObj(NULL),
       mReceiveStreamPos(0),
       mMidiSendPort(NULL), mMidiReceivePort(NULL),
-      mTestMsgs(NULL), mNumTestMsgs(0),
+      mTestMsgs(0), mNumTestMsgs(0),
       mThrottleData(false)
 {}
 
@@ -152,6 +154,22 @@ void MidiTestManager::jniSetup(JNIEnv* env) {
     if (DEBUG) {
         ALOGI("mMidEndTestgMidEndTest:%p", mMidEndTest);
     }
+}
+
+bool MidiTestManager::setupMessages() {
+    mNumTestMsgs = 7;
+    mTestMsgs.resize(mNumTestMsgs);
+
+    if (!mTestMsgs[0].set(msg0, sizeof(msg0)) ||
+        !mTestMsgs[1].set(msg1, sizeof(msg1)) ||
+        !mTestMsgs[2].setSysExMessage(30) ||
+        !mTestMsgs[3].setSysExMessage(6) ||
+        !mTestMsgs[4].setSysExMessage(120) ||
+        !mTestMsgs[5].setTwoSysExMessage(5, 13) ||
+        !mTestMsgs[6].setSysExMessage(340)) {
+        return false;
+    }
+    return true;
 }
 
 void MidiTestManager::buildMatchStream() {
@@ -260,16 +278,25 @@ int MidiTestManager::matchStream(uint8_t* bytes, int count) {
 #define THROTTLE_PERIOD_MS 20
 #define THROTTLE_MAX_PACKET_SIZE 15
 
+/**
+ * Send a number of bytes.
+ *
+ * Returns the number of sent bytes on success or negative error code on failure.
+ *
+ */
 int portSend(AMidiInputPort* sendPort, uint8_t* msg, int length, bool throttle) {
 
     int numSent = 0;
     if (throttle) {
         for(int index = 0; index < length; index += THROTTLE_MAX_PACKET_SIZE) {
             int packetSize = std::min(length - index, THROTTLE_MAX_PACKET_SIZE);
-            AMidiInputPort_send(sendPort, msg + index, packetSize);
+            int curSent = AMidiInputPort_send(sendPort, msg + index, packetSize);
+            if (curSent < 0) {
+                return curSent;
+            }
+            numSent += curSent;
             usleep(THROTTLE_PERIOD_MS * 1000);
         }
-        numSent = length;
     } else {
         numSent = AMidiInputPort_send(sendPort, msg, length);
     }
@@ -278,7 +305,7 @@ int portSend(AMidiInputPort* sendPort, uint8_t* msg, int length, bool throttle) 
 
 /**
  * Writes out the list of MIDI messages to the output port.
- * Returns total number of bytes sent.
+ * Returns total number of bytes sent or negative error code.
  */
 int MidiTestManager::sendMessages() {
     if (DEBUG) {
@@ -301,6 +328,10 @@ int MidiTestManager::sendMessages() {
         ssize_t numSent =
             portSend(mMidiSendPort, mTestMsgs[msgIndex].mMsgBytes, mTestMsgs[msgIndex].mNumMsgBytes,
                 mThrottleData);
+        if (numSent < 0) {
+            ALOGE("sendMessages(): Send failed. index: %d, error: %zd", msgIndex, numSent);
+            return numSent;
+        }
         totalSent += numSent;
     }
 
@@ -320,6 +351,9 @@ int MidiTestManager::ProcessInput() {
     int32_t opCode;
     size_t numBytesReceived;
     int64_t timeStamp;
+
+    auto startTime = std::chrono::system_clock::now();
+
     while (true) {
         // AMidiOutputPort_receive is non-blocking, so let's not burn up the CPU unnecessarily
         usleep(2000);
@@ -364,6 +398,16 @@ int MidiTestManager::ProcessInput() {
                 }
                 return testResult;
             }
+        }
+
+        auto currentTime = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsedSeconds = currentTime - startTime;
+        if (elapsedSeconds.count() > TIMEOUT_SECONDS) {
+            testResult = TESTSTATUS_FAILED_TIMEOUT;
+            if (DEBUG) {
+                ALOGE("---- TESTSTATUS_FAILED_TIMEOUT");
+            }
+            return testResult;
         }
     }
 
@@ -414,7 +458,14 @@ bool MidiTestManager::RunTest(jobject testModuleObj, AMidiDevice* sendDevice,
     mJvm->AttachCurrentThread(&env, NULL);
     if (env == NULL) {
         EndTest(TESTSTATUS_FAILED_JNI);
+        return false; // bail
     }
+
+    if (!setupMessages()) {
+        EndTest(TESTSTATUS_FAILED_SETUP);
+        return false; // bail
+    }
+    buildMatchStream();
 
     mTestModuleObj = env->NewGlobalRef(testModuleObj);
 
@@ -425,26 +476,16 @@ bool MidiTestManager::RunTest(jobject testModuleObj, AMidiDevice* sendDevice,
         return false; // bail
     }
 
-    // setup messages
-    delete[] mTestMsgs;
-    mNumTestMsgs = 7;
-    mTestMsgs = new TestMessage[mNumTestMsgs];
+    int bytesSent = sendMessages();
+    void* threadRetval = (void*)TESTSTATUS_NOTRUN;
+    int status = pthread_join(readThread, &threadRetval);
 
-    if (!mTestMsgs[0].set(msg0, sizeof(msg0)) ||
-        !mTestMsgs[1].set(msg1, sizeof(msg1)) ||
-        !mTestMsgs[2].setSysExMessage(30) ||
-        !mTestMsgs[3].setSysExMessage(6) ||
-        !mTestMsgs[4].setSysExMessage(120) ||
-        !mTestMsgs[5].setTwoSysExMessage(5, 13) ||
-        !mTestMsgs[6].setSysExMessage(340)) {
+    // If send fails, the test should still wait for the receiver port to timeout to flush buffers.
+    if (bytesSent < 0) {
+        EndTest(TESTSTATUS_FAILED_SEND);
         return false;
     }
 
-    buildMatchStream();
-
-    sendMessages();
-    void* threadRetval = (void*)TESTSTATUS_NOTRUN;
-    int status = pthread_join(readThread, &threadRetval);
     if (status != 0) {
         ALOGE("Failed to join readThread: %s (%d)", strerror(status), status);
     }
