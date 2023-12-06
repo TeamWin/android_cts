@@ -27,13 +27,14 @@ import capture_request_utils
 import image_processing_utils
 import its_session_utils
 import lighting_control_utils
+import opencv_processing_utils
 import video_processing_utils
 
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _PREVIEW_RECORDING_DURATION_SECONDS = 10
 _MAX_VAR_FRAME_DELTA = 0.001  # variance of frame deltas, units: seconds^2
 _FPS_ATOL = 0.5
-_DARKNESS_ATOL = 0.1
+_DARKNESS_ATOL = 0.1 * 255  # openCV uses [0:255] images
 
 
 class PreviewMinFrameRateTest(its_base_test.ItsBaseTest):
@@ -137,10 +138,12 @@ class PreviewMinFrameRateTest(its_base_test.ItsBaseTest):
       logging.debug('Confirming video brightness in frame %s is low enough.',
                     last_key_frame)
       last_image = image_processing_utils.convert_image_to_numpy_array(
-          os.path.join(self.log_path, last_key_frame)) / 255
-      rgb = np.average(last_image, axis=(0, 1))
-      if not all(math.isclose(x, 0, abs_tol=_DARKNESS_ATOL) for x in rgb):
-        raise AssertionError(f'Last frame: {rgb}, expected: (0, 0, 0), '
+          os.path.join(self.log_path, last_key_frame))
+      last_image_bgr = last_image[:, :, ::-1]
+      y_avg = np.average(opencv_processing_utils.convert_to_y(last_image_bgr))
+      logging.debug('Last frame y avg: %.4f', y_avg)
+      if not math.isclose(y_avg, 0, abs_tol=_DARKNESS_ATOL):
+        raise AssertionError(f'Last frame y average: {y_avg}, expected: 0, '
                              f'ATOL: {_DARKNESS_ATOL}')
 
 if __name__ == '__main__':
