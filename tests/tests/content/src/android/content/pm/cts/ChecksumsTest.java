@@ -26,7 +26,7 @@ import static android.content.pm.Checksum.TYPE_WHOLE_MERKLE_ROOT_4K_SHA256;
 import static android.content.pm.Checksum.TYPE_WHOLE_SHA1;
 import static android.content.pm.Checksum.TYPE_WHOLE_SHA256;
 import static android.content.pm.Checksum.TYPE_WHOLE_SHA512;
-import static android.content.pm.Flags.FLAG_QUARANTINED_ENABLED;
+import static android.content.pm.Flags.FLAG_ARCHIVING;
 import static android.content.pm.PackageInstaller.LOCATION_DATA_APP;
 import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
 import static android.content.pm.PackageManager.TRUST_ALL;
@@ -408,7 +408,7 @@ public class ChecksumsTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(FLAG_QUARANTINED_ENABLED)
+    @RequiresFlagsEnabled(FLAG_ARCHIVING)
     public void testArchivedDefaultChecksums() throws Exception {
         uninstallPackageSilently(FIXED_PACKAGE_NAME);
         installPackage(TEST_FIXED_APK);
