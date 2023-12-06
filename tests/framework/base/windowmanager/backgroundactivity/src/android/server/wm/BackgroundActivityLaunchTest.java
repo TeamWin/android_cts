@@ -442,8 +442,8 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
-    @RequiresFlagsDisabled(Flags.FLAG_BAL_REQUIRE_OPT_IN_BY_PENDING_INTENT_CREATOR)
-    public void testPI_onlyCreatorAllowsBAL_isNotBlocked() throws Exception {
+    @RequiresFlagsDisabled(Flags.FLAG_BAL_DONT_BRING_EXISTING_BACKGROUND_TASK_STACK_TO_FG)
+    public void testPI_onlyCreatorAllowsBALInSameTask_isNotBlocked() throws Exception {
         // creator (appa) is not privileged
         grantSystemAlertWindow(APP_A, false);
         // sender (appb) is privileged, and grants
@@ -454,13 +454,37 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         pressHomeAndWaitHomeResumed();
 
         TestServiceClient serviceB = getTestService(APP_B);
-        PendingIntent pi = serviceB.generatePendingIntent(APP_B.BACKGROUND_ACTIVITY);
+        PendingIntent pi = serviceB.generatePendingIntent(APP_B.BACKGROUND_ACTIVITY,
+                CREATE_OPTIONS_ALLOW_BAL);
         TestServiceClient serviceA = getTestService(APP_A);
+        // send the pending intent in the same task.
         serviceA.sendPendingIntentWithActivity(pi, Bundle.EMPTY);
 
         assertActivityFocused(APP_B.BACKGROUND_ACTIVITY);
         assertTaskStackHasComponents(APP_A.FOREGROUND_ACTIVITY, APP_B.BACKGROUND_ACTIVITY,
                 APP_A.FOREGROUND_ACTIVITY);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_BAL_DONT_BRING_EXISTING_BACKGROUND_TASK_STACK_TO_FG)
+    public void testPI_onlyCreatorAllowsBALInSameTask_isBlocked() throws Exception {
+        // creator (appa) is not privileged
+        grantSystemAlertWindow(APP_A, false);
+        // sender (appb) is privileged, and grants
+        grantSystemAlertWindow(APP_B);
+
+        startActivity(APP_A.FOREGROUND_ACTIVITY);
+
+        pressHomeAndWaitHomeResumed();
+
+        TestServiceClient serviceB = getTestService(APP_B);
+        PendingIntent pi = serviceB.generatePendingIntent(APP_B.BACKGROUND_ACTIVITY,
+                CREATE_OPTIONS_ALLOW_BAL);
+        TestServiceClient serviceA = getTestService(APP_A);
+        // send the pending intent in the same task.
+        serviceA.sendPendingIntentWithActivity(pi, Bundle.EMPTY);
+
+        assertActivityNotFocused(APP_B.BACKGROUND_ACTIVITY);
     }
 
     @Test
