@@ -1869,6 +1869,16 @@ public class PackageManagerShellCommandInstallTest {
         setSystemProperty("debug.pm.adb_verifier_override_packages",
                 CTS_PACKAGE_NAME + ";" + TEST_VERIFIER_PACKAGE);
 
+        final int settingValue = Integer.parseInt(
+                executeShellCommand("settings get global verifier_verify_adb_installs").trim());
+        final String sysPropertyValue = getSystemProperty(
+                "debug.pm.adb_verifier_override_packages").trim();
+        // Make sure the setting and property are set
+        assertEquals("verifier_verify_adb_installs is " + settingValue + " expecting 1",
+                1, settingValue);
+        assertEquals("debug.pm.adb_verifier_override_packages is " + sysPropertyValue,
+                CTS_PACKAGE_NAME + ";" + TEST_VERIFIER_PACKAGE, sysPropertyValue);
+
         // Update the package, should trigger verifier override.
         installPackage(updatedName, expectedResultStartsWith);
 
