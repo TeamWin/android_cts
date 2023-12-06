@@ -625,6 +625,9 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         List<String> expectedLines = Files.readAllLines(expectedFile.toPath());
         List<String> actualLines = Files.readAllLines(actualFile.toPath());
 
+        expectedLines.replaceAll(String::trim);
+        actualLines.replaceAll(String::trim);
+
         HashSet<String> expected = new HashSet(expectedLines);
         HashSet<String> actual = new HashSet(actualLines);
 
