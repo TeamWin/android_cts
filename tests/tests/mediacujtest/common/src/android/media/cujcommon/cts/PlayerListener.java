@@ -53,21 +53,30 @@ public class PlayerListener implements Player.Listener {
   public static final Object LISTENER_LOCK = new Object();
   public static int CURRENT_MEDIA_INDEX = 0;
 
+  // Enum Declared for Test Type
+  private enum TestType {
+    PLAYBACK_TEST,
+    SEEK_TEST,
+    ORIENTATION_TEST,
+    ADAPTIVE_PLAYBACK_TEST,
+    SCROLL_TEST,
+    SWITCH_AUDIO_TRACK_TEST,
+    SWITCH_SUBTITLE_TRACK_TEST;
+  }
+
   public static boolean mPlaybackEnded;
   private long mExpectedTotalTime;
   private MainActivity mActivity;
   private ScrollTestActivity mScrollActivity;
-  private boolean mIsSeekTest;
+  private final TestType mTestType;
   private int mNumOfSeekIteration;
   private long mSeekTimeUs;
   private long mSeed;
   private boolean mSeekDone;
-  private boolean mIsOrientationTest;
   private long mSendMessagePosition;
   private boolean mOrientationChangeRequested;
   private int mStartOrientation;
   private int mCurrentOrientation;
-  private boolean mIsAdaptivePlaybackTest;
   private boolean mResolutionChangeRequested;
   private int mCurrentResolutionWidth;
   private int mCurrentResolutionHeight;
@@ -76,36 +85,40 @@ public class PlayerListener implements Player.Listener {
   private int mCurrentTrackIndex = C.INDEX_UNSET;
   private Tracks.Group mVideoTrackGroup;
   private List<Format> mVideoFormatList;
-  private boolean mIsScrollTest;
   private int mNumOfScrollIteration;
   private boolean mScrollRequested;
-  private boolean mIsSwitchAudioTracksTest;
   private boolean mTrackChangeRequested;
   private List<Tracks.Group> mTrackGroups;
   private Format mStartTrackFormat;
   private Format mCurrentTrackFormat;
   private Format mConfiguredTrackFormat;
   private int mNumOfAudioTrack;
-  private boolean mIsSwitchSubtitleTracksTest;
   private int mNumOfSubtitleTrack;
+
+  public PlayerListener(TestType testType) {
+    mTestType = testType;
+  }
+
+  /**
+   * Create default player listener.
+   */
+  public static PlayerListener createDefaultListener(TestType testType) {
+    PlayerListener playerListener = new PlayerListener(testType);
+    playerListener.mNumOfSeekIteration = 0;
+    playerListener.mSeekTimeUs = 0;
+    playerListener.mSeed = 0;
+    playerListener.mSendMessagePosition = 0;
+    playerListener.mNumOfScrollIteration = 0;
+    playerListener.mNumOfAudioTrack = 0;
+    playerListener.mNumOfSubtitleTrack = 0;
+    return playerListener;
+  }
 
   /**
    * Create player listener for playback test.
    */
   public static PlayerListener createListenerForPlaybackTest() {
-    PlayerListener playerListener = new PlayerListener();
-    playerListener.mIsSeekTest = false;
-    playerListener.mNumOfSeekIteration = 0;
-    playerListener.mSeekTimeUs = 0;
-    playerListener.mSeed = 0;
-    playerListener.mIsOrientationTest = false;
-    playerListener.mSendMessagePosition = 0;
-    playerListener.mIsScrollTest = false;
-    playerListener.mNumOfScrollIteration = 0;
-    playerListener.mIsSwitchAudioTracksTest = false;
-    playerListener.mNumOfAudioTrack = 0;
-    playerListener.mIsSwitchSubtitleTracksTest = false;
-    playerListener.mNumOfSubtitleTrack = 0;
+    PlayerListener playerListener = createDefaultListener(TestType.PLAYBACK_TEST);
     return playerListener;
   }
 
@@ -118,8 +131,7 @@ public class PlayerListener implements Player.Listener {
    */
   public static PlayerListener createListenerForSeekTest(int numOfSeekIteration, long seekTimeUs,
       long sendMessagePosition) {
-    PlayerListener playerListener = createListenerForPlaybackTest();
-    playerListener.mIsSeekTest = true;
+    PlayerListener playerListener = createDefaultListener(TestType.SEEK_TEST);
     playerListener.mNumOfSeekIteration = numOfSeekIteration;
     playerListener.mSeekTimeUs = seekTimeUs;
     playerListener.mSeed = playerListener.getSeed();
@@ -133,8 +145,7 @@ public class PlayerListener implements Player.Listener {
    * @param sendMessagePosition The position at which message will be send
    */
   public static PlayerListener createListenerForOrientationTest(long sendMessagePosition) {
-    PlayerListener playerListener = createListenerForPlaybackTest();
-    playerListener.mIsOrientationTest = true;
+    PlayerListener playerListener = createDefaultListener(TestType.ORIENTATION_TEST);
     playerListener.mSendMessagePosition = sendMessagePosition;
     return playerListener;
   }
@@ -147,8 +158,7 @@ public class PlayerListener implements Player.Listener {
    */
   public static PlayerListener createListenerForAdaptivePlaybackTest(int numOfVideoTrack,
       long sendMessagePosition) {
-    PlayerListener playerListener = createListenerForPlaybackTest();
-    playerListener.mIsAdaptivePlaybackTest = true;
+    PlayerListener playerListener = createDefaultListener(TestType.ADAPTIVE_PLAYBACK_TEST);
     playerListener.mSendMessagePosition = sendMessagePosition;
     playerListener.mNumOfVideoTrack = numOfVideoTrack;
     playerListener.mIndexIncrement = 1;
@@ -162,8 +172,7 @@ public class PlayerListener implements Player.Listener {
    */
   public static PlayerListener createListenerForScrollTest(int numOfScrollIteration,
       long sendMessagePosition) {
-    PlayerListener playerListener = createListenerForPlaybackTest();
-    playerListener.mIsScrollTest = true;
+    PlayerListener playerListener = createDefaultListener(TestType.SCROLL_TEST);
     playerListener.mNumOfScrollIteration = numOfScrollIteration;
     playerListener.mSendMessagePosition = sendMessagePosition;
     return playerListener;
@@ -177,8 +186,7 @@ public class PlayerListener implements Player.Listener {
    */
   public static PlayerListener createListenerForSwitchAudioTracksTest(int numOfAudioTrack,
       long sendMessagePosition) {
-    PlayerListener playerListener = createListenerForPlaybackTest();
-    playerListener.mIsSwitchAudioTracksTest = true;
+    PlayerListener playerListener = createDefaultListener(TestType.SWITCH_AUDIO_TRACK_TEST);
     playerListener.mNumOfAudioTrack = numOfAudioTrack;
     playerListener.mSendMessagePosition = sendMessagePosition;
     return playerListener;
@@ -192,8 +200,7 @@ public class PlayerListener implements Player.Listener {
    */
   public static PlayerListener createListenerForSwitchSubtitleTracksTest(int numOfSubtitleTrack,
       long sendMessagePosition) {
-    PlayerListener playerListener = createListenerForPlaybackTest();
-    playerListener.mIsSwitchSubtitleTracksTest = true;
+    PlayerListener playerListener = createDefaultListener(TestType.SWITCH_SUBTITLE_TRACK_TEST);
     playerListener.mNumOfSubtitleTrack = numOfSubtitleTrack;
     playerListener.mSendMessagePosition = sendMessagePosition;
     return playerListener;
@@ -204,23 +211,51 @@ public class PlayerListener implements Player.Listener {
    */
   private long getSeed() {
     // Truncate time to the nearest day.
-    long seed = Clock.tick(Clock.systemDefaultZone(), Duration.ofDays(1)).instant().toEpochMilli();
+    long seed = Clock.tick(Clock.systemUTC(), Duration.ofDays(1)).instant().toEpochMilli();
     Log.d(LOG_TAG, "Random seed = " + seed);
     return seed;
+  }
+
+  /**
+   * Returns True for Seek test.
+   */
+  public boolean isSeekTest() {
+    return mTestType.equals(TestType.SEEK_TEST);
   }
 
   /**
    * Returns True for Orientation test.
    */
   public boolean isOrientationTest() {
-    return mIsOrientationTest;
+    return mTestType.equals(TestType.ORIENTATION_TEST);
+  }
+
+  /**
+   * Returns True for Adaptive playback test.
+   */
+  public boolean isAdaptivePlaybackTest() {
+    return mTestType.equals(TestType.ADAPTIVE_PLAYBACK_TEST);
   }
 
   /**
    * Returns True for Scroll test.
    */
   public boolean isScrollTest() {
-    return mIsScrollTest;
+    return mTestType.equals(TestType.SCROLL_TEST);
+  }
+
+  /**
+   * Returns True for Switch audio track test.
+   */
+  public boolean isSwitchAudioTrackTest() {
+    return mTestType.equals(TestType.SWITCH_AUDIO_TRACK_TEST);
+  }
+
+  /**
+   * Returns True for Switch subtitle track test.
+   */
+  public boolean isSwitchSubtitleTrackTest() {
+    return mTestType.equals(TestType.SWITCH_SUBTITLE_TRACK_TEST);
   }
 
   /**
@@ -313,13 +348,13 @@ public class PlayerListener implements Player.Listener {
   private boolean isFormatSimilar(Format refFormat, Format testFormat) {
     String refMediaType = refFormat.sampleMimeType;
     String testMediaType = testFormat.sampleMimeType;
-    if (mIsSwitchAudioTracksTest) {
+    if (isSwitchAudioTrackTest()) {
       assertTrue(refMediaType.startsWith("audio/") && testMediaType.startsWith("audio/"));
       if ((refFormat.channelCount != testFormat.channelCount) || (refFormat.sampleRate
           != testFormat.sampleRate)) {
         return false;
       }
-    } else if (mIsSwitchSubtitleTracksTest) {
+    } else if (isSwitchSubtitleTrackTest()) {
       assertTrue((refMediaType.startsWith("text/") && testMediaType.startsWith("text/")) || (
           refMediaType.startsWith("application/") && testMediaType.startsWith("application/")));
     }
@@ -384,16 +419,16 @@ public class PlayerListener implements Player.Listener {
           // first clip when player is ready
           mExpectedTotalTime += player.getDuration();
           // When player is ready, get the list of supported video Format(s) in the DASH mediaItem
-          if (mIsAdaptivePlaybackTest) {
+          if (isAdaptivePlaybackTest()) {
             mVideoFormatList = getVideoFormatList();
             mCurrentTrackIndex = 0;
           }
-          if (mIsSwitchAudioTracksTest || mIsSwitchSubtitleTracksTest) {
+          if (isSwitchAudioTrackTest() || isSwitchSubtitleTrackTest()) {
             // When player is ready, get the list of audio/subtitle track groups in the mediaItem
             mTrackGroups = getTrackGroups();
             // For a subtitle track switching test, we need to explicitly select the first
             // subtitle track
-            if (mIsSwitchSubtitleTracksTest) {
+            if (isSwitchSubtitleTrackTest()) {
               selectFirstSubtitleTrack();
             }
           }
@@ -409,7 +444,7 @@ public class PlayerListener implements Player.Listener {
           if (mPlaybackEnded) {
             throw new RuntimeException("mPlaybackEnded already set, player could be ended");
           }
-          if (!mIsScrollTest) {
+          if (!isScrollTest()) {
             mActivity.removePlayerListener();
           } else {
             assertTrue(mScrollRequested);
@@ -421,9 +456,9 @@ public class PlayerListener implements Player.Listener {
       }
     }
     if (events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION)) {
-      if (mIsSeekTest || mIsOrientationTest) {
+      if (isSeekTest() || isOrientationTest()) {
         mActivity.mPlayer.createMessage((messageType, payload) -> {
-              if (mIsSeekTest) {
+              if (isSeekTest()) {
                 seek();
               } else {
                 changeOrientation();
@@ -431,17 +466,17 @@ public class PlayerListener implements Player.Listener {
             }).setLooper(Looper.getMainLooper()).setPosition(mSendMessagePosition)
             .setDeleteAfterDelivery(true)
             .send();
-      } else if (mIsAdaptivePlaybackTest) {
+      } else if (isAdaptivePlaybackTest()) {
         // Iterating forwards and then backwards for all the available video tracks
         final int totalNumOfVideoTrackChange = mNumOfVideoTrack * 2;
         // Create messages to be executed at different positions
         for (int count = 1; count < totalNumOfVideoTrackChange; count++) {
           createAdaptivePlaybackMessage(mSendMessagePosition * (count));
         }
-      } else if (mIsSwitchAudioTracksTest || mIsSwitchSubtitleTracksTest) {
+      } else if (isSwitchAudioTrackTest() || isSwitchSubtitleTrackTest()) {
         // Create messages to be executed at different positions
         final int numOfTrackGroup =
-            mIsSwitchAudioTracksTest ? mNumOfAudioTrack : mNumOfSubtitleTrack;
+            isSwitchAudioTrackTest() ? mNumOfAudioTrack : mNumOfSubtitleTrack;
         // First trackGroupIndex is selected at the time of playback start, so changing
         // track from second track group Index onwards.
         for (int trackGroupIndex = 1; trackGroupIndex < numOfTrackGroup; trackGroupIndex++) {
@@ -452,7 +487,7 @@ public class PlayerListener implements Player.Listener {
       // In case of scroll test, send the message to scroll the view to change the surface
       // positions. Scroll has two surfaceView (top and bottom), playback start on top view and
       // after each mSendMessagePosition sec playback is switched to other view alternatively.
-      if (mIsScrollTest) {
+      if (isScrollTest()) {
         int yIndex;
         ExoPlayer currentPlayer;
         if ((CURRENT_MEDIA_INDEX % 2) == 0) {
@@ -582,9 +617,9 @@ public class PlayerListener implements Player.Listener {
   @Override
   public void onTracksChanged(Tracks tracks) {
     for (Tracks.Group currentTrackGroup : tracks.getGroups()) {
-      if (currentTrackGroup.isSelected() && (mIsSwitchAudioTracksTest && (
-          currentTrackGroup.getType() == C.TRACK_TYPE_AUDIO)) || (mIsSwitchSubtitleTracksTest && (
-          currentTrackGroup.getType() == C.TRACK_TYPE_TEXT))) {
+      if (currentTrackGroup.isSelected() && ((isSwitchAudioTrackTest() && (
+          currentTrackGroup.getType() == C.TRACK_TYPE_AUDIO)) || (isSwitchSubtitleTrackTest() && (
+          currentTrackGroup.getType() == C.TRACK_TYPE_TEXT)))) {
         for (int trackIndex = 0; trackIndex < currentTrackGroup.length; trackIndex++) {
           if (currentTrackGroup.isTrackSelected(trackIndex)) {
             if (!mTrackChangeRequested) {
