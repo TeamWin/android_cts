@@ -39,6 +39,7 @@ private:
     void buildMatchStream();
     int matchStream(uint8_t* bytes, int count);
 
+    bool setupMessages();
     int sendMessages();
 
     jobject mTestModuleObj;
@@ -53,7 +54,7 @@ private:
     AMidiOutputPort* mMidiReceivePort;
 
     // The array of messages to send/receive
-    TestMessage*    mTestMsgs;
+    std::vector<TestMessage>    mTestMsgs;
     int             mNumTestMsgs;
 
     bool            mThrottleData;
@@ -70,6 +71,8 @@ private:
     static const int TESTSTATUS_FAILED_OVERRUN = 4;
     static const int TESTSTATUS_FAILED_DEVICE = 5;
     static const int TESTSTATUS_FAILED_JNI = 6;
+    static const int TESTSTATUS_FAILED_SETUP = 7;
+    static const int TESTSTATUS_FAILED_SEND = 8;
 
     bool StartReading(AMidiDevice* nativeReadDevice);
     bool StartWriting(AMidiDevice* nativeWriteDevice);
