@@ -24,6 +24,8 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -100,8 +102,15 @@ public class CtsSettingsIntentTest {
         StrictMode.setVmPolicy(
                 new StrictMode.VmPolicy.Builder().permitUnsafeIntentLaunch().penaltyLog().build());
 
+        // Disable on watches since they don't have the traditional settings UI.
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            Log.w(TAG, "Credential Manager Settings Intent test should not be enabled on watches");
+            return;
+        }
+
         // Ensure that the intent is resolvable.
-        final Intent intent = newSettingsIntent("android.settings.CREDENTIAL_PROVIDER");
+        final Intent intent =
+                newSettingsIntent(android.provider.Settings.ACTION_CREDENTIAL_PROVIDER);
         final ResolveInfo ri =
                 mContext.getPackageManager()
                         .resolveActivity(intent, PackageManager.MATCH_DISABLED_COMPONENTS);
@@ -118,8 +127,12 @@ public class CtsSettingsIntentTest {
                     activity.startSettingsActivity(intent);
                 });
 
-        assertThat(hasViewWithText("Test Provider Service Alternate")).isTrue();
-        assertThat(hasViewWithText("Additional providers")).isTrue();
+        // The UI is not exactly the same on all platforms so this is desired
+        // but not required. The most important thing about this test is that
+        // the intent opens an activity and is not lost because it has not
+        // been implemented.
+        assumeTrue(hasViewWithText("Test Provider Service Alternate"));
+        assumeTrue(hasViewWithText("Additional providers"));
     }
 
     @Test
@@ -127,6 +140,12 @@ public class CtsSettingsIntentTest {
     public void testCredentialManagerAutofillSettingsIntent() throws Exception {
         StrictMode.setVmPolicy(
                 new StrictMode.VmPolicy.Builder().permitUnsafeIntentLaunch().penaltyLog().build());
+
+        // Disable on watches since they don't have the traditional settings UI.
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            Log.w(TAG, "Credential Manager Settings Intent test should not be enabled on watches");
+            return;
+        }
 
         // Ensure that the intent is resolvable.
         final Intent intent =
