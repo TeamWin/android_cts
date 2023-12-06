@@ -25,6 +25,8 @@ android_test_helper_app {
         "androidx.test.uiautomator_uiautomator",
         "compatibility-device-util-axt",
         "CtsStorageAppLib",
+        "flag-junit",
+        "android.app.usage.flags-aconfig-java",
     ],
     libs: ["android.test.base"],
     srcs: [

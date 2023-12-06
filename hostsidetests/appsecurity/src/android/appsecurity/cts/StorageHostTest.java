@@ -138,6 +138,13 @@ public class StorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testVerifyStatsByDataType() throws Exception {
+        for (int user : mUsers) {
+            runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsByDataType", user);
+        }
+    }
+
+    @Test
     public void testVerifyStatsMultiple() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_A, CLASS, "testAllocate", user);
