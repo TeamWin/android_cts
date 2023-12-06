@@ -2982,10 +2982,12 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                 new NtnSignalStrengthCallbackTest();
 
         /* register callback for non-terrestrial network signal strength changed event */
-        @SatelliteManager.SatelliteResult int registerError =
-                sSatelliteManager.registerForNtnSignalStrengthChanged(
-                        getContext().getMainExecutor(), ntnSignalStrengthCallbackTest);
-        assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerError);
+        try {
+            sSatelliteManager.registerForNtnSignalStrengthChanged(
+                    getContext().getMainExecutor(), ntnSignalStrengthCallbackTest);
+        } catch (SatelliteManager.SatelliteException ex) {
+            throw new AssertionError();
+        }
 
         @NtnSignalStrength.NtnSignalStrengthLevel int expectedLevel =
                 NtnSignalStrength.NTN_SIGNAL_STRENGTH_NONE;
