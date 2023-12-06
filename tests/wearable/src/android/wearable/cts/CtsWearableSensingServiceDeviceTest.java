@@ -33,6 +33,7 @@ import android.os.Build.VERSION_CODES;
 import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.text.TextUtils;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -69,6 +70,9 @@ public class CtsWearableSensingServiceDeviceTest {
     private static final String KEY_FOR_PROVIDE_DATA = "foo.bar.baz_key_for_provide_data";
     private static final int VALUE_TO_SEND = 1000;
     private static final String VALUE_TO_WRITE = "wearable_sensing";
+
+    private final boolean mIsTestable =
+            !TextUtils.isEmpty(getAmbientContextDetectionServiceComponent());
 
     @Rule
     public final DeviceConfigStateChangerRule mLookAllTheseRules =
@@ -163,6 +167,8 @@ public class CtsWearableSensingServiceDeviceTest {
 
     @Test
     public void startDetection_wearable_getsCall() {
+        assumeTrue("Feature not available on this device. Skipping test.", mIsTestable);
+
         setTestableAmbientContextDetectionService(CTS_SERVICE_NAME);
         whenCallbackTriggeredRespondWithServiceStatus(AmbientContextManager.STATUS_SUCCESS);
 
@@ -185,6 +191,8 @@ public class CtsWearableSensingServiceDeviceTest {
 
     @Test
     public void stopDetection_wearable_getsCall() {
+        assumeTrue("Feature not available on this device. Skipping test.", mIsTestable);
+
         setTestableAmbientContextDetectionService(CTS_SERVICE_NAME);
         whenCallbackTriggeredRespondWithServiceStatus(AmbientContextManager.STATUS_SUCCESS);
         callStartDetection();
@@ -210,6 +218,8 @@ public class CtsWearableSensingServiceDeviceTest {
 
     @Test
     public void queryServiceStatus_available() {
+        assumeTrue("Feature not available on this device. Skipping test.", mIsTestable);
+
         setTestableAmbientContextDetectionService(CTS_SERVICE_NAME);
         whenCallbackTriggeredRespondWithServiceStatus(AmbientContextManager.STATUS_SUCCESS);
 
@@ -348,5 +358,9 @@ public class CtsWearableSensingServiceDeviceTest {
 
     private void clearTestableAmbientContextDetectionService() {
         runShellCommand("cmd ambient_context set-temporary-service %d", USER_ID);
+    }
+
+    private String getAmbientContextDetectionServiceComponent() {
+        return runShellCommand("cmd ambient_context get-bound-package %s", USER_ID);
     }
 }
