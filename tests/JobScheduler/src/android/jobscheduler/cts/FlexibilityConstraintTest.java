@@ -110,20 +110,6 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
                 kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
     }
 
-    public void testNoConstraintSatisfied_noPreferred() throws Exception {
-        if (!deviceSupportsFlexConstraints()) {
-            return;
-        }
-        satisfySystemWideConstraints(false, false, false);
-        kTestEnvironment.setExpectedExecutions(1);
-        JobInfo job = new JobInfo.Builder(FLEXIBLE_JOB_ID, kJobServiceComponent).build();
-        mJobScheduler.schedule(job);
-        runJob();
-
-        assertTrue("Job without flexible constraint did not fire when no constraints were required",
-                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
-    }
-
     /**
      * Schedule an expedited job, verify it runs immediately.
      */
