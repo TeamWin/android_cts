@@ -83,8 +83,16 @@ class PreviewMinFrameRateTest(its_base_test.ItsBaseTest):
       # determine camera capabilities for preview
       preview_sizes = cam.get_supported_preview_sizes(
           self.camera_id)
+      supported_video_sizes = cam.get_supported_video_sizes_capped(self.camera_id)
+      max_video_size = supported_video_sizes[-1]  # choose largest available size
       logging.debug('Camera supported preview sizes: %s', preview_sizes)
+      logging.debug('Camera supported video sizes: %s', supported_video_sizes)
+
       preview_size = preview_sizes[-1]  # choose largest available size
+      if preview_size <= max_video_size:
+        logging.debug('preview_size is supported by video encoder')
+      else:
+        preview_size = max_video_size
       logging.debug('Doing 3A to ensure AE convergence')
       cam.do_3a(do_af=False)
       logging.debug('Testing preview recording FPS for size: %s', preview_size)
