@@ -326,8 +326,14 @@ public class WindowManagerState {
             try {
                 parseSysDumpProto(dump);
             } catch (InvalidProtocolBufferNanoException ex) {
-                throw new RuntimeException("Failed to parse dumpsys:\n"
-                        + new String(dump, StandardCharsets.UTF_8), ex);
+                final String dumpString = new String(dump, StandardCharsets.UTF_8);
+                if (dumpString.contains("SERVICE \'window\' DUMP TIMEOUT")) {
+                    // retry and log when dump timeout
+                    logE(dumpString);
+                } else {
+                    throw new RuntimeException("Failed to parse dumpsys:\n"
+                            + new String(dump, StandardCharsets.UTF_8), ex);
+                }
             }
 
             retry = mRootTasks.isEmpty() || mTopFocusedTaskId == -1 || mWindowStates.isEmpty()
