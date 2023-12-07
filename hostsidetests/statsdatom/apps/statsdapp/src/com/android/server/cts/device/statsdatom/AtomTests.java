@@ -259,6 +259,7 @@ public class AtomTests {
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_CREATE_ACCESSIBILITY_OVERLAY, 138);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_MEDIA_ROUTING_CONTROL, 139);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_ENABLE_MOBILE_DATA_BY_USER, 140);
+        APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_RESERVED_FOR_TESTING, 141);
     }
 
     @Test
