@@ -32,8 +32,8 @@ public final class DumpUtils {
 
     /**
      * Dumps a given CarService by shell command.
-     * It will parse the dump output with ':' separator and put it into a map with the first part
-     * as a key and the second part as a value.
+     * It will parse the dump output with ':' or '=' separator and put it into a map with the first
+     * part as a key and the second part as a value.
      *
      * @param serviceName Name of service to be dumped.
      * @return map contains the dump output
@@ -47,8 +47,13 @@ public final class DumpUtils {
     private static ArrayMap<String, String> parseDumpResult(String serviceName, String output) {
         Scanner scanner = new Scanner(output);
         ArrayMap<String, String> map = new ArrayMap<>();
+        // Pattern to match the title, For example:
+        //   *CarMediaService*
         Pattern patternHeader = Pattern.compile("\\*" + serviceName + "\\*");
-        Pattern patternBody = Pattern.compile("\\s*(\\w+)\\s*:\\s*(\\w+)");
+        // Pattern to match key-value with ':' or '=' as separator. For example:
+        //   mPlayOnBootConfig=2
+        //   MediaConnectorService: com.android.car.media/.service.MediaConnectorService
+        Pattern patternBody = Pattern.compile("\\s*(\\w+)\\s*[:=]\\s*(\\S+)");
         Pattern currentPattern = patternHeader;
         while (scanner.hasNextLine()) {
             scanner.nextLine();
