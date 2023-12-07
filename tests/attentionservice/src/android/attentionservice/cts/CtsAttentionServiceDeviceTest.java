@@ -25,6 +25,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.content.res.Resources;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.service.attention.AttentionService;
@@ -57,6 +58,10 @@ public class CtsAttentionServiceDeviceTest {
     private final boolean isTestable =
             !TextUtils.isEmpty(getAttentionServiceComponent());
 
+    private final Resources mResources = getInstrumentation().getTargetContext()
+            .getResources();
+    private boolean mIsProximitySupported;
+
     @Rule
     public final DeviceConfigStateChangerRule mLookAllTheseRules =
             new DeviceConfigStateChangerRule(getInstrumentation().getTargetContext(),
@@ -67,6 +72,12 @@ public class CtsAttentionServiceDeviceTest {
     @Before
     public void setUp() {
         assumeTrue("Feature not available on this device. Skipping test.", isTestable);
+        try {
+            mIsProximitySupported = mResources.getBoolean(
+                    mResources.getIdentifier("config_enableProximityService", "bool", "android"));
+        } catch (Resources.NotFoundException e) {
+            // this would mean resource is not found in device. skip test
+        }
         clearTestableAttentionService();
         CtsTestAttentionService.reset();
         bindToTestService();
@@ -79,6 +90,9 @@ public class CtsAttentionServiceDeviceTest {
 
     @Test
     public void testProximityUpdates_OnSuccess() {
+        assumeTrue("Proximity Feature not available on this device. Skipping test.",
+                mIsProximitySupported);
+
         assertThat(CtsTestAttentionService.hasCurrentProximityUpdates()).isFalse();
 
         /** From manager, call onStartProximityUpdates() on test service */
@@ -98,6 +112,9 @@ public class CtsAttentionServiceDeviceTest {
 
     @Test
     public void testProximityUpdates_OnCancelledFromManager() {
+        assumeTrue("Proximity Feature not available on this device. Skipping test.",
+                mIsProximitySupported);
+
         assertThat(CtsTestAttentionService.hasPendingChecks()).isFalse();
 
         /** From manager, call onStartProximityUpdates() on test service */
