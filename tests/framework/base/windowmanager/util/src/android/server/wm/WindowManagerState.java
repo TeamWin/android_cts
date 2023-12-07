@@ -252,7 +252,8 @@ public class WindowManagerState {
     }
 
     static boolean isValidNavBarType(WindowState navState) {
-        return TYPE_NAVIGATION_BAR == navState.getType();
+        final int windowType = navState.getType();
+        return TYPE_NAVIGATION_BAR == windowType || TYPE_NAVIGATION_BAR_PANEL == windowType;
     }
 
     /**
