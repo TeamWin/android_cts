@@ -16,9 +16,9 @@
 
 package android.adpf.cts;
 
+import static android.adpf.common.ADPFHintSessionConstants.IS_HINT_SESSION_SUPPORTED_KEY;
 import static android.adpf.common.ADPFHintSessionConstants.MINIMUM_VALID_SDK;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import com.android.tradefed.device.ITestDevice;
@@ -81,6 +81,7 @@ public class ADPFHintSessionHostJUnit4Test extends BaseHostJUnit4Test {
         final TestRunResult runResult = getLastDeviceRunResults();
         final TestResult result = runResult.getTestResults().get(testDesc);
         assertNotNull(result);
-        assertEquals("bar", result.getMetrics().get("foo"));
+        assertNotNull(result.getMetrics());
+        assertNotNull(result.getMetrics().get(IS_HINT_SESSION_SUPPORTED_KEY));
     }
 }

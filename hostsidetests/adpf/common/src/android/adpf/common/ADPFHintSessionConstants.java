@@ -20,4 +20,5 @@ public class ADPFHintSessionConstants {
     public static final String TEST_NAME_KEY = "Test_Name";
 
     public static final int MINIMUM_VALID_SDK = 32; // T
+    public static final String IS_HINT_SESSION_SUPPORTED_KEY = "isHintSessionSupported";
 }
