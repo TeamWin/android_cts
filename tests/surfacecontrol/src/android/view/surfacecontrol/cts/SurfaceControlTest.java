@@ -42,8 +42,11 @@ import android.hardware.SyncFence;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.ImageWriter;
+import android.platform.test.annotations.RequiresDevice;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
+import android.view.Choreographer;
 import android.view.Display;
 import android.view.Surface;
 import android.view.SurfaceControl;
@@ -58,6 +61,7 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule;
 
 import com.android.compatibility.common.util.WidgetTestUtils;
 import com.android.cts.hardware.SyncFenceUtil;
+import com.android.window.flags.Flags;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -66,6 +70,7 @@ import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -114,6 +119,8 @@ public class SurfaceControlTest {
     public TestName mName = new TestName();
 
     private ASurfaceControlTestActivity mActivity;
+
+    private long mDesiredPresentTime;
 
     @Before
     public void setup() {
@@ -178,11 +185,17 @@ public class SurfaceControlTest {
 
         public void setSolidBuffer(SurfaceControl surfaceControl,
                 int width, int height, int color) {
+            SurfaceControl.Transaction tx = new SurfaceControl.Transaction();
+            setSolidBuffer(surfaceControl, tx, width, height, color);
+            tx.apply();
+        }
+
+        public void setSolidBuffer(SurfaceControl surfaceControl,
+                                   SurfaceControl.Transaction tx,
+                                   int width, int height, int color) {
             HardwareBuffer buffer = getSolidBuffer(width, height, color);
             assertNotNull("failed to make solid buffer", buffer);
-            new SurfaceControl.Transaction()
-                    .setBuffer(surfaceControl, buffer)
-                    .apply();
+            tx.setBuffer(surfaceControl, buffer);
             mBuffers.add(buffer);
         }
 
@@ -1422,6 +1435,252 @@ public class SurfaceControlTest {
                 }
         );
         assertTrue(caughtException.get());
+    }
+
+    class OnCompleteListenerHelper {
+        private CountDownLatch mLatch = new CountDownLatch(1);
+        private long mLatchTime;
+        private SyncFence mPresentFence;
+
+        SurfaceControl.Transaction getTransaction() {
+            return makeTransactionWithListener().addTransactionCompletedListener(
+                    Runnable::run,  stats -> {
+                        mLatchTime = stats.getLatchTime();
+                        mPresentFence = stats.getPresentFence();
+                        mLatch.countDown();
+                    });
+        }
+
+        void waitForStats() throws InterruptedException {
+            assertTrue(mLatch.await(5, TimeUnit.SECONDS));
+        }
+
+        SyncFence getPresentFence() {
+            return mPresentFence;
+        }
+
+        long getLatchTime() {
+            return mLatchTime;
+        }
+
+        void close() {
+            mPresentFence.close();
+            mPresentFence = null;
+        }
+    }
+
+    @Test
+    @RequiresDevice // emulators can't support sync fences
+    @RequiresFlagsEnabled(Flags.FLAG_SDK_DESIRED_PRESENT_TIME)
+    public void testSurfaceTransaction_setDesiredPresentTime_now() throws InterruptedException {
+        assumeTrue(Flags.sdkDesiredPresentTime());
+
+        final OnCompleteListenerHelper helper = new OnCompleteListenerHelper();
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl surfaceControl = createFromWindow(holder);
+                        SurfaceControl.Transaction tx = helper.getTransaction();
+                        setSolidBuffer(surfaceControl, tx, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
+
+                        mDesiredPresentTime = System.nanoTime();
+                        tx.setDesiredPresentTime(mDesiredPresentTime).apply();
+                    }
+                },
+                new PixelChecker(Color.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                }, 1);
+
+        helper.waitForStats();
+        assertTrue(helper.getLatchTime() > 0);
+
+        assertTrue(helper.getPresentFence() != null);
+        assertTrue(helper.getPresentFence().await(Duration.ofSeconds(5)));
+        assertTrue("transaction was presented too early. presentTime="
+                        + helper.getPresentFence().getSignalTime(),
+                helper.getPresentFence().getSignalTime() >= mDesiredPresentTime);
+        helper.close();
+    }
+
+    @Test
+    @RequiresDevice // emulators can't support sync fences
+    @RequiresFlagsEnabled(Flags.FLAG_SDK_DESIRED_PRESENT_TIME)
+    public void testSurfaceTransaction_setDesiredPresentTime_30ms() throws InterruptedException {
+        assumeTrue(Flags.sdkDesiredPresentTime());
+
+        final OnCompleteListenerHelper helper = new OnCompleteListenerHelper();
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl surfaceControl = createFromWindow(holder);
+                        SurfaceControl.Transaction tx = helper.getTransaction();
+                        setSolidBuffer(surfaceControl, tx, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
+
+                        mDesiredPresentTime = System.nanoTime() + 30_000_000;
+                        tx.setDesiredPresentTime(mDesiredPresentTime).apply();
+                    }
+                },
+                new PixelChecker(Color.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                }, 1);
+
+        helper.waitForStats();
+        assertTrue(helper.getLatchTime() > 0);
+        assertTrue(helper.getPresentFence() != null);
+        assertTrue(helper.getPresentFence().await(Duration.ofSeconds(5)));
+        assertTrue("transaction was presented too early. presentTime="
+                        + helper.getPresentFence().getSignalTime(),
+                helper.getPresentFence().getSignalTime() >= mDesiredPresentTime);
+        helper.close();
+    }
+
+    @Test
+    @RequiresDevice // emulators can't support sync fences
+    @RequiresFlagsEnabled(Flags.FLAG_SDK_DESIRED_PRESENT_TIME)
+    public void testSurfaceTransaction_setDesiredPresentTime_100ms() throws InterruptedException {
+        assumeTrue(Flags.sdkDesiredPresentTime());
+
+        final OnCompleteListenerHelper helper = new OnCompleteListenerHelper();
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl surfaceControl = createFromWindow(holder);
+                        SurfaceControl.Transaction tx = helper.getTransaction();
+                        setSolidBuffer(surfaceControl, tx, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
+
+                        mDesiredPresentTime = System.nanoTime() + 100_000_000;
+                        tx.setDesiredPresentTime(mDesiredPresentTime).apply();
+                    }
+                },
+                new PixelChecker(Color.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                }, 1);
+
+        helper.waitForStats();
+        assertTrue(helper.getLatchTime() > 0);
+        assertTrue(helper.getPresentFence() != null);
+        assertTrue(helper.getPresentFence().await(Duration.ofSeconds(5)));
+        assertTrue("transaction was presented too early. presentTime="
+                        + helper.getPresentFence().getSignalTime(),
+                helper.getPresentFence().getSignalTime() >= mDesiredPresentTime);
+        helper.close();
+    }
+
+    @Test
+    @RequiresDevice // emulators can't support sync fences
+    @RequiresFlagsEnabled(Flags.FLAG_SDK_DESIRED_PRESENT_TIME)
+    public void testSurfaceTransaction_setFrameTimeline_preferredIndex()
+            throws InterruptedException {
+        assumeTrue(Flags.sdkDesiredPresentTime());
+
+        final OnCompleteListenerHelper helper = new OnCompleteListenerHelper();
+        final SurfaceControl.Transaction[] transaction = new SurfaceControl.Transaction[1];
+
+        Choreographer.VsyncCallback vsyncCallback = new Choreographer.VsyncCallback() {
+            @Override
+            public void onVsync(@NonNull Choreographer.FrameData frameData) {
+                long periodNanos = (long) (1e9 / mActivity.getDisplay().getRefreshRate());
+                long threshold = periodNanos / 2;
+                mDesiredPresentTime = frameData.getPreferredFrameTimeline()
+                        .getExpectedPresentationTimeNanos() - threshold;
+                transaction[0].setFrameTimeline(
+                        frameData.getPreferredFrameTimeline().getVsyncId()).apply();
+            }
+        };
+
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl surfaceControl = createFromWindow(holder);
+                        transaction[0] = helper.getTransaction();
+                        setSolidBuffer(surfaceControl, transaction[0], DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
+                        Choreographer.getInstance().postVsyncCallback(vsyncCallback);
+
+                    }
+                },
+            new PixelChecker(Color.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                }, 1);
+
+        helper.waitForStats();
+        assertTrue(helper.getLatchTime() > 0);
+        assertTrue(helper.getPresentFence() != null);
+        assertTrue(helper.getPresentFence().await(Duration.ofSeconds(5)));
+        assertTrue("transaction was presented too early. presentTime="
+                        + helper.getPresentFence().getSignalTime(),
+                helper.getPresentFence().getSignalTime() >= mDesiredPresentTime);
+        helper.close();
+    }
+
+    @Test
+    @RequiresDevice // emulators can't support sync fences
+    @RequiresFlagsEnabled(Flags.FLAG_SDK_DESIRED_PRESENT_TIME)
+    public void testSurfaceTransaction_setFrameTimeline_nonPreferredIndex()
+            throws InterruptedException {
+        assumeTrue(Flags.sdkDesiredPresentTime());
+
+        final OnCompleteListenerHelper helper = new OnCompleteListenerHelper();
+        final SurfaceControl.Transaction[] transaction = new SurfaceControl.Transaction[1];
+
+        Choreographer.VsyncCallback vsyncCallback = new Choreographer.VsyncCallback() {
+            @Override
+            public void onVsync(@NonNull Choreographer.FrameData frameData) {
+                long periodNanos =
+                        (long) (1e9 / mActivity.getDisplay().getRefreshRate());
+                long threshold = periodNanos / 2;
+                Choreographer.FrameTimeline[] timelines = frameData.getFrameTimelines();
+                Choreographer.FrameTimeline lastTimeline = timelines[timelines.length - 1];
+                mDesiredPresentTime = lastTimeline.getExpectedPresentationTimeNanos() - threshold;
+                transaction[0].setFrameTimeline(lastTimeline.getVsyncId()).apply();
+            }
+        };
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl surfaceControl = createFromWindow(holder);
+                        transaction[0] = helper.getTransaction();
+                        setSolidBuffer(surfaceControl, transaction[0], DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
+                        Choreographer.getInstance().postVsyncCallback(vsyncCallback);
+
+                    }
+                },
+                new PixelChecker(Color.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                }, 1);
+
+        helper.waitForStats();
+        assertTrue(helper.getLatchTime() > 0);
+        assertTrue(helper.getPresentFence() != null);
+        assertTrue(helper.getPresentFence().await(Duration.ofSeconds(5)));
+        assertTrue("transaction was presented too early. presentTime="
+                        + helper.getPresentFence().getSignalTime(),
+                helper.getPresentFence().getSignalTime() >= mDesiredPresentTime);
+        helper.close();
     }
 
     /**
