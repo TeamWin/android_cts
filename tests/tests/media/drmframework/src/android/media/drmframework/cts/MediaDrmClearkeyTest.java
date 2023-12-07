@@ -42,11 +42,13 @@ import androidx.annotation.NonNull;
 import androidx.test.filters.SdkSuppress;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.ApiTest;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -1667,6 +1669,48 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
                 drm.close();
             }
         }
+    }
+
+    /**
+     * The test tries to enforce the behavior described
+     * in {@link android.media.MediaDrm.KeyRequest#getDefaultUrl()}.
+     * It should return an empty string if the default URL is not known.
+     */
+    @Presubmit
+    @ApiTest(apis = {"android.media.MediaDrm.KeyRequest#getDefaultUrl"})
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testGetKeyRequestDefaultUrl()
+            throws UnsupportedSchemeException, NotProvisionedException {
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
+        MediaDrm drm = new MediaDrm(CLEARKEY_SCHEME_UUID);
+        byte[] sessionId = openSession(drm);
+
+        try {
+            if (!preparePlayback(
+                    MIME_VIDEO_AVC,
+                    new String[0],
+                    CENC_AUDIO_URL, false /* audioEncrypted */ ,
+                    CENC_VIDEO_URL, true /* videoEncrypted */,
+                    VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC, false /* scrambled */,
+                    sessionId, getSurfaces())) {
+                closeSession(drm, sessionId);
+                stopDrm(drm);
+                return;
+            }
+        } catch (Exception e) {
+            throw new Error("Unexpected exception ", e);
+        }
+
+        MediaDrm.KeyRequest drmRequest = drm.getKeyRequest(sessionId, mMediaCodecPlayer.getDrmInitData(), "cenc",
+                MediaDrm.KEY_TYPE_STREAMING,
+                null);
+        String defaultUrl = drmRequest.getDefaultUrl();
+        Log.i(TAG, "Default url is [" + defaultUrl + "].");
+        assertEquals("Default url of key request should be empty", "", defaultUrl);
+        drm.close();
     }
 
     private void testIntegerProperties(MediaDrm drm, String testKey)
