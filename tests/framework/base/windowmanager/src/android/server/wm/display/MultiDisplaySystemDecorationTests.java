@@ -47,6 +47,8 @@ import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerState.DisplayContent;
 import android.server.wm.WindowManagerState.WindowState;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.TestUtils;
 
 import org.junit.Before;
@@ -298,6 +300,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
      * The currently configured secondary home activity should be resumed because the display does
      * not support primary home.
      */
+    @FlakyTest(bugId = 315069300)
     @Test
     public void testSendPrimaryHomeIntentActivityOnDisplayWithDecorations() {
         createManagedHomeActivitySession(SINGLE_SECONDARY_HOME_ACTIVITY);
