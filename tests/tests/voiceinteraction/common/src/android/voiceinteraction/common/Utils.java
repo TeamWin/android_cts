@@ -104,11 +104,14 @@ public class Utils {
     // Check the HotwordDetectionService can read audio and the data is not zero
     public static final int EXTRA_HOTWORD_DETECTION_SERVICE_CAN_READ_AUDIO_DATA_IS_NOT_ZERO = 9;
 
-    // Send training data on onDetect call. Specifically, send training data when the DSP is
-    // triggered for always on detection and when recognition is started for external or
-    // software detection.
-    public static final int EXTRA_HOTWORD_DETECTION_SERVICE_SEND_TRAINING_DATA_ON_DETECT =
-            10;
+    // Send training data. Specifically, send training data on DSP trigger for always on
+    // detection and when recognition is started for external or software detection.
+    public static final int EXTRA_HOTWORD_DETECTION_SERVICE_SEND_TRAINING_DATA = 10;
+
+    // Send a detection followed by training data. Specifically, send training data and
+    // detection event on DSP trigger for always on detection and when recognition is started for
+    // external or software detection.
+    public static final int EXTRA_HOTWORD_DETECTION_SERVICE_SEND_TRAINING_DATA_AFTER_DETECT = 11;
 
     /** Indicate to start a new activity for testing. */
     public static final int ACTIVITY_NEW = 0;
