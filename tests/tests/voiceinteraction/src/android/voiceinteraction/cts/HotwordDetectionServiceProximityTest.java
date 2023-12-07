@@ -31,9 +31,12 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.attentionservice.cts.CtsTestAttentionService;
+import android.content.res.Resources;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
@@ -105,8 +108,22 @@ public final class HotwordDetectionServiceProximityTest {
     private static final Instrumentation sInstrumentation =
             InstrumentationRegistry.getInstrumentation();
 
+    private final Resources mResources = getInstrumentation().getTargetContext()
+            .getResources();
+
+    private boolean mIsProximitySupported;
+
     @Before
     public void setup() {
+        try {
+            mIsProximitySupported = mResources.getBoolean(
+                    mResources.getIdentifier("config_enableProximityService", "bool", "android"));
+        } catch (Resources.NotFoundException e) {
+            // this would mean resource is not found in device. skip test
+        }
+        assumeTrue("Proximity Feature not available on this device. Skipping test.",
+                mIsProximitySupported);
+
         // Set up Attention Service
         CtsTestAttentionService.reset();
         assertThat(setTestableAttentionService(FAKE_SERVICE_PACKAGE)).isTrue();
