@@ -617,6 +617,29 @@ class ItsSession(object):
           'Failed to query landscape to portrait system property')
     return data[_STR_VALUE] == 'true'
 
+  def get_supported_video_sizes_capped(self, camera_id):
+    """Get the supported video sizes for camera id.
+
+    Args:
+      camera_id: int; device id
+    Returns:
+      Sorted list of supported video sizes.
+    """
+
+    cmd = {
+        _CMD_NAME_STR: 'doGetSupportedVideoSizesCapped',
+        _CAMERA_ID_STR: camera_id,
+    }
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
+    self.sock.settimeout(timeout)
+    data, _ = self.__read_response_from_socket()
+    if data[_TAG_STR] != 'supportedVideoSizes':
+      raise error_util.CameraItsError('Invalid command response')
+    if not data[_STR_VALUE]:
+      raise error_util.CameraItsError('No supported video sizes')
+    return data[_STR_VALUE].split(';')
+
   def do_basic_recording(self, profile_id, quality, duration,
                          video_stabilization_mode=0, hlg10_enabled=False,
                          zoom_ratio=None, ae_target_fps_min=None,
