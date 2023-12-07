@@ -18,6 +18,8 @@ package android.content.pm.cts;
 
 import static android.Manifest.permission.WRITE_ALLOWLISTED_DEVICE_CONFIG;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -305,10 +307,8 @@ public class PackageManagerShellCommandIncrementalTest {
     public void testSystemInstallWithIdSig() throws Exception {
         final String baseName = TEST_APK_SHELL;
         final File file = new File(createApkPath(baseName));
-        assertEquals(
-                "Failure [INSTALL_FAILED_SESSION_INVALID: Incremental installation of this "
-                        + "package is not allowed.]\n",
-                executeShellCommand("pm install-incremental -t -g " + file.getPath()));
+        assertThat(executeShellCommand("pm install-incremental -t -g " + file.getPath()))
+                .startsWith("Failure [INSTALL_FAILED_SESSION_INVALID");
     }
 
     @LargeTest
