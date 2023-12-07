@@ -161,7 +161,13 @@ public final class BluetoothTest {
 
         try (PermissionContext p =
                      sDeviceState.dpc().permissions().withPermission(BLUETOOTH_CONNECT)) {
-            assertThat(sDeviceState.dpc().bluetoothManager().getAdapter().disable()).isTrue();
+            // For some reason it doesn't always immediately recognise that the permission has
+            // been granted to the DPC
+            Poll.forValue("return value for disable from adapter",
+                    () -> sDeviceState.dpc().bluetoothManager().getAdapter().disable())
+                    .toBeEqualTo(true)
+                    .errorOnFail()
+                    .await();
             r.awaitForBroadcast();
 
             Poll.forValue("Bluetooth Enabled for DPC",
