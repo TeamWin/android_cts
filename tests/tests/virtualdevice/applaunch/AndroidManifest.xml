@@ -42,6 +42,24 @@
             </intent-filter>
         </activity>
         <service android:name=".AppComponents$TestService" />
+        <service android:name=".VirtualDeviceImeTest$DefaultDeviceTestIme"
+            android:label="Default device Test IME"
+            android:permission="android.permission.BIND_INPUT_METHOD"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.view.InputMethod"/>
+            </intent-filter>
+            <meta-data android:name="android.view.im" android:resource="@xml/defaultdevicetestime"/>
+        </service>
+        <service android:name=".VirtualDeviceImeTest$VirtualDeviceTestIme"
+            android:label="Virtual device Test IME"
+            android:permission="android.permission.BIND_INPUT_METHOD"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.view.InputMethod"/>
+            </intent-filter>
+            <meta-data android:name="android.view.im" android:resource="@xml/virtualdevicetestime"/>
+        </service>
     </application>
 
     <uses-feature android:name="android.software.companion_device_setup" />
