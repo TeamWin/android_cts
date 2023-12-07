@@ -135,6 +135,7 @@ android_test {
         ":AppInBackground",
         ":AppWithAttributionInheritingFromSelf",
         ":AppWithAttributionInheritingFromExisting",
+        ":AppInstalledOnMultipleUsers",
     ],
     per_testcase_directory: true,
 }
