@@ -147,17 +147,25 @@ public final class FeatureCombinationTest extends Camera2AndroidTestCase {
             }
 
             openDevice(id);
-            MaxStreamSizes maxSizes16_9 = new MaxStreamSizes(mStaticInfo,
-                    id, mContext, AspectRatio.AR_16_9);
-            MaxStreamSizes maxSizes4_3 = new MaxStreamSizes(mStaticInfo,
-                    id, mContext, AspectRatio.AR_4_3);
 
             try {
                 for (int[] c : legacyCombinations) {
-                    // Test 16:9 version of the combination
-                    testIsSessionConfigurationSupported(id, maxSizes16_9, c);
-                    // Test 4:3 version of the combination
-                    testIsSessionConfigurationSupported(id, maxSizes4_3, c);
+                    boolean testAspectRatios = false;
+                    for (int i = 0; i < c.length; i += 2) {
+                        if (c[i + 1] == S1440P || c[i + 1] == S1080P || c[i + 1] == S720P) {
+                            testAspectRatios = true;
+                            break;
+                        }
+                    }
+
+                    if (testAspectRatios) {
+                        // Test 16:9 version of the combination
+                        testIsSessionConfigurationSupported(id, AspectRatio.AR_16_9, c);
+                        // Test 4:3 version of the combination
+                        testIsSessionConfigurationSupported(id, AspectRatio.AR_4_3, c);
+                    } else {
+                        testIsSessionConfigurationSupported(id, AspectRatio.ARBITRARY, c);
+                    }
                 }
             } finally {
                 closeDevice(id);
@@ -166,7 +174,9 @@ public final class FeatureCombinationTest extends Camera2AndroidTestCase {
     }
 
     private void testIsSessionConfigurationSupported(String cameraId,
-            MaxStreamSizes maxStreamSizes, int[] combination) throws Exception {
+            AspectRatio aspectRatio, int[] combination) throws Exception {
+        MaxStreamSizes maxStreamSizes = new MaxStreamSizes(mStaticInfo,
+                cameraId, mContext, aspectRatio);
 
         Set<Long> dynamicRangeProfiles = mStaticInfo.getAvailableDynamicRangeProfilesChecked();
         int[] videoStabilizationModes =

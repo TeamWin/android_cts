@@ -4641,9 +4641,9 @@ public class CameraTestUtils extends Assert {
                 // sizes are necessarily > 1080p. Also the mandatory stream combinations have no
                 // JPEG streams capped at PREVIEW.
                 mMaxPrivSizes[PREVIEW] = CameraTestUtils.getMaxSizeWithBound(privSizes,
-                        maxPreviewSize, aspectRatioValue);
+                        maxPreviewSize);
                 mMaxYuvSizes[PREVIEW]  = CameraTestUtils.getMaxSizeWithBound(yuvSizes,
-                        maxPreviewSize, aspectRatioValue);
+                        maxPreviewSize);
 
                 if (sm.isExternalCamera()) {
                     mMaxPrivSizes[RECORD] = getMaxExternalRecordingSize(cameraId, configs);
