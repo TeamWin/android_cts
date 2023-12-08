@@ -16,8 +16,6 @@
 
 package android.os.cts;
 
-import static org.testng.Assert.assertThrows;
-
 import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -28,22 +26,15 @@ import android.os.ConditionVariable;
 import android.os.IBinder;
 import android.os.IInterface;
 import android.os.Parcel;
-import android.os.Process;
 import android.os.RemoteException;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.ApiTest;
 
-import java.io.ByteArrayOutputStream;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
-import java.util.Arrays;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 public class BinderIntegrationTest extends ActivityTestsBase {
-    private static final String DESCRIPTOR_GOOGLE = "google";
-    private static final String DESCRIPTOR_ANDROID = "android";
     // states of mStartState
     private static final int STATE_START_1 = 0;
     private static final int STATE_START_2 = 1;
@@ -380,8 +371,8 @@ public class BinderIntegrationTest extends ActivityTestsBase {
             getContext().getSystemService(ActivityManager.class).killBackgroundProcesses(
                     getContext().getPackageName()
             );
-            // Try for a total of DELAY_MSEC
-            if (died.block(DELAY_MSEC / nAttempts)) {
+            // Try for a total of DELAY_MSEC * nAttempts. Make sure this is below 30 seconds total
+            if (died.block(DELAY_MSEC)) {
                 break;
             }
         }
