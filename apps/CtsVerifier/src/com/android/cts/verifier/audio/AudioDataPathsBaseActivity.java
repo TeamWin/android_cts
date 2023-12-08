@@ -88,12 +88,15 @@ public abstract class AudioDataPathsBaseActivity
 
     // Test Manager
     protected TestManager mTestManager = new TestManager();
+    private boolean mTestHasBeenRun;
     private boolean mTestCanceled;
 
     // Audio I/O
     private AudioManager mAudioManager;
     private boolean mSupportsMMAP;
     private boolean mSupportsMMAPExclusive;
+
+    protected boolean mHasUsb;
 
     // Analysis
     private BaseSineAnalyzer mAnalyzer = new BaseSineAnalyzer();
@@ -117,6 +120,9 @@ public abstract class AudioDataPathsBaseActivity
 
         mHasMic = AudioSystemFlags.claimsInput(this);
         mHasSpeaker = AudioSystemFlags.claimsOutput(this);
+
+        // Use as a proxy for "has a USB port"
+        mHasUsb = AudioSystemFlags.claimsProAudio(this);
 
         String yesString = getResources().getString(R.string.audio_general_yes);
         String noString = getResources().getString(R.string.audio_general_no);
@@ -959,7 +965,7 @@ public abstract class AudioDataPathsBaseActivity
         protected boolean calculatePass() {
             int numFailures = countFailures(mApi);
             int numUntested = countValidTestModules() - countTestedTestModules();
-            return !mTestCanceled && numFailures == 0 && numUntested == 0;
+            return mTestHasBeenRun && !mTestCanceled && numFailures == 0 && numUntested == 0;
         }
 
         public void completeTest() {
@@ -975,6 +981,7 @@ public abstract class AudioDataPathsBaseActivity
                     mHtmlFormatter.openDocument();
                     mTestManager.generateReport(mHtmlFormatter);
 
+                    mTestHasBeenRun = true;
                     getPassButton().setEnabled(mIsLessThanV || calculatePass());
 
                     mHtmlFormatter.openParagraph();
@@ -992,6 +999,14 @@ public abstract class AudioDataPathsBaseActivity
                         }
                         mHtmlFormatter.closeParagraph();
                         mHtmlFormatter.openParagraph();
+                    }
+
+                    if (mIsLessThanV && !calculatePass()) {
+                        mHtmlFormatter.appendText("Although not all test modules passed, "
+                                + "for this OS version you may enter a PASS.");
+                        mHtmlFormatter.appendBreak();
+                        mHtmlFormatter.appendText("In future versions, "
+                                + "ALL test modules will be required to pass.");
                     }
                     mHtmlFormatter.closeParagraph();
 
@@ -1200,7 +1215,9 @@ public abstract class AudioDataPathsBaseActivity
                 // if we are in a pass state, leave the report on the screen
                 showDeviceView();
                 mTestManager.displayTestDevices();
-                getPassButton().setEnabled(mIsLessThanV || mTestManager.calculatePass());
+                if (mTestHasBeenRun) {
+                    getPassButton().setEnabled(mIsLessThanV || mTestManager.calculatePass());
+                }
             }
         }
 
