@@ -70,8 +70,10 @@ import android.app.Flags;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.UiModeManager;
 import android.app.WallpaperManager;
 import android.app.compat.CompatChanges;
+import android.app.cts.CtsAppTestUtils;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.GetResultActivity;
 import android.app.stubs.R;
@@ -110,12 +112,14 @@ import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.ScreenUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import com.google.common.collect.Iterables;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -2382,6 +2386,65 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     }
 
     @Test
+    @Ignore // TODO: b/314285749 - Requires new APIs for verifying (to be added in b/313418335)
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void setAutomaticZenRuleState_ruleWithNightMode_appliedImmediately() throws Exception {
+        assertThat(isUiModeManagerThemeOverlayActive()).isFalse();
+
+        AutomaticZenRule rule = createRule("Grayscale");
+        rule.setDeviceEffects(new ZenDeviceEffects.Builder()
+                .setShouldUseNightMode(true)
+                .build());
+        String ruleId = mNotificationManager.addAutomaticZenRule(rule);
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "yeah", Condition.STATE_TRUE,
+                        Condition.SOURCE_USER_ACTION));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(isUiModeManagerThemeOverlayActive()).isTrue();
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "nope", Condition.STATE_FALSE,
+                        Condition.SOURCE_USER_ACTION));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(isUiModeManagerThemeOverlayActive()).isFalse();
+    }
+
+    @Test
+    @Ignore // Requires new APIs for verifying, b/313418335
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void setAutomaticZenRuleState_ruleWithNightMode_appliedOnScreenOff() throws Exception {
+        assertThat(isUiModeManagerThemeOverlayActive()).isFalse();
+
+        AutomaticZenRule rule = createRule("Grayscale");
+        rule.setDeviceEffects(new ZenDeviceEffects.Builder()
+                .setShouldUseNightMode(true)
+                .build());
+        String ruleId = mNotificationManager.addAutomaticZenRule(rule);
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "yeah", Condition.STATE_TRUE,
+                        Condition.SOURCE_SCHEDULE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+
+        assertThat(isUiModeManagerThemeOverlayActive()).isFalse(); // Not yet applied.
+
+        // Have you tried turning it off and on again?
+        turnScreenOffAndOn();
+        assertThat(isUiModeManagerThemeOverlayActive()).isTrue();
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "nope", Condition.STATE_FALSE,
+                        Condition.SOURCE_SCHEDULE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+
+        assertThat(isUiModeManagerThemeOverlayActive()).isTrue(); // Not yet applied.
+
+        turnScreenOffAndOn();
+        assertThat(isUiModeManagerThemeOverlayActive()).isFalse();
+    }
+
+    @Test
     @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
     public void setAutomaticZenRuleState_multipleRulesWithDeviceEffects_effectsMerged()
             throws Exception {
@@ -2439,6 +2502,20 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         return SystemUtil.runWithShellPermissionIdentity(
                 () -> colorDisplayManager.isSaturationActivated(),
                 Manifest.permission.CONTROL_DISPLAY_COLOR_TRANSFORMS);
+    }
+
+    private boolean isUiModeManagerThemeOverlayActive() {
+        UiModeManager uiModeManager = mContext.getSystemService(UiModeManager.class);
+        return SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    throw new IllegalStateException("Not ready for testing yet");
+                },
+                Manifest.permission.MODIFY_DAY_NIGHT_MODE);
+    }
+
+    private void turnScreenOffAndOn() throws Exception {
+        ScreenUtils.setScreenOn(false);
+        CtsAppTestUtils.turnScreenOn(mInstrumentation, mContext);
     }
 
     @Test
