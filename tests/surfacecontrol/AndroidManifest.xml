@@ -100,6 +100,11 @@
                   android:showWhenLocked="true"
                   android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
 
+        <activity android:name="android.view.surfacecontrol.cts.TrustedPresentationListenerTest$TestActivity"
+            android:exported="true"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true" />
+
         <activity android:name="android.view.surfacecontrol.cts.HandleConfigurationActivity"
                   android:screenOrientation="locked"
                   android:label="HandleConfigurationActivity"
