@@ -22,10 +22,13 @@ import static org.junit.Assert.assertNotEquals;
 import android.util.Pair;
 
 import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @SmallTest
+@RunWith(AndroidJUnit4.class)
 public class PairTest {
     @Test
     public void testBasic() {

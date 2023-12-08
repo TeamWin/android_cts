@@ -28,13 +28,16 @@ import android.util.SparseArray;
 
 import androidx.annotation.NonNull;
 import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Objects;
 import java.util.function.BiFunction;
 
 @SmallTest
+@RunWith(AndroidJUnit4.class)
 public class SparseArrayTest {
     private static final int[] KEYS = {12, 23, 4, 6, 8, 1, 3, -12, 0, -3, 11, 14, -23};
     private static final Integer[] VALUES = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};

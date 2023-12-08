@@ -24,10 +24,13 @@ import android.util.IntProperty;
 import android.util.Property;
 
 import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @SmallTest
+@RunWith(AndroidJUnit4.class)
 public class PropertyTest {
     private float mFloatValue = -1;
     private int mIntValue = -2;

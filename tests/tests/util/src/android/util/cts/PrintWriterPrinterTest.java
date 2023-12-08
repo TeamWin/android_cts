@@ -21,10 +21,12 @@ import static org.junit.Assert.assertEquals;
 import android.util.PrintWriterPrinter;
 
 import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -36,6 +38,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 
 @SmallTest
+@RunWith(AndroidJUnit4.class)
 public class PrintWriterPrinterTest {
     private File mFile;
 

@@ -16,24 +16,50 @@
 
 package android.util.cts;
 
-import static android.util.Half.*;
+import static android.util.Half.LOWEST_VALUE;
+import static android.util.Half.MAX_VALUE;
+import static android.util.Half.MIN_NORMAL;
+import static android.util.Half.MIN_VALUE;
+import static android.util.Half.NEGATIVE_INFINITY;
+import static android.util.Half.NEGATIVE_ZERO;
+import static android.util.Half.NaN;
+import static android.util.Half.POSITIVE_INFINITY;
+import static android.util.Half.POSITIVE_ZERO;
+import static android.util.Half.getExponent;
+import static android.util.Half.getSign;
+import static android.util.Half.getSignificand;
+import static android.util.Half.halfToIntBits;
+import static android.util.Half.halfToRawIntBits;
+import static android.util.Half.halfToShortBits;
+import static android.util.Half.intBitsToHalf;
+import static android.util.Half.parseHalf;
+import static android.util.Half.toFloat;
+import static android.util.Half.toHalf;
+import static android.util.Half.toHexString;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 import android.util.Half;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@IgnoreUnderRavenwood(blockedBy = Half.class)
 public class HalfTest {
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
     private static void assertShortEquals(short a, short b) {
         assertEquals((long) (a & 0xffff), (long) (b & 0xffff));
     }
