@@ -18,7 +18,7 @@ package android.adpf.hintsession.app;
 
 import static android.adpf.common.ADPFHintSessionConstants.TEST_NAME_KEY;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
 import android.content.Context;
@@ -50,9 +50,8 @@ public class ADPFHintSessionDeviceTest {
         // this will wait until onCreate finishes
         mInstrumentation.waitForIdleSync();
 
-        // test results
-        final ADPFHintSessionDeviceActivity.Result result = activity.getResult();
-        assertEquals(10, result.targetDuration);
+        ADPFHintSessionDeviceActivity.Result res = activity.getResult();
+        assertTrue(res.mErrMsg, res.mIsSuccess);
 
         // report metrics
         final Bundle returnBundle = new Bundle();

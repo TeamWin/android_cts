@@ -24,11 +24,7 @@ import android.os.Bundle;
 import android.os.PerformanceHintManager;
 import android.util.Log;
 
-import org.junit.Assert;
-
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -37,16 +33,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class ADPFHintSessionDeviceActivity extends Activity {
     public static class Result {
-        public long targetDuration;
-        public List<Long> actualDurations = new ArrayList<>();
-
-        synchronized void setTargetDuration(long target) {
-            targetDuration = target;
-        }
-
-        synchronized void addActualDuration(long duration) {
-            actualDurations.add(duration);
-        }
+        // if the activity runs successfully
+        boolean mIsSuccess = true;
+        // the error message if it fails to run
+        String mErrMsg;
     }
 
     private static final String TAG =
@@ -65,29 +55,40 @@ public class ADPFHintSessionDeviceActivity extends Activity {
         String testName = intent.getStringExtra(
                 TEST_NAME_KEY);
         if (testName == null) {
-            Assert.fail("test starts without name");
+            synchronized (mResult) {
+                mResult.mIsSuccess = false;
+                mResult.mErrMsg = "test starts without name";
+            }
+            return;
         }
 
         if (mSession == null) {
             PerformanceHintManager hintManager = getApplicationContext().getSystemService(
                     PerformanceHintManager.class);
+            long preferredRate = hintManager.getPreferredUpdateRateNanos();
+            synchronized (mMetrics) {
+                mMetrics.put("isHintSessionSupported", preferredRate < 0 ? "false" : "true");
+                mMetrics.put("preferredRate", String.valueOf(preferredRate));
+            }
+            if (hintManager.getPreferredUpdateRateNanos() < 0) {
+                Log.i(TAG, "Skipping the test as the hint session is not supported");
+                return;
+            }
             final long id = android.os.Process.myTid();
             mSession = hintManager.createHintSession(new int[]{(int) id},
                     TimeUnit.MILLISECONDS.toNanos(10));
             if (mSession == null) {
-                Log.e(TAG, "Failed to create hint session");
+                synchronized (mResult) {
+                    mResult.mIsSuccess = false;
+                    mResult.mErrMsg = "failed to create hint session";
+                }
                 return;
             }
         }
         final long targetMillis = 10;
         mSession.updateTargetWorkDuration(TimeUnit.MILLISECONDS.toNanos(targetMillis));
         final long actualMillis = 5;
-        mResult.setTargetDuration(targetMillis);
         mSession.reportActualWorkDuration(TimeUnit.MILLISECONDS.toNanos(actualMillis));
-        mResult.addActualDuration(actualMillis);
-        synchronized (mMetrics) {
-            mMetrics.put("foo", "bar");
-        }
     }
 
     @Override
@@ -110,9 +111,10 @@ public class ADPFHintSessionDeviceActivity extends Activity {
     public Result getResult() {
         Result res = new Result();
         synchronized (mResult) {
-            res.targetDuration = mResult.targetDuration;
-            res.actualDurations = new ArrayList<>(res.actualDurations);
+            res.mIsSuccess = mResult.mIsSuccess;
+            res.mErrMsg = mResult.mErrMsg;
         }
         return res;
     }
+
 }
