@@ -152,6 +152,8 @@
         <option name="push-file" key="HelloWorldSdk3UsingSdk1And2.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldSdk3UsingSdk1And2.apk.idsig" />
         <option name="push-file" key="HelloWorldUsingSdk1.apk" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1.apk" />
         <option name="push-file" key="HelloWorldUsingSdk1.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1.apk.idsig" />
+        <option name="push-file" key="HelloWorldUsingSdk1Optional.apk" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1Optional.apk" />
+        <option name="push-file" key="HelloWorldUsingSdk1Optional.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1Optional.apk.idsig" />
         <option name="push-file" key="HelloWorldUsingSdk1And2.apk" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1And2.apk" />
         <option name="push-file" key="HelloWorldUsingSdk1And2.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1And2.apk.idsig" />
         <option name="push-file" key="HelloWorldUsingSdk3.apk" value="/data/local/tmp/cts/content/HelloWorldUsingSdk3.apk" />
