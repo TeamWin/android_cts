@@ -133,6 +133,20 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
+    public void testBackgroundActivityBlockedInStartNextMatchingActivity() throws TimeoutException {
+        EventReceiver receiver = new EventReceiver(
+                Event.APP_A_LAUNCHER_MOVING_TO_BACKGROUND_ACTIVITY);
+        Intent intent = new Intent("StartNextMatchingActivityAction");
+        intent.setComponent(APP_A.START_NEXT_MATCHING_ACTIVITY);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(EVENT_NOTIFIER_EXTRA, receiver.getNotifier());
+        mContext.startActivity(intent);
+        receiver.waitForEventOrThrow(ACTIVITY_START_TIMEOUT_MS);
+        boolean result = waitForActivityFocused(APP_A.BACKGROUND_ACTIVITY);
+        assertFalse("Should not able to launch background activity", result);
+    }
+
+    @Test
     public void testStartBgActivity_usingStartActivitiesFromBackgroundPermission()
             throws Exception {
         // Disable SAW app op for shell, since that can also allow starting activities from bg.
@@ -419,6 +433,57 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         startPendingIntentSenderActivity(APP_A, APP_B, /* allowBalBySender */ false);
 
         boolean result = waitForActivityFocused(APP_A.BACKGROUND_ACTIVITY);
+        assertFalse("Should not able to launch background activity", result);
+    }
+
+    @Test
+    public void testPI_appAIsForegroundDenyCreatorPrivilege_launchAppB_isBlocked()
+            throws Exception {
+        // Start AppA foreground activity
+        Intent intent = new Intent();
+        intent.setComponent(APP_A.FOREGROUND_ACTIVITY);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+        boolean result = waitForActivityFocused(APP_A.FOREGROUND_ACTIVITY);
+        assertTrue("Not able to start foreground Activity", result);
+        assertTaskStackHasComponents(APP_A.FOREGROUND_ACTIVITY, APP_A.FOREGROUND_ACTIVITY);
+
+        // App A create a PendingIntent with ActivityOption that denies PendingIntent sender to use
+        // creator's privilege to launch itself. The PendingIntent itself is to launch App B. Since
+        // App B is in the background, it should be blocked even though the creator (App A) is in
+        // the foreground.
+        sendPendingIntentActivity(APP_A, APP_B,
+                APP_A.SEND_PENDING_INTENT_RECEIVER_EXTRA.DENY_CREATOR_BAL_PRIVILEGE,
+                APP_A.SEND_PENDING_INTENT_RECEIVER_EXTRA.CREATE_PI_LAUNCH_APP_B);
+
+        result = waitForActivityFocused(APP_B.FOREGROUND_ACTIVITY);
+        assertFalse("Should not able to launch background activity", result);
+    }
+
+    @Test
+    public void testPI_appAIsFgDenyCreatorPrivilege_appBTryOverrideCreatorPrivilege_isBlocked()
+            throws Exception {
+        // Start AppB foreground activity
+        Intent intent = new Intent();
+        intent.setComponent(APP_A.FOREGROUND_ACTIVITY);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+        boolean result = waitForActivityFocused(APP_A.FOREGROUND_ACTIVITY);
+        assertTrue("Not able to start foreground Activity", result);
+        assertTaskStackHasComponents(APP_A.FOREGROUND_ACTIVITY, APP_A.FOREGROUND_ACTIVITY);
+
+        // App A create a PendingIntent with ActivityOption that denies PendingIntent sender to use
+        // creator's privilege to launch itself. The PendingIntent itself is to launch App B.
+        // App B is in the background, it should be blocked even though the creator (App A) is in
+        // the foreground. However, The sender (App B) also tries to override the creator option by
+        // setting the creator option from the sender side. This should not work. Creator option
+        // cannot be set from the sender side.
+        sendPendingIntentActivity(APP_A, APP_B,
+                APP_A.SEND_PENDING_INTENT_RECEIVER_EXTRA.DENY_CREATOR_BAL_PRIVILEGE,
+                APP_A.SEND_PENDING_INTENT_RECEIVER_EXTRA.CREATE_PI_LAUNCH_APP_B,
+                APP_B.START_PENDING_INTENT_ACTIVITY_EXTRA.ALLOW_CREATOR_BAL);
+
+        result = waitForActivityFocused(APP_B.FOREGROUND_ACTIVITY);
         assertFalse("Should not able to launch background activity", result);
     }
 
@@ -751,10 +816,31 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     // Check that a presentation on a virtual display won't allow BAL after pressing home.
     @Test
-    public void testVirtualDisplayCannotStartAfterHomeButton() throws Exception {
+    public void testPrivateVirtualDisplayCannotStartAfterHomeButton() throws Exception {
         Intent intent = new Intent();
         intent.setComponent(APP_A.VIRTUAL_DISPLAY_ACTIVITY);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(APP_A.VIRTUAL_DISPLAY_ACTIVITY_EXTRA.USE_PUBLIC_PRESENTATION, false);
+        mContext.startActivity(intent);
+
+        assertTrue("VirtualDisplay activity not started", waitUntilForegroundChanged(
+                APP_A.APP_PACKAGE_NAME, true, ACTIVITY_START_TIMEOUT_MS));
+
+        // Click home button, and test app activity onPause() will trigger which tries to launch
+        // the background activity.
+        pressHomeAndWaitHomeResumed();
+
+        boolean result = waitForActivityFocused(APP_A.BACKGROUND_ACTIVITY);
+        assertFalse("Should not able to launch background activity", result);
+    }
+
+    // Check that a presentation on a virtual display won't allow BAL after pressing home.
+    @Test
+    public void testPublicVirtualDisplayCannotStartAfterHomeButton() throws Exception {
+        Intent intent = new Intent();
+        intent.setComponent(APP_A.VIRTUAL_DISPLAY_ACTIVITY);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(APP_A.VIRTUAL_DISPLAY_ACTIVITY_EXTRA.USE_PUBLIC_PRESENTATION, true);
         mContext.startActivity(intent);
 
         assertTrue("VirtualDisplay activity not started", waitUntilForegroundChanged(
@@ -899,12 +985,6 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         pressHomeButton();
         mWmState.waitForHomeActivityVisible();
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
-    }
-
-    private void pressHomeAndWaitHomeResumed(int timeoutMs) {
-        assumeSetupComplete();
-        pressHomeButton();
-        assertActivityFocused(timeoutMs, mWmState.getHomeActivityName());
     }
 
     private void assumeSetupComplete() {

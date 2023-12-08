@@ -203,7 +203,7 @@ public class BiometricServiceTests extends BiometricTestBase {
             throws Exception {
         Log.d(TAG, "testLockoutResetRequestedAfterBiometricUnlock_whenStrong_forSensor: "
                 + sensorId);
-        final int userId = 0;
+        final int userId = Utils.getUserId();
 
         BiometricServiceState state = getCurrentState();
         final List<Integer> eligibleSensorsToReset = new ArrayList<>();
@@ -292,7 +292,7 @@ public class BiometricServiceTests extends BiometricTestBase {
             int sensorId, @NonNull BiometricTestSession session) throws Exception {
         Log.d(TAG, "testLockoutResetNotRequestedAfterBiometricUnlock_whenNotStrong_forSensor: "
                 + sensorId);
-        final int userId = 0;
+        final int userId = Utils.getUserId();
 
         // Explicitly clear the log so that we can check the exact number of resetLockout operations
         // below.

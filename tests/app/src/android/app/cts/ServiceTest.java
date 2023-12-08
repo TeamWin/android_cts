@@ -104,6 +104,9 @@ public class ServiceTest extends ActivityTestsBase {
     private static final String EXTERNAL_SERVICE_PACKAGE = "com.android.app2";
     private static final String EXTERNAL_SERVICE_COMPONENT =
             EXTERNAL_SERVICE_PACKAGE + "/android.app.stubs.LocalService";
+    private static final String DELAYED_SERVICE_PACKAGE = "com.android.delayed_start";
+    private static final String DELAYED_SERVICE_COMPONENT =
+            DELAYED_SERVICE_PACKAGE + "/android.app.stubs.LocalService";
     private static final String APP_ZYGOTE_PROCESS_NAME = "android.app.stubs_zygote";
     private static final String KEY_MAX_SERVICE_CONNECTIONS_PER_PROCESS =
             "max_service_connections_per_process";
@@ -118,6 +121,7 @@ public class ServiceTest extends ActivityTestsBase {
     private Intent mLocalService_ApplicationDoesNotHavePermission;
     private Intent mIsolatedService;
     private Intent mExternalService;
+    private Intent mDelayedService;
     private Executor mContextMainExecutor;
     private HandlerThread mBackgroundThread;
     private Executor mBackgroundThreadExecutor;
@@ -375,12 +379,12 @@ public class ServiceTest extends ActivityTestsBase {
             data.recycle();
         }
 
-        public int getValue() {
+        public int getValue(int transactCode) {
             Parcel data = Parcel.obtain();
             Parcel reply = Parcel.obtain();
             data.writeInterfaceToken(LocalService.SERVICE_LOCAL);
             try {
-                mService.transact(LocalService.GET_VALUE_CODE, data, reply, 0);
+                mService.transact(transactCode, data, reply, 0);
             } catch (RemoteException e) {
                 finishBad("DeadObjectException when sending reporting object");
             }
@@ -388,55 +392,30 @@ public class ServiceTest extends ActivityTestsBase {
             reply.recycle();
             data.recycle();
             return value;
+        }
+
+        public int getValue() {
+            return getValue(LocalService.GET_VALUE_CODE);
         }
 
         public int getPidIpc() {
-            Parcel data = Parcel.obtain();
-            Parcel reply = Parcel.obtain();
-            data.writeInterfaceToken(LocalService.SERVICE_LOCAL);
-            try {
-                mService.transact(LocalService.GET_PID_CODE, data, reply, 0);
-            } catch (RemoteException e) {
-                finishBad("DeadObjectException when sending reporting object");
-            }
-            int value = reply.readInt();
-            reply.recycle();
-            data.recycle();
-            return value;
+            return getValue(LocalService.GET_PID_CODE);
         }
 
         public int getPpidIpc() {
-            Parcel data = Parcel.obtain();
-            Parcel reply = Parcel.obtain();
-            data.writeInterfaceToken(LocalService.SERVICE_LOCAL);
-            try {
-                mService.transact(LocalService.GET_PPID_CODE, data, reply, 0);
-            } catch (RemoteException e) {
-                finishBad("DeadObjectException when sending reporting object");
-            }
-            int value = reply.readInt();
-            reply.recycle();
-            data.recycle();
-            return value;
+            return getValue(LocalService.GET_PPID_CODE);
         }
 
         public int getUidIpc() {
-            Parcel data = Parcel.obtain();
-            Parcel reply = Parcel.obtain();
-            data.writeInterfaceToken(LocalService.SERVICE_LOCAL);
-            try {
-                mService.transact(LocalService.GET_UID_CODE, data, reply, 0);
-            } catch (RemoteException e) {
-                finishBad("DeadObjectException when sending reporting object");
-            }
-            int value = reply.readInt();
-            reply.recycle();
-            data.recycle();
-            return value;
+            return getValue(LocalService.GET_UID_CODE);
         }
 
         public Thread getOnServiceConnectedThread() {
             return mOnServiceConnectedThread;
+        }
+
+        public int getOnCreateCalledCount() {
+            return getValue(LocalService.GET_ON_CREATE_CALLED_COUNT);
         }
 
         @Override
@@ -751,7 +730,9 @@ public class ServiceTest extends ActivityTestsBase {
         PermissionUtils.grantPermission(mContext.getPackageName(), POST_NOTIFICATIONS);
         mLocalService = new Intent(mContext, LocalService.class);
         mExternalService = new Intent();
+        mDelayedService = new Intent();
         mExternalService.setComponent(ComponentName.unflattenFromString(EXTERNAL_SERVICE_COMPONENT));
+        mDelayedService.setComponent(ComponentName.unflattenFromString(DELAYED_SERVICE_COMPONENT));
         mLocalForegroundService = new Intent(mContext, LocalForegroundService.class);
         mLocalPhoneCallService = new Intent(mContext, LocalPhoneCallService.class);
         mLocalPhoneCallService.putExtra(LocalForegroundService.EXTRA_FOREGROUND_SERVICE_TYPE,
@@ -793,6 +774,7 @@ public class ServiceTest extends ActivityTestsBase {
         mContext.stopService(mLocalGrantedService);
         mContext.stopService(mLocalService_ApplicationHasPermission);
         mContext.stopService(mExternalService);
+        mContext.stopService(mDelayedService);
         if (mBackgroundThread != null) {
             mBackgroundThread.quitSafely();
         }
@@ -1638,6 +1620,31 @@ public class ServiceTest extends ActivityTestsBase {
             }
             if (conn1a != null) {
                 mContext.unbindService(conn1a);
+            }
+        }
+    }
+
+    @MediumTest
+    public void testOnCreateCalledOnce_bindService() throws Exception {
+        IsolatedConnection conn = null;
+
+        try {
+            conn = new IsolatedConnection();
+            mContext.bindService(
+                    mDelayedService, Context.BIND_AUTO_CREATE, mContextMainExecutor, conn);
+
+            // Wait for app to be executing bindApplication
+            SystemClock.sleep(1000);
+
+            mContext.bindService(
+                    mDelayedService, Context.BIND_AUTO_CREATE, mContextMainExecutor, conn);
+
+            conn.waitForService(DELAY);
+
+            assertEquals(1, conn.getOnCreateCalledCount());
+        } finally {
+            if (conn != null) {
+                mContext.unbindService(conn);
             }
         }
     }

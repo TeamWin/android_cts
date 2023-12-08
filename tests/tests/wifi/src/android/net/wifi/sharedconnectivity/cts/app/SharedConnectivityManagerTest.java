@@ -32,9 +32,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.res.Resources;
 import android.net.wifi.sharedconnectivity.app.HotspotNetwork;
@@ -59,6 +61,8 @@ import com.android.compatibility.common.util.NonMainlineTest;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -106,6 +110,9 @@ public class SharedConnectivityManagerTest {
     @Mock
     UserManager mUserManager;
 
+    @Captor
+    private ArgumentCaptor<IntentFilter> mIntentFilterCaptor;
+
     private static final ComponentName COMPONENT_NAME =
             new ComponentName("dummypkg", "dummycls");
 
@@ -137,7 +144,43 @@ public class SharedConnectivityManagerTest {
     @Test
     public void bindingToServiceOnFirstCallbackRegistration() {
         SharedConnectivityManager manager = SharedConnectivityManager.create(mContext);
+
         manager.registerCallback(mExecutor, mClientCallback);
+
+        verify(mContext).bindService(any(Intent.class), any(ServiceConnection.class), anyInt());
+    }
+
+    @Test
+    public void bindToServiceFails_userUnlocked_callsOnRegisterCallbackFailed() {
+        when(mContext.bindService(any(Intent.class), any(ServiceConnection.class),
+                anyInt())).thenReturn(false);
+        SharedConnectivityManager manager = SharedConnectivityManager.create(mContext);
+
+        manager.registerCallback(mExecutor, mClientCallback);
+
+        verify(mClientCallback).onRegisterCallbackFailed(any(IllegalStateException.class));
+    }
+
+    @Test
+    public void bindToServiceFails_userLocked_registerReceiver() {
+        when(mUserManager.isUserUnlocked()).thenReturn(false);
+        when(mContext.bindService(any(Intent.class), any(ServiceConnection.class),
+                anyInt())).thenReturn(false);
+        SharedConnectivityManager manager = SharedConnectivityManager.create(mContext);
+
+        manager.registerCallback(mExecutor, mClientCallback);
+
+        verify(mContext).registerReceiver(any(BroadcastReceiver.class),
+                mIntentFilterCaptor.capture());
+        IntentFilter intentFilter = mIntentFilterCaptor.getValue();
+        assertThat(intentFilter.getAction(0)).isEqualTo(Intent.ACTION_USER_UNLOCKED);
+    }
+
+    @Test
+    public void broadcastReceiver_onReceiveUnlock_retriesBind() {
+        SharedConnectivityManager manager = SharedConnectivityManager.create(mContext);
+
+        manager.getBroadcastReceiver().onReceive(mContext, new Intent(Intent.ACTION_USER_UNLOCKED));
 
         verify(mContext).bindService(any(Intent.class), any(ServiceConnection.class), anyInt());
     }
@@ -168,6 +211,19 @@ public class SharedConnectivityManagerTest {
         manager.unregisterCallback(mClientCallback2);
         verify(mContext, times(1)).unbindService(
                 any(ServiceConnection.class));
+    }
+
+    @Test
+    public void bindIsCalledOnRegisterAfterUnbind() {
+        SharedConnectivityManager manager = SharedConnectivityManager.create(mContext);
+        manager.registerCallback(mExecutor, mClientCallback);
+        manager.getServiceConnection().onServiceConnected(COMPONENT_NAME, mIBinder);
+        manager.unregisterCallback(mClientCallback);
+
+        manager.registerCallback(mExecutor, mClientCallback2);
+
+        verify(mContext, times(2)).bindService(any(Intent.class), any(ServiceConnection.class),
+                anyInt());
     }
 
     @Test

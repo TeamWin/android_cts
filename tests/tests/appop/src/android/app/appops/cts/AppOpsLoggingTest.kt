@@ -969,7 +969,7 @@ class AppOpsLoggingTest {
     fun checkAttributionsAreUserVisible() {
         val pi = context.packageManager.getPackageInfo(
                 TEST_SERVICE_PKG, PackageManager.PackageInfoFlags.of(GET_ATTRIBUTIONS_LONG))
-        assertThat(pi.applicationInfo.areAttributionsUserVisible())
+        assertThat(pi.applicationInfo?.areAttributionsUserVisible()).isTrue()
     }
 
     @After

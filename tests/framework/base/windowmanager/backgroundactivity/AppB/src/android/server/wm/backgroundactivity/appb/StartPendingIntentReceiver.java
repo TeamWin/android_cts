@@ -53,6 +53,16 @@ public class StartPendingIntentReceiver extends BroadcastReceiver {
                         appB.START_PENDING_INTENT_ACTIVITY_EXTRA.ALLOW_BAL, false);
                 options.setPendingIntentBackgroundActivityLaunchAllowed(allowBal);
                 bundle = options.toBundle();
+            } else if (intent.hasExtra(
+                    appB.START_PENDING_INTENT_ACTIVITY_EXTRA.ALLOW_CREATOR_BAL)) {
+                ActivityOptions options = ActivityOptions.makeBasic();
+                final boolean allowBal = intent.getBooleanExtra(
+                        appB.START_PENDING_INTENT_ACTIVITY_EXTRA.ALLOW_CREATOR_BAL, false);
+                if (allowBal) {
+                    options.setPendingIntentCreatorBackgroundActivityStartMode(
+                            ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
+                }
+                bundle = options.toBundle();
             } else if (intent.getBooleanExtra(
                     appB.START_PENDING_INTENT_ACTIVITY_EXTRA.USE_NULL_BUNDLE, false)) {
                 bundle = null;

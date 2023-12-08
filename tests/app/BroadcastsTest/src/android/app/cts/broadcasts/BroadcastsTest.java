@@ -24,7 +24,6 @@ import static com.google.common.truth.Truth.assertThat;
 import android.content.Intent;
 
 import com.android.app.cts.broadcasts.Common;
-import com.android.compatibility.common.util.AmUtils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,7 +41,7 @@ public class BroadcastsTest extends BaseBroadcastTest {
             mContext.sendOrderedBroadcast(explicitIntent, null /* receiverPermission */,
                     resultReceiver, null /* scheduler */, 0 /* initialCode */,
                     ORDERED_BROADCAST_INITIAL_DATA, null /* initialExtras */);
-            AmUtils.waitForBroadcastBarrier();
+            waitForBroadcastBarrier();
             assertThat(resultReceiver.getResult()).isEqualTo(ORDERED_BROADCAST_RESULT_DATA);
         }
 
@@ -57,7 +56,7 @@ public class BroadcastsTest extends BaseBroadcastTest {
                 mContext.sendOrderedBroadcast(explicitIntent, null /* receiverPermission */,
                         resultReceiver, null /* scheduler */, 0 /* initialCode */,
                         ORDERED_BROADCAST_INITIAL_DATA, null /* initialExtras */);
-                AmUtils.waitForBroadcastBarrier();
+                waitForBroadcastBarrier();
                 assertThat(resultReceiver.getResult()).isEqualTo(ORDERED_BROADCAST_RESULT_DATA);
             } finally {
                 connection.unbind();
@@ -74,7 +73,7 @@ public class BroadcastsTest extends BaseBroadcastTest {
             mContext.sendOrderedBroadcast(implicitIntent, null /* receiverPermission */,
                     resultReceiver, null /* scheduler */, 0 /* initialCode */,
                     ORDERED_BROADCAST_INITIAL_DATA, null /* initialExtras */);
-            AmUtils.waitForBroadcastBarrier();
+            waitForBroadcastBarrier();
             assertThat(resultReceiver.getResult()).isEqualTo(ORDERED_BROADCAST_INITIAL_DATA);
         }
 
@@ -89,7 +88,7 @@ public class BroadcastsTest extends BaseBroadcastTest {
                 mContext.sendOrderedBroadcast(implicitIntent, null /* receiverPermission */,
                         resultReceiver, null /* scheduler */, 0 /* initialCode */,
                         ORDERED_BROADCAST_INITIAL_DATA, null /* initialExtras */);
-                AmUtils.waitForBroadcastBarrier();
+                waitForBroadcastBarrier();
                 assertThat(resultReceiver.getResult()).isEqualTo(ORDERED_BROADCAST_INITIAL_DATA);
             } finally {
                 connection.unbind();

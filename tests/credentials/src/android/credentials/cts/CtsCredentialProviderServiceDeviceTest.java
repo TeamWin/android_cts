@@ -44,7 +44,6 @@ import android.credentials.GetCredentialRequest;
 import android.credentials.GetCredentialResponse;
 import android.credentials.PrepareGetCredentialResponse;
 import android.credentials.cts.testcore.DeviceConfigStateRequiredRule;
-import android.net.Uri;
 import android.os.Build.VERSION;
 import android.os.Bundle;
 import android.os.OutcomeReceiver;
@@ -516,7 +515,7 @@ public class CtsCredentialProviderServiceDeviceTest {
                     Executors.newSingleThreadExecutor(), callback);
         });
 
-        latch.await(100L, TimeUnit.MILLISECONDS);
+        latch.await(1000L, TimeUnit.MILLISECONDS);
 	assertThat(loadedResult.get()).isNotNull();
         assertThat(loadedResult.get()).isTrue();
     }

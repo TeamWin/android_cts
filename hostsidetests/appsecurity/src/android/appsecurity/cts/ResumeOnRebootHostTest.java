@@ -519,7 +519,7 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
 
     private void removeUser(int userId) throws Exception {
         if (listUsers().contains(userId) && userId != USER_SYSTEM
-                && userId != getDevice().getPrimaryUserId()) {
+                && userId != getDevice().getMainUserId()) {
             // Don't log output, as tests sometimes set no debug user restriction, which
             // causes this to fail, we should still continue and remove the user.
             String stopUserCommand = "am stop-user -w -f " + userId;

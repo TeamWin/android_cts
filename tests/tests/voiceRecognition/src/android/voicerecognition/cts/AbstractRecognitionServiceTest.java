@@ -250,10 +250,10 @@ abstract class AbstractRecognitionServiceTest {
 
     static ModelDownloadExecutionInfo.Scenario[] modelDownloadScenarios() {
         return new ModelDownloadExecutionInfo.Scenario[] {
-                ModelDownloadExecutionInfo.Scenario.PROGRESS_PROGRESS_PROGRESS};
-
-        // TODO(b/297309890): Other scenarios should be added for the CTS 15 release,
-        // as they are failing on non-QPR Android U platform.
+                ModelDownloadExecutionInfo.Scenario.PROGRESS_PROGRESS_PROGRESS,
+                ModelDownloadExecutionInfo.Scenario.PROGRESS_SUCCESS_PROGRESS,
+                ModelDownloadExecutionInfo.Scenario.SCHEDULED_ERROR,
+                ModelDownloadExecutionInfo.Scenario.ERROR_SCHEDULED};
     }
 
     @Test

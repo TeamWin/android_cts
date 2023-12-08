@@ -19,8 +19,16 @@ package {
 java_library_static {
     name: "cts-input-lib",
     sdk_version: "test_current",
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.kt",
+    ],
+    kotlincflags: [
+        "-Werror",
+    ],
     static_libs: [
         "androidx.test.rules",
+        "compatibility-device-util-axt",
+        "cts-wm-util",
     ],
 }

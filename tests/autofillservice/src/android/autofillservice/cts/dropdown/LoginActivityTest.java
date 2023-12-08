@@ -75,6 +75,8 @@ import static com.android.compatibility.common.util.ShellUtils.tap;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertThrows;
+
 import android.app.PendingIntent;
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.R;
@@ -104,6 +106,7 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
@@ -938,6 +941,28 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.assertNoDatasets();
     }
 
+    @Test
+    public void testUiNotShowAfterSessionEnds() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .setPresentation(createPresentation("The Dude"))
+                .build());
+        // Trigger auto-fill.
+        requestFocusOnUsername();
+        sReplier.getNextFillRequest();
+
+        // Call commit to end the session
+        final AutofillManager afm = mActivity.getAutofillManager();
+        afm.commit();
+
+        mUiBot.assertNoDatasetsEver();
+    }
+
     @Presubmit
     @Test
     public void testAutofillCallbacks() throws Exception {
@@ -1466,6 +1491,46 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
 
         // Check the results.
         mActivity.assertAutoFilled();
+    }
+
+    @Test
+    public void remoteViews_doesNotSpillAcrossUsers() throws Exception {
+        // Set service.
+        enableService();
+
+
+        RemoteViews firstRv = createPresentation("hello");
+        RemoteViews secondRv = createPresentation("world");
+
+        // bad url, should not be displayed
+        firstRv.setImageViewIcon(R.id.icon,
+                Icon.createWithContentUri("content://1000@com.android.contacts/display_photo/1"));
+        secondRv.setImageViewIcon(R.id.icon,
+                Icon.createWithContentUri("content://1000@com.android.contacts/display_photo/1"));
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                    .setField(ID_USERNAME, "dude", firstRv)
+                    .setField(ID_PASSWORD, "sweet", secondRv)
+                    .build())
+                .setHeader(firstRv)
+                .setFooter(secondRv)
+                .build());
+
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        // Assert that the dataset is not shown
+        assertThrows(RetryableException.class,
+                () -> mUiBot.assertDatasets("The Dude"));
+
+        // Assert that header/footer is not shown
+        assertThrows(RetryableException.class,
+                () -> mUiBot.assertDatasetsWithBorders("hello", "world", "The Dude"));
     }
 
     /**

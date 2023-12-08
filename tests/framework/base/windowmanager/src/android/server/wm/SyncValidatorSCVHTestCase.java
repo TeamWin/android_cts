@@ -52,7 +52,6 @@ public class SyncValidatorSCVHTestCase implements ISurfaceValidatorTestCase {
     private int mLastSizeIndex = 0;
 
     private final long mDelayMs;
-    private final boolean mOverrideDefaultDuration;
 
     private SurfaceControlViewHostHelper mSurfaceControlViewHostHelper;
 
@@ -65,12 +64,10 @@ public class SyncValidatorSCVHTestCase implements ISurfaceValidatorTestCase {
 
     private final CountDownLatch mReadyToStart = new CountDownLatch(1);
 
-    private boolean mInProcess;
+    private final boolean mInProcess;
 
-    public SyncValidatorSCVHTestCase(long delayMs, boolean overrideDefaultDuration,
-            boolean inProcess) {
+    public SyncValidatorSCVHTestCase(long delayMs, boolean inProcess) {
         mDelayMs = delayMs;
-        mOverrideDefaultDuration = overrideDefaultDuration;
         mInProcess = inProcess;
     }
 
@@ -150,12 +147,13 @@ public class SyncValidatorSCVHTestCase implements ISurfaceValidatorTestCase {
     }
 
     @Override
-    public void waitForReady() {
-        boolean ready = false;
+    public boolean waitForReady() {
+        boolean ready;
         try {
             ready = mReadyToStart.await(3L * HW_TIMEOUT_MULTIPLIER, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             Log.e(TAG, "Failed to wait for SCVH to attach");
+            return false;
         }
 
         assertTrue("Failed to attach SCVH", ready);
@@ -164,15 +162,11 @@ public class SyncValidatorSCVHTestCase implements ISurfaceValidatorTestCase {
         mIAttachEmbeddedWindow = mSurfaceControlViewHostHelper.getAttachedEmbeddedWindow();
 
         mHandler.post(mResizeWithSurfaceSyncGroup);
+        return true;
     }
 
     @Override
     public void end() {
         mHandler.removeCallbacks(mResizeWithSurfaceSyncGroup);
-    }
-
-    @Override
-    public boolean hasAnimation() {
-        return !mOverrideDefaultDuration;
     }
 }

@@ -19,10 +19,12 @@ import static android.telephony.cts.FakeCarrierMessagingService.FAKE_MESSAGE_REF
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.service.carrier.CarrierMessagingService;
 import android.service.carrier.CarrierMessagingServiceWrapper;
@@ -73,6 +75,9 @@ public class CarrierMessagingServiceWrapperTest {
 
     @Before
     public void setUp() throws Exception {
+        assumeTrue(getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_TELEPHONY));
+
         MockitoAnnotations.initMocks(this);
         mContext = getContext();
         mTestSub = SubscriptionManager.getDefaultSubscriptionId();

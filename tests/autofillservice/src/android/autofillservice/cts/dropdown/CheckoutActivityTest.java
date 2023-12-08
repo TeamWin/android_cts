@@ -479,6 +479,16 @@ public class CheckoutActivityTest
         assertThat(editText.getAutofillValue()).isEqualTo(AutofillValue.forText("test"));
     }
 
+    @Test
+    public void getEditTextAutoFillValue_worksOnDisabledField() throws Exception {
+        EditText editText = mActivity.getCcNumber();
+        mActivity.syncRunOnUiThread(() -> editText.setEnabled(false));
+
+        mActivity.syncRunOnUiThread(() -> editText.setText("test"));
+
+        assertThat(editText.getAutofillValue()).isEqualTo(AutofillValue.forText("test"));
+    }
+
     // ============================================================================================
     // Tests to verify CheckBox by setting with AutofillValue.
     // ============================================================================================

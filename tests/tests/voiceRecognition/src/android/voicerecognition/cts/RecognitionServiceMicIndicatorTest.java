@@ -76,7 +76,6 @@ public final class RecognitionServiceMicIndicatorTest {
     private static final String PRIVACY_DIALOG_CONTENT_ID = "text";
     private static final String PRIVACY_DIALOG_CONTENT_V2_ID = "privacy_dialog_item_header_summary";
     private static final String CAR_PRIVACY_DIALOG_CONTENT_ID = "qc_title";
-    private static final String CAR_PRIVACY_DIALOG_APP_LABEL_CONTENT_ID = "qc_title";
     private static final String TV_MIC_INDICATOR_WINDOW_TITLE = "MicrophoneCaptureIndicator";
     private static final String SC_PRIVACY_DIALOG_PACKAGE_NAME = "com.android.permissioncontroller";
     private static final String SC_PRIVACY_DIALOG_CONTENT_ID = "indicator_label";
@@ -86,7 +85,7 @@ public final class RecognitionServiceMicIndicatorTest {
     private static final String CTS_VOICE_RECOGNITION_SERVICE =
             "android.recognitionservice.service/android.recognitionservice.service"
                     + ".CtsVoiceRecognitionService";
-    private static final long LONG_TIMEOUT_FOR_CAR = 30000L;
+    private static final long LONGER_TIMEOUT = 30000L;
     protected final Context mContext =
             InstrumentationRegistry.getInstrumentation().getTargetContext();
     private final String mOriginalVoiceRecognizer = Settings.Secure.getString(
@@ -217,8 +216,6 @@ public final class RecognitionServiceMicIndicatorTest {
         boolean hasPreInstalledRecognizer = hasPreInstalledRecognizer(
                 getComponentPackageNameFromString(mOriginalVoiceRecognizer));
         assumeTrue("No preinstalled recognizer.", hasPreInstalledRecognizer);
-        // TODO(b/279146568): remove the next line after test is fixed for auto
-        assumeFalse(isCar());
 
         // verify that the trusted app can blame the calling app mic access
         testVoiceRecognitionServiceBlameCallingApp(/* trustVoiceService */ true);
@@ -290,22 +287,10 @@ public final class RecognitionServiceMicIndicatorTest {
                 });
 
         // get dialog content
-        String dialogDescription;
-        if (isCar()) {
-            dialogDescription =
-                    recognitionCallingAppLabels.get(0)
-                            .findObjects(By.res(PRIVACY_DIALOG_PACKAGE_NAME,
-                                    CAR_PRIVACY_DIALOG_APP_LABEL_CONTENT_ID))
+        String dialogDescription = recognitionCallingAppLabels
                             .stream()
                             .map(UiObject2::getText)
                             .collect(Collectors.joining("\n"));
-        } else {
-            dialogDescription =
-                    recognitionCallingAppLabels
-                            .stream()
-                            .map(UiObject2::getText)
-                            .collect(Collectors.joining("\n"));
-        }
         Log.i(TAG, "Retrieved dialog description " + dialogDescription);
 
         if (trustVoiceService) {
@@ -333,11 +318,9 @@ public final class RecognitionServiceMicIndicatorTest {
             // session in progress
             mActivity.destroyRecognizerDefault();
             privacyChip.click();
-            waitForNoIndicatorForCar(chipId);
-        } else {
-            // Wait for the privacy indicator to disappear to avoid the test becoming flaky.
-            waitForNoIndicator(chipId);
-       }
+        }
+        // Wait for the privacy indicator to disappear to avoid the test becoming flaky.
+        waitForNoIndicator(chipId);
     }
 
     @NonNull
@@ -348,17 +331,9 @@ public final class RecognitionServiceMicIndicatorTest {
     private void waitForNoIndicator(String chipId) {
         SystemUtil.eventually(() -> {
             final UiObject2 foundChip =
-                  mUiDevice.findObject(By.res(PRIVACY_CHIP_PACKAGE_NAME, chipId));
-            assertWithMessage("Chip still visible.").that(foundChip).isNull();
-        });
-    }
-
-    private void waitForNoIndicatorForCar(String chipId) {
-        SystemUtil.eventually(() -> {
-            final UiObject2 foundChip =
                     mUiDevice.findObject(By.res(PRIVACY_CHIP_PACKAGE_NAME, chipId));
             assertWithMessage("Chip still visible.").that(foundChip).isNull();
-        }, LONG_TIMEOUT_FOR_CAR);
+        }, LONGER_TIMEOUT);
     }
     
 

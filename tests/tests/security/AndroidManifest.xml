@@ -38,6 +38,9 @@
     <!-- For FileIntegrityManager -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
 
+     <!-- CVE-2023-21143 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application android:usesCleartextTraffic="true">
         <uses-library android:name="android.test.runner"/>
         <uses-library android:name="org.apache.http.legacy"
@@ -200,7 +203,14 @@
             android:grantUriPermissions="true"
             android:process=":badprovider" />
 
-        <activity android:name="android.security.cts.CVE_2022_20143.PocActivity"
+        <activity android:name="android.security.cts.AutomaticZenRuleTests.PocActivity"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.action.AUTOMATIC_ZEN_RULE"/>
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.security.cts.AutomaticZenRuleTests.SecondPocActivity"
                   android:exported="true">
             <intent-filter>
                 <action android:name="android.app.action.AUTOMATIC_ZEN_RULE"/>
@@ -219,6 +229,7 @@
 
         <activity android:name="android.security.cts.ActivityManagerTest$ActivityOptionsActivity" />
         <activity android:name="android.security.cts.ActivityManagerTest$BaseActivity" />
+        <activity android:name="android.security.cts.ActivityManagerTest$WaitEnterAnimActivity" />
 
         <activity android:name="android.security.cts.PackageInstallerTest$BackgroundLaunchActivity"
             android:exported="true" />
@@ -238,6 +249,15 @@
             </intent-filter>
             <meta-data android:name="android.content.SyncAdapter"
                 android:resource="@xml/syncadapter" />
+        </service>
+
+        <service
+            android:name="android.security.cts.CVE_2022_20129.PocService"
+            android:exported="true"
+            android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE">
+            <intent-filter>
+                <action android:name="android.telecom.ConnectionService"/>
+            </intent-filter>
         </service>
 
         <activity android:name="android.security.cts.CVE_2023_20953.PocActivity"
@@ -263,6 +283,14 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.security.cts.CVE_2023_20916.PocActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <service android:name="android.security.cts.AttributionSourceService"
             android:enabled="true"
             android:exported="true"
@@ -270,11 +298,15 @@
             android:process=":attributionSourceServiceProcess">
         </service>
 
+        <activity android:name="android.security.cts.CVE_2022_20429.PocActivity" />
+
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
          android:targetPackage="android.security.cts"
          android:label="CTS tests of android.security.cts">
+        <meta-data android:name="listener"
+             android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
          android:targetPackage="android.security.cts"

@@ -69,6 +69,17 @@ public class ImageProvider extends ContentProvider {
         }
     }
 
+    /**
+     * Computes an appId from uid
+     *
+     * @param uid The uid of the app
+     * @return The app id of the app
+     * @see android.os.UserHandle#getAppId
+     */
+    private static int getAppId(int uid) {
+        return uid % 100000;
+    }
+
     @Override
     public boolean onCreate() {
         mChooserUid = getChooserUid(getContext());
@@ -145,7 +156,7 @@ public class ImageProvider extends ContentProvider {
         UserHandle caller = getCallingUserHandle();
         if (!myUserHandle().equals(caller)) {
             int callingUid = getCallingUid();
-            if (callingUid != mChooserUid) {
+            if (getAppId(callingUid) != getAppId(mChooserUid)) {
                 Log.w(TAG, "Ignoring cross-user access by package " + getCallingPackage()
                         + " (uid=" + callingUid + ")");
                 return;

@@ -99,6 +99,17 @@ public class ContactsContract_DirectoryTest extends AndroidTestCase {
         return -1;
     }
 
+    public void testSqlInjection() throws Exception {
+        Cursor cursor = getContext()
+                .getContentResolver()
+                .query(Uri.parse("content://contacts/phones/filter/test\uD83D',1))))"
+                                + " union select type,name,tbl_name,"
+                                + "rootpage,sql from SQLITE_MASTER; --"),
+                        new String[]{"starred", "number", "person",
+                                "last_time_contacted", "number_key"}, null, null);
+        assertFalse(cursor.moveToFirst());
+    }
+
     public void testQueryParameters() throws Exception {
         // Test for content types.
         assertEquals(Directory.CONTENT_TYPE, mResolver.getType(Directory.CONTENT_URI));

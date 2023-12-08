@@ -15,7 +15,6 @@
  */
 package android.app.stubs.shared;
 
-import android.content.ComponentName;
 import android.os.ConditionVariable;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
@@ -25,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 public class TestNotificationListener extends NotificationListenerService {
@@ -38,6 +38,10 @@ public class TestNotificationListener extends NotificationListenerService {
     public Map<String, Integer> mRemoved = new HashMap<>();
     public RankingMap mRankingMap;
     public Map<String, Boolean> mIntercepted = new HashMap<>();
+
+    private CountDownLatch mPostedLatch = null;
+    private CountDownLatch mRankingUpdateLatch = null;
+    private CountDownLatch mRemovedLatch = null;
 
     /**
      * This controls whether there is a listener connected or not. Depending on the method, if the
@@ -108,6 +112,7 @@ public class TestNotificationListener extends NotificationListenerService {
                     mTestPackages));
         }
         mPosted.add(sbn);
+        maybeUpdateLatch(mPostedLatch);
     }
 
     @Override
@@ -123,6 +128,13 @@ public class TestNotificationListener extends NotificationListenerService {
         mRankingMap = rankingMap;
         updateInterceptedRecords(rankingMap);
         mPosted.add(sbn);
+        maybeUpdateLatch(mPostedLatch);
+    }
+
+    public void maybeUpdateLatch(CountDownLatch latch) {
+        if (latch != null) {
+            latch.countDown();
+        }
     }
 
     @Override
@@ -137,6 +149,7 @@ public class TestNotificationListener extends NotificationListenerService {
         }
         mPosted.remove(sbn);
         mRemoved.put(sbn.getKey(), -1 );
+        maybeUpdateLatch(mRemovedLatch);
     }
 
     @Override
@@ -154,6 +167,7 @@ public class TestNotificationListener extends NotificationListenerService {
         updateInterceptedRecords(rankingMap);
         mPosted.remove(sbn);
         mRemoved.put(sbn.getKey(), reason);
+        maybeUpdateLatch(mRemovedLatch);
     }
 
     @Override
@@ -166,14 +180,30 @@ public class TestNotificationListener extends NotificationListenerService {
     // update the local cache of intercepted records based on the given ranking map; should be run
     // every time the listener gets updated ranking map info
     private void updateInterceptedRecords(RankingMap rankingMap) {
+        maybeUpdateLatch(mRankingUpdateLatch);
         for (String key : rankingMap.getOrderedKeys()) {
             Ranking rank = new Ranking();
             if (rankingMap.getRanking(key, rank)) {
-                // matchesInterruptionFilter is true if the notifiation can bypass and false if
+                // matchesInterruptionFilter is true if the notification can bypass and false if
                 // blocked so the "is intercepted" boolean is the opposite of that.
                 mIntercepted.put(key, !rank.matchesInterruptionFilter());
             }
         }
+    }
+
+    public CountDownLatch setPostedCountDown(int countDownNumber) {
+        mPostedLatch = new CountDownLatch(countDownNumber);
+        return mPostedLatch;
+    }
+
+    public CountDownLatch setRankingUpdateCountDown(int countDownNumber) {
+        mRankingUpdateLatch = new CountDownLatch(countDownNumber);
+        return mRankingUpdateLatch;
+    }
+
+    public CountDownLatch setRemovedCountDown(int countDownNumber) {
+        mRemovedLatch = new CountDownLatch(countDownNumber);
+        return mRemovedLatch;
     }
 
     @Override

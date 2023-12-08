@@ -66,10 +66,10 @@ public class Settings_MemoryUsageTest {
     public void testMemoryUsageExceeded() {
         expectThrows(Exception.class,
                 () -> Settings.System.putString(
-                        mContentResolver, STRING_SETTING, Strings.repeat("A", 65535)));
+                        mContentResolver, STRING_SETTING, Strings.repeat("A", 30001)));
         // Repeated calls should throw as well
         expectThrows(Exception.class,
                 () -> Settings.System.putString(
-                        mContentResolver, STRING_SETTING, Strings.repeat("A", 65535)));
+                        mContentResolver, STRING_SETTING, Strings.repeat("A", 30001)));
     }
 }

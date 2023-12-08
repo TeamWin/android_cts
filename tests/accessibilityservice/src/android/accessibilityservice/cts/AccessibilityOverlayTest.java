@@ -319,19 +319,14 @@ public class AccessibilityOverlayTest {
     }
 
     private void checkTrustedOverlayExists(String overlayTitle) throws Exception {
-        try {
-            sUiAutomation.adoptShellPermissionIdentity(
-                    android.Manifest.permission.ACCESS_SURFACE_FLINGER);
-            Predicate<List<WindowInfosListenerForTest.WindowInfo>> windowPredicate =
-                    windows -> windows.stream().anyMatch(
-                            window -> window.name.contains(overlayTitle)
-                                    && window.isTrustedOverlay);
-            assertWithMessage("Expected to find trusted overlay window").that(
-                    CtsWindowInfoUtils.waitForWindowInfos(windowPredicate,
-                            AsyncUtils.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
-        } finally {
-            sUiAutomation.dropShellPermissionIdentity();
-        }
+        Predicate<List<WindowInfosListenerForTest.WindowInfo>> windowPredicate =
+                windows -> windows.stream().anyMatch(
+                        window -> window.name.contains(overlayTitle)
+                                && window.isTrustedOverlay);
+        assertWithMessage("Expected to find trusted overlay window").that(
+                CtsWindowInfoUtils.waitForWindowInfos(windowPredicate,
+                        AsyncUtils.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS,
+                        sUiAutomation)).isTrue();
     }
 
     private void addOverlayWindow(Context context, String overlayTitle) {

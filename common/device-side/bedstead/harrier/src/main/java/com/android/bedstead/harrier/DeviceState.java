@@ -100,6 +100,7 @@ import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagNotEnabled;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagValue;
+import com.android.bedstead.harrier.annotations.RequireHasDefaultBrowser;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireInstantApp;
 import com.android.bedstead.harrier.annotations.RequireLowRamDevice;
@@ -1294,6 +1295,18 @@ public final class DeviceState extends HarrierRule {
                 continue;
             }
 
+            if (annotation instanceof RequireHasDefaultBrowser) {
+                RequireHasDefaultBrowser requireHasDefaultBrowser =
+                        (RequireHasDefaultBrowser) annotation;
+                UserReference user =
+                            resolveUserTypeToUser(requireHasDefaultBrowser.forUser());
+
+                checkFailOrSkip("User: " + user + " does not have a default browser",
+                            TestApis.packages().defaultBrowserForUser(user) != null,
+                            requireHasDefaultBrowser.failureMode());
+                    continue;
+            }
+
             if (annotation instanceof RequireTelephonySupport) {
                 RequireTelephonySupport requireTelephonySupport =
                         (RequireTelephonySupport) annotation;
@@ -1407,6 +1420,7 @@ public final class DeviceState extends HarrierRule {
         }
 
         annotations.addAll(description.getAnnotations());
+        annotations.sort(BedsteadJUnit4::annotationSorter);
 
         checkAnnotations(annotations);
 

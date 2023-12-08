@@ -15,7 +15,10 @@
  */
 package android.view.cts.surfacevalidator;
 
-import android.content.Context;
+import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
+
+import static org.junit.Assert.assertTrue;
+
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -30,8 +33,13 @@ import android.util.SparseArray;
 import android.view.Surface;
 
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 public class SurfacePixelValidator2 {
     private static final String TAG = "SurfacePixelValidator";
+
+    private static final boolean DEBUG = false;
 
     private static final int MAX_CAPTURED_FAILURES = 5;
     private static final int PIXEL_STRIDE = 4;
@@ -45,76 +53,75 @@ public class SurfacePixelValidator2 {
     private final Rect mBoundsToCheck;
     private ImageReader mImageReader;
 
-    private final Object mResultLock = new Object();
     private int mResultSuccessFrames;
     private int mResultFailureFrames;
-    private SparseArray<Bitmap> mFirstFailures = new SparseArray<>(MAX_CAPTURED_FAILURES);
+    private final SparseArray<Bitmap> mFirstFailures = new SparseArray<>(MAX_CAPTURED_FAILURES);
     private long mFrameNumber = 0;
 
-    private ImageReader.OnImageAvailableListener mOnImageAvailable =
+    private final int mRequiredNumFrames;
+
+    private final CountDownLatch mRequiredNumFramesDrawnLatch = new CountDownLatch(1);
+
+    private final Handler mHandler;
+
+    private final ImageReader.OnImageAvailableListener mOnImageAvailable =
             new ImageReader.OnImageAvailableListener() {
+                @Override
+                public void onImageAvailable(ImageReader reader) {
+                    if (mImageReader == null) {
+                        return;
+                    }
 
-        @Override
-        public void onImageAvailable(ImageReader reader) {
-            Trace.beginSection("Read buffer");
-            Image image = reader.acquireNextImage();
+                    Trace.beginSection("Read buffer");
+                    Image image = reader.acquireNextImage();
 
-            Image.Plane plane = image.getPlanes()[0];
-            if (plane.getPixelStride() != PIXEL_STRIDE) {
-                throw new IllegalStateException("pixel stride != " + PIXEL_STRIDE + "? "
-                                                + plane.getPixelStride());
-            }
-            Trace.endSection();
+                    Image.Plane plane = image.getPlanes()[0];
+                    if (plane.getPixelStride() != PIXEL_STRIDE) {
+                        throw new IllegalStateException("pixel stride != " + PIXEL_STRIDE + "? "
+                                + plane.getPixelStride());
+                    }
+                    Trace.endSection();
 
-            synchronized (mResultLock) {
-                boolean success = mPixelChecker.validatePlane(plane, mFrameNumber++, mBoundsToCheck,
-                    mWidth, mHeight);
-                mResultLock.notifyAll();
-                if (success) {
-                    mResultSuccessFrames++;
-                } else {
-                    mResultFailureFrames++;
-                    int totalFramesSeen = mResultSuccessFrames + mResultFailureFrames;
-                    Log.d(TAG, "Failure (" + mPixelChecker.getLastError() + ") occurred on frame "
-                            + totalFramesSeen);
+                    int totalFramesSeen;
+                    boolean success = mPixelChecker.validatePlane(plane, mFrameNumber++,
+                            mBoundsToCheck,
+                            mWidth, mHeight);
+                    if (success) {
+                        mResultSuccessFrames++;
+                    } else {
+                        mResultFailureFrames++;
+                    }
 
-                    if (mFirstFailures.size() < MAX_CAPTURED_FAILURES) {
-                        Log.d(TAG, "Capturing bitmap #" + mFirstFailures.size());
-                        // error, worth looking at...
-                        Bitmap capture = Bitmap.wrapHardwareBuffer(
-                                image.getHardwareBuffer(), null)
-                                .copy(Bitmap.Config.ARGB_8888, false);
-                        mFirstFailures.put(totalFramesSeen, capture);
+                    totalFramesSeen = mResultSuccessFrames + mResultFailureFrames;
+                    if (DEBUG) {
+                        Log.d(TAG, "Received image " + success + " numSuccess="
+                                + mResultSuccessFrames + " numFail=" + mResultFailureFrames
+                                + " total=" + totalFramesSeen);
+                    }
+
+                    if (!success) {
+                        Log.d(TAG, "Failure (" + mPixelChecker.getLastError()
+                                + ") occurred on frame " + totalFramesSeen);
+
+                        if (mFirstFailures.size() < MAX_CAPTURED_FAILURES) {
+                            Log.d(TAG, "Capturing bitmap #" + mFirstFailures.size());
+                            // error, worth looking at...
+                            Bitmap capture = Bitmap.wrapHardwareBuffer(
+                                            image.getHardwareBuffer(), null)
+                                    .copy(Bitmap.Config.ARGB_8888, false);
+                            mFirstFailures.put(totalFramesSeen, capture);
+                        }
+                    }
+
+                    image.close();
+                    if (totalFramesSeen >= mRequiredNumFrames) {
+                        mRequiredNumFramesDrawnLatch.countDown();
                     }
                 }
-            }
-            image.close();
-        }
-    };
+            };
 
-    void waitForFrame(int timeoutMs) {
-        synchronized (mResultLock) {
-            if (mResultSuccessFrames != 0 || mResultFailureFrames != 0) {
-                return;
-            }
-            try {
-                mResultLock.wait(timeoutMs);
-            } catch (Exception e) {
-            }
-        }
-    }
-
-    private static void getPixels(Image image, int[] dest, Rect bounds) {
-        Bitmap hwBitmap = Bitmap.wrapHardwareBuffer(image.getHardwareBuffer(), null);
-        Bitmap swBitmap = hwBitmap.copy(Bitmap.Config.ARGB_8888, false);
-        hwBitmap.recycle();
-        swBitmap.getPixels(dest, 0, bounds.width(),
-                bounds.left, bounds.top, bounds.width(), bounds.height());
-        swBitmap.recycle();
-    }
-
-    public SurfacePixelValidator2(Context context, Point size, Rect boundsToCheck,
-            PixelChecker pixelChecker) {
+    public SurfacePixelValidator2(Point size, Rect boundsToCheck, PixelChecker pixelChecker,
+            int requiredNumFrames) {
         mWidth = size.x;
         mHeight = size.y;
 
@@ -123,12 +130,13 @@ public class SurfacePixelValidator2 {
 
         mPixelChecker = pixelChecker;
         mBoundsToCheck = new Rect(boundsToCheck);
+        mRequiredNumFrames = requiredNumFrames;
+        mHandler = new Handler(mWorkerThread.getLooper());
 
         mImageReader = ImageReader.newInstance(mWidth, mHeight, HardwareBuffer.RGBA_8888, 1,
                 HardwareBuffer.USAGE_GPU_COLOR_OUTPUT | HardwareBuffer.USAGE_CPU_READ_OFTEN
                         | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE);
-        mImageReader.setOnImageAvailableListener(mOnImageAvailable,
-                new Handler(mWorkerThread.getLooper()));
+        mImageReader.setOnImageAvailableListener(mOnImageAvailable, mHandler);
     }
 
     public Surface getSurface() {
@@ -142,9 +150,10 @@ public class SurfacePixelValidator2 {
      * flight may be lost.
      */
     public void finish(CapturedActivity.TestResult testResult) {
-        synchronized (mResultLock) {
-            // could in theory miss results still processing, but only if latency is extremely high.
-            // Caller should only call this
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        // Post the imageReader close on the same thread it's processing data to avoid shutting down
+        // while still in the middle of processing an image.
+        mHandler.post(() -> {
             testResult.failFrames = mResultFailureFrames;
             testResult.passFrames = mResultSuccessFrames;
 
@@ -152,7 +161,23 @@ public class SurfacePixelValidator2 {
                 testResult.failures.put(mFirstFailures.keyAt(i), mFirstFailures.valueAt(i));
             }
             mImageReader.close();
+            mImageReader = null;
             mWorkerThread.quitSafely();
+            countDownLatch.countDown();
+        });
+
+        try {
+            assertTrue("Failed to wait for results",
+                    countDownLatch.await(5L * HW_TIMEOUT_MULTIPLIER, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+        }
+    }
+
+    public boolean waitForAllFrames(long timeoutMs) {
+        try {
+            return mRequiredNumFramesDrawnLatch.await(timeoutMs, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            return false;
         }
     }
 }

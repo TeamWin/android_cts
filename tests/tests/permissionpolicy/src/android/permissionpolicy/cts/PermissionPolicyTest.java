@@ -91,11 +91,6 @@ public class PermissionPolicyTest {
     private static final String ATTR_PROTECTION_LEVEL = "protectionLevel";
     private static final String ATTR_BACKGROUND_PERMISSION = "backgroundPermission";
 
-    private static final String OBSERVE_APP_USAGE_PERMISSION =
-            "android.permission.OBSERVE_APP_USAGE";
-    private static final String MODIFY_DAY_NIGHT_MODE_PERMISSION =
-            "android.permission.MODIFY_DAY_NIGHT_MODE";
-
     private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getTargetContext();
 
@@ -520,9 +515,6 @@ public class PermissionPolicyTest {
                 return parseDate(SECURITY_PATCH).before(HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE);
             case MANAGE_COMPANION_DEVICES_PERMISSION:
                 return parseDate(SECURITY_PATCH).before(MANAGE_COMPANION_DEVICES_PATCH_DATE);
-            case OBSERVE_APP_USAGE_PERMISSION:
-            case MODIFY_DAY_NIGHT_MODE_PERMISSION:
-                return true;
             default:
                 return false;
         }

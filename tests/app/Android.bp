@@ -60,11 +60,13 @@ android_test {
     dxflags: ["--multi-dex"],
     data: [
         ":CtsSimpleApp",
+        ":CtsAppTestDelayedStart",
         ":CtsAppTestStubs",
         ":CtsAppTestStubsApp1",
         ":CtsAppTestStubsApp3",
         ":CtsAppTestStubsApp2",
         ":CtsAppTestStubsApi30",
+        ":CtsAppTestWedgedStart",
         ":CtsBadProviderStubs",
         ":CtsCantSaveState1",
         ":CtsCantSaveState2",

@@ -28,6 +28,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 
+@Presubmit
 public class SurfaceSyncGroupContinuousTest {
     @Rule
     public TestName mName = new TestName();
@@ -47,30 +48,19 @@ public class SurfaceSyncGroupContinuousTest {
     @Test
     public void testSurfaceControlViewHostIPCSync_Fast() throws Throwable {
         mCapturedActivity.verifyTest(
-                new SyncValidatorSCVHTestCase(0 /* delayMs */, false /* overrideDefaultDuration */,
-                        false /* inProcess */), mName);
+                new SyncValidatorSCVHTestCase(0 /* delayMs */, false /* inProcess */), mName);
     }
 
     @Test
     public void testSurfaceControlViewHostIPCSync_Slow() throws Throwable {
-        mCapturedActivity.verifyTest(new SyncValidatorSCVHTestCase(100 /* delayMs */,
-                false /* overrideDefaultDuration */, false /* inProcess */), mName);
-    }
-
-    @Test
-    @Presubmit
-    public void testSurfaceControlViewHostIPCSync_Short() throws Throwable {
-        mCapturedActivity.setMinimumCaptureDurationMs(5000);
         mCapturedActivity.verifyTest(
-                new SyncValidatorSCVHTestCase(0 /* delayMs */, true /* overrideDefaultDuration */,
-                        false /* inProcess */), mName);
+                new SyncValidatorSCVHTestCase(100 /* delayMs */, false /* inProcess */), mName);
     }
 
     @Test
     @Presubmit
     public void testSurfaceControlViewHostSyncInProcess() throws Throwable {
-        mCapturedActivity.setMinimumCaptureDurationMs(5000);
-        mCapturedActivity.verifyTest(new SyncValidatorSCVHTestCase(0 /* delayMs */,
-                true /* overrideDefaultDuration */, true /* inProcess */), mName);
+        mCapturedActivity.verifyTest(
+                new SyncValidatorSCVHTestCase(0 /* delayMs */, true /* inProcess */), mName);
     }
 }
