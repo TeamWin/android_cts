@@ -318,22 +318,7 @@ class PackageManagerShellCommandMultiUserTest {
                     backgroundHandler,
                     RECEIVER_EXPORTED
                 )
-                // Uninstall with "keep data" sends the REMOVED broadcast but not the FULLY_REMOVED
-                // Only the targeted user will get the broadcast
-                uninstallPackageWithKeepData(TEST_APP_PACKAGE, secondaryUser)
-                removedBroadcastReceiverForPrimaryUser.assertBroadcastNotReceived()
-                fullyRemovedBroadcastReceiverForPrimaryUser.assertBroadcastNotReceived()
-                removedBroadcastReceiverForSecondaryUser.assertBroadcastReceived()
-                fullyRemovedBroadcastReceiverForSecondaryUser.assertBroadcastNotReceived()
-                removedBroadcastReceiverForSecondaryUser.reset()
-                uninstallPackageWithKeepData(TEST_APP_PACKAGE, primaryUser)
-                removedBroadcastReceiverForPrimaryUser.assertBroadcastReceived()
-                fullyRemovedBroadcastReceiverForPrimaryUser.assertBroadcastNotReceived()
-                removedBroadcastReceiverForSecondaryUser.assertBroadcastNotReceived()
-                fullyRemovedBroadcastReceiverForSecondaryUser.assertBroadcastNotReceived()
-                removedBroadcastReceiverForPrimaryUser.reset()
 
-                installPackage(TEST_HW5)
                 // Uninstall without "KEEP DATA" sends both REMOVED and FULLY_REMOVED broadcasts
                 // to the targeted user
                 uninstallPackageAsUser(TEST_APP_PACKAGE, secondaryUser)
@@ -351,6 +336,26 @@ class PackageManagerShellCommandMultiUserTest {
                 fullyRemovedBroadcastReceiverForPrimaryUser.assertBroadcastReceived()
                 removedBroadcastReceiverForSecondaryUser.assertBroadcastReceived()
                 fullyRemovedBroadcastReceiverForSecondaryUser.assertBroadcastReceived()
+                removedBroadcastReceiverForPrimaryUser.reset()
+                fullyRemovedBroadcastReceiverForPrimaryUser.reset()
+                removedBroadcastReceiverForSecondaryUser.reset()
+                fullyRemovedBroadcastReceiverForSecondaryUser.reset()
+
+                // Uninstall with "keep data" sends the REMOVED broadcast but not the FULLY_REMOVED
+                // Only the targeted user will get the broadcast
+                installPackage(TEST_HW5)
+                uninstallPackageWithKeepData(TEST_APP_PACKAGE, secondaryUser)
+                removedBroadcastReceiverForPrimaryUser.assertBroadcastNotReceived()
+                fullyRemovedBroadcastReceiverForPrimaryUser.assertBroadcastNotReceived()
+                removedBroadcastReceiverForSecondaryUser.assertBroadcastReceived()
+                fullyRemovedBroadcastReceiverForSecondaryUser.assertBroadcastNotReceived()
+                removedBroadcastReceiverForSecondaryUser.reset()
+                uninstallPackageWithKeepData(TEST_APP_PACKAGE, primaryUser)
+                removedBroadcastReceiverForPrimaryUser.assertBroadcastReceived()
+                fullyRemovedBroadcastReceiverForPrimaryUser.assertBroadcastNotReceived()
+                removedBroadcastReceiverForSecondaryUser.assertBroadcastNotReceived()
+                fullyRemovedBroadcastReceiverForSecondaryUser.assertBroadcastNotReceived()
+                removedBroadcastReceiverForPrimaryUser.reset()
 
                 // Clean up
                 contextPrimaryUser.unregisterReceiver(removedBroadcastReceiverForPrimaryUser)
