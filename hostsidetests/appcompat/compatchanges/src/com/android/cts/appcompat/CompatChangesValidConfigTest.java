@@ -41,6 +41,7 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
     private static final long RESTRICT_STORAGE_ACCESS_FRAMEWORK = 141600225L;
     private static final long SPLIT_AS_STREAM_RETURNS_SINGLE_EMPTY_STRING = 288845345L;
     private static final long PRIORITY_QUEUE_OFFER_NON_COMPARABLE_ONE_ELEMENT = 289878283L;
+    private static final long ASM_RESTRICTIONS = 230590090L;
     private static final String FEATURE_WATCH = "android.hardware.type.watch";
 
     private static final Set<String> OVERRIDES_ALLOWLIST = ImmutableSet.of(
@@ -179,7 +180,8 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
         // Exclude PRIORITY_QUEUE_OFFER_NON_COMPARABLE_ONE_ELEMENT
         // This feature is enabled only from U for apps targeting SDK 34+, see b/297482242
         changes.removeIf(c -> c.changeId == PRIORITY_QUEUE_OFFER_NON_COMPARABLE_ONE_ELEMENT);
-
+        // This feature is enabled only from V for apps targeting SDK 35+, see b/307477133
+        changes.removeIf(c -> c.changeId == ASM_RESTRICTIONS);
         return changes;
     }
 
