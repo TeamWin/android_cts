@@ -16,15 +16,21 @@
 
 package android.car.cts;
 
+import static android.car.feature.Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.car.VehiclePropertyIds;
 import android.car.cts.utils.VehiclePropertyUtils;
 import android.platform.test.annotations.RequiresDevice;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.test.suitebuilder.annotation.SmallTest;
 
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -34,6 +40,8 @@ import java.util.List;
 @RequiresDevice
 @RunWith(AndroidJUnit4.class)
 public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     /**
      * Test for {@link VehiclePropertyIds#toString()}
@@ -71,18 +79,6 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("HANDS_ON_DETECTION_DRIVER_STATE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HANDS_ON_DETECTION_WARNING))
                 .isEqualTo("HANDS_ON_DETECTION_WARNING");
-        assertThat(
-                VehiclePropertyIds.toString(
-                        VehiclePropertyIds.DRIVER_DROWSINESS_ATTENTION_SYSTEM_ENABLED))
-                .isEqualTo("DRIVER_DROWSINESS_ATTENTION_SYSTEM_ENABLED");
-        assertThat(
-                VehiclePropertyIds.toString(
-                        VehiclePropertyIds.DRIVER_DROWSINESS_ATTENTION_STATE))
-                .isEqualTo("DRIVER_DROWSINESS_ATTENTION_STATE");
-        assertThat(
-                VehiclePropertyIds.toString(
-                        VehiclePropertyIds.DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED))
-                .isEqualTo("DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.IGNITION_STATE))
                 .isEqualTo("IGNITION_STATE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.INFO_DRIVER_SEAT))
@@ -468,6 +464,26 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("LANE_CENTERING_ASSIST_STATE");
         assertThat(VehiclePropertyIds.toString(3)).isEqualTo("0x3");
         assertThat(VehiclePropertyIds.toString(12)).isEqualTo("0xc");
+    }
+
+    /**
+     * Test for {@link VehiclePropertyIds#toString()} for properties added in Android VIC.
+     */
+    @Test
+    @RequiresFlagsEnabled(FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
+    public void testToStringForAndroidVicVehicleProperties() {
+        assertThat(
+                VehiclePropertyIds.toString(
+                        VehiclePropertyIds.DRIVER_DROWSINESS_ATTENTION_SYSTEM_ENABLED))
+                .isEqualTo("DRIVER_DROWSINESS_ATTENTION_SYSTEM_ENABLED");
+        assertThat(
+                VehiclePropertyIds.toString(
+                        VehiclePropertyIds.DRIVER_DROWSINESS_ATTENTION_STATE))
+                .isEqualTo("DRIVER_DROWSINESS_ATTENTION_STATE");
+        assertThat(
+                VehiclePropertyIds.toString(
+                        VehiclePropertyIds.DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED))
+                .isEqualTo("DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED");
     }
 
     /**
