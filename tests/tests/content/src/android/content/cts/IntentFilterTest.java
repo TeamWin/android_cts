@@ -18,9 +18,15 @@ package android.content.cts;
 
 import static android.content.IntentFilter.MATCH_ADJUSTMENT_NORMAL;
 import static android.content.IntentFilter.MATCH_CATEGORY_HOST;
+import static android.content.IntentFilter.MATCH_CATEGORY_PATH;
 import static android.content.IntentFilter.MATCH_CATEGORY_SCHEME_SPECIFIC_PART;
 import static android.content.IntentFilter.MATCH_CATEGORY_TYPE;
 import static android.content.IntentFilter.NO_MATCH_DATA;
+import static android.content.UriRelativeFilter.PATH;
+import static android.content.UriRelativeFilter.QUERY;
+import static android.content.UriRelativeFilter.FRAGMENT;
+import static android.content.UriRelativeFilterGroup.ACTION_ALLOW;
+import static android.content.UriRelativeFilterGroup.ACTION_BLOCK;
 import static android.os.PatternMatcher.PATTERN_ADVANCED_GLOB;
 import static android.os.PatternMatcher.PATTERN_LITERAL;
 import static android.os.PatternMatcher.PATTERN_PREFIX;
@@ -41,7 +47,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentFilter.AuthorityEntry;
 import android.content.IntentFilter.MalformedMimeTypeException;
+import android.content.UriRelativeFilter;
+import android.content.UriRelativeFilterGroup;
 import android.content.pm.ActivityInfo;
+import android.content.pm.Flags;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
@@ -50,6 +59,9 @@ import android.os.PatternMatcher;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.IgnoreUnderRavenwood;
 import android.platform.test.annotations.PlatinumTest;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.platform.test.ravenwood.RavenwoodRule;
 import android.test.mock.MockContext;
 import android.util.Printer;
@@ -83,6 +95,9 @@ import java.util.function.Predicate;
 @PlatinumTest(focusArea = "pm")
 public class IntentFilterTest {
     @Rule public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
+    @Rule public CheckFlagsRule mCheckFlagsRule = RavenwoodRule.isUnderRavenwood() ? null :
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private Context mContext;
     private IntentFilter mIntentFilter;
@@ -809,6 +824,100 @@ public class IntentFilterTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood
+    @RequiresFlagsEnabled(Flags.FLAG_RELATIVE_REFERENCE_INTENT_FILTERS)
+    public void testMatchDataWithRelRefGroups() {
+        Uri uri = Uri.parse("https://" + HOST + "/path?query=string&cat=gizmo#fragment");
+        Uri uri2 = Uri.parse("https://" + HOST + "/path?query=string;cat=gizmo#fragment");
+        mIntentFilter.addDataScheme(DATA_SCHEME);
+        mIntentFilter.addDataAuthority(HOST, null);
+        assertEquals(MATCH_CATEGORY_HOST + MATCH_ADJUSTMENT_NORMAL,
+                mIntentFilter.matchData(null, DATA_SCHEME, uri));
+
+        // PATH matches so group match
+        UriRelativeFilterGroup matchGroup = new UriRelativeFilterGroup(ACTION_ALLOW);
+        matchGroup.addUriRelativeFilter(new UriRelativeFilter(PATH, PATTERN_LITERAL, "/path"));
+        mIntentFilter.addUriRelativeFilterGroup(matchGroup);
+        assertEquals(MATCH_CATEGORY_PATH + MATCH_ADJUSTMENT_NORMAL,
+                mIntentFilter.matchData(null, DATA_SCHEME, uri));
+        mIntentFilter.clearUriRelativeFilterGroups();
+
+        // PATH does not match so group does not match
+        UriRelativeFilterGroup noMatchGroup = new UriRelativeFilterGroup(ACTION_ALLOW);
+        noMatchGroup.addUriRelativeFilter(new UriRelativeFilter(PATH, PATTERN_LITERAL, "/trail"));
+        mIntentFilter.addUriRelativeFilterGroup(noMatchGroup);
+        assertEquals(NO_MATCH_DATA, mIntentFilter.matchData(null, DATA_SCHEME, uri));
+        mIntentFilter.clearUriRelativeFilterGroups();
+
+        // PATH and QUERY match so group match
+        UriRelativeFilterGroup matchGroup1 = new UriRelativeFilterGroup(ACTION_ALLOW);
+        matchGroup1.addUriRelativeFilter(new UriRelativeFilter(PATH, PATTERN_LITERAL, "/path"));
+        matchGroup1.addUriRelativeFilter(new UriRelativeFilter(QUERY, PATTERN_SIMPLE_GLOB, ".*"));
+        mIntentFilter.addUriRelativeFilterGroup(matchGroup1);
+        assertEquals(MATCH_CATEGORY_PATH + MATCH_ADJUSTMENT_NORMAL,
+                mIntentFilter.matchData(null, DATA_SCHEME, uri));
+        assertEquals(MATCH_CATEGORY_PATH + MATCH_ADJUSTMENT_NORMAL,
+                mIntentFilter.matchData(null, DATA_SCHEME, uri2));
+        mIntentFilter.clearUriRelativeFilterGroups();
+
+        // PATH match but QUERY does not match so group does not match
+        UriRelativeFilterGroup noMatchGroup1 = new UriRelativeFilterGroup(ACTION_ALLOW);
+        noMatchGroup1.addUriRelativeFilter(new UriRelativeFilter(PATH, PATTERN_LITERAL, "/path"));
+        noMatchGroup1.addUriRelativeFilter(new UriRelativeFilter(QUERY, PATTERN_PREFIX, "query"));
+        noMatchGroup1.addUriRelativeFilter(new UriRelativeFilter(QUERY, PATTERN_SUFFIX, "widget"));
+        mIntentFilter.addUriRelativeFilterGroup(noMatchGroup1);
+        assertEquals(NO_MATCH_DATA, mIntentFilter.matchData(null, DATA_SCHEME, uri));
+        assertEquals(NO_MATCH_DATA, mIntentFilter.matchData(null, DATA_SCHEME, uri2));
+        mIntentFilter.clearUriRelativeFilterGroups();
+
+        // PATH, QUERY, and FRAGMENT all match so group matches
+        UriRelativeFilterGroup matchGroup2 = new UriRelativeFilterGroup(ACTION_ALLOW);
+        matchGroup2.addUriRelativeFilter(new UriRelativeFilter(PATH, PATTERN_LITERAL, "/path"));
+        matchGroup2.addUriRelativeFilter(new UriRelativeFilter(QUERY, PATTERN_PREFIX, "query"));
+        matchGroup2.addUriRelativeFilter(new UriRelativeFilter(FRAGMENT, PATTERN_SIMPLE_GLOB,
+                "fr.*"));
+        mIntentFilter.addUriRelativeFilterGroup(matchGroup2);
+        assertEquals(MATCH_CATEGORY_PATH + MATCH_ADJUSTMENT_NORMAL,
+                mIntentFilter.matchData(null, DATA_SCHEME, uri));
+        assertEquals(MATCH_CATEGORY_PATH + MATCH_ADJUSTMENT_NORMAL,
+                mIntentFilter.matchData(null, DATA_SCHEME, uri2));
+        mIntentFilter.clearUriRelativeFilterGroups();
+
+        // PATH, QUERY, and FRAGMENT all match but group is disallow
+        // and intent filter will not match
+        UriRelativeFilterGroup disallowGroup = new UriRelativeFilterGroup(ACTION_BLOCK);
+        disallowGroup.addUriRelativeFilter(new UriRelativeFilter(PATH, PATTERN_LITERAL, "/path"));
+        disallowGroup.addUriRelativeFilter(new UriRelativeFilter(QUERY, PATTERN_PREFIX, "query"));
+        disallowGroup.addUriRelativeFilter(new UriRelativeFilter(QUERY, PATTERN_SUFFIX, "gizmo"));
+        disallowGroup.addUriRelativeFilter(new UriRelativeFilter(FRAGMENT, PATTERN_SIMPLE_GLOB,
+                "fr.*"));
+        mIntentFilter.addUriRelativeFilterGroup(disallowGroup);
+        assertEquals(NO_MATCH_DATA, mIntentFilter.matchData(null, DATA_SCHEME, uri));
+        assertEquals(NO_MATCH_DATA, mIntentFilter.matchData(null, DATA_SCHEME, uri2));
+        mIntentFilter.clearUriRelativeFilterGroups();
+
+        // Since disallow group is defined first it will match but prevent the
+        // intent filter from matching even though though a matching group is
+        // defined after the disallow group.
+        mIntentFilter.addUriRelativeFilterGroup(disallowGroup);
+        mIntentFilter.addUriRelativeFilterGroup(matchGroup);
+        assertEquals(NO_MATCH_DATA, mIntentFilter.matchData(null, DATA_SCHEME, uri));
+        assertEquals(NO_MATCH_DATA, mIntentFilter.matchData(null, DATA_SCHEME, uri2));
+        mIntentFilter.clearUriRelativeFilterGroups();
+
+        // First group will not match so check the next group. The second group will
+        // match so the disallowed group will not be checked and the intent filter
+        // will match.
+        mIntentFilter.addUriRelativeFilterGroup(noMatchGroup);
+        mIntentFilter.addUriRelativeFilterGroup(matchGroup);
+        mIntentFilter.addUriRelativeFilterGroup(disallowGroup);
+        assertEquals(MATCH_CATEGORY_PATH + MATCH_ADJUSTMENT_NORMAL,
+                mIntentFilter.matchData(null, DATA_SCHEME, uri));
+        assertEquals(MATCH_CATEGORY_PATH + MATCH_ADJUSTMENT_NORMAL,
+                mIntentFilter.matchData(null, DATA_SCHEME, uri2));
+    }
+
+    @Test
     public void testActions() {
         for (int i = 0; i < 10; i++) {
             mIntentFilter.addAction(ACTION + i);
@@ -1121,6 +1230,57 @@ public class IntentFilterTest {
         assertEquals(DATA_PATH, intentFilter.getDataPath(0).getPath());
         assertEquals(HOST, intentFilter.getDataAuthority(0).getHost());
         assertEquals(PORT, intentFilter.getDataAuthority(0).getPort());
+        out.close();
+    }
+
+    @Test
+    @IgnoreUnderRavenwood
+    @RequiresFlagsEnabled(Flags.FLAG_RELATIVE_REFERENCE_INTENT_FILTERS)
+    public void testWriteToXmlWithRelRefGroup() throws IllegalArgumentException,
+            IllegalStateException, IOException, MalformedMimeTypeException, XmlPullParserException {
+        XmlSerializer xml;
+        ByteArrayOutputStream out;
+        UriRelativeFilterGroup relRefGroup = new UriRelativeFilterGroup(ACTION_ALLOW);
+        relRefGroup.addUriRelativeFilter(new UriRelativeFilter(PATH, PATTERN_LITERAL, "/path"));
+        relRefGroup.addUriRelativeFilter(new UriRelativeFilter(QUERY, PATTERN_SIMPLE_GLOB, "q*"));
+
+        xml = Xml.newSerializer();
+        out = new ByteArrayOutputStream();
+        xml.setOutput(out, "utf-8");
+        mIntentFilter.addAction(ACTION);
+        mIntentFilter.addCategory(CATEGORY);
+        mIntentFilter.addDataAuthority(HOST, String.valueOf(PORT));
+        mIntentFilter.addDataPath(DATA_PATH, 1);
+        mIntentFilter.addDataScheme(DATA_SCHEME);
+        mIntentFilter.addDataType(DATA_STATIC_TYPE);
+        mIntentFilter.addDynamicDataType(DATA_DYNAMIC_TYPE);
+        mIntentFilter.addMimeGroup(MIME_GROUP);
+        mIntentFilter.addUriRelativeFilterGroup(relRefGroup);
+        mIntentFilter.writeToXml(xml);
+        xml.flush();
+        final XmlPullParser parser = Xml.newPullParser();
+        final InputStream in = new ByteArrayInputStream(out.toByteArray());
+        parser.setInput(in, "utf-8");
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.readFromXml(parser);
+        assertEquals(ACTION, intentFilter.getAction(0));
+        assertEquals(CATEGORY, intentFilter.getCategory(0));
+        assertTrue(intentFilter.hasExactStaticDataType(DATA_STATIC_TYPE));
+        assertTrue(intentFilter.hasExactDynamicDataType(DATA_DYNAMIC_TYPE));
+        assertEquals(MIME_GROUP, intentFilter.getMimeGroup(0));
+        assertEquals(DATA_SCHEME, intentFilter.getDataScheme(0));
+        assertEquals(DATA_PATH, intentFilter.getDataPath(0).getPath());
+        assertEquals(HOST, intentFilter.getDataAuthority(0).getHost());
+        assertEquals(PORT, intentFilter.getDataAuthority(0).getPort());
+        assertEquals(mIntentFilter.countUriRelativeFilterGroups(),
+                intentFilter.countUriRelativeFilterGroups());
+        assertEquals(mIntentFilter.getUriRelativeFilterGroup(0).getUriRelativeFilters().size(),
+                intentFilter.getUriRelativeFilterGroup(0).getUriRelativeFilters().size());
+        Iterator<UriRelativeFilter> it =
+                intentFilter.getUriRelativeFilterGroup(0).getUriRelativeFilters().iterator();
+        assertTrue(relRefGroup.getUriRelativeFilters().contains(it.next()));
+        assertTrue(relRefGroup.getUriRelativeFilters().contains(it.next()));
+        assertFalse(it.hasNext());
         out.close();
     }
 
@@ -1452,6 +1612,51 @@ public class IntentFilterTest {
         assertEquals(mIntentFilter.countStaticDataTypes(), target.countStaticDataTypes());
         assertEquals(mIntentFilter.countDataTypes(), target.countDataTypes());
         assertEquals(mIntentFilter.getMimeGroup(0), target.getMimeGroup(0));
+    }
+
+    @Test
+    @IgnoreUnderRavenwood
+    @RequiresFlagsEnabled(Flags.FLAG_RELATIVE_REFERENCE_INTENT_FILTERS)
+    public void testWriteToParcelWithRelRefGroup() throws MalformedMimeTypeException {
+        UriRelativeFilterGroup relRefGroup = new UriRelativeFilterGroup(ACTION_ALLOW);
+        relRefGroup.addUriRelativeFilter(new UriRelativeFilter(PATH, PATTERN_LITERAL, "/path"));
+        relRefGroup.addUriRelativeFilter(new UriRelativeFilter(QUERY, PATTERN_SIMPLE_GLOB, "q*"));
+
+        mIntentFilter.addAction(ACTION);
+        mIntentFilter.addCategory(CATEGORY);
+        mIntentFilter.addDataAuthority(HOST, String.valueOf(PORT));
+        mIntentFilter.addDataPath(DATA_PATH, 1);
+        mIntentFilter.addDataScheme(DATA_SCHEME);
+        mIntentFilter.addDataType(DATA_STATIC_TYPE);
+        mIntentFilter.addDynamicDataType(DATA_DYNAMIC_TYPE);
+        mIntentFilter.addMimeGroup(MIME_GROUP);
+        mIntentFilter.addUriRelativeFilterGroup(relRefGroup);
+        Parcel parcel = Parcel.obtain();
+        mIntentFilter.writeToParcel(parcel, 1);
+        parcel.setDataPosition(0);
+        IntentFilter target = IntentFilter.CREATOR.createFromParcel(parcel);
+        assertEquals(mIntentFilter.getAction(0), target.getAction(0));
+        assertEquals(mIntentFilter.getCategory(0), target.getCategory(0));
+        assertEquals(mIntentFilter.getDataAuthority(0).getHost(),
+                target.getDataAuthority(0).getHost());
+        assertEquals(mIntentFilter.getDataAuthority(0).getPort(),
+                target.getDataAuthority(0).getPort());
+        assertEquals(mIntentFilter.getDataPath(0).getPath(), target.getDataPath(0).getPath());
+        assertEquals(mIntentFilter.getDataScheme(0), target.getDataScheme(0));
+        assertEquals(mIntentFilter.getDataType(0), target.getDataType(0));
+        assertEquals(mIntentFilter.getDataType(1), target.getDataType(1));
+        assertEquals(mIntentFilter.countStaticDataTypes(), target.countStaticDataTypes());
+        assertEquals(mIntentFilter.countDataTypes(), target.countDataTypes());
+        assertEquals(mIntentFilter.getMimeGroup(0), target.getMimeGroup(0));
+        assertEquals(mIntentFilter.countUriRelativeFilterGroups(),
+                target.countUriRelativeFilterGroups());
+        assertEquals(mIntentFilter.getUriRelativeFilterGroup(0).getUriRelativeFilters().size(),
+                target.getUriRelativeFilterGroup(0).getUriRelativeFilters().size());
+        Iterator<UriRelativeFilter> it =
+                target.getUriRelativeFilterGroup(0).getUriRelativeFilters().iterator();
+        assertTrue(relRefGroup.getUriRelativeFilters().contains(it.next()));
+        assertTrue(relRefGroup.getUriRelativeFilters().contains(it.next()));
+        assertFalse(it.hasNext());
     }
 
     @Test
