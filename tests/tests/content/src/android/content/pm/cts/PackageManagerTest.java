@@ -3476,6 +3476,13 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
                     PackageManager.PackageInfoFlags.of(GET_ACTIVITIES));
             assertEquals(1, packageInfo.activities.length);
             assertEquals("com.example.helloworld.MainActivity", packageInfo.activities[0].name);
+
+            // 4. mPackageManager.getInstalledPackages(GET_ACTIVITIES);
+            List<PackageInfo> pkgs = mPackageManager.getInstalledPackages(
+                    PackageManager.PackageInfoFlags.of(GET_ACTIVITIES));
+            PackageInfo pkgInfo = findPackageOrFail(pkgs, HELLO_WORLD_PACKAGE_NAME);
+            assertEquals(1, pkgInfo.activities.length);
+            assertEquals("com.example.helloworld.MainActivity", pkgInfo.activities[0].name);
         }
 
         // Default filtration of services.
