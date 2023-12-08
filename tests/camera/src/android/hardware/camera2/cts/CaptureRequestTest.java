@@ -3229,6 +3229,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 CameraMetadata.CONTROL_AUTOFRAMING_ON};
         final int zoomSteps = 5;
         final float zoomErrorMargin = 0.05f;
+        final int kMaxNumFrames = 200;
         Size maxPreviewSize = mOrderedPreviewSizes.get(0); // Max preview size.
         CaptureRequest.Builder requestBuilder =
                 mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
@@ -3259,17 +3260,34 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                         CaptureResult.CONTROL_VIDEO_STABILIZATION_MODE);
 
                 if (mode == CameraMetadata.CONTROL_AUTOFRAMING_ON) {
-                    if (expectedZoomRatio == 0.0f) {
-                        expectedZoomRatio = resultZoomRatio;
-                    }
-                    assertTrue("Autoframing state should be FRAMING or CONVERGED when AUTOFRAMING"
-                            + "is ON",
+                    int numFrames = 0;
+                    while (numFrames < kMaxNumFrames) {
+                        result = listener.getCaptureResult(WAIT_FOR_RESULT_TIMEOUT_MS);
+                        autoframingState = getValueNotNull(result,
+                                CaptureResult.CONTROL_AUTOFRAMING_STATE);
+                        assertTrue("Autoframing state should be FRAMING or CONVERGED when "
+                            + "AUTOFRAMING is ON",
                             autoframingState == CameraMetadata.CONTROL_AUTOFRAMING_STATE_FRAMING
                                     || autoframingState
                                             == CameraMetadata.CONTROL_AUTOFRAMING_STATE_CONVERGED);
-                    assertTrue("Video Stablization should be OFF when AUTOFRAMING is ON",
+
+                        assertTrue("Video Stablization should be OFF when AUTOFRAMING is ON",
                             videoStabilizationMode
                                     == CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_OFF);
+
+                        resultZoomRatio = getValueNotNull(result, CaptureResult.CONTROL_ZOOM_RATIO);
+                        if (autoframingState ==
+                                CameraMetadata.CONTROL_AUTOFRAMING_STATE_CONVERGED) {
+                            break;
+                        }
+                        numFrames++;
+                    }
+                    assertTrue("Autoframing state didn't converge within " + kMaxNumFrames
+                            + " frames", numFrames < kMaxNumFrames);
+
+                    if (expectedZoomRatio == 0.0f) {
+                        expectedZoomRatio = resultZoomRatio;
+                    }
                 } else {
                     expectedZoomRatio = testZoomRatio;
                     assertTrue("Autoframing state should be INACTIVE when AUTOFRAMING is OFF",
