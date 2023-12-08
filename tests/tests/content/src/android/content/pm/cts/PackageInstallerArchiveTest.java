@@ -408,12 +408,18 @@ public class PackageInstallerArchiveTest {
                 draftSessionId);
         assertThat(unarchiveId).isEqualTo(draftSessionId);
         assertThat(sessionInfo.appPackageName).isEqualTo(PACKAGE_NAME);
+        assertThat(sessionInfo.installFlags & PackageManager.INSTALL_UNARCHIVE_DRAFT).isNotEqualTo(
+                0);
+        assertThat(sessionInfo.isUnarchival()).isTrue();
         PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
                 PackageInstaller.SessionParams.MODE_FULL_INSTALL);
         params.setUnarchiveId(unarchiveId);
         params.appPackageName = PACKAGE_NAME;
         int sessionId = mPackageInstaller.createSession(params);
         assertThat(unarchiveId).isEqualTo(sessionId);
+        sessionInfo = mPackageInstaller.getSessionInfo(sessionId);
+        assertThat(sessionInfo.installFlags & PackageManager.INSTALL_UNARCHIVE).isNotEqualTo(0);
+        assertThat(sessionInfo.isUnarchival()).isTrue();
         mPackageInstaller.abandonSession(sessionId);
     }
 
