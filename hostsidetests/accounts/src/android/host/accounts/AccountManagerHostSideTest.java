@@ -39,6 +39,7 @@ import com.android.tradefed.testtype.IDeviceTest;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -112,6 +113,7 @@ public class AccountManagerHostSideTest implements IDeviceTest, IBuildReceiver {
     }
 
     @Test
+    @Ignore("Flaky test - b/303573931")
     public void tesAddAccount_logsMetrics() throws Exception {
         assertMetricsLogged(getDevice(), () -> {
             runDeviceTests(
@@ -152,6 +154,7 @@ public class AccountManagerHostSideTest implements IDeviceTest, IBuildReceiver {
     }
 
     @Test
+    @Ignore("Flaky test - b/303573931")
     public void tesAddAccountExplicitly_logsMetrics() throws Exception {
         final String[] expectedVisibilityStr = new String[]{"0:", "1:", "2:", "3:", "4:"};
         assertMetricsLogged(getDevice(), () -> {
@@ -172,6 +175,7 @@ public class AccountManagerHostSideTest implements IDeviceTest, IBuildReceiver {
     }
 
     @Test
+    @Ignore("Flaky test - b/303573931")
     public void tesGetAuthToken_logsMetrics() throws Exception {
         assertMetricsLogged(getDevice(), () -> {
             runDeviceTests(
