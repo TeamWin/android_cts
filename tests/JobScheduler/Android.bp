@@ -24,6 +24,7 @@ android_test {
         "androidx.test.uiautomator_uiautomator",
         "androidx.test.rules",
         "cts-wm-util",
+        "Harrier",
     ],
     libs: ["android.test.base"],
     srcs: [
