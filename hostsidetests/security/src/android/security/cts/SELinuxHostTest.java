@@ -940,7 +940,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     @Test
     public void testDevTypeViolators() throws Exception {
         int vsrVersion = getVSRApiLevel(getDevice());
-        assumeTrue("Skipping test: dev_tyoe is enforced for W or later", vsrVersion > 35);
+        assumeTrue("Skipping test: dev_type is enforced for W or later", vsrVersion > 202404);
         assertSepolicyTests("TestDevTypeViolations", "/sepolicy_tests", true);
     }
 
