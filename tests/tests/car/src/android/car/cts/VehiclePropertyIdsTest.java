@@ -500,6 +500,10 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 VehiclePropertyIds.toString(
                         VehiclePropertyIds.DRIVER_DISTRACTION_WARNING_ENABLED))
                 .isEqualTo("DRIVER_DISTRACTION_WARNING_ENABLED");
+        assertThat(
+                VehiclePropertyIds.toString(
+                        VehiclePropertyIds.DRIVER_DISTRACTION_WARNING))
+                .isEqualTo("DRIVER_DISTRACTION_WARNING");
     }
 
     /**
