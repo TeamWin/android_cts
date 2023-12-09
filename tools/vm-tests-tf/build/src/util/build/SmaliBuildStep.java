@@ -16,8 +16,8 @@
 
 package util.build;
 
-import com.android.tools.smali.smali.Smali;
-import com.android.tools.smali.smali.SmaliOptions;
+import org.jf.smali.Smali;
+import org.jf.smali.SmaliOptions;
 
 import java.io.File;
 import java.util.List;

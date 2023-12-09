@@ -39,7 +39,7 @@ java_library_host {
     // super fragile.
     static_libs: [
         "compatibility-host-util",
-        "smali-dexlib2",
+        "dexlib2",
         "jsonlib",
         "tradefed",
     ],

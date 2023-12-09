@@ -28,7 +28,7 @@ java_test_host {
     static_libs: [
         "compat-classpaths-testing",
         "modules-utils-build-testing",
-        "smali-dexlib2-no-guava",
+        "dexlib2-no-guava-no-cli",
     ],
     // tag this module as a cts test artifact
     test_suites: [
