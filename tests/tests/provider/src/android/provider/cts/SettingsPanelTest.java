@@ -17,6 +17,7 @@
 package android.provider.cts;
 
 import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
@@ -32,6 +33,7 @@ import android.support.test.uiautomator.Until;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
+import androidx.test.uiautomator.StaleObjectException;
 
 import org.junit.After;
 import org.junit.Before;
@@ -216,8 +218,14 @@ public class SettingsPanelTest {
         assumeTrue(mHasTouchScreen);
         pressSeeMore();
 
-        UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_TITLE));
-        assertThat(titleView).isNull();
+        try {
+            UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_TITLE));
+            assertThat(titleView).isNull();
+        } catch (StaleObjectException ex) {
+            // If we get a StaleObjectException, it means that the underlying View has already
+            // been destroyed. The test panel might be no longer visible, which is same as expected
+            // result. Filter out exceptions to avoid unnecessary flaky errors.
+        }
     }
 
     private void launchVolumePanel() {

@@ -37,6 +37,7 @@ android_test {
         "ctstestrunner-axt",
         "junit",
         "compatibility-device-util-axt",
+        "cts-wm-util",
     ],
     libs: ["android.test.base"],
     // Tag this module as a cts test artifact
@@ -51,6 +52,7 @@ android_test {
         ":CtsAppWidgetProvider1",
         ":CtsAppWidgetLauncher1",
         ":CtsAppWidgetProvider2",
+        ":CtsAppWidgetTestCasesBalApp",
     ],
     per_testcase_directory: true,
 }

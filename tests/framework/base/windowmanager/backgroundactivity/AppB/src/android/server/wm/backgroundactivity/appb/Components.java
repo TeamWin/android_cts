@@ -65,6 +65,11 @@ public class Components extends ComponentsBase {
 
         /** Start the pending intent with a `null` bundle if no options are set. */
         public final String USE_NULL_BUNDLE = "USE_NULL_BUNDLE";
+        /**
+         * If present and true starts the pending intent with a bundle created from ActivityOptions
+         * where setPendingIntentCreatorBackgroundActivityStartMode() to allow BAL.
+         */
+        public final String ALLOW_CREATOR_BAL = "ALLOW_CREATOR_BAL";
     }
 
     /** Extra key constants for {@link #START_PENDING_INTENT_RECEIVER} */

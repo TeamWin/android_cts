@@ -26,10 +26,6 @@ public interface ISurfaceValidatorTestCase {
 
     void end();
 
-    default boolean hasAnimation() {
-        return true;
-    }
-
     default Rect getBoundsToCheck(FrameLayout parent) {
         Rect boundsToCheck = new Rect(0, 0, parent.getWidth(), parent.getHeight());
         int[] topLeft = new int[2];
@@ -38,7 +34,12 @@ public interface ISurfaceValidatorTestCase {
         return  boundsToCheck;
     }
 
-    default void waitForReady() {
-        return;
+    default boolean waitForReady() {
+        return true;
     }
+
+    default int getNumFramesRequired() {
+        return 100;
+    }
+
 }

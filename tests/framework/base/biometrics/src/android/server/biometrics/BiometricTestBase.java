@@ -517,7 +517,7 @@ abstract class BiometricTestBase extends ActivityManagerTestBase implements Test
     protected void enrollForSensor(@NonNull BiometricTestSession session, int sensorId)
             throws Exception {
         Log.d(TAG, "Enrolling for sensor: " + sensorId);
-        final int userId = 0;
+        final int userId = Utils.getUserId();
 
         session.startEnroll(userId);
         mInstrumentation.waitForIdleSync();

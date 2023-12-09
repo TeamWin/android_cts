@@ -113,6 +113,8 @@ public class Utils {
     public static final int VISIBLE_ACTIVITY_CALLBACK_REGISTER_WITHOUT_EXECUTOR = 1;
     public static final int VISIBLE_ACTIVITY_CALLBACK_REGISTER_WITHOUT_CALLBACK = 2;
 
+    public static final int NUM_TEST_RESOURCE_FILE_MULTIPLE = 50;
+
     public static final String TEST_APP_PACKAGE = "android.voiceinteraction.testapp";
     public static final String TESTCASE_TYPE = "testcase_type";
     public static final String TESTINFO = "testinfo";
@@ -233,7 +235,9 @@ public class Utils {
                     + PROXY_VOICE_INTERACTION_SERVICE_CLASS_NAME;
     public static final String VOICE_INTERACTION_SERVICE_BINDING_HELPER_CLASS_NAME =
             "android.voiceinteraction.service.VoiceInteractionServiceBindingHelper";
-
+    // File opening related
+    public static final String TEST_RESOURCE_FILE_NAME = "test_resource";
+    public static final String TEST_RESOURCE_FILE_CONTENT = "This file contains test resource";
     private static final String KEY_FAKE_DATA = "fakeData";
     private static final String VALUE_FAKE_DATA = "fakeData";
 

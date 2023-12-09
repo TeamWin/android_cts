@@ -16,20 +16,30 @@
 
 package android.appwidget.cts;
 
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.server.wm.UiDeviceUtils.pressHomeButton;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.ActivityManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
+import android.appwidget.cts.activity.EmptyActivity;
 import android.appwidget.cts.common.Constants;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.LauncherApps;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
+import android.server.wm.WindowManagerStateHelper;
+import android.util.Log;
 
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -46,6 +56,8 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
 
     private String mDefaultLauncher;
 
+    protected WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
+
     @Before
     public void setUpLauncher() throws Exception {
         mDefaultLauncher = getDefaultLauncher();
@@ -57,7 +69,7 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
         setLauncher(mDefaultLauncher);
     }
 
-    @CddTest(requirement="3.8.2/C-2-2")
+    @CddTest(requirement = "3.8.2/C-2-2")
     private void runPinWidgetTest(final String launcherPkg) throws Exception {
         setLauncher(launcherPkg + "/" + LAUNCHER_CLASS);
 
@@ -103,7 +115,7 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
         assertEquals("dummy-2", resultReceiver.result.getStringExtra("dummy"));
     }
 
-    @Ignore("b/265187199")
+    //@Ignore("b/265187199")
     @Test
     public void testPinWidget_launcher1() throws Exception {
         runPinWidgetTest("android.appwidget.cts.packages.launcher1");
@@ -115,9 +127,9 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
         runPinWidgetTest("android.appwidget.cts.packages.launcher2");
     }
 
-    @CddTest(requirement="3.8.2/C-2-1")
+    @CddTest(requirement = "3.8.2/C-2-1")
     public void verifyIsRequestPinAppWidgetSupported(String launcherPkg, boolean expectedSupport)
-        throws Exception {
+            throws Exception {
         setLauncher(launcherPkg + "/" + LAUNCHER_CLASS);
 
         Context context = getInstrumentation().getContext();
@@ -155,7 +167,52 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
     }
 
     private void setLauncher(String component) throws Exception {
-        runShellCommand("cmd package set-home-activity --user "
+        Log.i("BalActivity", "cmd package set-home-activity --user "
                 + getInstrumentation().getContext().getUserId() + " " + component);
+        /*runShellCommand("cmd package set-home-activity --user "
+                + getInstrumentation().getContext().getUserId() + " " + component);*/
+        runShellCommand("cmd package set-home-activity "
+                 + component);
     }
+
+    @Test
+    public void testRequestPinAppWidgetNotAllBal() throws Exception {
+        String launcherPkg = "android.appwidget.cts.packages.launcher1";
+        setLauncher(launcherPkg + "/" + LAUNCHER_CLASS);
+        Context context = getInstrumentation().getContext();
+        // Request to pin widget
+        BlockingBroadcastReceiver setupReceiver = new BlockingBroadcastReceiver()
+                .register(Constants.ACTION_SETUP_REPLY);
+
+        // starts the BalActivity in the test app AppBal.
+        context.startActivity(new Intent(Intent.ACTION_MAIN)
+                .setPackage("android.appwidget.cts.appbal")
+                .addFlags(FLAG_ACTIVITY_NEW_TASK));
+
+        setupReceiver.await();
+        // Verify that the confirmation dialog was opened
+        assertTrue(setupReceiver.result.getBooleanExtra(Constants.EXTRA_SUCCESS, false));
+
+        // Accept the request
+        context.sendBroadcast(new Intent(Constants.ACTION_CONFIRM_PIN)
+                .setPackage(launcherPkg));
+
+        // Press home key to ensure stopAppSwitches is called because the last-stop-app-switch-time
+        // is a criteria of allowing background start.
+        pressHomeButton();
+        SystemUtil.runWithShellPermissionIdentity(ActivityManager::resumeAppSwitches);
+        mWmState.waitForHomeActivityVisible();
+        SystemUtil.runWithShellPermissionIdentity(ActivityManager::resumeAppSwitches);
+
+        boolean result = false;
+        // The background activity will be launched 30s after the BalService starts. The
+        // waitForFocusedActivity only waits for 5s. So put it in a for loop.
+        for (int i = 0; i < 10; i++) {
+            result = mWmState.waitForFocusedActivity(
+                    "Empty Activity is launched", new ComponentName(context, EmptyActivity.class));
+            if (result) break;
+        }
+        assertFalse("Should not able to launch background activity", result);
+    }
+
 }

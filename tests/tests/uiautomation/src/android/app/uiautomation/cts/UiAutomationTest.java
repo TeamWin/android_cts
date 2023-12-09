@@ -16,27 +16,24 @@
 
 package android.app.uiautomation.cts;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 import android.Manifest;
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
+import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.cts.utils.ActivityLaunchUtils;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Process;
@@ -44,30 +41,29 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
-import android.text.TextUtils;
-import android.util.Log;
 import android.view.FrameStats;
 import android.view.KeyEvent;
-import android.view.Window;
 import android.view.WindowAnimationFrameStats;
 import android.view.WindowContentFrameStats;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
-import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.ListView;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.UserHelper;
 
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
-import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -76,30 +72,51 @@ import java.util.concurrent.TimeoutException;
 @RunWith(AndroidJUnit4.class)
 public final class UiAutomationTest {
 
-    private static final String TAG = UiAutomationTest.class.getSimpleName();
-
-    private static final long QUIET_TIME_TO_BE_CONSIDERED_IDLE_STATE = 1000;//ms
-
-    private static final long TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE = 1000 * 10;//ms
+    private static final long IDLE_QUIET_TIME_MS = 1000;
+    private static final long IDLE_WAIT_TIME_MS = 10 * 1000;
+    private static final long TIMEOUT_FOR_SERVICE_ENABLE_MS = 10 * 1000;
 
     // Used to enable/disable accessibility services
     private static final String COMPONENT_NAME_SEPARATOR = ":";
-    private static final int TIMEOUT_FOR_SERVICE_ENABLE = 10000; // millis; 10s
+
+    private final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
+    private final ActivityTestRule<UiAutomationTestActivity> mActivityRule =
+            new ActivityTestRule<>(UiAutomationTestActivity.class, false, false);
 
     @Rule
-    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
-            new AccessibilityDumpOnFailureRule();
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mActivityRule)
+            .around(mDumpOnFailureRule);
 
     private final UserHelper mUserHelper = new UserHelper();
 
+    private UiAutomation mUiAutomation;
+    private Activity mActivity;
+
+
     @Before
-    public void setUp() throws Exception {
-        UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
-        AccessibilityServiceInfo info = uiAutomation.getServiceInfo();
-        info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
-        Log.d(TAG, "setup(): userHelper=" + mUserHelper);
-        uiAutomation.setServiceInfo(info);
-        grantWriteSecureSettingsPermission(uiAutomation);
+    public void setUp() {
+        // TODO(b/272604566): remove check below once a11y supports concurrent users
+        // NOTE: cannot use Harrier / DeviceState because they call Instrumentation in a way that
+        // would make the tests pass. Besides, there are a @RequireNotVisibleBackgroundUsers and a
+        // @RequireRunNotOnSecondaryUser, but not a @RequireRunNotOnVisibleBackgroundSecondaryUser
+        assumeFalse("not supported when running on visible background user",
+                mUserHelper.isVisibleBackgroundUser());
+
+        InstrumentedAccessibilityService.disableAllServices();
+    }
+
+    @After
+    public void tearDown() {
+        if (mUiAutomation != null) {
+            mUiAutomation.destroy();
+        }
+    }
+
+    @AfterClass
+    public static void postTestTearDown() {
+        InstrumentedAccessibilityService.disableAllServices();
     }
 
     @AppModeFull
@@ -108,6 +125,7 @@ public final class UiAutomationTest {
         final Context context = getInstrumentation().getContext();
         final ActivityManager activityManager = context.getSystemService(ActivityManager.class);
         final PackageManager packageManager = context.getPackageManager();
+        mUiAutomation = getInstrumentation().getUiAutomation();
 
         // Try to access APIs guarded by a platform defined signature permissions
         assertThrows(SecurityException.class,
@@ -120,7 +138,7 @@ public final class UiAutomationTest {
 
         // Access APIs guarded by a platform defined signature permissions
         try {
-            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
+            mUiAutomation.adoptShellPermissionIdentity();
             // Access APIs guarded by a platform defined signature permission
             activityManager.getPackageImportance("foo.bar.baz");
 
@@ -130,7 +148,7 @@ public final class UiAutomationTest {
         } catch (SecurityException e) {
             fail("Should be able to access APIs protected by a permission apps cannot get");
         } finally {
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+            mUiAutomation.dropShellPermissionIdentity();
         }
 
         // Try to access APIs guarded by a platform defined signature permissions
@@ -147,418 +165,245 @@ public final class UiAutomationTest {
     @Test
     public void testAdoptSomeShellPermissions() {
         final Context context = getInstrumentation().getContext();
+        mUiAutomation = getInstrumentation().getUiAutomation();
 
         // Make sure we don't have any of the permissions
-        assertSame(PackageManager.PERMISSION_DENIED, context.checkSelfPermission(
-                Manifest.permission.BATTERY_STATS));
-        assertSame(PackageManager.PERMISSION_DENIED, context.checkSelfPermission(
-                Manifest.permission.PACKAGE_USAGE_STATS));
+        assertThat(context.checkSelfPermission(Manifest.permission.BATTERY_STATS))
+                .isEqualTo(PackageManager.PERMISSION_DENIED);
+        assertThat(context.checkSelfPermission(Manifest.permission.PACKAGE_USAGE_STATS))
+                .isEqualTo(PackageManager.PERMISSION_DENIED);
 
-        try {
-            // Adopt a permission
-            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
-                    Manifest.permission.BATTERY_STATS);
-            // Check one is granted and the other not
-            assertSame(PackageManager.PERMISSION_GRANTED, context.checkSelfPermission(
-                    Manifest.permission.BATTERY_STATS));
-            assertSame(PackageManager.PERMISSION_DENIED, context.checkSelfPermission(
-                    Manifest.permission.PACKAGE_USAGE_STATS));
+        // Adopt a permission
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.BATTERY_STATS);
+        // Check one is granted and the other not
+        assertThat(context.checkSelfPermission(Manifest.permission.BATTERY_STATS))
+                .isEqualTo(PackageManager.PERMISSION_GRANTED);
+        assertThat(context.checkSelfPermission(Manifest.permission.PACKAGE_USAGE_STATS))
+                .isEqualTo(PackageManager.PERMISSION_DENIED);
 
-            // Adopt all permissions
-            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
-            // Check both permissions are granted
-            assertSame(PackageManager.PERMISSION_GRANTED, context.checkSelfPermission(
-                    Manifest.permission.BATTERY_STATS));
-            assertSame(PackageManager.PERMISSION_GRANTED, context.checkSelfPermission(
-                    Manifest.permission.PACKAGE_USAGE_STATS));
+        // Adopt all permissions
+        mUiAutomation.adoptShellPermissionIdentity();
+        // Check both permissions are granted
+        assertThat(context.checkSelfPermission(Manifest.permission.BATTERY_STATS))
+                .isEqualTo(PackageManager.PERMISSION_GRANTED);
+        assertThat(context.checkSelfPermission(Manifest.permission.PACKAGE_USAGE_STATS))
+                .isEqualTo(PackageManager.PERMISSION_GRANTED);
 
-            // Adopt a permission
-            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
-                    Manifest.permission.PACKAGE_USAGE_STATS);
-            // Check one is granted and the other not
-            assertSame(PackageManager.PERMISSION_DENIED, context.checkSelfPermission(
-                    Manifest.permission.BATTERY_STATS));
-            assertSame(PackageManager.PERMISSION_GRANTED, context.checkSelfPermission(
-                    Manifest.permission.PACKAGE_USAGE_STATS));
-        } finally {
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
-        }
+        // Adopt a permission
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.PACKAGE_USAGE_STATS);
+        // Check one is granted and the other not
+        assertThat(context.checkSelfPermission(Manifest.permission.BATTERY_STATS))
+                .isEqualTo(PackageManager.PERMISSION_DENIED);
+        assertThat(context.checkSelfPermission(Manifest.permission.PACKAGE_USAGE_STATS))
+                .isEqualTo(PackageManager.PERMISSION_GRANTED);
     }
 
     @Test
     public void testWindowContentFrameStats() throws Exception {
-        Activity activity = null;
-        try {
-            UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+        mUiAutomation = getInstrumentation().getUiAutomation();
+        final int windowId = startActivitySync();
+        // Clear stats to start with a clean slate.
+        assertWithMessage("clearWindowContentFrameStats(%s)", windowId)
+                .that(mUiAutomation.clearWindowContentFrameStats(windowId)).isTrue();
 
-            // Start an activity.
-            Intent intent = new Intent(getInstrumentation().getContext(),
-                    UiAutomationTestFirstActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            activity = startActivitySync(intent);
+        // Scroll around before grabbing the frame stats.
+        final ListView listView = mActivity.findViewById(R.id.list_view);
+        scrollListView(listView, listView.getAdapter().getCount() - 1);
+        scrollListView(listView, 0);
+        WindowContentFrameStats stats = mUiAutomation.getWindowContentFrameStats(windowId);
 
-            // Wait for things to settle.
-            uiAutomation.waitForIdle(
-                    QUIET_TIME_TO_BE_CONSIDERED_IDLE_STATE, TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE);
-
-            // Wait for Activity draw finish
-            getInstrumentation().waitForIdleSync();
-
-            // Find the application window.
-            List<AccessibilityWindowInfo> windows = uiAutomation.getWindows();
-            assertWithMessage("UiAutomation.getWindows()").that(windows).isNotEmpty();
-            int windowId = findAppWindowId(windows, activity);
-            assertWithMessage("window id for activity %s (windows=%s)", activity, windows)
-                    .that(windowId).isAtLeast(0);
-
-            // Clear stats to be with a clean slate.
-            assertWithMessage("clearWindowContentFrameStats(%s)", windowId)
-                    .that(uiAutomation.clearWindowContentFrameStats(windowId)).isTrue();
-
-            // Find the list to scroll around.
-            final ListView listView = activity.findViewById(R.id.list_view);
-
-            // Scroll a bit.
-            scrollListView(uiAutomation, listView, listView.getAdapter().getCount() - 1);
-            scrollListView(uiAutomation, listView, 0);
-
-            // Get the frame stats.
-            WindowContentFrameStats stats = uiAutomation.getWindowContentFrameStats(windowId);
-
-            // Check the frame stats...
-
-            // We should have something.
-            assertNotNull(stats);
-
-            // The refresh period is always positive.
-            assertTrue(stats.getRefreshPeriodNano() > 0);
-
-            // There is some frame data.
-            final int frameCount = stats.getFrameCount();
-            assertTrue(frameCount > 0);
-
-            // The frames are ordered in ascending order.
-            assertWindowContentTimestampsInAscendingOrder(stats);
-
-            // The start and end times are based on first and last frame.
-            assertEquals(stats.getStartTimeNano(), stats.getFramePresentedTimeNano(0));
-            assertEquals(stats.getEndTimeNano(), stats.getFramePresentedTimeNano(frameCount - 1));
-        } finally {
-            // Clean up.
-            if (activity != null) {
-                activity.finish();
-            }
-        }
+        assertThat(stats).isNotNull();
+        assertThat(stats.getRefreshPeriodNano()).isGreaterThan(0);
+        assertThat(stats.getFrameCount()).isGreaterThan(0);
+        assertWindowContentTimestampsInAscendingOrder(stats);
+        // The start and end times are based on first and last frame.
+        assertThat(stats.getStartTimeNano()).isEqualTo(
+                stats.getFramePresentedTimeNano(0));
+        assertThat(stats.getEndTimeNano()).isEqualTo(
+                stats.getFramePresentedTimeNano(stats.getFrameCount() - 1));
     }
 
     @Test
-    public void testWindowContentFrameStatsNoAnimation() throws Exception {
-        Activity activity = null;
-        try {
-            UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+    public void testWindowContentFrameStats_NoAnimation() throws Exception {
+        mUiAutomation = getInstrumentation().getUiAutomation();
+        final int windowId = startActivitySync();
+        // Clear stats to start with a clean slate.
+        assertWithMessage("clearWindowContentFrameStats(%s)", windowId)
+                .that(mUiAutomation.clearWindowContentFrameStats(windowId)).isTrue();
 
-            // Start an activity.
-            Intent intent = new Intent(getInstrumentation().getContext(),
-                    UiAutomationTestFirstActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            activity = startActivitySync(intent);
+        WindowContentFrameStats stats = mUiAutomation.getWindowContentFrameStats(windowId);
 
-            // Wait for things to settle.
-            uiAutomation.waitForIdle(
-                    QUIET_TIME_TO_BE_CONSIDERED_IDLE_STATE, TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE);
-
-            // Wait for Activity draw finish
-            getInstrumentation().waitForIdleSync();
-
-            // Find the application window.
-            List<AccessibilityWindowInfo> windows = uiAutomation.getWindows();
-            assertWithMessage("UiAutomation.getWindows()").that(windows).isNotEmpty();
-            int windowId = findAppWindowId(windows, activity);
-            assertWithMessage("window id for activity %s (windows=%s)", activity, windows)
-                    .that(windowId).isAtLeast(0);
-
-            // Clear stats to be with a clean slate.
-            assertWithMessage("clearWindowContentFrameStats(%s)", windowId)
-                    .that(uiAutomation.clearWindowContentFrameStats(windowId)).isTrue();
-
-            // Get the frame stats.
-            WindowContentFrameStats stats = uiAutomation.getWindowContentFrameStats(windowId);
-
-            // Check the frame stats...
-
-            // We should have something.
-            assertNotNull(stats);
-
-            // The refresh period is always positive.
-            assertTrue(stats.getRefreshPeriodNano() > 0);
-
-            // There is no data.
-            assertTrue(stats.getFrameCount() == 0);
-
-            // The start and end times are undefibed as we have no data.
-            assertEquals(stats.getStartTimeNano(), FrameStats.UNDEFINED_TIME_NANO);
-            assertEquals(stats.getEndTimeNano(), FrameStats.UNDEFINED_TIME_NANO);
-        } finally {
-            // Clean up.
-            if (activity != null) {
-                activity.finish();
-            }
+        assertThat(stats).isNotNull();
+        assertThat(stats.getRefreshPeriodNano()).isGreaterThan(0);
+        // Without scrolling we should have at most one frame rendered. Having zero or one
+        // frames rendered here depends on the render pipeline and is out of scope of this test.
+        final int frameCount = stats.getFrameCount();
+        assertThat(frameCount).isAtMost(1);
+        if (frameCount == 0) {
+            assertThat(stats.getStartTimeNano()).isEqualTo(FrameStats.UNDEFINED_TIME_NANO);
+            assertThat(stats.getEndTimeNano()).isEqualTo(FrameStats.UNDEFINED_TIME_NANO);
         }
     }
 
     @Presubmit
     @Test
-    public void testWindowAnimationFrameStatsDoesntCrash() throws Exception {
-        UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+    public void testWindowAnimationFrameStatsDoesNotCrash() {
+        mUiAutomation = getInstrumentation().getUiAutomation();
 
         // Get the frame stats. This just needs to not crash because these APIs are deprecated.
-        uiAutomation.clearWindowAnimationFrameStats();
-        WindowAnimationFrameStats stats = uiAutomation.getWindowAnimationFrameStats();
-        assertEquals(0, stats.getFrameCount());
-    }
+        mUiAutomation.clearWindowAnimationFrameStats();
+        WindowAnimationFrameStats stats = mUiAutomation.getWindowAnimationFrameStats();
 
+        assertThat(stats.getFrameCount()).isEqualTo(0);
+    }
 
     @Presubmit
     @Test
     public void testUsingUiAutomationAfterDestroy_shouldThrowException() {
-        UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
-        uiAutomation.destroy();
-        assertThrows(RuntimeException.class, () -> uiAutomation.getServiceInfo(),
+        mUiAutomation = getInstrumentation().getUiAutomation();
+
+        mUiAutomation.destroy();
+
+        assertThrows(RuntimeException.class, () -> mUiAutomation.getServiceInfo(),
                 "Expected exception when using destroyed UiAutomation");
     }
 
     @AppModeFull
     @Test
-    public void testDontSuppressAccessibility_canStartA11yService() throws Exception {
-        turnAccessibilityOff();
-        try {
-            getInstrumentation()
-                    .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
-            enableAccessibilityService();
-            assertTrue(UiAutomationTestA11yService.sConnectedInstance.isConnected());
-        } finally {
-            turnAccessibilityOff();
-        }
+    public void testDontSuppressAccessibility_canStartA11yService() {
+        mUiAutomation = getInstrumentation()
+                .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+
+        enableAccessibilityService();
     }
 
     @AppModeFull
     @Test
-    public void testServiceWithNoFlags_shutsDownA11yService() throws Exception {
-        turnAccessibilityOff();
-        try {
-            UiAutomation uiAutomation = getInstrumentation()
-                    .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
-            enableAccessibilityService();
-            assertTrue(UiAutomationTestA11yService.sConnectedInstance.isConnected());
-            uiAutomation.destroy();
-            assertTrue(UiAutomationTestA11yService.sConnectedInstance.isConnected());
-            getInstrumentation().getUiAutomation(); // Should suppress
-            waitForAccessibilityServiceToUnbind();
-        } finally {
-            turnAccessibilityOff();
-        }
+    public void testUiAutomationWithNoFlags_shutsDownA11yService() {
+        enableAccessibilityService();
+
+        mUiAutomation = getInstrumentation().getUiAutomation();
+
+        waitForAccessibilityServiceToUnbind();
     }
 
     @AppModeFull
     @Test
-    public void testServiceWithDontUseAccessibilityFlag_shutsDownA11yService() throws Exception {
-        turnAccessibilityOff();
-        try {
-            enableAccessibilityService();
-            assertTrue(UiAutomationTestA11yService.sConnectedInstance.isConnected());
-            getInstrumentation().getUiAutomation(
-                    UiAutomation.FLAG_DONT_USE_ACCESSIBILITY); // Should suppress
-            waitForAccessibilityServiceToUnbind();
-        } finally {
-            turnAccessibilityOff();
-        }
+    public void testUiAutomationWithDontUseAccessibilityFlag_shutsDownA11yService() {
+        enableAccessibilityService();
+
+        mUiAutomation = getInstrumentation().getUiAutomation(
+                UiAutomation.FLAG_DONT_USE_ACCESSIBILITY);
+
+        waitForAccessibilityServiceToUnbind();
     }
 
     @AppModeFull
     @Test
-    public void testServiceSuppressingA11yServices_a11yServiceStartsWhenDestroyed()
-            throws Exception {
-        turnAccessibilityOff();
-        try {
-            UiAutomation uiAutomation = getInstrumentation()
-                    .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
-            enableAccessibilityService();
-            uiAutomation.destroy();
+    public void testUiAutomationSuppressingA11yServices_a11yServiceStartsWhenDestroyed() {
+        enableAccessibilityService();
 
-            assertA11yServiceSuppressedAndRestartsAfterUiAutomationDestroyed(0);
-        } finally {
-            turnAccessibilityOff();
-        }
+        mUiAutomation = getInstrumentation().getUiAutomation();
+        waitForAccessibilityServiceToUnbind();
+
+        mUiAutomation.destroy();
+        waitForAccessibilityServiceToStart();
     }
 
     @AppModeFull
     @Test
-    public void testServiceSuppressingA11yServices_a11yServiceStartsWhenDestroyedAndFlagChanged()
-            throws Exception {
-        turnAccessibilityOff();
-        try {
-            UiAutomation uiAutomation = getInstrumentation()
-                    .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
-            enableAccessibilityService();
-            uiAutomation.destroy();
+    public void testUiAutomationSuppressingA11yServices_a11yServiceStartsWhenFlagsChange() {
+        enableAccessibilityService();
 
-            assertA11yServiceSuppressedAndRestartsAfterUiAutomationDestroyed(
-                    UiAutomation.FLAG_DONT_USE_ACCESSIBILITY);
-        } finally {
-            turnAccessibilityOff();
-        }
+        mUiAutomation = getInstrumentation().getUiAutomation();
+        waitForAccessibilityServiceToUnbind();
+
+        mUiAutomation = getInstrumentation()
+                .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        waitForAccessibilityServiceToStart();
     }
 
     @AppModeFull
     @Test
-    public void testServiceSuppressingA11yServices_a11yServiceStartsWhenFlagsChange()
-            throws Exception {
-        turnAccessibilityOff();
-        try {
-            getInstrumentation()
-                    .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
-            enableAccessibilityService();
-            getInstrumentation().getUiAutomation();
-            // We verify above that the connection is broken here. Make sure we see a new one
-            // after we change the flags
-            waitForAccessibilityServiceToUnbind();
-            getInstrumentation()
-                    .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
-            waitForAccessibilityServiceToStart();
-        } finally {
-            turnAccessibilityOff();
-        }
-    }
-
-    @AppModeFull
-    @Test
-    public void testCallingDisabledAccessibilityAPIsWithDontUseAccessibilityFlag_shouldThrowException()
-            throws Exception {
-        final UiAutomation uiAutomation = getInstrumentation()
+    public void testCallingAccessibilityAPIsWithDontUseAccessibilityFlag_shouldThrowException() {
+        mUiAutomation = getInstrumentation()
                 .getUiAutomation(UiAutomation.FLAG_DONT_USE_ACCESSIBILITY);
         final String failMsg =
                 "Should not be able to access Accessibility APIs disabled by UiAutomation flag, "
                         + "FLAG_DONT_USE_ACCESSIBILITY";
         assertThrows(IllegalStateException.class,
-                () -> uiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK),
+                () -> mUiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK),
                 failMsg);
         assertThrows(IllegalStateException.class,
-                () -> uiAutomation.findFocus(AccessibilityNodeInfo.FOCUS_INPUT), failMsg);
+                () -> mUiAutomation.findFocus(AccessibilityNodeInfo.FOCUS_INPUT), failMsg);
         assertThrows(IllegalStateException.class,
-                () -> uiAutomation.getServiceInfo(), failMsg);
+                () -> mUiAutomation.getServiceInfo(), failMsg);
         assertThrows(IllegalStateException.class,
-                () -> uiAutomation.setServiceInfo(new AccessibilityServiceInfo()), failMsg);
+                () -> mUiAutomation.setServiceInfo(new AccessibilityServiceInfo()), failMsg);
         assertThrows(IllegalStateException.class,
-                () -> uiAutomation.findFocus(AccessibilityNodeInfo.FOCUS_INPUT), failMsg);
+                () -> mUiAutomation.findFocus(AccessibilityNodeInfo.FOCUS_INPUT), failMsg);
         assertThrows(IllegalStateException.class,
-                () -> uiAutomation.getWindows(), failMsg);
+                () -> mUiAutomation.getWindows(), failMsg);
         assertThrows(IllegalStateException.class,
-                () -> uiAutomation.getWindowsOnAllDisplays(), failMsg);
+                () -> mUiAutomation.getWindowsOnAllDisplays(), failMsg);
         assertThrows(IllegalStateException.class,
-                () -> uiAutomation.clearWindowContentFrameStats(-1), failMsg);
+                () -> mUiAutomation.clearWindowContentFrameStats(-1), failMsg);
         assertThrows(IllegalStateException.class,
-                () -> uiAutomation.getWindowContentFrameStats(-1), failMsg);
+                () -> mUiAutomation.getWindowContentFrameStats(-1), failMsg);
         assertThrows(IllegalStateException.class,
-                () -> uiAutomation.getRootInActiveWindow(), failMsg);
+                () -> mUiAutomation.getRootInActiveWindow(), failMsg);
         assertThrows(IllegalStateException.class,
-                () -> uiAutomation.setOnAccessibilityEventListener(null), failMsg);
+                () -> mUiAutomation.setOnAccessibilityEventListener(null), failMsg);
     }
 
     @AppModeFull
     @Test
-    public void testCallingPublicAPIsWithDontUseAccessibilityFlag_shouldNotThrowException()
-            throws Exception {
-        final UiAutomation uiAutomation = getInstrumentation()
+    public void testCallingPublicAPIsWithDontUseAccessibilityFlag_shouldNotThrowException() {
+        mUiAutomation = getInstrumentation()
                 .getUiAutomation(UiAutomation.FLAG_DONT_USE_ACCESSIBILITY);
         final KeyEvent event = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN,
                 KeyEvent.KEYCODE_BACK, 0);
-        uiAutomation.injectInputEvent(event, true);
-        uiAutomation.syncInputTransactions();
-        uiAutomation.setRotation(UiAutomation.ROTATION_FREEZE_0);
-        uiAutomation.takeScreenshot();
-        uiAutomation.clearWindowAnimationFrameStats();
-        uiAutomation.getWindowAnimationFrameStats();
+        mUiAutomation.injectInputEvent(event, true);
+        mUiAutomation.syncInputTransactions();
+        mUiAutomation.setRotation(UiAutomation.ROTATION_FREEZE_0);
+        mUiAutomation.takeScreenshot();
+        mUiAutomation.clearWindowAnimationFrameStats();
+        mUiAutomation.getWindowAnimationFrameStats();
         try {
-            uiAutomation.adoptShellPermissionIdentity(Manifest.permission.BATTERY_STATS);
+            mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.BATTERY_STATS);
         } finally {
-            uiAutomation.dropShellPermissionIdentity();
+            mUiAutomation.dropShellPermissionIdentity();
         }
     }
 
     @Test
-    public void testScreenshot() throws TimeoutException {
-        UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+    public void testTakeScreenshot() throws Exception {
+        mUiAutomation = getInstrumentation().getUiAutomation();
 
         // Test with null window
-        Bitmap bitmap = uiAutomation.takeScreenshot(null);
-        assertNull(bitmap);
+        Bitmap bitmap = mUiAutomation.takeScreenshot(null);
+        assertThat(bitmap).isNull();
 
-        Activity activity = null;
-        try {
-
-            // Start an activity.
-            Intent intent = new Intent(getInstrumentation().getContext(),
-                    UiAutomationTestFirstActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            activity = startActivitySync(intent);
-
-            // Wait for things to settle.
-            uiAutomation.waitForIdle(
-                    QUIET_TIME_TO_BE_CONSIDERED_IDLE_STATE, TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE);
-
-            // Wait for Activity draw finish
-            getInstrumentation().waitForIdleSync();
-
-            Window window = activity.getWindow();
-            bitmap = uiAutomation.takeScreenshot(window);
-            assertNotNull(bitmap);
-        } finally {
-            // Clean up.
-            if (activity != null) {
-                activity.finish();
-            }
-        }
+        startActivitySync();
+        final Bitmap screenshot = mUiAutomation.takeScreenshot(mActivity.getWindow());
+        assertThat(screenshot).isNotNull();
     }
 
-    private void scrollListView(UiAutomation uiAutomation, final ListView listView,
-            final int position) throws TimeoutException {
-        getInstrumentation().runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                listView.smoothScrollToPosition(position);
-            }
-        });
-        Runnable emptyRunnable = new Runnable() {
-            @Override
-            public void run() {
-            }
-        };
+    private void scrollListView(final ListView listView, final int position)
+            throws TimeoutException {
+        getInstrumentation().runOnMainSync(() -> listView.smoothScrollToPosition(position));
         UiAutomation.AccessibilityEventFilter scrollFilter =
-                new UiAutomation.AccessibilityEventFilter() {
-                    @Override
-                    public boolean accept(AccessibilityEvent accessibilityEvent) {
-                        return accessibilityEvent.getEventType()
-                                == AccessibilityEvent.TYPE_VIEW_SCROLLED;
-                    }
-                };
-        uiAutomation.executeAndWaitForEvent(emptyRunnable, scrollFilter,
-                TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE);
-        uiAutomation.waitForIdle(
-                QUIET_TIME_TO_BE_CONSIDERED_IDLE_STATE, TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE);
-    }
-
-    private void grantWriteSecureSettingsPermission(UiAutomation uiAutomation) {
-        uiAutomation.grantRuntimePermission(getInstrumentation().getContext().getPackageName(),
-                android.Manifest.permission.WRITE_SECURE_SETTINGS);
+                accessibilityEvent -> accessibilityEvent.getEventType()
+                        == AccessibilityEvent.TYPE_VIEW_SCROLLED;
+        mUiAutomation.executeAndWaitForEvent(() -> {}, scrollFilter, IDLE_WAIT_TIME_MS);
+        mUiAutomation.waitForIdle(IDLE_QUIET_TIME_MS, IDLE_WAIT_TIME_MS);
     }
 
     private void enableAccessibilityService() {
-        Context context = getInstrumentation().getContext();
-        AccessibilityManager manager = context.getSystemService(AccessibilityManager.class);
-        List<AccessibilityServiceInfo> serviceInfos =
-                manager.getInstalledAccessibilityServiceList();
-        for (int i = 0; i < serviceInfos.size(); i++) {
-            AccessibilityServiceInfo serviceInfo = serviceInfos.get(i);
+        final Context context = getInstrumentation().getContext();
+        final AccessibilityManager manager = context.getSystemService(AccessibilityManager.class);
+        for (AccessibilityServiceInfo serviceInfo :
+                manager.getInstalledAccessibilityServiceList()) {
             if (context.getString(R.string.uiautomation_a11y_service_description)
                     .equals(serviceInfo.getDescription())) {
                 ContentResolver cr = context.getContentResolver();
@@ -576,10 +421,11 @@ public final class UiAutomationTest {
     }
 
     private void waitForAccessibilityServiceToStart() {
-        long timeoutTimeMillis = SystemClock.uptimeMillis() + TIMEOUT_FOR_SERVICE_ENABLE;
+        long timeoutTimeMillis = SystemClock.uptimeMillis() + TIMEOUT_FOR_SERVICE_ENABLE_MS;
         while (SystemClock.uptimeMillis() < timeoutTimeMillis) {
             synchronized (UiAutomationTestA11yService.sWaitObjectForConnectOrUnbind) {
-                if (UiAutomationTestA11yService.sConnectedInstance != null) {
+                if (UiAutomationTestA11yService.sConnectedInstance != null
+                        && UiAutomationTestA11yService.sConnectedInstance.isConnected()) {
                     return;
                 }
                 try {
@@ -594,7 +440,7 @@ public final class UiAutomationTest {
     }
 
     private void waitForAccessibilityServiceToUnbind() {
-        long timeoutTimeMillis = SystemClock.uptimeMillis() + TIMEOUT_FOR_SERVICE_ENABLE;
+        long timeoutTimeMillis = SystemClock.uptimeMillis() + TIMEOUT_FOR_SERVICE_ENABLE_MS;
         while (SystemClock.uptimeMillis() < timeoutTimeMillis) {
             synchronized (UiAutomationTestA11yService.sWaitObjectForConnectOrUnbind) {
                 if (UiAutomationTestA11yService.sConnectedInstance == null) {
@@ -611,58 +457,17 @@ public final class UiAutomationTest {
         throw new RuntimeException("Test accessibility service doesn't unbind");
     }
 
-    private void turnAccessibilityOff() {
-        // TODO(b/272604566): remove check below once a11y supports concurrent users
-
-        // NOTE: cannot use Harrier / DeviceState because they call Instrumentation in a way that
-        // would make the tests pass. Besides, there are a @RequireNotVisibleBackgroundUsers and a
-        // @RequireRunNotOnSecondaryUser, but not a @RequireRunNotOnVisibleBackgroundSecondaryUser
-        assumeFalse("not supported when running on visible background user",
-                    mUserHelper.isVisibleBackgroundUser());
-
-        getInstrumentation().getUiAutomation().destroy();
-        final Object waitLockForA11yOff = new Object();
-        Context context = getInstrumentation().getContext();
-        AccessibilityManager manager =
-                (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
-        manager.addAccessibilityStateChangeListener(
-                new AccessibilityManager.AccessibilityStateChangeListener() {
-                    @Override
-                    public void onAccessibilityStateChanged(boolean b) {
-                        synchronized (waitLockForA11yOff) {
-                            waitLockForA11yOff.notifyAll();
-                        }
-                    }
-                });
-        ContentResolver cr = context.getContentResolver();
-        Settings.Secure.putString(
-                cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, null);
-        long timeoutTimeMillis = SystemClock.uptimeMillis() + TIMEOUT_FOR_SERVICE_ENABLE;
-        while (SystemClock.uptimeMillis() < timeoutTimeMillis) {
-            synchronized (waitLockForA11yOff) {
-                if (!manager.isEnabled()) {
-                    return;
-                }
-                try {
-                    waitLockForA11yOff.wait(timeoutTimeMillis - SystemClock.uptimeMillis());
-                } catch (InterruptedException e) {
-                    // Ignored; loop again
-                }
-            }
-        }
-        throw new RuntimeException("Unable to turn accessibility off");
-    }
-
     private void assertWindowContentTimestampsInAscendingOrder(WindowContentFrameStats stats) {
         long lastDesiredPresentTimeNano = 0;
         long lastPreviousFramePresentTimeNano = 0;
         long lastFrameReadyTimeNano = 0;
 
-        String statsDebugDump = stats.toString();
+        StringBuilder statsDebugDump = new StringBuilder(stats.toString());
         for (int i = 0; i < stats.getFrameCount(); i++) {
-            statsDebugDump += " [" + i + ":" +
-            stats.getFramePostedTimeNano(i) + " " +
-            stats.getFramePresentedTimeNano(i) + " " + stats.getFrameReadyTimeNano(i)  + "] ";
+            statsDebugDump.append(" [").append(i).append(":").append(
+                    stats.getFramePostedTimeNano(i)).append(" ").append(
+                    stats.getFramePresentedTimeNano(i)).append(" ").append(
+                    stats.getFrameReadyTimeNano(i)).append("] ");
         }
 
         final int frameCount = stats.getFrameCount();
@@ -671,9 +476,9 @@ public final class UiAutomationTest {
             final long previousFramePresentTimeNano = stats.getFramePresentedTimeNano(i);
             final long frameReadyTimeNano = stats.getFrameReadyTimeNano(i);
 
-            if (desiredPresentTimeNano == FrameStats.UNDEFINED_TIME_NANO ||
-                previousFramePresentTimeNano == FrameStats.UNDEFINED_TIME_NANO ||
-                frameReadyTimeNano == FrameStats.UNDEFINED_TIME_NANO) {
+            if (desiredPresentTimeNano == FrameStats.UNDEFINED_TIME_NANO
+                    || previousFramePresentTimeNano == FrameStats.UNDEFINED_TIME_NANO
+                    || frameReadyTimeNano == FrameStats.UNDEFINED_TIME_NANO) {
                 continue;
             }
 
@@ -685,13 +490,13 @@ public final class UiAutomationTest {
                 // NOTE: actual present time maybe an estimate. If this test continues to be flaky,
                 // we may need to add a margin like the one below.
                 // previousFramePresentTimeNano += stats.getRefreshPeriodNano() / 2;
-                assertTrue("Failed frame:" + i + statsDebugDump,
-                        previousFramePresentTimeNano >= lastDesiredPresentTimeNano);
-                assertTrue("Failed frame:" + i + statsDebugDump,
-                        previousFramePresentTimeNano >= lastFrameReadyTimeNano);
+                assertWithMessage("Failed frame:" + i + statsDebugDump).that(
+                        previousFramePresentTimeNano).isGreaterThan(lastDesiredPresentTimeNano);
+                assertWithMessage("Failed frame:" + i + statsDebugDump).that(
+                        previousFramePresentTimeNano).isGreaterThan(lastFrameReadyTimeNano);
             }
-            assertTrue("Failed frame:" + i + statsDebugDump,
-                    previousFramePresentTimeNano >= lastPreviousFramePresentTimeNano);
+            assertWithMessage("Failed frame:" + i + statsDebugDump).that(
+                    previousFramePresentTimeNano).isGreaterThan(lastPreviousFramePresentTimeNano);
 
             lastDesiredPresentTimeNano = desiredPresentTimeNano;
             lastPreviousFramePresentTimeNano = previousFramePresentTimeNano;
@@ -705,54 +510,21 @@ public final class UiAutomationTest {
         try {
             r.run();
         } catch (Exception expected) {
-            assertTrue(clazz.isAssignableFrom(expected.getClass()));
+            assertThat(expected.getClass()).isAssignableTo(clazz);
             return;
         }
         fail(message);
-    }
-
-    private void assertA11yServiceSuppressedAndRestartsAfterUiAutomationDestroyed(int flag) {
-        UiAutomation suppressingUiAutomation = getInstrumentation().getUiAutomation(flag);
-        // We verify above that the connection is broken here. Make sure we see a new one
-        // after we destroy it
-        waitForAccessibilityServiceToUnbind();
-        suppressingUiAutomation.destroy();
-        waitForAccessibilityServiceToStart();
-    }
-
-    private int findAppWindowId(List<AccessibilityWindowInfo> windows, Activity activity) {
-        final CharSequence activityTitle = getActivityTitle(getInstrumentation(), activity);
-        final int windowCount = windows.size();
-        for (int i = 0; i < windowCount; i++) {
-            AccessibilityWindowInfo window = windows.get(i);
-            int displayId = window.getDisplayId();
-            CharSequence title = window.getTitle();
-            Log.v(TAG, "findAppWindowId()#" + i + ": title=" + title + ", display=" + displayId);
-            if (window.getType() == AccessibilityWindowInfo.TYPE_APPLICATION
-                    && TextUtils.equals(title, activityTitle)) {
-                // TODO(b/271188189): once working, remove false or whole statement below
-                if (false && displayId != mUserHelper.getMainDisplayId()) {
-                    continue;
-                }
-                return window.getId();
-            }
-        }
-        return -1;
     }
 
     private Instrumentation getInstrumentation() {
         return InstrumentationRegistry.getInstrumentation();
     }
 
-    private Activity startActivitySync(Intent intent) {
-        return getInstrumentation().startActivitySync(intent,
-                mUserHelper.getActivityOptions().toBundle());
-    }
-
-    private static CharSequence getActivityTitle(
-            Instrumentation instrumentation, Activity activity) {
-        final StringBuilder titleBuilder = new StringBuilder();
-        instrumentation.runOnMainSync(() -> titleBuilder.append(activity.getTitle()));
-        return titleBuilder;
+    /** Start an activity and return its accessibility window id. */
+    private int startActivitySync() throws Exception {
+        mActivity = ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen(
+                getInstrumentation(), mUiAutomation, mActivityRule);
+        return ActivityLaunchUtils.findWindowByTitle(mUiAutomation,
+                ActivityLaunchUtils.getActivityTitle(getInstrumentation(), mActivity)).getId();
     }
 }

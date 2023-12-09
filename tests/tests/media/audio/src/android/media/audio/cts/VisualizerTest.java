@@ -218,6 +218,30 @@ public class VisualizerTest extends PostProcTestBase {
         }
     }
 
+    //Test case 2.2: test capture with illegal size
+    public void test2_2IllegalCaptureSize() throws Exception {
+        if (!hasAudioOutput()) {
+            Log.w(TAG, "AUDIO_OUTPUT feature not found. This system might not have a valid "
+                    + "audio output HAL");
+            return;
+        }
+        try {
+            getVisualizer(0);
+            mVisualizer.setEnabled(true);
+            assertTrue("visualizer not enabled", mVisualizer.getEnabled());
+            int captureSize = mVisualizer.getCaptureSize();
+            if (captureSize <= 0) {
+                Log.w(TAG, "This system visualizer doesn't support capture waveform");
+                return;
+            }
+            byte[] data = new byte[captureSize - 1];
+            mVisualizer.getWaveForm(data);
+            fail("Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            // success
+        }
+    }
+
     //-----------------------------------------------------------------
     // 3 - check measurement mode MEASUREMENT_MODE_NONE
     //----------------------------------

@@ -40,8 +40,6 @@ public class GrammaticalGenderAtomTests extends DeviceTestCase implements IBuild
     private static final String INSTALLED_PACKAGE_NAME_APP =
             "android.grammaticalinflection.atom.app";
     private final static String GENDER_KEY = "gender";
-    private static final int INVALID_UID = -1;
-    private int mShellUid;
 
     @Override
     protected void setUp() throws Exception {
@@ -50,10 +48,8 @@ public class GrammaticalGenderAtomTests extends DeviceTestCase implements IBuild
         ReportUtils.clearReports(getDevice());
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.GRAMMATICAL_INFLECTION_CHANGED_FIELD_NUMBER);
-
-        // This will be ROOT_UID if adb is running as root, SHELL_UID otherwise.
-        mShellUid = DeviceUtils.getHostUid(getDevice());
     }
+
     @Override
     protected void tearDown() throws Exception {
         resetAppGender();

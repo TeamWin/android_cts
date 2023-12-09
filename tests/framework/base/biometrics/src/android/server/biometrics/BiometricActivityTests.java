@@ -72,7 +72,7 @@ public class BiometricActivityTests extends BiometricTestBase {
             @NonNull BiometricTestSession session, int sensorId,
             @NonNull ActivitySession activitySession) throws Exception {
         Log.d(TAG, "testBiometricOnly_authenticateFromForegroundActivity_forSensor: " + sensorId);
-        final int userId = 0;
+        final int userId = Utils.getUserId();
         waitForAllUnenrolled();
         enrollForSensor(session, sensorId);
         final TestJournalProvider.TestJournal journal = TestJournalProvider.TestJournalContainer
@@ -126,7 +126,7 @@ public class BiometricActivityTests extends BiometricTestBase {
             @NonNull ActivitySession activitySession) throws Exception {
         Log.d(TAG, "testBiometricOnly_rejectThenErrorFromForegroundActivity_forSensor: "
                 + sensorId);
-        final int userId = 0;
+        final int userId = Utils.getUserId();
         waitForAllUnenrolled();
         enrollForSensor(session, sensorId);
 
@@ -193,7 +193,7 @@ public class BiometricActivityTests extends BiometricTestBase {
             @NonNull ActivitySession activitySession) throws Exception {
         Log.d(TAG, "testBiometricOnly_rejectThenAuthenticate_forSensor: " + sensorId);
 
-        final int userId = 0;
+        final int userId = Utils.getUserId();
         waitForAllUnenrolled();
         enrollForSensor(session, sensorId);
 

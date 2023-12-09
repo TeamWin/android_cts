@@ -54,8 +54,13 @@
             android:taskAffinity=".am_cts_bg_task_asd"
             android:exported="true"/>
         <activity android:name=".BackgroundActivity"
-             android:taskAffinity=".am_cts_bg_task_b"
-             android:exported="true"/>
+                  android:taskAffinity=".am_cts_bg_task_b"
+                  android:exported="true">
+            <intent-filter android:priority="-1">
+                <action android:name="StartNextMatchingActivityAction" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <activity android:name=".SecondBackgroundActivity"
              android:exported="true"/>
         <activity android:name=".RelaunchingActivity"
@@ -69,6 +74,16 @@
                   android:exported="true"/>
         <activity android:name=".WidgetConfigTestActivity"
                   android:exported="true"/>
+        <activity
+            android:name=".StartNextMatchingActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="StartNextMatchingActivityAction" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <receiver android:name=".WidgetProvider" android:exported="true" >
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

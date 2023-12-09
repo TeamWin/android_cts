@@ -133,20 +133,18 @@ public class NotificationTrampolineTestService extends Service {
                     break;
                 }
                 case MESSAGE_CLICK_NOTIFICATION: {
-                    PendingIntent intent = Stream
-                            .of(mNotificationManager.getActiveNotifications())
+                    long count = Stream.of(mNotificationManager.getActiveNotifications())
                             .filter(sb -> sb.getId() == notificationId)
-                            .map(sb -> sb.getNotification().contentIntent)
-                            .findFirst()
-                            .orElse(null);
-                    if (intent != null) {
-                        try {
-                            intent.send();
-                        } catch (PendingIntent.CanceledException e) {
-                            throw new IllegalStateException("Notification PI cancelled", e);
-                        }
-                    }
-                    sendMessageToTest(mCallback, TEST_MESSAGE_NOTIFICATION_CLICKED, intent != null);
+                            .flatMap(sb -> Stream.of(sb.getNotification().contentIntent,
+                                    sb.getNotification().publicVersion.contentIntent))
+                            .peek(intent -> {
+                                try {
+                                    intent.send();
+                                } catch (PendingIntent.CanceledException e) {
+                                    throw new IllegalStateException("Notification PI cancelled", e);
+                                }
+                            }).count();
+                    sendMessageToTest(mCallback, TEST_MESSAGE_NOTIFICATION_CLICKED, count == 2);
                     break;
                 }
                 default:
@@ -164,10 +162,16 @@ public class NotificationTrampolineTestService extends Service {
     }
 
     private void postNotification(int notificationId, PendingIntent intent) {
+        Notification publicNotification =
+                new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(android.R.drawable.ic_info)
+                        .setContentIntent(intent)
+                        .build();
         Notification notification =
                 new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
                         .setSmallIcon(android.R.drawable.ic_info)
                         .setContentIntent(intent)
+                        .setPublicVersion(publicNotification)
                         .build();
         NotificationChannel notificationChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
                 NOTIFICATION_CHANNEL_ID, NotificationManager.IMPORTANCE_DEFAULT);

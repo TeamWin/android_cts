@@ -204,6 +204,12 @@ public class CarrierConfigManagerTest {
                     config.getBoolean(
                       CarrierConfigManager.KEY_ENABLE_CROSS_SIM_CALLING_ON_OPPORTUNISTIC_DATA_BOOL),
                       false);
+            assertEquals(
+                    "KEY_CARRIER_SUPPORTED_SATELLITE_SERVICES_PER_PROVIDER_BUNDLE"
+                            + " doesn't match static default.",
+                    config.getPersistableBundle(CarrierConfigManager
+                            .KEY_CARRIER_SUPPORTED_SATELLITE_SERVICES_PER_PROVIDER_BUNDLE),
+                    PersistableBundle.EMPTY);
 
             assertArrayEquals("KEY_CAPABILITIES_EXEMPT_FROM_SINGLE_DC_CHECK_INT_ARRAY"
                             + " doesn't match static default.",

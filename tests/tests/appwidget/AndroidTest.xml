@@ -26,8 +26,8 @@
         <option name="test-file-name" value="CtsAppWidgetLauncher2.apk" />
         <option name="test-file-name" value="CtsAppWidgetLauncher3.apk" />
         <option name="test-file-name" value="CtsAppWidgetTestCases.apk" />
+        <option name="test-file-name" value="CtsAppWidgetTestCasesBalApp.apk" />
     </target_preparer>
-
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="mkdir -p /data/local/tmp/cts/widgetprovider/" />
         <option name="teardown-command" value="rm -rf /data/local/tmp/cts/widgetprovider"/>

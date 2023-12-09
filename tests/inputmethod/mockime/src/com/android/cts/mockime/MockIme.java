@@ -19,6 +19,7 @@ package com.android.cts.mockime;
 import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+import static android.view.WindowInsets.Type.captionBar;
 import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
 
 import android.content.BroadcastReceiver;
@@ -654,6 +655,15 @@ public final class MockIme extends InputMethodService {
                     case "getCurrentWindowMetricsBounds": {
                         return getSystemService(WindowManager.class)
                                 .getCurrentWindowMetrics().getBounds();
+                    }
+                    case "setImeCaptionBarVisible": {
+                        final boolean visible = command.getExtras().getBoolean("visible");
+                        if (visible) {
+                            mView.getRootView().getWindowInsetsController().show(captionBar());
+                        } else {
+                            mView.getRootView().getWindowInsetsController().hide(captionBar());
+                        }
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     }
                 }
             }

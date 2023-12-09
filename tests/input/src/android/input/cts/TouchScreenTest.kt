@@ -26,9 +26,11 @@ import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.ORIENTATIO
 import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.ORIENTATION_90
 import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.WIDTH
 import android.util.Size
+import android.view.InputDevice
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.cts.input.UinputTouchDevice
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -50,9 +52,11 @@ class TouchScreenTest {
     @Before
     fun setUp() {
         touchScreen = UinputTouchDevice(
-            instrumentation,
-            virtualDisplayRule.virtualDisplay.display,
-            Size(WIDTH, HEIGHT)
+                instrumentation,
+                virtualDisplayRule.virtualDisplay.display,
+                Size(WIDTH, HEIGHT),
+                R.raw.test_touchscreen_register,
+                InputDevice.SOURCE_TOUCHSCREEN,
         )
         verifier = EventVerifier(virtualDisplayRule.activity::getInputEvent)
     }

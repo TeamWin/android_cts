@@ -1101,6 +1101,51 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
         }
     }
 
+    /**
+     * Verifies that requesting to hide the IME caption bar does not lead
+     * to any undesired behaviour (e.g. crashing, hiding the IME when it was visible, etc.).
+     */
+    @Test
+    public void testRequestHideImeCaptionBar() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+            expectImeVisible(TIMEOUT);
+
+            expectCommand(stream, imeSession.callSetImeCaptionBarVisible(false), TIMEOUT);
+            expectImeVisible(TIMEOUT);
+        }
+    }
+
+    /**
+     * Verifies that requesting to hide the IME caption bar and then show it again does not lead
+     * to any undesired behaviour (e.g. crashing, hiding the IME when it was visible, etc.).
+     */
+    @Test
+    public void testRequestHideThenShowImeCaptionBar() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+            expectImeVisible(TIMEOUT);
+
+            expectCommand(stream, imeSession.callSetImeCaptionBarVisible(false), TIMEOUT);
+            expectImeVisible(TIMEOUT);
+
+            expectCommand(stream, imeSession.callSetImeCaptionBarVisible(true), TIMEOUT);
+            expectImeVisible(TIMEOUT);
+        }
+    }
+
     /** Explicitly start-up the IME process if it would have been prevented. */
     protected void ensureImeRunning() {
         if (isPreventImeStartup()) {

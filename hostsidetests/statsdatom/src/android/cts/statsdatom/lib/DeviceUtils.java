@@ -266,13 +266,21 @@ public final class DeviceUtils {
     }
 
     /**
-     * Returns the UID of the test app.
+     * Returns the UID of the test app for the current user.
      */
     public static int getAppUid(ITestDevice device, String pkgName)
             throws DeviceNotAvailableException {
         int currentUser = device.getCurrentUser();
+        return getAppUidForUser(device, pkgName, currentUser);
+    }
+
+    /**
+     * Returns the UID of the test app for the given user.
+     */
+    public static int getAppUidForUser(ITestDevice device, String pkgName, int userId)
+            throws DeviceNotAvailableException {
         String uidLine = device.executeShellCommand("cmd package list packages -U --user "
-                + currentUser + " " + pkgName);
+                + userId + " " + pkgName);
         String[] uidLineArr = uidLine.split(":");
 
         // Package uid is located at index 2.

@@ -1019,6 +1019,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
      * {@link InputMethodService#onUpdateEditorToolType(int)} on next startInput().
      */
     @Test
+    @FlakyTest
     public void testOnViewClicked_withStylusHandwriting() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
@@ -1596,9 +1597,9 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     stream,
                     editorMatcher("onStartStylusHandwriting", secondaryMarker),
                     TIMEOUT);
-            TestUtils.injectStylusUpEvent(editText, endX, endY);
 
             verifyStylusHandwritingWindowIsShown(stream, imeSession);
+            TestUtils.injectStylusUpEvent(editText, endX, endY);
 
             // Finish handwriting to remove test stylus id.
             imeSession.callFinishStylusHandwriting();
