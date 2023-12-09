@@ -42,6 +42,7 @@ import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 import com.android.tradefed.testtype.suite.ITestSuite;
 import com.android.tradefed.testtype.suite.TestSuiteInfo;
+import com.android.tradefed.testtype.suite.ValidateSuiteConfigHelper;
 import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.ModuleTestTypeUtil;
 
@@ -267,6 +268,9 @@ public class CommonConfigLoadingTest {
                         String.format("config: %s. Performance test modules are not allowed in xTS",
                                 config.getName()));
             }
+
+            // Vailidate the module config doesn't contain inclusion tags
+            ValidateSuiteConfigHelper.validateConfigFile(config);
         }
     }
 
