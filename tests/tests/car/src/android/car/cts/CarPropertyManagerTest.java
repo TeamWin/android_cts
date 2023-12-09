@@ -7057,6 +7057,21 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @Test
     @ApiTest(
             apis = {
+                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents"
+            }
+    )
+    @RequiresFlagsEnabled(Flags.FLAG_BATCHED_SUBSCRIPTIONS)
+    public void testSubscribePropertyEventsWithNoReadPermission_throwSecurityException()
+            throws Exception {
+        assertThrows(SecurityException.class, () ->
+                mCarPropertyManager.subscribePropertyEvents(
+                List.of(new Subscription.Builder(VehiclePropertyIds.PERF_VEHICLE_SPEED).build()),
+                null, new CarPropertyEventCounter()));
+    }
+
+    @Test
+    @ApiTest(
+            apis = {
                     "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
                     "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents",
                     "android.car.hardware.property.Subscription.Builder#Builder",
