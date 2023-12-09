@@ -16,19 +16,28 @@
 
 package android.car.cts;
 
+import static android.car.feature.Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.car.cts.utils.VehiclePropertyUtils;
 import android.car.hardware.property.DriverDrowsinessAttentionState;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.List;
 
 public class DriverDrowsinessAttentionStateTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Test
+    @RequiresFlagsEnabled(FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testToString() {
         assertThat(
                 DriverDrowsinessAttentionState.toString(DriverDrowsinessAttentionState.OTHER))
@@ -74,6 +83,7 @@ public class DriverDrowsinessAttentionStateTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testAllDriverDrowsinessAttentionStatesAreMappedInToString() {
         List<Integer> driverDrowsinessAttentionStates =
                 VehiclePropertyUtils.getIntegersFromDataEnums(DriverDrowsinessAttentionState.class);
