@@ -484,6 +484,10 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 VehiclePropertyIds.toString(
                         VehiclePropertyIds.DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED))
                 .isEqualTo("DRIVER_DROWSINESS_ATTENTION_WARNING_ENABLED");
+        assertThat(
+                VehiclePropertyIds.toString(
+                        VehiclePropertyIds.DRIVER_DROWSINESS_ATTENTION_WARNING))
+                .isEqualTo("DRIVER_DROWSINESS_ATTENTION_WARNING");
     }
 
     /**
