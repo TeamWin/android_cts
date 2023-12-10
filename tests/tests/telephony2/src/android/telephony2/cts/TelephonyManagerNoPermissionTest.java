@@ -20,9 +20,11 @@ import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.util.TelephonyUtils;
 
+import androidx.annotation.RequiresApi;
 import androidx.test.InstrumentationRegistry;
 
 import org.junit.After;
@@ -85,6 +87,17 @@ public class TelephonyManagerNoPermissionTest {
                     + "if TelecomManager#ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION is "
                     + "enabled.");
         } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @Test
+    public void getAllowedCarriers_SecurityException() throws Exception {
+        try {
+            mTelephonyManager.getCarrierRestrictionRules().getCarrierRestrictionStatus();
+            fail();
+        } catch (SecurityException se) {
             // expected
         }
     }
