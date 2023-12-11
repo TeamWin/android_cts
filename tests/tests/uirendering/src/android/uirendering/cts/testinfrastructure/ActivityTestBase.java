@@ -25,7 +25,9 @@ import android.uirendering.cts.bitmapcomparers.BitmapComparer;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
 import android.uirendering.cts.util.BitmapAsserter;
 import android.util.Log;
+import android.view.AttachedSurfaceControl;
 import android.view.PixelCopy;
+import android.view.SurfaceControl;
 
 import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
@@ -124,6 +126,34 @@ public abstract class ActivityTestBase {
         }
     }
 
+    private void unsafeAwait(CountDownLatch latch) {
+        try {
+            latch.await(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException("readyFence didn't signal within 5 seconds");
+        }
+    }
+
+    // waitForRedraw checks that HWUI finished drawing but SurfaceFlinger may be backpressured, so
+    // synchronizing by applying no-op transactions with UI draws to guarantee that we wait until
+    // SurfaceFlinger's frontend has latched the UI frame.
+    protected void waitForScreenshottable() {
+        CountDownLatch latch = new CountDownLatch(1);
+        getActivity().runOnUiThread(() -> {
+            AttachedSurfaceControl rootSurfaceControl =
+                    getActivity().getWindow().getRootSurfaceControl();
+
+            SurfaceControl stub = new SurfaceControl.Builder().setName("test").build();
+            rootSurfaceControl.applyTransactionOnDraw(
+                    rootSurfaceControl.buildReparentTransaction(stub));
+            rootSurfaceControl.applyTransactionOnDraw(
+                    new SurfaceControl.Transaction().reparent(stub, null)
+                            .addTransactionCommittedListener(Runnable::run, latch::countDown));
+        });
+        getActivity().waitForRedraw();
+        unsafeAwait(latch);
+    }
+
     private Bitmap takeScreenshot(TestPositionInfo testPositionInfo) {
         if (mScreenshotter == null) {
             SynchronousPixelCopy copy = new SynchronousPixelCopy();
@@ -148,14 +178,17 @@ public abstract class ActivityTestBase {
                 testCase.viewInitializer, testCase.useHardware, testCase.usePicture);
         testCase.wasTestRan = true;
         if (testCase.readyFence != null) {
-            try {
-                testCase.readyFence.await(5, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                throw new RuntimeException("readyFence didn't signal within 5 seconds");
-            }
-            // The fence setup may have (and probably did) changed things that we need to wait
-            // have been drawn. So force an invalidate() and wait for it to finish
+            unsafeAwait(testCase.readyFence);
+            // The fence setup may have (and probably did) changed things that we need to
+            // wait have been drawn. So force an invalidate() and wait for it to finish
             getActivity().waitForRedraw();
+        }
+
+        if (mScreenshotter != null) {
+            // If we have a screenshotter then we're (probably) using SurfaceFlinger to
+            // capture a screenshot, so we wait until we know SurfaceFlinger latched the most
+            // recent content
+            waitForScreenshottable();
         }
         return testPositionInfo;
     }
