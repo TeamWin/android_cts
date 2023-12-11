@@ -22,6 +22,8 @@ import android.Manifest;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -34,6 +36,7 @@ import com.android.cts.install.lib.Uninstall;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -45,11 +48,15 @@ import java.lang.reflect.Field;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Instant apps cannot create installer sessions")
+@IgnoreUnderRavenwood(blockedBy = PackageManager.class)
 /**
  * Test for cts.install.lib.
  * <p>This test also tries to showcase how to use the library.
  */
 public class InstallUtilTest {
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
     /**
      * Drops adopted shell permissions and uninstalls the test apps.
      */

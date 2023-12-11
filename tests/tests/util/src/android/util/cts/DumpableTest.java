@@ -19,10 +19,14 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.util.Dumpable;
 
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.PrintWriter;
 
+@RunWith(AndroidJUnit4.class)
 public final class DumpableTest {
 
     @Test

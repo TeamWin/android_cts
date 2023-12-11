@@ -21,12 +21,15 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.os.Process;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 import android.util.EventLog;
 import android.util.EventLog.Event;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -37,10 +40,14 @@ import java.util.List;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@IgnoreUnderRavenwood(blockedBy = EventLog.class)
 public class EventLogTest {
     private static final int ANSWER_TAG = 42;
     private static final int PI_TAG = 314;
     private static final int E_TAG = 2718;
+
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule();
 
     @Test
     public void testWriteEvent() throws Exception {

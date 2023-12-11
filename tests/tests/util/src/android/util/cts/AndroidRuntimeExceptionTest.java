@@ -21,10 +21,13 @@ import static org.junit.Assert.assertEquals;
 import android.util.AndroidRuntimeException;
 
 import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @SmallTest
+@RunWith(AndroidJUnit4.class)
 public class AndroidRuntimeExceptionTest {
     private static final String NAME = "Test_AndroidRuntimeException";
     private static final Exception CAUSE = new Exception();

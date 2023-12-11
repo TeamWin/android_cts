@@ -26,14 +26,17 @@ import android.util.JsonToken;
 import android.util.MalformedJsonException;
 
 import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Arrays;
 
 @SmallTest
+@RunWith(AndroidJUnit4.class)
 public final class JsonReaderTest {
 
     private static final int READER_BUFFER_SIZE = 1024;

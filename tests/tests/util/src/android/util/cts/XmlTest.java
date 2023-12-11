@@ -413,8 +413,7 @@ public class XmlTest {
     @IgnoreUnderRavenwood
     public void testAsAttributeSet() {
         Resources res = InstrumentationRegistry.getTargetContext().getResources();
-        XmlResourceParser xp = res.getLayout(
-                res.getIdentifier("xml_test", "layout", "android.util.cts"));
+        XmlResourceParser xp = res.getLayout(R.layout.xml_test);
         int eventType = -1;
         try {
             eventType = xp.getEventType();
