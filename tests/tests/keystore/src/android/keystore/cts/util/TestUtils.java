@@ -1186,7 +1186,7 @@ public class TestUtils {
                     .setUserAuthenticationRequired(isUserAuthRequired)
                     .setUserAuthenticationValidityDurationSeconds(3600)
                     .setUnlockedDeviceRequired(isUnlockedDeviceRequired);
-            if (mgf1DigestList != null) {
+            if (mgf1DigestList != null && android.security.Flags.mgf1DigestSetter()) {
                 keyProtectionBuilder.setMgf1Digests(mgf1DigestList);
             }
             return keyProtectionBuilder.build();

@@ -25,12 +25,16 @@ import android.content.Context;
 import android.keystore.cts.util.EmptyArray;
 import android.keystore.cts.util.ImportedKey;
 import android.keystore.cts.util.TestUtils;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -55,6 +59,9 @@ import javax.crypto.spec.PSource;
 public class RSACipherTest {
 
     private static final String EXPECTED_PROVIDER_NAME = TestUtils.EXPECTED_CRYPTO_OP_PROVIDER_NAME;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -282,6 +289,7 @@ public class RSACipherTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(android.security.Flags.FLAG_MGF1_DIGEST_SETTER)
     public void testRsaOaepDecryptWithWrongMGF1DigestFails() throws Exception {
         Provider provider = Security.getProvider(EXPECTED_PROVIDER_NAME);
         KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA", "AndroidKeyStore");
