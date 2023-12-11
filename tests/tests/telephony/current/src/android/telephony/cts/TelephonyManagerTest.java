@@ -70,6 +70,9 @@ import android.os.Process;
 import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.os.UserManager;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -134,6 +137,7 @@ import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
+import com.android.internal.telephony.flags.Flags;
 import com.android.internal.telephony.uicc.IccUtils;
 
 import org.json.JSONArray;
@@ -142,6 +146,7 @@ import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -181,6 +186,9 @@ import java.util.stream.IntStream;
  *  cts-tradefed run cts -m CtsTelephonyTestCases --test android.telephony.cts.TelephonyManagerTest
  */
 public class TelephonyManagerTest {
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
     private TelephonyManager mTelephonyManager;
     private SubscriptionManager mSubscriptionManager;
     private PackageManager mPackageManager;
@@ -6472,6 +6480,56 @@ public class TelephonyManagerTest {
             turnRadioOff(callbackForFirstSub, TelephonyManager.RADIO_POWER_REASON_USER);
             callbackForSecondSub.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_OFF);
         }
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.telephony.TelephonyManager#isCellularIdentifierDisclosureNotificationEnabled",
+            "android.telephony.TelephonyManager#enableCellularIdentifierDisclosureNotifications"})
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_IDENTIFIER_DISCLOSURE_TRANSPARENCY)
+    public void testEnableCellularIdentifierDisclosureNotifications() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
+        if (mNetworkHalVersion < RADIO_HAL_VERSION_2_2) {
+            Log.d(TAG,
+                    "Skipping test since modem does not support IRadioNetwork HAL v2.2");
+            return;
+        }
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                (tm) -> tm.enableCellularIdentifierDisclosureNotifications(true));
+        boolean enabled = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.isCellularIdentifierDisclosureNotificationEnabled());
+        assertTrue(enabled);
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                (tm) -> tm.enableCellularIdentifierDisclosureNotifications(false));
+        enabled = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.isCellularIdentifierDisclosureNotificationEnabled());
+        assertFalse(enabled);
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.telephony.TelephonyManager#isCellularIdentifierDisclosureNotificationEnabled",
+            "android.telephony.TelephonyManager#enableCellularIdentifierDisclosureNotifications"})
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_IDENTIFIER_DISCLOSURE_TRANSPARENCY)
+    public void testCellularIdentifierDisclosureNotificationsPermissions() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
+        if (mNetworkHalVersion < RADIO_HAL_VERSION_2_2) {
+            Log.d(TAG,
+                    "Skipping test since modem does not support IRadioNetwork HAL v2.2");
+            return;
+        }
+
+        assertThrows(SecurityException.class, () -> {
+                    mTelephonyManager.enableCellularIdentifierDisclosureNotifications(true);
+                }
+        );
+
+        assertThrows(SecurityException.class, () -> {
+                    mTelephonyManager.isCellularIdentifierDisclosureNotificationEnabled();
+                }
+        );
     }
 
     private Integer getSecondTestSubId() {
