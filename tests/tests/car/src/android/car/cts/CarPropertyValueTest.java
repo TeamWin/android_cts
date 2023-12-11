@@ -23,7 +23,6 @@ import android.car.VehicleAreaType;
 import android.car.cts.utils.ShellPermissionUtils;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
-import android.car.hardware.property.AreaIdConfig;
 import android.car.hardware.property.CarInternalErrorException;
 import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.PropertyAccessDeniedSecurityException;
@@ -63,16 +62,24 @@ public final class CarPropertyValueTest extends AbstractCarTestCase {
             List<CarPropertyConfig> configs = carPropertyManager.getPropertyList();
             for (CarPropertyConfig cfg : configs) {
                 mPropIdToConfig.put(cfg.getPropertyId(), cfg);
-                List<? extends AreaIdConfig<?>> areaIdConfigs = cfg.getAreaIdConfigs();
-                for (AreaIdConfig<?> areaIdConfig : areaIdConfigs) {
-                    if (areaIdConfig.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ
-                            || areaIdConfig.getAccess()
-                            == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
-                        CarPropertyValue value = getCarPropertyValue(carPropertyManager, cfg,
-                                areaIdConfig.getAreaId());
+                if (cfg.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ
+                        || cfg.getAccess()
+                        == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
+                    if (cfg.isGlobalProperty()) {
+                        CarPropertyValue value = getCarPropertyValue(carPropertyManager,
+                                cfg, /*areaId=*/0);
                         if (value != null) {
                             Assert.assertEquals(value.getPropertyId(), cfg.getPropertyId());
                             mCarPropertyValues.add(value);
+                        }
+                    } else {
+                        for (int areaId : cfg.getAreaIds()) {
+                            CarPropertyValue value = getCarPropertyValue(carPropertyManager, cfg,
+                                    areaId);
+                            if (value != null) {
+                                Assert.assertEquals(value.getPropertyId(), cfg.getPropertyId());
+                                mCarPropertyValues.add(value);
+                            }
                         }
                     }
                 }
