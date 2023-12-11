@@ -125,6 +125,44 @@ public class VirtualDeviceManagerBasicTest {
         }
     }
 
+    @RequiresFlagsEnabled(Flags.FLAG_PERSISTENT_DEVICE_ID_API)
+    @Test
+    public void getDisplayNameForPersistentId_nullPersistentId_throws() {
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDeviceManager.getDisplayNameForPersistentDeviceId(null));
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_PERSISTENT_DEVICE_ID_API)
+    @Test
+    public void getDisplayNameForPersistentId_nonExistentPersistentId_returnsNull() {
+        assertThat(mVirtualDeviceManager.getDisplayNameForPersistentDeviceId(
+                "nonExistentPersistentId"))
+                .isNull();
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_PERSISTENT_DEVICE_ID_API)
+    @Test
+    public void getDisplayNameForPersistentId_defaultDevicePersistentId_returnsNull() {
+        assertThat(mVirtualDeviceManager.getDisplayNameForPersistentDeviceId(
+                VirtualDeviceManager.PERSISTENT_DEVICE_ID_DEFAULT))
+                .isNull();
+    }
+
+    @RequiresFlagsEnabled({Flags.FLAG_PERSISTENT_DEVICE_ID_API, Flags.FLAG_VDM_PUBLIC_APIS})
+    @Test
+    public void getDisplayNameForPersistentId_validVirtualDevice_returnsCorrectId() {
+        final CharSequence virtualDeviceDisplayName =
+                mVirtualDeviceManager
+                        .getVirtualDevice(mVirtualDevice.getDeviceId())
+                        .getDisplayName();
+        final CharSequence persistentDeviceDisplayName =
+                mVirtualDeviceManager.getDisplayNameForPersistentDeviceId(
+                        mVirtualDevice.getPersistentDeviceId());
+
+        assertThat(virtualDeviceDisplayName.toString())
+                .isEqualTo(persistentDeviceDisplayName.toString());
+    }
+
     @Test
     public void createVirtualDevice_shouldNotThrowException() {
         assertThat(mVirtualDevice).isNotNull();
