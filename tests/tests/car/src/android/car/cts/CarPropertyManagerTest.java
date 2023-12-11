@@ -954,7 +954,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.ULTRASONICS_SENSOR_ORIENTATION,
                             VehiclePropertyIds.ULTRASONICS_SENSOR_FIELD_OF_VIEW,
                             VehiclePropertyIds.ULTRASONICS_SENSOR_DETECTION_RANGE,
-                            VehiclePropertyIds.ULTRASONICS_SENSOR_SUPPORTED_RANGES)
+                            VehiclePropertyIds.ULTRASONICS_SENSOR_SUPPORTED_RANGES,
+                            VehiclePropertyIds.ULTRASONICS_SENSOR_MEASURED_DISTANCE)
                     .build();
     private static final ImmutableList<String> VENDOR_PROPERTY_PERMISSIONS =
             ImmutableList.<String>builder()
@@ -1291,6 +1292,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getUltrasonicsSensorFieldOfViewVerifier(),
              getUltrasonicsSensorDetectionRangeVerifier(),
              getUltrasonicsSensorSupportedRangesVerifier(),
+             getUltrasonicsSensorMeasuredDistanceVerifier(),
              getElectronicTollCollectionCardTypeVerifier(),
              getElectronicTollCollectionCardStatusVerifier(),
              getGeneralSafetyRegulationComplianceVerifier(),
@@ -2750,6 +2752,31 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
     public void testUltrasonicsSensorSupportedRangesIfSupported() {
         getUltrasonicsSensorSupportedRangesVerifier().verify();
+    }
+
+    private VehiclePropertyVerifier<Integer[]> getUltrasonicsSensorMeasuredDistanceVerifier() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.ULTRASONICS_SENSOR_MEASURED_DISTANCE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_VENDOR,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                        Integer[].class, mCarPropertyManager)
+                .setCarPropertyValueVerifier(
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, distance)
+                                -> {
+                            assertWithMessage("ULTRASONICS_SENSOR_MEASURED_DISTANCE must "
+                                    + "must have at most 2 values")
+                                    .that(distance.length)
+                                    .isAtMost(2);
+                        })
+                .addReadPermission(Car.PERMISSION_READ_ULTRASONICS_SENSOR_DATA)
+                .build();
+    }
+
+    @Test
+    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    public void testUltrasonicsSensorMeasuredDistanceIfSupported() {
+        getUltrasonicsSensorMeasuredDistanceVerifier().verify();
     }
 
     private VehiclePropertyVerifier<Integer> getElectronicTollCollectionCardTypeVerifier() {

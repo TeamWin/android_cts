@@ -545,6 +545,10 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 VehiclePropertyIds.toString(
                         VehiclePropertyIds.ULTRASONICS_SENSOR_SUPPORTED_RANGES))
                 .isEqualTo("ULTRASONICS_SENSOR_SUPPORTED_RANGES");
+        assertThat(
+                VehiclePropertyIds.toString(
+                        VehiclePropertyIds.ULTRASONICS_SENSOR_MEASURED_DISTANCE))
+                .isEqualTo("ULTRASONICS_SENSOR_MEASURED_DISTANCE");
     }
 
     /**
