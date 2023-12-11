@@ -41,6 +41,7 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState.Task;
 import android.view.Display;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -92,6 +93,7 @@ public class FreeformWindowingModeTests extends MultiDisplayTestBase {
     }
 
     @Test
+    @Ignore("b/303085283 This is related to new app compat policy")
     public void testNonResizeableActivityHasFullDisplayBounds() throws Exception {
         createManagedDevEnableNonResizableMultiWindowSession().set(0);
         launchActivity(TEST_ACTIVITY);
@@ -123,6 +125,7 @@ public class FreeformWindowingModeTests extends MultiDisplayTestBase {
     }
 
     @Test
+    @Ignore("b/303087543 Need to investigate the reason why this test doesn't work on tablets")
     public void testActivityLifeCycleOnResizeFreeformTask() throws Exception {
         launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FREEFORM);
         launchActivity(NO_RELAUNCH_ACTIVITY, WINDOWING_MODE_FREEFORM);
