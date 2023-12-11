@@ -45,6 +45,7 @@ import android.media.Image;
 import android.os.Build;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.Pair;
@@ -54,6 +55,7 @@ import android.util.Size;
 import android.view.Surface;
 
 import com.android.compatibility.common.util.PropertyUtil;
+import com.android.internal.camera.flags.Flags;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -1005,6 +1007,28 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 }
                 openDevice(id);
                 manualFlashStrengthControlTestByCamera();
+            } finally {
+                closeDevice();
+            }
+        }
+    }
+
+    /**
+     * Test AE mode ON_LOW_LIGHT_BOOST_BRIGHTNESS_PRIORITY.
+     */
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CAMERA_AE_MODE_LOW_LIGHT_BOOST)
+    public void testAeModeOnLowLightBoostBrightnessPriority() throws Exception {
+        for (String id : getCameraIdsUnderTest()) {
+            try {
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                if (!staticInfo.isAeModeLowLightBoostSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not have AE mode "
+                            + "ON_LOW_LIGHT_BOOST_BRIGHTNESS_PRIORITY, skipping");
+                    continue;
+                }
+                openDevice(id);
+                testAeModeOnLowLightBoostBrightnessPriorityTestByCamera();
             } finally {
                 closeDevice();
             }
@@ -3440,6 +3464,29 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         waitForNumResults(listenerZoom, ZOOM_SOME_FRAMES);
         verifyCaptureResultForKey(CaptureResult.CONTROL_SETTINGS_OVERRIDE,
                 CameraMetadata.CONTROL_SETTINGS_OVERRIDE_ZOOM, listenerZoom, NUM_FRAMES_VERIFIED);
+    }
+
+    private void testAeModeOnLowLightBoostBrightnessPriorityTestByCamera() throws Exception {
+        Size maxPreviewSize = mOrderedPreviewSizes.get(0);
+        CaptureRequest.Builder requestBuilder =
+                mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        requestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
+                CameraMetadata.CONTROL_AE_MODE_ON_LOW_LIGHT_BOOST_BRIGHTNESS_PRIORITY);
+        SimpleCaptureCallback listener = new SimpleCaptureCallback();
+        startPreview(requestBuilder, maxPreviewSize, listener);
+        waitForSettingsApplied(listener, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
+        CaptureResult result = listener.getCaptureResult(WAIT_FOR_RESULT_TIMEOUT_MS);
+        // Expect that AE_MODE is ON_LOW_LIGHT_BOOST_BRIGHTNESS_PRIORITY
+        int resultAeMode = getValueNotNull(result, CaptureResult.CONTROL_AE_MODE);
+        assertTrue("AE Mode should be ON_LOW_LIGHT_BOOST_BRIGHTNESS_PRIORITY", resultAeMode
+                == CameraMetadata.CONTROL_AE_MODE_ON_LOW_LIGHT_BOOST_BRIGHTNESS_PRIORITY);
+
+        // Expect that CaptureResult.CONTROL_LOW_LIGHT_BOOST_STATE is present
+        int resultLowLightBoostState =
+                getValueNotNull(result, CaptureResult.CONTROL_LOW_LIGHT_BOOST_STATE);
+        assertTrue("Low Light Boost State should be ACTIVE or INACTIVE",
+                resultLowLightBoostState == CameraMetadata.CONTROL_LOW_LIGHT_BOOST_STATE_INACTIVE
+                || resultLowLightBoostState == CameraMetadata.CONTROL_LOW_LIGHT_BOOST_STATE_ACTIVE);
     }
 
     //----------------------------------------------------------------

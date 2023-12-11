@@ -4169,6 +4169,58 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     }
 
     /**
+     * Validate the operating luminance range for low light boost. If the luminance range is
+     * defined then the AE mode CONTROL_AE_MODE_ON_LOW_LIGHT_BOOST_BRIGHTNESS_PRIORITY must also
+     * be present in the list of available AE modes.
+     */
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CAMERA_AE_MODE_LOW_LIGHT_BOOST)
+    public void testLowLightBoostLuminanceRange() throws Exception {
+        String[] allCameraIds = getAllCameraIds();
+        for (int i = 0; i < allCameraIds.length; i++) {
+            Log.i(TAG, "testLowLightBoostLuminanceRange: Testing camera ID " + allCameraIds[i]);
+            CameraCharacteristics c = mCharacteristics.get(i);
+
+            // Check for the presence of AE mode low light boost
+            int[] availableAeModes = c.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES);
+            if (availableAeModes == null) {
+                Log.i(TAG, "Camera id " + allCameraIds[i] + " does not have AE modes. "
+                        + "Skipping testLowLightBoostLuminanceRange");
+                continue;
+            }
+
+            assertNotNull("CONTROL_AE_AVAILABLE_MODES must be present", availableAeModes);
+            boolean containsAeModeLowLightBoost = false;
+            for (int aeMode : availableAeModes) {
+                if (aeMode
+                        == CameraMetadata.CONTROL_AE_MODE_ON_LOW_LIGHT_BOOST_BRIGHTNESS_PRIORITY) {
+                    containsAeModeLowLightBoost = true;
+                    break;
+                }
+            }
+
+            Range<Float> lowLightBoostLuminanceRange =
+                    c.get(CameraCharacteristics.CONTROL_LOW_LIGHT_BOOST_INFO_LUMINANCE_RANGE);
+
+            // The AE mode low light boost can only be available if the luminance range is also
+            // defined
+            if (lowLightBoostLuminanceRange == null) {
+                assertFalse("AE mode ON_LOW_LIGHT_BOOST_BRIGHTNESS_PRIORITY can only be present "
+                        + "if LOW_LIGHT_BOOST_INFO_LUMINANCE_RANGE is also defined",
+                        containsAeModeLowLightBoost);
+                continue;
+            }
+            assertTrue("AE mode ON_LOW_LIGHT_BOOST_BRIGHTNESS_PRIORITY must be present if "
+                    + "LOW_LIGHT_BOOST_INFO_LUMINANCE_RANGE is also defined",
+                    containsAeModeLowLightBoost);
+
+            float luminanceRangeLower = lowLightBoostLuminanceRange.getLower();
+            assertTrue("Luminance range lower bound is in the range [0.1, 1]",
+                    luminanceRangeLower >= 0.1f && luminanceRangeLower <= 1f);
+        }
+    }
+
+    /**
      * Check key is present in characteristics if the hardware level is at least {@code hwLevel};
      * check that the key is present if the actual capabilities are one of {@code capabilities}.
      *
