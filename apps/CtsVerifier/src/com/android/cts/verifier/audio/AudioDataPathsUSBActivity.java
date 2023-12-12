@@ -126,14 +126,19 @@ public class AudioDataPathsUSBActivity extends AudioDataPathsBaseActivity {
     void postValidateTestDevices(int numValidTestModules) {
         TextView promptView = findViewById(R.id.audio_datapaths_deviceprompt);
 
-        if (mTestManager.countTestedTestModules() != 0) {
-            // There are already tested devices in the list, so they must be attaching
-            // another test peripheral
-            promptView.setText(
-                    getResources().getString(R.string.audio_datapaths_usb_nextperipheral));
+        if (mIsHandheld) {
+            if (mTestManager.countTestedTestModules() != 0) {
+                // There are already tested devices in the list, so they must be attaching
+                // another test peripheral
+                promptView.setText(
+                        getResources().getString(R.string.audio_datapaths_usb_nextperipheral));
+            } else {
+                promptView.setText(
+                        getResources().getString(R.string.audio_datapaths_usb_nodevices));
+            }
+            promptView.setVisibility(numValidTestModules == 0 ? View.VISIBLE : View.GONE);
         } else {
-            promptView.setText(getResources().getString(R.string.audio_datapaths_usb_nodevices));
+            promptView.setVisibility(View.GONE);
         }
-        promptView.setVisibility(numValidTestModules == 0 ? View.VISIBLE : View.GONE);
     }
 }

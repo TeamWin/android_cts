@@ -75,10 +75,14 @@ public class AudioDataPathsAnalogActivity extends AudioDataPathsBaseActivity {
 
     void postValidateTestDevices(int numValidTestModules) {
         View promptView = findViewById(R.id.audio_datapaths_deviceprompt);
-        if (mTestManager.calculatePass()) {
-            promptView.setVisibility(View.GONE);
+        if (mIsHandheld) {
+            if (mTestManager.calculatePass()) {
+                promptView.setVisibility(View.GONE);
+            } else {
+                promptView.setVisibility(numValidTestModules == 0 ? View.VISIBLE : View.GONE);
+            }
         } else {
-            promptView.setVisibility(numValidTestModules == 0 ? View.VISIBLE : View.GONE);
+            promptView.setVisibility(View.GONE);
         }
     }
 }

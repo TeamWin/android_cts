@@ -97,6 +97,7 @@ public abstract class AudioDataPathsBaseActivity
     private boolean mSupportsMMAPExclusive;
 
     protected boolean mHasUsb;
+    protected boolean mIsHandheld;
 
     // Analysis
     private BaseSineAnalyzer mAnalyzer = new BaseSineAnalyzer();
@@ -123,6 +124,7 @@ public abstract class AudioDataPathsBaseActivity
 
         // Use as a proxy for "has a USB port"
         mHasUsb = AudioSystemFlags.claimsProAudio(this);
+        mIsHandheld = AudioSystemFlags.isHandheld(this);
 
         String yesString = getResources().getString(R.string.audio_general_yes);
         String noString = getResources().getString(R.string.audio_general_no);
@@ -165,9 +167,12 @@ public abstract class AudioDataPathsBaseActivity
 
         mAudioManager.registerAudioDeviceCallback(new AudioDeviceConnectionCallback(), null);
 
-        getPassButton().setEnabled(false);
-
         DisplayUtils.setKeepScreenOn(this, true);
+
+        getPassButton().setEnabled(!mIsHandheld);
+        if (!mIsHandheld) {
+            displayNonHandheldMessage();
+        }
     }
 
     @Override
@@ -982,7 +987,8 @@ public abstract class AudioDataPathsBaseActivity
                     mTestManager.generateReport(mHtmlFormatter);
 
                     mTestHasBeenRun = true;
-                    getPassButton().setEnabled(mIsLessThanV || calculatePass());
+                    boolean passEnabled = passBtnEnabled();
+                    getPassButton().setEnabled(passEnabled);
 
                     mHtmlFormatter.openParagraph();
                     if (!mTestCanceled) {
@@ -1001,7 +1007,7 @@ public abstract class AudioDataPathsBaseActivity
                         mHtmlFormatter.openParagraph();
                     }
 
-                    if (mIsLessThanV && !calculatePass()) {
+                    if (passEnabled) {
                         mHtmlFormatter.appendText("Although not all test modules passed, "
                                 + "for this OS version you may enter a PASS.");
                         mHtmlFormatter.appendBreak();
@@ -1123,6 +1129,23 @@ public abstract class AudioDataPathsBaseActivity
         enableTestButtons(true, false);
     }
 
+    boolean passBtnEnabled() {
+        return mIsLessThanV || !mIsHandheld || mTestManager.calculatePass();
+    }
+
+    void displayNonHandheldMessage() {
+        mHtmlFormatter.clear();
+        mHtmlFormatter.openDocument();
+        mHtmlFormatter.openParagraph();
+        mHtmlFormatter.appendText(getResources().getString(R.string.audio_exempt_nonhandheld));
+        mHtmlFormatter.closeParagraph();
+
+        mHtmlFormatter.closeDocument();
+        mResultsView.loadData(mHtmlFormatter.toString(),
+                "text/html; charset=utf-8", "utf-8");
+        showResultsView();
+    }
+
     //
     // PassFailButtons Overrides
     //
@@ -1213,10 +1236,15 @@ public abstract class AudioDataPathsBaseActivity
             mTestManager.validateTestDevices();
             if (!mTestManager.calculatePass()) {
                 // if we are in a pass state, leave the report on the screen
-                showDeviceView();
-                mTestManager.displayTestDevices();
-                if (mTestHasBeenRun) {
-                    getPassButton().setEnabled(mIsLessThanV || mTestManager.calculatePass());
+                if (!mIsHandheld) {
+                    displayNonHandheldMessage();
+                    getPassButton().setEnabled(true);
+                } else {
+                    showDeviceView();
+                    mTestManager.displayTestDevices();
+                    if (mTestHasBeenRun) {
+                        getPassButton().setEnabled(passBtnEnabled());
+                    }
                 }
             }
         }
