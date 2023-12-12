@@ -2542,10 +2542,12 @@ public class PackageManagerShellCommandInstallTest {
         }
         @Override
         public void onReceive(Context context, Intent intent) {
-            final String packageName = intent.getData().getEncodedSchemeSpecificPart();
+            final String packageName = intent.getData() == null
+                    ? null : intent.getData().getEncodedSchemeSpecificPart();
             final int userId = context.getUserId();
-            if (intent.getAction().equals(mAction)
-                    && packageName.equals(mTargetPackage) && userId == mTargetUserId) {
+            if (intent.getAction().equals(mAction) && userId == mTargetUserId
+                    && (packageName == null || packageName.equals(mTargetPackage))) {
+                // Only check packageName if it is included in the intent
                 mUserReceivedBroadcast.complete(intent);
             }
         }
@@ -2575,6 +2577,5 @@ public class PackageManagerShellCommandInstallTest {
             mUserReceivedBroadcast = new CompletableFuture();
         }
     }
-
 }
 
