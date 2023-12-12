@@ -78,6 +78,8 @@ java_defaults {
     data: [
         ":CtsPropertyCompatAllowOrientationOverrideApp",
         ":CtsPropertyCompatAllowDisplayOrientationOverrideApp",
+        ":CtsPropertyCompatAllowMinAspectRatioOverrideOptInApp",
+        ":CtsPropertyCompatAllowMinAspectRatioOverrideOptOutApp",
         ":CtsPropertyIgnoreOrientationRequestOverrideOptOutApp",
         ":CtsPropertyIgnoreOrientationRequestOverrideOptInApp",
         ":CtsPropertyCameraCompatAllowForceRotationApp",
