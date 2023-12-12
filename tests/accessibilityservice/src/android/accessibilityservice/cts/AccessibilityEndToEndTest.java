@@ -28,7 +28,12 @@ import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWin
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.getActivityTitle;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
+import static android.accessibilityservice.cts.utils.AsyncUtils.await;
+import static android.accessibilityservice.cts.utils.GestureUtils.click;
+import static android.accessibilityservice.cts.utils.GestureUtils.dispatchGesture;
 import static android.accessibilityservice.cts.utils.RunOnMainUtils.getOnMain;
+import static android.view.MotionEvent.ACTION_DOWN;
+import static android.view.MotionEvent.ACTION_UP;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS;
@@ -58,8 +63,11 @@ import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibility.cts.common.ShellCommandBuilder;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.GestureDescription;
+import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.accessibilityservice.MagnificationConfig;
 import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity;
+import android.accessibilityservice.cts.utils.EventCapturingMotionEventListener;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Instrumentation;
@@ -78,6 +86,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.os.Bundle;
@@ -87,6 +96,9 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
@@ -169,6 +181,9 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
     private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
 
+    private CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule(sUiAutomation);
+
     private final InstrumentedAccessibilityServiceTestRule<
             StubMotionInterceptingAccessibilityService>
             mMotionInterceptingServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
@@ -178,7 +193,8 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
     public final RuleChain mRuleChain = RuleChain
             .outerRule(mActivityRule)
             .around(mMotionInterceptingServiceRule)
-            .around(mDumpOnFailureRule);
+            .around(mDumpOnFailureRule)
+            .around(mCheckFlagsRule);
 
     @BeforeClass
     public static void oneTimeSetup() throws Exception {
@@ -2037,6 +2053,71 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
         }
     }
 
+    /** Test the case where we want to intercept but not consume motion events. */
+    @Test
+    @FlakyTest
+    @ApiTest(apis = {"android.accessibilityservice.AccessibilityService#onMotionEvent"})
+    @RequiresFlagsEnabled(android.view.accessibility.Flags.FLAG_MOTION_EVENT_OBSERVING)
+    public void testOnMotionEvent_interceptsEventFromRequestedSource_observesMotionEvents() {
+        sUiAutomation.adoptShellPermissionIdentity(
+                android.Manifest.permission.ACCESSIBILITY_MOTION_EVENT_OBSERVING);
+        final int requestedSource = InputDevice.SOURCE_TOUCHSCREEN;
+        final StubMotionInterceptingAccessibilityService service =
+                mMotionInterceptingServiceRule.enableService();
+        service.setMotionEventSources(requestedSource);
+        service.setObservedMotionEventSources(requestedSource);
+        assertThat(service.getServiceInfo().getMotionEventSources()).isEqualTo(requestedSource);
+        assertThat(service.getServiceInfo().getObservedMotionEventSources())
+                .isEqualTo(requestedSource);
+        final Object waitObject = new Object();
+        final AtomicInteger eventCount = new AtomicInteger(0);
+        service.setOnMotionEventListener(
+                motionEvent -> {
+                    synchronized (waitObject) {
+                        if (motionEvent.getSource() == requestedSource) {
+                            eventCount.incrementAndGet();
+                        }
+                        waitObject.notifyAll();
+                    }
+                });
+
+        // Simulate a tap on the center of the button.
+        final Button button = (Button) mActivity.findViewById(R.id.button);
+        final EventCapturingMotionEventListener listener = new EventCapturingMotionEventListener();
+        button.setOnTouchListener(listener);
+        int[] buttonLocation = new int[2];
+        final int midX = button.getWidth() / 2;
+        final int midY = button.getHeight() / 2;
+        button.getLocationOnScreen(buttonLocation);
+        PointF tapLocation = new PointF(buttonLocation[0] + midX, buttonLocation[1] + midY);
+        dispatch(service, click(tapLocation));
+
+        // We should find 2 events.
+        TestUtils.waitOn(
+                waitObject,
+                () -> eventCount.get() == 2,
+                TIMEOUT_FOR_MOTION_EVENT_INTERCEPTION_MS,
+                "Service did not receive MotionEvent");
+
+        // The view should still have seen two events.
+        listener.assertPropagated(ACTION_DOWN, ACTION_UP);
+        // Stop listening to events for this source, then inject 1 more event to the input filter.
+        service.setMotionEventSources(0 /* no sources */);
+        assertThat(service.getServiceInfo().getMotionEventSources()).isEqualTo(0);
+        dispatch(service, click(tapLocation));
+        // Assert we only received the original 2.
+        try {
+            TestUtils.waitOn(
+                    waitObject,
+                    () -> eventCount.get() == 3,
+                    TIMEOUT_FOR_MOTION_EVENT_INTERCEPTION_MS,
+                    "(expected)");
+        } catch (AssertionError e) {
+            // expected
+        }
+        assertThat(eventCount.get()).isEqualTo(2);
+    }
+
     private MotionEvent createMotionEvent(int source) {
         // Only source is used by these tests, so set other properties to valid defaults.
         final long eventTime = SystemClock.uptimeMillis();
@@ -2275,6 +2356,22 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
             final View tooltipView = viewWithTooltip.getTooltipView();
             return (tooltipView != null) && (tooltipView.getParent() != null);
         });
+    }
+
+    private void dispatch(
+            InstrumentedAccessibilityService service,
+            StrokeDescription firstStroke,
+            StrokeDescription... rest) {
+        GestureDescription.Builder builder =
+                new GestureDescription.Builder().addStroke(firstStroke);
+        for (StrokeDescription stroke : rest) {
+            builder.addStroke(stroke);
+        }
+        dispatch(service, builder.build());
+    }
+
+    private void dispatch(InstrumentedAccessibilityService service, GestureDescription gesture) {
+        await(dispatchGesture(service, gesture));
     }
 
     private static int getCurrentUser() {
