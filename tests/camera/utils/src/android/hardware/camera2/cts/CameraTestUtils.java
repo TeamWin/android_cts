@@ -4553,17 +4553,14 @@ public class CameraTestUtils extends Assert {
         static final int INPUT_MAX_RES = 1;
         static final int INPUT_RESOLUTION_COUNT = 2;
 
-        static final Size S_1280_720 = new Size(1280, 720);
-        static final Size S_1280_960 = new Size(1280, 960);
-        // Add 960 * 720
+        static final Size S_1280_720 = new Size(1280, 720);   // 16:9
+        static final Size S_960_720 = new Size(960, 720);     // 4:3
 
-        static final Size S_2560_1440 = new Size(2560, 1440);
-        static final Size S_2560_1920 = new Size(2560, 1920);
+        static final Size S_1920_1080 = new Size(1920, 1080); // 16:9
+        static final Size S_1440_1080 = new Size(1440, 1080); // 4:3
 
-        static final Size S_1920_1080 = new Size(1920, 1080);
-        static final Size S_1920_1440 = new Size(1920, 1440);
-
-        // Add 1440 * 1080
+        static final Size S_2560_1440 = new Size(2560, 1440); // 16:9
+        static final Size S_1920_1440 = new Size(1920, 1440); // 4:3
 
         static final long FRAME_DURATION_30FPS_NSEC = (long) 1e9 / 30;
 
@@ -4675,7 +4672,7 @@ public class CameraTestUtils extends Assert {
                 // Check for 720p size for PRIVATE and YUV
                 // 720p is not mandatory for JPEG so it is not checked
                 final Size s720pSize =
-                        (mAspectRatio == AspectRatio.AR_4_3) ? S_1280_960 : S_1280_720;
+                        (mAspectRatio == AspectRatio.AR_4_3) ? S_960_720 : S_1280_720;
                 if (mAspectRatio == AspectRatio.ARBITRARY) {
                     mMaxPrivSizes[S720P] = CameraTestUtils.getMaxSizeWithBound(
                             configs.getOutputSizes(ImageFormat.PRIVATE), s720pSize);
@@ -4688,8 +4685,9 @@ public class CameraTestUtils extends Assert {
                 }
 
                 final Size s1440pSize =
-                        (mAspectRatio == AspectRatio.AR_4_3) ? S_2560_1920 : S_2560_1440;
+                        (mAspectRatio == AspectRatio.AR_16_9) ? S_2560_1440 : S_1920_1440;
                 if (mAspectRatio == AspectRatio.ARBITRARY) {
+
                     mMaxPrivSizes[S1440P] = CameraTestUtils.getMaxSizeWithBound(
                             configs.getOutputSizes(ImageFormat.PRIVATE), s1440pSize);
                     mMaxYuvSizes[S1440P] = CameraTestUtils.getMaxSizeWithBound(
@@ -4703,7 +4701,7 @@ public class CameraTestUtils extends Assert {
                 }
 
                 final Size s1080pSize =
-                        (mAspectRatio == AspectRatio.AR_4_3) ? S_1920_1440 : S_1920_1080;
+                        (mAspectRatio == AspectRatio.AR_4_3) ? S_1440_1080 : S_1920_1080;
                 if (mAspectRatio == AspectRatio.ARBITRARY) {
                     mMaxPrivSizes[S1080P] = CameraTestUtils.getMaxSizeWithBound(
                             configs.getOutputSizes(ImageFormat.PRIVATE), s1080pSize);
