@@ -21,6 +21,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import android.os.Parcel;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.ims.ImsRegistrationAttributes;
 import android.telephony.ims.SipDetails;
@@ -29,11 +32,18 @@ import android.util.ArraySet;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.android.internal.telephony.flags.Flags;
+
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class ImsRegistrationAttributesTest {
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Test
     public void testRegistrationTypeToTransportAttr() {
@@ -115,6 +125,52 @@ public class ImsRegistrationAttributesTest {
         assertEquals(0,
                 (attr.getAttributeFlags()
                         & ImsRegistrationAttributes.ATTR_EPDG_OVER_CELL_INTERNET));
+        assertNotNull(attr.getFeatureTags());
+        assertEquals(0, attr.getFeatureTags().size());
+        assertNull(attr.getSipDetails());
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_EMERGENCY_REGISTRATION_STATE)
+    public void testRegistrationTypeToTransportAttrForEmergency() {
+        // emergency call with emergency registration
+        ImsRegistrationAttributes attr = new ImsRegistrationAttributes.Builder(
+                ImsRegistrationImplBase.REGISTRATION_TECH_LTE)
+                .setFlagRegistrationTypeEmergency()
+                .build();
+        assertEquals(ImsRegistrationImplBase.REGISTRATION_TECH_LTE,
+                attr.getRegistrationTechnology());
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN,
+                attr.getTransportType());
+        assertEquals(0, (attr.getAttributeFlags()
+                & ImsRegistrationAttributes.ATTR_EPDG_OVER_CELL_INTERNET));
+        assertEquals(ImsRegistrationAttributes.ATTR_REGISTRATION_TYPE_EMERGENCY,
+                (attr.getAttributeFlags()
+                        & ImsRegistrationAttributes.ATTR_REGISTRATION_TYPE_EMERGENCY));
+        assertEquals(0, (attr.getAttributeFlags()
+                & ImsRegistrationAttributes.ATTR_VIRTUAL_FOR_ANONYMOUS_EMERGENCY_CALL));
+        assertNotNull(attr.getFeatureTags());
+        assertEquals(0, attr.getFeatureTags().size());
+        assertNull(attr.getSipDetails());
+
+        // emergency call without emergency registration
+        attr = new ImsRegistrationAttributes.Builder(
+            ImsRegistrationImplBase.REGISTRATION_TECH_LTE)
+            .setFlagRegistrationTypeEmergency()
+            .setFlagVirtualRegistrationForEmergencyCall()
+            .build();
+        assertEquals(ImsRegistrationImplBase.REGISTRATION_TECH_LTE,
+                attr.getRegistrationTechnology());
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN,
+                attr.getTransportType());
+        assertEquals(0, (attr.getAttributeFlags()
+                & ImsRegistrationAttributes.ATTR_EPDG_OVER_CELL_INTERNET));
+        assertEquals(ImsRegistrationAttributes.ATTR_REGISTRATION_TYPE_EMERGENCY,
+                (attr.getAttributeFlags()
+                        & ImsRegistrationAttributes.ATTR_REGISTRATION_TYPE_EMERGENCY));
+        assertEquals(ImsRegistrationAttributes.ATTR_VIRTUAL_FOR_ANONYMOUS_EMERGENCY_CALL,
+                (attr.getAttributeFlags()
+                        & ImsRegistrationAttributes.ATTR_VIRTUAL_FOR_ANONYMOUS_EMERGENCY_CALL));
         assertNotNull(attr.getFeatureTags());
         assertEquals(0, attr.getFeatureTags().size());
         assertNull(attr.getSipDetails());
