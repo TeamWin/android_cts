@@ -24,6 +24,7 @@ android_test {
     ],
     compile_multilib: "both",
     static_libs: [
+        "android.content.pm.flags-aconfig-java",
         "androidx.test.core",
         "androidx.test.ext.junit",
         "androidx.test.rules",
