@@ -39,7 +39,7 @@ public class AudioDataPathsUSBActivity extends AudioDataPathsBaseActivity {
                 R.string.audio_datapaths_USB_test, R.string.audio_datapaths_USB_info, -1);
 
         // Make sure there are devices to test, or else enable pass button.
-        if (mTestManager.countValidTestModules() == 0) {
+        if (!mHasUsb && mTestManager.countValidTestModules() == 0) {
             getPassButton().setEnabled(true);
         }
     }
