@@ -1377,6 +1377,24 @@
     <string name="nfc_hce_payment_prefix_aids_emulator_2">Payment prefix AIDs 2 (Emulator)</string>
     <string name="nfc_hce_payment_prefix_aids_reader_2">Payment prefix AIDs 2 (Reader)</string>
 
+    <string name="nfc_observe_mode_emulator">Observe Mode (Emulator)</string>
+    <string name="nfc_observe_mode_reader">Observe Mode (Reader)</string>
+    <string name="nfc_observe_mode_emulator_help">In observe mode there should not be any response from the emulator to the reader. If the emulator detects the reader and does not receive a command, it will enable the pass button and that represents a pass or the test.</string>
+    <string name="nfc_observe_mode_reader_help">In observe mode there should not be any response from the emulator to the reader. If the reader detects a response it will disable the pass button and this is a failure.</string>
+
+    <string name="nfc_polling_loop_a_emulator">Polling Loop A (Emulator)</string>
+    <string name="nfc_polling_loop_a_reader">Polling Loop A (Reader)</string>
+    <string name="nfc_polling_loop_b_emulator">Polling Loop B (Emulator)</string>
+    <string name="nfc_polling_loop_b_reader">Polling Loop B (Reader)</string>
+    <string name="nfc_polling_loop_ab_emulator">Polling Loop A and B (Emulator)</string>
+    <string name="nfc_polling_loop_ab_reader">Polling Loop A and B (Reader)</string>
+    <string name="nfc_polling_loop_a_emulator_help">The emulator will wait until it sees 3 NFC-A polling frames before responding. If it sees another type of frame, it will fail.</string>
+    <string name="nfc_polling_loop_a_reader_help">The reader will poll for NFC-A.</string>
+    <string name="nfc_polling_loop_b_emulator_help">The emulator will wait until it sees 3 NFC-B polling frames before responding. If it sees another type of frame, it will fail.</string>
+    <string name="nfc_polling_loop_b_reader_help">The reader will poll for NFC-B.</string>
+    <string name="nfc_polling_loop_ab_emulator_help">The emulator will wait until it sees 3 NFC-A polling frames and 3 NFC-B polling frames before responding. If it sees another type of frame, it will fail.</string>
+    <string name="nfc_polling_loop_ab_reader_help">The reader will poll for NFC-A and NFC-B.</string>
+
     <string name="nfc_hce_other_prefix_aids_emulator">Other prefix AIDs (Emulator)</string>
     <string name="nfc_hce_other_prefix_aids_reader">Other prefix AIDs (Reader)</string>
     <string name="nfc_hce_other_prefix_aids_help">This test dynamically registers prefix AIDs for a non-payment service.</string>

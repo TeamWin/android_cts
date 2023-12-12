@@ -6,8 +6,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcAdapter.ReaderCallback;
-import android.nfc.tech.IsoDep;
 import android.nfc.Tag;
+import android.nfc.tech.IsoDep;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
@@ -33,6 +33,8 @@ public class SimpleReaderActivity extends PassFailButtons.Activity implements Re
     public static final String EXTRA_APDUS = "apdus";
     public static final String EXTRA_RESPONSES = "responses";
     public static final String EXTRA_LABEL = "label";
+    public static final String EXTRA_NFC_TECH = "nfc_tech";
+
 
     NfcAdapter mAdapter;
     CommandApdu[] mApdus;
@@ -59,25 +61,31 @@ public class SimpleReaderActivity extends PassFailButtons.Activity implements Re
         mTextView.setText(R.string.nfc_hce_type_selection);
 
         Spinner spinner = (Spinner) findViewById(R.id.type_ab_selection);
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-                R.array.nfc_types_array, android.R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
-        spinner.setOnItemSelectedListener(this);
+        Intent intent = getIntent();
+        if (!intent.hasExtra(EXTRA_NFC_TECH)) {
+            ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                    R.array.nfc_types_array, android.R.layout.simple_spinner_item);
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinner.setAdapter(adapter);
+            spinner.setOnItemSelectedListener(this);
 
-        mPrefs = getSharedPreferences(PREFS_NAME, 0);
-        boolean isTypeB = mPrefs.getBoolean("typeB", false);
-        if (isTypeB) {
-            spinner.setSelection(1);
+            mPrefs = getSharedPreferences(PREFS_NAME, 0);
+            boolean isTypeB = mPrefs.getBoolean("typeB", false);
+            if (isTypeB) {
+                spinner.setSelection(1);
+            }
+        } else {
+            spinner.setVisibility(View.GONE);
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        mAdapter.enableReaderMode(this, this, NfcAdapter.FLAG_READER_NFC_A |
-                NfcAdapter.FLAG_READER_NFC_BARCODE | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK, null);
         Intent intent = getIntent();
+        int nfc_tech = intent.getIntExtra(EXTRA_NFC_TECH, NfcAdapter.FLAG_READER_NFC_A
+                | NfcAdapter.FLAG_READER_NFC_BARCODE | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK);
+        mAdapter.enableReaderMode(this, this, nfc_tech, null);
         Parcelable[] apdus = intent.getParcelableArrayExtra(EXTRA_APDUS);
         if (apdus != null) {
 	        mApdus = new CommandApdu[apdus.length];
@@ -166,22 +174,26 @@ public class SimpleReaderActivity extends PassFailButtons.Activity implements Re
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position,
             long id) {
-        if (position == 0) {
-            // Type-A
-            mAdapter.disableReaderMode(this);
-            mAdapter.enableReaderMode(this, this, NfcAdapter.FLAG_READER_NFC_A |
-                NfcAdapter.FLAG_READER_NFC_BARCODE | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK, null);
-            SharedPreferences.Editor editor = mPrefs.edit();
-            editor.putBoolean("typeB", false);
-            editor.commit();
-        } else {
-            // Type-B
-            mAdapter.disableReaderMode(this);
-            mAdapter.enableReaderMode(this, this, NfcAdapter.FLAG_READER_NFC_B |
-                    NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK, null);
-            SharedPreferences.Editor editor = mPrefs.edit();
-            editor.putBoolean("typeB", true);
-            editor.commit();
+        Intent intent = getIntent();
+        if (!intent.hasExtra(EXTRA_NFC_TECH)) {
+            if (position == 0) {
+                // Type-A
+                mAdapter.disableReaderMode(this);
+                mAdapter.enableReaderMode(this, this, NfcAdapter.FLAG_READER_NFC_A
+                        | NfcAdapter.FLAG_READER_NFC_BARCODE
+                        | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK, null);
+                SharedPreferences.Editor editor = mPrefs.edit();
+                editor.putBoolean("typeB", false);
+                editor.commit();
+            } else {
+                // Type-B
+                mAdapter.disableReaderMode(this);
+                mAdapter.enableReaderMode(this, this, NfcAdapter.FLAG_READER_NFC_B
+                        | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK, null);
+                SharedPreferences.Editor editor = mPrefs.edit();
+                editor.putBoolean("typeB", true);
+                editor.commit();
+            }
         }
     }
 
