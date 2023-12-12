@@ -54,6 +54,7 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.Settings;
+import android.server.wm.IgnoreOrientationRequestSession;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
@@ -336,6 +337,7 @@ public class VirtualDisplayTest {
     @Test
     public void testVirtualDisplayRotatesWithContent() throws Exception {
         assumeTrue(supportsActivitiesOnSecondaryDisplays());
+        assumeTrue(supportsRotation());
 
         VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
                 WIDTH, HEIGHT, DENSITY, mSurface,
@@ -348,7 +350,8 @@ public class VirtualDisplayTest {
         Display display = virtualDisplay.getDisplay();
         assertEquals(Surface.ROTATION_0, display.getRotation());
         SimpleActivity activity = launchTestActivityOnDisplay(display.getDisplayId());
-        try {
+        try (IgnoreOrientationRequestSession unused =
+                     new IgnoreOrientationRequestSession(/* enable= */ false)) {
             {
                 RotationChangeWaiter waiter = new RotationChangeWaiter(display);
                 activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -508,6 +511,15 @@ public class VirtualDisplayTest {
     private boolean supportsActivitiesOnSecondaryDisplays() {
         return mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS);
+    }
+
+    private boolean supportsRotation() {
+        final boolean supportsLandscape = mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_SCREEN_LANDSCAPE);
+        final boolean supportsPortrait = mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_SCREEN_PORTRAIT);
+        return (supportsLandscape && supportsPortrait)
+                || (!supportsLandscape && !supportsPortrait);
     }
 
     private void runOnUiThread(Runnable runnable) {
