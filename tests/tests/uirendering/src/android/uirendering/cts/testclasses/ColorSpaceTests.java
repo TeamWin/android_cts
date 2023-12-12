@@ -33,6 +33,8 @@ import android.graphics.Point;
 import android.graphics.RecordingCanvas;
 import android.graphics.RenderNode;
 import android.graphics.Shader;
+import android.graphics.fonts.Font;
+import android.graphics.fonts.SystemFonts;
 import android.hardware.HardwareBuffer;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
@@ -216,6 +218,95 @@ public class ColorSpaceTests extends ActivityTestBase {
             Assert.fail("Emoji failed colorspace conversion; got " + color.red() + ", "
                     + color.blue() + ", " + color.green());
         }
+    }
+
+    // Renders many glyphs from a color font to overflow into Skia's multi-atlas codepath.
+    //
+    // Originally created to ensure SkSL helper functions (for e.g. colorspace conversion) aren't
+    // duplicated when needing to pull from multiple atlases, which could cause a shader compilation
+    // error resulting in no glyphs being drawn.
+    @Test
+    public void testMultiAtlasGlyphsWithColorSpace() throws IOException {
+        final int canvasSize = 64;
+        final int[] textSizes = { 80, 60, 40, 30, 25, 20, 18, 13, 12, 11, 10, 9, 8 };
+        final int numGlyphs = 1000;
+        final int[] glyphIds = new int[numGlyphs];
+        final float[] positions = new float[2 * numGlyphs];
+        for (int i = 0; i < numGlyphs; i++) {
+            glyphIds[i] = i;
+            // Position in bottom left to better fill space
+            positions[2 * i] = 0;
+            positions[2 * i + 1] = canvasSize;
+        }
+
+        Font font = null;
+        for (Font sysFont : SystemFonts.getAvailableFonts()) {
+            if (sysFont.getFile().getName().equals("NotoColorEmoji.ttf")) {
+                font = sysFont;
+                break;
+            }
+        }
+        // Per SystemEmojiTest#uniquePostScript (CtsGraphicsTestCases), NotoColorEmoji.ttf should
+        // always be available as a fallback font, even if other emoji font files are installed on
+        // the system.
+        Assert.assertNotNull(font);
+
+        HardwareBuffer buffer = HardwareBuffer.create(canvasSize, canvasSize,
+                HardwareBuffer.RGBA_8888, 1,
+                HardwareBuffer.USAGE_GPU_COLOR_OUTPUT | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE);
+        final ColorSpace dest = ColorSpace.get(ColorSpace.Named.BT2020_PQ); // Colorspace conversion
+        HardwareBufferRenderer renderer = new HardwareBufferRenderer(buffer);
+        RenderNode content = new RenderNode("colored_glyphs");
+        content.setPosition(0, 0, canvasSize, canvasSize);
+        Paint p = new Paint();
+
+        // Render twice to ensure the final image was all rendered after the switch to multi-atlas
+        for (int renderAttempt = 0; renderAttempt < 2; renderAttempt++) {
+            RecordingCanvas canvas = content.beginRecording();
+            // Start with a white background
+            canvas.drawColor(Color.pack(1.0f, 1.0f, 1.0f, 1.0f, dest));
+
+            for (int i = 0; i < textSizes.length; i++) {
+                p.setTextSize(textSizes[i]);
+                canvas.drawGlyphs(glyphIds, 0, positions, 0, glyphIds.length, font, p);
+            }
+
+            content.endRecording();
+            renderer.setContentRoot(content);
+            CountDownLatch latch = new CountDownLatch(1);
+            renderer.obtainRenderRequest().setColorSpace(dest).draw(Runnable::run, result -> {
+                result.getFence().awaitForever();
+                latch.countDown();
+            });
+            try {
+                Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
+            } catch (InterruptedException ex) {
+                Assert.fail(ex.getMessage());
+            }
+        }
+        Bitmap result = Bitmap.wrapHardwareBuffer(buffer, dest)
+                .copy(Bitmap.Config.ARGB_8888, false);
+
+        // Ensure that some pixels are neither white nor black. The emoji include other colors, and
+        // if we only see white and black (or gray), then they are not being rendered correctly.
+        // (Some glyph shapes may render black even on failure.)
+        final float saturationThreshold = 0.01f;
+        for (int y = 0; y < canvasSize; y++) {
+            for (int x = 0; x < canvasSize; x++) {
+                Color color = result.getColor(x, y);
+                float[] hsv = new float[3];
+                Color.colorToHSV(color.toArgb(), hsv);
+                if (hsv[1] > saturationThreshold) {
+                    // Success!
+                    return;
+                }
+            }
+        }
+        // All pixels failed
+        BitmapDumper.dumpBitmap(result, "testMultiAtlasGlyphsWithColorSpace",
+                this.getClass().getName());
+        Assert.fail("Failed to render render glyphs from multiple atlases while a colorspace"
+                        + " conversion was set. All pixels were either white or black.");
     }
 
     private void drawAsset(@NonNull Canvas canvas, Bitmap bitmap) {
