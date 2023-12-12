@@ -24,8 +24,15 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.os.Looper;
+import android.os.Process;
+import android.os.UserManager;
+import android.telecom.PhoneAccount;
+import android.telecom.PhoneAccountHandle;
+import android.telecom.TelecomManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
@@ -34,11 +41,13 @@ import androidx.media3.common.C;
 import androidx.media3.common.Format;
 import androidx.media3.common.Player;
 import androidx.media3.common.Player.Events;
+import androidx.media3.common.Player.PlaybackSuppressionReason;
 import androidx.media3.common.TrackSelectionOverride;
 import androidx.media3.common.TrackSelectionParameters;
 import androidx.media3.common.Tracks;
 import androidx.media3.common.VideoSize;
 import androidx.media3.exoplayer.ExoPlayer;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -49,8 +58,8 @@ import java.util.Random;
 public class PlayerListener implements Player.Listener {
 
   private static final String LOG_TAG = PlayerListener.class.getSimpleName();
-
   public static final Object LISTENER_LOCK = new Object();
+  private static final String COMMAND_ENABLE = "telecom set-phone-account-enabled";
   public static int CURRENT_MEDIA_INDEX = 0;
 
   // Enum Declared for Test Type
@@ -61,7 +70,8 @@ public class PlayerListener implements Player.Listener {
     ADAPTIVE_PLAYBACK_TEST,
     SCROLL_TEST,
     SWITCH_AUDIO_TRACK_TEST,
-    SWITCH_SUBTITLE_TRACK_TEST;
+    SWITCH_SUBTITLE_TRACK_TEST,
+    NOTIFICATION_TEST;
   }
 
   public static boolean mPlaybackEnded;
@@ -94,6 +104,10 @@ public class PlayerListener implements Player.Listener {
   private Format mConfiguredTrackFormat;
   private int mNumOfAudioTrack;
   private int mNumOfSubtitleTrack;
+  private boolean mIsCallNotification;
+  private TelecomManager mTelecomManager;
+  private PhoneAccountHandle mPhoneAccountHandle;
+  private long mStartTime;
 
   public PlayerListener(TestType testType) {
     mTestType = testType;
@@ -207,6 +221,19 @@ public class PlayerListener implements Player.Listener {
   }
 
   /**
+   * Create player listener for Notification test.
+   *
+   * @param sendMessagePosition The position at which message will be sent
+   */
+  public static PlayerListener createListenerForNotificationTest(boolean isCallNotification,
+      long sendMessagePosition) {
+    PlayerListener playerListener = createDefaultListener(TestType.NOTIFICATION_TEST);
+    playerListener.mIsCallNotification = isCallNotification;
+    playerListener.mSendMessagePosition = sendMessagePosition;
+    return playerListener;
+  }
+
+  /**
    * Returns seed for Seek test.
    */
   private long getSeed() {
@@ -256,6 +283,13 @@ public class PlayerListener implements Player.Listener {
    */
   public boolean isSwitchSubtitleTrackTest() {
     return mTestType.equals(TestType.SWITCH_SUBTITLE_TRACK_TEST);
+  }
+
+  /**
+   * Returns True for Notification test.
+   */
+  public boolean isNotificationTest() {
+    return mTestType.equals(TestType.NOTIFICATION_TEST);
   }
 
   /**
@@ -382,6 +416,34 @@ public class PlayerListener implements Player.Listener {
   }
 
   /**
+   * Create a phone account using a unique handle and return it.
+   */
+  private PhoneAccount getSamplePhoneAccount() {
+    mPhoneAccountHandle = new PhoneAccountHandle(
+        new ComponentName(mActivity, CallNotificationService.class), "SampleID");
+    return PhoneAccount.builder(mPhoneAccountHandle, "SamplePhoneAccount")
+        .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER)
+        .build();
+  }
+
+  /**
+   * Enable the registered phone account by running adb command.
+   */
+  private void enablePhoneAccount() {
+    final ComponentName component = mPhoneAccountHandle.getComponentName();
+    final UserManager userManager = mActivity.getSystemService(UserManager.class);
+    try {
+      String command =
+          COMMAND_ENABLE + " " + component.getPackageName() + "/" + component.getClassName() + " "
+              + mPhoneAccountHandle.getId() + " " + userManager.getSerialNumberForUser(
+              Process.myUserHandle());
+      InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(command);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
    * Called when player states changed.
    *
    * @param player The {@link Player} whose state changed. Use the getters to obtain the latest
@@ -432,6 +494,19 @@ public class PlayerListener implements Player.Listener {
               selectFirstSubtitleTrack();
             }
           }
+          if (isNotificationTest()) {
+            mStartTime = System.currentTimeMillis();
+            // Add the duration of the incoming call
+            if (mIsCallNotification) {
+              mExpectedTotalTime += CallNotificationService.DURATION_MS;
+            }
+            // Let the ExoPlayer handle audio focus internally
+            mActivity.mPlayer.setAudioAttributes(mActivity.mPlayer.getAudioAttributes(), true);
+            mTelecomManager = (TelecomManager) mActivity.getApplicationContext().getSystemService(
+                Context.TELECOM_SERVICE);
+            mTelecomManager.registerPhoneAccount(getSamplePhoneAccount());
+            enablePhoneAccount();
+          }
         }
       } else if (mTrackChangeRequested && player.getPlaybackState() == Player.STATE_ENDED) {
         assertEquals(mConfiguredTrackFormat, mCurrentTrackFormat);
@@ -449,6 +524,11 @@ public class PlayerListener implements Player.Listener {
           } else {
             assertTrue(mScrollRequested);
             mScrollActivity.removePlayerListener();
+          }
+          // Verify the total time taken by the notification test
+          if (isNotificationTest()) {
+            long actualTime = System.currentTimeMillis() - mStartTime;
+            assertEquals((float) mExpectedTotalTime, (float) actualTime, 3000);
           }
           mPlaybackEnded = true;
           LISTENER_LOCK.notify();
@@ -505,6 +585,13 @@ public class PlayerListener implements Player.Listener {
               .setDeleteAfterDelivery(true)
               .send();
         }
+      } else if (isNotificationTest()) {
+        mActivity.mPlayer.createMessage((messageType, payload) -> {
+              // Place a sample incoming call
+              mTelecomManager.addNewIncomingCall(mPhoneAccountHandle, null);
+            }).setLooper(Looper.getMainLooper()).setPosition(mSendMessagePosition)
+            .setDeleteAfterDelivery(true)
+            .send();
       }
       // Add duration on media transition.
       long duration = player.getDuration();
@@ -646,5 +733,25 @@ public class PlayerListener implements Player.Listener {
       }
     }
     return trackGroups;
+  }
+
+  /**
+   * Called when the value returned from getPlaybackSuppressionReason() changes. onEvents(Player,
+   * Player.Events) will also be called to report this event along with other events that happen in
+   * the same Looper message queue iteration.
+   *
+   * @param playbackSuppressionReason The current {@link PlaybackSuppressionReason}.
+   */
+  @Override
+  public void onPlaybackSuppressionReasonChanged(int playbackSuppressionReason) {
+    // Verify suppression reason change caused by call notification test
+    if (mIsCallNotification) {
+      if (!mActivity.mPlayer.isPlaying()) {
+        assertEquals(Player.PLAYBACK_SUPPRESSION_REASON_TRANSIENT_AUDIO_FOCUS_LOSS,
+            playbackSuppressionReason);
+      } else {
+        assertEquals(Player.PLAYBACK_SUPPRESSION_REASON_NONE, playbackSuppressionReason);
+      }
+    }
   }
 }
