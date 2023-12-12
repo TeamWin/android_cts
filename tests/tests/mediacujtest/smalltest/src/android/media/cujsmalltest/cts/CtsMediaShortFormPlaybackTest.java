@@ -127,6 +127,11 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
             .setPlayerListener(
                 PlayerListener.createListenerForSwitchSubtitleTracksTest(2, 3000)).build(),
             "Ssa_Subtitle_eng_french_5sec_SwitchSubtitleTracksTest"},
+        {CujTestParam.builder().setMediaUrls(prepareHevc_720p_15secVideoListForNotificationTest())
+            .setTimeoutMilliSeconds(52000)
+            .setPlayerListener(
+                PlayerListener.createListenerForNotificationTest(true, 4000)).build(),
+            "Hevc_720p_15sec_CallNotificationTest"},
     }));
     return exhaustiveArgsList;
   }
@@ -228,6 +233,15 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
   public static List<String> prepare_Ssa_Subtitles_Eng_French_5secVideoList() {
     List<String> videoInput = Arrays.asList(
         MKV_TEARS_OF_STEEL_ASSET_SSA_SUBTITLES_ENG_FRENCH_URI_STRING);
+    return videoInput;
+  }
+
+  /**
+   * Prepare Hevc 720p 15sec video list for notification test.
+   */
+  public static List<String> prepareHevc_720p_15secVideoListForNotificationTest() {
+    List<String> videoInput = Arrays.asList(
+        MP4_FORBIGGERJOYRIDES_ASSET_720P_HEVC_URI_STRING);
     return videoInput;
   }
 
