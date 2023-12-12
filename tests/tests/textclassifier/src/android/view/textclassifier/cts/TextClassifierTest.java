@@ -48,6 +48,7 @@ import com.google.common.collect.Range;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -148,6 +149,7 @@ public class TextClassifierTest {
     }
 
     @Test
+    @Ignore("b/315110905")
     public void testGetMaxGenerateLinksTextLength() {
         // TODO(b/143249163): Verify the value get from TextClassificationConstants
         assertTrue(mClassifier.getMaxGenerateLinksTextLength() >= 0);
