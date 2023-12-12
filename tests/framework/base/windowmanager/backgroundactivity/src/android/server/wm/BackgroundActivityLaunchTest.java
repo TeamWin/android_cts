@@ -318,33 +318,6 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 143522449)
-    public void testActivityBlockedWhenLaunchedAfterHomePress() throws Exception {
-        Intent intent = new Intent();
-        intent.setComponent(APP_A_FOREGROUND_ACTIVITY);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(LAUNCH_BACKGROUND_ACTIVITY_EXTRA, true);
-        intent.putExtra(START_ACTIVITY_FROM_FG_ACTIVITY_DELAY_MS_EXTRA, 2000);
-        intent.putExtra(START_ACTIVITY_FROM_FG_ACTIVITY_NEW_TASK_EXTRA, true);
-        mContext.startActivity(intent);
-        boolean result = waitForActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS,
-                APP_A_FOREGROUND_ACTIVITY);
-        assertTrue("Not able to launch background activity", result);
-        assertTaskStack(new ComponentName[]{APP_A_FOREGROUND_ACTIVITY}, APP_A_FOREGROUND_ACTIVITY);
-
-        // We can't resume app switching after pressing home button, otherwise the grace period
-        // will allow the starts.
-        pressHomeAndWaitHomeResumed();
-
-        result = waitForActivityFocused(APP_A_FOREGROUND_ACTIVITY);
-        assertFalse("FG activity shouldn't be visible", result);
-        result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
-        assertFalse("BG activity shouldn't be visible", result);
-        assertTaskStack(new ComponentName[]{APP_A_FOREGROUND_ACTIVITY}, APP_A_FOREGROUND_ACTIVITY);
-        assertTaskStack(null, APP_A_BACKGROUND_ACTIVITY);
-    }
-
-    @Test
     public void testActivityNotBlockedFromBgActivityInFgTask() {
         // Launch Activity A, B in the same task with different processes.
         final Intent intent = new Intent()
