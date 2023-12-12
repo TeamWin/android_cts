@@ -75,6 +75,7 @@ import android.car.hardware.property.LocationCharacterization;
 import android.car.hardware.property.PropertyNotAvailableException;
 import android.car.hardware.property.Subscription;
 import android.car.hardware.property.TrailerState;
+import android.car.hardware.property.VehicleAutonomousState;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardStatus;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardType;
 import android.car.hardware.property.VehicleLightState;
@@ -264,6 +265,16 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     private static final ImmutableSet<Integer> HVAC_TEMPERATURE_DISPLAY_UNITS =
             ImmutableSet.<Integer>builder().add(VehicleUnit.CELSIUS,
                     VehicleUnit.FAHRENHEIT).build();
+    private static final ImmutableSet<Integer> VEHICLE_AUTONOMOUS_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            VehicleAutonomousState.LEVEL_0,
+                            VehicleAutonomousState.LEVEL_1,
+                            VehicleAutonomousState.LEVEL_2,
+                            VehicleAutonomousState.LEVEL_3,
+                            VehicleAutonomousState.LEVEL_4,
+                            VehicleAutonomousState.LEVEL_5)
+                    .build();
     private static final ImmutableSet<Integer> EMERGENCY_LANE_KEEP_ASSIST_STATES =
             ImmutableSet.<Integer>builder()
                     .add(
@@ -864,6 +875,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     .add(
                             VehiclePropertyIds.LOCATION_CHARACTERIZATION)
                     .build();
+    private static final ImmutableList<Integer>
+            PERMISSION_CAR_DRIVING_STATE_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL)
+                    .build();
     private static final ImmutableList<String> VENDOR_PROPERTY_PERMISSIONS =
             ImmutableList.<String>builder()
                     .add(
@@ -1209,6 +1226,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getDoorMoveVerifier(),
              getDoorLockVerifier(),
              getDoorChildLockEnabledVerifier(),
+             getVehicleDrivingAutomationCurrentLevelVerifier(),
              // TODO(b/273988725): Put all verifiers here.
         };
     }
@@ -2761,6 +2779,23 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @Test
     public void testDoorChildLockEnabledIfSupported() {
         getDoorChildLockEnabledVerifier().verify();
+    }
+
+    private VehiclePropertyVerifier<Integer> getVehicleDrivingAutomationCurrentLevelVerifier() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class, mCarPropertyManager)
+                .setAllPossibleEnumValues(VEHICLE_AUTONOMOUS_STATES)
+                .addReadPermission(Car.PERMISSION_CAR_DRIVING_STATE)
+                .build();
+    }
+
+    @Test
+    public void testVehicleDrivingAutomationCurrentLevelIfSupported() {
+        getVehicleDrivingAutomationCurrentLevelVerifier().verify();
     }
 
     @Test
@@ -7883,6 +7918,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         verifyExpectedPropertiesWhenPermissionsGranted(
                 PERMISSION_PRIVILEGED_CAR_INFO_PROPERTIES,
                 Car.PERMISSION_PRIVILEGED_CAR_INFO);
+    }
+
+    @Test
+    public void testPermissionCarDrivingStateGranted() {
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CAR_DRIVING_STATE_PROPERTIES,
+                Car.PERMISSION_CAR_DRIVING_STATE);
     }
 
     @Test
