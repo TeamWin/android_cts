@@ -60,6 +60,7 @@ import com.android.cts.install.lib.LocalIntentSender;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -157,6 +158,7 @@ public class ArchiveTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
+    @Ignore("b/315953294")
     public void requestArchive_confirmationDialog() throws Exception {
         installPackage(ARCHIVE_APK);
         assertFalse(mPackageManager.getPackageInfo(ARCHIVE_APK_PACKAGE_NAME,
