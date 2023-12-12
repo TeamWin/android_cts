@@ -54,7 +54,7 @@ public final class TestArgs {
 
     public static boolean shouldSkipCodec(String name) {
         if ((CODEC_PREFIX != null && !name.startsWith(CODEC_PREFIX))
-                || (codecFilter != null && codecFilter.matcher(name).matches())) {
+                || (codecFilter != null && !codecFilter.matcher(name).matches())) {
             Log.d(TAG, "Skipping tests for codec: " + name + " as codec prefix is " + CODEC_PREFIX);
             return true;
         }
