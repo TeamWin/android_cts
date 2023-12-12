@@ -18,6 +18,7 @@ package android.view.surfacecontrol.cts;
 
 import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
 import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
+import static android.server.wm.CtsWindowInfoUtils.assertAndDumpWindowState;
 import static android.view.cts.util.ASurfaceControlTestUtils.getSolidBuffer;
 
 import static org.junit.Assert.assertEquals;
@@ -31,7 +32,6 @@ import android.graphics.Rect;
 import android.hardware.HardwareBuffer;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.CtsWindowInfoUtils;
 import android.util.ArraySet;
 import android.util.Size;
 import android.view.Gravity;
@@ -423,11 +423,8 @@ public class TrustedPresentationCallbackTest {
     private void assertResults(boolean result) throws InterruptedException {
         mResultsLock.wait(WAIT_TIME_MS);
 
-        if (!mReceivedResults) {
-            CtsWindowInfoUtils.dumpWindowsOnScreen(TAG, "test " + mName.getMethodName());
-        }
-        // Make sure we received the results and not just timed out
-        assertTrue("Timed out waiting for results", mReceivedResults);
+        assertAndDumpWindowState(TAG, "Timed out waiting for results",
+                mReceivedResults);
         assertEquals(result, mResult);
     }
 
@@ -504,7 +501,8 @@ public class TrustedPresentationCallbackTest {
         }
 
         public SurfaceControl getSurfaceControl() throws InterruptedException {
-            assertTrue(mCountDownLatch.await(5, TimeUnit.SECONDS));
+            assertAndDumpWindowState(TAG, "No SurfaceView found",
+                    mCountDownLatch.await(5, TimeUnit.SECONDS));
             return mSurfaceView.getSurfaceControl();
         }
     }

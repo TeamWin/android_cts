@@ -16,6 +16,8 @@
 
 package android.server.wm;
 
+import static junit.framework.Assert.assertTrue;
+
 import android.Manifest;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
@@ -26,10 +28,10 @@ import android.os.IBinder;
 import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.util.Log;
+import android.view.Display;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.Window;
-import android.view.Display;
 import android.window.WindowInfosListenerForTest;
 import android.window.WindowInfosListenerForTest.WindowInfo;
 
@@ -591,7 +593,7 @@ public class CtsWindowInfoUtils {
     public static void dumpWindowsOnScreen(String tag, String message)
             throws InterruptedException {
         waitForWindowInfos(windowInfos -> {
-            if (windowInfos.size() == 0) {
+            if (windowInfos.isEmpty()) {
                 return false;
             }
             Log.d(tag, "Dumping windows on screen: " + message);
@@ -600,5 +602,17 @@ public class CtsWindowInfoUtils {
             }
             return true;
         }, 5L * HW_TIMEOUT_MULTIPLIER, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Assert the condition and dump the window states if the condition fails.
+     */
+    public static void assertAndDumpWindowState(String tag, String message, boolean condition)
+            throws InterruptedException {
+        if (!condition) {
+            dumpWindowsOnScreen(tag, message);
+        }
+
+        assertTrue(message, condition);
     }
 }
