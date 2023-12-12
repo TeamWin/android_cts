@@ -18,6 +18,9 @@ package {
 
 java_library {
     name: "car-integration-test-utils-lib",
+    defaults: [
+        "car-framework-aconfig-libraries",
+    ],
     srcs: [
         "src/android/car/cts/utils/*.java",
     ],

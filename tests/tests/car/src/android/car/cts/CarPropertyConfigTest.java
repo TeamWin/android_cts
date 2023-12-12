@@ -30,12 +30,17 @@ import android.car.hardware.property.AreaIdConfig;
 import android.car.hardware.property.CarPropertyManager;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.test.suitebuilder.annotation.SmallTest;
 
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.Test.None;
 import org.junit.runner.RunWith;
@@ -53,6 +58,9 @@ public final class CarPropertyConfigTest extends AbstractCarTestCase {
     private static final float EPSILON = 0.00001f;
 
     private List<CarPropertyConfig> mConfigs;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setUp() throws Exception {
@@ -91,7 +99,8 @@ public final class CarPropertyConfigTest extends AbstractCarTestCase {
     }
 
     @Test
-    public void testGetAccess() {
+    @RequiresFlagsDisabled(Flags.FLAG_AREA_ID_CONFIG_ACCESS)
+    public void testGetAccess_AreaIdConfigAccessDisabled() {
         List<Integer> expectedAccessCodes = Arrays.asList(
                 CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_NONE,
                 CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
@@ -100,6 +109,42 @@ public final class CarPropertyConfigTest extends AbstractCarTestCase {
         for (CarPropertyConfig cfg : mConfigs) {
             int result = cfg.getAccess();
             assertThat(expectedAccessCodes).contains(result);
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_AREA_ID_CONFIG_ACCESS)
+    public void testGetAccess_AreaIdConfigAccessEnabled() {
+        for (CarPropertyConfig<?> cfg : mConfigs) {
+            boolean readOnlyPresent = false;
+            boolean writeOnlyPresent = false;
+            boolean readWritePresent = false;
+            for (AreaIdConfig<?> areaIdConfig : cfg.getAreaIdConfigs()) {
+                int areaIdAccess = areaIdConfig.getAccess();
+                if (areaIdAccess == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ) {
+                    readOnlyPresent = true;
+                } else if (areaIdAccess == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE) {
+                    writeOnlyPresent = true;
+                } else if (areaIdAccess == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
+                    readWritePresent = true;
+                } else {
+                    throw new AssertionError("AreaIdConfig must have an access level of one of the"
+                            + " following: {READ, WRITE, READ_WRITE}");
+                }
+            }
+            assertThat(readOnlyPresent || writeOnlyPresent || readWritePresent).isTrue();
+
+            int propertyIdAccess = cfg.getAccess();
+            if (propertyIdAccess == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ) {
+                assertThat(readOnlyPresent && !writeOnlyPresent).isTrue();
+            } else if (propertyIdAccess == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE) {
+                assertThat(!readOnlyPresent && writeOnlyPresent && !readWritePresent).isTrue();
+            } else if (propertyIdAccess == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
+                assertThat(!readOnlyPresent && !writeOnlyPresent && readWritePresent).isTrue();
+            } else {
+                throw new AssertionError("CarPropertyConfig must have an access level of one of the"
+                        + " following: {READ, WRITE, READ_WRITE}");
+            }
         }
     }
 
@@ -266,6 +311,13 @@ public final class CarPropertyConfigTest extends AbstractCarTestCase {
                 }
                 assertThat(areaIdConfig.getSupportedEnumValues()).isNotNull();
                 assertThat(areaIdConfig.getSupportedEnumValues()).containsNoDuplicates();
+                if (Flags.areaIdConfigAccess()) {
+                    assertThat(areaIdConfig.getAccess()).isIn(Arrays.asList(
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE
+                    ));
+                }
             }
         }
     }
