@@ -16,10 +16,8 @@
 
 package android.photopicker.cts;
 
-import static android.photopicker.cts.PhotoPickerCloudUtils.disableCloudMediaAndClearAllowedCloudProviders;
+import static android.photopicker.cts.PhotoPickerCloudUtils.disableDeviceConfigSync;
 import static android.photopicker.cts.PhotoPickerCloudUtils.enableCloudMediaAndSetAllowedCloudProviders;
-import static android.photopicker.cts.PhotoPickerCloudUtils.getAllowedProvidersDeviceConfig;
-import static android.photopicker.cts.PhotoPickerCloudUtils.isCloudMediaEnabled;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createImage;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.deleteMedia;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.TIMEOUT;
@@ -66,26 +64,15 @@ import java.io.IOException;
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 public class PhotoPickerBannersTest extends PhotoPickerBaseTest {
     private static final String TAG = PhotoPickerBannersTest.class.getSimpleName();
-    private static boolean sCloudMediaPreviouslyEnabled;
-    private static String sPreviouslyAllowedCloudProviders;
     @Nullable
-    private static String sPreviouslySetCloudProvider;
+    private static DeviceStatePreserver sDeviceStatePreserver;
     private Uri mLocalMediaFileUri;
 
     @BeforeClass
     public static void setUpBeforeClass() throws IOException {
-        // Store the current CMP configs, so that we can reset them at the end of the test.
-        sCloudMediaPreviouslyEnabled = isCloudMediaEnabled();
-        if (sCloudMediaPreviouslyEnabled) {
-            sPreviouslyAllowedCloudProviders = getAllowedProvidersDeviceConfig();
-        }
-
-        try {
-            sPreviouslySetCloudProvider = getCurrentCloudProvider();
-        } catch (RuntimeException e) {
-            Log.e(TAG, "Could not get previously set cloud provider", e);
-            sPreviouslySetCloudProvider = INVALID_CLOUD_PROVIDER;
-        }
+        sDeviceStatePreserver = new DeviceStatePreserver(sDevice);
+        sDeviceStatePreserver.saveCurrentCloudProviderState();
+        disableDeviceConfigSync();
 
         // Override the allowed cloud providers config to enable the banners.
         enableCloudMediaAndSetAllowedCloudProviders(sTargetPackageName);
@@ -93,13 +80,7 @@ public class PhotoPickerBannersTest extends PhotoPickerBaseTest {
 
     @AfterClass
     public static void tearDownClass() throws Exception {
-        // Reset CloudMedia configs.
-        if (sCloudMediaPreviouslyEnabled) {
-            enableCloudMediaAndSetAllowedCloudProviders(sPreviouslyAllowedCloudProviders);
-        } else {
-            disableCloudMediaAndClearAllowedCloudProviders();
-        }
-        setCloudProvider(sPreviouslySetCloudProvider);
+          sDeviceStatePreserver.restoreCloudProviderState();
     }
 
     @Before
@@ -129,6 +110,7 @@ public class PhotoPickerBannersTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("These tests have been removed after U CTS cut")
     public void testChooseAppBannerOnDismiss() throws Exception {
         // 1. Setting up the 'Choose App' banner.
         setCloudMediaInfoForChooseAppBanner();
@@ -148,7 +130,7 @@ public class PhotoPickerBannersTest extends PhotoPickerBaseTest {
     }
 
     @Test
-    @Ignore("Tracking this in b/274840171")
+    @Ignore("These tests have been removed after U CTS cut")
     public void testChooseAppBannerOnActionButtonClick() throws Exception {
         // 1. Setting up the 'Choose App' banner.
         setCloudMediaInfoForChooseAppBanner();

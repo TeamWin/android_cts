@@ -87,47 +87,11 @@ public class PhotoPickerBaseTest {
     }
 
     protected static void setCloudProvider(@Nullable String authority) throws Exception {
-        if (INVALID_CLOUD_PROVIDER.equals(authority)) {
-            Log.w(TAG, "Cloud provider is invalid. "
-                    + "Ignoring the request to set the cloud provider to invalid");
-            return;
-        }
-        if (authority == null) {
-            sDevice.executeShellCommand(
-                    "content call"
-                            + " --user " + UserHandle.myUserId()
-                            + " --uri content://media/ --method set_cloud_provider --extra"
-                            + " cloud_provider:n:null");
-        } else {
-            sDevice.executeShellCommand(
-                    "content call"
-                            + " --user " + UserHandle.myUserId()
-                            + " --uri content://media/ --method set_cloud_provider --extra"
-                            + " cloud_provider:s:"
-                            + authority);
-        }
+        PhotoPickerCloudUtils.setCloudProvider(sDevice, authority);
     }
 
     protected static String getCurrentCloudProvider() throws IOException {
-        final String out =
-                sDevice.executeShellCommand(
-                        "content call"
-                                + " --user " + UserHandle.myUserId()
-                                + " --uri content://media/ --method get_cloud_provider");
-        return extractCloudProvider(out);
-    }
-
-    private static String extractCloudProvider(String out) {
-        String[] splitOutput;
-        if (TextUtils.isEmpty(out) || ((splitOutput = out.split("=")).length < 2)) {
-            throw new RuntimeException("Could not get current cloud provider. Output: " + out);
-        }
-        String cloudprovider = splitOutput[1];
-        cloudprovider = cloudprovider.substring(0, cloudprovider.length() - 3);
-        if (cloudprovider.equals("null")) {
-            return null;
-        }
-        return cloudprovider;
+        return PhotoPickerCloudUtils.getCurrentCloudProvider(sDevice);
     }
 }
 

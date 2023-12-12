@@ -16,10 +16,7 @@
 
 package android.photopicker.cts;
 
-import static android.photopicker.cts.PhotoPickerCloudUtils.disableCloudMediaAndClearAllowedCloudProviders;
-import static android.photopicker.cts.PhotoPickerCloudUtils.enableCloudMediaAndSetAllowedCloudProviders;
-import static android.photopicker.cts.PhotoPickerCloudUtils.getAllowedProvidersDeviceConfig;
-import static android.photopicker.cts.PhotoPickerCloudUtils.isCloudMediaEnabled;
+import static android.photopicker.cts.PhotoPickerCloudUtils.disableDeviceConfigSync;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.isPhotoPickerVisible;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.verifySettingsActionBarIsVisible;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.verifySettingsActivityIsVisible;
@@ -32,6 +29,7 @@ import android.os.Build;
 import android.photopicker.cts.util.PhotoPickerUiUtils;
 import android.provider.MediaStore;
 
+import androidx.annotation.Nullable;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.uiautomator.UiObject;
 
@@ -39,6 +37,8 @@ import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.io.IOException;
 
 /**
  * Photo Picker tests for settings page launched from the overflow menu in PhotoPickerActivity or
@@ -49,16 +49,14 @@ import org.junit.Test;
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
 
-    private static boolean sCloudMediaPreviouslyEnabled;
-    private static String sPreviouslyAllowedCloudProviders;
+    @Nullable
+    private static DeviceStatePreserver sDeviceStatePreserver;
 
     @BeforeClass
-    public static void setUpBeforeClass() {
-        // Store the current CMP configs, so that we can reset them at the end of the test.
-        sCloudMediaPreviouslyEnabled = isCloudMediaEnabled();
-        if (sCloudMediaPreviouslyEnabled) {
-            sPreviouslyAllowedCloudProviders = getAllowedProvidersDeviceConfig();
-        }
+    public static void setUpBeforeClass() throws IOException {
+        sDeviceStatePreserver = new DeviceStatePreserver(sDevice);
+        sDeviceStatePreserver.saveCurrentCloudProviderState();
+        disableDeviceConfigSync();
 
         // Enable Settings menu item in PhotoPickerActivity's overflow menu.
         PhotoPickerCloudUtils.enableCloudMediaAndSetAllowedCloudProviders(
@@ -66,13 +64,8 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
     }
 
     @AfterClass
-    public static void tearDownClass() {
-        // Reset CloudMedia configs.
-        if (sCloudMediaPreviouslyEnabled) {
-            enableCloudMediaAndSetAllowedCloudProviders(sPreviouslyAllowedCloudProviders);
-        } else {
-            disableCloudMediaAndClearAllowedCloudProviders();
-        }
+    public static void tearDownClass() throws Exception {
+        sDeviceStatePreserver.restoreCloudProviderState();
     }
 
     @Test
