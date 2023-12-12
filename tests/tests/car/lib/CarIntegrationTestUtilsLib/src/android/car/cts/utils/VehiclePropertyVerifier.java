@@ -154,6 +154,7 @@ public class VehiclePropertyVerifier<T> {
     private final Optional<Integer> mDependentOnPropertyId;
     private final ImmutableSet<String> mDependentOnPropertyPermissions;
     private final ImmutableSet<Integer> mPossibleConfigArrayValues;
+    private final boolean mEnumIsBitMap;
     private final ImmutableSet<T> mAllPossibleEnumValues;
     private final ImmutableSet<T> mAllPossibleUnwritableValues;
     private final ImmutableSet<T> mAllPossibleUnavailableValues;
@@ -186,6 +187,7 @@ public class VehiclePropertyVerifier<T> {
             Optional<Integer> dependentPropertyId,
             ImmutableSet<String> dependentOnPropertyPermissions,
             ImmutableSet<Integer> possibleConfigArrayValues,
+            boolean enumIsBitMap,
             ImmutableSet<T> allPossibleEnumValues,
             ImmutableSet<T> allPossibleUnwritableValues,
             ImmutableSet<T> allPossibleUnavailableValues,
@@ -214,6 +216,7 @@ public class VehiclePropertyVerifier<T> {
         mDependentOnPropertyId = dependentPropertyId;
         mDependentOnPropertyPermissions = dependentOnPropertyPermissions;
         mPossibleConfigArrayValues = possibleConfigArrayValues;
+        mEnumIsBitMap = enumIsBitMap;
         mAllPossibleEnumValues = allPossibleEnumValues;
         mAllPossibleUnwritableValues = allPossibleUnwritableValues;
         mAllPossibleUnavailableValues = allPossibleUnavailableValues;
@@ -1640,9 +1643,20 @@ public class VehiclePropertyVerifier<T> {
             List<T> supportedEnumValues = carPropertyConfig.getAreaIdConfig(
                     areaId).getSupportedEnumValues();
             if (!supportedEnumValues.isEmpty()) {
-                assertWithMessage(mPropertyName + " - areaId: " + areaId + " - source: " + source
-                        + " value must be listed in getSupportedEnumValues()").that(value).isIn(
-                        supportedEnumValues);
+                if (mEnumIsBitMap) {
+                    int allValidValues = 0;
+                    for (T bitEnumValue : supportedEnumValues) {
+                        allValidValues |= ((Integer) bitEnumValue).intValue();
+                    }
+                    assertWithMessage(mPropertyName + " - areaId: " + areaId + " - source: "
+                            + source + " value must be a combination of values listed in "
+                            + "getSupportedEnumValues()")
+                            .that(((Integer) value).intValue() & allValidValues).isEqualTo(value);
+                } else {
+                    assertWithMessage(mPropertyName + " - areaId: " + areaId + " - source: "
+                            + source + " value must be listed in getSupportedEnumValues()").that(
+                                    value).isIn(supportedEnumValues);
+                }
             }
         }
 
@@ -1926,6 +1940,7 @@ public class VehiclePropertyVerifier<T> {
         private Optional<Integer> mDependentOnPropertyId = Optional.empty();
         private ImmutableSet<String> mDependentOnPropertyPermissions = ImmutableSet.of();
         private ImmutableSet<Integer> mPossibleConfigArrayValues = ImmutableSet.of();
+        private boolean mEnumIsBitMap = false;
         private ImmutableSet<T> mAllPossibleEnumValues = ImmutableSet.of();
         private ImmutableSet<T> mAllPossibleUnwritableValues = ImmutableSet.of();
         private ImmutableSet<T> mAllPossibleUnavailableValues = ImmutableSet.of();
@@ -2014,6 +2029,16 @@ public class VehiclePropertyVerifier<T> {
         /**
          * Used to assert that supportedEnum values provided in config are a subset of all possible
          * enum values that can be set for the property.
+         */
+        public Builder<T> setBitMapEnumEnabled(boolean enabled) {
+            mEnumIsBitMap = enabled;
+            return this;
+        }
+
+        /*
+         * Used to assert that supportedEnum values provided in config are a subset of all possible
+         * enum values that can be set for the property. If enums is defined as a bit map rather
+         * than a regular integer, setBitMapEnumEnabled(boolean) should be used as well.
          */
         public Builder<T> setAllPossibleEnumValues(ImmutableSet<T> allPossibleEnumValues) {
             mAllPossibleEnumValues = allPossibleEnumValues;
@@ -2146,6 +2171,7 @@ public class VehiclePropertyVerifier<T> {
                     mDependentOnPropertyId,
                     mDependentOnPropertyPermissions,
                     mPossibleConfigArrayValues,
+                    mEnumIsBitMap,
                     mAllPossibleEnumValues,
                     mAllPossibleUnwritableValues,
                     mAllPossibleUnavailableValues,
