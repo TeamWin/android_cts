@@ -2331,6 +2331,32 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, 0);
     }
 
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsEnabled(Flags.FLAG_REPORT_USAGE_STATS_PERMISSION)
+    @Test
+    public void testCrossUserReportUserInteractionAccess() throws Exception {
+        assumeTrue(UserManager.supportsMultipleUsers());
+        // Create user
+        final int userId = createUser("Test User");
+        startUser(userId, true);
+        installExistingPackageAsUser(mContext.getPackageName(), userId);
+        installExistingPackageAsUser(TEST_APP_PKG, userId);
+
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.REPORT_USAGE_STATS);
+        try {
+            mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, /* userId= */ userId);
+            fail("Able to report cross user interaction without INTERACT_ACROSS_USERS_FULLi"
+                    + " permission from CTS test");
+        } catch (SecurityException expected) {
+            // Do nothing.
+        }
+
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.REPORT_USAGE_STATS,
+                Manifest.permission.INTERACT_ACROSS_USERS_FULL);
+        mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, userId);
+        // user cleanup done in @After.
+    }
+
     /**
      * Test to ensure the {@link UsageStatsManager#reportUserInteraction(String, int, Bundle)}
      * is enforce with {@link android.Manifest.permission#REPORT_USAGE_STATS}
