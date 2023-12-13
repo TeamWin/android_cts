@@ -894,7 +894,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.LANE_CENTERING_ASSIST_ENABLED,
                             VehiclePropertyIds.EMERGENCY_LANE_KEEP_ASSIST_ENABLED,
                             VehiclePropertyIds.CRUISE_CONTROL_ENABLED,
-                            VehiclePropertyIds.LOW_SPEED_COLLISION_WARNING_ENABLED)
+                            VehiclePropertyIds.LOW_SPEED_COLLISION_WARNING_ENABLED,
+                            VehiclePropertyIds.CROSS_TRAFFIC_MONITORING_ENABLED)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_ADAS_SETTINGS_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -907,7 +908,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.LANE_CENTERING_ASSIST_ENABLED,
                             VehiclePropertyIds.EMERGENCY_LANE_KEEP_ASSIST_ENABLED,
                             VehiclePropertyIds.CRUISE_CONTROL_ENABLED,
-                            VehiclePropertyIds.LOW_SPEED_COLLISION_WARNING_ENABLED)
+                            VehiclePropertyIds.LOW_SPEED_COLLISION_WARNING_ENABLED,
+                            VehiclePropertyIds.CROSS_TRAFFIC_MONITORING_ENABLED)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_READ_ADAS_STATES_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -1309,6 +1311,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getValetModeEnabledVerifier(),
              getElectronicStabilityControlEnabledVerifier(),
              getElectronicStabilityControlStateVerifier(),
+             getCrossTrafficMonitoringEnabledVerifier(),
              // TODO(b/273988725): Put all verifiers here.
         };
     }
@@ -6732,6 +6735,24 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @Test
     public void testElectronicStabilityControlEnabledIfSupported() {
         getElectronicStabilityControlEnabledVerifier().verify();
+    }
+
+    private VehiclePropertyVerifier<Boolean> getCrossTrafficMonitoringEnabledVerifier() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.CROSS_TRAFFIC_MONITORING_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class, mCarPropertyManager)
+                .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
+                .addReadPermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
+                .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
+                .build();
+    }
+
+    @Test
+    public void testCrossTrafficMonitoringEnabledIfSupported() {
+        getCrossTrafficMonitoringEnabledVerifier().verify();
     }
 
     @SuppressWarnings("unchecked")
