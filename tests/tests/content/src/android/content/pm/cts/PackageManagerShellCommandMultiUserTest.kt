@@ -432,7 +432,7 @@ class PackageManagerShellCommandMultiUserTest {
                 contextSecondaryUser.unregisterReceiver(
                     fullyRemovedBroadcastReceiverForSecondaryUser
                 )
-                contextPrimaryUser.unregisterReceiver(uidRemovedBroadcastReceiverForSecondaryUser)
+                contextSecondaryUser.unregisterReceiver(uidRemovedBroadcastReceiverForSecondaryUser)
                 backgroundThread.interrupt()
             },
             Manifest.permission.INTERACT_ACROSS_USERS,
