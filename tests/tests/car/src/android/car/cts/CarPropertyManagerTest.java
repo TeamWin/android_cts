@@ -75,6 +75,7 @@ import android.car.hardware.property.LocationCharacterization;
 import android.car.hardware.property.PropertyNotAvailableException;
 import android.car.hardware.property.Subscription;
 import android.car.hardware.property.TrailerState;
+import android.car.hardware.property.VehicleAirbagLocation;
 import android.car.hardware.property.VehicleAutonomousState;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardStatus;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardType;
@@ -274,6 +275,15 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehicleAutonomousState.LEVEL_3,
                             VehicleAutonomousState.LEVEL_4,
                             VehicleAutonomousState.LEVEL_5)
+                    .build();
+    private static final ImmutableSet<Integer> VEHICLE_AIRBAG_LOCATIONS =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            VehicleAirbagLocation.FRONT,
+                            VehicleAirbagLocation.KNEE,
+                            VehicleAirbagLocation.LEFT_SIDE,
+                            VehicleAirbagLocation.RIGHT_SIDE,
+                            VehicleAirbagLocation.CURTAIN)
                     .build();
     private static final ImmutableSet<Integer> EMERGENCY_LANE_KEEP_ASSIST_STATES =
             ImmutableSet.<Integer>builder()
@@ -589,6 +599,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.STEERING_WHEEL_THEFT_LOCK_ENABLED,
                             VehiclePropertyIds.STEERING_WHEEL_LOCKED,
                             VehiclePropertyIds.STEERING_WHEEL_EASY_ACCESS_ENABLED)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_READ_CAR_AIRBAGS_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.SEAT_AIRBAGS_DEPLOYED)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_CAR_AIRBAGS_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -1227,6 +1242,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getDoorLockVerifier(),
              getDoorChildLockEnabledVerifier(),
              getVehicleDrivingAutomationCurrentLevelVerifier(),
+             getSeatAirbagsDeployedVerifier(),
              // TODO(b/273988725): Put all verifiers here.
         };
     }
@@ -5302,6 +5318,24 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .verify();
     }
 
+    private VehiclePropertyVerifier<Integer> getSeatAirbagsDeployedVerifier() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.SEAT_AIRBAGS_DEPLOYED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class, mCarPropertyManager)
+                .setAllPossibleEnumValues(VEHICLE_AIRBAG_LOCATIONS)
+                .setBitMapEnumEnabled(true)
+                .addReadPermission(Car.PERMISSION_READ_CAR_AIRBAGS)
+                .build();
+    }
+
+    @Test
+    public void testSeatAirbagsDeployedIfSupported() {
+        getSeatAirbagsDeployedVerifier().verify();
+    }
+
     @Test
     @ApiTest(
             apis = {
@@ -7757,6 +7791,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         verifyExpectedPropertiesWhenPermissionsGranted(
                 PERMISSION_CONTROL_GLOVE_BOX_PROPERTIES,
                 Car.PERMISSION_CONTROL_GLOVE_BOX);
+    }
+
+    @Test
+    public void testPermissionReadCarAirbagsGranted() {
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_READ_CAR_AIRBAGS_PROPERTIES,
+                Car.PERMISSION_READ_CAR_AIRBAGS);
     }
 
     @Test

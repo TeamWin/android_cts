@@ -359,6 +359,8 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("SEAT_LUMBAR_VERTICAL_MOVE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_WALK_IN_POS))
                 .isEqualTo("SEAT_WALK_IN_POS");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_AIRBAGS_DEPLOYED))
+                .isEqualTo("SEAT_AIRBAGS_DEPLOYED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.WINDOW_LOCK))
                 .isEqualTo("WINDOW_LOCK");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.WINDOW_MOVE))
