@@ -23,6 +23,7 @@ import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.fail;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.ContentProvider;
 import android.content.Context;
@@ -400,8 +401,10 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
 
     private void internalTestPlayAudio(final String res,
             int mp3Duration, int tolerance, int seekDuration) throws Exception {
-        Preconditions.assertTestFileExists(mInpPrefix + res);
-        MediaPlayer mp = MediaPlayer.create(mContext, Uri.fromFile(new File(mInpPrefix + res)));
+        String filePath = mInpPrefix + res;
+        Preconditions.assertTestFileExists(filePath);
+        assumeTrue("codecs not found for " +  filePath, MediaUtils.hasCodecsForResource(filePath));
+        MediaPlayer mp = MediaPlayer.create(mContext, Uri.fromFile(new File(filePath)));
         try {
             mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mp.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
