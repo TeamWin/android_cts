@@ -25,7 +25,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -182,10 +181,11 @@ public class ArchiveTest {
         // wait for device idle
         mUiDevice.waitForIdle();
 
-        assertNotNull("Uninstall prompt not shown",
-                waitFor(Until.findObject(By.res(SYSTEM_PACKAGE_NAME, "message"))));
-        // The app's name should be shown to the user.
-        assertNotNull(mUiDevice.findObject(By.text("Archive app")));
+        UiObject2 headerTitle = waitFor(
+                Until.findObject(By.res(SYSTEM_PACKAGE_NAME, "alertTitle")));
+        UiObject2 message = waitFor(Until.findObject(By.res(SYSTEM_PACKAGE_NAME, "message")));
+        assertThat(headerTitle.getText()).contains("Archive");
+        assertThat(message.getText()).contains("data will be saved");
 
         // Confirm uninstall
         UiObject2 clickableView = mUiDevice.findObject(By.res(SYSTEM_PACKAGE_NAME, "button1"));
