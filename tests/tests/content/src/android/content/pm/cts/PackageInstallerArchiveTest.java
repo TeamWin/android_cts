@@ -334,6 +334,27 @@ public class PackageInstallerArchiveTest {
     }
 
     @Test
+    public void archiveApp_twiceFails() throws Exception {
+        installPackage(PACKAGE_NAME, APK_PATH);
+
+        runWithShellPermissionIdentity(
+                () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
+                        new IntentSender((IIntentSender) mArchiveIntentSender), 0),
+                Manifest.permission.DELETE_PACKAGES);
+        assertThat(mArchiveIntentSender.mStatus.get(5, TimeUnit.SECONDS)).isEqualTo(
+                PackageInstaller.STATUS_SUCCESS);
+
+        PackageManager.NameNotFoundException e =
+                runWithShellPermissionIdentity(
+                        () -> assertThrows(
+                                PackageManager.NameNotFoundException.class,
+                                () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
+                                        new IntentSender((IIntentSender) mArchiveIntentSender), 0)),
+                        Manifest.permission.DELETE_PACKAGES);
+        assertThat(e).hasMessageThat().isEqualTo(PACKAGE_NAME + " is not installed.");
+    }
+
+    @Test
     @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
     public void archiveApp_getArchiveTimeMillis() throws Exception {
         installPackage(PACKAGE_NAME, APK_PATH);
