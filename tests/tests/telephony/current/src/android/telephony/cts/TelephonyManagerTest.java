@@ -6484,10 +6484,10 @@ public class TelephonyManagerTest {
 
     @Test
     @ApiTest(apis = {
-            "android.telephony.TelephonyManager#isCellularIdentifierDisclosureNotificationEnabled",
-            "android.telephony.TelephonyManager#enableCellularIdentifierDisclosureNotifications"})
+            "android.telephony.TelephonyManager#isCellularIdentifierDisclosureNotificationsEnabled",
+            "android.telephony.TelephonyManager#setEnableCellularIdentifierDisclosureNotifications"})
     @RequiresFlagsEnabled(Flags.FLAG_ENABLE_IDENTIFIER_DISCLOSURE_TRANSPARENCY)
-    public void testEnableCellularIdentifierDisclosureNotifications() {
+    public void testSetEnableCellularIdentifierDisclosureNotifications() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
         if (mNetworkHalVersion < RADIO_HAL_VERSION_2_2) {
             Log.d(TAG,
@@ -6496,22 +6496,22 @@ public class TelephonyManagerTest {
         }
 
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                (tm) -> tm.enableCellularIdentifierDisclosureNotifications(true));
+                (tm) -> tm.setEnableCellularIdentifierDisclosureNotifications(true));
         boolean enabled = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                (tm) -> tm.isCellularIdentifierDisclosureNotificationEnabled());
+                (tm) -> tm.isCellularIdentifierDisclosureNotificationsEnabled());
         assertTrue(enabled);
 
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                (tm) -> tm.enableCellularIdentifierDisclosureNotifications(false));
+                (tm) -> tm.setEnableCellularIdentifierDisclosureNotifications(false));
         enabled = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                (tm) -> tm.isCellularIdentifierDisclosureNotificationEnabled());
+                (tm) -> tm.isCellularIdentifierDisclosureNotificationsEnabled());
         assertFalse(enabled);
     }
 
     @Test
     @ApiTest(apis = {
-            "android.telephony.TelephonyManager#isCellularIdentifierDisclosureNotificationEnabled",
-            "android.telephony.TelephonyManager#enableCellularIdentifierDisclosureNotifications"})
+            "android.telephony.TelephonyManager#isCellularIdentifierDisclosureNotificationsEnabled",
+            "android.telephony.TelephonyManager#setEnableCellularIdentifierDisclosureNotifications"})
     @RequiresFlagsEnabled(Flags.FLAG_ENABLE_IDENTIFIER_DISCLOSURE_TRANSPARENCY)
     public void testCellularIdentifierDisclosureNotificationsPermissions() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
@@ -6522,12 +6522,12 @@ public class TelephonyManagerTest {
         }
 
         assertThrows(SecurityException.class, () -> {
-                    mTelephonyManager.enableCellularIdentifierDisclosureNotifications(true);
+                    mTelephonyManager.setEnableCellularIdentifierDisclosureNotifications(true);
                 }
         );
 
         assertThrows(SecurityException.class, () -> {
-                    mTelephonyManager.isCellularIdentifierDisclosureNotificationEnabled();
+                    mTelephonyManager.isCellularIdentifierDisclosureNotificationsEnabled();
                 }
         );
     }
