@@ -259,15 +259,17 @@ public class CodecEncoderSurfaceTest extends CodecEncoderSurfaceTestBase {
         // Prior to Android U, this test was using the first decoder for a given mediaType.
         // In Android U, this was updated to test the encoders with all decoders for the
         // given mediaType. There are some vendor encoders in older versions of Android
-        // which do not work as expected with the surface from s/w decoder.
-        // If the device is has vendor partition older than Android U, limit the tests
-        // to first decoder like it was being done prior to Androd U
+        // and few OMX encoders which do not work as expected with the surface from s/w decoder.
+        // If the device is has vendor partition older than Android U or if the encoder is
+        // an OMX encoder, then limit the tests to first decoder like it was being done prior
+        // to Androd U
         final List<Object[]> finalArgsList = new ArrayList<>();
         for (Object[] arg : expandedArgsList) {
             String encoderName = (String) arg[0];
             String decoderName = (String) arg[2];
             String decoderMediaType = (String) arg[3];
-            if (VNDK_IS_BEFORE_U && isVendorCodec(encoderName)) {
+            if ((VNDK_IS_BEFORE_U || encoderName.toUpperCase().startsWith("OMX"))
+                    && isVendorCodec(encoderName)) {
                 if (!isDefaultCodec(decoderName, decoderMediaType, /* isEncoder */false)) {
                     continue;
                 }
