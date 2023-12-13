@@ -30,6 +30,7 @@ import static android.voiceinteraction.common.Utils.AUDIO_EGRESS_DETECTED_RESULT
 import static android.voiceinteraction.common.Utils.AUDIO_EGRESS_DETECTED_RESULT_WRONG_COPY_BUFFER_SIZE;
 import static android.voiceinteraction.common.Utils.EXTRA_HOTWORD_DETECTION_SERVICE_CAN_READ_AUDIO_DATA_IS_NOT_ZERO;
 import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
+import static android.voiceinteraction.cts.testcore.Helper.DETECTED_RESULT;
 import static android.voiceinteraction.cts.testcore.Helper.MANAGE_VOICE_KEYPHRASES;
 import static android.voiceinteraction.cts.testcore.Helper.WAIT_TIMEOUT_IN_MS;
 import static android.voiceinteraction.cts.testcore.Helper.createKeyphraseRecognitionExtraList;
@@ -942,9 +943,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     @Test
     public void testHotwordDetectionService_dspDetectorTrainingData_opAndPermGranted()
             throws Throwable {
-        // Create AlwaysOnHotwordDetector
+        // Create AlwaysOnHotwordDetector that sends training data after detection.
         AlwaysOnHotwordDetector alwaysOnHotwordDetector =
-                createAlwaysOnHotwordDetectorForTrainingDataEgress();
+                createAlwaysOnHotwordDetectorForTrainingDataEgress(/* sendAfterDetect= */ true);
 
         try {
             // Set training data op to MODE_ALLOWED.
@@ -953,8 +954,8 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
             adoptShellPermissionIdentityForHotwordWithTrainingData();
             mService.initTrainingDataLatch();
 
-            // Trigger detection.
-            triggerDetections(1, alwaysOnHotwordDetector);
+            // Trigger detector and verify detection.
+            triggerDetectorAndVerifyDetection(alwaysOnHotwordDetector);
 
             // wait onTrainingData() called and verify the data
             mService.waitOnTrainingDataCalled();
@@ -974,9 +975,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     @Test
     public void testHotwordDetectionService_softwareDetectorTrainingData_opAndPermGranted()
             throws Throwable {
-        // Create SoftwareHotwordDetector.
+        // Create SoftwareHotwordDetector that sends training data after detection.
         HotwordDetector softwareHotwordDetector =
-                createSoftwareHotwordDetectorForTrainingDataEgress();
+                createSoftwareHotwordDetectorForTrainingDataEgress(/* sendAfterDetect= */ true);
 
         try {
             // Set training data op to MODE_ALLOWED.
@@ -985,8 +986,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
             adoptShellPermissionIdentityForHotwordWithTrainingData();
             mService.initTrainingDataLatch();
 
-            // Trigger detection.
-            triggerDetections(1, softwareHotwordDetector, /* externalDetection= */ false);
+            // Trigger detector and verify detection.
+            triggerDetectorAndVerifyDetection(softwareHotwordDetector,
+                    /* externalDetection= */ false);
 
             // wait onTrainingData() called and verify the data
             mService.waitOnTrainingDataCalled();
@@ -1006,9 +1008,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     @Test
     public void testHotwordDetectionService_softwareExternalDetectionTrainingData_opAndPermGranted()
             throws Throwable {
-        // Create SoftwareHotwordDetector.
+        // Create SoftwareHotwordDetector that sends training data after detection.
         HotwordDetector softwareHotwordDetector =
-                createSoftwareHotwordDetectorForTrainingDataEgress();
+                createSoftwareHotwordDetectorForTrainingDataEgress(/* sendAfterDetect= */ true);
 
         try {
             // Set training data op to MODE_ALLOWED.
@@ -1017,8 +1019,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
             adoptShellPermissionIdentityForHotwordWithTrainingData();
             mService.initTrainingDataLatch();
 
-            // Trigger detection.
-            triggerDetections(1, softwareHotwordDetector, /* externalDetection= */ true);
+            // Trigger detector and verify detection.
+            triggerDetectorAndVerifyDetection(softwareHotwordDetector,
+                    /* externalDetection= */ true);
 
             // wait onTrainingData() called and verify the data
             mService.waitOnTrainingDataCalled();
@@ -1038,9 +1041,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     @Test
     public void testHotwordDetectionService_dspDetectorTrainingData_opNotGranted()
             throws Throwable {
-        // Create AlwaysOnHotwordDetector
+        // Create AlwaysOnHotwordDetector that sends training data after detection.
         AlwaysOnHotwordDetector alwaysOnHotwordDetector =
-                createAlwaysOnHotwordDetectorForTrainingDataEgress();
+                createAlwaysOnHotwordDetectorForTrainingDataEgress(/* sendAfterDetect= */ true);
 
         try {
             // Set training data op to default mode (not allowed).
@@ -1049,7 +1052,8 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
             adoptShellPermissionIdentityForHotwordWithTrainingData();
             mService.initOnFailureLatch();
 
-            triggerDetections(1, alwaysOnHotwordDetector);
+            // Trigger detector and verify detection.
+            triggerDetectorAndVerifyDetection(alwaysOnHotwordDetector);
 
             // wait onFailure() called and verify the result.
             mService.waitOnFailureCalled();
@@ -1066,9 +1070,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     @Test
     public void testHotwordDetectionService_softwareDetectorTrainingData_opNotGranted()
             throws Throwable {
-        // Create SoftwareHotwordDetector.
+        // Create SoftwareHotwordDetector that sends training data after detection.
         HotwordDetector softwareHotwordDetector =
-                createSoftwareHotwordDetectorForTrainingDataEgress();
+                createSoftwareHotwordDetectorForTrainingDataEgress(/* sendAfterDetect= */ true);
 
         try {
             // Set training data op to default mode (not allowed).
@@ -1077,7 +1081,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
             adoptShellPermissionIdentityForHotwordWithTrainingData();
             mService.initOnFailureLatch();
 
-            triggerDetections(1, softwareHotwordDetector, /* externalDetection= */ false);
+            // Trigger detector and verify detection.
+            triggerDetectorAndVerifyDetection(softwareHotwordDetector,
+                    /* externalDetection= */ false);
 
             // wait onFailure() called and verify the result
             mService.waitOnFailureCalled();
@@ -1094,9 +1100,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     @Test
     public void testHotwordDetectionService_softwareExternalDetectionTrainingData_opNotGranted()
             throws Throwable {
-        // Create SoftwareHotwordDetector.
+        // Create SoftwareHotwordDetector that sends training data after detection.
         HotwordDetector softwareHotwordDetector =
-                createSoftwareHotwordDetectorForTrainingDataEgress();
+                createSoftwareHotwordDetectorForTrainingDataEgress(/* sendAfterDetect= */ true);
 
         try {
             // Set training data op to default mode (not allowed).
@@ -1105,7 +1111,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
             adoptShellPermissionIdentityForHotwordWithTrainingData();
             mService.initOnFailureLatch();
 
-            triggerDetections(1, softwareHotwordDetector, /* externalDetection= */ true);
+            // Trigger detector and verify detection.
+            triggerDetectorAndVerifyDetection(softwareHotwordDetector,
+                    /* externalDetection= */ true);
 
             // wait onFailure() called and verify the result
             mService.waitOnFailureCalled();
@@ -1122,9 +1130,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     @Test
     public void testHotwordDetectionService_dspDetectorTrainingData_permNotGranted()
             throws Throwable {
-        // Create AlwaysOnHotwordDetector
+        // Create AlwaysOnHotwordDetector that sends training data after detection.
         AlwaysOnHotwordDetector alwaysOnHotwordDetector =
-                createAlwaysOnHotwordDetectorForTrainingDataEgress();
+                createAlwaysOnHotwordDetectorForTrainingDataEgress(/* sendAfterDetect= */ true);
 
         try {
             // Set training data op to MODE_ALLOWED.
@@ -1133,7 +1141,8 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
             adoptShellPermissionIdentityForHotword();
             mService.initOnFailureLatch();
 
-            triggerDetections(1, alwaysOnHotwordDetector);
+            // Trigger detector and verify detection.
+            triggerDetectorAndVerifyDetection(alwaysOnHotwordDetector);
 
             // wait onFailure() called and verify the result.
             mService.waitOnFailureCalled();
@@ -1150,9 +1159,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     @Test
     public void testHotwordDetectionService_softwareDetectorTrainingData_permNotGranted()
             throws Throwable {
-        // Create SoftwareHotwordDetector.
+        // Create SoftwareHotwordDetector that sends training data after detection.
         HotwordDetector softwareHotwordDetector =
-                createSoftwareHotwordDetectorForTrainingDataEgress();
+                createSoftwareHotwordDetectorForTrainingDataEgress(/* sendAfterDetect= */ true);
 
         try {
             // Set training data op to MODE_ALLOWED.
@@ -1161,7 +1170,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
             adoptShellPermissionIdentityForHotword();
             mService.initOnFailureLatch();
 
-            triggerDetections(1, softwareHotwordDetector, /* externalDetection= */ false);
+            // Trigger detector and verify detection.
+            triggerDetectorAndVerifyDetection(softwareHotwordDetector,
+                    /* externalDetection= */ false);
 
             // wait onFailure() called and verify the result
             mService.waitOnFailureCalled();
@@ -1178,9 +1189,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     @Test
     public void testHotwordDetectionService_softwareExternalDetectionTrainingData_permNotGranted()
             throws Throwable {
-        // Create SoftwareHotwordDetector.
+        // Create SoftwareHotwordDetector that sends training data after detection.
         HotwordDetector softwareHotwordDetector =
-                createSoftwareHotwordDetectorForTrainingDataEgress();
+                createSoftwareHotwordDetectorForTrainingDataEgress(/* sendAfterDetect= */ true);
 
         try {
             // Set training data op to MODE_ALLOWED.
@@ -1189,7 +1200,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
             adoptShellPermissionIdentityForHotword();
             mService.initOnFailureLatch();
 
-            triggerDetections(1, softwareHotwordDetector, /* externalDetection= */ true);
+            // Trigger detector and verify detection.
+            triggerDetectorAndVerifyDetection(softwareHotwordDetector,
+                    /* externalDetection= */ true);
 
             // wait onFailure() called and verify the result
             mService.waitOnFailureCalled();
@@ -1207,36 +1220,42 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     @Test(timeout = 120000)
     public void testHotwordDetectionService_dspDetectorTrainingData_whenLimitExceeded()
             throws Throwable {
-        // Create AlwaysOnHotwordDetector
+        // Create AlwaysOnHotwordDetector.
         AlwaysOnHotwordDetector alwaysOnHotwordDetector =
-                createAlwaysOnHotwordDetectorForTrainingDataEgress();
+                createAlwaysOnHotwordDetectorForTrainingDataEgress(/* sendAfterDetect= */ false);
 
         try {
             // Set training data op to MODE_ALLOWED.
             setTrainingDataAppOpForShellIdentity(/* allow= */ true);
             // Grant training data permission.
             adoptShellPermissionIdentityForHotwordWithTrainingData();
-            mService.initTrainingDataLatch();
+
+            // STEP 1: Trigger 20 training data events (use up all of the daily limit).
+            for (int i = 0; i < 20; i++) {
+                // Initialize training data latch.
+                mService.initTrainingDataLatch();
+                // Trigger detector.
+                triggerDetector(alwaysOnHotwordDetector);
+                // Verify training data event.
+                mService.waitOnTrainingDataCalled();
+                HotwordTrainingData trainingDataResult =
+                        mService.getHotwordServiceOnTrainingData();
+                assertThat(trainingDataResult).isEqualTo(Utils.HOTWORD_TRAINING_DATA);
+            }
+
+            // STEP 2: Trigger one more training data event (past limit) and verify that notified of
+            // failure to egress due to limit exceeded.
+            // Initialize failure latch.
             mService.initOnFailureLatch();
-
-            // Trigger 25 onDetect() events.
-            triggerDetections(25, alwaysOnHotwordDetector);
-
+            // Trigger detector.
+            triggerDetector(alwaysOnHotwordDetector);
             // Verify that training data egress limit was notified.
             mService.waitOnFailureCalled();
             verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
                     ERROR_CODE_ON_TRAINING_DATA_EGRESS_LIMIT_EXCEEDED);
 
-            // Verify that all detections (25) where egressed but only 20 training data events
-            // were egressed.
-            assertThat(mService.getDspOnDetectedCount()).isEqualTo(25);
+            // Verify that only 20 training data events were egressed.
             assertThat(mService.getDspOnTrainingDataCount()).isEqualTo(20);
-
-            // Verify last on training data event.
-            mService.waitOnTrainingDataCalled();
-            HotwordTrainingData trainingDataResult =
-                    mService.getHotwordServiceOnTrainingData();
-            assertThat(trainingDataResult).isEqualTo(Utils.HOTWORD_TRAINING_DATA);
         } finally {
             alwaysOnHotwordDetector.destroy();
             // Drop identity adopted.
@@ -1252,34 +1271,42 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
             throws Throwable {
         // Create SoftwareHotwordDetector.
         HotwordDetector softwareHotwordDetector =
-                createSoftwareHotwordDetectorForTrainingDataEgress();
+                createSoftwareHotwordDetectorForTrainingDataEgress(/* sendAfterDetect= */ false);
 
         try {
             // Set training data op to MODE_ALLOWED.
             setTrainingDataAppOpForShellIdentity(/* allow= */ true);
             // Grant training data permission.
             adoptShellPermissionIdentityForHotwordWithTrainingData();
-            mService.initTrainingDataLatch();
+
+            // STEP 1: Trigger 20 training data events (use up all of the daily limit).
+            for (int i = 0; i < 20; i++) {
+                // Initialize training data latch.
+                mService.initTrainingDataLatch();
+                // Trigger detector.
+                triggerDetector(softwareHotwordDetector, /* externalDetection= */ false);
+                // Verify training data event.
+                mService.waitOnTrainingDataCalled();
+                HotwordTrainingData trainingDataResult =
+                        mService.getHotwordServiceOnTrainingData();
+                assertThat(trainingDataResult).isEqualTo(Utils.HOTWORD_TRAINING_DATA);
+                // For software detector we need to stop recognition between triggers.
+                softwareHotwordDetector.stopRecognition();
+            }
+
+            // STEP 2: Trigger one more training data event (past limit) and verify that notified of
+            // failure to egress due to limit exceeded.
+            // Initialize failure latch.
             mService.initOnFailureLatch();
-
-            // Trigger 25 onDetect() events.
-            triggerDetections(25, softwareHotwordDetector, /* externalDetection= */ false);
-
+            // Trigger detector.
+            triggerDetector(softwareHotwordDetector, /* externalDetection= */ false);
             // Verify that training data egress limit was notified.
             mService.waitOnFailureCalled();
             verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
                     ERROR_CODE_ON_TRAINING_DATA_EGRESS_LIMIT_EXCEEDED);
 
-
-            // Verify that all detections (25) where egressed but only 20 training data events
-            // were egressed.
-            assertThat(mService.getSoftwareOnDetectedCount()).isEqualTo(25);
+            // Verify that only 20 training data events were egressed.
             assertThat(mService.getSoftwareOnTrainingDataCount()).isEqualTo(20);
-
-            mService.waitOnTrainingDataCalled();
-            HotwordTrainingData trainingDataResult =
-                    mService.getHotwordServiceOnTrainingData();
-            assertThat(trainingDataResult).isEqualTo(Utils.HOTWORD_TRAINING_DATA);
         } finally {
             softwareHotwordDetector.destroy();
             // Drop identity adopted.
@@ -1295,32 +1322,39 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
             throws Throwable {
         // Create SoftwareHotwordDetector.
         HotwordDetector softwareHotwordDetector =
-                createSoftwareHotwordDetectorForTrainingDataEgress();
+                createSoftwareHotwordDetectorForTrainingDataEgress(/* sendAfterDetect= */ false);
 
         try {
             // Set training data op to MODE_ALLOWED.
             setTrainingDataAppOpForShellIdentity(/* allow= */ true);
             // Grant training data permission.
             adoptShellPermissionIdentityForHotwordWithTrainingData();
-            mService.initTrainingDataLatch();
+            // STEP 1: Trigger 20 training data events (use up all of the daily limit).
+            for (int i = 0; i < 20; i++) {
+                // Initialize training data latch.
+                mService.initTrainingDataLatch();
+                // Trigger detector.
+                triggerDetector(softwareHotwordDetector, /* externalDetection= */ true);
+                // Verify training data event.
+                mService.waitOnTrainingDataCalled();
+                HotwordTrainingData trainingDataResult =
+                        mService.getHotwordServiceOnTrainingData();
+                assertThat(trainingDataResult).isEqualTo(Utils.HOTWORD_TRAINING_DATA);
+            }
+
+            // STEP 2: Trigger one more training data event (past limit) and verify that notified of
+            // failure to egress due to limit exceeded.
+            // Initialize failure latch.
             mService.initOnFailureLatch();
-
-            triggerDetections(25, softwareHotwordDetector, /* externalDetection= */ true);
-
+            // Trigger detector.
+            triggerDetector(softwareHotwordDetector, /* externalDetection= */ true);
             // Verify that training data egress limit was notified.
             mService.waitOnFailureCalled();
             verifyHotwordDetectionServiceFailure(mService.getHotwordDetectionServiceFailure(),
                     ERROR_CODE_ON_TRAINING_DATA_EGRESS_LIMIT_EXCEEDED);
 
-            // Verify that all detections (25) where egressed but only 20 training data events
-            // were egressed.
-            assertThat(mService.getSoftwareOnDetectedCount()).isEqualTo(25);
+            // Verify that only 20 training data events were egressed.
             assertThat(mService.getSoftwareOnTrainingDataCount()).isEqualTo(20);
-
-            mService.waitOnTrainingDataCalled();
-            HotwordTrainingData trainingDataResult =
-                    mService.getHotwordServiceOnTrainingData();
-            assertThat(trainingDataResult).isEqualTo(Utils.HOTWORD_TRAINING_DATA);
         } finally {
             softwareHotwordDetector.destroy();
             // Drop identity adopted.
@@ -2493,45 +2527,64 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
         assertThat(hotwordDetectionServiceFailure.getErrorCode()).isEqualTo(errorCode);
     }
 
-    /** Triggers detection(s) for software detector and waits. */
-    private void triggerDetections(int numTriggers, HotwordDetector softwareDetector,
+    /** Triggers software detector and verifies detection */
+    private void triggerDetectorAndVerifyDetection(HotwordDetector softwareDetector,
             boolean externalDetection) throws Exception {
-        for (int i = 0; i < numTriggers; i++) {
-            mService.initDetectRejectLatch();
-            if (externalDetection) {
-                softwareDetector.startRecognition(Helper.createFakeAudioStream(),
-                        Helper.createFakeAudioFormat(), Helper.createFakePersistableBundleData());
+        mService.initDetectRejectLatch();
 
-            } else {
-                softwareDetector.startRecognition();
+        triggerDetector(softwareDetector, /* externalDetection= */ externalDetection);
 
-            }
-            mService.waitOnDetectOrRejectCalled();
+        // Verify detection.
+        mService.waitOnDetectOrRejectCalled();
+        Helper.verifyDetectedResult(mService.getHotwordServiceOnDetectedResult(), DETECTED_RESULT);
+    }
+
+    /** Triggers always on hotword detector (simulate DSP trigger) and verifies detection */
+    private void triggerDetectorAndVerifyDetection(
+            AlwaysOnHotwordDetector alwaysOnHotwordDetector)
+            throws Exception {
+        mService.initDetectRejectLatch();
+
+        triggerDetector(alwaysOnHotwordDetector);
+
+        // Verify detection.
+        mService.waitOnDetectOrRejectCalled();
+        Helper.verifyDetectedResult(mService.getHotwordServiceOnDetectedResult(), DETECTED_RESULT);
+    }
+
+    /** Triggers software detector (start recognition). */
+    private void triggerDetector(HotwordDetector softwareDetector,
+            boolean externalDetection) throws Exception {
+        if (externalDetection) {
+            softwareDetector.startRecognition(Helper.createFakeAudioStream(),
+                    Helper.createFakeAudioFormat(), Helper.createFakePersistableBundleData());
+
+        } else {
+            softwareDetector.startRecognition();
         }
     }
 
-    /** Triggers detection(s) for always-on hotword detector and waits. */
-    private void triggerDetections(int numTriggers, AlwaysOnHotwordDetector alwaysOnHotwordDetector)
+    /** Triggers always on hotword detector (simulate DSP trigger) */
+    private void triggerDetector(
+            AlwaysOnHotwordDetector alwaysOnHotwordDetector)
             throws Exception {
-        for (int i = 0; i < numTriggers; i++) {
-            mService.initDetectRejectLatch();
-            // Trigger test detection event.
-            alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
-                    /* status= */ 0, /* soundModelHandle= */ 100,
-                    /* halEventReceivedMillis */ 12345, /* captureAvailable= */ true,
-                    /* captureSession= */ 101, /* captureDelayMs= */ 1000,
-                    /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
-                    Helper.createFakeAudioFormat(), new byte[1024],
-                    Helper.createFakeKeyphraseRecognitionExtraList());
-            mService.waitOnDetectOrRejectCalled();
-        }
+        // Trigger test detection event.
+        alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
+                /* status= */ 0, /* soundModelHandle= */ 100,
+                /* halEventReceivedMillis */ 12345, /* captureAvailable= */ true,
+                /* captureSession= */ 101, /* captureDelayMs= */ 1000,
+                /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
+                Helper.createFakeAudioFormat(), new byte[1024],
+                Helper.createFakeKeyphraseRecognitionExtraList());
     }
 
     /**
-     * Creates a software hotword detector and inform HDS to egress training data on detection
-     * events.
+     * Creates a software hotword detector and inform HDS to egress training data.
+     *
+     * @param sendAfterDetect whether to send training data after detection.
      */
-    private HotwordDetector createSoftwareHotwordDetectorForTrainingDataEgress() throws Throwable {
+    private HotwordDetector createSoftwareHotwordDetectorForTrainingDataEgress(
+            boolean sendAfterDetect) throws Throwable {
         HotwordDetector softwareHotwordDetector = createSoftwareHotwordDetector(/* useOnFailure= */
                 true);
 
@@ -2539,7 +2592,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
         runWithShellPermissionIdentity(() -> {
             PersistableBundle persistableBundle = new PersistableBundle();
             persistableBundle.putInt(Helper.KEY_TEST_SCENARIO,
-                    Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_TRAINING_DATA_ON_DETECT);
+                    sendAfterDetect
+                            ? Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_TRAINING_DATA_AFTER_DETECT
+                            : Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_TRAINING_DATA);
             softwareHotwordDetector.updateState(
                     persistableBundle,
                     Helper.createFakeSharedMemoryData());
@@ -2549,10 +2604,13 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     }
 
     /**
-     * Creates always-on hotword detector and inform HDS to egress training data on detection
+     * Creates always-on hotword detector and inform HDS to egress training data after detection
      * events.
+     *
+     * @param sendAfterDetect whether to send training data after detection.
      */
-    private AlwaysOnHotwordDetector createAlwaysOnHotwordDetectorForTrainingDataEgress()
+    private AlwaysOnHotwordDetector createAlwaysOnHotwordDetectorForTrainingDataEgress(boolean
+            sendAfterDetect)
             throws Throwable {
         AlwaysOnHotwordDetector alwaysOnHotwordDetector =
                 createAlwaysOnHotwordDetectorWithSoundTriggerInjection(/* withFailureCallback= */
@@ -2562,7 +2620,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
         runWithShellPermissionIdentity(() -> {
             PersistableBundle persistableBundle = new PersistableBundle();
             persistableBundle.putInt(Helper.KEY_TEST_SCENARIO,
-                    Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_TRAINING_DATA_ON_DETECT);
+                    sendAfterDetect
+                            ? Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_TRAINING_DATA_AFTER_DETECT
+                            : Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_TRAINING_DATA);
             alwaysOnHotwordDetector.updateState(
                     persistableBundle,
                     Helper.createFakeSharedMemoryData());

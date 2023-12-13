@@ -109,7 +109,8 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
 
     private boolean mCheckAudioDataIsNotZero;
 
-    private boolean mSendTrainingDataOnDetect;
+    private boolean mSendTrainingData;
+    private boolean mSendTrainingDataAfterDetect;
 
     @Override
     public void onCreate() {
@@ -124,9 +125,10 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             long timeoutMillis, @NonNull Callback callback) {
         Log.d(TAG, "onDetect for DSP source");
 
-        if (mSendTrainingDataOnDetect) {
+        if (mSendTrainingData) {
             Log.d(TAG, "Sending training data");
             callback.onTrainingData(Utils.HOTWORD_TRAINING_DATA);
+            return;
         }
 
         if (mIsNoNeedActionDuringDetection) {
@@ -185,6 +187,11 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                     } catch (IllegalArgumentException e) {
                         callback.onDetected(DETECTED_RESULT);
                     }
+
+                    if (mSendTrainingDataAfterDetect) {
+                        Log.i(TAG, "Sending training data after detect");
+                        callback.onTrainingData(Utils.HOTWORD_TRAINING_DATA);
+                    }
                 }, mDetectionDelayMs);
             }
         } else {
@@ -210,9 +217,10 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             return;
         }
 
-        if (mSendTrainingDataOnDetect) {
-            Log.d(TAG, "Sending training data");
+        if (mSendTrainingData) {
+            Log.d(TAG, "Sending training data.");
             callback.onTrainingData(Utils.HOTWORD_TRAINING_DATA);
+            return;
         }
 
         if (audioStream == null) {
@@ -262,6 +270,11 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                     } else {
                         callback.onDetected(DETECTED_RESULT);
                     }
+
+                    if (mSendTrainingDataAfterDetect) {
+                        Log.d(TAG, "Sending training data after detect");
+                        callback.onTrainingData(Utils.HOTWORD_TRAINING_DATA);
+                    }
                 };
 
                 synchronized (mLock) {
@@ -280,28 +293,22 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     @Override
     public void onDetect(@NonNull Callback callback) {
         Log.d(TAG, "onDetect for Mic source");
+
+        if (mSendTrainingData) {
+            Log.d(TAG, "Sending training data");
+            callback.onTrainingData(Utils.HOTWORD_TRAINING_DATA);
+            return;
+        }
+
         synchronized (mLock) {
             if (mDetectionJob != null) {
-                if (mSendTrainingDataOnDetect) {
-                    // If we allow sending training data on detect, just clear existing detection
-                    // job instead of throwing an exception. This will allow for sending multiple
-                    // training data events without starting and stopping recognition
-                    // multiple times.
-                    mHandler.removeCallbacks(mDetectionJob);
-                    mDetectionJob = null;
-                } else {
-                    throw new IllegalStateException("onDetect called while already detecting");
-                }
+                throw new IllegalStateException("onDetect called while already detecting");
             }
             if (!mStopDetectionCalled) {
                 // Delaying this allows us to test other flows, such as stopping detection. It's
                 // also more realistic to schedule it onto another thread.
                 mDetectionJob = () -> {
                     Log.d(TAG, "Sending detected result");
-                    if (mSendTrainingDataOnDetect) {
-                        Log.d(TAG, "Sending training data");
-                        callback.onTrainingData(Utils.HOTWORD_TRAINING_DATA);
-                    }
                     if (mIsTestUnexpectedCallback) {
                         Log.d(TAG, "callback onDetected twice");
                         callback.onDetected(DETECTED_RESULT);
@@ -322,6 +329,11 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                         }
                     } else {
                         callback.onDetected(DETECTED_RESULT_FOR_MIC_FAILURE);
+                    }
+
+                    if (mSendTrainingDataAfterDetect) {
+                        Log.d(TAG, "Sending training data after detect");
+                        callback.onTrainingData(Utils.HOTWORD_TRAINING_DATA);
                     }
                 };
                 mHandler.postDelayed(mDetectionJob, mDetectionDelayMs);
@@ -451,9 +463,16 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                 return;
             }
             if (options.getInt(Utils.KEY_TEST_SCENARIO, -1)
-                    == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_TRAINING_DATA_ON_DETECT) {
-                Log.d(TAG, "options: Test send training data on every onDetect() call.");
-                mSendTrainingDataOnDetect = true;
+                    == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_TRAINING_DATA) {
+                Log.d(TAG, "options: Test send training data on trigger or start.");
+                mSendTrainingData = true;
+                return;
+            }
+            if (options.getInt(Utils.KEY_TEST_SCENARIO, -1)
+                    == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_TRAINING_DATA_AFTER_DETECT) {
+                Log.d(TAG, "options: Test send training data after detection on trigger or"
+                        + " start.");
+                mSendTrainingDataAfterDetect = true;
                 return;
             }
 
