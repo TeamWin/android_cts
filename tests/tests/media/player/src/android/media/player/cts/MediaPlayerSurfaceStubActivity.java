@@ -15,6 +15,8 @@
  */
 package android.media.player.cts;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.Activity;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
@@ -24,6 +26,7 @@ import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
+import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.Preconditions;
 
 import java.io.File;
@@ -34,7 +37,7 @@ public class MediaPlayerSurfaceStubActivity extends Activity {
 
     private static final String TAG = "MediaPlayerSurfaceStubActivity";
 
-    static final String mInpPrefix = WorkDir.getMediaDirString();
+    static final String FILE_PATH = WorkDir.getMediaDirString() + "testvideo.3gp";
     protected Resources mResources;
 
     private VideoSurfaceView mVideoView = null;
@@ -48,9 +51,9 @@ public class MediaPlayerSurfaceStubActivity extends Activity {
         mMediaPlayer = new MediaPlayer();
         AssetFileDescriptor afd = null;
 
-        Preconditions.assertTestFileExists(mInpPrefix + "testvideo.3gp");
+        Preconditions.assertTestFileExists(FILE_PATH);
         try {
-            File inpFile = new File(mInpPrefix + "testvideo.3gp");
+            File inpFile = new File(FILE_PATH);
             ParcelFileDescriptor parcelFD =
                     ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
             afd = new AssetFileDescriptor(parcelFD, 0, parcelFD.getStatSize());
@@ -76,11 +79,17 @@ public class MediaPlayerSurfaceStubActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        mVideoView.onResume();
+        if (mVideoView != null) {
+            mVideoView.onResume();
+        }
     }
 
     public void playVideo() throws Exception {
-        mVideoView.startTest();
+        assumeTrue("codecs not found for " +  FILE_PATH,
+                   MediaUtils.hasCodecsForResource(FILE_PATH));
+        if (mVideoView != null) {
+            mVideoView.startTest();
+        }
     }
 
 }
