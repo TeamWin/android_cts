@@ -408,7 +408,12 @@ public abstract class AudioDataPathsBaseActivity
                 case TESTSTATUS_NOT_RUN:
                     return " NOT TESTED";
                 case TESTSTATUS_RUN:
-                    return hasPassed(api) ? " PASS" : " FAIL";
+                    if (mTestResults[api] == null) {
+                        // This can happen when the test sequence is cancelled.
+                        return " NO RESULTS";
+                    } else {
+                        return hasPassed(api) ? " PASS" : " FAIL";
+                    }
                 case TESTSTATUS_BAD_START:
                     return " BAD START";
                 case TESTSTATUS_BAD_ROUTING:
@@ -531,69 +536,50 @@ public abstract class AudioDataPathsBaseActivity
                         .appendText(getTestStateString(api))
                         .closeBold();
                 if (mTestState[api] == TESTSTATUS_NOT_RUN) {
-                    htmlFormatter.appendText(" - Invalid Route or Sharing Mode");
+                    htmlFormatter.appendText(mTestCanceled
+                            ? " - Test Cancelled" : " - Invalid Route or Sharing Mode");
                 }
                 if (isErrorState) {
                     htmlFormatter.closeTextColor();
                 }
+            }
 
-                TestResults results = mTestResults[api];
-                if (results != null) {
-                    // we can get null here if the test was cancelled
-                    Locale locale = Locale.getDefault();
-                    String maxMagString = String.format(
-                            locale, "mag:%.4f ", results.mMaxMagnitude);
-                    String phaseJitterString = String.format(
-                            locale, "jitter:%.4f ", results.mPhaseJitter);
+            TestResults results = mTestResults[api];
+            if (results != null) {
+                // we can get null here if the test was cancelled
+                Locale locale = Locale.getDefault();
+                String maxMagString = String.format(
+                        locale, "mag:%.4f ", results.mMaxMagnitude);
+                String phaseJitterString = String.format(
+                        locale, "jitter:%.4f ", results.mPhaseJitter);
 
-                    boolean passMagnitude = mAnalysisType == TYPE_SIGNAL_PRESENCE
-                            ? results.mMaxMagnitude >= mMinPassMagnitude
-                            : results.mMaxMagnitude <= mMinPassMagnitude;
-                    boolean passJitter =
-                            results.mPhaseJitter <= mMaxPassJitter;
+                boolean passMagnitude = mAnalysisType == TYPE_SIGNAL_PRESENCE
+                        ? results.mMaxMagnitude >= mMinPassMagnitude
+                        : results.mMaxMagnitude <= mMinPassMagnitude;
+                boolean passJitter =
+                        results.mPhaseJitter <= mMaxPassJitter;
 
-                    // Values
-                    htmlFormatter.appendBreak();
-                    if (!passMagnitude) {
-                        htmlFormatter.openTextColor("red")
-                                .appendText(maxMagString)
-                                .closeTextColor();
-                    } else {
-                        htmlFormatter.appendText(maxMagString);
-                    }
+                // Values / Criteria
+                htmlFormatter.appendBreak();
+                htmlFormatter.openTextColor(passMagnitude ? "black" : "red")
+                        .appendText(maxMagString
+                                + String.format(locale,
+                                passMagnitude ? " >= %.4f " : " < %.4f ",
+                                mMinPassMagnitude))
+                        .closeTextColor();
 
-                    if (!passJitter) {
-                        htmlFormatter.openTextColor("red")
-                                .appendText(phaseJitterString)
-                                .closeTextColor();
-                    } else {
-                        htmlFormatter.appendText(phaseJitterString);
-                    }
-
-                    // Criteria
-                    htmlFormatter.appendBreak();
-                    if (!passMagnitude) {
-                        htmlFormatter.openTextColor("blue")
-                                .appendText(maxMagString
-                                        + String.format(locale,
-                                            mAnalysisType == TYPE_SIGNAL_PRESENCE
-                                                    ? " <= %.4f " : " >= %.4f ",
-                                        mMinPassMagnitude))
-                                .closeTextColor();
-                    }
-
-                    // Jitter isn't relevant to SIGNAL ABSENCE test
-                    if (mAnalysisType == TYPE_SIGNAL_PRESENCE && !passJitter) {
-                        htmlFormatter.openTextColor("blue")
-                                .appendText(phaseJitterString
-                                        + String.format(locale, " >= %.4f",
-                                        mMaxPassJitter))
-                                .closeTextColor();
-                    }
-                }
+                // Jitter isn't relevant to SIGNAL ABSENCE test
+                htmlFormatter.openTextColor(
+                                mAnalysisType != TYPE_SIGNAL_PRESENCE || passJitter
+                                        ? "black" : "red")
+                        .appendText(phaseJitterString
+                                + String.format(locale, passJitter ? " <= %.4f" : " > %.4f",
+                                mMaxPassJitter))
+                        .closeTextColor();
 
                 htmlFormatter.appendBreak();
-            } // pass/fail
+            } // results != null
+
             htmlFormatter.closeParagraph();
 
             return htmlFormatter;
