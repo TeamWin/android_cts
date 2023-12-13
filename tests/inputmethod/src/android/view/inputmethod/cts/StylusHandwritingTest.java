@@ -58,6 +58,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.Flags;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -929,11 +930,32 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             // Tap with stylus on unfocused editor
             TestUtils.injectStylusDownEvent(unfocusedEditText, startX, startY);
             event = TestUtils.injectStylusUpEvent(unfocusedEditText, startX, startY);
-            expectEvent(stream, onStartInputMatcher(toolType, marker2), TIMEOUT);
+            if (Flags.useHandwritingListenerForTooltype()) {
+                expectEvent(stream, startInputInitialEditorToolMatcher(toolType, marker2),
+                        TIMEOUT);
+            } else {
+                expectEvent(stream, onStartInputMatcher(toolType, marker2), TIMEOUT);
+            }
             expectEvent(
                     stream,
                     onUpdateEditorToolTypeMatcher(event.getToolType(event.getActionIndex())),
                     TIMEOUT);
+
+            if (Flags.useHandwritingListenerForTooltype()) {
+                // try handwriting on unfocused editor and onUpdateEditorToolType should be called.
+                // Note: focusedEditText is unfocused at this point.
+                final int touchSlop = getTouchSlop();
+                int endX = startX + 2 * touchSlop;
+                int endY = startY + 2 * touchSlop;
+                final int number = 5;
+                TestUtils.injectStylusDownEvent(focusedEditText, startX, startY);
+                TestUtils.injectStylusMoveEvents(focusedEditText, startX, startY,
+                        endX, endY, number);
+                expectEvent(
+                        stream,
+                        onUpdateEditorToolTypeMatcher(event.getToolType(event.getActionIndex())),
+                        TIMEOUT);
+            }
         }
     }
 
@@ -1082,6 +1104,18 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
         };
         return withDescription(
                 "onStartInput(initialToolType=" + toolType + ",marker=" + marker + ")", matcher);
+    }
+
+
+    private static Predicate<ImeEvent> startInputInitialEditorToolMatcher(
+            int expectedToolType, @NonNull String marker) {
+        return withDescription("onStartInput()" + "(marker=" + marker + ")", event -> {
+            if (!TextUtils.equals("onStartInput", event.getEventName())) {
+                return false;
+            }
+            final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
+            return expectedToolType == editorInfo.getInitialToolType();
+        });
     }
 
     private static Predicate<ImeEvent> onStartStylusHandwritingMatcher(
