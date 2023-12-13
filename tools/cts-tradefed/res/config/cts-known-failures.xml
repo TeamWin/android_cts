@@ -315,6 +315,15 @@
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.SurfaceControlViewHostTests#testFocusWithTouchCrossProcess" />
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.SurfaceControlViewHostTests#testChildWindowFocusable" />
 
+    <!-- b/305161422 -->
+    <option name="compatibility:exclude-filter" value="CtsAdServicesEndToEndTests com.android.adservices.tests.cts.topics.TopicsManagerTest#testTopicsManager_runOnDeviceClassifier" />
+    <option name="compatibility:exclude-filter" value="CtsAdServicesEndToEndTests com.android.adservices.tests.cts.topics.TopicsManagerTest#testTopicsManager_runDefaultClassifier_usingGetMethodToCreateManager" />
+    <option name="compatibility:exclude-filter" value="CtsAdServicesEndToEndTests com.android.adservices.tests.cts.topics.TopicsManagerTest#testTopicsManager_runOnDeviceClassifier_usingGetMethodToCreateManager" />
+    <option name="compatibility:exclude-filter" value="CtsAdServicesEndToEndTests com.android.adservices.tests.cts.topics.TopicsManagerTest#testTopicsManager_runDefaultClassifier" />
+
+    <!-- b/305161175 -->
+    <option name="compatibility:exclude-filter" value="CtsAdServicesMddTests com.android.adservices.tests.cts.topics.TopicsManagerMddTest#testTopicsManager_downloadModelViaMdd_runPrecomputedClassifier" />
+
     <!-- b/294253316 -->
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.WindowUntrustedTouchTest#testWhenOneCustomToastWindowAndOneSawWindowBelowThreshold_blocksTouch" />
 
