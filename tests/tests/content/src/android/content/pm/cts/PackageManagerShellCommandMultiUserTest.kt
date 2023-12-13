@@ -59,6 +59,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
@@ -278,10 +279,21 @@ class PackageManagerShellCommandMultiUserTest {
             secondaryUser.id(),
             Intent.ACTION_PACKAGE_FULLY_REMOVED
         )
+        val uidRemovedBroadcastReceiverForPrimaryUser = PackageBroadcastReceiver(
+                TEST_APP_PACKAGE,
+                primaryUser.id(),
+                Intent.ACTION_UID_REMOVED
+        )
+        val uidRemovedBroadcastReceiverForSecondaryUser = PackageBroadcastReceiver(
+                TEST_APP_PACKAGE,
+                secondaryUser.id(),
+                Intent.ACTION_UID_REMOVED
+        )
         val intentFilter = IntentFilter()
         intentFilter.addAction(Intent.ACTION_PACKAGE_REMOVED)
         intentFilter.addAction(Intent.ACTION_PACKAGE_FULLY_REMOVED)
         intentFilter.addDataScheme("package")
+        val intentFilterForUidRemoved = IntentFilter(Intent.ACTION_UID_REMOVED)
         runWithShellPermissionIdentity(
             uiAutomation,
             {
@@ -318,24 +330,69 @@ class PackageManagerShellCommandMultiUserTest {
                     backgroundHandler,
                     RECEIVER_EXPORTED
                 )
+                contextPrimaryUser.registerReceiver(
+                        uidRemovedBroadcastReceiverForPrimaryUser,
+                        intentFilterForUidRemoved,
+                        null,
+                        backgroundHandler,
+                        RECEIVER_EXPORTED
+                )
+                contextSecondaryUser.registerReceiver(
+                        uidRemovedBroadcastReceiverForSecondaryUser,
+                        intentFilterForUidRemoved,
+                        null,
+                        backgroundHandler,
+                        RECEIVER_EXPORTED
+                )
 
-                // Uninstall without "KEEP DATA" sends both REMOVED and FULLY_REMOVED broadcasts
-                // to the targeted user
+                var uidPrimaryUser =
+                        contextPrimaryUser.packageManager.getPackageUid(TEST_APP_PACKAGE, 0)
+                var uidSecondaryUser =
+                        contextSecondaryUser.packageManager.getPackageUid(TEST_APP_PACKAGE, 0)
+                assertNotEquals(uidPrimaryUser, uidSecondaryUser)
+                // Uninstall w/o DELETE_KEEP_DATA sends PACKAGE_REMOVED, PACKAGE_FULLY_REMOVED, and
+                // UID_REMOVED broadcasts to the targeted user
                 uninstallPackageAsUser(TEST_APP_PACKAGE, secondaryUser)
                 removedBroadcastReceiverForPrimaryUser.assertBroadcastNotReceived()
                 fullyRemovedBroadcastReceiverForPrimaryUser.assertBroadcastNotReceived()
+                uidRemovedBroadcastReceiverForPrimaryUser.assertBroadcastNotReceived()
                 removedBroadcastReceiverForSecondaryUser.assertBroadcastReceived()
+                var result = removedBroadcastReceiverForSecondaryUser.broadcastResult
+                assertEquals(result.extras!!.getInt(Intent.EXTRA_UID, 0), uidSecondaryUser)
                 fullyRemovedBroadcastReceiverForSecondaryUser.assertBroadcastReceived()
+                result = fullyRemovedBroadcastReceiverForSecondaryUser.broadcastResult
+                assertEquals(result.extras!!.getInt(Intent.EXTRA_UID, 0), uidSecondaryUser)
+                uidRemovedBroadcastReceiverForSecondaryUser.assertBroadcastReceived()
+                result = uidRemovedBroadcastReceiverForSecondaryUser.broadcastResult
+                assertEquals(result.extras!!.getInt(Intent.EXTRA_UID, 0), uidSecondaryUser)
+                assertNull(result.extras!!.getString(Intent.EXTRA_PACKAGE_NAME, null))
                 removedBroadcastReceiverForSecondaryUser.reset()
                 fullyRemovedBroadcastReceiverForSecondaryUser.reset()
+                uidRemovedBroadcastReceiverForSecondaryUser.reset()
 
                 installExistingPackageAsUser(TEST_APP_PACKAGE, secondaryUser)
                 // Uninstall on both users sends the broadcasts to both users
                 uninstallPackageSilently(TEST_APP_PACKAGE)
                 removedBroadcastReceiverForPrimaryUser.assertBroadcastReceived()
+                result = removedBroadcastReceiverForPrimaryUser.broadcastResult
+                assertEquals(result.extras!!.getInt(Intent.EXTRA_UID, 0), uidPrimaryUser)
                 fullyRemovedBroadcastReceiverForPrimaryUser.assertBroadcastReceived()
+                result = fullyRemovedBroadcastReceiverForPrimaryUser.broadcastResult
+                assertEquals(result.extras!!.getInt(Intent.EXTRA_UID, 0), uidPrimaryUser)
+                uidRemovedBroadcastReceiverForPrimaryUser.assertBroadcastReceived()
+                result = uidRemovedBroadcastReceiverForPrimaryUser.broadcastResult
+                assertEquals(result.extras!!.getInt(Intent.EXTRA_UID, 0), uidPrimaryUser)
+                assertNull(result.extras!!.getString(Intent.EXTRA_PACKAGE_NAME, null))
                 removedBroadcastReceiverForSecondaryUser.assertBroadcastReceived()
+                result = removedBroadcastReceiverForSecondaryUser.broadcastResult
+                assertEquals(result.extras!!.getInt(Intent.EXTRA_UID, 0), uidSecondaryUser)
                 fullyRemovedBroadcastReceiverForSecondaryUser.assertBroadcastReceived()
+                result = fullyRemovedBroadcastReceiverForSecondaryUser.broadcastResult
+                assertEquals(result.extras!!.getInt(Intent.EXTRA_UID, 0), uidSecondaryUser)
+                uidRemovedBroadcastReceiverForSecondaryUser.assertBroadcastReceived()
+                result = uidRemovedBroadcastReceiverForSecondaryUser.broadcastResult
+                assertEquals(result.extras!!.getInt(Intent.EXTRA_UID, 0), uidSecondaryUser)
+                assertNull(result.extras!!.getString(Intent.EXTRA_PACKAGE_NAME, null))
                 removedBroadcastReceiverForPrimaryUser.reset()
                 fullyRemovedBroadcastReceiverForPrimaryUser.reset()
                 removedBroadcastReceiverForSecondaryUser.reset()
@@ -344,14 +401,24 @@ class PackageManagerShellCommandMultiUserTest {
                 // Uninstall with "keep data" sends the REMOVED broadcast but not the FULLY_REMOVED
                 // Only the targeted user will get the broadcast
                 installPackage(TEST_HW5)
+                // The UIDs have been changed after uninstall + reinstall
+                uidPrimaryUser =
+                        contextPrimaryUser.packageManager.getPackageUid(TEST_APP_PACKAGE, 0)
+                uidSecondaryUser =
+                        contextSecondaryUser.packageManager.getPackageUid(TEST_APP_PACKAGE, 0)
+                assertNotEquals(uidPrimaryUser, uidSecondaryUser)
                 uninstallPackageWithKeepData(TEST_APP_PACKAGE, secondaryUser)
                 removedBroadcastReceiverForPrimaryUser.assertBroadcastNotReceived()
                 fullyRemovedBroadcastReceiverForPrimaryUser.assertBroadcastNotReceived()
                 removedBroadcastReceiverForSecondaryUser.assertBroadcastReceived()
+                result = removedBroadcastReceiverForSecondaryUser.broadcastResult
+                assertEquals(result.extras!!.getInt(Intent.EXTRA_UID, 0), uidSecondaryUser)
                 fullyRemovedBroadcastReceiverForSecondaryUser.assertBroadcastNotReceived()
                 removedBroadcastReceiverForSecondaryUser.reset()
                 uninstallPackageWithKeepData(TEST_APP_PACKAGE, primaryUser)
                 removedBroadcastReceiverForPrimaryUser.assertBroadcastReceived()
+                result = removedBroadcastReceiverForPrimaryUser.broadcastResult
+                assertEquals(result.extras!!.getInt(Intent.EXTRA_UID, 0), uidPrimaryUser)
                 fullyRemovedBroadcastReceiverForPrimaryUser.assertBroadcastNotReceived()
                 removedBroadcastReceiverForSecondaryUser.assertBroadcastNotReceived()
                 fullyRemovedBroadcastReceiverForSecondaryUser.assertBroadcastNotReceived()
@@ -360,10 +427,12 @@ class PackageManagerShellCommandMultiUserTest {
                 // Clean up
                 contextPrimaryUser.unregisterReceiver(removedBroadcastReceiverForPrimaryUser)
                 contextPrimaryUser.unregisterReceiver(fullyRemovedBroadcastReceiverForPrimaryUser)
+                contextPrimaryUser.unregisterReceiver(uidRemovedBroadcastReceiverForPrimaryUser)
                 contextSecondaryUser.unregisterReceiver(removedBroadcastReceiverForSecondaryUser)
                 contextSecondaryUser.unregisterReceiver(
                     fullyRemovedBroadcastReceiverForSecondaryUser
                 )
+                contextPrimaryUser.unregisterReceiver(uidRemovedBroadcastReceiverForSecondaryUser)
                 backgroundThread.interrupt()
             },
             Manifest.permission.INTERACT_ACROSS_USERS,
