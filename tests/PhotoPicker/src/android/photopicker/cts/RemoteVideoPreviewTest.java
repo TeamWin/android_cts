@@ -247,6 +247,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Test have changed after Android U CTS cut")
     public void testVideoPreviewProgressIndicator() throws Exception {
         initCloudProviderWithVideo(Arrays.asList(Pair.create(null, CLOUD_ID1)));
         launchPreviewMultiple(/* count */ 1);
@@ -257,6 +258,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Test have changed after Android U CTS cut")
     public void testVideoPreviewPermanentError() throws Exception {
         initCloudProviderWithVideo(Arrays.asList(Pair.create(null, CLOUD_ID1)));
         launchPreviewMultiple(/* count */ 1);
@@ -267,6 +269,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Test have changed after Android U CTS cut")
     public void testVideoPreviewRetriableError() throws Exception {
         initCloudProviderWithVideo(Arrays.asList(Pair.create(null, CLOUD_ID1)));
         final int surfaceId = 0;

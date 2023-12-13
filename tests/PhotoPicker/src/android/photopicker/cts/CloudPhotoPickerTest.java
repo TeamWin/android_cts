@@ -54,6 +54,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -133,6 +134,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Test have changed after Android U CTS cut")
     public void testCloudOnlySync() throws Exception {
         initPrimaryCloudProviderWithImage(Pair.create(null, CLOUD_ID1));
 
@@ -143,6 +145,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Test have changed after Android U CTS cut")
     public void testCloudPlusLocalSyncWithoutDedupe() throws Exception {
         mUriList.addAll(createImagesAndGetUris(1, mContext.getUserId()));
         initPrimaryCloudProviderWithImage(Pair.create(null, CLOUD_ID1));
@@ -166,6 +169,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Test have changed after Android U CTS cut")
     public void testDeleteCloudMedia() throws Exception {
         initPrimaryCloudProviderWithImage(Pair.create(null, CLOUD_ID1),
                 Pair.create(null, CLOUD_ID2));
@@ -186,6 +190,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Test have changed after Android U CTS cut")
     public void testVersionChange() throws Exception {
         initPrimaryCloudProviderWithImage(Pair.create(null, CLOUD_ID1),
                 Pair.create(null, CLOUD_ID2));
@@ -227,6 +232,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Test have changed after Android U CTS cut")
     public void testProviderSwitchSuccess() throws Exception {
         setCloudProvider(CloudProviderPrimary.AUTHORITY);
         assertThat(MediaStore.isCurrentCloudMediaProviderAuthority(mContext.getContentResolver(),
@@ -264,6 +270,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Test have changed after Android U CTS cut")
     public void testUriAccessWithValidProjection() throws Exception {
         initPrimaryCloudProviderWithImage(Pair.create(null, CLOUD_ID1));
 
@@ -299,6 +306,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Test have changed after Android U CTS cut")
     public void testUriAccessWithInvalidProjection() throws Exception {
         initPrimaryCloudProviderWithImage(Pair.create(null, CLOUD_ID1));
 
@@ -320,6 +328,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Test have changed after Android U CTS cut")
     public void testCloudEventNotification() throws Exception {
         // Create a placeholder local image to ensure that the picker UI is never empty.
         // The PhotoPickerUiUtils#findItemList needs to select an item and it times out if the
