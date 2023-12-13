@@ -16,6 +16,8 @@
 
 package android.view.surfacecontrol.cts;
 
+import static android.server.wm.CtsWindowInfoUtils.assertAndDumpWindowState;
+
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
@@ -23,7 +25,6 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.graphics.Region;
 import android.server.wm.BuildUtils;
-import android.server.wm.CtsWindowInfoUtils;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -166,11 +167,8 @@ public class SetTouchableRegionTest {
 
         // However now we have covered ourselves with a MATCH_PARENT popup window
         // and so the tap should not reach us
-        boolean success = mMotionRecordingView.waitForEvent(false /* receivedEvent */);
-        if (!success) {
-            CtsWindowInfoUtils.dumpWindowsOnScreen(TAG, "test " + mName.getMethodName());
-        }
-        assertTrue(success);
+        assertAndDumpWindowState(TAG, "Received motion event",
+                mMotionRecordingView.waitForEvent(false /* receivedEvent */));
 
         CountDownLatch updateTouchableRegionsLatch = new CountDownLatch(1);
         mActivityRule.runOnUiThread(() -> {
@@ -192,10 +190,7 @@ public class SetTouchableRegionTest {
         tapSync();
         // But now we have punched a touchable region hole in the popup window and
         // we should be reachable again.
-        success = mMotionRecordingView.waitForEvent(true /* receivedEvent */);
-        if (!success) {
-            CtsWindowInfoUtils.dumpWindowsOnScreen(TAG, "test " + mName.getMethodName());
-        }
-        assertTrue(success);
+        assertAndDumpWindowState(TAG, "Failed to receive motion event",
+                mMotionRecordingView.waitForEvent(true /* receivedEvent */));
     }
 }
