@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 import static org.testng.Assert.assertThrows;
 
 import android.os.Process;
+import android.security.Flags;
 import android.security.keystore.AttestationUtils;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
@@ -71,8 +72,10 @@ public class KeyGenParameterSpecTest {
             spec.getDigests();
             fail();
         } catch (IllegalStateException expected) {}
-        assertFalse(spec.isMgf1DigestsSpecified());
-        assertThrows(IllegalStateException.class, spec::getMgf1Digests);
+        if (Flags.mgf1DigestSetter()) {
+            assertFalse(spec.isMgf1DigestsSpecified());
+            assertThrows(IllegalStateException.class, spec::getMgf1Digests);
+        }
         MoreAsserts.assertEmpty(Arrays.asList(spec.getEncryptionPaddings()));
         assertEquals(-1, spec.getKeySize());
         assertNull(spec.getKeyValidityStart());
@@ -111,7 +114,7 @@ public class KeyGenParameterSpecTest {
             AttestationUtils.ID_TYPE_IMEI,
             AttestationUtils.ID_TYPE_MEID,
             AttestationUtils.USE_INDIVIDUAL_ATTESTATION};
-        KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
+        KeyGenParameterSpec.Builder specBuilder = new KeyGenParameterSpec.Builder(
                 "arbitrary", KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_ENCRYPT)
                 .setAlgorithmParameterSpec(algSpecificParams)
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM, KeyProperties.BLOCK_MODE_CBC)
@@ -120,7 +123,6 @@ public class KeyGenParameterSpecTest {
                 .setCertificateSerialNumber(new BigInteger("13946146"))
                 .setCertificateSubject(new X500Principal("CN=test"))
                 .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA384)
-                .setMgf1Digests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA384)
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_OAEP,
                         KeyProperties.ENCRYPTION_PADDING_PKCS7)
                 .setKeySize(1234)
@@ -137,8 +139,12 @@ public class KeyGenParameterSpecTest {
                 .setDevicePropertiesAttestationIncluded(true)
                 .setAttestationIds(ids)
                 .setUnlockedDeviceRequired(true)
-                .setMaxUsageCount(maxUsageCount)
-                .build();
+                .setMaxUsageCount(maxUsageCount);
+
+        if (Flags.mgf1DigestSetter()) {
+            specBuilder.setMgf1Digests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA384);
+        }
+        KeyGenParameterSpec spec = specBuilder.build();
 
         assertEquals("arbitrary", spec.getKeystoreAlias());
         assertEquals(
@@ -151,12 +157,14 @@ public class KeyGenParameterSpecTest {
         assertEquals(new BigInteger("13946146"), spec.getCertificateSerialNumber());
         assertEquals(new X500Principal("CN=test"), spec.getCertificateSubject());
         assertTrue(spec.isDigestsSpecified());
-        assertTrue(spec.isMgf1DigestsSpecified());
         MoreAsserts.assertContentsInOrder(Arrays.asList(spec.getDigests()),
                 KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA384);
-        /* Since getMgf1Digest return type is Set, objects could be in any order. */
-        MoreAsserts.assertContentsInAnyOrder(spec.getMgf1Digests(),
-                KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA384);
+        if (Flags.mgf1DigestSetter()) {
+            assertTrue(spec.isMgf1DigestsSpecified());
+            /* Since getMgf1Digest return type is Set, objects could be in any order. */
+            MoreAsserts.assertContentsInAnyOrder(spec.getMgf1Digests(),
+                    KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA384);
+        }
         MoreAsserts.assertContentsInOrder(Arrays.asList(spec.getEncryptionPaddings()),
                 KeyProperties.ENCRYPTION_PADDING_RSA_OAEP, KeyProperties.ENCRYPTION_PADDING_PKCS7);
         assertEquals(1234, spec.getKeySize());
@@ -264,19 +272,22 @@ public class KeyGenParameterSpecTest {
                 KeyProperties.SIGNATURE_PADDING_RSA_PSS, KeyProperties.SIGNATURE_PADDING_RSA_PKCS1};
         String[] originalSignaturePaddings = signaturePaddings.clone();
 
-        KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
+        KeyGenParameterSpec.Builder specBuilder = new KeyGenParameterSpec.Builder(
                 "arbitrary", KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_ENCRYPT)
                 .setBlockModes(blockModes)
                 .setCertificateNotBefore(certNotBeforeDate)
                 .setCertificateNotAfter(certNotAfterDate)
                 .setDigests(digests)
-                .setMgf1Digests(mgfDigests)
                 .setEncryptionPaddings(encryptionPaddings)
                 .setKeyValidityStart(keyValidityStartDate)
                 .setKeyValidityForOriginationEnd(keyValidityEndDateForOrigination)
                 .setKeyValidityForConsumptionEnd(keyValidityEndDateForConsumption)
-                .setSignaturePaddings(signaturePaddings)
-                .build();
+                .setSignaturePaddings(signaturePaddings);
+
+        if (Flags.mgf1DigestSetter()) {
+            specBuilder.setMgf1Digests(mgfDigests);
+        }
+        KeyGenParameterSpec spec = specBuilder.build();
 
         assertEquals(Arrays.asList(originalBlockModes), Arrays.asList(spec.getBlockModes()));
         blockModes[0] = null;
@@ -294,9 +305,11 @@ public class KeyGenParameterSpecTest {
         digests[1] = null;
         assertEquals(Arrays.asList(originalDigests), Arrays.asList(spec.getDigests()));
 
-        assertTrue(Arrays.asList(originalMgfDigests).containsAll(spec.getMgf1Digests()));
-        mgfDigests[1] = null;
-        assertTrue(Arrays.asList(originalMgfDigests).containsAll(spec.getMgf1Digests()));
+        if (Flags.mgf1DigestSetter()) {
+            assertTrue(Arrays.asList(originalMgfDigests).containsAll(spec.getMgf1Digests()));
+            mgfDigests[1] = null;
+            assertTrue(Arrays.asList(originalMgfDigests).containsAll(spec.getMgf1Digests()));
+        }
 
         assertEquals(Arrays.asList(originalEncryptionPaddings),
                 Arrays.asList(spec.getEncryptionPaddings()));
@@ -331,13 +344,12 @@ public class KeyGenParameterSpecTest {
     public void testImmutabilityViaGetterReturnValues() {
         // Assert that none of the mutable return values from getters modify the state of the spec.
 
-        KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
+        KeyGenParameterSpec.Builder specBuilder = new KeyGenParameterSpec.Builder(
                 "arbitrary", KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_ENCRYPT)
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM, KeyProperties.BLOCK_MODE_CBC)
                 .setCertificateNotBefore(new Date(System.currentTimeMillis()))
                 .setCertificateNotAfter(new Date(System.currentTimeMillis() + 12345678))
                 .setDigests(KeyProperties.DIGEST_MD5, KeyProperties.DIGEST_SHA512)
-                .setMgf1Digests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
                 .setEncryptionPaddings(
                         KeyProperties.ENCRYPTION_PADDING_RSA_OAEP,
                         KeyProperties.ENCRYPTION_PADDING_PKCS7)
@@ -346,8 +358,12 @@ public class KeyGenParameterSpecTest {
                 .setKeyValidityForConsumptionEnd(new Date(System.currentTimeMillis() + 33333333))
                 .setSignaturePaddings(
                         KeyProperties.SIGNATURE_PADDING_RSA_PSS,
-                        KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
-                .build();
+                        KeyProperties.SIGNATURE_PADDING_RSA_PKCS1);
+
+        if (Flags.mgf1DigestSetter()) {
+            specBuilder.setMgf1Digests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512);
+        }
+        KeyGenParameterSpec spec = specBuilder.build();
 
         String[] originalBlockModes = spec.getBlockModes().clone();
         spec.getBlockModes()[0] = null;
