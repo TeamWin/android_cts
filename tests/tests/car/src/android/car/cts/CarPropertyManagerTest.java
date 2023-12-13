@@ -533,7 +533,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.EV_CHARGE_STATE,
                             VehiclePropertyIds.EV_CHARGE_SWITCH,
                             VehiclePropertyIds.EV_CHARGE_TIME_REMAINING,
-                            VehiclePropertyIds.EV_REGENERATIVE_BRAKING_STATE)
+                            VehiclePropertyIds.EV_REGENERATIVE_BRAKING_STATE,
+                            VehiclePropertyIds.EV_BATTERY_AVERAGE_TEMPERATURE)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CAR_ENERGY_PORTS_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -1266,6 +1267,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getSeatAirbagsDeployedVerifier(),
              getSeatBeltPretensionerDeployedVerifier(),
              getImpactDetectedVerifier(),
+             getEvBatteryAverageTemperatureVerifier(),
              // TODO(b/273988725): Put all verifiers here.
         };
     }
@@ -3655,6 +3657,22 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .addWritePermission(Car.PERMISSION_ADJUST_RANGE_REMAINING)
                 .build()
                 .verify();
+    }
+
+    private VehiclePropertyVerifier<Float> getEvBatteryAverageTemperatureVerifier() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.EV_BATTERY_AVERAGE_TEMPERATURE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                        Float.class, mCarPropertyManager)
+                .addReadPermission(Car.PERMISSION_ENERGY)
+                .build();
+    }
+
+    @Test
+    public void testEvBatteryAverageTemperatureIfSupported() {
+        getEvBatteryAverageTemperatureVerifier().verify();
     }
 
     @Test
