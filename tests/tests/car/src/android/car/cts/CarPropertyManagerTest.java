@@ -746,7 +746,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             ImmutableList.<Integer>builder()
                     .add(
                             VehiclePropertyIds.ABS_ACTIVE,
-                            VehiclePropertyIds.TRACTION_CONTROL_ACTIVE)
+                            VehiclePropertyIds.TRACTION_CONTROL_ACTIVE,
+                            VehiclePropertyIds.ELECTRONIC_STABILITY_CONTROL_ENABLED)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_CAR_DYNAMICS_STATE_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.ELECTRONIC_STABILITY_CONTROL_ENABLED)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_CAR_CLIMATE_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -1292,6 +1298,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getLowSpeedCollisionWarningEnabledVerifier(),
              getLowSpeedCollisionWarningStateVerifier(),
              getValetModeEnabledVerifier(),
+             getElectronicStabilityControlEnabledVerifier(),
              // TODO(b/273988725): Put all verifiers here.
         };
     }
@@ -6668,6 +6675,24 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         verifyEnumValuesAreDistinct(LOW_SPEED_COLLISION_WARNING_STATES, ERROR_STATES);
     }
 
+    private VehiclePropertyVerifier<Boolean> getElectronicStabilityControlEnabledVerifier() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.ELECTRONIC_STABILITY_CONTROL_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class, mCarPropertyManager)
+                .addReadPermission(Car.PERMISSION_CAR_DYNAMICS_STATE)
+                .addReadPermission(Car.PERMISSION_CONTROL_CAR_DYNAMICS_STATE)
+                .addWritePermission(Car.PERMISSION_CONTROL_CAR_DYNAMICS_STATE)
+                .build();
+    }
+
+    @Test
+    public void testElectronicStabilityControlEnabledIfSupported() {
+        getElectronicStabilityControlEnabledVerifier().verify();
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getPropertyList",
@@ -8059,6 +8084,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         verifyExpectedPropertiesWhenPermissionsGranted(
                 PERMISSION_CAR_DYNAMICS_STATE_PROPERTIES,
                 Car.PERMISSION_CAR_DYNAMICS_STATE);
+    }
+
+    @Test
+    public void testPermissionControlCarDynamicsStateGranted() {
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_CAR_DYNAMICS_STATE_PROPERTIES,
+                Car.PERMISSION_CONTROL_CAR_DYNAMICS_STATE);
     }
 
     @Test
