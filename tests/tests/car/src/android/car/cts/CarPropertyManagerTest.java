@@ -649,6 +649,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.SEAT_WALK_IN_POS,
                             VehiclePropertyIds.SEAT_OCCUPANCY)
                     .build();
+    private static final ImmutableList<Integer> PERMISSION_READ_CAR_SEAT_BELTS_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.SEAT_BELT_PRETENSIONER_DEPLOYED)
+                    .build();
     private static final ImmutableList<Integer> PERMISSION_IDENTIFICATION_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add(
@@ -1243,6 +1248,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getDoorChildLockEnabledVerifier(),
              getVehicleDrivingAutomationCurrentLevelVerifier(),
              getSeatAirbagsDeployedVerifier(),
+             getSeatBeltPretensionerDeployedVerifier(),
              // TODO(b/273988725): Put all verifiers here.
         };
     }
@@ -5336,6 +5342,22 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         getSeatAirbagsDeployedVerifier().verify();
     }
 
+    private VehiclePropertyVerifier<Boolean> getSeatBeltPretensionerDeployedVerifier() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.SEAT_BELT_PRETENSIONER_DEPLOYED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class, mCarPropertyManager)
+                .addReadPermission(Car.PERMISSION_READ_CAR_SEAT_BELTS)
+                .build();
+    }
+
+    @Test
+    public void testSeatBeltPretensionerDeployedIfSupported() {
+        getSeatBeltPretensionerDeployedVerifier().verify();
+    }
+
     @Test
     @ApiTest(
             apis = {
@@ -7791,6 +7813,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         verifyExpectedPropertiesWhenPermissionsGranted(
                 PERMISSION_CONTROL_GLOVE_BOX_PROPERTIES,
                 Car.PERMISSION_CONTROL_GLOVE_BOX);
+    }
+
+    @Test
+    public void testPermissionReadCarSeatBeltsGranted() {
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_READ_CAR_SEAT_BELTS_PROPERTIES,
+                Car.PERMISSION_READ_CAR_SEAT_BELTS);
     }
 
     @Test
