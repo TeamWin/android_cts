@@ -257,6 +257,8 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("AP_POWER_STATE_REQ");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.DISPLAY_BRIGHTNESS))
                 .isEqualTo("DISPLAY_BRIGHTNESS");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.VALET_MODE_ENABLED))
+                .isEqualTo("VALET_MODE_ENABLED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HW_KEY_INPUT))
                 .isEqualTo("HW_KEY_INPUT");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.DOOR_LOCK))
