@@ -71,6 +71,8 @@ public class AttachedSurfaceControlSyncTest {
         final Surface mSurface;
         final int[] mLocation = new int[2];
 
+        boolean mChildScAttached;
+
         final Runnable mUpdatePositionRunnable = new Runnable() {
             @Override
             public void run() {
@@ -92,18 +94,44 @@ public class AttachedSurfaceControlSyncTest {
             canvas.drawColor(Color.GREEN);
             mSurface.unlockCanvasAndPost(canvas);
             setBackgroundColor(Color.BLACK);
+
+            getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+                @Override
+                public boolean onPreDraw() {
+                    attachChildSc();
+                    getViewTreeObserver().removeOnPreDrawListener(this);
+                    return true;
+                }
+            });
         }
 
         @Override
         protected void onAttachedToWindow() {
             super.onAttachedToWindow();
+            attachChildSc();
+        }
+
+        private void attachChildSc() {
+            if (mChildScAttached) {
+                return;
+            }
+
             SurfaceControl.Transaction t =
-                getRootSurfaceControl().buildReparentTransaction(mSurfaceControl);
+                    getRootSurfaceControl().buildReparentTransaction(mSurfaceControl);
+
+            if (t == null) {
+                // TODO (b/286406553) SurfaceControl was not yet setup. Wait until the draw request
+                // to attach since the SurfaceControl will be created by that point. This can be
+                // cleaned up when the bug is fixed.
+                return;
+            }
+
             // Add the SC on top of the view, which is colored black. If the SC moves out of sync
             // from the view, the black view behind should show.
             t.setLayer(mSurfaceControl, 1)
-                .setVisibility(mSurfaceControl, true)
-                .apply();
+                    .setVisibility(mSurfaceControl, true)
+                    .apply();
+            mChildScAttached = true;
         }
 
         @Override
@@ -111,6 +139,7 @@ public class AttachedSurfaceControlSyncTest {
             new SurfaceControl.Transaction().reparent(mSurfaceControl, null).apply();
             mSurfaceControl.release();
             mSurface.release();
+            mChildScAttached = false;
 
             super.onDetachedFromWindow();
         }
