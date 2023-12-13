@@ -73,6 +73,7 @@ import android.car.hardware.property.LaneCenteringAssistState;
 import android.car.hardware.property.LaneDepartureWarningState;
 import android.car.hardware.property.LaneKeepAssistState;
 import android.car.hardware.property.LocationCharacterization;
+import android.car.hardware.property.LowSpeedCollisionWarningState;
 import android.car.hardware.property.PropertyNotAvailableException;
 import android.car.hardware.property.Subscription;
 import android.car.hardware.property.TrailerState;
@@ -463,6 +464,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             CarHvacFanDirection.FACE,
                             CarHvacFanDirection.FLOOR,
                             CarHvacFanDirection.DEFROST);
+    private static final ImmutableSet<Integer> LOW_SPEED_COLLISION_WARNING_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            LowSpeedCollisionWarningState.OTHER,
+                            LowSpeedCollisionWarningState.NO_WARNING,
+                            LowSpeedCollisionWarningState.WARNING)
+                    .build();
     private static final ImmutableSet<Integer> ALL_POSSIBLE_HVAC_FAN_DIRECTIONS =
             generateAllPossibleHvacFanDirections();
     private static final ImmutableSet<Integer> VEHICLE_SEAT_OCCUPANCY_STATES = ImmutableSet.of(
@@ -891,7 +899,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.CRUISE_CONTROL_TARGET_SPEED,
                             VehiclePropertyIds.ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP,
                             VehiclePropertyIds
-                                    .ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE)
+                                    .ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE,
+                            VehiclePropertyIds.LOW_SPEED_COLLISION_WARNING_STATE)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_ADAS_STATES_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -1271,6 +1280,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getImpactDetectedVerifier(),
              getEvBatteryAverageTemperatureVerifier(),
              getLowSpeedCollisionWarningEnabledVerifier(),
+             getLowSpeedCollisionWarningStateVerifier(),
              // TODO(b/273988725): Put all verifiers here.
         };
     }
@@ -6591,6 +6601,42 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @Test
     public void testLowSpeedCollisionWarningEnabledIfSupported() {
         getLowSpeedCollisionWarningEnabledVerifier().verify();
+    }
+
+    private VehiclePropertyVerifier<Integer> getLowSpeedCollisionWarningStateVerifier() {
+        ImmutableSet<Integer> combinedCarPropertyValues = ImmutableSet.<Integer>builder()
+                .addAll(LOW_SPEED_COLLISION_WARNING_STATES)
+                .add(
+                        ErrorState.OTHER_ERROR_STATE,
+                        ErrorState.NOT_AVAILABLE_DISABLED,
+                        ErrorState.NOT_AVAILABLE_SPEED_HIGH,
+                        ErrorState.NOT_AVAILABLE_POOR_VISIBILITY,
+                        ErrorState.NOT_AVAILABLE_SAFETY)
+                .build();
+
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.LOW_SPEED_COLLISION_WARNING_STATE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class, mCarPropertyManager)
+                .setAllPossibleEnumValues(combinedCarPropertyValues)
+                .setDependentOnProperty(VehiclePropertyIds.LOW_SPEED_COLLISION_WARNING_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
+                .verifyErrorStates()
+                .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
+                .build();
+    }
+
+    @Test
+    public void testLowSpeedCollisionWarningStateIfSupported() {
+        getLowSpeedCollisionWarningStateVerifier().verify();
+    }
+
+    @Test
+    public void testLowSpeedCollisionWarningStateWithErrorState() {
+        verifyEnumValuesAreDistinct(LOW_SPEED_COLLISION_WARNING_STATES, ERROR_STATES);
     }
 
     @SuppressWarnings("unchecked")
