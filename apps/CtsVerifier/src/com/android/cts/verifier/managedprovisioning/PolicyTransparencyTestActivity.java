@@ -78,10 +78,13 @@ public final class PolicyTransparencyTestActivity extends PassFailButtons.Activi
     private static final Map<String, PolicyTestItem> POLICY_TEST_ITEMS = new ArrayMap<>();
 
     /**
-     * List of restrictions that might not have an optional for user to change on Settings.
+     * List of restrictions that might not have an option for user to change on Settings.
      */
     private static final List<String> OPTIONAL_USER_RESTRICTION_ACTIONS = Arrays
-            .asList(UserManager.DISALLOW_CONFIG_CELL_BROADCASTS);
+            .asList(
+                UserManager.DISALLOW_CONFIG_CELL_BROADCASTS,
+                UserManager.DISALLOW_NETWORK_RESET,
+                UserManager.DISALLOW_CONFIG_TETHERING);
 
     static {
         POLICY_TEST_ITEMS.put(TEST_CHECK_AUTO_TIME_REQUIRED, new PolicyTestItem(
