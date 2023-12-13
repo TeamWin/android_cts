@@ -53,6 +53,7 @@ import android.car.hardware.property.AutomaticEmergencyBrakingState;
 import android.car.hardware.property.BlindSpotWarningState;
 import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.CarPropertyManager.CarPropertyEventCallback;
+import android.car.hardware.property.CrossTrafficMonitoringWarningState;
 import android.car.hardware.property.CruiseControlCommand;
 import android.car.hardware.property.CruiseControlState;
 import android.car.hardware.property.CruiseControlType;
@@ -465,6 +466,18 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             ElectronicStabilityControlState.OTHER,
                             ElectronicStabilityControlState.ENABLED,
                             ElectronicStabilityControlState.ACTIVATED)
+                    .build();
+    private static final ImmutableSet<Integer> CROSS_TRAFFIC_MONITORING_WARNING_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            CrossTrafficMonitoringWarningState.OTHER,
+                            CrossTrafficMonitoringWarningState.NO_WARNING,
+                            CrossTrafficMonitoringWarningState.WARNING_FRONT_LEFT,
+                            CrossTrafficMonitoringWarningState.WARNING_FRONT_RIGHT,
+                            CrossTrafficMonitoringWarningState.WARNING_FRONT_BOTH,
+                            CrossTrafficMonitoringWarningState.WARNING_REAR_LEFT,
+                            CrossTrafficMonitoringWarningState.WARNING_REAR_RIGHT,
+                            CrossTrafficMonitoringWarningState.WARNING_REAR_BOTH)
                     .build();
     private static final ImmutableSet<Integer> ALL_POSSIBLE_HVAC_FAN_DIRECTIONS =
             generateAllPossibleHvacFanDirections();
@@ -914,7 +927,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.ADAPTIVE_CRUISE_CONTROL_TARGET_TIME_GAP,
                             VehiclePropertyIds
                                     .ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE,
-                            VehiclePropertyIds.LOW_SPEED_COLLISION_WARNING_STATE)
+                            VehiclePropertyIds.LOW_SPEED_COLLISION_WARNING_STATE,
+                            VehiclePropertyIds.CROSS_TRAFFIC_MONITORING_WARNING_STATE)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_ADAS_STATES_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -1289,6 +1303,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getElectronicStabilityControlEnabledVerifier(),
              getElectronicStabilityControlStateVerifier(),
              getCrossTrafficMonitoringEnabledVerifier(),
+             getCrossTrafficMonitoringWarningStateVerifier(),
              // TODO(b/273988725): Put all verifiers here.
         };
     }
@@ -6701,6 +6716,32 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @Test
     public void testCrossTrafficMonitoringEnabledIfSupported() {
         getCrossTrafficMonitoringEnabledVerifier().verify();
+    }
+
+    private VehiclePropertyVerifier<Integer> getCrossTrafficMonitoringWarningStateVerifier() {
+        ImmutableSet<Integer> combinedCarPropertyValues = ImmutableSet.<Integer>builder()
+                .addAll(CROSS_TRAFFIC_MONITORING_WARNING_STATES)
+                .addAll(ERROR_STATES)
+                .build();
+
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.CROSS_TRAFFIC_MONITORING_WARNING_STATE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class, mCarPropertyManager)
+                .setAllPossibleEnumValues(combinedCarPropertyValues)
+                .setDependentOnProperty(VehiclePropertyIds.CROSS_TRAFFIC_MONITORING_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
+                .verifyErrorStates()
+                .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
+                .build();
+    }
+
+    @Test
+    public void testCrossTrafficMonitoringWarningStateIfSupported() {
+        getCrossTrafficMonitoringWarningStateVerifier().verify();
     }
 
     @SuppressWarnings("unchecked")
