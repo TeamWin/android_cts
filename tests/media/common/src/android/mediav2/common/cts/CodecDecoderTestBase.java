@@ -235,7 +235,7 @@ public class CodecDecoderTestBase extends CodecTestBase {
             flattenBufferInfo(info, mIsAudio);
             mOutputBuff.checksum(mFlatBuffer, mFlatBuffer.limit());
             if (mIsAudio) {
-                mOutputBuff.checksum(buf, info.size);
+                mOutputBuff.checksum(buf, info);
                 mOutputBuff.saveToMemory(buf, info);
             } else {
                 // tests both getOutputImage and getOutputBuffer. Can do time division
