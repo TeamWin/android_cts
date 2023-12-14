@@ -335,4 +335,12 @@
 
     <!-- b/305609163 -->
     <option name="compatibility:exclude-filter" value="CtsSandboxedTopicsManagerTests com.android.tests.sandbox.topics.SandboxedTopicsManagerTest#loadSdkAndRunTopicsApi" />
+
+    <!-- b/310063797 -->
+    <option name="compatibility:exclude-filter" value="CtsAdServicesPermissionsNoPermEndToEndTests com.android.adservices.tests.permissions.PermissionsNoPermTest#testPermissionNotRequested_fledgeRemoveCustomAudienceRemoteInfoOverride" />
+    <option name="compatibility:exclude-filter" value="CtsAdServicesPermissionsNoPermEndToEndTests com.android.adservices.tests.permissions.PermissionsNoPermTest#testPermissionNotRequested_fledgeResetAllAdSelectionConfigRemoteOverrides" />
+    <option name="compatibility:exclude-filter" value="CtsAdServicesPermissionsNoPermEndToEndTests com.android.adservices.tests.permissions.PermissionsNoPermTest#testPermissionNotRequested_fledgeRemoveAdSelectionConfigRemoteInfo" />
+    <option name="compatibility:exclude-filter" value="CtsAdServicesPermissionsNoPermEndToEndTests com.android.adservices.tests.permissions.PermissionsNoPermTest#testPermissionNotRequested_fledgeOverrideCustomAudienceRemoteInfo" />
+    <option name="compatibility:exclude-filter" value="CtsAdServicesPermissionsNoPermEndToEndTests com.android.adservices.tests.permissions.PermissionsNoPermTest#testPermissionNotRequested_fledgeResetAllCustomAudienceOverrides" />
+    <option name="compatibility:exclude-filter" value="CtsAdServicesPermissionsNoPermEndToEndTests com.android.adservices.tests.permissions.PermissionsNoPermTest#testPermissionNotRequested_fledgeOverrideAdSelectionConfigRemoteInfo" />
 </configuration>
