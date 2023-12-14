@@ -163,6 +163,9 @@ public class PackageManagerShellCommandInstallTest {
     private static final String TEST_SDK2_UPDATED = "HelloWorldSdk2Updated.apk";
 
     private static final String TEST_USING_SDK1_OPTIONAL = "HelloWorldUsingSdk1Optional.apk";
+
+    private static final String TEST_USING_SDK1_OPTIONAL_SDK2 =
+            "HelloWorldUsingSdk1OptionalSdk2.apk";
     private static final String TEST_USING_SDK1 = "HelloWorldUsingSdk1.apk";
     private static final String TEST_USING_SDK1_AND_SDK2 = "HelloWorldUsingSdk1And2.apk";
 
@@ -1483,6 +1486,136 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(FLAG_SDK_LIB_INDEPENDENCE)
+    public void testSdkOptionalEnabledGetSharedLibraries() throws Exception {
+        onBeforeSdkTests();
+
+        // Install the SDK1.
+        installPackage(TEST_SDK1);
+        // Install the SDK2.
+        installPackage(TEST_SDK2);
+
+        {
+            List<SharedLibraryInfo> libs = getSharedLibraries();
+            SharedLibraryInfo sdk1 = findLibrary(libs, "com.test.sdk1", 1);
+            assertNotNull(sdk1);
+            SharedLibraryInfo sdk2 = findLibrary(libs, "com.test.sdk2", 2);
+            assertNotNull(sdk2);
+        }
+        {
+            overrideUsesSdkLibraryCertificateDigest(getPackageCertDigest(TEST_SDK1_PACKAGE));
+
+            installPackage(TEST_USING_SDK1_OPTIONAL_SDK2);
+
+            List<SharedLibraryInfo> libs = getSharedLibraries();
+            SharedLibraryInfo sdk1 = findLibrary(libs, "com.test.sdk1", 1);
+            assertNotNull(sdk1);
+            SharedLibraryInfo sdk2 = findLibrary(libs, "com.test.sdk2", 2);
+            assertNotNull(sdk2);
+
+            // SDK1 optional
+            assertEquals(TEST_SDK_USER_PACKAGE,
+                    sdk1.getDependentPackages().get(0).getPackageName());
+            assertEquals(TEST_SDK_USER_PACKAGE,
+                    sdk1.getOptionalDependentPackages().get(0).getPackageName());
+
+            // SDK2 required
+            assertEquals(TEST_SDK_USER_PACKAGE,
+                    sdk2.getDependentPackages().get(0).getPackageName());
+            assertThat(sdk2.getOptionalDependentPackages()).isEmpty();
+
+            getUiAutomation().adoptShellPermissionIdentity();
+            try {
+                ApplicationInfo appInfo = getPackageManager().getApplicationInfo(
+                        TEST_SDK_USER_PACKAGE,
+                        PackageManager.ApplicationInfoFlags.of(GET_SHARED_LIBRARY_FILES));
+
+                // feature is enabled. Two, one is optional, one is required
+                assertThat(appInfo.sharedLibraryInfos).isNotNull();
+                assertThat(appInfo.optionalSharedLibraryInfos).isNotNull();
+                assertThat(appInfo.sharedLibraryInfos.size()).isEqualTo(2);
+                assertThat(appInfo.optionalSharedLibraryInfos.size()).isEqualTo(1);
+
+                assertThat(appInfo.optionalSharedLibraryInfos.get(0).getName()).isEqualTo(
+                        "com.test.sdk1");
+                assertThat(appInfo.optionalSharedLibraryInfos.get(0).getLongVersion()).isEqualTo(1);
+
+                assertThat(appInfo.sharedLibraryInfos.get(0).getName()).isEqualTo(
+                        "com.test.sdk1");
+                assertThat(appInfo.sharedLibraryInfos.get(0).getLongVersion()).isEqualTo(1);
+                assertThat(appInfo.sharedLibraryInfos.get(1).getName()).isEqualTo(
+                        "com.test.sdk2");
+                assertThat(appInfo.sharedLibraryInfos.get(1).getLongVersion()).isEqualTo(2);
+            } finally {
+                getUiAutomation().dropShellPermissionIdentity();
+            }
+            uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
+        }
+    }
+
+    @Test
+    @RequiresFlagsDisabled(FLAG_SDK_LIB_INDEPENDENCE)
+    public void testSdkOptionalDisabledGetSharedLibraries() throws Exception {
+        onBeforeSdkTests();
+
+        // Install the SDK1.
+        installPackage(TEST_SDK1);
+        // Install the SDK2.
+        installPackage(TEST_SDK2);
+
+        {
+            List<SharedLibraryInfo> libs = getSharedLibraries();
+            SharedLibraryInfo sdk1 = findLibrary(libs, "com.test.sdk1", 1);
+            assertNotNull(sdk1);
+            SharedLibraryInfo sdk2 = findLibrary(libs, "com.test.sdk2", 2);
+            assertNotNull(sdk2);
+        }
+
+        {
+            overrideUsesSdkLibraryCertificateDigest(getPackageCertDigest(TEST_SDK1_PACKAGE));
+
+            installPackage(TEST_USING_SDK1_OPTIONAL_SDK2);
+
+            List<SharedLibraryInfo> libs = getSharedLibraries();
+            SharedLibraryInfo sdk1 = findLibrary(libs, "com.test.sdk1", 1);
+            assertNotNull(sdk1);
+            SharedLibraryInfo sdk2 = findLibrary(libs, "com.test.sdk2", 2);
+            assertNotNull(sdk2);
+
+            assertEquals(TEST_SDK_USER_PACKAGE,
+                    sdk1.getDependentPackages().get(0).getPackageName());
+            assertEquals(TEST_SDK_USER_PACKAGE,
+                    sdk2.getDependentPackages().get(0).getPackageName());
+            assertThat(sdk1.getOptionalDependentPackages()).isEmpty();
+            assertThat(sdk2.getOptionalDependentPackages()).isEmpty();
+
+
+            getUiAutomation().adoptShellPermissionIdentity();
+            try {
+                ApplicationInfo appInfo = getPackageManager().getApplicationInfo(
+                        TEST_SDK_USER_PACKAGE,
+                        PackageManager.ApplicationInfoFlags.of(GET_SHARED_LIBRARY_FILES));
+
+                // Two, one is optional, one is required but feature is disabled
+                assertThat(appInfo.sharedLibraryInfos).isNotNull();
+                assertThat(appInfo.optionalSharedLibraryInfos).isNull();
+                assertThat(appInfo.sharedLibraryInfos.size()).isEqualTo(2);
+
+                assertThat(appInfo.sharedLibraryInfos.get(0).getName()).isEqualTo(
+                        "com.test.sdk1");
+                assertThat(appInfo.sharedLibraryInfos.get(0).getLongVersion()).isEqualTo(1);
+
+                assertThat(appInfo.sharedLibraryInfos.get(1).getName()).isEqualTo(
+                        "com.test.sdk2");
+                assertThat(appInfo.sharedLibraryInfos.get(1).getLongVersion()).isEqualTo(2);
+            } finally {
+                getUiAutomation().dropShellPermissionIdentity();
+            }
+            uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
+        }
+    }
+
+    @Test
     public void testGetSharedLibraries() throws Exception {
         onBeforeSdkTests();
 
@@ -1522,6 +1655,8 @@ public class PackageManagerShellCommandInstallTest {
                     sdk1.getDependentPackages().get(0).getPackageName());
             assertEquals(TEST_SDK_USER_PACKAGE,
                     sdk2.getDependentPackages().get(0).getPackageName());
+            assertThat(sdk1.getOptionalDependentPackages()).isEmpty();
+            assertThat(sdk2.getOptionalDependentPackages()).isEmpty();
 
             uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
         }
