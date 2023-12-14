@@ -27,6 +27,7 @@ android_test {
         "cts-wm-util",
         "cts-install-lib",
         "android.content.pm.flags-aconfig-java",
+        "ShortcutManagerTestUtils",
     ],
     resource_dirs: ["res"],
     srcs: ["src/**/*.java"],
