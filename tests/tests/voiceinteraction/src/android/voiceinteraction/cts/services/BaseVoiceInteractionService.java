@@ -52,6 +52,7 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
 
     private final String mTag = getClass().getSimpleName();
     public static final int STATUS_NO_CALLBACK_CALLED = -100;
+    public static final int NUM_THREADS = 10;
 
     // The service instance
     public static VoiceInteractionService sService;
@@ -669,7 +670,7 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
         try {
             resetDetectorCreationExceptions();
             return createVisualQueryDetector(Helper.createFakePersistableBundleData(),
-                    Helper.createFakeSharedMemoryData(), Executors.newSingleThreadExecutor(),
+                    Helper.createFakeSharedMemoryData(), Executors.newFixedThreadPool(NUM_THREADS),
                     callback);
         } catch (IllegalStateException | SecurityException e) {
             if (e instanceof IllegalStateException) {

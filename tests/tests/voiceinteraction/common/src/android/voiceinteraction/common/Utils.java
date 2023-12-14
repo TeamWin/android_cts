@@ -123,6 +123,7 @@ public class Utils {
     public static final int VISIBLE_ACTIVITY_CALLBACK_REGISTER_WITHOUT_CALLBACK = 2;
 
     public static final int NUM_TEST_RESOURCE_FILE_MULTIPLE = 50;
+    public static final int NUM_TEST_QUERY_SESSION_MULTIPLE = 20;
 
     public static final String TEST_APP_PACKAGE = "android.voiceinteraction.testapp";
     public static final String TESTCASE_TYPE = "testcase_type";
