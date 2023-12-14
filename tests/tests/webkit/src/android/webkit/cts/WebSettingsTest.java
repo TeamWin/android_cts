@@ -31,6 +31,7 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.util.Base64;
 import android.util.Log;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.webkit.ConsoleMessage;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
@@ -500,33 +501,45 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
 
         final WebView childWebView = mOnUiThread.createWebView();
         final SettableFuture<Void> createWindowFuture = SettableFuture.create();
-        mOnUiThread.setWebChromeClient(new WebChromeClient() {
-            @Override
-            public boolean onCreateWindow(
-                    WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
-                WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
-                transport.setWebView(childWebView);
-                resultMsg.sendToTarget();
-                createWindowFuture.set(null);
-                return true;
-            }
-        });
 
-        mSettings.setJavaScriptCanOpenWindowsAutomatically(false);
-        assertFalse(mSettings.getJavaScriptCanOpenWindowsAutomatically());
-        mOnUiThread.loadUrl(mWebServer.getAssetUrl(TestHtmlConstants.POPUP_URL));
-        new PollingCheck(WEBVIEW_TIMEOUT) {
-            @Override
-            protected boolean check() {
-                return "Popup blocked".equals(mOnUiThread.getTitle());
-            }
-        }.run();
-        assertFalse("onCreateWindow should not have been called yet", createWindowFuture.isDone());
+        try {
+          mOnUiThread.setWebChromeClient(new WebChromeClient() {
+              @Override
+              public boolean onCreateWindow(
+                      WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
+                  WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+                  transport.setWebView(childWebView);
+                  resultMsg.sendToTarget();
+                  createWindowFuture.set(null);
+                  return true;
+              }
+          });
 
-        mSettings.setJavaScriptCanOpenWindowsAutomatically(true);
-        assertTrue(mSettings.getJavaScriptCanOpenWindowsAutomatically());
-        mOnUiThread.loadUrl(mWebServer.getAssetUrl(TestHtmlConstants.POPUP_URL));
-        WebkitUtils.waitForFuture(createWindowFuture);
+          mSettings.setJavaScriptCanOpenWindowsAutomatically(false);
+          assertFalse(mSettings.getJavaScriptCanOpenWindowsAutomatically());
+          mOnUiThread.loadUrl(mWebServer.getAssetUrl(TestHtmlConstants.POPUP_URL));
+          new PollingCheck(WEBVIEW_TIMEOUT) {
+              @Override
+              protected boolean check() {
+                  return "Popup blocked".equals(mOnUiThread.getTitle());
+              }
+          }.run();
+          assertFalse("onCreateWindow should not have been called yet",
+              createWindowFuture.isDone());
+
+          mSettings.setJavaScriptCanOpenWindowsAutomatically(true);
+          assertTrue(mSettings.getJavaScriptCanOpenWindowsAutomatically());
+          mOnUiThread.loadUrl(mWebServer.getAssetUrl(TestHtmlConstants.POPUP_URL));
+          WebkitUtils.waitForFuture(createWindowFuture);
+        } finally {
+            WebkitUtils.onMainThreadSync(() -> {
+                ViewParent parent = childWebView.getParent();
+                if (parent instanceof ViewGroup) {
+                    ((ViewGroup) parent).removeView(childWebView);
+                }
+                childWebView.destroy();
+            });
+        }
     }
 
     public void testAccessJavaScriptEnabled() throws Exception {
