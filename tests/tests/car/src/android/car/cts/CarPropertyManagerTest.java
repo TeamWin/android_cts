@@ -75,6 +75,7 @@ import android.car.hardware.property.LaneCenteringAssistCommand;
 import android.car.hardware.property.LaneCenteringAssistState;
 import android.car.hardware.property.LaneDepartureWarningState;
 import android.car.hardware.property.LaneKeepAssistState;
+import android.car.hardware.property.LowSpeedAutomaticEmergencyBrakingState;
 import android.car.hardware.property.LowSpeedCollisionWarningState;
 import android.car.hardware.property.PropertyNotAvailableException;
 import android.car.hardware.property.Subscription;
@@ -480,6 +481,14 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             CrossTrafficMonitoringWarningState.WARNING_REAR_RIGHT,
                             CrossTrafficMonitoringWarningState.WARNING_REAR_BOTH)
                     .build();
+    private static final ImmutableSet<Integer> LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATES =
+            ImmutableSet.<Integer>builder()
+                    .add(
+                            LowSpeedAutomaticEmergencyBrakingState.OTHER,
+                            LowSpeedAutomaticEmergencyBrakingState.ENABLED,
+                            LowSpeedAutomaticEmergencyBrakingState.ACTIVATED,
+                            LowSpeedAutomaticEmergencyBrakingState.USER_OVERRIDE)
+                    .build();
     private static final ImmutableSet<Integer> ALL_POSSIBLE_HVAC_FAN_DIRECTIONS =
             generateAllPossibleHvacFanDirections();
     private static final ImmutableSet<Integer> VEHICLE_SEAT_OCCUPANCY_STATES = ImmutableSet.of(
@@ -698,6 +707,16 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     .add(
                             VehiclePropertyIds.VALET_MODE_ENABLED)
                     .build();
+    private static final ImmutableList<Integer> PERMISSION_READ_HEAD_UP_DISPLAY_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.HEAD_UP_DISPLAY_ENABLED)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_HEAD_UP_DISPLAY_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.HEAD_UP_DISPLAY_ENABLED)
+                    .build();
     private static final ImmutableList<Integer> PERMISSION_IDENTIFICATION_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add(
@@ -896,7 +915,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.EMERGENCY_LANE_KEEP_ASSIST_ENABLED,
                             VehiclePropertyIds.CRUISE_CONTROL_ENABLED,
                             VehiclePropertyIds.LOW_SPEED_COLLISION_WARNING_ENABLED,
-                            VehiclePropertyIds.CROSS_TRAFFIC_MONITORING_ENABLED)
+                            VehiclePropertyIds.CROSS_TRAFFIC_MONITORING_ENABLED,
+                            VehiclePropertyIds.LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_ADAS_SETTINGS_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -910,7 +930,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.EMERGENCY_LANE_KEEP_ASSIST_ENABLED,
                             VehiclePropertyIds.CRUISE_CONTROL_ENABLED,
                             VehiclePropertyIds.LOW_SPEED_COLLISION_WARNING_ENABLED,
-                            VehiclePropertyIds.CROSS_TRAFFIC_MONITORING_ENABLED)
+                            VehiclePropertyIds.CROSS_TRAFFIC_MONITORING_ENABLED,
+                            VehiclePropertyIds.LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_READ_ADAS_STATES_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -929,7 +950,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds
                                     .ADAPTIVE_CRUISE_CONTROL_LEAD_VEHICLE_MEASURED_DISTANCE,
                             VehiclePropertyIds.LOW_SPEED_COLLISION_WARNING_STATE,
-                            VehiclePropertyIds.CROSS_TRAFFIC_MONITORING_WARNING_STATE)
+                            VehiclePropertyIds.CROSS_TRAFFIC_MONITORING_WARNING_STATE,
+                            VehiclePropertyIds.LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CONTROL_ADAS_STATES_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -1320,6 +1342,9 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getElectronicStabilityControlStateVerifier(),
              getCrossTrafficMonitoringEnabledVerifier(),
              getCrossTrafficMonitoringWarningStateVerifier(),
+             getHeadUpDisplayEnabledVerifier(),
+             getLowSpeedAutomaticEmergencyBrakingEnabledVerifier(),
+             getLowSpeedAutomaticEmergencyBrakingStateVerifier(),
              // TODO(b/273988725): Put all verifiers here.
         };
     }
@@ -5621,6 +5646,24 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         getValetModeEnabledVerifier().verify();
     }
 
+    private VehiclePropertyVerifier<Boolean> getHeadUpDisplayEnabledVerifier() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.HEAD_UP_DISPLAY_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class, mCarPropertyManager)
+                .addReadPermission(Car.PERMISSION_READ_HEAD_UP_DISPLAY)
+                .addReadPermission(Car.PERMISSION_CONTROL_HEAD_UP_DISPLAY)
+                .addWritePermission(Car.PERMISSION_CONTROL_HEAD_UP_DISPLAY)
+                .build();
+    }
+
+    @Test
+    public void testHeadUpDisplayEnabledIfSupported() {
+        getHeadUpDisplayEnabledVerifier().verify();
+    }
+
     @Test
     @ApiTest(
             apis = {
@@ -6928,6 +6971,56 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @Test
     public void testCrossTrafficMonitoringWarningStateIfSupported() {
         getCrossTrafficMonitoringWarningStateVerifier().verify();
+    }
+
+    private VehiclePropertyVerifier<Boolean> getLowSpeedAutomaticEmergencyBrakingEnabledVerifier() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class, mCarPropertyManager)
+                .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
+                .addReadPermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
+                .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
+                .build();
+    }
+
+    @Test
+    public void testLowSpeedAutomaticEmergencyBrakingEnabledIfSupported() {
+        getLowSpeedAutomaticEmergencyBrakingEnabledVerifier().verify();
+    }
+
+    private VehiclePropertyVerifier<Integer> getLowSpeedAutomaticEmergencyBrakingStateVerifier() {
+        ImmutableSet<Integer> combinedCarPropertyValues = ImmutableSet.<Integer>builder()
+                .addAll(LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATES)
+                .addAll(ERROR_STATES)
+                .build();
+
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class, mCarPropertyManager)
+                .setAllPossibleEnumValues(combinedCarPropertyValues)
+                .setDependentOnProperty(
+                        VehiclePropertyIds.LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
+                .verifyErrorStates()
+                .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
+                .build();
+    }
+
+    @Test
+    public void testLowSpeedAutomaticEmergencyBrakingStateIfSupported() {
+        getLowSpeedAutomaticEmergencyBrakingStateVerifier().verify();
+    }
+
+    @Test
+    public void testLowSpeedAutomaticEmergencyBrakingStateWithErrorState() {
+        verifyEnumValuesAreDistinct(LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATES, ERROR_STATES);
     }
 
     @SuppressWarnings("unchecked")
@@ -8433,6 +8526,20 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         verifyExpectedPropertiesWhenPermissionsGranted(
                 PERMISSION_CONTROL_VALET_MODE_PROPERTIES,
                 Car.PERMISSION_CONTROL_VALET_MODE);
+    }
+
+    @Test
+    public void testPermissionReadHeadUpDisplayGranted() {
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_READ_HEAD_UP_DISPLAY_PROPERTIES,
+                Car.PERMISSION_READ_HEAD_UP_DISPLAY);
+    }
+
+    @Test
+    public void testPermissionControlHeadUpDisplayGranted() {
+        verifyExpectedPropertiesWhenPermissionsGranted(
+                PERMISSION_CONTROL_HEAD_UP_DISPLAY_PROPERTIES,
+                Car.PERMISSION_CONTROL_HEAD_UP_DISPLAY);
     }
 
     @Test

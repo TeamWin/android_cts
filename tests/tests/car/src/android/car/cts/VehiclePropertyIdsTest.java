@@ -259,6 +259,8 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("DISPLAY_BRIGHTNESS");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.VALET_MODE_ENABLED))
                 .isEqualTo("VALET_MODE_ENABLED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HEAD_UP_DISPLAY_ENABLED))
+                .isEqualTo("HEAD_UP_DISPLAY_ENABLED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HW_KEY_INPUT))
                 .isEqualTo("HW_KEY_INPUT");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.DOOR_LOCK))
@@ -493,6 +495,12 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
         assertThat(VehiclePropertyIds.toString(
                 VehiclePropertyIds.CROSS_TRAFFIC_MONITORING_WARNING_STATE))
                 .isEqualTo("CROSS_TRAFFIC_MONITORING_WARNING_STATE");
+        assertThat(VehiclePropertyIds.toString(
+                VehiclePropertyIds.LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED))
+                .isEqualTo("LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED");
+        assertThat(VehiclePropertyIds.toString(
+                VehiclePropertyIds.LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE))
+                .isEqualTo("LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE");
         assertThat(VehiclePropertyIds.toString(3)).isEqualTo("0x3");
         assertThat(VehiclePropertyIds.toString(12)).isEqualTo("0xc");
     }
