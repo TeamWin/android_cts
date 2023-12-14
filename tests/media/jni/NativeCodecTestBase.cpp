@@ -317,13 +317,17 @@ bool OutputManager::equals(OutputManager* that) {
 bool OutputManager::equalsByteOutput(OutputManager* that) {
     if (this == that) return true;
     if (that == nullptr) return false;
+    bool isEqual = true;
     if (crc32value != that->crc32value) {
         mSharedErrorLogs->append("CRC32 checksums computed for byte buffers received from "
                                  "getOutputBuffer() do not match between ref and test runs. \n");
         mSharedErrorLogs->append(StringFormat("Ref CRC32 checksum value is %lu \n", crc32value));
         mSharedErrorLogs->append(
                 StringFormat("Test CRC32 checksum value is %lu \n", that->crc32value));
-        if (memory.size() == that->memory.size()) {
+        isEqual = false;
+    }
+    if (memory.size() == that->memory.size()) {
+        if (memory != that->memory) {
             int count = 0;
             for (int i = 0; i < memory.size(); i++) {
                 if (memory[i] != that->memory[i]) {
@@ -340,16 +344,16 @@ bool OutputManager::equalsByteOutput(OutputManager* that) {
             if (count != 0) {
                 mSharedErrorLogs->append("Ref and Test outputs are not identical \n");
             }
-        } else {
-            mSharedErrorLogs->append("CRC32 byte buffer checksums are different because ref and "
-                                     "test output sizes are not identical \n");
-            mSharedErrorLogs->append(StringFormat("Ref output buffer size %d \n", memory.size()));
-            mSharedErrorLogs->append(
-                    StringFormat("Test output buffer size %d \n", that->memory.size()));
+            isEqual = false;
         }
-        return false;
+    } else {
+        mSharedErrorLogs->append("ref and test output sizes are not identical \n");
+        mSharedErrorLogs->append(StringFormat("Ref output buffer size %d \n", memory.size()));
+        mSharedErrorLogs->append(
+                StringFormat("Test output buffer size %d \n", that->memory.size()));
+        isEqual = false;
     }
-    return true;
+    return isEqual;
 }
 
 bool OutputManager::equalsPtsList(OutputManager* that) {

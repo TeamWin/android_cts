@@ -967,7 +967,7 @@ public class BitStreamUtils {
 
         @Override
         public int getFrameType() {
-            ArrayList<FrameHeaderObu> headers = new ArrayList();
+            ArrayList<FrameHeaderObu> headers = new ArrayList<>();
             for (int pos = mOffset; pos < mLimit; ) {
                 ObuInfo obuDetails = parseObuHeader(mData, pos, mLimit);
                 ObuParsableBitArray bitArray =
