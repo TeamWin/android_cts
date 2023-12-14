@@ -246,7 +246,7 @@ public class ZoomCaptureTest extends Camera2AndroidTestCase {
 
                     // Ensure that the active physical crop region is updated correctly
                     // when iterating over the zoom ratio within the same active physical camera
-                    Rect activeCropRegion = CameraTestUtils.getValueNotNull(result,
+                    Rect activeCropRegion = result.get(
                             LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_SENSOR_CROP_REGION);
                     if (activeCropRegion != null) {
                         Float zoomRatio = CameraTestUtils.getValueNotNull(result,
