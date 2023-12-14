@@ -957,6 +957,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     .add(
                             VehiclePropertyIds.VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL)
                     .build();
+    private static final ImmutableList<Integer>
+            PERMISSION_READ_ULTRASONICS_SENSOR_DATA_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.ULTRASONICS_SENSOR_POSITION)
+                    .build();
     private static final ImmutableList<String> VENDOR_PROPERTY_PERMISSIONS =
             ImmutableList.<String>builder()
                     .add(
@@ -1277,6 +1283,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getInfoExteriorDimensionsVerifier(),
              getEpochTimeVerifier(),
              getLocationCharacterizationVerifier(),
+             getUltrasonicsSensorPositionVerifier(),
              getElectronicTollCollectionCardTypeVerifier(),
              getElectronicTollCollectionCardStatusVerifier(),
              getGeneralSafetyRegulationComplianceVerifier(),
@@ -2540,6 +2547,29 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @Test
     public void testLocationCharacterizationIfSupported() {
         getLocationCharacterizationVerifier().verify();
+    }
+
+    private VehiclePropertyVerifier<Integer[]> getUltrasonicsSensorPositionVerifier() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.ULTRASONICS_SENSOR_POSITION,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_VENDOR,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                        Integer[].class, mCarPropertyManager)
+                .setCarPropertyValueVerifier(
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, positions) -> {
+                            assertWithMessage("ULTRASONICS_SENSOR_POSITION must specify 3 values")
+                                    .that(positions.length)
+                                    .isEqualTo(3);
+                        })
+                .addReadPermission(Car.PERMISSION_READ_ULTRASONICS_SENSOR_DATA)
+                .build();
+    }
+
+    @Test
+    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    public void testUltrasonicsSensorPositionIfSupported() {
+        getUltrasonicsSensorPositionVerifier().verify();
     }
 
     private VehiclePropertyVerifier<Integer> getElectronicTollCollectionCardTypeVerifier() {
