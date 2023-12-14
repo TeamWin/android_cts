@@ -961,7 +961,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             PERMISSION_READ_ULTRASONICS_SENSOR_DATA_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add(
-                            VehiclePropertyIds.ULTRASONICS_SENSOR_POSITION)
+                            VehiclePropertyIds.ULTRASONICS_SENSOR_POSITION,
+                            VehiclePropertyIds.ULTRASONICS_SENSOR_ORIENTATION)
                     .build();
     private static final ImmutableList<String> VENDOR_PROPERTY_PERMISSIONS =
             ImmutableList.<String>builder()
@@ -1284,6 +1285,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getEpochTimeVerifier(),
              getLocationCharacterizationVerifier(),
              getUltrasonicsSensorPositionVerifier(),
+             getUltrasonicsSensorOrientationVerifier(),
              getElectronicTollCollectionCardTypeVerifier(),
              getElectronicTollCollectionCardStatusVerifier(),
              getGeneralSafetyRegulationComplianceVerifier(),
@@ -2570,6 +2572,30 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
     public void testUltrasonicsSensorPositionIfSupported() {
         getUltrasonicsSensorPositionVerifier().verify();
+    }
+
+    private VehiclePropertyVerifier<Integer[]> getUltrasonicsSensorOrientationVerifier() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.ULTRASONICS_SENSOR_ORIENTATION,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_VENDOR,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                        Integer[].class, mCarPropertyManager)
+                .setCarPropertyValueVerifier(
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, orientations) -> {
+                            assertWithMessage("ULTRASONICS_SENSOR_ORIENTATION must specify 4 "
+                                    + "values")
+                                    .that(orientations.length)
+                                    .isEqualTo(4);
+                        })
+                .addReadPermission(Car.PERMISSION_READ_ULTRASONICS_SENSOR_DATA)
+                .build();
+    }
+
+    @Test
+    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    public void testUltrasonicsSensorOrientationIfSupported() {
+        getUltrasonicsSensorOrientationVerifier().verify();
     }
 
     private VehiclePropertyVerifier<Integer> getElectronicTollCollectionCardTypeVerifier() {

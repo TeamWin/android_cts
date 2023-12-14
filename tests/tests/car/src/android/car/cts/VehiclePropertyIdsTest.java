@@ -537,6 +537,10 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("DRIVER_DISTRACTION_WARNING");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.ULTRASONICS_SENSOR_POSITION))
                 .isEqualTo("ULTRASONICS_SENSOR_POSITION");
+        assertThat(
+                VehiclePropertyIds.toString(
+                        VehiclePropertyIds.ULTRASONICS_SENSOR_ORIENTATION))
+                .isEqualTo("ULTRASONICS_SENSOR_ORIENTATION");
     }
 
     /**
