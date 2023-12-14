@@ -16,18 +16,29 @@
 
 package com.android.bedstead.harrier;
 
+import static com.android.bedstead.harrier.annotations.EnsureHasPermissionKt.ensureHasPermission;
 import static com.android.bedstead.harrier.annotations.EnsureHasWorkProfileKt.ensureHasWorkProfile;
-
+import static com.android.bedstead.harrier.annotations.EnsureNoPackageRespondsToIntentKt.ensureNoPackageRespondsToIntent;
+import static com.android.bedstead.harrier.annotations.EnsurePackageRespondsToIntentKt.ensurePackageRespondsToIntent;
+import static com.android.bedstead.harrier.annotations.RequireNoPackageRespondsToIntentKt.requireNoPackageRespondsToIntent;
+import static com.android.bedstead.harrier.annotations.RequirePackageRespondsToIntentKt.requirePackageRespondsToIntent;
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS_FULL;
+import static com.android.bedstead.nene.utils.Assert.assertThrows;
+import static com.android.queryable.queries.ActivityQuery.activity;
+import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
 import static com.google.common.truth.Truth.assertThat;
 
+import android.content.Intent;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
-
+import com.android.bedstead.testapp.TestApp;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -63,6 +74,8 @@ import java.util.concurrent.atomic.AtomicReference;
 @RunWith(JUnit4.class)
 public final class DeviceStateInternalTest {
 
+    private static final String INTENT_ACTION = "com.android.cts.deviceandprofileowner.CONFIRM";
+
     private DeviceStateTester mDeviceState;
 
     @Before
@@ -88,5 +101,127 @@ public final class DeviceStateInternalTest {
                 .apply(List.of(ensureHasWorkProfile()), () -> {
             assertThat(mDeviceState.workProfile()).isEqualTo(user.get());
         });
+    }
+
+    @Test
+    public void requirePackageRespondsToIntentAnnotation_packageRespondsToIntent() {
+        mDeviceState.testApps().query()
+                .whereActivities().contains(
+                        activity().where().intentFilters().contains(
+                                intentFilter().where().actions().contains(INTENT_ACTION)
+                        )
+                )
+                .get()
+                .install();
+
+        mDeviceState.stepName("requirePackageRespondsToIntentAnnotation_packageRespondsToIntent")
+                .apply(List.of(requirePackageRespondsToIntent(INTENT_ACTION))
+                        , () ->
+                                assertThat(
+                                        TestApis.context().instrumentedContext().getPackageManager().queryIntentActivities(
+                                                new Intent(INTENT_ACTION),
+                                                /* flags= */0)
+                                ).isNotEmpty());
+    }
+
+    @Test
+    public void requirePackageRespondsToIntentAnnotation_workProfile_packageRespondsToIntent() {
+        mDeviceState.stepName("createWorkProfile")
+                .apply(List.of(ensureHasWorkProfile())
+                , () ->
+                                mDeviceState.testApps().query().whereActivities().contains(
+                                        activity().where().intentFilters().contains(
+                                                intentFilter().where().actions().contains(INTENT_ACTION)))
+                                        .get()
+                                        .install(mDeviceState.workProfile()));
+
+        mDeviceState.stepName("requirePackageRespondsToIntentAnnotation_workProfile_packageRespondsToIntent")
+                .apply(List.of(requirePackageRespondsToIntent(INTENT_ACTION, UserType.WORK_PROFILE), ensureHasPermission(INTERACT_ACROSS_USERS, INTERACT_ACROSS_USERS_FULL))
+                        , () ->
+                                assertThat(
+                                        TestApis.context().androidContextAsUser(mDeviceState.workProfile()).getPackageManager().queryIntentActivities(
+                                                new Intent(INTENT_ACTION),
+                                                /* flags= */0)
+                                ).isNotEmpty());
+    }
+
+    @Test
+    public void requirePackageRespondsToIntentAnnotation_noPackageRespondsToIntent() {
+        assertThrows(NeneException.class
+                , () ->
+                        mDeviceState
+                                .stepName("requirePackageRespondsToIntentAnnotation_noPackageRespondsToIntent")
+                                .apply(List.of(requirePackageRespondsToIntent("INTENT_ACTION"))
+                                        , () -> {})
+        );
+    }
+
+    @Test
+    public void requireNoPackageRespondsToIntentAnnotation_noPackageRespondsToIntent() {
+        mDeviceState.stepName("requireNoPackageRespondsToIntentAnnotation_noPackageRespondsToIntent")
+                .apply(List.of(requireNoPackageRespondsToIntent("INTENT_ACTION"))
+                        , () ->
+                                assertThat(
+                                        TestApis.context().instrumentedContext().getPackageManager().queryIntentActivities(
+                                                new Intent("INTENT_ACTION"),
+                                                /* flags= */0)
+                                ).isEmpty());
+    }
+
+    @Test
+    public void requireNoPackageRespondsToIntentAnnotation_packageRespondsToIntent() {
+        mDeviceState.testApps().query()
+                .whereActivities().contains(
+                        activity().where().intentFilters().contains(
+                                intentFilter().where().actions().contains(INTENT_ACTION)
+                        )
+                )
+                .get()
+                .install();
+
+        assertThrows(NeneException.class
+                , () ->
+                        mDeviceState
+                                .stepName("requireNoPackageRespondsToIntentAnnotation_packageRespondsToIntent")
+                                .apply(List.of(requireNoPackageRespondsToIntent(INTENT_ACTION))
+                                        , () -> {})
+        );
+    }
+
+    @Test
+    public void ensurePackageRespondsToIntentAnnotation() {
+        mDeviceState.stepName("ensurePackageRespondsToIntentAnnotation")
+                .apply(List.of(ensurePackageRespondsToIntent(INTENT_ACTION))
+                        , () -> {});
+    }
+
+    @Test
+    public void ensurePackageRespondsToIntentAnnotation_throwsException() {
+        assertThrows(NeneException.class
+                , () ->
+                        mDeviceState
+                                .stepName("ensurePackageRespondsToIntentAnnotation_throwsException")
+                                .apply(List.of(ensurePackageRespondsToIntent("INTENT_ACTION"))
+                                        , () -> {})
+        );
+    }
+
+    @Test
+    public void ensureNoPackageRespondsToIntentAnnotation() {
+        TestApp testApp = mDeviceState.testApps().query()
+                .whereActivities().contains(
+                        activity().where().intentFilters().contains(
+                                intentFilter().where().actions().contains(INTENT_ACTION)
+                        )
+                )
+                .get();
+
+        try (var unused = testApp.install()) {
+            mDeviceState.stepName("ensureNoPackageRespondsToIntentAnnotation")
+                    .apply(List.of(ensureNoPackageRespondsToIntent(INTENT_ACTION))
+                            , () ->
+                                    assertThat(TestApis.packages().find(testApp.packageName()).installedOnUser()).isFalse()
+                    );
+        }
     }
 }

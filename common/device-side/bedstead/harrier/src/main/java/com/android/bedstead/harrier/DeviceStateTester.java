@@ -20,6 +20,7 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.remotedpc.RemoteDpc;
+import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -92,5 +93,10 @@ public final class DeviceStateTester {
     /** See {@link DeviceState#workProfile()}. */
     public UserReference workProfile() {
         return mDeviceState.workProfile(TestApis.users().instrumented());
+    }
+
+    /** See {@link DeviceState#testApps()}. */
+    public TestAppProvider testApps() {
+        return mDeviceState.testApps();
     }
 }

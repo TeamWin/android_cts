@@ -40,6 +40,8 @@ import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.utils.Versions.T;
 import static com.android.bedstead.nene.utils.Versions.meetsSdkVersionRequirements;
 import static com.android.bedstead.remoteaccountauthenticator.RemoteAccountAuthenticator.REMOTE_ACCOUNT_AUTHENTICATOR_TEST_APP;
+import static com.android.queryable.queries.ActivityQuery.activity;
+import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -54,9 +56,7 @@ import android.os.Build;
 import android.os.UserManager;
 import android.service.quicksettings.TileService;
 import android.util.Log;
-
 import androidx.annotation.Nullable;
-
 import com.android.bedstead.harrier.annotations.AfterClass;
 import com.android.bedstead.harrier.annotations.BeforeClass;
 import com.android.bedstead.harrier.annotations.EnsureBluetoothDisabled;
@@ -82,7 +82,9 @@ import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasTestContentSuggestionsService;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
+import com.android.bedstead.harrier.annotations.EnsureNoPackageRespondsToIntent;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
+import com.android.bedstead.harrier.annotations.EnsurePackageRespondsToIntent;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.EnsurePasswordSet;
 import com.android.bedstead.harrier.annotations.EnsurePolicyOperationUnsafe;
@@ -112,6 +114,7 @@ import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireInstantApp;
 import com.android.bedstead.harrier.annotations.RequireLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequireMultiUserSupport;
+import com.android.bedstead.harrier.annotations.RequireNoPackageRespondsToIntent;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
 import com.android.bedstead.harrier.annotations.RequireNotLowRamDevice;
@@ -119,6 +122,7 @@ import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsers
 import com.android.bedstead.harrier.annotations.RequireNotVisibleBackgroundUsersOnDefaultDisplay;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
+import com.android.bedstead.harrier.annotations.RequirePackageRespondsToIntent;
 import com.android.bedstead.harrier.annotations.RequireQuickSettingsSupport;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnVisibleBackgroundNonProfileUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
@@ -174,6 +178,7 @@ import com.android.bedstead.nene.types.OptionalBoolean;
 import com.android.bedstead.nene.users.UserBuilder;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Poll;
+import com.android.bedstead.nene.utils.ResolveInfoWrapper;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.Tags;
 import com.android.bedstead.nene.utils.Versions;
@@ -184,6 +189,7 @@ import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.remotedpc.RemoteDpcUsingParentInstance;
 import com.android.bedstead.remotedpc.RemotePolicyManager;
 import com.android.bedstead.remotedpc.RemoteTestApp;
+import com.android.bedstead.testapp.NotFoundException;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
@@ -1312,6 +1318,37 @@ public final class DeviceState extends HarrierRule {
 
             if (annotation instanceof RequireFactoryResetProtectionPolicySupported) {
                 requireFactoryResetProtectionPolicySupported();
+                continue;
+            }
+
+            if(annotation instanceof RequirePackageRespondsToIntent requirePackageRespondsToIntentAnnotation) {
+                requirePackageRespondsToIntent(
+                        requirePackageRespondsToIntentAnnotation.intent(),
+                        resolveUserTypeToUser(requirePackageRespondsToIntentAnnotation.user()),
+                        requirePackageRespondsToIntentAnnotation.failureMode());
+                continue;
+            }
+
+            if(annotation instanceof RequireNoPackageRespondsToIntent requireNoPackageRespondsToIntentAnnotation) {
+                requireNoPackageRespondsToIntent(
+                        requireNoPackageRespondsToIntentAnnotation.intent(),
+                        resolveUserTypeToUser(requireNoPackageRespondsToIntentAnnotation.user()),
+                        requireNoPackageRespondsToIntentAnnotation.failureMode());
+                continue;
+            }
+
+            if(annotation instanceof EnsurePackageRespondsToIntent ensurePackageRespondsToIntentAnnotation) {
+                ensurePackageRespondsToIntent(
+                        ensurePackageRespondsToIntentAnnotation.intent(),
+                        resolveUserTypeToUser(ensurePackageRespondsToIntentAnnotation.user()),
+                        ensurePackageRespondsToIntentAnnotation.failureMode());
+                continue;
+            }
+
+            if(annotation instanceof EnsureNoPackageRespondsToIntent ensureNoPackageRespondsToIntentAnnotation) {
+                ensureNoPackageRespondsToIntent(
+                        ensureNoPackageRespondsToIntentAnnotation.intent(),
+                        ensureNoPackageRespondsToIntentAnnotation.user());
                 continue;
             }
         }
@@ -4483,5 +4520,57 @@ public final class DeviceState extends HarrierRule {
         }
 
         TestApis.properties().set(key, value);
+    }
+
+    private void requirePackageRespondsToIntent(com.android.bedstead.harrier.annotations.Intent paramIntent, UserReference user, FailureMode failureMode) {
+        Intent intent = new Intent(/* action= */ paramIntent.action());
+        boolean packageResponded = TestApis.packages().queryIntentActivities(user, intent, /* flags= */0).size() > 0;
+
+        if(packageResponded) {
+            checkFailOrSkip("Requires at least one package to respond to this intent.", /* value= */ true, failureMode);
+        }
+        else {
+            failOrSkip("Requires at least one package to respond to this intent.", failureMode);
+        }
+    }
+
+    private void requireNoPackageRespondsToIntent(com.android.bedstead.harrier.annotations.Intent paramIntent, UserReference user, FailureMode failureMode) {
+        Intent intent = new Intent(/* action= */ paramIntent.action());
+        boolean noPackageResponded = TestApis.packages().queryIntentActivities(user, intent, /* flags= */0).isEmpty();
+
+        if(noPackageResponded) {
+            checkFailOrSkip("Requires no package to respond to this intent.", /* value= */ true, failureMode);
+        }
+        else {
+            failOrSkip("Requires no package to respond to this intent.", failureMode);
+        }
+    }
+
+    private void ensurePackageRespondsToIntent(com.android.bedstead.harrier.annotations.Intent paramIntent, UserReference user, FailureMode failureMode) {
+        Intent intent = new Intent(/* action= */ paramIntent.action());
+        boolean packageResponded = TestApis.packages().queryIntentActivities(user, intent, /* flags= */0).size() > 0;
+
+        if(!packageResponded) {
+            try {
+                ensureTestAppInstalled(
+                        /* testApp= */ testApps().query().whereActivities().contains(
+                                        activity().where().intentFilters().contains(
+                                                intentFilter().where().actions().contains(paramIntent.action())))
+                                .get()
+                        , user);
+            } catch (NotFoundException notFoundException) {
+                failOrSkip("Could not found the testApp which contains an activity matching the intent action '" + paramIntent.action() + "'.", failureMode);
+            }
+        }
+    }
+
+    private void ensureNoPackageRespondsToIntent(com.android.bedstead.harrier.annotations.Intent paramIntent, UserType user) {
+        Intent intent = new Intent(/* action= */ paramIntent.action());
+        List<ResolveInfoWrapper> resolveInfoWrappers = TestApis.packages().queryIntentActivities(resolveUserTypeToUser(user), intent, /* flags= */0);
+
+        for (ResolveInfoWrapper resolveInfoWrapper : resolveInfoWrappers) {
+            String packageName = resolveInfoWrapper.activityInfo().packageName;
+            ensurePackageNotInstalled(packageName, user);
+        }
     }
 }
