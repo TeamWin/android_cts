@@ -962,7 +962,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             ImmutableList.<Integer>builder()
                     .add(
                             VehiclePropertyIds.ULTRASONICS_SENSOR_POSITION,
-                            VehiclePropertyIds.ULTRASONICS_SENSOR_ORIENTATION)
+                            VehiclePropertyIds.ULTRASONICS_SENSOR_ORIENTATION,
+                            VehiclePropertyIds.ULTRASONICS_SENSOR_FIELD_OF_VIEW)
                     .build();
     private static final ImmutableList<String> VENDOR_PROPERTY_PERMISSIONS =
             ImmutableList.<String>builder()
@@ -1286,6 +1287,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getLocationCharacterizationVerifier(),
              getUltrasonicsSensorPositionVerifier(),
              getUltrasonicsSensorOrientationVerifier(),
+             getUltrasonicsSensorFieldOfViewVerifier(),
              getElectronicTollCollectionCardTypeVerifier(),
              getElectronicTollCollectionCardStatusVerifier(),
              getGeneralSafetyRegulationComplianceVerifier(),
@@ -2596,6 +2598,38 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
     public void testUltrasonicsSensorOrientationIfSupported() {
         getUltrasonicsSensorOrientationVerifier().verify();
+    }
+
+    private VehiclePropertyVerifier<Integer[]> getUltrasonicsSensorFieldOfViewVerifier() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.ULTRASONICS_SENSOR_FIELD_OF_VIEW,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_VENDOR,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                        Integer[].class, mCarPropertyManager)
+                .setCarPropertyValueVerifier(
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, fieldOfViews) -> {
+                            assertWithMessage("ULTRASONICS_SENSOR_FIELD_OF_VIEW must specify 2 "
+                                    + "values")
+                                    .that(fieldOfViews.length)
+                                    .isEqualTo(2);
+                            assertWithMessage("ULTRASONICS_SENSOR_FIELD_OF_VIEW horizontal fov "
+                                    + "must be greater than zero")
+                                    .that(fieldOfViews[0])
+                                    .isGreaterThan(0);
+                            assertWithMessage("ULTRASONICS_SENSOR_FIELD_OF_VIEW vertical fov "
+                                    + "must be greater than zero")
+                                    .that(fieldOfViews[1])
+                                    .isGreaterThan(0);
+                        })
+                .addReadPermission(Car.PERMISSION_READ_ULTRASONICS_SENSOR_DATA)
+                .build();
+    }
+
+    @Test
+    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    public void testUltrasonicsSensorFieldOfViewIfSupported() {
+        getUltrasonicsSensorFieldOfViewVerifier().verify();
     }
 
     private VehiclePropertyVerifier<Integer> getElectronicTollCollectionCardTypeVerifier() {
