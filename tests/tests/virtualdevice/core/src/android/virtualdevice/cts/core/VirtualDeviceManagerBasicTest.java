@@ -43,6 +43,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
+import android.companion.AssociationInfo;
+import android.companion.CompanionDeviceManager;
 import android.companion.virtual.VirtualDevice;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceParams;
@@ -52,6 +54,7 @@ import android.companion.virtual.sensor.VirtualSensorCallback;
 import android.companion.virtual.sensor.VirtualSensorConfig;
 import android.content.Context;
 import android.hardware.display.VirtualDisplay;
+import android.os.Process;
 import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsDisabled;
@@ -59,6 +62,8 @@ import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.virtualdevice.cts.common.VirtualDeviceRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -146,6 +151,27 @@ public class VirtualDeviceManagerBasicTest {
                 IllegalArgumentException.class,
                 () -> mVirtualDeviceManager.createVirtualDevice(
                         /* associationId= */ -1, mRule.DEFAULT_VIRTUAL_DEVICE_PARAMS));
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_PERSISTENT_DEVICE_ID_API)
+    @Test
+    public void createVirtualDevice_invalidDeviceProfile_shouldThrowIllegalArgumentException() {
+        final String fakeAddress = "00:00:00:00:10:10";
+        SystemUtil.runShellCommand(String.format("cmd companiondevice associate %d %s %s",
+                Process.myUserHandle().getIdentifier(), mContext.getPackageName(), fakeAddress));
+        CompanionDeviceManager cdm = mContext.getSystemService(CompanionDeviceManager.class);
+        List<AssociationInfo> associations = cdm.getMyAssociations();
+        final AssociationInfo associationInfo = associations.stream()
+                .filter(a -> fakeAddress.equals(a.getDeviceMacAddressAsString()))
+                .findAny().orElse(null);
+        assertThat(associationInfo).isNotNull();
+        try {
+            assertThrows(IllegalArgumentException.class,
+                    () -> mVirtualDeviceManager.createVirtualDevice(
+                            associationInfo.getId(), mRule.DEFAULT_VIRTUAL_DEVICE_PARAMS));
+        } finally {
+            cdm.disassociate(associationInfo.getId());
+        }
     }
 
     @Test
