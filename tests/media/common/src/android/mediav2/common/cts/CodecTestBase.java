@@ -32,6 +32,7 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.params.DynamicRangeProfiles;
 import android.hardware.display.DisplayManager;
+import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
@@ -68,6 +69,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -363,6 +365,7 @@ public abstract class CodecTestBase {
     // This doesn't own the handle. The ownership with instances that manage
     // SurfaceView or TextureView, ... They hold the responsibility of calling release().
     protected CodecTestActivity mActivity;
+    protected ImageSurface mImageSurface;
 
     public static final MediaCodecList MEDIA_CODEC_LIST_ALL;
     public static final MediaCodecList MEDIA_CODEC_LIST_REGULAR;
@@ -1048,6 +1051,10 @@ public abstract class CodecTestBase {
             mActivity.finish();
             mActivity = null;
         }
+        if (mImageSurface != null) {
+            mImageSurface.release();
+            mImageSurface = null;
+        }
         if (mCodec != null) {
             mCodec.release();
             mCodec = null;
@@ -1355,6 +1362,14 @@ public abstract class CodecTestBase {
     protected void setUpSurface(CodecTestActivity activity) throws InterruptedException {
         activity.waitTillSurfaceIsCreated();
         mSurface = activity.getSurface();
+        assertNotNull("Surface created is null \n" + mTestConfig + mTestEnv, mSurface);
+        assertTrue("Surface created is invalid \n" + mTestConfig + mTestEnv, mSurface.isValid());
+    }
+
+    protected void setUpSurface(int width, int height, int format, int maxImages,
+            Function<Image, Boolean> predicate) {
+        mImageSurface.createSurface(width, height, format, maxImages, predicate);
+        mSurface = mImageSurface.getSurface();
         assertNotNull("Surface created is null \n" + mTestConfig + mTestEnv, mSurface);
         assertTrue("Surface created is invalid \n" + mTestConfig + mTestEnv, mSurface.isValid());
     }
