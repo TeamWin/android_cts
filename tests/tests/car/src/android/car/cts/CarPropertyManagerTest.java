@@ -963,7 +963,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     .add(
                             VehiclePropertyIds.ULTRASONICS_SENSOR_POSITION,
                             VehiclePropertyIds.ULTRASONICS_SENSOR_ORIENTATION,
-                            VehiclePropertyIds.ULTRASONICS_SENSOR_FIELD_OF_VIEW)
+                            VehiclePropertyIds.ULTRASONICS_SENSOR_FIELD_OF_VIEW,
+                            VehiclePropertyIds.ULTRASONICS_SENSOR_DETECTION_RANGE)
                     .build();
     private static final ImmutableList<String> VENDOR_PROPERTY_PERMISSIONS =
             ImmutableList.<String>builder()
@@ -1288,6 +1289,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getUltrasonicsSensorPositionVerifier(),
              getUltrasonicsSensorOrientationVerifier(),
              getUltrasonicsSensorFieldOfViewVerifier(),
+             getUltrasonicsSensorDetectionRangeVerifier(),
              getElectronicTollCollectionCardTypeVerifier(),
              getElectronicTollCollectionCardStatusVerifier(),
              getGeneralSafetyRegulationComplianceVerifier(),
@@ -2630,6 +2632,39 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
     public void testUltrasonicsSensorFieldOfViewIfSupported() {
         getUltrasonicsSensorFieldOfViewVerifier().verify();
+    }
+
+    private VehiclePropertyVerifier<Integer[]> getUltrasonicsSensorDetectionRangeVerifier() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.ULTRASONICS_SENSOR_DETECTION_RANGE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_VENDOR,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                        Integer[].class, mCarPropertyManager)
+                .setCarPropertyValueVerifier(
+                        (carPropertyConfig, propertyId, areaId, timestampNanos, detectionRanges)
+                                -> {
+                            assertWithMessage("ULTRASONICS_SENSOR_DETECTION_RANGE must "
+                                    + "specify 2 values")
+                                    .that(detectionRanges.length)
+                                    .isEqualTo(2);
+                            assertWithMessage("ULTRASONICS_SENSOR_DETECTION_RANGE min value must "
+                                    + "be at least zero")
+                                    .that(detectionRanges[0])
+                                    .isAtLeast(0);
+                            assertWithMessage("ULTRASONICS_SENSOR_DETECTION_RANGE max value must "
+                                    + "be greater than min")
+                                    .that(detectionRanges[1])
+                                    .isGreaterThan(detectionRanges[0]);
+                        })
+                .addReadPermission(Car.PERMISSION_READ_ULTRASONICS_SENSOR_DATA)
+                .build();
+    }
+
+    @Test
+    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    public void testUltrasonicsSensorDetectionRangeIfSupported() {
+        getUltrasonicsSensorDetectionRangeVerifier().verify();
     }
 
     private VehiclePropertyVerifier<Integer> getElectronicTollCollectionCardTypeVerifier() {
