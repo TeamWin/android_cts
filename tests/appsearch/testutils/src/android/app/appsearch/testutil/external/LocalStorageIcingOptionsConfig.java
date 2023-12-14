@@ -21,7 +21,7 @@ package com.android.server.appsearch.external.localstorage;
  * Icing options for AppSearch local-storage. Note, these values are not necessarily the defaults
  * set in {@link com.google.android.icing.proto.IcingSearchEngineOptions} proto.
  */
-public class DefaultIcingOptionsConfig implements IcingOptionsConfig {
+public class LocalStorageIcingOptionsConfig implements IcingOptionsConfig {
     @Override
     public int getMaxTokenLength() {
         return DEFAULT_MAX_TOKEN_LENGTH;
@@ -94,6 +94,6 @@ public class DefaultIcingOptionsConfig implements IcingOptionsConfig {
 
     @Override
     public boolean getBuildPropertyExistenceMetadataHits() {
-        return DEFAULT_BUILD_PROPERTY_EXISTENCE_METADATA_HITS;
+        return true;
     }
 }
