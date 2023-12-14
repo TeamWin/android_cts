@@ -503,6 +503,21 @@ class PackageManagerShellCommandMultiUserTest {
         }
     }
 
+    @Test
+    fun testGrantPermissionToSecondaryUser() {
+        installPackageAsUser(TEST_HW5, secondaryUser)
+        assertFalse(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser))
+        assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser))
+        var commandResult = PackageManagerShellCommandInstallTest.executeShellCommand(
+                "pm grant --all-permissions --user ${secondaryUser.id()} $TEST_APP_PACKAGE"
+        ).replace("\n", "")
+        assertTrue(commandResult.isEmpty())
+        commandResult = PackageManagerShellCommandInstallTest.executeShellCommand(
+                "pm grant --all-permissions --user ${primaryUser.id()} $TEST_APP_PACKAGE"
+        ).replace("\n", "")
+        assertEquals(commandResult, "Failure [package not found]")
+    }
+
     private fun testUninstallSetup() {
         // Install this test itself for the secondary user
         installExistingPackageAsUser(context.packageName, secondaryUser)

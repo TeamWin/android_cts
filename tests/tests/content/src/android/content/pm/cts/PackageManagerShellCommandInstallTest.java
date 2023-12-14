@@ -223,7 +223,7 @@ public class PackageManagerShellCommandInstallTest {
         return InstrumentationRegistry.getInstrumentation().getUiAutomation();
     }
 
-    private static String executeShellCommand(String command) throws IOException {
+    /* package */ static String executeShellCommand(String command) throws IOException {
         final ParcelFileDescriptor stdout = getUiAutomation().executeShellCommand(command);
         try (InputStream inputStream = new ParcelFileDescriptor.AutoCloseInputStream(stdout)) {
             return readFullStream(inputStream);
