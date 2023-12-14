@@ -329,4 +329,10 @@
 
     <!-- b/307489638 -->
     <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.satellite.cts.SatelliteManagerTestOnMockService" />
+
+    <!-- b/312075535 -->
+    <option name="compatibility:exclude-filter" value="CtsAdServicesTopicsAppUpdateTests com.android.adservices.tests.cts.topics.appupdate.AppUpdateTest#testAppUpdate" />
+
+    <!-- b/305609163 -->
+    <option name="compatibility:exclude-filter" value="CtsSandboxedTopicsManagerTests com.android.tests.sandbox.topics.SandboxedTopicsManagerTest#loadSdkAndRunTopicsApi" />
 </configuration>
