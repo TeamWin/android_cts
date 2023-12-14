@@ -554,7 +554,7 @@ public class CodecEncoderTestBase extends CodecTestBase {
     }
 
     @Override
-    public void waitForAllOutputs() throws InterruptedException {
+    protected void waitForAllOutputs() throws InterruptedException {
         super.waitForAllOutputs();
         if (mMuxOutput) {
             if (mTrackID != -1) {
