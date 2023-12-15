@@ -687,7 +687,10 @@ public class PackageManagerShellCommandInstallTest {
     public void testDontKillWithSplit() throws Exception {
         assumeFalse(mStreaming);
         installPackage(TEST_HW5);
+        installDontKillSplit();
+    }
 
+    private void installDontKillSplit() throws Exception {
         getUiAutomation().adoptShellPermissionIdentity();
         try {
             final PackageInstaller installer = getPackageInstaller();
@@ -708,8 +711,8 @@ public class PackageManagerShellCommandInstallTest {
             session.commit(new IntentSender((IIntentSender) new IIntentSender.Stub() {
                 @Override
                 public void send(int code, Intent intent, String resolvedType,
-                        IBinder whitelistToken, IIntentReceiver finishedReceiver,
-                        String requiredPermission, Bundle options) throws RemoteException {
+                                 IBinder whitelistToken, IIntentReceiver finishedReceiver,
+                                 String requiredPermission, Bundle options) throws RemoteException {
                     boolean dontKillApp =
                             (session.getInstallFlags() & PackageManager.INSTALL_DONT_KILL_APP) != 0;
                     status.complete(
@@ -727,6 +730,23 @@ public class PackageManagerShellCommandInstallTest {
         } finally {
             getUiAutomation().dropShellPermissionIdentity();
         }
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_IMPROVE_INSTALL_DONT_KILL)
+    @Test
+    public void testDontKillOldPathsArePreserved() throws Exception {
+        assumeFalse(mStreaming);
+        installPackage(TEST_HW5);
+        String oldPath =
+                getPackageManager().getApplicationInfo(TEST_APP_PACKAGE, 0).publicSourceDir;
+        installDontKillSplit();
+
+        List<String> oldPaths = getOldCodePaths(TEST_APP_PACKAGE);
+        assertNotNull(oldPaths);
+        assertEquals(1, oldPaths.size());
+        // publicSourceDir contains the full path to the APK
+        // oldPaths only contains paths to directory
+        assertTrue(oldPath.startsWith(oldPaths.get(0)));
     }
 
     @Test
@@ -2586,6 +2606,15 @@ public class PackageManagerShellCommandInstallTest {
         } finally {
             getUiAutomation().dropShellPermissionIdentity();
         }
+    }
+
+    private List<String> getOldCodePaths(String packageName) throws IOException {
+        final String commandResult = executeShellCommand("dumpsys package " + packageName);
+        final String prefix = "      oldCodePath=";
+        return Arrays.stream(commandResult.split("\\r?\\n"))
+                .filter(line -> line.startsWith(prefix))
+                .map(s -> s.substring(prefix.length()))
+                .toList();
     }
 
     static class PackageBroadcastReceiver extends BroadcastReceiver {
