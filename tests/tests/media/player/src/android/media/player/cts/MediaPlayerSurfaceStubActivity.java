@@ -25,6 +25,8 @@ import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
+import com.android.compatibility.common.util.MediaUtils;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -43,13 +45,17 @@ public class MediaPlayerSurfaceStubActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        String filePath = mInpPrefix + "testvideo.3gp";
         mResources = getResources();
         mMediaPlayer = new MediaPlayer();
         AssetFileDescriptor afd = null;
 
-        Preconditions.assertTestFileExists(mInpPrefix + "testvideo.3gp");
+        Preconditions.assertTestFileExists(filePath);
+        if (!MediaUtils.hasCodecsForResource(filePath)) {
+            return;
+        }
         try {
-            File inpFile = new File(mInpPrefix + "testvideo.3gp");
+            File inpFile = new File(filePath);
             ParcelFileDescriptor parcelFD =
                     ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
             afd = new AssetFileDescriptor(parcelFD, 0, parcelFD.getStatSize());
@@ -75,11 +81,15 @@ public class MediaPlayerSurfaceStubActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        mVideoView.onResume();
+        if (mVideoView != null) {
+            mVideoView.onResume();
+        }
     }
 
     public void playVideo() throws Exception {
-        mVideoView.startTest();
+        if (mVideoView != null) {
+            mVideoView.startTest();
+        }
     }
 
 }
