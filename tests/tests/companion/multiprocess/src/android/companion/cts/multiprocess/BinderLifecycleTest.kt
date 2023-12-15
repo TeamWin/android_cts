@@ -46,9 +46,12 @@ class BinderLifecycleTest : TestBase() {
         // Publish device's presence and wait for callback.
         cdm.notifyDeviceAppeared(associationId)
         assertApplicationBinds(cdm)
+        // Give 2 seconds to start the process
+        SystemClock.sleep(2000)
 
         // Kill primary process
         killProcess(PRIMARY_PROCESS_NAME)
+
         assertApplicationUnbinds(cdm)
     }
 

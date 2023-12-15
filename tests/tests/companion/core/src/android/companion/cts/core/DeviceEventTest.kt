@@ -1,13 +1,14 @@
 package android.companion.cts.core
 import android.Manifest
-import android.companion.CompanionDeviceService.DEVICE_EVENT_BLE_APPEARED
-import android.companion.CompanionDeviceService.DEVICE_EVENT_BLE_DISAPPEARED
-import android.companion.CompanionDeviceService.DEVICE_EVENT_BT_CONNECTED
-import android.companion.CompanionDeviceService.DEVICE_EVENT_BT_DISCONNECTED
+import android.companion.DevicePresenceEvent.EVENT_BLE_APPEARED
+import android.companion.DevicePresenceEvent.EVENT_BLE_DISAPPEARED
+import android.companion.DevicePresenceEvent.EVENT_BT_CONNECTED
+import android.companion.DevicePresenceEvent.EVENT_BT_DISCONNECTED
 import android.companion.Flags.FLAG_DEVICE_PRESENCE
 import android.companion.cts.common.MAC_ADDRESS_A
 import android.companion.cts.common.PrimaryCompanionService
 import android.companion.cts.common.toUpperCaseString
+import android.os.SystemClock
 import android.platform.test.annotations.AppModeFull
 import android.platform.test.annotations.RequiresFlagsEnabled
 import android.platform.test.flag.junit.DeviceFlagsValueProvider
@@ -22,7 +23,8 @@ import org.junit.runner.RunWith
  *
  * Run: atest CtsCompanionDeviceManagerCoreTestCases:DeviceEventTest
  *
- * @see android.companion.CompanionDeviceService.onDeviceEvent
+ * @see android.companion.CompanionDeviceService.onDevicePresenceEvent
+ * @see android.companion.DevicePresenceEvent
  */
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 @RunWith(AndroidJUnit4::class)
@@ -39,18 +41,19 @@ class DeviceEventTest : CoreTestBase() {
             cdm.startObservingDevicePresence(MAC_ADDRESS_A.toUpperCaseString())
         }
 
-        simulateDeviceEvent(associationId, DEVICE_EVENT_BLE_APPEARED)
+        simulateDeviceEvent(associationId, EVENT_BLE_APPEARED)
         PrimaryCompanionService.waitAssociationToAppear(associationId)
+        SystemClock.sleep(10000)
         assertEquals(
-                expected = DEVICE_EVENT_BLE_APPEARED,
-                actual = PrimaryCompanionService.getCurrentState()
+                expected = EVENT_BLE_APPEARED,
+                actual = PrimaryCompanionService.getCurrentEvent()
         )
 
-        simulateDeviceEvent(associationId, DEVICE_EVENT_BLE_DISAPPEARED)
+        simulateDeviceEvent(associationId, EVENT_BLE_DISAPPEARED)
         PrimaryCompanionService.waitAssociationToDisappear(associationId)
         assertEquals(
-                expected = DEVICE_EVENT_BLE_DISAPPEARED,
-                actual = PrimaryCompanionService.getCurrentState()
+                expected = EVENT_BLE_DISAPPEARED,
+                actual = PrimaryCompanionService.getCurrentEvent()
         )
 
         PrimaryCompanionService.forgetDevicePresence(associationId)
@@ -68,19 +71,19 @@ class DeviceEventTest : CoreTestBase() {
             cdm.startObservingDevicePresence(MAC_ADDRESS_A.toUpperCaseString())
         }
 
-        simulateDeviceEvent(idA, DEVICE_EVENT_BT_CONNECTED)
+        simulateDeviceEvent(idA, EVENT_BT_CONNECTED)
         PrimaryCompanionService.waitAssociationToBtConnect(idA)
         assertEquals(
-                expected = DEVICE_EVENT_BT_CONNECTED,
-                actual = PrimaryCompanionService.getCurrentState()
+                expected = EVENT_BT_CONNECTED,
+                actual = PrimaryCompanionService.getCurrentEvent()
         )
 
-        simulateDeviceEvent(idA, DEVICE_EVENT_BT_DISCONNECTED)
+        simulateDeviceEvent(idA, EVENT_BT_DISCONNECTED)
         PrimaryCompanionService.waitAssociationToBtDisconnect(idA)
         PrimaryCompanionService.waitAssociationToDisappear(idA)
         assertEquals(
-                expected = DEVICE_EVENT_BT_DISCONNECTED,
-                actual = PrimaryCompanionService.getCurrentState()
+                expected = EVENT_BT_DISCONNECTED,
+                actual = PrimaryCompanionService.getCurrentEvent()
         )
 
         PrimaryCompanionService.forgetDevicePresence(idA)
@@ -98,32 +101,32 @@ class DeviceEventTest : CoreTestBase() {
             cdm.startObservingDevicePresence(MAC_ADDRESS_A.toUpperCaseString())
         }
 
-        simulateDeviceEvent(associationId, DEVICE_EVENT_BLE_APPEARED)
+        simulateDeviceEvent(associationId, EVENT_BLE_APPEARED)
         PrimaryCompanionService.waitAssociationToAppear(associationId)
         assertEquals(
-                expected = DEVICE_EVENT_BLE_APPEARED,
-                actual = PrimaryCompanionService.getCurrentState()
+                expected = EVENT_BLE_APPEARED,
+                actual = PrimaryCompanionService.getCurrentEvent()
         )
 
-        simulateDeviceEvent(associationId, DEVICE_EVENT_BT_CONNECTED)
+        simulateDeviceEvent(associationId, EVENT_BT_CONNECTED)
         PrimaryCompanionService.waitAssociationToBtConnect(associationId)
         assertEquals(
-                expected = DEVICE_EVENT_BT_CONNECTED,
-                actual = PrimaryCompanionService.getCurrentState()
+                expected = EVENT_BT_CONNECTED,
+                actual = PrimaryCompanionService.getCurrentEvent()
         )
 
-        simulateDeviceEvent(associationId, DEVICE_EVENT_BT_DISCONNECTED)
+        simulateDeviceEvent(associationId, EVENT_BT_DISCONNECTED)
         PrimaryCompanionService.waitAssociationToBtDisconnect(associationId)
         assertEquals(
-                expected = DEVICE_EVENT_BT_DISCONNECTED,
-                actual = PrimaryCompanionService.getCurrentState()
+                expected = EVENT_BT_DISCONNECTED,
+                actual = PrimaryCompanionService.getCurrentEvent()
         )
 
-        simulateDeviceEvent(associationId, DEVICE_EVENT_BLE_DISAPPEARED)
+        simulateDeviceEvent(associationId, EVENT_BLE_DISAPPEARED)
         PrimaryCompanionService.waitAssociationToDisappear(associationId)
         assertEquals(
-                expected = DEVICE_EVENT_BLE_DISAPPEARED,
-                actual = PrimaryCompanionService.getCurrentState()
+                expected = EVENT_BLE_DISAPPEARED,
+                actual = PrimaryCompanionService.getCurrentEvent()
         )
 
         PrimaryCompanionService.forgetDevicePresence(associationId)

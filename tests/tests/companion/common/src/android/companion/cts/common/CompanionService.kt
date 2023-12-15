@@ -18,10 +18,15 @@ package android.companion.cts.common
 
 import android.companion.AssociationInfo
 import android.companion.CompanionDeviceService
+import android.companion.DevicePresenceEvent
+import android.companion.DevicePresenceEvent.EVENT_BT_CONNECTED
+import android.companion.DevicePresenceEvent.EVENT_BT_DISCONNECTED
 import android.content.Intent
 import android.os.Handler
+import android.os.ParcelUuid
 import android.util.Log
 import java.util.Collections.synchronizedMap
+import java.util.Collections.synchronizedSet
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -37,7 +42,7 @@ sealed class CompanionService<T : CompanionService<T>>(
             field = isBound
         }
 
-    var currentState: Int = -2
+    var currentEvent: Int = -2
 
     val connectedDevices: Collection<AssociationInfo>
         get() = _connectedDevices.values
@@ -45,13 +50,11 @@ sealed class CompanionService<T : CompanionService<T>>(
     val associationIdsForConnectedDevices: Collection<Int>
         get() = _connectedDevices.keys
 
-    val associationIdsForBtBondDevices: Collection<Int>
-        get() = _connectedBtBondDevices.keys
+    val connectedUuidDevices: MutableSet<ParcelUuid?> = synchronizedSet(mutableSetOf())
+
+    val associationIdsForBtBondDevices: MutableSet<Int> = synchronizedSet(mutableSetOf())
 
     private val _connectedDevices: MutableMap<Int, AssociationInfo> =
-            synchronizedMap(mutableMapOf())
-
-    private val _connectedBtBondDevices: MutableMap<Int, AssociationInfo> =
             synchronizedMap(mutableMapOf())
 
     override fun onCreate() {
@@ -79,19 +82,42 @@ sealed class CompanionService<T : CompanionService<T>>(
         super.onDeviceDisappeared(associationInfo)
     }
 
-    override fun onDeviceEvent(associationInfo: AssociationInfo, event: Int) {
-        Log.i(TAG, "$this.onDeviceEvent(), associationInfo=$associationInfo state is: $event")
+    override fun onDevicePresenceEvent(devicePresenceEvent: DevicePresenceEvent) {
+        val event = devicePresenceEvent.event
+        currentEvent = event
+        Log.i("evanxinchen", "onDevicePresenceEvent: $currentEvent")
 
-        currentState = event
-        if (event == DEVICE_EVENT_BT_CONNECTED) {
-            _connectedBtBondDevices[associationInfo.id] = associationInfo
-        } else if (event == DEVICE_EVENT_BT_DISCONNECTED) {
-            _connectedBtBondDevices.remove(associationInfo.id)
+        if (devicePresenceEvent.uuid == null) {
+            Log.i(
+                TAG,
+                "$this.onDevicePresenceEvent(), " +
+                        "association id=${devicePresenceEvent.associationId}" + "event is: $event"
+            )
+
+            var associationId: Int = devicePresenceEvent.associationId
+            if (event == EVENT_BT_CONNECTED) {
+                associationIdsForBtBondDevices.add(associationId)
+            } else if (event == EVENT_BT_DISCONNECTED) {
+                associationIdsForBtBondDevices.remove(associationId)
                     ?: error("onDeviceDisconnected() has not been called for association with id " +
-                            "${associationInfo.id}")
+                            "${devicePresenceEvent.associationId}")
+            }
+        } else {
+            val uuid: ParcelUuid? = devicePresenceEvent.uuid
+            Log.i(TAG, "$this.onDeviceEvent(), ParcelUuid=$uuid event is: $event")
+            if (event == EVENT_BT_CONNECTED) {
+                connectedUuidDevices.add(uuid)
+            } else if (event == EVENT_BT_DISCONNECTED) {
+                if (!connectedUuidDevices.remove(uuid)) {
+                    error(
+                        "onDeviceEvent() with event " +
+                                "$EVENT_BT_CONNECTED has not been called"
+                    )
+                }
+            }
         }
 
-        super.onDeviceEvent(associationInfo, event)
+        super.onDevicePresenceEvent(devicePresenceEvent)
     }
 
     // For now, we need to "post" a Runnable that sets isBound to false to the Main Thread's
@@ -132,10 +158,13 @@ sealed class InstanceHolder<T : CompanionService<T>> {
     val connectedBtBondDevices: Collection<AssociationInfo>
         get() = instance?.connectedDevices ?: emptySet()
 
+    val connectedUuidBondDevices: Collection<ParcelUuid?>
+        get() = instance?.connectedUuidDevices ?: emptySet()
+
     val associationIdsForConnectedDevices: Collection<Int>
         get() = instance?.associationIdsForConnectedDevices ?: emptySet()
 
-    private val associationIdsForBtBondDevices: Collection<Int>
+    val associationIdsForBtBondDevices: Collection<Int>
         get() = instance?.associationIdsForBtBondDevices ?: emptySet()
 
     fun waitForBind(timeout: Duration = 1.seconds) {
@@ -184,6 +213,24 @@ sealed class InstanceHolder<T : CompanionService<T>> {
         }
     }
 
+    fun waitDeviceUuidConnect(uuid: ParcelUuid, timeout: Duration = 1.seconds) {
+        val appeared = waitFor(timeout) {
+            connectedUuidBondDevices.contains(uuid)
+        }
+        if (!appeared) {
+            throw AssertionError("""Uuid $uuid hasn't "connected"""")
+        }
+    }
+
+    fun waitDeviceUuidDisconnect(uuid: ParcelUuid, timeout: Duration = 1.seconds) {
+        val gone = waitFor(timeout) {
+            !connectedUuidBondDevices.contains(uuid)
+        }
+        if (!gone) {
+            throw AssertionError("""Uuid $uuid hasn't "disconnected"""")
+        }
+    }
+
     // This is a useful function to use to conveniently "forget" that a device is currently present.
     // Use to bypass the "unbinding while there are connected devices" for simulated devices.
     // (Don't worry! they would have removed themselves after 1 minute anyways!)
@@ -191,8 +238,12 @@ sealed class InstanceHolder<T : CompanionService<T>> {
         instance?.removeConnectedDevice(associationId)
     }
 
-    fun getCurrentState(): Int? {
-        return instance?.currentState
+    fun clearDeviceUuidPresence() {
+        instance?.connectedUuidDevices?.clear()
+    }
+
+    fun getCurrentEvent(): Int? {
+        return instance?.currentEvent
     }
 }
 
