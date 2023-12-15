@@ -296,6 +296,9 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     public void testPlayAudio(final String res,
             int mp3Duration, int tolerance, int seekDuration) throws Exception {
         Preconditions.assertTestFileExists(mInpPrefix + res);
+        if (!MediaUtils.hasCodecsForResource(mInpPrefix + res)) {
+            return;
+        }
         MediaPlayer mp = MediaPlayer.create(mContext, Uri.fromFile(new File(mInpPrefix + res)));
         try {
             mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
