@@ -43,5 +43,18 @@
         {
             "name": "CtsScopedStoragePublicVolumeHostTest"
         }
-  ]
+    ],
+    "postsubmit": [
+        {
+          "name": "CtsAppCloningMediaProviderHostTest",
+          "options": [
+            {
+              "include-filter": "android.scopedstorage.cts.host.AppCloningMediaProviderHostTest#testGetFilesInDirectoryViaMediaProvider"
+            },
+            {
+              "include-filter": "android.scopedstorage.cts.host.AppCloningMediaProviderHostTest#testInsertCrossUserFilesInDirectoryViaMediaProvider"
+            }
+          ]
+        }
+    ]
 }

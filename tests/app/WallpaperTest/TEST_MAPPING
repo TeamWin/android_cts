@@ -248,5 +248,57 @@
         }
       ]
     }
+  ],
+  "postsubmit": [
+    {
+      "name": "CtsWallpaperTestCases",
+      "options": [
+        {
+          "include-filter": "android.app.cts.wallpapers.WallpaperManagerTest#setLiveWallpaper_lockScreen_setsLockWallpaperInfo"
+        },
+        {
+          "include-filter": "android.app.cts.wallpapers.WallpaperManagerTest#setWallpaperComponent_both_lockScreenSet_changesLockOnly"
+        },
+        {
+          "include-filter": "android.app.cts.wallpapers.WallpaperManagerTest#setWallpaperComponent_both_lockScreenUnset_setsHomeToBoth"
+        },
+        {
+          "include-filter": "android.app.cts.wallpapers.WallpaperManagerTest#setWallpaperComponent_default_lockScreenUnset_behavesLikeBoth"
+        },
+        {
+          "include-filter": "android.app.cts.wallpapers.WallpaperManagerTest#setWallpaperComponent_lockScreen_lockScreenSet_changeLockOnly"
+        },
+        {
+          "include-filter": "android.app.cts.wallpapers.WallpaperManagerTest#setWallpaperComponent_lockScreen_lockScreenUnset_changesLockOnly"
+        },
+        {
+          "include-filter": "android.app.cts.wallpapers.WallpaperManagerTest#testClear"
+        },
+        {
+          "include-filter": "android.app.cts.wallpapers.WallpaperManagerTest#testEngineCallbackCountsParam[LIVE_DIFF_MULTI]"
+        },
+        {
+          "include-filter": "android.app.cts.wallpapers.WallpaperManagerTest#testEngineCallbackCountsParam[LIVE_SAME_MULTI]"
+        },
+        {
+          "include-filter": "android.app.cts.wallpapers.WallpaperManagerTest#testEngineCallbackCountsParam[LIVE_SAME_SINGLE]"
+        },
+        {
+          "include-filter": "android.app.cts.wallpapers.WallpaperManagerTest#testEngineCallbackCountsParam[LIVE_STATIC_MULTI]"
+        },
+        {
+          "include-filter": "android.app.cts.wallpapers.WallpaperManagerTest#testEngineCallbackCountsParam[STATIC_DIFF_MULTI]"
+        },
+        {
+          "include-filter": "android.app.cts.wallpapers.WallpaperManagerTest#testEngineCallbackCountsParam[STATIC_LIVE_MULTI]"
+        },
+        {
+          "include-filter": "android.app.cts.wallpapers.WallpaperManagerTest#testEngineCallbackCountsParam[STATIC_SAME_MULTI]"
+        },
+        {
+          "include-filter": "android.app.cts.wallpapers.WallpaperManagerTest#testEngineCallbackCountsParam[STATIC_SAME_SINGLE]"
+        }
+      ]
+    }
   ]
 }
