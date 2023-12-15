@@ -268,11 +268,11 @@ public class ZoomCaptureTest extends Camera2AndroidTestCase {
                         long previousTs = Long.MIN_VALUE;
                         float[] previousIntrinicArray = new float[5];
                         for (LensIntrinsicsSample sample : samples) {
-                            assertTrue(previousTs < sample.getTimestamp());
+                            assertTrue(previousTs < sample.getTimestampNanos());
                             assertTrue(Arrays.hashCode(previousIntrinicArray) !=
                                     Arrays.hashCode(sample.getLensIntrinsics()));
                             previousIntrinicArray = sample.getLensIntrinsics();
-                            previousTs = sample.getTimestamp();
+                            previousTs = sample.getTimestampNanos();
                         }
                     }
                 }
