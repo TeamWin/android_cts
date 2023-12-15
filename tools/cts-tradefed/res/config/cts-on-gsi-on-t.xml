@@ -51,4 +51,7 @@
     <option name="compatibility:exclude-filter" value="CtsMediaMiscTestCases android.media.misc.cts.ResourceManagerTest#testAVCVideoCodecReclaimHighResolution" />
     <option name="compatibility:exclude-filter" value="CtsMediaMiscTestCases android.media.misc.cts.ResourceManagerTest#testHEVCVideoCodecReclaimHighResolution" />
 
+    <!-- CtsVideoCodecTestCases: b/288527955 -->
+    <option name="compatibility:exclude-filter" value="CtsVideoCodecTestCases android.videocodec.cts.VideoEncoderMinMaxTest" />
+
 </configuration>
