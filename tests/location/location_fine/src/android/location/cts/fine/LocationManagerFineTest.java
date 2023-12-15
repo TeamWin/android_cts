@@ -309,6 +309,25 @@ public class LocationManagerFineTest {
     }
 
     @Test
+    public void testGetLastKnownLocation_NoteOp() {
+        // Ensure no note ops for null location
+        long timeBeforeLocationAccess = System.currentTimeMillis();
+        mManager.getLastKnownLocation(TEST_PROVIDER);
+        assertFineOpNotNoted(timeBeforeLocationAccess, null);
+
+        mManager.setTestProviderLocation(TEST_PROVIDER, createLocation(TEST_PROVIDER, mRandom));
+        timeBeforeLocationAccess = System.currentTimeMillis();
+        mManager.getLastKnownLocation(TEST_PROVIDER);
+        assertFineOpNoted(timeBeforeLocationAccess, null);
+
+        // Ensure no note ops when provider disabled
+        mManager.setTestProviderEnabled(TEST_PROVIDER, false);
+        timeBeforeLocationAccess = System.currentTimeMillis();
+        mManager.getLastKnownLocation(TEST_PROVIDER);
+        assertFineOpNotNoted(timeBeforeLocationAccess, null);
+    }
+
+    @Test
     public void testGetCurrentLocation() throws Exception {
         Location loc = createLocation(TEST_PROVIDER, mRandom);
 
@@ -400,6 +419,30 @@ public class LocationManagerFineTest {
                     Executors.newSingleThreadExecutor(), capture);
             mManager.setTestProviderEnabled(TEST_PROVIDER, false);
             assertThat(capture.getLocation(FAILURE_TIMEOUT_MS)).isNull();
+        }
+    }
+
+    @Test
+    public void testGetCurrentLocation_NoteOps() throws Exception {
+        long timeBeforeLocationAccess = System.currentTimeMillis();
+        Location loc = createLocation(TEST_PROVIDER, mRandom);
+
+        try (GetCurrentLocationCapture capture = new GetCurrentLocationCapture()) {
+            mManager.getCurrentLocation(TEST_PROVIDER, capture.getCancellationSignal(),
+                    Executors.newSingleThreadExecutor(), capture);
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc);
+            assertThat(capture.getLocation(TIMEOUT_MS)).isEqualTo(loc);
+            assertFineOpNoted(timeBeforeLocationAccess, null);
+        }
+
+        // Ensure no note ops when provider disabled
+        mManager.setTestProviderEnabled(TEST_PROVIDER, false);
+        timeBeforeLocationAccess = System.currentTimeMillis();
+        try (GetCurrentLocationCapture capture2 = new GetCurrentLocationCapture()) {
+            mManager.getCurrentLocation(TEST_PROVIDER, capture2.getCancellationSignal(),
+                    Executors.newSingleThreadExecutor(), capture2);
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc);
+            assertFineOpNotNoted(timeBeforeLocationAccess, null);
         }
     }
 
@@ -806,6 +849,78 @@ public class LocationManagerFineTest {
             loc = createLocation(GPS_PROVIDER, mRandom);
             mManager.setTestProviderLocation(GPS_PROVIDER, loc);
             assertThat(capture.getNextLocation(FAILURE_TIMEOUT_MS)).isEqualTo(loc);
+        }
+    }
+
+    @Test
+    public void testRequestLocationUpdates_NoteOps() throws Exception {
+        long timeBeforeLocationAccess = System.currentTimeMillis();
+        Location loc1 = createLocation(TEST_PROVIDER, mRandom);
+
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
+            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0,
+                    Executors.newSingleThreadExecutor(), capture);
+
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
+            assertFineOpNoted(timeBeforeLocationAccess,
+                    null);
+        }
+
+        // Ensure no note ops when provider disabled
+        mManager.setTestProviderEnabled(TEST_PROVIDER, false);
+        timeBeforeLocationAccess = System.currentTimeMillis();
+        try (LocationListenerCapture capture2 = new LocationListenerCapture(mContext)) {
+            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0,
+                    Executors.newSingleThreadExecutor(), capture2);
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
+            assertFineOpNotNoted(timeBeforeLocationAccess, null);
+        }
+    }
+
+    @Test
+    public void testRequestLocationUpdates_NoteOps_simultaneousRequests() {
+        Context attributionContextFast =
+                mContext.createAttributionContext(VALID_LOCATION_ATTRIBUTION_TAG);
+        Context attributionContextSlow =
+                mContext.createAttributionContext(ANOTHER_VALID_LOCATION_ATTRIBUTION_TAG);
+        Location loc1 = createLocation(TEST_PROVIDER, mRandom);
+        Location loc2 = createLocation(TEST_PROVIDER, mRandom);
+
+        try (LocationListenerCapture fastCapture =
+                     new LocationListenerCapture(attributionContextFast);
+                LocationListenerCapture slowCapture =
+                     new LocationListenerCapture(attributionContextSlow)) {
+            Objects.requireNonNull(attributionContextFast.getSystemService(LocationManager.class))
+                    .requestLocationUpdates(
+                            TEST_PROVIDER,
+                            new LocationRequest.Builder(0).build(),
+                            Runnable::run,
+                            fastCapture);
+            Objects.requireNonNull(attributionContextSlow.getSystemService(LocationManager.class))
+                    .requestLocationUpdates(
+                            TEST_PROVIDER,
+                            new LocationRequest.Builder(100).build(),
+                            Runnable::run,
+                            slowCapture);
+
+            // Set initial location.
+            long timeBeforeLocationAccess = System.currentTimeMillis();
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
+            assertFineOpNoted(timeBeforeLocationAccess, VALID_LOCATION_ATTRIBUTION_TAG);
+
+            // Verify noteOp for the fast request.
+            timeBeforeLocationAccess = System.currentTimeMillis();
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
+            assertFineOpNoted(timeBeforeLocationAccess, VALID_LOCATION_ATTRIBUTION_TAG);
+            assertFineOpNotNoted(timeBeforeLocationAccess, ANOTHER_VALID_LOCATION_ATTRIBUTION_TAG);
+
+            // Verify noteOp for the slow request.
+            timeBeforeLocationAccess = System.currentTimeMillis();
+            Location loc3 = createLocation(TEST_PROVIDER, 0, 1, 10,
+                    SystemClock.elapsedRealtimeNanos() + 100000000L);
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc3);
+            assertFineOpNoted(timeBeforeLocationAccess, ANOTHER_VALID_LOCATION_ATTRIBUTION_TAG);
         }
     }
 
@@ -1520,115 +1635,6 @@ public class LocationManagerFineTest {
                 assertThat(status).isNotNull();
                 assertThat(status).isEqualTo(GnssNavigationMessage.Callback.STATUS_READY);
             }
-        }
-    }
-
-    @Test
-    public void testGetLastKnownLocationNoteOps() {
-        long timeBeforeLocationAccess = System.currentTimeMillis();
-        mManager.getLastKnownLocation(TEST_PROVIDER);
-        assertFineOpNoted(timeBeforeLocationAccess, null);
-
-        // Ensure no note ops when provider disabled
-        mManager.setTestProviderEnabled(TEST_PROVIDER, false);
-        timeBeforeLocationAccess = System.currentTimeMillis();
-        mManager.getLastKnownLocation(TEST_PROVIDER);
-        assertFineOpNotNoted(timeBeforeLocationAccess, null);
-    }
-
-    @Test
-    public void testGetCurrentLocationNoteOps() throws Exception {
-        long timeBeforeLocationAccess = System.currentTimeMillis();
-        Location loc = createLocation(TEST_PROVIDER, mRandom);
-
-        try (GetCurrentLocationCapture capture = new GetCurrentLocationCapture()) {
-            mManager.getCurrentLocation(TEST_PROVIDER, capture.getCancellationSignal(),
-                    Executors.newSingleThreadExecutor(), capture);
-            mManager.setTestProviderLocation(TEST_PROVIDER, loc);
-            assertThat(capture.getLocation(TIMEOUT_MS)).isEqualTo(loc);
-            assertFineOpNoted(timeBeforeLocationAccess, null);
-        }
-
-        // Ensure no note ops when provider disabled
-        mManager.setTestProviderEnabled(TEST_PROVIDER, false);
-        timeBeforeLocationAccess = System.currentTimeMillis();
-        try (GetCurrentLocationCapture capture2 = new GetCurrentLocationCapture()) {
-            mManager.getCurrentLocation(TEST_PROVIDER, capture2.getCancellationSignal(),
-                    Executors.newSingleThreadExecutor(), capture2);
-            mManager.setTestProviderLocation(TEST_PROVIDER, loc);
-            assertFineOpNotNoted(timeBeforeLocationAccess, null);
-        }
-    }
-
-    @Test
-    public void testRequestLocationUpdatesNoteOps() throws Exception {
-        long timeBeforeLocationAccess = System.currentTimeMillis();
-        Location loc1 = createLocation(TEST_PROVIDER, mRandom);
-
-        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
-            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0,
-                    Executors.newSingleThreadExecutor(), capture);
-
-            mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
-            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
-            assertFineOpNoted(timeBeforeLocationAccess,
-                    null);
-        }
-
-        // Ensure no note ops when provider disabled
-        mManager.setTestProviderEnabled(TEST_PROVIDER, false);
-        timeBeforeLocationAccess = System.currentTimeMillis();
-        try (LocationListenerCapture capture2 = new LocationListenerCapture(mContext)) {
-            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0,
-                    Executors.newSingleThreadExecutor(), capture2);
-            mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
-            assertFineOpNotNoted(timeBeforeLocationAccess, null);
-        }
-    }
-
-    @Test
-    public void testRequestLocationUpdatesNoteOps_simultaneousRequests() {
-        Context attributionContextFast =
-                mContext.createAttributionContext(VALID_LOCATION_ATTRIBUTION_TAG);
-        Context attributionContextSlow =
-                mContext.createAttributionContext(ANOTHER_VALID_LOCATION_ATTRIBUTION_TAG);
-        Location loc1 = createLocation(TEST_PROVIDER, mRandom);
-        Location loc2 = createLocation(TEST_PROVIDER, mRandom);
-
-        try (LocationListenerCapture fastCapture =
-                     new LocationListenerCapture(attributionContextFast);
-             LocationListenerCapture slowCapture =
-                     new LocationListenerCapture(attributionContextSlow)) {
-            Objects.requireNonNull(attributionContextFast.getSystemService(LocationManager.class))
-                    .requestLocationUpdates(
-                            TEST_PROVIDER,
-                            new LocationRequest.Builder(0).build(),
-                            Runnable::run,
-                            fastCapture);
-            Objects.requireNonNull(attributionContextSlow.getSystemService(LocationManager.class))
-                    .requestLocationUpdates(
-                            TEST_PROVIDER,
-                            new LocationRequest.Builder(100).build(),
-                            Runnable::run,
-                            slowCapture);
-
-            // Set initial location.
-            long timeBeforeLocationAccess = System.currentTimeMillis();
-            mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
-            assertFineOpNoted(timeBeforeLocationAccess, VALID_LOCATION_ATTRIBUTION_TAG);
-
-            // Verify noteOp for the fast request.
-            timeBeforeLocationAccess = System.currentTimeMillis();
-            mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
-            assertFineOpNoted(timeBeforeLocationAccess, VALID_LOCATION_ATTRIBUTION_TAG);
-            assertFineOpNotNoted(timeBeforeLocationAccess, ANOTHER_VALID_LOCATION_ATTRIBUTION_TAG);
-
-            // Verify noteOp for the slow request.
-            timeBeforeLocationAccess = System.currentTimeMillis();
-            Location loc3 = createLocation(TEST_PROVIDER, 0, 1, 10,
-                    SystemClock.elapsedRealtimeNanos() + 100000000L);
-            mManager.setTestProviderLocation(TEST_PROVIDER, loc3);
-            assertFineOpNoted(timeBeforeLocationAccess, ANOTHER_VALID_LOCATION_ATTRIBUTION_TAG);
         }
     }
 
