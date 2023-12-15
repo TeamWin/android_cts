@@ -64,6 +64,8 @@ public class Utils {
 
     public static final long OPERATION_TIMEOUT_MS = 5000;
 
+    private static long sAdjustedOperationTimeoutMs = -1;
+
     /** CDD restricts the max size of each successful hotword result is 100 bytes. */
     public static final int MAX_HOTWORD_DETECTED_RESULT_SIZE = 100;
 
@@ -413,8 +415,9 @@ public class Utils {
     }
 
     public static boolean await(CountDownLatch latch) {
+        final long timeoutMs = getAdjustedOperationTimeoutMs();
         try {
-            if (latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) return true;
+            if (latch.await(timeoutMs, TimeUnit.MILLISECONDS)) return true;
             Log.e(TAG, "latch timed out");
         } catch (InterruptedException e) {
             /* ignore */
@@ -424,8 +427,9 @@ public class Utils {
     }
 
     public static boolean await(Condition condition) {
+        final long timeoutMs = getAdjustedOperationTimeoutMs();
         try {
-            if (condition.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) return true;
+            if (condition.await(timeoutMs, TimeUnit.MILLISECONDS)) return true;
             Log.e(TAG, "condition timed out");
         } catch (InterruptedException e) {
             /* ignore */
@@ -456,5 +460,28 @@ public class Utils {
         final String property = PropertyUtil.getProperty("ro.hardware.virtual_device");
         Log.v(TAG, "virtual device property=" + property);
         return Objects.equals(property, "1");
+    }
+
+    /**
+     * Returns an operation timeout (in milliseconds) adjusted when running on
+     * a slower device.
+     */
+    public static long getAdjustedOperationTimeoutMs() {
+        // We cache the value in sAdjustedOperationTimeoutMs so we don't need to
+        // send a command to the device every time this method is called.  The
+        // hw_timeout_multiplier is not a dynamic value.
+        if (sAdjustedOperationTimeoutMs == -1) {
+            final String property = PropertyUtil.getProperty("ro.hw_timeout_multiplier");
+            int multiplier = 1;
+            if (property != null) {
+                try {
+                    multiplier = Integer.parseInt(property);
+                } catch (NumberFormatException e) {
+                    // Ignore and keep 'multiplier' at 1.
+                }
+            }
+            sAdjustedOperationTimeoutMs = OPERATION_TIMEOUT_MS * multiplier;
+        }
+        return sAdjustedOperationTimeoutMs;
     }
 }
