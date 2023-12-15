@@ -59,6 +59,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
 import android.os.Process;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.permission.flags.Flags;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -2741,13 +2742,14 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
      * <p> This should be used if
      * {@link HotwordDetectionServiceBasicTest#adoptShellPermissionIdentityForHotwordWithTrainingData()}
      * has been called. When adopting shell permission identity, both permissions and app-op checks
-     * are redirected from the  test app to the shell identity (uid: 2000, package name:
-     * "com.android.shell"). </p>
+     * are redirected from the  test app to the shell identity (package name "com.android.shell").
+     * See {@link com.android.server.am.ActivityManagerService#startDelegateShellPermissionIdentity(int, String[])}
+     * to see how the delegation is performed </p>
      */
     private void setTrainingDataAppOpForShellIdentity(boolean allow) {
         runWithShellPermissionIdentity(() -> {
             mAppOpsManager.setUidMode(RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA_OP_STR,
-                    Process.SHELL_UID,
+                    UserHandle.getUid(UserHandle.getUserId(Process.myUid()), Process.SHELL_UID),
                     allow ? AppOpsManager.MODE_ALLOWED : AppOpsManager.opToDefaultMode(
                             RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA_OP_STR));
         });
@@ -2759,8 +2761,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
      * {@link HotwordDetectionServiceBasicTest#adoptShellPermissionIdentityForHotwordWithVoiceActivation()}
      * has been called and should only be called while the permission identity is in effect. When
      * adopting shell permission identity, both permissions and app-op checks are redirected from
-     *  the test app to the shell identity (uid: 2000, package name:
-     * "com.android.shell"). </p>
+     *  the test app to the shell identity (package name: "com.android.shell").
+     *  See {@link com.android.server.am.ActivityManagerService#startDelegateShellPermissionIdentity(int, String[])}
+     *  to see how the delegation is performed </p>
      */
     private void setVoiceActivationOpForShellIdentity(boolean allow) {
         // We expect this call to be made after
@@ -2769,7 +2772,7 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
         // identity, that would OVERRIDE any existing permission adopted and break the flow of
         // running tests.
         mAppOpsManager.setUidMode(RECEIVE_SANDBOX_TRIGGER_AUDIO_OP_STR,
-                    Process.SHELL_UID,
-                    allow ? AppOpsManager.MODE_ALLOWED : AppOpsManager.MODE_ERRORED);
+                UserHandle.getUid(UserHandle.getUserId(Process.myUid()), Process.SHELL_UID),
+                allow ? AppOpsManager.MODE_ALLOWED : AppOpsManager.MODE_ERRORED);
     }
 }
