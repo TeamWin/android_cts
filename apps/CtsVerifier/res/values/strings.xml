@@ -5729,6 +5729,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_datapaths_calibrate">Calibrate Audio</string>
     <string name="audio_datapaths_calibratetitle">Calibrate Loopback Audio</string>
 
+    <string name="audio_exempt_nonhandheld">This is a non-handheld device and is exempt from this test.
+        Press the \"Pass\" button (below) to continue.</string>
+
     <string name="audio_datapaths_speakermic_test">Audio Data Paths Speaker/Mic Test</string>
     <string name="audio_datapaths_speakermic_info">This test verifies basic functionality over a set of audio routes
         \n\nTest Setup:
