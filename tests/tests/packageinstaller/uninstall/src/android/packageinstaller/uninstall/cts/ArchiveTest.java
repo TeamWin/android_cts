@@ -42,6 +42,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -59,7 +61,7 @@ import com.android.cts.install.lib.LocalIntentSender;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -90,6 +92,9 @@ public class ArchiveTest {
     private UiDevice mUiDevice;
     private PackageManager mPackageManager;
     private PackageInstaller mPackageInstaller;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setup() throws Exception {
@@ -157,7 +162,6 @@ public class ArchiveTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
-    @Ignore("b/315953294")
     public void requestArchive_confirmationDialog() throws Exception {
         installPackage(ARCHIVE_APK);
         assertFalse(mPackageManager.getPackageInfo(ARCHIVE_APK_PACKAGE_NAME,
