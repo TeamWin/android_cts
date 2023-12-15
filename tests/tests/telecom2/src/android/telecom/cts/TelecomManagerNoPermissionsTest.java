@@ -17,15 +17,32 @@
 package android.telecom.cts;
 
 import android.content.Context;
+import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.test.InstrumentationTestCase;
-import android.util.Log;
+
+import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.internal.telephony.flags.Flags;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Verifies correct operation of TelecomManager APIs when the correct permissions have not been
  * granted.
  */
 public class TelecomManagerNoPermissionsTest extends InstrumentationTestCase {
+    // permissions
+    private static final String READ_PRIVILEGED_PHONE_STATE =
+            "android.permission.READ_PRIVILEGED_PHONE_STATE";
+    private static final String MODIFY_PHONE_STATE_PERMISSION =
+            "android.permission.MODIFY_PHONE_STATE";
+    private static final String ACROSS_PROFILES_PERMISSION =
+            "android.permission.INTERACT_ACROSS_PROFILES";
+    private static final String READ_PHONE_STATE =
+            "android.permission.READ_PHONE_STATE";
+
     private Context mContext;
     private TelecomManager mTelecomManager;
 
@@ -33,9 +50,6 @@ public class TelecomManagerNoPermissionsTest extends InstrumentationTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         mContext = getInstrumentation().getContext();
-        if (!TestUtils.shouldTestTelecom(mContext)) {
-            return;
-        }
         TestUtils.PACKAGE = mContext.getPackageName();
         mTelecomManager = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
     }
@@ -102,5 +116,75 @@ public class TelecomManagerNoPermissionsTest extends InstrumentationTestCase {
             TestUtils.resetCompatCommand(getInstrumentation(),
                     TestUtils.ENABLE_GET_PHONE_ACCOUNT_PERMISSION_PROTECTION_STRING);
         }
+    }
+
+    @ApiTest(apis = {"android.telecom.TelecomManager#getCallCapablePhoneAccountsAcrossProfiles"})
+    public void testGetCallCapablePhoneAccountsAcrossProfilesPermission() throws Exception {
+        if (!TestUtils.shouldTestTelecom(mContext) || !Flags.workProfileApiSplit()) {
+            return;
+        }
+
+        boolean hasSecurityException = false;
+        List<PhoneAccountHandle> handles = new ArrayList<>();
+
+        try {
+            mTelecomManager.getCallCapablePhoneAccountsAcrossProfiles();
+        } catch (SecurityException e) {
+            hasSecurityException = true;
+        }
+
+        assertTrue(hasSecurityException);
+        assertTrue(handles.isEmpty());
+
+        hasSecurityException = false;
+
+        try {
+            handles = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelecomManager,
+                (tm) -> tm.getCallCapablePhoneAccountsAcrossProfiles(),
+                READ_PHONE_STATE);
+        } catch (SecurityException e) {
+            hasSecurityException = true;
+        }
+
+        assertTrue(hasSecurityException);
+        assertTrue(handles.isEmpty());
+
+        hasSecurityException = false;
+
+        try {
+            handles = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelecomManager,
+                (tm) -> tm.getCallCapablePhoneAccountsAcrossProfiles(),
+                READ_PHONE_STATE, ACROSS_PROFILES_PERMISSION);
+        } catch (SecurityException e) {
+            hasSecurityException = true;
+        }
+
+        assertFalse(hasSecurityException);
+
+        hasSecurityException = false;
+        handles.clear();
+
+        try {
+            handles = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelecomManager,
+                (tm) -> tm.getCallCapablePhoneAccountsAcrossProfiles(true),
+                READ_PHONE_STATE, ACROSS_PROFILES_PERMISSION);
+        } catch (SecurityException e) {
+            hasSecurityException = true;
+        }
+
+        assertTrue(hasSecurityException);
+        assertTrue(handles.isEmpty());
+
+        hasSecurityException = false;
+
+        try {
+            handles = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelecomManager,
+                (tm) -> tm.getCallCapablePhoneAccountsAcrossProfiles(true),
+                READ_PRIVILEGED_PHONE_STATE, ACROSS_PROFILES_PERMISSION);
+        } catch (SecurityException e) {
+            hasSecurityException = true;
+        }
+
+        assertFalse(hasSecurityException);
     }
 }

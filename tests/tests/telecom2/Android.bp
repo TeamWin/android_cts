@@ -22,6 +22,7 @@ android_test {
     static_libs: [
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
+        "telephony_flags_core_java_lib",
         "CtsTelecomUtilLib",
     ],
     libs: ["android.test.base"],
