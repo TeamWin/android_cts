@@ -27,7 +27,9 @@ import android.media.MediaFormat;
 import android.mediav2.common.cts.CodecDecoderTestBase;
 import android.mediav2.common.cts.ImageSurface;
 import android.mediav2.common.cts.OutputManager;
+import android.os.Build;
 
+import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -114,6 +116,7 @@ public class DecoderPushBlankBufferOnStopTest extends CodecDecoderTestBase {
      */
     @ApiTest(apis = {"android.media.MediaFormat#KEY_PUSH_BLANK_BUFFERS_ON_STOP"})
     @SmallTest
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testSimpleDecodeToSurface() throws IOException, InterruptedException {
         MediaFormat format = setUpSource(mTestFile);
