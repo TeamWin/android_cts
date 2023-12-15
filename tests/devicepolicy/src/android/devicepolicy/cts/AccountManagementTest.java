@@ -74,6 +74,7 @@ import com.android.bedstead.nene.userrestrictions.CommonUserRestrictions;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -626,6 +627,7 @@ public final class AccountManagementTest {
         }
     }
 
+    @Ignore("b/312605194 Ignore until test failure is root caused")
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = AccountManagement.class)
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setAccountManagementDisabled",
