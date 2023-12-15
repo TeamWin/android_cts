@@ -493,7 +493,8 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         final int IMAGE_COUNT = 10;
         final int SUPPORTED_CAPTURE_OUTPUT_FORMATS[] = {
                 ImageFormat.YUV_420_888,
-                ImageFormat.JPEG
+                ImageFormat.JPEG,
+                ImageFormat.JPEG_R
         };
         for (String id : getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
@@ -591,7 +592,8 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
 
                         for (int i = 0; i < IMAGE_COUNT; i++) {
                             int jpegOrientation = (i * 90) % 360; // degrees [0..270]
-                            if (captureFormat == ImageFormat.JPEG) {
+                            if (captureFormat == ImageFormat.JPEG
+                                    || captureFormat == ImageFormat.JPEG_R) {
                                 captureBuilder.set(CaptureRequest.JPEG_ORIENTATION,
                                         jpegOrientation);
                             }
@@ -605,24 +607,31 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                                     imageListenerPostview
                                     .getImage(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS);
                             postviewCaptureTimes[i] = SystemClock.elapsedRealtime() - startTimeMs;
-                            if (captureFormat == ImageFormat.JPEG) {
-                                verifyJpegOrientation(imgPostview, postviewSize, jpegOrientation);
-                            } else {
-                                validateImage(imgPostview, postviewSize.getWidth(),
-                                        postviewSize.getHeight(), captureFormat, null);
+
+                            if (captureFormat == ImageFormat.JPEG
+                                    || captureFormat == ImageFormat.JPEG_R) {
+                                verifyJpegOrientation(imgPostview, postviewSize,
+                                        jpegOrientation);
                             }
+                            validateImage(imgPostview, postviewSize.getWidth(),
+                                    postviewSize.getHeight(), captureFormat, null);
+
+
                             Long imgTsPostview = imgPostview.getTimestamp();
                             imgPostview.close();
 
                             Image img =
                                     imageListener.getImage(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS);
                             captureTimes[i] = SystemClock.elapsedRealtime() - startTimeMs;
-                            if (captureFormat == ImageFormat.JPEG) {
-                                verifyJpegOrientation(img, maxSize, jpegOrientation);
-                            } else {
-                                validateImage(img, maxSize.getWidth(), maxSize.getHeight(),
-                                        captureFormat, null);
+
+                            if (captureFormat == ImageFormat.JPEG
+                                    || captureFormat == ImageFormat.JPEG_R) {
+                                verifyJpegOrientation(img, maxSize,
+                                        jpegOrientation);
                             }
+                            validateImage(img, maxSize.getWidth(),
+                                    maxSize.getHeight(), captureFormat, null);
+
                             Long imgTs = img.getTimestamp();
                             img.close();
 
@@ -710,7 +719,8 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         final int IMAGE_COUNT = 10;
         final int SUPPORTED_CAPTURE_OUTPUT_FORMATS[] = {
                 ImageFormat.YUV_420_888,
-                ImageFormat.JPEG
+                ImageFormat.JPEG,
+                ImageFormat.JPEG_R
         };
         for (String id : getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
@@ -780,7 +790,8 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
 
                         for (int i = 0; i < IMAGE_COUNT; i++) {
                             int jpegOrientation = (i * 90) % 360; // degrees [0..270]
-                            if (captureFormat == ImageFormat.JPEG) {
+                            if (captureFormat == ImageFormat.JPEG
+                                    || captureFormat == ImageFormat.JPEG_R) {
                                 captureBuilder.set(CaptureRequest.JPEG_ORIENTATION,
                                         jpegOrientation);
                             }
@@ -793,12 +804,15 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                             Image img =
                                     imageListener.getImage(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS);
                             captureTimes[i] = SystemClock.elapsedRealtime() - startTimeMs;
-                            if (captureFormat == ImageFormat.JPEG) {
-                                verifyJpegOrientation(img, maxSize, jpegOrientation);
-                            } else {
-                                validateImage(img, maxSize.getWidth(), maxSize.getHeight(),
-                                        captureFormat, null);
+
+                            if (captureFormat == ImageFormat.JPEG
+                                    || captureFormat == ImageFormat.JPEG_R) {
+                                verifyJpegOrientation(img, maxSize,
+                                        jpegOrientation);
                             }
+                            validateImage(img, maxSize.getWidth(),
+                                    maxSize.getHeight(), captureFormat, null);
+
                             Long imgTs = img.getTimestamp();
                             img.close();
 
