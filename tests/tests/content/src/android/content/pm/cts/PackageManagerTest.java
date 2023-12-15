@@ -2059,13 +2059,14 @@ public class PackageManagerTest {
 
     @Test
     public void testInstall_withLongUsesPermissionName_fail() {
-        String expectedErrorCode = "INSTALL_PARSE_FAILED_MANIFEST_MALFORMED";
-        String expectedErrorMessage = "The name in the <uses-permission> is greater than 512";
+        String expectedErrorCode = "INSTALL_PARSE_FAILED_UNEXPECTED_EXCEPTION";
+        String expectedErrorMessage =
+                "String length limit exceeded for attribute in uses-permission";
 
         String installResult = installPackageWithResult(LONG_USES_PERMISSION_NAME_APK);
 
-        assertThat(installResult.contains(expectedErrorCode)).isTrue();
-        assertThat(installResult.contains(expectedErrorMessage)).isTrue();
+        assertThat(installResult).contains(expectedErrorCode);
+        assertThat(installResult).contains(expectedErrorMessage);
     }
 
     @Test
