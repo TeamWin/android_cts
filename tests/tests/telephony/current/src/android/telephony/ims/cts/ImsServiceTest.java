@@ -20,7 +20,7 @@ import static android.telephony.ims.RegistrationManager.SUGGESTED_ACTION_NONE;
 import static android.telephony.ims.RegistrationManager.SUGGESTED_ACTION_TRIGGER_PLMN_BLOCK;
 import static android.telephony.ims.RegistrationManager.SUGGESTED_ACTION_TRIGGER_PLMN_BLOCK_WITH_TIMEOUT;
 import static android.telephony.ims.RegistrationManager.SUGGESTED_ACTION_TRIGGER_RAT_BLOCK;
-import static android.telephony.ims.RegistrationManager.SUGGESTED_ACTION_TRIGGER_CLEAR_RAT_BLOCK;
+import static android.telephony.ims.RegistrationManager.SUGGESTED_ACTION_TRIGGER_CLEAR_RAT_BLOCKS;
 import static android.telephony.ims.stub.ImsRegistrationImplBase.REGISTRATION_TECH_LTE;
 import static android.telephony.ims.stub.ImsRegistrationImplBase.REGISTRATION_TECH_NONE;
 
@@ -5485,7 +5485,7 @@ public class ImsServiceTest {
 
         int suggestedAction = waitForResult(mDeregQueue);
         assertNotEquals(SUGGESTED_ACTION_TRIGGER_RAT_BLOCK, suggestedAction);
-        assertNotEquals(SUGGESTED_ACTION_TRIGGER_CLEAR_RAT_BLOCK, suggestedAction);
+        assertNotEquals(SUGGESTED_ACTION_TRIGGER_CLEAR_RAT_BLOCKS, suggestedAction);
 
         sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(
                 reasonInfo, SUGGESTED_ACTION_TRIGGER_RAT_BLOCK,
@@ -5496,11 +5496,11 @@ public class ImsServiceTest {
 
         // rat block clear
         sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(
-                reasonInfo, SUGGESTED_ACTION_TRIGGER_CLEAR_RAT_BLOCK,
+                reasonInfo, SUGGESTED_ACTION_TRIGGER_CLEAR_RAT_BLOCKS,
                 REGISTRATION_TECH_LTE);
 
         suggestedAction = waitForResult(mDeregQueue);
-        assertEquals(SUGGESTED_ACTION_TRIGGER_CLEAR_RAT_BLOCK, suggestedAction);
+        assertEquals(SUGGESTED_ACTION_TRIGGER_CLEAR_RAT_BLOCKS, suggestedAction);
 
         // without extra
         sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(reasonInfo);
