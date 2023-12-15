@@ -53,6 +53,7 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
     private byte mNumOfLiveModems = 1;
     private PhoneCapability mPhoneCapability = new PhoneCapability();
     private SimSlotStatus[] mSimSlotStatus;
+    private int[] mEnabledLogicalSlots = {};
 
     MockCentralizedNetworkAgent mMockCentralizedNetworkAgent;
 
@@ -173,6 +174,24 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
             mRadioConfigResponse.getPhoneCapabilityResponse(rsp, phoneCapability);
         } catch (RemoteException ex) {
             Log.e(mTag, "Failed to invoke getPhoneCapabilityResponse from AIDL. Exception" + ex);
+        }
+    }
+
+    @Override
+    public void getSimultaneousCallingSupport(int serial) {
+        Log.d(mTag, "getSimultaneousCallingSupport");
+        int[] enabledLogicalSlots;
+
+        synchronized (mCacheUpdateMutex) {
+            enabledLogicalSlots = mEnabledLogicalSlots;
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
+        try {
+            mRadioConfigResponse.getSimultaneousCallingSupportResponse(rsp, enabledLogicalSlots);
+        } catch (RemoteException ex) {
+            Log.e(mTag, "Failed to invoke getSimultaneousCallingSupportResponse from AIDL. "
+                    + "Exception" + ex);
         }
     }
 
