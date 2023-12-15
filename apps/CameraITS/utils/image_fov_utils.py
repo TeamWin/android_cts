@@ -34,6 +34,25 @@ THRESH_CROP_S = 0.075  # Crop test threshold of mini images
 THRESH_MIN_PIXEL = 4  # Crop test allowed offset
 
 
+def calc_scaler_crop_region_ratio(scaler_crop_region, props):
+  """Calculate ratio of scaler crop region area over active array area.
+
+  Args:
+    scaler_crop_region: Rect(left, top, right, bottom)
+    props: camera properties
+
+  Returns:
+    ratio of scaler crop region area over active array area
+  """
+  a = props['android.sensor.info.activeArraySize']
+  s = scaler_crop_region
+  logging.debug('Active array size: %s', a)
+  active_array_area = (a['right'] - a['left']) * (a['bottom'] - a['top'])
+  scaler_crop_region_area = (s['right'] - s['left']) * (s['bottom'] - s['top'])
+  crop_region_active_array_ratio = scaler_crop_region_area / active_array_area
+  return crop_region_active_array_ratio
+
+
 def check_fov(circle, ref_fov, w, h):
   """Check the FoV for correct size."""
   fov_percent = calc_circle_image_ratio(circle['r'], w, h)
