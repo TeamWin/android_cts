@@ -404,6 +404,106 @@ public class GenericDocumentCtsTest {
                 () -> builder.setPropertyString("testKey", "string1", nullString));
     }
 
+    /* TODO(adorokhine): uncomment this test once Builder#setId is no longer hidden in Framework
+    @Test
+    public void testDocument_toBuilder() {
+        GenericDocument document1 =
+                new GenericDocument.Builder<>(/*namespace=* / "", "id1", "schemaType1")
+                        .setCreationTimestampMillis(5L)
+                        .setPropertyLong("longKey1", 1L, 2L, 3L)
+                        .setPropertyDouble("doubleKey1", 1.0, 2.0, 3.0)
+                        .setPropertyBoolean("booleanKey1", true, false, true)
+                        .setPropertyString("stringKey1", "String1", "String2", "String3")
+                        .setPropertyBytes("byteKey1", sByteArray1, sByteArray2)
+                        .setPropertyDocument(
+                                "documentKey1", sDocumentProperties1, sDocumentProperties2)
+                        .build();
+        GenericDocument document2 =
+                new GenericDocument.Builder<>(document1)
+                        .setId("id2")
+                        .setNamespace("namespace2")
+                        .setPropertyBytes("byteKey1", sByteArray2)
+                        .setPropertyLong("longKey2", 10L)
+                        .clearProperty("booleanKey1")
+                        .build();
+
+        // Make sure old doc hasn't changed
+        assertThat(document1.getId()).isEqualTo("id1");
+        assertThat(document1.getNamespace()).isEqualTo("");
+        assertThat(document1.getPropertyLongArray("longKey1"))
+                .asList()
+                .containsExactly(1L, 2L, 3L)
+                .inOrder();
+        assertThat(document1.getPropertyBooleanArray("booleanKey1"))
+                .asList()
+                .containsExactly(true, false, true)
+                .inOrder();
+        assertThat(document1.getPropertyLongArray("longKey2")).isNull();
+
+        // Make sure the new doc contains the expected values
+        GenericDocument expectedDoc =
+                new GenericDocument.Builder<>("namespace2", "id2", "schemaType1")
+                        .setCreationTimestampMillis(5L)
+                        .setPropertyLong("longKey1", 1L, 2L, 3L)
+                        .setPropertyLong("longKey2", 10L)
+                        .setPropertyDouble("doubleKey1", 1.0, 2.0, 3.0)
+                        .setPropertyString("stringKey1", "String1", "String2", "String3")
+                        .setPropertyBytes("byteKey1", sByteArray2)
+                        .setPropertyDocument(
+                                "documentKey1", sDocumentProperties1, sDocumentProperties2)
+                        .build();
+        assertThat(document2).isEqualTo(expectedDoc);
+    }
+    */
+
+    @Test
+    public void testDocument_toBuilder_doesNotModifyOriginal() {
+        GenericDocument oldDoc =
+                new GenericDocument.Builder<>("namespace", "id1", "schema1")
+                        .setScore(42)
+                        .setPropertyString("propString", "Hello")
+                        .setPropertyBytes("propBytes", new byte[][] {{1, 2}})
+                        .setPropertyDocument(
+                                "propDocument",
+                                new GenericDocument.Builder<>("namespace", "id2", "schema2")
+                                        .setPropertyString("propString", "Goodbye")
+                                        .setPropertyBytes("propBytes", new byte[][] {{3, 4}})
+                                        .build())
+                        .build();
+
+        GenericDocument newDoc =
+                new GenericDocument.Builder<>(oldDoc)
+                        .setPropertyBytes("propBytes", new byte[][] {{1, 2}})
+                        .setPropertyDocument(
+                                "propDocument",
+                                new GenericDocument.Builder<>("namespace", "id3", "schema3")
+                                        .setPropertyString("propString", "Bye")
+                                        .setPropertyBytes("propBytes", new byte[][] {{5, 6}})
+                                        .build())
+                        .build();
+
+        // Check that the original GenericDocument is unmodified.
+        assertThat(oldDoc.getScore()).isEqualTo(42);
+        assertThat(oldDoc.getPropertyString("propString")).isEqualTo("Hello");
+        assertThat(oldDoc.getPropertyBytesArray("propBytes")).isEqualTo(new byte[][] {{1, 2}});
+        assertThat(oldDoc.getPropertyDocument("propDocument").getPropertyString("propString"))
+                .isEqualTo("Goodbye");
+        assertThat(oldDoc.getPropertyDocument("propDocument").getPropertyBytesArray("propBytes"))
+                .isEqualTo(new byte[][] {{3, 4}});
+
+        // Check that the new GenericDocument has modified the original fields correctly.
+        assertThat(newDoc.getPropertyBytesArray("propBytes")).isEqualTo(new byte[][] {{1, 2}});
+        assertThat(newDoc.getPropertyDocument("propDocument").getPropertyString("propString"))
+                .isEqualTo("Bye");
+        assertThat(newDoc.getPropertyDocument("propDocument").getPropertyBytesArray("propBytes"))
+                .isEqualTo(new byte[][] {{5, 6}});
+
+        // Check that the new GenericDocument copies fields that aren't set.
+        assertThat(oldDoc.getScore()).isEqualTo(newDoc.getScore());
+        assertThat(oldDoc.getPropertyString("propString"))
+                .isEqualTo(newDoc.getPropertyString("propString"));
+    }
+
     @Test
     public void testRetrieveTopLevelProperties() {
         GenericDocument doc =

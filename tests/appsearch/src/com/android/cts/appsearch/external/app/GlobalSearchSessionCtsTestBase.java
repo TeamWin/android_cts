@@ -1809,22 +1809,16 @@ public abstract class GlobalSearchSessionCtsTestBase {
                         .isFeatureSupported(
                                 Features.GLOBAL_SEARCH_SESSION_REGISTER_OBSERVER_CALLBACK));
 
+        AppSearchSchema type1 = new AppSearchSchema.Builder("Type1").build();
+        AppSearchSchema type2 =
+                new AppSearchSchema.Builder("Type2")
+                        .addProperty(
+                                new AppSearchSchema.BooleanPropertyConfig.Builder("booleanProp")
+                                        .setCardinality(PropertyConfig.CARDINALITY_REQUIRED)
+                                        .build())
+                        .build();
         // Add a schema
-        mDb1.setSchemaAsync(
-                        new SetSchemaRequest.Builder()
-                                .addSchemas(
-                                        new AppSearchSchema.Builder("Type1").build(),
-                                        new AppSearchSchema.Builder("Type2")
-                                                .addProperty(
-                                                        new AppSearchSchema.BooleanPropertyConfig
-                                                                        .Builder("booleanProp")
-                                                                .setCardinality(
-                                                                        PropertyConfig
-                                                                                .CARDINALITY_REQUIRED)
-                                                                .build())
-                                                .build())
-                                .build())
-                .get();
+        mDb1.setSchemaAsync(new SetSchemaRequest.Builder().addSchemas(type1, type2).build()).get();
 
         // Register an observer
         TestObserverCallback observer = new TestObserverCallback();
@@ -1836,41 +1830,22 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
         try {
             // Update the schema, but don't make any actual changes
-            mDb1.setSchemaAsync(
-                new SetSchemaRequest.Builder()
-                    .addSchemas(
-                        new AppSearchSchema.Builder("Type1").build(),
-                        new AppSearchSchema.Builder("Type2")
-                            .addProperty(
-                                new AppSearchSchema
-                                    .BooleanPropertyConfig
-                                    .Builder("booleanProp")
-                                    .setCardinality(
-                                        PropertyConfig
-                                            .CARDINALITY_REQUIRED)
-                                    .build())
-                            .build())
-                    .build())
-                .get();
+            mDb1.setSchemaAsync(new SetSchemaRequest.Builder().addSchemas(type1, type2).build())
+                    .get();
 
             // Now update the schema again, but this time actually make a change (cardinality of the
             // property)
-            mDb1.setSchemaAsync(
-                new SetSchemaRequest.Builder()
-                    .addSchemas(
-                        new AppSearchSchema.Builder("Type1").build(),
-                        new AppSearchSchema.Builder("Type2")
+
+            AppSearchSchema type2Optional =
+                    new AppSearchSchema.Builder("Type2")
                             .addProperty(
-                                new AppSearchSchema
-                                    .BooleanPropertyConfig
-                                    .Builder("booleanProp")
-                                    .setCardinality(
-                                        PropertyConfig
-                                            .CARDINALITY_OPTIONAL)
-                                    .build())
-                            .build())
-                    .build())
-                .get();
+                                    new AppSearchSchema.BooleanPropertyConfig.Builder("booleanProp")
+                                            .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                                            .build())
+                            .build();
+            mDb1.setSchemaAsync(
+                            new SetSchemaRequest.Builder().addSchemas(type1, type2Optional).build())
+                    .get();
 
             // Dispatch notifications
             observer.waitForNotificationCount(1);
@@ -1895,28 +1870,22 @@ public abstract class GlobalSearchSessionCtsTestBase {
                                 Features.GLOBAL_SEARCH_SESSION_REGISTER_OBSERVER_CALLBACK));
 
         // Add a schema
-        mDb1.setSchemaAsync(
-            new SetSchemaRequest.Builder()
-                .addSchemas(
-                    new AppSearchSchema.Builder("Type1")
+
+        AppSearchSchema type1 =
+                new AppSearchSchema.Builder("Type1")
                         .addProperty(
-                            new AppSearchSchema.BooleanPropertyConfig
-                                .Builder("booleanProp")
-                                .setCardinality(
-                                    PropertyConfig
-                                        .CARDINALITY_REQUIRED)
-                                .build())
-                        .build(),
-                    new AppSearchSchema.Builder("Type2")
+                                new AppSearchSchema.BooleanPropertyConfig.Builder("booleanProp")
+                                        .setCardinality(PropertyConfig.CARDINALITY_REQUIRED)
+                                        .build())
+                        .build();
+        AppSearchSchema type2 =
+                new AppSearchSchema.Builder("Type2")
                         .addProperty(
-                            new AppSearchSchema.BooleanPropertyConfig
-                                .Builder("booleanProp")
-                                .setCardinality(
-                                    PropertyConfig
-                                        .CARDINALITY_REQUIRED)
-                                .build())
-                        .build())
-                .build()).get();
+                                new AppSearchSchema.BooleanPropertyConfig.Builder("booleanProp")
+                                        .setCardinality(PropertyConfig.CARDINALITY_REQUIRED)
+                                        .build())
+                        .build();
+        mDb1.setSchemaAsync(new SetSchemaRequest.Builder().addSchemas(type1, type2).build()).get();
 
         // Register an observer that only listens for Type2
         TestObserverCallback observer = new TestObserverCallback();
@@ -1927,31 +1896,25 @@ public abstract class GlobalSearchSessionCtsTestBase {
                 observer);
         try {
             // Update both types of the schema (changed cardinalities)
+            AppSearchSchema type1Optional =
+                    new AppSearchSchema.Builder("Type1")
+                            .addProperty(
+                                    new AppSearchSchema.BooleanPropertyConfig.Builder("booleanProp")
+                                            .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                                            .build())
+                            .build();
+            AppSearchSchema type2Optional =
+                    new AppSearchSchema.Builder("Type2")
+                            .addProperty(
+                                    new AppSearchSchema.BooleanPropertyConfig.Builder("booleanProp")
+                                            .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                                            .build())
+                            .build();
             mDb1.setSchemaAsync(
-                new SetSchemaRequest.Builder()
-                    .addSchemas(
-                        new AppSearchSchema.Builder("Type1")
-                            .addProperty(
-                                new AppSearchSchema
-                                    .BooleanPropertyConfig
-                                    .Builder("booleanProp")
-                                    .setCardinality(
-                                        PropertyConfig
-                                            .CARDINALITY_OPTIONAL)
+                            new SetSchemaRequest.Builder()
+                                    .addSchemas(type1Optional, type2Optional)
                                     .build())
-                            .build(),
-                        new AppSearchSchema.Builder("Type2")
-                            .addProperty(
-                                new AppSearchSchema
-                                    .BooleanPropertyConfig
-                                    .Builder("booleanProp")
-                                    .setCardinality(
-                                        PropertyConfig
-                                            .CARDINALITY_OPTIONAL)
-                                    .build())
-                            .build())
-                    .build())
-                .get();
+                    .get();
 
             observer.waitForNotificationCount(1);
             assertThat(observer.getSchemaChanges())
