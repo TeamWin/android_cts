@@ -34,6 +34,8 @@
         <option name="test-file-name" value="{MODULE}.apk"/>
         <option name="test-file-name" value="CtsPropertyCompatAllowOrientationOverrideApp.apk" />
         <option name="test-file-name" value="CtsPropertyCompatAllowDisplayOrientationOverrideApp.apk" />
+        <option name="test-file-name" value="CtsPropertyCompatAllowMinAspectRatioOverrideOptInApp.apk" />
+        <option name="test-file-name" value="CtsPropertyCompatAllowMinAspectRatioOverrideOptOutApp.apk" />
         <option name="test-file-name" value="CtsDragAndDropSourceApp.apk"/>
         <option name="test-file-name" value="CtsDragAndDropTargetApp.apk"/>
         <option name="test-file-name" value="CtsDeviceAlertWindowTestApp.apk"/>
