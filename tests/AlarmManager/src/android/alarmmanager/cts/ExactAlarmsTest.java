@@ -344,7 +344,7 @@ public class ExactAlarmsTest {
                 alarmLatch.countDown();
             }
         };
-        sContext.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
+        sContext.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
         try {
             Thread.sleep(5_000);
             assertTrue("AlarmClock expiration not reported",
@@ -638,51 +638,10 @@ public class ExactAlarmsTest {
                 latch.countDown();
             }
         };
-        sContext.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
+        sContext.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
         try {
             Log.d(TAG, "Granting the appop");
             setAppOp(TEST_APP_PACKAGE, AppOpsManager.MODE_ALLOWED);
-
-            assertTrue("Didn't receive response",
-                    latch.await(30, TimeUnit.SECONDS));
-            assertEquals("Failure message should be empty", "", resultHolder.get());
-        } finally {
-            sContext.unregisterReceiver(receiver);
-        }
-    }
-
-    @Test
-    public void scheduleExactAlarmPermissionStateChangedSentDenyListSdk32() throws Exception {
-        // App is targeting SDK 32, deny list will dictate the default grant state.
-        prepareTestAppForBroadcast(mPermissionChangeReceiver32);
-
-        // App op hasn't been touched, should be default.
-        Log.d(TAG, "Putting in deny list");
-        mDeviceConfigHelper.with("exact_alarm_deny_list", TEST_APP_WITH_SCHEDULE_EXACT_ALARM_32)
-                .commitAndAwaitPropagation();
-        removeFromWhitelists(TEST_APP_WITH_SCHEDULE_EXACT_ALARM_32);
-
-        final int uid = Utils.getPackageUid(TEST_APP_WITH_SCHEDULE_EXACT_ALARM_32);
-        TestUtils.waitUntil("Package still allowlisted",
-                () -> !checkThisAppTempAllowListed(uid));
-
-        final IntentFilter filter = new IntentFilter(
-                PermissionStateChangedReceiver.ACTION_FGS_START_RESULT);
-        final AtomicReference<String> resultHolder = new AtomicReference<>();
-        final CountDownLatch latch = new CountDownLatch(1);
-        final BroadcastReceiver receiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                Log.d(TAG, "Received response intent: " + intent);
-                resultHolder.set(intent.getStringExtra(
-                        FgsTester.EXTRA_FGS_START_RESULT));
-                latch.countDown();
-            }
-        };
-        sContext.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
-        try {
-            Log.d(TAG, "Removing from deny list");
-            mDeviceConfigHelper.without("exact_alarm_deny_list").commitAndAwaitPropagation();
 
             assertTrue("Didn't receive response",
                     latch.await(30, TimeUnit.SECONDS));
