@@ -58,8 +58,7 @@ final class AudioHelper {
     public static final int CHANNEL_COUNT = 1;
     public static final int AMPLITUDE = 32767;
     public static final int BUFFER_SIZE_IN_BYTES = 65536;
-    public static final int NUMBER_OF_SAMPLES = computeNumSamples(/* timeMs= */ 1000, SAMPLE_RATE,
-            CHANNEL_COUNT);
+    public static final int NUMBER_OF_SAMPLES = computeNumSamples(SAMPLE_RATE, CHANNEL_COUNT);
 
     static class CapturedAudio {
         private int mSamplingRate;
@@ -119,9 +118,9 @@ final class AudioHelper {
                 }
                 break;
             }
-            for (int i = 0; i < audioData.length; i++) {
-                if (audioData[i] != 0) {
-                    mByteValue = audioData[i];
+            for (byte audioDatum : audioData) {
+                if (audioDatum != 0) {
+                    mByteValue = audioDatum;
                     break;
                 }
             }
@@ -140,9 +139,9 @@ final class AudioHelper {
                 }
                 break;
             }
-            for (int i = 0; i < audioData.length; i++) {
-                if (audioData[i] != 0) {
-                    mShortValue = audioData[i];
+            for (short audioDatum : audioData) {
+                if (audioDatum != 0) {
+                    mShortValue = audioDatum;
                     break;
                 }
             }
@@ -156,9 +155,9 @@ final class AudioHelper {
                 }
                 break;
             }
-            for (int i = 0; i < audioData.length; i++) {
-                if (audioData[i] != 0) {
-                    mFloatValue = audioData[i];
+            for (float audioDatum : audioData) {
+                if (audioDatum != 0) {
+                    mFloatValue = audioDatum;
                     break;
                 }
             }
@@ -181,8 +180,8 @@ final class AudioHelper {
         }
     }
 
-    static int computeNumSamples(int timeMs, int samplingRate, int channelCount) {
-        return (int) ((long) timeMs * samplingRate * channelCount / 1000);
+    static int computeNumSamples(int samplingRate, int channelCount) {
+        return (int) ((long) 1000 * samplingRate * channelCount / 1000);
     }
 
     static ByteBuffer createAudioData(int samplingRate, int numSamples, int channelCount,

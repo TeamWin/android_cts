@@ -23,8 +23,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
+import android.app.UiAutomation;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.view.accessibility.AccessibilityNodeInfo.CollectionInfo;
+import android.view.accessibility.Flags;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -40,9 +45,14 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityNodeInfo_CollectionInfoTest  {
 
+    private static UiAutomation sUiAutomation;
+
     @Rule
     public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
+
+    private CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule(sUiAutomation);
 
     @SmallTest
     @Test
@@ -51,13 +61,11 @@ public class AccessibilityNodeInfo_CollectionInfoTest  {
 
         c = CollectionInfo.obtain(0, 1, true);
         assertNotNull(c);
-        verifyCollectionInfo(c, 0, 1, true, CollectionInfo.SELECTION_MODE_NONE,
-                UNDEFINED, UNDEFINED);
+        verifyCollectionInfo(c, 0, 1, true, CollectionInfo.SELECTION_MODE_NONE);
 
         c = CollectionInfo.obtain(1, 2, true, CollectionInfo.SELECTION_MODE_MULTIPLE);
         assertNotNull(c);
-        verifyCollectionInfo(c, 1, 2, true, CollectionInfo.SELECTION_MODE_MULTIPLE,
-                UNDEFINED, UNDEFINED);
+        verifyCollectionInfo(c, 1, 2, true, CollectionInfo.SELECTION_MODE_MULTIPLE);
     }
 
     @SmallTest
@@ -66,21 +74,38 @@ public class AccessibilityNodeInfo_CollectionInfoTest  {
         CollectionInfo c;
 
         c = new CollectionInfo(0, 1, true);
-        verifyCollectionInfo(c, 0, 1, true, CollectionInfo.SELECTION_MODE_NONE,
-                UNDEFINED, UNDEFINED);
+        verifyCollectionInfo(c, 0, 1, true, CollectionInfo.SELECTION_MODE_NONE);
 
         c = new CollectionInfo(1, 2, true, CollectionInfo.SELECTION_MODE_MULTIPLE);
-        verifyCollectionInfo(c, 1, 2, true, CollectionInfo.SELECTION_MODE_MULTIPLE,
-                UNDEFINED, UNDEFINED);
+        verifyCollectionInfo(c, 1, 2, true, CollectionInfo.SELECTION_MODE_MULTIPLE);
 
         // Test default values.
         c = new CollectionInfo.Builder()
                 .setSelectionMode(CollectionInfo.SELECTION_MODE_MULTIPLE)
                 .build();
-        verifyCollectionInfo(c, 0, 0, false, CollectionInfo.SELECTION_MODE_MULTIPLE, UNDEFINED,
-                UNDEFINED);
+        verifyCollectionInfo(c, 0, 0, false, CollectionInfo.SELECTION_MODE_MULTIPLE);
+    }
 
-        c = new CollectionInfo.Builder()
+    @SmallTest
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_COLLECTION_INFO_ITEM_COUNTS)
+    public void testConstructor_withCollectionCountFields() {
+
+        verifyItemCountFieldsAreUndefined(new CollectionInfo(0, 1, true));
+
+        verifyItemCountFieldsAreUndefined(
+                new CollectionInfo(1, 2, true, CollectionInfo.SELECTION_MODE_MULTIPLE));
+
+        verifyItemCountFieldsAreUndefined(new CollectionInfo.Builder()
+                .setSelectionMode(CollectionInfo.SELECTION_MODE_MULTIPLE)
+                .build());
+    }
+
+    @SmallTest
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_COLLECTION_INFO_ITEM_COUNTS)
+    public void testBuilder() {
+        CollectionInfo c = new CollectionInfo.Builder()
                 .setRowCount(1)
                 .setColumnCount(2)
                 .setHierarchical(true)
@@ -88,21 +113,24 @@ public class AccessibilityNodeInfo_CollectionInfoTest  {
                 .setItemCount(10)
                 .setImportantForAccessibilityItemCount(3)
                 .build();
-        verifyCollectionInfo(c, 1, 2, true, CollectionInfo.SELECTION_MODE_MULTIPLE, 10, 3);
+        verifyCollectionInfo(c, 1, 2, true, CollectionInfo.SELECTION_MODE_MULTIPLE);
+        assertEquals(10, c.getItemCount());
+        assertEquals(3, c.getImportantForAccessibilityItemCount());
     }
 
     /**
      * Verifies all properties of the <code>info</code> with input expected values.
      */
-    public static void verifyCollectionInfo(CollectionInfo info, int rowCount, int columnCount,
-            boolean hierarchical, int selectionMode, int itemCount,
-            int numItemsUnimportantForAccessibility) {
+    private static void verifyCollectionInfo(CollectionInfo info, int rowCount, int columnCount,
+            boolean hierarchical, int selectionMode) {
         assertEquals(rowCount, info.getRowCount());
         assertEquals(columnCount, info.getColumnCount());
         assertSame(hierarchical, info.isHierarchical());
         assertEquals(selectionMode, info.getSelectionMode());
-        assertEquals(itemCount, info.getItemCount());
-        assertEquals(numItemsUnimportantForAccessibility,
-                info.getImportantForAccessibilityItemCount());
+    }
+
+    private static void verifyItemCountFieldsAreUndefined(CollectionInfo info) {
+        assertEquals(UNDEFINED, info.getItemCount());
+        assertEquals(UNDEFINED, info.getImportantForAccessibilityItemCount());
     }
 }

@@ -22,14 +22,22 @@ import android.content.AttributionSource
 import android.content.Context
 import android.content.Intent
 import android.os.Process
+import android.permission.flags.Flags
+import android.platform.test.annotations.RequiresFlagsDisabled
+import android.platform.test.annotations.RequiresFlagsEnabled
+import android.platform.test.flag.junit.DeviceFlagsValueProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import com.android.compatibility.common.util.ApiTest
 import kotlin.test.assertFailsWith
 import org.junit.Assert.assertEquals
+import org.junit.Rule
 import org.junit.Test
 
 class AttributionSourceTest {
+    @get:Rule
+    public val mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
+
     @Test
     @Throws(Exception::class)
     fun testRemoteProcessActivityPidCheck() {
@@ -51,6 +59,7 @@ class AttributionSourceTest {
     @Test
     @ApiTest(apis = ["android.content.AttributionSource.Builder#setNextAttributionSource"])
     @Throws(Exception::class)
+    @RequiresFlagsEnabled(Flags.FLAG_SET_NEXT_ATTRIBUTION_SOURCE)
     fun testSetNextAttributionSourceNonNull() {
         val context: Context = ApplicationProvider.getApplicationContext()
         val thisAttributionSource = context.getAttributionSource()
@@ -62,6 +71,7 @@ class AttributionSourceTest {
     @Test
     @ApiTest(apis = ["android.content.AttributionSource.Builder#setNextAttributionSource"])
     @Throws(Exception::class)
+    @RequiresFlagsEnabled(Flags.FLAG_ATTRIBUTION_SOURCE_CONSTRUCTOR)
     fun testSetNextAttributionSourceWithNull() {
         assertFailsWith(Exception::class, "setNextAttributionSource should throw on null") {
             val nullBuilder = AttributionSource.Builder(Process.myUid())

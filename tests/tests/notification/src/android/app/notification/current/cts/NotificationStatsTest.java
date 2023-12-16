@@ -23,12 +23,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Flags;
 import android.os.Parcel;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.service.notification.NotificationStats;
-import android.test.AndroidTestCase;
 
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -36,6 +40,9 @@ import org.junit.runner.RunWith;
 /** Test the public NotificationStats api. */
 @RunWith(AndroidJUnit4.class)
 public class NotificationStatsTest {
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Test
     public void testGetDismissalSentiment() {
@@ -85,6 +92,15 @@ public class NotificationStatsTest {
         NotificationStats stats = new NotificationStats();
         stats.setDirectReplied();
         assertTrue(stats.hasDirectReplied());
+        assertTrue(stats.hasInteracted());
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_LIFETIME_EXTENSION_REFACTOR)
+    public void testSmartReplied() {
+        NotificationStats stats = new NotificationStats();
+        stats.setSmartReplied();
+        assertTrue(stats.hasSmartReplied());
         assertTrue(stats.hasInteracted());
     }
 

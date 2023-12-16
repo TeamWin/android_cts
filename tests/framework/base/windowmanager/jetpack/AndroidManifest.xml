@@ -74,6 +74,10 @@
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"
                   android:exported="true"
         />
+        <activity android:name="android.server.wm.jetpack.utils.TestRearDisplayCrashingActivity"
+                  android:process=":Rear_display_crash_process"
+                  android:exported="true"
+        />
         <!-- The provider properties must match the shared one defined in the util module. -->
         <provider android:name="android.server.wm.activity.lifecycle.EventLog"
                   android:authorities="android.server.wm.jetpack.logprovider"

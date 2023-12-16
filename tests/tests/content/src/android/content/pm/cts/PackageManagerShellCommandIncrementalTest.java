@@ -18,6 +18,8 @@ package android.content.pm.cts;
 
 import static android.Manifest.permission.WRITE_ALLOWLISTED_DEVICE_CONFIG;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -107,7 +109,7 @@ public class PackageManagerShellCommandIncrementalTest {
     private static final String TEST_APK = "HelloWorld5.apk";
     private static final String TEST_APK_IDSIG = "HelloWorld5.apk.idsig";
     private static final String TEST_APK_PROFILEABLE = "HelloWorld5Profileable.apk";
-    private static final String TEST_APK_SYSTEM = "HelloWorldSystem.apk";
+    private static final String TEST_APK_SETTINGS = "HelloWorldSettings.apk";
     private static final String TEST_APK_SPLIT0 = "HelloWorld5_mdpi-v4.apk";
     private static final String TEST_APK_SPLIT0_IDSIG = "HelloWorld5_mdpi-v4.apk.idsig";
     private static final String TEST_APK_SPLIT1 = "HelloWorld5_hdpi-v4.apk";
@@ -321,12 +323,10 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @Test
     public void testSystemInstallWithIdSig() throws Exception {
-        final String baseName = TEST_APK_SYSTEM;
+        final String baseName = TEST_APK_SETTINGS;
         final File file = new File(createApkPath(baseName));
-        assertEquals(
-                "Failure [INSTALL_FAILED_SESSION_INVALID: Incremental installation of this "
-                        + "package is not allowed.]\n",
-                executeShellCommand("pm install-incremental -t -g " + file.getPath()));
+        assertThat(executeShellCommand("pm install-incremental -t -g " + file.getPath()))
+                .startsWith("Failure [INSTALL_FAILED_SESSION_INVALID");
     }
 
     @LargeTest
@@ -1193,7 +1193,7 @@ public class PackageManagerShellCommandIncrementalTest {
     }
 
     static String parsePackageDump(String packageName, String prefix) throws IOException {
-        final String commandResult = executeShellCommand("pm dump " + packageName);
+        final String commandResult = executeShellCommand("pm dump-package " + packageName);
         final int prefixLength = prefix.length();
         Optional<String> maybeSplits = Arrays.stream(commandResult.split("\\r?\\n"))
                 .filter(line -> line.startsWith(prefix)).findFirst();

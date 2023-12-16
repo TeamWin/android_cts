@@ -23,7 +23,9 @@
     <queries>
         <package android:name="android.scopedstorage.cts.testapp.A.withres" />
         <package android:name="android.scopedstorage.cts.testapp.SystemGalleryBypassDB" />
-        <package android:name="android.scopedstorage.cts.testapp.C" />
+        <package android:name="android.scopedstorage.cts.testapp.SystemGallery30BypassDB" />
+        <package android:name="android.scopedstorage.cts.testapp.E30" />
+        <package android:name="android.scopedstorage.cts.testapp.E30.filemanager" />
         <package android:name="android.scopedstorage.cts.testapp.filemanager" />
         <package android:name="android.scopedstorage.cts.testapp.filemanagerbypassdb" />
     </queries>

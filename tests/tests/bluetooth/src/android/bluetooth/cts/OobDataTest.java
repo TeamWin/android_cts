@@ -51,7 +51,7 @@ public class OobDataTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testClassicBuilder() {
+    public void classicBuilder() {
         byte[] defaultRandomizerHash = new byte[OobData.RANDOMIZER_OCTETS];
         byte[] defaultClassOfDevice = new byte[OobData.CLASS_OF_DEVICE_OCTETS];
         // Default device name: "Bluetooth Device"
@@ -123,7 +123,7 @@ public class OobDataTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testLEBuilder() {
+    public void lEBuilder() {
         Assume.assumeTrue(TestUtils.isBleSupported(mContext));
 
         byte[] defaultRandomizerHash = new byte[OobData.RANDOMIZER_OCTETS];

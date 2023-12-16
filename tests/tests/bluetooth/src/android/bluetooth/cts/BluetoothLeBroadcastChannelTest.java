@@ -98,7 +98,7 @@ public class BluetoothLeBroadcastChannelTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testCreateBroadcastChannelFromBuilder() {
+    public void createBroadcastChannelFromBuilder() {
         BluetoothLeAudioCodecConfigMetadata codecMetadata =
                 new BluetoothLeAudioCodecConfigMetadata.Builder()
                         .setAudioLocation(TEST_AUDIO_LOCATION_FRONT_LEFT)
@@ -122,7 +122,7 @@ public class BluetoothLeBroadcastChannelTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testCreateBroadcastChannelFromCopy() {
+    public void createBroadcastChannelFromCopy() {
         BluetoothLeAudioCodecConfigMetadata codecMetadata =
                 new BluetoothLeAudioCodecConfigMetadata.Builder()
                         .setAudioLocation(TEST_AUDIO_LOCATION_FRONT_LEFT)

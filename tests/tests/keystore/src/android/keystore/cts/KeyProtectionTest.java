@@ -23,6 +23,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.security.Flags;
 import android.security.GateKeeper;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
@@ -52,8 +53,10 @@ public class KeyProtectionTest {
             spec.getDigests();
             fail();
         } catch (IllegalStateException expected) {}
-        assertFalse(spec.isMgf1DigestsSpecified());
-        assertThrows(IllegalStateException.class, spec::getMgf1Digests);
+        if (Flags.mgf1DigestSetter()) {
+            assertFalse(spec.isMgf1DigestsSpecified());
+            assertThrows(IllegalStateException.class, spec::getMgf1Digests);
+        }
         MoreAsserts.assertEmpty(Arrays.asList(spec.getEncryptionPaddings()));
         assertNull(spec.getKeyValidityStart());
         assertNull(spec.getKeyValidityForOriginationEnd());
@@ -78,11 +81,10 @@ public class KeyProtectionTest {
         Date keyValidityEndDateForConsumption = new Date(System.currentTimeMillis() + 33333333);
         int maxUsageCount = 1;
 
-        KeyProtection spec = new KeyProtection.Builder(
+        KeyProtection.Builder specBuilder = new KeyProtection.Builder(
                 KeyProperties.PURPOSE_DECRYPT | KeyProperties.PURPOSE_VERIFY)
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM, KeyProperties.BLOCK_MODE_CTR)
                 .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
-                .setMgf1Digests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1,
                         KeyProperties.ENCRYPTION_PADDING_PKCS7)
                 .setKeyValidityStart(keyValidityStartDate)
@@ -97,8 +99,12 @@ public class KeyProtectionTest {
                 .setBoundToSpecificSecureUserId(654321)
                 .setUnlockedDeviceRequired(true)
                 .setMaxUsageCount(maxUsageCount)
-                .setIsStrongBoxBacked(true)
-                .build();
+                .setIsStrongBoxBacked(true);
+
+        if (Flags.mgf1DigestSetter()) {
+            specBuilder.setMgf1Digests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512);
+        }
+        KeyProtection spec = specBuilder.build();
 
         assertEquals(
                 KeyProperties.PURPOSE_DECRYPT| KeyProperties.PURPOSE_VERIFY, spec.getPurposes());
@@ -107,10 +113,12 @@ public class KeyProtectionTest {
         assertTrue(spec.isDigestsSpecified());
         MoreAsserts.assertContentsInOrder(Arrays.asList(spec.getDigests()),
                 KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512);
-        assertTrue(spec.isMgf1DigestsSpecified());
-        /* Since getMgf1Digest return type is Set, objects could be in any order. */
-        MoreAsserts.assertContentsInAnyOrder(spec.getMgf1Digests(),
-                KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512);
+        if (Flags.mgf1DigestSetter()) {
+            assertTrue(spec.isMgf1DigestsSpecified());
+            /* Since getMgf1Digest return type is Set, objects could be in any order. */
+            MoreAsserts.assertContentsInAnyOrder(spec.getMgf1Digests(),
+                    KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512);
+        }
         MoreAsserts.assertContentsInOrder(Arrays.asList(spec.getEncryptionPaddings()),
                 KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1, KeyProperties.ENCRYPTION_PADDING_PKCS7);
         assertEquals(keyValidityStartDate, spec.getKeyValidityStart());
@@ -196,17 +204,20 @@ public class KeyProtectionTest {
                 KeyProperties.SIGNATURE_PADDING_RSA_PSS, KeyProperties.SIGNATURE_PADDING_RSA_PKCS1};
         String[] originalSignaturePaddings = signaturePaddings.clone();
 
-        KeyProtection spec = new KeyProtection.Builder(
+        KeyProtection.Builder specBuilder = new KeyProtection.Builder(
                 KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_ENCRYPT)
                 .setBlockModes(blockModes)
                 .setDigests(digests)
-                .setMgf1Digests(mgfDigests)
                 .setEncryptionPaddings(encryptionPaddings)
                 .setKeyValidityStart(keyValidityStartDate)
                 .setKeyValidityForOriginationEnd(keyValidityEndDateForOrigination)
                 .setKeyValidityForConsumptionEnd(keyValidityEndDateForConsumption)
-                .setSignaturePaddings(signaturePaddings)
-                .build();
+                .setSignaturePaddings(signaturePaddings);
+
+        if (Flags.mgf1DigestSetter()) {
+            specBuilder.setMgf1Digests(mgfDigests);
+        }
+        KeyProtection spec = specBuilder.build();
 
         assertEquals(Arrays.asList(originalBlockModes), Arrays.asList(spec.getBlockModes()));
         blockModes[0] = null;
@@ -216,9 +227,11 @@ public class KeyProtectionTest {
         digests[1] = null;
         assertEquals(Arrays.asList(originalDigests), Arrays.asList(spec.getDigests()));
 
-        assertTrue(Arrays.asList(originalMgfDigests).containsAll(spec.getMgf1Digests()));
-        mgfDigests[1] = null;
-        assertTrue(Arrays.asList(originalMgfDigests).containsAll(spec.getMgf1Digests()));
+        if (Flags.mgf1DigestSetter()) {
+            assertTrue(Arrays.asList(originalMgfDigests).containsAll(spec.getMgf1Digests()));
+            mgfDigests[1] = null;
+            assertTrue(Arrays.asList(originalMgfDigests).containsAll(spec.getMgf1Digests()));
+        }
 
         assertEquals(Arrays.asList(originalEncryptionPaddings),
                 Arrays.asList(spec.getEncryptionPaddings()));
@@ -253,11 +266,10 @@ public class KeyProtectionTest {
     public void testImmutabilityViaGetterReturnValues() {
         // Assert that none of the mutable return values from getters modify the state of the spec.
 
-        KeyProtection spec = new KeyProtection.Builder(
+        KeyProtection.Builder specBuilder = new KeyProtection.Builder(
                 KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_ENCRYPT)
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM, KeyProperties.BLOCK_MODE_CBC)
                 .setDigests(KeyProperties.DIGEST_MD5, KeyProperties.DIGEST_SHA512)
-                .setMgf1Digests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
                 .setEncryptionPaddings(
                         KeyProperties.ENCRYPTION_PADDING_RSA_OAEP,
                         KeyProperties.ENCRYPTION_PADDING_PKCS7)
@@ -266,8 +278,12 @@ public class KeyProtectionTest {
                 .setKeyValidityForConsumptionEnd(new Date(System.currentTimeMillis() + 33333333))
                 .setSignaturePaddings(
                         KeyProperties.SIGNATURE_PADDING_RSA_PSS,
-                        KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
-                .build();
+                        KeyProperties.SIGNATURE_PADDING_RSA_PKCS1);
+
+        if (Flags.mgf1DigestSetter()) {
+            specBuilder.setMgf1Digests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512);
+        }
+        KeyProtection spec = specBuilder.build();
 
         String[] originalBlockModes = spec.getBlockModes().clone();
         spec.getBlockModes()[0] = null;

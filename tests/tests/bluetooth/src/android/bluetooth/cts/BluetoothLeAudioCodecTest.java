@@ -82,7 +82,7 @@ public class BluetoothLeAudioCodecTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testGetCodecNameAndType() {
+    public void getCodecNameAndType() {
         try {
             for (int codecIdx = 0; codecIdx < mCodecTypeArray.length; codecIdx++) {
                 int codecType = mCodecTypeArray[codecIdx];
@@ -108,7 +108,7 @@ public class BluetoothLeAudioCodecTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testGetCodecPriority() {
+    public void getCodecPriority() {
         for (int priorityIdx = 0; priorityIdx < mCodecPriorityArray.length; priorityIdx++) {
             int codecPriority = mCodecPriorityArray[priorityIdx];
 
@@ -123,7 +123,7 @@ public class BluetoothLeAudioCodecTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testGetSampleRate() {
+    public void getSampleRate() {
         for (int sampleRateIdx = 0; sampleRateIdx < mSampleRateArray.length; sampleRateIdx++) {
             int sampleRate = mSampleRateArray[sampleRateIdx];
 
@@ -138,7 +138,7 @@ public class BluetoothLeAudioCodecTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testGetBitsPerSample() {
+    public void getBitsPerSample() {
         for (int bitsPerSampleIdx = 0; bitsPerSampleIdx < mBitsPerSampleArray.length;
                 bitsPerSampleIdx++) {
             int bitsPerSample = mBitsPerSampleArray[bitsPerSampleIdx];
@@ -154,7 +154,7 @@ public class BluetoothLeAudioCodecTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testGetChannelCount() {
+    public void getChannelCount() {
         for (int channelCountIdx = 0; channelCountIdx < mChannelCountArray.length;
                 channelCountIdx++) {
             int channelCount = mChannelCountArray[channelCountIdx];
@@ -170,7 +170,7 @@ public class BluetoothLeAudioCodecTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testGetFrameDuration() {
+    public void getFrameDuration() {
         for (int frameDurationIdx = 0; frameDurationIdx < mFrameDurationArray.length;
                 frameDurationIdx++) {
             int frameDuration = mFrameDurationArray[frameDurationIdx];
@@ -186,7 +186,7 @@ public class BluetoothLeAudioCodecTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testGetOctetsPerFrame() {
+    public void getOctetsPerFrame() {
         final int octetsPerFrame = 100;
         BluetoothLeAudioCodecConfig leAudioCodecConfig =
                 new BluetoothLeAudioCodecConfig.Builder()
@@ -198,7 +198,7 @@ public class BluetoothLeAudioCodecTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testGetMinOctetsPerFrame() {
+    public void getMinOctetsPerFrame() {
         final int minOctetsPerFrame = 100;
         BluetoothLeAudioCodecConfig leAudioCodecConfig =
                 new BluetoothLeAudioCodecConfig.Builder()
@@ -210,7 +210,7 @@ public class BluetoothLeAudioCodecTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testGetMaxOctetsPerFrame() {
+    public void getMaxOctetsPerFrame() {
         final int maxOctetsPerFrame = 100;
         BluetoothLeAudioCodecConfig leAudioCodecConfig =
                 new BluetoothLeAudioCodecConfig.Builder()
@@ -222,7 +222,7 @@ public class BluetoothLeAudioCodecTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testDescribeContents() {
+    public void describeContents() {
         BluetoothLeAudioCodecConfig leAudioCodecConfig =
             new BluetoothLeAudioCodecConfig.Builder().build();
         assertEquals(0, leAudioCodecConfig.describeContents());
@@ -230,7 +230,7 @@ public class BluetoothLeAudioCodecTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testReadWriteParcel() {
+    public void readWriteParcel() {
         final int octetsPerFrame = 100;
         Parcel parcel = Parcel.obtain();
         BluetoothLeAudioCodecConfig leAudioCodecConfig = new BluetoothLeAudioCodecConfig.Builder()
@@ -263,7 +263,7 @@ public class BluetoothLeAudioCodecTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testBuilderWithExistingObject() {
+    public void builderWithExistingObject() {
         final int octetsPerFrame = 100;
         final int minOctectsPerFrame = 50;
         final int maxOctectsPerFrame = 150;

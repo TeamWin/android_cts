@@ -16,8 +16,7 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.media.router.cts.proxyroutingapp"
-          android:targetSandboxVersion="2">
+          package="android.media.router.cts.proxyroutingapp">
 
     <uses-permission android:name="android.permission.MEDIA_ROUTING_CONTROL" />
 

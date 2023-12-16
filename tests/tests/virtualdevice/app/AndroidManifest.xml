@@ -17,16 +17,15 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.virtualdevice.streamedtestapp">
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <application>
-        <activity android:name=".MainActivity"
-            android:allowEmbedded="true"
-            android:exported="true" />
 
-        <activity
-            android:name=".HomeActivity"
-            android:allowEmbedded="true"
+    <!--
+    * This permission is only used to trigger a permission request dialog in some test cases of
+    * VirtualDevicePermissionTest. This app otherwise does not use this permission.
+    -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <application>
+        <activity android:name=".HomeActivity"
             android:launchMode="singleTop"
             android:enabled="false"
             android:exported="true" >
@@ -38,32 +37,15 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".CustomHomeActivity"
-            android:allowEmbedded="true"
+        <activity android:name=".CustomHomeActivity"
             android:launchMode="singleTop"
             android:exported="true" />
 
         <activity android:name=".ClipboardTestActivity"
             android:exported="true"/>
 
-        <activity android:name=".NoEmbedActivity"
-            android:exported="true" />
-
-        <activity android:name=".CannotDisplayOnRemoteActivity"
-            android:allowEmbedded="true"
-            android:canDisplayOnRemoteDevices="false"
-            android:exported="true" />
-
-        <activity android:name=".ReporterActivityA"
-            android:exported="true" />
-
-        <activity android:name=".ReporterActivityB"
-            android:exported="true" />
-        <activity android:name=".RestrictToDisplayCategoryActivity"
-            android:allowEmbedded="true"
-            android:exported="true"
-            android:requiredDisplayCategory="automotive"/>
+        <activity android:name=".PermissionTestActivity"
+            android:exported="true"/>
 
         <service android:name=".StreamedAppService"
             android:exported="true" />

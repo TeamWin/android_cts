@@ -27,6 +27,7 @@ android_test_helper_app {
     min_sdk_version: "23",
     // Tag this module as a cts test artifact
     test_suites: [
+        "csuite",
         "cts",
         "general-tests",
         "sts",

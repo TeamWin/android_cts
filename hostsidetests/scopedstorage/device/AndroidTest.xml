@@ -23,6 +23,11 @@
         <option name="test-file-name" value="CtsScopedStorageTestAppFileManager.apk" />
         <option name="test-file-name" value="CtsTestAppWithQueryAllPackagesPermission.apk" />
         <option name="test-file-name" value="CtsTestAppWithQueriesTag.apk" />
+        <option name="test-file-name" value="CtsScopedStorageTestAppE30.apk" />
+        <option name="test-file-name" value="CtsScopedStorageTestAppE30FileManager.apk" />
+        <option name="test-file-name" value="CtsScopedStorageTestAppFileManagerBypassDB.apk" />
+        <option name="test-file-name" value="CtsScopedStorageTestAppSystemGalleryBypassDB.apk" />
+        <option name="test-file-name" value="CtsScopedStorageTestAppSystemGallery30BypassDB.apk" />
     </target_preparer>
 
     <option

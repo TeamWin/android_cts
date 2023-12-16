@@ -225,10 +225,10 @@ public class ApduServiceInfoTest {
         ApduServiceInfo apduServiceInfo = new ApduServiceInfo(mResolveInfo, false, "",
                 new ArrayList<>(), mDynamicAidGroups, false, 0, 0, "", "", "");
 
-        assertFalse(apduServiceInfo.isOtherServiceEnabled());
+        assertFalse(apduServiceInfo.isCategoryOtherServiceEnabled());
 
-        apduServiceInfo.setOtherServiceEnabled(true);
-        assertTrue(apduServiceInfo.isOtherServiceEnabled());
+        apduServiceInfo.setCategoryOtherServiceEnabled(true);
+        assertTrue(apduServiceInfo.isCategoryOtherServiceEnabled());
     }
 
 }

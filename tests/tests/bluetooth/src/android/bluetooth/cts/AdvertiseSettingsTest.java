@@ -51,7 +51,7 @@ public class AdvertiseSettingsTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testDefaultSettings() {
+    public void defaultSettings() {
         AdvertiseSettings settings = new AdvertiseSettings.Builder().build();
         assertEquals(AdvertiseSettings.ADVERTISE_MODE_LOW_POWER, settings.getMode());
         assertEquals(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM, settings.getTxPowerLevel());
@@ -62,7 +62,7 @@ public class AdvertiseSettingsTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testDescribeContents() {
+    public void describeContents() {
         AdvertiseSettings settings = new AdvertiseSettings.Builder().build();
         assertEquals(0, settings.describeContents());
     }
@@ -70,7 +70,7 @@ public class AdvertiseSettingsTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testReadWriteParcel() {
+    public void readWriteParcel() {
         final int timeoutMillis = 60 * 1000;
         Parcel parcel = Parcel.obtain();
         AdvertiseSettings settings = new AdvertiseSettings.Builder()
@@ -96,7 +96,7 @@ public class AdvertiseSettingsTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testIllegalTimeout() {
+    public void illegalTimeout() {
         AdvertiseSettings.Builder builder = new AdvertiseSettings.Builder();
         builder.setTimeout(0).build();
         builder.setTimeout(180 * 1000).build();

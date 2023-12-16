@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.virtualdevice.cts;
+package android.virtualdevice.cts.core;
 
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAULT;
@@ -49,7 +49,6 @@ import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
-import android.virtualdevice.cts.common.util.TestAppHelper;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -75,7 +74,8 @@ public class VirtualDeviceParamsTest {
     private static final String SENSOR_VENDOR = "VirtualSensorVendor";
     private static final int PLAYBACK_SESSION_ID = 42;
     private static final int RECORDING_SESSION_ID = 77;
-    private static final ComponentName HOME_COMPONENT = new ComponentName("foo.bar", "foo.bar.Baz");
+    private static final ComponentName COMPONENT_NAME = new ComponentName("test", ".Activity1");
+    private static final ComponentName COMPONENT_NAME_2 = new ComponentName("test", ".Activity2");
 
     @Rule
     public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
@@ -142,7 +142,7 @@ public class VirtualDeviceParamsTest {
     @Test
     public void customHome_parcelable_shouldRecreateSuccessfully() {
         VirtualDeviceParams originalParams = new VirtualDeviceParams.Builder()
-                .setHomeComponent(HOME_COMPONENT)
+                .setHomeComponent(COMPONENT_NAME)
                 .build();
 
         Parcel parcel = Parcel.obtain();
@@ -151,15 +151,14 @@ public class VirtualDeviceParamsTest {
 
         VirtualDeviceParams params = VirtualDeviceParams.CREATOR.createFromParcel(parcel);
         assertThat(params).isEqualTo(originalParams);
-        assertThat(params.getHomeComponent()).isEqualTo(HOME_COMPONENT);
+        assertThat(params.getHomeComponent()).isEqualTo(COMPONENT_NAME);
     }
 
     @Test
     public void setAllowedAndBlockedCrossTaskNavigations_shouldThrowException() {
         VirtualDeviceParams.Builder paramsBuilder = new VirtualDeviceParams.Builder();
         assertThrows(IllegalArgumentException.class, () -> {
-            paramsBuilder.setAllowedCrossTaskNavigations(Set.of(
-                    TestAppHelper.MAIN_ACTIVITY_COMPONENT));
+            paramsBuilder.setAllowedCrossTaskNavigations(Set.of(COMPONENT_NAME));
             paramsBuilder.setBlockedCrossTaskNavigations(Set.of());
         });
     }
@@ -168,8 +167,7 @@ public class VirtualDeviceParamsTest {
     public void setBlockedAndAllowedCrossTaskNavigations_shouldThrowException() {
         VirtualDeviceParams.Builder paramsBuilder = new VirtualDeviceParams.Builder();
         assertThrows(IllegalArgumentException.class, () -> {
-            paramsBuilder.setBlockedCrossTaskNavigations(Set.of(
-                    TestAppHelper.MAIN_ACTIVITY_COMPONENT));
+            paramsBuilder.setBlockedCrossTaskNavigations(Set.of(COMPONENT_NAME));
             paramsBuilder.setAllowedCrossTaskNavigations(Set.of());
         });
     }
@@ -177,15 +175,11 @@ public class VirtualDeviceParamsTest {
     @Test
     public void getAllowedCrossTaskNavigations_shouldReturnConfiguredSet() {
         VirtualDeviceParams params = new VirtualDeviceParams.Builder()
-                .setAllowedCrossTaskNavigations(
-                        Set.of(
-                                new ComponentName("test", "test.Activity1"),
-                                new ComponentName("test", "test.Activity2")))
+                .setAllowedCrossTaskNavigations(Set.of(COMPONENT_NAME, COMPONENT_NAME_2))
                 .build();
 
-        assertThat(params.getAllowedCrossTaskNavigations()).containsExactly(
-                new ComponentName("test", "test.Activity1"),
-                new ComponentName("test", "test.Activity2"));
+        assertThat(params.getAllowedCrossTaskNavigations())
+                .containsExactly(COMPONENT_NAME, COMPONENT_NAME_2);
         assertThat(params.getDefaultNavigationPolicy())
                 .isEqualTo(VirtualDeviceParams.NAVIGATION_POLICY_DEFAULT_BLOCKED);
     }
@@ -193,15 +187,11 @@ public class VirtualDeviceParamsTest {
     @Test
     public void getBlockedCrossTaskNavigations_shouldReturnConfiguredSet() {
         VirtualDeviceParams params = new VirtualDeviceParams.Builder()
-                .setBlockedCrossTaskNavigations(
-                        Set.of(
-                                new ComponentName("test", "test.Activity1"),
-                                new ComponentName("test", "test.Activity2")))
+                .setBlockedCrossTaskNavigations(Set.of(COMPONENT_NAME, COMPONENT_NAME_2))
                 .build();
 
-        assertThat(params.getBlockedCrossTaskNavigations()).containsExactly(
-                new ComponentName("test", "test.Activity1"),
-                new ComponentName("test", "test.Activity2"));
+        assertThat(params.getBlockedCrossTaskNavigations())
+                .containsExactly(COMPONENT_NAME, COMPONENT_NAME_2);
         assertThat(params.getDefaultNavigationPolicy())
                 .isEqualTo(VirtualDeviceParams.NAVIGATION_POLICY_DEFAULT_ALLOWED);
     }
@@ -210,7 +200,7 @@ public class VirtualDeviceParamsTest {
     public void setAllowedAndBlockedActivities_shouldThrowException() {
         VirtualDeviceParams.Builder paramsBuilder = new VirtualDeviceParams.Builder();
         assertThrows(IllegalArgumentException.class, () -> {
-            paramsBuilder.setAllowedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT));
+            paramsBuilder.setAllowedActivities(Set.of(COMPONENT_NAME));
             paramsBuilder.setBlockedActivities(Set.of());
         });
     }
@@ -219,7 +209,7 @@ public class VirtualDeviceParamsTest {
     public void setBlockedAndAllowedActivities_shouldThrowException() {
         VirtualDeviceParams.Builder paramsBuilder = new VirtualDeviceParams.Builder();
         assertThrows(IllegalArgumentException.class, () -> {
-            paramsBuilder.setBlockedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT));
+            paramsBuilder.setBlockedActivities(Set.of(COMPONENT_NAME));
             paramsBuilder.setAllowedActivities(Set.of());
         });
     }
@@ -227,15 +217,11 @@ public class VirtualDeviceParamsTest {
     @Test
     public void getAllowedActivities_shouldReturnConfiguredSet() {
         VirtualDeviceParams params = new VirtualDeviceParams.Builder()
-                .setAllowedActivities(
-                        Set.of(
-                                new ComponentName("test", "test.Activity1"),
-                                new ComponentName("test", "test.Activity2")))
+                .setAllowedActivities(Set.of(COMPONENT_NAME, COMPONENT_NAME_2))
                 .build();
 
-        assertThat(params.getAllowedActivities()).containsExactly(
-                new ComponentName("test", "test.Activity1"),
-                new ComponentName("test", "test.Activity2"));
+        assertThat(params.getAllowedActivities())
+                .containsExactly(COMPONENT_NAME, COMPONENT_NAME_2);
         assertThat(params.getDefaultActivityPolicy())
                 .isEqualTo(VirtualDeviceParams.ACTIVITY_POLICY_DEFAULT_BLOCKED);
     }
@@ -243,15 +229,11 @@ public class VirtualDeviceParamsTest {
     @Test
     public void getBlockedActivities_shouldReturnConfiguredSet() {
         VirtualDeviceParams params = new VirtualDeviceParams.Builder()
-                .setBlockedActivities(
-                        Set.of(
-                                new ComponentName("test", "test.Activity1"),
-                                new ComponentName("test", "test.Activity2")))
+                .setBlockedActivities(Set.of(COMPONENT_NAME, COMPONENT_NAME_2))
                 .build();
 
-        assertThat(params.getBlockedActivities()).containsExactly(
-                new ComponentName("test", "test.Activity1"),
-                new ComponentName("test", "test.Activity2"));
+        assertThat(params.getBlockedActivities())
+                .containsExactly(COMPONENT_NAME, COMPONENT_NAME_2);
         assertThat(params.getDefaultActivityPolicy())
                 .isEqualTo(VirtualDeviceParams.ACTIVITY_POLICY_DEFAULT_ALLOWED);
     }
@@ -261,21 +243,20 @@ public class VirtualDeviceParamsTest {
     public void setBlockedActivities_activityPolicyCustom_throwsException() {
         assertThrows(IllegalArgumentException.class,
                 () -> new VirtualDeviceParams.Builder()
-                        .setBlockedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT))
+                        .setBlockedActivities(Set.of(COMPONENT_NAME))
                         .setDevicePolicy(POLICY_TYPE_ACTIVITY, DEVICE_POLICY_CUSTOM)
-                .build());
+                        .build());
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_DYNAMIC_POLICY)
     @Test
     public void setBlockedActivities_activityPolicyDefault_isOK() {
         VirtualDeviceParams params = new VirtualDeviceParams.Builder()
-                .setBlockedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT))
+                .setBlockedActivities(Set.of(COMPONENT_NAME))
                 .setDevicePolicy(POLICY_TYPE_ACTIVITY, DEVICE_POLICY_DEFAULT)
                 .build();
 
-        assertThat(params.getBlockedActivities())
-                .containsExactly(TestAppHelper.MAIN_ACTIVITY_COMPONENT);
+        assertThat(params.getBlockedActivities()).containsExactly(COMPONENT_NAME);
         assertThat(params.getDefaultActivityPolicy())
                 .isEqualTo(VirtualDeviceParams.ACTIVITY_POLICY_DEFAULT_ALLOWED);
         assertThat(params.getDevicePolicy(POLICY_TYPE_ACTIVITY)).isEqualTo(DEVICE_POLICY_DEFAULT);
@@ -286,7 +267,7 @@ public class VirtualDeviceParamsTest {
     public void setAllowedActivities_activityPolicyDefault_throwsException() {
         assertThrows(IllegalArgumentException.class,
                 () -> new VirtualDeviceParams.Builder()
-                        .setAllowedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT))
+                        .setAllowedActivities(Set.of(COMPONENT_NAME))
                         .setDevicePolicy(POLICY_TYPE_ACTIVITY, DEVICE_POLICY_DEFAULT)
                         .build());
     }
@@ -295,12 +276,11 @@ public class VirtualDeviceParamsTest {
     @Test
     public void setAllowedActivities_activityPolicyCustom_isOK() {
         VirtualDeviceParams params = new VirtualDeviceParams.Builder()
-                .setAllowedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT))
+                .setAllowedActivities(Set.of(COMPONENT_NAME))
                 .setDevicePolicy(POLICY_TYPE_ACTIVITY, DEVICE_POLICY_CUSTOM)
                 .build();
 
-        assertThat(params.getAllowedActivities())
-                .containsExactly(TestAppHelper.MAIN_ACTIVITY_COMPONENT);
+        assertThat(params.getAllowedActivities()).containsExactly(COMPONENT_NAME);
         assertThat(params.getDefaultActivityPolicy())
                 .isEqualTo(VirtualDeviceParams.ACTIVITY_POLICY_DEFAULT_BLOCKED);
         assertThat(params.getDevicePolicy(POLICY_TYPE_ACTIVITY)).isEqualTo(DEVICE_POLICY_CUSTOM);
@@ -310,7 +290,7 @@ public class VirtualDeviceParamsTest {
     @Test
     public void setAllowedActivities_activityPolicyUndefined_setsActivityPolicyCustom() {
         VirtualDeviceParams params = new VirtualDeviceParams.Builder()
-                .setAllowedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT))
+                .setAllowedActivities(Set.of(COMPONENT_NAME))
                 .build();
         assertThat(params.getDevicePolicy(POLICY_TYPE_ACTIVITY)).isEqualTo(DEVICE_POLICY_CUSTOM);
     }
@@ -319,7 +299,7 @@ public class VirtualDeviceParamsTest {
     @Test
     public void setBlockedActivities_activityPolicyUndefined_setsActivityPolicyDefault() {
         VirtualDeviceParams params = new VirtualDeviceParams.Builder()
-                .setBlockedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT))
+                .setBlockedActivities(Set.of(COMPONENT_NAME))
                 .build();
         assertThat(params.getDevicePolicy(POLICY_TYPE_ACTIVITY)).isEqualTo(DEVICE_POLICY_DEFAULT);
     }
@@ -381,7 +361,7 @@ public class VirtualDeviceParamsTest {
     }
 
     @Test
-    public void setDevicePolcy_overwritePreviousValue_shouldReturnValueFromLastCall() {
+    public void setDevicePolicy_overwritePreviousValue_shouldReturnValueFromLastCall() {
         VirtualDeviceParams params = new VirtualDeviceParams.Builder()
                 .setName(VIRTUAL_DEVICE_NAME)
                 .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)

@@ -21,11 +21,14 @@ import static android.server.wm.UiDeviceUtils.pressSleepButton;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.view.Display.DEFAULT_DISPLAY;
+
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 import static androidx.window.extensions.area.WindowAreaComponent.SESSION_STATE_ACTIVE;
 import static androidx.window.extensions.area.WindowAreaComponent.SESSION_STATE_CONTENT_VISIBLE;
 import static androidx.window.extensions.area.WindowAreaComponent.SESSION_STATE_INACTIVE;
+
 import static com.android.compatibility.common.util.PollingCheck.waitFor;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -36,6 +39,7 @@ import static org.junit.Assume.assumeTrue;
 import android.app.ActivityManager;
 import android.app.KeyguardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.hardware.devicestate.DeviceStateManager;
 import android.hardware.devicestate.DeviceStateRequest;
@@ -46,6 +50,7 @@ import android.server.wm.DeviceStateUtils;
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestActivityLauncher;
 import android.server.wm.jetpack.utils.TestRearDisplayActivity;
+import android.server.wm.jetpack.utils.TestRearDisplayCrashingActivity;
 import android.server.wm.jetpack.utils.WindowExtensionTestRule;
 import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
 import android.view.Display;
@@ -403,6 +408,32 @@ public class ExtensionRearDisplayPresentationTest extends WindowManagerJetpackTe
         // Since the non-visible and session ended callbacks happen so fast, we check if
         // the list of values received equal what we expected.
         assertEquals(mSessionStateStatusValues, SESSION_LIFECYCLE_VALUES);
+    }
+
+    /**
+     * Tests that you can start, and then end rear display presentation mode when the process dies.
+     * Verifies that the device moves into the extension rear display presentation device state, and
+     * then moves back to the base state of the device when the process that started the feature
+     * dies.
+     */
+    @ApiTest(apis = {
+            "androidx.window.extensions.area."
+                    + "WindowAreaComponent#startRearDisplayPresentationSession"})
+    @Test
+    public void testStartAndEndRearDisplayPresentationSession_processDies() {
+        assumeTrue(mWindowAreaPresentationStatus.getWindowAreaStatus()
+                == WindowAreaComponent.STATUS_AVAILABLE);
+        assumeTrue(mCurrentDeviceState != mRearDisplayPresentationState);
+
+        Intent intent = new Intent(mActivity, TestRearDisplayCrashingActivity.class);
+        mActivity.startActivity(intent);
+
+        waitAndAssert(() ->  mCurrentDeviceState == mRearDisplayPresentationState);
+
+        // The crashing activity that we launched will crash after the rear display presentation
+        // feature has been enabled, so the device should transition back to the base state after
+        // the process crashes.
+        waitAndAssert(() -> mCurrentDeviceState == mCurrentDeviceBaseState);
     }
 
     @ApiTest(apis = {

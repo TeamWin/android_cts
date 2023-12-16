@@ -161,6 +161,11 @@ public class PackageManagerShellCommandInstallTest {
     private static final String TEST_SDK1_DIFFERENT_SIGNER = "HelloWorldSdk1DifferentSigner.apk";
     private static final String TEST_SDK2 = "HelloWorldSdk2.apk";
     private static final String TEST_SDK2_UPDATED = "HelloWorldSdk2Updated.apk";
+
+    private static final String TEST_USING_SDK1_OPTIONAL = "HelloWorldUsingSdk1Optional.apk";
+
+    private static final String TEST_USING_SDK1_OPTIONAL_SDK2 =
+            "HelloWorldUsingSdk1OptionalSdk2.apk";
     private static final String TEST_USING_SDK1 = "HelloWorldUsingSdk1.apk";
     private static final String TEST_USING_SDK1_AND_SDK2 = "HelloWorldUsingSdk1And2.apk";
 
@@ -221,7 +226,7 @@ public class PackageManagerShellCommandInstallTest {
         return InstrumentationRegistry.getInstrumentation().getUiAutomation();
     }
 
-    private static String executeShellCommand(String command) throws IOException {
+    /* package */ static String executeShellCommand(String command) throws IOException {
         final ParcelFileDescriptor stdout = getUiAutomation().executeShellCommand(command);
         try (InputStream inputStream = new ParcelFileDescriptor.AutoCloseInputStream(stdout)) {
             return readFullStream(inputStream);
@@ -1020,7 +1025,7 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
-    public void testCannotGetPackageInfoForSdkIfNotSystemOrShell() throws Exception {
+    public void testGetPackageInfoForSdk_notSystemOrShell() throws Exception {
         onBeforeSdkTests();
 
         installPackage(TEST_SDK1);
@@ -1030,21 +1035,41 @@ public class PackageManagerShellCommandInstallTest {
         assertThrows(PackageManager.NameNotFoundException.class,
                 () -> getPackageManager().getPackageInfo(TEST_SDK1_PACKAGE,
                         PackageManager.PackageInfoFlags.of(MATCH_STATIC_SHARED_AND_SDK_LIBRARIES)));
+    }
+
+    @Test
+    public void testGetApplicationInfoForSdk_notSystemOrShell() throws Exception {
+        onBeforeSdkTests();
+
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        // Normal access
         assertThrows(PackageManager.NameNotFoundException.class,
                 () -> getPackageManager().getApplicationInfo(TEST_SDK1_PACKAGE,
                         PackageManager.ApplicationInfoFlags.of(
                                 MATCH_STATIC_SHARED_AND_SDK_LIBRARIES)));
+    }
 
-        final List<SharedLibraryInfo> shareLibs = getPackageManager().getSharedLibraries(0);
-        SharedLibraryInfo sdk1 = findLibrary(shareLibs, TEST_SDK1_NAME, 1);
-        assertThat(sdk1).isNull();
+    @Test
+    public void testSharedLibraryAccess_notSystemOrShell() throws Exception {
+        onBeforeSdkTests();
 
-        PackageManager.Property property =
-                getPackageManager().getProperty("com.test.sdk1_1.TEST_PROPERTY",
-                        TEST_SDK1_PACKAGE);
-        assertThat(property).isNotNull();
-        assertThat(property.getName()).isEqualTo("com.test.sdk1_1.TEST_PROPERTY");
-        assertThat(property.getString()).isEqualTo("com.test.sdk1_1.testp1");
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        // Normal access
+        List<SharedLibraryInfo> shareLibs = getPackageManager().getSharedLibraries(/*flags=*/ 0);
+        SharedLibraryInfo sdk = findLibrary(shareLibs, TEST_SDK1_NAME, 1);
+        assertThat(sdk).isNull();
+    }
+
+    @Test
+    public void testGetPackageInfoForSdk_systemOrShell() throws Exception {
+        onBeforeSdkTests();
+
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
 
         // Access as a shell
         SystemUtil.runWithShellPermissionIdentity(() -> {
@@ -1053,14 +1078,59 @@ public class PackageManagerShellCommandInstallTest {
 
             assertThat(info).isNotNull();
             assertThat(info.packageName).isEqualTo(TEST_SDK1_PACKAGE);
+        });
+    }
 
+    @Test
+    public void testGetApplicationInfoForSdk_systemOrShell() throws Exception {
+        onBeforeSdkTests();
+
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        // Access as a shell
+        SystemUtil.runWithShellPermissionIdentity(() -> {
             ApplicationInfo appInfo = getPackageManager().getApplicationInfo(TEST_SDK1_PACKAGE,
                     PackageManager.ApplicationInfoFlags.of(
                             MATCH_STATIC_SHARED_AND_SDK_LIBRARIES));
 
             assertThat(appInfo).isNotNull();
             assertThat(appInfo.icon).isGreaterThan(0);
+
+            assertThat(appInfo.targetSdkVersion).isEqualTo(34);
+            assertThat(appInfo.minSdkVersion).isEqualTo(30);
         });
+    }
+
+    @Test
+    public void testSharedLibraryAccess_systemOrShell() throws Exception {
+        onBeforeSdkTests();
+
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        // Access as a shell
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            List<SharedLibraryInfo> shareLibs = getPackageManager().getSharedLibraries(/*flags=*/
+                    0);
+            SharedLibraryInfo sdk = findLibrary(shareLibs, TEST_SDK1_NAME, 1);
+            assertThat(sdk).isNotNull();
+        });
+    }
+
+    @Test
+    public void testGetProperty() throws Exception {
+        onBeforeSdkTests();
+
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        PackageManager.Property property =
+                getPackageManager().getProperty("com.test.sdk1_1.TEST_PROPERTY",
+                        TEST_SDK1_PACKAGE);
+        assertThat(property).isNotNull();
+        assertThat(property.getName()).isEqualTo("com.test.sdk1_1.TEST_PROPERTY");
+        assertThat(property.getString()).isEqualTo("com.test.sdk1_1.testp1");
     }
 
     @Test
@@ -1224,29 +1294,31 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     @RequiresFlagsEnabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testAppUsingSdkInstallAndUpdate_allowAppInstallWithoutSDK() throws Exception {
+    public void testAppUsingSdkOptionalInstallInstall_allowAppInstallWithoutSDK()
+            throws Exception {
         onBeforeSdkTests();
 
-        testAppUsingSdkInstallAndUpdate(true /* enableSdkLibIndependence */);
+        // Try to install without required SDK1.
+        installPackage(TEST_USING_SDK1_OPTIONAL);
+        assertTrue(isAppInstalled(TEST_SDK_USER_PACKAGE));
     }
 
     @Test
     @RequiresFlagsDisabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testAppUsingSdkInstallAndUpdate_blockAppInstallWithoutSDK() throws Exception {
+    public void testAppUsingSdkOptionalInstall_blockAppInstallWithoutSDK() throws Exception {
         onBeforeSdkTests();
 
-        testAppUsingSdkInstallAndUpdate(false /* enableSdkLibIndependence */);
+        // Try to install without required SDK1.
+        installPackage(TEST_USING_SDK1_OPTIONAL, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
     }
 
-    public void testAppUsingSdkInstallAndUpdate(boolean enableSdkLibIndependence) throws Exception {
+    @Test
+    public void testAppUsingSdkRequiredInstallAndUpdate() throws Exception {
+        onBeforeSdkTests();
         // Try to install without required SDK1.
-        if (enableSdkLibIndependence) {
-            installPackage(TEST_USING_SDK1);
-            assertTrue(isAppInstalled(TEST_SDK_USER_PACKAGE));
-        } else {
-            installPackage(TEST_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-            assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
-        }
+        installPackage(TEST_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
 
         // Now install the required SDK1.
         installPackage(TEST_SDK1);
@@ -1278,12 +1350,8 @@ public class PackageManagerShellCommandInstallTest {
         }
 
         // Try to install without required SDK2.
-        if (enableSdkLibIndependence) {
-            installPackage(TEST_USING_SDK1_AND_SDK2);
-        } else {
-            installPackage(TEST_USING_SDK1_AND_SDK2,
-                    "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-        }
+        installPackage(TEST_USING_SDK1_AND_SDK2,
+                "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
 
         // Now install the required SDK2.
         installPackage(TEST_SDK2);
@@ -1319,23 +1387,9 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
-    @RequiresFlagsDisabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testAppUsingSdkInstallGroupInstall_blockAppInstallWithoutSDK() throws Exception {
+    public void testAppUsingSdkRequiredInstallGroupInstall() throws Exception {
         onBeforeSdkTests();
 
-        testAppUsingSdkInstallGroupInstall(false /* enableSdkLibIndependence */);
-    }
-
-    @Test
-    @RequiresFlagsEnabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testAppUsingSdkInstallGroupInstall_allowAppInstallWithoutSDK() throws Exception {
-        onBeforeSdkTests();
-
-        testAppUsingSdkInstallGroupInstall(true /* enableSdkLibIndependence */);
-    }
-
-    private void testAppUsingSdkInstallGroupInstall(boolean enableSdkLibIndependence)
-            throws Exception {
         // Install/uninstall the sdk to grab its certDigest.
         installPackage(TEST_SDK1);
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
@@ -1343,13 +1397,8 @@ public class PackageManagerShellCommandInstallTest {
         uninstallPackageSilently(TEST_SDK1_PACKAGE);
 
         // Try to install without required SDK1.
-        if (enableSdkLibIndependence) {
-            installPackage(TEST_USING_SDK1);
-            assertTrue(isAppInstalled(TEST_SDK_USER_PACKAGE));
-        } else {
-            installPackage(TEST_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-            assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
-        }
+        installPackage(TEST_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
 
         // Parent session
         String parentSessionId = createSession("--multi-package");
@@ -1400,8 +1449,7 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
-    @RequiresFlagsDisabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testUninstallSdkWhileAppUsing_blockUninstall() throws Exception {
+    public void testUninstallSdkRequiredWhileAppUsing_blockUninstall() throws Exception {
         onBeforeSdkTests();
 
         // Install the required SDK1.
@@ -1421,7 +1469,7 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     @RequiresFlagsEnabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testUninstallSdkWhileAppUsing_allowUninstall() throws Exception {
+    public void testUninstallSdkOptionalWhileAppUsing_allowUninstall() throws Exception {
         onBeforeSdkTests();
 
         // Install the required SDK1.
@@ -1430,11 +1478,141 @@ public class PackageManagerShellCommandInstallTest {
 
         overrideUsesSdkLibraryCertificateDigest(getPackageCertDigest(TEST_SDK1_PACKAGE));
 
-        // Install the package.
-        installPackage(TEST_USING_SDK1);
+        // Install the package optional using sdk1
+        installPackage(TEST_USING_SDK1_OPTIONAL);
 
         uninstallPackage(TEST_SDK1_PACKAGE, "Success");
         assertThat(isSdkInstalled(TEST_SDK1_NAME, 1)).isFalse();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_SDK_LIB_INDEPENDENCE)
+    public void testSdkOptionalEnabledGetSharedLibraries() throws Exception {
+        onBeforeSdkTests();
+
+        // Install the SDK1.
+        installPackage(TEST_SDK1);
+        // Install the SDK2.
+        installPackage(TEST_SDK2);
+
+        {
+            List<SharedLibraryInfo> libs = getSharedLibraries();
+            SharedLibraryInfo sdk1 = findLibrary(libs, "com.test.sdk1", 1);
+            assertNotNull(sdk1);
+            SharedLibraryInfo sdk2 = findLibrary(libs, "com.test.sdk2", 2);
+            assertNotNull(sdk2);
+        }
+        {
+            overrideUsesSdkLibraryCertificateDigest(getPackageCertDigest(TEST_SDK1_PACKAGE));
+
+            installPackage(TEST_USING_SDK1_OPTIONAL_SDK2);
+
+            List<SharedLibraryInfo> libs = getSharedLibraries();
+            SharedLibraryInfo sdk1 = findLibrary(libs, "com.test.sdk1", 1);
+            assertNotNull(sdk1);
+            SharedLibraryInfo sdk2 = findLibrary(libs, "com.test.sdk2", 2);
+            assertNotNull(sdk2);
+
+            // SDK1 optional
+            assertEquals(TEST_SDK_USER_PACKAGE,
+                    sdk1.getDependentPackages().get(0).getPackageName());
+            assertEquals(TEST_SDK_USER_PACKAGE,
+                    sdk1.getOptionalDependentPackages().get(0).getPackageName());
+
+            // SDK2 required
+            assertEquals(TEST_SDK_USER_PACKAGE,
+                    sdk2.getDependentPackages().get(0).getPackageName());
+            assertThat(sdk2.getOptionalDependentPackages()).isEmpty();
+
+            getUiAutomation().adoptShellPermissionIdentity();
+            try {
+                ApplicationInfo appInfo = getPackageManager().getApplicationInfo(
+                        TEST_SDK_USER_PACKAGE,
+                        PackageManager.ApplicationInfoFlags.of(GET_SHARED_LIBRARY_FILES));
+
+                // feature is enabled. Two, one is optional, one is required
+                assertThat(appInfo.sharedLibraryInfos).isNotNull();
+                assertThat(appInfo.optionalSharedLibraryInfos).isNotNull();
+                assertThat(appInfo.sharedLibraryInfos.size()).isEqualTo(2);
+                assertThat(appInfo.optionalSharedLibraryInfos.size()).isEqualTo(1);
+
+                assertThat(appInfo.optionalSharedLibraryInfos.get(0).getName()).isEqualTo(
+                        "com.test.sdk1");
+                assertThat(appInfo.optionalSharedLibraryInfos.get(0).getLongVersion()).isEqualTo(1);
+
+                assertThat(appInfo.sharedLibraryInfos.get(0).getName()).isEqualTo(
+                        "com.test.sdk1");
+                assertThat(appInfo.sharedLibraryInfos.get(0).getLongVersion()).isEqualTo(1);
+                assertThat(appInfo.sharedLibraryInfos.get(1).getName()).isEqualTo(
+                        "com.test.sdk2");
+                assertThat(appInfo.sharedLibraryInfos.get(1).getLongVersion()).isEqualTo(2);
+            } finally {
+                getUiAutomation().dropShellPermissionIdentity();
+            }
+            uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
+        }
+    }
+
+    @Test
+    @RequiresFlagsDisabled(FLAG_SDK_LIB_INDEPENDENCE)
+    public void testSdkOptionalDisabledGetSharedLibraries() throws Exception {
+        onBeforeSdkTests();
+
+        // Install the SDK1.
+        installPackage(TEST_SDK1);
+        // Install the SDK2.
+        installPackage(TEST_SDK2);
+
+        {
+            List<SharedLibraryInfo> libs = getSharedLibraries();
+            SharedLibraryInfo sdk1 = findLibrary(libs, "com.test.sdk1", 1);
+            assertNotNull(sdk1);
+            SharedLibraryInfo sdk2 = findLibrary(libs, "com.test.sdk2", 2);
+            assertNotNull(sdk2);
+        }
+
+        {
+            overrideUsesSdkLibraryCertificateDigest(getPackageCertDigest(TEST_SDK1_PACKAGE));
+
+            installPackage(TEST_USING_SDK1_OPTIONAL_SDK2);
+
+            List<SharedLibraryInfo> libs = getSharedLibraries();
+            SharedLibraryInfo sdk1 = findLibrary(libs, "com.test.sdk1", 1);
+            assertNotNull(sdk1);
+            SharedLibraryInfo sdk2 = findLibrary(libs, "com.test.sdk2", 2);
+            assertNotNull(sdk2);
+
+            assertEquals(TEST_SDK_USER_PACKAGE,
+                    sdk1.getDependentPackages().get(0).getPackageName());
+            assertEquals(TEST_SDK_USER_PACKAGE,
+                    sdk2.getDependentPackages().get(0).getPackageName());
+            assertThat(sdk1.getOptionalDependentPackages()).isEmpty();
+            assertThat(sdk2.getOptionalDependentPackages()).isEmpty();
+
+
+            getUiAutomation().adoptShellPermissionIdentity();
+            try {
+                ApplicationInfo appInfo = getPackageManager().getApplicationInfo(
+                        TEST_SDK_USER_PACKAGE,
+                        PackageManager.ApplicationInfoFlags.of(GET_SHARED_LIBRARY_FILES));
+
+                // Two, one is optional, one is required but feature is disabled
+                assertThat(appInfo.sharedLibraryInfos).isNotNull();
+                assertThat(appInfo.optionalSharedLibraryInfos).isNull();
+                assertThat(appInfo.sharedLibraryInfos.size()).isEqualTo(2);
+
+                assertThat(appInfo.sharedLibraryInfos.get(0).getName()).isEqualTo(
+                        "com.test.sdk1");
+                assertThat(appInfo.sharedLibraryInfos.get(0).getLongVersion()).isEqualTo(1);
+
+                assertThat(appInfo.sharedLibraryInfos.get(1).getName()).isEqualTo(
+                        "com.test.sdk2");
+                assertThat(appInfo.sharedLibraryInfos.get(1).getLongVersion()).isEqualTo(2);
+            } finally {
+                getUiAutomation().dropShellPermissionIdentity();
+            }
+            uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
+        }
     }
 
     @Test
@@ -1477,6 +1655,8 @@ public class PackageManagerShellCommandInstallTest {
                     sdk1.getDependentPackages().get(0).getPackageName());
             assertEquals(TEST_SDK_USER_PACKAGE,
                     sdk2.getDependentPackages().get(0).getPackageName());
+            assertThat(sdk1.getOptionalDependentPackages()).isEmpty();
+            assertThat(sdk2.getOptionalDependentPackages()).isEmpty();
 
             uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
         }
@@ -1529,42 +1709,16 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
-    @RequiresFlagsDisabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testAppUsingSdkUsingSdkInstallAndUpdate_blockAppInstallWithoutSDK()
-            throws Exception {
+    public void testAppUsingSdkRequiredUsingSdkInstallAndUpdate() throws Exception {
         onBeforeSdkTests();
 
-        testAppUsingSdkUsingSdkInstallAndUpdate(false /* enableSdkLibIndependence */);
-    }
-
-    @Test
-    @RequiresFlagsEnabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testAppUsingSdkUsingSdkInstallAndUpdate_allowAppInstallWithoutSDK()
-            throws Exception {
-        onBeforeSdkTests();
-
-        testAppUsingSdkUsingSdkInstallAndUpdate(true /* enableSdkLibIndependence */);
-    }
-
-    public void testAppUsingSdkUsingSdkInstallAndUpdate(boolean enableSdkLibIndependence)
-            throws Exception {
         // Try to install without required SDK1.
-        if (enableSdkLibIndependence) {
-            installPackage(TEST_USING_SDK3);
-            assertTrue(isAppInstalled(TEST_SDK_USER_PACKAGE));
-        } else {
-            installPackage(TEST_USING_SDK3, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-            assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
-        }
+        installPackage(TEST_USING_SDK3, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
 
         // Try to install SDK3 without required SDK1.
-        if (enableSdkLibIndependence) {
-            installPackage(TEST_SDK3_USING_SDK1);
-            assertTrue(isSdkInstalled(TEST_SDK3_NAME, 3));
-        } else {
-            installPackage(TEST_SDK3_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-            assertFalse(isSdkInstalled(TEST_SDK3_NAME, 3));
-        }
+        installPackage(TEST_SDK3_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        assertFalse(isSdkInstalled(TEST_SDK3_NAME, 3));
 
         // Now install the required SDK1.
         installPackage(TEST_SDK1);
@@ -1600,12 +1754,8 @@ public class PackageManagerShellCommandInstallTest {
         }
 
         // Try to install updated SDK3 without required SDK2.
-        if (enableSdkLibIndependence) {
-            installPackage(TEST_SDK3_USING_SDK1_AND_SDK2);
-        } else {
-            installPackage(TEST_SDK3_USING_SDK1_AND_SDK2,
-                    "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-        }
+        installPackage(TEST_SDK3_USING_SDK1_AND_SDK2,
+                "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
 
         // Now install the required SDK2.
         installPackage(TEST_SDK2);
@@ -1642,33 +1792,12 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testSdkUsingSdkInstallAndUpdate_allowAppInstallWithoutSDK() throws Exception {
-        onBeforeSdkTests();
-
-        testSdkUsingSdkInstallAndUpdate(true /* enableSdkLibIndependence */);
-    }
-
-    @Test
-    @RequiresFlagsDisabled(FLAG_SDK_LIB_INDEPENDENCE)
-    public void testSdkUsingSdkInstallAndUpdate_blockAppInstallWithoutSDK() throws Exception {
-        onBeforeSdkTests();
-
-        testSdkUsingSdkInstallAndUpdate(false /* enableSdkLibIndependence */);
-    }
-
-    public void testSdkUsingSdkInstallAndUpdate(boolean enableSdkLibIndependence) throws Exception {
+    public void testSdkUsingSdkRequiredInstallAndUpdate() throws Exception {
         onBeforeSdkTests();
 
         // Try to install without required SDK1.
-        if (enableSdkLibIndependence) {
-            installPackage(TEST_SDK3_USING_SDK1);
-            assertTrue(isSdkInstalled(TEST_SDK3_NAME, 3));
-        } else {
-            installPackage(TEST_SDK3_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-            assertFalse(isSdkInstalled(TEST_SDK3_NAME, 3));
-        }
-
+        installPackage(TEST_SDK3_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        assertFalse(isSdkInstalled(TEST_SDK3_NAME, 3));
 
         // Now install the required SDK1.
         installPackage(TEST_SDK1);
@@ -1699,13 +1828,8 @@ public class PackageManagerShellCommandInstallTest {
         }
 
         // Try to install without required SDK2.
-
-        if (enableSdkLibIndependence) {
-            installPackage(TEST_SDK3_USING_SDK1_AND_SDK2);
-        } else {
-            installPackage(TEST_SDK3_USING_SDK1_AND_SDK2,
-                    "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
-        }
+        installPackage(TEST_SDK3_USING_SDK1_AND_SDK2,
+                "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
 
         // Now install the required SDK2.
         installPackage(TEST_SDK2);
@@ -1803,6 +1927,16 @@ public class PackageManagerShellCommandInstallTest {
         // Override verifier for updates of debuggable apps.
         setSystemProperty("debug.pm.adb_verifier_override_packages",
                 CTS_PACKAGE_NAME + ";" + TEST_VERIFIER_PACKAGE);
+
+        final int settingValue = Integer.parseInt(
+                executeShellCommand("settings get global verifier_verify_adb_installs").trim());
+        final String sysPropertyValue = getSystemProperty(
+                "debug.pm.adb_verifier_override_packages").trim();
+        // Make sure the setting and property are set
+        assertEquals("verifier_verify_adb_installs is " + settingValue + " expecting 1",
+                1, settingValue);
+        assertEquals("debug.pm.adb_verifier_override_packages is " + sysPropertyValue,
+                CTS_PACKAGE_NAME + ";" + TEST_VERIFIER_PACKAGE, sysPropertyValue);
 
         // Update the package, should trigger verifier override.
         installPackage(updatedName, expectedResultStartsWith);
@@ -2467,10 +2601,12 @@ public class PackageManagerShellCommandInstallTest {
         }
         @Override
         public void onReceive(Context context, Intent intent) {
-            final String packageName = intent.getData().getEncodedSchemeSpecificPart();
+            final String packageName = intent.getData() == null
+                    ? null : intent.getData().getEncodedSchemeSpecificPart();
             final int userId = context.getUserId();
-            if (intent.getAction().equals(mAction)
-                    && packageName.equals(mTargetPackage) && userId == mTargetUserId) {
+            if (intent.getAction().equals(mAction) && userId == mTargetUserId
+                    && (packageName == null || packageName.equals(mTargetPackage))) {
+                // Only check packageName if it is included in the intent
                 mUserReceivedBroadcast.complete(intent);
             }
         }
@@ -2500,6 +2636,5 @@ public class PackageManagerShellCommandInstallTest {
             mUserReceivedBroadcast = new CompletableFuture();
         }
     }
-
 }
 

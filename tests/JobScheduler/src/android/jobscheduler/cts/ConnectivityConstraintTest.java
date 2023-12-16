@@ -15,6 +15,8 @@
  */
 package android.jobscheduler.cts;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.Manifest.permission.OVERRIDE_COMPAT_CHANGE_CONFIG_ON_RELEASE_BUILD;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED;
 import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
@@ -23,6 +25,8 @@ import static org.junit.Assert.assertNotEquals;
 
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
+import android.app.compat.CompatChanges;
+import android.app.compat.PackageOverride;
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.content.Context;
@@ -619,17 +623,27 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         if (!hasEthernetConnection()) {
             // Deadline passed with no network satisfied.
             mNetworkingHelper.setAllNetworksEnabled(false);
-            ji = mBuilder
-                    .setRequiredNetwork(nr)
-                    .setOverrideDeadline(0)
-                    .build();
 
-            kTestEnvironment.setExpectedExecutions(1);
-            mJobScheduler.schedule(ji);
-            runSatisfiedJob(CONNECTIVITY_JOB_ID);
-            assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
-
-            params = kTestEnvironment.getLastStartJobParameters();
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> CompatChanges.putPackageOverrides(
+                            TestAppInterface.TEST_APP_PACKAGE,
+                            Map.of(TestAppInterface.ENFORCE_MINIMUM_TIME_WINDOWS,
+                                    new PackageOverride.Builder().setEnabled(false).build())
+                    ),
+                    OVERRIDE_COMPAT_CHANGE_CONFIG_ON_RELEASE_BUILD, INTERACT_ACROSS_USERS_FULL);
+            mTestAppInterface = new TestAppInterface(mContext, CONNECTIVITY_JOB_ID);
+            mTestAppInterface.scheduleJob(
+                    Collections.emptyMap(),
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE,
+                            JobInfo.NETWORK_TYPE_ANY
+                    ),
+                    Map.of(TestJobSchedulerReceiver.EXTRA_DEADLINE, 0L)
+            );
+            mTestAppInterface.runSatisfiedJob();
+            assertTrue("Job didn't fire immediately",
+                    mTestAppInterface.awaitJobStart(DEFAULT_TIMEOUT_MILLIS));
+            params = mTestAppInterface.getLastParams();
             assertNull(params.getNetwork());
         }
 

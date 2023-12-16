@@ -5220,42 +5220,62 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
         // These below API's only work with privileged permissions (obtained via shell identity
         // for test)
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        List<CoexUnsafeChannel> prevUnsafeChannels = null;
+        List<CoexUnsafeChannel> prevUnsafeChannels = new ArrayList<>();
         int prevRestrictions = -1;
         try {
             uiAutomation.adoptShellPermissionIdentity();
-            final TestCoexCallback callback = new TestCoexCallback(mLock);
-            final List<CoexUnsafeChannel> testUnsafeChannels = new ArrayList<>();
-            testUnsafeChannels.add(new CoexUnsafeChannel(WIFI_BAND_24_GHZ, 6));
-            final int testRestrictions = COEX_RESTRICTION_WIFI_DIRECT
-                    | COEX_RESTRICTION_SOFTAP | COEX_RESTRICTION_WIFI_AWARE;
             synchronized (mLock) {
                 try {
+                    boolean defaultAlgoEnabled = false;
+                    final TestCoexCallback callback = new TestCoexCallback(mLock);
                     sWifiManager.registerCoexCallback(mExecutor, callback);
+
                     // Callback should be called after registering
                     mLock.wait(TEST_WAIT_DURATION_MS);
                     assertEquals(1, callback.getOnCoexUnsafeChannelChangedCount());
-                    // Store the previous coex channels and set new coex channels
+
+                    // Store the previous coex channels and try setting new coex channels 5 times.
+                    //
+                    // If the default algorithm is disabled, we'll get exactly 5 callbacks, and we
+                    // can verify that the update channels match what we inputted.
+                    //
+                    // If the default algorithm is enabled, then the callbacks will trigger
+                    // according to the algorithm, which may or may not trigger during the test.
+                    // Thus we try 5 times and see if the callbacks match the number of tries, since
+                    // it's highly unlikely that the default algorithm will update the channels
+                    // exactly 5 times during the test.
                     prevUnsafeChannels = callback.getCoexUnsafeChannels();
                     prevRestrictions = callback.getCoexRestrictions();
-                    sWifiManager.setCoexUnsafeChannels(testUnsafeChannels, testRestrictions);
-                    mLock.wait(TEST_WAIT_DURATION_MS);
-                    // Unregister callback and try setting again
-                    sWifiManager.unregisterCoexCallback(callback);
-                    sWifiManager.setCoexUnsafeChannels(testUnsafeChannels, testRestrictions);
-                    // Callback should not be called here since it was unregistered.
-                    mLock.wait(TEST_WAIT_DURATION_MS);
+                    List<CoexUnsafeChannel> testChannels = null;
+                    final int testRestrictions = COEX_RESTRICTION_WIFI_DIRECT
+                            | COEX_RESTRICTION_SOFTAP | COEX_RESTRICTION_WIFI_AWARE;
+                    for (int i = 0; i < 5; i++) {
+                        testChannels = List.of(new CoexUnsafeChannel(WIFI_BAND_24_GHZ, 1 + i));
+                        sWifiManager.setCoexUnsafeChannels(testChannels, testRestrictions);
+                        mLock.wait(TEST_WAIT_DURATION_MS);
+                        if (callback.getOnCoexUnsafeChannelChangedCount() != i + 2) {
+                            defaultAlgoEnabled = true;
+                            break;
+                        }
+                    }
+
+                    if (!defaultAlgoEnabled) {
+                        int currentCallbackCount = callback.getOnCoexUnsafeChannelChangedCount();
+                        assertEquals(testChannels, callback.getCoexUnsafeChannels());
+                        assertEquals(testRestrictions, callback.getCoexRestrictions());
+                        // Unregister callback and try setting again
+                        sWifiManager.unregisterCoexCallback(callback);
+                        sWifiManager.setCoexUnsafeChannels(
+                                List.of(new CoexUnsafeChannel(WIFI_BAND_24_GHZ, 11)),
+                                testRestrictions);
+                        mLock.wait(TEST_WAIT_DURATION_MS);
+                        // Callback should not be called here since it was unregistered.
+                        assertThat(callback.getOnCoexUnsafeChannelChangedCount())
+                                .isEqualTo(currentCallbackCount);
+                    }
                 } catch (InterruptedException e) {
                     fail("Thread interrupted unexpectedly while waiting on mLock");
                 }
-            }
-            if (callback.getOnCoexUnsafeChannelChangedCount() == 2) {
-                // Default algorithm disabled, setter should set the getter values.
-                assertEquals(testUnsafeChannels, callback.getCoexUnsafeChannels());
-                assertEquals(testRestrictions, callback.getCoexRestrictions());
-            } else if (callback.getOnCoexUnsafeChannelChangedCount() != 1) {
-                fail("Coex callback called " + callback.mOnCoexUnsafeChannelChangedCount
-                        + " times. Expected 0 or 1 calls." );
             }
         } finally {
             // Reset the previous unsafe channels if we overrode them.
@@ -6573,12 +6593,12 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     }
 
     /**
-     * Tests {@link WifiManager#isWifiWepSupported()} does not crash.
+     * Tests {@link WifiManager#isWepSupported()} does not crash.
      */
     @RequiresFlagsEnabled(Flags.FLAG_WEP_USAGE)
     @Test
-    public void testIsWifiWepSupported() throws Exception {
-        sWifiManager.isWifiWepSupported();
+    public void testIsWepSupported() throws Exception {
+        sWifiManager.isWepSupported();
     }
 
     /**
@@ -6588,5 +6608,73 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     @Test
     public void testIsWpaPersonalSupported() throws Exception {
         sWifiManager.isWpaPersonalSupported();
+    }
+
+    /**
+     * Tests {@link WifiManager#setWepAllowed()} and
+     * {@link WifiManager#queryWepAllowed()}.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_WEP_USAGE)
+    @Test
+    public void testSetAndQueryWepAllowed() throws Exception {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        Mutable<Boolean> isQuerySucceeded = new Mutable<Boolean>(false);
+        boolean currentWepAllowed = false;
+        boolean isRestoreRequired = false;
+        long now, deadline;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            Mutable<Boolean> isWepAllowed = new Mutable<Boolean>(false);
+            sWifiManager.queryWepAllowed(mExecutor,
+                    new Consumer<Boolean>() {
+                    @Override
+                    public void accept(Boolean value) {
+                        synchronized (mLock) {
+                            isWepAllowed.value = value;
+                            isQuerySucceeded.value = true;
+                            mLock.notify();
+                        }
+                    }
+                });
+            synchronized (mLock) {
+                now = System.currentTimeMillis();
+                deadline = now + TEST_WAIT_DURATION_MS;
+                while (!isQuerySucceeded.value && now < deadline) {
+                    mLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+            assertTrue(isQuerySucceeded.value);
+            // Reset for next query
+            isQuerySucceeded.value = false;
+            currentWepAllowed = isWepAllowed.value;
+            isRestoreRequired = true;
+            sWifiManager.setWepAllowed(!currentWepAllowed);
+            sWifiManager.queryWepAllowed(mExecutor,
+                    new Consumer<Boolean>() {
+                    @Override
+                    public void accept(Boolean value) {
+                        synchronized (mLock) {
+                            isWepAllowed.value = value;
+                            isQuerySucceeded.value = true;
+                            mLock.notify();
+                        }
+                    }
+                });
+            synchronized (mLock) {
+                now = System.currentTimeMillis();
+                deadline = now + TEST_WAIT_DURATION_MS;
+                while (!isQuerySucceeded.value && now < deadline) {
+                    mLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+            assertEquals(isWepAllowed.value, !currentWepAllowed);
+        } finally {
+            if (isRestoreRequired) {
+                sWifiManager.setWepAllowed(currentWepAllowed);
+            }
+            uiAutomation.dropShellPermissionIdentity();
+        }
     }
 }

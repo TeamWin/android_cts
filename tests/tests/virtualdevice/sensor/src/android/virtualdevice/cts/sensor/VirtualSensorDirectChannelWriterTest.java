@@ -39,8 +39,6 @@ import org.junit.runner.RunWith;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 
@@ -159,35 +157,33 @@ public class VirtualSensorDirectChannelWriterTest {
     @Test
     public void writeEvent_singleChannel() throws Exception {
         testWriteSensorEvents(
-                new ArrayList<>(Arrays.asList(
-                        new SharedMemoryWrapper(CHANNEL_HANDLE, SHARED_MEMORY_SIZE))),
-                new ArrayList<>(Arrays.asList(mAccelerometer)));
+                List.of(new SharedMemoryWrapper(CHANNEL_HANDLE, SHARED_MEMORY_SIZE)),
+                List.of(mAccelerometer));
     }
 
     @Test
     public void writeEvent_multipleChannels() throws Exception {
         testWriteSensorEvents(
-                new ArrayList<>(Arrays.asList(
+                List.of(
                         new SharedMemoryWrapper(CHANNEL_HANDLE, SHARED_MEMORY_SIZE),
-                        new SharedMemoryWrapper(CHANNEL_HANDLE + 1, SHARED_MEMORY_SIZE * 2))),
-                new ArrayList<>(Arrays.asList(mAccelerometer)));
+                        new SharedMemoryWrapper(CHANNEL_HANDLE + 1, SHARED_MEMORY_SIZE * 2)),
+                List.of(mAccelerometer));
     }
 
     @Test
     public void writeEvent_multipleSensors_singleChannel() throws Exception {
         testWriteSensorEvents(
-                new ArrayList<>(Arrays.asList(
-                        new SharedMemoryWrapper(CHANNEL_HANDLE, SHARED_MEMORY_SIZE))),
-                new ArrayList<>(Arrays.asList(mAccelerometer, mGyroscope)));
+                List.of(new SharedMemoryWrapper(CHANNEL_HANDLE, SHARED_MEMORY_SIZE)),
+                List.of(mAccelerometer, mGyroscope));
     }
 
     @Test
     public void writeEvent_multipleSensors_multipleChannels() throws Exception {
         testWriteSensorEvents(
-                new ArrayList<>(Arrays.asList(
+                List.of(
                         new SharedMemoryWrapper(CHANNEL_HANDLE, SHARED_MEMORY_SIZE),
-                        new SharedMemoryWrapper(CHANNEL_HANDLE + 1, SHARED_MEMORY_SIZE * 2))),
-                new ArrayList<>(Arrays.asList(mAccelerometer, mGyroscope)));
+                        new SharedMemoryWrapper(CHANNEL_HANDLE + 1, SHARED_MEMORY_SIZE * 2)),
+                List.of(mAccelerometer, mGyroscope));
     }
 
     private void testWriteSensorEvents(

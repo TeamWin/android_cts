@@ -32,5 +32,15 @@
         }
       ]
     }
+  ],
+  "postsubmit": [
+    {
+      "name": "CtsVirtualDevicesCameraTestCases",
+      "options": [
+        {
+          "exclude-annotation": "androidx.test.filters.FlakyTest"
+        }
+      ]
+    }
   ]
 }

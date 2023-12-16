@@ -244,7 +244,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                 queueEOS();
                 waitForAllOutputs();
                 mCodec.stop();
-                if (!(mIsInterlaced ? ref.equalsInterlaced(test) : ref.equals(test))) {
+                if (!(mIsInterlaced ? ref.equalsByteOutput(test) : ref.equals(test))) {
                     fail("Decoder output in surface mode does not match with output in bytebuffer "
                             + "mode \n" + mTestConfig + mTestEnv + test.getErrMsg());
                 }
@@ -333,7 +333,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
-                if (!(mIsInterlaced ? ref.equalsInterlaced(test) : ref.equals(test))) {
+                if (!(mIsInterlaced ? ref.equalsByteOutput(test) : ref.equals(test))) {
                     fail("Decoder output in surface mode does not match with output in bytebuffer "
                             + "mode \n" + mTestConfig + mTestEnv + test.getErrMsg());
                 }
@@ -347,7 +347,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                 queueEOS();
                 waitForAllOutputs();
                 mCodec.stop();
-                if (!(mIsInterlaced ? ref.equalsInterlaced(test) : ref.equals(test))) {
+                if (!(mIsInterlaced ? ref.equalsByteOutput(test) : ref.equals(test))) {
                     fail("Decoder output in surface mode does not match with output in bytebuffer "
                             + "mode \n" + mTestConfig + mTestEnv + test.getErrMsg());
                 }
@@ -437,7 +437,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                 queueEOS();
                 waitForAllOutputs();
                 mCodec.stop();
-                if (!(mIsInterlaced ? ref.equalsInterlaced(test) : ref.equals(test))) {
+                if (!(mIsInterlaced ? ref.equalsByteOutput(test) : ref.equals(test))) {
                     fail("Decoder output in surface mode does not match with output in bytebuffer "
                             + "mode \n" + mTestConfig + mTestEnv + test.getErrMsg());
                 }
@@ -451,7 +451,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                 queueEOS();
                 waitForAllOutputs();
                 mCodec.stop();
-                if (!(mIsInterlaced ? ref.equalsInterlaced(test) : ref.equals(test))) {
+                if (!(mIsInterlaced ? ref.equalsByteOutput(test) : ref.equals(test))) {
                     fail("Decoder output in surface mode does not match with output in bytebuffer "
                             + "mode \n" + mTestConfig + mTestEnv + test.getErrMsg());
                 }
@@ -469,7 +469,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                 queueEOS();
                 waitForAllOutputs();
                 mCodec.stop();
-                if (!(mIsInterlaced ? configRef.equalsInterlaced(configTest) :
+                if (!(mIsInterlaced ? configRef.equalsByteOutput(configTest) :
                         configRef.equals(configTest))) {
                     fail("Decoder output in surface mode does not match with output in bytebuffer "
                             + "mode \n" + mTestConfig + mTestEnv + configTest.getErrMsg());

@@ -1,39 +1,51 @@
 package android.accounts.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import android.accounts.Account;
 import android.os.Parcel;
 
-import junit.framework.TestCase;
+import androidx.test.runner.AndroidJUnit4;
 
-public class AccountTest extends TestCase {
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class AccountTest {
 
     private Account account;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
         account = new Account("abc@xyz.org", "com.my.auth");
     }
 
+    @Test
     public void testAccountObjectCreationWithNullName() {
         try {
-            new Account(null, "com.my.auth");
+            new Account((String) null, "com.my.auth");
             fail();
         } catch (IllegalArgumentException expectedException) {
         }
     }
 
+    @Test
     public void testAccountObjectCreationWithNullAccountType() {
         try {
-            new Account("abc@xyz.org", null);
+            new Account("abc@xyz.org", (String) null);
             fail();
         } catch (IllegalArgumentException expectedException) {
         }
     }
 
+    @Test
     public void testDescribeContents() {
         assertEquals(0, account.describeContents());
     }
 
+    @Test
     public void testWriteToParcel() {
         Parcel parcel = Parcel.obtain();
         parcel.setDataPosition(0);

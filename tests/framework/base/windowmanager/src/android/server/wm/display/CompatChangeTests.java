@@ -18,6 +18,7 @@ package android.server.wm.display;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.pm.ActivityInfo.OVERRIDE_ENABLE_COMPAT_FAKE_FOCUS;
+import static android.content.pm.ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO;
 import static android.content.pm.ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE;
 import static android.content.pm.ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_MEDIUM_VALUE;
 import static android.content.pm.ActivityInfo.OVERRIDE_SANDBOX_VIEW_BOUNDS_APIS;
@@ -30,6 +31,8 @@ import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
 import static android.provider.DeviceConfig.NAMESPACE_CONSTRAIN_DISPLAY_APIS;
 import static android.server.wm.allowdisplayorientationoverride.Components.ALLOW_DISPLAY_ORIENTATION_OVERRIDE_ACTIVITY;
+import static android.server.wm.allowminaspectratiooverrideoptin.Components.ALLOW_MIN_ASPECT_RATIO_OVERRIDE_OPT_IN_ACTIVITY;
+import static android.server.wm.allowminaspectratiooverrideoptout.Components.ALLOW_MIN_ASPECT_RATIO_OVERRIDE_OPT_OUT_ACTIVITY;
 import static android.server.wm.alloworientationoverride.Components.ALLOW_ORIENTATION_OVERRIDE_LANDSCAPE_ACTIVITY;
 import static android.server.wm.alloworientationoverride.Components.ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY;
 import static android.server.wm.allowsandboxingviewboundsapis.Components.ACTION_TEST_VIEW_SANDBOX_ALLOWED_PASSED;
@@ -946,6 +949,64 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     public void testOverrideMinAspectRatioActivityMinAspectRatioLargerThanOverride() {
         runMinAspectRatioTest(NON_RESIZEABLE_ASPECT_RATIO_ACTIVITY,
                 /* expected */ ACTIVITY_MIN_ASPECT_RATIO);
+    }
+
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO})
+    public void testOverrideMinAspectRatio_propertyTrue_overrideEnabled_overrideApplied() {
+        try (var compatChange = new CompatChangeCloseable(OVERRIDE_MIN_ASPECT_RATIO,
+                ALLOW_MIN_ASPECT_RATIO_OVERRIDE_OPT_IN_ACTIVITY.getPackageName());
+                var session = new ActivitySessionCloseable(
+                        ALLOW_MIN_ASPECT_RATIO_OVERRIDE_OPT_IN_ACTIVITY)) {
+            assertTrue(session.getActivityState().getShouldOverrideMinAspectRatio());
+        }
+    }
+
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO})
+    public void testOverrideMinAspectRatio_propertyFalse_overrideEnabled_overrideNotApplied() {
+        try (var compatChange = new CompatChangeCloseable(OVERRIDE_MIN_ASPECT_RATIO,
+                ALLOW_MIN_ASPECT_RATIO_OVERRIDE_OPT_IN_ACTIVITY.getPackageName());
+                var session = new ActivitySessionCloseable(
+                        ALLOW_MIN_ASPECT_RATIO_OVERRIDE_OPT_OUT_ACTIVITY)) {
+            assertFalse(session.getActivityState().getShouldOverrideMinAspectRatio());
+        }
+    }
+
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO})
+    public void testOverrideMinAspectRatio_propertyNotSet_overrideEnabled_overrideApplied() {
+        try (var session = new ActivitySessionCloseable(
+                NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY)) {
+            assertTrue(session.getActivityState().getShouldOverrideMinAspectRatio());
+        }
+    }
+
+    @Test
+    @DisableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO})
+    public void testOverrideMinAspectRatio_propertyNotSet_overrideDisabled_overrideNotApplied() {
+        try (var session = new ActivitySessionCloseable(
+                NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY)) {
+            assertFalse(session.getActivityState().getShouldOverrideMinAspectRatio());
+        }
+    }
+
+    @Test
+    @DisableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO})
+    public void testOverrideMinAspectRatio_propertyTrue_overrideDisabled_overrideNotApplied() {
+        try (var session = new ActivitySessionCloseable(
+                ALLOW_MIN_ASPECT_RATIO_OVERRIDE_OPT_IN_ACTIVITY)) {
+            assertFalse(session.getActivityState().getShouldOverrideMinAspectRatio());
+        }
+    }
+
+    @Test
+    @DisableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO})
+    public void testOverrideMinAspectRatio_propertyFalse_overrideDisabled_overrideNotApplied() {
+        try (var session = new ActivitySessionCloseable(
+                ALLOW_MIN_ASPECT_RATIO_OVERRIDE_OPT_OUT_ACTIVITY)) {
+            assertFalse(session.getActivityState().getShouldOverrideMinAspectRatio());
+        }
     }
 
     private boolean isCameraCompatForceRotationTreatmentConfigEnabled() {

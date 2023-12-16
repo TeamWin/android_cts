@@ -121,7 +121,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void test_closeProfileProxy() {
+    public void closeProfileProxy() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
         assertTrue(mIsProfileReady);
@@ -133,7 +133,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetConnectedDevices() {
+    public void getConnectedDevices() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -146,7 +146,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetDevicesMatchingConnectionStates() {
+    public void getDevicesMatchingConnectionStates() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -160,7 +160,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetConnectionState() {
+    public void getConnectionState() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -182,7 +182,7 @@ public class BluetoothHapClientTest {
      */
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetHapGroup() {
+    public void getHapGroup() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -195,7 +195,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetActivePresetIndex() {
+    public void getActivePresetIndex() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -212,7 +212,7 @@ public class BluetoothHapClientTest {
      */
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetActivePresetInfo() {
+    public void getActivePresetInfo() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -225,7 +225,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testSelectPreset() {
+    public void selectPreset() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -238,7 +238,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testSelectPresetForGroup() {
+    public void selectPresetForGroup() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -252,7 +252,7 @@ public class BluetoothHapClientTest {
      */
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testSwitchToNextPreset() {
+    public void switchToNextPreset() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -268,7 +268,7 @@ public class BluetoothHapClientTest {
      */
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testSwitchToNextPresetForGroup() {
+    public void switchToNextPresetForGroup() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -282,7 +282,7 @@ public class BluetoothHapClientTest {
      */
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testSwitchToPreviousPreset() {
+    public void switchToPreviousPreset() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -298,7 +298,7 @@ public class BluetoothHapClientTest {
      */
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testSwitchToPreviousPresetForGroup() {
+    public void switchToPreviousPresetForGroup() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -312,7 +312,7 @@ public class BluetoothHapClientTest {
      */
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetPresetInfo() {
+    public void getPresetInfo() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -326,7 +326,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetAllPresetInfo() {
+    public void getAllPresetInfo() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -341,7 +341,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testSetPresetName() {
+    public void setPresetName() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -354,7 +354,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testSetPresetNameForGroup() {
+    public void setPresetNameForGroup() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -365,7 +365,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testSetGetConnectionPolicy() {
+    public void setGetConnectionPolicy() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -389,7 +389,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testRegisterUnregisterCallback() {
+    public void registerUnregisterCallback() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -438,7 +438,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testRegisterCallbackNoPermission() {
+    public void registerCallbackNoPermission() {
         TestUtils.dropPermissionAsShellUid();
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
 
@@ -477,7 +477,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testCallbackCalls() {
+    public void callbackCalls() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -545,7 +545,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetHearingAidType() {
+    public void getHearingAidType() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -559,7 +559,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testSupportsSynchronizedPresets() {
+    public void supportsSynchronizedPresets() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -573,7 +573,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testSupportsIndependentPresets() {
+    public void supportsIndependentPresets() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -587,7 +587,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testSupportsDynamicPresets() {
+    public void supportsDynamicPresets() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 
@@ -601,7 +601,7 @@ public class BluetoothHapClientTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testSupportsWritablePresets() {
+    public void supportsWritablePresets() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHapClient);
 

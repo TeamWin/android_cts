@@ -4513,8 +4513,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="test_accessibility_service_label">Test accessibility service</string>
     <string name="policy_transparency_test_instructions">
         1. <xliff:g id="set_step" example="Set policy by turning the switch on">%1$s</xliff:g>\n
-        2. Open Settings app by clicking the \"Open settings\" button below. Note that this will open the personal Settings app. If this device has the work settings in a different app or screen, then navigate there, ignoring the button if necessary.\n
-        3. Verify that clicking on \"Allow multiple users\" toggle will trigger a support dialog.\n
+        2. Open Settings app by clicking the "Open settings" button below. Note that this will open the personal Settings app. If this device has the work settings in a different app or screen, then navigate there, ignoring the button if necessary.\n
+        3. Verify that performing the following action will trigger a support dialog:\n
+           <xliff:g id="user_action" example="Adding an account">%2$s</xliff:g>.<xliff:g id="exception_node" example="NOTE: if the device doesn't support the action...">%3$s</xliff:g>\n
         4. Verify that the support dialog displays the short support message set earlier.\n
     </string>
     <string name="optional_policy_transparency_test_note">\n\t<b>NOTE</b>: if the device doesn\'t support this action please skip this test and mark it as passing.</string>
@@ -4522,7 +4523,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Set \'%s\' user restriction by turning on the switch below.
     </string>
     <string name="disallow_add_user">Disallow add user</string>
-    <string name="disallow_add_user_action">Accessing the multiple users settings page, or if the device allows access to the page, then attempting to add a new user </string>
+    <string name="disallow_add_user_action">Accessing the multiple users settings page, or if the device allows access to the page, then attempting to enable the feature </string>
     <string name="disallow_adjust_volume">Disallow adjust volume</string>
     <string name="disallow_adjust_volume_action">Adjusting the volume\n
         NOTE: If the device does not support volume adjustment in Settings app please skip this test and mark it as passing.\n</string>
@@ -5471,8 +5472,6 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_uap_notifications_test">USB Audio Peripheral Notifications Test</string>
     <string name="uapPeripheralProfileAttributes">USB Audio Peripheral Attributes</string>
     <string name="audio_uap_play_test">USB Audio Peripheral Play Test</string>
-    <string name="uapPlayTestInstructions">Connect the USB Audio Interface Peripheral and press the
-        PLAY button below. Verify that a tone is correctly played.</string>
     <string name="uapPlayStopTestInstructions">Connect the USB Audio Interface Peripheral and press the
         PLAY button below. Verify that a tone is correctly played. Then press the STOP button.
     </string>
@@ -5480,8 +5479,6 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_uap_play_stopBtn">Stop</string>
 
     <string name="audio_uap_record_test">USB Audio Peripheral Record Test</string>
-    <string name="uapRecordTestInstructions">Connect the USB Audio Peripheral and press the RECORD or
-        RECORD LOOPBACK button below. Verify that a tone is correctly played.</string>
     <string name="audio_uap_record_recordBtn">Record</string>
     <string name="audio_uap_record_recordLoopbackBtn">Record Loopback</string>
     <string name="audio_uap_record_stopBtn">Stop</string>
@@ -5731,6 +5728,9 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="audio_datapaths_calibrate">Calibrate Audio</string>
     <string name="audio_datapaths_calibratetitle">Calibrate Loopback Audio</string>
+
+    <string name="audio_exempt_nonhandheld">This is a non-handheld device and is exempt from this test.
+        Press the \"Pass\" button (below) to continue.</string>
 
     <string name="audio_datapaths_speakermic_test">Audio Data Paths Speaker/Mic Test</string>
     <string name="audio_datapaths_speakermic_info">This test verifies basic functionality over a set of audio routes
@@ -6384,22 +6384,6 @@ Follow the instructions on the screen to measure the frequency response for the 
         displayed along with the name of the associated profile. If the peripheral matches the
         profile, the test passes. If not, the mismatches are displayed.
     </string>
-
-    <!-- USB Audio Peripheral Play Test -->
-    <string name="usbaudio_play_test"> USB Audio Peripheral Play Test</string>
-    <string name="usbaudio_play_info">
-        This test requires that you have connected a USB Audio Interface peripheral and
-        some way to monitor the output. Press the \"Play\" button and verify that a tone is produced.
-       </string>
-
-    <!-- USB Audio Peripheral Record Test -->
-    <string name="usbaudio_record_test"> USB Audio Peripheral Record Test</string>
-    <string name="usbaudio_record_info">
-        This test requires that you have connected a USB Audio Interface peripheral.
-        Connect the outputs to the inputs (with patch cables). Start playback by pressing the
-        \"Record Loopback\" button and verify that the recorded signal is displayed in the wave
-        display view. (It may be necessary to adjust the input controls on the peripheral).
-       </string>
 
     <!-- USB Audio Peripheral Buttons Test -->
     <string name="usbaudio_buttons_test"> USB Audio Peripheral Buttons Test</string>

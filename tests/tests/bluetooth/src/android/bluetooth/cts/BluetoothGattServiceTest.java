@@ -49,13 +49,13 @@ public class BluetoothGattServiceTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void test_getInstanceId() {
+    public void getInstanceId() {
         assertEquals(mBluetoothGattService.getInstanceId(), 0);
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void test_getType() {
+    public void getType() {
         assertEquals(mBluetoothGattService.getType(), BluetoothGattService.SERVICE_TYPE_PRIMARY);
     }
 }

@@ -117,6 +117,11 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         mDevice.executeShellCommand("locksettings set-disabled false");
         String output = mDevice.executeShellCommand("locksettings set-pin 1234");
         assertTrue("set-pin failed. Output: " + output, output.contains("1234"));
+
+        // Clear all other requests for lskf from the system.
+        String clearOutput = mDevice.executeShellCommand("cmd recovery clear-lskf android");
+        assertTrue("clear-lskf failed for package android. Output: " + clearOutput,
+                clearOutput.contains("success"));
     }
 
     public void testTearDown() throws Exception {

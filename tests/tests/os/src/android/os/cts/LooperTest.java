@@ -16,18 +16,36 @@
 
 package android.os.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.MessageQueue;
 import android.os.SystemClock;
-import android.test.AndroidTestCase;
+import android.platform.test.ravenwood.RavenwoodRule;
 import android.util.Printer;
 import android.util.StringBuilderPrinter;
 
+import androidx.test.runner.AndroidJUnit4;
+
 import com.android.compatibility.common.util.TestThread;
 
-public class LooperTest extends AndroidTestCase {
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class LooperTest {
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule.Builder()
+            .setProvideMainThread(true).build();
 
     public static final long WAIT_TIME = 1000;
 
@@ -37,17 +55,20 @@ public class LooperTest extends AndroidTestCase {
     private boolean mHasQuit;
     private Handler mLoopHandler;
 
+    @Test
     public void testDump() {
         StringBuilderPrinter printer = new StringBuilderPrinter(new StringBuilder());
         final String prefix = "LooperTest";
         Looper.getMainLooper().dump(printer, prefix);
     }
 
+    @Test
     public void testGetMainLooper() {
         Looper looper = Looper.getMainLooper();
         assertNotNull(looper);
     }
 
+    @Test
     public void testLoop() throws Throwable {
         Thread t = new Thread(new Runnable() {
             public void run() {
@@ -67,6 +88,7 @@ public class LooperTest extends AndroidTestCase {
         t.join();
     }
 
+    @Test
     public void testMyLooper() throws Throwable {
         TestThread t = new TestThread(new Runnable() {
             public void run() {
@@ -79,6 +101,7 @@ public class LooperTest extends AndroidTestCase {
         t.runTest(WAIT_TIME);
     }
 
+    @Test
     public void testIsCurrentThread() throws Throwable {
         final Looper[] looper = new Looper[1];
         TestThread t = new TestThread(new Runnable() {
@@ -94,6 +117,7 @@ public class LooperTest extends AndroidTestCase {
         assertFalse(looper[0].isCurrentThread());
     }
 
+    @Test
     public void testMyQueue() throws Throwable {
         TestThread t = new TestThread(new Runnable() {
             public void run() {
@@ -116,6 +140,7 @@ public class LooperTest extends AndroidTestCase {
         t.runTest(WAIT_TIME);
     }
 
+    @Test
     public void testGetQueue() throws Throwable {
         TestThread t = new TestThread(new Runnable() {
             public void run() {
@@ -128,6 +153,7 @@ public class LooperTest extends AndroidTestCase {
         t.runTest(WAIT_TIME);
     }
 
+    @Test
     public void testPrepare() throws Throwable {
         TestThread t = new TestThread(new Runnable() {
             public void run() {
@@ -145,6 +171,7 @@ public class LooperTest extends AndroidTestCase {
         t.runTest(WAIT_TIME);
     }
 
+    @Test
     public void testPrepareMainLooper() throws Throwable {
         TestThread t = new TestThread(new Runnable() {
             public void run() {
@@ -160,6 +187,7 @@ public class LooperTest extends AndroidTestCase {
         t.runTest(WAIT_TIME);
     }
 
+    @Test
     public void testQuit() throws Throwable {
         TestThread t = new TestThread(new Runnable() {
             public void run() {
@@ -191,6 +219,7 @@ public class LooperTest extends AndroidTestCase {
         t.joinAndCheck(WAIT_TIME);
     }
 
+    @Test
     public void testSetMessageLogging() throws Throwable {
         mHasRun = false;
 
@@ -216,6 +245,7 @@ public class LooperTest extends AndroidTestCase {
         assertTrue(mHasRun);
     }
 
+    @Test
     public void testToString() {
         assertNotNull(Looper.getMainLooper().toString());
     }

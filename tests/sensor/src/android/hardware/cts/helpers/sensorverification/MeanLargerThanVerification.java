@@ -33,7 +33,7 @@ public class MeanLargerThanVerification extends AbstractMeanVerification {
     public static final String PASSED_KEY = "mean_larger_than_passed";
     private static final String TAG = "MeanLargerThanVerification";
 
-    private static final float DEFAULT_GYRO_UNCAL_THRESHOLD = 0.0005f;
+    private static final float DEFAULT_GYRO_UNCAL_THRESHOLD = 0.0002f;
 
     private final float[] mExpected;
     private final float[] mThresholds;

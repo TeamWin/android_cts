@@ -109,7 +109,7 @@ public class BluetoothPanTest {
     }
 
     @Test
-    public void test_closeProfileProxy() {
+    public void closeProfileProxy() {
         assumeTrue(mHasBluetooth && mIsPanSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPan);
@@ -121,7 +121,7 @@ public class BluetoothPanTest {
     }
 
     @Test
-    public void test_getConnectedDevices() {
+    public void getConnectedDevices() {
         assumeTrue(mHasBluetooth && mIsPanSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPan);
@@ -134,7 +134,7 @@ public class BluetoothPanTest {
     }
 
     @Test
-    public void test_getDevicesMatchingConnectionStates() {
+    public void getDevicesMatchingConnectionStates() {
         assumeTrue(mHasBluetooth && mIsPanSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPan);
@@ -148,7 +148,7 @@ public class BluetoothPanTest {
     }
 
     @Test
-    public void test_getConnectionState() {
+    public void getConnectionState() {
         assumeTrue(mHasBluetooth && mIsPanSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPan);
@@ -167,7 +167,7 @@ public class BluetoothPanTest {
     }
 
     @Test
-    public void test_setConnectionPolicy() {
+    public void setConnectionPolicy() {
         assumeTrue(mHasBluetooth && mIsPanSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothPan);
@@ -188,7 +188,7 @@ public class BluetoothPanTest {
     }
 
     @Test
-    public void test_setAndCheckBluetoothTethering() {
+    public void setAndCheckBluetoothTethering() {
         assumeTrue(mHasBluetooth && mIsPanSupported);
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED,
                 TETHER_PRIVILEGED);

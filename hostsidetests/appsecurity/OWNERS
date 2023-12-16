@@ -30,7 +30,6 @@ patb@google.com
 include platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
 
 # Permissions
-per-file AccessSerialNumberTest.java = file:platform/frameworks/base:/core/java/android/permission/OWNERS
 per-file AppOpsTest.java = file:platform/frameworks/base:/core/java/android/permission/OWNERS
 per-file LocationPolicyTest.java = file:platform/frameworks/base:/core/java/android/permission/OWNERS
 per-file PermissionEscalationTest.java = file:platform/frameworks/base:/core/java/android/permission/OWNERS
@@ -43,15 +42,15 @@ per-file AppDataIsolationTests.java = rickywai@google.com,alanstokes@google.com
 per-file UseEmbeddedDexTest.java = victorhsieh@google.com
 
 # Security
-per-file AppSecurityTests.java = cbrubaker@google.com,mpgroover@google.com
-per-file DeviceIdentifierTest.java = cbrubaker@google.com,mpgroover@google.com
-per-file KeySetHostTest.java = cbrubaker@google.com,mpgroover@google.com
-per-file ListeningPortsTest.java = cbrubaker@google.com,mpgroover@google.com
-per-file PkgInstallSignatureVerificationTest.java = cbrubaker@google.com,mpgroover@google.com
+per-file AccessSerialNumberTest.java = mpgroover@google.com
+per-file AppSecurityTests.java = mpgroover@google.com
+per-file DeviceIdentifierTest.java = mpgroover@google.com
+per-file KeySetHostTest.java = mpgroover@google.com
+per-file ListeningPortsTest.java = mpgroover@google.com
+per-file PkgInstallSignatureVerificationTest.java = mpgroover@google.com
 per-file StatsdAppSecurityAtomTest.java = yaochen@google.com
 
 # Package Manager
-per-file AuthBoundKeyTest.java = file:test-apps/AuthBoundKeyApp/OWNERS
 per-file ApplicationVisibilityTest.java = file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
 per-file BaseInstallMultiple.java =  file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
 per-file EphemeralTest.java =  file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS

@@ -566,6 +566,25 @@ def distortion_correction(props):
       'android.lens.distortion'] is not None
 
 
+def distortion_correction_mode(props, mode):
+  """Returns whether a device supports a distortionCorrection mode.
+
+  Args:
+    props: Camera properties object
+    mode: Integer indicating distortion correction mode
+
+  Returns:
+    Boolean. True if device supports distortion correction mode(s).
+  """
+  if 'android.distortionCorrection.availableModes' in props:
+    logging.debug('distortionCorrection.availableModes: %s',
+                  props['android.distortionCorrection.availableModes'])
+  else:
+    logging.debug('distortionCorrection.availableModes not in props!')
+  return ('android.distortionCorrection.availableModes' in props and
+          mode in props['android.distortionCorrection.availableModes'])
+
+
 def freeform_crop(props):
   """Returns whether a device supports freefrom cropping.
 

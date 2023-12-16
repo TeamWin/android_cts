@@ -52,7 +52,7 @@ public final class MockTestActivityUtil {
     private static final Uri TEST_ACTIVITY_URI =
             Uri.parse("https://example.com/android/view/inputmethod/ctstestapp");
 
-    private static final String ACTION_TRIGGER = "broadcast_action_trigger";
+    public static final String ACTION_TRIGGER = "broadcast_action_trigger";
 
     /**
      * A key to be used as the {@code key} of {@link Map} passed as {@code extras} parameter of
@@ -85,10 +85,17 @@ public final class MockTestActivityUtil {
     public static final String EXTRA_SHOW_SOFT_INPUT = "extra_show_soft_input";
 
     /**
-     * Can be passed to {@link #sendBroadcastAction(String)} to declare editor as
-     * {@link android.view.View#setIsHandwritingDelegate(boolean) handwriting delegator}.
+     * Can be passed to {@link #sendBroadcastAction(String)} to declare editor as a
+     * {@link android.view.View#setIsHandwritingDelegate(boolean) handwriting delegate}.
      */
-    public static final String EXTRA_HANDWRITING_DELEGATE = "extra_handwriting_delegator";
+    public static final String EXTRA_HANDWRITING_DELEGATE = "extra_handwriting_delegate";
+
+    /**
+     * Can be passed to {@link #sendBroadcastAction(String)} to declare editor as {@link
+     * android.view.View#setHomeScreenHandwritingDelegatorAllowed(boolean)}.
+     */
+    public static final String EXTRA_HOME_HANDWRITING_DELEGATOR_ALLOWED =
+            "extra_home_handwriting_delegator_allowed";
 
     /**
      * Is used by the {@link RemoteCallback} in launchSyncAsUser()

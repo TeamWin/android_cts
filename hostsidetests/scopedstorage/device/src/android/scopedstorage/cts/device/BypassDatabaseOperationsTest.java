@@ -25,10 +25,7 @@ import static android.scopedstorage.cts.lib.TestUtils.denyAppOpsToUid;
 import static android.scopedstorage.cts.lib.TestUtils.getContentResolver;
 import static android.scopedstorage.cts.lib.TestUtils.getDcimDir;
 import static android.scopedstorage.cts.lib.TestUtils.getPicturesDir;
-import static android.scopedstorage.cts.lib.TestUtils.installApp;
-import static android.scopedstorage.cts.lib.TestUtils.installAppWithStoragePermissions;
 import static android.scopedstorage.cts.lib.TestUtils.renameFileAs;
-import static android.scopedstorage.cts.lib.TestUtils.uninstallAppNoThrow;
 
 import static androidx.test.InstrumentationRegistry.getContext;
 
@@ -77,14 +74,14 @@ public class BypassDatabaseOperationsTest extends ScopedStorageBaseDeviceTest {
             "android.scopedstorage.cts.testapp.SystemGalleryBypassDB", 1, false,
             "CtsScopedStorageTestAppSystemGalleryBypassDB.apk");
     // An app with READ_EXTERNAL_STORAGE_PERMISSION. Targets targetSDK=30.
-    private static final TestApp APP_SYSTEM_GALLERY_30 = new TestApp("TestAppC",
-            "android.scopedstorage.cts.testapp.C", 1, false,
-            "CtsScopedStorageTestAppC30.apk");
+    private static final TestApp APP_SYSTEM_GALLERY_30 = new TestApp("TestAppE30",
+            "android.scopedstorage.cts.testapp.E30", 1, false,
+            "CtsScopedStorageTestAppE30.apk");
     // An app with READ_EXTERNAL_STORAGE_PERMISSION. Targets targetSDK=30 and has
     // requestRawExternalStorageAccess=true
     private static final TestApp APP_SYSTEM_GALLERY_30_BYPASS_DB = new TestApp(
-            "TestAppSystemGalleryBypassDB",
-            "android.scopedstorage.cts.testapp.SystemGalleryBypassDB", 1, false,
+            "TestAppSystemGallery30BypassDB",
+            "android.scopedstorage.cts.testapp.SystemGallery30BypassDB", 1, false,
             "CtsScopedStorageTestAppSystemGallery30BypassDB.apk");
     // An app that has file manager (MANAGE_EXTERNAL_STORAGE) permission.
     // Targets current SDK and preinstalled
@@ -97,9 +94,9 @@ public class BypassDatabaseOperationsTest extends ScopedStorageBaseDeviceTest {
             "TestAppFileManagerBypassDB", "android.scopedstorage.cts.testapp.filemanagerbypassdb",
             1, false, "CtsScopedStorageTestAppFileManagerBypassDB.apk");
     // An app that has file manager (MANAGE_EXTERNAL_STORAGE) permission and targets targetSDK=30
-    private static final TestApp APP_FM_TARGETS_30 = new TestApp("TestAppC",
-            "android.scopedstorage.cts.testapp.C", 1, false,
-            "CtsScopedStorageTestAppC30.apk");
+    private static final TestApp APP_FM_TARGETS_30 = new TestApp("TestAppE30FileManager",
+            "android.scopedstorage.cts.testapp.E30.filemanager", 1, false,
+            "CtsScopedStorageTestAppE30FileManager.apk");
 
     private static final String OPSTR_MANAGE_EXTERNAL_STORAGE =
             permissionToOp(Manifest.permission.MANAGE_EXTERNAL_STORAGE);
@@ -157,16 +154,10 @@ public class BypassDatabaseOperationsTest extends ScopedStorageBaseDeviceTest {
     @Test
     @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testManageExternalStorage_WithBypassFlag_BypassesDatabase() throws Exception {
-        installApp(APP_FM_BYPASS_DATABASE_OPS);
-        try {
-            final int fmUid =
-                    getContext().getPackageManager().getPackageUid(
-                            APP_FM_BYPASS_DATABASE_OPS.getPackageName(), 0);
-            allowAppOpsToUid(fmUid, OPSTR_MANAGE_EXTERNAL_STORAGE);
-            testAppBypassesDatabaseOps(APP_FM_BYPASS_DATABASE_OPS);
-        } finally {
-            uninstallAppNoThrow(APP_FM_BYPASS_DATABASE_OPS);
-        }
+        final int fmUid = getContext().getPackageManager().getPackageUid(
+                APP_FM_BYPASS_DATABASE_OPS.getPackageName(), 0);
+        allowAppOpsToUid(fmUid, OPSTR_MANAGE_EXTERNAL_STORAGE);
+        testAppBypassesDatabaseOps(APP_FM_BYPASS_DATABASE_OPS);
     }
 
     /**
@@ -175,16 +166,10 @@ public class BypassDatabaseOperationsTest extends ScopedStorageBaseDeviceTest {
      */
     @Test
     public void testManageExternalStorage_targets30_BypassesDatabase() throws Exception {
-        installApp(APP_FM_TARGETS_30);
-        try {
-            final int fmUid =
-                    getContext().getPackageManager().getPackageUid(
-                            APP_FM_TARGETS_30.getPackageName(), 0);
-            allowAppOpsToUid(fmUid, OPSTR_MANAGE_EXTERNAL_STORAGE);
-            testAppBypassesDatabaseOps(APP_FM_TARGETS_30);
-        } finally {
-            uninstallAppNoThrow(APP_FM_TARGETS_30);
-        }
+        final int fmUid = getContext().getPackageManager().getPackageUid(
+                APP_FM_TARGETS_30.getPackageName(), 0);
+        allowAppOpsToUid(fmUid, OPSTR_MANAGE_EXTERNAL_STORAGE);
+        testAppBypassesDatabaseOps(APP_FM_TARGETS_30);
     }
 
     /**
@@ -213,16 +198,10 @@ public class BypassDatabaseOperationsTest extends ScopedStorageBaseDeviceTest {
     @Test
     @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testSystemGallery_WithBypassFlag_BypassesDatabase() throws Exception {
-        installAppWithStoragePermissions(APP_SYSTEM_GALLERY_BYPASS_DB);
-        try {
-            final int sgUid =
-                    getContext().getPackageManager().getPackageUid(
-                            APP_SYSTEM_GALLERY_BYPASS_DB.getPackageName(), 0);
-            allowAppOpsToUid(sgUid, SYSTEM_GALLERY_APPOPS);
-            testAppBypassesDatabaseOps(APP_SYSTEM_GALLERY_BYPASS_DB);
-        } finally {
-            uninstallAppNoThrow(APP_SYSTEM_GALLERY_BYPASS_DB);
-        }
+        final int sgUid = getContext().getPackageManager().getPackageUid(
+                APP_SYSTEM_GALLERY_BYPASS_DB.getPackageName(), 0);
+        allowAppOpsToUid(sgUid, SYSTEM_GALLERY_APPOPS);
+        testAppBypassesDatabaseOps(APP_SYSTEM_GALLERY_BYPASS_DB);
     }
 
     /**
@@ -231,16 +210,10 @@ public class BypassDatabaseOperationsTest extends ScopedStorageBaseDeviceTest {
      */
     @Test
     public void testSystemGallery_targets30_DoesntBypassDatabase() throws Exception {
-        installAppWithStoragePermissions(APP_SYSTEM_GALLERY_30);
-        try {
-            final int sgUid =
-                    getContext().getPackageManager().getPackageUid(
-                            APP_SYSTEM_GALLERY_30.getPackageName(), 0);
-            allowAppOpsToUid(sgUid, SYSTEM_GALLERY_APPOPS);
-            testAppDoesntBypassDatabaseOps(APP_SYSTEM_GALLERY_30);
-        } finally {
-            uninstallAppNoThrow(APP_SYSTEM_GALLERY_30);
-        }
+        final int sgUid = getContext().getPackageManager().getPackageUid(
+                APP_SYSTEM_GALLERY_30.getPackageName(), 0);
+        allowAppOpsToUid(sgUid, SYSTEM_GALLERY_APPOPS);
+        testAppDoesntBypassDatabaseOps(APP_SYSTEM_GALLERY_30);
     }
 
     /**
@@ -251,16 +224,10 @@ public class BypassDatabaseOperationsTest extends ScopedStorageBaseDeviceTest {
     @Test
     @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testSystemGallery_targets30_WithBypassFlag_BypassesDatabase() throws Exception {
-        installAppWithStoragePermissions(APP_SYSTEM_GALLERY_30_BYPASS_DB);
-        try {
-            final int sgUid =
-                    getContext().getPackageManager().getPackageUid(
-                            APP_SYSTEM_GALLERY_30_BYPASS_DB.getPackageName(), 0);
-            allowAppOpsToUid(sgUid, SYSTEM_GALLERY_APPOPS);
-            testAppBypassesDatabaseOps(APP_SYSTEM_GALLERY_30_BYPASS_DB);
-        } finally {
-            uninstallAppNoThrow(APP_SYSTEM_GALLERY_30_BYPASS_DB);
-        }
+        final int sgUid = getContext().getPackageManager().getPackageUid(
+                APP_SYSTEM_GALLERY_30_BYPASS_DB.getPackageName(), 0);
+        allowAppOpsToUid(sgUid, SYSTEM_GALLERY_APPOPS);
+        testAppBypassesDatabaseOps(APP_SYSTEM_GALLERY_30_BYPASS_DB);
     }
 
     private void testAppDoesntBypassDatabaseOps(TestApp app) throws Exception {

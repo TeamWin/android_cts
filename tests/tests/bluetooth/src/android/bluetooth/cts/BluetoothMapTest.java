@@ -113,7 +113,7 @@ public class BluetoothMapTest {
     }
 
     @Test
-    public void test_closeProfileProxy() {
+    public void closeProfileProxy() {
         assumeTrue(mHasBluetooth && mIsMapSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMap);
@@ -125,7 +125,7 @@ public class BluetoothMapTest {
     }
 
     @Test
-    public void test_getConnectedDevices() {
+    public void getConnectedDevices() {
         assumeTrue(mHasBluetooth && mIsMapSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMap);
@@ -138,7 +138,7 @@ public class BluetoothMapTest {
     }
 
     @Test
-    public void test_getConnectionPolicy() {
+    public void getConnectionPolicy() {
         assumeTrue(mHasBluetooth && mIsMapSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMap);
@@ -157,7 +157,7 @@ public class BluetoothMapTest {
     }
 
     @Test
-    public void test_getConnectionState() {
+    public void getConnectionState() {
         assumeTrue(mHasBluetooth && mIsMapSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMap);
@@ -176,7 +176,7 @@ public class BluetoothMapTest {
     }
 
     @Test
-    public void test_getDevicesMatchingConnectionStates() {
+    public void getDevicesMatchingConnectionStates() {
         assumeTrue(mHasBluetooth && mIsMapSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMap);
@@ -190,7 +190,7 @@ public class BluetoothMapTest {
     }
 
     @Test
-    public void test_setConnectionPolicy() {
+    public void setConnectionPolicy() {
         assumeTrue(mHasBluetooth && mIsMapSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMap);

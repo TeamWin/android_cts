@@ -16,11 +16,9 @@
 
 package android.hardware.camera2.cts;
 
-import static android.hardware.camera2.cts.CameraTestUtils.PREVIEW_SIZE_BOUND;
 import static android.hardware.camera2.cts.CameraTestUtils.SessionConfigSupport;
 import static android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import static android.hardware.camera2.cts.CameraTestUtils.SimpleImageReaderListener;
-import static android.hardware.camera2.cts.CameraTestUtils.SizeComparator;
 import static android.hardware.camera2.cts.CameraTestUtils.StreamCombinationTargets;
 import static android.hardware.camera2.cts.CameraTestUtils.assertEquals;
 import static android.hardware.camera2.cts.CameraTestUtils.assertNotNull;
@@ -29,25 +27,25 @@ import static android.hardware.camera2.cts.CameraTestUtils.checkSessionConfigura
 import static android.hardware.camera2.cts.CameraTestUtils.checkSessionConfigurationWithSurfaces;
 import static android.hardware.camera2.cts.CameraTestUtils.configureReprocessableCameraSession;
 import static android.hardware.camera2.cts.CameraTestUtils.fail;
-import static android.hardware.camera2.cts.CameraTestUtils.getAscendingOrderSizes;
 import static android.hardware.camera2.cts.CameraTestUtils.isSessionConfigSupported;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.JPEG;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.MAXIMUM;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.MAX_RES;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.PREVIEW;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.PRIV;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.RAW;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.RECORD;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.S1440P;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.S720P;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.USE_CASE_PREVIEW;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.USE_CASE_PREVIEW_VIDEO_STILL;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.USE_CASE_STILL_CAPTURE;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.USE_CASE_VIDEO_CALL;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.USE_CASE_VIDEO_RECORD;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.USE_CASE_CROPPED_RAW;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.VGA;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.YUV;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes.JPEG;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes.MAXIMUM;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes.MAX_RES;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes.PREVIEW;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes.PRIV;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes.RAW;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes.RECORD;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes.S1440P;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes.S720P;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes.USE_CASE_PREVIEW;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes.USE_CASE_PREVIEW_VIDEO_STILL;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes.USE_CASE_STILL_CAPTURE;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes.USE_CASE_VIDEO_CALL;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes.USE_CASE_VIDEO_RECORD;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes.USE_CASE_CROPPED_RAW;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes.VGA;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes.YUV;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
@@ -60,14 +58,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
-import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
@@ -83,7 +79,6 @@ import android.hardware.camera2.params.OisSample;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.SessionConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
-import android.media.CamcorderProfile;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.ImageWriter;
@@ -91,8 +86,6 @@ import android.util.Log;
 import android.util.Pair;
 import android.util.Size;
 import android.view.Surface;
-import android.view.WindowManager;
-import android.view.WindowMetrics;
 
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 
@@ -102,11 +95,9 @@ import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -3043,589 +3034,5 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             }
             tableIdx++;
         }
-    }
-
-    /**
-     * Simple holder for resolutions to use for different camera outputs and size limits.
-     */
-    static class MaxStreamSizes {
-        // Format shorthands
-        static final int PRIV = ImageFormat.PRIVATE;
-        static final int JPEG = ImageFormat.JPEG;
-        static final int YUV  = ImageFormat.YUV_420_888;
-        static final int RAW  = ImageFormat.RAW_SENSOR;
-        static final int Y8   = ImageFormat.Y8;
-        static final int HEIC = ImageFormat.HEIC;
-
-        // Max resolution output indices
-        static final int PREVIEW = 0;
-        static final int RECORD  = 1;
-        static final int MAXIMUM = 2;
-        static final int VGA = 3;
-        static final int VGA_FULL_FOV = 4;
-        static final int MAX_30FPS = 5;
-        static final int S720P = 6;
-        static final int S1440P = 7;
-        static final int MAX_RES = 8;
-        static final int RESOLUTION_COUNT = 9;
-
-        // Max resolution input indices
-        static final int INPUT_MAXIMUM = 0;
-        static final int INPUT_MAX_RES = 1;
-        static final int INPUT_RESOLUTION_COUNT = 2;
-
-        static final long FRAME_DURATION_30FPS_NSEC = (long) 1e9 / 30;
-
-        static final int USE_CASE_PREVIEW =
-                CameraMetadata.SCALER_AVAILABLE_STREAM_USE_CASES_PREVIEW;
-        static final int USE_CASE_VIDEO_RECORD =
-                CameraMetadata.SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_RECORD;
-        static final int USE_CASE_STILL_CAPTURE =
-                CameraMetadata.SCALER_AVAILABLE_STREAM_USE_CASES_STILL_CAPTURE;
-        static final int USE_CASE_PREVIEW_VIDEO_STILL =
-                CameraMetadata.SCALER_AVAILABLE_STREAM_USE_CASES_PREVIEW_VIDEO_STILL;
-        static final int USE_CASE_VIDEO_CALL =
-                CameraMetadata.SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL;
-        static final int USE_CASE_CROPPED_RAW =
-                CameraMetadata.SCALER_AVAILABLE_STREAM_USE_CASES_CROPPED_RAW;
-
-        private final Size[] mMaxPrivSizes = new Size[RESOLUTION_COUNT];
-        private final Size[] mMaxJpegSizes = new Size[RESOLUTION_COUNT];
-        private final Size[] mMaxYuvSizes = new Size[RESOLUTION_COUNT];
-        private final Size[] mMaxY8Sizes = new Size[RESOLUTION_COUNT];
-        private final Size[] mMaxHeicSizes = new Size[RESOLUTION_COUNT];
-        private final Size mMaxRawSize;
-        private final Size mMaxResolutionRawSize;
-
-        private final Size[] mMaxPrivInputSizes = new Size[INPUT_RESOLUTION_COUNT];
-        private final Size[] mMaxYuvInputSizes = new Size[INPUT_RESOLUTION_COUNT];
-        private final Size mMaxInputY8Size;
-
-        public MaxStreamSizes(StaticMetadata sm, String cameraId, Context context) {
-            Size[] privSizes = sm.getAvailableSizesForFormatChecked(ImageFormat.PRIVATE,
-                    StaticMetadata.StreamDirection.Output, /*fastSizes*/true, /*slowSizes*/false);
-            Size[] yuvSizes = sm.getAvailableSizesForFormatChecked(ImageFormat.YUV_420_888,
-                    StaticMetadata.StreamDirection.Output, /*fastSizes*/true, /*slowSizes*/false);
-
-            Size[] y8Sizes = sm.getAvailableSizesForFormatChecked(ImageFormat.Y8,
-                    StaticMetadata.StreamDirection.Output, /*fastSizes*/true, /*slowSizes*/false);
-            Size[] jpegSizes = sm.getAvailableSizesForFormatChecked(ImageFormat.JPEG,
-                    StaticMetadata.StreamDirection.Output, /*fastSizes*/true, /*slowSizes*/false);
-            Size[] rawSizes = sm.getAvailableSizesForFormatChecked(ImageFormat.RAW_SENSOR,
-                    StaticMetadata.StreamDirection.Output, /*fastSizes*/true, /*slowSizes*/false);
-            Size[] heicSizes = sm.getAvailableSizesForFormatChecked(ImageFormat.HEIC,
-                    StaticMetadata.StreamDirection.Output, /*fastSizes*/true, /*slowSizes*/false);
-
-            Size maxPreviewSize = getMaxPreviewSize(context, cameraId);
-
-            StreamConfigurationMap configs = sm.getCharacteristics().get(
-                    CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-
-            StreamConfigurationMap maxResConfigs = sm.getCharacteristics().get(
-                    CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION);
-
-            mMaxRawSize = (rawSizes.length != 0) ? CameraTestUtils.getMaxSize(rawSizes) : null;
-            mMaxResolutionRawSize = sm.isUltraHighResolutionSensor() ?
-                    CameraTestUtils.getMaxSize(
-                            maxResConfigs.getOutputSizes(ImageFormat.RAW_SENSOR))
-                    : null;
-
-            if (sm.isColorOutputSupported()) {
-                // We don't include JPEG sizes capped at PREVIEW since for MPC 12+ devices, JPEG
-                // sizes are necessarily > 1080p. Also the mandatory stream combinations have no
-                // JPEG streams capped at PREVIEW.
-                mMaxPrivSizes[PREVIEW] = getMaxSize(privSizes, maxPreviewSize);
-                mMaxYuvSizes[PREVIEW]  = getMaxSize(yuvSizes, maxPreviewSize);
-
-                if (sm.isExternalCamera()) {
-                    mMaxPrivSizes[RECORD] = getMaxExternalRecordingSize(cameraId, configs);
-                    mMaxYuvSizes[RECORD]  = getMaxExternalRecordingSize(cameraId, configs);
-                    mMaxJpegSizes[RECORD] = getMaxExternalRecordingSize(cameraId, configs);
-                } else {
-                    mMaxPrivSizes[RECORD] = getMaxRecordingSize(cameraId);
-                    mMaxYuvSizes[RECORD]  = getMaxRecordingSize(cameraId);
-                    mMaxJpegSizes[RECORD] = getMaxRecordingSize(cameraId);
-                }
-
-                if (sm.isUltraHighResolutionSensor()) {
-                    mMaxYuvSizes[MAX_RES] = CameraTestUtils.getMaxSize(
-                            maxResConfigs.getOutputSizes(ImageFormat.YUV_420_888));
-                    mMaxJpegSizes[MAX_RES] = CameraTestUtils.getMaxSize(
-                            maxResConfigs.getOutputSizes(ImageFormat.JPEG));
-                }
-
-                mMaxPrivSizes[MAXIMUM] = CameraTestUtils.getMaxSize(privSizes);
-                mMaxYuvSizes[MAXIMUM] = CameraTestUtils.getMaxSize(yuvSizes);
-                mMaxJpegSizes[MAXIMUM] = CameraTestUtils.getMaxSize(jpegSizes);
-
-                // Must always be supported, add unconditionally
-                final Size vgaSize = new Size(640, 480);
-                mMaxPrivSizes[VGA] = vgaSize;
-                mMaxYuvSizes[VGA] = vgaSize;
-                mMaxJpegSizes[VGA] = vgaSize;
-
-                // Check for 720p size for PRIVATE and YUV
-                // 720p is not mandatory for JPEG so it is not checked
-                final Size s720pSize = new Size(1280, 720);
-                mMaxPrivSizes[S720P] = getMaxSize(configs.getOutputSizes(ImageFormat.PRIVATE),
-                        s720pSize);
-                mMaxYuvSizes[S720P] = getMaxSize(configs.getOutputSizes(ImageFormat.YUV_420_888),
-                        s720pSize);
-
-                final Size s1440pSize = new Size(1920, 1440);
-                mMaxPrivSizes[S1440P] = getMaxSize(configs.getOutputSizes(ImageFormat.PRIVATE),
-                        s1440pSize);
-                mMaxYuvSizes[S1440P] = getMaxSize(configs.getOutputSizes(ImageFormat.YUV_420_888),
-                        s1440pSize);
-                mMaxJpegSizes[S1440P] = getMaxSize(configs.getOutputSizes(ImageFormat.JPEG),
-                        s1440pSize);
-
-                if (sm.isMonochromeWithY8()) {
-                    mMaxY8Sizes[PREVIEW]  = getMaxSize(y8Sizes, maxPreviewSize);
-                    if (sm.isExternalCamera()) {
-                        mMaxY8Sizes[RECORD]  = getMaxExternalRecordingSize(cameraId, configs);
-                    } else {
-                        mMaxY8Sizes[RECORD]  = getMaxRecordingSize(cameraId);
-                    }
-                    mMaxY8Sizes[MAXIMUM] = CameraTestUtils.getMaxSize(y8Sizes);
-                    mMaxY8Sizes[VGA] = vgaSize;
-                    mMaxY8Sizes[S720P] = getMaxSize(configs.getOutputSizes(ImageFormat.Y8),
-                            s720pSize);
-                    mMaxY8Sizes[S1440P] = getMaxSize(configs.getOutputSizes(ImageFormat.Y8),
-                            s1440pSize);
-                }
-
-                if (sm.isHeicSupported()) {
-                    mMaxHeicSizes[PREVIEW] = getMaxSize(heicSizes, maxPreviewSize);
-                    mMaxHeicSizes[RECORD] = getMaxRecordingSize(cameraId);
-                    mMaxHeicSizes[MAXIMUM] = CameraTestUtils.getMaxSize(heicSizes);
-                    mMaxHeicSizes[VGA] = vgaSize;
-                    mMaxHeicSizes[S720P] = getMaxSize(configs.getOutputSizes(ImageFormat.HEIC),
-                            s720pSize);
-                    mMaxHeicSizes[S1440P] = getMaxSize(configs.getOutputSizes(ImageFormat.HEIC),
-                            s1440pSize);
-                }
-            }
-            if (sm.isColorOutputSupported() && !sm.isHardwareLevelLegacy()) {
-                // VGA resolution, but with aspect ratio matching full res FOV
-                float fullFovAspect = mMaxYuvSizes[MAXIMUM].getWidth()
-                        / (float) mMaxYuvSizes[MAXIMUM].getHeight();
-                Size vgaFullFovSize = new Size(640, (int) (640 / fullFovAspect));
-
-                mMaxPrivSizes[VGA_FULL_FOV] = vgaFullFovSize;
-                mMaxYuvSizes[VGA_FULL_FOV] = vgaFullFovSize;
-                mMaxJpegSizes[VGA_FULL_FOV] = vgaFullFovSize;
-                if (sm.isMonochromeWithY8()) {
-                    mMaxY8Sizes[VGA_FULL_FOV] = vgaFullFovSize;
-                }
-
-                // Max resolution that runs at 30fps
-
-                Size maxPriv30fpsSize = null;
-                Size maxYuv30fpsSize = null;
-                Size maxY830fpsSize = null;
-                Size maxJpeg30fpsSize = null;
-                Comparator<Size> comparator = new SizeComparator();
-                for (Map.Entry<Size, Long> e :
-                             sm.getAvailableMinFrameDurationsForFormatChecked(ImageFormat.PRIVATE).
-                             entrySet()) {
-                    Size s = e.getKey();
-                    Long minDuration = e.getValue();
-                    Log.d(TAG, String.format("Priv Size: %s, duration %d limit %d", s, minDuration,
-                                FRAME_DURATION_30FPS_NSEC));
-                    if (minDuration <= FRAME_DURATION_30FPS_NSEC) {
-                        if (maxPriv30fpsSize == null ||
-                                comparator.compare(maxPriv30fpsSize, s) < 0) {
-                            maxPriv30fpsSize = s;
-                        }
-                    }
-                }
-                assertTrue("No PRIVATE resolution available at 30fps!", maxPriv30fpsSize != null);
-
-                for (Map.Entry<Size, Long> e :
-                             sm.getAvailableMinFrameDurationsForFormatChecked(
-                                     ImageFormat.YUV_420_888).
-                             entrySet()) {
-                    Size s = e.getKey();
-                    Long minDuration = e.getValue();
-                    Log.d(TAG, String.format("YUV Size: %s, duration %d limit %d", s, minDuration,
-                                FRAME_DURATION_30FPS_NSEC));
-                    if (minDuration <= FRAME_DURATION_30FPS_NSEC) {
-                        if (maxYuv30fpsSize == null ||
-                                comparator.compare(maxYuv30fpsSize, s) < 0) {
-                            maxYuv30fpsSize = s;
-                        }
-                    }
-                }
-                assertTrue("No YUV_420_888 resolution available at 30fps!",
-                        maxYuv30fpsSize != null);
-
-                if (sm.isMonochromeWithY8()) {
-                    for (Map.Entry<Size, Long> e :
-                                 sm.getAvailableMinFrameDurationsForFormatChecked(
-                                         ImageFormat.Y8).
-                                 entrySet()) {
-                        Size s = e.getKey();
-                        Long minDuration = e.getValue();
-                        Log.d(TAG, String.format("Y8 Size: %s, duration %d limit %d",
-                                s, minDuration, FRAME_DURATION_30FPS_NSEC));
-                        if (minDuration <= FRAME_DURATION_30FPS_NSEC) {
-                            if (maxY830fpsSize == null ||
-                                    comparator.compare(maxY830fpsSize, s) < 0) {
-                                maxY830fpsSize = s;
-                            }
-                        }
-                    }
-                    assertTrue("No Y8 resolution available at 30fps!", maxY830fpsSize != null);
-                }
-
-                for (Map.Entry<Size, Long> e :
-                             sm.getAvailableMinFrameDurationsForFormatChecked(ImageFormat.JPEG).
-                             entrySet()) {
-                    Size s = e.getKey();
-                    Long minDuration = e.getValue();
-                    Log.d(TAG, String.format("JPEG Size: %s, duration %d limit %d", s, minDuration,
-                                FRAME_DURATION_30FPS_NSEC));
-                    if (minDuration <= FRAME_DURATION_30FPS_NSEC) {
-                        if (maxJpeg30fpsSize == null ||
-                                comparator.compare(maxJpeg30fpsSize, s) < 0) {
-                            maxJpeg30fpsSize = s;
-                        }
-                    }
-                }
-                assertTrue("No JPEG resolution available at 30fps!", maxJpeg30fpsSize != null);
-
-                mMaxPrivSizes[MAX_30FPS] = maxPriv30fpsSize;
-                mMaxYuvSizes[MAX_30FPS] = maxYuv30fpsSize;
-                mMaxY8Sizes[MAX_30FPS] = maxY830fpsSize;
-                mMaxJpegSizes[MAX_30FPS] = maxJpeg30fpsSize;
-            }
-
-            Size[] privInputSizes = configs.getInputSizes(ImageFormat.PRIVATE);
-            mMaxPrivInputSizes[INPUT_MAXIMUM] = privInputSizes != null
-                    ? CameraTestUtils.getMaxSize(privInputSizes)
-                    : null;
-            Size[] maxResPrivInputSizes =
-                    sm.isUltraHighResolutionSensor() ?
-                    maxResConfigs.getInputSizes(ImageFormat.PRIVATE)
-                    : null;
-            mMaxPrivInputSizes[INPUT_MAX_RES] = maxResPrivInputSizes != null
-                    ? CameraTestUtils.getMaxSize(maxResPrivInputSizes)
-                    : null;
-
-            Size[] yuvInputSizes = configs.getInputSizes(ImageFormat.YUV_420_888);
-            mMaxYuvInputSizes[INPUT_MAXIMUM] = yuvInputSizes != null
-                    ? CameraTestUtils.getMaxSize(yuvInputSizes)
-                    : null;
-            Size[] maxResYuvInputSizes = sm.isUltraHighResolutionSensor() ?
-                    maxResConfigs.getInputSizes(ImageFormat.YUV_420_888)
-                    : null;
-            mMaxYuvInputSizes[INPUT_MAX_RES] = maxResYuvInputSizes != null
-                    ? CameraTestUtils.getMaxSize(maxResYuvInputSizes)
-                    : null;
-
-            Size[] y8InputSizes = configs.getInputSizes(ImageFormat.Y8);
-            mMaxInputY8Size = y8InputSizes != null
-                    ? CameraTestUtils.getMaxSize(y8InputSizes)
-                    : null;
-        }
-
-        public final Size getOutputSizeForFormat(int format, int resolutionIndex) {
-            if (resolutionIndex >= RESOLUTION_COUNT) {
-                return new Size(0, 0);
-            }
-
-            switch (format) {
-                case PRIV:
-                    return mMaxPrivSizes[resolutionIndex];
-                case YUV:
-                    return mMaxYuvSizes[resolutionIndex];
-                case JPEG:
-                    return mMaxJpegSizes[resolutionIndex];
-                case Y8:
-                    return mMaxY8Sizes[resolutionIndex];
-                case HEIC:
-                    return mMaxHeicSizes[resolutionIndex];
-                case RAW:
-                    if (resolutionIndex == MAX_RES) {
-                        return mMaxResolutionRawSize;
-                    }
-                    return mMaxRawSize;
-                default:
-                    return new Size(0, 0);
-            }
-        }
-
-        public final Size getMaxInputSizeForFormat(int format, int resolutionIndex) {
-            int inputResolutionIndex = getInputResolutionIndex(resolutionIndex);
-            if (inputResolutionIndex >= INPUT_RESOLUTION_COUNT || inputResolutionIndex == -1) {
-                return new Size(0, 0);
-            }
-            switch (format) {
-                case PRIV:
-                    return mMaxPrivInputSizes[inputResolutionIndex];
-                case YUV:
-                    return mMaxYuvInputSizes[inputResolutionIndex];
-                case Y8:
-                    return mMaxInputY8Size;
-                case RAW:
-                    return mMaxResolutionRawSize;
-                default:
-                    return new Size(0, 0);
-            }
-        }
-
-        public static String combinationToString(int[] combination) {
-            return combinationToString(combination, /*useCaseSpecified*/ false);
-        }
-
-        public static String combinationToString(int[] combination, boolean useCaseSpecified) {
-            StringBuilder b = new StringBuilder("{ ");
-            int i = 0;
-            while (i < combination.length) {
-                int format = combination[i];
-                int sizeLimit = combination[i + 1];
-
-                appendFormatSize(b, format, sizeLimit);
-                if (useCaseSpecified) {
-                    int streamUseCase = combination[i + 2];
-                    appendStreamUseCase(b, streamUseCase);
-                    i += 1;
-                }
-                i += 2;
-                b.append(" ");
-            }
-            b.append("}");
-            return b.toString();
-        }
-
-        public static String reprocessCombinationToString(int[] reprocessCombination) {
-            // reprocessConfig[0..1] is the input configuration
-            StringBuilder b = new StringBuilder("Input: ");
-            appendFormatSize(b, reprocessCombination[0], reprocessCombination[1]);
-
-            // reprocessCombnation[0..1] is also output combination to be captured as reprocess
-            // input.
-            b.append(", Outputs: { ");
-            for (int i = 0; i < reprocessCombination.length; i += 2) {
-                int format = reprocessCombination[i];
-                int sizeLimit = reprocessCombination[i + 1];
-
-                appendFormatSize(b, format, sizeLimit);
-                b.append(" ");
-            }
-            b.append("}");
-            return b.toString();
-        }
-
-        int getInputResolutionIndex(int resolutionIndex) {
-            switch (resolutionIndex) {
-                case MAXIMUM:
-                    return INPUT_MAXIMUM;
-                case MAX_RES:
-                    return INPUT_MAX_RES;
-            }
-            return -1;
-        }
-
-        private static void appendFormatSize(StringBuilder b, int format, int size) {
-            switch (format) {
-                case PRIV:
-                    b.append("[PRIV, ");
-                    break;
-                case JPEG:
-                    b.append("[JPEG, ");
-                    break;
-                case YUV:
-                    b.append("[YUV, ");
-                    break;
-                case Y8:
-                    b.append("[Y8, ");
-                    break;
-                case RAW:
-                    b.append("[RAW, ");
-                    break;
-                default:
-                    b.append("[UNK, ");
-                    break;
-            }
-
-            switch (size) {
-                case PREVIEW:
-                    b.append("PREVIEW]");
-                    break;
-                case RECORD:
-                    b.append("RECORD]");
-                    break;
-                case MAXIMUM:
-                    b.append("MAXIMUM]");
-                    break;
-                case VGA:
-                    b.append("VGA]");
-                    break;
-                case VGA_FULL_FOV:
-                    b.append("VGA_FULL_FOV]");
-                    break;
-                case MAX_30FPS:
-                    b.append("MAX_30FPS]");
-                    break;
-                case S720P:
-                    b.append("S720P]");
-                    break;
-                case S1440P:
-                    b.append("S1440P]");
-                    break;
-                case MAX_RES:
-                    b.append("MAX_RES]");
-                    break;
-                default:
-                    b.append("UNK]");
-                    break;
-            }
-        }
-
-        private static void appendStreamUseCase(StringBuilder b, int streamUseCase) {
-            b.append(", ");
-            switch (streamUseCase) {
-                case USE_CASE_PREVIEW:
-                    b.append("USE_CASE_PREVIEW");
-                    break;
-                case USE_CASE_PREVIEW_VIDEO_STILL:
-                    b.append("USE_CASE_PREVIEW_VIDEO_STILL");
-                    break;
-                case USE_CASE_STILL_CAPTURE:
-                    b.append("USE_CASE_STILL_CAPTURE");
-                    break;
-                case USE_CASE_VIDEO_CALL:
-                    b.append("USE_CASE_VIDEO_CALL");
-                    break;
-                case USE_CASE_VIDEO_RECORD:
-                    b.append("USE_CASE_VIDEO_RECORD");
-                    break;
-                case USE_CASE_CROPPED_RAW:
-                    b.append("USE_CASE_CROPPED_RAW");
-                    break;
-                default:
-                    b.append("UNK STREAM_USE_CASE");
-                    break;
-            }
-            b.append(";");
-        }
-    }
-
-    private static Size getMaxRecordingSize(String cameraId) {
-        int id = Integer.valueOf(cameraId);
-
-        int quality =
-                CamcorderProfile.hasProfile(id, CamcorderProfile.QUALITY_2160P) ?
-                    CamcorderProfile.QUALITY_2160P :
-                CamcorderProfile.hasProfile(id, CamcorderProfile.QUALITY_1080P) ?
-                    CamcorderProfile.QUALITY_1080P :
-                CamcorderProfile.hasProfile(id, CamcorderProfile.QUALITY_720P) ?
-                    CamcorderProfile.QUALITY_720P :
-                CamcorderProfile.hasProfile(id, CamcorderProfile.QUALITY_480P) ?
-                    CamcorderProfile.QUALITY_480P :
-                CamcorderProfile.hasProfile(id, CamcorderProfile.QUALITY_QVGA) ?
-                    CamcorderProfile.QUALITY_QVGA :
-                CamcorderProfile.hasProfile(id, CamcorderProfile.QUALITY_CIF) ?
-                    CamcorderProfile.QUALITY_CIF :
-                CamcorderProfile.hasProfile(id, CamcorderProfile.QUALITY_QCIF) ?
-                    CamcorderProfile.QUALITY_QCIF :
-                    -1;
-
-        assertTrue("No recording supported for camera id " + cameraId, quality != -1);
-
-        CamcorderProfile maxProfile = CamcorderProfile.get(id, quality);
-        return new Size(maxProfile.videoFrameWidth, maxProfile.videoFrameHeight);
-    }
-
-    private static Size getMaxExternalRecordingSize(
-            String cameraId, StreamConfigurationMap config) {
-        final Size FULLHD = new Size(1920, 1080);
-
-        Size[] videoSizeArr = config.getOutputSizes(android.media.MediaRecorder.class);
-        List<Size> sizes = new ArrayList<Size>();
-        for (Size sz: videoSizeArr) {
-            if (sz.getWidth() <= FULLHD.getWidth() && sz.getHeight() <= FULLHD.getHeight()) {
-                sizes.add(sz);
-            }
-        }
-        List<Size> videoSizes = getAscendingOrderSizes(sizes, /*ascending*/false);
-        for (Size sz : videoSizes) {
-            long minFrameDuration = config.getOutputMinFrameDuration(
-                    android.media.MediaRecorder.class, sz);
-            // Give some margin for rounding error
-            if (minFrameDuration < (1e9 / 29.9)) {
-                Log.i(TAG, "External camera " + cameraId + " has max video size:" + sz);
-                return sz;
-            }
-        }
-        fail("Camera " + cameraId + " does not support any 30fps video output");
-        return FULLHD; // doesn't matter what size is returned here
-    }
-
-    /**
-     * Get maximum size in list that's equal or smaller to than the bound.
-     * Returns null if no size is smaller than or equal to the bound.
-     */
-    private static Size getMaxSize(Size[] sizes, Size bound) {
-        if (sizes == null || sizes.length == 0) {
-            throw new IllegalArgumentException("sizes was empty");
-        }
-
-        Size sz = null;
-        for (Size size : sizes) {
-            if (size.getWidth() <= bound.getWidth() && size.getHeight() <= bound.getHeight()) {
-
-                if (sz == null) {
-                    sz = size;
-                } else {
-                    long curArea = sz.getWidth() * (long) sz.getHeight();
-                    long newArea = size.getWidth() * (long) size.getHeight();
-                    if ( newArea > curArea ) {
-                        sz = size;
-                    }
-                }
-            }
-        }
-
-        assertTrue("No size under bound found: " + Arrays.toString(sizes) + " bound " + bound,
-                sz != null);
-
-        return sz;
-    }
-
-    private static Size getMaxPreviewSize(Context context, String cameraId) {
-        try {
-            WindowManager windowManager = context.getSystemService(WindowManager.class);
-            assertNotNull("Could not find WindowManager service.", windowManager);
-
-            WindowMetrics windowMetrics = windowManager.getCurrentWindowMetrics();
-            Rect windowBounds = windowMetrics.getBounds();
-
-            int width = windowBounds.width();
-            int height = windowBounds.height();
-
-            if (height > width) {
-                height = width;
-                width = windowBounds.height();
-            }
-
-            CameraManager camMgr = context.getSystemService(CameraManager.class);
-            List<Size> orderedPreviewSizes = CameraTestUtils.getSupportedPreviewSizes(
-                    cameraId, camMgr, PREVIEW_SIZE_BOUND);
-
-            if (orderedPreviewSizes != null) {
-                for (Size size : orderedPreviewSizes) {
-                    if (width >= size.getWidth() &&
-                            height >= size.getHeight()) {
-                        return size;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "getMaxPreviewSize Failed. " + e);
-        }
-        return PREVIEW_SIZE_BOUND;
     }
 }

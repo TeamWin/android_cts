@@ -79,7 +79,7 @@ public class DistanceMeasurementSessionTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testCallbackMethods() {
+    public void callbackMethods() {
         mTestcallback.onStarted(null);
         mTestcallback.onStartFail(ERROR_REMOTE_OPERATION_NOT_SUPPORTED);
         mTestcallback.onStopped(null, ERROR_TIMEOUT);

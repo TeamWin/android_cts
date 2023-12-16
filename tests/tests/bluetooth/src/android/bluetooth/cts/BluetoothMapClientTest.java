@@ -125,7 +125,7 @@ public class BluetoothMapClientTest {
     }
 
     @Test
-    public void test_closeProfileProxy() {
+    public void closeProfileProxy() {
         assumeTrue(mHasBluetooth && mIsMapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMapClient);
@@ -137,7 +137,7 @@ public class BluetoothMapClientTest {
     }
 
     @Test
-    public void test_getConnectedDevices() {
+    public void getConnectedDevices() {
         assumeTrue(mHasBluetooth && mIsMapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMapClient);
@@ -150,7 +150,7 @@ public class BluetoothMapClientTest {
     }
 
     @Test
-    public void test_getConnectionPolicy() {
+    public void getConnectionPolicy() {
         assumeTrue(mHasBluetooth && mIsMapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMapClient);
@@ -169,7 +169,7 @@ public class BluetoothMapClientTest {
     }
 
     @Test
-    public void test_getConnectionState() {
+    public void getConnectionState() {
         assumeTrue(mHasBluetooth && mIsMapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMapClient);
@@ -188,7 +188,7 @@ public class BluetoothMapClientTest {
     }
 
     @Test
-    public void test_getDevicesMatchingConnectionStates() {
+    public void getDevicesMatchingConnectionStates() {
         assumeTrue(mHasBluetooth && mIsMapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMapClient);
@@ -202,7 +202,7 @@ public class BluetoothMapClientTest {
     }
 
     @Test
-    public void test_sendMessage() {
+    public void sendMessage() {
         assumeTrue(mHasBluetooth && mIsMapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMapClient);
@@ -229,7 +229,7 @@ public class BluetoothMapClientTest {
     }
 
     @Test
-    public void test_setConnectionPolicy() {
+    public void setConnectionPolicy() {
         assumeTrue(mHasBluetooth && mIsMapClientSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothMapClient);

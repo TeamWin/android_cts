@@ -133,7 +133,7 @@ public class BluetoothLeBroadcastMetadataTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2", "7.4.3/C-9-1"})
     @Test
-    public void testCreateMetadataFromBuilder() {
+    public void createMetadataFromBuilder() {
         BluetoothDevice testDevice =
                 mAdapter.getRemoteLeDevice(TEST_MAC_ADDRESS, BluetoothDevice.ADDRESS_TYPE_RANDOM);
         BluetoothLeAudioContentMetadata publicBroadcastMetadata =
@@ -181,7 +181,7 @@ public class BluetoothLeBroadcastMetadataTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2", "7.4.3/C-9-1"})
     @Test
-    public void testCreateMetadataFromCopy() {
+    public void createMetadataFromCopy() {
         BluetoothDevice testDevice =
                 mAdapter.getRemoteLeDevice(TEST_MAC_ADDRESS, BluetoothDevice.ADDRESS_TYPE_RANDOM);
         BluetoothLeAudioContentMetadata publicBroadcastMetadata =
@@ -233,7 +233,7 @@ public class BluetoothLeBroadcastMetadataTest {
     @RequiresFlagsEnabled(Flags.FLAG_LEAUDIO_BROADCAST_MONITOR_SOURCE_SYNC_STATUS)
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2", "7.4.3/C-9-1"})
     @Test
-    public void testCreateMetadataFromBuilderAndCheckRssi() {
+    public void createMetadataFromBuilderAndCheckRssi() {
         final int testRssiInvalidMin = -128;
         final int testRssiInvalidMax = 128;
         BluetoothDevice testDevice =

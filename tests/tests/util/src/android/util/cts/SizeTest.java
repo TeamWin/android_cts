@@ -22,10 +22,13 @@ import android.util.Size;
 import android.util.SizeF;
 
 import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @SmallTest
+@RunWith(AndroidJUnit4.class)
 public class SizeTest {
     @Test
     public void testConstructors() {

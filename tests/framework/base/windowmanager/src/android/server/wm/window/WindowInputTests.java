@@ -19,6 +19,7 @@ package android.server.wm.window;
 import static android.server.wm.ActivityManagerTestBase.launchHomeActivityNoWait;
 import static android.server.wm.BarTestUtils.assumeHasStatusBar;
 import static android.server.wm.CtsWindowInfoUtils.waitForStableWindowGeometry;
+import static android.server.wm.CtsWindowInfoUtils.waitForWindowInfo;
 import static android.server.wm.CtsWindowInfoUtils.waitForWindowOnTop;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
@@ -29,9 +30,12 @@ import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
 import static android.view.WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
+
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -61,6 +65,7 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
+import android.window.WindowInfosListenerForTest.WindowInfo;
 
 import androidx.test.rule.ActivityTestRule;
 
@@ -80,6 +85,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 
 /**
  * Ensure moving windows and tapping is done synchronously.
@@ -429,6 +435,9 @@ public class WindowInputTests {
                     });
             mInstrumentation.waitForIdleSync();
             waitForWindow(windowName);
+            assertTrue("Failed to reach stable window geometry",
+                    waitForStableWindowGeometry(5, TimeUnit.SECONDS));
+
             mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
             assertTrue(touchReceived.get());
@@ -483,6 +492,8 @@ public class WindowInputTests {
                     });
             mInstrumentation.waitForIdleSync();
             waitForWindow(windowName);
+            assertTrue("Failed to reach stable window geometry",
+                    waitForStableWindowGeometry(5, TimeUnit.SECONDS));
             mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
             assertTrue(touchReceived.get());
@@ -547,6 +558,8 @@ public class WindowInputTests {
                     });
             mInstrumentation.waitForIdleSync();
             waitForWindow(windowName);
+            assertTrue("Failed to reach stable window geometry",
+                    waitForStableWindowGeometry(5, TimeUnit.SECONDS));
             mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
             assertTrue(touchReceived.get());
@@ -614,6 +627,8 @@ public class WindowInputTests {
                     });
             mInstrumentation.waitForIdleSync();
             waitForWindow(windowName);
+            assertTrue("Failed to reach stable window geometry",
+                    waitForStableWindowGeometry(5, TimeUnit.SECONDS));
             mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
             assertTrue(touchReceived.get());
@@ -671,6 +686,9 @@ public class WindowInputTests {
                     });
             mInstrumentation.waitForIdleSync();
             waitForWindow(windowName);
+            assertTrue("Failed to reach stable window geometry",
+                    waitForStableWindowGeometry(5, TimeUnit.SECONDS));
+
             mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
             assertTrue(touchReceived.get());
@@ -721,6 +739,8 @@ public class WindowInputTests {
                         mActivity.addWindow(mView, p);
                     });
             mInstrumentation.waitForIdleSync();
+            assertTrue("Failed to reach stable window geometry",
+                    waitForStableWindowGeometry(5, TimeUnit.SECONDS));
 
             mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
         }
@@ -766,6 +786,10 @@ public class WindowInputTests {
                     wm.updateViewLayout(viewOverlap, p);
                 });
         mInstrumentation.waitForIdleSync();
+        Predicate<WindowInfo> hasInputConfigFlags =
+                windowInfo -> !windowInfo.isTouchable && !windowInfo.isFocusable;
+        assertTrue(waitForWindowInfo(hasInputConfigFlags, 5, TimeUnit.SECONDS,
+                viewOverlap::getWindowToken));
 
         mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
         assertEquals(1, mClickCount);
@@ -792,6 +816,8 @@ public class WindowInputTests {
                     mActivity.addWindow(mView, p);
                 });
         mInstrumentation.waitForIdleSync();
+        assertTrue("Failed to reach stable window geometry",
+                waitForStableWindowGeometry(5, TimeUnit.SECONDS));
 
         mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 

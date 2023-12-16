@@ -154,6 +154,8 @@ public class SuspendPackagesTest {
 
     @Test
     public void testUpdatingAppExtras() throws Exception {
+        // Make sure broadcast has been sent from PackageManager
+        SystemUtil.runShellCommand("pm wait-for-handler --timeout 2000");
         mTestAppInterface = new TestAppInterface(mContext);
 
         mTestAppInterface.startListeningForBroadcast(Intent.ACTION_MY_PACKAGE_SUSPENDED);

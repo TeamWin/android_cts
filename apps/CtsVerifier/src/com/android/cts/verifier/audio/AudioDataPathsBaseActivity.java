@@ -88,12 +88,16 @@ public abstract class AudioDataPathsBaseActivity
 
     // Test Manager
     protected TestManager mTestManager = new TestManager();
+    private boolean mTestHasBeenRun;
     private boolean mTestCanceled;
 
     // Audio I/O
     private AudioManager mAudioManager;
     private boolean mSupportsMMAP;
     private boolean mSupportsMMAPExclusive;
+
+    protected boolean mHasUsb;
+    protected boolean mIsHandheld;
 
     // Analysis
     private BaseSineAnalyzer mAnalyzer = new BaseSineAnalyzer();
@@ -117,6 +121,10 @@ public abstract class AudioDataPathsBaseActivity
 
         mHasMic = AudioSystemFlags.claimsInput(this);
         mHasSpeaker = AudioSystemFlags.claimsOutput(this);
+
+        // Use as a proxy for "has a USB port"
+        mHasUsb = AudioSystemFlags.claimsProAudio(this);
+        mIsHandheld = AudioSystemFlags.isHandheld(this);
 
         String yesString = getResources().getString(R.string.audio_general_yes);
         String noString = getResources().getString(R.string.audio_general_no);
@@ -159,9 +167,12 @@ public abstract class AudioDataPathsBaseActivity
 
         mAudioManager.registerAudioDeviceCallback(new AudioDeviceConnectionCallback(), null);
 
-        getPassButton().setEnabled(false);
-
         DisplayUtils.setKeepScreenOn(this, true);
+
+        getPassButton().setEnabled(!mIsHandheld);
+        if (!mIsHandheld) {
+            displayNonHandheldMessage();
+        }
     }
 
     @Override
@@ -402,7 +413,12 @@ public abstract class AudioDataPathsBaseActivity
                 case TESTSTATUS_NOT_RUN:
                     return " NOT TESTED";
                 case TESTSTATUS_RUN:
-                    return hasPassed(api) ? " PASS" : " FAIL";
+                    if (mTestResults[api] == null) {
+                        // This can happen when the test sequence is cancelled.
+                        return " NO RESULTS";
+                    } else {
+                        return hasPassed(api) ? " PASS" : " FAIL";
+                    }
                 case TESTSTATUS_BAD_START:
                     return " BAD START";
                 case TESTSTATUS_BAD_ROUTING:
@@ -525,69 +541,50 @@ public abstract class AudioDataPathsBaseActivity
                         .appendText(getTestStateString(api))
                         .closeBold();
                 if (mTestState[api] == TESTSTATUS_NOT_RUN) {
-                    htmlFormatter.appendText(" - Invalid Route or Sharing Mode");
+                    htmlFormatter.appendText(mTestCanceled
+                            ? " - Test Cancelled" : " - Invalid Route or Sharing Mode");
                 }
                 if (isErrorState) {
                     htmlFormatter.closeTextColor();
                 }
+            }
 
-                TestResults results = mTestResults[api];
-                if (results != null) {
-                    // we can get null here if the test was cancelled
-                    Locale locale = Locale.getDefault();
-                    String maxMagString = String.format(
-                            locale, "mag:%.4f ", results.mMaxMagnitude);
-                    String phaseJitterString = String.format(
-                            locale, "jitter:%.4f ", results.mPhaseJitter);
+            TestResults results = mTestResults[api];
+            if (results != null) {
+                // we can get null here if the test was cancelled
+                Locale locale = Locale.getDefault();
+                String maxMagString = String.format(
+                        locale, "mag:%.4f ", results.mMaxMagnitude);
+                String phaseJitterString = String.format(
+                        locale, "jitter:%.4f ", results.mPhaseJitter);
 
-                    boolean passMagnitude = mAnalysisType == TYPE_SIGNAL_PRESENCE
-                            ? results.mMaxMagnitude >= mMinPassMagnitude
-                            : results.mMaxMagnitude <= mMinPassMagnitude;
-                    boolean passJitter =
-                            results.mPhaseJitter <= mMaxPassJitter;
+                boolean passMagnitude = mAnalysisType == TYPE_SIGNAL_PRESENCE
+                        ? results.mMaxMagnitude >= mMinPassMagnitude
+                        : results.mMaxMagnitude <= mMinPassMagnitude;
+                boolean passJitter =
+                        results.mPhaseJitter <= mMaxPassJitter;
 
-                    // Values
-                    htmlFormatter.appendBreak();
-                    if (!passMagnitude) {
-                        htmlFormatter.openTextColor("red")
-                                .appendText(maxMagString)
-                                .closeTextColor();
-                    } else {
-                        htmlFormatter.appendText(maxMagString);
-                    }
+                // Values / Criteria
+                htmlFormatter.appendBreak();
+                htmlFormatter.openTextColor(passMagnitude ? "black" : "red")
+                        .appendText(maxMagString
+                                + String.format(locale,
+                                passMagnitude ? " >= %.4f " : " < %.4f ",
+                                mMinPassMagnitude))
+                        .closeTextColor();
 
-                    if (!passJitter) {
-                        htmlFormatter.openTextColor("red")
-                                .appendText(phaseJitterString)
-                                .closeTextColor();
-                    } else {
-                        htmlFormatter.appendText(phaseJitterString);
-                    }
-
-                    // Criteria
-                    htmlFormatter.appendBreak();
-                    if (!passMagnitude) {
-                        htmlFormatter.openTextColor("blue")
-                                .appendText(maxMagString
-                                        + String.format(locale,
-                                            mAnalysisType == TYPE_SIGNAL_PRESENCE
-                                                    ? " <= %.4f " : " >= %.4f ",
-                                        mMinPassMagnitude))
-                                .closeTextColor();
-                    }
-
-                    // Jitter isn't relevant to SIGNAL ABSENCE test
-                    if (mAnalysisType == TYPE_SIGNAL_PRESENCE && !passJitter) {
-                        htmlFormatter.openTextColor("blue")
-                                .appendText(phaseJitterString
-                                        + String.format(locale, " >= %.4f",
-                                        mMaxPassJitter))
-                                .closeTextColor();
-                    }
-                }
+                // Jitter isn't relevant to SIGNAL ABSENCE test
+                htmlFormatter.openTextColor(
+                                mAnalysisType != TYPE_SIGNAL_PRESENCE || passJitter
+                                        ? "black" : "red")
+                        .appendText(phaseJitterString
+                                + String.format(locale, passJitter ? " <= %.4f" : " > %.4f",
+                                mMaxPassJitter))
+                        .closeTextColor();
 
                 htmlFormatter.appendBreak();
-            } // pass/fail
+            } // results != null
+
             htmlFormatter.closeParagraph();
 
             return htmlFormatter;
@@ -959,7 +956,7 @@ public abstract class AudioDataPathsBaseActivity
         protected boolean calculatePass() {
             int numFailures = countFailures(mApi);
             int numUntested = countValidTestModules() - countTestedTestModules();
-            return !mTestCanceled && numFailures == 0 && numUntested == 0;
+            return mTestHasBeenRun && !mTestCanceled && numFailures == 0 && numUntested == 0;
         }
 
         public void completeTest() {
@@ -975,7 +972,9 @@ public abstract class AudioDataPathsBaseActivity
                     mHtmlFormatter.openDocument();
                     mTestManager.generateReport(mHtmlFormatter);
 
-                    getPassButton().setEnabled(mIsLessThanV || calculatePass());
+                    mTestHasBeenRun = true;
+                    boolean passEnabled = passBtnEnabled();
+                    getPassButton().setEnabled(passEnabled);
 
                     mHtmlFormatter.openParagraph();
                     if (!mTestCanceled) {
@@ -992,6 +991,14 @@ public abstract class AudioDataPathsBaseActivity
                         }
                         mHtmlFormatter.closeParagraph();
                         mHtmlFormatter.openParagraph();
+                    }
+
+                    if (passEnabled) {
+                        mHtmlFormatter.appendText("Although not all test modules passed, "
+                                + "for this OS version you may enter a PASS.");
+                        mHtmlFormatter.appendBreak();
+                        mHtmlFormatter.appendText("In future versions, "
+                                + "ALL test modules will be required to pass.");
                     }
                     mHtmlFormatter.closeParagraph();
 
@@ -1108,6 +1115,23 @@ public abstract class AudioDataPathsBaseActivity
         enableTestButtons(true, false);
     }
 
+    boolean passBtnEnabled() {
+        return mIsLessThanV || !mIsHandheld || mTestManager.calculatePass();
+    }
+
+    void displayNonHandheldMessage() {
+        mHtmlFormatter.clear();
+        mHtmlFormatter.openDocument();
+        mHtmlFormatter.openParagraph();
+        mHtmlFormatter.appendText(getResources().getString(R.string.audio_exempt_nonhandheld));
+        mHtmlFormatter.closeParagraph();
+
+        mHtmlFormatter.closeDocument();
+        mResultsView.loadData(mHtmlFormatter.toString(),
+                "text/html; charset=utf-8", "utf-8");
+        showResultsView();
+    }
+
     //
     // PassFailButtons Overrides
     //
@@ -1198,9 +1222,16 @@ public abstract class AudioDataPathsBaseActivity
             mTestManager.validateTestDevices();
             if (!mTestManager.calculatePass()) {
                 // if we are in a pass state, leave the report on the screen
-                showDeviceView();
-                mTestManager.displayTestDevices();
-                getPassButton().setEnabled(mIsLessThanV || mTestManager.calculatePass());
+                if (!mIsHandheld) {
+                    displayNonHandheldMessage();
+                    getPassButton().setEnabled(true);
+                } else {
+                    showDeviceView();
+                    mTestManager.displayTestDevices();
+                    if (mTestHasBeenRun) {
+                        getPassButton().setEnabled(passBtnEnabled());
+                    }
+                }
             }
         }
 

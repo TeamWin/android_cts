@@ -97,7 +97,7 @@ public class BasicBluetoothGattTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetServices() throws Exception {
+    public void getServices() throws Exception {
         // getServices() returns an empty list if service discovery has not yet been performed.
         List<BluetoothGattService> services = mBluetoothGatt.getServices();
         assertNotNull(services);
@@ -106,41 +106,41 @@ public class BasicBluetoothGattTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testConnect() throws Exception {
+    public void connect() throws Exception {
         mBluetoothGatt.connect();
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testSetPreferredPhy() throws Exception {
+    public void setPreferredPhy() throws Exception {
         mBluetoothGatt.setPreferredPhy(BluetoothDevice.PHY_LE_1M, BluetoothDevice.PHY_LE_1M,
                 BluetoothDevice.PHY_OPTION_NO_PREFERRED);
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetConnectedDevices() {
+    public void getConnectedDevices() {
         assertThrows(UnsupportedOperationException.class,
                 () -> mBluetoothGatt.getConnectedDevices());
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetConnectionState() {
+    public void getConnectionState() {
         assertThrows(UnsupportedOperationException.class,
                 () -> mBluetoothGatt.getConnectionState(null));
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetDevicesMatchingConnectionStates() {
+    public void getDevicesMatchingConnectionStates() {
         assertThrows(UnsupportedOperationException.class,
                 () -> mBluetoothGatt.getDevicesMatchingConnectionStates(null));
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testWriteCharacteristic_withValueOverMaxLength() {
+    public void writeCharacteristic_withValueOverMaxLength() {
         BluetoothGattCharacteristic characteristic = new BluetoothGattCharacteristic(TEST_UUID,
                 0x0A, 0x11);
         BluetoothGattService service = new BluetoothGattService(TEST_UUID,

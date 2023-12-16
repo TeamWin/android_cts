@@ -108,7 +108,7 @@ public class BluetoothLeAdvertiserTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void test_startAdvertisingSetWithCallbackAndHandler() throws InterruptedException {
+    public void startAdvertisingSetWithCallbackAndHandler() throws InterruptedException {
         mAdvertiser.startAdvertisingSet(ADVERTISING_SET_PARAMETERS, null, null, null, null,
                 mCallback, new Handler(Looper.getMainLooper()));
         assertTrue(mCallback.mAdvertisingSetStartedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
@@ -118,7 +118,7 @@ public class BluetoothLeAdvertiserTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void test_startAdvertisingSetWithDurationAndCallback() throws InterruptedException {
+    public void startAdvertisingSetWithDurationAndCallback() throws InterruptedException {
         mAdvertiser.startAdvertisingSet(ADVERTISING_SET_PARAMETERS, null, null, null, null,
                 0, 0, mCallback);
         assertTrue(mCallback.mAdvertisingSetStartedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
@@ -128,7 +128,7 @@ public class BluetoothLeAdvertiserTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void test_startAdvertisingSetWithDurationCallbackAndHandler()
+    public void startAdvertisingSetWithDurationCallbackAndHandler()
             throws InterruptedException {
         mAdvertiser.startAdvertisingSet(ADVERTISING_SET_PARAMETERS, null, null, null, null,
                 0, 0, mCallback, new Handler(Looper.getMainLooper()));
@@ -139,7 +139,7 @@ public class BluetoothLeAdvertiserTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void test_startAdvertisingSetWithDurationCallbackGattServerAndHandler()
+    public void startAdvertisingSetWithDurationCallbackGattServerAndHandler()
             throws InterruptedException {
         BluetoothGattServer gattServer =
                 mManager.openGattServer(mContext, new BluetoothGattServerCallback() {});
@@ -161,7 +161,7 @@ public class BluetoothLeAdvertiserTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void test_getAdvertisingSetId() throws InterruptedException {
+    public void getAdvertisingSetId() throws InterruptedException {
         mAdvertiser.startAdvertisingSet(ADVERTISING_SET_PARAMETERS, null, null, null, null, 0, 0,
                 mCallback, new Handler(Looper.getMainLooper()));
         mCallback.mAdvertisingSetStartedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS);

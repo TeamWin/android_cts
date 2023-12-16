@@ -51,7 +51,9 @@ import android.media.MediaRouter2Manager;
 import android.media.RouteDiscoveryPreference;
 import android.media.RouteListingPreference;
 import android.media.RoutingSessionInfo;
+import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.text.TextUtils;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -60,6 +62,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.media.flags.Flags;
 
 import com.google.common.truth.Correspondence;
 import com.google.common.truth.Expect;
@@ -198,6 +201,18 @@ public class SystemMediaRouter2Test {
     public void testGetInstanceReturnsSameInstance() {
         assertThat(MediaRouter2.getInstance(mContext, mContext.getPackageName()))
                 .isSameInstanceAs(mSystemRouter2ForCts);
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_CROSS_USER_ROUTING_IN_MEDIA_ROUTER2)
+    @Test
+    public void getInstance_withDifferentOverrides_returnsSameInstance() {
+        assertThat(MediaRouter2.getInstance(mContext, mContext.getPackageName()))
+                .isSameInstanceAs(
+                        MediaRouter2.getInstance(
+                                mContext,
+                                Looper.getMainLooper(),
+                                mContext.getPackageName(),
+                                mContext.getUser()));
     }
 
     @Test

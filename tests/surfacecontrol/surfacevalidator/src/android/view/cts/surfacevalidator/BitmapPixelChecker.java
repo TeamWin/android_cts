@@ -87,6 +87,9 @@ public class BitmapPixelChecker {
         }
     }
 
+    /**
+     * @param expectedMatchingPixels Pass in -1 if you want all the pixels to match.
+     */
     public static void validateScreenshot(TestName testName, Activity activity,
             BitmapPixelChecker pixelChecker, int expectedMatchingPixels, Insets insets) {
         Bitmap screenshot =
@@ -105,6 +108,9 @@ public class BitmapPixelChecker {
         pixelChecker.applyInsetsToLogBounds(insets);
         Log.d(TAG, "Checking bounds " + bounds + " boundsToLog=" + pixelChecker.mBoundToLog);
         int numMatchingPixels = pixelChecker.getNumMatchingPixels(swBitmap, bounds);
+        if (expectedMatchingPixels == -1) {
+            expectedMatchingPixels = bounds.width() * bounds.height();
+        }
         boolean numMatches = expectedMatchingPixels == numMatchingPixels;
         if (!numMatches) {
             saveFailureCaptures(swBitmap, activity.getClass(), testName);

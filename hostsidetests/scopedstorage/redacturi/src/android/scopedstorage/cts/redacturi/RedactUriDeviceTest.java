@@ -19,6 +19,7 @@ package android.scopedstorage.cts.redacturi;
 
 import static android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION;
 import static android.database.Cursor.FIELD_TYPE_BLOB;
+import static android.scopedstorage.cts.lib.TestUtils.addressStoragePermissions;
 import static android.scopedstorage.cts.lib.TestUtils.assertThrows;
 import static android.scopedstorage.cts.lib.TestUtils.canOpenRedactedUriForWrite;
 import static android.scopedstorage.cts.lib.TestUtils.canQueryOnUri;
@@ -26,11 +27,9 @@ import static android.scopedstorage.cts.lib.TestUtils.checkPermission;
 import static android.scopedstorage.cts.lib.TestUtils.forceStopApp;
 import static android.scopedstorage.cts.lib.TestUtils.getContentResolver;
 import static android.scopedstorage.cts.lib.TestUtils.grantPermission;
-import static android.scopedstorage.cts.lib.TestUtils.installAppWithStoragePermissions;
 import static android.scopedstorage.cts.lib.TestUtils.isFileDescriptorRedacted;
 import static android.scopedstorage.cts.lib.TestUtils.isFileOpenRedacted;
 import static android.scopedstorage.cts.lib.TestUtils.setShouldForceStopTestApp;
-import static android.scopedstorage.cts.lib.TestUtils.uninstallAppNoThrow;
 
 import static androidx.test.InstrumentationRegistry.getContext;
 
@@ -41,6 +40,8 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+
 
 import android.Manifest;
 import android.content.ContentValues;
@@ -59,6 +60,7 @@ import android.system.Os;
 import androidx.test.filters.SdkSuppress;
 
 import com.android.cts.install.lib.TestApp;
+import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -102,9 +104,8 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
             "android.scopedstorage.cts.testapp.B.noperms", 1, false,
             "CtsScopedStorageTestAppB.apk");
 
-    // The following apps are not installed at test startup - please install before using.
-    private static final TestApp APP_C = new TestApp("TestAppC",
-            "android.scopedstorage.cts.testapp.C", 1, false, "CtsScopedStorageTestAppC.apk");
+    private static final TestApp APP_E = new TestApp("TestAppE",
+            "android.scopedstorage.cts.testapp.E", 1, false, "CtsScopedStorageTestAppE.apk");
 
     @Parameterized.Parameter(0)
     public String mVolumeName;
@@ -310,16 +311,15 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
     @Test
     public void testSharedRedactedUri_openFileForRead_withLocationPerm() throws Exception {
         final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
+        forceStopApp(APP_E.getPackageName());
         try {
-            // Install test app
-            installAppWithStoragePermissions(APP_C);
-            grantPermission(APP_C.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
+            addressStoragePermissions(APP_E.getPackageName(), true);
+            grantPermission(APP_E.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
 
-            Uri redactedUri = shareAndGetRedactedUri(img, APP_C);
-            assertThat(isFileOpenRedacted(APP_C, redactedUri)).isTrue();
+            Uri redactedUri = shareAndGetRedactedUri(img, APP_E);
+            assertThat(isFileOpenRedacted(APP_E, redactedUri)).isTrue();
         } finally {
             img.delete();
-            uninstallAppNoThrow(APP_C);
         }
     }
 
@@ -328,17 +328,16 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
      **/
     @Test
     public void testSharedRedactedUri_openFdForRead_withLocationPerm() throws Exception {
+        forceStopApp(APP_E.getPackageName());
         final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
         try {
-            // Install test app
-            installAppWithStoragePermissions(APP_C);
-            grantPermission(APP_C.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
+            addressStoragePermissions(APP_E.getPackageName(), true);
+            grantPermission(APP_E.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
 
-            Uri redactedUri = shareAndGetRedactedUri(img, APP_C);
-            assertThat(isFileDescriptorRedacted(APP_C, redactedUri)).isTrue();
+            Uri redactedUri = shareAndGetRedactedUri(img, APP_E);
+            assertThat(isFileDescriptorRedacted(APP_E, redactedUri)).isTrue();
         } finally {
             img.delete();
-            uninstallAppNoThrow(APP_C);
         }
     }
 
@@ -348,19 +347,18 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
     @Test
     public void testUnsharedRedactedUri_openFdForRead() throws Exception {
         forceStopApp(APP_B_NO_PERMS.getPackageName());
+        forceStopApp(APP_E.getPackageName());
         final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
         try {
-            // Install test app
-            installAppWithStoragePermissions(APP_C);
+            addressStoragePermissions(APP_E.getPackageName(), true);
 
             final Uri redactedUri = getRedactedUri(img);
-            // APP_C has R_E_S, so should have access to redactedUri
-            assertThat(isFileDescriptorRedacted(APP_C, redactedUri)).isTrue();
+            // APP_E has R_E_S, so should have access to redactedUri
+            assertThat(isFileDescriptorRedacted(APP_E, redactedUri)).isTrue();
             assertThrows(SecurityException.class,
                     () -> isFileDescriptorRedacted(APP_B_NO_PERMS, redactedUri));
         } finally {
             img.delete();
-            uninstallAppNoThrow(APP_C);
         }
     }
 
@@ -370,18 +368,17 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
     @Test
     public void testUnsharedRedactedUri_openFileForRead() throws Exception {
         forceStopApp(APP_B_NO_PERMS.getPackageName());
+        forceStopApp(APP_E.getPackageName());
         final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
         try {
-            // Install test app
-            installAppWithStoragePermissions(APP_C);
+            addressStoragePermissions(APP_E.getPackageName(), true);
 
             final Uri redactedUri = getRedactedUri(img);
-            // APP_C has R_E_S
-            assertThat(isFileOpenRedacted(APP_C, redactedUri)).isTrue();
+            // APP_E has R_E_S
+            assertThat(isFileOpenRedacted(APP_E, redactedUri)).isTrue();
             assertThrows(IOException.class, () -> isFileOpenRedacted(APP_B_NO_PERMS, redactedUri));
         } finally {
             img.delete();
-            uninstallAppNoThrow(APP_C);
         }
     }
 
@@ -483,6 +480,7 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
 
     @Test
     public void testOpenOnRedactedUri_readFuzzer() throws Exception {
+        assumeTrue(SdkLevel.isAtLeastV());
         final File img = stageFuzzerImageFileWithMetadata(FUZZER_HEIC_FILE_NAME);
         final Uri redactedUri = getRedactedUri(img);
         try {

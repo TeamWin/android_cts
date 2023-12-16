@@ -91,9 +91,10 @@ class LowLatencyZoomTest(its_base_test.ItsBaseTest):
       # do auto captures over zoom range and find circles with cv2
       img_name_stem = f'{os.path.join(self.log_path, _NAME)}'
       logging.debug('Using auto capture request')
-      cam.do_3a(zoom_ratio=z_min)
-      test_failed = False
       fmt = 'yuv'
+      cam.do_3a(fmt=fmt, width=size[0], height=size[1],
+                zoom_ratio=z_min, reuse_session=True)
+      test_failed = False
       test_data = {}
       reqs = []
       req = capture_request_utils.auto_capture_request()
@@ -111,7 +112,8 @@ class LowLatencyZoomTest(its_base_test.ItsBaseTest):
 
       # take captures at different zoom ratios
       caps = cam.do_capture(
-          reqs, {'format': fmt, 'width': size[0], 'height': size[1]})
+          reqs, {'format': fmt, 'width': size[0], 'height': size[1]},
+          reuse_session=True)
 
       # Check low latency zoom outputs match result metadata
       for i, cap in enumerate(caps):

@@ -54,7 +54,7 @@ public class BluetoothHidDeviceCallbackTest {
     };
 
     @Test
-    public void testHidDeviceCallback() {
+    public void hidDeviceCallback() {
         // TODO: Provide a way to simulate BluetoothHidHost for better testing.
         // We may need to have a new BluetoothAdapter.getProfileProxy method with a new test profile
         // like HID_DEVICE_TEST which also takes a mock hid host instance.

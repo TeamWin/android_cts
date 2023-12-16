@@ -136,7 +136,16 @@ class AudioLoopbackCalibrationDialog extends Dialog
         arrayAdapter.add(mContext.getString(R.string.audio_loopback_calibrate_default));
         if (deviceInfos != null) {
             for (AudioDeviceInfo devInfo : deviceInfos) {
-                arrayAdapter.add(AudioDeviceUtils.getDeviceTypeName(devInfo.getType()));
+                String devTypeString = AudioDeviceUtils.getDeviceTypeName(devInfo.getType());
+                String devNameString = devInfo.getAddress();
+                StringBuilder sb = new StringBuilder();
+                sb.append(devTypeString);
+                // We won't filter out "meaningless" address strings
+                // like "0" and "card=1;device=0".
+                if (devNameString.length() != 0) {
+                    sb.append(" (").append(devNameString).append(")");
+                }
+                arrayAdapter.add(sb.toString());
             }
         }
         return arrayAdapter;

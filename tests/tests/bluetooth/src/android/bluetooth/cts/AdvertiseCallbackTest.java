@@ -57,7 +57,7 @@ public class AdvertiseCallbackTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testAdvertiseSuccess() {
+    public void advertiseSuccess() {
         mAdvertiseCallback.mAdvertiseType = ADVERTISE_TYPE_SUCCESS;
         mMockAdvertiser.startAdvertise(mAdvertiseCallback);
     }
@@ -65,7 +65,7 @@ public class AdvertiseCallbackTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testAdvertiseFailure() {
+    public void advertiseFailure() {
         mAdvertiseCallback.mAdvertiseType = ADVERTISE_TYPE_SUCCESS;
         mMockAdvertiser.startAdvertise(mAdvertiseCallback);
 

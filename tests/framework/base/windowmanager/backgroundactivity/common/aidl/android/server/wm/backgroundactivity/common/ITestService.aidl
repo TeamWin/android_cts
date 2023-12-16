@@ -27,5 +27,6 @@ interface ITestService {
     void sendByTextClassification(in TextClassification classification);
     void sendPendingIntent(in PendingIntent pendingIntent, in Bundle sendOptions);
     void sendPendingIntentWithActivity(in PendingIntent pendingIntent, in Bundle sendOptions);
+    void sendPendingIntentWithActivityForResult(in PendingIntent pendingIntent, in Bundle sendOptions);
     void startActivityIntent(in Intent intent);
 }

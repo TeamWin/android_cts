@@ -66,8 +66,10 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcel;
+import android.os.PersistableBundle;
 import android.os.Process;
 import android.os.SystemClock;
 import android.os.UserHandle;
@@ -215,6 +217,9 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     private static final String TEST_NOTIFICATION_TEXT_1 = "Test content 1";
     private static final String TEST_NOTIFICATION_TEXT_2 = "Test content 2";
 
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
     private Context mContext;
     private UiDevice mUiDevice;
     private UiAutomation mUiAutomation;
@@ -227,9 +232,6 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     private Context mOtherUserContext;
     private UsageStatsManager mOtherUsageStats;
     private WindowManagerStateHelper mWMStateHelper;
-
-    @Rule
-    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setUp() throws Exception {
@@ -2327,6 +2329,133 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
 
         mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.REPORT_USAGE_STATS);
         mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, 0);
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsEnabled(Flags.FLAG_REPORT_USAGE_STATS_PERMISSION)
+    @Test
+    public void testCrossUserReportUserInteractionAccess() throws Exception {
+        assumeTrue(UserManager.supportsMultipleUsers());
+        // Create user
+        final int userId = createUser("Test User");
+        startUser(userId, true);
+        installExistingPackageAsUser(mContext.getPackageName(), userId);
+        installExistingPackageAsUser(TEST_APP_PKG, userId);
+
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.REPORT_USAGE_STATS);
+        try {
+            mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, /* userId= */ userId);
+            fail("Able to report cross user interaction without INTERACT_ACROSS_USERS_FULLi"
+                    + " permission from CTS test");
+        } catch (SecurityException expected) {
+            // Do nothing.
+        }
+
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.REPORT_USAGE_STATS,
+                Manifest.permission.INTERACT_ACROSS_USERS_FULL);
+        mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, userId);
+        // user cleanup done in @After.
+    }
+
+    /**
+     * Test to ensure the {@link UsageStatsManager#reportUserInteraction(String, int, Bundle)}
+     * is enforce with {@link android.Manifest.permission#REPORT_USAGE_STATS}
+     */
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_USER_INTERACTION_TYPE_API)
+    public void testReportUserInteractionWithTypeAccess() throws Exception {
+        final PersistableBundle extras = new PersistableBundle();
+        extras.putString(UsageStatsManager.EXTRA_EVENT_CATEGORY, "fake.namespace.category");
+        extras.putString(UsageStatsManager.EXTRA_EVENT_ACTION, "fakeaction");
+        try {
+            // only system uid or holders of the REPORT_USAGE_EVENTS should be able to report events
+            mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, /* userId */0, extras);
+            fail("Able to report a user interaction from CTS test");
+        } catch (SecurityException expected) { }
+
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.REPORT_USAGE_STATS);
+        mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, 0, extras);
+    }
+
+    /**
+     * Tests to ensure {@link UsageStatsManager#reportUserInteraction(String, int, Bundle)}
+     * with valid package and user interaction event type is able to report the user
+     * interaction events.
+     */
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
+    @RequiresFlagsEnabled({Flags.FLAG_USER_INTERACTION_TYPE_API,
+            Flags.FLAG_REPORT_USAGE_STATS_PERMISSION})
+    public void testReportUserInteraction() throws Exception {
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.REPORT_USAGE_STATS);
+        // attempt to report an event with a null package, should fail.
+        try {
+            mUsageStatsManager.reportUserInteraction(null, /* userId= */ 0,
+                    /* extras=*/ PersistableBundle.EMPTY);
+            fail("able to report a user interaction with a null package");
+        } catch (NullPointerException expected) { }
+
+        // attempt to report an event with non-existent package, should fail.
+        final PersistableBundle extras = new PersistableBundle();
+        final String interactionCategoryValue = "android.app.notification";
+        final String interactionActionValue = "click";
+        extras.putString(UsageStatsManager.EXTRA_EVENT_CATEGORY, interactionCategoryValue);
+        extras.putString(UsageStatsManager.EXTRA_EVENT_ACTION, interactionActionValue);
+        try {
+            mUsageStatsManager.reportUserInteraction("android.app.usage.cts.nonexistent.pkg", 0,
+                    extras);
+            fail("able to report a user interaction with non-existent package name");
+        } catch (IllegalArgumentException expected) { }
+
+        // attempt to report an event with an empty extras, should fail.
+        try {
+            mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, /* userId= */ 0,
+                    /* extras= */ PersistableBundle.EMPTY);
+            fail("able to report a user interaction with empty extras");
+        } catch (IllegalArgumentException expected) { }
+
+        // attempt to report an event with empty category or action, should fail.
+        extras.putString(UsageStatsManager.EXTRA_EVENT_CATEGORY, "");
+        extras.putString(UsageStatsManager.EXTRA_EVENT_ACTION, interactionActionValue);
+        try {
+            mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, /* userId= */ 0,
+                    /* extras= */ extras);
+            fail("able to report a user interaction with empty category");
+        } catch (IllegalArgumentException expected) { }
+
+        extras.putString(UsageStatsManager.EXTRA_EVENT_CATEGORY, interactionCategoryValue);
+        extras.putString(UsageStatsManager.EXTRA_EVENT_ACTION, "");
+        try {
+            mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, /* userId= */ 0,
+                    /* extras= */ extras);
+            fail("able to report a user interaction with empty action");
+        } catch (IllegalArgumentException expected) { }
+
+        // report a valid user interaction event - should be found.
+        extras.putString(UsageStatsManager.EXTRA_EVENT_CATEGORY, interactionCategoryValue);
+        extras.putString(UsageStatsManager.EXTRA_EVENT_ACTION, interactionActionValue);
+        long startTime = System.currentTimeMillis();
+        mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, /* userId */ 0, extras);
+        Thread.sleep(500); // wait for a while for the event to report via the handler.
+        UsageEvents userInteractionEvents = mUsageStatsManager.queryEvents(
+                startTime - 1000, System.currentTimeMillis() + 1000);
+        boolean found = false;
+        while (userInteractionEvents.hasNextEvent()) {
+            final Event ev = new Event();
+            userInteractionEvents.getNextEvent(ev);
+            if (ev.getEventType() != Event.USER_INTERACTION) {
+                continue;
+            }
+            PersistableBundle interactionExtras = ev.getExtras();
+            assertEquals(interactionCategoryValue,
+                    interactionExtras.getString(UsageStatsManager.EXTRA_EVENT_CATEGORY));
+            assertEquals(interactionActionValue,
+                    interactionExtras.getString(UsageStatsManager.EXTRA_EVENT_ACTION));
+            found = true;
+            break;
+        }
+        assertTrue("Couldn't find the reported user interaction event.", found);
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")

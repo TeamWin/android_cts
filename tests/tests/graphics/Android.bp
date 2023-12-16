@@ -38,6 +38,7 @@ android_test {
         "SurfaceFlingerProperties",
         "testng",
         "androidx.core_core",
+        "framework_graphics_flags_java_lib",
         "com.android.text.flags-aconfig-java",
     ],
     jni_libs: ["libctsgraphics_jni"],
@@ -52,4 +53,21 @@ android_test {
     ],
     // Enforce public / test api only
     sdk_version: "test_current",
+}
+
+android_ravenwood_test {
+    name: "CtsGraphicsTestCasesRavenwood",
+    defaults: ["cts_defaults"],
+    static_libs: [
+        "androidx.annotation_annotation",
+        "androidx.test.rules",
+    ],
+    srcs: [
+        "src/android/graphics/cts/InsetsTest.java",
+        "src/android/graphics/cts/PointTest.java",
+        "src/android/graphics/cts/PointFTest.java",
+        "src/android/graphics/cts/RectTest.java",
+        "src/android/graphics/cts/RectFTest.java",
+    ],
+    auto_gen_config: true,
 }

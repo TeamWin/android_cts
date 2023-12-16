@@ -45,9 +45,9 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.server.wm.MultiDisplayTestBase;
 import android.server.wm.ObjectTracker;
 import android.server.wm.cts.R;
-import android.server.wm.MultiDisplayTestBase;
 import android.transition.Transition;
 import android.transition.TransitionListenerAdapter;
 import android.util.Pair;
@@ -264,6 +264,16 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
             Class<? extends Activity> activityClass, String expectedState) {
         log("Start waitAndAssertActivityCurrentState");
         mTransitionTracker.waitAndAssertActivityCurrentState(activityClass, expectedState);
+    }
+
+    /**
+     * Blocking call that will wait for the activity transition settles with the
+     * expected state.
+     */
+    final void waitForActivityCurrentState(
+            Class<? extends Activity> activityClass, String expectedState) {
+        log("Start waitForActivityCurrentState");
+        mTransitionTracker.waitForActivityCurrentState(activityClass, expectedState);
     }
 
     /**
@@ -646,9 +656,9 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         final List<String> expectedTransitionForMinimizedDock =
                 TransitionVerifier.appendMinimizedDockTransitionTrail(expectedTransitions);
 
-        final int displayWindowingMode =
-                getDisplayWindowingModeByActivity(getComponentName(activityClass));
-        if (displayWindowingMode != WINDOWING_MODE_FULLSCREEN) {
+        final int defaultWindowingMode =
+                getDefaultWindowingModeByActivity(getComponentName(activityClass));
+        if (defaultWindowingMode != WINDOWING_MODE_FULLSCREEN) {
             // For non-fullscreen display mode, there won't be a multi-window callback.
             expectedTransitions.removeAll(Collections.singleton(ON_MULTI_WINDOW_MODE_CHANGED));
             expectedTransitionForMinimizedDock.removeAll(

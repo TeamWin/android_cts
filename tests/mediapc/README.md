@@ -33,6 +33,14 @@ Example: To limit the tests to run for media types whose names start with video/
 ```sh
 atest CtsMediaPerformanceClassTestCases -- --module-arg CtsMediaPerformanceClassTestCases:instrumentation-arg:media-type-prefix:=video/avc
 ```
+#### Select codecs using regular expressions
+To select codecs by applying regular expressions, *codec-filter* can be passed to media codec tests to select one or more codecs that match with a specified regular expression pattern.
+
+Example: To limit the tests to run for c2.android.avc.decoder and c2.android.hevc.encoder
+
+```sh
+atest CtsMediaPerformanceClassTestCases -- --module-arg CtsMediaPerformanceClassTestCases:instrumentation-arg:codec-filter:="c2\.android\.avc\.decoder\|c2\.android\.hevc\.encoder"
+```
 
 #### Select codecs by name
 To select codecs by name, *codec-prefix* can be passed to media codec tests to select one or more codecs that start with a given prefix.

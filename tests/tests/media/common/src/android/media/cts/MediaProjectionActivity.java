@@ -146,18 +146,18 @@ public class MediaProjectionActivity extends Activity {
     public void dismissPermissionDialog() {
         // Ensure the device is initialized before interacting with any UI elements.
         UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-
-        if (!selectEntireScreenOption()) {
-            Log.e(TAG, "Couldn't select entire screen option");
-            return;
+        final boolean isWatch = getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
+        if (!isWatch) {
+            // if not testing on a watch device, then we need to select the entire screen option
+            // before pressing "Start recording" button.
+            if (!selectEntireScreenOption()) {
+                Log.e(TAG, "Couldn't select entire screen option");
+            }
         }
-        pressStartRecording();
+        pressStartRecording(isWatch);
     }
 
     private boolean selectEntireScreenOption() {
-        if (!scrollToUiElementIfNeeded(SPINNER_RESOURCE_ID)) {
-            return false;
-        }
         UiObject2 spinner = waitForObject(By.res(SPINNER_RESOURCE_ID));
         if (spinner == null) {
             Log.e(TAG, "Couldn't find spinner to select projection mode");
@@ -187,9 +187,9 @@ public class MediaProjectionActivity extends Activity {
         return sysUiResources.getString(resourceId);
     }
 
-    private void pressStartRecording() {
-        if (!scrollToUiElementIfNeeded(ACCEPT_RESOURCE_ID)) {
-            return;
+    private void pressStartRecording(boolean isWatch) {
+        if (isWatch) {
+            scrollToStartRecordingButton();
         }
         UiObject2 startRecordingButton = waitForObject(By.res(ACCEPT_RESOURCE_ID));
         if (startRecordingButton == null) {
@@ -200,24 +200,19 @@ public class MediaProjectionActivity extends Activity {
         }
     }
 
-    /** Scrolls to a UI element, if needed. Returns whether it was successful. */
-    private boolean scrollToUiElementIfNeeded(String elementResourceId) {
+    /** When testing on a small screen device, scrolls to a Start Recording button. */
+    private void scrollToStartRecordingButton() {
         // Scroll down the dialog; on a device with a small screen the elements may not be visible.
-        final boolean isWatch = getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
-        if (!isWatch) {
-            return true;
-        }
         final UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
         try {
-            if (!scrollable.scrollIntoView(new UiSelector().resourceId(elementResourceId))) {
-                Log.e(TAG, "Didn't find " + elementResourceId + " when scrolling");
-                return false;
+            if (!scrollable.scrollIntoView(new UiSelector().resourceId(ACCEPT_RESOURCE_ID))) {
+                Log.e(TAG, "Didn't find " + ACCEPT_RESOURCE_ID + " when scrolling");
+                return;
             }
             Log.d(TAG, "This is a watch; we finished scrolling down to the ui elements");
         } catch (UiObjectNotFoundException e) {
             Log.d(TAG, "This is a watch, but there was no scrolling (UI may not be scrollable");
         }
-        return true;
     }
 
     private UiObject2 waitForObject(BySelector selector) {

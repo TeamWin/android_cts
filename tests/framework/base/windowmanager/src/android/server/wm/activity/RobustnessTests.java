@@ -19,7 +19,6 @@ package android.server.wm.activity;
 import static android.server.wm.app.Components.RECURSIVE_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 
-import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerTestBase;
 
 import org.junit.Test;
@@ -28,7 +27,6 @@ import org.junit.Test;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceActivity:RobustnessTests
  */
-@Presubmit
 public class RobustnessTests extends ActivityManagerTestBase {
 
     /**

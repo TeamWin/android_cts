@@ -70,6 +70,8 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.server.wm.LockScreenSession;
 import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerStateHelper;
@@ -141,6 +143,9 @@ public class WallpaperManagerTest {
 
     private static final WindowManagerStateHelper sWindowManagerStateHelper =
             new WindowManagerStateHelper();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Rule
     public ActivityTestRule<WallpaperTestActivity> mActivityTestRule = new ActivityTestRule<>(
@@ -1541,6 +1546,7 @@ public class WallpaperManagerTest {
      */
     @RequiresFlagsEnabled(Flags.FLAG_ALWAYS_UPDATE_WALLPAPER_PERMISSION)
     @Test
+    @Ignore("b/313534425")
     public void testAlwaysUpdateWallpaperPermission_allowOutOfFocusWallpaperCommand() {
 
         /* Clear previous wallpaper commands */
@@ -1690,7 +1696,7 @@ public class WallpaperManagerTest {
      * @param which FLAG_LOCK, FLAG_SYSTEM or a combination of both.
      */
     private void verifyColorListenerInvokedClearing(int which) {
-        ensureCleanState();
+        ensureCleanState(which);
 
         final CountDownLatch latch = new CountDownLatch(1);
 

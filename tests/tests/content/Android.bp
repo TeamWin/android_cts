@@ -203,6 +203,7 @@ android_test {
         ":HelloWorld7",
         ":HelloWorldNoAppStorage",
         ":HelloWorldResHardening",
+        ":HelloWorldSettings",
         ":HelloWorldSdk1",
         ":HelloWorldSdk1DifferentSigner",
         ":HelloWorldSdk1MajorVersion2",
@@ -214,6 +215,8 @@ android_test {
         ":HelloWorldSystem",
         ":HelloWorldUsingSdk1",
         ":HelloWorldUsingSdk1And2",
+        ":HelloWorldUsingSdk1Optional",
+        ":HelloWorldUsingSdk1OptionalSdk2",
         ":HelloWorldUsingSdk3",
         ":HelloWorldNoAppStorage",
         ":HelloWorldLotsOfFlags",
@@ -224,6 +227,7 @@ android_test {
         ":HelloVerifierReject",
         ":HelloVerifierDelayedReject",
         ":HelloVerifierDisabled",
+        ":SettingsProvider",
     ],
     java_resources: [
         ":PackagePropertyTestApp1",
@@ -232,6 +236,10 @@ android_test {
         ":TestInstallerApp",
     ],
     test_config: "CtsPackageManagerTest.xml",
+    package_splits: [
+        "mdpi-v4",
+        "hdpi-v4",
+    ],
 }
 
 android_ravenwood_test {
@@ -244,6 +252,7 @@ android_ravenwood_test {
         "androidx.annotation_annotation",
         "androidx.test.rules",
         "androidx.test.uiautomator_uiautomator",
+        "compatibility-device-util-axt",
     ],
     srcs: [
         "src/android/content/cts/util/XmlUtils.java",
@@ -259,6 +268,15 @@ android_ravenwood_test {
         "src/android/content/cts/MockReceiver.java",
         "src/android/content/cts/MockContentProvider.java",
         "src/android/content/cts/UriMatcherTest.java",
+        "src/android/content/pm/cts/ActivityInfoTest.java",
+        "src/android/content/pm/cts/ApplicationInfoTest.java",
+        "src/android/content/pm/cts/ComponentInfoTest.java",
+        "src/android/content/pm/cts/PackageInfoTest.java",
+        "src/android/content/pm/cts/PackageItemInfoTest.java",
+        "src/android/content/pm/cts/ProviderInfoTest.java",
+        "src/android/content/pm/cts/ResolveInfoTest.java",
+        "src/android/content/pm/cts/ServiceInfoTest.java",
+        "src/android/content/pm/cts/SignatureTest.java",
     ],
     auto_gen_config: true,
 }

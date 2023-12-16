@@ -16,6 +16,7 @@
 
 package android.mediapc.cts;
 
+import static android.mediapc.cts.CodecTestBase.codecFilter;
 import static android.mediapc.cts.CodecTestBase.codecPrefix;
 import static android.mediapc.cts.CodecTestBase.mediaTypePrefix;
 import static android.mediapc.cts.CodecTestBase.selectCodecs;
@@ -178,7 +179,8 @@ public class FrameDropTestBase {
             ArrayList<String> listOfDecoders =
                     selectHardwareCodecs(mime, formats, features, false);
             for (String decoder : listOfDecoders) {
-                if (codecPrefix != null && !decoder.startsWith(codecPrefix)) {
+                if ((codecPrefix != null && !decoder.startsWith(codecPrefix))
+                        || (codecFilter != null && !codecFilter.matcher(decoder).matches())) {
                     continue;
                 }
                 for (boolean isAsync : boolStates) {

@@ -21,17 +21,14 @@ android_library {
     min_sdk_version: "30",
     srcs: [
         "src/**/*.java",
-        "//cts/tests/tests/virtualdevice:CtsVirtualDevicesTestAidl",
     ],
     static_libs: [
         "androidx.test.ext.junit",
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
         "cts-wm-util",
         "junit",
         "flag-junit",
         "android.companion.virtual.flags-aconfig-java",
-        "platform-compat-test-rules",
+        "android.companion.virtualdevice.flags-aconfig-java",
     ],
     manifest: "AndroidManifest.xml",
 }

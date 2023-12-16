@@ -690,6 +690,7 @@ public final class CameraDeviceInfo extends DeviceInfo {
         charsKeyNames.add(CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE.getName());
         charsKeyNames.add(CameraCharacteristics.CONTROL_AVAILABLE_SETTINGS_OVERRIDES.getName());
         charsKeyNames.add(CameraCharacteristics.CONTROL_AUTOFRAMING_AVAILABLE.getName());
+        charsKeyNames.add(CameraCharacteristics.CONTROL_LOW_LIGHT_BOOST_INFO_LUMINANCE_RANGE.getName());
         charsKeyNames.add(CameraCharacteristics.EDGE_AVAILABLE_EDGE_MODES.getName());
         charsKeyNames.add(CameraCharacteristics.FLASH_SINGLE_STRENGTH_MAX_LEVEL.getName());
         charsKeyNames.add(CameraCharacteristics.FLASH_SINGLE_STRENGTH_DEFAULT_LEVEL.getName());
@@ -776,6 +777,7 @@ public final class CameraDeviceInfo extends DeviceInfo {
         charsKeyNames.add(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL.getName());
         charsKeyNames.add(CameraCharacteristics.INFO_VERSION.getName());
         charsKeyNames.add(CameraCharacteristics.INFO_DEVICE_STATE_SENSOR_ORIENTATION_MAP.getName());
+        charsKeyNames.add(CameraCharacteristics.INFO_SESSION_CONFIGURATION_QUERY_VERSION.getName());
         charsKeyNames.add(CameraCharacteristics.SYNC_MAX_LATENCY.getName());
         charsKeyNames.add(CameraCharacteristics.REPROCESS_MAX_CAPTURE_STALL.getName());
         charsKeyNames.add(CameraCharacteristics.DEPTH_DEPTH_IS_EXCLUSIVE.getName());

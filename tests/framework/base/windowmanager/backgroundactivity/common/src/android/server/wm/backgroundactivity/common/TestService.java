@@ -103,11 +103,24 @@ public class TestService extends Service {
         }
 
         @Override
-        public void sendPendingIntentWithActivity(PendingIntent pendingIntent,
+        public void sendPendingIntentWithActivityForResult(PendingIntent pendingIntent,
                 Bundle sendOptions) {
             try {
                 sLatestForegroundActivity.startIntentSenderForResult(
                         pendingIntent.getIntentSender(), /*requestCode*/1, /*fillinIntent*/
+                        null, /*flagsMask*/0, /*flagsValue*/0, /*extraFlags*/0);
+            } catch (Exception e) {
+                Log.e(TAG, "sendPendingIntentForResult failed", e);
+                throw new AssertionError(e);
+            }
+        }
+
+        @Override
+        public void sendPendingIntentWithActivity(PendingIntent pendingIntent,
+                Bundle sendOptions) {
+            try {
+                sLatestForegroundActivity.startIntentSender(
+                        pendingIntent.getIntentSender(), /*fillinIntent*/
                         null, /*flagsMask*/0, /*flagsValue*/0, /*extraFlags*/0);
             } catch (Exception e) {
                 Log.e(TAG, "sendPendingIntent failed", e);

@@ -972,8 +972,8 @@ public abstract class ActivityManagerTestBase {
         return null;
     }
 
-    protected int getDisplayWindowingModeByActivity(ComponentName activity) {
-        return mWmState.getDisplay(mWmState.getDisplayByActivity(activity)).getWindowingMode();
+    protected int getDefaultWindowingModeByActivity(ComponentName activity) {
+        return mWmState.getTaskDisplayArea(activity).getWindowingMode();
     }
 
     public static void closeSystemDialogs() {

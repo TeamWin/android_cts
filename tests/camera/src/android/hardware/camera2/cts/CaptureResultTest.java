@@ -626,6 +626,16 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             waiverKeys.add(CaptureResult.FLASH_STRENGTH_LEVEL);
         }
 
+        // Only present on devices capable of reporting intra-frame statistics
+        waiverKeys.add(CaptureResult.STATISTICS_LENS_INTRINSICS_SAMPLES);
+        // Only present on logical cameras that switch between lenses when going trhough zoom ratios
+        waiverKeys.add(CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_SENSOR_CROP_REGION);
+
+        // Only present on devices that support low light boose AE mode
+        if (!staticInfo.isAeModeLowLightBoostSupported()) {
+            waiverKeys.add(CaptureResult.CONTROL_LOW_LIGHT_BOOST_STATE);
+        }
+
         // LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID not required if key is not supported.
         if (!staticInfo.isLogicalMultiCamera() ||
                 !staticInfo.isActivePhysicalCameraIdSupported()) {
@@ -1022,6 +1032,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         resultKeys.add(CaptureResult.CONTROL_SETTINGS_OVERRIDE);
         resultKeys.add(CaptureResult.CONTROL_AUTOFRAMING);
         resultKeys.add(CaptureResult.CONTROL_AUTOFRAMING_STATE);
+        resultKeys.add(CaptureResult.CONTROL_LOW_LIGHT_BOOST_STATE);
         resultKeys.add(CaptureResult.EDGE_MODE);
         resultKeys.add(CaptureResult.FLASH_MODE);
         resultKeys.add(CaptureResult.FLASH_STATE);
@@ -1073,6 +1084,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         resultKeys.add(CaptureResult.STATISTICS_LENS_SHADING_MAP_MODE);
         resultKeys.add(CaptureResult.STATISTICS_OIS_DATA_MODE);
         resultKeys.add(CaptureResult.STATISTICS_OIS_SAMPLES);
+        resultKeys.add(CaptureResult.STATISTICS_LENS_INTRINSICS_SAMPLES);
         resultKeys.add(CaptureResult.TONEMAP_CURVE);
         resultKeys.add(CaptureResult.TONEMAP_MODE);
         resultKeys.add(CaptureResult.TONEMAP_GAMMA);
@@ -1080,6 +1092,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         resultKeys.add(CaptureResult.BLACK_LEVEL_LOCK);
         resultKeys.add(CaptureResult.REPROCESS_EFFECTIVE_EXPOSURE_FACTOR);
         resultKeys.add(CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID);
+        resultKeys.add(CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_SENSOR_CROP_REGION);
         resultKeys.add(CaptureResult.DISTORTION_CORRECTION_MODE);
 
         return resultKeys;

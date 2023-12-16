@@ -33,6 +33,19 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
     private static final String TAG = "FlexibilityConstraintTest";
     public static final int FLEXIBLE_JOB_ID = FlexibilityConstraintTest.class.hashCode();
     private static final long FLEXIBILITY_TIMEOUT_MILLIS = 5_000;
+
+    // Same values as in JobStatus.java
+    private static final int CONSTRAINT_BATTERY_NOT_LOW = 1 << 1;
+    private static final int CONSTRAINT_CHARGING = 1 << 0;
+    private static final int CONSTRAINT_CONNECTIVITY = 1 << 28;
+    private static final int CONSTRAINT_IDLE = 1 << 2;
+    private static final int ALL_CONSTRAINTS = CONSTRAINT_BATTERY_NOT_LOW
+            | CONSTRAINT_CHARGING | CONSTRAINT_CONNECTIVITY | CONSTRAINT_IDLE;
+
+    private static final int SUPPORTED_CONSTRAINTS_AUTOMOTIVE = 0;
+    private static final int SUPPORTED_CONSTRAINTS_EMBEDDED = 0;
+    private static final int SUPPORTED_CONSTRAINTS_DEFAULT = ALL_CONSTRAINTS;
+
     private JobInfo.Builder mBuilder;
     private UiDevice mUiDevice;
 
@@ -60,6 +73,12 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         // whose lifecycle is smaller than the minimum allowed by JobStatus.
         mDeviceConfigStateHelper.set(
                 new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_JOB_SCHEDULER)
+                        // Apply
+                        //  * CONSTRAINT_BATTERY_NOT_LOW
+                        //  * CONSTRAINT_CHARGING
+                        //  * CONSTRAINT_CONNECTIVITY
+                        //  * CONSTRAINT_IDLE
+                        .setInt("fc_applied_constraints", 268435463)
                         .setLong("fc_flexibility_deadline_proximity_limit_ms", 0L)
                         .setLong("fc_fallback_flexibility_deadline_ms", 100_000)
                         .setLong("fc_min_time_between_flexibility_alarms_ms", 0L)
@@ -102,7 +121,9 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
      * Tests that flex constraints don't affect jobs on devices that don't support flex constraints.
      */
     public void testUnsupportedDevice() throws Exception {
-        if (deviceSupportsFlexConstraints()) {
+        if (deviceSupportsAnyFlexConstraints(
+                CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CHARGING | CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test since device supports constraints");
             return;
         }
         // Make it so that constraints won't drop in time.
@@ -115,12 +136,83 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
                 kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
     }
 
+    public void testUnsupportedConstraint_batteryNotLow() throws Exception {
+        if (deviceSupportsAllFlexConstraints(CONSTRAINT_BATTERY_NOT_LOW)) {
+            Log.d(TAG, "Skipping test since device supports constraints");
+            return;
+        }
+        if (!deviceSupportsAnyFlexConstraints(CONSTRAINT_CHARGING | CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test since device doesn't support constraints");
+            return;
+        }
+        // Increase timeouts to make sure the test doesn't start passing because of transpired time.
+        mDeviceConfigStateHelper.set("fc_percents_to_drop_num_flexible_constraints",
+                "900000,1800000,3600000,7200000");
+        scheduleJobToExecute();
+
+        assertJobNotReady();
+
+        satisfySystemWideConstraints(true, false, true);
+
+        runJob();
+        assertTrue("Job didn't fire on unsupported constraint device",
+                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
+    }
+
+    public void testUnsupportedConstraint_charging() throws Exception {
+        if (deviceSupportsAllFlexConstraints(CONSTRAINT_CHARGING)) {
+            Log.d(TAG, "Skipping test since device supports constraints");
+            return;
+        }
+        if (!deviceSupportsAnyFlexConstraints(CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test since device doesn't support constraints");
+            return;
+        }
+        // Increase timeouts to make sure the test doesn't start passing because of transpired time.
+        mDeviceConfigStateHelper.set("fc_percents_to_drop_num_flexible_constraints",
+                "900000,1800000,3600000,7200000");
+        scheduleJobToExecute();
+
+        assertJobNotReady();
+
+        satisfySystemWideConstraints(false, true, true);
+
+        runJob();
+        assertTrue("Job didn't fire on unsupported constraint device",
+                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
+    }
+
+    public void testUnsupportedConstraint_idle() throws Exception {
+        if (deviceSupportsAllFlexConstraints(CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test since device supports constraints");
+            return;
+        }
+        if (!deviceSupportsAnyFlexConstraints(CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CHARGING)) {
+            Log.d(TAG, "Skipping test since device doesn't support constraints");
+            return;
+        }
+        // Increase timeouts to make sure the test doesn't start passing because of transpired time.
+        mDeviceConfigStateHelper.set("fc_percents_to_drop_num_flexible_constraints",
+                "900000,1800000,3600000,7200000");
+        scheduleJobToExecute();
+
+        assertJobNotReady();
+
+        satisfySystemWideConstraints(true, true, false);
+
+        runJob();
+        assertTrue("Job didn't fire on unsupported constraint device",
+                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
+    }
+
     /**
      * Schedule a job to run, don't satisfy any constraints, then verify it runs only when no
      * constraints are required.
      */
     public void testNoConstraintSatisfied() throws Exception {
-        if (!deviceSupportsFlexConstraints()) {
+        if (!deviceSupportsAllFlexConstraints(
+                CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CHARGING | CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test since device doesn't support any constraints");
             return;
         }
         mDeviceConfigStateHelper.set("fc_percents_to_drop_num_flexible_constraints", "5,6,7,25");
@@ -143,7 +235,9 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
      * Schedule a job to run, verify that if all constraints are satisfied that it runs.
      */
     public void testAllConstraintsSatisfied() throws Exception {
-        if (!deviceSupportsFlexConstraints()) {
+        if (!deviceSupportsAnyFlexConstraints(
+                CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CHARGING | CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test since device doesn't support any constraints");
             return;
         }
         scheduleJobToExecute();
@@ -153,6 +247,209 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
 
         runJob();
         assertTrue("Job with flexible constraint did not fire when all constraints were satisfied",
+                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
+    }
+
+    /**
+     * Schedule a job to run, verify it runs when applied constraints are reduced to the satisfied
+     * set.
+     */
+    public void testAppliedConstraints_batteryNotLow() throws Exception {
+        if (!deviceSupportsAllFlexConstraints(CONSTRAINT_BATTERY_NOT_LOW)) {
+            Log.d(TAG, "Skipping test that requires device support for battery_not_low constraint");
+            return;
+        }
+        // The test needs the device to support at least one other constraint to test proper
+        // functionality.
+        if (!deviceSupportsAnyFlexConstraints(CONSTRAINT_CHARGING | CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test since device doesn't support any constraints");
+            return;
+        }
+        // Increase timeouts to make sure the test doesn't start passing because of transpired time.
+        mDeviceConfigStateHelper.set("fc_percents_to_drop_num_flexible_constraints",
+                "900000,1800000,3600000,7200000");
+
+        scheduleJobToExecute();
+
+        satisfySystemWideConstraints(false, true, false);
+
+        assertJobNotReady();
+
+        // CONSTRAINT_BATTERY_NOT_LOW
+        mDeviceConfigStateHelper.set("fc_applied_constraints", "2");
+
+        runJob();
+        assertTrue("Job did not fire when applied constraints were satisfied",
+                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
+    }
+
+    /**
+     * Schedule a job to run, verify it runs when applied constraints are reduced to the satisfied
+     * set.
+     */
+    @RequiresDevice // Emulators don't always have access to wifi/network
+    public void testAppliedConstraints_batteryNotLowAndConnectivity() throws Exception {
+        if (!deviceSupportsAllFlexConstraints(
+                CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CONNECTIVITY)) {
+            Log.d(TAG, "Skipping test that requires device support for"
+                    + " battery_not_low & connectivity constraints");
+            return;
+        }
+        // The test needs the device to support at least one other constraint to test proper
+        // functionality.
+        if (!deviceSupportsAnyFlexConstraints(CONSTRAINT_CHARGING | CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test since device doesn't support any constraints");
+            return;
+        }
+        if (!mNetworkingHelper.hasWifiFeature()) {
+            Log.d(TAG, "Skipping test that requires the device be WiFi enabled.");
+            return;
+        }
+        // Increase timeouts to make sure the test doesn't start passing because of transpired time.
+        mDeviceConfigStateHelper.set("fc_percents_to_drop_num_flexible_constraints",
+                "900000,1800000,3600000,7200000");
+        mNetworkingHelper.setWifiState(false);
+
+        final int connectivityJobId = FLEXIBLE_JOB_ID;
+        final int nonConnectivityJobId = FLEXIBLE_JOB_ID + 1;
+        mJobScheduler.schedule(new JobInfo.Builder(connectivityJobId, kJobServiceComponent)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .build());
+        mJobScheduler.schedule(new JobInfo.Builder(nonConnectivityJobId, kJobServiceComponent)
+                .build());
+
+        assertJobNotReady(nonConnectivityJobId);
+        assertJobNotReady(connectivityJobId);
+
+        // CONSTRAINT_BATTERY_NOT_LOW
+        mDeviceConfigStateHelper.set("fc_applied_constraints", "2");
+
+        kTestEnvironment.setExpectedExecutions(1);
+        satisfySystemWideConstraints(false, true, false);
+
+        // Only the connectivity job should be held back by the lack of connectivity.
+        assertJobNotReady(connectivityJobId);
+
+        runJob(nonConnectivityJobId);
+        assertTrue("Job did not fire when applied constraints were satisfied",
+                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
+
+        kTestEnvironment.setExpectedExecutions(1);
+        // CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CONNECTIVITY
+        // Connectivity job needs both to run
+        mDeviceConfigStateHelper.set("fc_applied_constraints", "268435458");
+        mNetworkingHelper.setWifiState(true);
+
+        runJob(connectivityJobId);
+        assertTrue("Job did not fire when applied constraints were satisfied",
+                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
+    }
+
+    /**
+     * Schedule a job to run, verify it runs when applied constraints are reduced to the satisfied
+     * set.
+     */
+    public void testAppliedConstraints_charging() throws Exception {
+        if (!deviceSupportsAllFlexConstraints(CONSTRAINT_CHARGING)) {
+            Log.d(TAG, "Skipping test that requires device support for charging constraint");
+            return;
+        }
+        // The test needs the device to support at least one other constraint to test proper
+        // functionality.
+        if (!deviceSupportsAnyFlexConstraints(CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test since device doesn't support any constraints");
+            return;
+        }
+        // Increase timeouts to make sure the test doesn't start passing because of transpired time.
+        mDeviceConfigStateHelper.set("fc_percents_to_drop_num_flexible_constraints",
+                "900000,1800000,3600000,7200000");
+
+        scheduleJobToExecute();
+
+        satisfySystemWideConstraints(true, false, false);
+
+        assertJobNotReady();
+
+        // CONSTRAINT_CHARGING
+        mDeviceConfigStateHelper.set("fc_applied_constraints", "1");
+
+        runJob();
+        assertTrue("Job did not fire when applied constraints were satisfied",
+                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
+    }
+
+    /**
+     * Schedule a job to run, verify it runs when applied constraints are reduced to the satisfied
+     * set.
+     */
+    @RequiresDevice // Emulators don't always have access to wifi/network
+    public void testAppliedConstraints_connectivity() throws Exception {
+        if (!deviceSupportsAllFlexConstraints(CONSTRAINT_CONNECTIVITY)) {
+            Log.d(TAG, "Skipping test that requires device support for connectivity constraint");
+            return;
+        }
+        // The test needs the device to support at least one other constraint to test proper
+        // functionality.
+        if (!deviceSupportsAnyFlexConstraints(
+                CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CHARGING | CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test since device doesn't support any constraints");
+            return;
+        }
+        if (!mNetworkingHelper.hasWifiFeature()) {
+            Log.d(TAG, "Skipping test that requires the device be WiFi enabled.");
+            return;
+        }
+        // Increase timeouts to make sure the test doesn't start passing because of transpired time.
+        mDeviceConfigStateHelper.set("fc_percents_to_drop_num_flexible_constraints",
+                "900000,1800000,3600000,7200000");
+
+        kTestEnvironment.setExpectedExecutions(1);
+        mJobScheduler.schedule(mBuilder.build());
+        mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
+        scheduleJobToExecute();
+
+        mNetworkingHelper.setWifiState(true);
+
+        assertJobNotReady();
+
+        // CONSTRAINT_CONNECTIVITY
+        mDeviceConfigStateHelper.set("fc_applied_constraints", "268435456");
+
+        runJob();
+        assertTrue("Job did not fire when applied constraints were satisfied",
+                kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
+    }
+
+    /**
+     * Schedule a job to run, verify it runs when applied constraints are reduced to the satisfied
+     * set.
+     */
+    public void testAppliedConstraints_idle() throws Exception {
+        if (!deviceSupportsAllFlexConstraints(CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test that requires device support for idle constraint");
+            return;
+        }
+        // The test needs the device to support at least one other constraint to test proper
+        // functionality.
+        if (!deviceSupportsAnyFlexConstraints(CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CHARGING)) {
+            Log.d(TAG, "Skipping test since device doesn't support any constraints");
+            return;
+        }
+        // Increase timeouts to make sure the test doesn't start passing because of transpired time.
+        mDeviceConfigStateHelper.set("fc_percents_to_drop_num_flexible_constraints",
+                "900000,1800000,3600000,7200000");
+
+        scheduleJobToExecute();
+
+        satisfySystemWideConstraints(false, false, true);
+
+        assertJobNotReady();
+
+        // CONSTRAINT_IDLE
+        mDeviceConfigStateHelper.set("fc_applied_constraints", "4");
+
+        runJob();
+        assertTrue("Job did not fire when applied constraints were satisfied",
                 kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
     }
 
@@ -172,7 +469,9 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
      * satisfied constraints past that limit.
      */
     public void testCutoffWindowRemovesConstraints() throws Exception {
-        if (!deviceSupportsFlexConstraints()) {
+        if (!deviceSupportsAllFlexConstraints(
+                CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CHARGING | CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test that requires device support required constraints");
             return;
         }
         mDeviceConfigStateHelper.set("fc_flexibility_deadline_proximity_limit_ms", "95000");
@@ -183,7 +482,7 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         assertJobNotReady();
 
         // Wait for constraints to drop.
-        Thread.sleep(5_000L);
+        Thread.sleep(10_000L);
 
         runJob();
         assertTrue("Job with flexible constraint did not fire when the deadline was close",
@@ -195,7 +494,9 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
      * becomes idle.
      */
     public void testIdleSatisfiesFlexibleConstraints() throws Exception {
-        if (!deviceSupportsFlexConstraints()) {
+        if (!deviceSupportsAllFlexConstraints(
+                CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CHARGING | CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test that requires device support required constraints");
             return;
         }
         scheduleJobToExecute();
@@ -216,7 +517,9 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
      * is charging.
      */
     public void testChargingSatisfiesFlexibleConstraints() throws Exception {
-        if (!deviceSupportsFlexConstraints()) {
+        if (!deviceSupportsAllFlexConstraints(
+                CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CHARGING | CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test that requires device support required constraints");
             return;
         }
         scheduleJobToExecute();
@@ -236,7 +539,9 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
      * is battery not low.
      */
     public void testBatteryNotLowSatisfiesFlexibleConstraints() throws Exception {
-        if (!deviceSupportsFlexConstraints()) {
+        if (!deviceSupportsAllFlexConstraints(
+                CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CHARGING | CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test that requires device support required constraints");
             return;
         }
         scheduleJobToExecute();
@@ -259,7 +564,12 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
      */
     @RequiresDevice // Emulators don't always have access to wifi/network
     public void testWifiSatisfiesFlexibleConstraints() throws Exception {
-        if (!deviceSupportsFlexConstraints() || !deviceSupportsFlexTransportAffinities()) {
+        if (!deviceSupportsAllFlexConstraints(
+                CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CHARGING | CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test that requires device support required constraints");
+            return;
+        }
+        if (!deviceSupportsFlexTransportAffinities()) {
             return;
         }
         if (mNetworkingHelper.hasEthernetConnection()) {
@@ -301,7 +611,9 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
      * Verify it only requires 3 flexible constraints.
      */
     public void testPreferredTransport_RequiredNone() throws Exception {
-        if (!deviceSupportsFlexConstraints()) {
+        if (!deviceSupportsAnyFlexConstraints(
+                CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CHARGING | CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test that requires device support any required constraints");
             return;
         }
         mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_NONE);
@@ -321,7 +633,12 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
      */
     @RequiresDevice // Emulators don't always have access to wifi/network
     public void testPreferredTransport_RequiredCellular() throws Exception {
-        if (!deviceSupportsFlexConstraints() || !deviceSupportsFlexTransportAffinities()) {
+        if (!deviceSupportsAllFlexConstraints(
+                CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CHARGING | CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test that requires device support required constraints");
+            return;
+        }
+        if (!deviceSupportsFlexTransportAffinities()) {
             return;
         }
         if (!mNetworkingHelper.hasCellularNetwork()) {
@@ -352,7 +669,12 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
      */
     @RequiresDevice // Emulators don't always have access to wifi/network
     public void testPreferredTransport_UnsupportedDevice() throws Exception {
-        if (!deviceSupportsFlexConstraints() || deviceSupportsFlexTransportAffinities()) {
+        if (!deviceSupportsAnyFlexConstraints(
+                CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CHARGING | CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test that requires device support required constraints");
+            return;
+        }
+        if (deviceSupportsFlexTransportAffinities()) {
             return;
         }
         if (mNetworkingHelper.hasEthernetConnection()) {
@@ -384,10 +706,24 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
                 kTestEnvironment.awaitExecution(FLEXIBILITY_TIMEOUT_MILLIS));
     }
 
-    private boolean deviceSupportsFlexConstraints() {
-        // Flex constraints are disabled on auto devices.
-        return !getContext().getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    private boolean deviceSupportsAllFlexConstraints(int constraints) {
+        if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_EMBEDDED)) {
+            return (constraints & SUPPORTED_CONSTRAINTS_EMBEDDED) == constraints;
+        }
+        if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            return (constraints & SUPPORTED_CONSTRAINTS_AUTOMOTIVE) == constraints;
+        }
+        return (constraints & SUPPORTED_CONSTRAINTS_DEFAULT) == constraints;
+    }
+
+    private boolean deviceSupportsAnyFlexConstraints(int constraints) {
+        if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_EMBEDDED)) {
+            return (constraints & SUPPORTED_CONSTRAINTS_EMBEDDED) != 0;
+        }
+        if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            return (constraints & SUPPORTED_CONSTRAINTS_AUTOMOTIVE) != 0;
+        }
+        return (constraints & SUPPORTED_CONSTRAINTS_DEFAULT) != 0;
     }
 
     private boolean deviceSupportsFlexTransportAffinities() {
@@ -423,9 +759,13 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
     }
 
     private void runJob() throws Exception {
+        runJob(FLEXIBLE_JOB_ID);
+    }
+
+    private void runJob(int jobId) throws Exception {
         mUiDevice.executeShellCommand("cmd jobscheduler run -s"
                 + " -u " + UserHandle.myUserId()
                 + " " + kJobServiceComponent.getPackageName()
-                + " " + FLEXIBLE_JOB_ID);
+                + " " + jobId);
     }
 }

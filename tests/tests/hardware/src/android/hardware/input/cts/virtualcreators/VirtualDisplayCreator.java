@@ -24,7 +24,7 @@ import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
 import android.view.Surface;
-import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
+import android.virtualdevice.cts.common.VirtualDeviceRule;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -55,7 +55,7 @@ public class VirtualDisplayCreator {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         DisplayManager displayManager = context.getSystemService(DisplayManager.class);
         return displayManager.createVirtualDisplay(
-                VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder().build());
+                VirtualDeviceRule.createDefaultVirtualDisplayConfigBuilder().build());
     }
 
     public static Point getDisplaySize(VirtualDisplay virtualDisplay) {

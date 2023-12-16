@@ -20,6 +20,7 @@ import static android.telephony.PreciseDisconnectCause.TEMPORARY_FAILURE;
 import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_TWN_CHT;
 import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_TWN_FET;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWER;
 
 import static org.junit.Assert.assertEquals;
@@ -47,6 +48,7 @@ import android.os.SystemProperties;
 import android.telecom.PhoneAccount;
 import android.telecom.TelecomManager;
 import android.telephony.AccessNetworkConstants;
+import android.telephony.CarrierRestrictionRules;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.ServiceState;
 import android.telephony.SubscriptionManager;
@@ -147,6 +149,12 @@ public class TelephonyManagerTestOnMockModem {
         sCallStateChangeCallbackHandler =
                 new Handler(sCallStateChangeCallbackHandlerThread.getLooper());
         mShaId = getShaId(TelephonyUtils.CTS_APP_PACKAGE);
+
+        final PackageManager pm = getContext().getPackageManager();
+        if (pm.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            //Wait for Telephony FW and RIL initialization are done
+            TimeUnit.SECONDS.sleep(4);
+        }
     }
 
     @AfterClass
@@ -986,5 +994,17 @@ public class TelephonyManagerTestOnMockModem {
                     (tm) -> tm.getImei(1));
             assertEquals(slot1Imei, primaryImei);
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @Test
+    public void getAllowedCarriers_ReadPhoneState_Restricted() throws Exception {
+        sMockModemManager.updateCarrierRestrictionInfo(getCarrierList(false),
+                CarrierRestrictions.CarrierRestrictionStatus.RESTRICTED);
+        CarrierRestrictionRules rules =runWithShellPermissionIdentity(() -> {
+            return sTelephonyManager.getCarrierRestrictionRules();
+        }, android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
+        assertEquals(TelephonyManager.CARRIER_RESTRICTION_STATUS_RESTRICTED,
+                rules.getCarrierRestrictionStatus());
     }
 }

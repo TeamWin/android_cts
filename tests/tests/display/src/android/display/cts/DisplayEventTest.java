@@ -388,14 +388,14 @@ public class DisplayEventTest {
         intent.setClass(mContext, SimpleActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
 
-        // Launch Home to bring the test activity into cached mode
-        Intent home = new Intent(Intent.ACTION_MAIN);
-        home.addCategory(Intent.CATEGORY_HOME);
-        home.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        // Launch another activity to bring the test activity into cached mode
+        Intent intent2 = new Intent(Intent.ACTION_MAIN);
+        intent2.setClass(mContext, SimpleActivity2.class);
+        intent2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
                     mInstrumentation.startActivitySync(intent);
-                    mContext.startActivity(home);
+                    mInstrumentation.startActivitySync(intent2);
                 },
                 android.Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
         waitLatch(mLatchActivityCached);

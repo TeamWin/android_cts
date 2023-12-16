@@ -388,7 +388,8 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
       if (media_performance_class >= _TEST_REQUIRED_MPC and
           not should_run and
           cam.is_primary_camera() and
-          has_multiple_same_facing_cameras):
+          has_multiple_same_facing_cameras and
+          props['android.lens.facing'] == _LENS_FACING_BACK):
         logging.error('Found multiple camera IDs %s facing in the same '
                       'direction as primary camera %s.',
                       cameras_facing_same_direction, self.camera_id)

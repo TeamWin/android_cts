@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,166 +14,97 @@
  * limitations under the License.
  */
 
-package android.virtualdevice.cts;
-
-import static android.Manifest.permission.ACTIVITY_EMBEDDING;
-import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
-import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
-import static android.Manifest.permission.WAKE_LOCK;
-import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
-import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createActivityOptions;
+package android.virtualdevice.cts.applaunch;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.TruthJUnit.assume;
 
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
+import static org.junit.Assume.assumeNotNull;
 
-import android.annotation.Nullable;
+import android.annotation.NonNull;
 import android.app.Activity;
-import android.companion.virtual.VirtualDeviceManager;
-import android.companion.virtual.VirtualDeviceManager.ActivityListener;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
-import android.companion.virtual.VirtualDeviceParams;
 import android.companion.virtual.flags.Flags;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
+import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
+import android.os.ConditionVariable;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsDisabled;
-import android.platform.test.flag.junit.CheckFlagsRule;
-import android.platform.test.flag.junit.DeviceFlagsValueProvider;
-import android.virtualdevice.cts.applaunch.util.EmptyActivity;
-import android.virtualdevice.cts.common.FakeAssociationRule;
-import android.virtualdevice.cts.common.util.TestAppHelper;
-import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
+import android.virtualdevice.cts.common.VirtualDeviceRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.AdoptShellPermissionsRule;
-
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+
+import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class StreamedAppBehaviorTest {
 
-    private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =
-            new VirtualDeviceParams.Builder().build();
+    private static final long TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(3);
 
     @Rule
-    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
-            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-            ACTIVITY_EMBEDDING,
-            ADD_TRUSTED_DISPLAY,
-            CREATE_VIRTUAL_DEVICE,
-            WAKE_LOCK);
-
-    @Rule
-    public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
-
-    @Rule
-    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
-
-    private VirtualDeviceManager mVirtualDeviceManager;
-    @Nullable private VirtualDevice mVirtualDevice;
-    @Nullable private VirtualDisplay mVirtualDisplay;
-    private Context mContext;
-    @Mock
-    private VirtualDisplay.Callback mVirtualDisplayCallback;
-    @Mock
-    private ActivityListener mActivityListener;
-
-    @Before
-    public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
-        mContext = getApplicationContext();
-        final PackageManager packageManager = mContext.getPackageManager();
-        assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
-        assumeTrue(packageManager.hasSystemFeature(
-                PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
-        // TODO(b/261155110): Re-enable tests once freeform mode is supported in Virtual Display.
-        assumeFalse("Skipping test: VirtualDisplay window policy doesn't support freeform.",
-                packageManager.hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT));
-        mVirtualDeviceManager = mContext.getSystemService(VirtualDeviceManager.class);
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
-        mVirtualDevice.addActivityListener(mContext.getMainExecutor(), mActivityListener);
-        mVirtualDisplay = mVirtualDevice.createVirtualDisplay(
-                VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder().build(),
-                Runnable::run,
-                mVirtualDisplayCallback);
-    }
-
-    @After
-    public void tearDown() {
-        if (mVirtualDisplay != null) {
-            mVirtualDisplay.release();
-        }
-        if (mVirtualDevice != null) {
-            mVirtualDevice.close();
-        }
-    }
+    public VirtualDeviceRule mRule = VirtualDeviceRule.createDefault();
 
     @RequiresFlagsDisabled(Flags.FLAG_STREAM_CAMERA)
     @Test
-    public void appsInVirtualDevice_shouldNotHaveAccessToCamera() throws CameraAccessException {
-        CameraManager manager = mContext.getSystemService(CameraManager.class);
+    public void appsInVirtualDevice_shouldNotHaveAccessToCamera() throws Exception {
+        VirtualDevice virtualDevice = mRule.createManagedVirtualDevice();
+        VirtualDisplay virtualDisplay = mRule.createManagedVirtualDisplayWithFlags(virtualDevice,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY);
+
+        CameraManager manager = getApplicationContext().getSystemService(CameraManager.class);
         String[] cameras = manager.getCameraIdList();
-        assume().that(cameras).isNotNull();
+        assumeNotNull((Object) cameras);
+
+        // An activity from this UID is running on the virtual device, so camera access is blocked.
+        AppComponents.EmptyActivity activity = mRule.startActivityOnDisplaySync(
+                virtualDisplay, AppComponents.EmptyActivity.class);
 
         for (String cameraId : cameras) {
-            EmptyActivity activity =
-                    (EmptyActivity) InstrumentationRegistry.getInstrumentation()
-                            .startActivitySync(
-                                    new Intent(mContext, EmptyActivity.class)
-                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                                                    | Intent.FLAG_ACTIVITY_CLEAR_TASK),
-                                    createActivityOptions(mVirtualDisplay));
-
-            EmptyActivity.Callback callback = mock(EmptyActivity.Callback.class);
-            activity.setCallback(callback);
-
-            int requestCode = 1;
-            activity.startActivityForResult(
-                    TestAppHelper.createCameraAccessTestIntent().putExtra(
-                            TestAppHelper.EXTRA_CAMERA_ID, cameraId),
-                    requestCode,
-                    createActivityOptions(mVirtualDisplay));
-
-            ArgumentCaptor<Intent> intentArgumentCaptor = ArgumentCaptor.forClass(Intent.class);
-            verify(callback, timeout(10000)).onActivityResult(
-                    eq(requestCode), eq(Activity.RESULT_OK), intentArgumentCaptor.capture());
-            Intent resultData = intentArgumentCaptor.getValue();
-            activity.finish();
-
-            assertThat(resultData).isNotNull();
-            String result = resultData.getStringExtra(TestAppHelper.EXTRA_CAMERA_RESULT);
-            assertThat(result).isAnyOf("onDisconnected", "onError");
-            if (result.equals("onError")) {
-                int error = resultData.getIntExtra(TestAppHelper.EXTRA_CAMERA_ON_ERROR_CODE, -1);
-                assertThat(error).isEqualTo(CameraDevice.StateCallback.ERROR_CAMERA_DISABLED);
-            }
+            assertThat(accessCameraFromActivity(activity, cameraId)).isGreaterThan(0);
         }
+    }
+
+    private int accessCameraFromActivity(Activity activity, String cameraId) {
+        ConditionVariable cond = new ConditionVariable();
+        final CameraManager cameraManager = activity.getSystemService(CameraManager.class);
+        final int[] cameraError = {0};
+        final CameraDevice.StateCallback cameraCallback = new CameraDevice.StateCallback() {
+            @Override
+            public void onOpened(@NonNull CameraDevice cameraDevice) {}
+
+            @Override
+            public void onDisconnected(@NonNull CameraDevice cameraDevice) {
+                cameraError[0] = CameraDevice.StateCallback.ERROR_CAMERA_DISABLED;
+                cond.open();
+            }
+
+            @Override
+            public void onError(@NonNull CameraDevice cameraDevice, int error) {
+                cameraError[0] = error;
+                cond.open();
+            }
+        };
+
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+            try {
+                cameraManager.openCamera(cameraId, cameraCallback, null);
+            } catch (CameraAccessException e) {
+                // ok to ignore - we should get one of the onDisconnected or onError callbacks above
+            }
+        });
+        cond.block(TIMEOUT_MILLIS);
+        return cameraError[0];
     }
 }

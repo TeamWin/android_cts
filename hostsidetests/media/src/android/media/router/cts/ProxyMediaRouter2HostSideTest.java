@@ -18,10 +18,17 @@ package android.media.router.cts;
 
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_1_APK;
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_1_PACKAGE;
-import static android.media.cts.MediaRouterTestConstants.PROXY_MEDIA_ROUTER_APP_APK;
-import static android.media.cts.MediaRouterTestConstants.PROXY_MEDIA_ROUTER_APP_PACKAGE;
-import static android.media.cts.MediaRouterTestConstants.PROXY_MEDIA_ROUTER_APP_TEST_CLASS;
+import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_SECONDARY_USER_HELPER_APK;
+import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_SECONDARY_USER_HELPER_PACKAGE;
+import static android.media.cts.MediaRouterTestConstants.PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_APK;
+import static android.media.cts.MediaRouterTestConstants.PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_PACKAGE;
+import static android.media.cts.MediaRouterTestConstants.PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_TEST_CLASS;
+import static android.media.cts.MediaRouterTestConstants.PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_APK;
+import static android.media.cts.MediaRouterTestConstants.PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_PACKAGE;
+import static android.media.cts.MediaRouterTestConstants.PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_TEST_CLASS;
+import static android.media.cts.MediaRouterTestConstants.TARGET_USER_ID_KEY;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.platform.test.annotations.AppModeFull;
@@ -36,6 +43,7 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.AfterClassWithInfo;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
+import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
 import com.google.common.truth.Expect;
 
@@ -49,20 +57,48 @@ import java.io.FileNotFoundException;
 public class ProxyMediaRouter2HostSideTest extends BaseHostJUnit4Test {
 
     @ClassRule public static final Expect expect = Expect.create();
+    private static int secondaryUser = -1;
 
     @BeforeClassWithInfo
-    public static void installTestApps(TestInformation testInfo)
+    public static void installApps(TestInformation testInformation)
             throws DeviceNotAvailableException, FileNotFoundException {
-        installTestApp(testInfo, PROXY_MEDIA_ROUTER_APP_APK);
-        installTestApp(testInfo, MEDIA_ROUTER_PROVIDER_1_APK);
+        ITestDevice device = testInformation.getDevice();
+        secondaryUser = device.createUser("TEST_USER", false, false, true);
+
+        installTestAppAsUser(testInformation, MEDIA_ROUTER_PROVIDER_1_APK, secondaryUser);
+        installTestAppAsUser(
+                testInformation, MEDIA_ROUTER_SECONDARY_USER_HELPER_APK, secondaryUser);
+        assertThat(secondaryUser).isNotEqualTo(-1);
+        assertThat(secondaryUser).isNotEqualTo(device.getCurrentUser());
+
+        installTestAppAsUser(
+                testInformation,
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_APK,
+                device.getCurrentUser());
+
+        installTestAppAsUser(
+                testInformation,
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_APK,
+                device.getCurrentUser());
     }
 
     @AfterClassWithInfo
-    public static void uninstallTestApps(TestInformation testInformation)
+    public static void uninstallApps(TestInformation testInformation)
             throws DeviceNotAvailableException {
         ITestDevice device = testInformation.getDevice();
-        expect.that(device.uninstallPackage(MEDIA_ROUTER_PROVIDER_1_PACKAGE)).isNull();
-        expect.that(device.uninstallPackage(PROXY_MEDIA_ROUTER_APP_PACKAGE)).isNull();
+
+        expect.that(device.uninstallPackage(
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_PACKAGE)).isNull();
+        expect.that(device.uninstallPackage(
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_PACKAGE)).isNull();
+
+        expect.that(
+                        device.uninstallPackageForUser(
+                                MEDIA_ROUTER_SECONDARY_USER_HELPER_PACKAGE, secondaryUser))
+                .isNull();
+        expect.that(device.uninstallPackageForUser(MEDIA_ROUTER_PROVIDER_1_PACKAGE, secondaryUser))
+                .isNull();
+        assertThat(device.removeUser(secondaryUser)).isTrue();
     }
 
     @Test
@@ -71,9 +107,27 @@ public class ProxyMediaRouter2HostSideTest extends BaseHostJUnit4Test {
     public void getInstance_withMediaRoutingControl_flagEnabled_doesNotThrow()
             throws DeviceNotAvailableException {
         runDeviceTests(
-                PROXY_MEDIA_ROUTER_APP_PACKAGE,
-                PROXY_MEDIA_ROUTER_APP_TEST_CLASS,
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_PACKAGE,
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_TEST_CLASS,
                 "getInstance_withMediaRoutingControl_flagEnabled_doesNotThrow");
+    }
+
+    @Test
+    @AppModeFull
+    @RequiresDevice
+    public void getInstance_acrossUsers_withInteractAcrossUsersFull_returnsInstance()
+            throws DeviceNotAvailableException {
+        DeviceTestRunOptions options =
+                new DeviceTestRunOptions(
+                        PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_PACKAGE)
+                        .setTestClassName(
+                                PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_TEST_CLASS)
+                        .setTestMethodName(
+                                "getInstance_acrossUsers_withInteractAcrossUsersFull_"
+                                        + "returnsInstance")
+                        .addInstrumentationArg(TARGET_USER_ID_KEY, String.valueOf(secondaryUser));
+
+        runDeviceTests(options);
     }
 
     @Test
@@ -82,9 +136,27 @@ public class ProxyMediaRouter2HostSideTest extends BaseHostJUnit4Test {
     public void getInstance_withMediaRoutingControl_flagDisabled_throwsSecurityException()
             throws DeviceNotAvailableException {
         runDeviceTests(
-                PROXY_MEDIA_ROUTER_APP_PACKAGE,
-                PROXY_MEDIA_ROUTER_APP_TEST_CLASS,
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_PACKAGE,
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_TEST_CLASS,
                 "getInstance_withMediaRoutingControl_flagDisabled_throwsSecurityException");
+    }
+
+    @Test
+    @AppModeFull
+    @RequiresDevice
+    public void getInstance_acrossUsers_withoutInteractAcrossUsersFull_throwsSecurityException()
+            throws DeviceNotAvailableException {
+        DeviceTestRunOptions options =
+                new DeviceTestRunOptions(
+                        PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_PACKAGE)
+                        .setTestClassName(
+                                PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_TEST_CLASS)
+                        .setTestMethodName(
+                                "getInstance_acrossUsers_withoutInteractAcrossUsersFull_"
+                                        + "throwsSecurityException")
+                        .addInstrumentationArg(TARGET_USER_ID_KEY, String.valueOf(secondaryUser));
+
+        runDeviceTests(options);
     }
 
     @Test
@@ -93,22 +165,78 @@ public class ProxyMediaRouter2HostSideTest extends BaseHostJUnit4Test {
     public void getInstance_withoutMediaRoutingControl_throwsSecurityException()
             throws DeviceNotAvailableException, FileNotFoundException {
         runDeviceTests(
-                PROXY_MEDIA_ROUTER_APP_PACKAGE,
-                PROXY_MEDIA_ROUTER_APP_TEST_CLASS,
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_PACKAGE,
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_TEST_CLASS,
                 "getInstance_withoutMediaRoutingControl_throwsSecurityException");
     }
 
-    private static void installTestApp(TestInformation testInfo, String apkName)
+    @Test
+    @AppModeFull
+    @RequiresDevice
+    public void getInstance_acrossUsers_withFakePackageName_throwsIAE()
+            throws DeviceNotAvailableException {
+        DeviceTestRunOptions options =
+                new DeviceTestRunOptions(
+                        PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_PACKAGE)
+                        .setTestClassName(
+                                PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_TEST_CLASS)
+                        .setTestMethodName("getInstance_acrossUsers_withFakePackageName_throwsIAE")
+                        .addInstrumentationArg(TARGET_USER_ID_KEY, String.valueOf(secondaryUser));
+
+        runDeviceTests(options);
+    }
+
+    @Test
+    @AppModeFull
+    @RequiresDevice
+    public void getInstance_withinUser_withoutMediaRoutingControl_throwsSecurityException()
+            throws DeviceNotAvailableException, FileNotFoundException {
+        runDeviceTests(
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_PACKAGE,
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_TEST_CLASS,
+                "getInstance_withinUser_withoutMediaRoutingControl_throwsSecurityException");
+    }
+
+    @Test
+    @AppModeFull
+    @RequiresDevice
+    public void getInstance_withinUser_withMediaRoutingControl_flagEnabled_returnsInstance()
+            throws DeviceNotAvailableException, FileNotFoundException {
+        runDeviceTests(
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_PACKAGE,
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_TEST_CLASS,
+                "getInstance_withinUser_withMediaRoutingControl_flagEnabled_returnsInstance");
+    }
+
+    @Test
+    @AppModeFull
+    @RequiresDevice
+    public void getInstance_withinUser_returnsInstance() throws DeviceNotAvailableException {
+        DeviceTestRunOptions options =
+                new DeviceTestRunOptions(
+                        PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_PACKAGE)
+                        .setTestClassName(
+                                PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_TEST_CLASS)
+                        .setTestMethodName("getInstance_withinUser_returnsInstance")
+                        .addInstrumentationArg(TARGET_USER_ID_KEY, String.valueOf(secondaryUser));
+
+        runDeviceTests(options);
+    }
+
+    private static void installTestAppAsUser(
+            TestInformation testInformation, String apkName, int userId)
             throws FileNotFoundException, DeviceNotAvailableException {
         LogUtil.CLog.d("Installing app " + apkName);
         CompatibilityBuildHelper buildHelper =
-                new CompatibilityBuildHelper(testInfo.getBuildInfo());
+                new CompatibilityBuildHelper(testInformation.getBuildInfo());
         final String result =
-                testInfo.getDevice()
-                        .installPackage(
+                testInformation
+                        .getDevice()
+                        .installPackageForUser(
                                 buildHelper.getTestFile(apkName),
                                 /* reinstall= */ true,
                                 /* grantPermissions= */ true,
+                                userId,
                                 /*allow test apps*/ "-t");
         assertWithMessage("Failed to install " + apkName + ": " + result).that(result).isNull();
     }

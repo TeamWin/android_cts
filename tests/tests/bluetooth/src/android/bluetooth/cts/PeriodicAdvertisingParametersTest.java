@@ -49,7 +49,7 @@ public class PeriodicAdvertisingParametersTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testCreateFromParcel() {
+    public void createFromParcel() {
         final Parcel parcel = Parcel.obtain();
         try {
             PeriodicAdvertisingParameters params =
@@ -66,7 +66,7 @@ public class PeriodicAdvertisingParametersTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testDefaultParameters() {
+    public void defaultParameters() {
         PeriodicAdvertisingParameters params = new PeriodicAdvertisingParameters.Builder().build();
         assertFalse(params.getIncludeTxPower());
         assertEquals(INTERVAL_MAX, params.getInterval());
@@ -74,7 +74,7 @@ public class PeriodicAdvertisingParametersTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testIncludeTxPower() {
+    public void includeTxPower() {
         PeriodicAdvertisingParameters params =
                 new PeriodicAdvertisingParameters.Builder().setIncludeTxPower(true).build();
         assertTrue(params.getIncludeTxPower());
@@ -82,7 +82,7 @@ public class PeriodicAdvertisingParametersTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testIntervalWithInvalidValues() {
+    public void intervalWithInvalidValues() {
         int[] invalidValues = { INTERVAL_MIN - 1, INTERVAL_MAX + 1 };
         for (int i = 0; i < invalidValues.length; i++) {
             try {
@@ -96,7 +96,7 @@ public class PeriodicAdvertisingParametersTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testInterval() {
+    public void interval() {
         PeriodicAdvertisingParameters params =
                 new PeriodicAdvertisingParameters.Builder().setInterval(INTERVAL_MIN).build();
         assertEquals(INTERVAL_MIN, params.getInterval());
@@ -104,7 +104,7 @@ public class PeriodicAdvertisingParametersTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testDescribeContents() {
+    public void describeContents() {
         PeriodicAdvertisingParameters params = new PeriodicAdvertisingParameters.Builder().build();
         assertEquals(0, params.describeContents());
     }

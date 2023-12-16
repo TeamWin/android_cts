@@ -19,7 +19,8 @@ package android.virtualdevice.streamedtestapp;
 import android.app.Activity;
 
 /**
- * An empty activity acting as home on the virtual device.
+ * An empty activity acting as home on the default device. It needs to be in a separate apk because
+ * WM has special handling for home activities that are being instrumented.
  */
 public class HomeActivity extends Activity {
 }

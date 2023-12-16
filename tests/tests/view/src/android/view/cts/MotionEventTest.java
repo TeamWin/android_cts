@@ -322,7 +322,8 @@ public class MotionEventTest {
 
         // Move to pointer id count.
         parcel.setDataPosition(4);
-        parcel.writeInt(17);
+        // Use a very large pointer count, which should make this parcel invalid.
+        parcel.writeInt(117);
 
         parcel.setDataPosition(0);
         try {

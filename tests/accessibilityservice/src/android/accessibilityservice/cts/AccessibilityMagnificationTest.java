@@ -18,8 +18,11 @@ package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.MagnificationConfig.MAGNIFICATION_MODE_FULLSCREEN;
 import static android.accessibilityservice.MagnificationConfig.MAGNIFICATION_MODE_WINDOW;
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangedWithChangeTypes;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
+import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 import static android.content.pm.PackageManager.FEATURE_WINDOW_MAGNIFICATION;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ADDED;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -47,15 +50,23 @@ import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Region;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.Button;
@@ -66,8 +77,11 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
+import com.android.window.flags.Flags;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.Before;
@@ -80,6 +94,8 @@ import org.mockito.ArgumentCaptor;
 
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * Class for testing {@link MagnificationController} and the magnification overlay window.
@@ -100,6 +116,9 @@ public class AccessibilityMagnificationTest {
 
     /** Maximum timeout while waiting for a config to be updated */
     public static final int TIMEOUT_CONFIG_SECONDS = 15;
+
+    // From WindowManager.java.
+    public static final int TYPE_NAVIGATION_BAR_PANEL = 2024;
 
     private static UiAutomation sUiAutomation;
 
@@ -122,12 +141,16 @@ public class AccessibilityMagnificationTest {
             mMagnificationAccessibilityServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
                     StubMagnificationAccessibilityService.class, false);
 
+    private final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule(sUiAutomation);
+
     @Rule
     public final RuleChain mRuleChain = RuleChain
             .outerRule(mActivityRule)
             .around(mMagnificationAccessibilityServiceRule)
             .around(mInstrumentedAccessibilityServiceRule)
-            .around(mDumpOnFailureRule);
+            .around(mDumpOnFailureRule)
+            .around(mCheckFlagsRule);
 
     @BeforeClass
     public static void oneTimeSetUp() {
@@ -152,6 +175,24 @@ public class AccessibilityMagnificationTest {
         // Starting the service will force the accessibility subsystem to examine its settings, so
         // it will update magnification in the process to disable it.
         mService = mMagnificationAccessibilityServiceRule.enableService();
+    }
+
+    @After
+    public void tearDown() {
+        // Test cases should reset magnification themselves. Since window magnification
+        // may need times to remove the magnification window, we would like to wait and
+        // ensure the magnification overlay is removed here.
+        if (isMagnificationOverlayExisting()) {
+            // Do nothing, we just want to wait for the event and check the
+            // magnification overlay is removed
+            try {
+                sUiAutomation.executeAndWaitForEvent(() -> {},
+                        event -> !isMagnificationOverlayExisting(), 5000);
+            } catch (TimeoutException timeoutException) {
+                // Double check the overlay is not exists in case there is no event sent
+                assertTrue(!isMagnificationOverlayExisting());
+            }
+        }
     }
 
     @Test
@@ -281,6 +322,9 @@ public class AccessibilityMagnificationTest {
 
         assertTrue("Failed to set config", setConfig.get());
         assertConfigEquals(expectedConfig, controller.getMagnificationConfig());
+
+        mService.runOnServiceSync(
+                () -> controller.resetCurrentMagnification(/* animate= */ false));
     }
 
     @Test
@@ -520,16 +564,15 @@ public class AccessibilityMagnificationTest {
         try {
             sUiAutomation.executeAndWaitForEvent(
                     () -> controller.setMagnificationConfig(config, false),
-                    event -> sUiAutomation.getWindows().stream().anyMatch(
-                            accessibilityWindowInfo -> accessibilityWindowInfo.getType()
-                                    == AccessibilityWindowInfo.TYPE_MAGNIFICATION_OVERLAY), 5000);
+                    event -> isMagnificationOverlayExisting(), 5000);
         } finally {
-            controller.resetCurrentMagnification(false);
+            mService.runOnServiceSync(() -> controller.resetCurrentMagnification(false));
         }
     }
 
     @Test
-    public void testServiceConnectionDisconnected_hasNoMagnificationOverlay() throws Exception {
+    public void testServiceConnectionDisconnected_hasNoMagnificationOverlay()
+            throws TimeoutException {
         Assume.assumeTrue(isWindowModeSupported(mInstrumentation.getContext()));
 
         final MagnificationController controller = mService.getMagnificationController();
@@ -539,19 +582,15 @@ public class AccessibilityMagnificationTest {
                 .build();
 
         try {
-            controller.setMagnificationConfig(config, false);
-            TestUtils.waitUntil("Magnification overlay window should be visible",
-                    () -> sUiAutomation.getWindows().stream().anyMatch(
-                            accessibilityWindowInfo -> accessibilityWindowInfo.getType()
-                                    == AccessibilityWindowInfo.TYPE_MAGNIFICATION_OVERLAY));
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> controller.setMagnificationConfig(config, false),
+                    event -> isMagnificationOverlayExisting(), 5000);
 
-            mService.disableSelfAndRemove();
-            TestUtils.waitUntil("Magnification overlay window should be gone",
-                    () -> sUiAutomation.getWindows().stream().noneMatch(
-                            accessibilityWindowInfo -> accessibilityWindowInfo.getType()
-                                    == AccessibilityWindowInfo.TYPE_MAGNIFICATION_OVERLAY));
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> mService.runOnServiceSync(() -> mService.disableSelfAndRemove()),
+                    event -> !isMagnificationOverlayExisting(), 5000);
         } finally {
-            controller.resetCurrentMagnification(false);
+            mService.runOnServiceSync(() -> controller.resetCurrentMagnification(false));
         }
     }
 
@@ -1057,13 +1096,17 @@ public class AccessibilityMagnificationTest {
 
             Thread.sleep(timeBetweenAnimationChanges);
         }
+
+        mService.runOnServiceSync(() -> {
+            controller.resetCurrentMagnification(/* animate= */ false);
+        });
     }
 
     @Test
     @FlakyTest
     public void testA11yNodeInfoVisibility_whenOutOfMagnifiedArea_shouldVisible()
             throws Exception{
-        final Activity activity = launchActivityAndWaitForItToBeOnscreen(
+        Activity activity = launchActivityAndWaitForItToBeOnscreen(
                 mInstrumentation, sUiAutomation, mActivityRule);
         final MagnificationController controller = mService.getMagnificationController();
         final Rect magnifyBounds = controller.getMagnificationRegion().getBounds();
@@ -1109,6 +1152,215 @@ public class AccessibilityMagnificationTest {
         } finally {
             mService.runOnServiceSync(() -> controller.reset(false));
         }
+    }
+
+    @Test
+    public void testShowMagnifiableWindow_outOfTheMagnifiedRegion_moveMagnification()
+            throws Exception {
+        Activity activity = launchActivityAndWaitForItToBeOnscreen(
+                mInstrumentation, sUiAutomation, mActivityRule);
+
+        final MagnificationController controller = mService.getMagnificationController();
+        final Rect magnifyBounds = controller.getMagnificationRegion().getBounds();
+        final float scale = 4.0f;
+        // Get right-bottom center position
+        final float centerX = magnifyBounds.left + (((float) magnifyBounds.width() / (2.0f * scale))
+                * ((2.0f * scale) - 1.0f));
+        final float centerY = magnifyBounds.top + (((float) magnifyBounds.height() / (2.0f * scale))
+                * ((2.0f * scale) - 1.0f));
+
+        Button createdButton = null;
+
+        try {
+            waitOnMagnificationChanged(controller, scale, centerX, centerY);
+
+            // Add window at left-top position
+            Button button = addMagnifiableWindowInActivity(R.string.button1, params -> {
+                params.width = magnifyBounds.width() / 4;
+                params.height = magnifyBounds.height() / 4;
+                params.gravity = Gravity.TOP | Gravity.LEFT;
+            }, activity);
+            createdButton = button;
+
+            TestUtils.waitUntil("bounds are not intersected:", TIMEOUT_CONFIG_SECONDS,
+                    () -> {
+                        Rect magnifiedArea = getMagnifiedArea(controller);
+                        Rect buttonBounds = new Rect();
+                        button.getBoundsOnScreen(buttonBounds, false);
+                        // magnification should be moved to make the button visible on screen
+                        return magnifiedArea.intersect(buttonBounds);
+                    });
+
+        } finally {
+            if (createdButton != null) {
+                activity.getWindowManager().removeView(createdButton);
+            }
+            mService.runOnServiceSync(() -> controller.reset(false));
+        }
+    }
+
+    @Test
+    @RequiresFlagsDisabled(
+            Flags.FLAG_DO_NOT_CHECK_INTERSECTION_WHEN_NON_MAGNIFIABLE_WINDOW_TRANSITIONS)
+    public void testShowNonMagnifiableWindow_outOfTheMagnifiedRegion_moveMagnification()
+            throws Exception {
+        final MagnificationController controller = mService.getMagnificationController();
+        final Rect magnifyBounds = controller.getMagnificationRegion().getBounds();
+        final float scale = 4.0f;
+        // Get right-bottom center position
+        final float centerX = magnifyBounds.left + (((float) magnifyBounds.width() / (2.0f * scale))
+                * ((2.0f * scale) - 1.0f));
+        final float centerY = magnifyBounds.top + (((float) magnifyBounds.height() / (2.0f * scale))
+                * ((2.0f * scale) - 1.0f));
+
+        Button createdButton = null;
+
+        try {
+            waitOnMagnificationChanged(controller, scale, centerX, centerY);
+
+            // Add window at left-top position
+            Button button = addNonMagnifiableWindow(R.string.button1, "button1", params -> {
+                params.width = magnifyBounds.width() / 4;
+                params.height = magnifyBounds.height() / 4;
+                params.gravity = Gravity.TOP | Gravity.LEFT;
+            });
+            createdButton = button;
+
+            TestUtils.waitUntil("bounds are not intersected:", TIMEOUT_CONFIG_SECONDS,
+                    () -> {
+                        Rect magnifiedArea = getMagnifiedArea(controller);
+                        Rect buttonBounds = new Rect();
+                        button.getBoundsOnScreen(buttonBounds, false);
+                        // magnification should be moved though the button is already visible
+                        // on screen
+                        return magnifiedArea.intersect(buttonBounds);
+                    });
+        } finally {
+            if (createdButton != null) {
+                mInstrumentation.getContext().getSystemService(WindowManager.class).removeView(
+                        createdButton);
+            }
+            mService.runOnServiceSync(() -> controller.reset(false));
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(
+            Flags.FLAG_DO_NOT_CHECK_INTERSECTION_WHEN_NON_MAGNIFIABLE_WINDOW_TRANSITIONS)
+    public void testShowNonMagnifiableWindow_outOfTheMagnifiedRegion_shouldNotMoveMagnification()
+            throws Exception {
+        final MagnificationController controller = mService.getMagnificationController();
+        final Rect magnifyBounds = controller.getMagnificationRegion().getBounds();
+        final float scale = 4.0f;
+        // Get right-bottom center position
+        final float centerX = magnifyBounds.left + (((float) magnifyBounds.width() / (2.0f * scale))
+                * ((2.0f * scale) - 1.0f));
+        final float centerY = magnifyBounds.top + (((float) magnifyBounds.height() / (2.0f * scale))
+                * ((2.0f * scale) - 1.0f));
+
+        Button createdButton = null;
+
+        try {
+            waitOnMagnificationChanged(controller, scale, centerX, centerY);
+
+            // Add window at left-top position
+            Button button = addNonMagnifiableWindow(R.string.button1, "button1", params -> {
+                params.width = magnifyBounds.width() / 4;
+                params.height = magnifyBounds.height() / 4;
+                params.gravity = Gravity.TOP | Gravity.LEFT;
+            });
+            createdButton = button;
+            // wait 1 second to check if the magnification would move.
+            SystemClock.sleep(1000);
+            Rect magnifiedArea = getMagnifiedArea(controller);
+            Rect buttonBounds = new Rect();
+            button.getBoundsOnScreen(buttonBounds, false);
+            // magnification should not be moved since the button is already visible on screen
+            assertFalse(magnifiedArea.intersect(buttonBounds));
+            assertEquals(centerX, controller.getCenterX(), 0f);
+            assertEquals(centerY, controller.getCenterY(), 0f);
+        } finally {
+            if (createdButton != null) {
+                mInstrumentation.getContext().getSystemService(WindowManager.class).removeView(
+                        createdButton);
+            }
+            mService.runOnServiceSync(() -> controller.reset(false));
+        }
+    }
+
+    private boolean isMagnificationOverlayExisting() {
+        return sUiAutomation.getWindows().stream().anyMatch(
+                accessibilityWindowInfo -> accessibilityWindowInfo.getType()
+                        == AccessibilityWindowInfo.TYPE_MAGNIFICATION_OVERLAY);
+    }
+
+    private Rect getMagnifiedArea(MagnificationController magnificationController) {
+        final Rect magnifyBounds = magnificationController.getMagnificationRegion().getBounds();
+        final float scale = magnificationController.getScale();
+        final float centerX = magnificationController.getCenterX();
+        final float centerY = magnificationController.getCenterX();
+
+        float halfWidth = magnifyBounds.width() / (2.0f * scale);
+        float halfHeight = magnifyBounds.height() / (2.0f * scale);
+        return new Rect(
+                (int) (centerX - halfWidth),
+                (int) (centerY - halfHeight),
+                (int) (centerX + halfWidth),
+                (int) (centerY + halfHeight));
+    }
+
+    private Button addNonMagnifiableWindow(int btnTextRes, String title,
+            Consumer<WindowManager.LayoutParams> configure) throws Exception {
+        final WindowManager wm =
+                mInstrumentation.getContext().getSystemService(WindowManager.class);
+        AtomicReference<Button> result = new AtomicReference<>();
+
+        sUiAutomation.executeAndWaitForEvent(() -> {
+            mInstrumentation.runOnMainSync(() -> {
+                final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+                params.width = WindowManager.LayoutParams.MATCH_PARENT;
+                params.height = WindowManager.LayoutParams.WRAP_CONTENT;
+                params.type = TYPE_NAVIGATION_BAR_PANEL;
+                params.accessibilityTitle = title;
+                params.format = PixelFormat.TRANSPARENT;
+                configure.accept(params);
+
+                final Button button = new Button(mInstrumentation.getContext());
+                button.setText(btnTextRes);
+                result.set(button);
+                SystemUtil.runWithShellPermissionIdentity(sUiAutomation,
+                        () -> wm.addView(button, params),
+                        "android.permission.INTERNAL_SYSTEM_WINDOW",
+                        "android.permission.STATUS_BAR_SERVICE");
+            });
+        }, filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ADDED), DEFAULT_TIMEOUT_MS);
+        return result.get();
+    }
+
+    private Button addMagnifiableWindowInActivity(int btnTextRes,
+            Consumer<WindowManager.LayoutParams> configure,
+            Activity activity) throws TimeoutException {
+        AtomicReference<Button> result = new AtomicReference<>();
+        sUiAutomation.executeAndWaitForEvent(() -> {
+            mInstrumentation.runOnMainSync(() -> {
+                final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+                params.width = WindowManager.LayoutParams.MATCH_PARENT;
+                params.height = WindowManager.LayoutParams.WRAP_CONTENT;
+                params.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
+                        | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+                params.type = WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
+                params.token = activity.getWindow().getDecorView().getWindowToken();
+                configure.accept(params);
+
+                final Button button = new Button(activity);
+                button.setText(btnTextRes);
+                result.set(button);
+                activity.getWindowManager().addView(button, params);
+            });
+        }, filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ADDED), DEFAULT_TIMEOUT_MS);
+        return result.get();
     }
 
     private void waitOnMagnificationChanged(MagnificationController controller, float newScale,

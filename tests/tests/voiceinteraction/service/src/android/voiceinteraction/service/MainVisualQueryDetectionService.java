@@ -43,6 +43,8 @@ import android.voiceinteraction.common.Utils;
 
 import androidx.annotation.Nullable;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -62,6 +64,7 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
     public static final String FAKE_QUERY_FIRST = "What is ";
     public static final String FAKE_QUERY_SECOND = "the weather today?";
     public static final String MSG_FILE_NOT_WRITABLE = "files does not have writable channel";
+    public static final String MSG_FILE_NOT_FOUND = "files does not exist in the test directory";
 
     public static final String KEY_VQDS_TEST_SCENARIO = "test scenario";
 
@@ -75,6 +78,7 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
     public static final int SCENARIO_READ_FILE_MMAP_READ_ONLY = 100;
     public static final int SCENARIO_READ_FILE_MMAP_WRITE = 101;
     public static final int SCENARIO_READ_FILE_MMAP_MULTIPLE = 102;
+    public static final int SCENARIO_READ_FILE_FILE_NOT_EXIST = 103;
 
     // stores the content of a file for isolated process to perform disk read
     private ArrayList<String> mResourceContents = new ArrayList<>();
@@ -248,15 +252,9 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
                 finishQuery();
                 lostAttention();
             };
-        } else if (scenario == SCENARIO_READ_FILE_MMAP_READ_ONLY) {
-            // leverages the detection API to verify if the content read from the file is correct
-            detectionJob = () -> {
-                gainedAttention();
-                streamQuery(mResourceContents.get(0));
-                finishQuery();
-                lostAttention();
-            };
-        } else if (scenario == SCENARIO_READ_FILE_MMAP_WRITE) {
+        } else if (scenario == SCENARIO_READ_FILE_MMAP_READ_ONLY
+                || scenario == SCENARIO_READ_FILE_MMAP_WRITE
+                || scenario == SCENARIO_READ_FILE_FILE_NOT_EXIST) {
             // leverages the detection API to verify if the content read from the file is correct
             detectionJob = () -> {
                 gainedAttention();
@@ -401,6 +399,7 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
     private void maybeReadTargetFiles(PersistableBundle options) {
         switch (options.getInt(KEY_VQDS_TEST_SCENARIO)) {
             case SCENARIO_READ_FILE_MMAP_READ_ONLY:
+            case SCENARIO_READ_FILE_FILE_NOT_EXIST:
                 readFileWithMMap(Utils.TEST_RESOURCE_FILE_NAME, FileChannel.MapMode.READ_ONLY);
                 break;
             case SCENARIO_READ_FILE_MMAP_WRITE:
@@ -416,18 +415,22 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
     }
 
     private void readFileWithMMap(String filename, FileChannel.MapMode mode) {
-        try {
+        try (FileInputStream fis = openFileInput(filename)) {
             Log.d(TAG, "Reading test file in mode: " + mode);
-            FileChannel fc = openFileInput(filename).getChannel();
+            FileChannel fc = fis.getChannel();
             MappedByteBuffer buffer = fc.map(mode, 0, fc.size());
             byte[] data = new byte[(int) fc.size()];
             buffer.get(data);
             mResourceContents.add(new String(data, StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            Log.e(TAG, "Cannot mmap read from opened file: " + e.getMessage());
+        } catch (FileNotFoundException e) {
+            Log.d(TAG, "Target file to read does not exist. Filename: " + filename);
+            mResourceContents.add(MSG_FILE_NOT_FOUND);
         } catch (NonWritableChannelException e) {
-            Log.e(TAG, "Only read-only mode is permitted.");
+            Log.d(TAG, "Only read-only mode is permitted.");
             mResourceContents.add(MSG_FILE_NOT_WRITABLE);
+        } catch (IOException e) {
+            Log.e(TAG, "Unexpected IO error: Cannot mmap read from opened file: "
+                    + e.getMessage());
         }
     }
 }

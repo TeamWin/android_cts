@@ -97,6 +97,7 @@ class CodecAsyncHandler {
     void setOutputFormat(AMediaFormat* format);
     AMediaFormat* getOutputFormat();
     bool hasOutputFormatChanged();
+    bool waitOnFormatChange();
     void setError(bool status, std::string& msg);
     bool getError() const;
     void resetContext();
@@ -144,7 +145,8 @@ class OutputManager {
         mErrorLogs.clear();
         mSharedErrorLogs->clear();
     }
-    bool equalsInterlaced(OutputManager* that);
+    bool equalsPtsList(OutputManager* that);
+    bool equalsByteOutput(OutputManager* that);
     bool equals(OutputManager* that);
     float getRmsError(uint8_t* refData, int length);
     std::string getErrorMsg() { return mErrorLogs + *mSharedErrorLogs; }

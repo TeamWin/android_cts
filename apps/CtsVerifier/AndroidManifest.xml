@@ -6049,6 +6049,7 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_required_features" android:value="android.hardware.touchscreen" />
             <meta-data android:name="test_excluded_features"
                 android:value="android.hardware.type.watch:android.hardware.type.television:android.hardware.type.automotive" />
             <meta-data android:name="display_mode" android:value="multi_display_mode" />
@@ -6220,38 +6221,6 @@
                     android.media.AudioDeviceCallback#onAudioDevicesAdded|
                     android.media.AudioDeviceCallback#onAudioDevicesRemoved|
                     android.content.BroadcastReceiver#onReceive"/>
-        </activity>
-
-        <activity android:name=".audio.USBAudioPeripheralPlayActivity"
-                android:exported="true"
-                  android:label="@string/audio_uap_play_test">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
-            <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
-            <meta-data android:name="test_excluded_features"
-                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
-            <meta-data android:name="display_mode" android:value="multi_display_mode" />
-            <meta-data android:name="CddTest" android:value="7.8.2/C-1-1,C-1-2" />
-        </activity>
-
-        <activity android:name=".audio.USBAudioPeripheralRecordActivity"
-                android:exported="true"
-                  android:label="@string/audio_uap_record_test">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
-            <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
-            <meta-data android:name="test_excluded_features"
-                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
-            <meta-data android:name="display_mode" android:value="multi_display_mode" />
-            <meta-data android:name="CddTest" android:value="7.8.2.2/H-1-1|7.7.2/C-2-1,C-2-2" />
-            <meta-data android:name="ApiTest"
-                android:value="android.app.Activity#onKeyDown"/>
         </activity>
 
         <activity android:name=".audio.UsbMidiAudioActivity"

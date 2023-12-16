@@ -25,7 +25,6 @@ import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -37,7 +36,6 @@ public final class VirtualDeviceCreator {
     public static VirtualDevice createVirtualDevice(int associationId) {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         PackageManager packageManager = context.getPackageManager();
-        assumeTrue(VirtualDeviceTestUtils.isVirtualDeviceManagerConfigEnabled(context));
         // Virtual input devices only operate on virtual displays
         assumeTrue(packageManager.hasSystemFeature(
                 PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));

@@ -16,6 +16,7 @@
 package android.view.surfacecontrol.cts;
 
 import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
+import static android.server.wm.CtsWindowInfoUtils.assertAndDumpWindowState;
 import static android.server.wm.CtsWindowInfoUtils.tapOnWindow;
 import static android.server.wm.CtsWindowInfoUtils.tapOnWindowCenter;
 import static android.server.wm.CtsWindowInfoUtils.waitForWindowFocus;
@@ -59,7 +60,6 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Region;
-import android.graphics.Point;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -867,12 +867,9 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
         // Check if SurfacePackage copy remains valid even though the original package has
         // been released.
-        boolean success = tapOnWindowCenter(mInstrumentation, ()-> mEmbeddedView.getWindowToken(),
-                /* useGlobalInjection= */ true);
-        if (!success) {
-            CtsWindowInfoUtils.dumpWindowsOnScreen(TAG, "test " + mName.getMethodName());
-        }
-        assertTrue("Failed to find embedded window to tap", success);
+        boolean success = tapOnWindowCenter(mInstrumentation,
+                () -> mEmbeddedView.getWindowToken(), /* useGlobalInjection= */ true);
+        assertAndDumpWindowState(TAG, "Failed to find embedded window to tap", success);
         assertTrue(mClicked);
     }
 
@@ -1004,9 +1001,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         // was replaced
         boolean success = CtsWindowInfoUtils.tapOnWindowCenter(mInstrumentation,
                 () -> mEmbeddedView.getWindowToken(), /* useGlobalInjection= */ true);
-        if (!success) {
-            CtsWindowInfoUtils.dumpWindowsOnScreen(TAG, "test " + mName.getMethodName());
-        }
+        assertAndDumpWindowState(TAG, "Failed to tap on window", success);
         assertTrue(mClicked);
     }
 

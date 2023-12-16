@@ -110,7 +110,7 @@ public class BluetoothLeBroadcastReceiveStateTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2", "7.4.3/C-9-1"})
     @Test
-    public void testCreateBroadcastReceiveState() {
+    public void createBroadcastReceiveState() {
         BluetoothDevice testDevice =
                 mAdapter.getRemoteLeDevice(TEST_MAC_ADDRESS, TEST_SOURCE_ADDRESS_TYPE);
         BluetoothLeBroadcastReceiveState state = createBroadcastReceiveStateForTest(

@@ -23,6 +23,8 @@ import android.os.Build;
 import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
 
+import com.android.compatibility.common.util.CddTest;
+
 import junit.framework.TestCase;
 
 import java.io.IOException;
@@ -41,6 +43,9 @@ public class BuildTest extends TestCase {
     private static final String RO_PRODUCT_CPU_ABILIST = "ro.product.cpu.abilist";
     private static final String RO_PRODUCT_CPU_ABILIST32 = "ro.product.cpu.abilist32";
     private static final String RO_PRODUCT_CPU_ABILIST64 = "ro.product.cpu.abilist64";
+    private static final String DEVICE = "ro.product.device";
+    private static final String MANUFACTURER = "ro.product.manufacturer";
+    private static final String MODEL = "ro.product.model";
 
     /**
      * Verify that the values of the various CPU ABI fields are consistent.
@@ -53,6 +58,17 @@ public class BuildTest extends TestCase {
         } else {
             runTestCpuAbi32();
         }
+    }
+
+    /**
+     * Check if minimal properties are set (note that these might come from either
+     * /system/build.props or /oem/oem.props.
+     */
+    @CddTest(requirements = {"3.2.2/C-0-1"})
+    public void testBuildProperties() throws Exception {
+        assertNotNull(DEVICE + " should be defined", getProperty(DEVICE));
+        assertNotNull(MANUFACTURER + "should be defined", getProperty(MANUFACTURER));
+        assertNotNull(MODEL + "should be defined", getProperty(MODEL));
     }
 
     /**

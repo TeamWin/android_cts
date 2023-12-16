@@ -101,4 +101,15 @@ public class SystemClockTest {
         // Elapsed also counts time in deep sleep, so it should always be more than uptime
         assertThat(SystemClock.uptimeMillis()).isAtMost(SystemClock.elapsedRealtime());
     }
+
+    @Test
+    public void testElapsedRealtime_Valid() {
+        assertThat(SystemClock.elapsedRealtime()).isGreaterThan(0L);
+        assertThat(SystemClock.elapsedRealtimeNanos()).isGreaterThan(0L);
+    }
+
+    @Test
+    public void testUptime_Valid() {
+        assertThat(SystemClock.uptimeMillis()).isGreaterThan(0L);
+    }
 }

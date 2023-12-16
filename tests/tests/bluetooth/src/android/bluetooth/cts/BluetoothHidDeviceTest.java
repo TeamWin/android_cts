@@ -121,7 +121,7 @@ public class BluetoothHidDeviceTest {
     }
 
     @Test
-    public void test_closeProfileProxy() {
+    public void closeProfileProxy() {
         assumeTrue(mHasBluetooth && mIsHidSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHidDevice);
@@ -133,7 +133,7 @@ public class BluetoothHidDeviceTest {
     }
 
     @Test
-    public void test_getDevicesMatchingConnectionStates() {
+    public void getDevicesMatchingConnectionStates() {
         assumeTrue(mHasBluetooth && mIsHidSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHidDevice);
@@ -151,7 +151,7 @@ public class BluetoothHidDeviceTest {
     }
 
     @Test
-    public void test_getConnectionState() {
+    public void getConnectionState() {
         assumeTrue(mHasBluetooth && mIsHidSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHidDevice);
@@ -170,7 +170,7 @@ public class BluetoothHidDeviceTest {
     }
 
     @Test
-    public void test_connect() {
+    public void connect() {
         assumeTrue(mHasBluetooth && mIsHidSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHidDevice);
@@ -183,7 +183,7 @@ public class BluetoothHidDeviceTest {
     }
 
     @Test
-    public void test_disconnect() {
+    public void disconnect() {
         assumeTrue(mHasBluetooth && mIsHidSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHidDevice);
@@ -196,7 +196,7 @@ public class BluetoothHidDeviceTest {
     }
 
     @Test
-    public void test_getConnectedDevices() {
+    public void getConnectedDevices() {
         assumeTrue(mHasBluetooth && mIsHidSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHidDevice);
@@ -209,7 +209,7 @@ public class BluetoothHidDeviceTest {
     }
 
     @Test
-    public void test_setConnectionPolicy() {
+    public void setConnectionPolicy() {
         assumeTrue(mHasBluetooth && mIsHidSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHidDevice);

@@ -29,7 +29,6 @@ import static android.os.Build.VERSION_CODES.S_V2;
 import static android.os.Build.VERSION_CODES.TIRAMISU;
 import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
 import static android.os.Process.myUserHandle;
-
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SYSTEM_USER_TYPE_NAME;
@@ -190,6 +189,20 @@ public final class Users {
     /** Get a {@link UserReference} for the system user. */
     public UserReference system() {
         return find(0);
+    }
+
+    /** Get a {@link UserReference} for the main user, if one exists. Null otherwise. */
+    @Nullable
+    public UserReference main() {
+        UserHandle mainUser;
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(QUERY_USERS)) {
+            mainUser = sUserManager.getMainUser();
+        }
+        if (mainUser == null) {
+            return null;
+        }
+        return find(mainUser);
     }
 
     /** Get a {@link UserReference} by {@code id}. */

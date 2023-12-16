@@ -16,16 +16,11 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsUtilTestCases",
-    defaults: ["cts_defaults"],
-    // Tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
-        "mts-statsd",
+java_defaults {
+    name: "CtsUtilTestCasesDefaults",
+    libs: [
+        "android.test.runner",
     ],
-    libs: ["android.test.runner"],
     static_libs: [
         "androidx.annotation_annotation",
         "androidx.test.rules",
@@ -34,49 +29,35 @@ android_test {
         "core-test-rules", // for libcore.dalvik.system.CloseGuardSupport
         "ravenwood-junit",
     ],
-    srcs: ["src/**/*.java"],
     platform_apis: true,
     min_sdk_version: "30",
 }
 
-android_ravenwood_test {
-    name: "CtsUtilTestCasesRavenwood",
-    defaults: ["cts_defaults"],
-    static_libs: [
-        "androidx.annotation_annotation",
-        "androidx.test.rules",
-        "junit",
-        "truth",
+android_test {
+    name: "CtsUtilTestCases",
+    defaults: [
+        "cts_defaults",
+        "CtsUtilTestCasesDefaults",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+        "mts-statsd",
     ],
     srcs: [
-        "src/android/util/cts/AndroidExceptionTest.java",
-        "src/android/util/cts/AndroidRuntimeExceptionTest.java",
-        "src/android/util/cts/ArrayMapTest.java",
-        "src/android/util/cts/ArraySetTest.java",
-        "src/android/util/cts/Base64Test.java",
-        "src/android/util/cts/DebugUtilsTest.java",
-        "src/android/util/cts/DumpableTest.java",
-        "src/android/util/cts/JsonReaderTest.java",
-        "src/android/util/cts/JsonWriterTest.java",
-        "src/android/util/cts/LogPrinterTest.java",
-        "src/android/util/cts/LogTest.java",
-        "src/android/util/cts/LongSparseArrayTest.java",
-        "src/android/util/cts/MutableTest.java",
-        "src/android/util/cts/PairTest.java",
-        "src/android/util/cts/PatternsTest.java",
-        "src/android/util/cts/PrintStreamPrinterTest.java",
-        "src/android/util/cts/PrintWriterPrinterTest.java",
-        "src/android/util/cts/RangeTest.java",
-        "src/android/util/cts/RationalTest.java",
-        "src/android/util/cts/SizeTest.java",
-        "src/android/util/cts/SparseArrayMapTest.java",
-        "src/android/util/cts/SparseArrayTest.java",
-        "src/android/util/cts/SparseBooleanArrayTest.java",
-        "src/android/util/cts/SparseIntArrayTest.java",
-        "src/android/util/cts/SparseLongArrayTest.java",
-        "src/android/util/cts/StringBuilderPrinterTest.java",
-        "src/android/util/cts/XmlTest.java",
+        "src/**/*.java",
     ],
-    sdk_version: "test_current",
+}
+
+android_ravenwood_test {
+    name: "CtsUtilTestCasesRavenwood",
+    defaults: [
+        "cts_defaults",
+        "CtsUtilTestCasesDefaults",
+    ],
+    srcs: [
+        "src/**/*.java",
+        ":CtsUtilTestCases{.aapt.srcjar}",
+    ],
     auto_gen_config: true,
 }

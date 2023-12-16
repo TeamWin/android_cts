@@ -38,6 +38,8 @@ ANDROID13_API_LEVEL = 33
 ANDROID14_API_LEVEL = 34
 ANDROID15_API_LEVEL = 35
 CHART_DISTANCE_NO_SCALING = 0
+IMAGE_FORMAT_JPEG = 256
+IMAGE_FORMAT_YUV_420_888 = 35
 LOAD_SCENE_DELAY_SEC = 3
 SCALING_TO_FILE_ATOL = 0.01
 SINGLE_CAPTURE_NCAP = 1
@@ -615,6 +617,29 @@ class ItsSession(object):
           'Failed to query landscape to portrait system property')
     return data[_STR_VALUE] == 'true'
 
+  def get_supported_video_sizes_capped(self, camera_id):
+    """Get the supported video sizes for camera id.
+
+    Args:
+      camera_id: int; device id
+    Returns:
+      Sorted list of supported video sizes.
+    """
+
+    cmd = {
+        _CMD_NAME_STR: 'doGetSupportedVideoSizesCapped',
+        _CAMERA_ID_STR: camera_id,
+    }
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
+    self.sock.settimeout(timeout)
+    data, _ = self.__read_response_from_socket()
+    if data[_TAG_STR] != 'supportedVideoSizes':
+      raise error_util.CameraItsError('Invalid command response')
+    if not data[_STR_VALUE]:
+      raise error_util.CameraItsError('No supported video sizes')
+    return data[_STR_VALUE].split(';')
+
   def do_basic_recording(self, profile_id, quality, duration,
                          video_stabilization_mode=0, hlg10_enabled=False,
                          zoom_ratio=None, ae_target_fps_min=None,
@@ -679,23 +704,11 @@ class ItsSession(object):
     logging.debug('VideoRecordingObject: %s', data)
     return data[_OBJ_VALUE_STR]
 
-  def do_preview_recording(self, video_size, duration, stabilize,
-                           zoom_ratio=None, ae_target_fps_min=None,
-                           ae_target_fps_max=None):
-    """Issue a preview request and read back the preview recording object.
-
-    The resolution of the preview and its recording will be determined by
-    video_size. The duration is the time in seconds for which the preview will
-    be recorded. The recorded object consists of a path on the device at
-    which the recorded video is saved.
+  def _execute_preview_recording(self, cmd):
+    """Send preview recording command over socket and retrieve output object.
 
     Args:
-      video_size: str; Preview resolution at which to record. ex. "1920x1080"
-      duration: int; The time in seconds for which the video will be recorded.
-      stabilize: boolean; Whether the preview should be stabilized or not
-      zoom_ratio: float; zoom ratio. None if default zoom
-      ae_target_fps_min: int; CONTROL_AE_TARGET_FPS_RANGE min. Set if not None
-      ae_target_fps_max: int; CONTROL_AE_TARGET_FPS_RANGE max. Set if not None
+      cmd: dict; Mapping from command key to corresponding value
     Returns:
       video_recorded_object: The recorded object returned from ItsService which
       contains path at which the recording is saved on the device, quality of
@@ -713,7 +726,37 @@ class ItsSession(object):
         }
       }
     """
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
+    self.sock.settimeout(timeout)
 
+    data, _ = self.__read_response_from_socket()
+    logging.debug('VideoRecordingObject: %s', str(data))
+    if data[_TAG_STR] != 'recordingResponse':
+      raise error_util.CameraItsError(
+          f'Invalid response from command{cmd[_CMD_NAME_STR]}')
+    return data[_OBJ_VALUE_STR]
+
+  def do_preview_recording(self, video_size, duration, stabilize,
+                           zoom_ratio=None, ae_target_fps_min=None,
+                           ae_target_fps_max=None):
+    """Issue a preview request and read back the preview recording object.
+
+    The resolution of the preview and its recording will be determined by
+    video_size. The duration is the time in seconds for which the preview will
+    be recorded. The recorded object consists of a path on the device at
+    which the recorded video is saved.
+
+    Args:
+      video_size: str; Preview resolution at which to record. ex. "1920x1080"
+      duration: int; The time in seconds for which the video will be recorded.
+      stabilize: boolean; Whether the preview should be stabilized or not
+      zoom_ratio: float; static zoom ratio. None if default zoom
+      ae_target_fps_min: int; CONTROL_AE_TARGET_FPS_RANGE min. Set if not None
+      ae_target_fps_max: int; CONTROL_AE_TARGET_FPS_RANGE max. Set if not None
+    Returns:
+      video_recorded_object: The recorded object returned from ItsService
+    """
     cmd = {
         _CMD_NAME_STR: 'doPreviewRecording',
         _CAMERA_ID_STR: self._camera_id,
@@ -729,16 +772,57 @@ class ItsSession(object):
     if ae_target_fps_min and ae_target_fps_max:
       cmd['aeTargetFpsMin'] = ae_target_fps_min
       cmd['aeTargetFpsMax'] = ae_target_fps_max
-    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
-    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
-    self.sock.settimeout(timeout)
+    return self._execute_preview_recording(cmd)
 
-    data, _ = self.__read_response_from_socket()
-    logging.debug('VideoRecordingObject: %s', str(data))
-    if data[_TAG_STR] != 'recordingResponse':
-      raise error_util.CameraItsError(
-          f'Invalid response from command{cmd[_CMD_NAME_STR]}')
-    return data[_OBJ_VALUE_STR]
+  def do_preview_recording_with_dynamic_zoom(self, video_size, stabilize,
+                                             sweep_zoom,
+                                             ae_target_fps_min=None,
+                                             ae_target_fps_max=None):
+    """Issue a preview request with dynamic zoom and read back output object.
+
+    The resolution of the preview and its recording will be determined by
+    video_size. The duration will be determined by the duration at each zoom
+    ratio and the total number of zoom ratios. The recorded object consists
+    of a path on the device at which the recorded video is saved.
+
+    Args:
+      video_size: str; Preview resolution at which to record. ex. "1920x1080"
+      stabilize: boolean; Whether the preview should be stabilized or not
+      sweep_zoom: tuple of (zoom_start, zoom_end, step_size, step_duration).
+        Used to control zoom ratio during recording.
+        zoom_start (float) is the starting zoom ratio during recording
+        zoom_end (float) is the ending zoom ratio during recording
+        step_size (float) is the step for zoom ratio during recording
+        step_duration (float) sleep in ms between zoom ratios
+      ae_target_fps_min: int; CONTROL_AE_TARGET_FPS_RANGE min. Set if not None
+      ae_target_fps_max: int; CONTROL_AE_TARGET_FPS_RANGE max. Set if not None
+    Returns:
+      video_recorded_object: The recorded object returned from ItsService
+    """
+    cmd = {
+        _CMD_NAME_STR: 'doPreviewRecording',
+        _CAMERA_ID_STR: self._camera_id,
+        'videoSize': video_size,
+        'recordingDuration': 0,  # for interoperability
+        'stabilize': stabilize
+    }
+    zoom_start, zoom_end, step_size, step_duration = sweep_zoom
+    if (not self.zoom_ratio_within_range(zoom_start) or
+        not self.zoom_ratio_within_range(zoom_end)):
+      raise AssertionError(
+          f'Starting zoom ratio {zoom_start} or '
+          f'ending zoom ratio {zoom_end} out of range'
+      )
+    if zoom_start > zoom_end or step_size < 0:
+      raise NotImplementedError('Only increasing zoom ratios are supported')
+    cmd['zoomStart'] = zoom_start
+    cmd['zoomEnd'] = zoom_end
+    cmd['stepSize'] = step_size
+    cmd['stepDuration'] = step_duration
+    if ae_target_fps_min and ae_target_fps_max:
+      cmd['aeTargetFpsMin'] = ae_target_fps_min
+      cmd['aeTargetFpsMax'] = ae_target_fps_max
+    return self._execute_preview_recording(cmd)
 
   def get_supported_video_qualities(self, camera_id):
     """Get all supported video qualities for this camera device.
@@ -1112,7 +1196,8 @@ class ItsSession(object):
                  cap_request,
                  out_surfaces=None,
                  reprocess_format=None,
-                 repeat_request=None):
+                 repeat_request=None,
+                 reuse_session=False):
     """Issue capture request(s), and read back the image(s) and metadata.
 
     The main top-level function for capturing one or more images using the
@@ -1249,6 +1334,8 @@ class ItsSession(object):
       reprocess_format: (Optional) The reprocessing format. If not
         None,reprocessing will be enabled.
       repeat_request: Repeating request list.
+      reuse_session: True if ItsService.java should try to use
+        the existing CameraCaptureSession.
 
     Returns:
       An object, list of objects, or list of lists of objects, where each
@@ -1300,6 +1387,7 @@ class ItsSession(object):
           'width': max_yuv_size[0],
           'height': max_yuv_size[1]
       }]
+    cmd['reuseSession'] = reuse_session
 
     ncap = len(cmd['captureRequests'])
     nsurf = 1 if out_surfaces is None else len(cmd['outputSurfaces'])
@@ -1545,6 +1633,9 @@ class ItsSession(object):
 
   # pylint: disable=dangerous-default-value
   def do_3a(self,
+            fmt=None,
+            width=None,
+            height=None,
             regions_ae=[[0, 0, 1, 1, 1]],
             regions_awb=[[0, 0, 1, 1, 1]],
             regions_af=[[0, 0, 1, 1, 1]],
@@ -1557,7 +1648,8 @@ class ItsSession(object):
             ev_comp=0,
             auto_flash=False,
             mono_camera=False,
-            zoom_ratio=None):
+            zoom_ratio=None,
+            reuse_session=False):
     """Perform a 3A operation on the device.
 
     Triggers some or all of AE, AWB, and AF, and returns once they have
@@ -1567,6 +1659,9 @@ class ItsSession(object):
     Throws an assertion if 3A fails to converge.
 
     Args:
+      fmt: Format to configure a CameraCaptureSession.
+      width: Width to configure a CameraCaptureSession.
+      height: Height to configure a CameraCaptureSession.
       regions_ae: List of weighted AE regions.
       regions_awb: List of weighted AWB regions.
       regions_af: List of weighted AF regions.
@@ -1580,6 +1675,8 @@ class ItsSession(object):
       auto_flash: AE control boolean to enable auto flash.
       mono_camera: Boolean for monochrome camera.
       zoom_ratio: Zoom ratio. None if default zoom
+      reuse_session: True if ItsService.java should try to use
+        the existing CameraCaptureSession.
 
       Region format in args:
          Arguments are lists of weighted regions; each weighted region is a
@@ -1601,6 +1698,15 @@ class ItsSession(object):
     logging.debug('Running vendor 3A on device')
     cmd = {}
     cmd[_CMD_NAME_STR] = 'do3A'
+    if fmt:
+      if fmt == 'yuv':
+        cmd['format'] = IMAGE_FORMAT_YUV_420_888
+      elif fmt == 'jpeg' or fmt == 'jpg':
+        cmd['format'] = IMAGE_FORMAT_JPEG
+    if width:
+      cmd['width'] = width
+    if height:
+      cmd['height'] = height
     cmd['regions'] = {
         'ae': sum(regions_ae, []),
         'awb': sum(regions_awb, []),
@@ -1622,6 +1728,7 @@ class ItsSession(object):
         cmd['zoomRatio'] = zoom_ratio
       else:
         raise AssertionError(f'Zoom ratio {zoom_ratio} out of range')
+    cmd['reuseSession'] = reuse_session
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
     # Wait for each specified 3A to converge.

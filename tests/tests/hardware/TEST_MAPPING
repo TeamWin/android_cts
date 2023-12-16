@@ -15,32 +15,22 @@
       "name": "CtsHardwareTestCases",
       "options": [
         {
-          // TODO(b/256805438)
-          "exclude-filter": "android.hardware.consumerir.cts.ConsumerIrTest#test_getCarrierFrequencies"
-        },
-        {
-          "exclude-filter": "android.hardware.consumerir.cts.ConsumerIrTest#test_timing"
-        },
-        {
-          "exclude-filter": "android.hardware.consumerir.cts.ConsumerIrTest#test_transmit"
-        },
-        {
-          // TODO(b/221102945)
+          // TODO(b/221102945):
           "exclude-filter": "android.hardware.input.cts.tests.VirtualTouchscreenTest#sendTouchEvent"
         },
         {
-          // TODO(b/220094725)
+          // TODO(b/220094725):
           "exclude-filter": "android.hardware.input.cts.tests.NintendoSwitchProTest#testAllMotions"
         },
         {
           "exclude-filter": "android.hardware.input.cts.tests.NintendoSwitchProTest#testAllKeys"
         },
         {
-          // TODO(b/214223833)
+          // TODO(b/214223833):
           "exclude-filter": "android.hardware.cts.LowRamDeviceTest#testMinSharedDataPartitionSize"
         },
         {
-          // TODO(b/206945621)
+          // TODO(b/206945621):
           "exclude-filter": "android.hardware.input.cts.tests.SonyDualSenseUsbTest#testAllMotions"
         },
         {
@@ -86,15 +76,15 @@
           "exclude-filter": "android.hardware.lights.cts.tests.LightsManagerTest#testControlSingleLight"
         },
         {
-          // TODO(b/186200527)
+          // TODO(b/186200527):
           "exclude-filter": "android.hardware.input.cts.tests.AsusGamepadTest#testAllMotions"
         },
         {
-          // TODO(b/186200608)
+          // TODO(b/186200608):
           "exclude-filter": "android.hardware.input.cts.tests.RazerRaijuMobileBluetoothTest#testAllKeys"
         },
         {
-          // TODO(b/186414778)
+          // TODO(b/186414778):
           "exclude-filter": "android.hardware.input.cts.tests.RazerRaijuMobileBluetoothTest#testHomeKey"
         },
         {
@@ -116,7 +106,7 @@
           "exclude-filter": "android.hardware.input.cts.tests.RazerServalTest#testAllMotions"
         },
         {
-          // TODO(b/266108817) android.hardware.input.cts.tests unexpected timeouts
+          // TODO(b/266108817): android.hardware.input.cts.tests unexpected timeouts
           "exclude-filter": "android.hardware.input.cts.tests.SonyDualshock4BluetoothTest#testAllMotions"
         },
         {
@@ -162,15 +152,34 @@
           "exclude-filter": "android.hardware.input.cts.tests.MicrosoftDesignerKeyboardTest#testAllKeys"
         },
         {
-          // TODO(b/190487022)
+          // TODO(b/190487022):
           "exclude-filter": "android.hardware.input.cts.tests.SonyDualshock4ProBluetoothTest#testVibrator"
         },
         {
-          // TODO(b/184934384)
+          // TODO(b/184934384):
           "exclude-filter": "android.hardware.input.cts.tests.GameviceGv186Test#testAllKeys"
         },
         {
           "exclude-filter": "android.hardware.input.cts.tests.GameviceGv186Test#testAllMotions"
+        }
+      ]
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "CtsHardwareTestCases",
+      "options": [
+        {
+          "include-filter": "android.hardware.input.cts.tests.VirtualNavigationTouchpadTest#sendFlingDown_motionEventNotConsumed_getsConvertedToDpadDown"
+        },
+        {
+          "include-filter": "android.hardware.input.cts.tests.VirtualNavigationTouchpadTest#sendFlingLeft_motionEventNotConsumed_getsConvertedToDpadLeft"
+        },
+        {
+          "include-filter": "android.hardware.input.cts.tests.VirtualNavigationTouchpadTest#sendFlingRight_motionEventNotConsumed_getsConvertedToDpadRight"
+        },
+        {
+          "include-filter": "android.hardware.input.cts.tests.VirtualNavigationTouchpadTest#sendFlingUp_motionEventNotConsumed_getsConvertedToDpadUp"
         }
       ]
     }

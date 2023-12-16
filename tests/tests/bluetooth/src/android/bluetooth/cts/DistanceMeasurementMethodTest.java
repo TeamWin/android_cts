@@ -69,7 +69,7 @@ public class DistanceMeasurementMethodTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testCreateFromParcel() {
+    public void createFromParcel() {
         final Parcel parcel = Parcel.obtain();
         try {
             DistanceMeasurementMethod method = new DistanceMeasurementMethod
@@ -88,7 +88,7 @@ public class DistanceMeasurementMethodTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testSetGetId() {
+    public void setGetId() {
         DistanceMeasurementMethod method = new DistanceMeasurementMethod
                     .Builder(DistanceMeasurementMethod.DISTANCE_MEASUREMENT_METHOD_RSSI).build();
         assertEquals(DistanceMeasurementMethod.DISTANCE_MEASUREMENT_METHOD_RSSI,
@@ -97,7 +97,7 @@ public class DistanceMeasurementMethodTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testIsAzimuthAngleSupported() {
+    public void isAzimuthAngleSupported() {
         DistanceMeasurementMethod method = new DistanceMeasurementMethod
                     .Builder(DistanceMeasurementMethod.DISTANCE_MEASUREMENT_METHOD_RSSI)
                     .setAzimuthAngleSupported(true)
@@ -107,7 +107,7 @@ public class DistanceMeasurementMethodTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testIsAltitudeAngleSupported() {
+    public void isAltitudeAngleSupported() {
         DistanceMeasurementMethod method = new DistanceMeasurementMethod
                     .Builder(DistanceMeasurementMethod.DISTANCE_MEASUREMENT_METHOD_RSSI)
                     .setAltitudeAngleSupported(true)
@@ -117,7 +117,7 @@ public class DistanceMeasurementMethodTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testHashCode() {
+    public void validHashCode() {
         DistanceMeasurementMethod method = new DistanceMeasurementMethod
                     .Builder(DistanceMeasurementMethod.DISTANCE_MEASUREMENT_METHOD_RSSI)
                     .setAltitudeAngleSupported(true)

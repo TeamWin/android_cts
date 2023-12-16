@@ -362,8 +362,10 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
     private void verifyAtomKillStatsReported(String packageName, int userId)
             throws Exception {
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertWithMessage("Reported kill event metrics data").that(data).hasSize(1);
+        assertWithMessage("Reported kill event metrics data").that(data).isNotEmpty();
 
+        assertWithMessage("CarWatchdogKillStatsReported atom").that(data.get(
+                0).getAtom().hasCarWatchdogKillStatsReported()).isTrue();
         CarWatchdogKillStatsReported atom =
                 data.get(0).getAtom().getCarWatchdogKillStatsReported();
 

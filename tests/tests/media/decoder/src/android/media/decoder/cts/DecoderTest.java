@@ -110,7 +110,8 @@ public class DecoderTest extends MediaTestBase {
     private static final String REPORT_LOG_NAME = "CtsMediaDecoderTestCases";
 
     public static final boolean WAS_LAUNCHED_ON_S_OR_LATER =
-            SystemProperties.getInt("ro.board.first_api_level", Build.VERSION_CODES.CUR_DEVELOPMENT)
+            SystemProperties.getInt("ro.product.first_api_level",
+                                    Build.VERSION_CODES.CUR_DEVELOPMENT)
                     >= Build.VERSION_CODES.S;
 
     private static boolean IS_AT_LEAST_R = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
@@ -3531,7 +3532,7 @@ public class DecoderTest extends MediaTestBase {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testTunneledVideoPeekOnHevc() throws Exception {
         // Requires vendor support of the TUNNEL_PEEK feature
-        Assume.assumeTrue("First board API level is not Android 12 or later.",
+        Assume.assumeTrue("First API level is not Android 12 or later.",
                 WAS_LAUNCHED_ON_S_OR_LATER);
         testTunneledVideoPeekOn(MediaFormat.MIMETYPE_VIDEO_HEVC,
                 "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv", 25);
@@ -3545,7 +3546,7 @@ public class DecoderTest extends MediaTestBase {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testTunneledVideoPeekOnAvc() throws Exception {
         // Requires vendor support of the TUNNEL_PEEK feature
-        Assume.assumeTrue("First board API level is not Android 12 or later.",
+        Assume.assumeTrue("First API level is not Android 12 or later.",
                 WAS_LAUNCHED_ON_S_OR_LATER);
         testTunneledVideoPeekOn(MediaFormat.MIMETYPE_VIDEO_AVC,
                 "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4", 25);
@@ -3559,7 +3560,7 @@ public class DecoderTest extends MediaTestBase {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testTunneledVideoPeekOnVp9() throws Exception {
         // Requires vendor support of the TUNNEL_PEEK feature
-        Assume.assumeTrue("First board API level is not Android 12 or later.",
+        Assume.assumeTrue("First API level is not Android 12 or later.",
                 WAS_LAUNCHED_ON_S_OR_LATER);
         testTunneledVideoPeekOn(MediaFormat.MIMETYPE_VIDEO_VP9,
                 "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
@@ -3632,7 +3633,7 @@ public class DecoderTest extends MediaTestBase {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testTunneledVideoPeekOffHevc() throws Exception {
         // Requires vendor support of the TUNNEL_PEEK feature
-        Assume.assumeTrue("First board API level is not Android 12 or later.",
+        Assume.assumeTrue("First API level is not Android 12 or later.",
                 WAS_LAUNCHED_ON_S_OR_LATER);
         testTunneledVideoPeekOff(MediaFormat.MIMETYPE_VIDEO_HEVC,
                 "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv", 25);
@@ -3646,7 +3647,7 @@ public class DecoderTest extends MediaTestBase {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testTunneledVideoPeekOffAvc() throws Exception {
         // Requires vendor support of the TUNNEL_PEEK feature
-        Assume.assumeTrue("First board API level is not Android 12 or later.",
+        Assume.assumeTrue("First API level is not Android 12 or later.",
                 WAS_LAUNCHED_ON_S_OR_LATER);
         testTunneledVideoPeekOff(MediaFormat.MIMETYPE_VIDEO_AVC,
                 "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4", 25);
@@ -3660,7 +3661,7 @@ public class DecoderTest extends MediaTestBase {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testTunneledVideoPeekOffVp9() throws Exception {
         // Requires vendor support of the TUNNEL_PEEK feature
-        Assume.assumeTrue("First board API level is not Android 12 or later.",
+        Assume.assumeTrue("First API level is not Android 12 or later.",
                 WAS_LAUNCHED_ON_S_OR_LATER);
         testTunneledVideoPeekOff(MediaFormat.MIMETYPE_VIDEO_VP9,
                 "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",

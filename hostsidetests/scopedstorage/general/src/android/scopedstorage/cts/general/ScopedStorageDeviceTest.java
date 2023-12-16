@@ -25,6 +25,7 @@ import static android.scopedstorage.cts.lib.RedactionTestHelper.getExifMetadataF
 import static android.scopedstorage.cts.lib.RedactionTestHelper.getExifMetadataFromRawResource;
 import static android.scopedstorage.cts.lib.TestUtils.BYTES_DATA2;
 import static android.scopedstorage.cts.lib.TestUtils.STR_DATA2;
+import static android.scopedstorage.cts.lib.TestUtils.addressStoragePermissions;
 import static android.scopedstorage.cts.lib.TestUtils.allowAppOpsToUid;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanRenameDirectory;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanRenameFile;
@@ -78,7 +79,6 @@ import static android.scopedstorage.cts.lib.TestUtils.getRingtonesDir;
 import static android.scopedstorage.cts.lib.TestUtils.grantPermission;
 import static android.scopedstorage.cts.lib.TestUtils.installApp;
 import static android.scopedstorage.cts.lib.TestUtils.installAppWithStoragePermissions;
-import static android.scopedstorage.cts.lib.TestUtils.isAppInstalled;
 import static android.scopedstorage.cts.lib.TestUtils.listAs;
 import static android.scopedstorage.cts.lib.TestUtils.openWithMediaProvider;
 import static android.scopedstorage.cts.lib.TestUtils.pollForPermission;
@@ -92,7 +92,6 @@ import static android.scopedstorage.cts.lib.TestUtils.revokePermission;
 import static android.scopedstorage.cts.lib.TestUtils.setAppOpsModeForUid;
 import static android.scopedstorage.cts.lib.TestUtils.setAttrAs;
 import static android.scopedstorage.cts.lib.TestUtils.trashFileAndAssert;
-import static android.scopedstorage.cts.lib.TestUtils.uninstallApp;
 import static android.scopedstorage.cts.lib.TestUtils.uninstallAppNoThrow;
 import static android.scopedstorage.cts.lib.TestUtils.untrashFileAndAssert;
 import static android.scopedstorage.cts.lib.TestUtils.updateDisplayNameWithMediaProvider;
@@ -225,12 +224,15 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     // A legacy targeting app with RES and WES permissions
     private static final TestApp APP_D_LEGACY_HAS_RW = new TestApp("TestAppDLegacy",
             "android.scopedstorage.cts.testapp.D", 1, false, "CtsScopedStorageTestAppDLegacy.apk");
-
-    // The following apps are not installed at test startup - please install before using.
-    private static final TestApp APP_C = new TestApp("TestAppC",
-            "android.scopedstorage.cts.testapp.C", 1, false, "CtsScopedStorageTestAppC.apk");
-    private static final TestApp APP_C_LEGACY = new TestApp("TestAppCLegacy",
-            "android.scopedstorage.cts.testapp.C", 1, false, "CtsScopedStorageTestAppCLegacy.apk");
+    private static final TestApp APP_E = new TestApp("TestAppE",
+            "android.scopedstorage.cts.testapp.E", 1, false, "CtsScopedStorageTestAppE.apk");
+    private static final TestApp APP_E_LEGACY = new TestApp("TestAppELegacy",
+            "android.scopedstorage.cts.testapp.E.legacy", 1, false,
+            "CtsScopedStorageTestAppELegacy.apk");
+    // APP_GENERAL_ONLY is not installed at test startup - please install before using.
+    private static final TestApp APP_GENERAL_ONLY = new TestApp("TestAppGeneralOnly",
+            "android.scopedstorage.cts.testapp.general.only", 1, false,
+            "CtsScopedStorageGeneralTestOnlyApp.apk");
 
     private static final String[] SYSTEM_GALERY_APPOPS = {
             AppOpsManager.OPSTR_WRITE_MEDIA_IMAGES, AppOpsManager.OPSTR_WRITE_MEDIA_VIDEO};
@@ -1277,13 +1279,13 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     public void testReadStorageInvalidation() throws Exception {
         if (SdkLevel.isAtLeastT()) {
             testAppOpInvalidation(
-                APP_C,
+                    APP_E,
                 new File(getDcimDir(), "read_storage.jpg"),
                 Manifest.permission.READ_MEDIA_IMAGES,
                 AppOpsManager.OPSTR_READ_MEDIA_IMAGES,
                 /* forWrite */ false);
         } else {
-            testAppOpInvalidation(APP_C, new File(getDcimDir(), "read_storage.jpg"),
+            testAppOpInvalidation(APP_E, new File(getDcimDir(), "read_storage.jpg"),
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 AppOpsManager.OPSTR_READ_EXTERNAL_STORAGE, /* forWrite */ false);
         }
@@ -1291,26 +1293,26 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
 
     @Test
     public void testWriteStorageInvalidation() throws Exception {
-        testAppOpInvalidation(APP_C_LEGACY, new File(getDcimDir(), "write_storage.jpg"),
+        testAppOpInvalidation(APP_E_LEGACY, new File(getDcimDir(), "write_storage.jpg"),
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 AppOpsManager.OPSTR_WRITE_EXTERNAL_STORAGE, /* forWrite */ true);
     }
 
     @Test
     public void testManageStorageInvalidation() throws Exception {
-        testAppOpInvalidation(APP_C, new File(getDownloadDir(), "manage_storage.pdf"),
+        testAppOpInvalidation(APP_E, new File(getDownloadDir(), "manage_storage.pdf"),
                 /* permission */ null, OPSTR_MANAGE_EXTERNAL_STORAGE, /* forWrite */ true);
     }
 
     @Test
     public void testWriteImagesInvalidation() throws Exception {
-        testAppOpInvalidation(APP_C, new File(getDcimDir(), "write_images.jpg"),
+        testAppOpInvalidation(APP_E, new File(getDcimDir(), "write_images.jpg"),
                 /* permission */ null, AppOpsManager.OPSTR_WRITE_MEDIA_IMAGES, /* forWrite */ true);
     }
 
     @Test
     public void testWriteVideoInvalidation() throws Exception {
-        testAppOpInvalidation(APP_C, new File(getDcimDir(), "write_video.mp4"),
+        testAppOpInvalidation(APP_E, new File(getDcimDir(), "write_video.mp4"),
                 /* permission */ null, AppOpsManager.OPSTR_WRITE_MEDIA_VIDEO, /* forWrite */ true);
     }
 
@@ -1334,39 +1336,39 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             assertExifMetadataMatch(exif, originalExif);
 
             // Install test app
-            installAppWithStoragePermissions(APP_C);
+            installAppWithStoragePermissions(APP_GENERAL_ONLY);
 
             // Grant A_M_L and verify access to sensitive data
-            grantPermission(APP_C.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
-            pollForPermission(APP_C.getPackageName(),
+            grantPermission(APP_GENERAL_ONLY.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
+            pollForPermission(APP_GENERAL_ONLY.getPackageName(),
                     Manifest.permission.ACCESS_MEDIA_LOCATION, /* granted */ true);
             HashMap<String, String> exifFromTestApp =
-                    readExifMetadataFromTestApp(APP_C, imgFile.getPath());
+                    readExifMetadataFromTestApp(APP_GENERAL_ONLY, imgFile.getPath());
             assertExifMetadataMatch(exifFromTestApp, originalExif);
 
             // Revoke A_M_L and verify sensitive data redaction
             revokePermission(
-                    APP_C.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
+                    APP_GENERAL_ONLY.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
             // revokePermission waits for permission status to be updated, but MediaProvider still
             // needs to get permission change callback and clear its permission cache.
-            pollForPermission(APP_C.getPackageName(),
+            pollForPermission(APP_GENERAL_ONLY.getPackageName(),
                     Manifest.permission.ACCESS_MEDIA_LOCATION, /* granted */ false);
             Thread.sleep(500);
-            exifFromTestApp = readExifMetadataFromTestApp(APP_C, imgFile.getPath());
+            exifFromTestApp = readExifMetadataFromTestApp(APP_GENERAL_ONLY, imgFile.getPath());
             assertExifMetadataMismatch(exifFromTestApp, originalExif);
 
             // Re-grant A_M_L and verify access to sensitive data
-            grantPermission(APP_C.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
+            grantPermission(APP_GENERAL_ONLY.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
             // grantPermission waits for permission status to be updated, but MediaProvider still
             // needs to get permission change callback and clear its permission cache.
-            pollForPermission(APP_C.getPackageName(),
+            pollForPermission(APP_GENERAL_ONLY.getPackageName(),
                     Manifest.permission.ACCESS_MEDIA_LOCATION, /* granted */ true);
             Thread.sleep(500);
-            exifFromTestApp = readExifMetadataFromTestApp(APP_C, imgFile.getPath());
+            exifFromTestApp = readExifMetadataFromTestApp(APP_GENERAL_ONLY, imgFile.getPath());
             assertExifMetadataMatch(exifFromTestApp, originalExif);
         } finally {
             imgFile.delete();
-            uninstallAppNoThrow(APP_C);
+            uninstallAppNoThrow(APP_GENERAL_ONLY);
         }
     }
 
@@ -1376,27 +1378,27 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         try {
             assertThat(file.createNewFile()).isTrue();
 
-            // Install legacy
-            installAppWithStoragePermissions(APP_C_LEGACY);
-            grantPermission(APP_C_LEGACY.getPackageName(),
+            addressStoragePermissions(APP_E_LEGACY.getPackageName(), true);
+            grantPermission(APP_E_LEGACY.getPackageName(),
                     Manifest.permission.WRITE_EXTERNAL_STORAGE); // Grants write access for legacy
 
             // Legacy app can read and write media files contributed by others
-            assertThat(canOpenFileAs(APP_C_LEGACY, file, /* forWrite */ false)).isTrue();
-            assertThat(canOpenFileAs(APP_C_LEGACY, file, /* forWrite */ true)).isTrue();
+            assertThat(canOpenFileAs(APP_E_LEGACY, file, /* forWrite */ false)).isTrue();
+            assertThat(canOpenFileAs(APP_E_LEGACY, file, /* forWrite */ true)).isTrue();
 
             // Update to non-legacy
-            installAppWithStoragePermissions(APP_C);
-            grantPermission(APP_C_LEGACY.getPackageName(),
+            addressStoragePermissions(APP_E.getPackageName(), true);
+            grantPermission(APP_E_LEGACY.getPackageName(),
                     Manifest.permission.WRITE_EXTERNAL_STORAGE); // No effect for non-legacy
 
             // Non-legacy app can read media files contributed by others
-            assertThat(canOpenFileAs(APP_C, file, /* forWrite */ false)).isTrue();
+            assertThat(canOpenFileAs(APP_E, file, /* forWrite */ false)).isTrue();
             // But cannot write
-            assertThat(canOpenFileAs(APP_C, file, /* forWrite */ true)).isFalse();
+            assertThat(canOpenFileAs(APP_E, file, /* forWrite */ true)).isFalse();
         } finally {
             file.delete();
-            uninstallAppNoThrow(APP_C);
+            revokePermission(APP_E_LEGACY.getPackageName(),
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE);
         }
     }
 
@@ -1408,35 +1410,27 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             assertThat(file.createNewFile()).isTrue();
 
             // Install
-            installAppWithStoragePermissions(APP_C);
-            assertThat(canOpenFileAs(APP_C, file, /* forWrite */ false)).isTrue();
+            installAppWithStoragePermissions(APP_GENERAL_ONLY);
+            assertThat(canOpenFileAs(APP_GENERAL_ONLY, file, /* forWrite */ false)).isTrue();
 
             // Re-install
-            uninstallAppNoThrow(APP_C);
-            installApp(APP_C);
-            assertThat(canOpenFileAs(APP_C, file, /* forWrite */ false)).isFalse();
+            uninstallAppNoThrow(APP_GENERAL_ONLY);
+            installApp(APP_GENERAL_ONLY);
+            assertThat(canOpenFileAs(APP_GENERAL_ONLY, file, /* forWrite */ false)).isFalse();
         } finally {
             file.delete();
-            uninstallAppNoThrow(APP_C);
+            uninstallAppNoThrow(APP_GENERAL_ONLY);
         }
     }
 
     private void testAppOpInvalidation(TestApp app, File file, @Nullable String permission,
             String opstr, boolean forWrite) throws Exception {
-        boolean alreadyInstalled = true;
         try {
-            if (!isAppInstalled(app)) {
-                alreadyInstalled = false;
-                installApp(app);
-            }
+            addressStoragePermissions(app.getPackageName(), false);
             assertThat(file.createNewFile()).isTrue();
             assertAppOpInvalidation(app, file, permission, opstr, forWrite);
         } finally {
             file.delete();
-            if (!alreadyInstalled) {
-                // only uninstall if we installed this app here
-                uninstallApp(app);
-            }
         }
     }
 

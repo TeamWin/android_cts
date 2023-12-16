@@ -42,6 +42,14 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
 
   private static final String MEDIA_DIR = WorkDir.getMediaDirString();
 
+  private static final String MKA_ELEPHANTDREAM_OPUS_2CH_48Khz_5MIN_URI_STRING =
+      MEDIA_DIR + "ElephantsDream_opus_2ch_48Khz_5min.mka";
+  private static final String MP4_TEARSOFSTEEL_AAC_2CH_48Khz_5MIN_URI_STRING =
+      MEDIA_DIR + "TearsOfSteel_aac_2ch_48Khz_5min.mp4";
+  private static final String MKA_BIGBUCKBUNNY_VORBIS_2CH_48Khz_5MIN_URI_STRING =
+      MEDIA_DIR + "BigBuckBunny_vorbis_2ch_48Khz_5min.mka";
+  private static final String MP3_ELEPHANTSDREAM_BIGBUCKBUNNY_CONCAT_2CH_44Khz_30MIN_URI_STRING =
+      MEDIA_DIR + "ElephantsDream_BigBuckBunny_concat_2ch_44Khz_30min.mp3";
   private static final String WEBM_ELEPHANTDREAM_640x480_VP9_5MIN_URI_STRING =
       MEDIA_DIR + "ElephantsDream_640x480_vp9_5min.webm";
   private static final String WEBM_TEARSOFSTEEL_640X480_VP9_5MIN_URI_STRING =
@@ -67,6 +75,10 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
   public static Collection<Object[]> input() {
     // CujTestParam, testId
     final List<Object[]> exhaustiveArgsList = new ArrayList<>(Arrays.asList(new Object[][]{
+        {CujTestParam.builder().setMediaUrls(prepare_5minAudioList())
+            .setTimeoutMilliSeconds(930000)
+            .setPlayerListener(PlayerListener.createListenerForPlaybackTest()).build(),
+            "Audio_5min_PlaybackTest"},
         {CujTestParam.builder().setMediaUrls(prepareVP9_640x480_5minVideoList())
             .setTimeoutMilliSeconds(930000)
             .setPlayerListener(PlayerListener.createListenerForPlaybackTest()).build(),
@@ -75,6 +87,10 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
             .setTimeoutMilliSeconds(930000)
             .setPlayerListener(PlayerListener.createListenerForSeekTest(30, 10000, 30000)).build(),
             "VP9_640x480_5min_seekTest"},
+        {CujTestParam.builder().setMediaUrls(prepare_30minAudioList())
+            .setTimeoutMilliSeconds(1830000)
+            .setPlayerListener(PlayerListener.createListenerForPlaybackTest()).build(),
+            "Audio_30min_PlaybackTest"},
         {CujTestParam.builder().setMediaUrls(prepareAvc_1080p_30minVideoList())
             .setTimeoutMilliSeconds(1830000)
             .setPlayerListener(PlayerListener.createListenerForPlaybackTest()).build(),
@@ -93,6 +109,17 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
   }
 
   /**
+   * Prepare 5min audio list.
+   */
+  public static List<String> prepare_5minAudioList() {
+    List<String> videoInput = Arrays.asList(
+        MKA_ELEPHANTDREAM_OPUS_2CH_48Khz_5MIN_URI_STRING,
+        MP4_TEARSOFSTEEL_AAC_2CH_48Khz_5MIN_URI_STRING,
+        MKA_BIGBUCKBUNNY_VORBIS_2CH_48Khz_5MIN_URI_STRING);
+    return videoInput;
+  }
+
+  /**
    * Prepare Vp9 640x480 5min video list.
    */
   public static List<String> prepareVP9_640x480_5minVideoList() {
@@ -100,6 +127,15 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
         WEBM_ELEPHANTDREAM_640x480_VP9_5MIN_URI_STRING,
         WEBM_TEARSOFSTEEL_640X480_VP9_5MIN_URI_STRING,
         WEBM_BIGBUCKBUNNY_640X480_VP9_5MIN_URI_STRING);
+    return videoInput;
+  }
+
+  /**
+   * Prepare 30min audio list.
+   */
+  public static List<String> prepare_30minAudioList() {
+    List<String> videoInput = Arrays.asList(
+        MP3_ELEPHANTSDREAM_BIGBUCKBUNNY_CONCAT_2CH_44Khz_30MIN_URI_STRING);
     return videoInput;
   }
 

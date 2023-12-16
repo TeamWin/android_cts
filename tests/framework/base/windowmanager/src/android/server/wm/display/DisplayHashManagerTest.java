@@ -18,6 +18,7 @@ package android.server.wm.display;
 
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS;
 import static android.view.displayhash.DisplayHashResultCallback.DISPLAY_HASH_ERROR_INVALID_BOUNDS;
@@ -35,6 +36,7 @@ import static org.junit.Assert.assertNull;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.KeyguardManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -42,6 +44,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerStateHelper;
@@ -81,6 +84,8 @@ import java.util.concurrent.TimeUnit;
 @Presubmit
 public class DisplayHashManagerTest {
     private static final int WAIT_TIME_S = 5;
+    private static final int TIMEOUT_MS = 1000;
+    private static final int SLEEP_TIMEOUT_MS = 200;
 
     private final Point mCenter = new Point();
     private final Point mTestViewSize = new Point(200, 300);
@@ -422,7 +427,9 @@ public class DisplayHashManagerTest {
         } catch (InterruptedException e) {
         }
 
-        waitForAllActivitiesResumed();
+        ComponentName componentName = ComponentName.unflattenFromString(
+                "android.server.wm/android.server.wm.display.DisplayHashManagerTest$TestActivity");
+        waitForActivityResumed(TIMEOUT_MS, componentName);
 
         byte[] expectedImageHash = new byte[]{-1, -1, 127, -1, -1, -1, 127, 127};
 
@@ -434,6 +441,20 @@ public class DisplayHashManagerTest {
         assertEquals(mTestViewSize.x, verifiedDisplayHash.getBoundsInWindow().width());
         assertEquals(mTestViewSize.y, verifiedDisplayHash.getBoundsInWindow().height());
         assertArrayEquals(expectedImageHash, verifiedDisplayHash.getImageHash());
+    }
+
+    private void waitForActivityResumed(int timeoutMs, ComponentName componentName) {
+        long endTime = System.currentTimeMillis() + timeoutMs;
+        while (endTime > System.currentTimeMillis()) {
+            mWmState.computeState();
+            if (mWmState.hasActivityState(componentName, STATE_RESUMED)) {
+                SystemClock.sleep(SLEEP_TIMEOUT_MS);
+                mWmState.computeState();
+                break;
+            }
+            SystemClock.sleep(SLEEP_TIMEOUT_MS);
+            mWmState.computeState();
+        }
     }
 
     @Test

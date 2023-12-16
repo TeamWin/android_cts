@@ -22,9 +22,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Insets;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Display;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 
 import androidx.test.uiautomator.UiDevice;
@@ -73,6 +76,7 @@ public class ActivityManagerMemoryClassTest
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_XHIGH, 48);
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_340, 48);
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_360, 48);
+            expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_390, 48);
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_400, 56);
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_420, 64);
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_440, 88);
@@ -84,6 +88,8 @@ public class ActivityManagerMemoryClassTest
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_XXXHIGH, 154);
             // Backport of DENSITY_520 from Android 14 to android13-tests-dev
             expectedMemorySizeForWatch.put(520, 112);
+            // Backport of DENSITY_390 to android14-tests-dev
+            expectedMemorySizeForWatch.put(390, 48);
         }
 
         static {
@@ -101,6 +107,7 @@ public class ActivityManagerMemoryClassTest
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_XHIGH, 80);
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_340, 80);
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_360, 80);
+            expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_390, 80);
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_400, 96);
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_420, 112);
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_440, 128);
@@ -112,6 +119,8 @@ public class ActivityManagerMemoryClassTest
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_XXXHIGH, 256);
             // Backport of DENSITY_520 from Android 14 to android13-tests-dev
             expectedMemorySizeForSmallNormalScreen.put(520, 192);
+            // Backport of DENSITY_390 to android14-tests-dev
+            expectedMemorySizeForSmallNormalScreen.put(390, 80);
         }
 
         static {
@@ -129,6 +138,7 @@ public class ActivityManagerMemoryClassTest
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_XHIGH, 128);
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_340, 160);
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_360, 160);
+            expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_390, 160);
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_400, 192);
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_420, 228);
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_440, 256);
@@ -140,6 +150,8 @@ public class ActivityManagerMemoryClassTest
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_XXXHIGH, 512);
             // Backport of DENSITY_520 from Android 14 to android13-tests-dev
             expectedMemorySizeForLargeScreen.put(520, 192);
+            // Backport of DENSITY_390 to android14-tests-dev
+            expectedMemorySizeForLargeScreen.put(390, 160);
         }
 
         static {
@@ -157,6 +169,7 @@ public class ActivityManagerMemoryClassTest
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_XHIGH, 192);
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_340, 192);
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_360, 240);
+            expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_390, 240);
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_400, 288);
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_420, 336);
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_440, 384);
@@ -168,6 +181,8 @@ public class ActivityManagerMemoryClassTest
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_XXXHIGH, 768);
             // Backport of DENSITY_520 from Android 14 to android13-tests-dev
             expectedMemorySizeForXLargeScreen.put(520, 576);
+            // Backport of DENSITY_390 to android14-tests-dev
+            expectedMemorySizeForXLargeScreen.put(390, 240);
         }
 
         public static Integer getExpectedMemorySize(
@@ -247,7 +262,30 @@ public class ActivityManagerMemoryClassTest
     private int getScreenSize() {
         Context context = getInstrumentation().getTargetContext();
         Configuration config = context.getResources().getConfiguration();
-        return config.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
+        final int configScreenSize = config.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
+        final int minScreenSizeDp = Math.min(config.screenWidthDp, config.screenHeightDp);
+        // The insets size may affect screenSizeDp in different orientations. E.g., the short side
+        // is 720dp as the width in portrait orientation, but when the short side is the height in
+        // landscape orientation, the value will be smaller than 720dp because the insets of
+        // system bars may occupy a little space. Then the screen size from Configuration will be
+        // LARGE in landscape and XLARGE in portrait. So below calculation allows to return a
+        // smaller size definition if the size excluding insets is lower than the size threshold.
+        final Insets insets = getActivity().getWindowManager().getCurrentWindowMetrics()
+                .getWindowInsets().getInsetsIgnoringVisibility(WindowInsets.Type.systemBars());
+        final int insetsSize = Math.max(insets.top + insets.bottom, insets.left + insets.right);
+        final int toleranceSizeDp = (int) (insetsSize /
+                ((float) config.densityDpi / DisplayMetrics.DENSITY_DEFAULT) + 0.5f);
+        Log.i("ActivityManagerMemoryClassTest", "getScreenSize: config=" + config
+                + " insets=" + insets + " toleranceSizeDp=" + toleranceSizeDp);
+        if (configScreenSize == Configuration.SCREENLAYOUT_SIZE_XLARGE
+                && (minScreenSizeDp - toleranceSizeDp < 720)) {
+            return Configuration.SCREENLAYOUT_SIZE_LARGE;
+        }
+        if (configScreenSize == Configuration.SCREENLAYOUT_SIZE_LARGE
+                && (minScreenSizeDp - toleranceSizeDp < 480)) {
+            return Configuration.SCREENLAYOUT_SIZE_NORMAL;
+        }
+        return configScreenSize;
     }
 
     private void assertMemoryForScreenDensity(int memoryClass, int screenDensity, int screenSize) {

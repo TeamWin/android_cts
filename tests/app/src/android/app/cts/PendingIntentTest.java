@@ -17,6 +17,7 @@
 package android.app.cts;
 
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.app.PendingIntent;
 import android.app.PendingIntent.CanceledException;
 import android.app.stubs.MockActivity;
@@ -160,7 +161,9 @@ public class PendingIntentTest extends AndroidTestCase {
                 PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         assertEquals(mContext.getPackageName(), mPendingIntent.getTargetPackage());
 
-        mPendingIntent.send();
+        mPendingIntent.send(ActivityOptions.makeBasic()
+                .setPendingIntentBackgroundActivityStartMode(
+                        ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED).toBundle());
 
         PendingIntentStubActivity.waitForCreate(WAIT_TIME);
         assertNotNull(mPendingIntent);
@@ -225,7 +228,9 @@ public class PendingIntentTest extends AndroidTestCase {
                 PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         assertEquals(mContext.getPackageName(), mPendingIntent.getTargetPackage());
 
-        mPendingIntent.send();
+        mPendingIntent.send(ActivityOptions.makeBasic()
+                .setPendingIntentBackgroundActivityStartMode(
+                        ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED).toBundle());
 
         PendingIntentStubActivity.waitForCreate(WAIT_TIME);
         assertNotNull(mPendingIntent);

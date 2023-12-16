@@ -66,7 +66,6 @@ android_test {
         "cts-wm-util",
         "mockito-target-minus-junit4",
         "platform-test-annotations",
-        "platform-compat-test-rules",
         "ctshardware-aidl-java",
         "junit",
         "junit-params",
@@ -83,6 +82,4 @@ android_test {
         "src/**/*.kt",
     ],
     sdk_version: "test_current",
-    // platform APIs required for CoreCompatChangeRule
-    platform_apis: true,
 }

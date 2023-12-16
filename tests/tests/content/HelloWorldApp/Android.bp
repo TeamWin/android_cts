@@ -140,6 +140,22 @@ android_test {
         "general-tests",
     ],
     v4_signature: true,
+    certificate: "platform",
+}
+
+//-----------------------------------------------------------
+// This is slightly different from the actual SettingsProvider package
+// to ensure it won't get installed by mistake - as it'll break the device.
+android_test {
+    name: "HelloWorldSettings",
+    defaults: ["hello_world_defaults"],
+    srcs: ["src_shell/**/*.java"],
+    manifest: "AndroidManifestSettings.xml",
+    test_suites: [
+        "vts10",
+        "general-tests",
+    ],
+    v4_signature: true,
 }
 
 //-----------------------------------------------------------
@@ -240,6 +256,32 @@ android_test {
     defaults: ["hello_world_defaults"],
     srcs: ["sdk3/**/*.java"],
     manifest: "AndroidManifestSdk3UsingSdk1And2.xml",
+    test_suites: [
+        "vts10",
+        "general-tests",
+    ],
+    v4_signature: true,
+}
+
+//-----------------------------------------------------------
+android_test {
+    name: "HelloWorldUsingSdk1OptionalSdk2",
+    defaults: ["hello_world_defaults"],
+    srcs: ["sdk_user/**/*.java"],
+    manifest: "AndroidManifestUsingSdk1OptionalSdk2.xml",
+    test_suites: [
+        "vts10",
+        "general-tests",
+    ],
+    v4_signature: true,
+}
+
+//-----------------------------------------------------------
+android_test {
+    name: "HelloWorldUsingSdk1Optional",
+    defaults: ["hello_world_defaults"],
+    srcs: ["sdk_user/**/*.java"],
+    manifest: "AndroidManifestUsingSdk1Optional.xml",
     test_suites: [
         "vts10",
         "general-tests",

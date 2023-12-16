@@ -24,23 +24,42 @@
 
     <application>
         <uses-library android:name="android.test.runner" />
+        <activity android:name=".AppComponents$EmptyActivity" />
+        <activity android:name=".AppComponents$SecondActivity" />
         <activity
-            android:name="android.virtualdevice.cts.applaunch.util.EmptyActivity"
-            android:allowEmbedded="true"
+            android:name=".ActivityBlockingTest$CannotDisplayOnRemoteActivity"
+            android:canDisplayOnRemoteDevices="false"
             android:exported="false" />
         <activity
-            android:name="android.virtualdevice.cts.applaunch.util.SecondActivity"
-            android:allowEmbedded="true"
+            android:name=".RestrictActivityTest$RestrictedActivity"
+            android:requiredDisplayCategory="testActivityCategory"
             android:exported="false" />
-        <service android:name="android.virtualdevice.cts.applaunch.util.TestService" />
         <activity
-            android:name="android.virtualdevice.cts.applaunch.util.InterceptedActivity"
-            android:allowEmbedded="true"
+            android:name=".ActivityInterceptionTest$InterceptedActivity"
             android:exported="false">
             <intent-filter>
-                <action android:name="android.virtualdevice.applaunch.util.INTERCEPTED_RECEIVER" />
+                <action android:name="android.virtualdevice.applaunch.INTERCEPTED_RECEIVER" />
             </intent-filter>
         </activity>
+        <service android:name=".AppComponents$TestService" />
+        <service android:name=".VirtualDeviceImeTest$DefaultDeviceTestIme"
+            android:label="Default device Test IME"
+            android:permission="android.permission.BIND_INPUT_METHOD"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.view.InputMethod"/>
+            </intent-filter>
+            <meta-data android:name="android.view.im" android:resource="@xml/defaultdevicetestime"/>
+        </service>
+        <service android:name=".VirtualDeviceImeTest$VirtualDeviceTestIme"
+            android:label="Virtual device Test IME"
+            android:permission="android.permission.BIND_INPUT_METHOD"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.view.InputMethod"/>
+            </intent-filter>
+            <meta-data android:name="android.view.im" android:resource="@xml/virtualdevicetestime"/>
+        </service>
     </application>
 
     <uses-feature android:name="android.software.companion_device_setup" />
@@ -51,6 +70,8 @@
      -->
     <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Needed to test the camera blocking behavior. -->
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.virtualdevice.cts.applaunch"

@@ -26,6 +26,7 @@ import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_DEACTIVATED;
 import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_DISABLED;
 import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_ENABLED;
 import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_UNKNOWN;
+import static android.app.NotificationManager.EXTRA_AUTOMATIC_ZEN_RULE_ID;
 import static android.app.NotificationManager.EXTRA_AUTOMATIC_ZEN_RULE_STATUS;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_ALARMS;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_ALL;
@@ -52,6 +53,7 @@ import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_PEEK;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_OFF;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_ON;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BAR;
+import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -68,7 +70,10 @@ import android.app.Flags;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.UiModeManager;
+import android.app.WallpaperManager;
 import android.app.compat.CompatChanges;
+import android.app.cts.CtsAppTestUtils;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.GetResultActivity;
 import android.app.stubs.R;
@@ -78,11 +83,14 @@ import android.content.ContentProviderOperation;
 import android.content.Intent;
 import android.content.OperationApplicationException;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
+import android.hardware.display.ColorDisplayManager;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.PowerManager;
 import android.os.RemoteException;
 import android.permission.PermissionManager;
 import android.permission.cts.PermissionUtils;
@@ -91,6 +99,7 @@ import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.ContactsContract;
+import android.provider.Settings;
 import android.service.notification.Condition;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
@@ -103,12 +112,14 @@ import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.ScreenUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import com.google.common.collect.Iterables;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -131,11 +142,12 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     private static final String NOTIFICATION_CHANNEL_ID_NOISY = TAG + "/noisy";
     private static final String NOTIFICATION_CHANNEL_ID_MEDIA = TAG + "/media";
     private static final String NOTIFICATION_CHANNEL_ID_GAME = TAG + "/game";
+    private static final String NOTIFICATION_CHANNEL_ID_PRIORITY = TAG + "/priority";
     private static final String ALICE = "Alice";
     private static final String ALICE_PHONE = "+16175551212";
     private static final String ALICE_EMAIL = "alice@_foo._bar";
     private static final String BOB = "Bob";
-    private static final String BOB_PHONE = "+16505551212";;
+    private static final String BOB_PHONE = "+16505551212";
     private static final String BOB_EMAIL = "bob@_foo._bar";
     private static final String CHARLIE = "Charlie";
     private static final String CHARLIE_PHONE = "+13305551212";
@@ -164,7 +176,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     private final String TRIGGER_DESC = "Every Night, 10pm to 6am";
     private final int TYPE = TYPE_BEDTIME;
     private final boolean ALLOW_MANUAL = true;
-    private final int ICON_RES_ID = 123;
+    private final int ICON_RES_ID = android.app.notification.current.cts.R.drawable.ic_android;
     private final int INTERRUPTION_FILTER = INTERRUPTION_FILTER_PRIORITY;
     private NotificationManager.Policy mOriginalPolicy;
 
@@ -268,8 +280,8 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     // usePriorities false:
     //   MODE_NONE: C, B, A
     //   otherwise: A, B ,C
-    private void sendNotifications(int annotationMode, boolean uriMode, boolean noisy) {
-        sendNotifications(SEND_ALL, annotationMode, uriMode, noisy);
+    private void sendNotifications(int uriMode, boolean usePriorities, boolean noisy) {
+        sendNotifications(SEND_ALL, uriMode, usePriorities, noisy);
     }
 
     private void sendNotifications(int which, int uriMode, boolean usePriorities, boolean noisy) {
@@ -569,6 +581,14 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 .setUsage(AudioAttributes.USAGE_GAME);
         gameChannel.setSound(null, aa2.build());
         mNotificationManager.createNotificationChannel(gameChannel);
+        if (Flags.modesApi()) {
+            // "Priority" channel has canBypassDnd set to true.
+            NotificationChannel priorityChannel = new NotificationChannel(
+                    NOTIFICATION_CHANNEL_ID_PRIORITY, NOTIFICATION_CHANNEL_ID_PRIORITY,
+                    NotificationManager.IMPORTANCE_HIGH);
+            priorityChannel.setBypassDnd(true);
+            mNotificationManager.createNotificationChannel(priorityChannel);
+        }
     }
 
     private void deleteChannels() {
@@ -576,6 +596,9 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         mNotificationManager.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID_NOISY);
         mNotificationManager.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID_MEDIA);
         mNotificationManager.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID_GAME);
+        if (Flags.modesApi()) {
+            mNotificationManager.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID_PRIORITY);
+        }
     }
 
     private void deleteAllAutomaticZenRules() {
@@ -881,6 +904,53 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             mNotificationManager.setInterruptionFilter(originalFilter);
             mNotificationManager.setNotificationPolicy(origPolicy);
         }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void testConsolidatedNotificationPolicy_mergesAllowChannels() throws Exception {
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+
+        // setup custom ZenPolicy for an automatic rule
+        AutomaticZenRule rule = createRule("test_consolidated_policy_priority_channels",
+                INTERRUPTION_FILTER_PRIORITY);
+        rule.setZenPolicy(new ZenPolicy.Builder()
+                .allowChannels(ZenPolicy.CHANNEL_TYPE_PRIORITY)
+                .build());
+        String id = mNotificationManager.addAutomaticZenRule(rule);
+        mRuleIds.add(id);
+        // set condition of the automatic rule to TRUE
+        Condition condition = new Condition(rule.getConditionId(), "summary",
+                Condition.STATE_TRUE);
+        mNotificationManager.setAutomaticZenRuleState(id, condition);
+
+        Thread.sleep(300); // wait for rules to be applied - it's done asynchronously
+
+        assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
+
+        NotificationManager.Policy consolidatedPolicy =
+                mNotificationManager.getConsolidatedNotificationPolicy();
+
+        // channels are permitted as set by the rule
+        assertTrue(consolidatedPolicy.allowPriorityChannels());
+
+        // new rule that disallows channels
+        AutomaticZenRule rule2 = createRule("test_consolidated_policy_no_channels",
+                INTERRUPTION_FILTER_PRIORITY);
+        rule2.setZenPolicy(new ZenPolicy.Builder()
+                .allowChannels(ZenPolicy.CHANNEL_TYPE_NONE)
+                .build());
+        String id2 = mNotificationManager.addAutomaticZenRule(rule2);
+        Condition onCondition2 = new Condition(rule2.getConditionId(), "summary",
+                Condition.STATE_TRUE);
+        mRuleIds.add(id2);
+        mNotificationManager.setAutomaticZenRuleState(id2, onCondition2);
+
+        // now priority channels are disallowed because "no channels" overrides "priority"
+        consolidatedPolicy =
+                mNotificationManager.getConsolidatedNotificationPolicy();
+        assertFalse(consolidatedPolicy.allowPriorityChannels());
     }
 
     @Test
@@ -1888,6 +1958,85 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertTrue(mListener.mIntercepted.get(alice.getKey()));
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void testPriorityChannelNotInterceptedByDefault() throws Exception {
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+
+        // Setup: no contacts, so nobody counts as "priority" in terms of senders.
+        // Construct a policy that doesn't allow anything through; apply it via zen rule
+        AutomaticZenRule rule = createRule("test_channel_bypass",
+                INTERRUPTION_FILTER_PRIORITY);
+        rule.setZenPolicy(new ZenPolicy.Builder().disallowAllSounds().build());
+        String id = mNotificationManager.addAutomaticZenRule(rule);
+        mRuleIds.add(id);  // will be cleaned up by tearDown
+
+        // enable rule
+        Condition condition = new Condition(rule.getConditionId(), "summary",
+                Condition.STATE_TRUE);
+        mNotificationManager.setAutomaticZenRuleState(id, condition);
+
+        Thread.sleep(300); // wait for rules to be applied - it's done asynchronously
+
+        // Create a notification under the PRIORITY (set to bypass DND) channel and send.
+        Notification.Builder notif = new Notification.Builder(mContext,
+                NOTIFICATION_CHANNEL_ID_PRIORITY)
+                .setContentTitle(NAME)
+                .setContentText("content")
+                .setSmallIcon(android.R.drawable.sym_def_app_icon)
+                .setCategory(Notification.CATEGORY_MESSAGE)
+                .setWhen(System.currentTimeMillis() - 1000000L);
+        mNotificationManager.notify(NAME, 1, notif.build());
+
+        StatusBarNotification sbn = mNotificationHelper.findPostedNotification(NAME, 1,
+                SEARCH_TYPE.POSTED);
+
+        // should not be intercepted because priority channels are allowed.
+        assertFalse(mListener.mIntercepted.get(sbn.getKey()));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void testPriorityChannelInterceptedWhenChannelsDisallowed() throws Exception {
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+
+        // Setup: no contacts, so nobody counts as "priority" in terms of senders, not that the
+        // policy allows senders anyway.
+        // Construct a policy that doesn't allow anything through and also disallows channels.
+        AutomaticZenRule rule = createRule("test_channels_disallowed",
+                INTERRUPTION_FILTER_PRIORITY);
+        rule.setZenPolicy(new ZenPolicy.Builder()
+                .disallowAllSounds()
+                .allowChannels(ZenPolicy.CHANNEL_TYPE_NONE)
+                .build());
+        String id = mNotificationManager.addAutomaticZenRule(rule);
+        mRuleIds.add(id); // will be cleaned up by tearDown
+
+        // enable rule
+        Condition condition = new Condition(rule.getConditionId(), "summary",
+                Condition.STATE_TRUE);
+        mNotificationManager.setAutomaticZenRuleState(id, condition);
+        Thread.sleep(300); // wait for rules to be applied - it's done asynchronously
+
+        // Send notification under the priority channel.
+        Notification.Builder notif = new Notification.Builder(mContext,
+                NOTIFICATION_CHANNEL_ID_PRIORITY)
+                .setContentTitle(NAME)
+                .setContentText("content")
+                .setSmallIcon(android.R.drawable.sym_def_app_icon)
+                .setCategory(Notification.CATEGORY_MESSAGE)
+                .setWhen(System.currentTimeMillis() - 1000000L);
+        mNotificationManager.notify(NAME, 1, notif.build());
+
+        StatusBarNotification sbn = mNotificationHelper.findPostedNotification(NAME, 1,
+                SEARCH_TYPE.POSTED);
+
+        // Notification should be intercepted now
+        assertTrue(mListener.mIntercepted.get(sbn.getKey()));
+    }
+
     @CddTest(requirements = {"2.2.3/3.8.4/H-1-1"})
     @Test
     public void testContactAffinityByPhoneOrder() throws Exception {
@@ -1988,10 +2137,8 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     }
 
     @Test
-    public void testAddAutomaticZenRule_newFields() throws Exception {
-        if (!Flags.modesApi()) {
-            return;
-        }
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void testAddAutomaticZenRule_mergesAllowChannels() throws Exception {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -2035,7 +2182,10 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         mNotificationManager.setAutomaticZenRuleState(id, condition);
 
         // snooze the rule
-        mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
+        });
+
         assertEquals(AUTOMATIC_RULE_STATUS_ACTIVATED,
                 br.getExtra(EXTRA_AUTOMATIC_ZEN_RULE_STATUS, 0, 500));
         assertEquals(AUTOMATIC_RULE_STATUS_DEACTIVATED,
@@ -2172,6 +2322,203 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void setAutomaticZenRuleState_ruleWithGrayscale_applied() throws Exception {
+        assertThat(isColorDisplayManagerSaturationActivated()).isFalse();
+
+        AutomaticZenRule rule = createRule("Grayscale");
+        rule.setDeviceEffects(new ZenDeviceEffects.Builder()
+                .setShouldDisplayGrayscale(true)
+                .build());
+        String ruleId = mNotificationManager.addAutomaticZenRule(rule);
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "yeah", Condition.STATE_TRUE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(isColorDisplayManagerSaturationActivated()).isTrue();
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "nope", Condition.STATE_FALSE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(isColorDisplayManagerSaturationActivated()).isFalse();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void setAutomaticZenRuleState_ruleWithDimWallpaper_applied() throws Exception {
+        assertThat(getWallpaperManagerDimAmount()).isZero();
+
+        AutomaticZenRule rule = createRule("Dim wallpaper");
+        rule.setDeviceEffects(new ZenDeviceEffects.Builder().setShouldDimWallpaper(true).build());
+        String ruleId = mNotificationManager.addAutomaticZenRule(rule);
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "yeah", Condition.STATE_TRUE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(getWallpaperManagerDimAmount()).isNonZero();
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "nope", Condition.STATE_FALSE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(getWallpaperManagerDimAmount()).isZero();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void setAutomaticZenRuleState_ruleWithDisableAmbientDisplay_applied() throws Exception {
+        assertThat(isPowerManagerAmbientDisplaySuppressed()).isFalse();
+
+        AutomaticZenRule rule = createRule("Disable ambient display");
+        rule.setDeviceEffects(new ZenDeviceEffects.Builder()
+                .setShouldSuppressAmbientDisplay(true)
+                .build());
+        String ruleId = mNotificationManager.addAutomaticZenRule(rule);
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "yeah", Condition.STATE_TRUE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(isPowerManagerAmbientDisplaySuppressed()).isTrue();
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "nope", Condition.STATE_FALSE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(isPowerManagerAmbientDisplaySuppressed()).isFalse();
+    }
+
+    @Test
+    @Ignore // TODO: b/314285749 - Requires new APIs for verifying (to be added in b/313418335)
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void setAutomaticZenRuleState_ruleWithNightMode_appliedImmediately() throws Exception {
+        assertThat(isUiModeManagerThemeOverlayActive()).isFalse();
+
+        AutomaticZenRule rule = createRule("Grayscale");
+        rule.setDeviceEffects(new ZenDeviceEffects.Builder()
+                .setShouldUseNightMode(true)
+                .build());
+        String ruleId = mNotificationManager.addAutomaticZenRule(rule);
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "yeah", Condition.STATE_TRUE,
+                        Condition.SOURCE_USER_ACTION));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(isUiModeManagerThemeOverlayActive()).isTrue();
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "nope", Condition.STATE_FALSE,
+                        Condition.SOURCE_USER_ACTION));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(isUiModeManagerThemeOverlayActive()).isFalse();
+    }
+
+    @Test
+    @Ignore // Requires new APIs for verifying, b/313418335
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void setAutomaticZenRuleState_ruleWithNightMode_appliedOnScreenOff() throws Exception {
+        assertThat(isUiModeManagerThemeOverlayActive()).isFalse();
+
+        AutomaticZenRule rule = createRule("Grayscale");
+        rule.setDeviceEffects(new ZenDeviceEffects.Builder()
+                .setShouldUseNightMode(true)
+                .build());
+        String ruleId = mNotificationManager.addAutomaticZenRule(rule);
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "yeah", Condition.STATE_TRUE,
+                        Condition.SOURCE_SCHEDULE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+
+        assertThat(isUiModeManagerThemeOverlayActive()).isFalse(); // Not yet applied.
+
+        // Have you tried turning it off and on again?
+        turnScreenOffAndOn();
+        assertThat(isUiModeManagerThemeOverlayActive()).isTrue();
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "nope", Condition.STATE_FALSE,
+                        Condition.SOURCE_SCHEDULE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+
+        assertThat(isUiModeManagerThemeOverlayActive()).isTrue(); // Not yet applied.
+
+        turnScreenOffAndOn();
+        assertThat(isUiModeManagerThemeOverlayActive()).isFalse();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void setAutomaticZenRuleState_multipleRulesWithDeviceEffects_effectsMerged()
+            throws Exception {
+        AutomaticZenRule withDisableAmbientDisplay = createRule("Disable ambient display");
+        withDisableAmbientDisplay.setDeviceEffects(new ZenDeviceEffects.Builder()
+                .setShouldSuppressAmbientDisplay(true)
+                .build());
+        String withDisableAmbientDisplayId = mNotificationManager.addAutomaticZenRule(
+                withDisableAmbientDisplay);
+
+        AutomaticZenRule withDimWallpaper = createRule("With dim wallpaper");
+        withDimWallpaper.setDeviceEffects(new ZenDeviceEffects.Builder()
+                .setShouldDimWallpaper(true)
+                .build());
+        String withDimWallpaperId = mNotificationManager.addAutomaticZenRule(withDimWallpaper);
+
+        mNotificationManager.setAutomaticZenRuleState(withDisableAmbientDisplayId,
+                new Condition(withDisableAmbientDisplay.getConditionId(), "ad",
+                        Condition.STATE_TRUE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(isPowerManagerAmbientDisplaySuppressed()).isTrue();
+        assertThat(getWallpaperManagerDimAmount()).isZero();
+
+        mNotificationManager.setAutomaticZenRuleState(withDimWallpaperId,
+                new Condition(withDimWallpaper.getConditionId(), "dw", Condition.STATE_TRUE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(isPowerManagerAmbientDisplaySuppressed()).isTrue();
+        assertThat(getWallpaperManagerDimAmount()).isNonZero();
+
+        mNotificationManager.setAutomaticZenRuleState(withDisableAmbientDisplayId,
+                new Condition(withDisableAmbientDisplay.getConditionId(), "ad",
+                        Condition.STATE_FALSE));
+        Thread.sleep(300); // Effects are applied asynchronously.
+        assertThat(isPowerManagerAmbientDisplaySuppressed()).isFalse();
+        assertThat(getWallpaperManagerDimAmount()).isNonZero();
+    }
+
+    private float getWallpaperManagerDimAmount() {
+        WallpaperManager wallpaperManager = mContext.getSystemService(WallpaperManager.class);
+        return SystemUtil.runWithShellPermissionIdentity(
+                () -> wallpaperManager.getWallpaperDimAmount(),
+                Manifest.permission.SET_WALLPAPER_DIM_AMOUNT);
+    }
+
+    private boolean isPowerManagerAmbientDisplaySuppressed() {
+        PowerManager powerManager = mContext.getSystemService(PowerManager.class);
+        return SystemUtil.runWithShellPermissionIdentity(
+                () -> powerManager.isAmbientDisplaySuppressed(),
+                Manifest.permission.READ_DREAM_STATE);
+    }
+
+    private boolean isColorDisplayManagerSaturationActivated() {
+        ColorDisplayManager colorDisplayManager = mContext.getSystemService(
+                ColorDisplayManager.class);
+        return SystemUtil.runWithShellPermissionIdentity(
+                () -> colorDisplayManager.isSaturationActivated(),
+                Manifest.permission.CONTROL_DISPLAY_COLOR_TRANSFORMS);
+    }
+
+    private boolean isUiModeManagerThemeOverlayActive() {
+        UiModeManager uiModeManager = mContext.getSystemService(UiModeManager.class);
+        return SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    throw new IllegalStateException("Not ready for testing yet");
+                },
+                Manifest.permission.MODIFY_DAY_NIGHT_MODE);
+    }
+
+    private void turnScreenOffAndOn() throws Exception {
+        ScreenUtils.setScreenOn(false);
+        CtsAppTestUtils.turnScreenOn(mInstrumentation, mContext);
+    }
+
+    @Test
     public void testSetInterruptionFilter_usesAutomaticZenRule() throws Exception {
         // NMS: MANAGE_GLOBAL_ZEN_VIA_IMPLICIT_RULES
         if (!android.app.Flags.modesApi() || !CompatChanges.isChangeEnabled(308670109L)) {
@@ -2246,5 +2593,19 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 mNotificationManager.getConsolidatedNotificationPolicy();
         assertThat(activePolicy.priorityCategories & PRIORITY_CATEGORY_ALARMS).isNotEqualTo(0);
         assertThat(activePolicy.priorityCategories & PRIORITY_CATEGORY_CALLS).isEqualTo(0);
+    }
+
+    @RequiresFlagsEnabled({Flags.FLAG_MODES_API, Flags.FLAG_MODES_UI})
+    @Test
+    public void testIndividualRuleIntent_resolvesToActivity() {
+        AutomaticZenRule ruleToCreate = createRule("testIndividualRuleIntent_resolvesToActivity");
+        String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
+        mRuleIds.add(id);
+        final PackageManager pm = mContext.getPackageManager();
+        final Intent intent = new Intent(Settings.ACTION_AUTOMATIC_ZEN_RULE_SETTINGS);
+        intent.setData(Uri.parse("package:" + STUB_PACKAGE_NAME));
+        intent.putExtra(EXTRA_AUTOMATIC_ZEN_RULE_ID, id);
+        final ResolveInfo resolveInfo = pm.resolveActivity(intent, MATCH_DEFAULT_ONLY);
+        assertNotNull(resolveInfo);
     }
 }

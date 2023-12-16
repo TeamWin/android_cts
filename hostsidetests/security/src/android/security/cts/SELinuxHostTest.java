@@ -625,6 +625,9 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         List<String> expectedLines = Files.readAllLines(expectedFile.toPath());
         List<String> actualLines = Files.readAllLines(actualFile.toPath());
 
+        expectedLines.replaceAll(String::trim);
+        actualLines.replaceAll(String::trim);
+
         HashSet<String> expected = new HashSet(expectedLines);
         HashSet<String> actual = new HashSet(actualLines);
 
@@ -927,6 +930,18 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     public void testCoredomainViolators() throws Exception {
         assertSepolicyTests("CoredomainViolations", "/sepolicy_tests",
                 PropertyUtil.isVendorApiLevelNewerThan(mDevice, 27) /* includeVendorSepolicy */);
+    }
+
+    /**
+     * Tests that all labels on /dev have the dev_type attribute.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testDevTypeViolators() throws Exception {
+        int vsrVersion = getVSRApiLevel(getDevice());
+        assumeTrue("Skipping test: dev_type is enforced for W or later", vsrVersion > 202404);
+        assertSepolicyTests("TestDevTypeViolations", "/sepolicy_tests", true);
     }
 
    /**

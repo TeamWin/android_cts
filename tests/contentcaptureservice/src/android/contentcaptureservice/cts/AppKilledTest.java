@@ -16,8 +16,11 @@
 
 package android.contentcaptureservice.cts;
 
-import static android.contentcaptureservice.cts.Assertions.assertNoEvents;
+import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
+import static android.contentcaptureservice.cts.Assertions.getViewLevelEvents;
 import static android.contentcaptureservice.cts.Helper.sContext;
+
+import static com.google.common.truth.Truth.assertThat;
 
 import android.app.PendingIntent;
 import android.content.Intent;
@@ -39,10 +42,7 @@ public class AppKilledTest extends AbstractContentCaptureIntegrationActivityLess
     @Test
     public void testDoIt() throws Exception {
         final CtsContentCaptureService service = enableService();
-
         startOutOfProcessActivity();
-        // We should send command to kill process before using BlockingBroadcastReceiver to wait
-        // start signal. Othereise, it may cause the cc starts to send events.
         OutOfProcessActivity.killOutOfProcessActivity();
 
         // wait Activity started
@@ -50,8 +50,8 @@ public class AppKilledTest extends AbstractContentCaptureIntegrationActivityLess
 
         final Session session = service.getOnlyFinishedSession();
         Log.v(mTag, "session id: " + session.id);
-
-        assertNoEvents(session, OutOfProcessActivity.COMPONENT_NAME);
+        assertRightActivity(session, session.id, OutOfProcessActivity.COMPONENT_NAME);
+        assertThat(getViewLevelEvents(session.getEvents())).isEmpty();
     }
 
     @After

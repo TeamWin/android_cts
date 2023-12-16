@@ -87,7 +87,7 @@ public class BluetoothCddTest {
 
     @CddTest(requirements = {"7.4.3/C-3-1", "7.4.3/C-3-2"})
     @Test
-    public void test_C_3_BleRequirements() {
+    public void C_3_BleRequirements() {
         Assume.assumeTrue(mHasBluetooth);
         Assume.assumeTrue(TestUtils.isBleSupported(mContext));
         assertThat(BTAdapterUtils.enableAdapter(mAdapter, mContext)).isTrue();
@@ -96,7 +96,7 @@ public class BluetoothCddTest {
 
     @CddTest(requirements = {"7.4.3/C-7-3", "7.4.3/C-7-5"})
     @Test
-    public void test_C_7_LeAudioUnicastRequirements() {
+    public void C_7_LeAudioUnicastRequirements() {
         Assume.assumeTrue(mHasBluetooth);
         assertThat(BTAdapterUtils.enableAdapter(mAdapter, mContext)).isTrue();
         // Assert that BluetoothAdapter#isLeAudioSupported() and
@@ -117,7 +117,7 @@ public class BluetoothCddTest {
 
     @CddTest(requirements = {"7.4.3/C-8-2", "7.4.3/C-8-3"})
     @Test
-    public void test_C_8_LeAudioBroadcastSourceRequirements() {
+    public void C_8_LeAudioBroadcastSourceRequirements() {
         Assume.assumeTrue(mHasBluetooth);
         assertThat(BTAdapterUtils.enableAdapter(mAdapter, mContext)).isTrue();
         // Assert that BluetoothAdapter#isLeAudioBroadcastSourceSupported() and
@@ -138,7 +138,7 @@ public class BluetoothCddTest {
 
     @CddTest(requirements = {"7.4.3/C-9-2"})
     @Test
-    public void test_C_9_LeAudioBroadcastAssistantRequirements() {
+    public void C_9_LeAudioBroadcastAssistantRequirements() {
         Assume.assumeTrue(mHasBluetooth);
         assertThat(BTAdapterUtils.enableAdapter(mAdapter, mContext)).isTrue();
         // Assert that BluetoothAdapter#isLeAudioBroadcastAssistantSupported() and

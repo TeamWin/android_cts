@@ -20,6 +20,7 @@ import static android.mediapc.cts.CodecTestBase.SELECT_ALL;
 import static android.mediapc.cts.CodecTestBase.SELECT_AUDIO;
 import static android.mediapc.cts.CodecTestBase.SELECT_HARDWARE;
 import static android.mediapc.cts.CodecTestBase.SELECT_VIDEO;
+import static android.mediapc.cts.CodecTestBase.codecFilter;
 import static android.mediapc.cts.CodecTestBase.codecPrefix;
 import static android.mediapc.cts.CodecTestBase.getMimesOfAvailableCodecs;
 import static android.mediapc.cts.CodecTestBase.mediaTypePrefix;
@@ -190,7 +191,8 @@ public class CodecInitializationLatencyTest {
                 listOfCodecs.addAll(selectHardwareCodecs(mime, null, null, false));
             }
             for (String codec : listOfCodecs) {
-                if (codecPrefix != null && !codec.startsWith(codecPrefix)) {
+                if ((codecPrefix != null && !codec.startsWith(codecPrefix))
+                        || (codecFilter != null && !codecFilter.matcher(codec).matches())) {
                     continue;
                 }
                 argsList.add(new Object[]{mime, codec});

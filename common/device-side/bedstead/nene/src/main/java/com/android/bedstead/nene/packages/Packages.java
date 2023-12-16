@@ -793,4 +793,15 @@ public final class Packages {
                 .stream().map(r -> new ResolveInfoWrapper(r.activityInfo, r.match))
                 .collect(Collectors.toList());
     }
+
+    /** See {@link PackageManager#queryIntentActivities(Intent, int)}.
+     *
+     * <p> Returns a list of {@link ResolveInfo} wrapped in {@link ResolveInfoWrapper}.*/
+    @Experimental
+    public List<ResolveInfoWrapper> queryIntentActivities(UserReference user, Intent intent, int flags) {
+        return TestApis.context().androidContextAsUser(user).getPackageManager()
+                .queryIntentActivities(intent, flags)
+                .stream().map(r -> new ResolveInfoWrapper(r.activityInfo, r.match))
+                .collect(Collectors.toList());
+    }
  }

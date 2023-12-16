@@ -35,7 +35,6 @@ public class JobWorkItemTest extends BaseJobSchedulerTest {
     public void testAllInfoGivenToJob() throws Exception {
         final JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setOverrideDeadline(0)
                 .build();
         final PersistableBundle pb = new PersistableBundle();
         pb.putInt("random_key", 42);
@@ -48,13 +47,17 @@ public class JobWorkItemTest extends BaseJobSchedulerTest {
         // JobWorkItem hasn't been scheduled yet. Delivery count should be 0.
         assertEquals(0, expectedJwi.getDeliveryCount());
 
-        kTestEnvironment.setExpectedExecutions(1);
-        kTestEnvironment.setExpectedWork(new MockJobService.TestWorkItem[]{
-                new MockJobService.TestWorkItem(TEST_INTENT)});
-        kTestEnvironment.readyToWork();
-        mJobScheduler.enqueue(jobInfo, expectedJwi);
-        runSatisfiedJob(JOB_ID);
-        assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
+        try (NetworkingHelper networkingHelper =
+                     new NetworkingHelper(getInstrumentation(), getContext())) {
+            networkingHelper.setAllNetworksEnabled(true);
+            kTestEnvironment.setExpectedExecutions(1);
+            kTestEnvironment.setExpectedWork(new MockJobService.TestWorkItem[]{
+                    new MockJobService.TestWorkItem(TEST_INTENT)});
+            kTestEnvironment.readyToWork();
+            mJobScheduler.enqueue(jobInfo, expectedJwi);
+            runSatisfiedJob(JOB_ID);
+            assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
+        }
 
         List<JobWorkItem> executedJwis = kTestEnvironment.getLastReceivedWork();
         assertEquals(1, executedJwis.size());
@@ -265,9 +268,7 @@ public class JobWorkItemTest extends BaseJobSchedulerTest {
     }
 
     public void testDeliveryCountBumped() throws Exception {
-        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                .setOverrideDeadline(0)
-                .build();
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent).build();
         JobWorkItem jwi = new JobWorkItem(TEST_INTENT);
         // JobWorkItem hasn't been scheduled yet. Delivery count should be 0.
         assertEquals(0, jwi.getDeliveryCount());
@@ -311,9 +312,7 @@ public class JobWorkItemTest extends BaseJobSchedulerTest {
 
     public void testScheduleItemWithNetworkInfoAndNoNetworkConstraint_download() {
         JobWorkItem jwi = new JobWorkItem(TEST_INTENT, 10, JobInfo.NETWORK_BYTES_UNKNOWN);
-        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                .setOverrideDeadline(0)
-                .build();
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent).build();
         try {
             mJobScheduler.enqueue(jobInfo, jwi);
             fail("Successfully scheduled JobWorkItem with network implication"
@@ -325,9 +324,7 @@ public class JobWorkItemTest extends BaseJobSchedulerTest {
 
     public void testScheduleItemWithNetworkInfoAndNoNetworkConstraint_upload() {
         JobWorkItem jwi = new JobWorkItem(TEST_INTENT, JobInfo.NETWORK_BYTES_UNKNOWN, 10);
-        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                .setOverrideDeadline(0)
-                .build();
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent).build();
         try {
             mJobScheduler.enqueue(jobInfo, jwi);
             fail("Successfully scheduled JobWorkItem with network implication"
@@ -340,9 +337,7 @@ public class JobWorkItemTest extends BaseJobSchedulerTest {
     public void testScheduleItemWithNetworkInfoAndNoNetworkConstraint_minimumChunk() {
         JobWorkItem jwi = new JobWorkItem(TEST_INTENT,
                 JobInfo.NETWORK_BYTES_UNKNOWN, JobInfo.NETWORK_BYTES_UNKNOWN, 10);
-        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                .setOverrideDeadline(0)
-                .build();
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent).build();
         try {
             mJobScheduler.enqueue(jobInfo, jwi);
             fail("Successfully scheduled JobWorkItem with network implication"
@@ -355,7 +350,6 @@ public class JobWorkItemTest extends BaseJobSchedulerTest {
     public void testScheduleItemWithNetworkInfoAndNoNetworkConstraint() {
         JobWorkItem jwi = new JobWorkItem(TEST_INTENT, 10, 10, 10);
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                .setOverrideDeadline(0)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_NONE)
                 .build();
         try {
@@ -371,7 +365,6 @@ public class JobWorkItemTest extends BaseJobSchedulerTest {
         JobWorkItem jwi = new JobWorkItem(TEST_INTENT,
                 JobInfo.NETWORK_BYTES_UNKNOWN, JobInfo.NETWORK_BYTES_UNKNOWN, 10);
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                .setOverrideDeadline(0)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .build();
         assertEquals(JobScheduler.RESULT_SUCCESS, mJobScheduler.enqueue(jobInfo, jwi));

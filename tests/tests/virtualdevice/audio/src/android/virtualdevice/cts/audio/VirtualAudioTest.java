@@ -45,6 +45,7 @@ import static android.virtualdevice.cts.audio.AudioHelper.SHORT_VALUE;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -55,6 +56,7 @@ import android.companion.virtual.audio.AudioCapture;
 import android.companion.virtual.audio.AudioInjection;
 import android.companion.virtual.audio.VirtualAudioDevice;
 import android.companion.virtual.audio.VirtualAudioDevice.AudioConfigurationChangeCallback;
+import android.content.pm.PackageManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -66,6 +68,8 @@ import android.virtualdevice.cts.common.VirtualDeviceRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.android.compatibility.common.util.FeatureUtil;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -75,6 +79,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
@@ -274,6 +279,8 @@ public class VirtualAudioTest {
     }
 
     private void runAudioCaptureTest(@AudioHelper.DataType int dataType, int readMode) {
+        // Automotive has its own audio policies that don't play well with the VDM-created ones.
+        assumeFalse(FeatureUtil.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
         int encoding = dataType == FLOAT_ARRAY ? ENCODING_PCM_FLOAT : ENCODING_PCM_16BIT;
         AudioCapture audioCapture = mVirtualAudioDevice.startAudioCapture(
                 createCaptureFormat(encoding));
@@ -281,9 +288,9 @@ public class VirtualAudioTest {
         AudioActivity audioActivity = startAudioActivity();
         audioActivity.playAudio(dataType);
 
-        AudioHelper.CapturedAudio capturedAudio = null;
+        AudioHelper.CapturedAudio capturedAudio;
         switch (dataType) {
-            case BYTE_BUFFER:
+            case BYTE_BUFFER -> {
                 ByteBuffer byteBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE_IN_BYTES).order(
                         ByteOrder.nativeOrder());
                 capturedAudio = new AudioHelper.CapturedAudio(audioCapture, byteBuffer, readMode);
@@ -291,23 +298,23 @@ public class VirtualAudioTest {
                         .isLessThan(POWER_THRESHOLD_FOR_ABSENT);
                 assertThat(capturedAudio.getPowerSpectrum(FREQUENCY))
                         .isGreaterThan(POWER_THRESHOLD_FOR_PRESENT);
-                break;
-            case BYTE_ARRAY:
+            }
+            case BYTE_ARRAY -> {
                 byte[] byteArray = new byte[BUFFER_SIZE_IN_BYTES];
                 capturedAudio = new AudioHelper.CapturedAudio(audioCapture, byteArray, readMode);
                 assertThat(capturedAudio.getByteValue()).isEqualTo(BYTE_VALUE);
-                break;
-            case SHORT_ARRAY:
+            }
+            case SHORT_ARRAY -> {
                 short[] shortArray = new short[BUFFER_SIZE_IN_BYTES / 2];
                 capturedAudio = new AudioHelper.CapturedAudio(audioCapture, shortArray, readMode);
                 assertThat(capturedAudio.getShortValue()).isEqualTo(SHORT_VALUE);
-                break;
-            case FLOAT_ARRAY:
+            }
+            case FLOAT_ARRAY -> {
                 float[] floatArray = new float[BUFFER_SIZE_IN_BYTES / 4];
                 capturedAudio = new AudioHelper.CapturedAudio(audioCapture, floatArray, readMode);
                 float roundOffError = Math.abs(capturedAudio.getFloatValue() - FLOAT_VALUE);
                 assertThat(roundOffError).isLessThan(0.001f);
-                break;
+            }
         }
 
         verify(mAudioResultCallback, timeout(5000)).onCompleted();
@@ -325,7 +332,7 @@ public class VirtualAudioTest {
 
         int remaining;
         switch (dataType) {
-            case BYTE_BUFFER:
+            case BYTE_BUFFER -> {
                 ByteBuffer byteBuffer = AudioHelper.createAudioData(
                         SAMPLE_RATE, NUMBER_OF_SAMPLES, CHANNEL_COUNT, FREQUENCY, AMPLITUDE);
                 remaining = byteBuffer.remaining();
@@ -338,12 +345,10 @@ public class VirtualAudioTest {
                                 writeMode);
                     }
                 }
-                break;
-            case BYTE_ARRAY:
+            }
+            case BYTE_ARRAY -> {
                 byte[] byteArray = new byte[NUMBER_OF_SAMPLES];
-                for (int i = 0; i < byteArray.length; i++) {
-                    byteArray[i] = BYTE_VALUE;
-                }
+                Arrays.fill(byteArray, BYTE_VALUE);
                 remaining = byteArray.length;
                 while (remaining > 0) {
                     if (writeMode == WRITE_BLOCKING || writeMode == WRITE_NON_BLOCKING) {
@@ -353,12 +358,10 @@ public class VirtualAudioTest {
                         remaining -= audioInjection.write(byteArray, 0, byteArray.length);
                     }
                 }
-                break;
-            case SHORT_ARRAY:
+            }
+            case SHORT_ARRAY -> {
                 short[] shortArray = new short[NUMBER_OF_SAMPLES];
-                for (int i = 0; i < shortArray.length; i++) {
-                    shortArray[i] = SHORT_VALUE;
-                }
+                Arrays.fill(shortArray, SHORT_VALUE);
                 remaining = shortArray.length;
                 while (remaining > 0) {
                     if (writeMode == WRITE_BLOCKING || writeMode == WRITE_NON_BLOCKING) {
@@ -368,39 +371,35 @@ public class VirtualAudioTest {
                         remaining -= audioInjection.write(shortArray, 0, shortArray.length);
                     }
                 }
-                break;
-            case FLOAT_ARRAY:
+            }
+            case FLOAT_ARRAY -> {
                 float[] floatArray = new float[NUMBER_OF_SAMPLES];
-                for (int i = 0; i < floatArray.length; i++) {
-                    floatArray[i] = FLOAT_VALUE;
-                }
+                Arrays.fill(floatArray, FLOAT_VALUE);
                 remaining = floatArray.length;
                 while (remaining > 0) {
                     remaining -= audioInjection.write(floatArray, 0, floatArray.length, writeMode);
                 }
-                break;
+            }
         }
 
         verify(mAudioResultCallback, timeout(5000)).onCompleted();
 
         switch (dataType) {
-            case BYTE_BUFFER:
+            case BYTE_BUFFER -> {
                 assertThat(audioActivity.mPowerSpectrumNotFrequency).isLessThan(
                         POWER_THRESHOLD_FOR_ABSENT);
                 assertThat(audioActivity.mPowerSpectrumAtFrequency).isGreaterThan(
                         POWER_THRESHOLD_FOR_PRESENT);
-                break;
-            case BYTE_ARRAY:
-                assertThat(audioActivity.mLastRecordedNonZeroByteValue).isEqualTo(BYTE_VALUE);
-                break;
-            case SHORT_ARRAY:
-                assertThat(audioActivity.mLastRecordedNonZeroShortValue).isEqualTo(SHORT_VALUE);
-                break;
-            case FLOAT_ARRAY:
+            }
+            case BYTE_ARRAY -> assertThat(audioActivity.mLastRecordedNonZeroByteValue).isEqualTo(
+                    BYTE_VALUE);
+            case SHORT_ARRAY -> assertThat(audioActivity.mLastRecordedNonZeroShortValue).isEqualTo(
+                    SHORT_VALUE);
+            case FLOAT_ARRAY -> {
                 float floatValue = audioActivity.mLastRecordedNonZeroFloatValue;
                 float roundOffError = Math.abs(floatValue - FLOAT_VALUE);
                 assertThat(roundOffError).isLessThan(0.001f);
-                break;
+            }
         }
 
         stopAudioActivity(audioActivity);
@@ -444,18 +443,10 @@ public class VirtualAudioTest {
                     CHANNEL_OUT_MONO, playEncoding, bufferSize, AudioTrack.MODE_STREAM);
             audioTrack.play();
             switch (dataType) {
-                case BYTE_BUFFER:
-                    playAudioFromByteBuffer(audioTrack);
-                    break;
-                case BYTE_ARRAY:
-                    playAudioFromByteArray(audioTrack);
-                    break;
-                case SHORT_ARRAY:
-                    playAudioFromShortArray(audioTrack);
-                    break;
-                case FLOAT_ARRAY:
-                    playAudioFromFloatArray(audioTrack);
-                    break;
+                case BYTE_BUFFER -> playAudioFromByteBuffer(audioTrack);
+                case BYTE_ARRAY -> playAudioFromByteArray(audioTrack);
+                case SHORT_ARRAY -> playAudioFromShortArray(audioTrack);
+                case FLOAT_ARRAY -> playAudioFromFloatArray(audioTrack);
             }
         }
 
@@ -467,18 +458,10 @@ public class VirtualAudioTest {
                     AudioFormat.CHANNEL_IN_MONO, recordEncoding, BUFFER_SIZE_IN_BYTES);
             audioRecord.startRecording();
             switch (dataType) {
-                case BYTE_BUFFER:
-                    recordAudioToByteBuffer(audioRecord);
-                    break;
-                case BYTE_ARRAY:
-                    recordAudioToByteArray(audioRecord);
-                    break;
-                case SHORT_ARRAY:
-                    recordAudioToShortArray(audioRecord);
-                    break;
-                case FLOAT_ARRAY:
-                    recordAudioToFloatArray(audioRecord);
-                    break;
+                case BYTE_BUFFER -> recordAudioToByteBuffer(audioRecord);
+                case BYTE_ARRAY -> recordAudioToByteArray(audioRecord);
+                case SHORT_ARRAY -> recordAudioToShortArray(audioRecord);
+                case FLOAT_ARRAY -> recordAudioToFloatArray(audioRecord);
             }
         }
 
@@ -505,9 +488,7 @@ public class VirtualAudioTest {
             // Write to the audio track asynchronously to avoid ANRs.
             Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
                 byte[] audioData = new byte[NUMBER_OF_SAMPLES];
-                for (int i = 0; i < audioData.length; i++) {
-                    audioData[i] = BYTE_VALUE;
-                }
+                Arrays.fill(audioData, BYTE_VALUE);
 
                 int remainingSamples = audioData.length;
                 while (remainingSamples > 0) {
@@ -525,9 +506,7 @@ public class VirtualAudioTest {
             // Write to the audio track asynchronously to avoid ANRs.
             Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
                 short[] audioData = new short[NUMBER_OF_SAMPLES];
-                for (int i = 0; i < audioData.length; i++) {
-                    audioData[i] = SHORT_VALUE;
-                }
+                Arrays.fill(audioData, SHORT_VALUE);
 
                 int remainingSamples = audioData.length;
                 while (remainingSamples > 0) {
@@ -545,9 +524,7 @@ public class VirtualAudioTest {
             // Write to the audio track asynchronously to avoid ANRs.
             Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
                 float[] audioData = new float[NUMBER_OF_SAMPLES];
-                for (int i = 0; i < audioData.length; i++) {
-                    audioData[i] = FLOAT_VALUE;
-                }
+                Arrays.fill(audioData, FLOAT_VALUE);
 
                 int remainingSamples = audioData.length;
                 while (remainingSamples > 0) {
@@ -591,9 +568,9 @@ public class VirtualAudioTest {
                     break;
                 }
                 byte value = 0;
-                for (int i = 0; i < audioData.length; i++) {
-                    if (audioData[i] == BYTE_VALUE) {
-                        value = audioData[i];
+                for (byte audioDatum : audioData) {
+                    if (audioDatum == BYTE_VALUE) {
+                        value = audioDatum;
                         break;
                     }
                 }
@@ -618,9 +595,9 @@ public class VirtualAudioTest {
                     break;
                 }
                 short value = 0;
-                for (int i = 0; i < audioData.length; i++) {
-                    if (audioData[i] == SHORT_VALUE) {
-                        value = audioData[i];
+                for (short audioDatum : audioData) {
+                    if (audioDatum == SHORT_VALUE) {
+                        value = audioDatum;
                         break;
                     }
                 }
@@ -645,10 +622,10 @@ public class VirtualAudioTest {
                     break;
                 }
                 float value = 0f;
-                for (int i = 0; i < audioData.length; i++) {
-                    float roundOffDiff = Math.abs(audioData[i] - FLOAT_VALUE);
+                for (float audioDatum : audioData) {
+                    float roundOffDiff = Math.abs(audioDatum - FLOAT_VALUE);
                     if (roundOffDiff < 0.001f) {
-                        value = audioData[i];
+                        value = audioDatum;
                         break;
                     }
                 }

@@ -201,6 +201,11 @@ public class Utils {
     public static int[] getAllUsers(ITestDevice device)
             throws DeviceNotAvailableException {
         Integer primary = device.getPrimaryUserId();
+        if (device.isHeadlessSystemUserMode()
+                && primary == USER_SYSTEM
+                && !device.canSwitchToHeadlessSystemUser()) {
+            primary = device.getMainUserId();
+        }
         if (primary == null) {
             primary = USER_SYSTEM;
         }

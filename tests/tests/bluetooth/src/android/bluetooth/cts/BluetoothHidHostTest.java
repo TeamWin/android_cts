@@ -113,7 +113,7 @@ public class BluetoothHidHostTest {
     }
 
     @Test
-    public void test_closeProfileProxy() {
+    public void closeProfileProxy() {
         assumeTrue(mHasBluetooth && mIsHidHostSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mHidHost);
@@ -125,7 +125,7 @@ public class BluetoothHidHostTest {
     }
 
     @Test
-    public void test_getConnectedDevices() {
+    public void getConnectedDevices() {
         assumeTrue(mHasBluetooth && mIsHidHostSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mHidHost);
@@ -138,7 +138,7 @@ public class BluetoothHidHostTest {
     }
 
     @Test
-    public void test_getDevicesMatchingConnectionStates() {
+    public void getDevicesMatchingConnectionStates() {
         assumeTrue(mHasBluetooth && mIsHidHostSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mHidHost);
@@ -151,7 +151,7 @@ public class BluetoothHidHostTest {
     }
 
     @Test
-    public void test_getConnectionState() {
+    public void getConnectionState() {
         assumeTrue(mHasBluetooth && mIsHidHostSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mHidHost);
@@ -171,7 +171,7 @@ public class BluetoothHidHostTest {
     }
 
     @Test
-    public void test_getConnectionPolicy() {
+    public void getConnectionPolicy() {
         assumeTrue(mHasBluetooth && mIsHidHostSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mHidHost);
@@ -193,7 +193,7 @@ public class BluetoothHidHostTest {
     }
 
     @Test
-    public void test_setConnectionPolicy() {
+    public void setConnectionPolicy() {
         assumeTrue(mHasBluetooth && mIsHidHostSupported);
         assertTrue(waitForProfileConnect());
         assertNotNull(mHidHost);

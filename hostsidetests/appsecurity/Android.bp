@@ -251,7 +251,6 @@ java_test_host {
 
     srcs: [
         "src/**/ApplicationVisibilityTest.java",
-        "src/**/AuthBoundKeyTest.java",
         "src/**/BaseInstallMultiple.java",
         "src/**/IsolatedSplitsTests.java",
         "src/**/MajorVersionTest.java",
@@ -270,8 +269,6 @@ java_test_host {
         // ApplicationVisibilityTest
         ":CtsPkgInstallTinyApp",
         ":CtsApplicationVisibilityCrossUserApp",
-        // AuthBoundKeyTest
-        ":AuthBoundKeyApp",
         // IsolatedSplitsTests
         ":CtsIsolatedSplitApp",
         ":CtsIsolatedSplitAppExtractNativeLibsFalseJni",

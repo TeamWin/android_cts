@@ -61,7 +61,7 @@ public class AdvertiseDataTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testEmptyData() {
+    public void emptyData() {
         Parcel parcel = Parcel.obtain();
         AdvertiseData data = mAdvertiseDataBuilder.build();
         data.writeToParcel(parcel, 0);
@@ -79,7 +79,7 @@ public class AdvertiseDataTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testEmptyServiceUuid() {
+    public void emptyServiceUuid() {
         Parcel parcel = Parcel.obtain();
         AdvertiseData data = mAdvertiseDataBuilder.setIncludeDeviceName(true).build();
         data.writeToParcel(parcel, 0);
@@ -94,7 +94,7 @@ public class AdvertiseDataTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testEmptyManufacturerData() {
+    public void emptyManufacturerData() {
         Parcel parcel = Parcel.obtain();
         int manufacturerId = 50;
         byte[] manufacturerData = new byte[0];
@@ -112,7 +112,7 @@ public class AdvertiseDataTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testEmptyServiceData() {
+    public void emptyServiceData() {
         Parcel parcel = Parcel.obtain();
         ParcelUuid uuid = ParcelUuid.fromString("0000110A-0000-1000-8000-00805F9B34FB");
         byte[] serviceData = new byte[0];
@@ -130,7 +130,7 @@ public class AdvertiseDataTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testServiceUuid() {
+    public void serviceUuid() {
         Parcel parcel = Parcel.obtain();
         ParcelUuid uuid = ParcelUuid.fromString("0000110A-0000-1000-8000-00805F9B34FB");
         ParcelUuid uuid2 = ParcelUuid.fromString("0000110B-0000-1000-8000-00805F9B34FB");
@@ -150,7 +150,7 @@ public class AdvertiseDataTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testServiceSolicitationUuids() {
+    public void serviceSolicitationUuids() {
         AdvertiseData emptyData = mAdvertiseDataBuilder.build();
         assertEquals(0, emptyData.getServiceSolicitationUuids().size());
 
@@ -173,7 +173,7 @@ public class AdvertiseDataTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testManufacturerData() {
+    public void manufacturerData() {
         Parcel parcel = Parcel.obtain();
         ParcelUuid uuid = ParcelUuid.fromString("0000110A-0000-1000-8000-00805F9B34FB");
         ParcelUuid uuid2 = ParcelUuid.fromString("0000110B-0000-1000-8000-00805F9B34FB");
@@ -198,7 +198,7 @@ public class AdvertiseDataTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testServiceData() {
+    public void serviceData() {
         Parcel parcel = Parcel.obtain();
         ParcelUuid uuid = ParcelUuid.fromString("0000110A-0000-1000-8000-00805F9B34FB");
         byte[] serviceData = new byte[] {
@@ -217,7 +217,7 @@ public class AdvertiseDataTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testTransportDiscoveryData() {
+    public void transportDiscoveryData() {
         Parcel parcel = Parcel.obtain();
         ParcelUuid uuid = ParcelUuid.fromString("0000110A-0000-1000-8000-00805F9B34FB");
         List<TransportBlock> transportBlocks = new ArrayList();
@@ -253,7 +253,7 @@ public class AdvertiseDataTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testIncludeTxPower() {
+    public void includeTxPower() {
         Parcel parcel = Parcel.obtain();
         AdvertiseData data = mAdvertiseDataBuilder.setIncludeTxPowerLevel(true).build();
         data.writeToParcel(parcel, 0);
@@ -266,7 +266,7 @@ public class AdvertiseDataTest {
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
-    public void testDescribeContents() {
+    public void describeContents() {
         AdvertiseData data = new AdvertiseData.Builder().build();
         assertEquals(0, data.describeContents());
     }

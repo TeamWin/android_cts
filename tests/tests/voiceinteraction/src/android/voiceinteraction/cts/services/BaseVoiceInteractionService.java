@@ -533,6 +533,23 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
         }
     }
 
+    /**
+     * Remove all files in the internal storage that is created by
+     * {@link BaseVoiceInteractionService#createTestFile(String)}.
+     */
+    public void removeTestFiles() {
+        File path = this.getFilesDir();
+        File[] files = path.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                // Check if the filename starts with the specified prefix
+                if (file.getName().startsWith(Utils.TEST_RESOURCE_FILE_NAME)) {
+                    file.delete(); // Delete the file
+                }
+            }
+        }
+    }
+
     AlwaysOnHotwordDetector callCreateAlwaysOnHotwordDetectorNoHotwordDetectionService(
             AlwaysOnHotwordDetector.Callback callback, boolean useExecutor) {
         Log.i(mTag,

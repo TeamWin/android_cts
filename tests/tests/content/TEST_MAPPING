@@ -1,4 +1,14 @@
 {
+  "presubmit-large": [
+    {
+      "name": "CtsPackageManagerTestCases",
+      "options": [
+        {
+          "include-filter": "android.content.pm.cts.PackageManagerShellCommandInstallTest"
+        }
+      ]
+    }
+  ],
   "postsubmit": [
     {
       "name": "CtsPackageManagerTestCases",

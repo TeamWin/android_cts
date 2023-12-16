@@ -291,7 +291,7 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
         final List<String> expectedEnterSequence =
                 Arrays.asList(ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP, ON_DESTROY,
                         ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED,
-                        ON_TOP_POSITION_LOST, ON_PAUSE);
+                        ON_TOP_POSITION_LOST);
         waitForActivityTransitions(CallbackTrackingActivity.class, expectedEnterSequence);
         TransitionVerifier.assertOrder(
                 getTransitionLog(),
@@ -306,8 +306,8 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
 
         // Wait for the activity to relaunch and receive multi-window mode change
         final List<String> expectedExitSequence =
-                Arrays.asList(ON_STOP, ON_DESTROY, ON_CREATE, ON_START,
-                        ON_POST_CREATE, ON_RESUME, ON_PAUSE, ON_RESUME, ON_TOP_POSITION_GAINED);
+                Arrays.asList(ON_PAUSE, ON_STOP, ON_DESTROY, ON_CREATE, ON_START,
+                        ON_POST_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED);
         waitForActivityTransitions(CallbackTrackingActivity.class, expectedExitSequence);
         TransitionVerifier.assertOrder(
                 getTransitionLog(),
@@ -318,10 +318,9 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
 
     @Test
     public void testLifecycleOnMoveToFromSplitScreenNoRelaunch() throws Exception {
-
         // Launch activities and enter split screen. Launched an activity on
-        // split-screen secondary stack to ensure the TOP_POSITION_LOST is send
-        // prior to MULTI_WINDOW_MODE_CHANGED.
+        // split-screen secondary stack to ensure the MULTI_WINDOW_MODE_CHANGED is send
+        // prior to TOP_POSITION_LOST.
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().
                         setTargetActivity(getComponentName(
@@ -329,12 +328,11 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
                 getLaunchActivityBuilder().
                         setTargetActivity(getComponentName(SecondActivity.class)));
 
-        final int displayWindowingMode = getDisplayWindowingModeByActivity(
+        final int defaultWindowingMode = getDefaultWindowingModeByActivity(
                 getComponentName(LifecycleConfigChangeHandlingActivity.class));
-        if (displayWindowingMode == WINDOWING_MODE_FULLSCREEN) {
+        if (defaultWindowingMode == WINDOWING_MODE_FULLSCREEN) {
             // Wait for the activity to receive the change.
-            waitForActivityTransitions(LifecycleConfigChangeHandlingActivity.class,
-                    Arrays.asList(ON_TOP_POSITION_LOST, ON_MULTI_WINDOW_MODE_CHANGED));
+            waitForActivityCurrentState(LifecycleConfigChangeHandlingActivity.class, ON_RESUME);
             TransitionVerifier.assertOrder(
                     getTransitionLog(),
                     LifecycleConfigChangeHandlingActivity.class,
@@ -342,8 +340,8 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
                     "moveToSplitScreen");
         } else {
             // For non-fullscreen display mode, there won't be a multi-window callback.
-            waitForActivityTransitions(LifecycleConfigChangeHandlingActivity.class,
-                    Arrays.asList(ON_TOP_POSITION_LOST));
+            waitForActivityCurrentState(LifecycleConfigChangeHandlingActivity.class,
+                    ON_TOP_POSITION_LOST);
             assertTransitionObserved(getTransitionLog(),
                     transition(LifecycleConfigChangeHandlingActivity.class, ON_TOP_POSITION_LOST),
                     "moveToSplitScreen");
@@ -354,11 +352,10 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
         dismissSplitScreen(true /* primaryOnTop */);
 
         // Wait for the activity to receive the change
-        final List<String> expectedSequence =
-                Arrays.asList(ON_TOP_POSITION_GAINED, ON_MULTI_WINDOW_MODE_CHANGED);
-        waitForActivityTransitions(LifecycleConfigChangeHandlingActivity.class, expectedSequence);
+        waitForActivityCurrentState(LifecycleConfigChangeHandlingActivity.class,
+                ON_TOP_POSITION_GAINED);
 
-        if (displayWindowingMode == WINDOWING_MODE_FULLSCREEN) {
+        if (defaultWindowingMode == WINDOWING_MODE_FULLSCREEN) {
             assertTransitionObserved(getTransitionLog(),
                     transition(LifecycleConfigChangeHandlingActivity.class,
                             ON_MULTI_WINDOW_MODE_CHANGED), "exitSplitScreen");

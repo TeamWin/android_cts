@@ -16,7 +16,6 @@
 package android.app.appsearch;
 
 import android.annotation.NonNull;
-import android.content.Context;
 
 /**
  * A class that encapsulates all features that are only supported in certain cases (e.g. only on
@@ -81,6 +80,7 @@ public interface Features {
      * <p>For details on the numeric search expressions in the query language, see {@link
      * AppSearchSession#search}.
      */
+    // Note: The preferred name of this feature should have been LIST_FILTER_NUMERIC_SEARCH.
     String NUMERIC_SEARCH = FeatureConstants.NUMERIC_SEARCH;
 
     /**
@@ -91,6 +91,7 @@ public interface Features {
      *
      * <p>For details on the verbatim string operator, see {@link AppSearchSession#search}.
      */
+    // Note: The preferred name of this feature should have been LIST_FILTER_VERBATIM_SEARCH.
     String VERBATIM_SEARCH = FeatureConstants.VERBATIM_SEARCH;
 
     /**
@@ -101,6 +102,15 @@ public interface Features {
      * <p>For more details, see {@link AppSearchSession#search}.
      */
     String LIST_FILTER_QUERY_LANGUAGE = FeatureConstants.LIST_FILTER_QUERY_LANGUAGE;
+
+    /**
+     * Feature for {@link #isFeatureSupported(String)}. This feature covers the use of the
+     * "hasProperty" function in query expressions.
+     *
+     * <p>For details on the "hasProperty" function in the query language, see {@link
+     * AppSearchSession#search}.
+     */
+    String LIST_FILTER_HAS_PROPERTY_FUNCTION = FeatureConstants.LIST_FILTER_HAS_PROPERTY_FUNCTION;
 
     /**
      * Feature for {@link #isFeatureSupported(String)}. This feature covers {@link
@@ -183,8 +193,6 @@ public interface Features {
      * API level and AppSearch backend.
      *
      * <p>A property is defined as all values that are present at a particular path.
-     *
-     * @param context to check mainline module version, as support varies by module version.
      */
-    int getMaxIndexedProperties(@NonNull Context context);
+    int getMaxIndexedProperties();
 }

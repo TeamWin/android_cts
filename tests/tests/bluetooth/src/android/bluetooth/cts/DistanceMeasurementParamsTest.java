@@ -74,7 +74,7 @@ public class DistanceMeasurementParamsTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testCreateFromParcel() {
+    public void createFromParcel() {
         final Parcel parcel = Parcel.obtain();
         try {
             DistanceMeasurementParams params = new DistanceMeasurementParams
@@ -91,7 +91,7 @@ public class DistanceMeasurementParamsTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testDefaultParameters() {
+    public void defaultParameters() {
         DistanceMeasurementParams params = new DistanceMeasurementParams.Builder(mDevice).build();
         assertEquals(DistanceMeasurementParams.getDefaultDurationSeconds(),
                 params.getDurationSeconds());
@@ -101,14 +101,14 @@ public class DistanceMeasurementParamsTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testSetGetDevice() {
+    public void setGetDevice() {
         DistanceMeasurementParams params = new DistanceMeasurementParams.Builder(mDevice).build();
         assertEquals(mDevice, params.getDevice());
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testSetGetDurationSeconds() {
+    public void setGetDurationSeconds() {
         DistanceMeasurementParams params = new DistanceMeasurementParams.Builder(mDevice)
                 .setDurationSeconds(120).build();
         assertEquals(120, params.getDurationSeconds());
@@ -116,7 +116,7 @@ public class DistanceMeasurementParamsTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testSetGetFrequency() {
+    public void setGetFrequency() {
         DistanceMeasurementParams params = new DistanceMeasurementParams.Builder(mDevice)
                 .setFrequency(REPORT_FREQUENCY_HIGH).build();
         assertEquals(REPORT_FREQUENCY_HIGH, params.getFrequency());
@@ -124,7 +124,7 @@ public class DistanceMeasurementParamsTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testSetGetMethodId() {
+    public void setGetMethodId() {
         DistanceMeasurementParams params = new DistanceMeasurementParams.Builder(mDevice)
                 .setMethodId(DISTANCE_MEASUREMENT_METHOD_RSSI).build();
         assertEquals(DISTANCE_MEASUREMENT_METHOD_RSSI, params.getMethodId());

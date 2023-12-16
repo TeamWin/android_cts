@@ -30,6 +30,7 @@ android_test {
         "platform-compat-test-rules",
         "flag-junit",
         "android.service.voice.flags-aconfig-java",
+        "android.permission.flags-aconfig-java",
     ],
     aidl: {
         local_include_dirs: [

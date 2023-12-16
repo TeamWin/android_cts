@@ -25,6 +25,8 @@ android_test {
         "compatibility-device-util-axt",
         "platform-test-annotations",
         "cts-wm-util",
+        "cts-install-lib",
+        "android.content.pm.flags-aconfig-java",
     ],
     resource_dirs: ["res"],
     srcs: ["src/**/*.java"],
@@ -38,6 +40,7 @@ android_test {
     data: [
         ":CtsEmptyTestApp",
         ":CtsSelfUninstallingTestApp",
+        ":CtsArchiveTestApp",
     ],
     per_testcase_directory: true,
 }

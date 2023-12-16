@@ -106,6 +106,7 @@ public class Camera2HeadlessSystemUserTest extends Camera2ParameterizedTestCase 
     @RequiresFlagsEnabled(Flags.FLAG_CAMERA_HSUM_PERMISSION)
     @Test
     public void testHeadlessSystemUser_OpenCamera() throws Exception {
+        assumeTrue(mUserManager.isSystemUser());
         for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             CameraDevice camera = null;
             try {
@@ -132,6 +133,7 @@ public class Camera2HeadlessSystemUserTest extends Camera2ParameterizedTestCase 
     @RequiresFlagsEnabled(Flags.FLAG_CAMERA_HSUM_PERMISSION)
     @Test
     public void testHeadlessSystemUser_InvalidAccess() throws Exception {
+        assumeTrue(mUserManager.isSystemUser());
         assumeFalse("Skipping test for system camera.", mAdoptShellPerm);
         for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             try {
@@ -157,6 +159,7 @@ public class Camera2HeadlessSystemUserTest extends Camera2ParameterizedTestCase 
     @RequiresFlagsEnabled(Flags.FLAG_CAMERA_HSUM_PERMISSION)
     @Test
     public void testHeadlessSystemUser_SwitchForegroundUser() throws Exception {
+        assumeTrue(mUserManager.isSystemUser());
         assumeTrue("Skipping test for devices which doesn't support multiple users.",
                 UserManager.supportsMultipleUsers());
         for (int i = 0; i < mCameraIdsUnderTest.length; i++) {

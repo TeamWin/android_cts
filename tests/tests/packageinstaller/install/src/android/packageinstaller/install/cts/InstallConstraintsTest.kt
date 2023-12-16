@@ -490,7 +490,7 @@ class InstallConstraintsTest {
             packageName,
             PackageManager.PackageInfoFlags.of(flags.toLong())
         )
-        val signatures = packageInfo.signingInfo.signingCertificateHistory
+        val signatures = packageInfo.signingInfo!!.signingCertificateHistory
         val digest = computeSha256DigestBytes(signatures[0].toByteArray())
         return encodeHex(digest)
     }

@@ -22,8 +22,10 @@ import static org.junit.Assert.fail;
 import android.util.JsonWriter;
 
 import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -31,6 +33,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 @SmallTest
+@RunWith(AndroidJUnit4.class)
 public final class JsonWriterTest {
     @Test
     public void testWrongTopLevelType() throws IOException {

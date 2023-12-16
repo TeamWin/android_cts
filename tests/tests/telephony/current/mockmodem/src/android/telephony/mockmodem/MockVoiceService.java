@@ -193,6 +193,7 @@ public class MockVoiceService {
             mToa = DEFAULT_TOA;
             mNumber = address;
             mIsMT = isMT;
+            mUusInfo = new UusInfo[0];
             mCallType = callType;
             mCategories = categories;
             mUrns = urns;

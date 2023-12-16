@@ -51,6 +51,8 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="cleanup" value="true" />
         <option name="push" value="CtsPackageManagerTestCases.apk->/data/local/tmp/cts/content/CtsPackageManagerTestCases.apk" />
+        <option name="push" value="CtsPackageManagerTestCases_hdpi-v4.apk->/data/local/tmp/cts/content/CtsPackageManagerTestCases_hdpi-v4.apk" />
+        <option name="push" value="CtsPackageManagerTestCases_mdpi-v4.apk->/data/local/tmp/cts/content/CtsPackageManagerTestCases_mdpi-v4.apk" />
         <option name="push" value="CtsContentEmptyTestApp.apk->/data/local/tmp/cts/content/CtsContentEmptyTestApp.apk" />
         <option name="push" value="CtsContentLongPackageNameTestApp.apk->/data/local/tmp/cts/content/CtsContentLongPackageNameTestApp.apk" />
         <option name="push" value="CtsContentLongSharedUserIdTestApp.apk->/data/local/tmp/cts/content/CtsContentLongSharedUserIdTestApp.apk" />
@@ -100,8 +102,11 @@
         <option name="push-file" key="HelloWorld7_xxhdpi-v4.apk.idsig" value="/data/local/tmp/cts/content/HelloWorld7_xxhdpi-v4.apk.idsig" />
         <option name="push-file" key="HelloWorld7_xxxhdpi-v4.apk" value="/data/local/tmp/cts/content/HelloWorld7_xxxhdpi-v4.apk" />
         <option name="push-file" key="HelloWorld7_xxxhdpi-v4.apk.idsig" value="/data/local/tmp/cts/content/HelloWorld7_xxxhdpi-v4.apk.idsig" />
+        <option name="push-file" key="HelloWorldSettings.apk" value="/data/local/tmp/cts/content/HelloWorldSettings.apk" />
+        <option name="push-file" key="HelloWorldSettings.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldSettings.apk.idsig" />
         <option name="push-file" key="HelloWorldSystem.apk" value="/data/local/tmp/cts/content/HelloWorldSystem.apk" />
         <option name="push-file" key="HelloWorldSystem.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldSystem.apk.idsig" />
+        <option name="push-file" key="SettingsProvider.apk" value="/data/local/tmp/cts/content/SettingsProvider.apk" />
         <option name="push-file" key="CtsPkgInstallTinyAppV1.apk" value="/data/local/tmp/cts/content/CtsPkgInstallTinyAppV1.apk" />
         <option name="push-file" key="CtsPkgInstallTinyAppV2V3V4.apk" value="/data/local/tmp/cts/content/CtsPkgInstallTinyAppV2V3V4.apk" />
         <option name="push-file" key="CtsPkgInstallTinyAppV2V3V4.apk.idsig" value="/data/local/tmp/cts/content/CtsPkgInstallTinyAppV2V3V4.apk.idsig" />
@@ -150,6 +155,10 @@
         <option name="push-file" key="HelloWorldSdk3UsingSdk1And2.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldSdk3UsingSdk1And2.apk.idsig" />
         <option name="push-file" key="HelloWorldUsingSdk1.apk" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1.apk" />
         <option name="push-file" key="HelloWorldUsingSdk1.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1.apk.idsig" />
+        <option name="push-file" key="HelloWorldUsingSdk1Optional.apk" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1Optional.apk" />
+        <option name="push-file" key="HelloWorldUsingSdk1Optional.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1Optional.apk.idsig" />
+        <option name="push-file" key="HelloWorldUsingSdk1OptionalSdk2.apk" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1OptionalSdk2.apk" />
+        <option name="push-file" key="HelloWorldUsingSdk1OptionalSdk2.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1OptionalSdk2.apk.idsig" />
         <option name="push-file" key="HelloWorldUsingSdk1And2.apk" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1And2.apk" />
         <option name="push-file" key="HelloWorldUsingSdk1And2.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1And2.apk.idsig" />
         <option name="push-file" key="HelloWorldUsingSdk3.apk" value="/data/local/tmp/cts/content/HelloWorldUsingSdk3.apk" />

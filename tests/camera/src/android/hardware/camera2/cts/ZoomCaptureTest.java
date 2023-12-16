@@ -17,11 +17,13 @@
 package android.hardware.camera2.cts;
 
 import android.graphics.ImageFormat;
+import android.graphics.Rect;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.params.DynamicRangeProfiles;
+import android.hardware.camera2.params.LensIntrinsicsSample;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
@@ -35,6 +37,7 @@ import android.util.Range;
 import android.util.Size;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,6 +49,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.Test;
 
+import static android.hardware.camera2.CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_SENSOR_CROP_REGION;
 import static android.hardware.camera2.cts.CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS;
 import static android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import static junit.framework.Assert.*;
@@ -217,6 +221,9 @@ public class ZoomCaptureTest extends Camera2AndroidTestCase {
             listener.getCaptureSequenceLastFrameNumber(
                     seqId, CAPTURE_WAIT_TIMEOUT_MS * candidateZoomRatios.size());
 
+            float lastZoomRatio = Float.NaN;
+            Rect lastActiveCropRegion = new Rect();
+            String lastActivePhysicalId = new String();
             while (listener.hasMoreResults() && mStaticInfo.isActivePhysicalCameraIdSupported()) {
                 // Validate capture result.
                 TotalCaptureResult result = listener.getTotalCaptureResult(
@@ -236,6 +243,38 @@ public class ZoomCaptureTest extends Camera2AndroidTestCase {
                             physicalCameraIds.contains(activePhysicalId));
 
                     activePhysicalIdsSeen.add(activePhysicalId);
+
+                    // Ensure that the active physical crop region is updated correctly
+                    // when iterating over the zoom ratio within the same active physical camera
+                    Rect activeCropRegion = result.get(
+                            LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_SENSOR_CROP_REGION);
+                    if (activeCropRegion != null) {
+                        Float zoomRatio = CameraTestUtils.getValueNotNull(result,
+                                CaptureResult.CONTROL_ZOOM_RATIO);
+                        if ((zoomRatio != lastZoomRatio) && (zoomRatio > lastZoomRatio)) {
+                            if (lastActivePhysicalId.equals(activePhysicalId)) {
+                                assertTrue(lastActiveCropRegion.contains(activeCropRegion));
+                            } else {
+                                lastActivePhysicalId = activePhysicalId;
+                            }
+                            lastZoomRatio = zoomRatio;
+                            lastActiveCropRegion = activeCropRegion;
+                        }
+                    }
+
+                    LensIntrinsicsSample [] samples = result.get(
+                            CaptureResult.STATISTICS_LENS_INTRINSICS_SAMPLES);
+                    if (samples != null) {
+                        long previousTs = Long.MIN_VALUE;
+                        float[] previousIntrinicArray = new float[5];
+                        for (LensIntrinsicsSample sample : samples) {
+                            assertTrue(previousTs < sample.getTimestamp());
+                            assertTrue(Arrays.hashCode(previousIntrinicArray) !=
+                                    Arrays.hashCode(sample.getLensIntrinsics()));
+                            previousIntrinicArray = sample.getLensIntrinsics();
+                            previousTs = sample.getTimestamp();
+                        }
+                    }
                 }
             }
             // stop capture.

@@ -56,15 +56,11 @@ import org.junit.runner.RunWith;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Duration;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 @MediaHeavyPresubmitTest
@@ -74,7 +70,8 @@ import java.util.function.Supplier;
 @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
 public class DecodeOnlyTest extends MediaTestBase {
     public static final boolean WAS_LAUNCHED_ON_U_OR_LATER =
-            SystemProperties.getInt("ro.board.first_api_level", Build.VERSION_CODES.CUR_DEVELOPMENT)
+            SystemProperties.getInt("ro.product.first_api_level",
+                                    Build.VERSION_CODES.CUR_DEVELOPMENT)
                     >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
 
     private static final String MEDIA_DIR_STRING = WorkDir.getMediaDirString();
@@ -108,7 +105,7 @@ public class DecodeOnlyTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledPerfectSeekInitialPeekOnAvc() throws Exception {
         // Tunnel mode requires vendor support of the DECODE_ONLY feature
-        Assume.assumeTrue("First board API level is not Android 14 or later.",
+        Assume.assumeTrue("First API level is not Android 14 or later.",
                 WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledPerfectSeek(AVC_VIDEO, true);
     }
@@ -117,7 +114,7 @@ public class DecodeOnlyTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledPerfectSeekInitialPeekOnVp9() throws Exception {
         // Tunnel mode requires vendor support of the DECODE_ONLY feature
-        Assume.assumeTrue("First board API level is not Android 14 or later.",
+        Assume.assumeTrue("First API level is not Android 14 or later.",
                 WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledPerfectSeek(VP9_VIDEO, true);
     }
@@ -126,7 +123,7 @@ public class DecodeOnlyTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledPerfectSeekInitialPeekOnHevc() throws Exception {
         // Tunnel mode requires vendor support of the DECODE_ONLY feature
-        Assume.assumeTrue("First board API level is not Android 14 or later.",
+        Assume.assumeTrue("First API level is not Android 14 or later.",
                 WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledPerfectSeek(HEVC_VIDEO, true);
     }
@@ -135,7 +132,7 @@ public class DecodeOnlyTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledPerfectSeekInitialPeekOffAvc() throws Exception {
         // Tunnel mode requires vendor support of the DECODE_ONLY feature
-        Assume.assumeTrue("First board API level is not Android 14 or later.",
+        Assume.assumeTrue("First API level is not Android 14 or later.",
                 WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledPerfectSeek(AVC_VIDEO, false);
     }
@@ -144,7 +141,7 @@ public class DecodeOnlyTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledPerfectSeekInitialPeekOffVp9() throws Exception {
         // Tunnel mode requires vendor support of the DECODE_ONLY feature
-        Assume.assumeTrue("First board API level is not Android 14 or later.",
+        Assume.assumeTrue("First API level is not Android 14 or later.",
                 WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledPerfectSeek(VP9_VIDEO, false);
     }
@@ -153,7 +150,7 @@ public class DecodeOnlyTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledPerfectSeekInitialPeekOffHevc() throws Exception {
         // Tunnel mode requires vendor support of the DECODE_ONLY feature
-        Assume.assumeTrue("First board API level is not Android 14 or later.",
+        Assume.assumeTrue("First API level is not Android 14 or later.",
                 WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledPerfectSeek(HEVC_VIDEO, false);
     }
@@ -165,7 +162,7 @@ public class DecodeOnlyTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledTrickPlayHevc() throws Exception {
         // Tunnel mode requires vendor support of the DECODE_ONLY feature
-        Assume.assumeTrue("First board API level is not Android 14 or later.",
+        Assume.assumeTrue("First API level is not Android 14 or later.",
                 WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledTrickPlay(HEVC_VIDEO);
     }
@@ -174,7 +171,7 @@ public class DecodeOnlyTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledTrickPlayAvc() throws Exception {
         // Tunnel mode requires vendor support of the DECODE_ONLY feature
-        Assume.assumeTrue("First board API level is not Android 14 or later.",
+        Assume.assumeTrue("First API level is not Android 14 or later.",
                 WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledTrickPlay(AVC_VIDEO);
     }
@@ -183,7 +180,7 @@ public class DecodeOnlyTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledTrickPlayVp9() throws Exception {
         // Tunnel mode requires vendor support of the DECODE_ONLY feature
-        Assume.assumeTrue("First board API level is not Android 14 or later.",
+        Assume.assumeTrue("First API level is not Android 14 or later.",
                 WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledTrickPlay(VP9_VIDEO);
     }
@@ -240,7 +237,7 @@ public class DecodeOnlyTest extends MediaTestBase {
                     ByteBuffer inputBuffer = videoCodec.getInputBuffer(index);
                     int sampleSize = videoExtractor.readSampleData(inputBuffer, 0);
                     long presentationTime = videoExtractor.getSampleTime();
-                    int flags = videoExtractor.getSampleFlags();
+                    int flags = 0;
                     if (sampleSize < 0) {
                         flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
                         sampleSize = 0;
@@ -355,7 +352,7 @@ public class DecodeOnlyTest extends MediaTestBase {
                 ByteBuffer inputBuffer = videoCodec.getInputBuffer(index);
                 int sampleSize = videoExtractor.readSampleData(inputBuffer, 0);
                 long presentationTime = videoExtractor.getSampleTime();
-                int flags = videoExtractor.getSampleFlags();
+                int flags = 0;
                 if (sampleSize < 0) {
                     flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
                     sampleSize = 0;
@@ -485,64 +482,27 @@ public class DecodeOnlyTest extends MediaTestBase {
         audioExtractor.seekTo(seekTime.get(), MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
 
         List<Long> expectedPresentationTimes = new ArrayList<>();
-        // Setting it to true so that buffers are not queued in the beginning.
-        AtomicBoolean done = new AtomicBoolean(true);
+        AtomicBoolean done = new AtomicBoolean(false);
         AtomicBoolean hasDecodeOnlyFrames = new AtomicBoolean(false);
-
-        class VideoAsyncHandler extends MediaCodec.Callback {
-            private final Queue<Integer> mAvailableInputIndices = new ArrayDeque<>();
-            private final Lock mLock = new ReentrantLock();
-
-            private void queueInput(MediaCodec codec, int index) {
-                ByteBuffer inputBuffer = codec.getInputBuffer(index);
-                int sampleSize = videoExtractor.readSampleData(inputBuffer, 0);
-                long presentationTime = videoExtractor.getSampleTime();
-                int flags = videoExtractor.getSampleFlags();
-                if (sampleSize < 0) {
-                    flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
-                    sampleSize = 0;
-                } else if (presentationTime < seekTime.get()) {
-                    flags = MediaCodec.BUFFER_FLAG_DECODE_ONLY;
-                    hasDecodeOnlyFrames.set(true);
-                } else {
-                    expectedPresentationTimes.add(presentationTime);
-                }
-                codec.queueInputBuffer(index, 0, sampleSize, presentationTime, flags);
-                videoExtractor.advance();
-            }
-
+        videoCodec.setCallback(new MediaCodec.Callback() {
             @Override
             public void onInputBufferAvailable(MediaCodec codec, int index) {
-                mLock.lock();
-                try {
-                    if (!done.get()) {
-                        queueInput(codec, index);
+                if (!done.get()) {
+                    ByteBuffer inputBuffer = codec.getInputBuffer(index);
+                    int sampleSize = videoExtractor.readSampleData(inputBuffer, 0);
+                    long presentationTime = videoExtractor.getSampleTime();
+                    int flags = 0;
+                    if (sampleSize < 0) {
+                        flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                        sampleSize = 0;
+                    } else if (presentationTime < seekTime.get()) {
+                        flags = MediaCodec.BUFFER_FLAG_DECODE_ONLY;
+                        hasDecodeOnlyFrames.set(true);
                     } else {
-                        mAvailableInputIndices.offer(index);
+                        expectedPresentationTimes.add(presentationTime);
                     }
-                } finally {
-                    mLock.unlock();
-                }
-            }
-
-            public void startProcess() {
-                mLock.lock();
-                try {
-                    done.set(false);
-                    while (!mAvailableInputIndices.isEmpty()) {
-                        queueInput(videoCodec, mAvailableInputIndices.poll());
-                    }
-                } finally {
-                    mLock.unlock();
-                }
-            }
-
-            public void clearBufferQueue() {
-                mLock.lock();
-                try {
-                    mAvailableInputIndices.clear();
-                } finally {
-                    mLock.unlock();
+                    codec.queueInputBuffer(index, 0, sampleSize, presentationTime, flags);
+                    videoExtractor.advance();
                 }
             }
 
@@ -561,10 +521,7 @@ public class DecodeOnlyTest extends MediaTestBase {
             public void onOutputFormatChanged(MediaCodec codec, MediaFormat format) {
 
             }
-        }
-
-        VideoAsyncHandler videoAsyncHandler = new VideoAsyncHandler();
-        videoCodec.setCallback(videoAsyncHandler);
+        });
         videoCodec.configure(videoFormat, getActivity().getSurfaceHolder().getSurface(), null, 0);
         // Since data is written to AudioTrack in a blocking manner, run it in a separate thread to
         // not block other operations.
@@ -589,13 +546,10 @@ public class DecodeOnlyTest extends MediaTestBase {
                     firstTunnelFrameReady.set(true);
                 });
 
+        boolean isPeeking = setKeyTunnelPeek(videoCodec, initialPeek ? 1 : 0);
         // start media playback
         videoCodec.start();
         audioCodec.start();
-        // Set peeking value after MediaCodec.start() is called.
-        boolean isPeeking = setKeyTunnelPeek(videoCodec, initialPeek ? 1 : 0);
-        // start to queue video frames
-        videoAsyncHandler.startProcess();
 
         // When video codecs are started, large chunks of contiguous physical memory need to be
         // allocated, which, on low-RAM devices, can trigger high CPU usage for moving memory
@@ -642,7 +596,7 @@ public class DecodeOnlyTest extends MediaTestBase {
         Thread.sleep(500);
         videoCodec.flush();
         audioCodec.flush();
-        videoAsyncHandler.clearBufferQueue();
+        audioTrack.flush();
 
         // Frames at 7s of each file are not key frame, and there is non-zero key frame before it
         seekTime.set(7000 * 1000);
@@ -665,11 +619,10 @@ public class DecodeOnlyTest extends MediaTestBase {
 
         // Restart media playback
         firstTunnelFrameReady.set(false);
+        isPeeking = setKeyTunnelPeek(videoCodec, isPeeking ? 0 : 1);
+        done.set(false);
         videoCodec.start();
         audioCodec.start();
-        // Set peek on when it was off, and set it off when it was on.
-        isPeeking = setKeyTunnelPeek(videoCodec, isPeeking ? 0 : 1);
-        videoAsyncHandler.startProcess();
         sleepUntil(firstTunnelFrameReady::get, Duration.ofSeconds(firstFrameReadyTimeoutSeconds));
         assertTrue(String.format("onFirstTunnelFrameReady not called within %d seconds",
                 firstFrameReadyTimeoutSeconds), firstTunnelFrameReady.get());
@@ -796,7 +749,7 @@ public class DecodeOnlyTest extends MediaTestBase {
             ByteBuffer audioInputBuffer = mAudioCodec.getInputBuffer(index);
             int audioSampleSize = mAudioExtractor.readSampleData(audioInputBuffer, 0);
             long presentationTime = mAudioExtractor.getSampleTime();
-            int flags = mAudioExtractor.getSampleFlags();
+            int flags = 0;
             if (audioSampleSize < 0) {
                 flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
                 audioSampleSize = 0;

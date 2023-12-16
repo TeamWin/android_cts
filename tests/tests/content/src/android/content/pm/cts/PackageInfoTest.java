@@ -17,7 +17,13 @@
 package android.content.pm.cts;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
+import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.Attribution;
 import android.content.pm.ComponentInfo;
@@ -28,22 +34,32 @@ import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 
+@RunWith(AndroidJUnit4.class)
 @AppModeFull // TODO(Instant) Figure out which APIs should work.
-public class PackageInfoTest extends AndroidTestCase {
-    private PackageManager mPackageManager;
-    private PackageInfo mPackageInfo;
-    private PackageInfo mPackageInfoCmp;
+public class PackageInfoTest {
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
     private static final String PACKAGE_NAME = "android.content.cts";
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mPackageManager = getContext().getPackageManager();
-        mPackageInfo = mPackageManager.getPackageInfo(PACKAGE_NAME,
+    private Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
+
+    private PackageInfo getPackageInfo() throws Exception {
+        return getContext().getPackageManager().getPackageInfo(PACKAGE_NAME,
                 PackageManager.PackageInfoFlags.of(
                         PackageManager.GET_ACTIVITIES | PackageManager.GET_GIDS
                                 | PackageManager.GET_CONFIGURATIONS
@@ -55,28 +71,38 @@ public class PackageInfoTest extends AndroidTestCase {
                                 | PackageManager.GET_UNINSTALLED_PACKAGES));
     }
 
+    @Test
+    public void testSimple() {
+        PackageInfo info = new PackageInfo();
+        assertNotNull(info.toString());
+    }
+
+    @Test
     public void testPackageInfoOp() {
         // Test constructor, describeContents, toString
-        new PackageInfo();
-        assertEquals(0, mPackageInfo.describeContents());
-        assertNotNull(mPackageInfo.toString());
+        final PackageInfo packageInfo = new PackageInfo();
+        assertEquals(0, packageInfo.describeContents());
+        assertNotNull(packageInfo.toString());
 
         // Test writeToParcel
         Parcel p = Parcel.obtain();
-        mPackageInfo.writeToParcel(p, 0);
+        packageInfo.writeToParcel(p, 0);
         p.setDataPosition(0);
-        mPackageInfoCmp = PackageInfo.CREATOR.createFromParcel(p);
-        checkPkgInfoSame(mPackageInfo, mPackageInfoCmp);
+        final PackageInfo packageInfoCmp = PackageInfo.CREATOR.createFromParcel(p);
+        checkPkgInfoSame(packageInfo, packageInfoCmp);
         p.recycle();
     }
 
-    public void testApplicationInfoSame() {
-        ApplicationInfo ai = mPackageInfo.applicationInfo;
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
+    public void testApplicationInfoSame() throws Exception {
+        PackageInfo packageInfo = getPackageInfo();
+        ApplicationInfo ai = packageInfo.applicationInfo;
 
         // Make sure all the components in it has the same ApplicationInfo.
         for (ComponentInfo[] ar : new ComponentInfo[][]{
-                mPackageInfo.activities, mPackageInfo.services, mPackageInfo.providers,
-                mPackageInfo.receivers}) {
+                packageInfo.activities, packageInfo.services, packageInfo.providers,
+                packageInfo.receivers}) {
             for (ComponentInfo ci : ar) {
                 assertSame("component=" + ci.getComponentName(), ai, ci.applicationInfo);
             }

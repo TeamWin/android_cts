@@ -117,6 +117,7 @@ import com.android.bedstead.harrier.annotations.RequireFeatureFlagNotEnabled;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagValue;
 import com.android.bedstead.harrier.annotations.RequireGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireHasDefaultBrowser;
+import com.android.bedstead.harrier.annotations.RequireHasMainUser;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireInstantApp;
 import com.android.bedstead.harrier.annotations.RequireLowRamDevice;
@@ -1079,6 +1080,13 @@ public class DeviceStateTest {
     public void requireHeadlessSystemUserModeAnnotation_isHeadlessSystemUserMode() {
         assertThat(TestApis.users().isHeadlessSystemUserMode()).isTrue();
     }
+
+    @Test
+    @RequireHasMainUser(reason = "Test")
+    public void requireHasMainUser_hasMainUser() {
+        assertThat(TestApis.users().main()).isNotNull();
+    }
+
 
     @Test
     @RequireLowRamDevice(reason = "Test")

@@ -152,7 +152,7 @@ public class TextToSpeechTest {
 
     private static @Nullable TextToSpeech initializeTextToSpeech(@NonNull Context context) {
         SettableFuture<Integer> ttsInitFuture = SettableFuture.create();
-        TextToSpeech tts = new TextToSpeech(context, status -> ttsInitFuture.set(status));
+        TextToSpeech tts = new TextToSpeech(context, ttsInitFuture::set);
         int status;
         try {
             status = getUninterruptibly(ttsInitFuture, TIMEOUT.getSeconds(),
@@ -174,7 +174,7 @@ public class TextToSpeechTest {
      */
     private static class SpeechPlaybackObserver extends AudioManager.AudioPlaybackCallback {
 
-        private SettableFuture<AudioPlaybackConfiguration> mAudioPlaybackConfigurationFuture =
+        private final SettableFuture<AudioPlaybackConfiguration> mAudioPlaybackConfigurationFuture =
                 SettableFuture.create();
 
         @Override
@@ -185,7 +185,7 @@ public class TextToSpeechTest {
         }
 
         /**
-         * Get {@ListenableFuture} with observed SPEECH playb
+         * Get {@link ListenableFuture} with observed SPEECH playback
          *
          * @return {@code ListenableFuture} instance which will be completed with
          * @code AudioPlaybackConfiguration} corresponding to SPEECH playback once detected.

@@ -18,19 +18,26 @@ package android.app.notification.current.cts;
 
 import static org.junit.Assert.assertEquals;
 
+import android.app.Flags;
 import android.app.NotificationManager;
 import android.os.Parcel;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.service.notification.ZenPolicy;
 
 import androidx.test.runner.AndroidJUnit4;
 
-import junit.framework.Assert;
-
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class ZenPolicyTest {
+
+    // Required for RequiresFlagsEnabled annotation to work.
+    @Rule(order = 0)
+    public final CheckFlagsRule checkFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Test
     public void testWriteToParcel() {
@@ -40,6 +47,9 @@ public class ZenPolicyTest {
                 .allowMessages(ZenPolicy.PEOPLE_TYPE_STARRED)
                 .allowConversations(ZenPolicy.CONVERSATION_SENDERS_ANYONE)
                 .showInNotificationList(false);
+        if (Flags.modesApi()) {
+            builder.allowChannels(ZenPolicy.CHANNEL_TYPE_PRIORITY);
+        }
         ZenPolicy policy = builder.build();
 
         Parcel parcel = Parcel.obtain();
@@ -420,6 +430,21 @@ public class ZenPolicyTest {
         assertEquals(ZenPolicy.STATE_DISALLOW, policy.getVisualEffectBadge());
         assertEquals(ZenPolicy.STATE_DISALLOW, policy.getVisualEffectAmbient());
         assertEquals(ZenPolicy.STATE_DISALLOW, policy.getVisualEffectNotificationList());
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void testAllowChannels() {
+        ZenPolicy.Builder builder = new ZenPolicy.Builder();
+        ZenPolicy policy = builder.allowChannels(ZenPolicy.CHANNEL_TYPE_PRIORITY).build();
+        assertEquals(ZenPolicy.CHANNEL_TYPE_PRIORITY, policy.getAllowedChannels());
+        assertAllPriorityCategoriesUnset(policy);
+        assertAllVisualEffectsUnset(policy);
+
+        policy = builder.allowChannels(ZenPolicy.CHANNEL_TYPE_NONE).build();
+        assertEquals(ZenPolicy.CHANNEL_TYPE_NONE, policy.getAllowedChannels());
+        assertAllPriorityCategoriesUnset(policy);
+        assertAllVisualEffectsUnset(policy);
     }
 
     private void assertAllPriorityCategoriesUnsetExcept(ZenPolicy policy, int except) {

@@ -79,19 +79,19 @@ public class BluetoothLeAudioCodecStatusTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testGetInputCodecConfig() {
+    public void getInputCodecConfig() {
         assertTrue(LE_CODEC_STATUS.getInputCodecConfig().equals(LC3_16KHZ_CONFIG));
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testGetOutputCodecConfig() {
+    public void getOutputCodecConfig() {
         assertTrue(LE_CODEC_STATUS.getOutputCodecConfig().equals(LC3_48KHZ_CONFIG));
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testGetInputCodecLocalCapabilities() {
+    public void getInputCodecLocalCapabilities() {
         assertTrue(
                 LE_CODEC_STATUS.getInputCodecLocalCapabilities()
                                 .equals(INPUT_CAPABILITIES_CONFIG));
@@ -99,7 +99,7 @@ public class BluetoothLeAudioCodecStatusTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testGetOutputCodecLocalCapabilities() {
+    public void getOutputCodecLocalCapabilities() {
         assertTrue(
                 LE_CODEC_STATUS.getOutputCodecLocalCapabilities()
                                 .equals(OUTPUT_CAPABILITIES_CONFIG));
@@ -107,7 +107,7 @@ public class BluetoothLeAudioCodecStatusTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testGetInputCodecSelectableCapabilities() {
+    public void getInputCodecSelectableCapabilities() {
         assertTrue(
                 LE_CODEC_STATUS.getInputCodecSelectableCapabilities()
                         .equals(INPUT_SELECTABLE_CONFIG));
@@ -115,7 +115,7 @@ public class BluetoothLeAudioCodecStatusTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testGetOutputCodecSelectableCapabilities() {
+    public void getOutputCodecSelectableCapabilities() {
         assertTrue(
                 LE_CODEC_STATUS.getOutputCodecSelectableCapabilities()
                         .equals(OUTPUT_SELECTABLE_CONFIG));
@@ -123,27 +123,27 @@ public class BluetoothLeAudioCodecStatusTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testIsInputCodecConfigSelectable() {
+    public void isInputCodecConfigSelectable() {
         assertTrue(LE_CODEC_STATUS.isInputCodecConfigSelectable(LC3_16KHZ_CONFIG));
         assertTrue(!(LE_CODEC_STATUS.isInputCodecConfigSelectable(LC3_48KHZ_CONFIG)));
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testIsOutputCodecConfigSelectable() {
+    public void isOutputCodecConfigSelectable() {
         assertTrue(LE_CODEC_STATUS.isOutputCodecConfigSelectable(LC3_16KHZ_CONFIG));
         assertTrue(LE_CODEC_STATUS.isOutputCodecConfigSelectable(LC3_48KHZ_CONFIG));
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testDescribeContents() {
+    public void describeContents() {
         assertEquals(0, LE_CODEC_STATUS.describeContents());
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testReadWriteParcel() {
+    public void readWriteParcel() {
         Parcel parcel = Parcel.obtain();
         LE_CODEC_STATUS.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);

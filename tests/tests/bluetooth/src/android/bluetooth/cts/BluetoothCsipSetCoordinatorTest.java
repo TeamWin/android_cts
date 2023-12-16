@@ -140,7 +140,7 @@ public class BluetoothCsipSetCoordinatorTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testCloseProfileProxy() {
+    public void closeProfileProxy() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothCsipSetCoordinator);
         assertTrue(mIsProfileReady);
@@ -153,7 +153,7 @@ public class BluetoothCsipSetCoordinatorTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetConnectedDevices() {
+    public void getConnectedDevices() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothCsipSetCoordinator);
 
@@ -166,7 +166,7 @@ public class BluetoothCsipSetCoordinatorTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetDevicesMatchingConnectionStates() {
+    public void getDevicesMatchingConnectionStates() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothCsipSetCoordinator);
 
@@ -180,7 +180,7 @@ public class BluetoothCsipSetCoordinatorTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetConnectionState() {
+    public void getConnectionState() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothCsipSetCoordinator);
 
@@ -192,7 +192,7 @@ public class BluetoothCsipSetCoordinatorTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetGroupUuidMapByDevice() {
+    public void getGroupUuidMapByDevice() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothCsipSetCoordinator);
 
@@ -214,7 +214,7 @@ public class BluetoothCsipSetCoordinatorTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testLockUnlockGroup() {
+    public void lockUnlockGroup() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothCsipSetCoordinator);
 
@@ -255,7 +255,7 @@ public class BluetoothCsipSetCoordinatorTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testTestLockCallback() {
+    public void lockCallback() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothCsipSetCoordinator);
 
@@ -270,7 +270,7 @@ public class BluetoothCsipSetCoordinatorTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
-    public void testGetAllGroupIds() {
+    public void getAllGroupIds() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothCsipSetCoordinator);
 

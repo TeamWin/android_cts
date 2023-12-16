@@ -14,6 +14,7 @@ frameworks/av/apex/com.android.media.avbpubkey
 frameworks/base/packages/Tethering/apex/com.android.tethering.avbpubkey
 frameworks/ml/nn/apex/com.android.neuralnetworks.avbpubkey
 frameworks/opt/net/ike/apex/com.android.ipsec.avbpubkey
+hardware/interfaces/apexkey/com.android.hardware.avbpubkey
 packages/modules/Bluetooth/apex/com.android.btservices.avbpubkey
 packages/modules/SdkExtensions/com.android.sdkext.avbpubkey
 system/apex/apexd/apexd_testdata/com.android.apex.test_package_2.avbpubkey

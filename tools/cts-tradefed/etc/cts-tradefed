@@ -33,7 +33,7 @@ fi
 
 source ${UTILS_SCRIPT}
 
-checkPath aapt
+checkPath aapt2
 checkPath adb
 
 RDBG_FLAG=$(getRemoteDbgFlag)

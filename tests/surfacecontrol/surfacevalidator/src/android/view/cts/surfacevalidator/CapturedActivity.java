@@ -90,7 +90,6 @@ public class CapturedActivity extends Activity {
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private volatile boolean mOnEmbedded;
-    private volatile boolean mOnWatch;
 
     private final Point mTestAreaSize = new Point();
 
@@ -100,12 +99,6 @@ public class CapturedActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         final PackageManager packageManager = getPackageManager();
-        mOnWatch = packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH);
-        if (mOnWatch) {
-            // Don't try and set up test/capture infrastructure - they're not supported
-            return;
-        }
-
         mParentLayout = new FrameLayout(this);
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
@@ -167,17 +160,6 @@ public class CapturedActivity extends Activity {
         };
 
         try {
-            if (mOnWatch) {
-                /**
-                 * (TODO b/282204025): Legacy reasons why tests are disabled on wear. Investigate
-                 * if enabling is now possible.
-                 */
-                Log.d(TAG, "Skipping test on watch.");
-                testResult.passFrames = 1000;
-                testResult.failFrames = 0;
-                return testResult;
-            }
-
             final int numFramesRequired = animationTestCase.getNumFramesRequired();
             final long maxCapturedDuration = getCaptureDurationMs();
 
@@ -351,9 +333,5 @@ public class CapturedActivity extends Activity {
         } catch (Exception e) {
             Log.e(TAG, "Crash occurred when closing settings session. See b/272370325", e);
         }
-    }
-
-    public boolean isOnWatch() {
-        return mOnWatch;
     }
 }

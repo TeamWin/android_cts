@@ -87,7 +87,7 @@ public class PhotoPickerFilesUtils {
         return createdImagesData;
     }
 
-    public static Pair<Uri, String> createImage(int userId, boolean isFavorite) throws Exception {
+    private static Pair<Uri, String> createImage(int userId, boolean isFavorite) throws Exception {
         return getPermissionAndStageMedia(R.raw.lg_g4_iso_800_jpg,
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/jpeg", userId, isFavorite);
     }
@@ -116,6 +116,15 @@ public class PhotoPickerFilesUtils {
         MediaStore.waitForIdle(InstrumentationRegistry.getContext().getContentResolver());
 
         return uriList;
+    }
+
+    /**
+     * Return media id from a given Uri
+     * @param Uri uri to parse
+     * @return String media id
+     */
+    public static String getMediaId(Uri uri) throws Exception {
+        return uri.getLastPathSegment();
     }
 
     public static void deleteMedia(Uri uri, Context context) throws Exception {

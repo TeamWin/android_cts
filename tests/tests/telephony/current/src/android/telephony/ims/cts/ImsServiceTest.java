@@ -19,6 +19,8 @@ package android.telephony.ims.cts;
 import static android.telephony.ims.RegistrationManager.SUGGESTED_ACTION_NONE;
 import static android.telephony.ims.RegistrationManager.SUGGESTED_ACTION_TRIGGER_PLMN_BLOCK;
 import static android.telephony.ims.RegistrationManager.SUGGESTED_ACTION_TRIGGER_PLMN_BLOCK_WITH_TIMEOUT;
+import static android.telephony.ims.RegistrationManager.SUGGESTED_ACTION_TRIGGER_RAT_BLOCK;
+import static android.telephony.ims.RegistrationManager.SUGGESTED_ACTION_TRIGGER_CLEAR_RAT_BLOCK;
 import static android.telephony.ims.stub.ImsRegistrationImplBase.REGISTRATION_TECH_LTE;
 import static android.telephony.ims.stub.ImsRegistrationImplBase.REGISTRATION_TECH_NONE;
 
@@ -1206,6 +1208,129 @@ public class ImsServiceTest {
             ImsMmTelManager mmTelManager = imsManager.getImsMmTelManager(sTestSub);
             mmTelManager.unregisterImsRegistrationCallback(callback);
             fail("unregisterImsRegistrationCallback requires READ_PRECISE_PHONE_STATE permission.");
+        } catch (SecurityException e) {
+            //expected
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_EMERGENCY_REGISTRATION_STATE)
+    public void testMmTelManagerEmergencyRegistrationCallback() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        final ArraySet<String> featureTags = new ArraySet<>();
+        featureTags.add("featureTag1");
+        featureTags.add("featureTag2");
+
+        triggerFrameworkConnectToCarrierImsService();
+
+        // Start deregistered for emergency registration
+        sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(
+            new ImsReasonInfo(ImsReasonInfo.CODE_LOCAL_NOT_REGISTERED,
+                ImsReasonInfo.CODE_UNSPECIFIED, ""), SUGGESTED_ACTION_NONE,
+            new ImsRegistrationAttributes.Builder(IMS_REGI_TECH_LTE)
+                .setFlagRegistrationTypeEmergency().build());
+
+        LinkedBlockingQueue<ImsRegistrationAttributes> mEmerRegQueue =
+                new LinkedBlockingQueue<>();
+
+        LinkedBlockingQueue<Integer> mEmerDeregQueue =
+                new LinkedBlockingQueue<>();
+
+        RegistrationManager.RegistrationCallback emerRegCallback =
+                new RegistrationManager.RegistrationCallback() {
+                    @Override
+                    public void onRegistered(ImsRegistrationAttributes attributes) {
+                        mEmerRegQueue.offer(attributes);
+                    }
+
+                    @Override
+                    public void onRegistering(ImsRegistrationAttributes attributes) {
+                        mEmerRegQueue.offer(attributes);
+                    }
+
+                    @Override
+                    public void onUnregistered(ImsReasonInfo info, int suggestedAction,
+                            int imsRadioTech) {
+                        mEmerDeregQueue.offer(info.getCode());
+                    }
+                    @Override
+                    public void onTechnologyChangeFailed(int imsTransportType, ImsReasonInfo info) {
+                        mEmerDeregQueue.offer(imsTransportType);
+                        mEmerDeregQueue.offer(info.getCode());
+                    }
+                };
+
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        ImsMmTelManager mmTelManager = imsManager.getImsMmTelManager(sTestSub);
+        try {
+            // First try without the correct permissions.
+            mmTelManager.registerImsEmergencyRegistrationCallback(getContext().getMainExecutor(),
+                    emerRegCallback);
+            fail("registerImsEmergencyRegistrationCallback requires READ_PRECISE_PHONE_STATE "
+                    + "permission.");
+        } catch (SecurityException e) {
+            //expected
+        }
+
+        // Latch will count down here (we callback on the state during registration).
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mmTelManager, (mm) -> {
+                        try {
+                            mm.registerImsEmergencyRegistrationCallback(
+                                    getContext().getMainExecutor(), emerRegCallback);
+                        } catch (ImsException e) {
+                            fail("registerImsEmergencyRegistrationCallback failed " + e);
+                        }
+                });
+
+        assertEquals(ImsReasonInfo.CODE_LOCAL_NOT_REGISTERED, waitForIntResult(mEmerDeregQueue));
+
+        // Start registration for emergency registration
+        verifyEmergencyRegistering(IMS_REGI_TECH_LTE, featureTags, mEmerRegQueue,
+                AccessNetworkConstants.TRANSPORT_TYPE_WWAN,
+                ImsRegistrationAttributes.ATTR_REGISTRATION_TYPE_EMERGENCY);
+
+        // Complete registration for emergency registration
+        verifyEmergencyRegistered(IMS_REGI_TECH_LTE, featureTags, mEmerRegQueue,
+                AccessNetworkConstants.TRANSPORT_TYPE_WWAN,
+                ImsRegistrationAttributes.ATTR_REGISTRATION_TYPE_EMERGENCY);
+
+        // fail handover to IWLAN for emergency registration
+        sServiceConnector.getCarrierService().getImsRegistration().onTechnologyChangeFailed(
+            new ImsReasonInfo(ImsReasonInfo.CODE_LOCAL_HO_NOT_FEASIBLE,
+                ImsReasonInfo.CODE_UNSPECIFIED, ""), new ImsRegistrationAttributes.Builder(
+                IMS_REGI_TECH_IWLAN).setFlagRegistrationTypeEmergency().build());
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WLAN, waitForIntResult(mEmerDeregQueue));
+        assertEquals(ImsReasonInfo.CODE_LOCAL_HO_NOT_FEASIBLE, waitForIntResult(mEmerDeregQueue));
+
+        // handover to NR successfully for emergency registration
+        verifyEmergencyRegistering(IMS_REGI_TECH_NR, featureTags, mEmerRegQueue,
+                AccessNetworkConstants.TRANSPORT_TYPE_WWAN,
+                ImsRegistrationAttributes.ATTR_REGISTRATION_TYPE_EMERGENCY);
+
+        verifyEmergencyRegistered(IMS_REGI_TECH_NR, featureTags, mEmerRegQueue,
+                AccessNetworkConstants.TRANSPORT_TYPE_WWAN,
+                ImsRegistrationAttributes.ATTR_REGISTRATION_TYPE_EMERGENCY);
+
+        // Deregister registration for emergency registration with null reason info
+        sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(null,
+                SUGGESTED_ACTION_NONE, new ImsRegistrationAttributes.Builder(
+                ImsRegistrationImplBase.REGISTRATION_TECH_LTE).setFlagRegistrationTypeEmergency()
+                .build());
+        assertEquals(ImsReasonInfo.CODE_UNSPECIFIED, waitForIntResult(mEmerDeregQueue));
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mmTelManager, (mm) -> {
+                    mm.unregisterImsEmergencyRegistrationCallback(emerRegCallback);
+                });
+
+        try {
+            mmTelManager.unregisterImsEmergencyRegistrationCallback(emerRegCallback);
+            fail("unregisterImsEmergencyRegistrationCallback requires READ_PRECISE_PHONE_STATE "
+                    + "permission.");
         } catch (SecurityException e) {
             //expected
         }
@@ -5442,6 +5567,74 @@ public class ImsServiceTest {
     @Ignore("RegistrationManager.RegistrationCallback#onUnregistered(ImsReasonInfo,int,int)"
             + " is hidden. Internal use only.")
     @Test
+    @RequiresFlagsEnabled(
+            Flags.FLAG_ADD_RAT_RELATED_SUGGESTED_ACTION_TO_IMS_REGISTRATION)
+    public void testMmTelManagerRegistrationBlockWithRatSuggestedAction() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        assumeTrue(sSupportsImsHal);
+
+        triggerFrameworkConnectToCarrierImsService();
+
+        ImsReasonInfo reasonInfo = new ImsReasonInfo(ImsReasonInfo.CODE_REGISTRATION_ERROR,
+                ImsReasonInfo.CODE_UNSPECIFIED, "");
+
+        // Start de-registered
+        sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(
+                reasonInfo, SUGGESTED_ACTION_NONE, REGISTRATION_TECH_NONE);
+
+        LinkedBlockingQueue<Integer> mDeregQueue =
+                new LinkedBlockingQueue<>();
+        RegistrationManager.RegistrationCallback callback =
+                new RegistrationManager.RegistrationCallback() {
+                    @Override
+                    public void onUnregistered(ImsReasonInfo info, int suggestedAction,
+                            int imsRadioTech) {
+                        mDeregQueue.offer(suggestedAction);
+                    }
+                };
+
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            automan.adoptShellPermissionIdentity();
+            ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+            ImsMmTelManager mmTelManager = imsManager.getImsMmTelManager(sTestSub);
+            mmTelManager.registerImsRegistrationCallback(getContext().getMainExecutor(), callback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        int suggestedAction = waitForResult(mDeregQueue);
+        assertNotEquals(SUGGESTED_ACTION_TRIGGER_RAT_BLOCK, suggestedAction);
+        assertNotEquals(SUGGESTED_ACTION_TRIGGER_CLEAR_RAT_BLOCK, suggestedAction);
+
+        sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(
+                reasonInfo, SUGGESTED_ACTION_TRIGGER_RAT_BLOCK,
+                REGISTRATION_TECH_LTE);
+
+        suggestedAction = waitForResult(mDeregQueue);
+        assertEquals(SUGGESTED_ACTION_TRIGGER_RAT_BLOCK, suggestedAction);
+
+        // rat block clear
+        sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(
+                reasonInfo, SUGGESTED_ACTION_TRIGGER_CLEAR_RAT_BLOCK,
+                REGISTRATION_TECH_LTE);
+
+        suggestedAction = waitForResult(mDeregQueue);
+        assertEquals(SUGGESTED_ACTION_TRIGGER_CLEAR_RAT_BLOCK, suggestedAction);
+
+        // without extra
+        sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(reasonInfo);
+
+        suggestedAction = waitForResult(mDeregQueue);
+        assertEquals(SUGGESTED_ACTION_NONE, suggestedAction);
+    }
+
+    @Ignore("RegistrationManager.RegistrationCallback#onUnregistered(ImsReasonInfo,int,int)"
+            + " is hidden. Internal use only.")
+    @Test
     public void testMmTelManagerRegistrationDeregisteredRadioTech() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
             return;
@@ -6010,6 +6203,33 @@ public class ImsServiceTest {
             int expectedAttrFlags) throws Exception {
         ImsRegistrationAttributes attr = new ImsRegistrationAttributes.Builder(tech)
                 .setFeatureTags(featureTags).build();
+        sServiceConnector.getCarrierService().getImsRegistration().onRegistered(attr);
+        ImsRegistrationAttributes attrResult = waitForResult(attrQueue);
+        assertNotNull(attrResult);
+        assertEquals(tech, attrResult.getRegistrationTechnology());
+        assertEquals(expectedTransport, attrResult.getTransportType());
+        assertEquals(expectedAttrFlags, attrResult.getAttributeFlags());
+        assertEquals(featureTags, attrResult.getFeatureTags());
+    }
+    private void verifyEmergencyRegistering(int tech, ArraySet<String> featureTags,
+            LinkedBlockingQueue<ImsRegistrationAttributes> attrQueue, int expectedTransport,
+            int expectedAttrFlags) throws Exception {
+        ImsRegistrationAttributes attr = new ImsRegistrationAttributes.Builder(tech)
+                    .setFeatureTags(featureTags).setFlagRegistrationTypeEmergency().build();
+        sServiceConnector.getCarrierService().getImsRegistration().onRegistering(attr);
+        ImsRegistrationAttributes attrResult = waitForResult(attrQueue);
+        assertNotNull(attrResult);
+        assertEquals(tech, attrResult.getRegistrationTechnology());
+        assertEquals(expectedTransport, attrResult.getTransportType());
+        assertEquals(expectedAttrFlags, attrResult.getAttributeFlags());
+        assertEquals(featureTags, attrResult.getFeatureTags());
+    }
+
+    private void verifyEmergencyRegistered(int tech, ArraySet<String> featureTags,
+            LinkedBlockingQueue<ImsRegistrationAttributes> attrQueue, int expectedTransport,
+            int expectedAttrFlags) throws Exception {
+        ImsRegistrationAttributes attr = new ImsRegistrationAttributes.Builder(tech)
+                    .setFeatureTags(featureTags).setFlagRegistrationTypeEmergency().build();
         sServiceConnector.getCarrierService().getImsRegistration().onRegistered(attr);
         ImsRegistrationAttributes attrResult = waitForResult(attrQueue);
         assertNotNull(attrResult);

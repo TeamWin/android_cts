@@ -37,7 +37,7 @@ import android.uirendering.cts.testinfrastructure.CanvasClient;
 import android.uirendering.cts.testinfrastructure.DrawActivity;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import android.uirendering.cts.util.BitmapAsserter;
-import android.view.AttachedSurfaceControl;
+
 import android.view.Gravity;
 import android.view.PixelCopy;
 import android.view.SurfaceControl;
@@ -47,7 +47,6 @@ import android.view.View;
 import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -124,27 +123,11 @@ public class SurfaceViewTests extends ActivityTestBase {
                 TEST_WIDTH, TEST_HEIGHT);
     };
 
-    // waitForRedraw checks that HWUI finished drawing but SurfaceFlinger may be backpressured, so
-    // synchronizing by applying no-op transactions with UI draws instead.
-    private void waitForScreenshottable() throws InterruptedException {
-        AttachedSurfaceControl rootSurfaceControl =
-                getActivity().getWindow().getRootSurfaceControl();
-
-        CountDownLatch latch = new CountDownLatch(1);
-        SurfaceControl stub = new SurfaceControl.Builder().setName("test").build();
-        rootSurfaceControl.applyTransactionOnDraw(
-                rootSurfaceControl.buildReparentTransaction(stub));
-        rootSurfaceControl.applyTransactionOnDraw(
-                new SurfaceControl.Transaction().reparent(stub, null)
-                        .addTransactionCommittedListener(Runnable::run, latch::countDown));
-        getActivity().waitForRedraw();
-        assertTrue(latch.await(5, TimeUnit.SECONDS));
-    }
-
-    @FlakyTest(bugId = 244426304)
     @Test
     public void testMovingWhiteSurfaceView() {
         // A moving SurfaceViews with white content against a white background should be invisible
+        CountDownLatch latch = new CountDownLatch(1);
+        sWhiteCanvasCallback.setFence(latch);
         ViewInitializer initializer = new ViewInitializer() {
             ObjectAnimator mAnimator;
             @Override
@@ -163,7 +146,7 @@ public class SurfaceViewTests extends ActivityTestBase {
             }
         };
         createTest()
-                .addLayout(R.layout.frame_layout, initializer, true)
+                .addLayout(R.layout.frame_layout, initializer, true, latch)
                 .withScreenshotter(mScreenshotter)
                 .runWithAnimationVerifier(new ColorVerifier(Color.WHITE, 0 /* zero tolerance */));
     }

@@ -52,7 +52,6 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
                 final boolean allowInIdle = intent.getBooleanExtra(EXTRA_ALLOW_IN_IDLE, false);
                 JobInfo.Builder jobBuilder = new JobInfo.Builder(jobId, jobServiceComponent)
                         .setBackoffCriteria(JOB_INITIAL_BACKOFF, JobInfo.BACKOFF_POLICY_LINEAR)
-                        .setOverrideDeadline(0)
                         .setImportantWhileForeground(allowInIdle);
                 final int result = jobScheduler.schedule(jobBuilder.build());
                 if (result != JobScheduler.RESULT_SUCCESS) {

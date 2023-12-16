@@ -46,16 +46,6 @@ import androidx.annotation.Nullable;
  */
 public final class MainActivity extends Activity {
 
-    private static final String EXTRA_KEY_PRIVATE_IME_OPTIONS =
-            "android.view.inputmethod.ctstestapp.EXTRA_KEY_PRIVATE_IME_OPTIONS";
-    private static final String EXTRA_KEY_SHOW_DIALOG =
-            "android.view.inputmethod.ctstestapp.EXTRA_KEY_SHOW_DIALOG";
-
-    private static final String EXTRA_DISMISS_DIALOG = "extra_dismiss_dialog";
-    private static final String EXTRA_SHOW_SOFT_INPUT = "extra_show_soft_input";
-    private static final String EXTRA_HANDWRITING_DELEGATOR = "extra_handwriting_delegator";
-
-    private static final String ACTION_TRIGGER = "broadcast_action_trigger";
     private AlertDialog mDialog;
     private EditText mEditor;
     private final Handler mHandler = new Handler(Looper.myLooper());
@@ -91,7 +81,8 @@ public final class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         final LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
-        final boolean needShowDialog = getBooleanIntentExtra(EXTRA_KEY_SHOW_DIALOG);
+        final boolean needShowDialog =
+                getBooleanIntentExtra(MockTestActivityUtil.EXTRA_KEY_SHOW_DIALOG);
 
         if (needShowDialog) {
             layout.setOrientation(LinearLayout.VERTICAL);
@@ -132,14 +123,19 @@ public final class MainActivity extends Activity {
                 };
             }
             mEditor.setHint("editText");
-            final String privateImeOptions = getStringIntentExtra(EXTRA_KEY_PRIVATE_IME_OPTIONS);
+            final String privateImeOptions =
+                    getStringIntentExtra(MockTestActivityUtil.EXTRA_KEY_PRIVATE_IME_OPTIONS);
             if (privateImeOptions != null) {
                 mEditor.setPrivateImeOptions(privateImeOptions);
             }
-            boolean isHandwritingDelegator = getBooleanIntentExtra(EXTRA_HANDWRITING_DELEGATOR);
-            if (isHandwritingDelegator) {
+            if (getBooleanIntentExtra(MockTestActivityUtil.EXTRA_HANDWRITING_DELEGATE)) {
                 mEditor.setIsHandwritingDelegate(true);
                 mEditor.setAllowedHandwritingDelegatorPackage("android.view.inputmethod.cts");
+            }
+            if (getBooleanIntentExtra(
+                    MockTestActivityUtil.EXTRA_HOME_HANDWRITING_DELEGATOR_ALLOWED)) {
+                mEditor.setHandwritingDelegateFlags(
+                        InputMethodManager.HANDWRITING_DELEGATE_FLAG_HOME_DELEGATOR_ALLOWED);
             }
             mEditor.requestFocus();
             layout.addView(mEditor);
@@ -159,11 +155,11 @@ public final class MainActivity extends Activity {
                     return;
                 }
 
-                if (extras.containsKey(EXTRA_SHOW_SOFT_INPUT)) {
+                if (extras.containsKey(MockTestActivityUtil.EXTRA_SHOW_SOFT_INPUT)) {
                     getSystemService(InputMethodManager.class).showSoftInput(mEditor, 0);
                 }
 
-                if (extras.getBoolean(EXTRA_DISMISS_DIALOG, false)) {
+                if (extras.getBoolean(MockTestActivityUtil.EXTRA_DISMISS_DIALOG, false)) {
                     if (mDialog != null) {
                         mDialog.dismiss();
                         mDialog = null;
@@ -172,7 +168,7 @@ public final class MainActivity extends Activity {
                 }
             }
         };
-        registerReceiver(mBroadcastReceiver, new IntentFilter(ACTION_TRIGGER),
+        registerReceiver(mBroadcastReceiver, new IntentFilter(MockTestActivityUtil.ACTION_TRIGGER),
                 Context.RECEIVER_EXPORTED);
     }
 

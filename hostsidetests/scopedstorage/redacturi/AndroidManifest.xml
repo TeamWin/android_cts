@@ -22,7 +22,7 @@
 
     <queries>
         <package android:name="android.scopedstorage.cts.testapp.B.noperms" />
-        <package android:name="android.scopedstorage.cts.testapp.C" />
+        <package android:name="android.scopedstorage.cts.testapp.E" />
     </queries>
 
     <application android:label="Scoped Storage Device Redact Uri Tests">

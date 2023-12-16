@@ -104,7 +104,7 @@ public class BluetoothLeAudioContentMetadataTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testCreateContentMetadataFromBuilder() {
+    public void createContentMetadataFromBuilder() {
         BluetoothLeAudioContentMetadata contentMetadata =
                 new BluetoothLeAudioContentMetadata.Builder()
                         .setProgramInfo(TEST_PROGRAM_INFO).setLanguage(TEST_LANGUAGE).build();
@@ -124,7 +124,7 @@ public class BluetoothLeAudioContentMetadataTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testCreateContentMetadataFromCopy() {
+    public void createContentMetadataFromCopy() {
         BluetoothLeAudioContentMetadata contentMetadata =
                 new BluetoothLeAudioContentMetadata.Builder()
                         .setProgramInfo(TEST_PROGRAM_INFO).setLanguage(TEST_LANGUAGE).build();
@@ -137,7 +137,7 @@ public class BluetoothLeAudioContentMetadataTest {
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
-    public void testCreateContentMetadataFromBytes() {
+    public void createContentMetadataFromBytes() {
         BluetoothLeAudioContentMetadata contentMetadata =
                 BluetoothLeAudioContentMetadata.fromRawBytes(TEST_METADATA_BYTES);
         byte[] metadataBytes = contentMetadata.getRawMetadata();

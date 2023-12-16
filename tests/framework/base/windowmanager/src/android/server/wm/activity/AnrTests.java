@@ -39,6 +39,7 @@ import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.BuildUtils;
 import android.server.wm.WindowManagerState;
 import android.server.wm.app.Components.RenderService;
 import android.server.wm.settings.SettingsSession;
@@ -175,7 +176,7 @@ public class AnrTests extends ActivityManagerTestBase {
         final long timestamp = System.currentTimeMillis();
         UiDevice uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         UiObject2 closeAppButton = uiDevice.wait(Until.findObject(By.res("android:id/aerr_close")),
-                20000);
+                20000 * BuildUtils.HW_TIMEOUT_MULTIPLIER);
         if (closeAppButton == null) {
             fail("Could not find anr dialog");
             return;

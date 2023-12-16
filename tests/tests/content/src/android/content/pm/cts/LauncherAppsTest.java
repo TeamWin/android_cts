@@ -36,11 +36,13 @@ import android.Manifest;
 import android.app.Instrumentation;
 import android.app.PendingIntent;
 import android.app.usage.UsageStatsManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.IIntentReceiver;
 import android.content.IIntentSender;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
@@ -84,6 +86,7 @@ import java.util.stream.Collectors;
 @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 @RunWith(AndroidJUnit4.class)
 public class LauncherAppsTest {
+    private static CompletableFuture<String> sUnarchiveReceiverPackageName;
     private Context mContext;
     private Instrumentation mInstrumentation;
     private LauncherApps mLauncherApps;
@@ -148,6 +151,7 @@ public class LauncherAppsTest {
         mDefaultHome = getDefaultLauncher(mInstrumentation);
         mPackageInstaller = mContext.getPackageManager().getPackageInstaller();
         mIntentSender = new ArchiveIntentSender();
+        sUnarchiveReceiverPackageName = new CompletableFuture<>();
         setDefaultLauncher(mInstrumentation, mTestHome);
     }
 
@@ -368,7 +372,7 @@ public class LauncherAppsTest {
                 () ->
                         mPackageInstaller.requestArchive(
                                 ARCHIVE_PACKAGE_NAME,
-                                new IntentSender((IIntentSender) mIntentSender)),
+                                new IntentSender((IIntentSender) mIntentSender), 0),
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
 
@@ -410,7 +414,7 @@ public class LauncherAppsTest {
                 () ->
                         mPackageInstaller.requestArchive(
                                 ARCHIVE_PACKAGE_NAME,
-                                new IntentSender((IIntentSender) mIntentSender)),
+                                new IntentSender((IIntentSender) mIntentSender), 0),
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
 
@@ -466,7 +470,7 @@ public class LauncherAppsTest {
                 () ->
                         mPackageInstaller.requestArchive(
                                 ARCHIVE_PACKAGE_NAME,
-                                new IntentSender((IIntentSender) mIntentSender)),
+                                new IntentSender((IIntentSender) mIntentSender), 0),
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
         ComponentName archiveAppComponentName =
@@ -508,7 +512,7 @@ public class LauncherAppsTest {
                 () ->
                         mPackageInstaller.requestArchive(
                                 ARCHIVE_PACKAGE_NAME,
-                                new IntentSender((IIntentSender) mIntentSender)),
+                                new IntentSender((IIntentSender) mIntentSender), 0),
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
 
@@ -532,7 +536,7 @@ public class LauncherAppsTest {
                 () ->
                         mPackageInstaller.requestArchive(
                                 ARCHIVE_PACKAGE_NAME,
-                                new IntentSender((IIntentSender) mIntentSender)),
+                                new IntentSender((IIntentSender) mIntentSender), 0),
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
         ComponentName archiveAppComponentName =
@@ -554,7 +558,7 @@ public class LauncherAppsTest {
                 () ->
                         mPackageInstaller.requestArchive(
                                 ARCHIVE_PACKAGE_NAME,
-                                new IntentSender((IIntentSender) mIntentSender)),
+                                new IntentSender((IIntentSender) mIntentSender), 0),
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
         ComponentName archiveAppComponentName =
@@ -575,7 +579,7 @@ public class LauncherAppsTest {
                 () ->
                         mPackageInstaller.requestArchive(
                                 ARCHIVE_PACKAGE_NAME,
-                                new IntentSender((IIntentSender) mIntentSender)),
+                                new IntentSender((IIntentSender) mIntentSender), 0),
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
 
@@ -595,7 +599,7 @@ public class LauncherAppsTest {
                 () ->
                         mPackageInstaller.requestArchive(
                                 ARCHIVE_PACKAGE_NAME,
-                                new IntentSender((IIntentSender) mIntentSender)),
+                                new IntentSender((IIntentSender) mIntentSender), 0),
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
 
@@ -603,6 +607,37 @@ public class LauncherAppsTest {
                 mLauncherApps.shouldHideFromSuggestions(ARCHIVE_PACKAGE_NAME, USER_HANDLE);
 
         assertThat(isArchivedAppPackageEnabled).isTrue();
+    }
+
+    @Test
+    @AppModeFull(reason = "Need special permission")
+    @RequiresFlagsEnabled(FLAG_ARCHIVING)
+    public void startActivityAsUser_archivedApp() throws ExecutionException, InterruptedException {
+        installPackage(ARCHIVE_APK_PATH);
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mPackageInstaller.requestArchive(ARCHIVE_PACKAGE_NAME,
+                        new IntentSender((IIntentSender) mIntentSender), 0),
+                Manifest.permission.DELETE_PACKAGES);
+        assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+        LauncherUnarchiveBroadcastReceiver unarchiveReceiver =
+                new LauncherUnarchiveBroadcastReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Intent.ACTION_UNARCHIVE_PACKAGE);
+        mContext.registerReceiver(
+                unarchiveReceiver,
+                intentFilter,
+                null,
+                null,
+                Context.RECEIVER_EXPORTED);
+
+        mLauncherApps.startMainActivity(
+                new ComponentName(ARCHIVE_PACKAGE_NAME, ARCHIVE_ACTIVITY_NAME), USER_HANDLE,
+                null /* sourceBounds */,
+                null /* opts */);
+
+        assertThat(sUnarchiveReceiverPackageName.get()).isEqualTo(ARCHIVE_PACKAGE_NAME);
+
+        mContext.unregisterReceiver(unarchiveReceiver);
     }
 
     private void registerDefaultObserver() {
@@ -634,6 +669,21 @@ public class LauncherAppsTest {
 
     private void uninstallPackage(String packageName) {
         SystemUtil.runShellCommand(String.format("pm uninstall %s", packageName));
+    }
+
+    public static class LauncherUnarchiveBroadcastReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (!intent.getAction().equals(Intent.ACTION_UNARCHIVE_PACKAGE)) {
+                return;
+            }
+            if (sUnarchiveReceiverPackageName == null) {
+                sUnarchiveReceiverPackageName = new CompletableFuture<>();
+            }
+            sUnarchiveReceiverPackageName.complete(
+                    intent.getStringExtra(PackageInstaller.EXTRA_UNARCHIVE_PACKAGE_NAME));
+        }
     }
 
     private static class ArchiveIntentSender extends IIntentSender.Stub {

@@ -108,7 +108,7 @@ public class BluetoothLeBroadcastSubgroupTest {
     }
 
     @Test
-    public void testCreateBroadcastSubgroupFromBuilder() {
+    public void createBroadcastSubgroupFromBuilder() {
         BluetoothLeAudioCodecConfigMetadata codecMetadata =
                 new BluetoothLeAudioCodecConfigMetadata.Builder()
                         .setAudioLocation(TEST_AUDIO_LOCATION_FRONT_LEFT)
@@ -139,7 +139,7 @@ public class BluetoothLeBroadcastSubgroupTest {
     }
 
     @Test
-    public void testCreateBroadcastSubgroupFromCopy() {
+    public void createBroadcastSubgroupFromCopy() {
         BluetoothLeAudioCodecConfigMetadata codecMetadata =
                 new BluetoothLeAudioCodecConfigMetadata.Builder()
                         .setAudioLocation(TEST_AUDIO_LOCATION_FRONT_LEFT)

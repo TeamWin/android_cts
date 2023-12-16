@@ -24,10 +24,13 @@ import static org.junit.Assert.assertTrue;
 import android.util.SparseArrayMap;
 
 import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @SmallTest
+@RunWith(AndroidJUnit4.class)
 public class SparseArrayMapTest {
     private static final String[] KEYS_1 = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"};
     private static final String[] KEYS_2 = {"z", "y", "x", "w", "v", "u", "t", "s", "r", "q"};

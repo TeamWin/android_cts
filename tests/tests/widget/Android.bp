@@ -25,6 +25,7 @@ android_test {
         "androidx.test.ext.junit",
         "androidx.test.rules",
         "ctsdeviceutillegacy-axt",
+        "flag-junit",
         "mockito-target-minus-junit4",
         "android-common",
         "compatibility-device-util-axt",

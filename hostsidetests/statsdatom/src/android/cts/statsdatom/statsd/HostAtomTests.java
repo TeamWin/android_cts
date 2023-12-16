@@ -570,7 +570,7 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
 
         // Extract the relevant report from the incident section.
         ConfigMetricsReportList ourList = null;
-        int hostUid = DeviceUtils.getHostUid(getDevice());
+        int hostUid = 2000; // Shell UID is always used in ConfigUtils.uploadConfig
         for (ConfigMetricsReportList list : listList) {
             ConfigMetricsReportList.ConfigKey configKey = list.getConfigKey();
             if (configKey.getUid() == hostUid && configKey.getId() == ConfigUtils.CONFIG_ID) {

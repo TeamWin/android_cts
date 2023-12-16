@@ -14,69 +14,45 @@
  * limitations under the License.
  */
 
-package android.virtualdevice.cts;
+package android.virtualdevice.cts.applaunch;
 
-import static android.Manifest.permission.ACTIVITY_EMBEDDING;
-import static android.Manifest.permission.ADD_ALWAYS_UNLOCKED_DISPLAY;
-import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
-import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
-import static android.Manifest.permission.WAKE_LOCK;
-import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
-import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createActivityOptions;
+import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
-import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeNotNull;
-import static org.junit.Assume.assumeTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-import android.annotation.Nullable;
-import android.app.Activity;
-import android.app.ActivityOptions;
 import android.app.PendingIntent;
+import android.app.Service;
 import android.companion.virtual.VirtualDeviceManager;
-import android.companion.virtual.VirtualDeviceManager.ActivityListener;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
-import android.companion.virtual.VirtualDeviceParams;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
-import android.os.Bundle;
-import android.os.ResultReceiver;
 import android.platform.test.annotations.AppModeFull;
-import android.virtualdevice.cts.applaunch.util.EmptyActivity;
-import android.virtualdevice.cts.common.FakeAssociationRule;
-import android.virtualdevice.cts.common.util.TestAppHelper;
-import android.virtualdevice.cts.common.util.TestAppHelper.ServiceConnectionFuture;
-import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
-import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.OnReceiveResultListener;
+import android.virtualdevice.cts.applaunch.AppComponents.EmptyActivity;
+import android.virtualdevice.cts.applaunch.AppComponents.SecondActivity;
+import android.virtualdevice.cts.applaunch.AppComponents.TestService;
+import android.virtualdevice.cts.common.VirtualDeviceRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+import com.android.compatibility.common.util.ApiTest;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntConsumer;
 
@@ -88,262 +64,166 @@ import java.util.function.IntConsumer;
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class ActivityManagementTest {
 
-    private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =
-            new VirtualDeviceParams.Builder().build();
-
     // VirtualDeviceImpl#PENDING_TRAMPOLINE_TIMEOUT_MS is 5000ms wait a bit longer than that.
-    private static final int TIMEOUT_MS = 5100;
+    private static final long PENDING_INTENT_TIMEOUT_MILLIS = 5100;
+    private static final long TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(3);
 
     @Rule
-    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
-            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-            ACTIVITY_EMBEDDING,
-            ADD_ALWAYS_UNLOCKED_DISPLAY,
-            ADD_TRUSTED_DISPLAY,
-            CREATE_VIRTUAL_DEVICE,
-            WAKE_LOCK);
+    public VirtualDeviceRule mRule = VirtualDeviceRule.createDefault();
 
-    @Rule
-    public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
+    private final Context mContext = getInstrumentation().getContext();
 
-    private VirtualDeviceManager mVirtualDeviceManager;
-    @Nullable private VirtualDevice mVirtualDevice;
-    @Mock
-    private VirtualDisplay.Callback mVirtualDisplayCallback;
+    private final ComponentName mEmptyActivityComponent =
+            new ComponentName(mContext, EmptyActivity.class);
+    private final ComponentName mSecondActivityComponent =
+            new ComponentName(mContext, SecondActivity.class);
+
+    private VirtualDevice mVirtualDevice;
+    private int mVirtualDisplayId;
+
     @Mock
     private IntConsumer mLaunchCompleteListener;
-    @Nullable private ServiceConnectionFuture<IStreamedTestApp> mServiceConnection;
     @Mock
-    private OnReceiveResultListener mOnReceiveResultListener;
-    private ResultReceiver mResultReceiver;
+    private VirtualDeviceManager.ActivityListener mActivityListener;
+
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         MockitoAnnotations.initMocks(this);
-        Context context = getApplicationContext();
-        final PackageManager packageManager = context.getPackageManager();
-        assumeTrue(packageManager
-                .hasSystemFeature(PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
-        // TODO(b/261155110): Re-enable tests once freeform mode is supported in Virtual Display.
-        assumeFalse("Skipping test: VirtualDisplay window policy doesn't support freeform.",
-                packageManager.hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT));
-        mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
-        assumeNotNull(mVirtualDeviceManager);
-        mResultReceiver = VirtualDeviceTestUtils.createResultReceiver(mOnReceiveResultListener);
-    }
-
-    @After
-    public void tearDown() {
-        try {
-            if (mServiceConnection != null) {
-                getApplicationContext().unbindService(mServiceConnection);
-            }
-        } catch (IllegalArgumentException e) {
-            // Ignore if the service failed to bind
-        }
-        if (mVirtualDevice != null) {
-            mVirtualDevice.close();
-        }
-    }
-
-    @Test
-    public void activityListener_shouldCallOnExecutor() {
-        Context context = getApplicationContext();
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
-        ActivityListener activityListener = mock(ActivityListener.class);
-        Executor mockExecutor = mock(Executor.class);
-        mVirtualDevice.addActivityListener(mockExecutor, activityListener);
-        VirtualDisplay virtualDisplay = createVirtualDisplay();
-        InstrumentationRegistry.getInstrumentation()
-                .startActivitySync(
-                        new Intent(context, EmptyActivity.class)
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                                        | Intent.FLAG_ACTIVITY_CLEAR_TASK),
-                        createActivityOptions(virtualDisplay));
-
-        // Callback should not be called yet since the executor is mocked
-        verify(activityListener, never()).onTopActivityChanged(
-                eq(virtualDisplay.getDisplay().getDisplayId()),
-                eq(new ComponentName(context, EmptyActivity.class)));
-
-        verify(activityListener, never()).onTopActivityChanged(
-                eq(virtualDisplay.getDisplay().getDisplayId()),
-                eq(new ComponentName(context, EmptyActivity.class)),
-                eq(context.getUserId()));
-
-        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
-        verify(mockExecutor, timeout(3000).times(2)).execute(runnableCaptor.capture());
-
-        for (Runnable task: runnableCaptor.getAllValues()) {
-            task.run();
-        }
-
-        verify(activityListener, timeout(3000).times(1)).onTopActivityChanged(
-                eq(virtualDisplay.getDisplay().getDisplayId()),
-                eq(new ComponentName(context, EmptyActivity.class)));
-
-        verify(activityListener, timeout(3000).times(1)).onTopActivityChanged(
-                eq(virtualDisplay.getDisplay().getDisplayId()),
-                eq(new ComponentName(context, EmptyActivity.class)),
-                eq(context.getUserId()));
+        mVirtualDevice = mRule.createManagedVirtualDevice();
+        mVirtualDevice.addActivityListener(mContext.getMainExecutor(), mActivityListener);
+        VirtualDisplay virtualDisplay = mRule.createManagedVirtualDisplayWithFlags(mVirtualDevice,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY);
+        mVirtualDisplayId = virtualDisplay.getDisplay().getDisplayId();
     }
 
     @Test
     public void removeActivityListener_shouldStopCallbacks() {
-        Context context = getApplicationContext();
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
-        ActivityListener activityListener = mock(ActivityListener.class);
-        mVirtualDevice.addActivityListener(context.getMainExecutor(), activityListener);
-        VirtualDisplay virtualDisplay = createVirtualDisplay();
-        EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
-                .startActivitySync(
-                        new Intent(context, EmptyActivity.class)
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                                        | Intent.FLAG_ACTIVITY_CLEAR_TASK),
-                        createActivityOptions(virtualDisplay));
+        EmptyActivity activity =
+                mRule.startActivityOnDisplaySync(mVirtualDisplayId, EmptyActivity.class);
 
-        verify(activityListener).onTopActivityChanged(
-                eq(virtualDisplay.getDisplay().getDisplayId()),
-                eq(new ComponentName(context, EmptyActivity.class)));
+        verify(mActivityListener, timeout(TIMEOUT_MILLIS).times(1)).onTopActivityChanged(
+                eq(mVirtualDisplayId), eq(mEmptyActivityComponent));
+        assertActivityOnVirtualDisplay(mEmptyActivityComponent);
 
-        verify(activityListener).onTopActivityChanged(
-                eq(virtualDisplay.getDisplay().getDisplayId()),
-                eq(new ComponentName(context, EmptyActivity.class)),
-                eq(context.getUserId()));
+        mVirtualDevice.removeActivityListener(mActivityListener);
+        activity.finish();
+        mRule.waitAndAssertActivityRemoved(mEmptyActivityComponent);
 
-        mVirtualDevice.removeActivityListener(activityListener);
-        emptyActivity.finish();
-
-        verifyNoMoreInteractions(activityListener);
+        verifyNoMoreInteractions(mActivityListener);
     }
 
     @Test
     public void activityListener_shouldCallOnTopActivityChange() {
-        Context context = getApplicationContext();
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
-        ActivityListener activityListener = mock(ActivityListener.class);
-        mVirtualDevice.addActivityListener(context.getMainExecutor(), activityListener);
-        VirtualDisplay virtualDisplay = createVirtualDisplay();
-        EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
-                .startActivitySync(
-                        new Intent(context, EmptyActivity.class)
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                                        | Intent.FLAG_ACTIVITY_CLEAR_TASK),
-                        createActivityOptions(virtualDisplay));
+        EmptyActivity activity =
+                mRule.startActivityOnDisplaySync(mVirtualDisplayId, EmptyActivity.class);
 
-        verify(activityListener).onTopActivityChanged(
-                eq(virtualDisplay.getDisplay().getDisplayId()),
-                eq(new ComponentName(context, EmptyActivity.class)));
+        verify(mActivityListener, timeout(TIMEOUT_MILLIS).times(1)).onTopActivityChanged(
+                eq(mVirtualDisplayId), eq(mEmptyActivityComponent));
+        assertActivityOnVirtualDisplay(mEmptyActivityComponent);
 
-        verify(activityListener).onTopActivityChanged(
-                eq(virtualDisplay.getDisplay().getDisplayId()),
-                eq(new ComponentName(context, EmptyActivity.class)),
-                eq(context.getUserId()));
+        activity.finish();
+        mRule.waitAndAssertActivityRemoved(mEmptyActivityComponent);
 
-        emptyActivity.finish();
+        verify(mActivityListener, timeout(TIMEOUT_MILLIS)).onDisplayEmpty(mVirtualDisplayId);
+    }
 
-        verify(activityListener, timeout(3000))
-                .onDisplayEmpty(eq(virtualDisplay.getDisplay().getDisplayId()));
+    @Test
+    @ApiTest(apis = {"android.companion.virtual.VirtualDeviceManager#launchPendingIntent"})
+    public void launchPendingIntent_multipleActivities_shouldLaunchOnSameDisplay() {
+        mRule.assumeActivityLaunchSupported(mVirtualDisplayId);
+        PendingIntent pendingIntent = PendingIntent.getActivities(
+                mContext,
+                /* requestCode= */ 1,
+                new Intent[] {
+                        new Intent().setComponent(mEmptyActivityComponent)
+                                .addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK),
+                        new Intent().setComponent(mSecondActivityComponent)
+                },
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+
+        mVirtualDevice.launchPendingIntent(
+                mVirtualDisplayId, pendingIntent, Runnable::run, mLaunchCompleteListener);
+
+        assertActivityOnVirtualDisplay(mEmptyActivityComponent);
+        assertActivityOnVirtualDisplay(mSecondActivityComponent);
+        verify(mLaunchCompleteListener, timeout(PENDING_INTENT_TIMEOUT_MILLIS)).accept(
+                eq(VirtualDeviceManager.LAUNCH_SUCCESS));
     }
 
     @Test
     public void launchPendingIntent_activityIntent_shouldLaunchActivity() throws Exception {
-        PendingIntent pendingIntent = getTestAppService()
-                .createActivityPendingIntent(mResultReceiver);
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
-        VirtualDisplay virtualDisplay = createVirtualDisplay();
-        mVirtualDevice.launchPendingIntent(virtualDisplay.getDisplay().getDisplayId(),
-                pendingIntent, Runnable::run, mLaunchCompleteListener);
+        mRule.assumeActivityLaunchSupported(mVirtualDisplayId);
+        Service service = TestService.startService(mContext);
+        Intent intent = new Intent(Intent.ACTION_MAIN).setClass(service, EmptyActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                service, 1, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
 
-        verify(mOnReceiveResultListener, timeout(TIMEOUT_MS)).onReceiveResult(
-                eq(Activity.RESULT_OK), nullable(Bundle.class));
-        verify(mLaunchCompleteListener, timeout(TIMEOUT_MS)).accept(
+        mVirtualDevice.launchPendingIntent(
+                mVirtualDisplayId, pendingIntent, Runnable::run, mLaunchCompleteListener);
+
+        verify(mLaunchCompleteListener, timeout(PENDING_INTENT_TIMEOUT_MILLIS)).accept(
                 eq(VirtualDeviceManager.LAUNCH_SUCCESS));
+        assertActivityOnVirtualDisplay(mEmptyActivityComponent);
     }
 
     @Test
-    public void launchPendingIntent_serviceIntent_shouldLaunchTrampolineActivity()
+    public void launchPendingIntent_serviceIntentTrampolineActivity_shouldLaunchActivity()
             throws Exception {
-        PendingIntent pendingIntent = getTestAppService()
-                .createServicePendingIntent(/* trampoline= */ true, mResultReceiver);
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
-        VirtualDisplay virtualDisplay = createVirtualDisplay();
-        // Android 10 (and higher) place restrictions on when apps can start activities when the
-        // app is running in the background. To except the restriction, starting an activity before
-        // launching activity from background.
-        // See https://developer.android.com/guide/components/activities/background-starts for
-        // more details.
-        launchStreamedAppActivityOnDisplay(virtualDisplay.getDisplay().getDisplayId());
+        mRule.assumeActivityLaunchSupported(mVirtualDisplayId);
+        TestService service = TestService.startService(mContext);
+        Intent intent = new Intent(TestService.ACTION_START_TRAMPOLINE_ACTIVITY)
+                .setClass(service, EmptyActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                service, 1, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
 
         mVirtualDevice.launchPendingIntent(
-                virtualDisplay.getDisplay().getDisplayId(),
-                pendingIntent, Runnable::run,
-                mLaunchCompleteListener);
+                mVirtualDisplayId, pendingIntent, Runnable::run, mLaunchCompleteListener);
 
-        verify(mOnReceiveResultListener, timeout(TIMEOUT_MS)).onReceiveResult(
-                eq(Activity.RESULT_OK), nullable(Bundle.class));
-        verify(mLaunchCompleteListener, timeout(TIMEOUT_MS)).accept(
+        verify(mLaunchCompleteListener, timeout(PENDING_INTENT_TIMEOUT_MILLIS)).accept(
                 eq(VirtualDeviceManager.LAUNCH_SUCCESS));
+        assertActivityOnVirtualDisplay(mEmptyActivityComponent);
     }
 
     @Test
-    public void launchPendingIntent_serviceIntentNoTrampoline_shouldBeNoOp()
-            throws Exception {
-        PendingIntent pendingIntent = getTestAppService()
-                .createServicePendingIntent(/* trampoline=*/ false, mResultReceiver);
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
-        VirtualDisplay virtualDisplay = createVirtualDisplay();
+    public void launchPendingIntent_serviceIntentNoTrampoline_shouldBeNoOp() throws Exception {
+        mRule.assumeActivityLaunchSupported(mVirtualDisplayId);
+        Service service = TestService.startService(mContext);
+        Intent intent = new Intent(Intent.ACTION_MAIN).setClass(service, TestService.class);
+        PendingIntent pendingIntent = PendingIntent.getService(
+                service, 1, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
 
         mVirtualDevice.launchPendingIntent(
-                virtualDisplay.getDisplay().getDisplayId(),
-                pendingIntent,
-                Runnable::run,
-                mLaunchCompleteListener);
+                mVirtualDisplayId, pendingIntent, Runnable::run, mLaunchCompleteListener);
 
-        verify(mLaunchCompleteListener, timeout(TIMEOUT_MS)).accept(
+        verify(mLaunchCompleteListener, timeout(PENDING_INTENT_TIMEOUT_MILLIS)).accept(
                 eq(VirtualDeviceManager.LAUNCH_FAILURE_NO_ACTIVITY));
-        verify(mOnReceiveResultListener, never()).onReceiveResult(
-                anyInt(), any());
     }
 
-    private VirtualDisplay createVirtualDisplay() {
-        return mVirtualDevice.createVirtualDisplay(
-                VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder().build(),
-                Runnable::run,
-                mVirtualDisplayCallback);
+    @Test
+    public void launchPendingIntent_nullArguments_shouldThrow() {
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                mContext, 1, new Intent(mContext, EmptyActivity.class),
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.launchPendingIntent(mVirtualDisplayId,
+                        /* pendingIntent= */ null, Runnable::run, mLaunchCompleteListener));
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.launchPendingIntent(mVirtualDisplayId, pendingIntent,
+                        /* executor= */ null, mLaunchCompleteListener));
+
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.launchPendingIntent(mVirtualDisplayId, pendingIntent,
+                        Runnable::run, /* listener= */ null));
     }
 
-    private IStreamedTestApp getTestAppService() throws Exception {
-        mServiceConnection = TestAppHelper.createTestAppService();
-        return mServiceConnection.getFuture().get(10, TimeUnit.SECONDS);
-    }
-
-    private void launchStreamedAppActivityOnDisplay(int displayId) {
-        Context context = getApplicationContext();
-        Intent activityPendingIntent = TestAppHelper.createActivityLaunchedReceiverIntent(
-                mResultReceiver);
-        activityPendingIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        ActivityOptions activityOptions = ActivityOptions.makeBasic();
-        activityOptions.setLaunchDisplayId(displayId);
-        context.startActivity(activityPendingIntent, activityOptions.toBundle());
+    private void assertActivityOnVirtualDisplay(ComponentName componentName) {
+        verify(mActivityListener, timeout(TIMEOUT_MILLIS)).onTopActivityChanged(
+                eq(mVirtualDisplayId), eq(componentName), eq(mContext.getUserId()));
     }
 }
 
