@@ -92,8 +92,15 @@ class LowLatencyZoomTest(its_base_test.ItsBaseTest):
       img_name_stem = f'{os.path.join(self.log_path, _NAME)}'
       logging.debug('Using auto capture request')
       fmt = 'yuv'
-      cam.do_3a(fmt=fmt, width=size[0], height=size[1],
-                zoom_ratio=z_min, reuse_session=True)
+      cam.do_3a(
+          zoom_ratio=z_min,
+          out_surfaces={
+              'format': fmt,
+              'width': size[0],
+              'height': size[1]
+          },
+          repeat_request=None,
+      )
       test_failed = False
       test_data = {}
       reqs = []
