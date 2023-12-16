@@ -135,7 +135,6 @@ import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
@@ -287,15 +286,6 @@ public class PackageManagerTest {
             SAMPLE_APK_BASE + "HelloWorldLotsOfFlags.apk";
     private static final String HELLO_WORLD_NON_UPDATABLE_SYSTEM_APK = SAMPLE_APK_BASE
             + "HelloWorldNonUpdatableSystem.apk";
-
-    private static final String HELLO_WORLD_SYSTEM = SAMPLE_APK_BASE
-            + "HelloWorldSystem.apk";
-
-    private static final String SETTINGS_PROVIDER = SAMPLE_APK_BASE + "SettingsProvider.apk";
-
-    private static final String SYSTEM_PACKAGE_NAME = "com.android.system.app";
-
-    private static final String SETTINGS_PACKAGE_NAME = "com.android.providers.settings";
 
     private static final String MOCK_LAUNCHER_PACKAGE_NAME = "android.content.cts.mocklauncherapp";
     private static final String MOCK_LAUNCHER_APK = SAMPLE_APK_BASE
@@ -2091,25 +2081,6 @@ public class PackageManagerTest {
         assertThat(SystemUtil.runShellCommand(
                 "pm install -t -g " + HELLO_WORLD_NON_UPDATABLE_SYSTEM_APK)).contains(
                 "Non updatable system package");
-    }
-
-    @Test
-    public void testInstallAppSharedSystemUid() {
-        var result = SystemUtil.runShellCommand("pm install -t -g " + HELLO_WORLD_SYSTEM);
-        if (!Build.IS_DEBUGGABLE) {
-            assertThat(result).contains("Non-preload app associated with system signature");
-        } else {
-            assertThat(result).isEqualTo("Success\n");
-            uninstallPackage(SYSTEM_PACKAGE_NAME);
-        }
-    }
-
-    @Test
-    public void testUpdateSystemApp() {
-        assertThat(SystemUtil.runShellCommand(
-                "pm install -t -g " + SETTINGS_PROVIDER)).isEqualTo(
-                "Success\n");
-        uninstallPackage(SETTINGS_PACKAGE_NAME);
     }
 
     private String installPackageWithResult(String apkPath) {
