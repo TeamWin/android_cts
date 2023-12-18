@@ -16,9 +16,11 @@
 
 package android.media.cujlargetest.cts;
 
+import android.media.cujcommon.cts.AdaptivePlaybackTestPlayerListener;
 import android.media.cujcommon.cts.CujTestBase;
 import android.media.cujcommon.cts.CujTestParam;
-import android.media.cujcommon.cts.PlayerListener;
+import android.media.cujcommon.cts.PlaybackTestPlayerListener;
+import android.media.cujcommon.cts.SeekTestPlayerListener;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.PlatinumTest;
 
@@ -75,34 +77,30 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
   public static Collection<Object[]> input() {
     // CujTestParam, testId
     final List<Object[]> exhaustiveArgsList = new ArrayList<>(Arrays.asList(new Object[][]{
-        {CujTestParam.builder().setMediaUrls(prepare_5minAudioList())
-            .setTimeoutMilliSeconds(930000)
-            .setPlayerListener(PlayerListener.createListenerForPlaybackTest()).build(),
+        {CujTestParam.builder().setMediaUrls(prepare_5minAudioList()).setTimeoutMilliSeconds(930000)
+            .setPlayerListener(new PlaybackTestPlayerListener()).build(),
             "Audio_5min_PlaybackTest"},
         {CujTestParam.builder().setMediaUrls(prepareVP9_640x480_5minVideoList())
             .setTimeoutMilliSeconds(930000)
-            .setPlayerListener(PlayerListener.createListenerForPlaybackTest()).build(),
-            "VP9_640x480_5min"},
+            .setPlayerListener(new PlaybackTestPlayerListener()).build(), "VP9_640x480_5min"},
         {CujTestParam.builder().setMediaUrls(prepareVP9_640x480_5minVideoList())
             .setTimeoutMilliSeconds(930000)
-            .setPlayerListener(PlayerListener.createListenerForSeekTest(30, 10000, 30000)).build(),
+            .setPlayerListener(new SeekTestPlayerListener(30, 10000, 30000)).build(),
             "VP9_640x480_5min_seekTest"},
         {CujTestParam.builder().setMediaUrls(prepare_30minAudioList())
             .setTimeoutMilliSeconds(1830000)
-            .setPlayerListener(PlayerListener.createListenerForPlaybackTest()).build(),
+            .setPlayerListener(new PlaybackTestPlayerListener()).build(),
             "Audio_30min_PlaybackTest"},
         {CujTestParam.builder().setMediaUrls(prepareAvc_1080p_30minVideoList())
             .setTimeoutMilliSeconds(1830000)
-            .setPlayerListener(PlayerListener.createListenerForPlaybackTest()).build(),
-            "Avc_1080p_30min"},
+            .setPlayerListener(new PlaybackTestPlayerListener()).build(), "Avc_1080p_30min"},
         {CujTestParam.builder().setMediaUrls(prepareAvc_1080p_30minVideoList())
             .setTimeoutMilliSeconds(1830000)
-            .setPlayerListener(PlayerListener.createListenerForSeekTest(30, 10000, 30000)).build(),
+            .setPlayerListener(new SeekTestPlayerListener(30, 10000, 30000)).build(),
             "Avc_1080p_30min_seekTest"},
         {CujTestParam.builder().setMediaUrls(prepareVp9_Local_DASH_3minVideoList())
             .setTimeoutMilliSeconds(210000)
-            .setPlayerListener(
-                PlayerListener.createListenerForAdaptivePlaybackTest(6, 15000)).build(),
+            .setPlayerListener(new AdaptivePlaybackTestPlayerListener(6, 15000)).build(),
             "Vp9_DASH_3min_adaptivePlaybackTest"},
     }));
     return exhaustiveArgsList;
