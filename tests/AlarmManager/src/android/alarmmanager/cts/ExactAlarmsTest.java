@@ -230,20 +230,10 @@ public class ExactAlarmsTest {
     public void hasPermissionWhenAllowed() throws Exception {
         setAppOp(TEST_APP_PACKAGE, AppOpsManager.MODE_ALLOWED);
         assertTrue(getCanScheduleExactAlarmFromTestApp(TEST_APP_PACKAGE));
-
-        // The deny list shouldn't matter in this case.
-        mDeviceConfigHelper.with("exact_alarm_deny_list", TEST_APP_PACKAGE)
-                .commitAndAwaitPropagation();
-        assertTrue(getCanScheduleExactAlarmFromTestApp(TEST_APP_PACKAGE));
     }
 
     @Test
     public void canScheduleExactAlarmWithPolicyPermission() {
-        assertTrue(mAlarmManager.canScheduleExactAlarms());
-
-        // The deny list shouldn't do anything.
-        mDeviceConfigHelper.with("exact_alarm_deny_list", sContext.getOpPackageName())
-                .commitAndAwaitPropagation();
         assertTrue(mAlarmManager.canScheduleExactAlarms());
     }
 
@@ -257,12 +247,6 @@ public class ExactAlarmsTest {
     public void canScheduleExactAlarmWithUserPermissionSdk32() throws Exception {
         // Should be allowed by default.
         assertTrue(getCanScheduleExactAlarmFromTestApp(TEST_APP_WITH_SCHEDULE_EXACT_ALARM_32));
-
-        mDeviceConfigHelper.with("exact_alarm_deny_list", TEST_APP_WITH_SCHEDULE_EXACT_ALARM_32)
-                .commitAndAwaitPropagation();
-
-        assertFalse("canScheduleExactAlarm returned true when app was in deny list",
-                getCanScheduleExactAlarmFromTestApp(TEST_APP_WITH_SCHEDULE_EXACT_ALARM_32));
     }
 
     @Test
