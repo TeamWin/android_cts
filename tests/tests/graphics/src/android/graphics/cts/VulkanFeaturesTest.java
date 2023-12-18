@@ -109,7 +109,7 @@ public class VulkanFeaturesTest {
                     "VK_KHR_maintenance5",
                     "VK_KHR_map_memory2",
                     "VK_KHR_ray_tracing_position_fetch",
-                    "VK_GOOGLE_user_type"});
+                    "VK_ANDROID_external_format_resolve"});
         DEQP_EXTENSIONS_MAP.put(
                 DEQP_LEVEL_FOR_U,
                 new String[] {
@@ -118,7 +118,8 @@ public class VulkanFeaturesTest {
                     "VK_KHR_video_decode_h264",
                     "VK_KHR_video_decode_h265",
                     "VK_KHR_video_decode_queue",
-                    "VK_KHR_video_queue"});
+                    "VK_KHR_video_queue",
+                    "VK_GOOGLE_user_type"});
         DEQP_EXTENSIONS_MAP.put(
                 DEQP_LEVEL_FOR_T,
                 new String[] {
