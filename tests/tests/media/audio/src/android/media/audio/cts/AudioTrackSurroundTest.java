@@ -18,9 +18,13 @@ package android.media.audio.cts;
 
 import android.annotation.RawRes;
 import android.content.Context;
-import android.media.AudioDeviceInfo;
+import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.Resources;
+import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
+import android.media.AudioProfile;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.audio.cts.R;
@@ -37,6 +41,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 // Test the Java AudioTrack surround sound and HDMI passthrough.
@@ -56,14 +61,9 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     // AC3 and IEC61937 tracks require more time
     private static final long SAMPLE_RATE_LONG_TEST_DURATION_MILLIS = 12000;
 
-    // Set this true to prefer the device that supports the particular encoding.
-    // But note that as of 3/25/2016, a bug causes Direct tracks to fail.
-    // So only set true when debugging that problem.
-    private static final boolean USE_PREFERRED_DEVICE = false;
-
-    // Should we fail if there is no PCM16 device reported by device enumeration?
+    // Should we fail if there is no PCM16 profile reported?
     // This can happen if, for example, an ATV set top box does not have its HDMI cable plugged in.
-    private static final boolean REQUIRE_PCM_DEVICE = false;
+    private static final boolean REQUIRE_PCM_PROFILE = false;
 
     private final static long NANOS_PER_MILLISECOND = 1000000L;
     private final static int MILLIS_PER_SECOND = 1000;
@@ -76,14 +76,15 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
 
     private static int mLastPlayedEncoding = AudioFormat.ENCODING_INVALID;
 
-    // Devices that support various encodings.
-    private static boolean mDeviceScanComplete = false;
-    private static AudioDeviceInfo mInfoPCM16 = null;
-    private static AudioDeviceInfo mInfoAC3 = null;
-    private static AudioDeviceInfo mInfoE_AC3 = null;
-    private static AudioDeviceInfo mInfoDTS = null;
-    private static AudioDeviceInfo mInfoDTS_HD = null;
-    private static AudioDeviceInfo mInfoIEC61937 = null;
+    // Profiles that support various encodings.
+    private static AudioProfile mProfilePCM16 = null;
+    private static AudioProfile mProfileAC3 = null;
+    private static AudioProfile mProfileE_AC3 = null;
+    private static AudioProfile mProfileDTS = null;
+    private static AudioProfile mProfileDTS_HD = null;
+    private static AudioProfile mProfileIEC61937 = null;
+
+    private static AudioAttributes mAudioAttributes = null;
 
     private static void log(String testName, String message) {
         Log.i(TAG, "[" + testName + "] " + message);
@@ -103,66 +104,56 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
         // Note that I tried to only scan for encodings once but the static
         // data did not persist properly. That may be a bug.
         // For now, just scan before every test.
-        scanDevicesForEncodings();
+        scanProfilesForEncodings();
     }
 
-    private void scanDevicesForEncodings() throws Exception {
-        final String MTAG = "scanDevicesForEncodings";
-        // Scan devices to see which encodings are supported.
+    private void scanProfilesForEncodings() throws Exception {
+        final String MTAG = "scanProfilesForEncodings";
+        // Scan profiles to see which encodings are supported.
         AudioManager audioManager = (AudioManager) getContext()
                 .getSystemService(Context.AUDIO_SERVICE);
-        AudioDeviceInfo[] infos = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
-        for (AudioDeviceInfo info : infos) {
-            log(MTAG, "scanning devices, name = " + info.getProductName()
-                    + ", id = " + info.getId()
-                    + ", " + (info.isSink() ? "sink" : "source")
-                    + ", type = " + info.getType()
-                    + " ------");
-            String text = "{";
-            for (int encoding : info.getEncodings()) {
-                text += String.format("0x%08X, ", encoding);
-            }
-            text += "}";
-            log(MTAG, "  encodings = " + text);
-            text = "{";
-            for (int rate : info.getSampleRates()) {
-                text += rate + ", ";
-            }
-            text += "}";
-            log(MTAG, "  sample rates = " + text);
-            if (info.isSink()) {
-                for (int encoding : info.getEncodings()) {
-                    switch (encoding) {
-                        case AudioFormat.ENCODING_PCM_16BIT:
-                            mInfoPCM16 = info;
-                            log(MTAG, "mInfoPCM16 set to " + info);
-                            break;
-                        case AudioFormat.ENCODING_AC3:
-                            mInfoAC3 = info;
-                            log(MTAG, "mInfoAC3 set to " + info);
-                            break;
-                        case AudioFormat.ENCODING_E_AC3:
-                            mInfoE_AC3 = info;
-                            log(MTAG, "mInfoE_AC3 set to " + info);
-                            break;
-                        case AudioFormat.ENCODING_DTS:
-                            mInfoDTS = info;
-                            log(MTAG, "mInfoDTS set to " + info);
-                            break;
-                        case AudioFormat.ENCODING_DTS_HD:
-                            mInfoDTS_HD = info;
-                            log(MTAG, "mInfoDTS_HD set to " + info);
-                            break;
-                        case AudioFormat.ENCODING_IEC61937:
-                            mInfoIEC61937 = info;
-                            log(MTAG, "mInfoIEC61937 set to " + info);
-                            break;
-                        default:
-                            // This is OK. It is just an encoding that we don't care about.
-                            break;
-                    }
+        mAudioAttributes = new AudioAttributes.Builder()
+                                .setUsage(AudioAttributes.USAGE_MEDIA)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                .build();
+        List<AudioProfile> profiles = audioManager.getDirectProfilesForAttributes(mAudioAttributes);
+        if (profiles.size() == 0) {
+            log(MTAG, "no direct profiles for media + music found");
+        }
+        for (AudioProfile profile : profiles) {
+            log(MTAG, "scanning profiles, profile = " + profile.toString());
+            if (profile.getEncapsulationType() == AudioProfile.AUDIO_ENCAPSULATION_TYPE_IEC61937) {
+                mProfileIEC61937 = profile;
+                log(MTAG, "mProfileIEC61937 set to " + profile);
+                break;
+            } else { // AudioProfile.AUDIO_ENCAPSULATION_TYPE_NONE
+                switch (profile.getFormat()) {
+                    case AudioFormat.ENCODING_PCM_16BIT:
+                        mProfilePCM16 = profile;
+                        log(MTAG, "mProfilePCM16 set to " + profile);
+                        break;
+                    case AudioFormat.ENCODING_AC3:
+                        mProfileAC3 = profile;
+                        log(MTAG, "mProfileAC3 set to " + profile);
+                        break;
+                    case AudioFormat.ENCODING_E_AC3:
+                        mProfileE_AC3 = profile;
+                        log(MTAG, "mProfileE_AC3 set to " + profile);
+                        break;
+                    case AudioFormat.ENCODING_DTS:
+                        mProfileDTS = profile;
+                        log(MTAG, "mProfileDTS set to " + profile);
+                        break;
+                    case AudioFormat.ENCODING_DTS_HD:
+                        mProfileDTS_HD = profile;
+                        log(MTAG, "mProfileDTS_HD set to " + profile);
+                        break;
+                    default:
+                        // This is OK. It is just an encoding that we don't care about.
+                        break;
                 }
             }
+
         }
     }
 
@@ -349,42 +340,8 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
         // Add a warning to the assert message that might help folks figure out why their
         // PCM test is failing.
         private String getPcmWarning() {
-            return (mInfoPCM16 == null && AudioFormat.isEncodingLinearPcm(mEncoding))
-                ? " (No PCM device!)" : "";
-        }
-
-        /**
-         * Use a device that we know supports the current encoding.
-         */
-        private void usePreferredDevice() {
-            AudioDeviceInfo info = null;
-            switch (mEncoding) {
-                case AudioFormat.ENCODING_PCM_16BIT:
-                    info = mInfoPCM16;
-                    break;
-                case AudioFormat.ENCODING_AC3:
-                    info = mInfoAC3;
-                    break;
-                case AudioFormat.ENCODING_E_AC3:
-                    info = mInfoE_AC3;
-                    break;
-                case AudioFormat.ENCODING_DTS:
-                    info = mInfoDTS;
-                    break;
-                case AudioFormat.ENCODING_DTS_HD:
-                    info = mInfoDTS_HD;
-                    break;
-                case AudioFormat.ENCODING_IEC61937:
-                    info = mInfoIEC61937;
-                    break;
-                default:
-                    break;
-            }
-
-            if (info != null) {
-                log(TAG, "track.setPreferredDevice(" + info + ")");
-                mTrack.setPreferredDevice(info);
-            }
+            return (mProfilePCM16 == null && AudioFormat.isEncodingLinearPcm(mEncoding))
+                ? " (No PCM profile!)" : "";
         }
 
         public void playAndMeasureRate(long testDurationMillis) throws Exception {
@@ -411,10 +368,6 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
                 assertEquals(TEST_NAME + ": track created " + getPcmWarning(),
                         AudioTrack.STATE_INITIALIZED,
                         mTrack.getState());
-
-                if (USE_PREFERRED_DEVICE) {
-                    usePreferredDevice();
-                }
 
                 int bytesWritten = 0;
                 mOffset = primeBuffer(); // prime the buffer
@@ -532,7 +485,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     }
 
     public void testPlayAC3Bytes() throws Exception {
-        if (mInfoAC3 != null) {
+        if (mProfileAC3 != null) {
             SamplePlayerBytes player = new SamplePlayerBytes(
                     48000, AudioFormat.ENCODING_AC3, AudioFormat.CHANNEL_OUT_STEREO,
                     RES_AC3_VOICE_48000);
@@ -541,7 +494,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     }
 
     public void testPlayAC3Shorts() throws Exception {
-        if (mInfoAC3 != null) {
+        if (mProfileAC3 != null) {
             SamplePlayerShorts player = new SamplePlayerShorts(
                     48000, AudioFormat.ENCODING_AC3, AudioFormat.CHANNEL_OUT_STEREO,
                     RES_AC3_VOICE_48000);
@@ -550,7 +503,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     }
 
     public void testPlayIEC61937_32000() throws Exception {
-        if (mInfoIEC61937 != null) {
+        if (mProfileIEC61937 != null) {
             SamplePlayerShorts player = new SamplePlayerShorts(
                     32000, AudioFormat.ENCODING_IEC61937, AudioFormat.CHANNEL_OUT_STEREO,
                     RES_AC3_SPDIF_VOICE_32000);
@@ -559,7 +512,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     }
 
     public void testPlayIEC61937_44100() throws Exception {
-        if (mInfoIEC61937 != null) {
+        if (mProfileIEC61937 != null) {
             SamplePlayerShorts player = new SamplePlayerShorts(
                     44100, AudioFormat.ENCODING_IEC61937, AudioFormat.CHANNEL_OUT_STEREO,
                     RES_AC3_SPDIF_VOICE_44100);
@@ -568,7 +521,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     }
 
     public void testPlayIEC61937_48000() throws Exception {
-        if (mInfoIEC61937 != null) {
+        if (mProfileIEC61937 != null) {
             SamplePlayerShorts player = new SamplePlayerShorts(
                     48000, AudioFormat.ENCODING_IEC61937, AudioFormat.CHANNEL_OUT_STEREO,
                     RES_AC3_SPDIF_VOICE_48000);
@@ -577,16 +530,16 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     }
 
     public void testPcmSupport() throws Exception {
-        if (REQUIRE_PCM_DEVICE) {
-            // There should always be a fake PCM device available.
+        if (REQUIRE_PCM_PROFILE) {
+            // There should always be a fake PCM profile available.
             assertTrue("testPcmSupport: PCM should be supported."
                     + " On ATV device please check HDMI connection.",
-                    mInfoPCM16 != null);
+                    mProfilePCM16 != null);
         }
     }
 
     private boolean isPcmTestingEnabled() {
-        return (mInfoPCM16 != null || !REQUIRE_PCM_DEVICE);
+        return (mProfilePCM16 != null || !REQUIRE_PCM_PROFILE);
     }
 
     public void testPlaySineSweepShorts() throws Exception {
