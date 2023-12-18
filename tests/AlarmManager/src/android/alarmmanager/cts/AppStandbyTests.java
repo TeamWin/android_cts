@@ -281,8 +281,7 @@ public class AppStandbyTests {
     private void updateAlarmManagerConstants() {
         mConfigHelper.with("min_futurity", MIN_FUTURITY)
                 .with("app_standby_window", APP_STANDBY_WINDOW)
-                .with("min_window", MIN_WINDOW)
-                .with("exact_alarm_deny_list", TEST_APP_PACKAGE);
+                .with("min_window", MIN_WINDOW);
         for (int i = 0; i < APP_STANDBY_QUOTAS.length; i++) {
             mConfigHelper.with(APP_BUCKET_QUOTA_KEYS[i], APP_STANDBY_QUOTAS[i]);
         }
