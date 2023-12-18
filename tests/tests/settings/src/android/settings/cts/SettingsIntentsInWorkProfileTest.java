@@ -78,6 +78,13 @@ public class SettingsIntentsInWorkProfileTest {
         startActivity(intent);
     }
 
+    @Test
+    @RequireRunOnWorkProfile
+    public void settingActivity_launchDeviceInfoSetting_shouldNotCrash() {
+        final Intent intent = new Intent(Settings.ACTION_DEVICE_INFO_SETTINGS);
+        startActivity(intent);
+    }
+
     private void startActivity(Intent intent) {
         Context targetContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
