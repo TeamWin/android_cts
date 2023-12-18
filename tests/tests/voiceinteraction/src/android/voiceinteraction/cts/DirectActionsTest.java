@@ -255,9 +255,10 @@ public class DirectActionsTest extends AbstractVoiceInteractionTestCase {
             Log.v(TAG, "startActivity: " + intent);
             mContext.startActivity(intent);
 
-            if (!latch.await(Utils.OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+            final long timeoutMs = Utils.getAdjustedOperationTimeoutMs();
+            if (!latch.await(timeoutMs, TimeUnit.MILLISECONDS)) {
                 throw new TimeoutException(
-                        "activity not started in " + Utils.OPERATION_TIMEOUT_MS + "ms");
+                        "activity not started in " + timeoutMs + "ms");
             }
         }
 
@@ -325,9 +326,10 @@ public class DirectActionsTest extends AbstractVoiceInteractionTestCase {
                 }
             }
 
-            if (!latch.await(Utils.OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+            final long timeoutMs = Utils.getAdjustedOperationTimeoutMs();
+            if (!latch.await(timeoutMs, TimeUnit.MILLISECONDS)) {
                 throw new TimeoutException(
-                        "result not received in " + Utils.OPERATION_TIMEOUT_MS + "ms");
+                        "result not received in " + timeoutMs + "ms");
             }
             return result;
         }
