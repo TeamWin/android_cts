@@ -645,7 +645,10 @@ public class StaticMetadata {
         if (Flags.cameraAeModeLowLightBoost()) {
             boolean hasAeModeLowLightBoost = false;
             Key<int[]> keyAeAvailableModes = CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES;
-            int[] aeAvailableModes = getValueFromKeyNonNull(keyAeAvailableModes);
+            int[] aeAvailableModes = mCharacteristics.get(keyAeAvailableModes);
+            if (aeAvailableModes == null) {
+                return false;
+            }
             for (int aeMode : aeAvailableModes) {
                 if (aeMode
                         == CameraMetadata.CONTROL_AE_MODE_ON_LOW_LIGHT_BOOST_BRIGHTNESS_PRIORITY) {
@@ -658,7 +661,7 @@ public class StaticMetadata {
                 Key<Range<Float>> keyLowLightBoostLuminanceRange =
                         CameraCharacteristics.CONTROL_LOW_LIGHT_BOOST_INFO_LUMINANCE_RANGE;
                 Range<Float> lowLightBoostLuminanceRange =
-                        getValueFromKeyNonNull(keyLowLightBoostLuminanceRange);
+                        mCharacteristics.get(keyLowLightBoostLuminanceRange);
                 return lowLightBoostLuminanceRange != null;
             }
         }
