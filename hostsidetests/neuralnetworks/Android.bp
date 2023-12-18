@@ -25,6 +25,7 @@ java_test_host {
         "general-tests",
         "mts",
         "mts-neuralnetworks",
+        "mcts-neuralnetworks",
     ],
     libs: [
         "tradefed",

@@ -28,6 +28,7 @@ android_test {
         "general-tests",
         "mts",
         "mts-neuralnetworks",
+        "mcts-neuralnetworks",
     ],
     static_libs: [
         "androidx.test.rules",
