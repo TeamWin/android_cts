@@ -283,6 +283,8 @@ public class Constants {
             PKG_BASE + "cts.action.LAUNCHER_APPS_SHOULD_HIDE_FROM_SUGGESTIONS";
     public static final String ACTION_CHECK_URI_PERMISSION =
             PKG_BASE + "cts.action.CHECK_URI_PERMISSION";
+    public static final String ACTION_CHECK_CONTENT_URI_PERMISSION_FULL =
+            PKG_BASE + "cts.action.CHECK_CONTENT_URI_PERMISSION_FULL";
     public static final String ACTION_TAKE_PERSISTABLE_URI_PERMISSION =
             PKG_BASE + "cts.action.TAKE_PERSISTABLE_URI_PERMISSION";
     public static final String ACTION_CAN_PACKAGE_QUERY =
