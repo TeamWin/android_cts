@@ -16,8 +16,26 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsContentTestCases",
+java_library {
+    name: "CtsContentUtils",
+    defaults: ["cts_defaults"],
+
+    libs: [
+        "android.test.runner",
+        "android.test.base",
+        "android.test.mock",
+    ],
+    srcs: [
+        "src/android/content/cts/**/DummyProvider.java",
+        "src/android/content/cts/**/Mock*.java",
+        "src/android/content/cts/**/ResultReceiver.java",
+        "src/android/content/cts/util/**/*.java",
+        "src/**/DummyParcelable.java",
+    ],
+}
+
+java_defaults {
+    name: "cts_content_defaults",
     defaults: ["cts_defaults"],
 
     // Don't run manifestmerger on dependencies, it is unhappy with the duplicate
@@ -41,7 +59,7 @@ android_test {
         "ctstestrunner-axt",
         "services.core",
         "junit",
-        "truth-prebuilt",
+        "truth",
         "accountaccesslib",
         // TODO: remove once Android migrates to JUnit 4.12, which provides assertThrows:
         "testng",
@@ -55,6 +73,8 @@ android_test {
         "Nene",
         "Harrier",
         "platformprotosnano",
+        "ravenwood-junit",
+        "CtsContentUtils",
     ],
     // Use multi-dex as the compatibility-common-util-devicesidelib dependency
     // on compatibility-device-util-axt pushes us beyond 64k methods.
@@ -74,29 +94,87 @@ android_test {
         "-c tlh",
         "-c xx,xx-rYY",
     ],
+    per_testcase_directory: true,
+    platform_apis: true,
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+        "mts-documentsui",
+        "mcts-documentsui",
+    ],
+    min_sdk_version: "29",
+    replace_max_sdk_version_placeholder: "current",
+}
+
+android_test {
+    name: "CtsContentTestCases",
+    defaults: ["cts_content_defaults"],
+
     srcs: [
-        "src/**/*.java",
-        "src/**/*.kt",
+        "src/android/content/cts/**/*.java",
         "BinderPermissionTestService/**/I*.aidl",
     ],
-    per_testcase_directory: true,
     data: [
-        ":CtsContentDirectBootUnawareTestApp",
-        ":CtsContentMockLauncherTestApp",
+        ":CtsSyncAccountAccessStubs",
+        ":CtsBinderPermissionTestService",
         ":CtsContentMockRestrictedApp",
+    ],
+    test_config: "CtsContentTest.xml",
+}
+
+android_test {
+    name: "CtsResourcesTestCases",
+    defaults: ["cts_content_defaults"],
+
+    srcs: [
+        "src/android/content/om/**/*.java",
+        "src/android/content/res/**/*.java",
+    ],
+    test_config: "CtsResourcesTest.xml",
+}
+
+android_test {
+    name: "CtsWindowManagerTestCases",
+    defaults: ["cts_content_defaults"],
+
+    srcs: [
+        "src/android/content/wm/**/*.java",
+    ],
+    test_config: "CtsWindowManagerTest.xml",
+}
+
+android_test {
+    name: "CtsPackageManagerTestCases",
+    defaults: ["cts_content_defaults"],
+
+    static_libs: [
+        "android.content.pm.flags-aconfig-java",
+        "android.security.flags-aconfig-java",
+        "flag-junit",
+    ],
+    srcs: [
+        "src/android/content/pm/**/*.java",
+        "src/android/content/pm/**/*.kt",
+    ],
+    data: [
+        ":CtsContentEmptyTestApp",
+        ":CtsContentLongPackageNameTestApp",
+        ":CtsContentLongSharedUserIdTestApp",
+        ":CtsContentMaxPackageNameTestApp",
+        ":CtsContentMaxSharedUserIdTestApp",
+        ":CtsContentMockLauncherTestApp",
+        ":CtsContentMockLauncherActivityLabelTestApp",
+        ":CtsContentMockLauncherApplicationLabelTestApp",
+        ":CtsContentMockLauncherInvisibleLabelsTestApp",
         ":CtsContentLongLabelNameTestApp",
+        ":CtsSyncAccountAccessStubs",
+        ":CtsContentLongUsesPermissionNameTestApp",
+        ":CtsContentDirectBootUnawareTestApp",
         ":CtsContentPartiallyDirectBootAwareTestApp",
         ":CtsIntentResolutionTestApp",
-        ":CtsSyncAccountAccessStubs",
-        ":CtsContentEmptyTestApp",
-        ":CtsContentMaxPackageNameTestApp",
-        ":CtsBinderPermissionTestService",
-        ":CtsIntentResolutionTestAppApi30",
-        ":CtsContentLongSharedUserIdTestApp",
-        ":CtsContentMaxSharedUserIdTestApp",
-        ":CtsContentLongPackageNameTestApp",
         ":CtsContentNoApplicationTestApp",
-        ":CtsContentLongUsesPermissionNameTestApp",
+        ":CtsContentShellTestApp",
         ":CtsApkVerityTestPrebuiltFiles",
         // v1/v2/v3/v4 signed version of android.appsecurity.cts.tinyapp to keep checksums stable
         "data/CtsPkgInstallTinyAppV1.apk",
@@ -116,7 +194,12 @@ android_test {
         "data/HelloWorld5_mdpi-v4.digests.signature",
         "data/malformed.apk.idsig",
         "data/test-cert.x509.pem",
+        "data/icon.png",
+        "data/icon_mono.png",
+        "data/cts-testkey1.x509.pem",
         ":HelloWorld5",
+        ":HelloWorld5NonDefaultFlags",
+        ":HelloWorld5DifferentSigner",
         ":HelloWorld5Profileable",
         ":HelloWorld7",
         ":HelloWorldNoAppStorage",
@@ -129,13 +212,16 @@ android_test {
         ":HelloWorldSdk2Updated",
         ":HelloWorldSdk3UsingSdk1",
         ":HelloWorldSdk3UsingSdk1And2",
-        ":HelloWorldShell",
+        ":HelloWorldSystem",
         ":HelloWorldUsingSdk1",
         ":HelloWorldUsingSdk1And2",
+        ":HelloWorldUsingSdk1Optional",
+        ":HelloWorldUsingSdk1OptionalSdk2",
         ":HelloWorldUsingSdk3",
         ":HelloWorldNoAppStorage",
         ":HelloWorldLotsOfFlags",
         ":HelloWorldWithSufficient",
+        ":HelloWorldNonUpdatableSystem",
         ":HelloSufficientVerifierReject",
         ":HelloVerifierAllow",
         ":HelloVerifierReject",
@@ -148,13 +234,48 @@ android_test {
         ":PackagePropertyTestApp3",
         ":TestInstallerApp",
     ],
-    platform_apis: true,
-    // Tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
-        "mts-documentsui",
+    test_config: "CtsPackageManagerTest.xml",
+    package_splits: [
+        "mdpi-v4",
+        "hdpi-v4",
     ],
-    min_sdk_version: "29",
-    replace_max_sdk_version_placeholder: "current",
+}
+
+android_ravenwood_test {
+    name: "CtsContentTestCasesRavenwood",
+    defaults: ["cts_defaults"],
+    libs: [
+        "android.test.mock",
+    ],
+    static_libs: [
+        "androidx.annotation_annotation",
+        "androidx.test.rules",
+        "androidx.test.uiautomator_uiautomator",
+        "compatibility-device-util-axt",
+    ],
+    srcs: [
+        "src/android/content/cts/util/XmlUtils.java",
+        "src/android/content/cts/ClipDataTest.java",
+        "src/android/content/cts/ClipDescriptionTest.java",
+        "src/android/content/cts/ComponentNameTest.java",
+        "src/android/content/cts/ContentUrisTest.java",
+        "src/android/content/cts/ContentValuesTest.java",
+        "src/android/content/cts/IntentTest.java",
+        "src/android/content/cts/IntentFilterTest.java",
+        "src/android/content/cts/MockActivity.java",
+        "src/android/content/cts/MockService.java",
+        "src/android/content/cts/MockReceiver.java",
+        "src/android/content/cts/MockContentProvider.java",
+        "src/android/content/cts/UriMatcherTest.java",
+        "src/android/content/pm/cts/ActivityInfoTest.java",
+        "src/android/content/pm/cts/ApplicationInfoTest.java",
+        "src/android/content/pm/cts/ComponentInfoTest.java",
+        "src/android/content/pm/cts/PackageInfoTest.java",
+        "src/android/content/pm/cts/PackageItemInfoTest.java",
+        "src/android/content/pm/cts/ProviderInfoTest.java",
+        "src/android/content/pm/cts/ResolveInfoTest.java",
+        "src/android/content/pm/cts/ServiceInfoTest.java",
+        "src/android/content/pm/cts/SignatureTest.java",
+    ],
+    auto_gen_config: true,
 }
