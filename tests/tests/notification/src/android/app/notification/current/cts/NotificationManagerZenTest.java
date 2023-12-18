@@ -61,6 +61,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -200,23 +201,19 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         //   (starred) allowed.
         // * Some suppressed visual effects.
         // (using the SystemUI permission so we're certain to update global state).
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> {
-                    mOriginalPolicy = mNotificationManager.getNotificationPolicy();
+        runAsSystemUi(() -> {
+            mOriginalPolicy = mNotificationManager.getNotificationPolicy();
 
-                    mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                            PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA
-                                    | PRIORITY_CATEGORY_CALLS | PRIORITY_CATEGORY_MESSAGES
-                                    | PRIORITY_CATEGORY_REPEAT_CALLERS
-                                    | PRIORITY_CATEGORY_CONVERSATIONS,
-                            PRIORITY_SENDERS_STARRED, PRIORITY_SENDERS_STARRED,
-                            SUPPRESSED_EFFECT_AMBIENT | SUPPRESSED_EFFECT_PEEK
-                                    | SUPPRESSED_EFFECT_LIGHTS
-                                    | SUPPRESSED_EFFECT_FULL_SCREEN_INTENT,
-                            CONVERSATION_SENDERS_IMPORTANT));
-                    mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
-                },
-                Manifest.permission.STATUS_BAR_SERVICE);
+            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
+                    PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA | PRIORITY_CATEGORY_CALLS
+                            | PRIORITY_CATEGORY_MESSAGES | PRIORITY_CATEGORY_REPEAT_CALLERS
+                            | PRIORITY_CATEGORY_CONVERSATIONS, PRIORITY_SENDERS_STARRED,
+                    PRIORITY_SENDERS_STARRED,
+                    SUPPRESSED_EFFECT_AMBIENT | SUPPRESSED_EFFECT_PEEK | SUPPRESSED_EFFECT_LIGHTS
+                            | SUPPRESSED_EFFECT_FULL_SCREEN_INTENT,
+                    CONVERSATION_SENDERS_IMPORTANT));
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
+        });
     }
 
     @After
@@ -232,12 +229,10 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 REVOKE_RUNTIME_PERMISSIONS);
 
         // Restore to the previous DND state.
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> {
-                    mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
-                    mNotificationManager.setNotificationPolicy(mOriginalPolicy);
-                },
-                Manifest.permission.STATUS_BAR_SERVICE);
+        runAsSystemUi(() -> {
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
+            mNotificationManager.setNotificationPolicy(mOriginalPolicy);
+        });
 
         final ArrayList<ContentProviderOperation> operationList = new ArrayList<>();
         Uri aliceUri = lookupContact(ALICE_PHONE);
@@ -2182,9 +2177,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         mNotificationManager.setAutomaticZenRuleState(id, condition);
 
         // snooze the rule
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
-        });
+        runAsSystemUi(() -> mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL));
 
         assertEquals(AUTOMATIC_RULE_STATUS_ACTIVATED,
                 br.getExtra(EXTRA_AUTOMATIC_ZEN_RULE_STATUS, 0, 500));
@@ -2219,10 +2212,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
         // snooze the rule by pretending the user turned off the mode from SystemUI
         // triggers ACTION_AUTOMATIC_ZEN_RULE_STATUS_CHANGED: Deactivated
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> {
-                    mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
-                });
+        runAsSystemUi(() -> mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL));
         assertExpectedDndState(INTERRUPTION_FILTER_ALL);
 
         // disable the rule. should unsnooze.
@@ -2302,6 +2292,23 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             assertThat(r1.getType()).isEqualTo(r2.getType());
             assertThat(r1.isManualInvocationAllowed()).isEqualTo(r2.isManualInvocationAllowed());
         }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void addAutomaticZenRule_fromUser_onlyAcceptedFromSystem() {
+        AutomaticZenRule newRule = createRule("Test");
+
+        String rule1 = mNotificationManager.addAutomaticZenRule(newRule, /* fromUser= */ false);
+
+        assertThrows(SecurityException.class,
+                () -> mNotificationManager.addAutomaticZenRule(newRule, /* fromUser= */ true));
+
+        String rule2 = callAsSystemUi(
+                () -> mNotificationManager.addAutomaticZenRule(newRule, /* fromUser= */ true));
+
+        assertThat(mNotificationManager.getAutomaticZenRule(rule1)).isNotNull();
+        assertThat(mNotificationManager.getAutomaticZenRule(rule2)).isNotNull();
     }
 
     @Test

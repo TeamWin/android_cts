@@ -25,6 +25,7 @@ import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import android.Manifest;
 import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.Notification;
@@ -55,9 +56,12 @@ import android.provider.Telephony;
 import android.util.ArraySet;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AmUtils;
+import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.ThrowingRunnable;
 
 import org.junit.After;
 import org.junit.Before;
@@ -68,6 +72,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 /* Base class for NotificationManager tests. Handles some of the common set up logic for tests. */
 public abstract class BaseNotificationManagerTest {
@@ -165,6 +170,27 @@ public abstract class BaseNotificationManagerTest {
         // Delete all groups.
         for (NotificationChannelGroup ncg : groups) {
             mNotificationManager.deleteNotificationChannelGroup(ncg.getId());
+        }
+    }
+
+    /**
+     * Runs a {@link ThrowingRunnable} as the Shell, while adopting SystemUI's permission (as
+     * checked by {@code NotificationManagerService#isCallerSystemOrSystemUi}).
+     */
+    protected static void runAsSystemUi(@NonNull ThrowingRunnable runnable) {
+        SystemUtil.runWithShellPermissionIdentity(runnable, Manifest.permission.STATUS_BAR_SERVICE);
+    }
+
+    /**
+     * Calls a {@link Callable} as the Shell, while adopting SystemUI's permission (as checked by
+     * {@code NotificationManagerService#isCallerSystemOrSystemUi}).
+     */
+    protected static <T> T callAsSystemUi(@NonNull Callable<T> callable) {
+        try {
+            return SystemUtil.callWithShellPermissionIdentity(callable,
+                    Manifest.permission.STATUS_BAR_SERVICE);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
