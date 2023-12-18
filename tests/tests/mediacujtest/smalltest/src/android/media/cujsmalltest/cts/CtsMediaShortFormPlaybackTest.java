@@ -16,9 +16,17 @@
 
 package android.media.cujsmalltest.cts;
 
+import android.media.cujcommon.cts.CallNotificationTestPlayerListener;
 import android.media.cujcommon.cts.CujTestBase;
 import android.media.cujcommon.cts.CujTestParam;
-import android.media.cujcommon.cts.PlayerListener;
+import android.media.cujcommon.cts.MessageNotificationTestPlayerListener;
+import android.media.cujcommon.cts.OrientationTestPlayerListener;
+import android.media.cujcommon.cts.PinchToZoomTestPlayerListener;
+import android.media.cujcommon.cts.PlaybackTestPlayerListener;
+import android.media.cujcommon.cts.ScrollTestPlayerListener;
+import android.media.cujcommon.cts.SeekTestPlayerListener;
+import android.media.cujcommon.cts.SwitchAudioTrackTestPlayerListener;
+import android.media.cujcommon.cts.SwitchSubtitleTrackTestPlayerListener;
 import android.platform.test.annotations.PlatinumTest;
 
 import androidx.test.filters.LargeTest;
@@ -90,56 +98,50 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
     final List<Object[]> exhaustiveArgsList = new ArrayList<>(Arrays.asList(new Object[][]{
         {CujTestParam.builder().setMediaUrls(prepareHevc_720p_15secVideoList())
             .setTimeoutMilliSeconds(330000)
-            .setPlayerListener(PlayerListener.createListenerForPlaybackTest()).build(),
-            "Hevc_720p_15sec"},
+            .setPlayerListener(new PlaybackTestPlayerListener()).build(), "Hevc_720p_15sec"},
         {CujTestParam.builder().setMediaUrls(prepareHevc_720p_15secVideoList())
             .setTimeoutMilliSeconds(330000)
-            .setPlayerListener(PlayerListener.createListenerForSeekTest(1, 5000, 9000)).build(),
+            .setPlayerListener(new SeekTestPlayerListener(1, 5000, 9000)).build(),
             "Hevc_720p_15sec_seekTest"},
         {CujTestParam.builder().setMediaUrls(prepareHevc_480p_5secVideoList())
             .setTimeoutMilliSeconds(60000)
-            .setPlayerListener(PlayerListener.createListenerForOrientationTest(3000)).build(),
+            .setPlayerListener(new OrientationTestPlayerListener(3000)).build(),
             "Hevc_480p_5sec_OrientationTest"},
         {CujTestParam.builder().setMediaUrls(prepareAvc_1080p_5secVideoList())
             .setTimeoutMilliSeconds(60000)
-            .setPlayerListener(PlayerListener.createListenerForOrientationTest(3000)).build(),
+            .setPlayerListener(new OrientationTestPlayerListener(3000)).build(),
             "Avc_1080p_5sec_OrientationTest"},
         {CujTestParam.builder().setMediaUrls(prepareAvc_360x640_5secVideoList())
             .setTimeoutMilliSeconds(60000)
-            .setPlayerListener(PlayerListener.createListenerForOrientationTest(3000)).build(),
+            .setPlayerListener(new OrientationTestPlayerListener(3000)).build(),
             "Avc_360x640_5sec_OrientationTest"},
         {CujTestParam.builder().setMediaUrls(prepareHevc_480p_15secVideoListForScrollTest())
             .setTimeoutMilliSeconds(90000)
-            .setPlayerListener(PlayerListener.createListenerForScrollTest(2, 5000)).build(),
+            .setPlayerListener(new ScrollTestPlayerListener(2, 5000)).build(),
             "Avc_360x640_15sec_ScrollTest"},
         {CujTestParam.builder().setMediaUrls(prepare_Aac_2ch_44khz_Aac_1ch_44khz_5secVideoList())
             .setTimeoutMilliSeconds(45000)
-            .setPlayerListener(
-                PlayerListener.createListenerForSwitchAudioTracksTest(2, 3000)).build(),
+            .setPlayerListener(new SwitchAudioTrackTestPlayerListener(2, 3000)).build(),
             "Aac_2ch_44kHz_Aac_1ch_44kHz_5sec_SwitchAudioTracksTest"},
         {CujTestParam.builder().setMediaUrls(prepare_Srt_Subtitles_Eng_French_5secVideoList())
             .setTimeoutMilliSeconds(45000)
-            .setPlayerListener(
-                PlayerListener.createListenerForSwitchSubtitleTracksTest(2, 3000)).build(),
+            .setPlayerListener(new SwitchSubtitleTrackTestPlayerListener(2, 3000)).build(),
             "Srt_Subtitle_eng_french_5sec_SwitchSubtitleTracksTest"},
         {CujTestParam.builder().setMediaUrls(prepare_Ssa_Subtitles_Eng_French_5secVideoList())
             .setTimeoutMilliSeconds(45000)
-            .setPlayerListener(
-                PlayerListener.createListenerForSwitchSubtitleTracksTest(2, 3000)).build(),
+            .setPlayerListener(new SwitchSubtitleTrackTestPlayerListener(2, 3000)).build(),
             "Ssa_Subtitle_eng_french_5sec_SwitchSubtitleTracksTest"},
         {CujTestParam.builder().setMediaUrls(prepareHevc_720p_15secVideoListForNotificationTest())
             .setTimeoutMilliSeconds(52000)
-            .setPlayerListener(
-                PlayerListener.createListenerForCallNotificationTest(4000)).build(),
+            .setPlayerListener(new CallNotificationTestPlayerListener(4000)).build(),
             "Hevc_720p_15sec_CallNotificationTest"},
         {CujTestParam.builder().setMediaUrls(prepareHevc_720p_15secVideoListForNotificationTest())
             .setTimeoutMilliSeconds(45000)
-            .setPlayerListener(
-                PlayerListener.createListenerForMessageNotificationTest(4000)).build(),
+            .setPlayerListener(new MessageNotificationTestPlayerListener(4000)).build(),
             "Hevc_720p_15sec_MessageNotificationTest"},
         {CujTestParam.builder().setMediaUrls(prepareHevc_720p_15secVideoListForPinchToZoomTest())
             .setTimeoutMilliSeconds(45000)
-            .setPlayerListener(PlayerListener.createListenerForPinchToZoomTest(3000)).build(),
+            .setPlayerListener(new PinchToZoomTestPlayerListener(3000)).build(),
             "Hevc_720p_15sec_PinchToZoomTest"},
     }));
     return exhaustiveArgsList;
