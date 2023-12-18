@@ -17,7 +17,6 @@
 package android.media.audio.cts;
 
 import android.media.audiofx.HapticGenerator;
-import android.media.cts.PostProcTestBase;
 import android.platform.test.annotations.AppModeSdkSandbox;
 
 import com.android.compatibility.common.util.NonMainlineTest;
