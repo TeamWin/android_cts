@@ -22,7 +22,9 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.GameManager;
@@ -31,6 +33,7 @@ import android.app.GameModeInfo;
 import android.app.GameState;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 
@@ -85,6 +88,9 @@ public class GameManagerTest {
 
     private static final String GAME_TEST_APP_ACTIVITY_NAME = ".GameTestAppMainActivity";
 
+    private static final String PROPERTY_RO_SURFACEFLINGER_GAME_DEFAULT_FRAME_RATE =
+            "ro.surface_flinger.game_default_frame_rate_override";
+
     private static final int TEST_LABEL = 1;
     private static final int TEST_QUALITY = 2;
 
@@ -122,6 +128,26 @@ public class GameManagerTest {
         TestUtil.uninstallPackage(GAME_TEST_APP_WITH_BATTERY_PACKAGE_NAME);
         TestUtil.uninstallPackage(GAME_TEST_APP_WITH_PERFORMANCE_PACKAGE_NAME);
         TestUtil.uninstallPackage(GAME_TEST_APP_WITH_TIRAMISU_TARGET_PACKAGE_NAME);
+    }
+
+    protected void assumeMobileDeviceFormFactor() {
+        final PackageManager pm = mContext.getPackageManager();
+        assumeFalse(pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+        assumeFalse(pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)); // TVs
+        assumeFalse(pm.hasSystemFeature(PackageManager.FEATURE_WATCH));
+        assumeFalse(pm.hasSystemFeature(PackageManager.FEATURE_EMBEDDED));
+    }
+
+    @Test
+    public void testIsGameDefaultFrameRatePropSet() throws NumberFormatException {
+        // Verify that "ro.surface_flinger.game_default_frame_rate_override"
+        // is set with a positive integer.
+
+        assumeMobileDeviceFormFactor();
+        Integer gameDefaultFrameRate = Integer.valueOf(runShellCommand("getprop "
+                + PROPERTY_RO_SURFACEFLINGER_GAME_DEFAULT_FRAME_RATE));
+        assertNotNull(gameDefaultFrameRate);
+        assertTrue(gameDefaultFrameRate >= 0);
     }
 
     @Test
