@@ -27,8 +27,8 @@ import android.content.pm.ResolveInfo;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
-import android.test.suitebuilder.annotation.MediumTest;
 
+import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;

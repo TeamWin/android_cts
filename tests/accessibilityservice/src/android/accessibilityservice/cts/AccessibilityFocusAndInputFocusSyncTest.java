@@ -42,13 +42,13 @@ import android.graphics.Point;
 import android.os.Environment;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
-import android.test.suitebuilder.annotation.MediumTest;
 import android.view.Display;
 import android.view.View;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
