@@ -24,6 +24,7 @@ android_test {
         "cts",
         "general-tests",
         "mts-statsd",
+        "mcts-statsd",
     ],
     libs: ["android.test.runner"],
     static_libs: [
