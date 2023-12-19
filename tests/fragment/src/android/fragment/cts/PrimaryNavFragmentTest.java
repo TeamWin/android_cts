@@ -23,8 +23,8 @@ import static android.fragment.cts.FragmentTestUtil.popBackStackImmediate;
 import static junit.framework.TestCase.*;
 
 import android.app.FragmentManager;
-import android.test.suitebuilder.annotation.MediumTest;
 
+import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
