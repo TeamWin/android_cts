@@ -41,7 +41,6 @@ import android.os.ConditionVariable;
 import android.os.SystemClock;
 import android.os.UserManager;
 import android.provider.Settings;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.view.Display;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -51,6 +50,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.core.app.ActivityScenario;
+import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
