@@ -154,6 +154,7 @@ android_test {
         "cts",
         "general-tests",
         "mts-documentsui",
+        "mcts-documentsui",
     ],
     min_sdk_version: "29",
     replace_max_sdk_version_placeholder: "current",
