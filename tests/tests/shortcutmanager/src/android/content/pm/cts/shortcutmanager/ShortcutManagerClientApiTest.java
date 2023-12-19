@@ -34,7 +34,8 @@ import android.content.pm.ShortcutManager;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
-import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.CddTest;
 

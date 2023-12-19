@@ -21,9 +21,12 @@ import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils
 
 import android.content.pm.ShortcutManager;
 import android.test.MoreAsserts;
-import android.test.suitebuilder.annotation.SmallTest;
-import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
+
+import androidx.test.filters.SmallTest;
+import androidx.test.filters.Suppress;
+
+import com.android.compatibility.common.util.CddTest;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -32,8 +35,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-
-import com.android.compatibility.common.util.CddTest;
 
 @CddTest(requirement="3.8.1/C-4-1")
 @SmallTest

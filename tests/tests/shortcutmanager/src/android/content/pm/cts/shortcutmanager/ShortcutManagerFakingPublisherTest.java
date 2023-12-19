@@ -25,9 +25,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ShortcutInfo;
 import android.platform.test.annotations.AsbSecurityTest;
-import android.test.suitebuilder.annotation.SmallTest;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
 
 /**
  * CTS for b/109824443.

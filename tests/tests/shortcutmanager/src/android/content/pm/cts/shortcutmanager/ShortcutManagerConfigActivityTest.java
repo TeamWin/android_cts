@@ -29,7 +29,8 @@ import android.content.IntentSender;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps.PinItemRequest;
 import android.content.pm.ShortcutInfo;
-import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.filters.SmallTest;
 
 import java.util.concurrent.atomic.AtomicReference;
 

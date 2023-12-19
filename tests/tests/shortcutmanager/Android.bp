@@ -221,6 +221,7 @@ android_test_helper_app {
     srcs: ["throttling/src/**/*.java"],
     min_sdk_version: "25",
     manifest: "throttling/AndroidManifest.xml",
+    static_libs: ["androidx.test.rules"],
 }
 
 java_library {
