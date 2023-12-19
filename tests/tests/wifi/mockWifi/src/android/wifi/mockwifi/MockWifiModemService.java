@@ -23,6 +23,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 import android.wifi.mockwifi.nl80211.IClientInterfaceImp;
+import android.wifi.mockwifi.nl80211.IWifiScannerImp;
 import android.wifi.mockwifi.nl80211.WifiNL80211ManagerImp;
 
 import java.util.concurrent.CountDownLatch;
@@ -121,12 +122,27 @@ public class MockWifiModemService extends Service {
         return complete;
     }
 
+    /**
+     * Configures a mock client interface.
+     */
     public boolean configureClientInterfaceMock(String ifaceName,
             IClientInterfaceImp.ClientInterfaceMock clientInterfaceMock) {
         if (sWifiNL80211ManagerImp == null) {
             return false;
         }
         return sWifiNL80211ManagerImp.configureClientInterfaceMock(ifaceName, clientInterfaceMock);
+    }
+
+    /**
+     * Configures a mock Wifi scanner interface.
+     */
+    public boolean configureWifiScannerInterfaceMock(String ifaceName,
+            IWifiScannerImp.WifiScannerInterfaceMock wifiScannerInterfaceMock) {
+        if (sWifiNL80211ManagerImp == null) {
+            return false;
+        }
+        return sWifiNL80211ManagerImp.configureWifiScannerInterfaceMock(ifaceName,
+                wifiScannerInterfaceMock);
     }
 
     /**
