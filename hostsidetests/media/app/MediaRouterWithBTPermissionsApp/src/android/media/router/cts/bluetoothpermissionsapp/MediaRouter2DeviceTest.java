@@ -61,6 +61,7 @@ import android.platform.test.annotations.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.media.flags.Flags;
 
 import com.google.common.truth.Correspondence;
 import com.google.common.truth.Truth;
@@ -95,6 +96,12 @@ public class MediaRouter2DeviceTest {
 
     private static final Correspondence<MediaRoute2Info, String> ROUTE_HAS_ORIGINAL_ID =
             Correspondence.transforming(MediaRoute2Info::getOriginalId, "has original id");
+
+    // TODO: b/316864909 - Stop relying on route ids once we can control system routing in CTS.
+    private static final String ROUTE_ID_BUILTIN_SPEAKER =
+            Flags.enableAudioPoliciesDeviceAndBluetoothController()
+                    ? "ROUTE_ID_BUILTIN_SPEAKER"
+                    : MediaRoute2Info.ROUTE_ID_DEVICE;
 
     private MediaRouter2 mRouter2;
     private MediaRouter2Manager mRouter2Manager;
@@ -367,10 +374,9 @@ public class MediaRouter2DeviceTest {
         assertThat(
                         waitForAndGetRoutes(
                                         SYSTEM_ROUTE_DISCOVERY_PREFERENCE,
-                                        /* expectedRouteIds= */ Set.of(
-                                                MediaRoute2Info.ROUTE_ID_DEVICE))
+                                        /* expectedRouteIds= */ Set.of(ROUTE_ID_BUILTIN_SPEAKER))
                                 .keySet())
-                .containsExactly(MediaRoute2Info.ROUTE_ID_DEVICE);
+                .containsExactly(ROUTE_ID_BUILTIN_SPEAKER);
     }
 
     @Test
@@ -386,7 +392,7 @@ public class MediaRouter2DeviceTest {
         MediaRouter2.RoutingController systemController = mRouter2.getSystemController();
         assertThat(systemController.getSelectedRoutes())
                 .comparingElementsUsing(ROUTE_HAS_ORIGINAL_ID)
-                .containsExactly(MediaRoute2Info.ROUTE_ID_DEVICE);
+                .containsExactly(ROUTE_ID_BUILTIN_SPEAKER);
     }
 
     @Test

@@ -19,7 +19,6 @@ package android.media.audio.cts;
 import android.media.AudioFormat;
 import android.media.audiofx.AudioEffect;
 import android.media.audiofx.Virtualizer;
-import android.media.cts.PostProcTestBase;
 import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;

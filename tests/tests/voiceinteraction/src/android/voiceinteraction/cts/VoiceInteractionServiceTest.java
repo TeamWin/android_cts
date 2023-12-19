@@ -147,9 +147,10 @@ public class VoiceInteractionServiceTest extends AbstractHdsTestCase {
             mService.showSession(args, flags);
 
             // Wait the VoiceInteractionSessionService onNewSession called
-            if (!latch.await(Utils.OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+            final long timeoutMs = Utils.getAdjustedOperationTimeoutMs();
+            if (!latch.await(timeoutMs, TimeUnit.MILLISECONDS)) {
                 throw new TimeoutException(
-                        "result not received in " + Utils.OPERATION_TIMEOUT_MS + "ms");
+                        "result not received in " + timeoutMs + "ms");
             }
 
             // Wait target Activity can be started by startAssistantActivity

@@ -22,10 +22,7 @@ import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static org.junit.Assert.fail;
 
 import android.app.ActivityOptions;
-import android.app.KeyguardManager;
 import android.companion.virtual.VirtualDeviceManager;
-import android.content.Context;
-import android.graphics.Point;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.input.InputManager;
@@ -33,21 +30,14 @@ import android.hardware.input.cts.virtualcreators.VirtualDeviceCreator;
 import android.hardware.input.cts.virtualcreators.VirtualDisplayCreator;
 import android.hardware.input.cts.virtualcreators.VirtualInputDeviceCreator;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.server.wm.WakeUpAndUnlockRule;
 import android.server.wm.WindowManagerStateHelper;
-import android.view.MotionEvent;
-import android.view.View;
 import android.virtualdevice.cts.common.FakeAssociationRule;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
-import com.android.cts.input.DebugInputRule;
-
-import com.google.common.collect.ImmutableList;
 
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
@@ -106,8 +96,6 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
         WindowManagerStateHelper windowManagerStateHelper = new WindowManagerStateHelper();
         windowManagerStateHelper.waitForAppTransitionIdleOnDisplay(mTestActivity.getDisplayId());
         mInstrumentation.getUiAutomation().syncInputTransactions();
-        // Tap to gain window focus on the activity
-        tapActivityToFocus();
     }
 
     abstract void onSetUpVirtualInputDevice();
@@ -137,41 +125,6 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
         return ActivityOptions.makeBasic()
                 .setLaunchDisplayId(mVirtualDisplay.getDisplay().getDisplayId())
                 .toBundle();
-    }
-
-    void tapActivityToFocus() {
-        final Point p = getViewCenterOnScreen(mTestActivity.getWindow().getDecorView());
-        final int displayId = mTestActivity.getDisplayId();
-
-        final long downTime = SystemClock.elapsedRealtime();
-        final MotionEvent downEvent = MotionEvent.obtain(downTime, downTime,
-                MotionEvent.ACTION_DOWN, p.x, p.y, 0 /* metaState */);
-        downEvent.setDisplayId(displayId);
-        final MotionEvent upEvent = MotionEvent.obtain(downTime, SystemClock.elapsedRealtime(),
-                MotionEvent.ACTION_UP, p.x, p.y, 0 /* metaState */);
-        upEvent.setDisplayId(displayId);
-
-        try {
-            mInstrumentation.sendPointerSync(downEvent);
-            mInstrumentation.sendPointerSync(upEvent);
-        } catch (IllegalArgumentException e) {
-            DebugInputRule.dumpInputStateToLogcat();
-            final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-            final KeyguardManager keyguardManager = context.getSystemService(KeyguardManager.class);
-            fail("Failed to send taps to the activity. Device is "
-                    + (keyguardManager != null && keyguardManager.isKeyguardLocked()
-                    ? "locked" : "unlocked")
-                    + ". Getting exception " + e);
-        }
-
-        verifyEvents(ImmutableList.of(downEvent, upEvent));
-    }
-
-    private static Point getViewCenterOnScreen(@NonNull View view) {
-        final int[] location = new int[2];
-        view.getLocationOnScreen(location);
-        return new Point(location[0] + view.getWidth() / 2,
-                location[1] + view.getHeight() / 2);
     }
 
     protected void runWithPermission(Runnable runnable, String... permissions) {

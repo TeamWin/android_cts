@@ -43,11 +43,13 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.NetworkRequest;
+import android.net.wifi.OuiKeyedData;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pDiscoveryConfig;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pGroupList;
 import android.net.wifi.p2p.WifiP2pInfo;
@@ -60,8 +62,10 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerExecutor;
 import android.os.HandlerThread;
+import android.os.PersistableBundle;
 import android.os.WorkSource;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -72,6 +76,7 @@ import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.wifi.flags.Flags;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -161,6 +166,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
     private static final int TIMEOUT_MS = 15000;
     private static final int WAIT_MS = 100;
     private static final int DURATION = 5000;
+    private static final int TEST_OUI = 0x00C82ADD; // Google OUI
     private static final BroadcastReceiver RECEIVER = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -868,7 +874,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         assertTrue(MY_RESPONSE.success);
     }
 
-    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#discoverPeersOnSpecificFrequency"})
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#discoverPeers"})
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     @Test
     public void testDiscoverPeersOnSpecificFreq() {
@@ -956,6 +962,94 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         while (retryCount > 0) {
             resetResponse(MY_RESPONSE);
             sWifiP2pManager.discoverPeersOnSocialChannels(sWifiP2pChannel, sActionListener);
+            assertTrue(waitForServiceResponse(MY_RESPONSE));
+            if (MY_RESPONSE.success
+                    || MY_RESPONSE.failureReason != WifiP2pManager.BUSY) {
+                break;
+            }
+            Log.w(TAG, "Discovery is blocked, try again!");
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ex) { }
+            retryCount--;
+        }
+        assertTrue(MY_RESPONSE.success);
+        assertTrue(waitForBroadcasts(MySync.DISCOVERY_STATE));
+
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.requestDiscoveryState(sWifiP2pChannel,
+                new WifiP2pManager.DiscoveryStateListener() {
+                    @Override
+                    public void onDiscoveryStateAvailable(int state) {
+                        synchronized (MY_RESPONSE) {
+                            MY_RESPONSE.valid = true;
+                            MY_RESPONSE.discoveryState = state;
+                            MY_RESPONSE.notify();
+                        }
+                    }
+                });
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED, MY_RESPONSE.discoveryState);
+
+        sWifiP2pManager.stopPeerDiscovery(sWifiP2pChannel, null);
+    }
+
+    private static OuiKeyedData createTestOuiKeyedData(int oui) {
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putString("stringFieldKey", "stringData");
+        bundle.putInt("intFieldKey", 789);
+        return new OuiKeyedData.Builder(oui, bundle).build();
+    }
+
+    private static List<OuiKeyedData> createTestOuiKeyedDataList(int size) {
+        List<OuiKeyedData> ouiKeyedDataList = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            ouiKeyedDataList.add(createTestOuiKeyedData(TEST_OUI));
+        }
+        return ouiKeyedDataList;
+    }
+
+    /**
+     * Test that we can trigger a P2P scan using
+     * {@link WifiP2pManager#discoverPeers(
+     * WifiP2pManager.Channel, WifiP2pDiscoveryConfig, WifiP2pManager.ActionListener)}
+     */
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#discoverPeersWithConfigParams"})
+    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    @Test
+    public void testDiscoverPeers() {
+        if (!sWifiP2pManager.isChannelConstrainedDiscoverySupported()) return;
+
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.requestDiscoveryState(
+                sWifiP2pChannel, new WifiP2pManager.DiscoveryStateListener() {
+                    @Override
+                    public void onDiscoveryStateAvailable(int state) {
+                        synchronized (MY_RESPONSE) {
+                            MY_RESPONSE.valid = true;
+                            MY_RESPONSE.discoveryState = state;
+                            MY_RESPONSE.notify();
+                        }
+                    }
+                });
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED, MY_RESPONSE.discoveryState);
+
+        WifiP2pDiscoveryConfig discoveryConfig = new WifiP2pDiscoveryConfig.Builder(
+                WifiP2pManager.WIFI_P2P_SCAN_SINGLE_FREQ)
+                .setFrequencyMhz(2412)
+                .setVendorData(createTestOuiKeyedDataList(5))
+                .build();
+
+        // If there is any saved network and this device is connecting to this saved network,
+        // p2p discovery might be blocked during DHCP provision.
+        int retryCount = 3;
+        while (retryCount > 0) {
+            resetResponse(MY_RESPONSE);
+            sWifiP2pManager.discoverPeers(sWifiP2pChannel,
+                    discoveryConfig, sActionListener);
             assertTrue(waitForServiceResponse(MY_RESPONSE));
             if (MY_RESPONSE.success
                     || MY_RESPONSE.failureReason != WifiP2pManager.BUSY) {
@@ -1186,5 +1280,41 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         assertEquals(WpsInfo.INVALID, infoCopy.setup);
         assertNull(infoCopy.BSSID);
         assertNull(infoCopy.pin);
+    }
+
+    /**
+     * Tests that we can properly get/set fields in {@link WifiP2pDiscoveryConfig}.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @Test
+    public void testWifiP2pDiscoveryConfig() {
+        int scanType = WifiP2pManager.WIFI_P2P_SCAN_SINGLE_FREQ;
+        int frequencyMhz = 2600;
+        WifiP2pDiscoveryConfig config = new WifiP2pDiscoveryConfig.Builder(scanType)
+                .setFrequencyMhz(frequencyMhz)
+                .build();
+        assertEquals(scanType, config.getScanType());
+        assertEquals(frequencyMhz, config.getFrequencyMhz());
+    }
+
+    /**
+     * Tests that we can properly get/set fields in {@link WifiP2pDiscoveryConfig},
+     * including the Vendor Data.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    @Test
+    public void testWifiP2pDiscoveryConfigWithVendorData() {
+        int scanType = WifiP2pManager.WIFI_P2P_SCAN_SINGLE_FREQ;
+        int frequencyMhz = 2600;
+        List<OuiKeyedData> vendorData = createTestOuiKeyedDataList(5);
+        WifiP2pDiscoveryConfig config = new WifiP2pDiscoveryConfig.Builder(scanType)
+                .setFrequencyMhz(frequencyMhz)
+                .setVendorData(vendorData)
+                .build();
+        assertEquals(scanType, config.getScanType());
+        assertEquals(frequencyMhz, config.getFrequencyMhz());
+        assertTrue(vendorData.equals(config.getVendorData()));
     }
 }

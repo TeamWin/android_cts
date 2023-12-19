@@ -210,13 +210,14 @@ public class VoiceInteractionSessionVisibleActivityTest extends AbstractVoiceInt
                 break;
         }
 
+        final long timeoutMs = Utils.getAdjustedOperationTimeoutMs();
         final Intent onVisibleIntent = onVisibleReceiver.awaitForBroadcast(
-                Utils.OPERATION_TIMEOUT_MS);
+                timeoutMs);
         Log.v(TAG, "onVisibleIntent : " + onVisibleIntent);
         onVisibleReceiver.unregisterQuietly();
 
         final Intent onInvisibleIntent = onInvisibleReceiver.awaitForBroadcast(
-                Utils.OPERATION_TIMEOUT_MS);
+                timeoutMs);
         Log.v(TAG, "onInvisibleIntent : " + onVisibleIntent);
         onInvisibleReceiver.unregisterQuietly();
 
@@ -240,7 +241,8 @@ public class VoiceInteractionSessionVisibleActivityTest extends AbstractVoiceInt
                 Utils.VISIBLE_ACTIVITY_CALLBACK_REGISTER_NORMAL);
 
         // Verify if the VisibleActivityCallback.onVisible has been called.
-        Intent intent = receiver.awaitForBroadcast(Utils.OPERATION_TIMEOUT_MS);
+        final long timeoutMs = Utils.getAdjustedOperationTimeoutMs();
+        Intent intent = receiver.awaitForBroadcast(timeoutMs);
         receiver.unregisterQuietly();
 
         assertThat(intent).isNotNull();
@@ -317,9 +319,10 @@ public class VoiceInteractionSessionVisibleActivityTest extends AbstractVoiceInt
             Log.v(TAG, "startActivity: " + intent);
             mContext.startActivity(intent);
 
-            if (!latch.await(Utils.OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+            final long timeoutMs = Utils.getAdjustedOperationTimeoutMs();
+            if (!latch.await(timeoutMs, TimeUnit.MILLISECONDS)) {
                 throw new TimeoutException(
-                        "activity not started in " + Utils.OPERATION_TIMEOUT_MS + "ms");
+                        "activity not started in " + timeoutMs + "ms");
             }
         }
 
@@ -354,9 +357,10 @@ public class VoiceInteractionSessionVisibleActivityTest extends AbstractVoiceInt
                 mControl.sendResult(command);
             }
 
-            if (!latch.await(Utils.OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+            final long timeoutMs = Utils.getAdjustedOperationTimeoutMs();
+            if (!latch.await(timeoutMs, TimeUnit.MILLISECONDS)) {
                 throw new TimeoutException(
-                        "result not received in " + Utils.OPERATION_TIMEOUT_MS + "ms");
+                        "result not received in " + timeoutMs + "ms");
             }
             return result;
         }

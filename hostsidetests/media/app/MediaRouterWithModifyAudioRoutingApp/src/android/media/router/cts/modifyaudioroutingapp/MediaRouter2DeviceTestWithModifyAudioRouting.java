@@ -31,6 +31,8 @@ import android.platform.test.annotations.LargeTest;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.media.flags.Flags;
+
 import com.google.common.truth.Correspondence;
 
 import org.junit.Before;
@@ -42,6 +44,12 @@ import java.util.concurrent.Executors;
 /** Device-side test for {@link MediaRouter2} functionality. */
 @LargeTest
 public class MediaRouter2DeviceTestWithModifyAudioRouting {
+
+    // TODO: b/316864909 - Stop relying on route ids once we can control system routing in CTS.
+    private static final String ROUTE_ID_BUILTIN_SPEAKER =
+            Flags.enableAudioPoliciesDeviceAndBluetoothController()
+                    ? "ROUTE_ID_BUILTIN_SPEAKER"
+                    : MediaRoute2Info.ROUTE_ID_DEVICE;
 
     /** {@link RouteDiscoveryPreference} for system routes only. */
     private static final RouteDiscoveryPreference SYSTEM_ROUTE_DISCOVERY_PREFERENCE =
@@ -82,7 +90,7 @@ public class MediaRouter2DeviceTestWithModifyAudioRouting {
         MediaRouter2.RoutingController systemController = mediaRouter2.getSystemController();
         assertThat(systemController.getSelectedRoutes())
                 .comparingElementsUsing(ROUTE_HAS_ORIGINAL_ID)
-                .containsExactly(MediaRoute2Info.ROUTE_ID_DEVICE);
+                .containsExactly(ROUTE_ID_BUILTIN_SPEAKER);
     }
 
     @Test
@@ -105,7 +113,7 @@ public class MediaRouter2DeviceTestWithModifyAudioRouting {
 
             assertThat(mediaRouter2.getRoutes())
                     .comparingElementsUsing(ROUTE_HAS_ORIGINAL_ID)
-                    .containsExactly(MediaRoute2Info.ROUTE_ID_DEVICE);
+                    .containsExactly(ROUTE_ID_BUILTIN_SPEAKER);
         } finally {
             mediaRouter2.unregisterRouteCallback(mPlaceholderRouteCallback);
         }

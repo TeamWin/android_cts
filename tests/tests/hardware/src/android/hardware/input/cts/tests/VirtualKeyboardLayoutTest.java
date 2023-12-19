@@ -54,8 +54,6 @@ public class VirtualKeyboardLayoutTest extends VirtualDeviceTestCase {
         mInputDeviceListener = createInputDeviceListener();
         mInputManager.registerInputDeviceListener(
                 mInputDeviceListener, new Handler(Looper.getMainLooper()));
-        // Tap to gain window focus on the activity
-        tapActivityToFocus();
     }
 
     @Override
