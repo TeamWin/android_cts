@@ -24,6 +24,7 @@ import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ComposeShader;
+import android.graphics.Matrix44;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Picture;
@@ -34,6 +35,9 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.graphics.Shader;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
@@ -42,6 +46,9 @@ import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
 
+import com.android.graphics.hwui.flags.Flags;
+
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -55,6 +62,10 @@ public class CanvasTests extends ActivityTestBase {
     private static final int PAINT_COLOR = 0xff00ff00;
     private static final int BITMAP_WIDTH = 10;
     private static final int BITMAP_HEIGHT = 28;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private Paint getPaint() {
         Paint paint = new Paint();
@@ -170,6 +181,48 @@ public class CanvasTests extends ActivityTestBase {
                             3.0f, 3.0f
                     };
                     canvas.drawDoubleRoundRect(outer, outerRadii, inner, innerRadii, paint);
+                })
+                .runWithVerifier(new SamplePointVerifier(testPoints, colors));
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_MATRIX_44)
+    @Test
+    public void testDrawWithConcatenatedMatrix44() {
+        Point[] testPoints = {
+                new Point(0, 0),
+                new Point(45, 45),
+                new Point(45, 30),
+                new Point(45, 60),
+                new Point(20, 45),
+                new Point(60, 30),
+                new Point(60, 60)
+
+        };
+        int[] colors = {
+                Color.WHITE,
+                Color.RED,
+                Color.RED,
+                Color.RED,
+                Color.RED,
+                Color.WHITE,
+                Color.WHITE
+        };
+        createTest()
+                .addCanvasClient((canvas, width, height) -> {
+                    canvas.drawColor(Color.WHITE);
+
+                    Paint paint = new Paint();
+                    paint.setColor(Color.RED);
+                    paint.setStyle(Paint.Style.FILL);
+
+                    Matrix44 mat = new Matrix44();
+                    // column vector operations are read backwards, so the rect should be centered
+                    mat.translate((float) width / 2, (float) height / 2, 0)
+                            .rotate(45, 1, 0, 0)
+                            .scale(2, 2, 0)
+                            .rotate(45, 0, 0, 1);
+                    canvas.concat44(mat);
+                    canvas.drawRect(-10, -10, 10, 10, paint);
                 })
                 .runWithVerifier(new SamplePointVerifier(testPoints, colors));
     }
