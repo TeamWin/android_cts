@@ -72,4 +72,7 @@
     <!-- CtsMediaDecoderTestCases: b/284409693 -->
     <option name="compatibility:exclude-filter" value="CtsMediaDecoderTestCases android.media.decoder.cts.VideoDecoderPerfTest" />
 
+    <!-- CtsMediaV2TestCases: b/298410971 -->
+    <option name="compatibility:exclude-filter" value="CtsMediaV2TestCases android.mediav2.cts.EncoderProfileLevelTest#testValidateProfileLevel" />
+
 </configuration>

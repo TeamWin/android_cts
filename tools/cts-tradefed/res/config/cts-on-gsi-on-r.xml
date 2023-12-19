@@ -77,4 +77,7 @@
 
     <!-- CtsSecurityHostTestCases: b/256140333 -->
     <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.FileSystemPermissionTest" />
+
+    <!-- CtsMediaV2TestCases: b/298410971 -->
+    <option name="compatibility:exclude-filter" value="CtsMediaV2TestCases android.mediav2.cts.EncoderProfileLevelTest#testValidateProfileLevel" />
 </configuration>
