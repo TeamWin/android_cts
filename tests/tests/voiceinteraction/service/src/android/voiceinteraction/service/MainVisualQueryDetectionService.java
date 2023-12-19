@@ -75,6 +75,7 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
     public static final int SCENARIO_ATTENTION_DOUBLE_QUERY_FINISHED_LEAVE = 4;
     public static final int SCENARIO_QUERY_NO_ATTENTION = 5;
     public static final int SCENARIO_QUERY_NO_QUERY_FINISH = 6;
+    public static final int SCENARIO_MULTIPLE_QUERIES_FINISHED = 7;
     public static final int SCENARIO_READ_FILE_MMAP_READ_ONLY = 100;
     public static final int SCENARIO_READ_FILE_MMAP_WRITE = 101;
     public static final int SCENARIO_READ_FILE_MMAP_MULTIPLE = 102;
@@ -250,6 +251,19 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
             detectionJob = () -> {
                 gainedAttention();
                 finishQuery();
+                lostAttention();
+            };
+        } else if (scenario == SCENARIO_MULTIPLE_QUERIES_FINISHED) {
+            detectionJob = () -> {
+                gainedAttention();
+                for (int i = 0; i < Utils.NUM_TEST_QUERY_SESSION_MULTIPLE; i++) {
+                    if ((i & 1) == 0) {
+                        streamQuery(FAKE_QUERY_FIRST);
+                    } else {
+                        streamQuery(FAKE_QUERY_SECOND);
+                    }
+                    finishQuery();
+                }
                 lostAttention();
             };
         } else if (scenario == SCENARIO_READ_FILE_MMAP_READ_ONLY

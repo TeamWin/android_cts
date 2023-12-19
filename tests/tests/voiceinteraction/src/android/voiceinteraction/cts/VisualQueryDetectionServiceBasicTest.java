@@ -374,6 +374,47 @@ public class VisualQueryDetectionServiceBasicTest {
 
     @Test
     @RequiresDevice
+    public void testVisualQueryDetectionService_startRecogintion_multipleQueryStreamFinish()
+            throws Throwable {
+        // Create VisualQueryDetector
+        VisualQueryDetector visualQueryDetector = createVisualQueryDetector();
+        runWithShellPermissionIdentity(() -> {
+            PersistableBundle options = Helper.createFakePersistableBundleData();
+            options.putInt(MainVisualQueryDetectionService.KEY_VQDS_TEST_SCENARIO,
+                    MainVisualQueryDetectionService.SCENARIO_MULTIPLE_QUERIES_FINISHED);
+            visualQueryDetector.updateState(options, Helper.createFakeSharedMemoryData());
+        });
+        try {
+            adoptShellPermissionIdentityForVisualQueryDetection();
+
+            mService.initQueryFinishRejectLatch(Utils.NUM_TEST_QUERY_SESSION_MULTIPLE);
+            visualQueryDetector.startRecognition();
+
+            // wait onStartDetection() called and verify the result
+            mService.waitOnQueryFinishedRejectCalled();
+
+            // verify results
+            ArrayList<String> streamedQueries = mService.getStreamedQueriesResult();
+            assertThat(streamedQueries.size()).isEqualTo(Utils.NUM_TEST_QUERY_SESSION_MULTIPLE);
+            for (int i = 0; i < Utils.NUM_TEST_QUERY_SESSION_MULTIPLE; i++) {
+                if ((i & 1) == 0) {
+                    assertThat(streamedQueries.get(i)).isEqualTo(
+                            MainVisualQueryDetectionService.FAKE_QUERY_FIRST);
+                } else {
+                    assertThat(streamedQueries.get(i)).isEqualTo(
+                            MainVisualQueryDetectionService.FAKE_QUERY_SECOND);
+                }
+            }
+        } finally {
+            visualQueryDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresDevice
     public void testVisualQueryDetectionService_startRecogintion_noAttention()
             throws Throwable {
         // Create VisualQueryDetector
@@ -512,7 +553,7 @@ public class VisualQueryDetectionServiceBasicTest {
     }
 
     @Test
-    public void testVisualQueryDetectionService_openFilNotExist_failure() throws Throwable {
+    public void testVisualQueryDetectionService_openFileNotExist_failure() throws Throwable {
         VisualQueryDetector visualQueryDetector = createVisualQueryDetector();
         runWithShellPermissionIdentity(() -> {
             PersistableBundle options = Helper.createFakePersistableBundleData();
