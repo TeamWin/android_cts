@@ -32,13 +32,13 @@ import static org.junit.Assert.assertTrue;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.test.suitebuilder.annotation.LargeTest;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.cts.surfacevalidator.CapturedActivity;
 import android.view.cts.surfacevalidator.MultiFramePixelChecker;
 import android.view.cts.surfacevalidator.SurfaceControlTestCase;
 
+import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.UiObjectNotFoundException;
