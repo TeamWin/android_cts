@@ -19,6 +19,7 @@ package android.wifi.mockwifi;
 import android.content.Context;
 import android.util.Log;
 import android.wifi.mockwifi.nl80211.IClientInterfaceImp;
+import android.wifi.mockwifi.nl80211.IWifiScannerImp;
 
 import java.util.concurrent.TimeUnit;
 
@@ -116,4 +117,17 @@ public class MockWifiModemManager {
         }
         return mMockWifiModemService.configureClientInterfaceMock(ifaceName, clientInterfaceMock);
     }
+
+    /**
+     * Configures a mock Wifi scanner interface.
+     */
+    public boolean configureWifiScannerInterfaceMock(String ifaceName,
+            IWifiScannerImp.WifiScannerInterfaceMock wifiScannerInterfaceMock) {
+        if (mMockWifiModemService == null) {
+            return false;
+        }
+        return mMockWifiModemService.configureWifiScannerInterfaceMock(ifaceName,
+                wifiScannerInterfaceMock);
+    }
+
 }
