@@ -474,8 +474,10 @@ public class RemoteViewsFixedCollectionAdapterTest {
         assertTrue(adapter.hasStableIds());
 
         assertEquals(2, mListView.getChildCount());
-        TextView textView0 = (TextView) mListView.getChildAt(0);
-        TextView textView1 = (TextView) mListView.getChildAt(1);
+        AppWidgetHostView child0 = (AppWidgetHostView) mListView.getChildAt(0);
+        AppWidgetHostView child1 = (AppWidgetHostView) mListView.getChildAt(1);
+        TextView textView0 = (TextView) child0.getChildAt(0);
+        TextView textView1 = (TextView) child1.getChildAt(0);
         assertEquals("Hello", textView0.getText());
         assertEquals("World", textView1.getText());
     }
@@ -532,10 +534,13 @@ public class RemoteViewsFixedCollectionAdapterTest {
         assertTrue(adapter.hasStableIds());
 
         assertEquals(3, listView.getChildCount());
-        TextView textView0 = (TextView) listView.getChildAt(0);
-        TextView textView1 = (TextView) listView.getChildAt(1);
+        AppWidgetHostView child0 = (AppWidgetHostView) listView.getChildAt(0);
+        AppWidgetHostView child1 = (AppWidgetHostView) listView.getChildAt(1);
+        AppWidgetHostView child2 = (AppWidgetHostView) listView.getChildAt(2);
+        TextView textView0 = (TextView) child0.getChildAt(0);
+        TextView textView1 = (TextView) child1.getChildAt(0);
         CompoundButton checkBox2 =
-                (CompoundButton) ((ViewGroup) listView.getChildAt(2)).getChildAt(0);
+                (CompoundButton) ((ViewGroup) child2.getChildAt(0)).getChildAt(0);
         assertEquals("Hello", textView0.getText());
         assertEquals("World", textView1.getText());
         assertEquals("Checkbox", checkBox2.getText());
@@ -601,7 +606,8 @@ public class RemoteViewsFixedCollectionAdapterTest {
         runOnMainAndDrawSync(mActivityRule, listView, () -> mRemoteViews.reapply(mActivity, mView));
 
         Adapter initialAdapter = listView.getAdapter();
-        TextView initialFirstItemView = (TextView) listView.getChildAt(0);
+        AppWidgetHostView child0 = (AppWidgetHostView) listView.getChildAt(0);
+        TextView initialFirstItemView = (TextView) child0.getChildAt(0);
         int initialFirstItemViewType = initialAdapter.getItemViewType(0);
 
         items = new RemoteCollectionItems.Builder()
@@ -616,8 +622,9 @@ public class RemoteViewsFixedCollectionAdapterTest {
         // layoutId should have been maintained (as 0) and the next view type assigned to the
         // checkbox layout. The view for the row should have been recycled without inflating a new
         // view.
+        AppWidgetHostView child1 = (AppWidgetHostView) listView.getChildAt(1);
         assertSame(initialAdapter, listView.getAdapter());
-        assertSame(initialFirstItemView, listView.getChildAt(1));
+        assertSame(initialFirstItemView, child1.getChildAt(0));
         assertEquals(initialFirstItemViewType, listView.getAdapter().getItemViewType(1));
         assertNotEquals(initialFirstItemViewType, listView.getAdapter().getItemViewType(0));
     }
@@ -634,7 +641,8 @@ public class RemoteViewsFixedCollectionAdapterTest {
         runOnMainAndDrawSync(mActivityRule, listView, () -> mRemoteViews.reapply(mActivity, mView));
 
         Adapter initialAdapter = listView.getAdapter();
-        TextView initialFirstItemView = (TextView) listView.getChildAt(0);
+        AppWidgetHostView child0 = (AppWidgetHostView) listView.getChildAt(0);
+        TextView initialFirstItemView = (TextView) child0.getChildAt(0);
 
         items = new RemoteCollectionItems.Builder()
                 .addItem(8 /* id= */, new RemoteViews(PACKAGE_NAME, R.layout.checkbox_layout))
@@ -644,9 +652,10 @@ public class RemoteViewsFixedCollectionAdapterTest {
         runOnMainAndDrawSync(mActivityRule, listView, () -> mRemoteViews.reapply(mActivity, mView));
 
         // The adapter should have been replaced, which is required when the view type increases.
+        AppWidgetHostView child1 = (AppWidgetHostView) listView.getChildAt(1);
         assertEquals(2, listView.getAdapter().getViewTypeCount());
         assertNotSame(initialAdapter, listView.getAdapter());
-        assertNotSame(initialFirstItemView, listView.getChildAt(1));
+        assertNotSame(initialFirstItemView, child1.getChildAt(0));
     }
 
     @Test
@@ -663,7 +672,8 @@ public class RemoteViewsFixedCollectionAdapterTest {
         runOnMainAndDrawSync(mActivityRule, listView, () -> mRemoteViews.reapply(mActivity, mView));
 
         Adapter initialAdapter = listView.getAdapter();
-        TextView initialSecondItemView = (TextView) listView.getChildAt(1);
+        AppWidgetHostView child1 = (AppWidgetHostView) listView.getChildAt(1);
+        TextView initialSecondItemView = (TextView) child1.getChildAt(0);
         assertEquals(1, initialAdapter.getItemViewType(1));
 
         items = new RemoteCollectionItems.Builder()
@@ -675,9 +685,10 @@ public class RemoteViewsFixedCollectionAdapterTest {
 
         // The adapter should have been kept, and the second item should have maintained its view
         // type of 1 even though its now the only view type.
+        AppWidgetHostView child0 = (AppWidgetHostView) listView.getChildAt(0);
         assertEquals(2, listView.getAdapter().getViewTypeCount());
         assertSame(initialAdapter, listView.getAdapter());
-        assertSame(initialSecondItemView, listView.getChildAt(0));
+        assertSame(initialSecondItemView, child0.getChildAt(0));
         assertEquals(1, listView.getAdapter().getItemViewType(0));
     }
 
@@ -694,7 +705,8 @@ public class RemoteViewsFixedCollectionAdapterTest {
         runOnMainAndDrawSync(mActivityRule, listView, () -> mRemoteViews.reapply(mActivity, mView));
 
         Adapter initialAdapter = listView.getAdapter();
-        TextView initialSecondItemView = (TextView) listView.getChildAt(1);
+        AppWidgetHostView child1 = (AppWidgetHostView) listView.getChildAt(1);
+        TextView initialSecondItemView = (TextView) child1.getChildAt(0);
         assertEquals(1, initialAdapter.getItemViewType(1));
 
         items = new RemoteCollectionItems.Builder()
@@ -705,9 +717,10 @@ public class RemoteViewsFixedCollectionAdapterTest {
 
         // The adapter should have been kept, and kept its higher view count to allow for views to
         // be recycled.
+        AppWidgetHostView child0 = (AppWidgetHostView) listView.getChildAt(0);
         assertEquals(2, listView.getAdapter().getViewTypeCount());
         assertSame(initialAdapter, listView.getAdapter());
-        assertSame(initialSecondItemView, listView.getChildAt(0));
+        assertSame(initialSecondItemView, child0.getChildAt(0));
         assertEquals(1, listView.getAdapter().getItemViewType(0));
     }
 
@@ -755,10 +768,14 @@ public class RemoteViewsFixedCollectionAdapterTest {
         assertEquals(13, adapter.getItemId(3));
 
         assertEquals(4, mGridView.getChildCount());
-        TextView textView0 = (TextView) mGridView.getChildAt(0);
-        TextView textView1 = (TextView) mGridView.getChildAt(1);
-        TextView textView2 = (TextView) mGridView.getChildAt(2);
-        TextView textView3 = (TextView) mGridView.getChildAt(3);
+        AppWidgetHostView child0 = (AppWidgetHostView) mGridView.getChildAt(0);
+        AppWidgetHostView child1 = (AppWidgetHostView) mGridView.getChildAt(1);
+        AppWidgetHostView child2 = (AppWidgetHostView) mGridView.getChildAt(2);
+        AppWidgetHostView child3 = (AppWidgetHostView) mGridView.getChildAt(3);
+        TextView textView0 = (TextView) child0.getChildAt(0);
+        TextView textView1 = (TextView) child1.getChildAt(0);
+        TextView textView2 = (TextView) child2.getChildAt(0);
+        TextView textView3 = (TextView) child3.getChildAt(0);
         assertEquals("Hello", textView0.getText());
         assertEquals("World", textView1.getText());
         assertEquals("Hola", textView2.getText());
