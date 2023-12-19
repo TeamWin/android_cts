@@ -15,6 +15,7 @@ java_test_helper_library {
         "cts",
         "general-tests",
         "sts",
+        "mcts-documentsui",
         "mts-documentsui"
     ],
     host_supported: true,
