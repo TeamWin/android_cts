@@ -30,6 +30,7 @@ android_test {
 
     static_libs: [
         "CtsVirtualDeviceCommonLib",
+        "junit-params",
     ],
 
     srcs: [

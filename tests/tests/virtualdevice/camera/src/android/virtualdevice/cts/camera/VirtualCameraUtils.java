@@ -29,17 +29,19 @@ import java.util.concurrent.Executor;
 public final class VirtualCameraUtils {
 
     static VirtualCameraConfig createVirtualCameraConfig(
-            int width, int height, int format, String name, Executor executor,
-            VirtualCameraCallback callback) {
+            int width, int height, int format, int maximumFramesPerSecond, int sensorOrientation,
+            String name, Executor executor, VirtualCameraCallback callback) {
         return new VirtualCameraConfig.Builder()
-                .addStreamConfig(width, height, format)
+                .addStreamConfig(width, height, format, maximumFramesPerSecond)
                 .setName(name)
                 .setVirtualCameraCallback(executor, callback)
+                .setSensorOrientation(sensorOrientation)
                 .build();
     }
 
     static void assertVirtualCameraConfig(VirtualCameraConfig config, int width, int height,
-            int format, String name) {
+            int format, int maximumFramesPerSecond, int sensorOrientation,
+            String name) {
         assertThat(config.getName()).isEqualTo(name);
         assertThat(config.getStreamConfigs()).hasSize(1);
         VirtualCameraStreamConfig streamConfig =
@@ -47,6 +49,8 @@ public final class VirtualCameraUtils {
         assertThat(streamConfig.getWidth()).isEqualTo(width);
         assertThat(streamConfig.getHeight()).isEqualTo(height);
         assertThat(streamConfig.getFormat()).isEqualTo(format);
+        assertThat(streamConfig.getMaximumFramesPerSecond()).isEqualTo(maximumFramesPerSecond);
+        assertThat(config.getSensorOrientation()).isEqualTo(sensorOrientation);
     }
 
     private VirtualCameraUtils() {}

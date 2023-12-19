@@ -45,7 +45,6 @@ import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.camera.VirtualCamera;
 import android.companion.virtual.camera.VirtualCameraCallback;
 import android.companion.virtual.camera.VirtualCameraConfig;
-import android.companion.virtual.camera.VirtualCameraStreamConfig;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -55,11 +54,13 @@ import android.graphics.ImageDecoder;
 import android.graphics.ImageFormat;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
+import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.SessionConfiguration;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.opengl.EGL14;
@@ -68,12 +69,14 @@ import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.util.Size;
 import android.view.Surface;
 import android.virtualdevice.cts.common.VirtualDeviceRule;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-
 import com.android.compatibility.common.util.FeatureUtil;
+
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 
 import org.junit.After;
 import org.junit.Before;
@@ -89,11 +92,12 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @RequiresFlagsEnabled({android.companion.virtual.flags.Flags.FLAG_VIRTUAL_CAMERA,
         android.companion.virtualdevice.flags.Flags.FLAG_VIRTUAL_CAMERA_SERVICE_DISCOVERY})
-@RunWith(AndroidJUnit4.class)
+@RunWith(JUnitParamsRunner.class)
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class VirtualCameraTest {
     private static final long TIMEOUT_MILLIS = 2000L;
@@ -102,6 +106,8 @@ public class VirtualCameraTest {
     private static final int CAMERA_WIDTH = 640;
     private static final int CAMERA_HEIGHT = 480;
     private static final int CAMERA_FORMAT = ImageFormat.YUV_420_888;
+    private static final int CAMERA_MAX_FPS = 30;
+    private static final int CAMERA_SENSOR_ORIENTATION = VirtualCameraConfig.SENSOR_ORIENTATION_0;
     private static final int IMAGE_READER_MAX_IMAGES = 2;
     private static final String GL_EXT_YUV_target = "GL_EXT_YUV_target";
 
@@ -112,6 +118,7 @@ public class VirtualCameraTest {
 
     @Mock
     private CameraManager.AvailabilityCallback mMockCameraAvailabilityCallback;
+
     @Mock
     private VirtualCameraCallback mVirtualCameraCallback;
 
@@ -134,7 +141,13 @@ public class VirtualCameraTest {
     private ArgumentCaptor<Surface> mSurfaceCaptor;
 
     @Captor
-    private ArgumentCaptor<VirtualCameraStreamConfig> mVirtualCameraStreamConfigCaptor;
+    private ArgumentCaptor<Integer> mWidthCaptor;
+
+    @Captor
+    private ArgumentCaptor<Integer> mHeightCaptor;
+
+    @Captor
+    private ArgumentCaptor<Integer> mFormatCaptor;
 
     private CameraManager mCameraManager;
     private VirtualDevice mVirtualDevice;
@@ -158,8 +171,8 @@ public class VirtualCameraTest {
         mCameraManager.registerAvailabilityCallback(mExecutor, mMockCameraAvailabilityCallback);
         mVirtualDevice = mRule.createManagedVirtualDevice();
         VirtualCameraConfig config = VirtualCameraUtils.createVirtualCameraConfig(CAMERA_WIDTH,
-                CAMERA_HEIGHT, CAMERA_FORMAT, CAMERA_NAME, mExecutor,
-                mVirtualCameraCallback);
+                CAMERA_HEIGHT, CAMERA_FORMAT, CAMERA_MAX_FPS, CAMERA_SENSOR_ORIENTATION,
+                CAMERA_NAME, mExecutor, mVirtualCameraCallback);
         mVirtualCamera = mVirtualDevice.createVirtualCamera(config);
     }
 
@@ -174,7 +187,7 @@ public class VirtualCameraTest {
     public void virtualCamera_getConfig_returnsCorrectConfig() {
         VirtualCameraConfig config = mVirtualCamera.getConfig();
         VirtualCameraUtils.assertVirtualCameraConfig(config, CAMERA_WIDTH, CAMERA_HEIGHT,
-                CAMERA_FORMAT, CAMERA_NAME);
+                CAMERA_FORMAT, CAMERA_MAX_FPS, CAMERA_SENSOR_ORIENTATION, CAMERA_NAME);
     }
 
     @Test
@@ -210,6 +223,39 @@ public class VirtualCameraTest {
 
         assertThat(Arrays.stream(mCameraManager.getCameraIdListNoLazy()).toList())
                 .doesNotContain(mVirtualCamera.getId());
+    }
+
+    @Parameters(method = "getAllSensorOrientations")
+    @Test
+    public void virtualCamera_hasCorrectOrientation(int sensorOrientation) throws Exception {
+        mVirtualCamera.close();
+        VirtualCameraConfig config = VirtualCameraUtils.createVirtualCameraConfig(CAMERA_WIDTH,
+                CAMERA_HEIGHT, CAMERA_FORMAT, CAMERA_MAX_FPS, sensorOrientation,
+                CAMERA_NAME, mExecutor, mVirtualCameraCallback);
+        mVirtualCamera = mVirtualDevice.createVirtualCamera(config);
+
+        CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(
+                mVirtualCamera.getId());
+        int orientationAngleDegrees = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+        assertThat(orientationAngleDegrees).isEqualTo(sensorOrientation);
+    }
+
+    @Test
+    public void virtualCamera_hasCorrectMinFrameDuration() throws Exception {
+        long expectedMinFrameDuration = TimeUnit.SECONDS.toNanos(1) / CAMERA_MAX_FPS;
+        CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(
+                mVirtualCamera.getId());
+        StreamConfigurationMap streamConfigurationMap =
+                characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        int[] outputFormats = streamConfigurationMap.getOutputFormats();
+        for (int format : outputFormats) {
+            Size[] sizes = streamConfigurationMap.getOutputSizes(format);
+            for (Size size : sizes) {
+                long minFrameDuration =
+                        streamConfigurationMap.getOutputMinFrameDuration(format, size);
+                assertThat(minFrameDuration).isEqualTo(expectedMinFrameDuration);
+            }
+        }
     }
 
     @Test
@@ -257,14 +303,12 @@ public class VirtualCameraTest {
             cameraDevice.createCaptureSession(createSessionConfig(reader));
 
             verify(mVirtualCameraCallback, timeout(TIMEOUT_MILLIS)).onStreamConfigured(anyInt(),
-                    mSurfaceCaptor.capture(), mVirtualCameraStreamConfigCaptor.capture());
+                    mSurfaceCaptor.capture(), mWidthCaptor.capture(), mHeightCaptor.capture(),
+                    mFormatCaptor.capture());
             assertThat(mSurfaceCaptor.getValue().isValid()).isTrue();
-            assertThat(mVirtualCameraStreamConfigCaptor.getValue().getWidth()).isEqualTo(
-                    CAMERA_WIDTH);
-            assertThat(mVirtualCameraStreamConfigCaptor.getValue().getHeight()).isEqualTo(
-                    CAMERA_HEIGHT);
-            assertThat(mVirtualCameraStreamConfigCaptor.getValue().getFormat()).isEqualTo(
-                    ImageFormat.YUV_420_888);
+            assertThat(mWidthCaptor.getValue()).isEqualTo(CAMERA_WIDTH);
+            assertThat(mHeightCaptor.getValue()).isEqualTo(CAMERA_HEIGHT);
+            assertThat(mFormatCaptor.getValue()).isEqualTo(ImageFormat.YUV_420_888);
 
             verify(mSessionStateCallback, timeout(TIMEOUT_MILLIS)).onConfigured(
                     mCameraCaptureSessionCaptor.capture());
@@ -332,7 +376,6 @@ public class VirtualCameraTest {
         }
     }
 
-
     private Image captureImage(ImageReader reader, Consumer<Surface> inputSurfaceConsumer)
             throws CameraAccessException {
         mCameraManager.openCamera(mVirtualCamera.getId(), mExecutor, mCameraStateCallback);
@@ -345,7 +388,8 @@ public class VirtualCameraTest {
             verify(mSessionStateCallback, timeout(TIMEOUT_MILLIS)).onConfigured(
                     mCameraCaptureSessionCaptor.capture());
             verify(mVirtualCameraCallback, timeout(TIMEOUT_MILLIS)).onStreamConfigured(anyInt(),
-                    mSurfaceCaptor.capture(), mVirtualCameraStreamConfigCaptor.capture());
+                    mSurfaceCaptor.capture(), mWidthCaptor.capture(), mHeightCaptor.capture(),
+                    mFormatCaptor.capture());
 
             Surface inputSurface = mSurfaceCaptor.getValue();
             assertThat(inputSurface.isValid()).isTrue();
@@ -368,7 +412,6 @@ public class VirtualCameraTest {
                 assertThat(image.getHeight()).isEqualTo(CAMERA_HEIGHT);
                 return image;
             }
-
         }
     }
 
@@ -499,5 +542,14 @@ public class VirtualCameraTest {
         String extensions = glGetString(GL_EXTENSIONS);
         eglTerminate(eglDisplay);
         return extensions.contains(extension);
+    }
+
+    private static Integer[] getAllSensorOrientations() {
+        return new Integer[] {
+                VirtualCameraConfig.SENSOR_ORIENTATION_0,
+                VirtualCameraConfig.SENSOR_ORIENTATION_90,
+                VirtualCameraConfig.SENSOR_ORIENTATION_180,
+                VirtualCameraConfig.SENSOR_ORIENTATION_270
+        };
     }
 }
