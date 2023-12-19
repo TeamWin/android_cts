@@ -321,8 +321,9 @@ class AppOpEventCollectionTest {
             .isEqualTo(myUid)
         assertThat(opEntry.getLastProxyInfo(OP_FLAG_UNTRUSTED_PROXIED)?.uid).isEqualTo(myUid)
 
+        // Expecting null instead of firstTag as the tag is not declared in other app (b/304983146)
         assertThat(attributionOpEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.attributionTag)
-            .isEqualTo(firstTag)
+            .isNull()
         assertThat(attributionOpEntry.getLastProxyInfo(OP_FLAG_UNTRUSTED_PROXIED)?.attributionTag)
             .isEqualTo(secondTag)
 
@@ -353,8 +354,10 @@ class AppOpEventCollectionTest {
             assertThat(attributedOpEntries[null]!!.isRunning).isTrue()
             assertThat(attributedOpEntries[null]?.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)!!
                 .packageName).isEqualTo(SHELL_PACKAGE_NAME)
+            // Expecting null instead of firstTag as the tag is not declared in the
+            // other app (b/304983146)
             assertThat(attributedOpEntries[null]?.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)!!
-                .attributionTag).isEqualTo(firstTag)
+                .attributionTag).isNull()
             assertThat(isRunning).isTrue()
         }
 
@@ -384,8 +387,9 @@ class AppOpEventCollectionTest {
             .isEqualTo(shellUid)
         assertThat(opEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.uid).isEqualTo(
                 shellUid)
+        // Expecting null instead of firstTag as the tag is not declared in other app (b/304983146)
         assertThat(attributionOpEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.attributionTag)
-            .isEqualTo(firstTag)
+            .isNull()
     }
 
     @AppModeFull(reason = "instant apps cannot see other packages")
@@ -462,8 +466,9 @@ class AppOpEventCollectionTest {
         assertThat(attributionOpEntry.isRunning).isFalse()
         assertThat(opEntry.isRunning).isFalse()
 
+        // Expecting null instead of firstTag as the tag is not declared in other app (b/304983146)
         assertThat(attributionOpEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.attributionTag)
-            .isEqualTo(firstTag)
+                .isNull()
         assertThat(attributionOpEntry.getLastProxyInfo(OP_FLAG_UNTRUSTED_PROXIED)?.attributionTag)
             .isEqualTo(secondTag)
 
