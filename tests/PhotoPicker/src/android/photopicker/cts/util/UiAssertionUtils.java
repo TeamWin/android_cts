@@ -42,8 +42,9 @@ public class UiAssertionUtils {
                 PhotoPickerUiUtils.REGEX_PACKAGE_NAME + ":id/privacy_text"))
                 .exists()).isTrue();
 
-        // Assert that "Photos" and "Albums" headers are shown.
-        assertThat(new UiObject(new UiSelector().text("Photos")).exists()).isTrue();
+        // Assert that "Photos"/"Videos" and "Albums" headers are shown.
+        assertThat((new UiObject(new UiSelector().text("Photos")).exists())
+                || (new UiObject(new UiSelector().text("Videos")).exists())).isTrue();
         assertThat(new UiObject(new UiSelector().text("Albums")).exists()).isTrue();
     }
 }
