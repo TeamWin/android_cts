@@ -34,6 +34,7 @@ android_test {
         "cts",
         "general-tests",
         "mts-appsearch",
+        "mcts-appsearch",
     ],
     data: [
         ":CtsAppSearchTestHelperA",

@@ -53,6 +53,8 @@ android_test {
         "general-tests",
         "mts-tethering",
         "mts-wifi",
+        "mcts-tethering",
+        "mcts-wifi",
         "sts",
     ],
 
