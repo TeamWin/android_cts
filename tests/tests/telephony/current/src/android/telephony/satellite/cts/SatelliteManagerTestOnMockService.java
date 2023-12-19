@@ -16,6 +16,7 @@
 
 package android.telephony.satellite.cts;
 
+import static android.telephony.satellite.SatelliteManager.SATELLITE_COMMUNICATION_RESTRICTION_REASON_ENTITLEMENT;
 import static android.telephony.satellite.SatelliteManager.SATELLITE_COMMUNICATION_RESTRICTION_REASON_GEOLOCATION;
 
 import static com.android.internal.telephony.satellite.DatagramController.SATELLITE_ALIGN_TIMEOUT;
@@ -2939,32 +2940,52 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         bundle.putBoolean(
                 CarrierConfigManager.KEY_SATELLITE_ATTACH_SUPPORTED_BOOL, true);
         overrideCarrierConfig(sTestSubIDForCarrierSatellite, bundle);
-        requestAddSatelliteAttachRestrictionForCarrier(
-                SATELLITE_COMMUNICATION_RESTRICTION_REASON_GEOLOCATION,
+        int restrictionReason = SATELLITE_COMMUNICATION_RESTRICTION_REASON_GEOLOCATION;
+        requestAddSatelliteAttachRestrictionForCarrier(restrictionReason,
                 SatelliteManager.SATELLITE_RESULT_SUCCESS);
-        verifySatelliteAttachRestrictionForCarrier(
-                SATELLITE_COMMUNICATION_RESTRICTION_REASON_GEOLOCATION, true);
+        verifySatelliteAttachRestrictionForCarrier(restrictionReason, true);
         requestSatelliteAttachEnabledForCarrier(true, expectedSuccess);
         Pair<Boolean, Integer> pair = requestIsSatelliteAttachEnabledForCarrier();
         assertEquals(true, pair.first.booleanValue());
         assertNull(pair.second);
         assertEquals(false, getIsSatelliteEnabledForCarrierFromMockService());
 
-        /** If restriction reason is removed, re-evaluate and trigger enable/disable again */
-        requestRemoveSatelliteAttachRestrictionForCarrier(
-                SATELLITE_COMMUNICATION_RESTRICTION_REASON_GEOLOCATION,
+        /** If the restriction reason 'GEOLOCATION' is removed and the restriction reason is
+         * empty, re-evaluate and trigger enable/disable again */
+        requestRemoveSatelliteAttachRestrictionForCarrier(restrictionReason,
                 SatelliteManager.SATELLITE_RESULT_SUCCESS);
-        verifySatelliteAttachRestrictionForCarrier(
-                SATELLITE_COMMUNICATION_RESTRICTION_REASON_GEOLOCATION, false);
+        verifySatelliteAttachRestrictionForCarrier(restrictionReason, false);
         assertEquals(true, getIsSatelliteEnabledForCarrierFromMockService());
 
-        /** If restriction reason is added again, re-evaluate and trigger enable/disable again */
-        requestAddSatelliteAttachRestrictionForCarrier(
-                SATELLITE_COMMUNICATION_RESTRICTION_REASON_GEOLOCATION,
+        /** If the restriction reason 'GEOLOCATION' is added and the restriction reason becomes
+         * 'GEOLOCATION', re-evaluate and trigger enable/disable again */
+        requestAddSatelliteAttachRestrictionForCarrier(restrictionReason,
                 SatelliteManager.SATELLITE_RESULT_SUCCESS);
-        verifySatelliteAttachRestrictionForCarrier(
-                SATELLITE_COMMUNICATION_RESTRICTION_REASON_GEOLOCATION, true);
+        verifySatelliteAttachRestrictionForCarrier(restrictionReason, true);
         assertEquals(false, getIsSatelliteEnabledForCarrierFromMockService());
+
+        /** If the restriction reason 'ENTITLEMENT' is added and the restriction reasons become
+         * ‘GEOLOCATION’ and ‘ENTITLEMENT.’ re-evaluate and trigger enable/disable again */
+        restrictionReason = SATELLITE_COMMUNICATION_RESTRICTION_REASON_ENTITLEMENT;
+        requestAddSatelliteAttachRestrictionForCarrier(restrictionReason,
+                SatelliteManager.SATELLITE_RESULT_SUCCESS);
+        verifySatelliteAttachRestrictionForCarrier(restrictionReason, true);
+        assertEquals(false, getIsSatelliteEnabledForCarrierFromMockService());
+
+        /** If the restriction reason 'ENTITLEMENT' is removed and the restriction reason becomes
+         * ‘GEOLOCATION’, re-evaluate and trigger enable/disable again */
+        requestRemoveSatelliteAttachRestrictionForCarrier(restrictionReason,
+                SatelliteManager.SATELLITE_RESULT_SUCCESS);
+        restrictionReason = SATELLITE_COMMUNICATION_RESTRICTION_REASON_GEOLOCATION;
+        verifySatelliteAttachRestrictionForCarrier(restrictionReason, true);
+        assertEquals(false, getIsSatelliteEnabledForCarrierFromMockService());
+
+        /** If the restriction reason 'GEOLOCATION' is removed and the restriction reason becomes
+         *  empty, re-evaluate and trigger enable/disable again */
+        requestRemoveSatelliteAttachRestrictionForCarrier(restrictionReason,
+                SatelliteManager.SATELLITE_RESULT_SUCCESS);
+        verifySatelliteAttachRestrictionForCarrier(restrictionReason, false);
+        assertEquals(true, getIsSatelliteEnabledForCarrierFromMockService());
 
         afterSatelliteForCarrierTest();
         revokeSatellitePermission();
