@@ -36,6 +36,7 @@ java_test_host {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
         "cts",
     ],
     test_config: "AndroidTestAppCloning.xml",

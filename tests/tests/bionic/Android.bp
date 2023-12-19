@@ -57,6 +57,7 @@ cc_test {
         "cts",
         "general-tests",
         "mts-mainline-infra",
+        "mcts-mainline-infra",
     ],
 
     data_bins: [
