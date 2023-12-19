@@ -24,7 +24,6 @@ import android.annotation.RawRes;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
-import android.media.audio.Flags;
 import android.media.AudioAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFocusRequest;
@@ -32,6 +31,7 @@ import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.AudioRouting;
 import android.media.MediaPlayer;
+import android.media.audio.Flags;
 import android.media.cts.TestUtils;
 import android.os.Build;
 import android.os.Handler;
@@ -544,8 +544,14 @@ public class AudioFocusTest extends CtsAndroidTestCase {
                     AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
             mp.start();
             Thread.sleep(TEST_TIMING_TOLERANCE_MS);
-            final long fadeDuration = am.getFadeOutDurationOnFocusLossMillis(mediaAttributes);
-            Log.i(TAG, "using fade out duration = " + fadeDuration);
+            long fadeDuration = am.getFadeOutDurationOnFocusLossMillis(mediaAttributes);
+            assertTrue("Fade out duration cannot be negative", fadeDuration >= 0);
+            // since SystemClock#uptimeMillis is not always accurate, consider
+            // an error margin of 10%
+            long errMargin = (fadeDuration / 10);
+            fadeDuration = fadeDuration - errMargin;
+
+            Log.i(TAG, "using corrected fade out duration = " + fadeDuration);
 
             res = am.requestAudioFocusForTest(focusRequests[FOCUS_SIMULATED],
                     simFocusClientId, Integer.MAX_VALUE /*fakeClientUid*/, Build.VERSION_CODES.S);
@@ -563,7 +569,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
 
             focusListeners[FOCUS_UNDER_TEST].waitForFocusChange(
                     "testAudioFocusRequestMediaGainLossWithPlayer",
-                    TEST_TIMING_TOLERANCE_MS, /* shouldAcquire= */ true);
+                    TEST_TIMING_TOLERANCE_MS + errMargin, /* shouldAcquire= */ true);
             assertEquals("Focus loss not dispatched", AudioManager.AUDIOFOCUS_LOSS,
                     focusListeners[FOCUS_UNDER_TEST].getFocusChangeAndReset());
 
