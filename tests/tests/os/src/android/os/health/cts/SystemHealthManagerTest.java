@@ -22,7 +22,8 @@ import android.os.health.HealthStats;
 import android.os.health.SystemHealthManager;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.InstrumentationTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.filters.SmallTest;
 
 import junit.framework.Assert;
 

@@ -19,7 +19,8 @@ package android.os.health.cts;
 import android.os.Parcel;
 import android.os.health.TimerStat;
 import android.platform.test.annotations.AppModeSdkSandbox;
-import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.filters.SmallTest;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
