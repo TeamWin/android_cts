@@ -2260,18 +2260,14 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                     .setIconResId(R.drawable.icon_green)
                     .build();
         }
-        mNotificationManager.addAutomaticZenRule(rule1);
-        mNotificationManager.addAutomaticZenRule(rule2);
+        String ruleId1 = mNotificationManager.addAutomaticZenRule(rule1);
+        String ruleId2 = mNotificationManager.addAutomaticZenRule(rule2);
 
         Map<String, AutomaticZenRule> rules = mNotificationManager.getAutomaticZenRules();
 
         assertThat(rules).hasSize(2);
-        assertAllPublicSetFieldsEqual(
-                Iterables.find(rules.values(), r -> r.getName().equals("One")),
-                rule1);
-        assertAllPublicSetFieldsEqual(
-                Iterables.find(rules.values(), r -> r.getName().equals("Two")),
-                rule2);
+        assertAllPublicSetFieldsEqual(rules.get(ruleId1), rule1);
+        assertAllPublicSetFieldsEqual(rules.get(ruleId2), rule2);
     }
 
     private static void assertAllPublicSetFieldsEqual(AutomaticZenRule r1, AutomaticZenRule r2) {
@@ -2292,6 +2288,39 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             assertThat(r1.getType()).isEqualTo(r2.getType());
             assertThat(r1.isManualInvocationAllowed()).isEqualTo(r2.isManualInvocationAllowed());
         }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void addAutomaticZenRule_withInterruptionFilterAll_canBeUsed() {
+        AutomaticZenRule rule = createRule("Without filter", INTERRUPTION_FILTER_ALL);
+        rule.setDeviceEffects(
+                new ZenDeviceEffects.Builder().setShouldDisplayGrayscale(true).build());
+
+        String ruleId = mNotificationManager.addAutomaticZenRule(rule);
+
+        AutomaticZenRule savedRule = mNotificationManager.getAutomaticZenRule(ruleId);
+        assertThat(savedRule).isNotNull();
+        assertThat(savedRule.getInterruptionFilter()).isEqualTo(INTERRUPTION_FILTER_ALL);
+
+        // Simple update, just to verify no validation errors.
+        savedRule.setName("Still without filter");
+        mNotificationManager.updateAutomaticZenRule(ruleId, savedRule);
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "summary", Condition.STATE_TRUE));
+        assertThat(mNotificationManager.getCurrentInterruptionFilter()).isEqualTo(
+                INTERRUPTION_FILTER_ALL);
+        assertThat(isColorDisplayManagerSaturationActivated()).isTrue();
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "summary", Condition.STATE_FALSE));
+        assertThat(mNotificationManager.getCurrentInterruptionFilter()).isEqualTo(
+                INTERRUPTION_FILTER_ALL);
+        assertThat(isColorDisplayManagerSaturationActivated()).isFalse();
+
+        mNotificationManager.removeAutomaticZenRule(ruleId);
+        assertThat(mNotificationManager.getAutomaticZenRules()).isEmpty();
     }
 
     @Test
