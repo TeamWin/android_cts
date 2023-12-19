@@ -22,7 +22,8 @@ import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
 import android.content.pm.cts.shortcut.device.common.ShortcutManagerDeviceTestBase;
-import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.filters.SmallTest;
 
 @SmallTest
 public class ShortcutManagerPreBackup2Test extends ShortcutManagerDeviceTestBase {
