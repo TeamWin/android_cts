@@ -25,6 +25,7 @@ android_test {
         "ctstestrunner-axt",
         "junit",
         "truth",
+        "androidx.test.rules",
     ],
 
     srcs: [
