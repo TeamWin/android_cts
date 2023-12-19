@@ -18,7 +18,8 @@ package android.bluetooth.cts;
 
 import android.bluetooth.BluetoothHidDeviceAppSdpSettings;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.filters.SmallTest;
 
 /**
  * Unit test cases for {@link BluetoothHidDeviceAppSdpSettings}.

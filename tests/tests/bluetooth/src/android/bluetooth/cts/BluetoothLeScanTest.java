@@ -31,11 +31,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.ParcelUuid;
 import android.os.SystemClock;
-import android.test.suitebuilder.annotation.MediumTest;
 import android.util.Log;
 import android.util.SparseArray;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.CddTest;
@@ -56,7 +56,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
 
 /**
  * Test cases for Bluetooth LE scans.
