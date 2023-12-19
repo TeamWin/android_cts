@@ -31,6 +31,7 @@ import static android.jobscheduler.cts.jobtestapp.TestJobService.JOB_PROC_STATE_
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.ActivityManager;
@@ -99,6 +100,8 @@ class TestAppInterface implements AutoCloseable {
             // Force the test app out of the never bucket.
             SystemUtil.runShellCommand("am set-standby-bucket " + TEST_APP_PACKAGE + " rare");
         }
+        // Remove the app from the whitelist.
+        SystemUtil.runShellCommand("cmd deviceidle whitelist -" + TEST_APP_PACKAGE);
     }
 
     void cleanup() throws Exception {
@@ -116,6 +119,8 @@ class TestAppInterface implements AutoCloseable {
                         Set.of(ENFORCE_MINIMUM_TIME_WINDOWS)),
                 OVERRIDE_COMPAT_CHANGE_CONFIG_ON_RELEASE_BUILD, INTERACT_ACROSS_USERS_FULL);
         SystemUtil.runShellCommand("am compat reset-all " + TEST_APP_PACKAGE);
+        // Remove the app from the whitelist.
+        SystemUtil.runShellCommand("cmd deviceidle whitelist -" + TEST_APP_PACKAGE);
         mTestJobStates.clear();
         forceStopApp(); // Clean up as much internal/temporary system state as possible
     }
@@ -187,6 +192,7 @@ class TestAppInterface implements AutoCloseable {
                 15 /* 15 seconds */);
     }
 
+    /** Post an alarm that will start an FGS in the test app. */
     void postFgsStartingAlarm() throws Exception {
         AppOpsUtils.setOpMode(TEST_APP_PACKAGE,
                 AppOpsManager.OPSTR_SCHEDULE_EXACT_ALARM, AppOpsManager.MODE_ALLOWED);
@@ -203,8 +209,12 @@ class TestAppInterface implements AutoCloseable {
 
     /** Asks (not forces) JobScheduler to run the job if constraints are met. */
     void runSatisfiedJob() throws Exception {
+        runSatisfiedJob(mJobId);
+    }
+
+    void runSatisfiedJob(int jobId) throws Exception {
         SystemUtil.runShellCommand("cmd jobscheduler run -s"
-                + " -u " + UserHandle.myUserId() + " " + TEST_APP_PACKAGE + " " + mJobId);
+                + " -u " + UserHandle.myUserId() + " " + TEST_APP_PACKAGE + " " + jobId);
     }
 
     /** Forces JobScheduler to run the job */
@@ -263,6 +273,7 @@ class TestAppInterface implements AutoCloseable {
         }
     }
 
+    /** Directly start the FGS in the test app. */
     void startFgs() throws Exception {
         final Intent intent = new Intent(TestJobSchedulerReceiver.ACTION_START_FGS);
         intent.setComponent(new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER));
@@ -352,6 +363,17 @@ class TestAppInterface implements AutoCloseable {
                 return jobState != null && !jobState.running;
             }
         });
+    }
+
+    private String getJobState(int jobId) throws Exception {
+        return SystemUtil.runShellCommand(
+                "cmd jobscheduler get-job-state --user cur " + TEST_APP_PACKAGE + " " + jobId)
+                .trim();
+    }
+
+    void assertJobNotReady(int jobId) throws Exception {
+        String state = getJobState(jobId);
+        assertTrue("Job unexpectedly ready, in state: " + state, !state.contains("ready"));
     }
 
     void assertJobUidState(int procState, int capabilities, int oomScoreAdj) {
