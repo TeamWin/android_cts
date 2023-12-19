@@ -37,15 +37,21 @@ import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.net.wifi.WifiSsid;
 import android.net.wifi.cts.WifiFeature;
+import android.net.wifi.cts.WifiManagerTest.Mutable;
+import android.net.wifi.nl80211.NativeScanResult;
+import android.net.wifi.nl80211.RadioChainInfo;
 import android.os.Build;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.wifi.mockwifi.MockWifiModemManager;
 import android.wifi.mockwifi.nl80211.IClientInterfaceImp;
+import android.wifi.mockwifi.nl80211.IWifiScannerImp;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
@@ -61,7 +67,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -72,6 +82,8 @@ public class MockWifiTest {
     private static final int TEST_WAIT_DURATION_MS = 10_000;
     private static final int WAIT_MS = 60;
     private static final int WIFI_CONNECT_TIMEOUT_MS = 30_000;
+    private static final int WIFI_DISCONNECT_TIMEOUT_MS = 30_000;
+    private static final int WIFI_PNO_CONNECT_TIMEOUT_MILLIS = 90_000;
 
     private static Context sContext;
     private static boolean sShouldRunTest = false;
@@ -95,14 +107,21 @@ public class MockWifiTest {
     private static boolean sWasVerboseLoggingEnabled;
     private static boolean sWasScanThrottleEnabled;
     private static List<ScanResult> sScanResults = null;
+    private static MockWifiModemManager sMockModemManager;
     private static NetworkInfo sNetworkInfo =
             new NetworkInfo(ConnectivityManager.TYPE_WIFI, TelephonyManager.NETWORK_TYPE_UNKNOWN,
                     "wifi", "unknown");
+
+    private final Object mLock = new Object();
 
     private static void turnScreenOnNoDelay() throws Exception {
         if (sWakeLock.isHeld()) sWakeLock.release();
         sUiDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
         sUiDevice.executeShellCommand("wm dismiss-keyguard");
+    }
+
+    private static void turnScreenOffNoDelay() throws Exception {
+        sUiDevice.executeShellCommand("input keyevent KEYCODE_SLEEP");
     }
 
     private static final BroadcastReceiver sReceiver = new BroadcastReceiver() {
@@ -157,6 +176,8 @@ public class MockWifiTest {
         sWifiManager = sContext.getSystemService(WifiManager.class);
         assertThat(sWifiManager).isNotNull();
         sConnectivityManager = sContext.getSystemService(ConnectivityManager.class);
+        sMockModemManager = new MockWifiModemManager(sContext);
+        assertNotNull(sMockModemManager);
 
         // turn on verbose logging for tests
         sWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
@@ -263,26 +284,33 @@ public class MockWifiTest {
         waitForNetworkInfoState(NetworkInfo.State.CONNECTED, WIFI_CONNECT_TIMEOUT_MS);
     }
 
+    private void waitForConnection(int timeoutMillis) throws Exception {
+        waitForNetworkInfoState(NetworkInfo.State.CONNECTED, timeoutMillis);
+    }
+
+    private void waitForDisconnection() throws Exception {
+        waitForNetworkInfoState(NetworkInfo.State.DISCONNECTED, WIFI_DISCONNECT_TIMEOUT_MS);
+    }
+
+    private String getIfaceName() {
+        Network wifiCurrentNetwork = sWifiManager.getCurrentNetwork();
+        assertNotNull(wifiCurrentNetwork);
+        LinkProperties wifiLinkProperties = sConnectivityManager.getLinkProperties(
+                wifiCurrentNetwork);
+        String mIfaceName = wifiLinkProperties.getInterfaceName();
+        return mIfaceName;
+    }
+
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     @Test
     public void testMockSignalPollOnMockWifi() throws Exception {
         int testRssi = -30;
-
-        MockWifiModemManager sMockModemManager = new MockWifiModemManager(sContext);
-        assertNotNull(sMockModemManager);
-
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
-            Network wifiCurrentNetwork = sWifiManager.getCurrentNetwork();
-            assertNotNull(wifiCurrentNetwork);
-            LinkProperties wifiLinkProperties = sConnectivityManager.getLinkProperties(
-                    wifiCurrentNetwork);
-            String ifaceName = wifiLinkProperties.getInterfaceName();
             WifiInfo wifiInfo = sWifiManager.getConnectionInfo();
-
             assertTrue(sMockModemManager.connectMockWifiModemService(sContext));
-            assertTrue(sMockModemManager.configureClientInterfaceMock(ifaceName,
+            assertTrue(sMockModemManager.configureClientInterfaceMock(getIfaceName(),
                     new IClientInterfaceImp.ClientInterfaceMock() {
                         @Override
                         public int[] signalPoll() {
@@ -302,6 +330,115 @@ public class MockWifiTest {
                     });
         } finally {
             sMockModemManager.disconnectMockWifiModemService();
+        }
+    }
+
+    private NativeScanResult[] getMockNativeResults() {
+        byte[] TestSsid =
+                new byte[] {'G', 'o', 'o', 'g', 'l', 'e', 'G', 'u', 'e', 's', 't'};
+        byte[] TestBssid =
+                new byte[] {(byte) 0x12, (byte) 0xef, (byte) 0xa1,
+                    (byte) 0x2c, (byte) 0x97, (byte) 0x8b};
+        byte[] TestInfoElement =
+                new byte[] {(byte) 0x01, (byte) 0x03, (byte) 0x12, (byte) 0xbe, (byte) 0xff};
+        int TestFrequency = 5935;
+        int TestCapability = (0x1 << 2) | (0x1 << 5);
+        int[] RadioChainIds = {0, 1};
+        int[] RadioChainLevels = {-56, -65};
+
+        NativeScanResult scanResult = new NativeScanResult();
+        scanResult.ssid = TestSsid;
+        scanResult.bssid = TestBssid;
+        scanResult.infoElement = TestInfoElement;
+        scanResult.frequency = TestFrequency;
+        scanResult.tsf = SystemClock.elapsedRealtime() * 1000;
+        scanResult.capability = TestCapability;
+        scanResult.radioChainInfos = new ArrayList<>(Arrays.asList(
+                new RadioChainInfo(RadioChainIds[0], RadioChainLevels[0]),
+                new RadioChainInfo(RadioChainIds[1], RadioChainLevels[1])));
+
+        NativeScanResult[] nativeScanResults = new NativeScanResult[1];
+        nativeScanResults[0] = scanResult;
+        return nativeScanResults;
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @Test
+    public void testMockPnoScanResultsOnMockWifi() throws Exception {
+        if (!sWifiManager.isPreferredNetworkOffloadSupported()) {
+            return;
+        }
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            WifiInfo currentNetwork = sWifiManager.getConnectionInfo();
+            assertTrue(sMockModemManager.connectMockWifiModemService(sContext));
+            assertTrue(sMockModemManager.configureWifiScannerInterfaceMock(getIfaceName(),
+                    new IWifiScannerImp.WifiScannerInterfaceMock() {
+                    @Override
+                    public NativeScanResult[] getPnoScanResults() {
+                        return getMockNativeResults();
+                    }
+                }));
+
+            sMockModemManager.updateConfiguredMockedMethods();
+            List<WifiSsid> listOfSsids = new ArrayList<WifiSsid>();
+            for (NativeScanResult nativeScan : getMockNativeResults()) {
+                listOfSsids.add(WifiSsid.fromBytes(nativeScan.getSsid()));
+            }
+            AtomicReference<List<ScanResult>> mScanResults = new AtomicReference<>();
+            Mutable<Boolean> isQuerySucceeded = new Mutable<Boolean>(false);
+            sWifiManager.setExternalPnoScanRequest(listOfSsids,
+                    null, Executors.newSingleThreadExecutor(),
+                    new WifiManager.PnoScanResultsCallback() {
+                    @Override
+                    public void onScanResultsAvailable(List<ScanResult> scanResults) {
+                        synchronized (mLock) {
+                            mScanResults.set(scanResults);
+                            Log.d(TAG, "Results from callback registered : " + mScanResults);
+                            isQuerySucceeded.value = true;
+                            mLock.notify();
+                        }
+                    }
+                    @Override
+                    public void onRegisterSuccess() {
+                        synchronized (mLock) {
+                            Log.d(TAG, "onRegisterSuccess");
+                            mLock.notify();
+                        }
+                    }
+                    @Override
+                    public void onRegisterFailed(int reason) {
+                        synchronized (mLock) {
+                            mLock.notify();
+                        }
+                    }
+                    @Override
+                    public void onRemoved(int reason) {
+                        synchronized (mLock) {
+                            mLock.notify();
+                        }
+                    }
+                });
+            synchronized (mLock) {
+                long now = System.currentTimeMillis();
+                long deadline = now + TEST_WAIT_DURATION_MS;
+                while (!isQuerySucceeded.value && now < deadline) {
+                    mLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+            sWifiManager.disconnect();
+            waitForDisconnection();
+            turnScreenOffNoDelay();
+            sWifiManager.enableNetwork(currentNetwork.getNetworkId(), false);
+            waitForConnection(WIFI_PNO_CONNECT_TIMEOUT_MILLIS);
+            assertTrue(mScanResults.get().stream().allMatch(
+                    p -> listOfSsids.contains(p.getWifiSsid())));
+        } finally {
+            turnScreenOnNoDelay();
+            sMockModemManager.disconnectMockWifiModemService();
+            uiAutomation.dropShellPermissionIdentity();
         }
     }
 }
