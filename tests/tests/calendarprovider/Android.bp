@@ -23,6 +23,7 @@ android_test {
         "junit",
         "truth",
         "mockito-target-minus-junit4",
+        "androidx.test.rules",
     ],
 
     srcs: ["src/**/*.java"],
