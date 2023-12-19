@@ -24,9 +24,9 @@ import android.graphics.Color;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
 
 import androidx.core.graphics.ColorUtils;
+import androidx.test.filters.SmallTest;
 
 @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ColorStateListTest extends AndroidTestCase {

@@ -22,7 +22,8 @@ import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.filters.SmallTest;
 
 import java.io.File;
 import java.io.FileInputStream;

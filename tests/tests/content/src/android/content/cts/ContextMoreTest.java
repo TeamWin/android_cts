@@ -20,8 +20,9 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
+
+import androidx.test.filters.LargeTest;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;

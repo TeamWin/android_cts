@@ -20,7 +20,8 @@ import android.content.cts.R;
 import android.content.res.Resources;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.filters.SmallTest;
 
 import java.io.IOException;
 import java.io.InputStream;
