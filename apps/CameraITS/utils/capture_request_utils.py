@@ -27,6 +27,7 @@ _AE_MODE_ON_AUTO_FLASH = 2
 _CAPTURE_INTENT_PREVIEW = 1
 _AE_PRECAPTURE_TRIGGER_START = 1
 _AE_PRECAPTURE_TRIGGER_IDLE = 0
+_FLASH_MODE_SINGLE = 1
 
 
 def is_common_aspect_ratio(size):
@@ -520,3 +521,59 @@ def take_captures_with_flash(cam, out_surface):
                                   preview_req_idle,
                                   still_capture_req, out_surface)
   return cap
+
+
+def take_captures_with_flash_strength(cam, out_surface, ae_mode, strength):
+  """Takes capture with desired flash strength.
+
+  Runs precapture sequence by setting the aePrecapture trigger to
+  START and capture intent set to Preview.
+  Then, take the capture with set flash strength.
+  Args:
+    cam: ItsSession object
+    out_surface: Specifications of the output image format and
+      size to use for the capture.
+    ae_mode: AE_mode
+    strength: flash strength
+
+  Returns:
+    cap: An object which contains following fields:
+      * data: the image data as a numpy array of bytes.
+      * width: the width of the captured image.
+      * height: the height of the captured image.
+      * format: image format
+      * metadata: the capture result object
+  """
+  preview_req_start = auto_capture_request()
+  preview_req_start[
+      'android.control.aeMode'] = _AE_MODE_ON_AUTO_FLASH
+  preview_req_start[
+      'android.control.captureIntent'] = _CAPTURE_INTENT_PREVIEW
+  preview_req_start[
+      'android.control.aePrecaptureTrigger'] = _AE_PRECAPTURE_TRIGGER_START
+  # Repeat preview requests with aePrecapture set to IDLE
+  # until AE is converged.
+  preview_req_idle = auto_capture_request()
+  preview_req_idle[
+      'android.control.aeMode'] = _AE_MODE_ON_AUTO_FLASH
+  preview_req_idle[
+      'android.control.captureIntent'] = _CAPTURE_INTENT_PREVIEW
+  preview_req_idle[
+      'android.control.aePrecaptureTrigger'] = _AE_PRECAPTURE_TRIGGER_IDLE
+  # Single still capture request.
+  still_capture_req = auto_capture_request()
+  still_capture_req[
+      'android.control.aeMode'] = ae_mode
+  still_capture_req[
+      'android.flash.mode'] = _FLASH_MODE_SINGLE
+  still_capture_req[
+      'android.control.captureIntent'] = _CAPTURE_INTENT_STILL_CAPTURE
+  still_capture_req[
+      'android.control.aePrecaptureTrigger'] = _AE_PRECAPTURE_TRIGGER_IDLE
+  still_capture_req[
+      'android.flash.strengthLevel'] = strength
+  cap = cam.do_capture_with_flash(preview_req_start,
+                                  preview_req_idle,
+                                  still_capture_req, out_surface)
+  return cap
+
