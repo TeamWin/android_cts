@@ -24,6 +24,7 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -38,6 +39,7 @@ import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.webkit.WebViewUpdateService;
 
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
@@ -65,6 +67,8 @@ public class SecurityStateManagerTest {
 
     @Before
     public void setUp() {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.INTERACT_ACROSS_USERS_FULL);
         mContext = getApplicationContext();
         mResources = mContext.getResources();
         mPackageManager = mContext.getPackageManager();
