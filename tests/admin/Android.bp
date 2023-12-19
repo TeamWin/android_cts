@@ -26,6 +26,7 @@ android_test {
         "truth",
         "testng",
         "Nene",
+        "androidx.test.rules",
     ],
     libs: [
         "android.test.runner",
