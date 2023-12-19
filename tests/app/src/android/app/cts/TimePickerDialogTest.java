@@ -27,10 +27,10 @@ import android.app.stubs.R;
 import android.content.Context;
 import android.os.Bundle;
 import android.test.UiThreadTest;
-import android.test.suitebuilder.annotation.MediumTest;
 import android.widget.TimePicker;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;

@@ -61,12 +61,12 @@ import android.permission.PermissionManager;
 import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.Presubmit;
 import android.service.notification.StatusBarNotification;
-import android.test.suitebuilder.annotation.MediumTest;
 import android.util.Log;
 import android.util.SparseArray;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
+import androidx.test.filters.MediumTest;
 
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.IBinderParcelable;
