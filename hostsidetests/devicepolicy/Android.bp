@@ -33,6 +33,7 @@ java_test_host {
         "cts",
         "general-tests",
         "mts-permission",
+        "mcts-permission",
     ],
     static_libs: [
         "cts-statsd-atom-host-test-utils",
