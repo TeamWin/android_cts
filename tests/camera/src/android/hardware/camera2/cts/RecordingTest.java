@@ -15,69 +15,70 @@ import static android.hardware.camera2.cts.CameraTestUtils.*;
 import static android.media.MediaCodecInfo.CodecProfileLevel.AV1ProfileMain10;
 import static android.media.MediaCodecInfo.CodecProfileLevel.AV1ProfileMain10HDR10;
 import static android.media.MediaCodecInfo.CodecProfileLevel.AV1ProfileMain10HDR10Plus;
-import static android.media.MediaCodecInfo.CodecProfileLevel.HEVCProfileMain10HDR10;
 import static android.media.MediaCodecInfo.CodecProfileLevel.HEVCProfileMain10;
+import static android.media.MediaCodecInfo.CodecProfileLevel.HEVCProfileMain10HDR10;
 import static android.media.MediaCodecInfo.CodecProfileLevel.HEVCProfileMain10HDR10Plus;
 
 import static com.android.ex.camera2.blocking.BlockingSessionCallback.*;
-
-import android.graphics.ImageFormat;
-import android.graphics.SurfaceTexture;
-import android.hardware.camera2.CameraCharacteristics;
-import android.hardware.camera2.CameraCaptureSession;
-import android.hardware.camera2.CameraConstrainedHighSpeedCaptureSession;
-import android.hardware.camera2.CameraDevice;
-import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.CaptureResult;
-import android.hardware.camera2.cts.helpers.StaticMetadata;
-import android.hardware.camera2.params.DynamicRangeProfiles;
-import android.hardware.camera2.params.OutputConfiguration;
-import android.hardware.camera2.params.SessionConfiguration;
-import android.hardware.camera2.params.StreamConfigurationMap;
-import android.hardware.HardwareBuffer;
-import android.media.MediaMuxer;
-import android.util.Size;
-import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
-import android.media.CamcorderProfile;
-import android.media.EncoderProfiles;
-import android.media.MediaCodec;
-import android.media.MediaCodecInfo.CodecCapabilities;
-import android.media.Image;
-import android.media.ImageReader;
-import android.media.ImageWriter;
-import android.media.MediaCodecList;
-import android.media.MediaExtractor;
-import android.media.MediaFormat;
-import android.media.MediaRecorder;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.SystemClock;
-import android.test.suitebuilder.annotation.LargeTest;
-import android.util.Log;
-import android.util.Range;
-import android.view.Surface;
-
-import com.android.compatibility.common.util.MediaUtils;
-import com.android.ex.camera2.blocking.BlockingSessionCallback;
-
-import junit.framework.AssertionFailedError;
-
-import org.junit.runners.Parameterized;
-import org.junit.runner.RunWith;
-import org.junit.Test;
 
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import android.graphics.ImageFormat;
+import android.graphics.SurfaceTexture;
+import android.hardware.HardwareBuffer;
+import android.hardware.camera2.CameraCaptureSession;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraConstrainedHighSpeedCaptureSession;
+import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.cts.helpers.StaticMetadata;
+import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
+import android.hardware.camera2.params.DynamicRangeProfiles;
+import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.SessionConfiguration;
+import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.CamcorderProfile;
+import android.media.EncoderProfiles;
+import android.media.Image;
+import android.media.ImageReader;
+import android.media.ImageWriter;
+import android.media.MediaCodec;
+import android.media.MediaCodecInfo.CodecCapabilities;
+import android.media.MediaCodecList;
+import android.media.MediaExtractor;
+import android.media.MediaFormat;
+import android.media.MediaMuxer;
+import android.media.MediaRecorder;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.SystemClock;
+import android.util.Log;
+import android.util.Range;
+import android.util.Size;
+import android.view.Surface;
+
+import androidx.test.filters.LargeTest;
+
+import com.android.compatibility.common.util.MediaUtils;
+import com.android.ex.camera2.blocking.BlockingSessionCallback;
+
+import junit.framework.AssertionFailedError;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
 

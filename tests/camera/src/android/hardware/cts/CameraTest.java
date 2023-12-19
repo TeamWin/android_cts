@@ -41,11 +41,13 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.test.MoreAsserts;
 import android.test.UiThreadTest;
-import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
+import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
+
+import com.android.compatibility.common.util.WindowUtil;
 
 import junit.framework.Assert;
 import junit.framework.AssertionFailedError;
@@ -67,8 +69,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TimeZone;
-
-import com.android.compatibility.common.util.WindowUtil;
 
 /**
  * This test case must run with hardware. It can't be tested in emulator

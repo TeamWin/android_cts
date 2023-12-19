@@ -34,9 +34,9 @@ import android.os.ConditionVariable;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.test.UiThreadTest;
-import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 
+import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.WindowUtil;
