@@ -34,10 +34,10 @@ import android.os.HandlerExecutor;
 import android.os.HandlerThread;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.util.SparseArray;
 
 import androidx.test.filters.SdkSuppress;
+import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import java.util.concurrent.Executor;
