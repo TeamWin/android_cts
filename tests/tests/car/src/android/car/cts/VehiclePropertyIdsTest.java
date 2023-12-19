@@ -131,8 +131,6 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("ENGINE_RPM");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.ENGINE_IDLE_AUTO_STOP_ENABLED))
                 .isEqualTo("ENGINE_IDLE_AUTO_STOP_ENABLED");
-        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.IMPACT_DETECTED))
-                .isEqualTo("IMPACT_DETECTED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.WHEEL_TICK))
                 .isEqualTo("WHEEL_TICK");
         assertThat(VehiclePropertyIds.toString(
@@ -177,8 +175,6 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("TRAILER_PRESENT");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.RANGE_REMAINING))
                 .isEqualTo("RANGE_REMAINING");
-        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_BATTERY_AVERAGE_TEMPERATURE))
-                .isEqualTo("EV_BATTERY_AVERAGE_TEMPERATURE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.TIRE_PRESSURE)).
                 isEqualTo("TIRE_PRESSURE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.TIRE_PRESSURE_DISPLAY_UNITS))
@@ -257,10 +253,6 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("AP_POWER_STATE_REQ");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.DISPLAY_BRIGHTNESS))
                 .isEqualTo("DISPLAY_BRIGHTNESS");
-        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.VALET_MODE_ENABLED))
-                .isEqualTo("VALET_MODE_ENABLED");
-        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HEAD_UP_DISPLAY_ENABLED))
-                .isEqualTo("HEAD_UP_DISPLAY_ENABLED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HW_KEY_INPUT))
                 .isEqualTo("HW_KEY_INPUT");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.DOOR_LOCK))
@@ -367,10 +359,6 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("SEAT_LUMBAR_VERTICAL_MOVE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_WALK_IN_POS))
                 .isEqualTo("SEAT_WALK_IN_POS");
-        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_AIRBAGS_DEPLOYED))
-                .isEqualTo("SEAT_AIRBAGS_DEPLOYED");
-        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_BELT_PRETENSIONER_DEPLOYED))
-                .isEqualTo("SEAT_BELT_PRETENSIONER_DEPLOYED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.WINDOW_LOCK))
                 .isEqualTo("WINDOW_LOCK");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.WINDOW_MOVE))
@@ -446,10 +434,6 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.STEERING_WHEEL_LIGHTS_SWITCH))
                 .isEqualTo("STEERING_WHEEL_LIGHTS_SWITCH");
         assertThat(
-                VehiclePropertyIds.toString(
-                        VehiclePropertyIds.VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL))
-                .isEqualTo("VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL");
-        assertThat(
                 VehiclePropertyIds.toString(VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_ENABLED))
                 .isEqualTo("AUTOMATIC_EMERGENCY_BRAKING_ENABLED");
         assertThat(
@@ -478,29 +462,6 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("LANE_CENTERING_ASSIST_COMMAND");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.LANE_CENTERING_ASSIST_STATE))
                 .isEqualTo("LANE_CENTERING_ASSIST_STATE");
-        assertThat(
-                VehiclePropertyIds.toString(VehiclePropertyIds.LOW_SPEED_COLLISION_WARNING_ENABLED))
-                .isEqualTo("LOW_SPEED_COLLISION_WARNING_ENABLED");
-        assertThat(
-                VehiclePropertyIds.toString(VehiclePropertyIds.LOW_SPEED_COLLISION_WARNING_STATE))
-                .isEqualTo("LOW_SPEED_COLLISION_WARNING_STATE");
-        assertThat(VehiclePropertyIds.toString(
-                VehiclePropertyIds.ELECTRONIC_STABILITY_CONTROL_ENABLED))
-                .isEqualTo("ELECTRONIC_STABILITY_CONTROL_ENABLED");
-        assertThat(
-                VehiclePropertyIds.toString(VehiclePropertyIds.ELECTRONIC_STABILITY_CONTROL_STATE))
-                .isEqualTo("ELECTRONIC_STABILITY_CONTROL_STATE");
-        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.CROSS_TRAFFIC_MONITORING_ENABLED))
-                .isEqualTo("CROSS_TRAFFIC_MONITORING_ENABLED");
-        assertThat(VehiclePropertyIds.toString(
-                VehiclePropertyIds.CROSS_TRAFFIC_MONITORING_WARNING_STATE))
-                .isEqualTo("CROSS_TRAFFIC_MONITORING_WARNING_STATE");
-        assertThat(VehiclePropertyIds.toString(
-                VehiclePropertyIds.LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED))
-                .isEqualTo("LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED");
-        assertThat(VehiclePropertyIds.toString(
-                VehiclePropertyIds.LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE))
-                .isEqualTo("LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE");
         assertThat(VehiclePropertyIds.toString(3)).isEqualTo("0x3");
         assertThat(VehiclePropertyIds.toString(12)).isEqualTo("0xc");
     }
@@ -565,6 +526,45 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 VehiclePropertyIds.toString(
                         VehiclePropertyIds.ULTRASONICS_SENSOR_MEASURED_DISTANCE))
                 .isEqualTo("ULTRASONICS_SENSOR_MEASURED_DISTANCE");
+        assertThat(
+                VehiclePropertyIds.toString(
+                        VehiclePropertyIds.VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL))
+                .isEqualTo("VEHICLE_DRIVING_AUTOMATION_CURRENT_LEVEL");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_AIRBAGS_DEPLOYED))
+                .isEqualTo("SEAT_AIRBAGS_DEPLOYED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_BELT_PRETENSIONER_DEPLOYED))
+                .isEqualTo("SEAT_BELT_PRETENSIONER_DEPLOYED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.IMPACT_DETECTED))
+                .isEqualTo("IMPACT_DETECTED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_BATTERY_AVERAGE_TEMPERATURE))
+                .isEqualTo("EV_BATTERY_AVERAGE_TEMPERATURE");
+        assertThat(
+                VehiclePropertyIds.toString(VehiclePropertyIds.LOW_SPEED_COLLISION_WARNING_ENABLED))
+                .isEqualTo("LOW_SPEED_COLLISION_WARNING_ENABLED");
+        assertThat(
+                VehiclePropertyIds.toString(VehiclePropertyIds.LOW_SPEED_COLLISION_WARNING_STATE))
+                .isEqualTo("LOW_SPEED_COLLISION_WARNING_STATE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.VALET_MODE_ENABLED))
+                .isEqualTo("VALET_MODE_ENABLED");
+        assertThat(VehiclePropertyIds.toString(
+                VehiclePropertyIds.ELECTRONIC_STABILITY_CONTROL_ENABLED))
+                .isEqualTo("ELECTRONIC_STABILITY_CONTROL_ENABLED");
+        assertThat(
+                VehiclePropertyIds.toString(VehiclePropertyIds.ELECTRONIC_STABILITY_CONTROL_STATE))
+                .isEqualTo("ELECTRONIC_STABILITY_CONTROL_STATE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.CROSS_TRAFFIC_MONITORING_ENABLED))
+                .isEqualTo("CROSS_TRAFFIC_MONITORING_ENABLED");
+        assertThat(VehiclePropertyIds.toString(
+                VehiclePropertyIds.CROSS_TRAFFIC_MONITORING_WARNING_STATE))
+                .isEqualTo("CROSS_TRAFFIC_MONITORING_WARNING_STATE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HEAD_UP_DISPLAY_ENABLED))
+                .isEqualTo("HEAD_UP_DISPLAY_ENABLED");
+        assertThat(VehiclePropertyIds.toString(
+                VehiclePropertyIds.LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED))
+                .isEqualTo("LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_ENABLED");
+        assertThat(VehiclePropertyIds.toString(
+                VehiclePropertyIds.LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE))
+                .isEqualTo("LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATE");
     }
 
     /**
