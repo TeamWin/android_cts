@@ -51,6 +51,7 @@ cc_test {
         "cts",
         "mts",
         "mts-neuralnetworks",
+        "mcts-neuralnetworks",
         "general-tests",
     ],
     sdk_version: "current",
