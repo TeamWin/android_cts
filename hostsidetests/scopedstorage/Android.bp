@@ -397,6 +397,7 @@ java_test_host {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
         "cts",
     ],
     test_config: "CoreTest.xml",
@@ -426,6 +427,7 @@ java_test_host {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
         "cts",
     ],
     test_config: "AndroidTest.xml",
@@ -458,6 +460,7 @@ java_test_host {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
         "cts",
     ],
     test_config: "AndroidTestAppCloning.xml",
@@ -537,6 +540,7 @@ android_test {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
         "cts",
     ],
     sdk_version: "test_current",
@@ -594,6 +598,7 @@ android_test {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
         "cts",
     ],
     sdk_version: "test_current",
@@ -640,6 +645,7 @@ android_test {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
         "cts",
     ],
     sdk_version: "test_current",
@@ -686,6 +692,7 @@ android_test {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
         "cts",
     ],
     sdk_version: "test_current",

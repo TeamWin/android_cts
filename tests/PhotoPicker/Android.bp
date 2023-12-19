@@ -29,6 +29,7 @@ android_test {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
         "cts",
     ],
     sdk_version: "core_current",
