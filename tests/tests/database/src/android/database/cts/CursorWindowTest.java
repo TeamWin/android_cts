@@ -29,9 +29,9 @@ import android.database.CursorWindowAllocationException;
 import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteException;
 import android.os.Parcel;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
 
+import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;

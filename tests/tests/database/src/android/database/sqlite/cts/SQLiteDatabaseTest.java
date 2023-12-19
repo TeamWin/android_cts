@@ -16,19 +16,15 @@
 
 package android.database.sqlite.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
-
-import android.platform.test.annotations.RequiresFlagsEnabled;
-import android.platform.test.flag.junit.CheckFlagsRule;
-import android.platform.test.flag.junit.DeviceFlagsValueProvider;
-
 import static android.database.sqlite.cts.DatabaseTestUtils.getDbInfoOutput;
 import static android.database.sqlite.cts.DatabaseTestUtils.waitForConnectionToClose;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.app.ActivityManager;
 import android.content.ContentValues;
@@ -51,17 +47,18 @@ import android.database.sqlite.SQLiteStatement;
 import android.database.sqlite.SQLiteTransactionListener;
 import android.icu.text.Collator;
 import android.icu.util.ULocale;
-import android.os.SystemClock;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.test.MoreAsserts;
-import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 
-import com.android.compatibility.common.util.CddTest;
-
+import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -76,10 +73,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
