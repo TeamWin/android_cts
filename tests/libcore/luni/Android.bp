@@ -62,5 +62,6 @@ android_test {
         "mts-art",
         "general-tests",
         "automotive-general-tests",
+        "mcts-art",
     ],
 }
