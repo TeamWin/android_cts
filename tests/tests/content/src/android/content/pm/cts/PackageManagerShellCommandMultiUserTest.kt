@@ -87,6 +87,15 @@ class PackageManagerShellCommandMultiUserTest {
         private const val TEST_APP_PACKAGE = PackageManagerShellCommandInstallTest.TEST_APP_PACKAGE
         private const val TEST_HW5 = PackageManagerShellCommandInstallTest.TEST_HW5
 
+        private const val TEST_HW_SYSTEM_USER_ONLY =
+                PackageManagerShellCommandInstallTest.TEST_HW_SYSTEM_USER_ONLY
+
+        private const val TEST_PROVIDER = "TestProvider"
+        private const val TEST_SERVICE = "TestService"
+
+        private const val SYSTEM_USER_ONLY_PROVIDER = "SystemUserOnlyProvider"
+        private const val SYSTEM_USER_ONLY_SERVICE = "SystemUserOnlyService"
+
         @JvmField
         @ClassRule(order = 0)
         @Rule
@@ -245,6 +254,76 @@ class PackageManagerShellCommandMultiUserTest {
             getFirstInstallTimeAsUser(TEST_APP_PACKAGE, secondaryUser)
         // Same firstInstallTime because package was installed for both users at the same time
         assertEquals(firstInstallTimeForPrimaryUser, firstInstallTimeForSecondaryUser)
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.multiuser
+            .Flags.FLAG_ENABLE_SYSTEM_USER_ONLY_FOR_SERVICES_AND_PROVIDERS)
+    fun testInstallAppHavingSystemUserOnlyComponents() {
+        runWithShellPermissionIdentity(
+                uiAutomation,
+                {
+                    installPackageAsUser(TEST_HW_SYSTEM_USER_ONLY, primaryUser)
+                    assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser))
+
+                    installExistingPackageAsUser(context.packageName, secondaryUser)
+                    assertTrue(isAppInstalledForUser(context.packageName, secondaryUser))
+                    installPackageAsUser(TEST_HW_SYSTEM_USER_ONLY, secondaryUser)
+                    assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser))
+
+                    val contextSystemUser = context.createPackageContextAsUser(
+                        TEST_APP_PACKAGE,
+                            0,
+                        primaryUser.userHandle()
+                    )
+                    val contextSecondaryUser = context.createPackageContextAsUser(
+                        TEST_APP_PACKAGE,
+                            0,
+                        secondaryUser.userHandle()
+                    )
+
+                    // Normal Providers and Services are available on both
+                    // SYSTEM and SECONDARY users.
+                    assertTrue(isServiceAvailable(contextSystemUser, TEST_SERVICE))
+                    assertTrue(isProviderAvailable(contextSystemUser, TEST_PROVIDER))
+                    assertTrue(isServiceAvailable(contextSecondaryUser, TEST_SERVICE))
+                    assertTrue(isProviderAvailable(contextSecondaryUser, TEST_PROVIDER))
+
+                    // systemUserOnly Providers and Services are available on SYSTEM user
+                    assertTrue(isServiceAvailable(contextSystemUser, SYSTEM_USER_ONLY_SERVICE))
+                    assertTrue(isProviderAvailable(contextSystemUser, SYSTEM_USER_ONLY_PROVIDER))
+                    // systemUserOnly Providers and Services are unavailable on SECONDARY user
+                    assertFalse(isServiceAvailable(contextSecondaryUser, SYSTEM_USER_ONLY_SERVICE))
+                    assertFalse(
+                        isProviderAvailable(contextSecondaryUser, SYSTEM_USER_ONLY_PROVIDER)
+                    )
+                },
+                Manifest.permission.INTERACT_ACROSS_USERS,
+                Manifest.permission.INTERACT_ACROSS_USERS_FULL
+        )
+    }
+
+    private fun isProviderAvailable(context: Context, providerName: String): Boolean {
+        return try {
+            context.contentResolver.acquireUnstableContentProviderClient(
+                    "$TEST_APP_PACKAGE.$providerName") != null
+        } catch (ex: Exception) {
+            false
+        }
+    }
+
+    private fun isServiceAvailable(context: Context, serviceName: String): Boolean {
+        val systemUserOnlyServiceIntent = Intent()
+        systemUserOnlyServiceIntent.setClassName(
+                TEST_APP_PACKAGE,
+                "$TEST_APP_PACKAGE.$serviceName"
+        )
+
+        return try {
+            context.startForegroundService(systemUserOnlyServiceIntent) != null
+        } catch (ex: Exception) {
+            false
+        }
     }
 
     @Test

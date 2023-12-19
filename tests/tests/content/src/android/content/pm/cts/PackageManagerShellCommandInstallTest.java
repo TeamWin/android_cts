@@ -133,6 +133,7 @@ public class PackageManagerShellCommandInstallTest {
 
     private static final String TEST_APK_PATH = "/data/local/tmp/cts/content/";
     static final String TEST_HW5 = "HelloWorld5.apk";
+    static final String TEST_HW_SYSTEM_USER_ONLY = "HelloWorldSystemUserOnly.apk";
     private static final String TEST_HW5_SPLIT0 = "HelloWorld5_hdpi-v4.apk";
     private static final String TEST_HW5_SPLIT1 = "HelloWorld5_mdpi-v4.apk";
     private static final String TEST_HW5_SPLIT2 = "HelloWorld5_xhdpi-v4.apk";
