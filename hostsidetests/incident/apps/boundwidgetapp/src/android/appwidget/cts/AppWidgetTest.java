@@ -16,19 +16,21 @@
 
 package android.appwidget.cts;
 
-import android.appwidget.AppWidgetProviderInfo;
-import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetHost;
+import android.appwidget.AppWidgetManager;
+import android.appwidget.AppWidgetProviderInfo;
 import android.appwidget.cts.provider.FirstAppWidgetProvider;
 import android.appwidget.cts.provider.SecondAppWidgetProvider;
-import android.os.Bundle;
-import android.test.suitebuilder.annotation.MediumTest;
-import android.util.Log;
 import android.content.ComponentName;
 import android.content.Context;
+import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.test.InstrumentationTestCase;
+import android.util.Log;
+
+import androidx.test.filters.MediumTest;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
