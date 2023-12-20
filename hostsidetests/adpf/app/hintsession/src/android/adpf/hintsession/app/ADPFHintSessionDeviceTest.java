@@ -19,29 +19,55 @@ package android.adpf.hintsession.app;
 import static android.adpf.common.ADPFHintSessionConstants.TEST_NAME_KEY;
 
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.device.collectors.util.SendToInstrumentation;
 import android.os.Bundle;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.MediaUtils;
+
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.Map;
 
 @RunWith(AndroidJUnit4.class)
 public class ADPFHintSessionDeviceTest {
     private final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
+    private Context mContext;
+
+    @Before
+    public void setUp() {
+        mContext = mInstrumentation.getContext();
+    }
+
+    protected void assumeMobileDeviceFormFactor() throws IOException {
+        final PackageManager pm = mContext.getPackageManager();
+        assumeFalse("Skipping test for auto",
+                pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+        assumeFalse("Skipping test for TV",
+                pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)); // TVs
+        assumeFalse("Skipping test for watch",
+                pm.hasSystemFeature(PackageManager.FEATURE_WATCH));
+        assumeFalse("Skipping test for embedded",
+                pm.hasSystemFeature(PackageManager.FEATURE_EMBEDDED));
+        assumeFalse("Skipping test for Cuttlefish",
+                MediaUtils.onCuttlefish());
+    }
 
     @Test
-    public void testAdpfHintSession() {
-        final Context context = mInstrumentation.getContext();
-        final Intent intent = new Intent(context, ADPFHintSessionDeviceActivity.class);
+    public void testAdpfHintSession() throws IOException {
+        assumeMobileDeviceFormFactor();
+        final Intent intent = new Intent(mContext, ADPFHintSessionDeviceActivity.class);
         // TODO: pass config to app
         intent.putExtra(TEST_NAME_KEY, "testAdpfHintSession");
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
