@@ -31,7 +31,8 @@ android_test {
         "androidx.test.uiautomator_uiautomator",
         "compatibility-device-util-axt",
         "SystemUI-proto",
-     ],
+        "com_android_systemui_flags_lib",
+    ],
 
     libs: [
         "android.test.mock",
