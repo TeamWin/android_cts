@@ -110,11 +110,6 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
     static final String ACTION_FINISH =
             "android.server.wm.activity.ActivityTransitionTests.ACTION_FINISH";
 
-    private boolean mAnimationScaleResetRequired = false;
-    private String mInitialWindowAnimationScale;
-    private String mInitialTransitionAnimationScale;
-    private String mInitialAnimatorDurationScale;
-
     // We need to allow for some variation stemming from color conversions
     private static final float COLOR_VALUE_VARIANCE_TOLERANCE = 0.05f;
 
@@ -461,8 +456,6 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         addTestMethodToExtras(TEST_METHOD_OVERRIDE_ACTIVITY_TRANSITION,
                 TRANSITION_TYPE_OPEN | TRANSITION_TYPE_CLOSE, extras);
         final TestBounds testBounds = getTestBounds();
-        final Rect appBounds = testBounds.appBounds;
-        final int xIndex = appBounds.left + (appBounds.right - appBounds.left) / 4;
         final LauncherActivity launcherActivity = startLauncherActivity();
         launcherActivity.startActivity(null, EdgeExtensionActivity.class, extras);
 
@@ -472,7 +465,8 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         update.putExtra(TRANSITION_TYPE_KEY, TRANSITION_TYPE_OPEN | TRANSITION_TYPE_CLOSE);
         mContext.sendBroadcast(update);
         mContext.sendBroadcast(new Intent(ACTION_FINISH));
-        runAndAssertActivityTransition(createAssertSingleColor(testBounds, Color.CYAN));
+        runAndAssertActivityTransition(
+                createAssertAppRegionOfScreenIsColor(Color.CYAN, testBounds));
     }
 
     /**
@@ -540,31 +534,57 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
     }
 
     private static class TestBounds {
-        public Rect rect;
         public Rect appBounds;
-        public ArrayList<Rect> excluded;
+        public Rect testableBounds;
     }
 
     private TestBounds getTestBounds() {
         final LauncherActivity activity = startLauncherActivity();
         final TestBounds bounds = new TestBounds();
-        bounds.rect = activity.getActivityFullyVisibleRegion();
         bounds.appBounds = getTopAppBounds();
-        bounds.excluded = activity.getRoundedCornersRegions();
+        final ArrayList<Rect> excluded = activity.getRoundedCornersRegions();
+
+        bounds.testableBounds = new Rect(bounds.appBounds);
+        for (Rect r : excluded) {
+            cropExcluded(bounds.testableBounds, r);
+        }
         launchHomeActivityNoWait();
         removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         return bounds;
     }
 
+    private void cropExcluded(Rect inout, Rect excluded) {
+        final Rect tmp = new Rect(excluded);
+        if (!tmp.intersect(inout)) {
+            return;
+        }
+        boolean leftMatch = tmp.left == inout.left;
+        boolean topMatch = tmp.top == inout.top;
+        boolean rightMatch = tmp.right == inout.right;
+        boolean bottomMatch = tmp.bottom == inout.bottom;
+        if (leftMatch && inout.left < tmp.right) {
+            inout.left = tmp.right;
+        }
+        if (rightMatch && inout.left < tmp.right) {
+            inout.right = tmp.left;
+        }
+        if (topMatch && inout.top < tmp.bottom) {
+            inout.top = tmp.bottom;
+        }
+        if (bottomMatch && inout.bottom < tmp.top) {
+            inout.bottom = tmp.top;
+        }
+    }
+
     private void runAndAssertActivityTransition(Function<Bitmap, AssertionResult> assertFunction) {
         // Busy wait until we are running the transition to capture the screenshot
         // Set a limited time to wait for transition start since there can still miss the state.
-        Condition.waitFor(new Condition<>("Wait for transition running", () -> {
+        assertTrue(Condition.waitFor(new Condition<>("Wait for transition running", () -> {
             mWmState.computeState();
             return WindowManagerState.APP_STATE_RUNNING.equals(
                     mWmState.getDisplay(DEFAULT_DISPLAY).getAppTransitionState());
-        }).setRetryIntervalMs(15).setRetryLimit(200));
+        }).setRetryIntervalMs(15).setRetryLimit(200)));
 
         // Because of differences in timing between devices we try the given assert function
         // by taking multiple screenshots approximately to ensure we capture at least one screenshot
@@ -588,15 +608,7 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         fail("No screenshot of the activity transition passed the assertions ::\n"
                 + String.join(",\n", failedResults.stream().map(Object::toString)
                 .toArray(String[]::new)));
-    }
 
-    private boolean rectsContain(ArrayList<Rect> rect, int x, int y) {
-        for (Rect r : rect) {
-            if (r.contains(x, y)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private Function<Bitmap, AssertionResult> createAssertAppRegionOfScreenIsColor(int color,
@@ -634,30 +646,40 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
 
     private AssertionResult getIsAppRegionOfScreenOfColorResult(Bitmap screen, int color,
             TestBounds testBounds) {
-        for (int x = testBounds.rect.left; x < testBounds.rect.right; x++) {
-            for (int y = testBounds.rect.top;
-                    y < testBounds.rect.bottom; y++) {
-                if (rectsContain(testBounds.excluded, x, y)) {
-                    continue;
-                }
-
-                final Color rawColor = screen.getColor(x, y);
+        final int scaleWidth = testBounds.testableBounds.width() / 5;
+        final int[] xSample = {
+                (scaleWidth + testBounds.testableBounds.left),
+                (scaleWidth * 2 + testBounds.testableBounds.left),
+                (scaleWidth * 3 + testBounds.testableBounds.left),
+                (scaleWidth * 4 + testBounds.testableBounds.left)};
+        final int scaleHeight = testBounds.testableBounds.height() / 5;
+        final int[] ySample = {
+                (scaleHeight + testBounds.testableBounds.top),
+                (scaleHeight * 2 + testBounds.testableBounds.top),
+                (scaleHeight * 3 + testBounds.testableBounds.top),
+                (scaleHeight * 4 + testBounds.testableBounds.top)};
+        final Color verifyColor = Color.valueOf(color);
+        for (int x = xSample.length - 1; x >= 0; --x) {
+            final int sampleX = xSample[x];
+            for (int y = ySample.length - 1; y >= 0; --y) {
+                final int sampleY = ySample[y];
+                final Color rawColor = screen.getColor(sampleX, sampleY);
                 final Color sRgbColor;
                 if (!rawColor.getColorSpace().equals(ColorSpace.get(ColorSpace.Named.SRGB))) {
                     // Conversion is required because the color space of the screenshot may be in
                     // the DCI-P3 color space or some other color space and we want to compare the
                     // color against once in the SRGB color space, so we must convert the color back
                     // to the SRGB color space.
-                    sRgbColor = screen.getColor(x, y)
+                    sRgbColor = screen.getColor(sampleX, sampleY)
                             .convert(ColorSpace.get(ColorSpace.Named.SRGB));
                 } else {
                     sRgbColor = rawColor;
                 }
-                final Color expectedColor = Color.valueOf(color);
                 if (arrayEquals(new float[]{
-                                expectedColor.red(), expectedColor.green(), expectedColor.blue()},
+                                verifyColor.red(), verifyColor.green(), verifyColor.blue()},
                         new float[]{sRgbColor.red(), sRgbColor.green(), sRgbColor.blue()})) {
-                    return new ColorCheckResult(new Point(x, y), expectedColor, sRgbColor);
+                    return new ColorCheckResult(new Point(sampleX, sampleY), verifyColor,
+                            sRgbColor);
                 }
             }
         }
@@ -723,51 +745,48 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
                 screen, xIndex, testBounds, Color.BLUE, Color.RED);
     }
 
-    // Verify the screenshot is filled with a single color.
-    private Function<Bitmap, AssertionResult> createAssertSingleColor(
-            TestBounds testBounds, int color) {
-        return (screen) -> assertColorChangeXIndex(
-                screen, 0, testBounds, color, color);
-    }
-
-    private AssertionResult assertColorChangeXIndex(Bitmap screen, int xIndex,
+    private AssertionResult assertColorChangeXIndex(Bitmap screen, int splitX,
             TestBounds testBounds, int lessXColor, int largeXColor) {
-        for (int x = testBounds.rect.left; x < testBounds.rect.right; x++) {
-            for (int y = testBounds.rect.top;
-                    y < testBounds.rect.bottom; y++) {
-                if (rectsContain(testBounds.excluded, x, y)) {
-                    continue;
-                }
-
-                // Edge pixels can have any color depending on the blending strategy of the device.
-                if (Math.abs(x - xIndex) <= 1) {
-                    continue;
-                }
-
+        final int[] xSample = {
+                (splitX - testBounds.testableBounds.left) / 2 + testBounds.testableBounds.left,
+                splitX - 3,
+                splitX + 3,
+                (testBounds.testableBounds.right - splitX) / 2 + splitX};
+        final int scaleHeight = testBounds.testableBounds.height() / 5;
+        final int[] ySample = {
+                (scaleHeight + testBounds.testableBounds.top),
+                (scaleHeight * 2 + testBounds.testableBounds.top),
+                (scaleHeight * 3 + testBounds.testableBounds.top),
+                (scaleHeight * 4 + testBounds.testableBounds.top)};
+        final Color lessXColorC = Color.valueOf(lessXColor);
+        final Color largeXColorC = Color.valueOf(largeXColor);
+        for (int xIndex = xSample.length - 1; xIndex >= 0; --xIndex) {
+            final int sampleX = xSample[xIndex];
+            for (int yIndex = ySample.length - 1; yIndex >= 0; --yIndex) {
+                final int sampleY = ySample[yIndex];
                 final Color expectedColor;
-                if (x < xIndex) {
-                    expectedColor = Color.valueOf(lessXColor);
+                if (sampleX < splitX) {
+                    expectedColor = lessXColorC;
                 } else {
-                    expectedColor = Color.valueOf(largeXColor);
+                    expectedColor = largeXColorC;
                 }
-
-                final Color rawColor = screen.getColor(x, y);
+                final Color rawColor = screen.getColor(sampleX, sampleY);
                 final Color sRgbColor;
                 if (!rawColor.getColorSpace().equals(ColorSpace.get(ColorSpace.Named.SRGB))) {
                     // Conversion is required because the color space of the screenshot may be in
                     // the DCI-P3 color space or some other color space and we want to compare the
                     // color against once in the SRGB color space, so we must convert the color back
                     // to the SRGB color space.
-                    sRgbColor = screen.getColor(x, y)
+                    sRgbColor = screen.getColor(sampleX, sampleY)
                             .convert(ColorSpace.get(ColorSpace.Named.SRGB));
                 } else {
                     sRgbColor = rawColor;
                 }
-
                 if (arrayEquals(new float[]{
                                 expectedColor.red(), expectedColor.green(), expectedColor.blue()},
                         new float[]{sRgbColor.red(), sRgbColor.green(), sRgbColor.blue()})) {
-                    return new ColorCheckResult(new Point(x, y), expectedColor, sRgbColor);
+                    return new ColorCheckResult(new Point(sampleX, sampleY), expectedColor,
+                            sRgbColor);
                 }
             }
         }
