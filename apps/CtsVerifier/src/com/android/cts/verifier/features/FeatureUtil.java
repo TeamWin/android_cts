@@ -223,4 +223,12 @@ public final class FeatureUtil {
     public static boolean isKeyguardShownWhenUserDoesntHaveCredentials(Context context) {
         return !isAutomotive(context) && !isWatch(context);
     }
+
+    /**
+     * Checks whether the device supports camera.
+     */
+    public static boolean supportCameraFeature(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY);
+    }
 }
