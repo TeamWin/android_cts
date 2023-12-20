@@ -22,6 +22,7 @@ import static android.app.AppOpsManager.OPSTR_READ_PHONE_STATE;
 import static android.telephony.CarrierConfigManager.KEY_CARRIER_NAME_OVERRIDE_BOOL;
 import static android.telephony.CarrierConfigManager.KEY_CARRIER_NAME_STRING;
 import static android.telephony.CarrierConfigManager.KEY_CARRIER_VOLTE_PROVISIONED_BOOL;
+import static android.telephony.CarrierConfigManager.KEY_CELLULAR_SERVICE_CAPABILITIES_INT_ARRAY;
 import static android.telephony.CarrierConfigManager.KEY_FORCE_HOME_NETWORK_BOOL;
 import static android.telephony.CarrierConfigManager.KEY_SATELLITE_CONNECTION_HYSTERESIS_SEC_INT;
 import static android.telephony.ServiceState.STATE_IN_SERVICE;
@@ -51,17 +52,24 @@ import android.net.NetworkCapabilities;
 import android.os.Looper;
 import android.os.PersistableBundle;
 import android.platform.test.annotations.AsbSecurityTest;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.CarrierConfigManager;
+import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionManager.OnSubscriptionsChangedListener;
 import android.telephony.TelephonyManager;
 import android.telephony.TelephonyRegistryManager;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
+import com.android.internal.telephony.flags.Flags;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -90,6 +98,10 @@ public class CarrierConfigManagerTest {
     private static final int TEST_PRECISE_CARRIER_ID = 100;
 
     private static final String CARRIER_NAME_OVERRIDE = "carrier_a";
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
     private CarrierConfigManager mConfigManager;
     private TelephonyManager mTelephonyManager;
     private SubscriptionManager mSubscriptionManager;
@@ -99,6 +111,8 @@ public class CarrierConfigManagerTest {
     // devices can receive the broadcast in under 5s (most should receive it well before then).
     private static final int BROADCAST_TIMEOUT_MILLIS = 5000;
     private static final CountDownLatch COUNT_DOWN_LATCH = new CountDownLatch(1);
+
+    private UiAutomation mUiAutomation;
 
     @Before
     public void setUp() throws Exception {
@@ -111,6 +125,7 @@ public class CarrierConfigManagerTest {
         mSubscriptionManager =
                 (SubscriptionManager)
                         getContext().getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+        mUiAutomation = getInstrumentation().getUiAutomation();
     }
 
     @After
@@ -671,6 +686,78 @@ public class CarrierConfigManagerTest {
         } finally {
             mConfigManager.unregisterCarrierConfigChangeListener(listener);
         }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_DATA_ONLY_CELLULAR_SERVICE)
+    @ApiTest(apis = {"android.telephony"
+            + ".CarrierConfigManager#KEY_CELLULAR_SERVICE_CAPABILITIES_INT_ARRAY",
+            "android.telephony.SubscriptionInfo#getServiceCapabilities"})
+    public void testCellularServiceCapabilitiesOverride() throws Exception {
+        if (!isSimCardPresent()
+                || mTelephonyManager.getServiceState().getState() != STATE_IN_SERVICE) {
+            return;
+        }
+
+        final int subId = SubscriptionManager.getDefaultSubscriptionId();
+        final boolean wasDataOnlyService = isDataOnlyService(subId);
+        final OnSubscriptionsChangedListener listener =
+                new OnSubscriptionsChangedListener() {
+                    @Override
+                    public void onSubscriptionsChanged() {
+                        boolean isDataOnlyService = isDataOnlyService(subId);
+                        if (wasDataOnlyService != isDataOnlyService) {
+                            COUNT_DOWN_LATCH.countDown();
+                        }
+                    }
+                };
+
+        try {
+            // Adopt shell permission to require android.permission.MODIFY_PHONE_STATE
+            mUiAutomation.adoptShellPermissionIdentity();
+            mSubscriptionManager.addOnSubscriptionsChangedListener(Runnable::run, listener);
+
+            // Override with full services if it was data only, or data only if it was full
+            int[] overriddenCapabilities;
+            if (!wasDataOnlyService) {
+                overriddenCapabilities = new int[]{SubscriptionManager.SERVICE_CAPABILITY_DATA};
+            } else {
+                final int numberOfServices =
+                        SubscriptionManager.SERVICE_CAPABILITY_MAX
+                                - SubscriptionManager.SERVICE_CAPABILITY_VOICE + 1;
+                overriddenCapabilities = new int[numberOfServices];
+                int service = SubscriptionManager.SERVICE_CAPABILITY_VOICE;
+                int i = 0;
+                while (i < numberOfServices) {
+                    overriddenCapabilities[i++] = service++;
+                }
+            }
+            overrideCellularServiceCapabilities(subId, overriddenCapabilities);
+
+            boolean awaitResult =
+                    COUNT_DOWN_LATCH.await(BROADCAST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+            if (!awaitResult) {
+                fail("Cellular services was not updated in " + BROADCAST_TIMEOUT_MILLIS + " ms");
+            }
+        } finally {
+            mConfigManager.overrideConfig(subId, null);
+            mSubscriptionManager.removeOnSubscriptionsChangedListener(listener);
+            mUiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    private boolean isDataOnlyService(int subId) {
+        final SubscriptionInfo subInfo =
+                mSubscriptionManager.getActiveSubscriptionInfo(subId);
+        final Set<Integer> cellularServices = subInfo.getServiceCapabilities();
+        return cellularServices.size() == 1
+                && cellularServices.contains(SubscriptionManager.SERVICE_CAPABILITY_DATA);
+    }
+
+    private void overrideCellularServiceCapabilities(int subId, int[] newCapabilities) {
+        PersistableBundle overrideBundle = new PersistableBundle(1);
+        overrideBundle.putIntArray(KEY_CELLULAR_SERVICE_CAPABILITIES_INT_ARRAY, newCapabilities);
+        mConfigManager.overrideConfig(subId, overrideBundle);
     }
 
     // A data value class to wrap the parameters of carrier config change
