@@ -27,8 +27,10 @@ import android.app.Notification.EXTRA_TITLE
 import android.app.Notification.InboxStyle
 import android.app.Notification.MessagingStyle
 import android.app.Notification.MessagingStyle.Message
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Person
+import android.app.stubs.R
 import android.app.stubs.shared.NotificationHelper.SEARCH_TYPE
 import android.companion.CompanionDeviceManager
 import android.content.Intent
@@ -41,7 +43,11 @@ import android.permission.cts.PermissionUtils
 import android.platform.test.annotations.RequiresFlagsDisabled
 import android.platform.test.annotations.RequiresFlagsEnabled
 import android.platform.test.flag.junit.DeviceFlagsValueProvider
+import android.service.notification.Adjustment
+import android.service.notification.Adjustment.KEY_IMPORTANCE
+import android.service.notification.Adjustment.KEY_RANKING_SCORE
 import android.service.notification.Flags
+import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
@@ -59,7 +65,6 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class SensitiveNotificationRedactionTest : BaseNotificationManagerTest() {
-    private val iconId = R.drawable.ic_android
     private val groupKey = "SensitiveNotificationRedactionTest begun at " +
             System.currentTimeMillis()
 
@@ -75,6 +80,9 @@ class SensitiveNotificationRedactionTest : BaseNotificationManagerTest() {
         setUpNotifListener()
         mAssistant = mNotificationHelper.enableAssistant(mContext.packageName)
         mAssistant.mMarkSensitiveContent = true
+        mAssistant.mSmartReplies =
+            ArrayList<CharSequence>(listOf(OTP_MESSAGE_BASIC as CharSequence))
+        mAssistant.mSmartActions = ArrayList<Notification.Action>(listOf(createAction()))
     }
 
     fun sendNotification(
@@ -94,20 +102,14 @@ class SensitiveNotificationRedactionTest : BaseNotificationManagerTest() {
         intent.setAction(Intent.ACTION_MAIN)
         intent.setPackage(mContext.getPackageName())
 
-        val pendingIntent = PendingIntent.getActivity(
-            mContext,
-            0,
-            intent,
-            PendingIntent.FLAG_MUTABLE
-        )
         val nb = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
         nb.setContentText(text)
         nb.setContentTitle(title)
         nb.setSubText(subtext)
         nb.setCategory(category)
-        nb.setSmallIcon(iconId)
-        nb.setLargeIcon(Icon.createWithResource(mContext, iconId))
-        nb.setContentIntent(pendingIntent)
+        nb.setSmallIcon(R.drawable.black)
+        nb.setLargeIcon(Icon.createWithResource(mContext, R.drawable.black))
+        nb.setContentIntent(createTestPendingIntent())
         nb.setGroup(groupKey)
         if (actions != null) {
             nb.setActions(*actions.toTypedArray())
@@ -119,6 +121,27 @@ class SensitiveNotificationRedactionTest : BaseNotificationManagerTest() {
             nb.addExtras(extras)
         }
         mNotificationManager.notify(groupKey, NOTIFICATION_ID, nb.build())
+    }
+
+    private fun createTestPendingIntent(): PendingIntent {
+        val intent = Intent(Intent.ACTION_MAIN)
+        intent.setFlags(
+            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        )
+        intent.setAction(Intent.ACTION_MAIN)
+        intent.setPackage(mContext.getPackageName())
+
+        return PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_MUTABLE)
+    }
+
+    private fun createAction(): Notification.Action {
+        val pendingIntent = createTestPendingIntent()
+        return Notification.Action.Builder(
+            Icon.createWithResource(mContext, R.drawable.black),
+            OTP_MESSAGE_BASIC,
+            pendingIntent
+        ).build()
     }
 
     private fun waitForNotification(
@@ -173,12 +196,7 @@ class SensitiveNotificationRedactionTest : BaseNotificationManagerTest() {
             intent,
             PendingIntent.FLAG_MUTABLE
         )
-        val actions = listOf(Notification.Action.Builder(
-            Icon.createWithResource(mContext, iconId),
-            OTP_MESSAGE_BASIC,
-            pendingIntent
-        ).build())
-        sendNotification(actions = actions)
+        sendNotification(actions = listOf(createAction()))
         val sbn = waitForNotification()
         val action = sbn.notification.actions.firstOrNull()
         assertWithMessage("expected notification to have an action").that(action).isNotNull()
@@ -227,11 +245,49 @@ class SensitiveNotificationRedactionTest : BaseNotificationManagerTest() {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_REDACT_SENSITIVE_NOTIFICATIONS_FROM_UNTRUSTED_LISTENERS)
-    fun testRemovedNotificationsRedacted() {
+    fun testRankingRedactedInPost() {
+        mListener.mRankingMap = null
         sendNotification()
-        waitForNotification()
-        val sbn = waitForNotification(searchType = SEARCH_TYPE.REMOVED)
-        assertNotificationTextRedacted(sbn)
+        val sbn = waitForNotification()
+        assertWithMessage("Expected to receive a ranking map")
+                .that(mListener.mRankingMap).isNotNull()
+        assertRankingRedacted(sbn.key, mListener.mRankingMap)
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_REDACT_SENSITIVE_NOTIFICATIONS_FROM_UNTRUSTED_LISTENERS)
+    fun testRankingRedactedInUpdate() {
+        sendNotification()
+        val sbn = waitForNotification()
+        for (key in mListener.mRankingMap.orderedKeys) {
+            val ranking = NotificationListenerService.Ranking()
+            mListener.mRankingMap.getRanking(key, ranking)
+        }
+        mListener.mRankingMap = null
+        val b = Bundle().apply {
+            putInt(KEY_IMPORTANCE, NotificationManager.IMPORTANCE_MAX)
+            putFloat(KEY_RANKING_SCORE, 1.0f)
+        }
+        val latch = mListener.setRankingUpdateCountDown(1)
+        mAssistant.adjustNotification(Adjustment(sbn.packageName, sbn.key, b, "", sbn.user))
+        latch.await()
+        assertWithMessage("Expected to receive a ranking map")
+                .that(mListener.mRankingMap).isNotNull()
+        assertRankingRedacted(sbn.key, mListener.mRankingMap)
+    }
+
+    private fun assertRankingRedacted(
+        key: String,
+        rankingMap: NotificationListenerService.RankingMap
+    ) {
+        val ranking = NotificationListenerService.Ranking()
+        val foundPostedNotifRanking = rankingMap.getRanking(key, ranking)
+         assertWithMessage("Expected to find a ranking with key $key")
+                .that(foundPostedNotifRanking).isTrue()
+        assertWithMessage("Expected smart actions to be empty").that(ranking.smartActions)
+                    .isEmpty()
+        assertWithMessage("Expected smart replies to be empty").that(ranking.smartReplies)
+                    .isEmpty()
     }
 
     @Test
