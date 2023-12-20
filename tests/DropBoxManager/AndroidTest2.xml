@@ -30,13 +30,6 @@
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsDropBoxManagerTestCasesAPI34.apk" />
     </target_preparer>
-    <!-- Hardcode enable_read_dropbox_permission to true to test that Dropbox behaves correctly
-         when targeting SDK versions lower than V.
-         TODO(b/309523560): remove flag forcing when flag is deleted. -->
-    <target_preparer class="com.android.tradefed.targetprep.FeatureFlagTargetPreparer">
-        <option name="flag-value"
-                value="preload_safety/com.android.server.feature.flags.enable_read_dropbox_permission=true"/>
-    </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.dropboxmanager.cts.legacy" />
