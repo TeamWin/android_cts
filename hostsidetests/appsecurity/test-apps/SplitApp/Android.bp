@@ -65,6 +65,9 @@ android_test_helper_app {
         "general-tests",
         "mts-mainline-infra",
     ],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
 
 // Define a variant with a different revision code
@@ -83,6 +86,9 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
 
 // Define a variant with a different version code
@@ -100,6 +106,9 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
 
 // Define a variant with a different signature
@@ -117,6 +126,9 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
 
 // Define a variant requiring a split for install
@@ -135,6 +147,9 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
 
 // Define a variant with different codes and resources for the inherit updated test of the base apk
@@ -163,6 +178,9 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
 
 // Define a variant which includes a provider and service declared in other split apk. And they only
@@ -181,4 +199,7 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
