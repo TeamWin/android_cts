@@ -34,6 +34,10 @@ public class LoginCredentialMixedActivity extends LoginActivity {
                     + "KEY_ALLOWED_USER_IDS\":[]},\"isSystemProviderRequired\":false}]}}";
     private static final String USERNAME_HINT = "username";
     private static final String PASSWORD_HINT = "password";
+    private static final String CREDIT_HINT = "creditCardNumber";
+
+    // a complete credential hint has a json credential option appended to the hint.
+    private static final String INCOMPLETE_CREDENTIAL_HINT = "credential";
 
     private EditText mCreditEditText;
 
@@ -43,6 +47,7 @@ public class LoginCredentialMixedActivity extends LoginActivity {
         this.mUsernameEditText.setAutofillHints(USERNAME_HINT, CREDENTIAL_HINT);
         this.mPasswordEditText.setAutofillHints(PASSWORD_HINT, CREDENTIAL_HINT);
         this.mCreditEditText = findViewById(R.id.card_number);
+        this.mCreditEditText.setAutofillHints(CREDIT_HINT, INCOMPLETE_CREDENTIAL_HINT);
     }
 
     @Override
