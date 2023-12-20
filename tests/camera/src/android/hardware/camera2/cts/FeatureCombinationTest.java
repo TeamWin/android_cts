@@ -327,9 +327,6 @@ public final class FeatureCombinationTest extends Camera2AndroidTestCase {
                                                 < ((1e9 / fpsRange.getLower()) * 1.01)));
                             }
                         }
-                    } catch (UnsupportedOperationException e) {
-                        //TODO: Remove this once HAL implementation of createCaptureRequest
-                        //and isSessionConfigurationWithParametersSupported is in place.
                     } catch (Throwable e) {
                         mCollector.addMessage(String.format(
                                 "Output combination %s failed due to: %s",
