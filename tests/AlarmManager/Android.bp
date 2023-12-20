@@ -33,6 +33,7 @@ android_test {
         "cts",
         "general-tests",
         "mts-scheduling",
+        "mcts-scheduling",
     ],
     platform_apis: true,
     data: [
