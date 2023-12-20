@@ -22,17 +22,75 @@ import android.net.wifi.nl80211.IWifiScannerImpl;
 import android.net.wifi.nl80211.NativeScanResult;
 import android.net.wifi.nl80211.PnoSettings;
 import android.net.wifi.nl80211.SingleScanSettings;
+import android.os.RemoteException;
+import android.util.ArraySet;
 import android.util.Log;
+
+import java.util.Collections;
+import java.util.Set;
 
 public class IWifiScannerImp extends IWifiScannerImpl.Stub {
     private static final String TAG = "IWifiScannerImp";
 
     private String mIfaceName;
+    private WifiScannerInterfaceMock mWifiScannerInterfaceMock;
+    private IPnoScanEvent mIPnoScanEvent;
+
+    public interface WifiScannerInterfaceMock {
+        default NativeScanResult[] getPnoScanResults() {
+            return null;
+        }
+        /**
+        * Configures a start Pno scan interface.
+        */
+        default boolean startPnoScan(PnoSettings pnoSettings) {
+            return false;
+        }
+    }
 
     public IWifiScannerImp(String ifaceName) {
         mIfaceName = ifaceName;
     }
 
+    private boolean isMethodOverridden(WifiScannerInterfaceMock wifiScannerInterfaceMock,
+            String methodName) throws NoSuchMethodException {
+        if (methodName.equals("startPnoScan")) {
+            return wifiScannerInterfaceMock.getClass().getMethod(
+                    methodName, PnoSettings.class).getDeclaringClass().equals(
+                    WifiScannerInterfaceMock.class);
+        }
+        if (methodName.equals("subscribePnoScanEvents")) {
+            return !wifiScannerInterfaceMock.getClass().getMethod(
+                    methodName, IPnoScanEvent.class).getDeclaringClass().equals(
+                    WifiScannerInterfaceMock.class);
+        }
+        return !wifiScannerInterfaceMock.getClass().getMethod(
+                methodName).getDeclaringClass().equals(WifiScannerInterfaceMock.class);
+    }
+
+    /**
+    *  Overridden method check.
+    */
+    public Set<String> setWifiScannerInterfaceMock(
+            WifiScannerInterfaceMock wifiScannerInterfaceMock) {
+        if (wifiScannerInterfaceMock == null) {
+            return Collections.emptySet();
+        }
+        Set<String> overriddenMethods = new ArraySet<>();
+        try {
+            if (isMethodOverridden(wifiScannerInterfaceMock, "getPnoScanResults")) {
+                overriddenMethods.add("getPnoScanResults");
+            }
+            if (isMethodOverridden(wifiScannerInterfaceMock, "startPnoScan")) {
+                overriddenMethods.add("startPnoScan");
+            }
+        } catch (NoSuchMethodException e) {
+            Log.e(TAG, "Reflection error: " + e);
+            return Collections.emptySet();
+        }
+        mWifiScannerInterfaceMock = wifiScannerInterfaceMock;
+        return overriddenMethods;
+    }
     // Supported methods in IWifiScannerImpl.aidl
     @Override
     public NativeScanResult[] getScanResults() {
@@ -44,8 +102,11 @@ public class IWifiScannerImp extends IWifiScannerImpl.Stub {
     @Override
     public NativeScanResult[] getPnoScanResults() {
         Log.i(TAG, "getPnoScanResults");
-        // TODO: Mock it when we have a use (test) case.
-        return null;
+        if (mWifiScannerInterfaceMock == null) {
+            Log.e(TAG, "mWifiScannerInterfaceMock: null!");
+            return null;
+        }
+        return mWifiScannerInterfaceMock.getPnoScanResults();
     }
 
     @Override
@@ -77,7 +138,7 @@ public class IWifiScannerImp extends IWifiScannerImpl.Stub {
     @Override
     public void subscribePnoScanEvents(IPnoScanEvent handler) {
         Log.i(TAG, "subscribePnoScanEvents");
-        // TODO: Mock it when we have a use (test) case.
+        this.mIPnoScanEvent = handler;
     }
 
     @Override
@@ -89,8 +150,16 @@ public class IWifiScannerImp extends IWifiScannerImpl.Stub {
     @Override
     public boolean startPnoScan(PnoSettings pnoSettings) {
         Log.i(TAG, "startPnoScan");
-        // TODO: Mock it when we have a use (test) case.
-        return false;
+        if (mWifiScannerInterfaceMock == null || mIPnoScanEvent == null) {
+            Log.e(TAG, "startPnoScan: false mock!");
+            return false;
+        }
+        try {
+            mIPnoScanEvent.OnPnoNetworkFound();
+        } catch (RemoteException e) {
+            Log.d(TAG, "Failed to start pno scan due to remote exception");
+        }
+        return true;
     }
 
     @Override

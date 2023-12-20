@@ -53,6 +53,7 @@ cc_test {
                 "cts",
                 "mts",
                 "mts-neuralnetworks",
+                "mcts-neuralnetworks",
             ],
             test_config: "AndroidTestDevice.xml",
         },

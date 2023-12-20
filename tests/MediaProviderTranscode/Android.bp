@@ -8,6 +8,7 @@ android_test {
         "device-tests",
         "cts",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
     ],
     compile_multilib: "both",
 

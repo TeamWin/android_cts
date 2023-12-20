@@ -2045,6 +2045,8 @@
                        android:value="single_display_mode" />
             <meta-data android:name="CddTest"
                        android:value="9.11.1/C-4-1" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.hardware.fingerprint#authenticate|android.hardware.fingerprint#hasEnrolledFingerprints" />
         </activity>
 
         <activity android:name=".security.ProtectedConfirmationTest"

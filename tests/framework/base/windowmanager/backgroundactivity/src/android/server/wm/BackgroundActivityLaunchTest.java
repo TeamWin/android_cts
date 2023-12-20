@@ -489,6 +489,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_BAL_REQUIRE_OPT_IN_BY_PENDING_INTENT_CREATOR)
+    @RequiresFlagsDisabled(Flags.FLAG_BAL_DONT_BRING_EXISTING_BACKGROUND_TASK_STACK_TO_FG)
     public void testPI_onlyCreatorAllowsBALwithOptIn_isNotBlocked() throws Exception {
         // creator (appa) is not privileged
         grantSystemAlertWindow(APP_A, false);
@@ -511,7 +512,32 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
+    @RequiresFlagsEnabled({Flags.FLAG_BAL_REQUIRE_OPT_IN_BY_PENDING_INTENT_CREATOR,
+            Flags.FLAG_BAL_DONT_BRING_EXISTING_BACKGROUND_TASK_STACK_TO_FG})
+    public void testPI_onlyCreatorAllowsBALwithOptIn_isStartedInBackground() throws Exception {
+        // creator (appa) is not privileged
+        grantSystemAlertWindow(APP_A, false);
+        // sender (appb) is privileged, and grants
+        grantSystemAlertWindow(APP_B);
+
+        startActivity(APP_A.FOREGROUND_ACTIVITY);
+
+        pressHomeAndWaitHomeResumed();
+
+        TestServiceClient serviceB = getTestService(APP_B);
+        PendingIntent pi = serviceB.generatePendingIntent(APP_B.BACKGROUND_ACTIVITY,
+                CREATE_OPTIONS_ALLOW_BAL);
+        TestServiceClient serviceA = getTestService(APP_A);
+        serviceA.sendPendingIntentWithActivity(pi, Bundle.EMPTY);
+
+        assertActivityNotFocused(APP_B.BACKGROUND_ACTIVITY);
+        assertTaskStackHasComponents(APP_A.FOREGROUND_ACTIVITY, APP_B.BACKGROUND_ACTIVITY,
+                APP_A.FOREGROUND_ACTIVITY);
+    }
+
+    @Test
     @RequiresFlagsEnabled(Flags.FLAG_BAL_REQUIRE_OPT_IN_BY_PENDING_INTENT_CREATOR)
+    @RequiresFlagsDisabled(Flags.FLAG_BAL_DONT_BRING_EXISTING_BACKGROUND_TASK_STACK_TO_FG)
     public void testPI_onlyCreatorAllowsBALwithoutOptInForResult_isNotBlocked() throws Exception {
         // creator (appa) is not privileged
         grantSystemAlertWindow(APP_A, false);
@@ -529,6 +555,33 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         serviceA.sendPendingIntentWithActivityForResult(pi, Bundle.EMPTY);
 
         assertActivityFocused(APP_B.BACKGROUND_ACTIVITY);
+        assertTaskStackHasComponents(APP_A.FOREGROUND_ACTIVITY, APP_B.BACKGROUND_ACTIVITY,
+                APP_A.FOREGROUND_ACTIVITY);
+    }
+
+    @Test
+    @RequiresFlagsEnabled({Flags.FLAG_BAL_REQUIRE_OPT_IN_BY_PENDING_INTENT_CREATOR,
+            Flags.FLAG_BAL_DONT_BRING_EXISTING_BACKGROUND_TASK_STACK_TO_FG})
+    public void testPI_onlyCreatorAllowsBALwithoutOptInForResult_isStartedInBackground()
+            throws Exception {
+        // creator (appa) is not privileged
+        grantSystemAlertWindow(APP_A, false);
+        // sender (appb) is privileged, and grants
+        grantSystemAlertWindow(APP_B);
+
+        startActivity(APP_A.FOREGROUND_ACTIVITY);
+
+        pressHomeAndWaitHomeResumed();
+
+        TestServiceClient serviceB = getTestService(APP_B);
+        PendingIntent pi = serviceB.generatePendingIntent(APP_B.BACKGROUND_ACTIVITY);
+        TestServiceClient serviceA = getTestService(APP_A);
+        // there is no explicit opt-in, but using sendPendingIntentForResult implicitly grants
+        serviceA.sendPendingIntentWithActivityForResult(pi, Bundle.EMPTY);
+
+        assertActivityNotFocused(APP_B.BACKGROUND_ACTIVITY);
+        assertTaskStackHasComponents(APP_A.FOREGROUND_ACTIVITY, APP_B.BACKGROUND_ACTIVITY,
+                APP_A.FOREGROUND_ACTIVITY);
     }
 
     @Test
