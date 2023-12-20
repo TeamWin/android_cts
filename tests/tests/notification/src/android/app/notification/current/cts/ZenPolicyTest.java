@@ -48,7 +48,7 @@ public class ZenPolicyTest {
                 .allowConversations(ZenPolicy.CONVERSATION_SENDERS_ANYONE)
                 .showInNotificationList(false);
         if (Flags.modesApi()) {
-            builder.allowChannels(ZenPolicy.CHANNEL_TYPE_PRIORITY);
+            builder.allowPriorityChannels(true);
         }
         ZenPolicy policy = builder.build();
 
@@ -434,15 +434,15 @@ public class ZenPolicyTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
-    public void testAllowChannels() {
+    public void testAllowPriorityChannels() {
         ZenPolicy.Builder builder = new ZenPolicy.Builder();
-        ZenPolicy policy = builder.allowChannels(ZenPolicy.CHANNEL_TYPE_PRIORITY).build();
-        assertEquals(ZenPolicy.CHANNEL_TYPE_PRIORITY, policy.getAllowedChannels());
+        ZenPolicy policy = builder.allowPriorityChannels(true).build();
+        assertEquals(ZenPolicy.STATE_ALLOW, policy.getPriorityChannels());
         assertAllPriorityCategoriesUnset(policy);
         assertAllVisualEffectsUnset(policy);
 
-        policy = builder.allowChannels(ZenPolicy.CHANNEL_TYPE_NONE).build();
-        assertEquals(ZenPolicy.CHANNEL_TYPE_NONE, policy.getAllowedChannels());
+        policy = builder.allowPriorityChannels(false).build();
+        assertEquals(ZenPolicy.STATE_DISALLOW, policy.getPriorityChannels());
         assertAllPriorityCategoriesUnset(policy);
         assertAllVisualEffectsUnset(policy);
     }

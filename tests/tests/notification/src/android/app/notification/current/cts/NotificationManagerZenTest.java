@@ -903,7 +903,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
-    public void testConsolidatedNotificationPolicy_mergesAllowChannels() throws Exception {
+    public void testConsolidatedNotificationPolicy_mergesAllowPriorityChannels() throws Exception {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -911,7 +911,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         AutomaticZenRule rule = createRule("test_consolidated_policy_priority_channels",
                 INTERRUPTION_FILTER_PRIORITY);
         rule.setZenPolicy(new ZenPolicy.Builder()
-                .allowChannels(ZenPolicy.CHANNEL_TYPE_PRIORITY)
+                .allowPriorityChannels(true)
                 .build());
         String id = mNotificationManager.addAutomaticZenRule(rule);
         mRuleIds.add(id);
@@ -934,7 +934,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         AutomaticZenRule rule2 = createRule("test_consolidated_policy_no_channels",
                 INTERRUPTION_FILTER_PRIORITY);
         rule2.setZenPolicy(new ZenPolicy.Builder()
-                .allowChannels(ZenPolicy.CHANNEL_TYPE_NONE)
+                .allowPriorityChannels(false)
                 .build());
         String id2 = mNotificationManager.addAutomaticZenRule(rule2);
         Condition onCondition2 = new Condition(rule2.getConditionId(), "summary",
@@ -2004,7 +2004,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 INTERRUPTION_FILTER_PRIORITY);
         rule.setZenPolicy(new ZenPolicy.Builder()
                 .disallowAllSounds()
-                .allowChannels(ZenPolicy.CHANNEL_TYPE_NONE)
+                .allowPriorityChannels(false)
                 .build());
         String id = mNotificationManager.addAutomaticZenRule(rule);
         mRuleIds.add(id); // will be cleaned up by tearDown
@@ -2133,7 +2133,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
-    public void testAddAutomaticZenRule_mergesAllowChannels() throws Exception {
+    public void testAddAutomaticZenRule_includesModesApiFields() throws Exception {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
