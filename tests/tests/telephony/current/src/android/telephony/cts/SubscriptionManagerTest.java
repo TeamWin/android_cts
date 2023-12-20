@@ -1475,6 +1475,28 @@ public class SubscriptionManagerTest {
         assertThat(info.isOnlyNonTerrestrialNetwork()).isFalse();
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_DATA_ONLY_CELLULAR_SERVICE)
+    @ApiTest(apis = {"android.telephony.SubscriptionInfo#getServiceCapabilities"})
+    public void testSubscriptionInfo_getServiceCapabilities() throws Exception {
+        final List<SubscriptionInfo> allSubInfos =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                        (sm) -> sm.getAllSubscriptionInfoList());
+        for (SubscriptionInfo subInfo : allSubInfos) {
+            final Set<Integer> capabilities = subInfo.getServiceCapabilities();
+
+            assertThat(capabilities).isNotNull();
+            for (int capability : capabilities) {
+                assertTrue(isValidServiceCapability(capability));
+            }
+        }
+    }
+
+    private boolean isValidServiceCapability(int capability) {
+        return capability >= SubscriptionManager.SERVICE_CAPABILITY_VOICE
+                && capability <= SubscriptionManager.SERVICE_CAPABILITY_MAX;
+    }
+
     @Nullable
     private PersistableBundle getBundleFromBackupData(byte[] data) {
         try (ByteArrayInputStream bis = new ByteArrayInputStream(data)) {
