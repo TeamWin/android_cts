@@ -41,6 +41,7 @@ import android.telephony.mockmodem.MockSimService.SimAppData;
 import android.util.Log;
 
 import java.util.ArrayList;
+import com.android.internal.telephony.flags.Flags;
 
 public class IRadioSimImpl extends IRadioSim.Stub {
     private static final String TAG = "MRSIM";
@@ -64,6 +65,10 @@ public class IRadioSimImpl extends IRadioSim.Stub {
 
     private Carrier[] mCarrierList;
     private int mCarrierRestrictionStatus = CarrierRestrictions.CarrierRestrictionStatus.UNKNOWN;
+
+    private int mMultiSimPolicy =
+            android.hardware.radio.sim.SimLockMultiSimPolicy.NO_MULTISIM_POLICY;
+    private CarrierRestrictions mCarrierRestrictionRules;
 
     public IRadioSimImpl(
             MockModemService service, MockModemConfigInterface configInterface, int instanceId) {
@@ -229,7 +234,7 @@ public class IRadioSimImpl extends IRadioSim.Stub {
     @Override
     public void getAllowedCarriers(int serial) {
         Log.d(mTag, "getAllowedCarriers");
-
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         android.hardware.radio.sim.CarrierRestrictions carriers =
                 new android.hardware.radio.sim.CarrierRestrictions();
         if (mCarrierList == null || mCarrierList.length < 1) {
@@ -241,13 +246,19 @@ public class IRadioSimImpl extends IRadioSim.Stub {
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
             carriers.status = mCarrierRestrictionStatus;
         }
-        int multiSimPolicy = android.hardware.radio.sim.SimLockMultiSimPolicy.NO_MULTISIM_POLICY;
-
-        RadioResponseInfo rsp = mService.makeSolRsp(serial);
+        if (Flags.carrierRestrictionRulesEnhancement() && mCarrierRestrictionRules != null) {
+            Log.e(mTag, "Updating carrierInfo information in CarrierRestrictions");
+            carriers.allowedCarrierInfoList = mCarrierRestrictionRules.allowedCarrierInfoList;
+            carriers.excludedCarrierInfoList = mCarrierRestrictionRules.excludedCarrierInfoList;
+        }
         try {
-            mRadioSimResponse.getAllowedCarriersResponse(rsp, carriers, multiSimPolicy);
+            mRadioSimResponse.getAllowedCarriersResponse(rsp, carriers, mMultiSimPolicy);
         } catch (RemoteException ex) {
             Log.e(mTag, "Failed to getAllowedCarriers from AIDL. Exception" + ex);
+        } finally {
+            // resetting the mCarrierRestrictionRules
+            mCarrierRestrictionRules = null;
+            mMultiSimPolicy = android.hardware.radio.sim.SimLockMultiSimPolicy.NO_MULTISIM_POLICY;
         }
     }
 
@@ -1061,5 +1072,12 @@ public class IRadioSimImpl extends IRadioSim.Stub {
             Carrier[] carrierList, int carrierRestrictionStatus) {
         mCarrierList = carrierList;
         mCarrierRestrictionStatus = carrierRestrictionStatus;
+    }
+
+    public void updateCarrierRestrictionRules(CarrierRestrictions carrierRestrictionRules,
+            int multiSimPolicy) {
+        Log.d(mTag, "updateCarrierRestrictionRules");
+        mCarrierRestrictionRules = carrierRestrictionRules;
+        mMultiSimPolicy = multiSimPolicy;
     }
 }
