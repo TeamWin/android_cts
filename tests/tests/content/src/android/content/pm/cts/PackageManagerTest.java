@@ -3418,6 +3418,29 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         }
     }
 
+    @Test
+    public void testInstallSystemAppAsInstant() {
+        PackageInfo ctsShimPackageInfo = null;
+        try {
+            ctsShimPackageInfo = mPackageManager.getPackageInfo(
+                    CTS_SHIM_PACKAGE_NAME, MATCH_SYSTEM_ONLY);
+        } catch (NameNotFoundException e) {
+            Log.w(TAG, "Device doesn't have " + CTS_SHIM_PACKAGE_NAME + " installed, skipping");
+        }
+        assumeTrue(ctsShimPackageInfo != null);
+        final int currentUser = ActivityManager.getCurrentUser();
+        try {
+            // Delete the system package with DELETE_SYSTEM_APP
+            uninstallPackageForUser(CTS_SHIM_PACKAGE_NAME, currentUser);
+            String result = SystemUtil.runShellCommand(
+                    "pm install-existing --instant --user " + currentUser + " "
+                            + CTS_SHIM_PACKAGE_NAME);
+            assertThat(result).contains("NameNotFoundException");
+        } finally {
+            installExistingPackageForUser(CTS_SHIM_PACKAGE_NAME, currentUser);
+        }
+    }
+
     static boolean matchesInstalled(PackageManager pm, String packageName, int userId, long flag) {
         List<PackageInfo> packageInfos = pm.getInstalledPackagesAsUser(
                 PackageManager.PackageInfoFlags.of(flag), userId);
