@@ -24,6 +24,7 @@ android_test {
         "androidx.test.ext.truth",
         "ctstestrunner-axt",
         "cts-media-common",
+        "flag-junit",
         "truth",
         "Harrier",
     ],
