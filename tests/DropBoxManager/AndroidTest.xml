@@ -29,11 +29,6 @@
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsDropBoxManagerTestCases.apk" />
-    <!-- TODO(b/309523560): remove flag forcing when flag is deleted. -->
-    </target_preparer>
-    <target_preparer class="com.android.tradefed.targetprep.FeatureFlagTargetPreparer">
-        <option name="flag-value"
-                value="preload_safety/com.android.server.feature.flags.enable_read_dropbox_permission=true"/>
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
