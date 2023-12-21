@@ -160,6 +160,28 @@ public class CtsConnectionService extends ConnectionService {
     }
 
     @Override
+    public void onCreateConnectionComplete(Connection connection) {
+        ConnectionService testImpl = getTestImpl();
+        if (testImpl != null) {
+            testImpl.onCreateConnectionComplete(connection);
+        } else {
+            Log.e(LOG_TAG, "onCreateConnectionComplete called when "
+                    + "sConnectionService null!");
+        }
+    }
+
+    @Override
+    public void onCreateConferenceComplete(Conference conference) {
+        ConnectionService testImpl = getTestImpl();
+        if (testImpl != null) {
+            testImpl.onCreateConferenceComplete(conference);
+        } else {
+            Log.e(LOG_TAG, "onCreateConferenceComplete called when "
+                    + "sConnectionService null!");
+        }
+    }
+
+    @Override
     public void onCreateIncomingConferenceFailed(PhoneAccountHandle connectionManagerPhoneAccount,
             ConnectionRequest request) {
         ConnectionService testImpl = getTestImpl();

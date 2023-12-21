@@ -39,6 +39,7 @@ import android.telephony.TelephonyManager;
 import android.telephony.emergency.EmergencyNumber;
 
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.server.telecom.flags.Flags;
 
 import java.util.List;
 import java.util.Map;
@@ -187,6 +188,11 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
         AudioManager am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
 
         placeAndVerifyCall();
+        // Confirm that we got ConnectionService#onCreateConnectionComplete
+        if (Flags.telecomResolveHiddenDependencies()) {
+            assertTrue(connectionService.waitForEvent(
+                    MockConnectionService.EVENT_CONNECTION_SERVICE_CREATE_CONNECTION_COMPLETE));
+        }
         verifyConnectionForOutgoingCall();
         if (mInCallCallbacks.getService().getCallAudioState().getSupportedRouteMask() ==
                 CallAudioState.ROUTE_SPEAKER) {
