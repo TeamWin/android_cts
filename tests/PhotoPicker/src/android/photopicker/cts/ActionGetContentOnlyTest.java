@@ -245,8 +245,9 @@ public class ActionGetContentOnlyTest extends PhotoPickerBaseTest {
     }
 
     private void findAndClickFilesInDocumentsUi(List<String> fileNameList) throws Exception {
+        final UiSelector docList = getDirectoryListSelector();
         for (String fileName : fileNameList) {
-            findAndClickFileInDocumentsUi(fileName);
+            findAndClickFileInDocumentsUi(docList, fileName);
         }
         findAndClickSelect();
     }
@@ -257,7 +258,7 @@ public class ActionGetContentOnlyTest extends PhotoPickerBaseTest {
         clickAndWait(sDevice, selectButton);
     }
 
-    private void findAndClickFileInDocumentsUi(String fileName) throws Exception {
+    private UiSelector getDirectoryListSelector() throws Exception {
         final UiSelector docList = new UiSelector().resourceId(sDocumentsUiPackageName
                 + ":id/dir_list");
 
@@ -275,6 +276,11 @@ public class ActionGetContentOnlyTest extends PhotoPickerBaseTest {
         } catch (UiObjectNotFoundException ignored) {
             // Do nothing, already be in list mode.
         }
+        return docList;
+    }
+
+    private void findAndClickFileInDocumentsUi(UiSelector docList, String fileName)
+            throws Exception {
 
         // Repeat swipe gesture to find our item
         // (UiScrollable#scrollIntoView does not seem to work well with SwipeRefreshLayout)
