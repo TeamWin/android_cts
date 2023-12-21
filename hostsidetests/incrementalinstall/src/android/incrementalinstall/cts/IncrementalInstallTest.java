@@ -107,7 +107,7 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
     @Before
     public void setup() throws Exception {
         // Increase default timeout to 5 mins to accommodate for slow restarting devices.
-        TestDeviceOptions options = new TestDeviceOptions();
+        TestDeviceOptions options = getDevice().getOptions();
         options.setAdbCommandTimeout(DEFAULT_ADB_TIMEOUT_MS);
         getDevice().setOptions(options);
 
