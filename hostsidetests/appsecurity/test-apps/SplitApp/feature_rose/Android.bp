@@ -39,4 +39,7 @@ android_test_helper_app {
         "--replace-version",
         "--package-id 0x81",
     ],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
