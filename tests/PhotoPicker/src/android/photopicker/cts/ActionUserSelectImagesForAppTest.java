@@ -58,6 +58,7 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -169,6 +170,7 @@ public class ActionUserSelectImagesForAppTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Test have changed after Android U CTS cut")
     public void testNoCloudContent() throws Exception {
         final List<Uri> uriList = new ArrayList<>();
         final String cloudId = "cloud_id1";
