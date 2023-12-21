@@ -38,6 +38,7 @@ android_test {
         "CtsAppTestStubsShared",
         "android.content.pm.flags-aconfig-java",
         "flag-junit",
+        "com.android.media.flags.bettertogether-aconfig-java",
     ],
     srcs: [
         "src/**/*.java",
