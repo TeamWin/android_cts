@@ -47,6 +47,9 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
 
 // Define a variant requiring a split for install
@@ -67,6 +70,9 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
 
 // Define a variant with different codes and resources for the inherit updated test of the
@@ -74,10 +80,16 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsSplitAppFeatureWarmRevisionA",
     defaults: ["CtsSplitAppFeatureWarmDefaults"],
-    srcs: ["src/**/*.java", "revision_a/src/**/*.java"],
-    resource_dirs: ["res", "revision_a/res"],
+    srcs: [
+        "src/**/*.java",
+        "revision_a/src/**/*.java",
+    ],
+    resource_dirs: [
+        "res",
+        "revision_a/res",
+    ],
     asset_dirs: ["revision_a/assets"],
-    manifest : "revision_a/AndroidManifest.xml",
+    manifest: "revision_a/AndroidManifest.xml",
     package_splits: ["v7"],
     certificate: ":cts-testkey1",
     aaptflags: [
@@ -92,4 +104,7 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
