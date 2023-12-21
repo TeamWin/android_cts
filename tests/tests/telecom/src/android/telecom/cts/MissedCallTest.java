@@ -19,6 +19,8 @@ package android.telecom.cts;
 import android.app.role.RoleManager;
 import android.content.Intent;
 import android.os.Process;
+import android.net.Uri;
+import android.provider.CallLog.Calls;
 import android.telecom.Call;
 import android.telecom.Connection;
 import android.telecom.DisconnectCause;
@@ -47,7 +49,7 @@ public class MissedCallTest extends BaseTelecomTestWithMockServices {
                 Log.i(TestUtils.TAG, intent.toString());
                 if (TelecomManager.ACTION_SHOW_MISSED_CALLS_NOTIFICATION
                         .equals(intent.getAction())) {
-                    mShowMissedCallNotificationIntentCounter.invoke();
+                    mShowMissedCallNotificationIntentCounter.invoke(intent);
                 }
             }
         });
@@ -80,6 +82,9 @@ public class MissedCallTest extends BaseTelecomTestWithMockServices {
         connection.setDisconnected(new DisconnectCause(DisconnectCause.MISSED));
         connection.destroy();
         mShowMissedCallNotificationIntentCounter.waitForCount(1);
+	Intent intent = (Intent) mShowMissedCallNotificationIntentCounter.getArgs(0)[0];
+	Uri uri = intent.getParcelableExtra(TelecomManager.EXTRA_CALL_LOG_URI);
+	assertNotNull(uri);
         if (mRoleManager.isRoleAvailable(RoleManager.ROLE_DIALER)) {
             assertTrue("After missing a call, if the default dialer is handling the missed call "
                             + "notification, then it must be in the temporary power exemption "
