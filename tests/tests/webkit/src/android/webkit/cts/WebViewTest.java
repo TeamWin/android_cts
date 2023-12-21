@@ -53,6 +53,7 @@ import android.util.DisplayMetrics;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextSelection;
@@ -797,46 +798,57 @@ public class WebViewTest extends SharedWebViewTest {
         final TestJavaScriptInterface obj = new TestJavaScriptInterface();
 
         final WebView childWebView = mOnUiThread.createWebView();
-        WebViewOnUiThread childOnUiThread = new WebViewOnUiThread(childWebView);
-        childOnUiThread.getSettings().setJavaScriptEnabled(true);
-        childOnUiThread.addJavascriptInterface(obj, "interface");
 
-        final SettableFuture<Void> onCreateWindowFuture = SettableFuture.create();
-        mOnUiThread.setWebChromeClient(
-                new WebViewSyncLoader.WaitForProgressClient(mOnUiThread) {
-                    @Override
-                    public boolean onCreateWindow(
-                            WebView view,
-                            boolean isDialog,
-                            boolean isUserGesture,
-                            Message resultMsg) {
-                        getTestEnvironment().addContentView(
-                                childWebView,
-                                new ViewGroup.LayoutParams(
-                                        ViewGroup.LayoutParams.FILL_PARENT,
-                                        ViewGroup.LayoutParams.WRAP_CONTENT));
-                        WebView.WebViewTransport transport =
-                                (WebView.WebViewTransport) resultMsg.obj;
-                        transport.setWebView(childWebView);
-                        resultMsg.sendToTarget();
-                        onCreateWindowFuture.set(null);
-                        return true;
-                    }
-                });
+        try {
+          WebViewOnUiThread childOnUiThread = new WebViewOnUiThread(childWebView);
+          childOnUiThread.getSettings().setJavaScriptEnabled(true);
+          childOnUiThread.addJavascriptInterface(obj, "interface");
 
-        mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
-        mOnUiThread.loadUrlAndWaitForCompletion(
-                mWebServer.getAssetUrl(TestHtmlConstants.POPUP_URL));
-        WebkitUtils.waitForFuture(onCreateWindowFuture);
+          final SettableFuture<Void> onCreateWindowFuture = SettableFuture.create();
+          mOnUiThread.setWebChromeClient(
+                  new WebViewSyncLoader.WaitForProgressClient(mOnUiThread) {
+                      @Override
+                      public boolean onCreateWindow(
+                              WebView view,
+                              boolean isDialog,
+                              boolean isUserGesture,
+                              Message resultMsg) {
+                          getTestEnvironment().addContentView(
+                                  childWebView,
+                                  new ViewGroup.LayoutParams(
+                                          ViewGroup.LayoutParams.FILL_PARENT,
+                                          ViewGroup.LayoutParams.WRAP_CONTENT));
+                          WebView.WebViewTransport transport =
+                                  (WebView.WebViewTransport) resultMsg.obj;
+                          transport.setWebView(childWebView);
+                          resultMsg.sendToTarget();
+                          onCreateWindowFuture.set(null);
+                          return true;
+                      }
+                  });
 
-        childOnUiThread.loadUrlAndWaitForCompletion("about:blank");
+          mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
+          mOnUiThread.loadUrlAndWaitForCompletion(
+                  mWebServer.getAssetUrl(TestHtmlConstants.POPUP_URL));
+          WebkitUtils.waitForFuture(onCreateWindowFuture);
 
-        assertEquals("true", childOnUiThread.evaluateJavascriptSync("'interface' in window"));
+          childOnUiThread.loadUrlAndWaitForCompletion("about:blank");
 
-        assertEquals(
-                "The injected object should be functional",
-                "42",
-                childOnUiThread.evaluateJavascriptSync("interface.test()"));
+          assertEquals("true", childOnUiThread.evaluateJavascriptSync("'interface' in window"));
+
+          assertEquals(
+                  "The injected object should be functional",
+                  "42",
+                  childOnUiThread.evaluateJavascriptSync("interface.test()"));
+        } finally {
+            WebkitUtils.onMainThreadSync(() -> {
+                ViewParent parent = childWebView.getParent();
+                if (parent instanceof ViewGroup) {
+                    ((ViewGroup) parent).removeView(childWebView);
+                }
+                childWebView.destroy();
+            });
+        }
     }
 
     private final class TestPictureListener implements PictureListener {
