@@ -18,6 +18,11 @@ package android.appsecurity.cts;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.app.usage.Flags;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.host.HostFlagsValueProvider;
+
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.result.TestDescription;
@@ -38,6 +43,7 @@ import junit.framework.AssertionFailedError;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -62,6 +68,10 @@ public class StorageHostTest extends BaseHostJUnit4Test {
     private static final int CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS = 20000;
 
     private int[] mUsers;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            HostFlagsValueProvider.createCheckFlagsRule(this::getDevice);
 
     @Before
     public void setUp() throws Exception {
@@ -138,6 +148,7 @@ public class StorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_GET_APP_BYTES_BY_DATA_TYPE_API)
     public void testVerifyStatsByDataType() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsByDataType", user);
