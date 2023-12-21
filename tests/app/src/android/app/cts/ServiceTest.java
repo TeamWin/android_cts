@@ -60,6 +60,7 @@ import android.os.UserHandle;
 import android.permission.PermissionManager;
 import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.service.notification.StatusBarNotification;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.util.Log;
@@ -71,6 +72,7 @@ import androidx.test.filters.FlakyTest;
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.IBinderParcelable;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.server.am.Flags;
 import com.android.server.am.nano.ActivityManagerServiceDumpProcessesProto;
 import com.android.server.am.nano.ProcessRecordProto;
 
@@ -1041,6 +1043,7 @@ public class ServiceTest extends ActivityTestsBase {
     }
 
     @MediumTest
+    @RequiresFlagsDisabled(Flags.FLAG_FGS_BOOT_COMPLETED)
     public void testForegroundService_removeNotificationOnStopUsingFlags() throws Exception {
         testForegroundServiceRemoveNotificationOnStop(true);
     }
@@ -1143,6 +1146,7 @@ public class ServiceTest extends ActivityTestsBase {
     }
 
     @MediumTest
+    @RequiresFlagsDisabled(Flags.FLAG_FGS_BOOT_COMPLETED)
     public void testForegroundService_detachNotificationOnStop() throws Exception {
         String newTitle = null;
         boolean success = false;

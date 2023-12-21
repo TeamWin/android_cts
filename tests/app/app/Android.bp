@@ -35,6 +35,11 @@ android_test_helper_app {
         "androidx.test.core",
         "testng",
         "CtsAppTestStubsShared",
+        "androidx.test.rules",
+        "flag-junit",
+        "platform-test-annotations",
+        "platform-compat-test-rules",
+        "am_flags_lib",
     ],
     aidl: {
         local_include_dirs: [
