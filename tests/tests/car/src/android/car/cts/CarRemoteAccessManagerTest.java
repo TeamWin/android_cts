@@ -327,11 +327,11 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
             "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#"
                     + "unscheduleAllTasks",
             "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#"
-                    + "getAllScheduledTasks",
+                    + "getAllPendingScheduledTasks",
     })
     @EnsureHasPermission(PERMISSION_CONTROL_REMOTE_ACCESS)
     @RequiresFlagsEnabled(Flags.FLAG_SERVERLESS_REMOTE_ACCESS)
-    public void testGetAllScheduledTasks() throws Exception {
+    public void testGetAllPendingScheduledTasks() throws Exception {
         assumeTaskSchedulingSupported();
         setSelfAsServerlessClient();
 
@@ -352,7 +352,7 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
         }
 
         try {
-            List<ScheduleInfo> scheduleInfo = taskScheduler.getAllScheduledTasks();
+            List<ScheduleInfo> scheduleInfo = taskScheduler.getAllPendingScheduledTasks();
 
             assertWithMessage("Must return two scheduled tasks").that(scheduleInfo).hasSize(2);
             List<String> gotScheduleIds = new ArrayList<>();
@@ -388,7 +388,7 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
             "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#"
                     + "unscheduleAllTasks",
             "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#"
-                    + "getAllScheduledTasks",
+                    + "getAllPendingScheduledTasks",
             "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#"
                     + "unscheduleTask",
     })
@@ -417,7 +417,7 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
         taskScheduler.unscheduleTask(TEST_SCHEDULE_ID_2);
 
         try {
-            List<ScheduleInfo> scheduleInfo = taskScheduler.getAllScheduledTasks();
+            List<ScheduleInfo> scheduleInfo = taskScheduler.getAllPendingScheduledTasks();
 
             assertWithMessage("Must return one scheduled tasks").that(scheduleInfo).hasSize(1);
             ScheduleInfo info = scheduleInfo.get(0);
