@@ -2433,14 +2433,12 @@ public class WindowManagerState {
 
     public static class InsetsSource {
         private int mType;
-        private String mTypeName;
         private Rect mFrame;
         private Rect mVisibleFrame;
         private boolean mVisible;
 
         InsetsSource(InsetsSourceProto proto) {
             mType = proto.typeNumber;
-            mTypeName = proto.type;
             if (proto.frame != null) {
                 mFrame = new Rect(
                         proto.frame.left, proto.frame.top, proto.frame.right, proto.frame.bottom);
@@ -2502,7 +2500,7 @@ public class WindowManagerState {
 
         @Override
         public String toString() {
-            return "InsetsSource: {type=" + mTypeName
+            return "InsetsSource: {type=" + WindowInsets.Type.toString(mType)
                     + " frame=" + mFrame
                     + " visibleFrame=" + mVisibleFrame
                     + " visible=" + mVisible
