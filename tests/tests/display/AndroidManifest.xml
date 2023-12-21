@@ -45,6 +45,7 @@
             android:exported="true"/>
         <activity android:name=".HdrConversionTestActivity" />
         <activity android:name=".SimpleActivity" />
+        <activity android:name=".SimpleActivity2" />
     </application>
 
     <!--  self-instrumenting test package. -->
