@@ -29,18 +29,18 @@ import java.util.concurrent.Executor;
 public final class VirtualCameraUtils {
 
     static VirtualCameraConfig createVirtualCameraConfig(
-            int width, int height, int format, int displayNameResId, Executor executor,
+            int width, int height, int format, String name, Executor executor,
             VirtualCameraCallback callback) {
         return new VirtualCameraConfig.Builder()
                 .addStreamConfig(width, height, format)
-                .setDisplayNameStringRes(displayNameResId)
+                .setName(name)
                 .setVirtualCameraCallback(executor, callback)
                 .build();
     }
 
     static void assertVirtualCameraConfig(VirtualCameraConfig config, int width, int height,
-            int format, int displayNameStringRes) {
-        assertThat(config.getDisplayNameStringRes()).isEqualTo(displayNameStringRes);
+            int format, String name) {
+        assertThat(config.getName()).isEqualTo(name);
         assertThat(config.getStreamConfigs()).hasSize(1);
         VirtualCameraStreamConfig streamConfig =
                 Iterables.getOnlyElement(config.getStreamConfigs());

@@ -43,7 +43,7 @@ import java.util.concurrent.Executor;
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class VirtualCameraConfigTest {
 
-    private static final int CAMERA_DISPLAY_NAME_RES_ID = 10;
+    private static final String CAMERA_NAME = "Virtual Camera";
     private static final int CAMERA_WIDTH = 640;
     private static final int CAMERA_HEIGHT = 480;
     private static final int CAMERA_FORMAT = ImageFormat.YUV_420_888;
@@ -60,12 +60,12 @@ public class VirtualCameraConfigTest {
     public void virtualCameraConfigBuilder_buildsCorrectConfig() {
         VirtualCameraConfig config = new VirtualCameraConfig.Builder()
                 .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT)
-                .setDisplayNameStringRes(CAMERA_DISPLAY_NAME_RES_ID)
+                .setName(CAMERA_NAME)
                 .setVirtualCameraCallback(mExecutor, mCallback)
                 .build();
 
         VirtualCameraUtils.assertVirtualCameraConfig(config, CAMERA_WIDTH, CAMERA_HEIGHT,
-                CAMERA_FORMAT, CAMERA_DISPLAY_NAME_RES_ID);
+                CAMERA_FORMAT, CAMERA_NAME);
     }
 
     @Test
@@ -73,7 +73,7 @@ public class VirtualCameraConfigTest {
         assertThrows(IllegalArgumentException.class,
                 () -> new VirtualCameraConfig.Builder()
                         .addStreamConfig(-1 /* width */, CAMERA_HEIGHT, CAMERA_FORMAT)
-                        .setDisplayNameStringRes(CAMERA_DISPLAY_NAME_RES_ID)
+                        .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, mCallback)
                         .build());
     }
@@ -83,7 +83,7 @@ public class VirtualCameraConfigTest {
         assertThrows(IllegalArgumentException.class,
                 () -> new VirtualCameraConfig.Builder()
                         .addStreamConfig(CAMERA_WIDTH, -1 /* height */, CAMERA_FORMAT)
-                        .setDisplayNameStringRes(CAMERA_DISPLAY_NAME_RES_ID)
+                        .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, mCallback)
                         .build());
     }
@@ -93,17 +93,17 @@ public class VirtualCameraConfigTest {
         assertThrows(IllegalArgumentException.class,
                 () -> new VirtualCameraConfig.Builder()
                         .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, -1 /* format */)
-                        .setDisplayNameStringRes(CAMERA_DISPLAY_NAME_RES_ID)
+                        .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, mCallback)
                         .build());
     }
 
     @Test
-    public void virtualCameraConfigBuilder_invalidDisplayNameResId_throwsException() {
-        assertThrows(IllegalArgumentException.class,
+    public void virtualCameraConfigBuilder_nullName_throwsException() {
+        assertThrows(NullPointerException.class,
                 () -> new VirtualCameraConfig.Builder()
                         .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT)
-                        .setDisplayNameStringRes(0 /* displayNameStringRes */)
+                        .setName(null)
                         .setVirtualCameraCallback(mExecutor, mCallback)
                         .build());
     }
@@ -113,7 +113,7 @@ public class VirtualCameraConfigTest {
         assertThrows(NullPointerException.class,
                 () -> new VirtualCameraConfig.Builder()
                         .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT)
-                        .setDisplayNameStringRes(CAMERA_DISPLAY_NAME_RES_ID)
+                        .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, null /* callback */)
                         .build());
     }
@@ -123,7 +123,7 @@ public class VirtualCameraConfigTest {
         assertThrows(NullPointerException.class,
                 () -> new VirtualCameraConfig.Builder()
                         .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT)
-                        .setDisplayNameStringRes(CAMERA_DISPLAY_NAME_RES_ID)
+                        .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(null /* executor */, mCallback)
                         .build());
     }
@@ -131,7 +131,7 @@ public class VirtualCameraConfigTest {
     @Test
     public void parcelAndUnparcel_matches() {
         VirtualCameraConfig original = VirtualCameraUtils.createVirtualCameraConfig(CAMERA_WIDTH,
-                CAMERA_HEIGHT, CAMERA_FORMAT, CAMERA_DISPLAY_NAME_RES_ID, mExecutor, mCallback);
+                CAMERA_HEIGHT, CAMERA_FORMAT, CAMERA_NAME, mExecutor, mCallback);
 
         final Parcel parcel = Parcel.obtain();
         original.writeToParcel(parcel, 0 /* flags */);
@@ -140,6 +140,6 @@ public class VirtualCameraConfigTest {
                 VirtualCameraConfig.CREATOR.createFromParcel(parcel);
 
         VirtualCameraUtils.assertVirtualCameraConfig(recreated, CAMERA_WIDTH, CAMERA_HEIGHT,
-                CAMERA_FORMAT, CAMERA_DISPLAY_NAME_RES_ID);
+                CAMERA_FORMAT, CAMERA_NAME);
     }
 }
