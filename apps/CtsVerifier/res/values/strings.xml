@@ -1238,7 +1238,7 @@
 
     <string name="nfc_scan_tag">Place device on a writable %s tag...</string>
     <string name="nfc_write_tag_title">Writable tag discovered!</string>
-    <string name="nfc_write_tag_message">Press OK to write to this tag...</string>
+    <string name="nfc_write_tag_message">Press OK to write to this tag(or auto write to this tag after 3s)...</string>
     <string name="nfc_scan_tag_again">Tap the same %s tag again to confirm that its contents match...</string>
     <string name="nfc_wrong_tag_title">Wrong type of tag scanned</string>
     <string name="nfc_no_tech">No tag technologies detected...</string>
