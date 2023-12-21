@@ -239,6 +239,7 @@ public class InlineLoginMixedCredentialActivityTest
         CtsCredentialProviderService.onReceivedResponse();
 
         mUiBot.assertDatasets("defaultUsername");
+        mUiBot.assertNotShowingForSure("The Username");
 
         mUiBot.selectDataset("defaultUsername");
         mUiBot.waitForIdleSync();
@@ -323,6 +324,7 @@ public class InlineLoginMixedCredentialActivityTest
         mUiBot.waitForIdleSync();
 
         mUiBot.assertDatasets("defaultUsername");
+        mUiBot.assertNotShowingForSure("The Username");
 
         mUiBot.selectDataset("defaultUsername");
         mUiBot.waitForIdleSync();

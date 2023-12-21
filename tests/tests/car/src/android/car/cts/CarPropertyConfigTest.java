@@ -118,39 +118,36 @@ public final class CarPropertyConfigTest extends AbstractCarTestCase {
             try {
                 result = cfg.getAreaType();
             } catch (RuntimeException e) {
-                // The VENDOR Area Type (134217728) was added with the Android VIC vehicle
-                // properties.
                 if (!Flags.androidVicVehicleProperties()) {
+                    // The VENDOR Area Type (134217728) was added with the Android VIC vehicle
+                    // properties.
                     assertThat(e.getMessage()).contains("Unsupported area type 134217728");
                 } else {
-                    Assert.fail(new StringBuilder()
-                            .append("Unexpected Runtime Exception for property: 0x")
-                            .append(Integer.toHexString(cfg.getPropertyId()))
-                            .toString());
+                    Assert.fail("Unexpected Runtime Exception for property: "
+                            + VehiclePropertyIds.toString(cfg.getPropertyId()));
                 }
             }
 
             assertThat(expectedAreaTypes).contains(result);
             int propertyArea = cfg.getPropertyId() & VehicleArea.MASK;
             if (result == VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL) {
-                Assert.assertEquals(propertyArea, VehicleArea.GLOBAL);
+                Assert.assertEquals(VehicleArea.GLOBAL, propertyArea);
             } else if (result == VehicleAreaType.VEHICLE_AREA_TYPE_WINDOW) {
-                Assert.assertEquals(propertyArea, VehicleArea.WINDOW);
+                Assert.assertEquals(VehicleArea.WINDOW, propertyArea);
             } else if (result == VehicleAreaType.VEHICLE_AREA_TYPE_SEAT) {
-                Assert.assertEquals(propertyArea, VehicleArea.SEAT);
+                Assert.assertEquals(VehicleArea.SEAT, propertyArea);
             } else if (result == VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR) {
-                Assert.assertEquals(propertyArea, VehicleArea.MIRROR);
+                Assert.assertEquals(VehicleArea.MIRROR, propertyArea);
             } else if (result == VehicleAreaType.VEHICLE_AREA_TYPE_DOOR) {
-                Assert.assertEquals(propertyArea, VehicleArea.DOOR);
+                Assert.assertEquals(VehicleArea.DOOR, propertyArea);
             } else if (result == VehicleAreaType.VEHICLE_AREA_TYPE_WHEEL) {
-                Assert.assertEquals(propertyArea, VehicleArea.WHEEL);
+                Assert.assertEquals(VehicleArea.WHEEL, propertyArea);
             } else if (Flags.androidVicVehicleProperties()
                     && result == VehicleAreaType.VEHICLE_AREA_TYPE_VENDOR) {
-                Assert.assertEquals(propertyArea, VehicleArea.VENDOR);
+                Assert.assertEquals(VehicleArea.VENDOR, propertyArea);
             } else {
-                Assert.fail(new StringBuilder().append("Failed for property: 0x")
-                                    .append(Integer.toHexString(cfg.getPropertyId()))
-                                    .toString());
+                Assert.fail("Failed for property: "
+                        + VehiclePropertyIds.toString(cfg.getPropertyId()));
             }
         }
     }

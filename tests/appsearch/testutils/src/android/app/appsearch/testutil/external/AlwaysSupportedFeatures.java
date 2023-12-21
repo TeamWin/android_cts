@@ -70,6 +70,10 @@ public class AlwaysSupportedFeatures implements Features {
             case Features.SCHEMA_ADD_INDEXABLE_NESTED_PROPERTIES:
                 // fall through
             case Features.SEARCH_SPEC_ADD_FILTER_PROPERTIES:
+                // fall through
+            case Features.SEARCH_SPEC_SET_SEARCH_SOURCE_LOG_TAG:
+                // fall through
+            case Features.SET_SCHEMA_REQUEST_SET_PUBLICLY_VISIBLE:
                 return true;
             default:
                 return false;

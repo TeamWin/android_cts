@@ -187,4 +187,22 @@ public class GetSchemaResponseCtsTest {
         assertThat(getSchemaResponse.getSchemaTypesVisibleToPackages()).isEmpty();
         assertThat(getSchemaResponse.getRequiredPermissionsForSchemaTypeVisibility()).isEmpty();
     }
+
+    @Test
+    public void testVisibility_publicVisibility() {
+        byte[] sha256cert1 = new byte[32];
+        byte[] sha256cert2 = new byte[32];
+        Arrays.fill(sha256cert1, (byte) 1);
+        Arrays.fill(sha256cert2, (byte) 1);
+        PackageIdentifier packageIdentifier1 = new PackageIdentifier("Email", sha256cert1);
+        PackageIdentifier packageIdentifier2 = new PackageIdentifier("Email", sha256cert2);
+
+        GetSchemaResponse getSchemaResponse =
+                new GetSchemaResponse.Builder()
+                        .setPubliclyVisibleSchema("Email1", packageIdentifier2)
+                        .setPubliclyVisibleSchema("Email1", packageIdentifier1)
+                        .build();
+        assertThat(getSchemaResponse.getPubliclyVisibleSchemas().get("Email1"))
+                .isEqualTo(packageIdentifier1);
+    }
 }

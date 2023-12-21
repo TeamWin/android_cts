@@ -294,9 +294,6 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
      */
     static void toggleScreenOn(final boolean screenon) throws Exception {
         BatteryUtils.turnOnScreen(screenon);
-        if (screenon) {
-            SystemUtil.runShellCommand("wm dismiss-keyguard");
-        }
         // Wait a little bit for the broadcasts to be processed.
         Thread.sleep(2_000);
     }

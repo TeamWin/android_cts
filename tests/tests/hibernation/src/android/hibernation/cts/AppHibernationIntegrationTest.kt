@@ -16,6 +16,7 @@
 
 package android.hibernation.cts
 
+import android.Manifest
 import android.app.ActivityManager
 import android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE
 import android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING
@@ -24,6 +25,7 @@ import android.apphibernation.AppHibernationManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
+import android.content.pm.Flags
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -134,6 +136,8 @@ class AppHibernationIntegrationTest {
 
         resetJob(context)
         bypassBatterySavingRestrictions(context)
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.READ_DEVICE_CONFIG)
     }
 
     @After
@@ -144,6 +148,8 @@ class AppHibernationIntegrationTest {
                 oldHibernationValue, false /* makeDefault */)
         }
         resetBatterySavingRestrictions(context)
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity()
     }
 
     @Test
@@ -343,8 +349,11 @@ class AppHibernationIntegrationTest {
             val packageManager = context.packageManager
             val settingsPackage = intent.resolveActivity(packageManager).packageName
             val res = packageManager.getResourcesForApplication(settingsPackage)
-            val title = res.getString(
-                res.getIdentifier("unused_apps_switch", "string", settingsPackage))
+            val title = if (isArchivingEnabled()) {
+                res.getString(res.getIdentifier("unused_apps_switch_v2", "string", settingsPackage))
+            } else {
+                res.getString(res.getIdentifier("unused_apps_switch", "string", settingsPackage))
+            }
 
             // Attempt standard search first (only uses first scrollable instance)
             var toggleFound = UiAutomatorUtils2.waitFindObjectOrNull(By.text(title)) != null
@@ -371,6 +380,15 @@ class AppHibernationIntegrationTest {
                 assertTrue("Remove permissions and free up space toggle not found", toggleFound)
             }
         }
+    }
+
+    private fun isArchivingEnabled(): Boolean {
+        if (Flags.archiving()) return true
+        var systemProperty: String? = null
+        runWithShellPermissionIdentity {
+            systemProperty = System.getProperty("pm.archiving.enabled")
+        }
+        return "true" == systemProperty
     }
 
     private fun leaveApp(packageName: String) {

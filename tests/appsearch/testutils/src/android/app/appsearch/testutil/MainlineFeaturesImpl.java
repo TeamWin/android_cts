@@ -68,6 +68,8 @@ public class MainlineFeaturesImpl implements Features {
                 // fall through
             case Features.LIST_FILTER_HAS_PROPERTY_FUNCTION:
                 return true;
+            case Features.SEARCH_SPEC_SET_SEARCH_SOURCE_LOG_TAG:
+                return true;
 
             // Features which are supported on U+ devices only.
             case Features.SET_SCHEMA_CIRCULAR_REFERENCES:

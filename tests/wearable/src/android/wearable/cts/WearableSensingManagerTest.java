@@ -18,8 +18,6 @@ package android.wearable.cts;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
@@ -59,22 +57,13 @@ public class WearableSensingManagerTest {
     }
 
     @Test
-    public void noAccessForNoneSystemComponent() {
-        assertEquals(PackageManager.PERMISSION_DENIED, mContext.checkCallingOrSelfPermission(
-                Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE));
-
-        // Cts test runner is a non-system apk.
-        assertThat(mWearableSensingManager).isNull();
-    }
-
-    @Test
     public void noAccessWhenAttemptingprovideDataStream() {
         assertEquals(PackageManager.PERMISSION_DENIED, mContext.checkCallingOrSelfPermission(
                 Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE));
 
-        // Test non system app throws NullPointerException
+        // Test non system app throws SecurityException
         assertThrows("no access to provideDataStream from non system component",
-                NullPointerException.class,
+                SecurityException.class,
                 () -> mWearableSensingManager.provideDataStream(
                         mPipe[0], EXECUTOR, (result) -> {}));
     }
@@ -84,9 +73,9 @@ public class WearableSensingManagerTest {
         assertEquals(PackageManager.PERMISSION_DENIED, mContext.checkCallingOrSelfPermission(
                 Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE));
 
-        // Test non system app throws NullPointerException
+        // Test non system app throws SecurityException
         assertThrows("no access to provideData from non system component",
-                NullPointerException.class,
+                SecurityException.class,
                 () -> mWearableSensingManager.provideData(new PersistableBundle(), null,
                         EXECUTOR, (result) -> {}));
     }

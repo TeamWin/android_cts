@@ -3266,6 +3266,12 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                 assertNotEquals(callback.getCurrentSoftApInfo().getWifiStandard(),
                         ScanResult.WIFI_STANDARD_UNKNOWN);
             }
+            if (Flags.vendorParcelableParameters()
+                    && (ApiLevelUtil.codenameEquals("VanillaIceCream")
+                    || ApiLevelUtil.isAtLeast(Build.VERSION_CODES.VANILLA_ICE_CREAM))
+                    && callback.getOnSoftapInfoChangedCalledCount() > 1) {
+                assertNotNull(callback.getCurrentSoftApInfo().getVendorData());
+            }
 
             if (callback.getOnSoftapInfoChangedCalledCount() > 1) {
                 assertTrue(callback.getCurrentSoftApInfo().getAutoShutdownTimeoutMillis() > 0);
