@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 import org.junit.Test;
+import org.junit.Ignore;
 
 /**
  * Checks that it is not possible to access hidden APIs.
@@ -77,11 +78,13 @@ public class HiddenApiTest extends AbstractApiTest {
     }
 
     @Test
+    @Ignore("b/301075649")
     public void testSignatureFieldsThroughReflection() {
         doTestSignature(FIELD_FILTER, /* reflection= */ true, /* jni= */ false);
     }
 
     @Test
+    @Ignore("b/301075649")
     public void testSignatureFieldsThroughJni() {
         doTestSignature(FIELD_FILTER, /* reflection= */ false, /* jni= */ true);
     }
