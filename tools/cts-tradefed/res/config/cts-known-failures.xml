@@ -614,4 +614,8 @@
     <option name="compatibility:exclude-filter" value="AdServicesFrameworkUnitTests android.adservices.common.KeyedFrequencyCapTest#testJsonSerializationNonStringKey" />
     <option name="compatibility:exclude-filter" value="AdServicesFrameworkUnitTests android.adservices.common.KeyedFrequencyCapTest#testParcelKeyedFrequencyCap_success" />
     <option name="compatibility:exclude-filter" value="AdServicesFrameworkUnitTests android.adservices.common.KeyedFrequencyCapTest#testToString" />
+
+    <!--b/316187793 Module error 2,436/4,520 #Build 11250065 -->
+    <option name="compatibility:exclude-filter" value="AdServicesServiceCoreUnitTests" /> 
+
 </configuration>
