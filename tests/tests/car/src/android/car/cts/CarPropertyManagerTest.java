@@ -42,6 +42,7 @@ import android.car.VehicleGear;
 import android.car.VehicleIgnitionState;
 import android.car.VehiclePropertyIds;
 import android.car.VehicleUnit;
+import android.car.cts.property.CarSvcPropsParser;
 import android.car.cts.utils.VehiclePropertyVerifier;
 import android.car.cts.utils.VehiclePropertyVerifiers;
 import android.car.feature.Flags;
@@ -142,6 +143,10 @@ import java.util.stream.Collectors;
 public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
     private static final String TAG = CarPropertyManagerTest.class.getSimpleName();
+
+    private static final int VEHICLE_PROPERTY_GROUP_MASK = 0xf0000000;
+    private static final int VEHICLE_PROPERTY_GROUP_SYSTEM = 0x10000000;
+    private static final int VEHICLE_PROPERTY_GROUP_VENDOR = 0x20000000;
 
     @Rule
     public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
@@ -1033,9 +1038,6 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehicleVendorPermission.PERMISSION_SET_CAR_VENDOR_CATEGORY_10)
                     .build();
 
-    private static final int VEHICLE_PROPERTY_GROUP_MASK = 0xf0000000;
-    private static final int VEHICLE_PROPERTY_GROUP_VENDOR = 0x20000000;
-
     /** contains property Ids for the properties required by CDD */
     private final ArraySet<Integer> mPropertyIds = new ArraySet<>();
     private CarPropertyManager mCarPropertyManager;
@@ -1266,6 +1268,80 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     assertThat(mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.INVALID))
                             .isNull();
                 });
+    }
+
+    /**
+     * If the feature flag: FLAG_ANDROID_VIC_VEHICLE_PROPERTIES is disabled, the VIC properties must
+     * not be supported.
+     */
+    @RequiresFlagsDisabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
+    @Test
+    @ApiTest(
+            apis = {
+                "android.car.hardware.property.CarPropertyManager#getPropertyList",
+                "android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            })
+    public void testVicPropertiesMustNotBeSupportedIfFlagDisabled() {
+        CarSvcPropsParser parser = new CarSvcPropsParser();
+        List<Integer> vicSystemPropertyIds = parser.getSystemPropertyIdsForFlag(
+                "FLAG_ANDROID_VIC_VEHICLE_PROPERTIES");
+
+        List<CarPropertyConfig> configs = new ArrayList<>();
+        // Use shell permission identity to get as many property configs as possible.
+        runWithShellPermissionIdentity(() -> {
+            configs.addAll(mCarPropertyManager.getPropertyList());
+        });
+
+        for (int i = 0; i < configs.size(); i++) {
+            int propertyId = configs.get(i).getPropertyId();
+            if (!isSystemProperty(propertyId)) {
+                continue;
+            }
+
+            String propertyName = VehiclePropertyIds.toString(propertyId);
+            expectWithMessage("Property: " + propertyName + " must not be supported if "
+                    + "FLAG_ANDROID_VIC_VEHICLE_PROPERTIES is disabled").that(propertyId)
+                    .isNotIn(vicSystemPropertyIds);
+        }
+
+        runWithShellPermissionIdentity(() -> {
+            for (int propertyId : vicSystemPropertyIds) {
+                String propertyName = VehiclePropertyIds.toString(propertyId);
+                expectWithMessage("getCarPropertyConfig for: " + propertyName
+                        + " when FLAG_ANDROID_VIC_VEHICLE_PROPERTIES is disabled must return null")
+                        .that(mCarPropertyManager.getCarPropertyConfig(propertyId)).isNull();
+            }
+        });
+    }
+
+    /**
+     * Test that all supported system property IDs are defined.
+     */
+    @Test
+    @ApiTest(
+            apis = {
+                "android.car.hardware.property.CarPropertyManager#getPropertyList",
+            })
+    public void testAllSupportedSystemPropertyIdsAreDefined() {
+        CarSvcPropsParser parser = new CarSvcPropsParser();
+        List<Integer> allSystemPropertyIds = parser.getAllSystemPropertyIds();
+
+        List<CarPropertyConfig> configs = new ArrayList<>();
+        // Use shell permission identity to get as many property configs as possible.
+        runWithShellPermissionIdentity(() -> {
+            configs.addAll(mCarPropertyManager.getPropertyList());
+        });
+
+        for (int i = 0; i < configs.size(); i++) {
+            int propertyId = configs.get(i).getPropertyId();
+            if (!isSystemProperty(propertyId)) {
+                continue;
+            }
+
+            String propertyName = VehiclePropertyIds.toString(propertyId);
+            expectWithMessage("Property: " + propertyName + " is not a defined system property")
+                    .that(propertyId).isIn(allSystemPropertyIds);
+        }
     }
 
     private VehiclePropertyVerifier<?>[] getAllVerifiers() {
@@ -9062,5 +9138,9 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 }
             }
         }
+    }
+
+    private static boolean isSystemProperty(int propertyId) {
+        return (propertyId & VEHICLE_PROPERTY_GROUP_MASK) == VEHICLE_PROPERTY_GROUP_SYSTEM;
     }
 }
