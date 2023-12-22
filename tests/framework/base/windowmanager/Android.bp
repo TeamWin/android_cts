@@ -66,6 +66,7 @@ java_defaults {
         "cts-wm-shared",
         "platform-compat-test-rules",
         "cts_window_jetpack_utils",
+        "com.android.window.flags.window-aconfig-java",
     ],
 
     test_suites: [

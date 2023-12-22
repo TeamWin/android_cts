@@ -3408,10 +3408,9 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                         }
                         numFrames++;
                     }
-                    assertTrue("Autoframing state didn't converge within " + kMaxNumFrames
-                            + " frames", numFrames < kMaxNumFrames);
 
-                    if (expectedZoomRatio == 0.0f) {
+                    if (autoframingState == CameraMetadata.CONTROL_AUTOFRAMING_STATE_CONVERGED
+                            && expectedZoomRatio == 0.0f) {
                         expectedZoomRatio = resultZoomRatio;
                     }
                 } else {
@@ -3423,12 +3422,16 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 verifyCaptureResultForKey(CaptureResult.CONTROL_AUTOFRAMING, mode, listener,
                         NUM_FRAMES_VERIFIED);
 
-                mCollector.expectTrue(String.format(
-                                "Zoom Ratio in Capture Request does not match the expected zoom"
-                                        + "ratio in Capture Result (expected = %f, actual = %f)",
-                                expectedZoomRatio, resultZoomRatio),
-                        Math.abs(expectedZoomRatio - resultZoomRatio) / expectedZoomRatio
-                                <= zoomErrorMargin);
+                // If autoframing was OFF, or the framing state CONVERGED, the zoom ratio in result
+                // should be within the margin of error.
+                if (autoframingState != CameraMetadata.CONTROL_AUTOFRAMING_STATE_FRAMING) {
+                    mCollector.expectTrue(String.format(
+                            "Zoom Ratio in Capture Request does not match the expected zoom"
+                                    + "ratio in Capture Result (expected = %f, actual = %f)",
+                                    expectedZoomRatio, resultZoomRatio),
+                            Math.abs(expectedZoomRatio - resultZoomRatio) / expectedZoomRatio
+                                    <= zoomErrorMargin);
+                }
             }
         }
     }

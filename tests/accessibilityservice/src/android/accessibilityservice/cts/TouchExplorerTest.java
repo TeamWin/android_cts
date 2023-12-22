@@ -58,6 +58,7 @@ import android.accessibilityservice.cts.utils.ActivityLaunchUtils;
 import android.accessibilityservice.cts.utils.EventCapturingClickListener;
 import android.accessibilityservice.cts.utils.EventCapturingLongClickListener;
 import android.accessibilityservice.cts.utils.EventCapturingMotionEventListener;
+import android.accessibilityservice.cts.utils.GestureUtils;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.pm.PackageManager;
@@ -130,9 +131,15 @@ public class TouchExplorerTest {
     private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
 
+    private GestureUtils.DumpOnFailureRule mGestureUtilsDumpOnFailureRule =
+            new GestureUtils.DumpOnFailureRule();
+
     @Rule
     public final RuleChain mRuleChain =
-            RuleChain.outerRule(mActivityRule).around(mServiceRule).around(mDumpOnFailureRule);
+            RuleChain.outerRule(mActivityRule)
+                    .around(mServiceRule)
+                    .around(mDumpOnFailureRule)
+                    .around(mGestureUtilsDumpOnFailureRule);
 
     PointF mTapLocation; // Center of activity. Gestures all start from around this point.
     float mSwipeDistance;
@@ -153,6 +160,7 @@ public class TouchExplorerTest {
         sUiAutomation =
                 sInstrumentation.getUiAutomation(
                         UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        GestureUtils.randomize();
     }
 
     @AfterClass

@@ -24,19 +24,27 @@ import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.graphics.Path;
 import android.graphics.PointF;
+import android.os.Bundle;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 
+import androidx.test.InstrumentationRegistry;
+
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.junit.rules.TestRule;
+import org.junit.runners.model.Statement;
 
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
 public class GestureUtils {
 
-    public static final long STROKE_TIME_GAP_MS = 40;
+    public static final long STROKE_TIME_GAP_MS_MIN = 1;
+    public static final long STROKE_TIME_GAP_MS_DEFAULT = 40;
+    public static final long STROKE_TIME_GAP_MS_MAX = ViewConfiguration.getDoubleTapTimeout() - 1;
 
     public static final Matcher<MotionEvent> IS_ACTION_DOWN =
             new MotionEventActionMatcher(MotionEvent.ACTION_DOWN);
@@ -50,6 +58,13 @@ public class GestureUtils {
             new MotionEventActionMatcher(MotionEvent.ACTION_CANCEL);
     public static final Matcher<MotionEvent> IS_ACTION_MOVE =
             new MotionEventActionMatcher(MotionEvent.ACTION_MOVE);
+
+    private static Random sRandom = null;
+    private static boolean sShouldRandomize = false;
+    // We generate the random seed later in randomize() and store it here to enable users to
+    // reproduce randomized test failures.
+    private static long sRandomSeed = 0;
+    private static long sStrokeGapTimeMs = STROKE_TIME_GAP_MS_DEFAULT;
 
     private GestureUtils() {}
 
@@ -120,7 +135,7 @@ public class GestureUtils {
         PointF midpoint = new PointF((from.x + to.x) / 2.0f, (from.y + to.y) / 2.0f);
         StrokeDescription swipe1 = new StrokeDescription(path(from, midpoint), 0, duration / 2);
         builder.addStroke(swipe1);
-        time += swipe1.getDuration() + STROKE_TIME_GAP_MS;
+        time += swipe1.getDuration() + sStrokeGapTimeMs;
         StrokeDescription swipe2 = startingAt(time, swipe(midpoint, to, duration / 2));
         builder.addStroke(swipe2);
         return builder.build();
@@ -198,8 +213,8 @@ public class GestureUtils {
     public static GestureDescription tripleTap(PointF point) {
         return tripleTap(point, Display.DEFAULT_DISPLAY);
     }
-/** Generates a triple-tap gesture. */
 
+    /** Generates a triple-tap gesture. */
     public static GestureDescription tripleTap(PointF point, int displayId) {
         return multiTap(point, 3, 0, displayId);
     }
@@ -223,11 +238,11 @@ public class GestureUtils {
             // If slop is 0 subsequent taps will also be on the point itself.
             StrokeDescription stroke = click(point);
             builder.addStroke(stroke);
-            time += stroke.getDuration() + STROKE_TIME_GAP_MS;
+            time += stroke.getDuration() + sStrokeGapTimeMs;
             for (int i = 1; i < taps; i++) {
                 stroke = click(getPointWithinSlop(point, slop));
                 builder.addStroke(startingAt(time, stroke));
-                time += stroke.getDuration() + STROKE_TIME_GAP_MS;
+                time += stroke.getDuration() + sStrokeGapTimeMs;
             }
         }
         return builder.build();
@@ -242,7 +257,7 @@ public class GestureUtils {
         GestureDescription.Builder builder = new GestureDescription.Builder();
         builder.setDisplayId(displayId);
         StrokeDescription tap1 = click(point);
-        StrokeDescription tap2 = startingAt(endTimeOf(tap1) + STROKE_TIME_GAP_MS, longClick(point));
+        StrokeDescription tap2 = startingAt(endTimeOf(tap1) + sStrokeGapTimeMs, longClick(point));
         builder.addStroke(tap1);
         builder.addStroke(tap2);
         return builder.build();
@@ -391,7 +406,7 @@ public class GestureUtils {
         for (int tapIndex = 1; tapIndex < tapCount; tapIndex++) {
             for (int i = 0; i < fingerCount; i++) {
                 final StrokeDescription lastStroke = strokes[(tapIndex - 1) * fingerCount + i];
-                final long nextStartTime = endTimeOf(lastStroke) + STROKE_TIME_GAP_MS;
+                final long nextStartTime = endTimeOf(lastStroke) + sStrokeGapTimeMs;
                 final int nextIndex = tapIndex * fingerCount + i;
                 pointers[i] = getPointWithinSlop(pointers[i], slop);
                 strokes[nextIndex] = startingAt(nextStartTime, click(pointers[i]));
@@ -440,7 +455,7 @@ public class GestureUtils {
         for (int tapIndex = 1; tapIndex < tapCount; tapIndex++) {
             for (int i = 0; i < fingerCount; i++) {
                 final StrokeDescription lastStroke = strokes[(tapIndex - 1) * fingerCount + i];
-                final long nextStartTime = endTimeOf(lastStroke) + STROKE_TIME_GAP_MS;
+                final long nextStartTime = endTimeOf(lastStroke) + sStrokeGapTimeMs;
                 final int nextIndex = tapIndex * fingerCount + i;
                 pointers[i] = getPointWithinSlop(pointers[i], slop);
                 if (tapIndex + 1 == tapCount) {
@@ -452,5 +467,72 @@ public class GestureUtils {
             }
         }
         return getGestureBuilder(displayId, strokes).build();
+    }
+
+    /** Randomizes the values governing gesture creation. */
+    public static void randomize() {
+        Bundle args = InstrumentationRegistry.getArguments();
+        String shouldRandomize = args.getString("randomize");
+        if (shouldRandomize == null) {
+            return;
+        }
+        sShouldRandomize = Boolean.parseBoolean(shouldRandomize);
+        if (!sShouldRandomize) {
+            return;
+        }
+        String seed = args.getString("randomSeed");
+        if (seed != null) {
+            sRandomSeed = Long.parseLong(seed);
+            sRandom = new Random(sRandomSeed);
+        } else {
+            // Generate a random seed then store it.
+            sRandomSeed = new Random().nextLong();
+            sRandom = new Random(sRandomSeed);
+        }
+        sStrokeGapTimeMs =
+                sRandom.nextLong(STROKE_TIME_GAP_MS_MAX - STROKE_TIME_GAP_MS_MIN)
+                        + STROKE_TIME_GAP_MS_MIN;
+    }
+
+    /** Rule used to report values in the failure message for easier bug reporting. */
+    public static class DumpOnFailureRule implements TestRule {
+
+        @Override
+        public Statement apply(Statement base, org.junit.runner.Description description) {
+            return new DumpOnFailureStatement(base);
+        }
+
+        class DumpOnFailureStatement extends Statement {
+            Statement mBase;
+
+            DumpOnFailureStatement(Statement base) {
+                mBase = base;
+            }
+
+            @Override
+            public void evaluate() throws Throwable {
+                try {
+                    mBase.evaluate();
+                } catch (Throwable throwable) {
+                    if (sShouldRandomize) {
+                        // Give instructions on how to reproduce this behavior
+                        String message =
+                                throwable.getMessage()
+                                        + "To reproduce this failure using atest, run this test"
+                                        + " with the options -- --test-arg"
+                                        + " com.android.tradefed.testtype.AndroidJUnitTest:"
+                                        + "instrumentation-arg:randomize:="
+                                        + sShouldRandomize
+                                        + " --test-arg"
+                                        + " com.android.tradefed.testtype.AndroidJUnitTest:"
+                                        + "instrumentation-arg:randomSeed:="
+                                        + sRandomSeed;
+                        throw new Exception(message, throwable);
+                    } else {
+                        throw throwable;
+                    }
+                }
+            }
+        }
     }
 }

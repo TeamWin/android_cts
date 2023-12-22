@@ -98,7 +98,7 @@ import java.util.function.Consumer;
 public class VirtualCameraTest {
     private static final long TIMEOUT_MILLIS = 2000L;
     private static final float EPSILON = 0.3f;
-    private static final int CAMERA_DISPLAY_NAME_RES_ID = 10;
+    private static final String CAMERA_NAME = "Virtual camera";
     private static final int CAMERA_WIDTH = 640;
     private static final int CAMERA_HEIGHT = 480;
     private static final int CAMERA_FORMAT = ImageFormat.YUV_420_888;
@@ -158,7 +158,7 @@ public class VirtualCameraTest {
         mCameraManager.registerAvailabilityCallback(mExecutor, mMockCameraAvailabilityCallback);
         mVirtualDevice = mRule.createManagedVirtualDevice();
         VirtualCameraConfig config = VirtualCameraUtils.createVirtualCameraConfig(CAMERA_WIDTH,
-                CAMERA_HEIGHT, CAMERA_FORMAT, CAMERA_DISPLAY_NAME_RES_ID, mExecutor,
+                CAMERA_HEIGHT, CAMERA_FORMAT, CAMERA_NAME, mExecutor,
                 mVirtualCameraCallback);
         mVirtualCamera = mVirtualDevice.createVirtualCamera(config);
     }
@@ -174,7 +174,7 @@ public class VirtualCameraTest {
     public void virtualCamera_getConfig_returnsCorrectConfig() {
         VirtualCameraConfig config = mVirtualCamera.getConfig();
         VirtualCameraUtils.assertVirtualCameraConfig(config, CAMERA_WIDTH, CAMERA_HEIGHT,
-                CAMERA_FORMAT, CAMERA_DISPLAY_NAME_RES_ID);
+                CAMERA_FORMAT, CAMERA_NAME);
     }
 
     @Test

@@ -280,6 +280,8 @@
                   android:screenOrientation="nosensor"
                   android:turnScreenOn="true"
                   android:showWhenLocked="true"/>
+        <activity android:name="android.server.wm.window.ConfigurationCallbacksTest$TestActivity"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
 
         <activity android:name="android.server.wm.insets.RoundedCornerTests$TestActivity"
                   android:configChanges="orientation|screenSize"
