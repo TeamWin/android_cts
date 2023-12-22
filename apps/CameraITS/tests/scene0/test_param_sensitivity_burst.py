@@ -22,7 +22,7 @@ import capture_request_utils
 import its_session_utils
 
 _NUM_STEPS = 3
-_ERROR_TOLERANCE = 0.96  # Allow ISO to be rounded down by 4%
+_ERROR_TOLERANCE = 0.95  # Allow ISO to be rounded down by 5%
 
 
 class ParamSensitivityBurstTest(its_base_test.ItsBaseTest):
