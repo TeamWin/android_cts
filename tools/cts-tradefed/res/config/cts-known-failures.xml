@@ -428,4 +428,40 @@
     <option name="compatibility:exclude-filter" value="AdServicesFrameworkUnitTests android.adservices.common.AdFiltersTest#testBuildValidAdFilters_success" />
     <option name="compatibility:exclude-filter" value="AdServicesFrameworkUnitTests android.adservices.common.FrequencyCapFiltersTest#testHashCodeIdentical_success" />
     <option name="compatibility:exclude-filter" value="AdServicesServiceCoreUnitTests com.android.adservices.data.common.DBAdDataTest#testAdCounterKeysNullFails" />
+
+
+    <!--b/316196102 -->
+    <option name="compatibility:exclude-filter" value="SdkSandboxFrameworkUnitTests com.android.server.sdksandbox.SdkSandboxManagerUnitTest#testLoadSdk_latencySystemServerToAppLogged_failed" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxFrameworkUnitTests com.android.server.sdksandbox.SdkSandboxManagerUnitTest#testLoadSdk_latencySystemServerToAppLogged_success" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxFrameworkUnitTests com.android.server.sdksandbox.SdkSandboxManagerUnitTest#testLoadSdkFailed" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxFrameworkUnitTests com.android.server.sdksandbox.SdkSandboxManagerUnitTest#testLoadSdkSuccess" />" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.LoadSdkSessionUnitTest#testLoadedSdkStatusAfterSandboxDeath" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.LoadSdkSessionUnitTest#testLoadingAfterUnloading_ShouldFail_SameSession" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.LoadSdkSessionUnitTest#testLoadingSdkTwiceInSameSessionShouldFail" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.LoadSdkSessionUnitTest#testLoadSdk_SandboxDiesBeforeCompletion" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.LoadSdkSessionUnitTest#testLoadSdkError" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.LoadSdkSessionUnitTest#testLoadSdkIsSuccessful" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.LoadSdkSessionUnitTest#testRequestSurfacePackage" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.LoadSdkSessionUnitTest#testRequestSurfacePackage_SandboxDiesInBetween" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.LoadSdkSessionUnitTest#testSandboxDeathBeforeUnload" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.LoadSdkSessionUnitTest#testSandboxDiedOnLoadSdkRequest" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.LoadSdkSessionUnitTest#testSecondLoadFails_ErrorOnFirstLoad_SameSession" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.LoadSdkSessionUnitTest#testUnloadSdk" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.LoadSdkSessionUnitTest#testUnloadSdkAfterFailedLoading" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.LoadSdkSessionUnitTest#testUnloadSdkThatIsBeingLoaded" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.SdkSandboxManagerServiceUnitTest#testGetSandboxedSdks_errorLoadingSdk" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.SdkSandboxManagerServiceUnitTest#testLatencyMetrics_SystemServerAppToSandbox_LoadSdk_FailureOnMultiLoad" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.SdkSandboxManagerServiceUnitTest#testLatencyMetrics_SystemServerSandboxToAppWithSandboxLatencyInfo_LoadSdk" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.SdkSandboxManagerServiceUnitTest#testLoadSdk_errorFromSdkSandbox" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.SdkSandboxManagerServiceUnitTest#testLoadSdk_errorOnFirstLoad_canBeLoadedAgain" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.SdkSandboxManagerServiceUnitTest#testLoadSdk_sandboxDiesInBetween" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.SdkSandboxManagerServiceUnitTest#testLoadSdk_sandboxInitializationFails" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.SdkSandboxManagerServiceUnitTest#testLoadSdk_successOnFirstLoad_errorOnLoadAgain" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.SdkSandboxManagerServiceUnitTest#testLoadSdkIsSuccessful" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.SdkSandboxManagerServiceUnitTest#testRequestSurfacePackage_SandboxDiesInBetween" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.SdkSandboxManagerServiceUnitTest#testRequestSurfacePackageFailedAfterAppDied" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.SdkSandboxManagerServiceUnitTest#testRequestSurfacePackageSdkNotLoaded_SandboxExists" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.SdkSandboxManagerServiceUnitTest#testUnloadSdkNotCalledOnAppDeath" />
+    <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.SdkSandboxManagerServiceUnitTest#testUnloadSdkThatIsBeingLoaded" />
+
 </configuration>
