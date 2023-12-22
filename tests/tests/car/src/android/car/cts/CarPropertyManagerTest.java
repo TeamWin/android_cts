@@ -2664,7 +2664,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Integer[].class, mCarPropertyManager)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos, positions) -> {
-                            assertWithMessage("ULTRASONICS_SENSOR_POSITION must specify 3 values")
+                            assertWithMessage("ULTRASONICS_SENSOR_POSITION must specify 3 values, "
+                                    + "areaId: " + areaId)
                                     .that(positions.length)
                                     .isEqualTo(3);
                         })
@@ -2688,7 +2689,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos, orientations) -> {
                             assertWithMessage("ULTRASONICS_SENSOR_ORIENTATION must specify 4 "
-                                    + "values")
+                                    + "values, areaId: " + areaId)
                                     .that(orientations.length)
                                     .isEqualTo(4);
                         })
@@ -2712,15 +2713,15 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos, fieldOfViews) -> {
                             assertWithMessage("ULTRASONICS_SENSOR_FIELD_OF_VIEW must specify 2 "
-                                    + "values")
+                                    + "values, areaId: " + areaId)
                                     .that(fieldOfViews.length)
                                     .isEqualTo(2);
                             assertWithMessage("ULTRASONICS_SENSOR_FIELD_OF_VIEW horizontal fov "
-                                    + "must be greater than zero")
+                                    + "must be greater than zero, areaId: " + areaId)
                                     .that(fieldOfViews[0])
                                     .isGreaterThan(0);
                             assertWithMessage("ULTRASONICS_SENSOR_FIELD_OF_VIEW vertical fov "
-                                    + "must be greater than zero")
+                                    + "must be greater than zero, areaId: " + areaId)
                                     .that(fieldOfViews[1])
                                     .isGreaterThan(0);
                         })
@@ -2745,15 +2746,15 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         (carPropertyConfig, propertyId, areaId, timestampNanos, detectionRanges)
                                 -> {
                             assertWithMessage("ULTRASONICS_SENSOR_DETECTION_RANGE must "
-                                    + "specify 2 values")
+                                    + "specify 2 values, areaId: " + areaId)
                                     .that(detectionRanges.length)
                                     .isEqualTo(2);
                             assertWithMessage("ULTRASONICS_SENSOR_DETECTION_RANGE min value must "
-                                    + "be at least zero")
+                                    + "be at least zero, areaId: " + areaId)
                                     .that(detectionRanges[0])
                                     .isAtLeast(0);
                             assertWithMessage("ULTRASONICS_SENSOR_DETECTION_RANGE max value must "
-                                    + "be greater than min")
+                                    + "be greater than min, areaId: " + areaId)
                                     .that(detectionRanges[1])
                                     .isGreaterThan(detectionRanges[0]);
                         })
@@ -2778,20 +2779,20 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         (carPropertyConfig, propertyId, areaId, timestampNanos, supportedRanges)
                                 -> {
                             assertWithMessage("ULTRASONICS_SENSOR_SUPPORTED_RANGES must "
-                                    + "must have at least 1 range")
+                                    + "must have at least 1 range, areaId: " + areaId)
                                     .that(supportedRanges.length)
                                     .isAtLeast(2);
                             assertWithMessage("ULTRASONICS_SENSOR_SUPPORTED_RANGES must "
-                                    + "specify an even number of values")
+                                    + "specify an even number of values, areaId: " + areaId)
                                     .that(supportedRanges.length % 2)
                                     .isEqualTo(0);
                             assertWithMessage("ULTRASONICS_SENSOR_SUPPORTED_RANGES values "
-                                    + "must be greater than zero")
+                                    + "must be greater than zero, areaId: " + areaId)
                                     .that(supportedRanges[0])
                                     .isAtLeast(0);
                             for (int i = 1; i < supportedRanges.length; i++) {
                                 assertWithMessage("ULTRASONICS_SENSOR_SUPPORTED_RANGES values "
-                                        + "must be in ascending order")
+                                        + "must be in ascending order, areaId: " + areaId)
                                         .that(supportedRanges[i])
                                         .isGreaterThan(supportedRanges[i - 1]);
                             }
@@ -2804,18 +2805,21 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
     private void verifyUltrasonicsSupportedRangesWithinDetectionRange(
             int areaId, Integer[] supportedRanges) {
+        if (mCarPropertyManager.getCarPropertyConfig(
+                VehiclePropertyIds.ULTRASONICS_SENSOR_DETECTION_RANGE) == null) {
+            return;
+        }
+
         Integer[] detectionRange = (Integer[]) mCarPropertyManager.getProperty(
                 VehiclePropertyIds.ULTRASONICS_SENSOR_DETECTION_RANGE, areaId).getValue();
-        if (mCarPropertyManager.getCarPropertyConfig(
-                VehiclePropertyIds.ULTRASONICS_SENSOR_DETECTION_RANGE) != null) {
-            for (int i = 0; i < supportedRanges.length; i++) {
-                assertWithMessage("ULTRASONICS_SENSOR_SUPPORTED_RANGES values must "
-                        + "be within the ULTRASONICS_SENSOR_DETECTION_RANGE")
-                        .that(supportedRanges[i])
-                        .isIn(Range.closed(
-                                detectionRange[0],
-                                detectionRange[1]));
-            }
+
+        for (int i = 0; i < supportedRanges.length; i++) {
+            assertWithMessage("ULTRASONICS_SENSOR_SUPPORTED_RANGES values must "
+                    + "be within the ULTRASONICS_SENSOR_DETECTION_RANGE, areaId: " + areaId)
+                    .that(supportedRanges[i])
+                    .isIn(Range.closed(
+                            detectionRange[0],
+                            detectionRange[1]));
         }
     }
 
@@ -2836,12 +2840,68 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         (carPropertyConfig, propertyId, areaId, timestampNanos, distance)
                                 -> {
                             assertWithMessage("ULTRASONICS_SENSOR_MEASURED_DISTANCE must "
-                                    + "must have at most 2 values")
+                                    + "have at most 2 values, areaId: " + areaId)
                                     .that(distance.length)
                                     .isAtMost(2);
+                            if (distance.length == 2) {
+                                assertWithMessage("ULTRASONICS_SENSOR_MEASURED_DISTANCE distance "
+                                    + "error must be greater than zero, areaId: " + areaId)
+                                    .that(distance[1])
+                                    .isAtLeast(0);
+                            }
+                            verifyUltrasonicsMeasuredDistanceInSupportedRanges(areaId, distance);
+                            verifyUltrasonicsMeasuredDistanceWithinDetectionRange(areaId, distance);
                         })
                 .addReadPermission(Car.PERMISSION_READ_ULTRASONICS_SENSOR_DATA)
                 .build();
+    }
+
+    private void verifyUltrasonicsMeasuredDistanceInSupportedRanges(
+            int areaId, Integer[] distance) {
+        // Distance with length of 0 is valid. return because there are no values to verify.
+        if (distance.length == 0) {
+            return;
+        }
+
+        if (mCarPropertyManager.getCarPropertyConfig(
+                VehiclePropertyIds.ULTRASONICS_SENSOR_SUPPORTED_RANGES) == null) {
+            return;
+        }
+
+        Integer[] supportedRanges = (Integer[]) mCarPropertyManager.getProperty(
+                VehiclePropertyIds.ULTRASONICS_SENSOR_SUPPORTED_RANGES, areaId).getValue();
+        ImmutableSet.Builder<Integer> minimumSupportedRangeValues = ImmutableSet.builder();
+        for (int i = 0; i < supportedRanges.length; i += 2) {
+            minimumSupportedRangeValues.add(supportedRanges[i]);
+        }
+
+        assertWithMessage("ULTRASONICS_SENSOR_MEASURED_DISTANCE distance must be one of the "
+                + "minimum values in ULTRASONICS_SENSOR_SUPPORTED_RANGES, areaId: "
+                + areaId)
+                .that(distance[0])
+                .isIn(minimumSupportedRangeValues.build());
+    }
+
+    private void verifyUltrasonicsMeasuredDistanceWithinDetectionRange(
+            int areaId, Integer[] distance) {
+        // Distance with length of 0 is valid. return because there are no values to verify.
+        if (distance.length == 0) {
+            return;
+        }
+
+        if (mCarPropertyManager.getCarPropertyConfig(
+                VehiclePropertyIds.ULTRASONICS_SENSOR_DETECTION_RANGE) == null) {
+            return;
+        }
+
+        Integer[] detectionRange = (Integer[]) mCarPropertyManager.getProperty(
+                VehiclePropertyIds.ULTRASONICS_SENSOR_DETECTION_RANGE, areaId).getValue();
+        assertWithMessage("ULTRASONICS_SENSOR_MEASURED_DISTANCE distance must "
+                + "be within the ULTRASONICS_SENSOR_DETECTION_RANGE, areaId: " + areaId)
+                .that(distance[0])
+                .isIn(Range.closed(
+                        detectionRange[0],
+                        detectionRange[1]));
     }
 
     @Test
