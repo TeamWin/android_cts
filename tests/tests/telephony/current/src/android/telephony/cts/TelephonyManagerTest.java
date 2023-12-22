@@ -6537,6 +6537,55 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.telephony.TelephonyManager#isNullCipherNotificationsEnabled",
+            "android.telephony.TelephonyManager#setEnableNullCipherNotifications"})
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_MODEM_CIPHER_TRANSPARENCY)
+    public void testSetEnableNullCipherNotifications() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
+        if (mNetworkHalVersion < RADIO_HAL_VERSION_2_2) {
+            Log.d(TAG,
+                    "Skipping test since modem does not support IRadioNetwork HAL v2.2");
+            return;
+        }
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                (tm) -> tm.setEnableNullCipherNotifications(true));
+        boolean enabled = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.isNullCipherNotificationsEnabled());
+        assertTrue(enabled);
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                (tm) -> tm.setEnableNullCipherNotifications(false));
+        enabled = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.isNullCipherNotificationsEnabled());
+        assertFalse(enabled);
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.telephony.TelephonyManager#isNullCipherNotificationsEnabled",
+            "android.telephony.TelephonyManager#setEnableNullCipherNotifications"})
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_MODEM_CIPHER_TRANSPARENCY)
+    public void testNullCipherNotificationsPermissions() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
+        if (mNetworkHalVersion < RADIO_HAL_VERSION_2_2) {
+            Log.d(TAG,
+                    "Skipping test since modem does not support IRadioNetwork HAL v2.2");
+            return;
+        }
+
+        assertThrows(SecurityException.class, () -> {
+                    mTelephonyManager.setEnableNullCipherNotifications(true);
+                }
+        );
+
+        assertThrows(SecurityException.class, () -> {
+                    mTelephonyManager.isNullCipherNotificationsEnabled();
+                }
+        );
+    }
+    @Test
     @RequiresFlagsEnabled(Flags.FLAG_DATA_ONLY_CELLULAR_SERVICE)
     @ApiTest(apis = {
             "android.telephony.TelephonyManager#isDeviceVoiceCapable",
