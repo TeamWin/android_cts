@@ -43,6 +43,7 @@ import android.telecom.TelecomManager;
 import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.FeatureUtil;
 
@@ -432,6 +433,7 @@ public class AvailableIntentsTest extends AndroidTestCase {
         assertCanBeHandled(new Intent(StorageManager.ACTION_MANAGE_STORAGE));
     }
 
+    @ApiTest(apis = {"android.provider.Settings#ACTION_FINGERPRINT_ENROLL"})
     public void testFingerprintEnrollStart() {
         PackageManager packageManager = mContext.getPackageManager();
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)) {

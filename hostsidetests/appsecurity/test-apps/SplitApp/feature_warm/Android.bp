@@ -47,6 +47,9 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
 
 // Define a variant requiring a split for install
@@ -67,6 +70,9 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
 
 // Define a variant with different codes and resources for the inherit updated test of the
@@ -98,4 +104,7 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }

@@ -19,6 +19,9 @@ android_library {
     ],
     manifest: "src/main/AndroidManifest.xml",
     min_sdk_version: "29",
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
 
 android_test {
@@ -44,4 +47,7 @@ android_test {
     data: [":EventLibTestApp"],
     manifest: "src/test/AndroidManifest.xml",
     min_sdk_version: "29",
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }

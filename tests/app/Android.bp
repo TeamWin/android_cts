@@ -38,6 +38,7 @@ android_test {
         "CtsAppTestStubsShared",
         "android.content.pm.flags-aconfig-java",
         "flag-junit",
+        "com.android.media.flags.bettertogether-aconfig-java",
     ],
     srcs: [
         "src/**/*.java",
@@ -77,6 +78,9 @@ android_test {
         ":WallpaperTest",
     ],
     per_testcase_directory: true,
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
 
 android_test {
@@ -190,6 +194,9 @@ android_test {
         ":CtsAppTestStubs",
     ],
     per_testcase_directory: true,
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
 
 android_test {
@@ -232,4 +239,7 @@ android_test {
         ":CtsAppTestFgsTestHelperApi33",
     ],
     per_testcase_directory: true,
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
