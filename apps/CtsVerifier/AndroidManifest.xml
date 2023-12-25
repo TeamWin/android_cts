@@ -5460,6 +5460,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_tunnel" />
             <meta-data android:name="test_required_features"
                        android:value="android.software.leanback" />
+            <meta-data android:name="test_required_configs"
+                       android:value="config_changeable_volume" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive" />
             <meta-data android:name="display_mode"
