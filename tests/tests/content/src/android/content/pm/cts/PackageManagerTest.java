@@ -40,6 +40,7 @@ import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.FLAG_SUSPEND_QUARANTINED;
 import static android.content.pm.PackageManager.GET_ACTIVITIES;
+import static android.content.pm.PackageManager.GET_INSTRUMENTATION;
 import static android.content.pm.PackageManager.GET_META_DATA;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.GET_PROVIDERS;
@@ -779,7 +780,7 @@ public class PackageManagerTest {
 
         // Test getPackageInfo
         PackageInfo packageInfo = mPackageManager.getPackageInfo(PACKAGE_NAME,
-                PackageManager.PackageInfoFlags.of(PackageManager.GET_INSTRUMENTATION));
+                PackageManager.PackageInfoFlags.of(GET_INSTRUMENTATION));
         assertEquals(PACKAGE_NAME, packageInfo.packageName);
 
         // Test getApplicationInfo, getApplicationLabel
@@ -1166,6 +1167,30 @@ public class PackageManagerTest {
                         + " GET_SIGNATURES and GET_SIGNING_CERTIFICATES flags are both specified",
                 pkgInfo.signatures);
 
+        pkgInfo = mPackageManager.getPackageArchiveInfo(apkPath,
+                PackageManager.PackageInfoFlags.of(GET_ACTIVITIES));
+        assertNotNull("Activities should have been collected when GET_ACTIVITIES"
+                + " flag is specified", pkgInfo.activities);
+
+        pkgInfo = mPackageManager.getPackageArchiveInfo(apkPath,
+                PackageManager.PackageInfoFlags.of(GET_PROVIDERS));
+        assertNotNull("Providers should have been collected when GET_PROVIDERS"
+                + " flag is specified", pkgInfo.providers);
+
+        pkgInfo = mPackageManager.getPackageArchiveInfo(apkPath,
+                PackageManager.PackageInfoFlags.of(GET_SERVICES));
+        assertNotNull("Services should have been collected when GET_SERVICES"
+                + " flag is specified", pkgInfo.services);
+
+        pkgInfo = mPackageManager.getPackageArchiveInfo(apkPath,
+                PackageManager.PackageInfoFlags.of(GET_INSTRUMENTATION));
+        assertNotNull("Instrumentation should have been collected when GET_INSTRUMENTATION"
+                + " flag is specified", pkgInfo.instrumentation);
+
+        pkgInfo = mPackageManager.getPackageArchiveInfo(apkPath,
+                PackageManager.PackageInfoFlags.of(GET_PERMISSIONS));
+        assertNotNull("Permissions should have been collected when GET_PERMISSIONS"
+                + " flag is specified", pkgInfo.permissions);
     }
 
     private void runTestGetPackageArchiveInfoSameApplicationInfo(long flags) {
