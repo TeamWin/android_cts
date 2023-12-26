@@ -330,6 +330,24 @@ public class NfcAdapterTest {
         }
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_NFC_CHARGING)
+    public void testEnableNfcCharging() throws NoSuchFieldException, RemoteException {
+        NfcAdapter adapter = createMockedInstance();
+        when(mService.enableWlc(anyBoolean())).thenReturn(true);
+        boolean result = adapter.enableWlc(true);
+        Assert.assertTrue(result);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_NFC_CHARGING)
+    public void testIsNfcChargingEnabled() throws NoSuchFieldException, RemoteException {
+        NfcAdapter adapter = createMockedInstance();
+        when(mService.isWlcEnabled()).thenReturn(true);
+        boolean result = adapter.isWlcEnabled();
+        Assert.assertTrue(result);
+    }
+
     private class CtsReaderCallback implements NfcAdapter.ReaderCallback {
         @Override
         public void onTagDiscovered(Tag tag) {}
