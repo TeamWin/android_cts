@@ -126,7 +126,7 @@ public class ConfigurationCallbacksTest extends WindowManagerTestBase {
      * {@link DisplayListener#onDisplayChanged} have updated {@link android.app.WindowConfiguration}
      * that is synchronized with the display window.
      */
-    @RequiresFlagsEnabled(Flags.FLAG_SYNC_WINDOW_CONFIG_UPDATE_FLAG)
+    @RequiresFlagsEnabled(Flags.FLAG_BUNDLE_CLIENT_TRANSACTION_FLAG)
     @Test
     @ApiTest(apis = {
             "android.hardware.display.DisplayManager.DisplayListener#onDisplayChanged",
@@ -152,7 +152,7 @@ public class ConfigurationCallbacksTest extends WindowManagerTestBase {
      * that is synchronized with the display window.
      */
     @FlakyTest(bugId = 317370225)
-    @RequiresFlagsEnabled(Flags.FLAG_SYNC_WINDOW_CONFIG_UPDATE_FLAG)
+    @RequiresFlagsEnabled(Flags.FLAG_BUNDLE_CLIENT_TRANSACTION_FLAG)
     @Test
     @ApiTest(apis = {
             "android.hardware.display.DisplayManager.DisplayListener#onDisplayChanged",
