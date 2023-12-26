@@ -6,6 +6,7 @@ per-file *Vibrat* = file:platform/frameworks/base:/services/core/java/com/androi
 per-file *NetworkTime* = file:platform/frameworks/base:/services/core/java/com/android/server/timezonedetector/OWNERS
 per-file *Sntp* = file:platform/frameworks/base:/services/core/java/com/android/server/timezonedetector/OWNERS
 per-file *LowPowerStandby* = file:platform/frameworks/base:/services/core/java/com/android/server/power/OWNERS
+per-file *SecurityStateManager* = file:platform/frameworks/base:/SECURITY_STATE_OWNERS
 
 # Bug component: 826709 = per-file PerformanceHintManagerTest.java
 # Bug component: 46788 = per-file PowerManager_ThermalTest.java
