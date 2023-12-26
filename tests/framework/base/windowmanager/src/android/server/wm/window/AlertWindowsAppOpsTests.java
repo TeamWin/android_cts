@@ -18,7 +18,6 @@ package android.server.wm.window;
 
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.OPSTR_SYSTEM_ALERT_WINDOW;
-
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertFalse;
@@ -34,8 +33,13 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import android.app.AppOpsManager;
+import android.content.Context;
 import android.os.Process;
+import android.permission.flags.Flags;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.rule.ActivityTestRule;
 
@@ -62,6 +66,10 @@ public class AlertWindowsAppOpsTests {
     private static int sPreviousSawAppOp;
 
     @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
+
+    @Rule
     public final ActivityTestRule<AlertWindowsAppOpsTestsActivity> mActivityRule =
             new ActivityTestRule<>(AlertWindowsAppOpsTestsActivity.class);
 
@@ -79,6 +87,7 @@ public class AlertWindowsAppOpsTests {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_DEVICE_AWARE_PERMISSION_APIS_ENABLED)
     public void testSystemAlertWindowAppOpsInitiallyAllowed() {
         final String packageName = getInstrumentation().getContext().getPackageName();
         final int uid = Process.myUid();
@@ -103,9 +112,9 @@ public class AlertWindowsAppOpsTests {
         getInstrumentation().runOnMainSync(activity::showSystemAlertWindow);
 
         // The app op should start
-        verify(listener, timeout(APP_OP_CHANGE_TIMEOUT_MILLIS)
-                .only()).onOpActiveChanged(eq(OPSTR_SYSTEM_ALERT_WINDOW),
-                eq(uid), eq(packageName), isNull(), eq(true), anyInt(), anyInt());
+        verify(listener, timeout(APP_OP_CHANGE_TIMEOUT_MILLIS).only()).onOpActiveChanged(
+                eq(OPSTR_SYSTEM_ALERT_WINDOW), eq(uid), eq(packageName), isNull(),
+                eq(Context.DEVICE_ID_DEFAULT), eq(true), anyInt(), anyInt());
 
         // The app op should be reported as started
         assertTrue(appOpsManager.isOpActive(OPSTR_SYSTEM_ALERT_WINDOW,
@@ -119,9 +128,9 @@ public class AlertWindowsAppOpsTests {
         getInstrumentation().runOnMainSync(activity::hideSystemAlertWindow);
 
         // The app op should finish
-        verify(listener, timeout(APP_OP_CHANGE_TIMEOUT_MILLIS)
-                .only()).onOpActiveChanged(eq(OPSTR_SYSTEM_ALERT_WINDOW),
-                eq(uid), eq(packageName), isNull(), eq(false), anyInt(), anyInt());
+        verify(listener, timeout(APP_OP_CHANGE_TIMEOUT_MILLIS).only()).onOpActiveChanged(
+                eq(OPSTR_SYSTEM_ALERT_WINDOW), eq(uid), eq(packageName), isNull(),
+                eq(Context.DEVICE_ID_DEFAULT), eq(false), anyInt(), anyInt());
 
         // The app op should be reported as finished
         assertFalse(appOpsManager.isOpActive(OPSTR_SYSTEM_ALERT_WINDOW, uid, packageName));

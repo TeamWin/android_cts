@@ -67,6 +67,7 @@ java_defaults {
         "platform-compat-test-rules",
         "cts_window_jetpack_utils",
         "com.android.window.flags.window-aconfig-java",
+        "android.permission.flags-aconfig-java",
     ],
 
     test_suites: [

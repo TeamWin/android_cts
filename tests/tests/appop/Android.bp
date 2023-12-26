@@ -78,6 +78,8 @@ android_test {
         "platform-test-annotations",
         "truth",
         "androidx.test.uiautomator_uiautomator",
+        "flag-junit",
+        "android.permission.flags-aconfig-java",
     ],
 
     jni_libs: [

@@ -33,7 +33,10 @@ import android.os.RemoteCallback
 import android.os.SystemClock
 import android.os.UserHandle
 import android.permission.PermissionManager
+import android.permission.flags.Flags
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.RequiresFlagsEnabled
+import android.platform.test.flag.junit.DeviceFlagsValueProvider
 import android.provider.CalendarContract
 import android.provider.CallLog
 import android.provider.ContactsContract
@@ -52,6 +55,7 @@ import org.junit.After
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.ArgumentMatcher
 import org.mockito.Mockito.eq
@@ -62,6 +66,8 @@ import org.mockito.Mockito.mock
 
 @AppModeFull(reason = "Instant apps cannot hold READ_CONTACTS/READ_CALENDAR/READ_SMS/READ_CALL_LOG")
 class RuntimePermissionsAppOpTrackingTest {
+
+    @get:Rule val mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
 
     @Before
     fun setUpTest() {
@@ -357,7 +363,7 @@ class RuntimePermissionsAppOpTrackingTest {
         // the permission identity to have the shell as the accessor.
         assertNotRunningOpAccess(AppOpsManager.permissionToOp(permission)!!,
                 beginEndMillis, endTimeMillis, AttributionSource(shellUid,
-                SHELL_PACKAGE_NAME, context.attributionTag, null,
+                SHELL_PACKAGE_NAME, ACCESSOR_ATTRIBUTION_TAG, null,
                 context.attributionSource.next),
                 /*accessorForeground*/ false, /*receiverForeground*/ false,
                 /*accessorTrusted*/ true, /*accessorAccessCount*/ 1,
@@ -375,6 +381,7 @@ class RuntimePermissionsAppOpTrackingTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_DEVICE_AWARE_PERMISSION_APIS_ENABLED)
     @Throws(Exception::class)
     fun testMicRecognitionInjectRecoWithoutAttribution() {
         runWithAuxiliaryApps {
@@ -477,30 +484,36 @@ class RuntimePermissionsAppOpTrackingTest {
                         RECEIVER_PACKAGE_NAME, 0)
 
                 inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                        eq(recognizerUid), eq(RECEIVER2_PACKAGE_NAME), isNull(), eq(true),
-                        eq(AppOpsManager.ATTRIBUTION_FLAG_ACCESSOR),
-                        intThat(attributionChainIdMatcher))
+                    eq(recognizerUid), eq(RECEIVER2_PACKAGE_NAME), isNull(),
+                    eq(Context.DEVICE_ID_DEFAULT), eq(true),
+                    eq(AppOpsManager.ATTRIBUTION_FLAG_ACCESSOR),
+                    intThat(attributionChainIdMatcher))
                 inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                        eq(Process.myUid()), eq(context.packageName), eq(ACCESSOR_ATTRIBUTION_TAG),
-                        eq(true), eq(AppOpsManager.ATTRIBUTION_FLAG_INTERMEDIARY),
-                        intThat(attributionChainIdMatcher))
+                    eq(Process.myUid()), eq(context.packageName), eq(ACCESSOR_ATTRIBUTION_TAG),
+                    eq(Context.DEVICE_ID_DEFAULT), eq(true),
+                    eq(AppOpsManager.ATTRIBUTION_FLAG_INTERMEDIARY),
+                    intThat(attributionChainIdMatcher))
                 inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                        eq(receiverUid), eq(RECEIVER_PACKAGE_NAME), eq(RECEIVER_ATTRIBUTION_TAG),
-                        eq(true), eq(AppOpsManager.ATTRIBUTION_FLAG_RECEIVER),
-                        intThat(attributionChainIdMatcher))
+                    eq(receiverUid), eq(RECEIVER_PACKAGE_NAME), eq(RECEIVER_ATTRIBUTION_TAG),
+                    eq(Context.DEVICE_ID_DEFAULT), eq(true),
+                    eq(AppOpsManager.ATTRIBUTION_FLAG_RECEIVER),
+                    intThat(attributionChainIdMatcher))
 
                 inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                        eq(recognizerUid), eq(RECEIVER2_PACKAGE_NAME), isNull(), eq(false),
-                        eq(AppOpsManager.ATTRIBUTION_FLAG_ACCESSOR),
-                        intThat(attributionChainIdMatcher))
+                    eq(recognizerUid), eq(RECEIVER2_PACKAGE_NAME), isNull(),
+                    eq(Context.DEVICE_ID_DEFAULT), eq(false),
+                    eq(AppOpsManager.ATTRIBUTION_FLAG_ACCESSOR),
+                    intThat(attributionChainIdMatcher))
                 inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                        eq(Process.myUid()), eq(context.packageName), eq(ACCESSOR_ATTRIBUTION_TAG),
-                        eq(false), eq(AppOpsManager.ATTRIBUTION_FLAG_INTERMEDIARY),
-                        intThat(attributionChainIdMatcher))
+                    eq(Process.myUid()), eq(context.packageName), eq(ACCESSOR_ATTRIBUTION_TAG),
+                    eq(Context.DEVICE_ID_DEFAULT), eq(false),
+                    eq(AppOpsManager.ATTRIBUTION_FLAG_INTERMEDIARY),
+                    intThat(attributionChainIdMatcher))
                 inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                        eq(receiverUid), eq(RECEIVER_PACKAGE_NAME), eq(RECEIVER_ATTRIBUTION_TAG),
-                        eq(false), eq(AppOpsManager.ATTRIBUTION_FLAG_RECEIVER),
-                        intThat(attributionChainIdMatcher))
+                    eq(receiverUid), eq(RECEIVER_PACKAGE_NAME), eq(RECEIVER_ATTRIBUTION_TAG),
+                    eq(Context.DEVICE_ID_DEFAULT), eq(false),
+                    eq(AppOpsManager.ATTRIBUTION_FLAG_RECEIVER),
+                    intThat(attributionChainIdMatcher))
             } finally {
                 // Take down the recognition service
                 instrumentation.runOnMainSync { recognizerRef.get().destroy() }
@@ -509,6 +522,7 @@ class RuntimePermissionsAppOpTrackingTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_DEVICE_AWARE_PERMISSION_APIS_ENABLED)
     @Throws(Exception::class)
     fun testMicRecognitionMicRecoWithAttribution() {
         runWithAuxiliaryApps {
@@ -611,30 +625,36 @@ class RuntimePermissionsAppOpTrackingTest {
                         RECEIVER_PACKAGE_NAME, 0)
 
                 inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                        eq(recognizerUid), eq(RECEIVER2_PACKAGE_NAME), isNull(), eq(true),
-                        eq(AppOpsManager.ATTRIBUTION_FLAG_ACCESSOR or ATTRIBUTION_FLAG_TRUSTED),
-                        intThat(attributionChainIdMatcher))
+                    eq(recognizerUid), eq(RECEIVER2_PACKAGE_NAME), isNull(),
+                    eq(Context.DEVICE_ID_DEFAULT), eq(true),
+                    eq(AppOpsManager.ATTRIBUTION_FLAG_ACCESSOR or ATTRIBUTION_FLAG_TRUSTED),
+                    intThat(attributionChainIdMatcher))
                 inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                        eq(Process.myUid()), eq(context.packageName), eq(ACCESSOR_ATTRIBUTION_TAG),
-                        eq(true), eq(AppOpsManager.ATTRIBUTION_FLAG_INTERMEDIARY or
-                        ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
+                    eq(Process.myUid()), eq(context.packageName), eq(ACCESSOR_ATTRIBUTION_TAG),
+                    eq(Context.DEVICE_ID_DEFAULT), eq(true),
+                    eq(AppOpsManager.ATTRIBUTION_FLAG_INTERMEDIARY or
+                    ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
                 inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                        eq(receiverUid), eq(RECEIVER_PACKAGE_NAME), eq(RECEIVER_ATTRIBUTION_TAG),
-                        eq(true), eq(AppOpsManager.ATTRIBUTION_FLAG_RECEIVER or
-                        ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
+                    eq(receiverUid), eq(RECEIVER_PACKAGE_NAME), eq(RECEIVER_ATTRIBUTION_TAG),
+                    eq(Context.DEVICE_ID_DEFAULT), eq(true),
+                    eq(AppOpsManager.ATTRIBUTION_FLAG_RECEIVER or
+                    ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
 
                 inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                        eq(recognizerUid), eq(RECEIVER2_PACKAGE_NAME), isNull(), eq(false),
-                        eq(AppOpsManager.ATTRIBUTION_FLAG_ACCESSOR or ATTRIBUTION_FLAG_TRUSTED),
-                        intThat(attributionChainIdMatcher))
+                    eq(recognizerUid), eq(RECEIVER2_PACKAGE_NAME), isNull(),
+                    eq(Context.DEVICE_ID_DEFAULT), eq(false),
+                    eq(AppOpsManager.ATTRIBUTION_FLAG_ACCESSOR or ATTRIBUTION_FLAG_TRUSTED),
+                    intThat(attributionChainIdMatcher))
                 inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                        eq(Process.myUid()), eq(context.packageName), eq(ACCESSOR_ATTRIBUTION_TAG),
-                        eq(false), eq(AppOpsManager.ATTRIBUTION_FLAG_INTERMEDIARY or
-                        ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
+                    eq(Process.myUid()), eq(context.packageName), eq(ACCESSOR_ATTRIBUTION_TAG),
+                    eq(Context.DEVICE_ID_DEFAULT), eq(false),
+                    eq(AppOpsManager.ATTRIBUTION_FLAG_INTERMEDIARY or
+                    ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
                 inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                        eq(receiverUid), eq(RECEIVER_PACKAGE_NAME), eq(RECEIVER_ATTRIBUTION_TAG),
-                        eq(false), eq(AppOpsManager.ATTRIBUTION_FLAG_RECEIVER or
-                        ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
+                    eq(receiverUid), eq(RECEIVER_PACKAGE_NAME), eq(RECEIVER_ATTRIBUTION_TAG),
+                    eq(Context.DEVICE_ID_DEFAULT), eq(false),
+                    eq(AppOpsManager.ATTRIBUTION_FLAG_RECEIVER or
+                    ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
             } finally {
                 // Take down the recognition service
                 instrumentation.runOnMainSync { recognizerRef.get().destroy() }
