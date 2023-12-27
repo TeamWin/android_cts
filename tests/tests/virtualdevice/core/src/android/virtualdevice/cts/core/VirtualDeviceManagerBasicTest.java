@@ -59,6 +59,7 @@ import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.server.wm.Condition;
 import android.virtualdevice.cts.common.VirtualDeviceRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -75,6 +76,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
@@ -295,10 +297,15 @@ public class VirtualDeviceManagerBasicTest {
 
         firstDisplay.release();
         mRule.assertDisplayDoesNotExist(firstDisplayId);
+        // The onVirtualDisplayRemoved callback is invoked asynchronously, so we add polling to
+        // remove the test flakiness.
+        // TODO(b/317872777): Remove the polling once the callback is synchronous.
+        waitForCondition("display removal", () -> device.getDisplayIds().length == 1);
         assertThat(device.getDisplayIds()).asList().containsExactly(secondDisplayId);
 
         secondDisplay.release();
         mRule.assertDisplayDoesNotExist(secondDisplayId);
+        waitForCondition("display removal", () -> device.getDisplayIds().length == 0);
         assertThat(device.getDisplayIds()).isEmpty();
     }
 
@@ -346,7 +353,7 @@ public class VirtualDeviceManagerBasicTest {
                 .isEqualTo(mVirtualDevice.getPersistentDeviceId());
         assertThat(device.getName()).isNull();
         if (Flags.vdmPublicApis()) {
-            assertThat(device.getDisplayIds()).hasLength(0);
+            assertThat(device.getDisplayIds()).isEmpty();
             assertThat(device.hasCustomSensorSupport()).isFalse();
         }
 
@@ -356,7 +363,7 @@ public class VirtualDeviceManagerBasicTest {
                 .isEqualTo(namedVirtualDevice.getPersistentDeviceId());
         assertThat(anotherDevice.getName()).isEqualTo(VIRTUAL_DEVICE_NAME);
         if (Flags.vdmPublicApis()) {
-            assertThat(anotherDevice.getDisplayIds()).hasLength(0);
+            assertThat(anotherDevice.getDisplayIds()).isEmpty();
             assertThat(anotherDevice.hasCustomSensorSupport()).isFalse();
         }
 
@@ -650,5 +657,9 @@ public class VirtualDeviceManagerBasicTest {
     private void assertDeviceClosed(int deviceId) {
         verify(mVirtualDeviceListener, timeout(TIMEOUT_MILLIS).times(1))
                 .onVirtualDeviceClosed(deviceId);
+    }
+
+    private static void waitForCondition(String message, BooleanSupplier waitCondition) {
+        assertThat(Condition.waitFor(message, waitCondition)).isTrue();
     }
 }
