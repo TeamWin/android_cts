@@ -161,11 +161,11 @@ public final class PowerPolicyDef {
         public static final String INITIAL_ALL_ON = "system_power_policy_initial_on";
         public static final String NO_USER_INTERACTION = "system_power_policy_no_user_interaction";
         public static final String NONE = "none";
-        public static final String TEST1 = "test1";
-        public static final String TEST2 = "test2";
-        public static final String ERROR_TEST1 = "error_test1";
-        public static final String ERROR_TEST2 = "error_test2";
-        public static final String LISTENER_TEST = "listener_test";
+        public static final String TEST1 = "test1_only_for_cts";
+        public static final String TEST2 = "test2_only_for_cts";
+        public static final String ERROR_TEST1 = "error_test1_only_for_cts";
+        public static final String ERROR_TEST2 = "error_test2_only_for_cts";
+        public static final String LISTENER_TEST = "listener_test_only_for_cts";
     }
 
     public enum PowerComponent {

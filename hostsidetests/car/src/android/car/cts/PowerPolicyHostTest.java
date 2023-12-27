@@ -384,30 +384,18 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         testHelper.checkRegisteredPolicy(PowerPolicyDef.PolicySet.DEFAULT_ALL_ON);
     }
 
-    private void defineAndCheckPolicyTest1(String testcase, int stepNo, int expectedTotalPolicies)
-            throws Exception {
-        String teststep = stepNo + ". define a new power policy with id test1";
-        definePowerPolicy(PowerPolicyDef.PolicySet.TEST1.toString());
-        PowerPolicyTestHelper testHelper = getTestHelper(testcase, stepNo, teststep);
-        testHelper.checkRegisteredPolicy(PowerPolicyDef.PolicySet.TEST1);
-        testHelper.checkTotalRegisteredPolicies(expectedTotalPolicies);
-    }
-
-    private void defineAndCheckPolicyTest2(String testcase, int stepNo, int expectedTotalPolicies)
-            throws Exception {
-        String teststep = stepNo + ". define a new power policy with id test2";
-        definePowerPolicy(PowerPolicyDef.PolicySet.TEST2.toString());
-        PowerPolicyTestHelper testHelper = getTestHelper(testcase, stepNo, teststep);
-        testHelper.checkRegisteredPolicy(PowerPolicyDef.PolicySet.TEST2);
-        testHelper.checkTotalRegisteredPolicies(expectedTotalPolicies);
-    }
-
-    private void defineAndCheckPolicyListenerTest(String testcase, int stepNo,
+    private void defineAndCheckPolicy(PowerPolicyDef policyDef, String testcase, int stepNo,
             int expectedTotalPolicies) throws Exception {
-        String teststep = stepNo + ". define a new power policy with id listener_test";
-        definePowerPolicy(PowerPolicyDef.PolicySet.LISTENER_TEST.toString());
+        String teststep = stepNo + ". define a new power policy with ID(" + policyDef.getPolicyId()
+                + ")";
         PowerPolicyTestHelper testHelper = getTestHelper(testcase, stepNo, teststep);
-        testHelper.checkRegisteredPolicy(PowerPolicyDef.PolicySet.LISTENER_TEST);
+        if (testHelper.isPowerPolicyIdDefined(policyDef)) {
+            CLog.i("Policy(ID: " + policyDef.getPolicyId() + ") is already defined");
+            return;
+        }
+        definePowerPolicy(policyDef.toString());
+        testHelper = getTestHelper(testcase, stepNo, teststep);
+        testHelper.checkRegisteredPolicy(policyDef);
         testHelper.checkTotalRegisteredPolicies(expectedTotalPolicies);
     }
 
@@ -465,8 +453,10 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         int expectedTotalPolicies = registeredPoliciesNumber;
 
         // create two power policies, test1 and test2, for power policy change test
-        defineAndCheckPolicyTest1(testcase, stepNo++, ++expectedTotalPolicies);
-        defineAndCheckPolicyTest2(testcase, stepNo++, ++expectedTotalPolicies);
+        defineAndCheckPolicy(PowerPolicyDef.PolicySet.TEST1, testcase, stepNo++,
+                ++expectedTotalPolicies);
+        defineAndCheckPolicy(PowerPolicyDef.PolicySet.TEST2, testcase, stepNo++,
+                ++expectedTotalPolicies);
 
         teststep = "apply power policy test1";
         applyPowerPolicy(PowerPolicyDef.IdSet.TEST1);
@@ -484,7 +474,8 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         testHelper.checkCurrentPolicy(PowerPolicyDef.IdSet.DEFAULT_ALL_ON);
 
         // add "test power policy listener" here so that one reboot clears all
-        defineAndCheckPolicyListenerTest(testcase, stepNo++, ++expectedTotalPolicies);
+        defineAndCheckPolicy(PowerPolicyDef.PolicySet.LISTENER_TEST, testcase, stepNo++,
+                ++expectedTotalPolicies);
         String clientTestcase = "PowerPolicyListenerTest";
         String component = "AUDIO";
         PowerPolicyTestResult testResult = new PowerPolicyTestResult(mTestAnalyzer);
