@@ -19,6 +19,7 @@ import static android.autofillservice.cts.activities.OptionalSaveActivity.ID_ADD
 import static android.autofillservice.cts.activities.OptionalSaveActivity.ID_ADDRESS2;
 import static android.autofillservice.cts.activities.OptionalSaveActivity.ID_CITY;
 import static android.autofillservice.cts.activities.OptionalSaveActivity.ID_FAVORITE_COLOR;
+import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
 import static android.autofillservice.cts.testcore.Helper.assertTextAndValue;
 import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
@@ -704,8 +705,8 @@ public class OptionalSaveActivityTest
         mUiBot.selectDataset("SF");
         mActivity.assertAutoFilled();
 
-        // Clear the field.
-        mActivity.syncRunOnUiThread(() -> mActivity.mCity.setText(""));
+        // Clear the field
+        mUiBot.clearTextByRelativeId(ID_CITY);
 
         // Trigger save...
         mActivity.save();

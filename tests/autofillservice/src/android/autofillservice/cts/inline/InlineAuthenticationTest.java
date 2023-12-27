@@ -304,8 +304,8 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         mUiBot.waitForIdle();
         mActivity.assertAutoFilled();
 
-        // Clear the username field
-        mActivity.onUsername((v) -> v.setText(""));
+        // Clear the username field; workaround reset bug fix by clearing progressively
+        mUiBot.clearTextByRelativeId(ID_USERNAME);
         final boolean expectOldDataset = isEphemeralDataset == null ? isPinned : isEphemeralDataset;
         if (!expectOldDataset) {
             // Expect to see the suggestion returned from auth intent.
@@ -327,9 +327,9 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
 
         // Clear the username field, put focus on password field, and then clear the password field,
         // Expect to see the old suggestion.
-        mActivity.onUsername((v) -> v.setText(""));
+        mUiBot.clearTextByRelativeId(ID_USERNAME);
         mUiBot.selectByRelativeId(ID_PASSWORD);
-        mActivity.onPassword((v) -> v.setText(""));
+        mUiBot.clearTextByRelativeId(ID_PASSWORD);
         assertSuggestionShownBySelectViewId(ID_PASSWORD, "auth-password");
 
         // Now select the dataset again and verify that the same authentication flow happens.
@@ -341,7 +341,7 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
 
         // Clear the password field, and expect to see the old suggestion again, rather than
         // the one returned from auth intent.
-        mActivity.onPassword((v) -> v.setText(""));
+        mUiBot.clearTextByRelativeId(ID_PASSWORD);
         assertSuggestionShownBySelectViewId(ID_PASSWORD, "auth-password");
 
         // Now select the dataset again and verify that the same authentication flow happens.
