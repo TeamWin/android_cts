@@ -25,6 +25,7 @@ import androidx.test.runner.AndroidJUnit4
 import java.util.concurrent.TimeUnit
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -92,6 +93,7 @@ class IntentTest : PackageInstallerTestBase() {
      * Install an app via a package-installer intent, but assign another package as installer
      * package name.
      */
+    @Ignore("b/317736655")
     @Test
     fun installWithAnotherInstallerPackageName() {
         val intent = getInstallationIntent()
