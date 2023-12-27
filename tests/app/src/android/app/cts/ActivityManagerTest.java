@@ -2001,6 +2001,9 @@ public final class ActivityManagerTest {
                         packageName, packageName, 0, null);
                 watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY,
                         null);
+                // Sleep a while before proceeding to next one to make sure the activity lifecycle
+                // transitions have completed.
+                SystemClock.sleep(1000);
             });
 
             // Launch home so we'd have cleared these the above test activities from recents.
@@ -2067,6 +2070,9 @@ public final class ActivityManagerTest {
                         packageName, packageName, 0, null);
                 watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY,
                         null);
+                // Sleep a while before proceeding to next one to make sure the activity lifecycle
+                // transitions have completed.
+                SystemClock.sleep(1000);
             });
 
             // Launch home so we'd have cleared these the above test activities from recents.
