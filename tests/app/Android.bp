@@ -208,6 +208,8 @@ android_test {
         "CtsExternalServiceCommon",
         "cts-wm-util",
         "libprotobuf-java-lite",
+        "flag-junit",
+        "android.content.pm.flags-aconfig-java",
     ],
     aidl: {
         local_include_dirs: ["app/src"],
