@@ -18,3 +18,4 @@ android.content.RestrictionsManager
 android.telephony.SmsManager
 android.app.WallpaperManager
 android.telephony.TelephonyManager
+android.telephony.euicc.EuiccManager
