@@ -218,7 +218,8 @@ public class CtsApiCoverage {
         List<Future> tasks = new ArrayList<>();
         for (File testApk : testApks) {
             tasks.add(addApiCoverage(service, apiCoverage, testApk, dexDeps));
-            tasks.add(addCddCoverage(service, cddCoverage, testApk, apiLevel));
+            // TODO(b/317075756): Turn on CddCoverage when the issue is fixed.
+            // tasks.add(addCddCoverage(service, cddCoverage, testApk, apiLevel));
         }
         // Wait until all tasks finish.
         for (Future task : tasks) {
