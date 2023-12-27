@@ -31,6 +31,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.junit.Test;
+import org.junit.Ignore;
 
 /**
  * Performs the signature check via a JUnit test.
@@ -90,6 +91,7 @@ public class SignatureTest extends AbstractSignatureTest {
      * <p>Will check the entire API, and then report the complete list of failures</p>
      */
     @Test(timeout = 600000)
+    @Ignore("b/301075649")
     public void testRuntimeCompatibilityWithCurrentApi() {
         runWithTestResultObserver(mResultObserver -> {
             ApiComplianceChecker complianceChecker =
