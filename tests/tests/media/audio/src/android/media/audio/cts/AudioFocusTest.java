@@ -18,44 +18,71 @@ package android.media.audio.cts;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.Manifest;
 import android.annotation.Nullable;
 import android.annotation.RawRes;
+import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFocusRequest;
+import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
+import android.media.AudioRecord;
 import android.media.AudioRouting;
 import android.media.MediaPlayer;
+import android.media.MediaRecorder;
 import android.media.audio.Flags;
 import android.media.cts.TestUtils;
+import android.media.cts.Utils;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeSdkSandbox;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.util.Log;
 
-import com.android.compatibility.common.util.CtsAndroidTestCase;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
+import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.RequireNotAutomotive;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.compatibility.common.util.NonMainlineTest;
 
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Arrays;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+@RunWith(BedsteadJUnit4.class)
 @NonMainlineTest
 @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
-public class AudioFocusTest extends CtsAndroidTestCase {
+public class AudioFocusTest {
     private static final String TAG = "AudioFocusTest";
 
-    private boolean mDeflakeApisAvailable;
+    // if the test APIs for robustness and additional checks are not available,
+    // skip the parts of the tests that call them / take advantage of them
+    private boolean mDeflakeApisAvailable = Flags.focusFreezeTestApi();
 
     private static final int TEST_TIMING_TOLERANCE_MS = 200;
     private static final long MEDIAPLAYER_PREPARE_TIMEOUT_MS = 2000;
@@ -79,13 +106,29 @@ public class AudioFocusTest extends CtsAndroidTestCase {
 
     private static final String TEST_CALL_ID = "fake call";
 
+    private Context mContext;
+    private AudioManager mAM;
+    private Instrumentation mInstrumentation;
+
     @Before
     public void setUp() throws Exception {
-        // if the test APIs for robustness and additional checks are not available,
-        // skip the parts of the tests that call them / take advantage of them
-        mDeflakeApisAvailable = Flags.focusFreezeTestApi();
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mContext = mInstrumentation.getTargetContext();
+        mAM = new AudioManager(mContext);
     }
 
+    @After
+    public void teardown() throws Exception {
+        stopRecording();
+        if (mDeflakeApisAvailable) {
+            try (PermissionContext p = TestApis.permissions().withPermission(
+                    Manifest.permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED)) {
+                mAM.exitAudioFocusFreezeForTest();
+            }
+        }
+    }
+
+    @Test
     public void testInvalidAudioFocusRequestDelayNoListener() throws Exception {
         AudioFocusRequest req = null;
         Exception ex = null;
@@ -101,6 +144,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
         assertNull("Shouldn't be able to create delayed request without listener", req);
     }
 
+    @Test
     public void testInvalidAudioFocusRequestPauseOnDuckNoListener() throws Exception {
         AudioFocusRequest req = null;
         Exception ex = null;
@@ -116,6 +160,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
         assertNull("Shouldn't be able to create pause-on-duck request without listener", req);
     }
 
+    @Test
     public void testAudioFocusRequestBuilderDefault() throws Exception {
         final AudioFocusRequest reqDefaults =
                 new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN).build();
@@ -127,7 +172,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
         assertEquals("Delayed focus differs", false, reqDefaults.acceptsDelayedFocusGain());
     }
 
-
+    @Test
     public void testAudioFocusRequestCopyBuilder() throws Exception {
         final FocusChangeListener focusListener = new FocusChangeListener();
         final int focusGain = AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK;
@@ -157,6 +202,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
         assertEquals("Delayed focus differs", true, newReq.acceptsDelayedFocusGain());
     }
 
+    @Test
     public void testNullListenerHandlerNpe() throws Exception {
         final AudioFocusRequest.Builder afBuilder =
                 new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN);
@@ -186,60 +232,51 @@ public class AudioFocusTest extends CtsAndroidTestCase {
         }
     }
 
+    @Test
     public void testAudioFocusRequestGainLoss() throws Exception {
         final AudioAttributes[] attributes = { ATTR_DRIVE_DIR, ATTR_MEDIA };
         doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN, attributes, false /*no handler*/);
     }
 
+    @Test
     public void testAudioFocusRequestGainLossHandler() throws Exception {
         final AudioAttributes[] attributes = { ATTR_DRIVE_DIR, ATTR_MEDIA };
         doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN, attributes, true /*with handler*/);
     }
 
-
+    @Test
     public void testAudioFocusRequestGainLossTransient() throws Exception {
         final AudioAttributes[] attributes = { ATTR_DRIVE_DIR, ATTR_MEDIA };
         doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT, attributes,
                 false /*no handler*/);
     }
 
+    @Test
     public void testAudioFocusRequestGainLossTransientHandler() throws Exception {
         final AudioAttributes[] attributes = { ATTR_DRIVE_DIR, ATTR_MEDIA };
         doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT, attributes,
                 true /*with handler*/);
     }
 
+    @Test
+    @RequireNotAutomotive(reason = "Auto has its own focus policy")
     public void testAudioFocusRequestGainLossTransientDuck() throws Exception {
-        if (hasAutomotiveFeature(getContext())) {
-            Log.i(TAG,"Test testAudioFocusRequestGainLossTransientDuck "
-                    + "skipped: not required for Auto platform");
-            return;
-        }
-
         final AudioAttributes[] attributes = { ATTR_DRIVE_DIR, ATTR_MEDIA };
         doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK, attributes,
                 false /*no handler*/);
     }
 
+    @Test
+    @RequireNotAutomotive(reason = "Auto has its own focus policy")
     public void testAudioFocusRequestGainLossTransientDuckHandler() throws Exception {
-        if (hasAutomotiveFeature(getContext())) {
-            Log.i(TAG,"Test testAudioFocusRequestGainLossTransientDuckHandler "
-                    + "skipped: not required for Auto platform");
-            return;
-        }
-
         final AudioAttributes[] attributes = { ATTR_DRIVE_DIR, ATTR_MEDIA };
         doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK, attributes,
                 true /*with handler*/);
     }
 
+    @Test
+    @RequireNotAutomotive(reason = "Auto has its own focus policy")
     public void testAudioFocusRequestForceDuckNotA11y() throws Exception {
-        if (hasAutomotiveFeature(getContext())) {
-            Log.i(TAG,"Test testAudioFocusRequestForceDuckNotA11y "
-                    + "skipped: not required for Auto platform");
-            return;
-        }
-
         // verify a request that is "force duck"'d still causes loss of focus because it doesn't
         // come from an A11y service, and requests are from same uid
         final AudioAttributes[] attributes = {ATTR_MEDIA, ATTR_A11Y};
@@ -248,6 +285,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
                 false /*no handler*/, true /* forceDucking */);
     }
 
+    @Test
     public void testAudioFocusRequestA11y() throws Exception {
         final AudioAttributes[] attributes = {ATTR_DRIVE_DIR, ATTR_A11Y};
         doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE,
@@ -262,9 +300,9 @@ public class AudioFocusTest extends CtsAndroidTestCase {
      * 3/ call ends: media gets FOCUS_GAIN
      * @throws Exception when failing
      */
+    @Test
     public void testAudioMediaFocusDelayedByCall() throws Exception {
         Log.i(TAG, "testAudioMediaFocusDelayedByCall");
-        AudioManager am = new AudioManager(getContext());
         Handler handler = new Handler(Looper.getMainLooper());
 
         AudioFocusRequest callFocusReq =
@@ -283,28 +321,28 @@ public class AudioFocusTest extends CtsAndroidTestCase {
 
 
         // for focus request/abandon test methods
-        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+        mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
                 Manifest.permission.QUERY_AUDIO_STATE);
         try {
             // call requests audio focus
-            int res = am.requestAudioFocusForTest(callFocusReq, TEST_CALL_ID, 1977,
+            int res = mAM.requestAudioFocusForTest(callFocusReq, TEST_CALL_ID, 1977,
                     Build.VERSION_CODES.S);
             assertEquals("call request failed", AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
             // media requests audio focus, verify it's delayed
-            res = am.requestAudioFocus(mediaFocusReq);
+            res = mAM.requestAudioFocus(mediaFocusReq);
             assertEquals("Focus request from media wasn't delayed",
                     AudioManager.AUDIOFOCUS_REQUEST_DELAYED, res);
             // end the call, verify media gets focus
-            am.abandonAudioFocusForTest(callFocusReq, TEST_CALL_ID);
+            mAM.abandonAudioFocusForTest(callFocusReq, TEST_CALL_ID);
             mediaListener.waitForFocusChange("testAudioMediaFocusDelayedByCall",
                     TEST_TIMING_TOLERANCE_MS, /* shouldAcquire= */ true);
 
             assertEquals("Focus gain not dispatched to media after call",
                     AudioManager.AUDIOFOCUS_GAIN, mediaListener.getFocusChangeAndReset());
         } finally {
-            am.abandonAudioFocusForTest(callFocusReq, TEST_CALL_ID);
-            am.abandonAudioFocusRequest(mediaFocusReq);
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+            mAM.abandonAudioFocusForTest(callFocusReq, TEST_CALL_ID);
+            mAM.abandonAudioFocusRequest(mediaFocusReq);
+            mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
         }
     }
 
@@ -316,19 +354,11 @@ public class AudioFocusTest extends CtsAndroidTestCase {
      * 4/ call ends: drive dir gets FOCUS_GAIN
      * @throws Exception when failing
      */
+    @Test
+    @RequireNotAutomotive(reason = "Auto has its own focus policy")
+    @RequireDoesNotHaveFeature(value = PackageManager.FEATURE_PC) // not required for Desktop
     public void testAudioFocusDelayedByCall() throws Exception {
-        if (hasAutomotiveFeature(getContext())) {
-            Log.i(TAG, "Test testAudioFocusDelayedByCall "
-                    + "skipped: not required for Auto platform");
-            return;
-        }
-        if (hasPCFeature(getContext())) {
-            Log.i(TAG, "Test testAudioFocusDelayedByCall "
-                    + "skipped: not required for Desktop platform");
-            return;
-        }
         Log.i(TAG, "testAudioFocusDelayedByCall");
-        final AudioManager am = new AudioManager(getContext());
         final HandlerThread handlerThread = new HandlerThread(TAG);
         handlerThread.start();
         final Handler handler = new Handler(handlerThread.getLooper());
@@ -351,14 +381,14 @@ public class AudioFocusTest extends CtsAndroidTestCase {
                         .build();
 
         // for focus request/abandon test methods
-        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+        mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
                 Manifest.permission.QUERY_AUDIO_STATE);
         try {
             // media requests audio focus
-            int res = am.requestAudioFocus(mediaFocusReq);
+            int res = mAM.requestAudioFocus(mediaFocusReq);
             assertEquals("media request failed", AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
             // call requests audio focus
-            am.requestAudioFocusForTest(callFocusReq, TEST_CALL_ID, 1977, Build.VERSION_CODES.S);
+            mAM.requestAudioFocusForTest(callFocusReq, TEST_CALL_ID, 1977, Build.VERSION_CODES.S);
             assertEquals("call request failed", AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
             // verify media lost focus with LOSS_TRANSIENT
             mediaListener.waitForFocusChange("testAudioFocusDelayedByCall",
@@ -366,7 +396,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
             assertEquals("Focus loss not dispatched to media after call start",
                     AudioManager.AUDIOFOCUS_LOSS_TRANSIENT, mediaListener.getFocusChangeAndReset());
             // drive dir requests audio focus, verify it's delayed
-            res = am.requestAudioFocus(driveFocusReq);
+            res = mAM.requestAudioFocus(driveFocusReq);
             assertEquals("Focus request from drive dir. wasn't delayed",
                     AudioManager.AUDIOFOCUS_REQUEST_DELAYED, res);
             // verify media lost focus with LOSS as it's being kicked out of the focus stack
@@ -375,18 +405,18 @@ public class AudioFocusTest extends CtsAndroidTestCase {
             assertEquals("Focus loss not dispatched to media after drive dir delayed focus",
                     AudioManager.AUDIOFOCUS_LOSS, mediaListener.getFocusChangeAndReset());
             // end the call, verify drive dir gets focus
-            am.abandonAudioFocusForTest(callFocusReq, TEST_CALL_ID);
+            mAM.abandonAudioFocusForTest(callFocusReq, TEST_CALL_ID);
             driveListener.waitForFocusChange("testAudioFocusDelayedByCall",
                     TEST_TIMING_TOLERANCE_MS, /* shouldAcquire= */ true);
             assertEquals("Focus gain not dispatched to drive dir after call",
                     AudioManager.AUDIOFOCUS_GAIN, driveListener.getFocusChangeAndReset());
         } finally {
-            am.abandonAudioFocusForTest(callFocusReq, TEST_CALL_ID);
-            am.abandonAudioFocusRequest(driveFocusReq);
-            am.abandonAudioFocusRequest(mediaFocusReq);
+            mAM.abandonAudioFocusForTest(callFocusReq, TEST_CALL_ID);
+            mAM.abandonAudioFocusRequest(driveFocusReq);
+            mAM.abandonAudioFocusRequest(mediaFocusReq);
             handler.getLooper().quit();
             handlerThread.quitSafely();
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+            mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
         }
     }
 
@@ -400,19 +430,11 @@ public class AudioFocusTest extends CtsAndroidTestCase {
      *                    unlike in testAudioFocusDelayedByCall)
      * @throws Exception when failing
      */
+    @Test
+    @RequireNotAutomotive(reason = "Auto has its own focus policy")
+    @RequireDoesNotHaveFeature(value = PackageManager.FEATURE_PC) // not required for Desktop
     public void testAudioFocusTransientDelayedByCall() throws Exception {
-        if (hasAutomotiveFeature(getContext())) {
-            Log.i(TAG, "Test testAudioFocusTransientDelayedByCall "
-                    + "skipped: not required for Auto platform");
-            return;
-        }
-        if (hasPCFeature(getContext())) {
-            Log.i(TAG, "Test testAudioFocusTransientDelayedByCall "
-                    + "skipped: not required for Desktop platform");
-            return;
-        }
-        Log.i(TAG, "testAudioFocusDelayedByCall");
-        final AudioManager am = new AudioManager(getContext());
+        Log.i(TAG, "testAudioFocusTransientDelayedByCall start");
         final HandlerThread handlerThread = new HandlerThread(TAG);
         handlerThread.start();
         final Handler handler = new Handler(handlerThread.getLooper());
@@ -435,14 +457,14 @@ public class AudioFocusTest extends CtsAndroidTestCase {
                         .build();
 
         // for focus request/abandon test methods
-        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+        mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
                 Manifest.permission.QUERY_AUDIO_STATE);
         try {
             // media requests audio focus
-            int res = am.requestAudioFocus(mediaFocusReq);
+            int res = mAM.requestAudioFocus(mediaFocusReq);
             assertEquals("media request failed", AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
             // call requests audio focus
-            am.requestAudioFocusForTest(callFocusReq, TEST_CALL_ID, 1977, Build.VERSION_CODES.S);
+            mAM.requestAudioFocusForTest(callFocusReq, TEST_CALL_ID, 1977, Build.VERSION_CODES.S);
             assertEquals("call request failed", AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
             // verify media lost focus with LOSS_TRANSIENT
             mediaListener.waitForFocusChange("testAudioFocusTransientDelayedByCall",
@@ -450,11 +472,11 @@ public class AudioFocusTest extends CtsAndroidTestCase {
             assertEquals("Focus loss not dispatched to media after call start",
                     AudioManager.AUDIOFOCUS_LOSS_TRANSIENT, mediaListener.getFocusChangeAndReset());
             // drive dir requests audio focus, verify it's delayed
-            res = am.requestAudioFocus(driveFocusReq);
+            res = mAM.requestAudioFocus(driveFocusReq);
             assertEquals("Focus request from drive dir. wasn't delayed",
                     AudioManager.AUDIOFOCUS_REQUEST_DELAYED, res);
             // end the call, verify drive dir gets focus, and media didn't get focus change
-            am.abandonAudioFocusForTest(callFocusReq, TEST_CALL_ID);
+            mAM.abandonAudioFocusForTest(callFocusReq, TEST_CALL_ID);
             driveListener.waitForFocusChange("testAudioFocusTransientDelayedByCall",
                     TEST_TIMING_TOLERANCE_MS, /* shouldAcquire= */ true);
             assertEquals("Focus gain not dispatched to drive dir after call",
@@ -464,51 +486,35 @@ public class AudioFocusTest extends CtsAndroidTestCase {
             assertEquals("Focus change was dispatched to media",
                     AudioManager.AUDIOFOCUS_NONE, mediaListener.getFocusChangeAndReset());
             // end the drive dir, verify media gets focus
-            am.abandonAudioFocusRequest(driveFocusReq);
+            mAM.abandonAudioFocusRequest(driveFocusReq);
             mediaListener.waitForFocusChange("testAudioFocusTransientDelayedByCall",
                     TEST_TIMING_TOLERANCE_MS, /* shouldAcquire= */ true);
             assertEquals("Focus gain not dispatched to media after drive dir",
                     AudioManager.AUDIOFOCUS_GAIN, mediaListener.getFocusChangeAndReset());
         } finally {
-            am.abandonAudioFocusForTest(callFocusReq, TEST_CALL_ID);
-            am.abandonAudioFocusRequest(driveFocusReq);
-            am.abandonAudioFocusRequest(mediaFocusReq);
+            mAM.abandonAudioFocusForTest(callFocusReq, TEST_CALL_ID);
+            mAM.abandonAudioFocusRequest(driveFocusReq);
+            mAM.abandonAudioFocusRequest(mediaFocusReq);
             handler.getLooper().quit();
             handlerThread.quitSafely();
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+            mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
         }
     }
-    /**
-     * Determine if automotive feature is available
-     * @param context context to query
-     * @return true if automotive feature is available
-     */
-    private static boolean hasAutomotiveFeature(Context context) {
-        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
-    }
 
-    /**
-     * Determine if desktop feature is available
-     * @param context context to query
-     * @return true if desktop feature is available
-     */
-    private static boolean hasPCFeature(Context context) {
-        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC);
+    private boolean hasMicFeature() {
+        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_MICROPHONE);
     }
 
     /**
      * Test delayed focus loss after fade out
-     * @throws Exception
+     * @throws Exception on failure
      */
+    @Test
+    @RequireNotAutomotive(reason = "Auto has its own focus policy")
     public void testAudioFocusRequestMediaGainLossWithPlayer() throws Exception {
-        if (hasAutomotiveFeature(getContext())) {
-            Log.i(TAG, "Test testAudioFocusRequestMediaGainLossWithPlayer "
-                    + "skipped: not required for Auto platform");
-            return;
-        }
-
+        Log.i(TAG, "testAudioFocusRequestMediaGainLossWithPlayer start");
         // for query of fade out duration and focus request/abandon test methods
-        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+        mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
                 Manifest.permission.QUERY_AUDIO_STATE);
 
         final int NB_FOCUS_OWNERS = 2;
@@ -532,19 +538,18 @@ public class AudioFocusTest extends CtsAndroidTestCase {
                     .setOnAudioFocusChangeListener(focusListeners[focusIndex], handler)
                     .build();
         }
-        final AudioManager am = new AudioManager(getContext());
 
         MediaPlayer mp = null;
         final String simFocusClientId = "fakeClientId";
         try {
             // set up the test conditions: a focus owner is playing media on a MediaPlayer
             mp = createPreparedMediaPlayer(R.raw.sine1khzs40dblong, mediaAttributes);
-            int res = am.requestAudioFocus(focusRequests[FOCUS_UNDER_TEST]);
+            int res = mAM.requestAudioFocus(focusRequests[FOCUS_UNDER_TEST]);
             assertEquals("real focus request failed",
                     AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
             mp.start();
             Thread.sleep(TEST_TIMING_TOLERANCE_MS);
-            long fadeDuration = am.getFadeOutDurationOnFocusLossMillis(mediaAttributes);
+            long fadeDuration = mAM.getFadeOutDurationOnFocusLossMillis(mediaAttributes);
             assertTrue("Fade out duration cannot be negative", fadeDuration >= 0);
             // since SystemClock#uptimeMillis is not always accurate, consider
             // an error margin of 10%
@@ -553,7 +558,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
 
             Log.i(TAG, "using corrected fade out duration = " + fadeDuration);
 
-            res = am.requestAudioFocusForTest(focusRequests[FOCUS_SIMULATED],
+            res = mAM.requestAudioFocusForTest(focusRequests[FOCUS_SIMULATED],
                     simFocusClientId, Integer.MAX_VALUE /*fakeClientUid*/, Build.VERSION_CODES.S);
             assertEquals("test focus request failed",
                     AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
@@ -580,30 +585,199 @@ public class AudioFocusTest extends CtsAndroidTestCase {
             if (mp != null) {
                 mp.release();
             }
-            am.abandonAudioFocusForTest(focusRequests[FOCUS_SIMULATED], simFocusClientId);
-            am.abandonAudioFocusRequest(focusRequests[FOCUS_UNDER_TEST]);
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+            mAM.abandonAudioFocusForTest(focusRequests[FOCUS_SIMULATED], simFocusClientId);
+            mAM.abandonAudioFocusRequest(focusRequests[FOCUS_UNDER_TEST]);
+            mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
         }
+    }
+
+    private static final AudioFocusRequest EXCLUSIVE_FOCUS_REQUEST = new AudioFocusRequest.Builder(
+            AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
+            .setAudioAttributes(new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ASSISTANT)
+                        .build())
+            .build();
+
+    private static final AudioAttributes NOTIFICATION_ATTRIBUTES = new AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION).build();
+    /**
+     * Test GAIN_TRANSIENT_EXCLUSIVE and AudioManager#shouldNotificationSoundPlay
+     * by changing ringer mode
+     * @throws Exception on failure
+     */
+    @Test
+    @RequireNotAutomotive(reason = "Auto has its own focus policy")
+    @RequireDoesNotHaveFeature(value = PackageManager.FEATURE_PC) // not required for Desktop
+    @AppModeFull(reason = "Instant apps cannot hold permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED")
+    @RequiresFlagsEnabled(value = Flags.FLAG_FOCUS_EXCLUSIVE_WITH_RECORDING)
+    public void testAudioFocusExclusive() throws Exception {
+        Log.i(TAG, "testAudioFocusExclusive start");
+        if (!mDeflakeApisAvailable) {
+            Log.i(TAG, "running testAudioFocusExclusive without deflake test APIs");
+        }
+
+        try (PermissionContext p = TestApis.permissions().withPermission(
+                Manifest.permission.QUERY_AUDIO_STATE,
+                Manifest.permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED)) {
+            final int testUid = android.os.Process.myUid();
+            if (mDeflakeApisAvailable) {
+                assertTrue(mAM.enterAudioFocusFreezeForTest(Arrays.asList(testUid)));
+            }
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), mInstrumentation, true);
+
+            mAM.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+            assertEquals("GAIN_TRANSIENT_EXCLUSIVE request failed",
+                    AudioManager.AUDIOFOCUS_REQUEST_GRANTED,
+                    mAM.requestAudioFocus(EXCLUSIVE_FOCUS_REQUEST));
+            // RINGER_MODE_NORMAL + GAIN_TRANSIENT_EXCLUSIVE expect shouldNotifSoundPlay true
+            assertTrue("Wrong shouldNotificationSoundPlay for ringer NORMAL + focus exclusive",
+                    mAM.shouldNotificationSoundPlay(NOTIFICATION_ATTRIBUTES));
+
+            mAM.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
+            // RINGER_MODE_VIBRATE + GAIN_TRANSIENT_EXCLUSIVE expect shouldNotifSoundPlay false
+            assertFalse("Wrong shouldNotificationSoundPlay for ringer VIBRATE + focus exclusive",
+                    mAM.shouldNotificationSoundPlay(NOTIFICATION_ATTRIBUTES));
+
+            mAM.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+            // RINGER_MODE_SILENT + GAIN_TRANSIENT_EXCLUSIVE expect shouldNotifSoundPlay false
+            assertFalse("Wrong shouldNotificationSoundPlay for ringer SILENT + focus exclusive",
+                    mAM.shouldNotificationSoundPlay(NOTIFICATION_ATTRIBUTES));
+
+            mAM.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+            // RINGER_MODE_NORMAL + GAIN_TRANSIENT_EXCLUSIVE expect shouldNotifSoundPlay true
+            assertTrue("Wrong shouldNotificationSoundPlay for ringer SILENT + focus exclusive",
+                    mAM.shouldNotificationSoundPlay(NOTIFICATION_ATTRIBUTES));
+        } finally {
+            mAM.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+            mAM.abandonAudioFocusRequest(EXCLUSIVE_FOCUS_REQUEST);
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), mInstrumentation, false);
+        }
+    }
+
+    /**
+     * Test GAIN_TRANSIENT_EXCLUSIVE and AudioManager#shouldNotificationSoundPlay
+     * by changing ringer mode and recording
+     * @throws Exception on failure
+     */
+    @Test
+    @RequireNotAutomotive(reason = "Auto has its own focus policy")
+    @RequireDoesNotHaveFeature(value = PackageManager.FEATURE_PC) // not required for Desktop
+    @RequireFeature(value = PackageManager.FEATURE_MICROPHONE)
+    @AppModeFull(reason = "Instant apps cannot hold permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED")
+    @RequiresFlagsEnabled(value = Flags.FLAG_FOCUS_EXCLUSIVE_WITH_RECORDING)
+    public void testAudioFocusExclusiveAndRecording() throws Exception {
+        Log.i(TAG, "testAudioFocusExclusiveAndRecording start");
+        if (!mDeflakeApisAvailable) {
+            Log.i(TAG, "running testAudioFocusExclusiveAndRecording without deflake test APIs");
+        }
+
+        mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
+                Manifest.permission.QUERY_AUDIO_STATE,
+                Manifest.permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED);
+
+        try {
+            final int testUid = android.os.Process.myUid();
+            if (mDeflakeApisAvailable) {
+                assertTrue(mAM.enterAudioFocusFreezeForTest(Arrays.asList(testUid)));
+            }
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), mInstrumentation, true);
+
+            mAM.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+            assertEquals("GAIN_TRANSIENT_EXCLUSIVE request failed",
+                    AudioManager.AUDIOFOCUS_REQUEST_GRANTED,
+                    mAM.requestAudioFocus(EXCLUSIVE_FOCUS_REQUEST));
+
+            startRecording();
+            // RINGER_MODE_NORMAL + GAIN_TRANSIENT_EXCLUSIVE + recording
+            //     expect shouldNotifSoundPlay false
+            assertFalse("Wrong shouldNotificationSoundPlay for ringer focus exclusive + recording",
+                    mAM.shouldNotificationSoundPlay(NOTIFICATION_ATTRIBUTES));
+
+            mAM.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+            // RINGER_MODE_SILENT + GAIN_TRANSIENT_EXCLUSIVE + recording
+            //      expect shouldNotifSoundPlay false
+            assertFalse("Wrong shouldNotificationSoundPlay for ringer SILENT + "
+                    + "focus exclusive + recording",
+                    mAM.shouldNotificationSoundPlay(NOTIFICATION_ATTRIBUTES));
+
+            stopRecording();
+            mAM.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+            // RINGER_MODE_NORMAL + GAIN_TRANSIENT_EXCLUSIVE + no more recording
+            //     expect shouldNotifSoundPlay true
+            assertTrue("Wrong shouldNotificationSoundPlay for focus exclusive + recording",
+                    mAM.shouldNotificationSoundPlay(NOTIFICATION_ATTRIBUTES));
+
+        } finally {
+            mAM.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+            mAM.abandonAudioFocusRequest(EXCLUSIVE_FOCUS_REQUEST);
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), mInstrumentation, false);
+        }
+    }
+
+    private AudioRecord mAudioRecord;
+    private AudioTestUtil.AudioRecordingCallbackUtil mRecordingCallback;
+
+    /**
+     * Start recording audio and returns when the recording is reported as active
+     */
+    private void startRecording() {
+        assertNull("Non null MediaRecorder before starting record, bad state", mAudioRecord);
+        mAudioRecord = new AudioRecord.Builder()
+                .setAudioFormat(new AudioFormat.Builder()
+                        .setSampleRate(8000)
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                        .setChannelMask(AudioFormat.CHANNEL_IN_MONO).build())
+                .setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION)
+                .setBufferSizeInBytes(
+                        AudioRecord.getMinBufferSize(8000,
+                                AudioFormat.CHANNEL_IN_MONO,
+                                AudioFormat.ENCODING_PCM_16BIT) * 10)
+                .build();
+        mRecordingCallback = new AudioTestUtil.AudioRecordingCallbackUtil(
+                mAudioRecord.getAudioSessionId(), MediaRecorder.AudioSource.VOICE_RECOGNITION);
+        mAudioRecord.registerAudioRecordingCallback(Executors.newSingleThreadExecutor(),
+                mRecordingCallback);
+        mAudioRecord.startRecording();
+        assertEquals("Invalid recording state, system in bad state",
+                AudioRecord.RECORDSTATE_RECORDING, mAudioRecord.getRecordingState());
+
+        mRecordingCallback.await(TEST_TIMING_TOLERANCE_MS);
+        assertTrue(mRecordingCallback.mCalled);
+        assertTrue(mRecordingCallback.hasRecording(mAudioRecord.getAudioSessionId(),
+                MediaRecorder.AudioSource.VOICE_RECOGNITION));
+        mRecordingCallback.reset();
+    }
+
+    private void stopRecording() {
+        if (mAudioRecord == null) {
+            return;
+        }
+        final int session = mAudioRecord.getAudioSessionId();
+        mAudioRecord.release();
+        mRecordingCallback.await(TEST_TIMING_TOLERANCE_MS);
+        assertFalse(mRecordingCallback.hasRecording(session,
+                MediaRecorder.AudioSource.VOICE_RECOGNITION));
+        mAudioRecord = null;
+        mRecordingCallback = null;
     }
 
     private void runDuckedUidsTest(String testName, AudioAttributes mediaAttributes,
                                    boolean expectDuck) throws Exception {
-        if (hasAutomotiveFeature(getContext())) {
-            Log.i(TAG, "Test " + testName + " skipped: not required for Auto platform");
-            return;
-        }
         if (!mDeflakeApisAvailable) {
             Log.i(TAG, "running " + testName + " without deflake test APIs");
         }
         // for query of fade out duration and focus request/abandon test methods
-        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+        mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
                 Manifest.permission.QUERY_AUDIO_STATE,
                 Manifest.permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED);
-        final AudioManager am = new AudioManager(getContext());
 
         java.util.List<Integer> duckedUids;
         if (mDeflakeApisAvailable) {
-            duckedUids = am.getFocusDuckedUidsForTest();
+            duckedUids = mAM.getFocusDuckedUidsForTest();
             assertEquals("Test start, expected no ducked UIDs bug got " + duckedUids,
                     0, duckedUids.size());
         }
@@ -653,13 +827,13 @@ public class AudioFocusTest extends CtsAndroidTestCase {
         try {
             // prevent audio focus from apps other than CTS and the fake UIDs for test
             if (mDeflakeApisAvailable) {
-                assertTrue(am.enterAudioFocusFreezeForTest(Arrays.asList(
+                assertTrue(mAM.enterAudioFocusFreezeForTest(Arrays.asList(
                         FocusHelperAssistUid, FocusHelperMediaUid, playerUnderTestUid)));
             }
             // set up the test conditions: a focus owner is playing media on a MediaPlayer
             mp = createPreparedMediaPlayer(R.raw.sine1khzs40dblong, mediaAttributes);
             final MediaPlayerRoutingListener routingListener = new MediaPlayerRoutingListener(mp);
-            int res = am.requestAudioFocus(focusRequests[FocusUnderTest]);
+            int res = mAM.requestAudioFocus(focusRequests[FocusUnderTest]);
             assertEquals("real focus request failed",
                     AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
             mp.setLooping(true);
@@ -667,7 +841,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
             routingListener.waitForRoutingChange(2 * TEST_TIMING_TOLERANCE_MS);
 
             // assistant use case requests focus with GAIN_TRANSIENT_MAY_DUCK
-            res = am.requestAudioFocusForTest(focusRequests[FocusHelperAssist],
+            res = mAM.requestAudioFocusForTest(focusRequests[FocusHelperAssist],
                     assistFocusClientId, FocusHelperAssistUid /*fakeClientUid*/,
                     Build.VERSION_CODES.S);
             assertEquals("assistant (test) focus request failed",
@@ -680,7 +854,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
                 // in the list for test robustness)
                 Thread.sleep(TEST_TIMING_TOLERANCE_MS);
                 if (mDeflakeApisAvailable) {
-                    duckedUids = am.getFocusDuckedUidsForTest();
+                    duckedUids = mAM.getFocusDuckedUidsForTest();
                     assertTrue("List of ducked UIDs doesn't contain the player UID ("
                                     + playerUnderTestUid + ") list:" + duckedUids,
                             duckedUids.contains(playerUnderTestUid));
@@ -701,7 +875,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
                         focusListeners[FocusUnderTest].getFocusChangeAndReset());
                 // verify the UID of the player is not ducked
                 if (mDeflakeApisAvailable) {
-                    duckedUids = am.getFocusDuckedUidsForTest();
+                    duckedUids = mAM.getFocusDuckedUidsForTest();
                     assertFalse("List of ducked UIDs contains the player UID ("
                                     + playerUnderTestUid + ") list:" + duckedUids,
                             duckedUids.contains(playerUnderTestUid));
@@ -710,14 +884,14 @@ public class AudioFocusTest extends CtsAndroidTestCase {
 
             // another (fake) media app requests focus with GAIN, the initial focus holder should
             // be notified of the loss now with LOSS
-            res = am.requestAudioFocusForTest(focusRequests[FocusHelperMedia],
+            res = mAM.requestAudioFocusForTest(focusRequests[FocusHelperMedia],
                     mediaFocusClientId, FocusHelperMediaUid /*fakeClientUid*/,
                     Build.VERSION_CODES.S);
             assertEquals("media (test) focus request failed",
                     AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
             if (mDeflakeApisAvailable) {
                 focusListeners[FocusUnderTest].waitForFocusChange("testDuckedUids",
-                        am.getFocusFadeOutDurationForTest()
+                        mAM.getFocusFadeOutDurationForTest()
                                 + TEST_TIMING_TOLERANCE_MS,
                         /* shouldAcquire= */ true);
                 assertEquals("Focus loss from media to assistant not dispatched",
@@ -727,28 +901,30 @@ public class AudioFocusTest extends CtsAndroidTestCase {
 
             // check there is more ducking going on
             if (mDeflakeApisAvailable) {
-                SafeWaitObject.checkConditionFor(am.getFocusUnmuteDelayAfterFadeOutForTest() * 2,
-                        /*period*/50, () -> am.getFocusDuckedUidsForTest().size() == 0);
-                duckedUids = am.getFocusDuckedUidsForTest();
+                SafeWaitObject.checkConditionFor(mAM.getFocusUnmuteDelayAfterFadeOutForTest() * 2,
+                        /*period*/50, () -> mAM.getFocusDuckedUidsForTest().size() == 0);
+                duckedUids = mAM.getFocusDuckedUidsForTest();
                 assertEquals("Expected no ducked UIDs, got " + duckedUids, 0, duckedUids.size());
             }
         } finally {
             if (mDeflakeApisAvailable) {
-                am.exitAudioFocusFreezeForTest();
+                mAM.exitAudioFocusFreezeForTest();
             }
             handler.getLooper().quit();
             handlerThread.quitSafely();
             if (mp != null) {
                 mp.release();
             }
-            am.abandonAudioFocusRequest(focusRequests[FocusUnderTest]);
-            am.abandonAudioFocusForTest(focusRequests[FocusHelperAssist], mediaFocusClientId);
-            am.abandonAudioFocusForTest(focusRequests[FocusHelperMedia], assistFocusClientId);
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+            mAM.abandonAudioFocusRequest(focusRequests[FocusUnderTest]);
+            mAM.abandonAudioFocusForTest(focusRequests[FocusHelperAssist], mediaFocusClientId);
+            mAM.abandonAudioFocusForTest(focusRequests[FocusHelperMedia], assistFocusClientId);
+            mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
         }
     }
 
+    @Test
     @AppModeFull(reason = "Instant apps cannot hold permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED")
+    @RequireNotAutomotive(reason = "Auto has its own focus policy")
     public void testDuckedUidsAfterMediaMusic() throws Exception {
         // the media requests are done on USAGE_MEDIA but CONTENT_TYPE_SPEECH so there is ducking
         final AudioAttributes mediaAttributes = new AudioAttributes.Builder()
@@ -760,7 +936,9 @@ public class AudioFocusTest extends CtsAndroidTestCase {
                 /*expectDuck*/ true); // expecting ducking because this is not SPEECH content
     }
 
+    @Test
     @AppModeFull(reason = "Instant apps cannot hold permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED")
+    @RequireNotAutomotive(reason = "Auto has its own focus policy")
     public void testDuckedUidsAfterMediaSpeech() throws Exception {
         // the media requests are done on USAGE_MEDIA but CONTENT_TYPE_SPEECH so there is no ducking
         final AudioAttributes mediaAttributes = new AudioAttributes.Builder()
@@ -776,12 +954,10 @@ public class AudioFocusTest extends CtsAndroidTestCase {
      * Test there is no delayed focus loss when focus loser is playing speech
      * @throws Exception
      */
+    @Test
+    @AppModeFull(reason = "Instant apps cannot hold permission.QUERY_AUDIO_STATE")
+    @RequireNotAutomotive(reason = "Auto has its own focus policy")
     public void testAudioFocusRequestMediaGainLossWithSpeechPlayer() throws Exception {
-        if (hasAutomotiveFeature(getContext())) {
-            Log.i(TAG, "Test testAudioFocusRequestMediaGainLossWithSpeechPlayer "
-                    + "skipped: not required for Auto platform");
-            return;
-        }
         doTwoFocusOwnerOnePlayerFocusLoss(
                 true /*playSpeech*/,
                 false /*speechFocus*/,
@@ -793,12 +969,10 @@ public class AudioFocusTest extends CtsAndroidTestCase {
      * AudioAttributes with speech content type
      * @throws Exception
      */
+    @Test
+    @AppModeFull(reason = "Instant apps cannot hold permission.QUERY_AUDIO_STATE")
+    @RequireNotAutomotive(reason = "Auto has its own focus policy")
     public void testAudioFocusRequestMediaGainLossWithSpeechFocusRequest() throws Exception {
-        if (hasAutomotiveFeature(getContext())) {
-            Log.i(TAG, "Test testAudioFocusRequestMediaGainLossWithSpeechPlayer "
-                    + "skipped: not required for Auto platform");
-            return;
-        }
         doTwoFocusOwnerOnePlayerFocusLoss(
                 false /*playSpeech*/,
                 true /*speechFocus*/,
@@ -810,12 +984,10 @@ public class AudioFocusTest extends CtsAndroidTestCase {
      * it pauses on duck
      * @throws Exception
      */
+    @Test
+    @AppModeFull(reason = "Instant apps cannot hold permission.QUERY_AUDIO_STATE")
+    @RequireNotAutomotive(reason = "Auto has its own focus policy")
     public void testAudioFocusRequestMediaGainLossWithPauseOnDuckFocusRequest() throws Exception {
-        if (hasAutomotiveFeature(getContext())) {
-            Log.i(TAG, "Test testAudioFocusRequestMediaGainLossWithSpeechPlayer "
-                    + "skipped: not required for Auto platform");
-            return;
-        }
         doTwoFocusOwnerOnePlayerFocusLoss(
                 false /*playSpeech*/,
                 false /*speechFocus*/,
@@ -825,7 +997,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
     private void doTwoFocusOwnerOnePlayerFocusLoss(boolean playSpeech, boolean speechFocus,
             boolean pauseOnDuck) throws Exception {
         // for query of fade out duration and focus request/abandon test methods
-        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+        mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
                 Manifest.permission.QUERY_AUDIO_STATE);
 
         final int NB_FOCUS_OWNERS = 2;
@@ -860,20 +1032,19 @@ public class AudioFocusTest extends CtsAndroidTestCase {
                     .setOnAudioFocusChangeListener(focusListeners[focusIndex], handler)
                     .build();
         }
-        final AudioManager am = new AudioManager(getContext());
 
         MediaPlayer mp = null;
         final String simFocusClientId = "fakeClientId";
         try {
             // set up the test conditions: a focus owner is playing media on a MediaPlayer
             mp = createPreparedMediaPlayer(R.raw.sine1khzs40dblong, playerAttributes);
-            int res = am.requestAudioFocus(focusRequests[FOCUS_UNDER_TEST]);
+            int res = mAM.requestAudioFocus(focusRequests[FOCUS_UNDER_TEST]);
             assertEquals("real focus request failed",
                     AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
             mp.start();
             Thread.sleep(TEST_TIMING_TOLERANCE_MS);
 
-            res = am.requestAudioFocusForTest(focusRequests[FOCUS_SIMULATED],
+            res = mAM.requestAudioFocusForTest(focusRequests[FOCUS_SIMULATED],
                     simFocusClientId, Integer.MAX_VALUE /*fakeClientUid*/, Build.VERSION_CODES.S);
             assertEquals("test focus request failed",
                     AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
@@ -890,9 +1061,9 @@ public class AudioFocusTest extends CtsAndroidTestCase {
             if (mp != null) {
                 mp.release();
             }
-            am.abandonAudioFocusForTest(focusRequests[FOCUS_SIMULATED], simFocusClientId);
-            am.abandonAudioFocusRequest(focusRequests[FOCUS_UNDER_TEST]);
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+            mAM.abandonAudioFocusForTest(focusRequests[FOCUS_SIMULATED], simFocusClientId);
+            mAM.abandonAudioFocusRequest(focusRequests[FOCUS_UNDER_TEST]);
+            mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
         }
     }
     //-----------------------------------
@@ -944,7 +1115,6 @@ public class AudioFocusTest extends CtsAndroidTestCase {
             default:
                 fail("invalid focus gain used in test");
         }
-        final AudioManager am = new AudioManager(getContext());
 
         final Handler h;
         if (useHandlerInListener) {
@@ -977,16 +1147,16 @@ public class AudioFocusTest extends CtsAndroidTestCase {
             // focus owner 0 requests focus with GAIN,
             // then focus owner 1 requests focus with gainType
             // then 1 abandons focus, then 0 abandons focus
-            int res = am.requestAudioFocus(focusRequests[0]);
+            int res = mAM.requestAudioFocus(focusRequests[0]);
             assertEquals("1st focus request failed",
                     AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
-            res = am.requestAudioFocus(focusRequests[1]);
+            res = mAM.requestAudioFocus(focusRequests[1]);
             assertEquals("2nd focus request failed", AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
             focusListeners[0].waitForFocusChange("doTestTwoPlayersGainLoss",
                     TEST_TIMING_TOLERANCE_MS, /* shouldAcquire= */ true);
             assertEquals("Focus loss not dispatched", expectedLoss,
                     focusListeners[0].getFocusChangeAndReset());
-            res = am.abandonAudioFocusRequest(focusRequests[1]);
+            res = mAM.abandonAudioFocusRequest(focusRequests[1]);
             assertEquals("1st abandon failed", AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
             focusRequests[1] = null;
             focusListeners[0].waitForFocusChange("doTestTwoPlayersGainLoss",
@@ -1001,14 +1171,14 @@ public class AudioFocusTest extends CtsAndroidTestCase {
                 assertEquals("Focus change was dispatched", AudioManager.AUDIOFOCUS_NONE,
                         focusListeners[0].getFocusChangeAndReset());
             }
-            res = am.abandonAudioFocusRequest(focusRequests[0]);
+            res = mAM.abandonAudioFocusRequest(focusRequests[0]);
             assertEquals("2nd abandon failed", AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
             focusRequests[0] = null;
         }
         finally {
             for (int i = 0 ; i < NB_FOCUS_OWNERS ; i++) {
                 if (focusRequests[i] != null) {
-                    am.abandonAudioFocusRequest(focusRequests[i]);
+                    mAM.abandonAudioFocusRequest(focusRequests[i]);
                 }
             }
             if (h != null) {
@@ -1023,7 +1193,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
 
         MediaPlayer mp = new MediaPlayer();
         mp.setAudioAttributes(aa);
-        AssetFileDescriptor afd = getContext().getResources().openRawResourceFd(resID);
+        AssetFileDescriptor afd = mContext.getResources().openRawResourceFd(resID);
         try {
             mp.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
         } finally {

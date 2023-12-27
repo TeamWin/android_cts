@@ -36,8 +36,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 @NonMainlineTest
 public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
@@ -170,8 +168,9 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
             AudioManager am = new AudioManager(getContext());
             assertNotNull("Could not create AudioManager", am);
 
-            MyAudioRecordingCallback callback = new MyAudioRecordingCallback(
-                    mAudioRecord.getAudioSessionId(), TEST_AUDIO_SOURCE);
+            AudioTestUtil.AudioRecordingCallbackUtil callback = new
+                    AudioTestUtil.AudioRecordingCallbackUtil(
+                        mAudioRecord.getAudioSessionId(), TEST_AUDIO_SOURCE);
             am.registerAudioRecordingCallback(callback, h /*handler*/);
 
             assertEquals(AudioRecord.STATE_INITIALIZED, mAudioRecord.getState());
@@ -253,40 +252,6 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
         assertNotNull("Failure to unmarshall AudioRecordingConfiguration", unmarshalledConf);
         assertEquals("Source and destination AudioRecordingConfiguration not equal",
                 configs.get(0), unmarshalledConf);
-    }
-
-    static class MyAudioRecordingCallback extends AudioManager.AudioRecordingCallback {
-        boolean mCalled;
-        List<AudioRecordingConfiguration> mConfigs;
-        private final int mTestSource;
-        private final int mTestSession;
-        private CountDownLatch mCountDownLatch;
-
-        void reset() {
-            mCountDownLatch = new CountDownLatch(1);
-            mCalled = false;
-            mConfigs = new ArrayList<AudioRecordingConfiguration>();
-        }
-
-        MyAudioRecordingCallback(int session, int source) {
-            mTestSource = source;
-            mTestSession = session;
-            reset();
-        }
-
-        @Override
-        public void onRecordingConfigChanged(List<AudioRecordingConfiguration> configs) {
-            mCalled = true;
-            mConfigs = configs;
-            mCountDownLatch.countDown();
-        }
-
-        void await(long timeoutMs) {
-            try {
-                mCountDownLatch.await(timeoutMs, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-            }
-        }
     }
 
     private static boolean deviceMatch(AudioDeviceInfo devJoe, AudioDeviceInfo devJeff) {

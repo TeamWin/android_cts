@@ -995,8 +995,8 @@ public class AudioRecordTest {
         if (!hasMicrophone()) {
             return;
         }
-        AudioRecordingConfigurationTest.MyAudioRecordingCallback callback =
-                new AudioRecordingConfigurationTest.MyAudioRecordingCallback(
+        AudioTestUtil.AudioRecordingCallbackUtil callback =
+                new AudioTestUtil.AudioRecordingCallbackUtil(
                         mAudioRecord.getAudioSessionId(), MediaRecorder.AudioSource.DEFAULT);
         mAudioRecord.registerAudioRecordingCallback(mExec, callback);
         mAudioRecord.startRecording();
