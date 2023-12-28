@@ -1936,6 +1936,13 @@ public class TunerTest {
         // connect CiCam to Frontend
         if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
             // TODO: get real CiCam id from MediaCas
+            int res = tunerA.connectFrontendToCiCam(ciCamId);
+            // INVALID_LTS_ID means hal doesn't support CiCam
+            if (res == Tuner.INVALID_LTS_ID) {
+                // Resources cleanup before return
+                tunerA.close();
+                return;
+            }
             assertEquals(Tuner.RESULT_SUCCESS, tunerA.connectFrontendToCiCam(ciCamId));
             linkCiCamToFrontendSupported = true;
         } else {
