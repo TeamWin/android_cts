@@ -16,6 +16,17 @@
 
 package android.virtualdevice.cts.camera;
 
+import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
+import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_CAMERA;
+import static android.companion.virtual.camera.VirtualCameraConfig.SENSOR_ORIENTATION_0;
+import static android.companion.virtual.camera.VirtualCameraConfig.SENSOR_ORIENTATION_180;
+import static android.companion.virtual.camera.VirtualCameraConfig.SENSOR_ORIENTATION_270;
+import static android.companion.virtual.camera.VirtualCameraConfig.SENSOR_ORIENTATION_90;
+import static android.graphics.ImageFormat.JPEG;
+import static android.graphics.ImageFormat.RGB_565;
+import static android.graphics.ImageFormat.YUV_420_888;
+import static android.hardware.camera2.CameraMetadata.LENS_FACING_BACK;
+import static android.hardware.camera2.CameraMetadata.LENS_FACING_FRONT;
 import static android.opengl.EGL14.EGL_NO_DISPLAY;
 import static android.opengl.EGL14.EGL_NO_SURFACE;
 import static android.opengl.EGL14.eglCreateContext;
@@ -25,12 +36,15 @@ import static android.opengl.EGL14.eglMakeCurrent;
 import static android.opengl.EGL14.eglTerminate;
 import static android.opengl.GLES20.GL_EXTENSIONS;
 import static android.opengl.GLES20.glGetString;
+import static android.virtualdevice.cts.camera.VirtualCameraUtils.assertVirtualCameraConfig;
+import static android.virtualdevice.cts.camera.VirtualCameraUtils.createVirtualCameraConfig;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -42,6 +56,7 @@ import static org.mockito.Mockito.verify;
 import static java.lang.Byte.toUnsignedInt;
 
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
+import android.companion.virtual.VirtualDeviceParams;
 import android.companion.virtual.camera.VirtualCamera;
 import android.companion.virtual.camera.VirtualCameraCallback;
 import android.companion.virtual.camera.VirtualCameraConfig;
@@ -95,6 +110,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+// TODO(b/310857520): Update tests to incorporate device awareness in camera framework.
 @RequiresFlagsEnabled({android.companion.virtual.flags.Flags.FLAG_VIRTUAL_CAMERA,
         android.companion.virtualdevice.flags.Flags.FLAG_VIRTUAL_CAMERA_SERVICE_DISCOVERY})
 @RunWith(JUnitParamsRunner.class)
@@ -105,9 +121,10 @@ public class VirtualCameraTest {
     private static final String CAMERA_NAME = "Virtual camera";
     private static final int CAMERA_WIDTH = 640;
     private static final int CAMERA_HEIGHT = 480;
-    private static final int CAMERA_FORMAT = ImageFormat.YUV_420_888;
+    private static final int CAMERA_FORMAT = YUV_420_888;
     private static final int CAMERA_MAX_FPS = 30;
-    private static final int CAMERA_SENSOR_ORIENTATION = VirtualCameraConfig.SENSOR_ORIENTATION_0;
+    private static final int CAMERA_SENSOR_ORIENTATION = SENSOR_ORIENTATION_0;
+    private static final int CAMERA_LENS_FACING = LENS_FACING_FRONT;
     private static final int IMAGE_READER_MAX_IMAGES = 2;
     private static final String GL_EXT_YUV_target = "GL_EXT_YUV_target";
 
@@ -169,9 +186,12 @@ public class VirtualCameraTest {
         mCameraManager = context.getSystemService(CameraManager.class);
         assertThat(mCameraManager).isNotNull();
         mCameraManager.registerAvailabilityCallback(mExecutor, mMockCameraAvailabilityCallback);
-        mVirtualDevice = mRule.createManagedVirtualDevice();
-        VirtualCameraConfig config = VirtualCameraUtils.createVirtualCameraConfig(CAMERA_WIDTH,
-                CAMERA_HEIGHT, CAMERA_FORMAT, CAMERA_MAX_FPS, CAMERA_SENSOR_ORIENTATION,
+        mVirtualDevice = mRule.createManagedVirtualDevice(
+                new VirtualDeviceParams.Builder()
+                        .setDevicePolicy(POLICY_TYPE_CAMERA, DEVICE_POLICY_CUSTOM)
+                        .build());
+        VirtualCameraConfig config = createVirtualCameraConfig(CAMERA_WIDTH, CAMERA_HEIGHT,
+                CAMERA_FORMAT, CAMERA_MAX_FPS, CAMERA_SENSOR_ORIENTATION, CAMERA_LENS_FACING,
                 CAMERA_NAME, mExecutor, mVirtualCameraCallback);
         mVirtualCamera = mVirtualDevice.createVirtualCamera(config);
     }
@@ -186,8 +206,8 @@ public class VirtualCameraTest {
     @Test
     public void virtualCamera_getConfig_returnsCorrectConfig() {
         VirtualCameraConfig config = mVirtualCamera.getConfig();
-        VirtualCameraUtils.assertVirtualCameraConfig(config, CAMERA_WIDTH, CAMERA_HEIGHT,
-                CAMERA_FORMAT, CAMERA_MAX_FPS, CAMERA_SENSOR_ORIENTATION, CAMERA_NAME);
+        assertVirtualCameraConfig(config, CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT,
+                CAMERA_MAX_FPS, CAMERA_SENSOR_ORIENTATION, CAMERA_LENS_FACING, CAMERA_NAME);
     }
 
     @Test
@@ -229,9 +249,9 @@ public class VirtualCameraTest {
     @Test
     public void virtualCamera_hasCorrectOrientation(int sensorOrientation) throws Exception {
         mVirtualCamera.close();
-        VirtualCameraConfig config = VirtualCameraUtils.createVirtualCameraConfig(CAMERA_WIDTH,
-                CAMERA_HEIGHT, CAMERA_FORMAT, CAMERA_MAX_FPS, sensorOrientation,
-                CAMERA_NAME, mExecutor, mVirtualCameraCallback);
+        VirtualCameraConfig config = createVirtualCameraConfig(CAMERA_WIDTH, CAMERA_HEIGHT,
+                CAMERA_FORMAT, CAMERA_MAX_FPS, sensorOrientation, CAMERA_LENS_FACING, CAMERA_NAME,
+                mExecutor, mVirtualCameraCallback);
         mVirtualCamera = mVirtualDevice.createVirtualCamera(config);
 
         CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(
@@ -256,6 +276,52 @@ public class VirtualCameraTest {
                 assertThat(minFrameDuration).isEqualTo(expectedMinFrameDuration);
             }
         }
+    }
+
+    @Parameters(method = "getAllLensFacingDirections")
+    @Test
+    public void virtualCamera_hasCorrectLensFacing(int lensFacing) throws Exception {
+        // Close the existing camera first.
+        mVirtualCamera.close();
+
+        VirtualCameraConfig config = createVirtualCameraConfig(CAMERA_WIDTH, CAMERA_HEIGHT,
+                CAMERA_FORMAT, CAMERA_MAX_FPS, CAMERA_SENSOR_ORIENTATION, lensFacing, CAMERA_NAME,
+                mExecutor, mVirtualCameraCallback);
+        mVirtualCamera = mVirtualDevice.createVirtualCamera(config);
+
+        CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(
+                mVirtualCamera.getId());
+        int cameraLensFacing = characteristics.get(CameraCharacteristics.LENS_FACING);
+        assertThat(cameraLensFacing).isEqualTo(lensFacing);
+    }
+
+    @Parameters(method = "getAllLensFacingDirections")
+    @Test
+    public void createMultipleVirtualCameras_withSameLensFacing_fails(int lensFacing) {
+        // Close the existing camera first.
+        mVirtualCamera.close();
+
+        VirtualCameraConfig config = createVirtualCameraConfig(CAMERA_WIDTH, CAMERA_HEIGHT,
+                CAMERA_FORMAT, CAMERA_MAX_FPS, CAMERA_SENSOR_ORIENTATION, lensFacing, CAMERA_NAME,
+                mExecutor, mVirtualCameraCallback);
+        mVirtualCamera = mVirtualDevice.createVirtualCamera(config);
+
+        // Creating another camera with same lens facing should fail.
+        assertThrows(IllegalArgumentException.class,
+                () -> mVirtualDevice.createVirtualCamera(config));
+    }
+
+    @Parameters(method = "getAllLensFacingDirections")
+    @Test
+    public void createVirtualCamera_withDefaultPolicy_fails(int lensFacing) {
+        // Create virtual device with default camera policy.
+        mVirtualDevice = mRule.createManagedVirtualDevice();
+
+        VirtualCameraConfig config = createVirtualCameraConfig(CAMERA_WIDTH, CAMERA_HEIGHT,
+                CAMERA_FORMAT, CAMERA_MAX_FPS, CAMERA_SENSOR_ORIENTATION, lensFacing, CAMERA_NAME,
+                mExecutor, mVirtualCameraCallback);
+        assertThrows(IllegalArgumentException.class,
+                () -> mVirtualDevice.createVirtualCamera(config));
     }
 
     @Test
@@ -290,7 +356,6 @@ public class VirtualCameraTest {
         assertThat(mCameraDeviceCaptor.getValue().getId()).isEqualTo(mVirtualCamera.getId());
     }
 
-
     @Test
     public void virtualCamera_configureSessionForSupportedFormat_succeeds() throws Exception {
         mCameraManager.openCamera(mVirtualCamera.getId(), mExecutor, mCameraStateCallback);
@@ -299,7 +364,7 @@ public class VirtualCameraTest {
 
         CameraDevice cameraDevice = mCameraDeviceCaptor.getValue();
 
-        try (ImageReader reader = createImageReader(ImageFormat.YUV_420_888)) {
+        try (ImageReader reader = createImageReader(YUV_420_888)) {
             cameraDevice.createCaptureSession(createSessionConfig(reader));
 
             verify(mVirtualCameraCallback, timeout(TIMEOUT_MILLIS)).onStreamConfigured(anyInt(),
@@ -308,7 +373,7 @@ public class VirtualCameraTest {
             assertThat(mSurfaceCaptor.getValue().isValid()).isTrue();
             assertThat(mWidthCaptor.getValue()).isEqualTo(CAMERA_WIDTH);
             assertThat(mHeightCaptor.getValue()).isEqualTo(CAMERA_HEIGHT);
-            assertThat(mFormatCaptor.getValue()).isEqualTo(ImageFormat.YUV_420_888);
+            assertThat(mFormatCaptor.getValue()).isEqualTo(YUV_420_888);
 
             verify(mSessionStateCallback, timeout(TIMEOUT_MILLIS)).onConfigured(
                     mCameraCaptureSessionCaptor.capture());
@@ -329,7 +394,7 @@ public class VirtualCameraTest {
 
         CameraDevice cameraDevice = mCameraDeviceCaptor.getValue();
 
-        try (ImageReader reader = createImageReader(ImageFormat.RGB_565)) {
+        try (ImageReader reader = createImageReader(RGB_565)) {
             cameraDevice.createCaptureSession(createSessionConfig(reader));
 
             verify(mSessionStateCallback, timeout(TIMEOUT_MILLIS)).onConfigureFailed(any());
@@ -338,40 +403,40 @@ public class VirtualCameraTest {
 
     @Test
     public void virtualCamera_captureYuv420_succeeds() throws Exception {
-        try (ImageReader imageReader = createImageReader(ImageFormat.YUV_420_888)) {
+        try (ImageReader imageReader = createImageReader(YUV_420_888)) {
             Image image = captureImage(imageReader, VirtualCameraTest::paintInputSurfaceRed);
 
-            assertThat(image.getFormat()).isEqualTo(ImageFormat.YUV_420_888);
+            assertThat(image.getFormat()).isEqualTo(YUV_420_888);
             assertThat(imageHasColor(image, Color.RED)).isTrue();
         }
     }
 
     @Test
     public void virtualCamera_captureYuv420WithNoInput_capturesBlackImage() throws Exception {
-        try (ImageReader imageReader = createImageReader(ImageFormat.YUV_420_888)) {
+        try (ImageReader imageReader = createImageReader(YUV_420_888)) {
             Image image = captureImage(imageReader);
 
-            assertThat(image.getFormat()).isEqualTo(ImageFormat.YUV_420_888);
+            assertThat(image.getFormat()).isEqualTo(YUV_420_888);
             assertThat(imageHasColor(image, Color.BLACK)).isTrue();
         }
     }
 
     @Test
     public void virtualCamera_captureJpeg_succeeds() throws Exception {
-        try (ImageReader imageReader = createImageReader(ImageFormat.JPEG)) {
+        try (ImageReader imageReader = createImageReader(JPEG)) {
             Image image = captureImage(imageReader, VirtualCameraTest::paintInputSurfaceRed);
 
-            assertThat(image.getFormat()).isEqualTo(ImageFormat.JPEG);
+            assertThat(image.getFormat()).isEqualTo(JPEG);
             assertThat(imageHasColor(image, Color.RED)).isTrue();
         }
     }
 
     @Test
     public void virtualCamera_captureJpegWithNoInput_capturesBlackImage() throws Exception {
-        try (ImageReader imageReader = createImageReader(ImageFormat.JPEG)) {
+        try (ImageReader imageReader = createImageReader(JPEG)) {
             Image image = captureImage(imageReader);
 
-            assertThat(image.getFormat()).isEqualTo(ImageFormat.JPEG);
+            assertThat(image.getFormat()).isEqualTo(JPEG);
             assertThat(imageHasColor(image, Color.BLACK)).isTrue();
         }
     }
@@ -509,8 +574,8 @@ public class VirtualCameraTest {
     // TODO(b/316326725) Turn this into proper custom matcher.
     private static boolean imageHasColor(Image image, int color) throws IOException {
         return switch (image.getFormat()) {
-            case ImageFormat.YUV_420_888 -> yuv420ImageHasColor(image, color);
-            case ImageFormat.JPEG -> jpegImageHasColor(image, color);
+            case YUV_420_888 -> yuv420ImageHasColor(image, color);
+            case JPEG -> jpegImageHasColor(image, color);
             default -> {
                 fail("Encountered unsupported image format: " + image.getFormat());
                 yield false;
@@ -546,10 +611,17 @@ public class VirtualCameraTest {
 
     private static Integer[] getAllSensorOrientations() {
         return new Integer[] {
-                VirtualCameraConfig.SENSOR_ORIENTATION_0,
-                VirtualCameraConfig.SENSOR_ORIENTATION_90,
-                VirtualCameraConfig.SENSOR_ORIENTATION_180,
-                VirtualCameraConfig.SENSOR_ORIENTATION_270
+                SENSOR_ORIENTATION_0,
+                SENSOR_ORIENTATION_90,
+                SENSOR_ORIENTATION_180,
+                SENSOR_ORIENTATION_270
+        };
+    }
+
+    private static Integer[] getAllLensFacingDirections() {
+        return new Integer[] {
+                LENS_FACING_BACK,
+                LENS_FACING_FRONT,
         };
     }
 }

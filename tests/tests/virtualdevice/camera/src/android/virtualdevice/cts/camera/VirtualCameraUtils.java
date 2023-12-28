@@ -30,17 +30,18 @@ public final class VirtualCameraUtils {
 
     static VirtualCameraConfig createVirtualCameraConfig(
             int width, int height, int format, int maximumFramesPerSecond, int sensorOrientation,
-            String name, Executor executor, VirtualCameraCallback callback) {
+            int lensFacing, String name, Executor executor, VirtualCameraCallback callback) {
         return new VirtualCameraConfig.Builder()
                 .addStreamConfig(width, height, format, maximumFramesPerSecond)
                 .setName(name)
                 .setVirtualCameraCallback(executor, callback)
                 .setSensorOrientation(sensorOrientation)
+                .setLensFacing(lensFacing)
                 .build();
     }
 
     static void assertVirtualCameraConfig(VirtualCameraConfig config, int width, int height,
-            int format, int maximumFramesPerSecond, int sensorOrientation,
+            int format, int maximumFramesPerSecond, int sensorOrientation, int lensFacing,
             String name) {
         assertThat(config.getName()).isEqualTo(name);
         assertThat(config.getStreamConfigs()).hasSize(1);
@@ -51,6 +52,7 @@ public final class VirtualCameraUtils {
         assertThat(streamConfig.getFormat()).isEqualTo(format);
         assertThat(streamConfig.getMaximumFramesPerSecond()).isEqualTo(maximumFramesPerSecond);
         assertThat(config.getSensorOrientation()).isEqualTo(sensorOrientation);
+        assertThat(config.getLensFacing()).isEqualTo(lensFacing);
     }
 
     private VirtualCameraUtils() {}

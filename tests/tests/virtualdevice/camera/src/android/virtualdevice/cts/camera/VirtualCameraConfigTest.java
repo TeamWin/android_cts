@@ -16,13 +16,19 @@
 
 package android.virtualdevice.cts.camera;
 
+import static android.companion.virtual.camera.VirtualCameraConfig.SENSOR_ORIENTATION_0;
+import static android.graphics.ImageFormat.YUV_420_888;
+import static android.hardware.camera2.CameraMetadata.LENS_FACING_EXTERNAL;
+import static android.hardware.camera2.CameraMetadata.LENS_FACING_FRONT;
+import static android.virtualdevice.cts.camera.VirtualCameraUtils.assertVirtualCameraConfig;
+import static android.virtualdevice.cts.camera.VirtualCameraUtils.createVirtualCameraConfig;
+
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static org.junit.Assert.assertThrows;
 
 import android.companion.virtual.camera.VirtualCameraCallback;
 import android.companion.virtual.camera.VirtualCameraConfig;
-import android.graphics.ImageFormat;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -46,9 +52,10 @@ public class VirtualCameraConfigTest {
     private static final String CAMERA_NAME = "Virtual Camera";
     private static final int CAMERA_WIDTH = 640;
     private static final int CAMERA_HEIGHT = 480;
-    private static final int CAMERA_FORMAT = ImageFormat.YUV_420_888;
+    private static final int CAMERA_FORMAT = YUV_420_888;
     private static final int CAMERA_MAX_FPS = 30;
-    private static final int CAMERA_SENSOR_ORIENTATION = VirtualCameraConfig.SENSOR_ORIENTATION_0;
+    private static final int CAMERA_SENSOR_ORIENTATION = SENSOR_ORIENTATION_0;
+    private static final int CAMERA_LENS_FACING = LENS_FACING_FRONT;
 
     @Rule
     public MockitoRule mRule = MockitoJUnit.rule();
@@ -65,10 +72,11 @@ public class VirtualCameraConfigTest {
                 .setName(CAMERA_NAME)
                 .setVirtualCameraCallback(mExecutor, mCallback)
                 .setSensorOrientation(CAMERA_SENSOR_ORIENTATION)
+                .setLensFacing(CAMERA_LENS_FACING)
                 .build();
 
-        VirtualCameraUtils.assertVirtualCameraConfig(config, CAMERA_WIDTH, CAMERA_HEIGHT,
-                CAMERA_FORMAT, CAMERA_MAX_FPS, CAMERA_SENSOR_ORIENTATION, CAMERA_NAME);
+        assertVirtualCameraConfig(config, CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT,
+                CAMERA_MAX_FPS, CAMERA_SENSOR_ORIENTATION, CAMERA_LENS_FACING, CAMERA_NAME);
     }
 
     @Test
@@ -79,6 +87,7 @@ public class VirtualCameraConfigTest {
                                 CAMERA_MAX_FPS)
                         .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, mCallback)
+                        .setLensFacing(CAMERA_LENS_FACING)
                         .build());
     }
 
@@ -90,6 +99,7 @@ public class VirtualCameraConfigTest {
                                 CAMERA_MAX_FPS)
                         .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, mCallback)
+                        .setLensFacing(CAMERA_LENS_FACING)
                         .build());
     }
 
@@ -101,6 +111,7 @@ public class VirtualCameraConfigTest {
                                 CAMERA_MAX_FPS)
                         .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, mCallback)
+                        .setLensFacing(CAMERA_LENS_FACING)
                         .build());
     }
 
@@ -112,6 +123,7 @@ public class VirtualCameraConfigTest {
                                 CAMERA_MAX_FPS)
                         .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, mCallback)
+                        .setLensFacing(CAMERA_LENS_FACING)
                         .build());
     }
 
@@ -123,6 +135,7 @@ public class VirtualCameraConfigTest {
                                 CAMERA_MAX_FPS)
                         .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, mCallback)
+                        .setLensFacing(CAMERA_LENS_FACING)
                         .build());
     }
 
@@ -134,6 +147,7 @@ public class VirtualCameraConfigTest {
                                 0 /* maximumFramesPerSecond */)
                         .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, mCallback)
+                        .setLensFacing(CAMERA_LENS_FACING)
                         .build());
     }
 
@@ -145,6 +159,7 @@ public class VirtualCameraConfigTest {
                                 100 /* maximumFramesPerSecond */)
                         .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, mCallback)
+                        .setLensFacing(CAMERA_LENS_FACING)
                         .build());
     }
 
@@ -155,6 +170,7 @@ public class VirtualCameraConfigTest {
                         .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT, CAMERA_MAX_FPS)
                         .setName(null)
                         .setVirtualCameraCallback(mExecutor, mCallback)
+                        .setLensFacing(CAMERA_LENS_FACING)
                         .build());
     }
 
@@ -165,6 +181,7 @@ public class VirtualCameraConfigTest {
                         .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT, CAMERA_MAX_FPS)
                         .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, null /* callback */)
+                        .setLensFacing(CAMERA_LENS_FACING)
                         .build());
     }
 
@@ -175,13 +192,37 @@ public class VirtualCameraConfigTest {
                         .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT, CAMERA_MAX_FPS)
                         .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(null /* executor */, mCallback)
+                        .setLensFacing(CAMERA_LENS_FACING)
+                        .build());
+    }
+
+    @Test
+    public void virtualCameraConfigBuilder_missingLensFacing_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualCameraConfig.Builder()
+                        .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT,
+                                CAMERA_MAX_FPS)
+                        .setName(CAMERA_NAME)
+                        .setVirtualCameraCallback(mExecutor, mCallback)
+                        .build());
+    }
+
+    @Test
+    public void virtualCameraConfigBuilder_unsupportedLensFacing_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualCameraConfig.Builder()
+                        .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT,
+                                CAMERA_MAX_FPS)
+                        .setName(CAMERA_NAME)
+                        .setLensFacing(LENS_FACING_EXTERNAL)
+                        .setVirtualCameraCallback(mExecutor, mCallback)
                         .build());
     }
 
     @Test
     public void parcelAndUnparcel_matches() {
-        VirtualCameraConfig original = VirtualCameraUtils.createVirtualCameraConfig(CAMERA_WIDTH,
-                CAMERA_HEIGHT, CAMERA_FORMAT, CAMERA_MAX_FPS, CAMERA_SENSOR_ORIENTATION,
+        VirtualCameraConfig original = createVirtualCameraConfig(CAMERA_WIDTH, CAMERA_HEIGHT,
+                CAMERA_FORMAT, CAMERA_MAX_FPS, CAMERA_SENSOR_ORIENTATION, CAMERA_LENS_FACING,
                 CAMERA_NAME, mExecutor, mCallback);
 
         final Parcel parcel = Parcel.obtain();
@@ -190,7 +231,7 @@ public class VirtualCameraConfigTest {
         final VirtualCameraConfig recreated =
                 VirtualCameraConfig.CREATOR.createFromParcel(parcel);
 
-        VirtualCameraUtils.assertVirtualCameraConfig(recreated, CAMERA_WIDTH, CAMERA_HEIGHT,
-                CAMERA_FORMAT, CAMERA_MAX_FPS, CAMERA_SENSOR_ORIENTATION, CAMERA_NAME);
+        assertVirtualCameraConfig(recreated, CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT,
+                CAMERA_MAX_FPS, CAMERA_SENSOR_ORIENTATION, CAMERA_LENS_FACING, CAMERA_NAME);
     }
 }
