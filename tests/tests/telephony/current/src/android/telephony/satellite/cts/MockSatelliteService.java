@@ -640,6 +640,14 @@ public class MockSatelliteService extends SatelliteImplBase {
         mShouldRespondTelephony.set(shouldRespondTelephony);
     }
 
+    /**
+     * Set whether satellite communication should be allowed.
+     */
+    public void setSatelliteCommunicationAllowed(boolean allowed) {
+        logd("setSatelliteCommunicationAllowed: allowed=" + allowed);
+        mIsCommunicationAllowedInLocation = allowed;
+    }
+
     public void sendOnSatelliteDatagramReceived(SatelliteDatagram datagram, int pendingCount) {
         logd("sendOnSatelliteDatagramReceived");
         mRemoteListeners.values().forEach(listener -> runWithExecutor(() ->
