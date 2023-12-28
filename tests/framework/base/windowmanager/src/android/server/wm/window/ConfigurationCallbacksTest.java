@@ -43,7 +43,6 @@ import android.util.Size;
 import android.view.Display;
 
 import androidx.annotation.NonNull;
-import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.window.flags.Flags;
@@ -151,7 +150,6 @@ public class ConfigurationCallbacksTest extends WindowManagerTestBase {
      * {@link DisplayListener#onDisplayChanged} have updated {@link android.app.WindowConfiguration}
      * that is synchronized with the display window.
      */
-    @FlakyTest(bugId = 317370225)
     @RequiresFlagsEnabled(Flags.FLAG_BUNDLE_CLIENT_TRANSACTION_FLAG)
     @Test
     @ApiTest(apis = {
