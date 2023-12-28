@@ -16,6 +16,7 @@
 package android.input.cts
 
 import android.app.ActivityOptions
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.PointF
@@ -38,6 +39,8 @@ class MultiTouchTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private lateinit var verifier: EventVerifier
     private val touchInjector = TouchInjector(instrumentation)
+    private val activityName =
+        ComponentName(instrumentation.targetContext, CaptureEventActivity::class.java)
 
     @JvmField
     @Parameterized.Parameter(0)
@@ -54,7 +57,7 @@ class MultiTouchTest {
     fun setUp() {
         val bundle = ActivityOptions.makeBasic().setLaunchDisplayId(0).toBundle()
         val intent = Intent(Intent.ACTION_VIEW)
-                .setClass(instrumentation.targetContext, CaptureEventActivity::class.java)
+                .setComponent(activityName)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 .putExtra(CaptureEventActivity.EXTRA_FIXED_ORIENTATION, orientation)
                 .putExtra(CaptureEventActivity.EXTRA_WINDOW_FLAGS, flags)
@@ -64,7 +67,10 @@ class MultiTouchTest {
         PollingCheck.waitFor { activity.hasWindowFocus() }
         verifier = EventVerifier(activity::getInputEvent)
 
-        WindowManagerStateHelper().waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY)
+        val wmState = WindowManagerStateHelper()
+        wmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY)
+        wmState.waitForActivityOrientation(activityName, orientation)
+
         instrumentation.uiAutomation.syncInputTransactions()
         instrumentation.waitForIdleSync()
     }
