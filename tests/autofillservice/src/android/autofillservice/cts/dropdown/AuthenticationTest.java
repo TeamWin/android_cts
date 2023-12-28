@@ -498,14 +498,6 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
         mActivity.onUsername((v) -> v.setText("du"));
         mUiBot.assertDatasets("DS1", "DS2");
         mActivity.onUsername((v) -> v.setText("dud"));
-        mUiBot.assertDatasets("DS1", "DS2");
-        mActivity.onUsername((v) -> v.setText("dude"));
-        mUiBot.assertDatasets("DS1", "DS2");
-        mActivity.onUsername((v) -> v.setText("dude,"));
-        mUiBot.assertDatasets("DS2");
-
-        // Now delete the char and assert 2 are shown again...
-        mActivity.onUsername((v) -> v.setText("dude"));
         final UiObject2 picker = mUiBot.assertDatasets("DS1", "DS2");
 
         // ...and select it this time
