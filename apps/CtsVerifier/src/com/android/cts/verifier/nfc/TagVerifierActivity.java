@@ -42,6 +42,9 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import android.os.Handler;
+import android.os.HandlerThread;
+
 /**
  * Test activity for reading and writing NFC tags using different technologies.
  * First, it asks the user to write some random data to the tag. Then it asks
@@ -82,6 +85,11 @@ public class TagVerifierActivity<T> extends PassFailButtons.ListActivity {
     private ArrayAdapter<String> mTechListAdapter;
     private TextView mEmptyText;
 
+    private HandlerThread mHandlerThread;
+    private Handler mHandler;
+    // Auto write to this tag(DISCOVERED_DIALOG will be dismissed) when the waiting time out
+    private static final int WAIT_TIME_AUTO_WRITE_TAG = 3 * 1000;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -89,6 +97,10 @@ public class TagVerifierActivity<T> extends PassFailButtons.ListActivity {
         setInfoResources(R.string.nfc_tag_verifier, R.string.nfc_tag_verifier_info, 0);
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
+
+        mHandlerThread = new HandlerThread("waitTimeAutoWriteTag");
+        mHandlerThread.start();
+        mHandler = new Handler(mHandlerThread.getLooper());
 
         parseIntentExtras();
         if (mTechClass != null) {
@@ -307,6 +319,23 @@ public class TagVerifierActivity<T> extends PassFailButtons.ListActivity {
         }
     }
 
+    @Override
+    protected void onPrepareDialog(int id, Dialog dialog) {
+        super.onPrepareDialog(id, dialog);
+        if (id == TESTABLE_TAG_DISCOVERED_DIALOG_ID) {
+            mHandler.removeCallbacks(waitTimeAutoWriteTagRunnable);
+            mHandler.postDelayed(waitTimeAutoWriteTagRunnable, WAIT_TIME_AUTO_WRITE_TAG);
+        }
+    }
+
+    private final Runnable waitTimeAutoWriteTagRunnable = new Runnable() {
+        @Override
+        public void run() {
+            brutallyDismissDialog(TESTABLE_TAG_DISCOVERED_DIALOG_ID);
+            runOnUiThread(() -> new WriteTagTask().execute(mTag));
+        }
+    };
+
     private AlertDialog createTestableTagDiscoveredDialog() {
         return new AlertDialog.Builder(this)
                 .setIcon(android.R.drawable.ic_dialog_info)
@@ -315,12 +344,14 @@ public class TagVerifierActivity<T> extends PassFailButtons.ListActivity {
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        mHandler.removeCallbacks(waitTimeAutoWriteTagRunnable);
                         new WriteTagTask().execute(mTag);
                     }
                 })
                 .setOnCancelListener(new DialogInterface.OnCancelListener() {
                     @Override
                     public void onCancel(DialogInterface dialog) {
+                        mHandler.removeCallbacks(waitTimeAutoWriteTagRunnable);
                         goToWriteStep();
                     }
                 })
