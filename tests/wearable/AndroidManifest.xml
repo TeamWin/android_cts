@@ -37,6 +37,14 @@
             android:permission="android.permission.BIND_WEARABLE_SENSING_SERVICE"
             android:isolatedProcess="true">
         </service>
+        <receiver
+            android:name=".CtsWearableSensingDataRequestBroadcastReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+            <action android:name="cts.android.service.wearable.DataRequestReceiverAction" />
+            </intent-filter>
+        </receiver>
     </application>
 
     <!--  self-instrumenting test package. -->

@@ -26,18 +26,34 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeTrue;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
+import android.Manifest;
+import android.app.PendingIntent;
 import android.app.ambientcontext.AmbientContextManager;
+import android.app.wearable.Flags;
+import android.app.wearable.WearableSensingDataRequest;
 import android.app.wearable.WearableSensingManager;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.os.ParcelFileDescriptor;
+import android.os.PersistableBundle;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.service.wearable.WearableSensingDataRequester;
 import android.text.TextUtils;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
+
+import com.google.common.collect.Iterables;
 
 import org.junit.After;
 import org.junit.Before;
@@ -46,6 +62,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.InputStream;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This suite of test ensures that WearableSensingManagerService behaves correctly when properly
@@ -71,8 +90,19 @@ public class CtsWearableSensingServiceDeviceTest {
     private static final int VALUE_TO_SEND = 1000;
     private static final String VALUE_TO_WRITE = "wearable_sensing";
 
+    private static final int PLACEHOLDER_DATA_TYPE = 234;
+    private static final String DATA_REQUEST_DETAILS_KEY_1 = "k1";
+    private static final String DATA_REQUEST_DETAILS_KEY_2 = "k2";
+    private static final String DATA_REQUEST_DETAILS_VALUE_1 = "v1";
+    private static final int DATA_REQUEST_DETAILS_VALUE_2 = 98765;
+
     private final boolean mIsTestable =
             !TextUtils.isEmpty(getAmbientContextDetectionServiceComponent());
+    private final Executor mExecutor = InstrumentationRegistry.getContext().getMainExecutor();
+    private Context mContext;
+    private WearableSensingManager mWearableSensingManager;
+    private PendingIntent mDataRequestObserverPendingIntent;
+    private WearableSensingDataRequest mDataRequest;
 
     @Rule
     public final DeviceConfigStateChangerRule mLookAllTheseRules =
@@ -88,11 +118,23 @@ public class CtsWearableSensingServiceDeviceTest {
                     KEY_SERVICE_ENABLED,
                     "true");
 
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
     @Before
     public void setUp() throws Exception {
         assumeTrue("VERSION.SDK_INT=" + VERSION.SDK_INT,
                 VERSION.SDK_INT >= VERSION_CODES.UPSIDE_DOWN_CAKE);
-
+        mContext = getInstrumentation().getContext();
+        mWearableSensingManager = mContext.getSystemService(WearableSensingManager.class);
+        mDataRequestObserverPendingIntent = createDataRequestPendingIntent(mContext);
+        PersistableBundle dataRequestDetails = new PersistableBundle();
+        dataRequestDetails.putString(DATA_REQUEST_DETAILS_KEY_1, DATA_REQUEST_DETAILS_VALUE_1);
+        dataRequestDetails.putInt(DATA_REQUEST_DETAILS_KEY_2, DATA_REQUEST_DETAILS_VALUE_2);
+        mDataRequest =
+                new WearableSensingDataRequest.Builder(PLACEHOLDER_DATA_TYPE)
+                        .setRequestDetails(dataRequestDetails)
+                        .build();
         CtsWearableSensingService.reset();
         clearTestableWearableSensingService();
         destroyDataStream();
@@ -250,6 +292,48 @@ public class CtsWearableSensingServiceDeviceTest {
         CtsWearableSensingService.expectTimeOut();
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_DATA_REQUEST_OBSERVER_API)
+    public void sendDataRequest_isReceivedByObserver() throws Exception {
+        getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE);
+        AtomicInteger dataRequestStatusRef =
+                new AtomicInteger(WearableSensingManager.STATUS_UNKNOWN);
+        CountDownLatch dataRequestStatusLatch = new CountDownLatch(1);
+        mWearableSensingManager.registerDataRequestObserver(
+                PLACEHOLDER_DATA_TYPE,
+                mDataRequestObserverPendingIntent,
+                mExecutor,
+                (dataRequestObserverRegistrationStatus) -> {});
+        CtsWearableSensingService.awaitResult();
+        assertThat(CtsWearableSensingService.getDataRequesters(PLACEHOLDER_DATA_TYPE)).hasSize(1);
+
+        // send a request from WearableSensingService
+        Iterables.getOnlyElement(CtsWearableSensingService.getDataRequesters(PLACEHOLDER_DATA_TYPE))
+                .requestData(
+                        mDataRequest,
+                        (status) -> {
+                            dataRequestStatusRef.set(status);
+                            dataRequestStatusLatch.countDown();
+                        });
+
+        CtsWearableSensingDataRequestBroadcastReceiver.awaitResult();
+        // assert that the broadcast receiver can receive the result
+        WearableSensingDataRequest receivedDataRequest =
+                CtsWearableSensingDataRequestBroadcastReceiver.getLatestDataRequest();
+        assertThat(receivedDataRequest).isNotNull();
+        assertThat(receivedDataRequest.getDataType()).isEqualTo(PLACEHOLDER_DATA_TYPE);
+        PersistableBundle receivedDataRequestDetails = receivedDataRequest.getRequestDetails();
+        assertThat(receivedDataRequestDetails.getString(DATA_REQUEST_DETAILS_KEY_1))
+                .isEqualTo(DATA_REQUEST_DETAILS_VALUE_1);
+        assertThat(receivedDataRequestDetails.getInt(DATA_REQUEST_DETAILS_KEY_2))
+                .isEqualTo(DATA_REQUEST_DETAILS_VALUE_2);
+        assertThat(dataRequestStatusLatch.await(3, SECONDS)).isTrue();
+        assertThat(dataRequestStatusRef.get())
+                .isEqualTo(WearableSensingDataRequester.STATUS_SUCCESS);
+    }
+
     @After
     public void tearDown() {
         clearTestableWearableSensingService();
@@ -362,5 +446,14 @@ public class CtsWearableSensingServiceDeviceTest {
 
     private String getAmbientContextDetectionServiceComponent() {
         return runShellCommand("cmd ambient_context get-bound-package %s", USER_ID);
+    }
+
+    private static PendingIntent createDataRequestPendingIntent(Context context) {
+        Intent intent =
+                new Intent("cts.android.service.wearable.DataRequestReceiverAction")
+                        .setClass(context, CtsWearableSensingDataRequestBroadcastReceiver.class);
+        int unusedRequestCode = 0;
+        return PendingIntent.getBroadcast(
+                context, unusedRequestCode, intent, PendingIntent.FLAG_MUTABLE);
     }
 }
