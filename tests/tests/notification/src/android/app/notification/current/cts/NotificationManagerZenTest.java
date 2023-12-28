@@ -2151,7 +2151,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
         assertNotNull(id);
         mRuleIds.add(id);
-        assertTrue(areRulesSame(ruleToCreate, mNotificationManager.getAutomaticZenRule(id)));
+        assertAllPublicSetFieldsEqual(ruleToCreate, mNotificationManager.getAutomaticZenRule(id));
     }
 
     @Test
@@ -2276,22 +2276,39 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
     private static void assertAllPublicSetFieldsEqual(AutomaticZenRule r1, AutomaticZenRule r2) {
         // Cannot test for exact equality because some extra fields (e.g. packageName,
-        // creationTime) come back. So we verify everything that the client app can set.
+        // creationTime, userModifiedFields) come back. So we verify everything that the client app
+        // can set.
         assertThat(r1.getConditionId()).isEqualTo(r2.getConditionId());
         assertThat(r1.getConfigurationActivity()).isEqualTo(r2.getConfigurationActivity());
         assertThat(r1.getInterruptionFilter()).isEqualTo(r2.getInterruptionFilter());
         assertThat(r1.getName()).isEqualTo(r2.getName());
         assertThat(r1.getOwner()).isEqualTo(r2.getOwner());
-        assertThat(r1.getZenPolicy()).isEqualTo(r2.getZenPolicy());
+        assertThat(clearUserModifiedFields(r1.getZenPolicy()))
+                .isEqualTo(clearUserModifiedFields(r2.getZenPolicy()));
         assertThat(r1.isEnabled()).isEqualTo(r2.isEnabled());
 
         if (Flags.modesApi()) {
-            assertThat(r1.getDeviceEffects()).isEqualTo(r2.getDeviceEffects());
+            assertThat(clearUserModifiedFields(r1.getDeviceEffects()))
+                    .isEqualTo(clearUserModifiedFields(r2.getDeviceEffects()));
             assertThat(r1.getIconResId()).isEqualTo(r2.getIconResId());
             assertThat(r1.getTriggerDescription()).isEqualTo(r2.getTriggerDescription());
             assertThat(r1.getType()).isEqualTo(r2.getType());
             assertThat(r1.isManualInvocationAllowed()).isEqualTo(r2.isManualInvocationAllowed());
         }
+    }
+
+    private static ZenPolicy clearUserModifiedFields(ZenPolicy policy) {
+        if (policy == null) {
+            return null;
+        }
+        return new ZenPolicy.Builder(policy).setUserModifiedFields(0).build();
+    }
+
+    private static ZenDeviceEffects clearUserModifiedFields(ZenDeviceEffects deviceEffects) {
+        if (deviceEffects == null) {
+            return null;
+        }
+        return new ZenDeviceEffects.Builder(deviceEffects).setUserModifiedFields(0).build();
     }
 
     @Test
@@ -2309,6 +2326,169 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
         assertThat(mNotificationManager.getAutomaticZenRule(rule1)).isNotNull();
         assertThat(mNotificationManager.getAutomaticZenRule(rule2)).isNotNull();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void updateAutomaticZenRule_fromUser_updatesUserModifiedFields() {
+        AutomaticZenRule original = new AutomaticZenRule.Builder("Original", CONDITION_ID)
+                .setConfigurationActivity(CONFIG_ACTIVITY)
+                .setType(AutomaticZenRule.TYPE_IMMERSIVE)
+                .setIconResId(android.app.notification.current.cts.R.drawable.ic_android)
+                .setTriggerDescription("Immerse yourself")
+                .setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY)
+                .setZenPolicy(new ZenPolicy.Builder()
+                        .allowRepeatCallers(false)
+                        .allowAlarms(false)
+                        .build())
+                .setDeviceEffects(new ZenDeviceEffects.Builder()
+                        .setShouldDisplayGrayscale(true)
+                        .build())
+                .build();
+        String ruleId = mNotificationManager.addAutomaticZenRule(original);
+
+        // Update the rule "from user".
+        AutomaticZenRule userUpdate = new AutomaticZenRule.Builder(original)
+                // User changes
+                .setName("Updated")
+                .setEnabled(false)
+                .setZenPolicy(new ZenPolicy.Builder(original.getZenPolicy())
+                        .allowMedia(true)
+                        .allowCalls(ZenPolicy.PEOPLE_TYPE_ANYONE)
+                        .build())
+                .setDeviceEffects(new ZenDeviceEffects.Builder(original.getDeviceEffects())
+                        .setShouldDimWallpaper(true)
+                        .build())
+                // Technically nothing stops this API call from also updating fields that should be
+                // the purview of the app, but those are NOT marked as user-modified.
+                .setType(AutomaticZenRule.TYPE_DRIVING)
+                .setTriggerDescription("While driving")
+                .setIconResId(android.R.drawable.sym_def_app_icon)
+                .build();
+        runAsSystemUi(
+                () -> mNotificationManager.updateAutomaticZenRule(ruleId, userUpdate,
+                        /* fromUser= */ true));
+
+        AutomaticZenRule result = mNotificationManager.getAutomaticZenRule(ruleId);
+        assertAllPublicSetFieldsEqual(userUpdate, result);
+
+        assertThat(result.canUpdate()).isFalse();
+        assertThat(result.getUserModifiedFields()).isEqualTo(AutomaticZenRule.FIELD_NAME);
+        assertThat(result.getZenPolicy().getUserModifiedFields()).isEqualTo(
+                ZenPolicy.FIELD_PRIORITY_CATEGORY_MEDIA | ZenPolicy.FIELD_CALLS);
+        assertThat(result.getDeviceEffects().getUserModifiedFields()).isEqualTo(
+                ZenDeviceEffects.FIELD_DIM_WALLPAPER);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void updateAutomaticZenRule_fromApp_forNonUserModifiedRule_allFieldsUpdated() {
+        AutomaticZenRule original = new AutomaticZenRule.Builder("Original", CONDITION_ID)
+                .setConfigurationActivity(CONFIG_ACTIVITY)
+                .setType(AutomaticZenRule.TYPE_IMMERSIVE)
+                .setIconResId(android.app.notification.current.cts.R.drawable.ic_android)
+                .setTriggerDescription("Immerse yourself")
+                .setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY)
+                .setZenPolicy(new ZenPolicy.Builder()
+                        .allowRepeatCallers(false)
+                        .allowAlarms(false)
+                        .build())
+                .setDeviceEffects(new ZenDeviceEffects.Builder()
+                        .setShouldDisplayGrayscale(true)
+                        .build())
+                .build();
+        String ruleId = mNotificationManager.addAutomaticZenRule(original);
+
+        // Update the rule "from app".
+        AutomaticZenRule appUpdate = new AutomaticZenRule.Builder(original)
+                .setName("Updated")
+                .setType(AutomaticZenRule.TYPE_DRIVING)
+                .setTriggerDescription("While driving")
+                .setIconResId(android.R.drawable.sym_def_app_icon)
+                .setEnabled(false)
+                .setZenPolicy(new ZenPolicy.Builder(original.getZenPolicy())
+                        .allowMedia(true)
+                        .allowCalls(ZenPolicy.PEOPLE_TYPE_ANYONE)
+                        .build())
+                .setDeviceEffects(new ZenDeviceEffects.Builder(original.getDeviceEffects())
+                        .setShouldDimWallpaper(true)
+                        .build())
+                .build();
+        mNotificationManager.updateAutomaticZenRule(ruleId, appUpdate);
+
+        // Update should be successful, and nothing is user-modified.
+        AutomaticZenRule result = mNotificationManager.getAutomaticZenRule(ruleId);
+        assertAllPublicSetFieldsEqual(appUpdate, result);
+
+        assertThat(result.canUpdate()).isTrue();
+        assertThat(result.getUserModifiedFields()).isEqualTo(0);
+        assertThat(result.getZenPolicy().getUserModifiedFields()).isEqualTo(0);
+        assertThat(result.getDeviceEffects().getUserModifiedFields()).isEqualTo(0);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void updateAutomaticZenRule_fromApp_forUserModifiedRule_onlySomeFieldsUpdated() {
+        AutomaticZenRule original = new AutomaticZenRule.Builder("Original", CONDITION_ID)
+                .setConfigurationActivity(CONFIG_ACTIVITY)
+                .setType(AutomaticZenRule.TYPE_IMMERSIVE)
+                .setIconResId(android.app.notification.current.cts.R.drawable.ic_android)
+                .setTriggerDescription("Immerse yourself")
+                .setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY)
+                .setZenPolicy(new ZenPolicy.Builder()
+                        .allowRepeatCallers(false)
+                        .allowAlarms(false)
+                        .build())
+                .setDeviceEffects(new ZenDeviceEffects.Builder()
+                        .setShouldDisplayGrayscale(true)
+                        .build())
+                .build();
+        String ruleId = mNotificationManager.addAutomaticZenRule(original);
+
+        // Minimally update the rule "from user".
+        AutomaticZenRule userUpdate = new AutomaticZenRule.Builder(original)
+                // User changes
+                .setName("Updated")
+                .build();
+        runAsSystemUi(
+                () -> mNotificationManager.updateAutomaticZenRule(ruleId, userUpdate,
+                        /* fromUser= */ true));
+
+        // Now try to update again "from app".
+        AutomaticZenRule appUpdate = new AutomaticZenRule.Builder(original)
+                .setName("Updated")
+                .setType(AutomaticZenRule.TYPE_DRIVING)
+                .setTriggerDescription("While driving")
+                .setIconResId(android.R.drawable.sym_def_app_icon)
+                .setEnabled(false)
+                .setZenPolicy(new ZenPolicy.Builder(original.getZenPolicy())
+                        .allowMedia(true)
+                        .allowCalls(ZenPolicy.PEOPLE_TYPE_ANYONE)
+                        .build())
+                .setDeviceEffects(new ZenDeviceEffects.Builder(original.getDeviceEffects())
+                        .setShouldDimWallpaper(true)
+                        .build())
+                .build();
+        mNotificationManager.updateAutomaticZenRule(ruleId, appUpdate);
+
+        // The app-controlled fields should be updated
+        AutomaticZenRule result = mNotificationManager.getAutomaticZenRule(ruleId);
+        assertThat(result.getType()).isEqualTo(appUpdate.getType());
+        assertThat(result.getTriggerDescription()).isEqualTo(appUpdate.getTriggerDescription());
+        assertThat(result.getIconResId()).isEqualTo(appUpdate.getIconResId());
+        assertThat(result.isEnabled()).isEqualTo(appUpdate.isEnabled());
+
+        // ... but nothing else should (even though those fields were not _specifically_ modified by
+        // the user).
+        assertThat(result.getName()).isEqualTo(userUpdate.getName());
+        assertThat(result.getZenPolicy()).isEqualTo(original.getZenPolicy());
+        assertThat(result.getDeviceEffects()).isEqualTo(original.getDeviceEffects());
+
+        // And the "user modified fields" should be those from the user update only.
+        assertThat(result.canUpdate()).isFalse();
+        assertThat(result.getUserModifiedFields()).isEqualTo(AutomaticZenRule.FIELD_NAME);
+        assertThat(result.getZenPolicy().getUserModifiedFields()).isEqualTo(0);
+        assertThat(result.getDeviceEffects().getUserModifiedFields()).isEqualTo(0);
     }
 
     @Test
