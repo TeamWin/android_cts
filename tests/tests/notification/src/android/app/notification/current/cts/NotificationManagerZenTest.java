@@ -19,7 +19,6 @@ package android.app.notification.current.cts;
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL;
 import static android.Manifest.permission.REVOKE_RUNTIME_PERMISSIONS;
-import static android.app.AutomaticZenRule.TYPE_BEDTIME;
 import static android.app.NotificationManager.ACTION_AUTOMATIC_ZEN_RULE_STATUS_CHANGED;
 import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_ACTIVATED;
 import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_DEACTIVATED;
@@ -174,11 +173,11 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             .appendPath("path")
             .appendPath("test")
             .build();
-    private final String TRIGGER_DESC = "Every Night, 10pm to 6am";
-    private final int TYPE = TYPE_BEDTIME;
-    private final boolean ALLOW_MANUAL = true;
-    private final int ICON_RES_ID = android.app.notification.current.cts.R.drawable.ic_android;
-    private final int INTERRUPTION_FILTER = INTERRUPTION_FILTER_PRIORITY;
+    private static final String TRIGGER_DESC = "Triggered mysteriously";
+    private static final int UNRESTRICTED_TYPE = AutomaticZenRule.TYPE_IMMERSIVE; // Freely usable.
+    private static final boolean ALLOW_MANUAL = true;
+    private static final int ICON_RES_ID =
+            android.app.notification.current.cts.R.drawable.ic_android;
     private NotificationManager.Policy mOriginalPolicy;
 
     @Rule(order = 0)
@@ -2141,9 +2140,9 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 .setZenPolicy(POLICY)
                 .setManualInvocationAllowed(ALLOW_MANUAL)
                 .setOwner(null)
-                .setType(TYPE)
+                .setType(UNRESTRICTED_TYPE)
                 .setConfigurationActivity(CONFIG_ACTIVITY)
-                .setInterruptionFilter(INTERRUPTION_FILTER)
+                .setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY)
                 .setTriggerDescription(TRIGGER_DESC)
                 .setIconResId(ICON_RES_ID)
                 .build();
