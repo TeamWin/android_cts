@@ -15,6 +15,9 @@
  */
 package android.wearable.cts;
 
+import static android.app.wearable.WearableSensingDataRequest.getMaxRequestSize;
+import static android.app.wearable.WearableSensingDataRequest.getRateLimit;
+import static android.app.wearable.WearableSensingDataRequest.getRateLimitWindowSize;
 import static android.wearable.cts.CtsWearableSensingService.whenCallbackTriggeredRespondWithServiceStatus;
 import static android.wearable.cts.CtsWearableSensingService.whenCallbackTriggeredRespondWithStatus;
 
@@ -24,6 +27,7 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -40,6 +44,7 @@ import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
+import android.os.SystemClock;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -103,6 +108,7 @@ public class CtsWearableSensingServiceDeviceTest {
     private WearableSensingManager mWearableSensingManager;
     private PendingIntent mDataRequestObserverPendingIntent;
     private WearableSensingDataRequest mDataRequest;
+    private WearableSensingDataRequest mLargeDataRequest;
 
     @Rule
     public final DeviceConfigStateChangerRule mLookAllTheseRules =
@@ -135,7 +141,17 @@ public class CtsWearableSensingServiceDeviceTest {
                 new WearableSensingDataRequest.Builder(PLACEHOLDER_DATA_TYPE)
                         .setRequestDetails(dataRequestDetails)
                         .build();
+        PersistableBundle largeDataRequestDetails = new PersistableBundle();
+        largeDataRequestDetails.putString(
+                "myVeryVeryVeryVeryLargeKey1", "myVeryVeryVeryVeryLargeValue1");
+        largeDataRequestDetails.putString(
+                "myVeryVeryVeryVeryLargeKey2", "myVeryVeryVeryVeryLargeValue2");
+        mLargeDataRequest =
+                new WearableSensingDataRequest.Builder(PLACEHOLDER_DATA_TYPE)
+                        .setRequestDetails(largeDataRequestDetails)
+                        .build();
         CtsWearableSensingService.reset();
+        CtsWearableSensingDataRequestBroadcastReceiver.reset();
         clearTestableWearableSensingService();
         destroyDataStream();
         bindToTestableWearableSensingService();
@@ -301,16 +317,9 @@ public class CtsWearableSensingServiceDeviceTest {
         AtomicInteger dataRequestStatusRef =
                 new AtomicInteger(WearableSensingManager.STATUS_UNKNOWN);
         CountDownLatch dataRequestStatusLatch = new CountDownLatch(1);
-        mWearableSensingManager.registerDataRequestObserver(
-                PLACEHOLDER_DATA_TYPE,
-                mDataRequestObserverPendingIntent,
-                mExecutor,
-                (dataRequestObserverRegistrationStatus) -> {});
-        CtsWearableSensingService.awaitResult();
-        assertThat(CtsWearableSensingService.getDataRequesters(PLACEHOLDER_DATA_TYPE)).hasSize(1);
 
         // send a request from WearableSensingService
-        Iterables.getOnlyElement(CtsWearableSensingService.getDataRequesters(PLACEHOLDER_DATA_TYPE))
+        registerAndGetDataRequester()
                 .requestData(
                         mDataRequest,
                         (status) -> {
@@ -332,6 +341,135 @@ public class CtsWearableSensingServiceDeviceTest {
         assertThat(dataRequestStatusLatch.await(3, SECONDS)).isTrue();
         assertThat(dataRequestStatusRef.get())
                 .isEqualTo(WearableSensingDataRequester.STATUS_SUCCESS);
+        // Wait for one window size plus some buffer to avoid interfering other tests
+        SystemClock.sleep(getRateLimitWindowSize().toMillis() + 200);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_DATA_REQUEST_OBSERVER_API)
+    public void sendDataRequest_requestTooLarge_notReceivedByObserver() throws Exception {
+        assumeTrue(
+                "Data request is not larger than size limit, skipping test.",
+                mLargeDataRequest.getDataSize() > getMaxRequestSize());
+        getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE);
+        AtomicInteger dataRequestStatusRef =
+                new AtomicInteger(WearableSensingManager.STATUS_UNKNOWN);
+        CountDownLatch dataRequestStatusLatch = new CountDownLatch(1);
+
+        // send a large request from WearableSensingService
+        registerAndGetDataRequester()
+                .requestData(
+                        mLargeDataRequest,
+                        (status) -> {
+                            dataRequestStatusRef.set(status);
+                            dataRequestStatusLatch.countDown();
+                        });
+
+        // CtsWearableSensingDataRequestBroadcastReceiver throws an AssertionError on timeout
+        assertThrows(
+                AssertionError.class,
+                () -> CtsWearableSensingDataRequestBroadcastReceiver.awaitResult());
+        assertThat(dataRequestStatusLatch.await(3, SECONDS)).isTrue();
+        assertThat(dataRequestStatusRef.get())
+                .isEqualTo(WearableSensingDataRequester.STATUS_TOO_LARGE);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_DATA_REQUEST_OBSERVER_API)
+    public void sendDataRequestsAtRateLimit_allReceivedByObserver() throws Exception {
+        getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE);
+        CtsWearableSensingDataRequestBroadcastReceiver.setResultCountToAwait(
+                getRateLimit());
+        WearableSensingDataRequester dataRequester = registerAndGetDataRequester();
+
+        for (int i = 0; i < getRateLimit(); i++) {
+            dataRequester.requestData(mDataRequest, status -> {});
+        }
+
+        CtsWearableSensingDataRequestBroadcastReceiver.awaitResult();
+        // no exception means all requests are received before timeout
+        // Wait for one window size plus some buffer to avoid interfering other tests
+        SystemClock.sleep(getRateLimitWindowSize().toMillis() + 200);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_DATA_REQUEST_OBSERVER_API)
+    public void sendDataRequests_tooFrequent_notReceivedByObserver() throws Exception {
+        getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE);
+        CtsWearableSensingDataRequestBroadcastReceiver.setResultCountToAwait(
+                getRateLimit());
+        WearableSensingDataRequester dataRequester = registerAndGetDataRequester();
+        AtomicInteger dataRequestStatusRef =
+                new AtomicInteger(WearableSensingManager.STATUS_UNKNOWN);
+        CountDownLatch dataRequestStatusLatch = new CountDownLatch(1);
+
+        // Reach the limit
+        for (int i = 0; i < getRateLimit(); i++) {
+            dataRequester.requestData(mDataRequest, status -> {});
+        }
+        CtsWearableSensingDataRequestBroadcastReceiver.awaitResult();
+        // Send one more
+        CtsWearableSensingDataRequestBroadcastReceiver.setResultCountToAwait(1);
+        dataRequester.requestData(
+                mDataRequest,
+                (status) -> {
+                        dataRequestStatusRef.set(status);
+                        dataRequestStatusLatch.countDown();
+                });
+
+        // CtsWearableSensingDataRequestBroadcastReceiver throws an AssertionError on timeout
+        assertThrows(
+                AssertionError.class,
+                () -> CtsWearableSensingDataRequestBroadcastReceiver.awaitResult());
+        assertThat(dataRequestStatusLatch.await(3, SECONDS)).isTrue();
+        assertThat(dataRequestStatusRef.get())
+                .isEqualTo(WearableSensingDataRequester.STATUS_TOO_FREQUENT);
+        // Wait for one window size plus some buffer to avoid interfering with other tests
+        SystemClock.sleep(getRateLimitWindowSize().toMillis() + 200);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_DATA_REQUEST_OBSERVER_API)
+    public void sendDataRequestsAtRateLimit_waitForOnePeriodThenSendAgain_isReceivedByObserver()
+            throws Exception {
+        getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE);
+        CtsWearableSensingDataRequestBroadcastReceiver.setResultCountToAwait(
+                getRateLimit());
+        WearableSensingDataRequester dataRequester = registerAndGetDataRequester();
+        AtomicInteger dataRequestStatusRef =
+                new AtomicInteger(WearableSensingManager.STATUS_UNKNOWN);
+        CountDownLatch dataRequestStatusLatch = new CountDownLatch(1);
+
+        // Reach the limit
+        for (int i = 0; i < getRateLimit(); i++) {
+            dataRequester.requestData(mDataRequest, status -> {});
+        }
+        CtsWearableSensingDataRequestBroadcastReceiver.awaitResult();
+        // Wait for one window size plus some buffer
+        SystemClock.sleep(getRateLimitWindowSize().toMillis() + 200);
+        // Send one more
+        CtsWearableSensingDataRequestBroadcastReceiver.setResultCountToAwait(1);
+        dataRequester.requestData(
+                mDataRequest,
+                (status) -> {
+                    dataRequestStatusRef.set(status);
+                    dataRequestStatusLatch.countDown();
+                });
+
+        CtsWearableSensingDataRequestBroadcastReceiver.awaitResult();
+        assertThat(dataRequestStatusLatch.await(3, SECONDS)).isTrue();
+        assertThat(dataRequestStatusRef.get())
+                .isEqualTo(WearableSensingDataRequester.STATUS_SUCCESS);
+        // Wait for one window size plus some buffer to avoid interfering other tests
+        SystemClock.sleep(getRateLimitWindowSize().toMillis() + 200);
     }
 
     @After
@@ -339,6 +477,7 @@ public class CtsWearableSensingServiceDeviceTest {
         clearTestableWearableSensingService();
         clearTestableAmbientContextDetectionService();
         destroyDataStream();
+        getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 
     private void bindToTestableWearableSensingService() {
@@ -446,6 +585,18 @@ public class CtsWearableSensingServiceDeviceTest {
 
     private String getAmbientContextDetectionServiceComponent() {
         return runShellCommand("cmd ambient_context get-bound-package %s", USER_ID);
+    }
+
+    private WearableSensingDataRequester registerAndGetDataRequester() {
+        mWearableSensingManager.registerDataRequestObserver(
+                PLACEHOLDER_DATA_TYPE,
+                mDataRequestObserverPendingIntent,
+                mExecutor,
+                (dataRequestObserverRegistrationStatus) -> {});
+        CtsWearableSensingService.awaitResult();
+        assertThat(CtsWearableSensingService.getDataRequesters(PLACEHOLDER_DATA_TYPE)).hasSize(1);
+        return Iterables.getOnlyElement(
+                CtsWearableSensingService.getDataRequesters(PLACEHOLDER_DATA_TYPE));
     }
 
     private static PendingIntent createDataRequestPendingIntent(Context context) {

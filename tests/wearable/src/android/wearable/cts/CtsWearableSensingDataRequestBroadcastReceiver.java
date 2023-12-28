@@ -39,9 +39,23 @@ public final class CtsWearableSensingDataRequestBroadcastReceiver extends Broadc
         sRespondLatch.countDown();
     }
 
+    /** Resets all states. */
+    public static void reset() {
+        sLatestDataRequest = null;
+        sRespondLatch = new CountDownLatch(1);
+    }
+
     /** Gets the last data request received. */
     public static WearableSensingDataRequest getLatestDataRequest() {
         return sLatestDataRequest;
+    }
+
+    /**
+     * Sets the number of results {@link #awaitResult()} will wait before returning. If not set, it
+     * defaults to 1.
+     */
+    public static void setResultCountToAwait(int count) {
+        sRespondLatch = new CountDownLatch(count);
     }
 
     /** Waits for a result to arrive. */

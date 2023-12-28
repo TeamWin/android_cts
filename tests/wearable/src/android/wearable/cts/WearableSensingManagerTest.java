@@ -98,6 +98,7 @@ public class WearableSensingManagerTest {
         mPipe = ParcelFileDescriptor.createPipe();
         mDataRequestObserverPendingIntent = createDataRequestPendingIntent(mContext);
         CtsWearableSensingService.reset();
+        CtsWearableSensingDataRequestBroadcastReceiver.reset();
         clearTestableWearableSensingService();
         bindToTestableWearableSensingService();
     }
