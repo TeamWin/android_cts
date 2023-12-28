@@ -3735,10 +3735,10 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
 
     @Test
     @RequiresFlagsEnabled(FLAG_GET_PACKAGE_INFO)
-    public void testParseAndroidManifest_withNullApkFilePath() {
-        // Disallow the apk file path is null
+    public void testParseAndroidManifest_withNullApkFile() {
+        // Disallow the apk file is null
         assertThrows(NullPointerException.class,
-                () -> mPackageManager.parseAndroidManifest(null /* apkFilePath */,
+                () -> mPackageManager.parseAndroidManifest(null /* apkFile */,
                         xmlResourceParser -> new Bundle()));
     }
 
@@ -3747,15 +3747,15 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
     public void testParseAndroidManifest_withNullParserFunction() {
         // Disallow the parser function is null
         assertThrows(NullPointerException.class,
-                () -> mPackageManager.parseAndroidManifest(mContext.getPackageCodePath(),
+                () -> mPackageManager.parseAndroidManifest(new File(mContext.getPackageCodePath()),
                         null /* parserFunction */));
     }
 
     @Test
     @RequiresFlagsEnabled(FLAG_GET_PACKAGE_INFO)
-    public void testParseAndroidManifest_withInvalidApkFilePath() {
+    public void testParseAndroidManifest_withInvalidApkFile() {
         assertThrows(IOException.class,
-                () -> mPackageManager.parseAndroidManifest("/data/app/invalid/base.apk",
+                () -> mPackageManager.parseAndroidManifest(new File("/data/app/invalid/base.apk"),
                         xmlResourceParser -> new Bundle()));
     }
 
@@ -3764,7 +3764,8 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
     public void testParseAndroidManifest() {
         Bundle testResult;
         try {
-            testResult = mPackageManager.parseAndroidManifest(mContext.getPackageCodePath(),
+            testResult = mPackageManager.parseAndroidManifest(
+                    new File(mContext.getPackageCodePath()),
                     xmlResourceParser -> {
                         assertNotNull(xmlResourceParser);
 
