@@ -21,12 +21,18 @@ import static com.android.bedstead.nene.packages.CommonPackages.FEATURE_BACKUP;
 import static com.android.bedstead.nene.permissions.CommonPermissions.BACKUP;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeFalse;
 import static org.testng.Assert.assertThrows;
 
+import android.app.admin.SecurityLog;
+import android.app.admin.flags.Flags;
 import android.app.backup.BackupManager;
+import android.content.ComponentName;
 import android.content.Context;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -38,22 +44,31 @@ import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.Backup;
+import com.android.bedstead.harrier.policies.BackupAndSecurityLogging;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.utils.Poll;
+import com.android.compatibility.common.util.ApiTest;
 
-import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
+
+import java.util.List;
 
 @RunWith(BedsteadJUnit4.class)
 @RequireFeature(FEATURE_BACKUP)
 public final class BackupTest {
     @ClassRule
-    @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
+    @Rule
+    public final TestRule mCheckFlagsRule = RuleChain
+            .outerRule(DeviceFlagsValueProvider.createCheckFlagsRule())
+            .around(sDeviceState);
     private static final Context sContext = TestApis.context().instrumentedContext();
     private static final BackupManager sLocalBackupManager = new BackupManager(sContext);
 
@@ -160,5 +175,96 @@ public final class BackupTest {
     public void isBackupServiceEnabled_canSetPolicy_doesNotThrow() {
         sDeviceState.dpc().devicePolicyManager().isBackupServiceEnabled(
                 sDeviceState.dpc().componentName());
+    }
+
+    /** Positive test for SecurityLog#TAG_BACKUP_SERVICE_TOGGLED */
+    @CanSetPolicyTest(policy = {BackupAndSecurityLogging.class})
+    @RequiresFlagsEnabled(Flags.FLAG_BACKUP_SERVICE_SECURITY_LOG_EVENT_ENABLED)
+    @ApiTest(apis = {"android.app.admin.SecurityLog#TAG_BACKUP_SERVICE_TOGGLED"})
+    @Postsubmit(reason = "new test")
+    public void setBackupServiceEnabled_enableBackup_SecurityLogEventsEmitted()
+            throws Exception {
+        ensureNoAdditionalFullUsers();
+        ComponentName admin = sDeviceState.dpc().componentName();
+        boolean backupState = sDeviceState.dpc().devicePolicyManager()
+                .isBackupServiceEnabled(admin);
+
+        try {
+            // Start with backup disabled
+            sDeviceState.dpc().devicePolicyManager().setBackupServiceEnabled(admin, false);
+            // Flush any existing security logs
+            sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(admin, false);
+            sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(admin, true);
+
+            // Enabling backup service and check security log
+            sDeviceState.dpc().devicePolicyManager().setBackupServiceEnabled(admin, true);
+            TestApis.devicePolicy().forceSecurityLogs();
+            List<SecurityLog.SecurityEvent> logs = sDeviceState.dpc().devicePolicyManager()
+                    .retrieveSecurityLogs(admin).stream()
+                    .filter(e -> e.getTag() == SecurityLog.TAG_BACKUP_SERVICE_TOGGLED).toList();
+            assertWithMessage("Incorrect number of log events returned after enabling backup")
+                    .that(logs).hasSize(1);
+            assertThat(logs.get(0).getStringData(0)).isEqualTo(admin.getPackageName());
+            assertThat(logs.get(0).getIntegerData(1)).isEqualTo(sDeviceState.dpc().user().id());
+            assertThat(logs.get(0).getIntegerData(2)).isEqualTo(/* enabled */ 1);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(admin, false);
+            sDeviceState.dpc().devicePolicyManager().setBackupServiceEnabled(admin, backupState);
+        }
+    }
+
+    /** Positive test for SecurityLog#TAG_BACKUP_SERVICE_TOGGLED */
+    @CanSetPolicyTest(policy = {BackupAndSecurityLogging.class})
+    @RequiresFlagsEnabled(Flags.FLAG_BACKUP_SERVICE_SECURITY_LOG_EVENT_ENABLED)
+    @ApiTest(apis = {"android.app.admin.SecurityLog#TAG_BACKUP_SERVICE_TOGGLED"})
+    @Postsubmit(reason = "new test")
+    public void setBackupServiceEnabled_disableBackup_SecurityLogEventsEmitted()
+            throws Exception {
+        ensureNoAdditionalFullUsers();
+        ComponentName admin = sDeviceState.dpc().componentName();
+        boolean backupState = sDeviceState.dpc().devicePolicyManager()
+                .isBackupServiceEnabled(admin);
+
+        try {
+            // Start with backup enabled
+            sDeviceState.dpc().devicePolicyManager().setBackupServiceEnabled(admin, true);
+            // Flush any existing security logs
+            sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(admin, false);
+            sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(admin, true);
+
+            // Disabling backup service and check security log
+            sDeviceState.dpc().devicePolicyManager().setBackupServiceEnabled(admin, false);
+            TestApis.devicePolicy().forceSecurityLogs();
+            List<SecurityLog.SecurityEvent> logs = sDeviceState.dpc().devicePolicyManager()
+                    .retrieveSecurityLogs(admin).stream()
+                    .filter(e -> e.getTag() == SecurityLog.TAG_BACKUP_SERVICE_TOGGLED).toList();
+            assertWithMessage("Incorrect number of log events returned after disabling backup")
+                    .that(logs).hasSize(1);
+            assertThat(logs.get(0).getStringData(0)).isEqualTo(admin.getPackageName());
+            assertThat(logs.get(0).getIntegerData(1)).isEqualTo(sDeviceState.dpc().user().id());
+            assertThat(logs.get(0).getIntegerData(2)).isEqualTo(/* enabled */ 0);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(admin, false);
+            sDeviceState.dpc().devicePolicyManager().setBackupServiceEnabled(admin, backupState);
+        }
+    }
+    private void ensureNoAdditionalFullUsers() {
+        // TODO(273474964): Move into infra
+        try {
+            TestApis.users().all().stream().filter(u -> (u != TestApis.users().instrumented()
+                    && u != TestApis.users().system()
+                    && u != TestApis.users().current() // We can't remove the profile of
+                    // the instrumented user for the run on parent profile tests. But the profiles
+                    // of other users will be removed when the full-user is removed anyway.
+                    && !u.isProfile())).forEach(u -> u.remove());
+        } catch (NeneException e) {
+            // Happens when we can't remove a user
+            throw new NeneException(
+                    "Error when removing user. Instrumented user is "
+                            + TestApis.users().instrumented() + ", current user is "
+                            + TestApis.users().current() + ", system user is "
+                            + TestApis.users().system(), e
+            );
+        }
     }
 }
