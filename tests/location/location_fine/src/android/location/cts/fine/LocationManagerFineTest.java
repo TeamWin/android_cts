@@ -885,7 +885,9 @@ public class LocationManagerFineTest {
         Context attributionContextSlow =
                 mContext.createAttributionContext(ANOTHER_VALID_LOCATION_ATTRIBUTION_TAG);
         Location loc1 = createLocation(TEST_PROVIDER, mRandom);
+        loc1.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos() - 100000000L);
         Location loc2 = createLocation(TEST_PROVIDER, mRandom);
+        loc2.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos() - 100000000L);
 
         try (LocationListenerCapture fastCapture =
                      new LocationListenerCapture(attributionContextFast);
@@ -917,8 +919,7 @@ public class LocationManagerFineTest {
 
             // Verify noteOp for the slow request.
             timeBeforeLocationAccess = System.currentTimeMillis();
-            Location loc3 = createLocation(TEST_PROVIDER, 0, 1, 10,
-                    SystemClock.elapsedRealtimeNanos() + 100000000L);
+            Location loc3 = createLocation(TEST_PROVIDER, mRandom);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc3);
             assertFineOpNoted(timeBeforeLocationAccess, ANOTHER_VALID_LOCATION_ATTRIBUTION_TAG);
         }
