@@ -223,6 +223,16 @@ public class ProxyMediaRouter2HostSideTest extends BaseHostJUnit4Test {
         runDeviceTests(options);
     }
 
+    @Test
+    @AppModeFull
+    @RequiresDevice
+    public void getAllRoutes_returnsAtLeastOneSystemRoute() throws DeviceNotAvailableException {
+        runDeviceTests(
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_PACKAGE,
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_TEST_CLASS,
+                "getAllRoutes_returnsAtLeastOneSystemRoute");
+    }
+
     private static void installTestAppAsUser(
             TestInformation testInformation, String apkName, int userId)
             throws FileNotFoundException, DeviceNotAvailableException {
