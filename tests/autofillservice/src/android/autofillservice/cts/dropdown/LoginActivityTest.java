@@ -2429,11 +2429,11 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
          */
         // Set expectations.
         sReplier.addResponse(new CannedDataset.Builder()
-                .setField(ID_USERNAME, "dude")
+                .setField(ID_USERNAME, "dud")
                 .setField(ID_PASSWORD, "sweet")
                 .setPresentation(createPresentation("The Dude"))
                 .build());
-        mActivity.expectAutoFill("dude", "sweet");
+        mActivity.expectAutoFill("dud", "sweet");
 
         // Trigger auto-fill.
         requestFocusOnUsername();
@@ -2469,7 +2469,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         // Assert request.
         final FillRequest fillRequest2 = sReplier.getNextFillRequest();
         assertHasFlags(fillRequest2.flags, FLAG_MANUAL_REQUEST);
-        assertValue(fillRequest2.structure, ID_USERNAME, "dude");
+        assertValue(fillRequest2.structure, ID_USERNAME, "dud");
         assertTextIsSanitized(fillRequest2.structure, ID_PASSWORD);
 
         // Select it.
@@ -2490,11 +2490,11 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
          */
         // Set expectations.
         sReplier.addResponse(new CannedDataset.Builder()
-                .setField(ID_USERNAME, "dude")
+                .setField(ID_USERNAME, "dud")
                 .setField(ID_PASSWORD, "sweet")
                 .setPresentation(createPresentation("The Dude"))
                 .build());
-        mActivity.expectAutoFill("dude", "sweet");
+        mActivity.expectAutoFill("dud", "sweet");
 
         // Trigger auto-fill.
         mActivity.forceAutofillOnUsername();
@@ -2530,7 +2530,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         // Assert request.
         final FillRequest fillRequest2 = sReplier.getNextFillRequest();
         assertHasFlags(fillRequest2.flags, FLAG_MANUAL_REQUEST);
-        assertValue(fillRequest2.structure, ID_USERNAME, "dude");
+        assertValue(fillRequest2.structure, ID_USERNAME, "dud");
         assertTextIsSanitized(fillRequest2.structure, ID_PASSWORD);
 
         // Select it.
