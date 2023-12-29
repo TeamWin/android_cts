@@ -140,7 +140,7 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.assertNoDatasets();
 
         // Clear the text, then check that all suggestions are shown.
-        mActivity.onUsername((v) -> v.setText(""));
+        mUiBot.clearTextByRelativeId(ID_USERNAME);
         mUiBot.waitForIdleSync();
         mUiBot.assertDatasets("sergey", "page");
     }
@@ -174,7 +174,7 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
         mActivity.onUsername((v) -> v.setText("ser"));
         mUiBot.waitForIdleSync();
         mUiBot.assertNoDatasets();
-        mActivity.onUsername((v) -> v.setText(""));
+        mUiBot.clearTextByRelativeId(ID_USERNAME);
         mUiBot.waitForIdleSync();
         mUiBot.assertDatasets("sergey");
     }

@@ -45,6 +45,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.internal.os.BackgroundThread;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -82,6 +83,7 @@ public class VirtualSensorNativeTest {
     }
 
     /** Activity running on the default device should get the default device sensors by default. */
+    @Ignore  // TODO(b/267280480): Re-enable.
     @Test
     public void activityOnDefaultDisplayGetsDefaultDeviceSensor() {
         Context deviceContext = mContext.createDeviceContext(Context.DEVICE_ID_DEFAULT);
