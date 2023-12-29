@@ -124,18 +124,18 @@ public class FillEventHistoryTest extends FillEventHistoryCommonTestCase {
 
         sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
                 new CannedDataset.Builder()
-                        .setField(ID_USERNAME, "username1")
-                        .setField(ID_PASSWORD, "password1")
+                        .setField(ID_USERNAME, "ab1")
+                        .setField(ID_PASSWORD, "ab1")
                         .setPresentation(createPresentation("dataset1"))
                         .build())
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, "username2")
-                        .setField(ID_PASSWORD, "password2")
+                        .setField(ID_USERNAME, "ab2")
+                        .setField(ID_PASSWORD, "ab2")
                         .setPresentation(createPresentation("dataset2"))
                         .build())
                 .setFillResponseFlags(FillResponse.FLAG_TRACK_CONTEXT_COMMITED)
                 .build());
-        mActivity.expectAutoFill("username1", "password1");
+        mActivity.expectAutoFill("ab1", "ab1");
 
         // Trigger autofill on username
         mActivity.onUsername(View::requestFocus);
@@ -153,10 +153,10 @@ public class FillEventHistoryTest extends FillEventHistoryCommonTestCase {
         }
 
         // Finish the context by login in
-        mActivity.onUsername((v) -> v.setText("USERNAME"));
-        mActivity.onPassword((v) -> v.setText("USERNAME"));
+        mActivity.onUsername((v) -> v.setText("AB"));
+        mActivity.onPassword((v) -> v.setText("AB"));
 
-        final String expectedMessage = getWelcomeMessage("USERNAME");
+        final String expectedMessage = getWelcomeMessage("AB");
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
@@ -368,19 +368,19 @@ public class FillEventHistoryTest extends FillEventHistoryCommonTestCase {
         sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
                 new CannedDataset.Builder()
                         .setId("id1")
-                        .setField(ID_USERNAME, "username1")
-                        .setField(ID_PASSWORD, "password1")
+                        .setField(ID_USERNAME, "ab1")
+                        .setField(ID_PASSWORD, "ab1")
                         .setPresentation(createPresentation("dataset1"))
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setId("id2")
-                        .setField(ID_USERNAME, "username2")
-                        .setField(ID_PASSWORD, "password2")
+                        .setField(ID_USERNAME, "ab2")
+                        .setField(ID_PASSWORD, "ab2")
                         .setPresentation(createPresentation("dataset2"))
                         .build())
                 .setFillResponseFlags(FillResponse.FLAG_TRACK_CONTEXT_COMMITED)
                 .build());
-        mActivity.expectAutoFill("username1", "password1");
+        mActivity.expectAutoFill("ab1", "ab1");
 
         // Trigger autofill on username
         mActivity.onUsername(View::requestFocus);
@@ -398,10 +398,10 @@ public class FillEventHistoryTest extends FillEventHistoryCommonTestCase {
         }
 
         // Finish the context by login in
-        mActivity.onUsername((v) -> v.setText("USERNAME"));
-        mActivity.onPassword((v) -> v.setText("USERNAME"));
+        mActivity.onUsername((v) -> v.setText("AB"));
+        mActivity.onPassword((v) -> v.setText("AB"));
 
-        final String expectedMessage = getWelcomeMessage("USERNAME");
+        final String expectedMessage = getWelcomeMessage("AB");
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
@@ -612,13 +612,13 @@ public class FillEventHistoryTest extends FillEventHistoryCommonTestCase {
         sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
                 new CannedDataset.Builder()
                         .setId("id1")
-                        .setField(ID_USERNAME, "username")
-                        .setField(ID_PASSWORD, "username")
+                        .setField(ID_USERNAME, "abc")
+                        .setField(ID_PASSWORD, "abc")
                         .setPresentation(createPresentation("dataset1"))
                         .build())
                 .setFillResponseFlags(FillResponse.FLAG_TRACK_CONTEXT_COMMITED)
                 .build());
-        mActivity.expectAutoFill("username", "username");
+        mActivity.expectAutoFill("abc", "abc");
 
         // Trigger autofill on username
         mActivity.onUsername(View::requestFocus);
@@ -634,15 +634,15 @@ public class FillEventHistoryTest extends FillEventHistoryCommonTestCase {
             assertFillEventForDatasetSelected(events.get(1), "id1", UI_TYPE_MENU);
         }
 
-        // Change the fields to different values from0 datasets
-        mActivity.onUsername((v) -> v.setText("USERNAME"));
-        mActivity.onPassword((v) -> v.setText("USERNAME"));
+        // Change the fields to different values from original datasets
+        mActivity.onUsername((v) -> v.setText("ABC"));
+        mActivity.onPassword((v) -> v.setText("ABC"));
 
         // Then change back to dataset values
-        mActivity.onUsername((v) -> v.setText("username"));
-        mActivity.onPassword((v) -> v.setText("username"));
+        mActivity.onUsername((v) -> v.setText("abc"));
+        mActivity.onPassword((v) -> v.setText("abc"));
 
-        final String expectedMessage = getWelcomeMessage("username");
+        final String expectedMessage = getWelcomeMessage("abc");
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
