@@ -70,6 +70,7 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
             "DO_NOT_DOWNSCALE_TO_1080P_ON_TV",
             "ENFORCE_MINIMUM_TIME_WINDOWS",
             "FGS_BG_START_RESTRICTION_CHANGE_ID",
+            "FGS_BOOT_COMPLETED_RESTRICTIONS",
             "FGS_TYPE_DATA_SYNC_DEPRECATION_CHANGE_ID",
             "FGS_TYPE_DATA_SYNC_DISABLED_CHANGE_ID",
             "FGS_TYPE_NONE_DEPRECATION_CHANGE_ID",

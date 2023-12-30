@@ -27,6 +27,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.media.MediaRoute2Info;
 import android.media.MediaRouter2;
 import android.os.Bundle;
 import android.os.Looper;
@@ -41,6 +42,8 @@ import com.android.media.flags.Flags;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.List;
 
 /** Device-side test for {@link MediaRouter2} functionality. */
 @LargeTest
@@ -133,5 +136,13 @@ public class MediaRouter2DeviceTest {
                                 mContext.getPackageName(),
                                 mContext.getUser()))
                 .isNotNull();
+    }
+
+    @Test
+    public void getAllRoutes_returnsAtLeastOneSystemRoute() {
+        MediaRouter2 instance = MediaRouter2.getInstance(mContext, mContext.getPackageName());
+        List<MediaRoute2Info> allRoutes = instance.getAllRoutes();
+        assertThat(allRoutes).isNotEmpty();
+        assertThat(allRoutes.stream().filter(MediaRoute2Info::isSystemRoute).findAny()).isNotNull();
     }
 }
