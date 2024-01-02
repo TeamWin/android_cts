@@ -54,7 +54,8 @@ public abstract class PlayerListener implements Player.Listener {
     SWITCH_SUBTITLE_TRACK_TEST,
     CALL_NOTIFICATION_TEST,
     MESSAGE_NOTIFICATION_TEST,
-    PINCH_TO_ZOOM_TEST
+    PINCH_TO_ZOOM_TEST,
+    SPEED_CHANGE_TEST
   }
 
   public static boolean mPlaybackEnded;
