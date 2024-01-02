@@ -360,6 +360,7 @@ public class CodecTranscoderTestBase {
         if (mUseHighBitDepth) {
             encoderFormat.setInteger(MediaFormat.KEY_PROFILE,
                     Objects.requireNonNull(PROFILE_HLG_MAP.get(mMime))[0]);
+            encoderFormat.setInteger(MediaFormat.KEY_LEVEL, 1);
         }
         return encoderFormat;
     }
