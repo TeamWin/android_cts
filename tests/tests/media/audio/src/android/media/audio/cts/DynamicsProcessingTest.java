@@ -32,7 +32,6 @@ import android.media.audiofx.DynamicsProcessing.EqBand;
 import android.media.audiofx.DynamicsProcessing.Limiter;
 import android.media.audiofx.DynamicsProcessing.Mbc;
 import android.media.audiofx.DynamicsProcessing.MbcBand;
-import android.media.cts.PostProcTestBase;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.util.Log;

@@ -24,7 +24,6 @@ import android.media.MediaPlayer;
 import android.media.audio.cts.R;
 import android.media.audiofx.Visualizer;
 import android.media.audiofx.Visualizer.MeasurementPeakRms;
-import android.media.cts.PostProcTestBase;
 import android.media.cts.Preconditions;
 import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;

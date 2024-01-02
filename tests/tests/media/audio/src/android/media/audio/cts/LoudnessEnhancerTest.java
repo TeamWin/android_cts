@@ -24,7 +24,6 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.audiofx.LoudnessEnhancer;
-import android.media.cts.PostProcTestBase;
 import android.platform.test.annotations.AppModeFull;
 import java.util.UUID;
 import android.media.audiofx.Visualizer;
