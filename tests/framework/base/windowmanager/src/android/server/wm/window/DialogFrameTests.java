@@ -44,7 +44,6 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.WaitForValidActivityState;
 import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerState.WindowState;
-import android.util.Log;
 import android.view.WindowInsets;
 
 import androidx.test.rule.ActivityTestRule;
@@ -65,7 +64,6 @@ import java.util.List;
 @android.server.wm.annotation.Group2
 public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivity> {
 
-    private static final String TAG = "DialogFrameTests";
     private static final ComponentName DIALOG_FRAME_TEST_ACTIVITY =
             new ComponentName(getInstrumentation().getContext(), DialogFrameTestActivity.class);
     private Insets mContentInsets;
@@ -89,26 +87,18 @@ public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivit
 
     private WindowState getSingleWindow(final String windowName) {
         final List<WindowState> windowList = mWmState.getMatchingVisibleWindowState(windowName);
-        if (windowList.isEmpty()) {
-            final StringBuilder sb = new StringBuilder("Cannot find visible window \"")
-                    .append(windowName)
-                    .append("\". Dumping all windows:");
-            final String prefix = "\n ";
-            final List<WindowState> windows = mWmState.getWindows();
-            for (int i = windows.size() - 1; i >= 0; i--) {
-                sb.append(prefix).append(windows.get(i).toLongString());
-            }
-            Log.e(TAG, sb.toString(), new RuntimeException());
-        }
         assertThat(windowList.size(), greaterThan(0));
         return windowList.get(0);
     }
 
     @Override
     void doSingleTest(ParentChildTest t) throws Exception {
-        mWmState.computeState(WaitForValidActivityState.forWindow(DIALOG_WINDOW_NAME));
-        WindowState dialog = getSingleWindow(DIALOG_WINDOW_NAME);
-        WindowState parent = getSingleWindow(getWindowName(activityName()));
+        final String mainWindowName = getWindowName(activityName());
+        mWmState.computeState(
+                WaitForValidActivityState.forWindow(DIALOG_WINDOW_NAME),
+                WaitForValidActivityState.forWindow(mainWindowName));
+        final WindowState dialog = getSingleWindow(DIALOG_WINDOW_NAME);
+        final WindowState parent = getSingleWindow(mainWindowName);
 
         t.doTest(parent, dialog);
     }
