@@ -141,6 +141,50 @@ class BackupAndRestoreTest : CoreTestBase() {
         assertAssociationsAddedFor(targetApp, MAC_ADDRESS_A)
     }
 
+    @Test
+    fun test_applyRestoredPayload_futurePackage() {
+        // Create a new association and back up
+        testApp.associate(MAC_ADDRESS_A)
+        assertAssociationsAddedFor(testApp, MAC_ADDRESS_A)
+        val payload = getBackupPayload(userId)
+
+        // Uninstall app and assert that associations are removed
+        testApp.uninstall()
+        assertAssociationsRemovedFor(testApp)
+
+        // Assert that association isn't added for a non-existent package
+        applyRestoredPayload(payload, userId)
+        assertAssociationsRemovedFor(testApp)
+
+        // Re-install package and assert that association is automatically restored
+        testApp.install()
+        assertAssociationsAddedFor(testApp, MAC_ADDRESS_A)
+    }
+
+    @Test
+    fun test_applyRestoredPayload_grantsRoleToFuturePackage() {
+        // Create a new association and back up
+        testApp.associate(MAC_ADDRESS_A, DEVICE_PROFILE_WATCH)
+        assertAssociationsAddedFor(testApp, MAC_ADDRESS_A)
+        assertRoleGrantedToApp(testApp, DEVICE_PROFILE_WATCH)
+        val payload = getBackupPayload(userId)
+
+        // Uninstall app and assert that associations are removed
+        testApp.uninstall()
+        assertAssociationsRemovedFor(testApp)
+        assertRoleRevokedFromApp(testApp, DEVICE_PROFILE_WATCH)
+
+        // Assert that association isn't added for a non-existent package
+        applyRestoredPayload(payload, userId)
+        assertAssociationsRemovedFor(testApp)
+        assertRoleRevokedFromApp(testApp, DEVICE_PROFILE_WATCH)
+
+        // Re-install package and assert that association is automatically restored
+        testApp.install()
+        assertAssociationsAddedFor(testApp, MAC_ADDRESS_A)
+        assertRoleGrantedToApp(testApp, DEVICE_PROFILE_WATCH)
+    }
+
     private fun getBackupPayload(userId: Int) =
             runShellCommand("cmd companiondevice get-backup-payload $userId")
 
