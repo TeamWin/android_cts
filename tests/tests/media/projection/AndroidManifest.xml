@@ -32,9 +32,6 @@
     <application
          android:requestLegacyExternalStorage="true"
          android:largeHeap="true">
-        <uses-library android:name="android.test.runner"/>
-        <uses-library android:name="org.apache.http.legacy"
-             android:required="false"/>
         <activity android:name="android.media.projection.cts.MediaProjectionCustomIntentActivity"
                   android:label="MediaProjectionActivity"
                   android:screenOrientation="locked"/>
