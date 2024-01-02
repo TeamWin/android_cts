@@ -29,6 +29,7 @@ import android.app.appsearch.GenericDocument;
 import android.app.appsearch.GetByDocumentIdRequest;
 import android.app.appsearch.GetSchemaResponse;
 import android.app.appsearch.GlobalSearchSessionShim;
+import android.app.appsearch.PackageIdentifier;
 import android.app.appsearch.PutDocumentsRequest;
 import android.app.appsearch.SearchResultsShim;
 import android.app.appsearch.SearchSpec;
@@ -278,6 +279,65 @@ public class AppSearchTestService extends Service {
             } catch (Exception e) {
                 Log.e(TAG, "Failed to index " + (globallySearchable ? "" : "non-")
                         + "globally searchable action document.", e);
+            }
+            return false;
+        }
+
+        @Override
+        public boolean setUpPubliclyVisibleDocuments(String targetPackageNameA,
+                byte[] targetPackageCertA, String targetPackageNameB, byte[] targetPackageCertB) {
+            // We need two schemas, with two different target packages. This way we can test public
+            // visibility.
+
+            try {
+                AppSearchSessionShim db = AppSearchSessionShimImpl.createSearchSessionAsync(
+                                AppSearchTestService.this,
+                                new AppSearchManager.SearchContext.Builder("database").build(),
+                                Executors.newCachedThreadPool())
+                        .get();
+
+                String schemaNameA = targetPackageNameA + "Schema";
+                String schemaNameB = targetPackageNameB + "Schema";
+
+                AppSearchSchema schemaA = new AppSearchSchema.Builder(schemaNameA)
+                        .addProperty(new StringPropertyConfig.Builder("searchable")
+                                .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                                .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                .setIndexingType(StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                .build()).build();
+
+                AppSearchSchema schemaB = new AppSearchSchema.Builder(schemaNameB)
+                        .addProperty(new StringPropertyConfig.Builder("searchable")
+                                .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                                .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                .setIndexingType(StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                .build()).build();
+
+                // Index schemas in the cts package
+                db.setSchemaAsync(new SetSchemaRequest.Builder()
+                        .addSchemas(schemaA, schemaB)
+                        .setForceOverride(true)
+                        .setPubliclyVisibleSchema(schemaNameA,
+                                new PackageIdentifier(targetPackageNameA, targetPackageCertA))
+                        .setPubliclyVisibleSchema(schemaNameB,
+                                new PackageIdentifier(targetPackageNameB, targetPackageCertB))
+                        .build()).get();
+
+                GenericDocument docA =
+                        new GenericDocument.Builder<>("namespace", "id1", schemaNameA)
+                                .setCreationTimestampMillis(0L)
+                                .setPropertyString("searchable",
+                                        "pineapple from " + targetPackageNameA).build();
+                GenericDocument docB =
+                        new GenericDocument.Builder<>("namespace", "id2", schemaNameB)
+                                .setCreationTimestampMillis(0L)
+                                .setPropertyString("searchable",
+                                        "pineapple from " + targetPackageNameB).build();
+                checkIsBatchResultSuccess(db.putAsync(new PutDocumentsRequest.Builder()
+                        .addGenericDocuments(docA, docB).build()));
+                return true;
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to index publicly searchable document.", e);
             }
             return false;
         }

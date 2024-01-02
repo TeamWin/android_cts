@@ -35,5 +35,8 @@ interface ICommandReceiver {
     boolean indexAction(in String databaseName, in String namespace, in String id,
         in String entityId, in boolean globallySearchable);
 
+    boolean setUpPubliclyVisibleDocuments(in String targetPackageNameA,
+        in byte[] targetPackageCertA, in String targetPackageNameB, in byte[] targetPackageCertB);
+
     boolean clearData(in String databaseName);
 }
