@@ -85,8 +85,8 @@ public class PlayerListener implements Player.Listener {
   private boolean mSeekDone;
   private long mSendMessagePosition;
   private boolean mOrientationChangeRequested;
-  private int mStartOrientation;
-  private int mCurrentOrientation;
+  private int mPreviousOrientation;
+  private int mOrientationIndex;
   private boolean mResolutionChangeRequested;
   private int mCurrentResolutionWidth;
   private int mCurrentResolutionHeight;
@@ -298,8 +298,9 @@ public class PlayerListener implements Player.Listener {
   public void setActivity(MainActivity activity) {
     this.mActivity = activity;
     if (isOrientationTest()) {
-      mActivity.setRequestedOrientation(ORIENTATIONS[0] /* SCREEN_ORIENTATION_PORTRAIT */);
-      mStartOrientation = getDeviceOrientation(mActivity);
+      mOrientationIndex = 0;
+      mActivity.setRequestedOrientation(
+          ORIENTATIONS[mOrientationIndex] /* SCREEN_ORIENTATION_PORTRAIT */);
     }
   }
 
@@ -355,8 +356,9 @@ public class PlayerListener implements Player.Listener {
    * Change the Orientation of the device.
    */
   private void changeOrientation() {
-    mCurrentOrientation = (mCurrentOrientation + 1) % ORIENTATIONS.length;
-    mActivity.setRequestedOrientation(ORIENTATIONS[mCurrentOrientation]);
+    mPreviousOrientation = ORIENTATIONS[mOrientationIndex];
+    mOrientationIndex = (mOrientationIndex + 1) % ORIENTATIONS.length;
+    mActivity.setRequestedOrientation(ORIENTATIONS[mOrientationIndex]);
     mOrientationChangeRequested = true;
   }
 
@@ -444,6 +446,18 @@ public class PlayerListener implements Player.Listener {
   }
 
   /**
+   * Verify Orientation change.
+   */
+  private void verifyOrientationChange() {
+    int configuredOrientation = ORIENTATIONS[mOrientationIndex];
+    int currentDeviceOrientation = getDeviceOrientation(mActivity);
+    assertEquals(configuredOrientation, currentDeviceOrientation);
+    assertNotEquals(mPreviousOrientation, currentDeviceOrientation);
+    mOrientationChangeRequested = false;
+    mPreviousOrientation = currentDeviceOrientation;
+  }
+
+  /**
    * Called when player states changed.
    *
    * @param player The {@link Player} whose state changed. Use the getters to obtain the latest
@@ -458,13 +472,6 @@ public class PlayerListener implements Player.Listener {
         if (mSeekDone) {
           mExpectedTotalTime += (mSendMessagePosition - player.getCurrentPosition());
           mSeekDone = false;
-        } else if (mOrientationChangeRequested) {
-          int configuredOrientation = ORIENTATIONS[mCurrentOrientation];
-          int currentDeviceOrientation = getDeviceOrientation(mActivity);
-          assertEquals(configuredOrientation, currentDeviceOrientation);
-          assertNotEquals(mStartOrientation, currentDeviceOrientation);
-          mOrientationChangeRequested = false;
-          mStartOrientation = currentDeviceOrientation;
         } else if (mResolutionChangeRequested) {
           int configuredResolutionWidth = mVideoFormatList.get(mCurrentTrackIndex).width;
           int configuredResolutionHeight = mVideoFormatList.get(mCurrentTrackIndex).height;
@@ -513,6 +520,8 @@ public class PlayerListener implements Player.Listener {
         assertFalse(isFormatSimilar(mStartTrackFormat, mCurrentTrackFormat));
         mTrackChangeRequested = false;
         mStartTrackFormat = mCurrentTrackFormat;
+      } else if (mOrientationChangeRequested && player.getPlaybackState() == Player.STATE_ENDED) {
+        verifyOrientationChange();
       }
       synchronized (LISTENER_LOCK) {
         if (player.getPlaybackState() == Player.STATE_ENDED) {
@@ -537,6 +546,9 @@ public class PlayerListener implements Player.Listener {
     }
     if (events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION)) {
       if (isSeekTest() || isOrientationTest()) {
+        if (mOrientationChangeRequested) {
+          verifyOrientationChange();
+        }
         mActivity.mPlayer.createMessage((messageType, payload) -> {
               if (isSeekTest()) {
                 seek();
