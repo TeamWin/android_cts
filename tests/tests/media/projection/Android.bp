@@ -34,29 +34,12 @@ android_test {
         "testng",
         "truth",
     ],
-    aaptflags: [
-        "--auto-add-overlay",
-
-        // Do not compress these files:
-        "-0 .vp9",
-        "-0 .ts",
-        "-0 .heic",
-        "-0 .trp",
-        "-0 .ota",
-        "-0 .mxmf",
-    ],
     srcs: [
         "src/**/*.java",
-        "aidl/**/*.aidl",
     ],
     // This test uses private APIs
     platform_apis: true,
     jni_uses_sdk_apis: true,
-    libs: [
-        "org.apache.http.legacy",
-        "android.test.base",
-        "android.test.runner",
-    ],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
