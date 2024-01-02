@@ -14,11 +14,15 @@ import static org.mockito.Mockito.doNothing;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.role.RoleManager;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.nfc.*;
+import android.nfc.cardemulation.CardEmulation;
+import android.nfc.cardemulation.HostApduService;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.platform.test.annotations.RequiresFlagsDisabled;
@@ -421,6 +425,72 @@ public class NfcAdapterTest {
         when(mService.isWlcEnabled()).thenReturn(true);
         boolean result = adapter.isWlcEnabled();
         Assert.assertTrue(result);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP)
+    public void testTypeAPollingLoopToDefault() {
+        try {
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().adoptShellPermissionIdentity(WRITE_SECURE_SETTINGS);
+            Settings.Secure.putString(mContext.getContentResolver(),
+                    "nfc_payment_default_component",
+                    "android.nfc.cts/android.nfc.cts.CtsMyHostApduService");
+            Bundle frame = new Bundle();
+            frame.putChar(HostApduService.POLLING_LOOP_TYPE_KEY,
+                                HostApduService.POLLING_LOOP_TYPE_A);
+            notifyPollingLoopAndWait(frame, CtsMyHostApduService.class.getName());
+        } finally {
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP)
+    public void testTypeAPollingLoopToForeground() {
+        Activity activity = createAndResumeActivity();
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
+        Assert.assertTrue(cardEmulation.setPreferredService(activity,
+                    new ComponentName(mContext,
+                                      CtsMyHostApduService.class)));
+        Bundle frame = new Bundle();
+        frame.putChar(HostApduService.POLLING_LOOP_TYPE_KEY,
+                            HostApduService.POLLING_LOOP_TYPE_A);
+        notifyPollingLoopAndWait(frame, CtsMyHostApduService.class.getName());
+    }
+
+    private void notifyPollingLoopAndWait(Bundle frame, String serviceName) {
+        BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Assert.assertEquals(serviceName,
+                        intent.getStringExtra(CtsMyHostApduService.SERVICE_NAME_EXTRA));
+                for (String key: frame.keySet()) {
+                    Assert.assertEquals(frame.getChar(key),
+                            intent.getBundleExtra(CtsMyHostApduService.POLLING_FRAME_EXTRA)
+                            .getChar(key));
+                }
+                synchronized (this) {
+                    notifyAll();
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(CtsMyHostApduService.POLLING_LOOP_RECEIVED_ACTION);
+        mContext.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        adapter.notifyPollingLoop(frame);
+
+        synchronized (receiver) {
+            try {
+                receiver.wait();
+            } catch (InterruptedException ie) {
+                Assert.assertNotNull(ie);
+            }
+        }
+
     }
 
     private class CtsReaderCallback implements NfcAdapter.ReaderCallback {
