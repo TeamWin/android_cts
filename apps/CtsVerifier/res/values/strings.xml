@@ -1387,6 +1387,7 @@
     <string name="nfc_polling_loop_b_emulator">Polling Loop B (Emulator)</string>
     <string name="nfc_polling_loop_b_reader">Polling Loop B (Reader)</string>
     <string name="nfc_polling_loop_ab_emulator">Polling Loop A and B (Emulator)</string>
+    <string name="nfc_polling_loop_custom_emulator">Polling Loop Custom (Emulator)</string>
     <string name="nfc_polling_loop_ab_reader">Polling Loop A and B (Reader)</string>
     <string name="nfc_polling_loop_a_emulator_help">The emulator will wait until it sees 3 NFC-A polling frames before responding. If it sees another type of frame, it will fail.</string>
     <string name="nfc_polling_loop_a_reader_help">The reader will poll for NFC-A.</string>
@@ -1394,6 +1395,7 @@
     <string name="nfc_polling_loop_b_reader_help">The reader will poll for NFC-B.</string>
     <string name="nfc_polling_loop_ab_emulator_help">The emulator will wait until it sees 3 NFC-A polling frames and 3 NFC-B polling frames before responding. If it sees another type of frame, it will fail.</string>
     <string name="nfc_polling_loop_ab_reader_help">The reader will poll for NFC-A and NFC-B.</string>
+    <string name="nfc_polling_loop_custom_emulator_help">Please connect the PN532 to your linux machine and follow the instructions. The emulator will wait until it sees the specified custom polling frame.</string>
 
     <string name="nfc_hce_other_prefix_aids_emulator">Other prefix AIDs (Emulator)</string>
     <string name="nfc_hce_other_prefix_aids_reader">Other prefix AIDs (Reader)</string>
