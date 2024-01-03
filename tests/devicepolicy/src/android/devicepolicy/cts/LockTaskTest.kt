@@ -38,6 +38,7 @@ import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.FEATURE_TELEPHONY
+import android.content.pm.PackageManager.FEATURE_TELEPHONY_CALLING
 import android.devicepolicy.cts.utils.PolicyEngineUtils
 import android.devicepolicy.cts.utils.PolicySetResultUtils
 import android.os.Bundle
@@ -1060,7 +1061,7 @@ class LockTaskTest {
     }
 
     @PolicyAppliesTest(policy = [LockTaskFinance::class])
-    @RequireFeature(FEATURE_TELEPHONY)
+    @RequireFeature(FEATURE_TELEPHONY_CALLING)
     @Postsubmit(reason = "b/181993922 automatically marked flaky") // Tests that the default dialer doesn't crash or otherwise misbehave in lock task mode
     fun launchDefaultDialerInLockTaskMode_launches() {
         val telecomManager =

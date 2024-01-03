@@ -95,7 +95,8 @@ public class InputJsonParser {
             return new JSONArray(data);
         } catch (JSONException e) {
             throw new RuntimeException(
-                    "Could not parse resource " + resourceId + ", received: " + data);
+                    "Could not parse resource " + resourceId + ", received: " + data,
+                    e);
         }
     }
 
