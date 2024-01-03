@@ -148,4 +148,9 @@ public class EventCapturingMotionEventListener
     public MotionEvent peek() {
         return mEvents.peek();
     }
+
+    /** Clears all received motions events. */
+    public void clear() {
+        mEvents.clear();
+    }
 }

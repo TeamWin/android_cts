@@ -2090,7 +2090,15 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
         final int midY = button.getHeight() / 2;
         button.getLocationOnScreen(buttonLocation);
         PointF tapLocation = new PointF(buttonLocation[0] + midX, buttonLocation[1] + midY);
-        dispatch(service, click(tapLocation));
+        try {
+            dispatch(service, click(tapLocation));
+        } catch (RuntimeException e) {
+            // The input filter could have been  rebuilt causing this gesture to cancel.
+            // Reset state and try again.
+            eventCount.set(0);
+            listener.clear();
+            dispatch(service, click(tapLocation));
+        }
 
         // We should find 2 events.
         TestUtils.waitOn(
@@ -2104,7 +2112,16 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
         // Stop listening to events for this source, then inject 1 more event to the input filter.
         service.setMotionEventSources(0 /* no sources */);
         assertThat(service.getServiceInfo().getMotionEventSources()).isEqualTo(0);
-        dispatch(service, click(tapLocation));
+        try {
+            dispatch(service, click(tapLocation));
+        } catch (RuntimeException e) {
+            // The input filter could have been  rebuilt causing this gesture to cancel.
+            // Reset state and try again.
+            eventCount.set(2);
+            listener.clear();
+            dispatch(service, click(tapLocation));
+        }
+
         // Assert we only received the original 2.
         try {
             TestUtils.waitOn(
