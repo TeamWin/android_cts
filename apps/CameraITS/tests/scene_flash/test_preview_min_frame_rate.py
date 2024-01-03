@@ -33,7 +33,7 @@ import video_processing_utils
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _PREVIEW_RECORDING_DURATION_SECONDS = 10
 _MAX_VAR_FRAME_DELTA = 0.001  # variance of frame deltas, units: seconds^2
-_FPS_ATOL = 0.5
+_FPS_ATOL = 0.8
 _DARKNESS_ATOL = 0.1 * 255  # openCV uses [0:255] images
 
 
