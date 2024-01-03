@@ -22,8 +22,12 @@ import static android.view.View.MeasureSpec.makeMeasureSpec;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.flags.Flags;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -48,6 +52,9 @@ public class View_ForceLayout {
 
     @Rule
     public final Expect mExpect = Expect.create();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setup() {
@@ -165,6 +172,22 @@ public class View_ForceLayout {
         mExpect.that(mChild2.hasCalledOnLayout()).isTrue();
         mExpect.that(mParent.hasCalledOnMeasure()).isTrue();
         mExpect.that(mParent.hasCalledOnLayout()).isTrue();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_USE_MEASURE_CACHE_DURING_FORCE_LAYOUT)
+    public void measure_optimizationFlagOn_measuredTwiceWhileForceLayout_childMeasuredOnce() {
+        mParent.requestLayout();
+
+        mParent.measure(makeMeasureSpec(100, EXACTLY), makeMeasureSpec(100, EXACTLY));
+        assertThat(mChild1.hasCalledOnMeasure()).isTrue();
+        assertThat(mParent.hasCalledOnMeasure()).isTrue();
+        mChild1.reset();
+        mParent.reset();
+        mParent.measure(makeMeasureSpec(100, EXACTLY), makeMeasureSpec(100, EXACTLY));
+
+        mExpect.that(mChild1.hasCalledOnMeasure()).isFalse();
+        mExpect.that(mParent.hasCalledOnMeasure()).isFalse();
     }
 
     private void measureAndLayoutForTest(View view, int width, int height) {
