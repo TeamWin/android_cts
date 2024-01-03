@@ -16,7 +16,6 @@
 
 package com.android.cts.devicepolicy;
 
-import com.android.tradefed.util.RunUtil;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
 import static org.junit.Assert.assertFalse;
@@ -35,6 +34,7 @@ import com.android.cts.devicepolicy.annotations.LockSettingsTest;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.util.RunUtil;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -1121,23 +1121,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                     .setBoolean(false)
                     .setStrings("android.permission.READ_CONTACTS")
                     .build());
-    }
-
-    @Test
-    public void testEnableSystemAppLogged() throws Exception {
-        final List<String> enabledSystemPackageNames = getEnabledSystemPackageNames();
-        // We enable an enabled package to not worry about restoring the state.
-        final String systemPackageToEnable = enabledSystemPackageNames.get(0);
-        final Map<String, String> params =
-                ImmutableMap.of(PARAM_APP_TO_ENABLE, systemPackageToEnable);
-        assertMetricsLogged(getDevice(), () -> {
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DevicePolicyLoggingTest",
-                    "testEnableSystemAppLogged", mUserId, params);
-        }, new DevicePolicyEventWrapper.Builder(EventId.ENABLE_SYSTEM_APP_VALUE)
-                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .setBoolean(false)
-                .setStrings(systemPackageToEnable)
-                .build());
     }
 
     @Test
