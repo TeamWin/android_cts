@@ -55,12 +55,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public abstract class Step<E> {
 
-    private static final TestLifecycleListener sLifecycleListener = new TestLifecycleListener() {
-        @Override
-        public void testFinished(String testName) {
-            sForceManual.set(false);
-        }
-    };
+    private static final TestLifecycleListener sLifecycleListener =
+            new TestLifecycleListener() {
+                @Override
+                public void testFinished(String testName) {
+                    sForceManual.set(false);
+                }
+            };
 
     private static final String LOG_TAG = "Interactive.Step";
 
@@ -71,11 +72,13 @@ public abstract class Step<E> {
     // We timeout 10 seconds before the infra would timeout
     private static final Duration MAX_STEP_DURATION =
             Duration.ofMillis(
-                    Long.parseLong(TestApis.instrumentation().arguments().getString(
-                            "timeout_msec", "600000")) - 10000);
+                    Long.parseLong(
+                                    TestApis.instrumentation()
+                                            .arguments()
+                                            .getString("timeout_msec", "600000"))
+                            - 10000);
 
-    private static final Automator sAutomator =
-            new Automator(AUTOMATION_FILE);
+    private static final Automator sAutomator = new Automator(AUTOMATION_FILE);
 
     private View mInstructionView;
 
@@ -90,8 +93,8 @@ public abstract class Step<E> {
     /**
      * Executes a step.
      *
-     * <p>This will first try to execute the step automatically, falling back to manual
-     * interaction if that fails.
+     * <p>This will first try to execute the step automatically, falling back to manual interaction
+     * if that fails.
      */
     public static <E> E execute(Class<? extends Step<E>> stepClass) throws Exception {
         Step<E> step;
@@ -107,10 +110,10 @@ public abstract class Step<E> {
         }
 
         if (!sForceManual.get()
-                && TestApis.instrumentation().arguments().getBoolean(
-                        "ENABLE_AUTOMATION", true)) {
+                && TestApis.instrumentation().arguments().getBoolean("ENABLE_AUTOMATION", true)) {
             if (sAutomator.canAutomate(step)) {
-                AutomatingStep automatingStep = new AutomatingStep("Automating " + stepClass.getCanonicalName());
+                AutomatingStep automatingStep =
+                        new AutomatingStep("Automating " + stepClass.getCanonicalName());
                 try {
                     automatingStep.interact();
 
@@ -119,7 +122,8 @@ public abstract class Step<E> {
                     // If it reaches this point then it has passed
                     Log.i(LOG_TAG, "Succeeded with automatic resolution of " + step);
 
-                    boolean stepIsCacheable = stepClass.getAnnotationsByType(CacheableStep.class).length > 0;
+                    boolean stepIsCacheable =
+                            stepClass.getAnnotationsByType(CacheableStep.class).length > 0;
                     if (stepIsCacheable) {
                         sStepCache.put(stepClass, returnValue);
                     }
@@ -127,24 +131,28 @@ public abstract class Step<E> {
                 } catch (Exception t) {
                     Log.e(LOG_TAG, "Error attempting automation of " + step, t);
 
-                    if (TestApis.instrumentation().arguments().getBoolean(
-                            "ENABLE_MANUAL", false)) {
+                    if (TestApis.instrumentation().arguments().getBoolean("ENABLE_MANUAL", false)) {
                         AutomatingFailedStep automatingFailedStep =
-                                new AutomatingFailedStep("Automation "
-                                        + stepClass.getCanonicalName()
-                                        + " Failed due to " + t.toString());
+                                new AutomatingFailedStep(
+                                        "Automation "
+                                                + stepClass.getCanonicalName()
+                                                + " Failed due to "
+                                                + t.toString());
                         automatingFailedStep.interact();
 
-                        Integer value = Poll.forValue("value", automatingFailedStep::getValue)
-                                .toMeet(Optional::isPresent)
-                                .terminalValue((b) -> step.hasFailed())
-                                .errorOnFail("Expected value from step. No value provided or step failed.")
-                                .timeout(MAX_STEP_DURATION)
-                                .await()
-                                .get();
+                        Integer value =
+                                Poll.forValue("value", automatingFailedStep::getValue)
+                                        .toMeet(Optional::isPresent)
+                                        .terminalValue((b) -> step.hasFailed())
+                                        .errorOnFail(
+                                                "Expected value from step. No value provided or"
+                                                    + " step failed.")
+                                        .timeout(MAX_STEP_DURATION)
+                                        .await()
+                                        .get();
 
                         if (value == AutomatingFailedStep.FAIL) {
-                            throw(t);
+                            throw (t);
                         } else if (value == AutomatingFailedStep.CONTINUE_MANUALLY) {
                             // Do nothing - we will fall through to the manual resolution
                         } else if (value == AutomatingFailedStep.RETRY) {
@@ -158,7 +166,7 @@ public abstract class Step<E> {
                                     "Restarting manually after automatic failure");
                         }
                     } else {
-                        throw(t);
+                        throw (t);
                     }
                 } finally {
                     automatingStep.close();
@@ -168,17 +176,17 @@ public abstract class Step<E> {
             }
         }
 
-        if (TestApis.instrumentation().arguments().getBoolean(
-                "ENABLE_MANUAL", false)) {
+        if (TestApis.instrumentation().arguments().getBoolean("ENABLE_MANUAL", false)) {
             step.interact();
 
             // Wait until we've reached a valid ending point
             try {
-                Optional<E> valueOptional = Poll.forValue("value", step::getValue)
-                        .toMeet(Optional::isPresent)
-                        .terminalValue((b) -> step.hasFailed())
-                        .timeout(MAX_STEP_DURATION)
-                        .await();
+                Optional<E> valueOptional =
+                        Poll.forValue("value", step::getValue)
+                                .toMeet(Optional::isPresent)
+                                .terminalValue((b) -> step.hasFailed())
+                                .timeout(MAX_STEP_DURATION)
+                                .await();
 
                 if (step.hasFailed()) {
                     throw new StepFailedException(stepClass);
@@ -190,14 +198,16 @@ public abstract class Step<E> {
                 E value = valueOptional.get();
 
                 // After the test has been marked passed, we validate ourselves
-                E returnValue = Poll.forValue("validated", () -> step.validate(value))
-                        .toMeet(Optional::isPresent)
-                        .errorOnFail("Step did not pass validation.")
-                        .timeout(MAX_STEP_DURATION)
-                        .await()
-                        .get();
+                E returnValue =
+                        Poll.forValue("validated", () -> step.validate(value))
+                                .toMeet(Optional::isPresent)
+                                .errorOnFail("Step did not pass validation.")
+                                .timeout(MAX_STEP_DURATION)
+                                .await()
+                                .get();
 
-                boolean stepIsCacheable = stepClass.getAnnotationsByType(CacheableStep.class).length > 0;
+                boolean stepIsCacheable =
+                        stepClass.getAnnotationsByType(CacheableStep.class).length > 0;
                 if (stepIsCacheable) {
                     sStepCache.put(stepClass, returnValue);
                 }
@@ -214,11 +224,10 @@ public abstract class Step<E> {
         try {
             pass((E) Nothing.NOTHING);
         } catch (ClassCastException e) {
-            throw new IllegalStateException("You cannot call pass() for a step which requires a"
-                    + " return value. If no return value is required, the step should use Nothing"
-                    + " (not Void)");
+            throw new IllegalStateException(
+                    "You cannot call pass() for a step which requires a return value. If no return"
+                        + " value is required, the step should use Nothing (not Void)");
         }
-
     }
 
     protected final void pass(E value) {
@@ -231,23 +240,17 @@ public abstract class Step<E> {
         close();
     }
 
-    /**
-     * Returns present if the manual step has concluded successfully.
-     */
+    /** Returns present if the manual step has concluded successfully. */
     public Optional<E> getValue() {
         return mValue;
     }
 
-    /**
-     * Returns true if the manual step has failed.
-     */
+    /** Returns true if the manual step has failed. */
     public boolean hasFailed() {
         return mFailed;
     }
 
-    /**
-     * Adds a button to the interaction prompt.
-     */
+    /** Adds a button to the interaction prompt. */
     protected void addButton(String title, Runnable onClick) {
         // Push to UI thread to avoid animation issues when adding the button
         new Handler(Looper.getMainLooper()).post(() -> {
@@ -261,8 +264,8 @@ public abstract class Step<E> {
     }
 
     /**
-     * Adds small button with a single up/down arrow, used for moving the text box to the
-     * bottom of the screen in case it covers some critical area of the app
+     * Adds small button with a single up/down arrow, used for moving the text box to the bottom of
+     * the screen in case it covers some critical area of the app
      */
     protected void addSwapButton() {
         // Push to UI thread to avoid animation issues when adding the button
@@ -291,38 +294,48 @@ public abstract class Step<E> {
      * <p>This should be called before any other methods on this class.
      */
     protected void show(String instruction) {
-        mInstructionView = LayoutInflater.from(TestApis.context().instrumentationContext())
-                .inflate(R.layout.instruction, null);
+        mInstructionView =
+                LayoutInflater.from(TestApis.context().instrumentationContext())
+                        .inflate(R.layout.instruction, null);
 
         TextView text = mInstructionView.findViewById(R.id.text);
         text.setText(instruction);
 
-        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.TRANSLUCENT);
+        WindowManager.LayoutParams params =
+                new WindowManager.LayoutParams(
+                        WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.WRAP_CONTENT,
+                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                        PixelFormat.TRANSLUCENT);
 
         params.gravity = Gravity.TOP; // TMP
         params.x = 0;
         params.y = 0;
 
-        TestApis.context().instrumentationContext().getMainExecutor().execute(() -> {
-            try (PermissionContext p = TestApis.permissions().withPermission(
-                    SYSTEM_ALERT_WINDOW, SYSTEM_APPLICATION_OVERLAY, INTERNAL_SYSTEM_WINDOW)) {
-                params.setSystemApplicationOverlay(true);
-                params.privateFlags = WindowManager.LayoutParams.SYSTEM_FLAG_SHOW_FOR_ALL_USERS;
-                sWindowManager.addView(mInstructionView, params);
-            }
-        });
+        TestApis.context()
+                .instrumentationContext()
+                .getMainExecutor()
+                .execute(
+                        () -> {
+                            try (PermissionContext p =
+                                    TestApis.permissions()
+                                            .withPermission(
+                                                    SYSTEM_ALERT_WINDOW,
+                                                    SYSTEM_APPLICATION_OVERLAY,
+                                                    INTERNAL_SYSTEM_WINDOW)) {
+                                params.setSystemApplicationOverlay(true);
+                                params.privateFlags =
+                                        WindowManager.LayoutParams.SYSTEM_FLAG_SHOW_FOR_ALL_USERS;
+                                sWindowManager.addView(mInstructionView, params);
+                            }
+                        });
     }
 
-    /**
-     * Swaps the prompt from the top to the bottom of the user screen
-     */
+    /** Swaps the prompt from the top to the bottom of the user screen */
     protected void swap() {
-        WindowManager.LayoutParams params = (WindowManager.LayoutParams) mInstructionView.getLayoutParams();
+        WindowManager.LayoutParams params =
+                (WindowManager.LayoutParams) mInstructionView.getLayoutParams();
         if (params.gravity == Gravity.TOP) {
             params.gravity = Gravity.BOTTOM;
         } else {
@@ -332,22 +345,27 @@ public abstract class Step<E> {
     }
 
     protected void close() {
+        if (TestApis.instrumentation().arguments().getBoolean("TAKE_SCREENSHOT", false)) {
+            ScreenshotUtil.captureScreenshot(getClass().getCanonicalName());
+        }
         if (mInstructionView != null) {
-            TestApis.context().instrumentationContext().getMainExecutor().execute(() -> {
-                try {
-                    sWindowManager.removeViewImmediate(mInstructionView);
-                    mInstructionView = null;
-                } catch (IllegalArgumentException e) {
-                    // This can happen if the view is no longer attached
-                    Log.i(LOG_TAG, "Error removing instruction view", e);
-                }
-            });
+            TestApis.context()
+                    .instrumentationContext()
+                    .getMainExecutor()
+                    .execute(
+                            () -> {
+                                try {
+                                    sWindowManager.removeViewImmediate(mInstructionView);
+                                    mInstructionView = null;
+                                } catch (IllegalArgumentException e) {
+                                    // This can happen if the view is no longer attached
+                                    Log.i(LOG_TAG, "Error removing instruction view", e);
+                                }
+                            });
         }
     }
 
-    /**
-     * Executes the manual step.
-     */
+    /** Executes the manual step. */
     public abstract void interact();
 
     /**
