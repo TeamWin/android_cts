@@ -23,6 +23,7 @@ import android.text.format.DateUtils;
 import androidx.annotation.NonNull;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject;
+import androidx.test.uiautomator.UiObjectNotFoundException;
 import androidx.test.uiautomator.UiScrollable;
 import androidx.test.uiautomator.UiSelector;
 
@@ -180,5 +181,23 @@ public class PhotoPickerUiUtils {
     public static void clickAndWait(UiDevice uiDevice, UiObject uiObject) throws Exception {
         uiObject.click();
         uiDevice.waitForIdle();
+    }
+
+    /**
+     * Verifies whether the selected tab is the one with the provided title
+     */
+    public static boolean isSelectedTabTitle(
+            @NonNull String tabTitle, @NonNull String tabResourceId, UiDevice device)
+            throws UiObjectNotFoundException {
+        final UiObject tabLayout = findObject(tabResourceId, device);
+        final UiObject tab = tabLayout.getChild(new UiSelector().textContains(tabTitle));
+        return tab.isSelected();
+    }
+
+    /**
+     * Returns the UI object corresponding to the specified resourceId
+     */
+    public static UiObject findObject(@NonNull String resourceId, UiDevice device) {
+        return device.findObject(new UiSelector().resourceIdMatches(resourceId));
     }
 }
