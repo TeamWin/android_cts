@@ -146,7 +146,7 @@ class OutputManager {
         mSharedErrorLogs->clear();
     }
     bool equalsPtsList(OutputManager* that);
-    bool equalsByteOutput(OutputManager* that);
+    bool equalsDequeuedOutput(OutputManager* that);
     bool equals(OutputManager* that);
     float getRmsError(uint8_t* refData, int length);
     std::string getErrorMsg() { return mErrorLogs + *mSharedErrorLogs; }
