@@ -7169,11 +7169,15 @@ Follow the instructions on the screen to measure the frequency response for the 
         keyboards, or styluses that are connected through USB or Bluetooth.\n\n
         Found %1$d built-in display(s). Are you ready to proceed?
     </string>
+    <string name="usi_test_verify_display_usi_support">Does the display \"%1$s\" support styluses
+        that use the USI protocol? \n\n
+        For more information about the Universal Stylus Initiative (USI) protocol, see:
+        http://universalstylus.org
+    </string>
     <string name="usi_test_verify_display_usi_version">The display \"%1$s\" reports its USI version
         as %2$s.\n\n
         Is this correct?
     </string>
-    <string name="usi_version_not_supported">not supported</string>
     <string name="usi_test_passed">Test Passed\n\n
         Press Pass.
     </string>
@@ -7181,7 +7185,12 @@ Follow the instructions on the screen to measure the frequency response for the 
         Reason: %1$s
     </string>
     <string name="usi_fail_reason_not_ready">Not ready to check for USI stylus versions.</string>
-    <string name="usi_fail_reason_incorrect_version">The USI version was incorrectly reported.
+    <string name="usi_fail_reason_version_not_found">The USI version for the display was not found.
+    </string>
+    <string name="usi_fail_reason_found_unexpected_version">The display reports support for a valid
+        USI version, even though it does not support USI.
+    </string>
+    <string name="usi_fail_reason_incorrect_version">The reported USI version is incorrect.
     </string>
 
     <!-- Strings for PreferredMixerAttributesTestActivity -->
