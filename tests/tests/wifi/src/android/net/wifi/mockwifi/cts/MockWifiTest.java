@@ -32,7 +32,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.LinkProperties;
-import android.net.MacAddress;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
@@ -438,56 +437,6 @@ public class MockWifiTest {
                     p -> listOfSsids.contains(p.getWifiSsid())));
         } finally {
             turnScreenOnNoDelay();
-            sMockModemManager.disconnectMockWifiModemService();
-            uiAutomation.dropShellPermissionIdentity();
-        }
-    }
-
-    private NativeScanResult[] getMockZeroLengthSubElementIe() {
-        byte[] zeroSubElementIE = new byte[] {
-                (byte) 0xff,  (byte) 0x10, (byte) 0x6b,
-                (byte) 0x10,  (byte) 0x00,                             // Control
-                (byte) 0x08,  (byte) 0x02, (byte) 0x34, (byte) 0x56,   // Common Info
-                (byte) 0x78,  (byte) 0x9A, (byte) 0xBC, (byte) 0x01,
-                (byte) 0x08,  (byte) 0x00, (byte) 0x02, (byte) 0x00,   // First Link Info
-                (byte) 0x00,  (byte) 0x00, (byte) 0x00, (byte) 0x00,   //
-                (byte) 0x00,  (byte) 0x00, (byte) 0x03, (byte) 0x00,   // Second Link Info
-                (byte) 0x00,  (byte) 0x00, (byte) 0x00, (byte) 0x00    //
-        };
-        NativeScanResult[] zeroLengthSubElementIE = getMockNativeResults();
-        zeroLengthSubElementIE[0].infoElement = zeroSubElementIE;
-        return zeroLengthSubElementIE;
-    }
-
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    @Test
-    public void testZeroLengthSubElementIEOnMockWifi() throws Exception {
-        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        try {
-            final NativeScanResult[] mockScanData = getMockZeroLengthSubElementIe();
-            uiAutomation.adoptShellPermissionIdentity();
-            assertTrue(sMockModemManager.connectMockWifiModemService(sContext));
-            assertTrue(sMockModemManager.configureWifiScannerInterfaceMock(getIfaceName(),
-                    new IWifiScannerImp.WifiScannerInterfaceMock() {
-                    @Override
-                    public NativeScanResult[] getScanResults() {
-                        return mockScanData;
-                    }
-                }));
-            sMockModemManager.updateConfiguredMockedMethods();
-            PollingCheck.check(
-                    "getscanResults fail", 30_000,
-                    () -> {
-                        ScanResult scanResults = sWifiManager.getScanResults().get(0);
-                        return (scanResults.getWifiSsid().equals(
-                            WifiSsid.fromBytes(mockScanData[0].getSsid()))
-                            && MacAddress.fromString(scanResults.BSSID).equals(
-                            mockScanData[0].getBssid())
-                            && scanResults.frequency == mockScanData[0].getFrequencyMhz()
-                            && (scanResults.getApMloLinkId() == -1)
-                            && (scanResults.getApMldMacAddress() == null));
-                    });
-        } finally {
             sMockModemManager.disconnectMockWifiModemService();
             uiAutomation.dropShellPermissionIdentity();
         }

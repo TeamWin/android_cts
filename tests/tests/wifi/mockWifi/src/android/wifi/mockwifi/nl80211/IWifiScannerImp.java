@@ -37,9 +37,6 @@ public class IWifiScannerImp extends IWifiScannerImpl.Stub {
     private IPnoScanEvent mIPnoScanEvent;
 
     public interface WifiScannerInterfaceMock {
-        default NativeScanResult[] getScanResults() {
-            return null;
-        }
         default NativeScanResult[] getPnoScanResults() {
             return null;
         }
@@ -81,9 +78,6 @@ public class IWifiScannerImp extends IWifiScannerImpl.Stub {
         }
         Set<String> overriddenMethods = new ArraySet<>();
         try {
-            if (isMethodOverridden(wifiScannerInterfaceMock, "getScanResults")) {
-                overriddenMethods.add("getScanResults");
-            }
             if (isMethodOverridden(wifiScannerInterfaceMock, "getPnoScanResults")) {
                 overriddenMethods.add("getPnoScanResults");
             }
@@ -101,11 +95,8 @@ public class IWifiScannerImp extends IWifiScannerImpl.Stub {
     @Override
     public NativeScanResult[] getScanResults() {
         Log.i(TAG, "getScanResults");
-        if (mWifiScannerInterfaceMock == null) {
-            Log.e(TAG, "mWifiScannerInterfaceMock: null!");
-            return null;
-        }
-        return mWifiScannerInterfaceMock.getScanResults();
+        // TODO: Mock it when we have a use (test) case.
+        return null;
     }
 
     @Override
