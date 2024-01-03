@@ -6,6 +6,7 @@ import static android.view.View.VISIBLE;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Insets;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -95,8 +96,9 @@ public class BubbleActivity extends Activity {
             WindowMetrics bubbleWindowMetrics =
                     getSystemService(WindowManager.class).getCurrentWindowMetrics();
             if (mIsLargeScreen) {
-                final float percentOfScreen = windowMetricsMax.getBounds().height() * 0.70f;
-                if (bubbleWindowMetrics.getBounds().height() < percentOfScreen) {
+                Rect bounds = windowMetricsMax.getBounds();
+                final float percentOfScreen = Math.min(bounds.height(), bounds.width()) * 0.70f;
+                if (bubbleWindowMetrics.getBounds().height() <= percentOfScreen) {
                     mTestMessage.setText("Test failed --"
                             + " the bubble expanded view is too small, it is: "
                             + bubbleWindowMetrics.getBounds().height()
