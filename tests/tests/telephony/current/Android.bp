@@ -60,6 +60,7 @@ android_test {
         "CtsTelecomUtilLib",
         "telephony_flags_core_java_lib",
         "flag-junit",
+        "telecom_flags_core_java_lib",
     ],
     srcs: [
         "src/**/*.java",

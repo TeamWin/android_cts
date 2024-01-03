@@ -22,7 +22,11 @@ import static android.telecom.cts.TestUtils.PACKAGE;
 import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 import static android.telephony.TelephonyManager.CALL_STATE_RINGING;
 
+import android.app.UiAutomation;
 import android.content.ComponentName;
+import android.content.ContentResolver;
+import android.database.ContentObserver;
+import android.database.Cursor;
 import android.media.AudioManager;
 import android.media.AudioPlaybackConfiguration;
 import android.net.Uri;
@@ -39,6 +43,8 @@ import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
 import android.telephony.TelephonyCallback;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+
 import com.android.server.telecom.flags.Flags;
 
 import java.util.Collection;
@@ -54,9 +60,16 @@ import java.util.concurrent.TimeUnit;
  */
 public class IncomingCallTest extends BaseTelecomTestWithMockServices {
     private static final long STATE_CHANGE_DELAY = 1000;
-
     private static final PhoneAccountHandle TEST_INVALID_HANDLE = new PhoneAccountHandle(
             new ComponentName(PACKAGE, COMPONENT), "WRONG_ID");
+    private static final String TEST_NUMBER = "5625698388";
+    private ContentResolver mContentResolver;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        mContentResolver = mContext.getContentResolver();
+    }
 
     public void testVerstatPassed() throws Exception {
         if (!mShouldTestTelecom) {
@@ -343,6 +356,69 @@ public class IncomingCallTest extends BaseTelecomTestWithMockServices {
     }
 
     /**
+     * Verify that when an incoming verified business call is received, the corresponding CallLog
+     * data (CallLog.Call.IS_BUSINESS_CALL && CallLog.Calls.ASSERTED_DISPLAY_NAME) is populated.
+     */
+    public void testBusinessCallProperties() throws Exception {
+        if (!mShouldTestTelecom || !Flags.businessCallComposer()) {
+            return;
+        }
+        // The following will be the selection of columns from the call log database that are
+        // returned.  The IS_BUSINESS_CALL and ASSERTED_DISPLAY_NAME are the business values.
+        final String[] projection =
+                new String[]{ CallLog.Calls.NUMBER,
+                              CallLog.Calls.TYPE,
+                              CallLog.Calls.IS_BUSINESS_CALL,
+                              CallLog.Calls.ASSERTED_DISPLAY_NAME};
+        boolean isBusinessCall = true;
+        String businessName = "Google";
+        UiAutomation automation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+
+        try {
+            automation.adoptShellPermissionIdentity(
+                    "android.permission.READ_CALL_LOG",
+                    "android.permission.WRITE_CALL_LOG");
+
+            // create an incoming business call
+            setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
+            addAndVerifyNewIncomingCall(Uri.parse(TEST_NUMBER), null);
+
+            // inject the business values. This is typically done by the IMS layer & network
+            Call call = setAndVerifyBusinessExtras(isBusinessCall, businessName);
+
+            // register an observer on the call logs to ensure this call changes the call logs
+            CountDownLatch changeLatch = new CountDownLatch(1);
+            mContentResolver.registerContentObserver(
+                    CallLog.Calls.CONTENT_URI, true,
+                    new ContentObserver(null /* handler */) {
+                        @Override
+                        public void onChange(boolean selfChange, Uri uri) {
+                            mContentResolver.unregisterContentObserver(this);
+                            changeLatch.countDown();
+                            super.onChange(selfChange);
+                        }
+                    });
+
+            // disconnect the call so the call logs can be evaluated
+            call.disconnect();
+            assertCallState(call, Call.STATE_DISCONNECTED);
+
+            try {
+                assertTrue(changeLatch.await(5000 /* MS timeout*/, TimeUnit.MILLISECONDS));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                fail("Expected the call logs to add a new entry but timed out waiting for entry");
+            }
+
+            // verify the business call values are logged and correct
+            verifyBusinessCallValues(TEST_NUMBER, projection, isBusinessCall, businessName);
+        } finally {
+            deleteCallLogsWithNumber(TEST_NUMBER);
+            automation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
      * Verifies that a call to {@link android.telecom.Call#answer(int)} with a passed video state of
      * {@link android.telecom.VideoProfile#STATE_AUDIO_ONLY} will result in a call to
      * {@link Connection#onAnswer()} where overridden.
@@ -396,5 +472,79 @@ public class IncomingCallTest extends BaseTelecomTestWithMockServices {
 
         // Make sure we get a call to {@link Connection#onAnswer(int)}.
         audioInvoke.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+    }
+
+    // Note: The WRITE_CALL_LOG permission is needed in order to call this helper.
+    private void deleteCallLogsWithNumber(String number) {
+        mContentResolver.delete(
+                CallLog.Calls.CONTENT_URI,
+                CallLog.Calls.NUMBER + " = " + number,
+                null);
+    }
+
+    private Call setAndVerifyBusinessExtras(boolean isBusinessCall, String businessName) {
+        Bundle businessCallExtras = new Bundle();
+        businessCallExtras.putBoolean(Call.EXTRA_IS_BUSINESS_CALL, isBusinessCall);
+        businessCallExtras.putString(Call.EXTRA_ASSERTED_DISPLAY_NAME, businessName);
+
+        // inject the Business Composer values and verify they are accessible
+        final MockConnection connection = verifyConnectionForIncomingCall();
+        connection.setExtras(businessCallExtras);
+
+        // verify the Extras can be fetched from the Call object
+        Call call = mInCallCallbacks.getService().getLastCall();
+        assertCallExtrasKey(call, Call.EXTRA_IS_BUSINESS_CALL);
+        assertCallExtrasKey(call, Call.EXTRA_ASSERTED_DISPLAY_NAME);
+        return call;
+    }
+
+    private void verifyBusinessCallValues(
+            String testNumber,
+            String[] projection,
+            boolean isBusinessCall,
+            String assertedDisplayName) {
+
+        // fetch the call logs where the testNumber matches the call made in this test
+        Cursor cursor = mContentResolver.query(CallLog.Calls.CONTENT_URI,
+                projection,
+                CallLog.Calls.NUMBER + " = " + testNumber,
+                null,
+                CallLog.Calls.DEFAULT_SORT_ORDER);
+
+        assertNotNull(cursor);
+
+        // extract the data from the cursor and put the objects in a map
+        cursor.moveToFirst();
+
+        assertEquals((isBusinessCall ? 1 : 0), cursor.getInt(
+                cursor.getColumnIndex(CallLog.Calls.IS_BUSINESS_CALL)));
+
+        assertEquals(assertedDisplayName, cursor.getString(
+                cursor.getColumnIndex(CallLog.Calls.ASSERTED_DISPLAY_NAME)));
+    }
+
+    /**
+     * Asserts that a call's extras contain a specified key.
+     *
+     * @param call The call.
+     * @param expectedKey The expected extras key.
+     */
+    public void assertCallExtrasKey(final Call call, final String expectedKey) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return expectedKey;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return call.getDetails().getExtras().containsKey(expectedKey) ? expectedKey
+                                : "";
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Call should have extras key " + expectedKey
+        );
     }
 }
