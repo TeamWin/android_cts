@@ -40,5 +40,7 @@ java_test_host {
         "general-tests",
         "mts-art",
         "mcts-art",
+        "mts-conscrypt",
+        "mcts-conscrypt",
     ],
 }
