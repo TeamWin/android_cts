@@ -16,10 +16,14 @@
 
 package android.photopicker.cts.util;
 
+import static android.photopicker.cts.util.PhotoPickerUiUtils.REGEX_PACKAGE_NAME;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.SHORT_TIMEOUT;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.provider.MediaStore;
+
+import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject;
 import androidx.test.uiautomator.UiSelector;
 
@@ -27,6 +31,10 @@ import androidx.test.uiautomator.UiSelector;
  * Photo Picker Utility methods for PhotoPicker UI assertions.
  */
 public class UiAssertionUtils {
+
+    private static final String PICKER_TAB_LAYOUT_RESOURCE_ID =
+            REGEX_PACKAGE_NAME + ":id/tab_layout";
+
     /**
      * Verifies PhotoPicker UI is shown.
      */
@@ -52,5 +60,25 @@ public class UiAssertionUtils {
             assertThat(new UiObject(new UiSelector().text("Photos")).exists()).isTrue();
         }
         assertThat(new UiObject(new UiSelector().text("Albums")).exists()).isTrue();
+    }
+
+
+    /**
+     * Verifies PhotoPicker UI based on the launch option set in the intent
+     */
+    public static void assertThatShowsPickerUi(
+            String mimeTypeFilter, int launchPickerTab, UiDevice device) throws Exception {
+
+        assertThatShowsPickerUi(mimeTypeFilter);
+
+        if (launchPickerTab == MediaStore.PICK_IMAGES_TAB_ALBUMS) {
+            // Picker launches with Albums tab
+            PhotoPickerUiUtils.isSelectedTabTitle(
+                    "Albums", PICKER_TAB_LAYOUT_RESOURCE_ID, device);
+        } else if (launchPickerTab == MediaStore.PICK_IMAGES_TAB_IMAGES) {
+            // Picker launches with Photos tab
+            PhotoPickerUiUtils.isSelectedTabTitle(
+                    "Photos", PICKER_TAB_LAYOUT_RESOURCE_ID, device);
+        }
     }
 }
