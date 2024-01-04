@@ -55,7 +55,8 @@ public abstract class PlayerListener implements Player.Listener {
     CALL_NOTIFICATION_TEST,
     MESSAGE_NOTIFICATION_TEST,
     PINCH_TO_ZOOM_TEST,
-    SPEED_CHANGE_TEST
+    SPEED_CHANGE_TEST,
+    PIP_MODE_TEST
   }
 
   public static boolean mPlaybackEnded;
@@ -108,6 +109,13 @@ public abstract class PlayerListener implements Player.Listener {
    */
   public final boolean isPinchToZoomTest() {
     return getTestType().equals(TestType.PINCH_TO_ZOOM_TEST);
+  }
+
+  /**
+   * Returns True for PIP Minimized Playback Mode test.
+   */
+  public final boolean isPipTest() {
+    return getTestType().equals(TestType.PIP_MODE_TEST);
   }
 
   /**

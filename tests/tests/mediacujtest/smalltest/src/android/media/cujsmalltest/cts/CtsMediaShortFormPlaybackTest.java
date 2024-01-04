@@ -20,6 +20,7 @@ import android.media.cujcommon.cts.CujTestBase;
 import android.media.cujcommon.cts.CujTestParam;
 import android.media.cujcommon.cts.OrientationTestPlayerListener;
 import android.media.cujcommon.cts.PinchToZoomTestPlayerListener;
+import android.media.cujcommon.cts.PipModeTestPlayerListener;
 import android.media.cujcommon.cts.PlaybackTestPlayerListener;
 import android.media.cujcommon.cts.ScrollTestPlayerListener;
 import android.media.cujcommon.cts.SeekTestPlayerListener;
@@ -129,10 +130,14 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
             .setTimeoutMilliSeconds(45000)
             .setPlayerListener(new SwitchSubtitleTrackTestPlayerListener(2, 3000)).build(),
             "Ssa_Subtitle_eng_french_5sec_SwitchSubtitleTracksTest"},
-        {CujTestParam.builder().setMediaUrls(prepareHevc_720p_15secVideoListForPinchToZoomTest())
+        {CujTestParam.builder().setMediaUrls(prepareHevc_720p_15sec_SingleVideoList())
             .setTimeoutMilliSeconds(45000)
             .setPlayerListener(new PinchToZoomTestPlayerListener(3000)).build(),
             "Hevc_720p_15sec_PinchToZoomTest"},
+        {CujTestParam.builder().setMediaUrls(prepareHevc_720p_15sec_SingleVideoList())
+            .setTimeoutMilliSeconds(45000)
+            .setPlayerListener(new PipModeTestPlayerListener(5000)).build(),
+            "Hevc_720p_15sec_PipModeTest"},
     }));
     return exhaustiveArgsList;
   }
@@ -238,22 +243,14 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
   }
 
   /**
-   * Prepare Hevc 720p 15sec video list for notification test.
+   * Prepare Hevc 720p 15sec single video list.
    */
-  public static List<String> prepareHevc_720p_15secVideoListForNotificationTest() {
+  public static List<String> prepareHevc_720p_15sec_SingleVideoList() {
     List<String> videoInput = Arrays.asList(
         MP4_FORBIGGERJOYRIDES_ASSET_720P_HEVC_URI_STRING);
     return videoInput;
   }
 
-  /**
-   * Prepare Hevc 720p 15sec video list for Pinch To Zoom Test.
-   */
-  public static List<String> prepareHevc_720p_15secVideoListForPinchToZoomTest() {
-    List<String> videoInput = Arrays.asList(
-        MP4_FORBIGGERJOYRIDES_ASSET_720P_HEVC_URI_STRING);
-    return videoInput;
-  }
 
   // Test to Verify video playback with and without seek
   @ApiTest(apis = {"android.media.MediaCodec#configure",
@@ -274,6 +271,11 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
     }
     if (mCujTestParam.playerListener().isPinchToZoomTest()) {
       Assume.assumeFalse("Skipping " + mTestType + " as watch doesn't support zoom behaviour yet",
+          isWatchDevice(mActivity));
+    }
+    if (mCujTestParam.playerListener().isPipTest()) {
+      Assume.assumeFalse(
+          "Skipping " + mTestType + " as watch doesn't support picture-in-picture mode yet",
           isWatchDevice(mActivity));
     }
     play(mCujTestParam.mediaUrls(), mCujTestParam.timeoutMilliSeconds());
