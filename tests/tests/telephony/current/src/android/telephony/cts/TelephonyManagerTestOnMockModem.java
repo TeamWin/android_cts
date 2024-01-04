@@ -45,6 +45,9 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.SystemProperties;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telecom.PhoneAccount;
 import android.telecom.TelecomManager;
 import android.telephony.AccessNetworkConstants;
@@ -64,12 +67,14 @@ import androidx.annotation.RequiresApi;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.internal.telephony.flags.Flags;
 import com.android.internal.telephony.uicc.IccUtils;
 
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.security.MessageDigest;
@@ -82,6 +87,10 @@ import java.util.function.BooleanSupplier;
 
 /** Test MockModemService interfaces. */
 public class TelephonyManagerTestOnMockModem {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
+
     private static final String TAG = "TelephonyManagerTestOnMockModem";
     private static final long WAIT_TIME_MS = 20000;
     private static MockModemManager sMockModemManager;
@@ -253,6 +262,16 @@ public class TelephonyManagerTestOnMockModem {
         final PackageManager pm = getContext().getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+            return false;
+        }
+        return true;
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_ENFORCE_TELEPHONY_FEATURE_MAPPING_FOR_PUBLIC_APIS)
+    private static boolean hasTelephonyFeature(String featureName) {
+        final PackageManager pm = getContext().getPackageManager();
+        if (!pm.hasSystemFeature(featureName)) {
+            Log.d(TAG, "Skipping test that requires " + featureName);
             return false;
         }
         return true;
@@ -959,7 +978,13 @@ public class TelephonyManagerTestOnMockModem {
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     @Test
     public void testGetPrimaryImei() {
-        assumeTrue(sTelephonyManager.getActiveModemCount() > 0);
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(hasTelephonyFeature(PackageManager.FEATURE_TELEPHONY_GSM)
+                    && sTelephonyManager.getActiveModemCount() > 0);
+        } else {
+            assumeTrue(sTelephonyManager.getActiveModemCount() > 0);
+        }
+
         String primaryImei = ShellIdentityUtils.invokeMethodWithShellPermissions(sTelephonyManager,
                 (tm) -> tm.getPrimaryImei());
         assertNotNull(primaryImei);
