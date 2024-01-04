@@ -167,6 +167,7 @@ public class ItsService extends Service implements SensorEventListener {
 
     // State transition timeouts, in ms.
     private static final long TIMEOUT_IDLE_MS = 2000;
+    private static final long TIMEOUT_IDLE_MS_EXTENSIONS = 20000;
     private static final long TIMEOUT_STATE_MS = 500;
     private static final long TIMEOUT_SESSION_CLOSE = 3000;
     private static final long TIMEOUT_SESSION_READY = 3000;
@@ -3181,7 +3182,7 @@ public class ItsService extends Service implements SensorEventListener {
                     sessionListener,
                     has10bitOutput);
 
-            mExtensionSession = sessionListener.waitAndGetSession(TIMEOUT_IDLE_MS);
+            mExtensionSession = sessionListener.waitAndGetSession(TIMEOUT_IDLE_MS_EXTENSIONS);
 
             CaptureRequest.Builder captureBuilder = requests.get(0);
 
@@ -4209,8 +4210,9 @@ public class ItsService extends Service implements SensorEventListener {
                 if (request == null || result == null) {
                     throw new ItsException("Request/result is invalid");
                 }
-                if (result.get(CaptureResult.CONTROL_AE_STATE) ==
-                    CaptureResult.CONTROL_AE_STATE_CONVERGED) {
+                int aeState = result.get(CaptureResult.CONTROL_AE_STATE);
+                if (aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED
+                        || aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED) {
                     synchronized(mCountCallbacksRemaining) {
                         mCountCallbacksRemaining.decrementAndGet();
                         mCountCallbacksRemaining.notify();

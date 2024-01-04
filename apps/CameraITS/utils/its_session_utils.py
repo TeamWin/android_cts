@@ -920,7 +920,8 @@ class ItsSession(object):
     if data[_TAG_STR] != 'supportedExtensionSizes':
       raise error_util.CameraItsError('Invalid command response')
     if not data[_STR_VALUE]:
-      raise error_util.CameraItsError('No supported extensions')
+      logging.debug('No supported extension sizes')
+      return ''
     return data[_STR_VALUE].split(';')
 
   def get_display_size(self):
