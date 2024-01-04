@@ -213,6 +213,7 @@ android_test {
         ":HelloWorldSdk3UsingSdk1",
         ":HelloWorldSdk3UsingSdk1And2",
         ":HelloWorldSystem",
+        ":HelloWorldSharedUid",
         ":HelloWorldUsingSdk1",
         ":HelloWorldUsingSdk1And2",
         ":HelloWorldUsingSdk1Optional",
