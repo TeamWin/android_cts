@@ -88,6 +88,8 @@ java_defaults {
         ":CtsPropertyIgnoreOrientationRequestOverrideOptInApp",
         ":CtsPropertyCompatAllowResizeableActivityOverridesOptInApp",
         ":CtsPropertyCompatAllowResizeableActivityOverridesOptOutApp",
+        ":CtsPropertyCompatAllowUserAspectRatioOverrideOptInApp",
+        ":CtsPropertyCompatAllowUserAspectRatioOverrideOptOutApp",
         ":CtsPropertyCameraCompatAllowForceRotationApp",
         ":CtsPropertyCameraCompatAllowRefreshApp",
         ":CtsPropertyCameraCompatEnableRefreshViaPauseOptInApp",
