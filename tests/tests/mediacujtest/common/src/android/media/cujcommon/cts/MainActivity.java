@@ -18,6 +18,8 @@ package android.media.cujcommon.cts;
 
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.WindowManager;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -36,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
   protected ExoPlayer mPlayer;
   protected static List<String> sVideoUrls = new ArrayList<>();
   protected Player.Listener mPlayerListener;
+  protected ScaleGestureDetector mScaleGestureDetector = null;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -102,6 +105,22 @@ public class MainActivity extends AppCompatActivity {
     super.onDestroy();
     mPlayer.release();
     getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+  }
+
+  /**
+   * Called to process touch screen events. You can override this to intercept all touch screen
+   * events before they are dispatched to the window. Be sure to call this implementation for touch
+   * screen events that should be handled normally.
+   *
+   * @param event The touch screen event.
+   * @return Return true if this event was consumed.
+   */
+  @Override
+  public boolean dispatchTouchEvent(MotionEvent event) {
+    if (mScaleGestureDetector != null) {
+      mScaleGestureDetector.onTouchEvent(event);
+    }
+    return true;
   }
 
   /**
