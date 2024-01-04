@@ -118,8 +118,8 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
 
         stopPackage(getDevice(), ANGLE_DRIVER_TEST_PKG);
         stopPackage(getDevice(), ANGLE_DRIVER_TEST_SEC_PKG);
-        stopPackage(getDevice(), ANGLE_DRIVER_DUMPSYS_PKG);
         stopPackage(getDevice(), ANGLE_NATIVE_DRIVER_CHECK_PKG);
+        stopPackage(getDevice(), ANGLE_DUMPSYS_GPU_TEST_PKG);
 
         if (!sSetupOnce) {
             sSetupOnce = true;
