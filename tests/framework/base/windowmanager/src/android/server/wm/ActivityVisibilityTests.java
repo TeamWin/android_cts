@@ -58,6 +58,7 @@ import static android.window.DisplayAreaOrganizer.FEATURE_UNDEFINED;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
@@ -749,7 +750,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     @Test
     public void testTurnScreenOnSingleTask() {
         assumeTrue(supportsLockScreen());
-
+        assumeFalse(isCar() && supportsMultiDisplay());
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         lockScreenSession.sleepDevice();
         separateTestJournal();
