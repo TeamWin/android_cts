@@ -130,8 +130,13 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
         {CujTestParam.builder().setMediaUrls(prepareHevc_720p_15secVideoListForNotificationTest())
             .setTimeoutMilliSeconds(52000)
             .setPlayerListener(
-                PlayerListener.createListenerForNotificationTest(true, 4000)).build(),
+                PlayerListener.createListenerForCallNotificationTest(4000)).build(),
             "Hevc_720p_15sec_CallNotificationTest"},
+        {CujTestParam.builder().setMediaUrls(prepareHevc_720p_15secVideoListForNotificationTest())
+            .setTimeoutMilliSeconds(45000)
+            .setPlayerListener(
+                PlayerListener.createListenerForMessageNotificationTest(4000)).build(),
+            "Hevc_720p_15sec_MessageNotificationTest"},
     }));
     return exhaustiveArgsList;
   }
