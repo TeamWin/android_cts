@@ -30,29 +30,14 @@ android_test {
         "cts-media-common",
     ],
     jni_libs: [
-        "libctscodecutils_jni"
-    ],
-    aaptflags: [
-      // Do not compress these files:
-        "-0 .vp9",
-        "-0 .ts",
-        "-0 .heic",
-        "-0 .trp",
-        "-0 .ota",
-        "-0 .mxmf",
+        "libctscodecutils_jni",
     ],
     srcs: [
         "src/**/*.java",
-        "aidl/**/*.aidl",
     ],
     // This test uses private APIs
     platform_apis: true,
     jni_uses_sdk_apis: true,
-    libs: [
-        "org.apache.http.legacy",
-        "android.test.base",
-        "android.test.runner",
-    ],
     test_suites: [
         "cts",
         "general-tests",

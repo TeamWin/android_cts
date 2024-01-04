@@ -26,10 +26,6 @@ android_test {
         "ctstestrunner-axt",
         "cts-media-common",
     ],
-    libs: [
-        "android.test.runner",
-        "android.test.base",
-    ],
     platform_apis: true,
     jni_uses_sdk_apis: true,
     jni_libs: [

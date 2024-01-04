@@ -24,7 +24,6 @@
     <application
         android:requestLegacyExternalStorage="true"
         android:usesCleartextTraffic="true">
-        <uses-library android:name="android.test.runner" />
         <activity android:name="android.video.cts.CodecTestActivity" />
     </application>
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

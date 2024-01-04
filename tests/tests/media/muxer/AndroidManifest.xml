@@ -25,7 +25,6 @@
 
     <application android:requestLegacyExternalStorage="true"
          android:largeHeap="true">
-        <uses-library android:name="android.test.runner"/>
 
     </application>
 
