@@ -70,6 +70,7 @@ import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.DisplayStateManager;
 import com.android.compatibility.common.util.SettingsStateKeeperRule;
 import com.android.compatibility.common.util.StateKeeperRule;
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.UserSettings.Namespace;
 
 import org.junit.After;
@@ -504,8 +505,10 @@ public class VirtualDisplayTest {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         ActivityOptions activityOptions = ActivityOptions.makeBasic();
         activityOptions.setLaunchDisplayId(displayId);
-        return (SimpleActivity) InstrumentationRegistry.getInstrumentation()
-                .startActivitySync(intent, activityOptions.toBundle());
+        return (SimpleActivity) SystemUtil.runWithShellPermissionIdentity(
+                () -> InstrumentationRegistry.getInstrumentation()
+                        .startActivitySync(intent, activityOptions.toBundle()),
+                Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
     }
 
     private boolean supportsActivitiesOnSecondaryDisplays() {

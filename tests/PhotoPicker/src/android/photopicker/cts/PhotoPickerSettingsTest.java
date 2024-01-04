@@ -46,8 +46,6 @@ import androidx.annotation.Nullable;
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.uiautomator.UiObject;
-import androidx.test.uiautomator.UiObjectNotFoundException;
-import androidx.test.uiautomator.UiSelector;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -157,7 +155,9 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
 
         verifySettingsTabContainerIsVisible();
         assertWithMessage("Personal tab is not selected")
-                .that(isSelectedTabTitle(PERSONAL_TAB_TITLE_ENGLISH)).isTrue();
+                .that(PhotoPickerUiUtils.isSelectedTabTitle(
+                        PERSONAL_TAB_TITLE_ENGLISH, TAB_LAYOUT_RESOURCE_ID, sDevice))
+                .isTrue();
     }
 
     @Test
@@ -171,32 +171,23 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
 
         verifySettingsTabContainerIsVisible();
         assertWithMessage("Work tab is not selected")
-                .that(isSelectedTabTitle(WORK_TAB_TITLE_ENGLISH)).isTrue();
+                .that(PhotoPickerUiUtils.isSelectedTabTitle(
+                        WORK_TAB_TITLE_ENGLISH, TAB_LAYOUT_RESOURCE_ID, sDevice)).isTrue();
     }
 
     private static void verifySettingsTabContainerIsVisible() {
         assertWithMessage("Timed out waiting for settings profile select tab container to appear")
-                .that(findObject(TAB_CONTAINER_RESOURCE_ID).waitForExists(SHORT_TIMEOUT))
+                .that(PhotoPickerUiUtils.findObject(
+                        TAB_CONTAINER_RESOURCE_ID, sDevice).waitForExists(SHORT_TIMEOUT))
                 .isTrue();
     }
 
     private static void verifySettingsTabContainerIsNotVisible() {
         assertWithMessage("Found the settings profile select tab container")
-                .that(findObject(TAB_CONTAINER_RESOURCE_ID).waitForExists(SHORT_TIMEOUT))
+                .that(PhotoPickerUiUtils.findObject(
+                        TAB_CONTAINER_RESOURCE_ID, sDevice).waitForExists(SHORT_TIMEOUT))
                 .isFalse();
     }
-
-    private static boolean isSelectedTabTitle(@NonNull String tabTitle)
-            throws UiObjectNotFoundException {
-        final UiObject tabLayout = findObject(TAB_LAYOUT_RESOURCE_ID);
-        final UiObject tab = tabLayout.getChild(new UiSelector().textContains(tabTitle));
-        return tab.isSelected();
-    }
-
-    private static UiObject findObject(@NonNull String resourceId) {
-        return sDevice.findObject(new UiSelector().resourceIdMatches(resourceId));
-    }
-
     @Test
     // This test is required for API coverage in Android R
     public void testSettingsLaunchFromIntent() throws InterruptedException {

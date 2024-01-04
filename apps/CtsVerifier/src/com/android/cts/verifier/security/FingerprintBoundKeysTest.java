@@ -66,7 +66,7 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
     /** Alias for our key in the Android Key Store. */
     private static final String KEY_NAME = "my_key";
     private static final byte[] SECRET_BYTE_ARRAY = new byte[] {1, 2, 3, 4, 5, 6};
-    private static final int AUTHENTICATION_DURATION_SECONDS = 2;
+    private static final int AUTHENTICATION_DURATION_SECONDS = 4;
     private static final int CONFIRM_CREDENTIALS_REQUEST_CODE = 1;
     private static final int BIOMETRIC_REQUEST_PERMISSION_CODE = 0;
 
@@ -344,7 +344,7 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
                 if (mActivity.tryEncrypt() &&
                     mActivity.doValidityDurationTest(false)) {
                     try {
-                        Thread.sleep(3000);
+                        Thread.sleep((AUTHENTICATION_DURATION_SECONDS+1)*1000);
                     } catch (Exception e) {
                         throw new RuntimeException("Failed to sleep", e);
                     }

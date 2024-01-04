@@ -105,6 +105,21 @@ public final class PowerPolicyTestHelper {
                 .that(mSystemCpms.getRegisteredPolicies().size()).isEqualTo(totalNum);
     }
 
+    /**
+     * Checks if the given power policy is already defined.
+     *
+     * @param policyDef The definition of a power policy.
+     * @return Whether the given power policy is defined.
+     */
+    public boolean isPowerPolicyIdDefined(PowerPolicyDef policyDef) {
+        for (PowerPolicyDef def : mSystemCpms.getRegisteredPolicies()) {
+            if (def.getPolicyId().equals(policyDef.getPolicyId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void checkCurrentPowerComponents(PowerPolicyDef expected) throws Exception {
         assertThat(mFrameCpms.getCurrentEnabledComponents()).asList()
                 .containsExactlyElementsIn(expected.getEnables());

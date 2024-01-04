@@ -522,6 +522,7 @@ public final class UserManagerTest {
     }
 
     @Test
+    @AppModeFull
     @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasNoWorkProfile
     @EnsureHasPermission({CREATE_USERS, QUERY_USERS, INTERACT_ACROSS_USERS})
