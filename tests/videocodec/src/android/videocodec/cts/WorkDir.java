@@ -23,6 +23,6 @@ import android.mediav2.common.cts.WorkDirBase;
  */
 class WorkDir extends WorkDirBase {
     static final String getMediaDirString() {
-        return getMediaDirString("CtsVideoCodecTestCases-1.2");
+        return getMediaDirString("CtsVideoCodecTestCases-2.0");
     }
 }
