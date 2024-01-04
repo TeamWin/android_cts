@@ -61,6 +61,7 @@ public class PlayerListener implements Player.Listener {
   public static final Object LISTENER_LOCK = new Object();
   private static final String COMMAND_ENABLE = "telecom set-phone-account-enabled";
   public static int CURRENT_MEDIA_INDEX = 0;
+  private static final int NUM_OF_MESSAGE_NOTIFICATIONS = 2;
 
   // Enum Declared for Test Type
   private enum TestType {
@@ -71,7 +72,8 @@ public class PlayerListener implements Player.Listener {
     SCROLL_TEST,
     SWITCH_AUDIO_TRACK_TEST,
     SWITCH_SUBTITLE_TRACK_TEST,
-    NOTIFICATION_TEST;
+    CALL_NOTIFICATION_TEST,
+    MESSAGE_NOTIFICATION_TEST,
   }
 
   public static boolean mPlaybackEnded;
@@ -104,7 +106,6 @@ public class PlayerListener implements Player.Listener {
   private Format mConfiguredTrackFormat;
   private int mNumOfAudioTrack;
   private int mNumOfSubtitleTrack;
-  private boolean mIsCallNotification;
   private TelecomManager mTelecomManager;
   private PhoneAccountHandle mPhoneAccountHandle;
   private long mStartTime;
@@ -221,14 +222,23 @@ public class PlayerListener implements Player.Listener {
   }
 
   /**
-   * Create player listener for Notification test.
+   * Create player listener for Call Notification test.
    *
    * @param sendMessagePosition The position at which message will be sent
    */
-  public static PlayerListener createListenerForNotificationTest(boolean isCallNotification,
-      long sendMessagePosition) {
-    PlayerListener playerListener = createDefaultListener(TestType.NOTIFICATION_TEST);
-    playerListener.mIsCallNotification = isCallNotification;
+  public static PlayerListener createListenerForCallNotificationTest(long sendMessagePosition) {
+    PlayerListener playerListener = createDefaultListener(TestType.CALL_NOTIFICATION_TEST);
+    playerListener.mSendMessagePosition = sendMessagePosition;
+    return playerListener;
+  }
+
+  /**
+   * Create player listener for Message Notification test.
+   *
+   * @param sendMessagePosition The position at which message will be sent
+   */
+  public static PlayerListener createListenerForMessageNotificationTest(long sendMessagePosition) {
+    PlayerListener playerListener = createDefaultListener(TestType.MESSAGE_NOTIFICATION_TEST);
     playerListener.mSendMessagePosition = sendMessagePosition;
     return playerListener;
   }
@@ -286,10 +296,17 @@ public class PlayerListener implements Player.Listener {
   }
 
   /**
-   * Returns True for Notification test.
+   * Returns True for Call Notification test.
    */
-  public boolean isNotificationTest() {
-    return mTestType.equals(TestType.NOTIFICATION_TEST);
+  public boolean isCallNotificationTest() {
+    return mTestType.equals(TestType.CALL_NOTIFICATION_TEST);
+  }
+
+  /**
+   * Returns True for Message Notification test.
+   */
+  public boolean isMessageNotificationTest() {
+    return mTestType.equals(TestType.MESSAGE_NOTIFICATION_TEST);
   }
 
   /**
@@ -501,10 +518,10 @@ public class PlayerListener implements Player.Listener {
               selectFirstSubtitleTrack();
             }
           }
-          if (isNotificationTest()) {
+          if (isCallNotificationTest() || isMessageNotificationTest()) {
             mStartTime = System.currentTimeMillis();
             // Add the duration of the incoming call
-            if (mIsCallNotification) {
+            if (isCallNotificationTest()) {
               mExpectedTotalTime += CallNotificationService.DURATION_MS;
             }
             // Let the ExoPlayer handle audio focus internally
@@ -535,7 +552,7 @@ public class PlayerListener implements Player.Listener {
             mScrollActivity.removePlayerListener();
           }
           // Verify the total time taken by the notification test
-          if (isNotificationTest()) {
+          if (isCallNotificationTest() || isMessageNotificationTest()) {
             long actualTime = System.currentTimeMillis() - mStartTime;
             assertEquals((float) mExpectedTotalTime, (float) actualTime, 3000);
           }
@@ -597,13 +614,22 @@ public class PlayerListener implements Player.Listener {
               .setDeleteAfterDelivery(true)
               .send();
         }
-      } else if (isNotificationTest()) {
+      } else if (isCallNotificationTest()) {
         mActivity.mPlayer.createMessage((messageType, payload) -> {
               // Place a sample incoming call
               mTelecomManager.addNewIncomingCall(mPhoneAccountHandle, null);
             }).setLooper(Looper.getMainLooper()).setPosition(mSendMessagePosition)
             .setDeleteAfterDelivery(true)
             .send();
+      } else if (isMessageNotificationTest()) {
+        for (int i = 0; i < NUM_OF_MESSAGE_NOTIFICATIONS; i++) {
+          mActivity.mPlayer.createMessage((messageType, payload) -> {
+                // Place a sample message notification
+                NotificationGenerator.createNotification(mActivity);
+              }).setLooper(Looper.getMainLooper()).setPosition(mSendMessagePosition * (i + 1))
+              .setDeleteAfterDelivery(true)
+              .send();
+        }
       }
       // Add duration on media transition.
       long duration = player.getDuration();
@@ -757,7 +783,7 @@ public class PlayerListener implements Player.Listener {
   @Override
   public void onPlaybackSuppressionReasonChanged(int playbackSuppressionReason) {
     // Verify suppression reason change caused by call notification test
-    if (mIsCallNotification) {
+    if (isCallNotificationTest()) {
       if (!mActivity.mPlayer.isPlaying()) {
         assertEquals(Player.PLAYBACK_SUPPRESSION_REASON_TRANSIENT_AUDIO_FOCUS_LOSS,
             playbackSuppressionReason);
