@@ -171,22 +171,22 @@ public class StorageStatsTest extends InstrumentationTestCase {
         final ApplicationInfo appInfo = pm.getApplicationInfo(PKG_A, 0);
         useSpace(getContext());
 
-        String appSrcDir = appInfo.sourceDir;
-        File dir = new File(appInfo.sourceDir);
+        String appSrcPath = appInfo.sourceDir;
+        File appSrcDir = new File(appInfo.sourceDir);
         // sourceDir could return the base.apk with path, in that case, use the parent directory.
-        if (dir.isFile()) {
-            appSrcDir = dir.getParent();
+        if (appSrcDir.isFile()) {
+            appSrcDir = appSrcDir.getParentFile();
         }
 
         final StorageStats as = stats.queryStatsForPackage(UUID_DEFAULT, PKG_A, user);
 
-        final long apkSize = getSizeOfFilesEndWith(new File(appSrcDir), ".apk");
+        long apkSize = getSizeOfFilesEndWith(appSrcDir, ".apk");
         assertEquals(apkSize, as.getAppBytesByDataType(StorageStats.APP_DATA_TYPE_FILE_TYPE_APK));
 
-        final long dmSize = getSizeOfFilesEndWith(new File(appSrcDir), ".dm");
+        long dmSize = getSizeOfFilesEndWith(appSrcDir, ".dm");
         assertEquals(dmSize, as.getAppBytesByDataType(StorageStats.APP_DATA_TYPE_FILE_TYPE_DM));
 
-        final long libSize = getSizeOfDir(new File(appSrcDir + "/lib/"));
+        long libSize = getSizeOfDir(new File(appSrcPath + "/lib/"));
         assertEquals(libSize, as.getAppBytesByDataType(StorageStats.APP_DATA_TYPE_LIB));
     }
 
@@ -568,11 +568,11 @@ public class StorageStatsTest extends InstrumentationTestCase {
 
         long size = 0;
         try {
-          for (File file : dir.listFiles()) {
-            if (file.isFile() && file.getName().endsWith(suffix)) {
-                size += file.length();
+            for (File file : dir.listFiles()) {
+                if (file.isFile() && file.getName().endsWith(suffix)) {
+                    size += file.length();
+                }
             }
-          }
         } catch (NullPointerException e) {
             size += 0;
         }
