@@ -1958,6 +1958,18 @@ public class StaticMetadata {
     }
 
     /**
+     * Check whether readout timestamp is supported
+     *
+     * @return true if readoutTimestamp is supported. false otherwise.
+     */
+    public boolean isReadoutTimestampSupported() {
+        Key<Integer> key = CameraCharacteristics.SENSOR_READOUT_TIMESTAMP;
+        Integer readoutTimestamp = getValueFromKeyNonNull(key);
+
+        return readoutTimestamp == CameraMetadata.SENSOR_READOUT_TIMESTAMP_HARDWARE;
+    }
+
+    /**
      * Get availableOpticalStabilization and do the validity check.
      *
      * @return available optical stabilization modes, empty array if it is unavailable.
