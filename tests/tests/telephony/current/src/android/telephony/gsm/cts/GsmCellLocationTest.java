@@ -20,12 +20,25 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.gsm.GsmCellLocation;
+
+import androidx.test.InstrumentationRegistry;
+
+import com.android.internal.telephony.flags.Flags;
+
+import org.junit.Rule;
 import org.junit.Test;
 
 public class GsmCellLocationTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private static final int CID_VALUE = 20;
     private static final int LAC_VALUE = 10;
@@ -35,6 +48,11 @@ public class GsmCellLocationTest {
     @SuppressWarnings("XorPower")
     @Test
     public void testGsmCellLocation() {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(InstrumentationRegistry.getContext().getPackageManager().hasSystemFeature(
+                    PackageManager.FEATURE_TELEPHONY_GSM));
+        }
+
         Bundle bundle = new Bundle();
 
         GsmCellLocation gsmCellLocation = new GsmCellLocation();
