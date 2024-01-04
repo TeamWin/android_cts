@@ -64,6 +64,7 @@ import android.net.NetworkRequest;
 import android.net.TetheringManager;
 import android.net.Uri;
 import android.net.wifi.CoexUnsafeChannel;
+import android.net.wifi.MscsParams;
 import android.net.wifi.OuiKeyedData;
 import android.net.wifi.QosPolicyParams;
 import android.net.wifi.ScanResult;
@@ -6680,6 +6681,46 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
             if (isRestoreRequired) {
                 sWifiManager.setWepAllowed(currentWepAllowed);
             }
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Tests {@link WifiManager#enableMscs(MscsParams)}, {@link WifiManager#disableMscs()},
+     * and all get/set methods in {@link MscsParams}.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_MSCS_CONFIGURATION)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    @Test
+    public void testEnableAndDisableMscs() {
+        int frameClassifierFields = MscsParams.FRAME_CLASSIFIER_IP_VERSION;
+        int userPriorityBitmap = 0; // don't match any user priorities using MSCS
+        int userPriorityLimit = 7;
+        int streamTimeoutUs = 30000000; // 30 seconds (value is longer than TEST_WAIT_DURATION_MS)
+        MscsParams params = new MscsParams.Builder()
+                .setFrameClassifierFields(frameClassifierFields)
+                .setUserPriorityBitmap(userPriorityBitmap)
+                .setUserPriorityLimit(userPriorityLimit)
+                .setStreamTimeoutUs(streamTimeoutUs)
+                .build();
+        assertEquals(frameClassifierFields, params.getFrameClassifierFields());
+        assertEquals(userPriorityBitmap, params.getUserPriorityBitmap());
+        assertEquals(userPriorityLimit, params.getUserPriorityLimit());
+        assertEquals(streamTimeoutUs, params.getStreamTimeoutUs());
+
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            sWifiManager.enableMscs(params);
+            synchronized (mLock) {
+                // Wait for the request to get sent to the AP.
+                mLock.wait(TEST_WAIT_DURATION_MS);
+            }
+            sWifiManager.disableMscs();
+        } catch (Exception e) {
+            fail("testEnableAndDisableMscs encountered an exception: " + e);
+        } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
     }
