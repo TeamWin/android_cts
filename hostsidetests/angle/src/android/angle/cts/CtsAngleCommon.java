@@ -40,30 +40,23 @@ class CtsAngleCommon {
 
     // ANGLE
     static final String ANGLE_PACKAGE_NAME = "com.android.angle";
+
     static final String ANGLE_DRIVER_TEST_PKG = "com.android.angleintegrationtest.drivertest";
+    static final String ANGLE_DRIVER_TEST_APP = "CtsAngleDriverTestCases.apk";
+
     static final String ANGLE_DRIVER_TEST_SEC_PKG =
             "com.android.angleintegrationtest.drivertestsecondary";
-    static final String ANGLE_DRIVER_DUMPSYS_PKG =
-            "com.android.angleintegrationtest.dumpsysgputest";
-
-    static final String ANGLE_DRIVER_TEST_CLASS = "AngleDriverTestActivity";
-    static final String ANGLE_DRIVER_TEST_DEFAULT_METHOD = "testUseDefaultDriver";
-    static final String ANGLE_DRIVER_TEST_ANGLE_METHOD = "testUseAngleDriver";
-    static final String ANGLE_DRIVER_TEST_NATIVE_METHOD = "testUseNativeDriver";
-
-    static final String ANGLE_DRIVER_TEST_APP = "CtsAngleDriverTestCases.apk";
     static final String ANGLE_DRIVER_TEST_SEC_APP = "CtsAngleDriverTestCasesSecondary.apk";
 
     static final String ANGLE_DUMPSYS_GPU_TEST_PKG =
             "com.android.angleintegrationtest.dumpsysgputest";
     static final String ANGLE_DUMPSYS_GPU_TEST_CLASS = "AngleDumpsysGpuTestActivity";
     static final String ANGLE_DUMPSYS_GPU_TEST_APP = "CtsAngleDumpsysGpuTestApp.apk";
-    static final String ANGLE_DRIVER_TEST_ACTIVITY =
-            ANGLE_DRIVER_TEST_PKG
-                    + "/com.android.angleIntegrationTest.common.AngleIntegrationTestActivity";
-    static final String ANGLE_DRIVER_TEST_SEC_ACTIVITY =
-            ANGLE_DRIVER_TEST_SEC_PKG
-                    + "/com.android.angleIntegrationTest.common.AngleIntegrationTestActivity";
+
+    static final String ANGLE_DRIVER_TEST_CLASS = "AngleDriverTestActivity";
+    static final String ANGLE_DRIVER_TEST_DEFAULT_METHOD = "testUseDefaultDriver";
+    static final String ANGLE_DRIVER_TEST_ANGLE_METHOD = "testUseAngleDriver";
+    static final String ANGLE_DRIVER_TEST_NATIVE_METHOD = "testUseNativeDriver";
 
     static final String ANGLE_NATIVE_DRIVER_CHECK_PKG =
             "com.android.angleintegrationtest.nativedrivercheck";
