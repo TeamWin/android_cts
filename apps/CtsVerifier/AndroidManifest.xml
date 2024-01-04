@@ -4904,7 +4904,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_managed_provisioning" />
             <meta-data android:name="test_excluded_features"
-                       android:value="android.software.lockscreen_disabled" />
+                       android:value="android.software.lockscreen_disabled:com.google.android.feature.AMATI_EXPERIENCE" />
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
@@ -4939,7 +4939,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_managed_provisioning" />
             <meta-data android:name="test_excluded_features"
-                       android:value="android.software.lockscreen_disabled" />
+              android:value="android.software.lockscreen_disabled:com.google.android.feature.AMATI_EXPERIENCE" />
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
@@ -4972,6 +4972,7 @@
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="test_excluded_features" android:value="com.google.android.feature.AMATI_EXPERIENCE" />
         </activity>
 
         <activity android:name=".managedprovisioning.NonMarketAppsActivity"
