@@ -609,8 +609,25 @@ class CodecDecoderTestBase extends CodecTestBase {
                     isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0);
 
             Map<UUID, byte[]> psshInfo = mExtractor.getPsshInfo();
-            assertNotNull("Extractor is missing pssh info", psshInfo);
-            byte[] emeInitData = psshInfo.get(WIDEVINE_UUID);
+            byte[] emeInitData = null;
+
+            // TODO(b/230682028) Remove the following once webm extractor returns PSSH info for VP9
+            if (psshInfo == null && mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP9)) {
+                if (format.getInteger(MediaFormat.KEY_HEIGHT) == 1080) {
+                    emeInitData = new byte[]{8, 1, 18, 1, 51, 26, 13, 119, 105, 100, 101, 118,
+                            105, 110, 101, 95, 116, 101, 115, 116, 34, 10, 50, 48, 49, 53,
+                            95, 116, 101, 97, 114, 115, 42, 2, 72, 68};
+                } else if (format.getInteger(MediaFormat.KEY_HEIGHT) == 2160) {
+                    emeInitData = new byte[]{8, 1, 18, 1, 56, 26, 13, 119, 105, 100, 101, 118,
+                            105, 110, 101, 95, 116, 101, 115, 116, 34, 10, 50, 48, 49, 53,
+                            95, 116, 101, 97, 114, 115, 42, 4, 85, 72, 68, 49};
+                } else {
+                    fail("unable to get pssh info for the given resolution in vp9");
+                }
+            } else {
+                assertNotNull("Extractor is missing pssh info", psshInfo);
+                emeInitData = psshInfo.get(WIDEVINE_UUID);
+            }
             assertNotNull("Extractor pssh info is missing data for scheme: " + WIDEVINE_UUID,
                     emeInitData);
             KeyRequester requester =
