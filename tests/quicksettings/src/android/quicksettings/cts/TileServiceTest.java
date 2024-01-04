@@ -24,15 +24,23 @@ import static org.junit.Assert.assertTrue;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.os.Looper;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 
+import com.android.systemui.Flags;
 import com.android.systemui.qs.nano.QsTileState;
 
+import org.junit.Rule;
 import org.junit.Test;
 
 public class TileServiceTest extends BaseTileServiceTest {
     private final static String TAG = "TileServiceTest";
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Test
     public void testCreateTileService() {
@@ -117,6 +125,9 @@ public class TileServiceTest extends BaseTileServiceTest {
     }
 
     @Test
+    // This test doesn't make sense with the new tiles because they use
+    // BooleanState to control chevron
+    @RequiresFlagsDisabled(Flags.FLAG_QS_NEW_PIPELINE)
     public void testTileInDumpAndHasNonBooleanState() throws Exception {
         initializeAndListen();
         final QsTileState tileState = findTileState();
