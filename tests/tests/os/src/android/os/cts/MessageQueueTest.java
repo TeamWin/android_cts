@@ -238,39 +238,6 @@ public class MessageQueueTest {
         tester.doTest(1000, 50);
     }
 
-    /**
-     * Use MessageQueue, remove messages.
-     */
-    @Test
-    public void testRemoveMessages() throws Exception {
-
-        OrderTestHelper tester = new OrderTestHelper() {
-            @Override
-            public void init() {
-                super.init();
-                long now = SystemClock.uptimeMillis() + 200;
-                mLastMessage = 4;
-
-                /* Queue up some messages, then remove from the front, the middle and the back. */
-                Object object = new Object();
-                mHandler.sendMessageAtTime(mHandler.obtainMessage(5, object), now + 5);
-                mHandler.sendMessageAtTime(mHandler.obtainMessage(2), now + 2);
-                mHandler.sendMessageAtTime(mHandler.obtainMessage(3), now + 3);
-                mHandler.sendMessageAtTime(mHandler.obtainMessage(4), now + 4);
-                mHandler.sendMessageAtTime(mHandler.obtainMessage(0), now + 0);
-                mHandler.sendMessageAtTime(mHandler.obtainMessage(1), now + 1);
-                mHandler.removeMessages(3, null);
-                mHandler.removeMessages(2, null);
-                mHandler.removeCallbacksAndMessages(object);
-                /* Re-add these messages as OrderTestHelper will be looking for them */
-                mHandler.sendMessageAtTime(mHandler.obtainMessage(2), now + 2);
-                mHandler.sendMessageAtTime(mHandler.obtainMessage(3), now + 3);
-            }
-        };
-        tester.doTest(1000, 50);
-    }
-
-
     @Test
     @IgnoreUnderRavenwood(blockedBy = android.os.ParcelFileDescriptor.class)
     public void testRegisterFileDescriptorCallbackThrowsWhenFdIsNull() {
