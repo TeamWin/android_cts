@@ -57,6 +57,7 @@ import static android.scopedstorage.cts.lib.TestUtils.getMoviesDir;
 import static android.scopedstorage.cts.lib.TestUtils.getMusicDir;
 import static android.scopedstorage.cts.lib.TestUtils.getPicturesDir;
 import static android.scopedstorage.cts.lib.TestUtils.openWithMediaProvider;
+import static android.scopedstorage.cts.lib.TestUtils.pollForCondition;
 import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageState;
 import static android.scopedstorage.cts.lib.TestUtils.pollForManageExternalStorageAllowed;
 import static android.scopedstorage.cts.lib.TestUtils.pollForPermission;
@@ -84,6 +85,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.content.ContentValues;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -165,11 +167,15 @@ public class ScopedStorageTest {
 
     @Before
     public void setup() throws Exception {
-        if (!getContext().getPackageManager().isInstantApp()) {
+        PackageManager packageManager = getContext().getPackageManager();
+        if (!packageManager.isInstantApp()) {
             pollForExternalStorageState();
             getExternalFilesDir().mkdirs();
         }
-        MediaStore.waitForIdle(getContext().getContentResolver());
+
+        pollForCondition(
+                () -> packageManager.resolveContentProvider(MediaStore.AUTHORITY, 0) != null,
+                "ContentProvider not available for authority media.");
     }
 
     /**
