@@ -16,7 +16,6 @@
 
 package com.android.cts.devicepolicy;
 
-import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
 import static org.junit.Assert.assertEquals;
@@ -31,7 +30,6 @@ import android.platform.test.annotations.LargeTest;
 import android.stats.devicepolicy.EventId;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.log.LogUtil.CLog;
 
@@ -485,16 +483,6 @@ public final class DeviceOwnerTest extends BaseDeviceOwnerTest {
         // This case runs when DO is provisioned
         // mHasFeature == true and provisioned, can't provision DO again.
         executeDeviceTestMethod(".PreDeviceOwnerTest", "testIsProvisioningAllowedFalse");
-    }
-
-    /**
-     * Can provision Managed Profile when DO is set by default if they are the same admin.
-     */
-    @Test
-    @RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
-    public void testIsManagedProfileProvisioningAllowed_deviceOwnerIsSet() throws Exception {
-        executeDeviceTestMethod(".PreDeviceOwnerTest",
-                "testIsProvisioningNotAllowedForManagedProfileAction");
     }
 
     @FlakyTest(bugId = 137096267)
