@@ -86,6 +86,7 @@
         </activity>
 
         <activity android:name="android.view.cts.ViewTestCtsActivity"
+             android:enableOnBackInvokedCallback="false"
              android:screenOrientation="locked"
              android:label="ViewTestCtsActivity"
              android:exported="true">
@@ -407,6 +408,7 @@
         </activity>
 
         <activity android:name="android.view.cts.InputEventInterceptTestActivity"
+             android:enableOnBackInvokedCallback="false"
              android:theme="@style/no_starting_window"
              android:exported="true">
             <intent-filter>
@@ -415,6 +417,7 @@
         </activity>
 
         <activity android:name="android.view.cts.input.InputDeviceKeyLayoutMapTestActivity"
+             android:enableOnBackInvokedCallback="false"
              android:configChanges="keyboardHidden|navigation|keyboard"
              android:exported="true">
             <intent-filter>
