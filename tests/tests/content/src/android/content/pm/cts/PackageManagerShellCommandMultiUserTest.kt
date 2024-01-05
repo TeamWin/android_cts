@@ -715,13 +715,13 @@ class PackageManagerShellCommandMultiUserTest {
             {
                 val cxtPrimaryUser = context.createContextAsUser(primaryUser.userHandle(), 0)
                 val cxtSecondaryUser = context.createContextAsUser(secondaryUser.userHandle(), 0)
-                // Queryable with match flags
+                // Not queryable with MATCH_ANY_USER flag as the AndroidPackage object was removed
                 notMatchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, 0)
-                matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_ANY_USER)
+                notMatchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_ANY_USER)
                 matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_UNINSTALLED_PACKAGES)
                 matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_KNOWN_PACKAGES)
                 notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, 0)
-                matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_ANY_USER)
+                notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_ANY_USER)
                 matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_UNINSTALLED_PACKAGES)
                 matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_KNOWN_PACKAGES)
             },
