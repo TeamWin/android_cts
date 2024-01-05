@@ -35,6 +35,7 @@ import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
@@ -73,7 +74,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -279,6 +279,11 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
      */
     @Test
     public void testAnimationBackgroundColorIsUsedDuringActivityTransition() {
+        // TODO (b/319637823): Find proper fix for background overriding in ActivityTransitionTests
+        // This test expects the default task display area to show a red color during the
+        // transition. But since in auto split screen UI, the launcher activity is always
+        // shown, no screenshot of the test would return the red background color.
+        assumeFalse(hasAutomotiveSplitscreenMultitaskingFeature());
         final int backgroundColor = Color.RED;
         final ActivityOptions activityOptions = ActivityOptions.makeCustomAnimation(mContext,
                 R.anim.alpha_0_with_red_backdrop, R.anim.alpha_0_with_red_backdrop);
@@ -296,6 +301,11 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
      */
     @Test
     public void testCustomTransitionCanOverrideBackgroundColor() {
+        // TODO (b/319637823): Find proper fix for background overriding in ActivityTransitionTests
+        // This test expects the default task display area to show a green color during the
+        // transition. But since in auto split screen UI, the launcher activity is always
+        // shown, no screenshot of the test would return the green background color.
+        assumeFalse(hasAutomotiveSplitscreenMultitaskingFeature());
         final int backgroundColor = Color.GREEN;
         final ActivityOptions activityOptions = ActivityOptions.makeCustomAnimation(mContext,
                 R.anim.alpha_0_with_backdrop, R.anim.alpha_0_with_backdrop, backgroundColor
@@ -314,6 +324,11 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
      */
     @Test
     public void testPendingTransitionCanOverrideBackgroundColor() {
+        // TODO (b/319637823): Find proper fix for background overriding in ActivityTransitionTests
+        // This test expects the default task display area to show a green color during the
+        // transition. But since in auto split screen UI, the launcher activity is always
+        // shown, no screenshot of the test would return the green background color.
+        assumeFalse(hasAutomotiveSplitscreenMultitaskingFeature());
         final int backgroundColor = Color.GREEN;
 
         final Bundle extras = new Bundle();
@@ -330,6 +345,11 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
 
     @Test
     public void testSetTransitionCanOverrideBackgroundColor() {
+        // TODO (b/319637823): Find proper fix for background overriding in ActivityTransitionTests
+        // This test expects the default task display area to show a green color during the
+        // transition. But since in auto split screen UI, the launcher activity is always
+        // shown, no screenshot of the test would return the green background color.
+        assumeFalse(hasAutomotiveSplitscreenMultitaskingFeature());
         final int backgroundColor = Color.GREEN;
 
         final Bundle extras = new Bundle();
