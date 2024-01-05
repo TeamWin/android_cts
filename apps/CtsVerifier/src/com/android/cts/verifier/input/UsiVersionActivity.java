@@ -20,6 +20,7 @@ import android.hardware.display.DisplayManager;
 import android.hardware.input.HostUsiVersion;
 import android.hardware.input.InputManager;
 import android.os.Bundle;
+import android.util.ArrayMap;
 import android.view.Display;
 import android.widget.Button;
 import android.widget.TextView;
@@ -28,8 +29,6 @@ import com.android.compatibility.common.util.ApiTest;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -45,7 +44,7 @@ public class UsiVersionActivity extends PassFailButtons.Activity {
     Button mNoButton;
 
     TestStage mCurrentStage;
-    final List<Display> mInternalDisplays = new ArrayList<>();
+    final ArrayMap<Display, HostUsiVersion> mInternalDisplays = new ArrayMap<>();
 
     /** Used for {@link TestStage#VERIFY_USI_VERSIONS}. */
     int mCurrentDisplayIndex;
@@ -55,8 +54,10 @@ public class UsiVersionActivity extends PassFailButtons.Activity {
     private enum TestStage {
         // Ask whether the tester is ready to start.
         START_INSTRUCTIONS,
-        // Ask if the USI version reported for each of the built-in displays is correct.
-        VERIFY_USI_VERSIONS,
+        // Ask if the current display supports USI.
+        VERIFY_USI_SUPPORT,
+        // If the current display does support USI, ask if the reported USI version is correct.
+        VERIFY_USI_VERSION,
         // Test passed.
         PASSED,
         // Test failed.
@@ -85,16 +86,39 @@ public class UsiVersionActivity extends PassFailButtons.Activity {
         switch (mCurrentStage) {
             case START_INSTRUCTIONS:
                 mCurrentStage = fromYesButton
-                        ? TestStage.VERIFY_USI_VERSIONS
+                        ? TestStage.VERIFY_USI_SUPPORT
                         : getFailState(R.string.usi_fail_reason_not_ready);
                 break;
 
-            case VERIFY_USI_VERSIONS:
+            case VERIFY_USI_SUPPORT:
+                final var usiVersion = mInternalDisplays.valueAt(mCurrentDisplayIndex);
+                if (fromYesButton) {
+                    // The user said that the display supports USI.
+                    if (usiVersion != null) {
+                        mCurrentStage = TestStage.VERIFY_USI_VERSION;
+                    } else {
+                        mCurrentStage = getFailState(R.string.usi_fail_reason_version_not_found);
+                    }
+                } else {
+                    // The user said that the display DOES NOT support USI.
+                    if (usiVersion == null)  {
+                        mCurrentDisplayIndex++;
+                        mCurrentStage = mCurrentDisplayIndex >= mInternalDisplays.size()
+                                ? TestStage.PASSED
+                                : TestStage.VERIFY_USI_SUPPORT;
+                    } else {
+                        mCurrentStage = getFailState(
+                                R.string.usi_fail_reason_found_unexpected_version);
+                    }
+                }
+                break;
+
+            case VERIFY_USI_VERSION:
                 if (fromYesButton) {
                     mCurrentDisplayIndex++;
                     mCurrentStage = mCurrentDisplayIndex >= mInternalDisplays.size()
                             ? TestStage.PASSED
-                            : TestStage.VERIFY_USI_VERSIONS;
+                            : TestStage.VERIFY_USI_SUPPORT;
                 } else {
                     mCurrentStage = getFailState(R.string.usi_fail_reason_incorrect_version);
                 }
@@ -115,7 +139,7 @@ public class UsiVersionActivity extends PassFailButtons.Activity {
 
     private void processTestStage() {
         switch (mCurrentStage) {
-            case START_INSTRUCTIONS:
+            case START_INSTRUCTIONS: {
                 mFailReason = null;
                 mCurrentDisplayIndex = 0;
                 populateInternalDisplays();
@@ -125,44 +149,55 @@ public class UsiVersionActivity extends PassFailButtons.Activity {
                 mYesButton.setEnabled(true);
                 mNoButton.setEnabled(true);
                 break;
+            }
 
-            case VERIFY_USI_VERSIONS:
-                final Display display = mInternalDisplays.get(mCurrentDisplayIndex);
-                final HostUsiVersion usiVersion =
-                        Objects.requireNonNull(getSystemService(InputManager.class))
-                                .getHostUsiVersion(display);
-                final String version = usiVersion != null
-                        ? usiVersion.getMajorVersion() + "." + usiVersion.getMinorVersion()
-                        : getString(R.string.usi_version_not_supported);
+            case VERIFY_USI_SUPPORT: {
+                final Display display = mInternalDisplays.keyAt(mCurrentDisplayIndex);
+                mInstructionsTextView.setText(
+                        getString(R.string.usi_test_verify_display_usi_support, display.getName()));
+                break;
+            }
+
+            case VERIFY_USI_VERSION: {
+                final Display display = mInternalDisplays.keyAt(mCurrentDisplayIndex);
+                final HostUsiVersion usiVersion = mInternalDisplays.valueAt(mCurrentDisplayIndex);
+                assert (usiVersion != null);
+
+                final String version =
+                        usiVersion.getMajorVersion() + "." + usiVersion.getMinorVersion();
                 mInstructionsTextView.setText(
                         getString(R.string.usi_test_verify_display_usi_version, display.getName(),
                                 version));
                 break;
+            }
 
-            case PASSED:
+            case PASSED: {
                 if (mFailReason != null) throw new IllegalStateException("Fail reason is non null");
                 mInstructionsTextView.setText(getString(R.string.usi_test_passed));
                 getPassButton().setEnabled(true);
                 mYesButton.setEnabled(false);
                 mNoButton.setEnabled(false);
                 break;
+            }
 
-            case FAILED:
+            case FAILED: {
                 Objects.requireNonNull(mFailReason);
                 mInstructionsTextView.setText(getString(R.string.usi_test_failed, mFailReason));
                 getPassButton().setEnabled(false);
                 mYesButton.setEnabled(false);
                 mNoButton.setEnabled(false);
                 break;
+            }
         }
     }
 
     private void populateInternalDisplays() {
         final Display[] displays = Objects.requireNonNull(getSystemService(DisplayManager.class))
                 .getDisplays();
+        final var inputManager = Objects.requireNonNull(getSystemService(InputManager.class));
         for (Display display : displays) {
             if (display.getType() == Display.TYPE_INTERNAL) {
-                mInternalDisplays.add(display);
+                mInternalDisplays.put(display, inputManager.getHostUsiVersion(display));
             }
         }
     }
