@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.content.Context;
 import android.device.collectors.util.SendToInstrumentation;
 import android.media.metrics.BundleSession;
+import android.media.metrics.EditingEndedEvent;
 import android.media.metrics.EditingSession;
 import android.media.metrics.LogSessionId;
 import android.media.metrics.MediaMetricsManager;
@@ -335,6 +336,36 @@ public class MediaMetricsAtomHostSideTests {
             LogSessionId idObj = s.getSessionId();
             assertThat(idObj).isNotEqualTo(null);
             assertThat(idObj.getStringId().length()).isGreaterThan(0);
+        }
+    }
+
+    @Test
+    public void testEditingEndedEvent_default() throws Exception {
+        turnOnForTesting();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        try (EditingSession s = manager.createEditingSession()) {
+            EditingEndedEvent e =
+                    new EditingEndedEvent.Builder(EditingEndedEvent.FINAL_STATE_SUCCEEDED).build();
+            s.reportEditingEndedEvent(e);
+        }
+        resetProperties();
+    }
+
+    @Test
+    public void testEditingEndedEvent_error() throws Exception {
+        turnOnForTesting();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        try (EditingSession s = manager.createEditingSession()) {
+            EditingEndedEvent e =
+                    new EditingEndedEvent.Builder(EditingEndedEvent.FINAL_STATE_ERROR)
+                            .setTimeSinceCreatedMillis(17630000L)
+                            .setErrorCode(PlaybackErrorEvent.ERROR_RUNTIME)
+                            .setMetricsBundle(new Bundle())
+                            .build();
+            s.reportEditingEndedEvent(e);
+            resetProperties();
         }
     }
 
