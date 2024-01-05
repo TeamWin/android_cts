@@ -30,6 +30,7 @@ import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.Flags.FLAG_ARCHIVING;
 import static android.content.pm.Flags.FLAG_GET_PACKAGE_INFO;
+import static android.content.pm.Flags.FLAG_PROVIDE_INFO_OF_APK_IN_APEX;
 import static android.content.pm.Flags.FLAG_QUARANTINED_ENABLED;
 import static android.content.pm.PackageInstaller.STATUS_FAILURE;
 import static android.content.pm.PackageInstaller.STATUS_SUCCESS;
@@ -287,6 +288,9 @@ public class PackageManagerTest {
             SAMPLE_APK_BASE + "HelloWorldLotsOfFlags.apk";
     private static final String HELLO_WORLD_NON_UPDATABLE_SYSTEM_APK = SAMPLE_APK_BASE
             + "HelloWorldNonUpdatableSystem.apk";
+
+    private static final String HELLO_WORLD_SHARED_UID_APK = SAMPLE_APK_BASE
+            + "HelloWorldSharedUid.apk";
 
     private static final String MOCK_LAUNCHER_PACKAGE_NAME = "android.content.cts.mocklauncherapp";
     private static final String MOCK_LAUNCHER_APK = SAMPLE_APK_BASE
@@ -1697,6 +1701,37 @@ public class PackageManagerTest {
         assertWithMessage("Shim apex wasn't supposed to be found").that(shimApex).isEmpty();
     }
 
+    @Test
+    @RequiresFlagsEnabled(FLAG_PROVIDE_INFO_OF_APK_IN_APEX)
+    public void testGetPackageInfo_apex_hasApexPackageName() throws Exception {
+        PackageInfo packageInfo =
+                mPackageManager.getPackageInfo(SHIM_APEX_PACKAGE_NAME, PackageManager.MATCH_APEX);
+
+        assertThat(packageInfo.packageName).isEqualTo(SHIM_APEX_PACKAGE_NAME);
+        assertThat(packageInfo.getApexPackageName()).isEqualTo(SHIM_APEX_PACKAGE_NAME);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_PROVIDE_INFO_OF_APK_IN_APEX)
+    public void testGetPackageInfo_apkInApex_hasApexPackageName()
+            throws Exception {
+        PackageInfo packageInfo =
+                mPackageManager.getPackageInfo(CTS_SHIM_PACKAGE_NAME, /* flags= */ 0);
+
+        assertThat(packageInfo.packageName).isEqualTo(CTS_SHIM_PACKAGE_NAME);
+        assertThat(packageInfo.getApexPackageName()).isEqualTo(SHIM_APEX_PACKAGE_NAME);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_PROVIDE_INFO_OF_APK_IN_APEX)
+    public void testGetPackageInfo_normalApk_noApexPackageName() throws Exception {
+        PackageInfo packageInfo =
+                mPackageManager.getPackageInfo(PACKAGE_NAME, /* flags= */ 0);
+
+        assertThat(packageInfo.packageName).isEqualTo(PACKAGE_NAME);
+        assertThat(packageInfo.getApexPackageName()).isNull();
+    }
+
     /**
      * Test that {@link ComponentInfo#metaData} data associated with all components in this
      * package will only be filled in if the {@link PackageManager#GET_META_DATA} flag is set.
@@ -2106,6 +2141,15 @@ public class PackageManagerTest {
         assertThat(SystemUtil.runShellCommand(
                 "pm install -t -g " + HELLO_WORLD_NON_UPDATABLE_SYSTEM_APK)).contains(
                 "Non updatable system package");
+    }
+
+    @Test
+    public void testSharedUidMaxSdkVersion() throws Exception {
+        assertThat(installPackageWithResult(HELLO_WORLD_SHARED_UID_APK)).isEqualTo("Success\n");
+        assertTrue(isPackagePresent(HELLO_WORLD_PACKAGE_NAME));
+        String privatePkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME,
+                "    privatePkgFlags=[");
+        assertThat(privatePkgFlags).doesNotContain("PRIVILEGED");
     }
 
     private String installPackageWithResult(String apkPath) {

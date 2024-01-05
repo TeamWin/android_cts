@@ -36,6 +36,11 @@
         <option name="test-file-name" value="CtsPropertyCompatAllowDisplayOrientationOverrideApp.apk" />
         <option name="test-file-name" value="CtsPropertyCompatAllowMinAspectRatioOverrideOptInApp.apk" />
         <option name="test-file-name" value="CtsPropertyCompatAllowMinAspectRatioOverrideOptOutApp.apk" />
+        <option name="test-file-name" value="CtsPropertyCompatAllowIgnoringOrientationRequestWhenLoopDetectedOptInApp.apk" />
+        <option name="test-file-name" value="CtsPropertyCompatAllowIgnoringOrientationRequestWhenLoopDetectedOptOutApp.apk" />
+        <option name="test-file-name" value="CtsPropertyCompatAllowIgnoringOrientationRequestWhenLoopDetectedUnsetApp.apk" />
+        <option name="test-file-name" value="CtsPropertyCompatAllowResizeableActivityOverridesOptInApp.apk" />
+        <option name="test-file-name" value="CtsPropertyCompatAllowResizeableActivityOverridesOptOutApp.apk" />
         <option name="test-file-name" value="CtsDragAndDropSourceApp.apk"/>
         <option name="test-file-name" value="CtsDragAndDropTargetApp.apk"/>
         <option name="test-file-name" value="CtsDeviceAlertWindowTestApp.apk"/>

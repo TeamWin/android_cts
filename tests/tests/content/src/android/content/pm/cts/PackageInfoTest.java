@@ -16,6 +16,8 @@
 
 package android.content.pm.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -28,6 +30,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.Attribution;
 import android.content.pm.ComponentInfo;
 import android.content.pm.ConfigurationInfo;
+import android.content.pm.Flags;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageItemInfo;
 import android.content.pm.PackageManager;
@@ -115,6 +118,10 @@ public class PackageInfoTest {
         assertEquals(expected.versionName, actual.versionName);
         assertEquals(expected.sharedUserId, actual.sharedUserId);
         assertEquals(expected.sharedUserLabel, actual.sharedUserLabel);
+        if (Flags.provideInfoOfApkInApex()) {
+            assertThat(expected.getApexPackageName()).isEqualTo(
+                    actual.getApexPackageName());
+        }
         if (expected.applicationInfo != null) {
             assertNotNull(actual.applicationInfo);
             checkAppInfo(expected.applicationInfo, actual.applicationInfo);

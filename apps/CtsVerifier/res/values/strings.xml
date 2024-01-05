@@ -1377,6 +1377,24 @@
     <string name="nfc_hce_payment_prefix_aids_emulator_2">Payment prefix AIDs 2 (Emulator)</string>
     <string name="nfc_hce_payment_prefix_aids_reader_2">Payment prefix AIDs 2 (Reader)</string>
 
+    <string name="nfc_observe_mode_emulator">Observe Mode (Emulator)</string>
+    <string name="nfc_observe_mode_reader">Observe Mode (Reader)</string>
+    <string name="nfc_observe_mode_emulator_help">In observe mode there should not be any response from the emulator to the reader. If the emulator detects the reader and does not receive a command, it will enable the pass button and that represents a pass or the test.</string>
+    <string name="nfc_observe_mode_reader_help">In observe mode there should not be any response from the emulator to the reader. If the reader detects a response it will disable the pass button and this is a failure.</string>
+
+    <string name="nfc_polling_loop_a_emulator">Polling Loop A (Emulator)</string>
+    <string name="nfc_polling_loop_a_reader">Polling Loop A (Reader)</string>
+    <string name="nfc_polling_loop_b_emulator">Polling Loop B (Emulator)</string>
+    <string name="nfc_polling_loop_b_reader">Polling Loop B (Reader)</string>
+    <string name="nfc_polling_loop_ab_emulator">Polling Loop A and B (Emulator)</string>
+    <string name="nfc_polling_loop_ab_reader">Polling Loop A and B (Reader)</string>
+    <string name="nfc_polling_loop_a_emulator_help">The emulator will wait until it sees 3 NFC-A polling frames before responding. If it sees another type of frame, it will fail.</string>
+    <string name="nfc_polling_loop_a_reader_help">The reader will poll for NFC-A.</string>
+    <string name="nfc_polling_loop_b_emulator_help">The emulator will wait until it sees 3 NFC-B polling frames before responding. If it sees another type of frame, it will fail.</string>
+    <string name="nfc_polling_loop_b_reader_help">The reader will poll for NFC-B.</string>
+    <string name="nfc_polling_loop_ab_emulator_help">The emulator will wait until it sees 3 NFC-A polling frames and 3 NFC-B polling frames before responding. If it sees another type of frame, it will fail.</string>
+    <string name="nfc_polling_loop_ab_reader_help">The reader will poll for NFC-A and NFC-B.</string>
+
     <string name="nfc_hce_other_prefix_aids_emulator">Other prefix AIDs (Emulator)</string>
     <string name="nfc_hce_other_prefix_aids_reader">Other prefix AIDs (Reader)</string>
     <string name="nfc_hce_other_prefix_aids_help">This test dynamically registers prefix AIDs for a non-payment service.</string>
@@ -7169,11 +7187,15 @@ Follow the instructions on the screen to measure the frequency response for the 
         keyboards, or styluses that are connected through USB or Bluetooth.\n\n
         Found %1$d built-in display(s). Are you ready to proceed?
     </string>
+    <string name="usi_test_verify_display_usi_support">Does the display \"%1$s\" support styluses
+        that use the USI protocol? \n\n
+        For more information about the Universal Stylus Initiative (USI) protocol, see:
+        http://universalstylus.org
+    </string>
     <string name="usi_test_verify_display_usi_version">The display \"%1$s\" reports its USI version
         as %2$s.\n\n
         Is this correct?
     </string>
-    <string name="usi_version_not_supported">not supported</string>
     <string name="usi_test_passed">Test Passed\n\n
         Press Pass.
     </string>
@@ -7181,7 +7203,12 @@ Follow the instructions on the screen to measure the frequency response for the 
         Reason: %1$s
     </string>
     <string name="usi_fail_reason_not_ready">Not ready to check for USI stylus versions.</string>
-    <string name="usi_fail_reason_incorrect_version">The USI version was incorrectly reported.
+    <string name="usi_fail_reason_version_not_found">The USI version for the display was not found.
+    </string>
+    <string name="usi_fail_reason_found_unexpected_version">The display reports support for a valid
+        USI version, even though it does not support USI.
+    </string>
+    <string name="usi_fail_reason_incorrect_version">The reported USI version is incorrect.
     </string>
 
     <!-- Strings for PreferredMixerAttributesTestActivity -->

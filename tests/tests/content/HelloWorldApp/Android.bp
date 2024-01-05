@@ -144,6 +144,19 @@ android_test {
 
 //-----------------------------------------------------------
 android_test {
+    name: "HelloWorldSharedUid",
+    defaults: ["hello_world_defaults"],
+    srcs: ["src_shell/**/*.java"],
+    manifest: "AndroidManifestSharedUid.xml",
+    test_suites: [
+        "vts10",
+        "general-tests",
+    ],
+    v4_signature: true,
+}
+
+//-----------------------------------------------------------
+android_test {
     name: "HelloWorldSdk1",
     defaults: ["hello_world_defaults"],
     srcs: ["sdk1/**/*.java"],

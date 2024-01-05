@@ -18,6 +18,7 @@ import logging
 import os.path
 import time
 
+import cv2
 from mobly import test_runner
 import numpy as np
 
@@ -37,8 +38,7 @@ _TEST_REQUIRED_MPC = 34
 _MIN_AREA = 0.001  # Circle must be >= 0.1% of image size
 _WHITE = 255
 
-_FMT_NAME = 'yuv'  # To detect noise without conversion to RGB
-_IMAGE_FORMAT_YUV_420_888_INT = 35
+_IMAGE_FORMATS_TO_CONSTANTS = (('yuv', 35), ('jpeg', 256))
 
 _DOT_INTENSITY_DIFF_TOL = 20  # Min diff between dot/circle intensities [0:255]
 _DURATION_DIFF_TOL = 0.5  # Night mode ON captures must take 0.5 seconds longer
@@ -79,7 +79,19 @@ def _convert_captures(cap, file_stem=None):
   Returns:
     Tuple of y_plane, numpy image.
   """
-  y, _, _ = image_processing_utils.convert_capture_to_planes(cap)
+  if cap['format'] == 'jpeg' or cap['format'] == 'jpeg_r':
+    # openCV needs [0, 255] images
+    rgb_image = (
+        image_processing_utils.decompress_jpeg_to_rgb_image(cap['data']) * 255
+    ).astype(np.uint8)
+    yuv_image = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2YUV)
+    y, _, _ = cv2.split(yuv_image)
+    # Convert back to [0, 1] and cast numpy array
+    y = (y / 255.0)
+  elif cap['format'] == 'yuv':
+    y, _, _ = image_processing_utils.convert_capture_to_planes(cap)
+  else:
+    raise ValueError(f'Unsupported format: {cap["format"]}')
   img = image_processing_utils.convert_capture_to_rgb_image(cap)
   if file_stem:
     image_processing_utils.write_image(img, f'{file_stem}.jpg')
@@ -273,28 +285,36 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
         self.tablet.adb.shell(
             f'input tap {_TAP_COORDINATES[0]} {_TAP_COORDINATES[1]}')
 
-      # Determine capture width and height
-      width, height = None, None
-      capture_sizes = capture_request_utils.get_available_output_sizes(
-          _FMT_NAME, props)
-      extension_capture_sizes_str = cam.get_supported_extension_sizes(
-          self.camera_id, _EXTENSION_NIGHT, _IMAGE_FORMAT_YUV_420_888_INT
-      )
-      extension_capture_sizes = [
-          tuple(int(size_part) for size_part in s.split(_X_STRING))
-          for s in extension_capture_sizes_str
-      ]
-      # Extension capture sizes are ordered in ascending area order by default
-      extension_capture_sizes.reverse()
-      logging.debug('Capture sizes: %s', capture_sizes)
-      logging.debug('Extension capture sizes: %s', extension_capture_sizes)
-      width, height = extension_capture_sizes[0]
+      # Determine capture width, height, and format
+      for format_name, format_constant in _IMAGE_FORMATS_TO_CONSTANTS:
+        capture_sizes = capture_request_utils.get_available_output_sizes(
+            format_name, props)
+        extension_capture_sizes_str = cam.get_supported_extension_sizes(
+            self.camera_id, _EXTENSION_NIGHT, format_constant
+        )
+        if not extension_capture_sizes_str:
+          continue
+        extension_capture_sizes = [
+            tuple(int(size_part) for size_part in s.split(_X_STRING))
+            for s in extension_capture_sizes_str
+        ]
+        # Extension capture sizes ordered in ascending area order by default
+        extension_capture_sizes.reverse()
+        logging.debug('Capture sizes: %s', capture_sizes)
+        logging.debug('Extension capture sizes: %s', extension_capture_sizes)
+        logging.debug('Accepted capture format: %s', format_name)
+        width, height = extension_capture_sizes[0]
+        accepted_format = format_name
+        break
+      else:
+        raise AssertionError('No supported sizes/formats found!')
 
       # Set tablet brightness to darken scene
       self.set_screen_brightness(_TABLET_BRIGHTNESS)
 
-      file_stem = f'{test_name}_{_FMT_NAME}_{width}x{height}'
-      out_surfaces = {'format': _FMT_NAME, 'width': width, 'height': height}
+      file_stem = f'{test_name}_{accepted_format}_{width}x{height}'
+      out_surfaces = {
+          'format': accepted_format, 'width': width, 'height': height}
       req = capture_request_utils.auto_capture_request()
 
       # Take auto capture with night mode on

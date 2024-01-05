@@ -426,6 +426,10 @@ java_test_host {
     name: "CtsStorageHostTestCases",
     defaults: ["appsecurity_cts_defaults"],
 
+    static_libs: [
+        "flag-junit-host",
+        "android.app.usage.flags-aconfig-java-host",
+    ],
     srcs: [
         "src/**/*Storage*.java",
     ],

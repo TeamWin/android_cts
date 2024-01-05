@@ -2399,6 +2399,54 @@
                                       android.nfc.tech.NfcA#transceive" />
         </activity>
 
+        <activity android:name=".nfc.hce.ObserveModeReaderActivity"
+                android:label="@string/nfc_observe_mode_reader">
+                <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+                <meta-data android:name="ApiTest"
+                       android:value="android.nfc.NfcAdapter#disallowTransaction"/>
+        </activity>
+
+        <activity android:name=".nfc.hce.ObserveModeEmulatorActivity"
+                android:label="@string/nfc_observe_mode_emulator">
+                <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+                <meta-data android:name="ApiTest"
+                       android:value="android.nfc.NfcAdapter#disallowTransaction|
+                                      android.nfc.NfcAdapter#allowTransaction|
+                                      android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_KEY|
+                                      android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_A|
+                                      android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_ON|
+                                      android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_OFF"/>
+        </activity>
+
+        <activity android:name=".nfc.hce.PollingLoopReaderActivity"
+                android:label="@string/nfc_polling_loop_a_reader">
+                <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+                <meta-data android:name="ApiTest"
+                       android:value="android.nfc.NfcAdapter#disallowTransaction|
+                                      android.nfc.NfcAdapter#allowTransaction|
+                                      android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_KEY|
+                                      android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_B|
+                                      android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_ON|
+                                      android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_OFF"/>
+        </activity>
+
+        <activity android:name=".nfc.hce.PollingLoopEmulatorActivity"
+                android:label="@string/nfc_polling_loop_a_emulator">
+                <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+                <meta-data android:name="ApiTest"
+                       android:value="android.nfc.NfcAdapter#disallowTransaction|
+                                      android.nfc.NfcAdapter#allowTransaction|
+                                      android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_KEY|
+                                      android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_A|
+                                      android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_B|
+                                      android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_ON|
+                                      android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_OFF"/>
+        </activity>
+
         <activity android:name=".nfc.hce.DualPaymentEmulatorActivity"
                 android:label="@string/nfc_hce_dual_payment_emulator"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
@@ -2767,6 +2815,15 @@
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
             <meta-data android:name="android.nfc.cardemulation.host_apdu_service" android:resource="@xml/screen_off_payment_aid_list"/>
+        </service>
+        <service android:name=".nfc.hce.PollingLoopService" android:exported="true"
+                 android:permission="android.permission.BIND_NFC_SERVICE"
+                 android:enabled="false">
+            <intent-filter>
+                <action android:name="android.nfc.cardemulation.action.HOST_APDU_SERVICE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+            <meta-data android:name="android.nfc.cardemulation.host_apdu_service" android:resource="@xml/access_aid_list"/>
         </service>
 
         <service
@@ -4962,7 +5019,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_managed_provisioning" />
             <meta-data android:name="test_excluded_features"
-                       android:value="android.software.lockscreen_disabled" />
+                       android:value="android.software.lockscreen_disabled:com.google.android.feature.AMATI_EXPERIENCE" />
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
@@ -4997,7 +5054,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_managed_provisioning" />
             <meta-data android:name="test_excluded_features"
-                       android:value="android.software.lockscreen_disabled" />
+              android:value="android.software.lockscreen_disabled:com.google.android.feature.AMATI_EXPERIENCE" />
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
@@ -5030,6 +5087,7 @@
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="test_excluded_features" android:value="com.google.android.feature.AMATI_EXPERIENCE" />
         </activity>
 
         <activity android:name=".managedprovisioning.NonMarketAppsActivity"

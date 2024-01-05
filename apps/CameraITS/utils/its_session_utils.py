@@ -920,7 +920,8 @@ class ItsSession(object):
     if data[_TAG_STR] != 'supportedExtensionSizes':
       raise error_util.CameraItsError('Invalid command response')
     if not data[_STR_VALUE]:
-      raise error_util.CameraItsError('No supported extensions')
+      logging.debug('No supported extension sizes')
+      return ''
     return data[_STR_VALUE].split(';')
 
   def get_display_size(self):
@@ -1633,9 +1634,6 @@ class ItsSession(object):
 
   # pylint: disable=dangerous-default-value
   def do_3a(self,
-            fmt=None,
-            width=None,
-            height=None,
             regions_ae=[[0, 0, 1, 1, 1]],
             regions_awb=[[0, 0, 1, 1, 1]],
             regions_af=[[0, 0, 1, 1, 1]],
@@ -1649,7 +1647,8 @@ class ItsSession(object):
             auto_flash=False,
             mono_camera=False,
             zoom_ratio=None,
-            reuse_session=False):
+            out_surfaces=None,
+            repeat_request=None):
     """Perform a 3A operation on the device.
 
     Triggers some or all of AE, AWB, and AF, and returns once they have
@@ -1659,9 +1658,6 @@ class ItsSession(object):
     Throws an assertion if 3A fails to converge.
 
     Args:
-      fmt: Format to configure a CameraCaptureSession.
-      width: Width to configure a CameraCaptureSession.
-      height: Height to configure a CameraCaptureSession.
       regions_ae: List of weighted AE regions.
       regions_awb: List of weighted AWB regions.
       regions_af: List of weighted AF regions.
@@ -1675,8 +1671,10 @@ class ItsSession(object):
       auto_flash: AE control boolean to enable auto flash.
       mono_camera: Boolean for monochrome camera.
       zoom_ratio: Zoom ratio. None if default zoom
-      reuse_session: True if ItsService.java should try to use
-        the existing CameraCaptureSession.
+      out_surfaces: dict; see do_capture() for specifications on out_surfaces.
+        CameraCaptureSession will only be reused if out_surfaces is specified.
+      repeat_request: repeating request list.
+        See do_capture() for specifications on repeat_request.
 
       Region format in args:
          Arguments are lists of weighted regions; each weighted region is a
@@ -1698,15 +1696,20 @@ class ItsSession(object):
     logging.debug('Running vendor 3A on device')
     cmd = {}
     cmd[_CMD_NAME_STR] = 'do3A'
-    if fmt:
-      if fmt == 'yuv':
-        cmd['format'] = IMAGE_FORMAT_YUV_420_888
-      elif fmt == 'jpeg' or fmt == 'jpg':
-        cmd['format'] = IMAGE_FORMAT_JPEG
-    if width:
-      cmd['width'] = width
-    if height:
-      cmd['height'] = height
+    reuse_session = False
+    if out_surfaces is not None:
+      reuse_session = True
+      if not isinstance(out_surfaces, list):
+        cmd['outputSurfaces'] = [out_surfaces]
+      else:
+        cmd['outputSurfaces'] = out_surfaces
+    if repeat_request is None:
+      cmd['repeatRequests'] = []
+    elif not isinstance(repeat_request, list):
+      cmd['repeatRequests'] = [repeat_request]
+    else:
+      cmd['repeatRequests'] = repeat_request
+
     cmd['regions'] = {
         'ae': sum(regions_ae, []),
         'awb': sum(regions_awb, []),

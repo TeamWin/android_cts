@@ -112,6 +112,9 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.service.autofill.FillContext;
 import android.service.autofill.SaveInfo;
 import android.util.Log;
@@ -132,6 +135,7 @@ import androidx.test.uiautomator.UiObject2;
 import com.android.compatibility.common.util.RetryableException;
 
 import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -145,6 +149,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class LoginActivityTest extends LoginActivityCommonTestCase {
 
     private static final String TAG = "LoginActivityTest";
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @After
     public void disablePcc() {
@@ -2252,6 +2260,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
 
     @Test
     @AppModeFull(reason = "Unit test")
+    @RequiresFlagsEnabled("android.service.autofill.include_invisible_view_group_in_assist_structure")
     public void testNoContainers() throws Exception {
         // Set service.
         enableService();
@@ -2266,17 +2275,19 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
 
         final FillRequest fillRequest = sReplier.getNextFillRequest();
 
-        // Assert it only has 1 root view with 10 "leaf" nodes:
+        // Assert it only has 1 root view with 12 "leaf" nodes:
         // 1.text view for app title
-        // 2.username text label
-        // 3.username text field
-        // 4.password text label
-        // 5.password text field
-        // 6.output text field
-        // 7.clear button
-        // 8.save button
-        // 9.login button
-        // 10.cancel button
+        // 2.invisible layout
+        // 3.edit text in the invisible layout
+        // 4.username text label
+        // 5.username text field
+        // 6.password text label
+        // 7.password text field
+        // 8.output text field
+        // 9.clear button
+        // 10.save button
+        // 11.login button
+        // 12.cancel button
         //
         // But it also has an intermediate container (for username) that should be included because
         // it has a resource id.
@@ -2284,7 +2295,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         // get activity title
         final CharSequence activityTitle = mActivity.getPackageName() + "/"
                 + getActivityTitle(InstrumentationRegistry.getInstrumentation(), mActivity);
-        assertNumberOfChildrenWithWindowTitle(fillRequest.structure, 12, activityTitle);
+        assertNumberOfChildrenWithWindowTitle(fillRequest.structure, 14, activityTitle);
 
         // Make sure container with a resource id was included:
         final ViewNode usernameContainer = findNodeByResourceId(fillRequest.structure,
