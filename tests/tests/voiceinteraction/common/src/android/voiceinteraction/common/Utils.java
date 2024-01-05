@@ -59,7 +59,7 @@ public class Utils {
 
     private static final String TAG = Utils.class.getSimpleName();
 
-    public static final long OPERATION_TIMEOUT_MS = 5000;
+    public static final long OPERATION_TIMEOUT_MS = 10000;
 
     /** CDD restricts the max size of each successful hotword result is 100 bytes. */
     public static final int MAX_HOTWORD_DETECTED_RESULT_SIZE = 100;
