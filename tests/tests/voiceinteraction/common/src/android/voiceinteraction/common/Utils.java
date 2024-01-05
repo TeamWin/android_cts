@@ -62,7 +62,7 @@ public class Utils {
 
     private static final String TAG = Utils.class.getSimpleName();
 
-    public static final long OPERATION_TIMEOUT_MS = 5000;
+    public static final long OPERATION_TIMEOUT_MS = 10000;
 
     private static long sAdjustedOperationTimeoutMs = -1;
 
