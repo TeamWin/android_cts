@@ -31,6 +31,7 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -54,6 +55,7 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.UserInfo;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Icon;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.os.ResultReceiver;
@@ -226,6 +228,13 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     public void testBackgroundActivityBlockedWhenForegroundActivityNotTop() throws Exception {
+        // Feature flag "ActivitySecurity__asm_restrictions_enabled" is set to 1 in
+        // BackgroundActivityTestBase. For backward compatibility reasons, it is only enabled
+        // for apps with targetSdkVersion starting Android V.
+        // TODO remove this assumption after V released.
+        assumeThat(mContext.getApplicationInfo().targetSdkVersion,
+                greaterThan(Build.VERSION_CODES.UPSIDE_DOWN_CAKE));
+
         startActivity(APP_A.FOREGROUND_ACTIVITY);
         mContext.sendBroadcast(getLaunchActivitiesBroadcast(APP_A, APP_B.FOREGROUND_ACTIVITY));
         mWmState.waitForValidState(APP_B.FOREGROUND_ACTIVITY);
