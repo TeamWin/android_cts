@@ -29,6 +29,17 @@
     <application android:label="Cts Package Uninstaller Tests">
         <uses-library android:name="android.test.runner" />
 
+        <activity android:name="android.packageinstaller.uninstall.cts.ArchiveTest$Launcher"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.HOME"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+
         <receiver android:name="android.packageinstaller.uninstall.cts.ArchiveTest$UnarchiveBroadcastReceiver"
             android:enabled="true"
             android:exported="true">
