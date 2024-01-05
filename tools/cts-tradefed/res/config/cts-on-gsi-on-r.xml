@@ -80,4 +80,7 @@
 
     <!-- CtsMediaV2TestCases: b/298410971 -->
     <option name="compatibility:exclude-filter" value="CtsMediaV2TestCases android.mediav2.cts.EncoderProfileLevelTest#testValidateProfileLevel" />
+
+    <!-- CtsMediaCodecTestCases: b/298483255 -->
+    <option name="compatibility:exclude-filter" value="CtsMediaCodecTestCases android.media.codec.cts.MediaCodecInstancesTest#testGetMaxSupportedInstances" />
 </configuration>
