@@ -3252,19 +3252,22 @@ public class ItsService extends Service implements SensorEventListener {
                 }
                 // Set repeating request and wait for AE convergence, using another ImageReader.
                 Logt.i(TAG, "Waiting for AE to converge before taking extensions capture.");
-                captureBuilder.addTarget(mExtensionPreviewImageReader.getSurface());
+                CaptureRequest.Builder previewRequestBuilder = mCamera.createCaptureRequest(
+                        CameraDevice.TEMPLATE_PREVIEW);
+                previewRequestBuilder.set(CaptureRequest.CONTROL_CAPTURE_INTENT,
+                        CaptureRequest.CONTROL_CAPTURE_INTENT_PREVIEW);
+                previewRequestBuilder.addTarget(mExtensionPreviewImageReader.getSurface());
                 ImageReader.OnImageAvailableListener dropperListener =
                         createAvailableListenerDropper();
                 mExtensionPreviewImageReader.setOnImageAvailableListener(dropperListener,
                         mSaveHandlers[0]);
-                mExtensionSession.setRepeatingRequest(captureBuilder.build(),
+                mExtensionSession.setRepeatingRequest(previewRequestBuilder.build(),
                         new HandlerExecutor(mResultHandler),
                         mExtAEResultListener);
                 mCountCallbacksRemaining.set(1);
                 long timeout = TIMEOUT_CALLBACK * 1000;
                 waitForCallbacks(timeout);
                 mExtensionSession.stopRepeating();
-                captureBuilder.removeTarget(mExtensionPreviewImageReader.getSurface());
                 mResultThread.sleep(PIPELINE_WARMUP_TIME_MS);
             }
 
