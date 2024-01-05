@@ -31,6 +31,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
@@ -123,7 +124,6 @@ public class CaptureContentForNotesVerifierActivity extends PassFailButtons.Test
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.capture_content_for_notes);
-        setInfoResources(R.string.ccfn_tests, R.string.ccfn_tests_info, 0);
         setPassFailButtonClickListeners();
 
         ArrayTestListAdapter adapter = new ArrayTestListAdapter(this);
@@ -135,23 +135,37 @@ public class CaptureContentForNotesVerifierActivity extends PassFailButtons.Test
             }
         });
 
+        TextView testInstructionsView = findViewById(R.id.test_instructions);
+
         if (isNotesRoleAvailable()) {
             // If the notes role is available, disable the pass button and setup tests.
             getPassButton().setEnabled(false);
             addTestsToAdapter(adapter);
+
+            // Set up test info resources to ask user to go through the test cases.
+            setInfoResources(R.string.ccfn_tests, R.string.ccfn_tests_info, 0);
+            testInstructionsView.setText(R.string.ccfn_tests_info);
+
+            // Add these buttons only if the Notes role is available to avoid confusion.
+            Button setDefaultNotesButton = findViewById(R.id.set_default_notes);
+            setDefaultNotesButton.setOnClickListener(this);
+            setDefaultNotesButton.setVisibility(View.VISIBLE);
+
+            Button setupDeviceOwner = findViewById(R.id.setup_device_owner);
+            setupDeviceOwner.setOnClickListener(this);
+            setupDeviceOwner.setVisibility(View.VISIBLE);
+
+            Button clearDeviceOwner = findViewById(R.id.clear_device_owner);
+            clearDeviceOwner.setOnClickListener(this);
+            clearDeviceOwner.setVisibility(View.VISIBLE);
         } else {
             // Notes role is unavailable, let the verifier skip this test altogether.
             getPassButton().setEnabled(true);
+
+            // Set up test info resources to ask user to skip the test.
+            setInfoResources(R.string.ccfn_tests, R.string.ccfn_tests_info_skip, 0);
+            testInstructionsView.setText(R.string.ccfn_tests_info_skip);
         }
-
-        Button setDefaultNotesButton = findViewById(R.id.set_default_notes);
-        setDefaultNotesButton.setOnClickListener(this);
-
-        Button setupDeviceOwner = findViewById(R.id.setup_device_owner);
-        setupDeviceOwner.setOnClickListener(this);
-
-        Button clearDeviceOwner = findViewById(R.id.clear_device_owner);
-        clearDeviceOwner.setOnClickListener(this);
     }
 
     @Override

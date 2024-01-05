@@ -7235,15 +7235,18 @@ Follow the instructions on the screen to measure the frequency response for the 
         This test verifies the support for Content Capture For Notes APIs on devices that have the
         ROLE_NOTES enabled.
 
-        \n\nIf the ROLE_NOTES is not enabled, no test should be shown in the list below, and you
-        should mark the CTS test as passed.
-
         \n\nFor this test you need to install CtsDefaultNotesApp.apk and set it as the Default notes
         app.
 
         \n\nFor some tests you will need to set up device owner.
 
         \n\nPlease clear the device owner after all the test cases are run, if it was set up.
+    </string>
+    <string name="ccfn_tests_info_skip">
+        This test verifies the support for Content Capture For Notes APIs on devices that have the
+        ROLE_NOTES enabled.
+
+        \n\nPlease mark this test as passed since ROLE_NOTES is not enabled on this device.
     </string>
     <!-- Dialogs -->
     <string name="set_default_notes_button_label">Set default notes app</string>
