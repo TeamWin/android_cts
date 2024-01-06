@@ -63,4 +63,7 @@ android_test {
     data: [
         ":CtsCarDisplayCompatApp",
     ],
+    java_resources: [
+        ":CarSvcProps_JSON",
+    ],
 }
