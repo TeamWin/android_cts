@@ -53,6 +53,8 @@ import org.hyphonate.megaaudio.recorder.sinks.AppCallback;
 import org.hyphonate.megaaudio.recorder.sinks.AppCallbackAudioSinkProvider;
 import org.junit.rules.TestName;
 
+import java.util.Locale;
+
 /**
  * CtsVerifier test to measure tap-to-tone latency.
  */
@@ -154,6 +156,10 @@ public class AudioTap2ToneActivity
         boolean claimsProAudio = AudioSystemFlags.claimsProAudio(this);
         boolean claimsLowLatencyAudio = AudioSystemFlags.claimsLowLatencyAudio(this);
 
+        ((TextView) findViewById(R.id.audio_t2t_version))
+                .setText(String.format(Locale.getDefault(),
+                         getString(R.string.version_number_format),
+                         Common.VERSION_CODE));
         ((TextView) findViewById(R.id.audio_t2t_mic))
                 .setText(mHasMic ? yesString : noString);
         ((TextView) findViewById(R.id.audio_t2t_speaker))
@@ -552,6 +558,12 @@ public class AudioTap2ToneActivity
     public void recordTestResults() {
         reportTestResultForApi(TEST_API_NATIVE);
         reportTestResultForApi(TEST_API_JAVA);
+
+        getReportLog().addValue(
+                Common.KEY_VERSION_CODE,
+                Common.VERSION_CODE,
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
 
         getReportLog().submit();
 

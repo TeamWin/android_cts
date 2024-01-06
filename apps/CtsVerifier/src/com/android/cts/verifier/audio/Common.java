@@ -11,6 +11,15 @@ import java.util.Random;
  */
 public class Common {
 
+    // Internal version code for tracking small changes.
+    // Format is a monotonic decimal number with Mmmpp
+    // M = major version
+    // mm = minor version
+    // pp = patch
+    public static final int VERSION_CODE = 10101;
+    // Key for storing in a protobuf.
+    public static final String KEY_VERSION_CODE = "version_code";
+
   public static final int RECORDING_SAMPLE_RATE_HZ
       = AudioRecordHelper.getInstance().getSampleRate();
   public static final int PLAYING_SAMPLE_RATE_HZ
