@@ -515,6 +515,7 @@ public class KeyAttestationTest {
     public void testEcAttestation_UniqueIdWorksWithCorrectPermission() throws Exception {
         assumeTrue("Device doesn't have secure lock screen",
                 TestUtils.hasSecureLockScreen(getContext()));
+        assumeTrue("Device does not support attestation", TestUtils.isAttestationSupported());
 
         String keystoreAlias = "test_key";
         KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(keystoreAlias, PURPOSE_SIGN)
