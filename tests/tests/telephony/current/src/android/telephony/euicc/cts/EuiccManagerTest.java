@@ -22,20 +22,21 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.service.euicc.EuiccService;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.TelephonyManager;
 import android.telephony.UiccCardInfo;
 import android.telephony.UiccPortInfo;
 import android.telephony.cts.util.TelephonyUtils;
 import android.telephony.euicc.DownloadableSubscription;
 import android.telephony.euicc.EuiccCardManager;
-
 import android.telephony.euicc.EuiccInfo;
 import android.telephony.euicc.EuiccManager;
 import android.text.TextUtils;
@@ -44,10 +45,12 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.internal.telephony.flags.Flags;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -59,6 +62,9 @@ import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 public class EuiccManagerTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private static final int REQUEST_CODE = 0;
     private static final int CALLBACK_TIMEOUT_MILLIS = 2000;
@@ -107,6 +113,10 @@ public class EuiccManagerTest {
 
     @Before
     public void setUp() throws Exception {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(EuiccUtil.hasEuiccFeature());
+        }
+
         mEuiccManager = (EuiccManager) getContext().getSystemService(Context.EUICC_SERVICE);
     }
 
@@ -114,6 +124,10 @@ public class EuiccManagerTest {
     public void tearDown() throws Exception {
         if (mCallbackReceiver != null) {
             getContext().unregisterReceiver(mCallbackReceiver);
+
+            if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+                mCallbackReceiver = null;
+            }
         }
     }
 

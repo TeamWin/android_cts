@@ -20,25 +20,38 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.service.euicc.EuiccService;
 import android.service.euicc.GetDefaultDownloadableSubscriptionListResult;
 
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.internal.telephony.flags.Flags;
+
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public final class GetDefaultDownloadableSubscriptionListResultTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private GetDefaultDownloadableSubscriptionListResult mDefaultSubListResult;
 
     @Before
     public void setUp() {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(EuiccUtil.hasEuiccFeature());
+        }
+
         mDefaultSubListResult =
                 new GetDefaultDownloadableSubscriptionListResult(
                         EuiccService.RESULT_RESOLVABLE_ERRORS, null /*subscriptions*/);

@@ -21,13 +21,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.RemoteException;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.Contacts;
 import android.provider.Contacts.People;
 import android.telephony.PhoneNumberUtils;
@@ -39,13 +43,20 @@ import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.style.TtsSpan;
 
+import com.android.internal.telephony.flags.Flags;
+
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.Locale;
 
 public class PhoneNumberUtilsTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
+
     private static final int MIN_MATCH = 7;
 
     // mPhoneNumber ~ "+17005550020", length == 7.
@@ -54,10 +65,17 @@ public class PhoneNumberUtilsTest {
 
     private int mOldMinMatch;
 
+    private PackageManager mPackageManager;
     @Before
     public void setUp() throws Exception {
         mOldMinMatch = PhoneNumberUtils.getMinMatchForTest();
         PhoneNumberUtils.setMinMatchForTest(MIN_MATCH);
+
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            mPackageManager = getContext().getPackageManager();
+            assumeTrue("Skipping test that requires FEATURE_TELEPHONY_CALLING",
+                    mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_CALLING));
+        }
     }
 
     @After

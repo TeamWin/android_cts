@@ -130,8 +130,7 @@ public class LoudnessCodecConfiguratorTest {
     public void addUnconfiguredMediaCodec_returnsFalse() throws Exception {
         mAt = createAndStartAudioTrack();
 
-        assertThrows(IllegalArgumentException.class,
-                () -> mLcc.addMediaCodec(createMediaCodec(/*configure*/false)));
+        assertFalse(mLcc.addMediaCodec(createMediaCodec(/*configure*/false)));
     }
 
     @Test
@@ -178,7 +177,7 @@ public class LoudnessCodecConfiguratorTest {
 
     @Test
     @RequiresFlagsEnabled(FLAG_LOUDNESS_CONFIGURATOR_API)
-    public void removeUnregisteredCodec_returnsFalse() throws Exception {
+    public void removeUnregisteredCodec_throwsIAE() throws Exception {
         mLcc.addMediaCodec(createMediaCodec(/*configure*/true));
         assertThrows(IllegalArgumentException.class,
                 () -> mLcc.removeMediaCodec(createMediaCodec(/*configure*/true)));

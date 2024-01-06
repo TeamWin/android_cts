@@ -29,6 +29,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.Telephony.Carriers;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.PreciseDataConnectionState;
@@ -42,9 +44,11 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.internal.telephony.flags.Flags;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -63,6 +67,9 @@ import java.util.concurrent.Executor;
         })
 @RunWith(AndroidJUnit4.class)
 public class ApnCarrierIdTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private static final Uri CARRIER_TABLE_URI = Carriers.CONTENT_URI;
     /**
@@ -111,7 +118,13 @@ public class ApnCarrierIdTest {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        assumeTrue(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY));
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeFalse(mContext.getPackageManager().hasSystemFeature(
+                    PackageManager.FEATURE_TELEPHONY_DATA));
+        } else {
+            assumeTrue(mContext.getPackageManager().hasSystemFeature(
+                    PackageManager.FEATURE_TELEPHONY));
+        }
         mTelephonyManager = mContext.getSystemService(TelephonyManager.class);
 
         if (mTelephonyManager.getSimState() != TelephonyManager.SIM_STATE_READY
@@ -139,8 +152,12 @@ public class ApnCarrierIdTest {
 
     @After
     public void tearDown() {
-        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            return;
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(mContext.getPackageManager().hasSystemFeature(
+                    PackageManager.FEATURE_TELEPHONY_DATA));
+        } else {
+            assumeTrue(mContext.getPackageManager().hasSystemFeature(
+                    PackageManager.FEATURE_TELEPHONY));
         }
 
         if (mInsertedApnSelectionArgs != null) {

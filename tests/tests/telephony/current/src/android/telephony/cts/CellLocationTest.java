@@ -23,8 +23,10 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.os.Looper;
 import android.net.ConnectivityManager;
+import android.os.Looper;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
@@ -32,12 +34,18 @@ import android.telephony.gsm.GsmCellLocation;
 import android.util.Log;
 
 import com.android.compatibility.common.util.TestThread;
+import com.android.internal.telephony.flags.Flags;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 public class CellLocationTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
+
     private boolean mOnCellLocationChangedCalled;
     private final Object mLock = new Object();
     private TelephonyManager mTelephonyManager;
@@ -64,9 +72,16 @@ public class CellLocationTest {
 
     @Test
     public void testCellLocation() throws Throwable {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
-            return;
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)) {
+                Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY_RADIO_ACCESS");
+                return;
+            }
+        } else {
+            if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+                Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+                return;
+            }
         }
 
         TelephonyManagerTest.grantLocationPermissions();

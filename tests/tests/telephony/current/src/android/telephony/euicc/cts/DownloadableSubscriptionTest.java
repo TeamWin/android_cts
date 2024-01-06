@@ -16,24 +16,33 @@
 
 package android.telephony.euicc.cts;
 
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.euicc.DownloadableSubscription;
 
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.internal.telephony.flags.Flags;
+
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class DownloadableSubscriptionTest {
-
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
     private static final String ACTIVATION_CODE =
             "1$SMDP.GSMA.COM$04386-AGYFT-A74Y8-3F815$1.3.6.1.4.1.31746";
 
@@ -41,6 +50,10 @@ public class DownloadableSubscriptionTest {
 
     @Before
     public void setUp() throws Exception {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(EuiccUtil.hasEuiccFeature());
+        }
+
         mDownloadableSubscription = DownloadableSubscription.forActivationCode(ACTIVATION_CODE);
     }
 

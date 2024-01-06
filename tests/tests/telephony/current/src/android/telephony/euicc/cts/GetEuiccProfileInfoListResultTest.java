@@ -21,25 +21,38 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.service.euicc.EuiccService;
 import android.service.euicc.GetEuiccProfileInfoListResult;
 
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.internal.telephony.flags.Flags;
+
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public final class GetEuiccProfileInfoListResultTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private GetEuiccProfileInfoListResult mProfileListResult;
 
     @Before
     public void setUp() {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(EuiccUtil.hasEuiccFeature());
+        }
+
         mProfileListResult =
                 new GetEuiccProfileInfoListResult(
                         EuiccService.RESULT_RESOLVABLE_ERRORS,

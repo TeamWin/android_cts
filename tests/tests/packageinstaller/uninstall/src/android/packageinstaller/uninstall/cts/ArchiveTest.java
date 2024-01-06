@@ -17,16 +17,18 @@ package android.packageinstaller.uninstall.cts;
 
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.pm.PackageInstaller.UNARCHIVAL_GENERIC_ERROR;
 import static android.content.pm.PackageManager.MATCH_ARCHIVED_PACKAGES;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.getDefaultLauncher;
+import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.setDefaultLauncher;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import android.Manifest;
 import android.app.Instrumentation;
@@ -61,6 +63,7 @@ import com.android.cts.install.lib.LocalIntentSender;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,6 +71,7 @@ import org.junit.runner.RunWith;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -80,6 +84,8 @@ public class ArchiveTest {
             "/data/local/tmp/cts/uninstall/CtsArchiveTestApp.apk";
     private static final String ARCHIVE_APK_PACKAGE_NAME =
             "android.packageinstaller.archive.cts.archiveapp";
+    private static final String ARCHIVE_APK_ACTIVITY_NAME =
+            ARCHIVE_APK_PACKAGE_NAME + ".MainActivity";
     private static final String SYSTEM_PACKAGE_NAME = "android";
 
     private static final long TIMEOUT_MS = 30000;
@@ -92,6 +98,7 @@ public class ArchiveTest {
     private UiDevice mUiDevice;
     private PackageManager mPackageManager;
     private PackageInstaller mPackageInstaller;
+    private String mDefaultHome;
 
     @Rule
     public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
@@ -116,11 +123,18 @@ public class ArchiveTest {
         sUnarchiveId = new CompletableFuture<>();
         sUnarchiveReceiverPackageName = new CompletableFuture<>();
         sUnarchiveReceiverAllUsers = new CompletableFuture<>();
+        mDefaultHome = getDefaultLauncher(instrumentation);
+        // Prepare device to same state to make tests more independent.
+        prepareDevice();
+        abandonPendingUnarchivalSessions();
     }
 
     @After
     public void tearDown() {
         uninstallPackage(ARCHIVE_APK_PACKAGE_NAME);
+        if (mDefaultHome != null) {
+            setDefaultLauncher(InstrumentationRegistry.getInstrumentation(), mDefaultHome);
+        }
     }
 
     private void uninstallPackage(String packageName) {
@@ -156,7 +170,6 @@ public class ArchiveTest {
             }
         }
         dumpWindowHierarchy();
-        fail("Unable to wait for the uninstaller activity");
         return null;
     }
 
@@ -251,12 +264,85 @@ public class ArchiveTest {
             Assert.fail("Restore button not shown");
         }
         clickableView.click();
+    }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
+    @Ignore("b/302114467")
+    public void startUnarchival_permissionDialog() throws Exception {
+        installPackage(ARCHIVE_APK);
+        prepareDevice();
+        LocalIntentSender archiveSender = new LocalIntentSender();
+        runWithShellPermissionIdentity(
+                () ->
+                        mPackageInstaller.requestArchive(
+                                ARCHIVE_APK_PACKAGE_NAME,
+                                archiveSender.getIntentSender(), 0),
+                Manifest.permission.DELETE_PACKAGES);
+        Intent archiveIntent = archiveSender.getResult();
+        assertThat(archiveIntent.getIntExtra(PackageInstaller.EXTRA_STATUS, -100)).isEqualTo(
+                PackageInstaller.STATUS_SUCCESS);
+        ComponentName archiveComponentName = new ComponentName(ARCHIVE_APK_PACKAGE_NAME,
+                ARCHIVE_APK_ACTIVITY_NAME);
+        if (mDefaultHome != null) {
+            setDefaultLauncher(InstrumentationRegistry.getInstrumentation(), mDefaultHome);
+        }
+        prepareDevice();
+
+        SystemUtil.runShellCommand(
+                String.format(
+                        "am start -n %s", archiveComponentName.flattenToShortString()));
+
+        mUiDevice.waitForIdle();
+        assertThat(waitFor(Until.findObject(By.textContains("Restore")))).isNotNull();
+        UiObject2 clickableView = mUiDevice.findObject(By.text("Restore"));
+        if (clickableView == null) {
+            Assert.fail("Restore button not shown");
+        }
+        clickableView.click();
         assertThat(sUnarchiveReceiverPackageName.get(10, TimeUnit.SECONDS)).isEqualTo(
                 ARCHIVE_APK_PACKAGE_NAME);
-        int unarchiveId = sUnarchiveId.get(10, TimeUnit.MILLISECONDS);
+        assertThat(sUnarchiveReceiverPackageName.get()).isEqualTo(ARCHIVE_APK_PACKAGE_NAME);
+        assertThat(sUnarchiveReceiverAllUsers.get()).isFalse();
+    }
 
-        mPackageInstaller.abandonSession(unarchiveId);
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
+    public void startUnarchival_errorDialog() throws Exception {
+        installPackage(ARCHIVE_APK);
+        prepareDevice();
+        LocalIntentSender archiveSender = new LocalIntentSender();
+        runWithShellPermissionIdentity(
+                () ->
+                        mPackageInstaller.requestArchive(
+                                ARCHIVE_APK_PACKAGE_NAME,
+                                archiveSender.getIntentSender(), 0),
+                Manifest.permission.DELETE_PACKAGES);
+        Intent archiveIntent = archiveSender.getResult();
+        assertThat(archiveIntent.getIntExtra(PackageInstaller.EXTRA_STATUS, -100)).isEqualTo(
+                PackageInstaller.STATUS_SUCCESS);
+        ComponentName archiveComponentName = new ComponentName(ARCHIVE_APK_PACKAGE_NAME,
+                ARCHIVE_APK_ACTIVITY_NAME);
+        if (mDefaultHome != null) {
+            setDefaultLauncher(InstrumentationRegistry.getInstrumentation(), mDefaultHome);
+        }
+        prepareDevice();
+
+        SystemUtil.runShellCommand(
+                String.format(
+                        "am start -n %s", archiveComponentName.flattenToShortString()));
+
+        mUiDevice.waitForIdle();
+        int unarchiveId = getUnarchivalSessionId();
+        mPackageInstaller.reportUnarchivalStatus(unarchiveId, UNARCHIVAL_GENERIC_ERROR,
+                -1 /* requiredStorageBytes= */, null /* userActionIntent= */);
+
+        assertThat(waitFor(Until.findObject(By.textContains("Something went wrong")))).isNotNull();
+        UiObject2 clickableView = mUiDevice.findObject(By.text("OK"));
+        if (clickableView == null) {
+            Assert.fail("OK button not shown");
+        }
+        clickableView.click();
     }
 
     private void prepareDevice() throws Exception {
@@ -290,6 +376,25 @@ public class ArchiveTest {
                     + mContext.getUser() + ": " + e);
             return false;
         }
+    }
+
+    private void abandonPendingUnarchivalSessions() {
+        List<PackageInstaller.SessionInfo> sessions = mPackageInstaller.getAllSessions();
+        for (PackageInstaller.SessionInfo session : sessions) {
+            if (session.getAppPackageName().equals(ARCHIVE_APK_PACKAGE_NAME)) {
+                mPackageInstaller.abandonSession(session.getSessionId());
+            }
+        }
+    }
+
+    private int getUnarchivalSessionId() {
+        List<PackageInstaller.SessionInfo> sessions = mPackageInstaller.getAllSessions();
+        for (PackageInstaller.SessionInfo session : sessions) {
+            if (session.getAppPackageName().equals(ARCHIVE_APK_PACKAGE_NAME)) {
+                return session.getSessionId();
+            }
+        }
+        return -1;
     }
 
     public static class UnarchiveBroadcastReceiver extends BroadcastReceiver {

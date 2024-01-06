@@ -23,6 +23,8 @@ import static android.content.pm.PackageManager.MATCH_ARCHIVED_PACKAGES;
 import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.getDefaultLauncher;
+import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.setDefaultLauncher;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -129,6 +131,7 @@ public class PackageInstallerArchiveTest {
     public AbandonAllPackageSessionsRule mAbandonSessionsRule = new AbandonAllPackageSessionsRule();
 
     private Context mContext;
+    private Instrumentation mInstrumentation;
     private UiDevice mUiDevice;
     private PackageManager mPackageManager;
     private PackageInstaller mPackageInstaller;
@@ -136,14 +139,15 @@ public class PackageInstallerArchiveTest {
     private ArchiveIntentSender mArchiveIntentSender;
     private UnarchiveIntentSender mUnarchiveIntentSender;
     private AppOpsManager mAppOpsManager;
+    private String mDefaultHome;
 
     @Before
     public void setup() throws Exception {
         assumeTrue("Form factor is not supported", isFormFactorSupported());
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mUiDevice = UiDevice.getInstance(
                 androidx.test.InstrumentationRegistry.getInstrumentation());
-        mContext = instrumentation.getContext();
+        mContext = mInstrumentation.getContext();
         mPackageManager = mContext.getPackageManager();
         mPackageInstaller = mPackageManager.getPackageInstaller();
         mStorageStatsManager = mContext.getSystemService(StorageStatsManager.class);
@@ -156,11 +160,15 @@ public class PackageInstallerArchiveTest {
         mContext.getPackageManager().setComponentEnabledSetting(
                 new ComponentName(mContext, UnarchiveBroadcastReceiver.class),
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
+        mDefaultHome = getDefaultLauncher(mInstrumentation);
     }
 
     @After
     public void uninstall() {
         uninstallPackage(PACKAGE_NAME);
+        if (mDefaultHome != null) {
+            setDefaultLauncher(mInstrumentation, mDefaultHome);
+        }
     }
 
     @Test
@@ -794,28 +802,6 @@ public class PackageInstallerArchiveTest {
                         () -> mContext.startActivity(callingIntent));
 
         assertThat(e).hasMessageThat().contains("Not allowed to start activity Intent");
-    }
-
-    @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
-    public void startUnarchival_success() throws Exception {
-        installPackage(PACKAGE_NAME, APK_PATH);
-        runWithShellPermissionIdentity(
-                () ->
-                        mPackageInstaller.requestArchive(
-                                PACKAGE_NAME,
-                                new IntentSender((IIntentSender) mArchiveIntentSender), 0),
-                Manifest.permission.DELETE_PACKAGES);
-        assertThat(mArchiveIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
-        ComponentName archiveComponentName = new ComponentName(PACKAGE_NAME, ACTIVITY_NAME);
-
-        SystemUtil.runShellCommand(
-                TextUtils.formatSimple(
-                        "am start -n %s", archiveComponentName.flattenToShortString()));
-
-        assertThat(sUnarchiveReceiverPackageName.get()).isEqualTo(PACKAGE_NAME);
-        assertThat(sUnarchiveReceiverAllUsers.get()).isFalse();
-        mPackageInstaller.abandonSession(sUnarchiveId.get());
     }
 
     private void launchTestActivity() {

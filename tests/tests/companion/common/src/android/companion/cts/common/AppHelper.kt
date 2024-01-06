@@ -18,7 +18,6 @@ package android.companion.cts.common
 
 import android.app.Instrumentation
 import android.net.MacAddress
-import java.lang.UnsupportedOperationException
 
 /** Utility class for interacting with applications via Shell */
 class AppHelper(
@@ -27,11 +26,14 @@ class AppHelper(
     val packageName: String,
     private val apkPath: String? = null
 ) {
-    fun associate(macAddress: MacAddress) =
-            runShellCommand("cmd companiondevice associate $userId $packageName $macAddress")
+    fun associate(macAddress: MacAddress, role: String = "") =
+            runShellCommand("cmd companiondevice associate $userId $packageName $macAddress $role")
 
     fun disassociate(macAddress: MacAddress) =
             runShellCommand("cmd companiondevice disassociate $userId $packageName $macAddress")
+
+    fun disassociateAll() =
+            runShellCommand("cmd companiondevice disassociate-all $userId $packageName")
 
     fun isInstalled(): Boolean =
             runShellCommand("pm list packages --user $userId $packageName").isNotBlank()
@@ -42,6 +44,9 @@ class AppHelper(
     fun uninstall() = runShellCommand("pm uninstall --user $userId $packageName")
 
     fun clearData() = runShellCommand("pm clear --user $userId $packageName")
+
+    fun isRoleHolder(role: String) =
+            runShellCommand("cmd role get-role-holders --user $userId $role").contains(packageName)
 
     fun addToHoldersOfRole(role: String) =
             runShellCommand("cmd role add-role-holder --user $userId $role $packageName")

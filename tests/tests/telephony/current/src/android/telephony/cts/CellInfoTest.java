@@ -22,14 +22,16 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.annotation.Nullable;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Parcel;
 import android.os.SystemClock;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.CellIdentity;
 import android.telephony.CellIdentityCdma;
@@ -57,12 +59,14 @@ import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.internal.telephony.flags.Flags;
+
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -86,6 +90,10 @@ import java.util.concurrent.Executor;
  *
  */
 public class CellInfoTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
+
     private static final String TAG = "android.telephony.cts.CellInfoTest";
 
     // Maximum and minimum possible RSSI values(in dbm).
@@ -255,7 +263,11 @@ public class CellInfoTest {
     @Before
     public void setUp() throws Exception {
         mPm = getContext().getPackageManager();
-        assumeTrue(mPm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY));
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(mPm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
+        } else {
+            assumeTrue(mPm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY));
+        }
 
         mTm = (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         Pair<Integer, Integer> verPair =

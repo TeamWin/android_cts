@@ -19,6 +19,7 @@ package com.android.cts.appcloning.media;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -93,6 +94,18 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
     public void setup() {
         sCloneUserStoragePath = String.format(EXTERNAL_STORAGE_PATH,
                 Integer.parseInt(sCloneUserId));
+    }
+
+    private String createAndStartManagedProfileUser() throws Exception {
+        String output = sDevice.executeShellCommand(
+                "pm create-user --profileOf 0 --managed managedUser");
+        String managedProfileId = output.substring(output.lastIndexOf(' ') + 1).replaceAll("[^0-9]",
+                "");
+        assertThat(managedProfileId).isNotEmpty();
+
+        startUserAndWait(managedProfileId);
+
+        return managedProfileId;
     }
 
     @Test
@@ -282,6 +295,51 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
 
         assertTrue(!getPackageInUser(APP_A_PACKAGE, Integer.parseInt(sCloneUserId))
                 .contains(APP_A_PACKAGE));
+    }
+
+    @Test
+    @LargeTest
+    public void testDeletionOfAppInNotParentProfile_notDeletesCloneApp()
+            throws Exception {
+        assumeTrue(isAtLeastU(sDevice));
+
+        int currentUserId = getCurrentUserId();
+        String managedProfileId = createAndStartManagedProfileUser();
+
+        try {
+            // Install the app in owner user space
+            installPackage(APP_A, "--user " + currentUserId);
+            eventually(() -> {
+                // Wait for finish.
+                assertThat(isPackageInstalled(APP_A_PACKAGE,
+                        String.valueOf(currentUserId))).isTrue();
+            }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
+
+            // Install the app in clone user profile
+            installPackage(APP_A, "--user " + sCloneUserId);
+            eventually(() -> {
+                // Wait for finish.
+                assertThat(isPackageInstalled(APP_A_PACKAGE, sCloneUserId)).isTrue();
+            }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
+
+            // Install the app in managed profile
+            installPackage(APP_A, "--user " + managedProfileId);
+            eventually(() -> {
+                // Wait for finish.
+                assertThat(isPackageInstalled(APP_A_PACKAGE, managedProfileId)).isTrue();
+            }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
+
+            eventually(() -> {
+                uninstallPackage(APP_A_PACKAGE, Integer.parseInt(managedProfileId));
+            }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
+
+            assertFalse(getPackageInUser(APP_A_PACKAGE, Integer.parseInt(managedProfileId))
+                    .contains(APP_A_PACKAGE));
+            assertTrue(getPackageInUser(APP_A_PACKAGE, Integer.parseInt(sCloneUserId))
+                    .contains(APP_A_PACKAGE));
+        } finally {
+            removeUser(managedProfileId);
+        }
     }
 
     /**
