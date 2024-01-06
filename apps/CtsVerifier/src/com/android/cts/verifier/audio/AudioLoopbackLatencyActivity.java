@@ -709,30 +709,36 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
     private static final String KEY_PATHS = "paths";
 
     private void recordGlobalResults(CtsVerifierReportLog reportLog) {
-            int audioLevel = mAudioLevelSeekbar.getProgress();
-            reportLog.addValue(
-                    KEY_LEVEL,
-                    audioLevel,
-                    ResultType.NEUTRAL,
-                    ResultUnit.NONE);
+        int audioLevel = mAudioLevelSeekbar.getProgress();
+        reportLog.addValue(
+                KEY_LEVEL,
+                audioLevel,
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
 
-            reportLog.addValue(
-                    KEY_IS_PRO_AUDIO,
-                    mClaimsProAudio,
-                    ResultType.NEUTRAL,
-                    ResultUnit.NONE);
+        reportLog.addValue(
+                KEY_IS_PRO_AUDIO,
+                mClaimsProAudio,
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
 
-            reportLog.addValue(
-                    KEY_TEST_MMAP,
-                    mSupportsMMAP,
-                    ResultType.NEUTRAL,
-                    ResultUnit.NONE);
+        reportLog.addValue(
+                KEY_TEST_MMAP,
+                mSupportsMMAP,
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
 
-            reportLog.addValue(
-                    KEY_TEST_MMAPEXCLUSIVE,
-                    mSupportsMMAPExclusive,
-                    ResultType.NEUTRAL,
-                    ResultUnit.NONE);
+        reportLog.addValue(
+                KEY_TEST_MMAPEXCLUSIVE,
+                mSupportsMMAPExclusive,
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
+
+        reportLog.addValue(
+                Common.KEY_VERSION_CODE,
+                Common.VERSION_CODE,
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
     }
 
     private void recordAllRoutes(CtsVerifierReportLog reportLog) {
