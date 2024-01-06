@@ -512,6 +512,29 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_BAL_REQUIRE_OPT_IN_BY_PENDING_INTENT_CREATOR)
+    @RequiresFlagsDisabled(Flags.FLAG_BAL_DONT_BRING_EXISTING_BACKGROUND_TASK_STACK_TO_FG)
+    public void testPI_onlyCreatorAllowsBALwithoutOptInSdk33_isNotBlocked() throws Exception {
+        // A (privileged) creates PI, B (non-privileged) sends PI from BG, C is started
+        grantSystemAlertWindow(APP_A_33);
+        grantSystemAlertWindow(APP_B, false);
+
+        startActivity(APP_B.FOREGROUND_ACTIVITY);
+
+        pressHomeAndWaitHomeResumed();
+
+        TestServiceClient servicePiCreator = getTestService(APP_A_33);
+        PendingIntent pi = servicePiCreator.generatePendingIntent(APP_C.BACKGROUND_ACTIVITY,
+                CREATE_OPTIONS_ALLOW_BAL);
+        TestServiceClient servicePiSender = getTestService(APP_B);
+        servicePiSender.sendPendingIntentWithActivity(pi, Bundle.EMPTY);
+
+        assertActivityFocused(APP_C.BACKGROUND_ACTIVITY);
+        assertTaskStackHasComponents(APP_B.FOREGROUND_ACTIVITY, APP_C.BACKGROUND_ACTIVITY,
+                APP_B.FOREGROUND_ACTIVITY);
+    }
+
+    @Test
     @RequiresFlagsEnabled({Flags.FLAG_BAL_REQUIRE_OPT_IN_BY_PENDING_INTENT_CREATOR,
             Flags.FLAG_BAL_DONT_BRING_EXISTING_BACKGROUND_TASK_STACK_TO_FG})
     public void testPI_onlyCreatorAllowsBALwithOptIn_isStartedInBackground() throws Exception {
