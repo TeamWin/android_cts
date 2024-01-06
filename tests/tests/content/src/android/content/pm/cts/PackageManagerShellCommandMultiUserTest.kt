@@ -26,6 +26,7 @@ import android.content.pm.Flags.FLAG_NULLABLE_DATA_DIR
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.MATCH_ANY_USER
+import android.content.pm.PackageManager.MATCH_ARCHIVED_PACKAGES
 import android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS
 import android.content.pm.PackageManager.MATCH_DISABLED_UNTIL_USED_COMPONENTS
 import android.content.pm.PackageManager.MATCH_HIDDEN_UNTIL_INSTALLED_COMPONENTS
@@ -449,28 +450,34 @@ class PackageManagerShellCommandMultiUserTest {
             "pm list packages -U --user ${primaryUser.id()} $TEST_APP_PACKAGE"
         ).replace("\n", "")
         assertTrue(out.split(":").last().split(",").size == 1)
+        var primaryUid = out.split(":").last().split(",").last()
         out = SystemUtil.runShellCommand(
             "pm list packages -U --user ${secondaryUser.id()} $TEST_APP_PACKAGE"
         ).replace("\n", "")
         assertEquals("", out)
         out = SystemUtil.runShellCommand("pm list packages -U $TEST_APP_PACKAGE")
             .replace("\n", "")
-        var installedUsersCount = out.split(":").last().split(",").size
-        assertTrue(out, installedUsersCount >= 1)
+        var listedUids = out.split(":").last().split(",")
+        assertTrue(out, listedUids.contains(primaryUid))
+        // Install app on another user and verify the new UID is included in the list
         installExistingPackageAsUser(TEST_APP_PACKAGE, secondaryUser)
         assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser))
         assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser))
+        out = SystemUtil.runShellCommand(
+                "pm list packages -U --user ${primaryUser.id()} $TEST_APP_PACKAGE"
+        ).replace("\n", "")
+        assertTrue(out, out.split(":").last().split(",").size == 1)
+        assertEquals(primaryUid, out.split(":").last().split(",").last())
+        out = SystemUtil.runShellCommand(
+                "pm list packages -U --user ${secondaryUser.id()} $TEST_APP_PACKAGE"
+        ).replace("\n", "")
+        assertTrue(out, out.split(":").last().split(",").size == 1)
+        var secondaryUid = out.split(":").last().split(",").last()
         out = SystemUtil.runShellCommand("pm list packages -U $TEST_APP_PACKAGE")
             .replace("\n", "")
-        assertTrue(out, out.split(":").last().split(",").size > installedUsersCount)
-        out = SystemUtil.runShellCommand(
-            "pm list packages -U --user ${primaryUser.id()} $TEST_APP_PACKAGE"
-        ).replace("\n", "")
-        assertTrue(out, out.split(":").last().split(",").size == 1)
-        out = SystemUtil.runShellCommand(
-            "pm list packages -U --user ${secondaryUser.id()} $TEST_APP_PACKAGE"
-        ).replace("\n", "")
-        assertTrue(out, out.split(":").last().split(",").size == 1)
+        listedUids = out.split(":").last().split(",")
+        assertTrue(out, listedUids.contains(primaryUid))
+        assertTrue(out, listedUids.contains(secondaryUid))
     }
 
     @Test
@@ -533,12 +540,29 @@ class PackageManagerShellCommandMultiUserTest {
             .isEqualTo("true")
     }
 
+    private fun matchFlag(packageName: String, userContext: Context, flag: Long) {
+        // Expect not to throw
+        userContext.packageManager.getPackageInfo(
+                packageName,
+                PackageInfoFlags.of(flag)
+        )
+    }
+
     private fun matchFlag(packageName: String, userContext: Context, flag: Int) {
         // Expect not to throw
         userContext.packageManager.getPackageInfo(
             packageName,
             PackageInfoFlags.of(flag.toLong())
         )
+    }
+
+    private fun notMatchFlag(packageName: String, userContext: Context, flag: Long) {
+        assertThrows(PackageManager.NameNotFoundException::class.java) {
+            userContext.packageManager.getPackageInfo(
+                    packageName,
+                    PackageInfoFlags.of(flag)
+            )
+        }
     }
 
     private fun notMatchFlag(packageName: String, userContext: Context, flag: Int) {
@@ -620,6 +644,8 @@ class PackageManagerShellCommandMultiUserTest {
                 notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_UNINSTALLED_PACKAGES)
                 notMatchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_KNOWN_PACKAGES)
                 notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_KNOWN_PACKAGES)
+                notMatchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_ARCHIVED_PACKAGES)
+                notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_ARCHIVED_PACKAGES)
             },
             Manifest.permission.INTERACT_ACROSS_USERS,
             Manifest.permission.INTERACT_ACROSS_USERS_FULL
@@ -649,11 +675,13 @@ class PackageManagerShellCommandMultiUserTest {
                 matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_ANY_USER)
                 matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_UNINSTALLED_PACKAGES)
                 matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_KNOWN_PACKAGES)
+                matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_ARCHIVED_PACKAGES)
                 // Queryable with MATCH_ANY_USER/MATCH_KNOWN_PACKAGES on secondary user
                 notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, 0)
                 matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_ANY_USER)
                 notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_UNINSTALLED_PACKAGES)
                 matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_KNOWN_PACKAGES)
+                notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_ARCHIVED_PACKAGES)
             },
             Manifest.permission.INTERACT_ACROSS_USERS,
             Manifest.permission.INTERACT_ACROSS_USERS_FULL
@@ -684,11 +712,13 @@ class PackageManagerShellCommandMultiUserTest {
                 matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_ANY_USER)
                 matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_UNINSTALLED_PACKAGES)
                 matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_KNOWN_PACKAGES)
+                matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_ARCHIVED_PACKAGES)
                 // Queryable with match flags on secondary user
                 notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, 0)
                 matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_ANY_USER)
                 matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_UNINSTALLED_PACKAGES)
                 matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_KNOWN_PACKAGES)
+                matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_ARCHIVED_PACKAGES)
             },
             Manifest.permission.INTERACT_ACROSS_USERS,
             Manifest.permission.INTERACT_ACROSS_USERS_FULL
@@ -720,10 +750,12 @@ class PackageManagerShellCommandMultiUserTest {
                 notMatchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_ANY_USER)
                 matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_UNINSTALLED_PACKAGES)
                 matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_KNOWN_PACKAGES)
+                matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_ARCHIVED_PACKAGES)
                 notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, 0)
                 notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_ANY_USER)
                 matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_UNINSTALLED_PACKAGES)
                 matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_KNOWN_PACKAGES)
+                matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_ARCHIVED_PACKAGES)
             },
             Manifest.permission.INTERACT_ACROSS_USERS,
             Manifest.permission.INTERACT_ACROSS_USERS_FULL
@@ -755,11 +787,13 @@ class PackageManagerShellCommandMultiUserTest {
                 notMatchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_ANY_USER)
                 notMatchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_UNINSTALLED_PACKAGES)
                 matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_KNOWN_PACKAGES)
+                notMatchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_ARCHIVED_PACKAGES)
                 // Queryable on secondary user with MATCH_UNINSTALLED_PACKAGES/MATCH_KNOWN_PACKAGES
                 notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, 0)
                 notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_ANY_USER)
                 matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_UNINSTALLED_PACKAGES)
                 matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_KNOWN_PACKAGES)
+                matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_ARCHIVED_PACKAGES)
             },
             Manifest.permission.INTERACT_ACROSS_USERS,
             Manifest.permission.INTERACT_ACROSS_USERS_FULL
