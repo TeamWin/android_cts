@@ -8,8 +8,8 @@
     "bus": "usb",
     "configuration":[
         {"type": 100, "data": [1]},  // UI_SET_EVBIT : EV_KEY
-        // UI_SET_KEYBIT : KEY_Q, KEY_W, KEY_E, KEY_A, KEY_B, KEY_C, KEY_ALT_LEFT, KEY_GRAVE,
+        // UI_SET_KEYBIT : KEY_Q, KEY_W, KEY_E, KEY_A, KEY_B, KEY_C, KEY_ALT_LEFT, KEY_ESC,
         // KEY_META_LEFT, KEY_DEL, KEY_DPAD_LEFT
-        {"type": 101, "data": [16, 17, 18, 30, 48, 46, 56, 41, 125, 14, 105]}
+        {"type": 101, "data": [16, 17, 18, 30, 48, 46, 56, 1, 125, 14, 105]}
     ]
 }
