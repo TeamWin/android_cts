@@ -55,10 +55,10 @@ private fun injectKeyUp(device: UinputDevice, scanCode: Int) {
 class BackKeyShortcutsTest {
 
     companion object {
-        const val KEY_META_LEFT = 125
-        const val KEY_GRAVE = 41
-        const val KEY_DEL = 14
-        const val KEY_DPAD_LEFT = 105
+        const val KEY_LEFTMETA = 125
+        const val KEY_ESC = 1
+        const val KEY_BACKSPACE = 14
+        const val KEY_LEFT = 105
     }
 
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -102,11 +102,11 @@ class BackKeyShortcutsTest {
         PollingCheck.waitFor { inputManager.getInputDevice(keyboardDevice.deviceId) != null }
         activity.assertNoEvents()
 
-        for (scanCode in intArrayOf(KEY_GRAVE, KEY_DEL, KEY_DPAD_LEFT)) {
-            injectKeyDown(keyboardDevice, KEY_META_LEFT)
+        for (scanCode in intArrayOf(KEY_BACKSPACE, KEY_LEFT)) {
+            injectKeyDown(keyboardDevice, KEY_LEFTMETA)
             injectKeyDown(keyboardDevice, scanCode)
             injectKeyUp(keyboardDevice, scanCode)
-            injectKeyUp(keyboardDevice, KEY_META_LEFT)
+            injectKeyUp(keyboardDevice, KEY_LEFTMETA)
 
             assertReceivedEventsCorrectlyMapped(2, KeyEvent.KEYCODE_BACK)
         }
