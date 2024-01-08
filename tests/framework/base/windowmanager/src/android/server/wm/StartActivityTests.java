@@ -315,10 +315,9 @@ public class StartActivityTests extends ActivityManagerTestBase {
         if (useShellPermission) {
             waitAndAssertResumedActivity(BROADCAST_RECEIVER_ACTIVITY,
                     "Activity should be started and resumed");
-            if (type == ACTIVITY_TYPE_HOME && isAutomotive(mContext)
-                    && hasSplitscreenMultitaskingFeature(mContext)) {
-                // For automotive devices with splitscreen multitasking, home activity might
-                // not be in front of the stack, hence, check for its visibility instead.
+            if (type == ACTIVITY_TYPE_HOME && isAutomotive(mContext)) {
+                // For automotive devices, home activity might not be in front of the stack,
+                // hence, check for its visibility instead.
                 mWmState.assertHomeActivityVisible(/* visible= */ true);
             } else {
                 mWmState.assertFrontStackActivityType(
