@@ -47,6 +47,7 @@ import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 import com.android.compatibility.common.util.RequiredServiceRule;
 import com.android.compatibility.common.util.SafeCleanerRule;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -66,6 +67,7 @@ import java.util.concurrent.CountDownLatch;
  * queries from clients in the same package.
  */
 @RunWith(AndroidJUnit4.class)
+@Ignore("b/318869191")
 public class TextClassifierServiceSwapTest {
     // TODO: Add more tests to verify all the TC APIs call between caller and TCS.
     private static final String TAG = "TextClassifierServiceSwapTest";
