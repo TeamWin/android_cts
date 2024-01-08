@@ -785,7 +785,7 @@ public abstract class AppSearchSessionCtsTestBase {
                         .build();
 
         // mDb1 and mDb2 are in the same package, so we can't REALLY test out public acl. But we
-        // can make sure they their own documents under the Public ACL.
+        // can make sure that they can query their own documents under the Public ACL.
         AppSearchBatchResult<String, Void> putResult =
                 checkIsBatchResultSuccess(
                         mDb1.putAsync(
