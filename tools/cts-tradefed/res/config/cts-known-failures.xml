@@ -430,7 +430,7 @@
     <option name="compatibility:exclude-filter" value="AdServicesServiceCoreUnitTests com.android.adservices.data.common.DBAdDataTest#testAdCounterKeysNullFails" />
 
 
-    <!--b/316196102, b/316187793-->
+    <!--b/316196102, b/316187793 -->
     <option name="compatibility:exclude-filter" value="SdkSandboxFrameworkUnitTests com.android.server.sdksandbox.SdkSandboxManagerUnitTest#testLoadSdk_latencySystemServerToAppLogged_failed" />
     <option name="compatibility:exclude-filter" value="SdkSandboxFrameworkUnitTests com.android.server.sdksandbox.SdkSandboxManagerUnitTest#testLoadSdk_latencySystemServerToAppLogged_success" />
     <option name="compatibility:exclude-filter" value="SdkSandboxFrameworkUnitTests com.android.server.sdksandbox.SdkSandboxManagerUnitTest#testLoadSdkFailed" />
@@ -464,7 +464,7 @@
     <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.SdkSandboxManagerServiceUnitTest#testUnloadSdkNotCalledOnAppDeath" />
     <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests android.app.sdksandbox.SdkSandboxManagerServiceUnitTest#testUnloadSdkThatIsBeingLoaded" />
 
-    <!--b/316187793 -->" />
+    <!--b/316187793 -->
     <option name="compatibility:exclude-filter" value="AdServicesApkUINotificationTests com.android.adservices.ui.notifications.NotificationActivityGAV2UiAutomatorTest#rowClickGotItTest" />
     <option name="compatibility:exclude-filter" value="AdServicesEndToEndTests com.android.adservices.measurement.MeasurementManagerSandboxTest#testDeleteRegistrations_verifySamePackageAsContext" />
     <option name="compatibility:exclude-filter" value="AdServicesEndToEndTests com.android.adservices.measurement.MeasurementManagerSandboxTest#testMeasurementApiStatus_verifySamePackageAsContext" />
@@ -616,9 +616,9 @@
     <option name="compatibility:exclude-filter" value="AdServicesFrameworkUnitTests android.adservices.common.KeyedFrequencyCapTest#testToString" />
 
     <!--b/316187793 Module error 2,436/4,520 #Build 11250065 -->
-    <option name="compatibility:exclude-filter" value="AdServicesServiceCoreUnitTests" /> 
+    <option name="compatibility:exclude-filter" value="AdServicesServiceCoreUnitTests" />
 
-    <!--b/316187793 -->" />
+    <!--b/316187793 -->
     <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests com.android.server.sdksandbox.SdkSandboxManagerServiceUnitTest#test_syncDataFromClient_sandboxServiceIsNotBound_sandboxStartedLater" />
     <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests com.android.server.sdksandbox.SdkSandboxManagerServiceUnitTest#testAddSdkSandboxProcessDeathCallback_AfterStartingSandbox" />
     <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests com.android.server.sdksandbox.SdkSandboxManagerServiceUnitTest#testAddSdkSandboxProcessDeathCallback_BeforeStartingSandbox" />
@@ -683,5 +683,8 @@
     <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests com.android.server.sdksandbox.SdkSandboxManagerServiceUnitTest#testUnloadSdkThatIsBeingLoaded" />
     <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests com.android.server.sdksandbox.SdkSandboxManagerServiceUnitTest#testUnloadSdkThatIsLoaded" />
     <option name="compatibility:exclude-filter" value="SdkSandboxManagerServiceUnitTests com.android.server.sdksandbox.SdkSandboxManagerServiceUnitTest#testUnloadSdkThatIsNotLoaded" />
+
+    <!--b/316187793 , b/317381115 -->
+    <option name="compatibility:exclude-filter" value="BroadcastRestrictionsHostTest com.android.tests.sdksandbox.host.BroadcastRestrictionsHostTest#testRegisterBroadcastReceiver_restrictionsNotApplied" />
 
 </configuration>
