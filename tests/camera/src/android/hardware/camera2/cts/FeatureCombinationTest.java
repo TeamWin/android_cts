@@ -38,7 +38,6 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
-import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.cts.CameraTestUtils.ImageDropperListener;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
@@ -175,6 +174,8 @@ public final class FeatureCombinationTest extends Camera2AndroidTestCase {
 
     private void testIsSessionConfigurationSupported(String cameraId,
             AspectRatio aspectRatio, int[] combination) throws Exception {
+        final int kNumBuffers = 5;
+        final int kWarmupFrames = 2;
         MaxStreamSizes maxStreamSizes = new MaxStreamSizes(mStaticInfo,
                 cameraId, mContext, aspectRatio);
 
@@ -182,6 +183,7 @@ public final class FeatureCombinationTest extends Camera2AndroidTestCase {
         int[] videoStabilizationModes =
                 mStaticInfo.getAvailableVideoStabilizationModesChecked();
         Range<Integer>[] fpsRanges = mStaticInfo.getAeAvailableTargetFpsRangesChecked();
+        boolean hasReadoutTimestamp = mStaticInfo.isReadoutTimestampSupported();
 
         for (Long dynamicProfile : dynamicRangeProfiles) {
             // Setup outputs
@@ -198,7 +200,7 @@ public final class FeatureCombinationTest extends Camera2AndroidTestCase {
 
             long minFrameDuration = setupConfigurationTargets(combination, maxStreamSizes,
                     privTargets, jpegTargets, yuvTargets, outputConfigs,
-                    /*numBuffers*/1, dynamicProfile, /*hasUseCase*/ false);
+                    kNumBuffers, dynamicProfile, /*hasUseCase*/ false);
             if (minFrameDuration == -1) {
                 // Stream combination isn't valid.
                 continue;
@@ -280,6 +282,8 @@ public final class FeatureCombinationTest extends Camera2AndroidTestCase {
                                     surfaceSets.add(secondarySurfaceList);
                                 }
                             }
+                        } else {
+                            surfaceSets.add(surfaceList);
                         }
 
                         for (List<Surface> surfaces : surfaceSets) {
@@ -293,38 +297,68 @@ public final class FeatureCombinationTest extends Camera2AndroidTestCase {
                             for (Surface s : surfaces) {
                                 builderForSession.addTarget(s);
                             }
-                            request = builderForSession.build();
+                            List<CaptureRequest> burst = new ArrayList<>();
+                            for (int i = 0; i < kNumBuffers; i++) {
+                                burst.add(builderForSession.build());
+                            }
 
                             SimpleCaptureCallback captureCallback = new SimpleCaptureCallback();
-                            mCameraSession.capture(request, captureCallback, mHandler);
+                            mCameraSession.captureBurst(burst, captureCallback, mHandler);
 
-                            TotalCaptureResult result = captureCallback.getTotalCaptureResult(
-                                    CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS);
-                            mCollector.expectTrue("Result is null for combination "
-                                    + combinationStr, result != null);
+                            List<Long> readoutTimestamps = null;
+                            if (hasReadoutTimestamp) {
+                                readoutTimestamps =
+                                        captureCallback.getReadoutStartTimestamps(kNumBuffers);
+                            }
+                            CaptureResult[] results = new CaptureResult[kNumBuffers];
 
-                            // Check video stabiliztaion mode
-                            Integer videoStabilizationMode = result.get(
-                                    CaptureResult.CONTROL_VIDEO_STABILIZATION_MODE);
-                            mCollector.expectTrue(
-                                    "Stabilization mode doesn't match for combination "
-                                    + combinationStr, videoStabilizationMode == stabilizationMode);
+                            for (int i = 0; i < kNumBuffers; i++) {
+                                CaptureResult result = captureCallback.getCaptureResult(
+                                        CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS);
+                                mCollector.expectTrue("Result is null for combination "
+                                        + combinationStr, result != null);
+                                results[i] = result;
 
-                            // Check frame rate
-                            if (fpsRange.getUpper().equals(fpsRange.getLower())) {
-                                Range<Integer> targetFpsRange = result.get(
-                                        CaptureResult.CONTROL_AE_TARGET_FPS_RANGE);
-                                mCollector.expectTrue("fpsRange doesn't match for combination "
-                                        + combinationStr, targetFpsRange.equals(fpsRange));
-                                Long frameDuration = result.get(
-                                        CaptureResult.SENSOR_FRAME_DURATION);
-                                mCollector.expectTrue("frameDuration doesn't match for "
-                                        + combinationStr + ", fpsRange is "
-                                        + fpsRange + ", but is " + frameDuration,
-                                        (frameDuration
-                                                > ((1e9 / fpsRange.getUpper()) * 0.99))
-                                        && (frameDuration
-                                                < ((1e9 / fpsRange.getLower()) * 1.01)));
+                                // Check video stabiliztaion mode
+                                Integer videoStabilizationMode = result.get(
+                                        CaptureResult.CONTROL_VIDEO_STABILIZATION_MODE);
+                                mCollector.expectTrue(
+                                        "Stabilization mode doesn't match for combination "
+                                        + combinationStr,
+                                        videoStabilizationMode == stabilizationMode);
+
+                                // Check frame rate
+                                if (fpsRange.getUpper().equals(fpsRange.getLower())) {
+                                    Range<Integer> resultFpsRange = result.get(
+                                            CaptureResult.CONTROL_AE_TARGET_FPS_RANGE);
+                                    mCollector.expectTrue("fpsRange " + resultFpsRange
+                                            + " doesn't match for combination "
+                                            + combinationStr, resultFpsRange.equals(fpsRange));
+                                    Long frameDuration = result.get(
+                                            CaptureResult.SENSOR_FRAME_DURATION);
+                                    mCollector.expectTrue("frameDuration doesn't match for "
+                                            + combinationStr + ", fpsRange is "
+                                            + fpsRange + ", but is " + frameDuration,
+                                            (frameDuration
+                                                    > ((1e9 / fpsRange.getUpper()) * 0.95))
+                                            && (frameDuration
+                                                    < ((1e9 / fpsRange.getLower()) * 1.05)));
+
+                                    // Check readout timestamp intervals to make sure targetFpsRange
+                                    // is met.
+                                    if (i > kWarmupFrames && readoutTimestamps != null) {
+                                        Long readoutInterval = readoutTimestamps.get(i)
+                                                - readoutTimestamps.get(i - 1);
+                                        mCollector.expectTrue(
+                                                "Timestamp interval doesn't match for "
+                                                + combinationStr + ", fpsRange is "
+                                                + fpsRange + ", but is " + readoutInterval,
+                                                (readoutInterval
+                                                        > ((1e9 / fpsRange.getUpper()) * 0.95))
+                                                && (readoutInterval
+                                                        < ((1e9 / fpsRange.getLower()) * 1.05)));
+                                    }
+                                }
                             }
                         }
                     } catch (Throwable e) {
