@@ -147,14 +147,6 @@ public class DevicePolicyLoggingTest extends BaseDeviceAdminTest {
         mDevicePolicyManager.setPermissionGrantState(ADMIN_RECEIVER_COMPONENT, PACKAGE_NAME,
                 READ_CONTACTS, PERMISSION_GRANT_STATE_DEFAULT);
     }
-
-
-    public void testEnableSystemAppLogged() {
-        final String systemPackageToEnable =
-                InstrumentationRegistry.getArguments().getString(PARAM_APP_TO_ENABLE);
-        mDevicePolicyManager.enableSystemApp(ADMIN_RECEIVER_COMPONENT, systemPackageToEnable);
-    }
-
     public void testEnableSystemAppWithIntentLogged() {
         final String systemPackageToEnable =
                 InstrumentationRegistry.getArguments().getString(PARAM_APP_TO_ENABLE);
