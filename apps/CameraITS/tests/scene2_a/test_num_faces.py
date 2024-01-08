@@ -195,9 +195,8 @@ class NumFacesTest(its_base_test.ItsBaseTest):
               check_face_bounding_box(rect, aw, ah, j)
 
             # Face landmarks (if provided) are within face bounding box
-            vendor_api_level = its_session_utils.get_vendor_api_level(
-                self.dut.serial)
-            if vendor_api_level >= its_session_utils.ANDROID14_API_LEVEL:
+            if (its_session_utils.get_first_api_level(self.dut.serial) >=
+                its_session_utils.ANDROID14_API_LEVEL):
               for k, face in enumerate(faces):
                 check_face_landmarks(face, fd_mode, k)
 

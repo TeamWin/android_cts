@@ -147,11 +147,11 @@ class LedSnapshotTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
 
       # check SKIP conditions
-      vendor_api_level = its_session_utils.get_vendor_api_level(
+      first_api_level = its_session_utils.get_first_api_level(
           self.dut.serial)
       camera_properties_utils.skip_unless(
           camera_properties_utils.flash(props) and
-          vendor_api_level >= its_session_utils.ANDROID14_API_LEVEL)
+          first_api_level >= its_session_utils.ANDROID14_API_LEVEL)
       failure_messages = []
       # establish connection with lighting controller
       arduino_serial_port = lighting_control_utils.lighting_control(
