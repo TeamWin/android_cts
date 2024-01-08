@@ -30,6 +30,9 @@ import opencv_processing_utils
 
 
 _FRAME_ATOL_MS = 10
+_LENS_INTRINSIC_CAL_FX_IDX = 0
+_LENS_INTRINSIC_CAL_FY_IDX = 1
+_LENS_INTRINSIC_CAL_RTOL = 0.01
 _MIN_AF_FD_TOL = 1.2  # AF value must < 1.2*min
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NUM_FRAMES_PER_FD = 12
@@ -78,6 +81,8 @@ def take_caps_and_determine_sharpness(
     data['loc'] = cap['metadata']['android.lens.focusDistance']
     data['lens_moving'] = (cap['metadata']['android.lens.state']
                            == 1)
+    data['lens_intrinsic_calibration'] = (
+        cap['metadata']['android.lens.intrinsicCalibration'])
     timestamp = cap['metadata']['android.sensor.timestamp'] * 1E-6
     if i == 0:
       timestamp_init = timestamp
@@ -114,6 +119,8 @@ class LensMovementReportingTest(its_base_test.ItsBaseTest):
           not camera_properties_utils.fixed_focus(props) and
           camera_properties_utils.read_3a(props) and
           camera_properties_utils.lens_approx_calibrated(props))
+      lens_calibrated = camera_properties_utils.lens_calibrated(props)
+      logging.debug('lens_calibrated: %d', lens_calibrated)
 
       # Load scene
       its_session_utils.load_scene(
@@ -134,10 +141,11 @@ class LensMovementReportingTest(its_base_test.ItsBaseTest):
       for k in sorted(frame_data):
         logging.debug(
             'i: %d\tfd: %.3f\tdiopters: %.3f \tsharpness: %.1f  \t'
-            'lens_state: %d \ttimestamp: %.1fms',
+            'lens_state: %d \ttimestamp: %.1fms\t cal: %s',
             frame_data[k]['frame_num'], frame_data[k]['fd'],
             frame_data[k]['loc'], frame_data[k]['sharpness'],
-            frame_data[k]['lens_moving'], frame_data[k]['timestamp'])
+            frame_data[k]['lens_moving'], frame_data[k]['timestamp'],
+            np.around(frame_data[k]['lens_intrinsic_calibration'], 2))
 
       # Assert frames are consecutive
       frame_diffs = np.gradient([v['timestamp'] for v in frame_data.values()])
@@ -211,6 +219,30 @@ class LensMovementReportingTest(its_base_test.ItsBaseTest):
       if af_fd > min_fd * _MIN_AF_FD_TOL:
         raise AssertionError(f'AF focus distance > min focus distance! af: '
                              f'{af_fd}, min: {min_fd}, TOL: {_MIN_AF_FD_TOL}')
+
+      # Check LENS_INTRINSIC_CALIBRATION
+      if (its_session_utils.get_first_api_level(self.dut.serial) >=
+          its_session_utils.ANDROID15_API_LEVEL and
+          camera_properties_utils.intrinsic_calibration(props)):
+        logging.debug('Assert LENS_INTRINSIC_CALIBRATION changes with lens '
+                      'location on non-moving frames.')
+        last_af_frame_cal = data_af_fd[max(data_af_fd.keys())][
+            'lens_intrinsic_calibration']
+        first_min_frame_cal = data_min_fd[min(data_min_fd.keys())][
+            'lens_intrinsic_calibration']
+        logging.debug('Last AF frame cal: %s', last_af_frame_cal)
+        logging.debug('1st min_fd frame cal: %s', first_min_frame_cal)
+        if (math.isclose(first_min_frame_cal[_LENS_INTRINSIC_CAL_FX_IDX],
+                         last_af_frame_cal[_LENS_INTRINSIC_CAL_FX_IDX],
+                         rel_tol=_LENS_INTRINSIC_CAL_RTOL) and
+            math.isclose(first_min_frame_cal[_LENS_INTRINSIC_CAL_FY_IDX],
+                         last_af_frame_cal[_LENS_INTRINSIC_CAL_FY_IDX],
+                         rel_tol=_LENS_INTRINSIC_CAL_RTOL)):
+          raise AssertionError(
+              'LENS_INTRINSIC_CALIBRAION[f_x, f_y] not changing with lens '
+              f'movement! AF lens location: {last_af_frame_cal}, '
+              f'min fd lens location: {first_min_frame_cal}, '
+              f'RTOL: {_LENS_INTRINSIC_CAL_RTOL}')
 
 if __name__ == '__main__':
   test_runner.main()
