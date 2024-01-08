@@ -1737,6 +1737,7 @@ public class WindowManagerState {
         private boolean mShouldIgnoreOrientationRequestLoop;
         private boolean mShouldOverrideForceResizeApp;
         private boolean mShouldEnableUserAspectRatioSettings;
+        private boolean mIsUserFullscreenOverrideEnabled;
 
         Activity(ActivityRecordProto proto, WindowContainer parent) {
             super(proto.windowToken.windowContainer);
@@ -1765,6 +1766,7 @@ public class WindowManagerState {
             mShouldIgnoreOrientationRequestLoop = proto.shouldIgnoreOrientationRequestLoop;
             mShouldOverrideForceResizeApp = proto.shouldOverrideForceResizeApp;
             mShouldEnableUserAspectRatioSettings = proto.shouldEnableUserAspectRatioSettings;
+            mIsUserFullscreenOverrideEnabled = proto.isUserFullscreenOverrideEnabled;
         }
 
         @NonNull
@@ -1853,6 +1855,10 @@ public class WindowManagerState {
 
         public boolean getShouldEnableUserAspectRatioSettings() {
             return mShouldEnableUserAspectRatioSettings;
+        }
+
+        public boolean getIsUserFullscreenOverrideEnabled() {
+            return mIsUserFullscreenOverrideEnabled;
         }
 
 
