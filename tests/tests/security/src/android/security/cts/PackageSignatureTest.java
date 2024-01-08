@@ -21,6 +21,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.Signature;
 import android.content.res.Resources.NotFoundException;
+import android.os.SystemProperties;
 import android.platform.test.annotations.RestrictedBuildTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
@@ -45,6 +46,11 @@ public class PackageSignatureTest extends AndroidTestCase {
 
     @RestrictedBuildTest
     public void testPackageSignatures() throws Exception {
+        if (isAosp()) {
+            Log.i(TAG, "Detected AOSP build. Skipping test");
+            return;
+        }
+
         Set<String> badPackages = new TreeSet<>();
         Set<Signature> wellKnownSignatures = getWellKnownSignatures();
 
@@ -296,5 +302,11 @@ public class PackageSignatureTest extends AndroidTestCase {
                 }
             }
         }
+    }
+
+    private boolean isAosp() throws Exception {
+        String product = SystemProperties.get("ro.product.system_ext.name", "");
+        String model = SystemProperties.get("ro.product.system_ext.model", "");
+        return product.startsWith("aosp_") || model.startsWith("AOSP on ");
     }
 }
