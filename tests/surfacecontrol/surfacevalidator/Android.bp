@@ -30,7 +30,6 @@ java_test_helper_library {
     static_libs: [
         "androidx.test.rules",
         "cts-wm-util",
-        "ub-uiautomator",
     ],
 
     libs: [
