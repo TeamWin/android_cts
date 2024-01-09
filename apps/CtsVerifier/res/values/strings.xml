@@ -17,7 +17,7 @@
     <string name="app_name">CTS Verifier</string>
     <string name="module_id">noabi CtsVerifier</string>
 
-    <string name="title_version">CTS Verifier %1$s</string>
+    <string name="title_version">Verifier %1$s</string>
     <string name="version_number_format">Version #: %d</string>
 
     <string name="pass_button_text">Pass</string>
