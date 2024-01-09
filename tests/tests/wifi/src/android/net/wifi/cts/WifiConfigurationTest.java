@@ -34,13 +34,19 @@ import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_WAPI_PSK;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
+import android.net.wifi.OuiKeyedData;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Build;
+import android.os.PersistableBundle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 
 import androidx.test.filters.SdkSuppress;
 
+import com.android.wifi.flags.Flags;
+
+import java.util.Arrays;
 import java.util.List;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
@@ -183,5 +189,19 @@ public class WifiConfigurationTest extends WifiJUnit3TestBase {
         assertTrue(configuration.isRepeaterEnabled());
         configuration.setRepeaterEnabled(false);
         assertFalse(configuration.isRepeaterEnabled());
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+             codeName = "VanillaIceCream")
+    public void testSetGetVendorData() {
+        WifiConfiguration configuration = new WifiConfiguration();
+        assertNotNull(configuration.getVendorData());   // non-null default value
+
+        OuiKeyedData ouiKeyedData =
+                new OuiKeyedData.Builder(0x00aabbcc, new PersistableBundle()).build();
+        List<OuiKeyedData> vendorData = Arrays.asList(ouiKeyedData);
+        configuration.setVendorData(vendorData);
+        assertTrue(vendorData.equals(configuration.getVendorData()));
     }
 }
