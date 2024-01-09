@@ -99,7 +99,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -827,8 +826,11 @@ public class CameraTestUtils extends Assert {
                 new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Integer> mAbortQueue =
                 new LinkedBlockingQueue<>();
-        // Pair<CaptureRequest, Long> is a pair of capture request and timestamp.
+        // Pair<CaptureRequest, Long> is a pair of capture request and start of exposure timestamp.
         private final LinkedBlockingQueue<Pair<CaptureRequest, Long>> mCaptureStartQueue =
+                new LinkedBlockingQueue<>();
+        // Pair<CaptureRequest, Long> is a pair of capture request and readout timestamp.
+        private final LinkedBlockingQueue<Pair<CaptureRequest, Long>> mReadoutStartQueue =
                 new LinkedBlockingQueue<>();
         // Pair<Int, Long> is a pair of sequence id and frame number
         private final LinkedBlockingQueue<Pair<Integer, Long>> mCaptureSequenceCompletedQueue =
@@ -844,6 +846,17 @@ public class CameraTestUtils extends Assert {
             } catch (InterruptedException e) {
                 throw new UnsupportedOperationException(
                         "Can't handle InterruptedException in onCaptureStarted");
+            }
+        }
+
+        @Override
+        public void onReadoutStarted(CameraCaptureSession session, CaptureRequest request,
+                long timestamp, long frameNumber) {
+            try {
+                mReadoutStartQueue.put(new Pair(request, timestamp));
+            } catch (InterruptedException e) {
+                throw new UnsupportedOperationException(
+                        "Can't handle InterruptedException in onReadoutStarted");
             }
         }
 
@@ -1245,7 +1258,6 @@ public class CameraTestUtils extends Assert {
         }
 
         public List<Long> getCaptureStartTimestamps(int count) {
-            Iterator<Pair<CaptureRequest, Long>> iter = mCaptureStartQueue.iterator();
             List<Long> timestamps = new ArrayList<Long>();
             try {
                 while (timestamps.size() < count) {
@@ -1262,12 +1274,36 @@ public class CameraTestUtils extends Assert {
             }
         }
 
+        /**
+         * Get start of readout timestamps
+         *
+         * @param count The number of captures
+         * @return The list of start of readout timestamps
+         */
+        public List<Long> getReadoutStartTimestamps(int count) {
+            List<Long> timestamps = new ArrayList<Long>();
+            try {
+                while (timestamps.size() < count) {
+                    Pair<CaptureRequest, Long> readoutStart = mReadoutStartQueue.poll(
+                            CAPTURE_RESULT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+                    assertNotNull("Wait for a readout start timed out in "
+                            + CAPTURE_RESULT_TIMEOUT_MS + "ms", readoutStart);
+
+                    timestamps.add(readoutStart.second);
+                }
+                return timestamps;
+            } catch (InterruptedException e) {
+                throw new UnsupportedOperationException("Unhandled interrupted exception", e);
+            }
+        }
+
         public void drain() {
             mQueue.clear();
             mNumFramesArrived.getAndSet(0);
             mFailureQueue.clear();
             mBufferLostQueue.clear();
             mCaptureStartQueue.clear();
+            mReadoutStartQueue.clear();
             mAbortQueue.clear();
         }
     }

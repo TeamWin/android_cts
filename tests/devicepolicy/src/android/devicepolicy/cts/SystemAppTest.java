@@ -16,7 +16,11 @@
 
 package android.devicepolicy.cts;
 
+import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
+
 import static org.testng.Assert.assertThrows;
+
+import android.stats.devicepolicy.EventId;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -25,8 +29,12 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.policies.EnableSystemApp;
+import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -35,11 +43,15 @@ import org.junit.runner.RunWith;
 @RunWith(BedsteadJUnit4.class)
 public final class SystemAppTest {
 
-    @ClassRule @Rule
+    @ClassRule
+    @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
     private static final TestApp sTestApp = sDeviceState.testApps().any();
     private static final TestAppInstance sTestAppInstance = sTestApp.install();
+
+    private static final Package SYSTEM_APP =
+            TestApis.packages().systemApps().stream().findFirst().get();
 
     @AfterClass
     public static void teardownClass() {
@@ -60,5 +72,24 @@ public final class SystemAppTest {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().enableSystemApp(
                         sDeviceState.dpc().componentName(), sTestApp.packageName()));
+    }
+
+    @CanSetPolicyTest(policy = EnableSystemApp.class)
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#enableSystemApp"})
+    public void enableSystemApp_isLogged() {
+        try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {
+
+            sDeviceState.dpc().devicePolicyManager().enableSystemApp(
+                    sDeviceState.dpc().componentName(), SYSTEM_APP.packageName());
+
+            assertThat(metrics.query()
+                    .whereType()
+                    .isEqualTo(EventId.ENABLE_SYSTEM_APP_VALUE)
+                    .whereAdminPackageName().isEqualTo(sDeviceState.dpc().packageName())
+                    .whereBoolean().isEqualTo(sDeviceState.dpc().isDelegate())
+                    .whereStrings().contains(SYSTEM_APP.packageName())
+            ).wasLogged();
+        }
     }
 }

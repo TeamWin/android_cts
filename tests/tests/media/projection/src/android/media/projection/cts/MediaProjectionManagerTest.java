@@ -128,7 +128,7 @@ public class MediaProjectionManagerTest {
     public void testGetMediaProjectionWithOtherFgs() throws Exception {
         final ComponentName name =
                 new ComponentName(mContext, LocalMediaProjectionHelperService.class);
-        final long timeOutMs = 5000 * HW_TIMEOUT_MULTIPLIER;
+        final long timeOutMs = 5000L * HW_TIMEOUT_MULTIPLIER;
         final CountDownLatch[] latchHolder = new CountDownLatch[2];
         final Runnable helperFgsStarted = () -> {
             latchHolder[0].countDown();
@@ -176,7 +176,7 @@ public class MediaProjectionManagerTest {
     public void testGetMediaProjectionWithOtherFgsAlter() throws Exception {
         final ComponentName name =
                 new ComponentName(mContext, LocalMediaProjectionHelperService.class);
-        final long timeOutMs = 5000 * HW_TIMEOUT_MULTIPLIER;
+        final long timeOutMs = 5000L * HW_TIMEOUT_MULTIPLIER;
         final CountDownLatch[] latchHolder = new CountDownLatch[2];
         final Runnable helperFgsStarted = () -> {
             latchHolder[0].countDown();
@@ -216,6 +216,54 @@ public class MediaProjectionManagerTest {
 
         // Now the mediaprojection instance should still be valid.
         assertFalse("MediaProjection stopped",
+                latchHolder[1].await(timeOutMs, TimeUnit.MILLISECONDS));
+    }
+
+    @Test
+    public void testGetMediaProjectionMultipleProjections() throws Exception {
+        final long timeOutMs = 5000L * HW_TIMEOUT_MULTIPLIER;
+        final CountDownLatch[] latchHolder = new CountDownLatch[2];
+
+        // Launch the first activity with a media projection
+        mActivityRule.launchActivity(null);
+        MediaProjectionCustomIntentActivity activity = mActivityRule.getActivity();
+
+        // Ensure the first mediaprojection instance is valid.
+        mMediaProjection = activity.waitForMediaProjection();
+        assertThat(mMediaProjection).isNotNull();
+
+        // Register a callback to the first mediaprojection instance.
+        final MediaProjection.Callback callback = new MediaProjection.Callback() {
+            @Override
+            public void onStop() {
+                latchHolder[0].countDown();
+            }
+        };
+        latchHolder[0] = new CountDownLatch(1);
+        mMediaProjection.registerCallback(callback, new Handler(Looper.getMainLooper()));
+
+        // Launch the second activity, with a media projection FGS running from another process
+        mActivityRule.launchActivity(getActivityIntentWithSecondaryProcessFgs());
+        MediaProjectionCustomIntentActivity activity2 = mActivityRule.getActivity();
+
+        // Ensure the second mediaprojection instance is valid.
+        MediaProjection mediaProjection2 = activity2.waitForMediaProjection();
+        assertThat(mediaProjection2).isNotNull();
+
+        // Register a callback to the second mediaprojection instance.
+        final MediaProjection.Callback callback2 = new MediaProjection.Callback() {
+            @Override
+            public void onStop() {
+                latchHolder[1].countDown();
+            }
+        };
+        latchHolder[1] = new CountDownLatch(1);
+        mediaProjection2.registerCallback(callback2, new Handler(Looper.getMainLooper()));
+
+        // Check that first projection IS stopped, but second projection IS NOT stopped
+        assertTrue("First MediaProjection was not stopped",
+                latchHolder[0].await(timeOutMs, TimeUnit.MILLISECONDS));
+        assertFalse("Second projection was stopped",
                 latchHolder[1].await(timeOutMs, TimeUnit.MILLISECONDS));
     }
 

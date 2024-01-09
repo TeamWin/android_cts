@@ -804,4 +804,5 @@ public final class Packages {
                 .stream().map(r -> new ResolveInfoWrapper(r.activityInfo, r.match))
                 .collect(Collectors.toList());
     }
+
  }

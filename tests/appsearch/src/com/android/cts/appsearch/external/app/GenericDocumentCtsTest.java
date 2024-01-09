@@ -404,6 +404,30 @@ public class GenericDocumentCtsTest {
                 () -> builder.setPropertyString("testKey", "string1", nullString));
     }
 
+    @Test
+    public void testDocumentInvalid_setNullByteValues() {
+        GenericDocument.Builder<?> builder =
+                new GenericDocument.Builder<>("namespace", "id1", "schemaType1");
+        byte[] nullBytes = null;
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> builder.setPropertyBytes("propBytes", new byte[][] {{1, 2}, nullBytes}));
+    }
+
+    @Test
+    public void testDocumentInvalid_setNullDocValues() {
+        GenericDocument.Builder<?> builder =
+                new GenericDocument.Builder<>("namespace", "id1", "schemaType1");
+        GenericDocument doc =
+                new GenericDocument.Builder<>("namespace", "id2", "schemaType2").build();
+        GenericDocument nullDoc = null;
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> builder.setPropertyDocument("propDocs", doc, nullDoc));
+    }
+
     /* TODO(adorokhine): uncomment this test once Builder#setId is no longer hidden in Framework
     @Test
     public void testDocument_toBuilder() {
