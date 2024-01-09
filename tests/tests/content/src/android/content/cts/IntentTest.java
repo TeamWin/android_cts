@@ -1184,6 +1184,7 @@ public class IntentTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(reason = "feature flag dependent test")
     public void testUris() {
         checkIntentUri(
                 "intent:#Intent;action=android.test.FOO;end",
