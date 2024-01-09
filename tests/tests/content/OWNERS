@@ -1,9 +1,9 @@
 # Bug component: 36137
 include platform/frameworks/base:/OWNERS
 include platform/frameworks/base:/core/java/android/content/OWNERS
+include platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
 
 alexbuy@google.com
-chiuwinson@google.com
 patb@google.com
 schfan@google.com
 zyy@google.com

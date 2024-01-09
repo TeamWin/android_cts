@@ -1,4 +1,4 @@
 # Bug component: 36137
-chiuwinson@google.com
+include platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+
 patb@google.com
-toddke@google.com
