@@ -30,21 +30,26 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.MloLink;
+import android.net.wifi.OuiKeyedData;
 import android.net.wifi.ScanResult;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Build;
+import android.os.PersistableBundle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.telephony.SubscriptionManager;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.wifi.flags.Flags;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -53,6 +58,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
@@ -317,5 +324,28 @@ public class WifiInfoTest extends WifiJUnit4TestBase{
         assertNotNull(wifiInfo.getAssociatedMloLinks());
         assertTrue(wifiInfo.getAssociatedMloLinks().isEmpty());
         assertFalse(wifiInfo.isApTidToLinkMappingNegotiationSupported());
+    }
+
+    /**
+     * Test that vendor data can be properly set and retrieved.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    @Test
+    public void testWifiInfoSetAndGetVendorData() {
+        WifiInfo.Builder builder = new WifiInfo.Builder()
+                .setSsid(TEST_SSID.getBytes(StandardCharsets.UTF_8))
+                .setBssid(TEST_BSSID)
+                .setRssi(TEST_RSSI)
+                .setNetworkId(TEST_NETWORK_ID);
+        WifiInfo wifiInfo = builder.build();
+        assertTrue(wifiInfo.getVendorData().isEmpty()); // default value
+
+        OuiKeyedData ouiKeyedData =
+                new OuiKeyedData.Builder(0x00aabbcc, new PersistableBundle()).build();
+        List<OuiKeyedData> vendorData = Arrays.asList(ouiKeyedData);
+        wifiInfo.setVendorData(vendorData);
+        assertTrue(vendorData.equals(wifiInfo.getVendorData()));
     }
 }
