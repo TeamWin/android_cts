@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,11 +88,20 @@ public class VirtualDeviceHomeTest {
                             | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY)
                     .setHomeSupported(true)
                     .build();
-
     private static final VirtualDisplayConfig UNTRUSTED_HOME_DISPLAY_CONFIG =
             VirtualDeviceRule.createDefaultVirtualDisplayConfigBuilder()
                     .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
                             | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY)
+                    .setHomeSupported(true)
+                    .build();
+    private static final VirtualDisplayConfig AUTO_MIRROR_HOME_DISPLAY_CONFIG =
+            VirtualDeviceRule.createDefaultVirtualDisplayConfigBuilder()
+                    .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR)
+                    .setHomeSupported(true)
+                    .build();
+    private static final VirtualDisplayConfig PUBLIC_HOME_DISPLAY_CONFIG =
+            VirtualDeviceRule.createDefaultVirtualDisplayConfigBuilder()
+                    .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC)
                     .setHomeSupported(true)
                     .build();
 
@@ -122,6 +131,32 @@ public class VirtualDeviceHomeTest {
     @Test
     public void virtualDeviceHome_untrustedVirtualDisplay() {
         createVirtualDeviceAndHomeDisplay(UNTRUSTED_HOME_DISPLAY_CONFIG, /* homeComponent= */ null);
+
+        verify(mActivityListener, never()).onTopActivityChanged(anyInt(), any(), anyInt());
+        assertThat(isWallpaperOnVirtualDisplay(mRule.getWmState())).isFalse();
+    }
+
+    /**
+     * Home activities and wallpaper are not shown on auto-mirror displays.
+     */
+    @ApiTest(apis = {"android.hardware.display.VirtualDisplayConfig.Builder#setHomeSupported"})
+    @Test
+    public void virtualDeviceHome_autoMirrorVirtualDisplay() {
+        createVirtualDeviceAndHomeDisplay(AUTO_MIRROR_HOME_DISPLAY_CONFIG,
+                /* homeComponent= */ null);
+
+        verify(mActivityListener, never()).onTopActivityChanged(anyInt(), any(), anyInt());
+        assertThat(isWallpaperOnVirtualDisplay(mRule.getWmState())).isFalse();
+    }
+
+    /**
+     * Home activities and wallpaper are not shown on public displays without the flag
+     * VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY.
+     */
+    @ApiTest(apis = {"android.hardware.display.VirtualDisplayConfig.Builder#setHomeSupported"})
+    @Test
+    public void virtualDeviceHome_publicVirtualDisplay() {
+        createVirtualDeviceAndHomeDisplay(PUBLIC_HOME_DISPLAY_CONFIG, /* homeComponent= */ null);
 
         verify(mActivityListener, never()).onTopActivityChanged(anyInt(), any(), anyInt());
         assertThat(isWallpaperOnVirtualDisplay(mRule.getWmState())).isFalse();
