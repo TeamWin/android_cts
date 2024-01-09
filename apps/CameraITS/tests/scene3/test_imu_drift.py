@@ -14,23 +14,44 @@
 """Verify IMU has stable output when device is stationary."""
 
 import logging
+import math
 import os
 
 import matplotlib
 from matplotlib import pylab
 from mobly import test_runner
-import numpy
+import numpy as np
 
 import its_base_test
 import camera_properties_utils
 import its_session_utils
 
 _NAME = os.path.basename(__file__).split('.')[0]
-_N = 20  # Number of samples averaged together, in the plot.
 _NSEC_TO_SEC = 1E-9
-_MEAN_THRESH = 0.01  # PASS/FAIL threshold for gyro mean drift
+_RAD_TO_DEG = 180/math.pi
+_MEAN_THRESH = 0.01*_RAD_TO_DEG  # PASS/FAIL thresh for gyro mean drift
 _SENSOR_EVENTS_WAIT_TIME = 30  # seconds
-_VAR_THRESH = 0.001  # PASS/FAIL threshold for gyro variance drift
+_VAR_THRESH = 0.001*_RAD_TO_DEG**2  # PASS/FAIL thresh for gyro variance drift
+
+
+def convert_events_to_arrays(events, t_factor, xyz_factor):
+  """Convert data from get_sensor_events() into x, y, z, t.
+
+  Args:
+    events: dict from cam.get_sensor_events()
+    t_factor: time multiplication factor ie. NSEC_TO_SEC
+    xyz_factor: xyz multiplicaiton factor ie. RAD_TO_DEG
+
+  Returns:
+    x, y, z, t numpy arrays
+  """
+  t = np.array([(e['time'] - events[0]['time'])*t_factor
+                for e in events])
+  x = np.array([e['x']*xyz_factor for e in events])
+  y = np.array([e['y']*xyz_factor for e in events])
+  z = np.array([e['z']*xyz_factor for e in events])
+
+  return x, y, z, t
 
 
 class ImuDriftTest(its_base_test.ItsBaseTest):
@@ -73,24 +94,12 @@ class ImuDriftTest(its_base_test.ItsBaseTest):
       gyro_events = cam.get_sensor_events()['gyro']
 
     name_with_log_path = os.path.join(self.log_path, _NAME)
-    nevents = (len(gyro_events) // _N) * _N
-    gyro_events = gyro_events[:nevents]
-    times = numpy.array([(e['time'] - gyro_events[0]['time'])*_NSEC_TO_SEC
-                         for e in gyro_events])
-    xs = numpy.array([e['x'] for e in gyro_events])
-    ys = numpy.array([e['y'] for e in gyro_events])
-    zs = numpy.array([e['z'] for e in gyro_events])
-
-    # Group samples into size-N groups and average each together, to get rid
-    # of individual random spikes in the data.
-    times = times[_N // 2::_N]
-    xs = xs.reshape(nevents // _N, _N).mean(1)
-    ys = ys.reshape(nevents // _N, _N).mean(1)
-    zs = zs.reshape(nevents // _N, _N).mean(1)
+    xs, ys, zs, times = convert_events_to_arrays(
+        gyro_events, _NSEC_TO_SEC, _RAD_TO_DEG)
 
     # add y limits so plot doesn't look like amplified noise
-    y_min = min([numpy.amin(xs), numpy.amin(ys), numpy.amin(zs), -_MEAN_THRESH])
-    y_max = max([numpy.amax(xs), numpy.amax(ys), numpy.amax(xs), _MEAN_THRESH])
+    y_min = min([np.amin(xs), np.amin(ys), np.amin(zs), -_MEAN_THRESH])
+    y_max = max([np.amax(xs), np.amax(ys), np.amax(xs), _MEAN_THRESH])
 
     pylab.figure()
     pylab.plot(times, xs, 'r', label='x')
@@ -98,7 +107,7 @@ class ImuDriftTest(its_base_test.ItsBaseTest):
     pylab.plot(times, zs, 'b', label='z')
     pylab.title(_NAME)
     pylab.xlabel('Time (seconds)')
-    pylab.ylabel(f'Gyro readings (mean of {_N} samples)')
+    pylab.ylabel(f'Gyro readings (degrees)')
     pylab.ylim([y_min, y_max])
     pylab.ticklabel_format(axis='y', style='sci', scilimits=(-3, -3))
     pylab.legend()
@@ -107,7 +116,7 @@ class ImuDriftTest(its_base_test.ItsBaseTest):
 
     for samples in [xs, ys, zs]:
       mean = samples.mean()
-      var = numpy.var(samples)
+      var = np.var(samples)
       logging.debug('mean: %.3e', mean)
       logging.debug('var: %.3e', var)
       if mean >= _MEAN_THRESH:
