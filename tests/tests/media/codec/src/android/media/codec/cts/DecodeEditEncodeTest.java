@@ -34,6 +34,7 @@ import android.media.MediaFormat;
 import android.media.cts.InputSurface;
 import android.media.cts.OutputSurface;
 import android.media.cts.TestArgs;
+import android.media.cts.TestUtils;
 import android.opengl.GLES20;
 import android.opengl.GLES30;
 import android.os.Build;
@@ -228,6 +229,14 @@ public class DecodeEditEncodeTest {
         // Few cuttlefish specific color conversion issues were fixed after Android T.
         if (MediaUtils.onCuttlefish()) {
             assumeTrue("Color conversion related tests are not valid on cuttlefish releases "
+                    + "through android T for format: " + format, IS_AFTER_T);
+        }
+        // Pre Android U, this test only checked the 1st codec (which is usually a hardware codec)
+        // and software codecs exercised a problem in the underlying graphis code.
+        // So we will only run this for CTS mode or if we're on versions after Android T
+        // (where the graphics code is fixed)
+        if (TestUtils.isMtsMode()) {
+            assumeTrue("Color conversion related tests are skipped in MTS on releases "
                     + "through android T for format: " + format, IS_AFTER_T);
         }
     }
