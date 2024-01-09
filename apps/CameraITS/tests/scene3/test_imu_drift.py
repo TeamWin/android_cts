@@ -11,11 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Verify if the gyro has stable output when device is stationary."""
+"""Verify IMU has stable output when device is stationary."""
 
 import logging
 import os
-import time
 
 import matplotlib
 from matplotlib import pylab
@@ -30,29 +29,47 @@ _NAME = os.path.basename(__file__).split('.')[0]
 _N = 20  # Number of samples averaged together, in the plot.
 _NSEC_TO_SEC = 1E-9
 _MEAN_THRESH = 0.01  # PASS/FAIL threshold for gyro mean drift
-_SENSOR_EVENTS_WAIT_TIME = 5  # seconds
+_SENSOR_EVENTS_WAIT_TIME = 30  # seconds
 _VAR_THRESH = 0.001  # PASS/FAIL threshold for gyro variance drift
 
 
-class GyroBiasTest(its_base_test.ItsBaseTest):
-  """Test if the gyro has stable output when device is stationary.
-  """
+class ImuDriftTest(its_base_test.ItsBaseTest):
+  """Test if the IMU has stable output when device is stationary."""
 
-  def test_gyro_bias(self):
+  def test_imu_drift(self):
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
         hidden_physical_id=self.hidden_physical_id) as cam:
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
-      # Only run test if the appropriate caps are claimed.
+
+      # check SKIP conditions
       camera_properties_utils.skip_unless(
           camera_properties_utils.sensor_fusion(props) and
           cam.get_sensors().get('gyro'))
 
+      # load scene
+      its_session_utils.load_scene(cam, props, self.scene,
+                                   self.tablet, self.chart_distance)
+
+      # determine preview size
+      supported_preview_sizes = cam.get_supported_preview_sizes(self.camera_id)
+      logging.debug('Supported preview resolutions: %s',
+                    supported_preview_sizes)
+      preview_size = supported_preview_sizes[-1]
+      logging.debug('Tested preview resolution: %s', preview_size)
+
+      # start collecting gyro events
       logging.debug('Collecting gyro events')
       cam.start_sensor_events()
-      time.sleep(_SENSOR_EVENTS_WAIT_TIME)  # run sensors to get events
+
+      # do preview recording
+      cam.do_preview_recording(
+          video_size=preview_size, duration=_SENSOR_EVENTS_WAIT_TIME,
+          stabilize=True)
+
+      # dump IMU events
       gyro_events = cam.get_sensor_events()['gyro']
 
     name_with_log_path = os.path.join(self.log_path, _NAME)
