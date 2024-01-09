@@ -24,7 +24,7 @@ android_test {
         "android-common",
         "ctstestrunner-axt",
         "ctstestrunner-axt",
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
         "junit",
         "flag-junit",
         "android.database.sqlite-aconfig-java",
