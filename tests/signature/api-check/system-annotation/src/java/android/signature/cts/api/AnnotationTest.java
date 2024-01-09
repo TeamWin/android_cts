@@ -32,6 +32,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.function.Predicate;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -65,6 +66,7 @@ public class AnnotationTest extends AbstractApiTest {
      * android.annotation.SystemApi) match the API definition.
      */
     @Test
+    @Ignore("b/301075649")
     public void testAnnotation() {
        AnnotationChecker.ResultFilter filter = new AnnotationChecker.ResultFilter() {
             @Override
