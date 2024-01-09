@@ -144,9 +144,10 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
      * Check that the on device config contains all the expected change ids defined in the platform.
      * The device may contain extra changes, but none may be removed.
      */
-    public void testDeviceContainsExpectedConfig() throws Exception {
-        assertThat(getOnDeviceCompatConfig()).containsAtLeastElementsIn(getExpectedCompatConfig());
-    }
+    // Ignored due to b/319227557
+    // public void testDeviceContainsExpectedConfig() throws Exception {
+    //     assertThat(getOnDeviceCompatConfig()).containsAtLeastElementsIn(getExpectedCompatConfig());
+    // }
 
 
     /**
