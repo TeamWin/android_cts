@@ -871,7 +871,7 @@ public class WindowManagerState {
 
     public int getRootTaskIdByActivity(ComponentName activityName) {
         final Task rootTask = getRootTaskByActivity(activityName);
-        return  (rootTask == null) ? INVALID_TASK_ID : rootTask.mTaskId;
+        return  (rootTask == null) ? INVALID_TASK_ID : rootTask.mRootTaskId;
     }
 
     public Task getTaskByActivity(ComponentName activityName) {
