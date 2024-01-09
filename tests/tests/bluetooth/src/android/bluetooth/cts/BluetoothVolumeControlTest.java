@@ -26,7 +26,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.bluetooth.BluetoothAdapter;
@@ -212,17 +211,8 @@ public class BluetoothVolumeControlTest {
                 mBluetoothVolumeControl.unregisterCallback(null));
 
         // Test success register unregister
-        try {
-            mBluetoothVolumeControl.registerCallback(mTestExecutor, mTestCallback);
-        } catch (Exception e) {
-            fail("Exception caught from register(): " + e.toString());
-        }
-
-        try {
-            mBluetoothVolumeControl.unregisterCallback(mTestCallback);
-        } catch (Exception e) {
-            fail("Exception caught from unregister(): " + e.toString());
-        }
+        mBluetoothVolumeControl.registerCallback(mTestExecutor, mTestCallback);
+        mBluetoothVolumeControl.unregisterCallback(mTestCallback);
 
         TestUtils.dropPermissionAsShellUid();
         // Verify throws SecurityException without permission.BLUETOOTH_PRIVILEGED
@@ -240,11 +230,7 @@ public class BluetoothVolumeControlTest {
 
         mTestDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
 
-        try {
-            mBluetoothVolumeControl.setVolumeOffset(mTestDevice, 0);
-        } catch (Exception e) {
-            fail("Exception caught from connect(): " + e.toString());
-        }
+        mBluetoothVolumeControl.setVolumeOffset(mTestDevice, 0);
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_LEAUDIO_BROADCAST_VOLUME_CONTROL_FOR_CONNECTED_DEVICES)
@@ -256,17 +242,8 @@ public class BluetoothVolumeControlTest {
 
         mTestDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
 
-        try {
-            mBluetoothVolumeControl.setDeviceVolume(mTestDevice, mTestVolume, true);
-        } catch (Exception e) {
-            fail("Exception caught from connect(): " + e.toString());
-        }
-
-        try {
-            mBluetoothVolumeControl.setDeviceVolume(mTestDevice, mTestVolume, false);
-        } catch (Exception e) {
-            fail("Exception caught from connect(): " + e.toString());
-        }
+        mBluetoothVolumeControl.setDeviceVolume(mTestDevice, mTestVolume, true);
+        mBluetoothVolumeControl.setDeviceVolume(mTestDevice, mTestVolume, false);
 
         // volume expect in range [0, 255]
         assertThrows(IllegalArgumentException.class, () ->
