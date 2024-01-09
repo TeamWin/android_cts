@@ -83,4 +83,7 @@
 
     <!-- CtsMediaCodecTestCases: b/298483255 -->
     <option name="compatibility:exclude-filter" value="CtsMediaCodecTestCases android.media.codec.cts.MediaCodecInstancesTest#testGetMaxSupportedInstances" />
+
+    <!-- CtsVideoCodecTestCases: b/302293100 -->
+    <option name="compatibility:exclude-filter" value="CtsVideoCodecTestCases android.videocodec.cts.VideoEncoderMultiResTest#testMultiRes" />
 </configuration>
