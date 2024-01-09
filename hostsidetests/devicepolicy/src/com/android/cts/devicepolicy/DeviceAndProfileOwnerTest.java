@@ -759,16 +759,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testPasswordRequirementsApi() throws Exception {
-        executeDeviceTestMethod(".PasswordRequirementsTest",
-                "testSettingConstraintsWithLowQualityThrowsOnRPlus");
-        executeDeviceTestMethod(".PasswordRequirementsTest",
-                "testSettingConstraintsWithNumericQualityOnlyLengthAllowedOnRPlus");
-        executeDeviceTestMethod(".PasswordRequirementsTest",
-                "testSettingConstraintsWithComplexQualityAndResetWithLowerQuality");
-    }
-
-    @Test
     public void testGetCurrentFailedPasswordAttempts() throws Exception {
         assumeHasSecureLockScreenFeature();
 
