@@ -135,6 +135,76 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                 getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3));
     }
 
+    public void testMultipleAudioTrackOffloadPreemption() throws Exception {
+        final int bitRateInkbps = 192;
+        final var audioFormat = getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3);
+
+        final AudioTrack trackOne = getOffloadAudioTrack(bitRateInkbps,
+                    audioFormat, /* testName= */"testMultipleAudioTrackOffloadPreemption");
+
+        AudioTrack trackTwo = null;
+
+        try (AssetFileDescriptor audioToOffload = getContext().getResources()
+                .openRawResourceFd(R.raw.sine1khzs40dblong);
+             InputStream audioInputStream = audioToOffload.createInputStream()) {
+
+            int bufferSizeInBytes3sec = bitRateInkbps * 1000 * BUFFER_SIZE_SEC / 8;
+            final byte[] data = new byte[bufferSizeInBytes3sec];
+            final int read = audioInputStream.read(data);
+            assertEquals("Could not read enough audio from the resource file",
+                    bufferSizeInBytes3sec, read);
+
+            trackOne.play();
+            new Thread(() -> {
+                int written = 0;
+                while (written < data.length) {
+                    int wrote = trackOne.write(data, written, data.length - written,
+                            AudioTrack.WRITE_BLOCKING);
+                    if (wrote < 0) {
+                        Log.i(TAG, "First audiotrack write ended by: " + wrote);
+                    }
+                    written += wrote;
+                    Log.i(TAG, String.format("wrote %d bytes (%d out of %d)",
+                                wrote, written, data.length));
+                }
+            }).start();
+
+            // 0.3s, ensure trackOne starts first
+            SystemClock.sleep(300);
+
+            trackTwo = getOffloadAudioTrack(
+                    bitRateInkbps, audioFormat, "testMultipleAudioTrackOffloadPreemption");
+
+            trackTwo.registerStreamEventCallback(mExec, mCallback);
+
+            trackTwo.play();
+            writeAllBlocking(trackTwo, data);
+
+            // Verify that trackTwo started and completed (preempting trackOne)
+            final long elapsed = checkDataRequest(DATA_REQUEST_TIMEOUT_MS);
+            synchronized (mPresEndLock) {
+                trackTwo.setOffloadEndOfStream();
+                trackTwo.stop();
+                mPresEndLock.waitFor(PRESENTATION_END_TIMEOUT_MS - elapsed,
+                        () -> !mCallback.mPresentationEndedTimes.isEmpty());
+            }
+
+            synchronized (mPresEndLock) {
+                // We are at most PRESENTATION_END_TIMEOUT_MS + 1s after about 3s of data was
+                // supplied, presentation should have ended
+                assertEquals("onPresentationEnded not called one time",
+                        1, mCallback.mPresentationEndedTimes.size());
+            }
+        } finally {
+            trackOne.release();
+            if (trackTwo != null) {
+                trackTwo.unregisterStreamEventCallback(mCallback);
+                trackTwo.release();
+            }
+        };
+    }
+
+
     public void testOpusAudioTrackOffload() throws Exception {
         testAudioTrackOffload(R.raw.testopus,
                 /* bitRateInkbps= */ 118, // Average
