@@ -57,6 +57,7 @@ import android.content.pm.Flags;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
+import android.content.pm.PackageInstaller.UnarchivalState;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.ApplicationInfoFlags;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -535,7 +536,7 @@ public class PackageInstallerArchiveTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
-    public void reportUnarchivalStatus_success() throws Exception {
+    public void reportUnarchivalState_success() throws Exception {
         installPackage(PACKAGE_NAME, APK_PATH);
         runWithShellPermissionIdentity(
                 () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
@@ -555,9 +556,8 @@ public class PackageInstallerArchiveTest {
         int unarchiveId = sUnarchiveId.get(5, TimeUnit.SECONDS);
 
         runWithShellPermissionIdentity(
-                () -> mPackageInstaller.reportUnarchivalStatus(unarchiveId,
-                        PackageInstaller.UNARCHIVAL_OK, /* requiredStorageBytes= */ 0,
-                        /* userActionIntent= */ null),
+                () -> mPackageInstaller.reportUnarchivalState(
+                        UnarchivalState.createOkState(unarchiveId)),
                 Manifest.permission.INSTALL_PACKAGES);
         assertThat(mUnarchiveIntentSender.mPackage.get(5, TimeUnit.SECONDS)).isEqualTo(
                 PACKAGE_NAME);
@@ -570,7 +570,7 @@ public class PackageInstallerArchiveTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
-    public void reportUnarchivalStatus_error() throws Exception {
+    public void reportUnarchivalState_error() throws Exception {
         installPackage(PACKAGE_NAME, APK_PATH);
         runWithShellPermissionIdentity(
                 () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
@@ -592,9 +592,8 @@ public class PackageInstallerArchiveTest {
         int draftSessionId = sessionListener.mSessionIdCreated.get(10, TimeUnit.MILLISECONDS);
 
         runWithShellPermissionIdentity(
-                () -> mPackageInstaller.reportUnarchivalStatus(unarchiveId,
-                        PackageInstaller.UNARCHIVAL_GENERIC_ERROR, /* requiredStorageBytes= */ 0,
-                        /* userActionIntent= */ null),
+                () -> mPackageInstaller.reportUnarchivalState(
+                        UnarchivalState.createGenericErrorState(unarchiveId)),
                 Manifest.permission.INSTALL_PACKAGES);
         assertThat(mUnarchiveIntentSender.mPackage.get(5, TimeUnit.SECONDS)).isEqualTo(
                 PACKAGE_NAME);
