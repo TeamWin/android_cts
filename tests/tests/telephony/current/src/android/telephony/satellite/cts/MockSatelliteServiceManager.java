@@ -80,6 +80,9 @@ class MockSatelliteServiceManager {
             "cmd phone set-satellite-device-aligned-timeout-duration -t ";
     private static final String SET_SHOULD_SEND_DATAGRAM_TO_MODEM_IN_DEMO_MODE =
             "cmd phone set-should-send-datagram-to-modem-in-demo-mode ";
+    private static final String SET_COUNTRY_CODES = "cmd phone set-country-codes";
+    private static final String SET_SATELLITE_ACCESS_CONTROL_OVERLAY_CONFIGS =
+            "cmd phone set-satellite-access-control-overlay-configs";
     private static final long TIMEOUT = 5000;
     @NonNull private ActivityManager mActivityManager;
     @NonNull private UidImportanceListener mUidImportanceListener = new UidImportanceListener();
@@ -912,6 +915,15 @@ class MockSatelliteServiceManager {
         mSatelliteService.setNtnSignalStrength(ntnSignalStrength);
     }
 
+    void setSatelliteCommunicationAllowed(boolean allowed) {
+        logd("setSatelliteCommunicationAllowed: allowed=" + allowed);
+        if (mSatelliteService == null) {
+            loge("setSatelliteCommunicationAllowed: mSatelliteService is null");
+            return;
+        }
+        mSatelliteService.setSatelliteCommunicationAllowed(allowed);
+    }
+
     void sendOnSatelliteDatagramReceived(SatelliteDatagram datagram, int pendingCount) {
         logd("sendOnSatelliteDatagramReceived");
         if (mSatelliteService == null) {
@@ -1098,6 +1110,76 @@ class MockSatelliteServiceManager {
         String[] plmnArr = readStringArrayFromOverlayConfig(
                 R.array.config_satellite_providers);
         return Arrays.stream(plmnArr).toList();
+    }
+
+    /** Set telephony country codes */
+    boolean setCountryCodes(boolean reset, @Nullable String currentNetworkCountryCodes,
+            @Nullable String cachedNetworkCountryCodes, @Nullable String locationCountryCode,
+            long locationCountryCodeTimestampNanos) {
+        logd("setCountryCodes: reset= " + reset + ", currentNetworkCountryCodes="
+                + currentNetworkCountryCodes + ", cachedNetworkCountryCodes="
+                + cachedNetworkCountryCodes + ", locationCountryCode=" + locationCountryCode
+                + ", locationCountryCodeTimestampNanos=" + locationCountryCodeTimestampNanos);
+        try {
+            StringBuilder command = new StringBuilder();
+            command.append(SET_COUNTRY_CODES);
+            if (reset) {
+                command.append(" -r");
+            }
+            if (!TextUtils.isEmpty(currentNetworkCountryCodes)) {
+                command.append(" -n ");
+                command.append(currentNetworkCountryCodes);
+            }
+            if (!TextUtils.isEmpty(cachedNetworkCountryCodes)) {
+                command.append(" -c ");
+                command.append(cachedNetworkCountryCodes);
+            }
+            if (!TextUtils.isEmpty(locationCountryCode)) {
+                command.append(" -l ");
+                command.append(locationCountryCode);
+                command.append(" -t ");
+                command.append(locationCountryCodeTimestampNanos);
+            }
+            TelephonyUtils.executeShellCommand(mInstrumentation, command.toString());
+            return true;
+        } catch (Exception ex) {
+            loge("setCountryCodes: ex= " + ex);
+            return false;
+        }
+    }
+
+    /** Set overlay configs for satellite access controller */
+    boolean setSatelliteAccessControlOverlayConfigs(boolean reset, boolean isAllowed,
+            @Nullable String s2CellFile, long locationFreshDurationNanos,
+            @Nullable String satelliteCountryCodes) {
+        logd("setSatelliteAccessControlOverlayConfigs");
+        try {
+            StringBuilder command = new StringBuilder();
+            command.append(SET_SATELLITE_ACCESS_CONTROL_OVERLAY_CONFIGS);
+            if (reset) {
+                command.append(" -r");
+            } else {
+                if (isAllowed) {
+                    command.append(" -a");
+                }
+                if (!TextUtils.isEmpty(s2CellFile)) {
+                    command.append(" -f ");
+                    command.append(s2CellFile);
+                }
+                command.append(" -d ");
+                command.append(locationFreshDurationNanos);
+                if (!TextUtils.isEmpty(satelliteCountryCodes)) {
+                    command.append(" -c ");
+                    command.append(satelliteCountryCodes);
+                }
+            }
+            logd("command=" + command);
+            TelephonyUtils.executeShellCommand(mInstrumentation, command.toString());
+            return true;
+        } catch (Exception ex) {
+            loge("setSatelliteAccessControlOverlayConfigs: ex= " + ex);
+            return false;
+        }
     }
 
     @NonNull private String[] readStringArrayFromOverlayConfig(@ArrayRes int id) {
