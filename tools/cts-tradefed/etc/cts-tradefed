@@ -90,8 +90,7 @@ TRADEFED_JAR=":${JAR_DIR}/tradefed.jar"
 JAR_PATH="${TRADEFED_JAR}${JAR_PATH/$TRADEFED_JAR}"
 JAR_PATH=${JAR_PATH:1} # Strip off leading ':'
 
-LIB_DIR=${CTS_ROOT}/android-cts/lib
-loadSharedLibraries "$HOST" "$LIB_DIR"
+loadSharedLibraries "$HOST"
 
 # include any host-side test jars
 for j in $(find ${CTS_ROOT}/android-cts/testcases -name '*.jar'); do
