@@ -36,7 +36,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public class NonBlockingAudioTrack {
     private static final String TAG = NonBlockingAudioTrack.class.getSimpleName();
 
-    class QueueElement {
+    private static final long END_OF_STREAM_PTS = Long.MAX_VALUE;
+
+    private static class QueueElement {
         ByteBuffer data;
         int size;
         long pts;
@@ -130,6 +132,12 @@ public class NonBlockingAudioTrack {
         mAudioTrack.play();
     }
 
+    public void setEndOfStream() {
+        QueueElement element = new QueueElement();
+        element.pts  = END_OF_STREAM_PTS;
+        mQueue.add(element);
+    }
+
     public void stop() {
         if (mQueue.isEmpty()) {
             mAudioTrack.stop();
@@ -176,10 +184,30 @@ public class NonBlockingAudioTrack {
                 break;
             }
 
+            if (element.pts == END_OF_STREAM_PTS) {
+                // For tunnel mode, when an audio PTS gap is encountered, silence is rendered
+                // during the gap. As such, it's necessary to fade down the audio to avoid a
+                // bad user experience. This necessitates that the Audio HAL holds onto the
+                // last audio frame and delays releasing it to the output device until the
+                // subsequent audio frame is seen so that it knows whether there's a PTS gap
+                // or not. When the end-of-stream is reached, this means that the last audio
+                // frame has not been rendered yet. So, in order to release the last audio
+                // frame, a signal must be sent to the Audio HAL so the last frame gets
+                // released.
+                int written = mAudioTrack.write(ByteBuffer.allocate(0), 0,
+                                                AudioTrack.WRITE_NON_BLOCKING,
+                                                END_OF_STREAM_PTS);
+                if (written < 0) {
+                   throw new RuntimeException("AudioTrack.write failed (" + written + ")");
+                }
+                mQueue.removeFirst();
+                break;
+            }
+
             int written = mAudioTrack.write(element.data, element.size,
                     AudioTrack.WRITE_NON_BLOCKING, element.pts + mAudioOffsetNs.get());
             if (written < 0) {
-                throw new RuntimeException("Audiotrack.write() failed.");
+                throw new RuntimeException("AudioTrack.write failed (" + written + ")");
             }
 
             mTotalBytesWritten.addAndGet(written);
