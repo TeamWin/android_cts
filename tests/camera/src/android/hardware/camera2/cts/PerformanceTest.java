@@ -1032,6 +1032,8 @@ public class PerformanceTest {
                 // Start viewfinder with settings override set and the starting zoom ratio,
                 // and wait for some number of frames.
                 CaptureRequest.Builder previewBuilder = configurePreviewOutputs(id);
+                previewBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_OFF);
                 previewBuilder.set(CaptureRequest.CONTROL_SETTINGS_OVERRIDE,
                         CameraMetadata.CONTROL_SETTINGS_OVERRIDE_ZOOM);
                 previewBuilder.set(CaptureRequest.CONTROL_ZOOM_RATIO, startRatio);
