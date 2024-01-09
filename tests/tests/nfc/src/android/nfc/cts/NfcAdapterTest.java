@@ -366,8 +366,8 @@ public class NfcAdapterTest {
     @RequiresFlagsEnabled(Flags.FLAG_ENABLE_NFC_CHARGING)
     public void testEnableNfcCharging() throws NoSuchFieldException, RemoteException {
         NfcAdapter adapter = createMockedInstance();
-        when(mService.enableWlc(anyBoolean())).thenReturn(true);
-        boolean result = adapter.enableWlc(true);
+        when(mService.setWlcEnabled(anyBoolean())).thenReturn(true);
+        boolean result = adapter.setWlcEnabled(true);
         Assert.assertTrue(result);
     }
 
