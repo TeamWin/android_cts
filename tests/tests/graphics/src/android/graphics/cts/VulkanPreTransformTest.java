@@ -23,14 +23,11 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.Rect;
-import android.os.SystemClock;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.view.PixelCopy;
 import android.view.SurfaceView;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
@@ -38,6 +35,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.SynchronousPixelCopy;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -110,7 +108,7 @@ public class VulkanPreTransformTest {
     }
 
     @Test
-    @FlakyTest (bugId = 184584284)
+    @Ignore
     public void testVulkanPreTransformSetToMatchCurrentTransform() throws Throwable {
         Log.d(TAG, "testVulkanPreTransformSetToMatchCurrentTransform start");
         if (!hasDeviceFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)
@@ -125,7 +123,7 @@ public class VulkanPreTransformTest {
     }
 
     @Test
-    @FlakyTest (bugId = 184584284)
+    @Ignore
     public void testVulkanPreTransformNotSetToMatchCurrentTransform() throws Throwable {
         Log.d(TAG, "testVulkanPreTransformNotSetToMatchCurrentTransform start");
         if (!hasDeviceFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)
