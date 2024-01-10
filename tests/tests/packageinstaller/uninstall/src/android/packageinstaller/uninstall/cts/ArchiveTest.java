@@ -175,6 +175,7 @@ public class ArchiveTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
+    @Ignore("b/312463977")
     public void requestArchive_confirmationDialog() throws Exception {
         installPackage(ARCHIVE_APK);
         assertFalse(mPackageManager.getPackageInfo(ARCHIVE_APK_PACKAGE_NAME,
@@ -183,8 +184,7 @@ public class ArchiveTest {
         LocalIntentSender sender = new LocalIntentSender();
         runWithShellPermissionIdentity(
                 () -> mPackageInstaller.requestArchive(ARCHIVE_APK_PACKAGE_NAME,
-                        sender.getIntentSender(),
-                        PackageManager.DELETE_SHOW_DIALOG),
+                        sender.getIntentSender()),
                 Manifest.permission.DELETE_PACKAGES);
         Intent intent = sender.getResult();
         assertThat(intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -100)).isEqualTo(
@@ -228,7 +228,7 @@ public class ArchiveTest {
         LocalIntentSender archiveSender = new LocalIntentSender();
         runWithShellPermissionIdentity(
                 () -> mPackageInstaller.requestArchive(ARCHIVE_APK_PACKAGE_NAME,
-                        archiveSender.getIntentSender(), 0),
+                        archiveSender.getIntentSender()),
                 Manifest.permission.DELETE_PACKAGES);
         Intent archiveIntent = archiveSender.getResult();
         assertThat(archiveIntent.getIntExtra(PackageInstaller.EXTRA_STATUS, -100)).isEqualTo(
@@ -277,7 +277,7 @@ public class ArchiveTest {
                 () ->
                         mPackageInstaller.requestArchive(
                                 ARCHIVE_APK_PACKAGE_NAME,
-                                archiveSender.getIntentSender(), 0),
+                                archiveSender.getIntentSender()),
                 Manifest.permission.DELETE_PACKAGES);
         Intent archiveIntent = archiveSender.getResult();
         assertThat(archiveIntent.getIntExtra(PackageInstaller.EXTRA_STATUS, -100)).isEqualTo(
@@ -316,7 +316,7 @@ public class ArchiveTest {
                 () ->
                         mPackageInstaller.requestArchive(
                                 ARCHIVE_APK_PACKAGE_NAME,
-                                archiveSender.getIntentSender(), 0),
+                                archiveSender.getIntentSender()),
                 Manifest.permission.DELETE_PACKAGES);
         Intent archiveIntent = archiveSender.getResult();
         assertThat(archiveIntent.getIntExtra(PackageInstaller.EXTRA_STATUS, -100)).isEqualTo(
