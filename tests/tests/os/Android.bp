@@ -42,6 +42,7 @@ android_test {
         "ravenwood-junit",
         "android.os.flags-aconfig-java",
         "backstage_power_flags_lib",
+        "sdk_sandbox_flags_lib",
     ],
     jni_uses_platform_apis: true,
     jni_libs: [

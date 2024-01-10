@@ -34,11 +34,16 @@ import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.os.Process;
 import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.platform.test.ravenwood.RavenwoodRule;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.sdksandbox.flags.Flags;
 
 import org.junit.After;
 import org.junit.Before;
@@ -54,6 +59,11 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class ProcessTest {
     @Rule public RavenwoodRule mRavenwood = new RavenwoodRule();
+
+    // Required for RequiresFlagsEnabled and RequiresFlagsDisabled annotations to take effect.
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = RavenwoodRule.isUnderRavenwood() ? null
+            : DeviceFlagsValueProvider.createCheckFlagsRule();
 
     public static final int THREAD_PRIORITY_HIGHEST = -20;
     private static final String NONE_EXISITENT_NAME = "abcdefcg";
@@ -294,6 +304,24 @@ public class ProcessTest {
                 () -> Process.getAppUidForSdkSandboxUid(-1));
         assertEquals(exception.getMessage(), "Input UID is not an SDK sandbox UID");
     }
+
+    /**
+     * Tests for {@link Process#getSdkSandboxUidForAppUid(int) (int)} API
+     */
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_SDK_SANDBOX_UID_TO_APP_UID_API)
+    public void testGetSdkSandboxUidForAppUid() {
+        assertEquals(SANDBOX_SDK_UID, Process.getSdkSandboxUidForAppUid(APP_UID));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_SDK_SANDBOX_UID_TO_APP_UID_API)
+    public void testGetSdkSandboxUidForAppUid_invalidInput() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> Process.getSdkSandboxUidForAppUid(-1));
+        assertEquals(exception.getMessage(), "Input UID is not an app UID");
+    }
+
 
     /**
      * Tests that the reserved UID is not taken by an actual package.
