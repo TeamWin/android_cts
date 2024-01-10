@@ -104,6 +104,7 @@ public class ParentProfileTest extends BaseManagedProfileTest {
             .add("setPermittedInputMethods")
             .add("getDevicePolicyManagementRoleHolderPackage")
             .add("getResources")
+            .add("isMtePolicyEnforced")
             .build();
 
     private static final String LOG_TAG = "ParentProfileTest";
