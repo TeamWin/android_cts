@@ -3806,7 +3806,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_NFC)) {
             satelliteModeRadiosList.add(Settings.Global.RADIO_NFC);
-            mNfcAdapter = NfcAdapter.getNfcAdapter(getContext().getApplicationContext());
+            mNfcAdapter = NfcAdapter.getDefaultAdapter(getContext().getApplicationContext());
             mNfcInitState = mNfcAdapter.isEnabled();
             radioStateIntentFilter.addAction(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED);
         }
