@@ -39,4 +39,7 @@ java_library {
     sdk_version: "test_current",
     min_sdk_version: "21",
     dxflags: ["--multi-dex"],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }

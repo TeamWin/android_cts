@@ -31,4 +31,7 @@ android_library {
         "android.companion.virtualdevice.flags-aconfig-java",
     ],
     manifest: "AndroidManifest.xml",
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
