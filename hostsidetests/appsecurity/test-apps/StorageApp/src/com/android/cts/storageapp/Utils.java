@@ -43,6 +43,10 @@ public class Utils {
     public static final String PKG_A = "com.android.cts.storageapp_a";
     public static final String PKG_B = "com.android.cts.storageapp_b";
 
+    public static final String REF_PROFILES_BASE_DIR = "/data/misc/profiles/ref/";
+    public static final String CUR_PROFILES_BASE_DIR = "/data/misc/profiles/cur/";
+    public static final String PROFILE_FILE_NAME = "primary.prof";
+
     // You will pry my kibibytes from my cold dead hands! But to make test
     // results easier to debug, we'll use kilobytes...
     public static final long KB_IN_BYTES = 1000;
