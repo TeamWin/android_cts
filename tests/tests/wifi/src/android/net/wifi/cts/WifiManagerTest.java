@@ -71,6 +71,7 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.SoftApCapability;
 import android.net.wifi.SoftApConfiguration;
 import android.net.wifi.SoftApInfo;
+import android.net.wifi.UriParserResults;
 import android.net.wifi.WifiAvailableChannel;
 import android.net.wifi.WifiClient;
 import android.net.wifi.WifiConfiguration;
@@ -84,6 +85,7 @@ import android.net.wifi.WifiNetworkSelectionConfig;
 import android.net.wifi.WifiNetworkSuggestion;
 import android.net.wifi.WifiScanner;
 import android.net.wifi.WifiSsid;
+import android.net.wifi.WifiUriParser;
 import android.net.wifi.hotspot2.ConfigParser;
 import android.net.wifi.hotspot2.OsuProvider;
 import android.net.wifi.hotspot2.PasspointConfiguration;
@@ -6734,6 +6736,37 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
         } catch (Exception e) {
             fail("testEnableAndDisableMscs encountered an exception: " + e);
         } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Tests the result from {@link WifiUriParser#parseUri(String)} can be added.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_URI_PARSER)
+    @Test
+    public void testZxingNetworkFromUriParserCanBeAdded() throws Exception {
+        String testUriZx = "WIFI:S:testAbC;T:nopass";
+        UriParserResults result = WifiUriParser.parseUri(testUriZx);
+        assertNotNull(result);
+        assertEquals(result.getUriScheme(), UriParserResults.URI_SCHEME_ZXING_WIFI_NETWORK_CONFIG);
+        WifiConfiguration config = result.getWifiConfiguration();
+        assertNotNull(config);
+        // These below API's only work with privileged permissions (obtained via shell identity
+        // for test)
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation();
+        int networkId = INVALID_NETWORK_ID;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            // Verify that the network is added
+            networkId = sWifiManager.addNetwork(config);
+            assertNotEquals(INVALID_NETWORK_ID, networkId);
+        } finally {
+            if (networkId != INVALID_NETWORK_ID) {
+                // Clean up the previously added network
+                sWifiManager.removeNetwork(networkId);
+            }
             uiAutomation.dropShellPermissionIdentity();
         }
     }
