@@ -544,12 +544,14 @@ public class VideoEncoderDecoderTest {
             // that results in the SW codecs also running much faster (perhaps they are
             // scheduled for the big cores as well)
             // TODO: still verify lower bound.
-            if ((MediaUtils.onFrankenDevice() || (infoEnc.mIsSoftware && !isPreferredAbi()))
-                    && error != null) {
-                // ensure there is data, but don't insist that it is correct
-                assertFalse(error, error.startsWith("Failed to get "));
-            } else {
-                assertNull(error, error);
+            if (error != null) {
+                if (MediaUtils.onFrankenDevice() || Build.IS_EMULATOR
+                        || (infoEnc.mIsSoftware && !isPreferredAbi())) {
+                    // ensure there is data, but don't insist that it is correct
+                    assertFalse(error, error.startsWith("Failed to get "));
+                } else {
+                    fail("encountered error " + error);
+                }
             }
         }
         assertTrue(success);
