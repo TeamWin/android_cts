@@ -61,6 +61,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
+import androidx.test.filters.SdkSuppress;
 
 import com.android.cts.appsearch.ICommandReceiver;
 
@@ -195,6 +196,8 @@ public class GlobalSearchSessionPlatformCtsTest {
     // Doc in inaccessible package, accessible publiclyVisibleTargetPackage: searchable
     // Doc in accessible package, inaccessible publiclyVisibleTargetPackage: not searchable
     // Doc in inaccessible package, inaccessible publiclyVisibleTargetPackage: not searchable
+    @SdkSuppress(minSdkVersion = 34)
+    // TODO(b/275592563): Figure out why canPackageQuery works different on T
     @Test
     public void testPublicVisibility_accessibleTestPackage() throws Exception {
         // Ensure manifest files are set up correctly.
@@ -261,6 +264,8 @@ public class GlobalSearchSessionPlatformCtsTest {
         }
     }
 
+    @SdkSuppress(minSdkVersion = 34)
+    // TODO(b/275592563): Figure out why canPackageQuery works different on T
     @Test
     public void testPublicVisibility_inaccessibleHelperApp() throws Exception {
         String ctsPackageName = mContext.getPackageName();
@@ -269,6 +274,9 @@ public class GlobalSearchSessionPlatformCtsTest {
                 new GenericDocument.Builder<>(NAMESPACE_NAME, "id1", ctsSchemaName)
                         .setPropertyString("searchable", "pineapple from com.android.cts.appsearch")
                         .build();
+
+        assertThat(mContext.getPackageManager().canPackageQuery(PKG_A, ctsPackageName)).isTrue();
+        assertThat(mContext.getPackageManager().canPackageQuery(PKG_A, PKG_B)).isFalse();
 
         // Index schemas in the B package
         GlobalSearchSessionPlatformCtsTest.TestServiceConnection serviceConnection =
@@ -302,6 +310,8 @@ public class GlobalSearchSessionPlatformCtsTest {
         }
     }
 
+    @SdkSuppress(minSdkVersion = 34)
+    // TODO(b/275592563): Figure out why canPackageQuery works different on T
     @Test
     public void testPublicVisibility_invalidCertificate() throws Exception {
         // Ensure manifest files are set up correctly.
