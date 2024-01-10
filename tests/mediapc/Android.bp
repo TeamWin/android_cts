@@ -24,13 +24,7 @@ android_test {
         "compatibility-device-util-axt",
         "ctsmediav2common",
         "ctstestrunner-axt",
-        "ctstestserver",
         "MediaPerformanceClassCommon",
-    ],
-    libs: [
-        "org.apache.http.legacy",
-        "android.test.runner",
-        "android.test.base",
     ],
     platform_apis: true,
     srcs: ["src/**/*.java"],
