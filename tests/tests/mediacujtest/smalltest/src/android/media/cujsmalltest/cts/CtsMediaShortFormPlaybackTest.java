@@ -276,6 +276,10 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
       Assume.assumeTrue("Skipping " + mTestType + " as device doesn't support orientation.",
           supportOrientationRequest(mActivity));
     }
+    if (mCujTestParam.playerListener().isCallNotificationTest()) {
+      Assume.assumeTrue("Skipping " + mTestType + " as device doesn't support call feature",
+          deviceSupportPhoneCall(mActivity));
+    }
     play(mCujTestParam.mediaUrls(), mCujTestParam.timeoutMilliSeconds());
   }
 }
