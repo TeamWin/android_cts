@@ -1,6 +1,7 @@
 package android.nfc.cts;
 
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
+import static android.Manifest.permission.MANAGE_DEFAULT_APPLICATIONS;
 
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -12,14 +13,15 @@ import static org.mockito.Mockito.doNothing;
 
 import android.app.Activity;
 import android.app.PendingIntent;
+import android.app.role.RoleManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.nfc.*;
-import android.nfc.tech.*;
 import android.os.Bundle;
 import android.os.RemoteException;
+import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
@@ -27,6 +29,8 @@ import android.provider.Settings;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.core.app.ApplicationProvider;
+
+import com.google.common.util.concurrent.MoreExecutors;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -41,6 +45,9 @@ import org.mockito.internal.util.reflection.FieldReader;
 import org.mockito.internal.util.reflection.FieldSetter;
 
 import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 @RunWith(JUnit4.class)
 public class NfcAdapterTest {
@@ -328,6 +335,7 @@ public class NfcAdapterTest {
 
     @Test
     @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_OBSERVE_MODE)
+    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
     public void testAllowTransaction() {
         try {
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
@@ -346,6 +354,7 @@ public class NfcAdapterTest {
 
     @Test
     @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_OBSERVE_MODE)
+    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
     public void testDisallowTransaction() {
         try {
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
@@ -359,6 +368,40 @@ public class NfcAdapterTest {
         } finally {
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
                 .getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled({android.nfc.Flags.FLAG_NFC_OBSERVE_MODE,
+            android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED})
+    public void testAllowTransaction_walletRoleEnabled() throws InterruptedException {
+        try {
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation().adoptShellPermissionIdentity(MANAGE_DEFAULT_APPLICATIONS);
+            assumeTrue(setDefaultWalletRoleHolder(mContext));
+            NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+            boolean result = adapter.allowTransaction();
+            Assert.assertTrue(result);
+        } finally {
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled({android.nfc.Flags.FLAG_NFC_OBSERVE_MODE,
+            android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED})
+    public void testDisallowTransaction_walletRoleEnabled() throws InterruptedException {
+        try {
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation().adoptShellPermissionIdentity(MANAGE_DEFAULT_APPLICATIONS);
+            assumeTrue(setDefaultWalletRoleHolder(mContext));
+            NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+            boolean result = adapter.disallowTransaction();
+            Assert.assertTrue(result);
+        } finally {
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation().dropShellPermissionIdentity();
         }
     }
 
@@ -405,5 +448,20 @@ public class NfcAdapterTest {
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
         FieldSetter.setField(adapter, adapter.getClass().getDeclaredField("sService"), mService);
         return adapter;
+    }
+
+    private static boolean setDefaultWalletRoleHolder(Context context)
+            throws InterruptedException {
+        RoleManager roleManager = context.getSystemService(RoleManager.class);
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        AtomicReference<Boolean> result = new AtomicReference<>(false);
+        roleManager.setDefaultApplication(RoleManager.ROLE_WALLET,
+                "android.nfc.cts", 0,
+                MoreExecutors.directExecutor(), aBoolean -> {
+                    result.set(aBoolean);
+                    countDownLatch.countDown();
+                });
+        countDownLatch.await(2000, TimeUnit.MILLISECONDS);
+        return result.get();
     }
 }
