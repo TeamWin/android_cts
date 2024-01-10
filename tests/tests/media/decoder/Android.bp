@@ -73,16 +73,10 @@ android_test {
     ],
     srcs: [
         "src/**/*.java",
-        "aidl/**/*.aidl",
     ],
     // This test uses private APIs
     platform_apis: true,
     jni_uses_sdk_apis: true,
-    libs: [
-        "org.apache.http.legacy",
-        "android.test.base",
-        "android.test.runner",
-    ],
     test_suites: [
         "cts",
         "general-tests",
