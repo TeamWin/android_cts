@@ -98,7 +98,9 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
 
     @AfterClass
     public static void tearDownClass() throws Exception {
-        sDeviceStatePreserver.restoreCloudProviderState();
+        if (sDeviceStatePreserver != null) {
+            sDeviceStatePreserver.restoreCloudProviderState();
+        }
     }
     @Before
     public void setUp() throws Exception {

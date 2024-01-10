@@ -84,7 +84,9 @@ public class ActionUserSelectImagesForAppTest extends PhotoPickerBaseTest {
 
     @AfterClass
     public static void tearDownClass() throws Exception {
-        sDeviceStatePreserver.restoreCloudProviderState();
+        if (sDeviceStatePreserver != null) {
+            sDeviceStatePreserver.restoreCloudProviderState();
+        }
     }
 
     @After

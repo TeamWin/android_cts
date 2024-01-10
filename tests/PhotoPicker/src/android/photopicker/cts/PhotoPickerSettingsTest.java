@@ -112,7 +112,7 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
                 sPhotoPickerSettingsActivityState);
 
         // Reset CloudMedia configs.
-        if (SdkLevel.isAtLeastS()) {
+        if (SdkLevel.isAtLeastS() && sDeviceStatePreserver != null) {
             sDeviceStatePreserver.restoreCloudProviderState();
         }
     }
