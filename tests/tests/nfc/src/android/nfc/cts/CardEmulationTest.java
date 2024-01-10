@@ -309,6 +309,19 @@ public class CardEmulationTest {
         Assert.assertEquals(instance.getServices(CardEmulation.CATEGORY_PAYMENT, 0), services);
     }
 
+    @Test
+    @RequiresFlagsEnabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
+    public void testGetPreferredPaymentService() throws NoSuchFieldException, RemoteException {
+        CardEmulation instance = createMockedInstance();
+        String description = "Preferred Payment Service Description";
+        ApduServiceInfo serviceInfo = new ApduServiceInfo(new ResolveInfo(), false,
+                /* description */ description, new ArrayList<AidGroup>(), new ArrayList<AidGroup>(),
+                false, 0, 0, "", "", "");
+        when(mEmulation.getPreferredPaymentService(anyInt())).thenReturn(serviceInfo);
+        ApduServiceInfo result = instance.getPreferredPaymentService();
+        Assert.assertEquals(serviceInfo, result);
+    }
+
     private Activity createAndResumeActivity() {
         Intent intent
             = new Intent(ApplicationProvider.getApplicationContext(),
