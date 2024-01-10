@@ -402,7 +402,7 @@ def convert_capture_to_planes(cap, props=None):
     rgb = decompress_jpeg_to_rgb_image(cap['data']).reshape(w * h * 3)
     return (rgb[::3].reshape(h, w, 1), rgb[1::3].reshape(h, w, 1),
             rgb[2::3].reshape(h, w, 1))
-  elif cap['format'] == 'raw':
+  elif cap['format'] in ('raw', 'rawQuadBayer'):
     assert_props_is_not_none(props)
     is_quad_bayer = 'QuadBayer' in cap['format']
     white_level = float(props['android.sensor.info.whiteLevel'])
