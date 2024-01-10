@@ -20,9 +20,15 @@ import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
 import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.media.AudioRecordingConfiguration;
 import android.media.audiopolicy.AudioProductStrategy;
 import android.os.PowerManager;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.IntSupplier;
 
 class AudioTestUtil {
@@ -117,4 +123,57 @@ class AudioTestUtil {
         }
     }
 
+    /**
+     * A helper class to use when wanting to block in a test on audio recording starting/stopping
+     */
+    static class AudioRecordingCallbackUtil extends AudioManager.AudioRecordingCallback {
+        boolean mCalled;
+        private final Object mConfigLock = new Object();
+        List<AudioRecordingConfiguration> mConfigs;
+        private final int mTestSource;
+        private final int mTestSession;
+        private CountDownLatch mCountDownLatch;
+
+        void reset() {
+            mCountDownLatch = new CountDownLatch(1);
+            mCalled = false;
+            synchronized (mConfigLock) {
+                mConfigs = new ArrayList<AudioRecordingConfiguration>();
+            }
+        }
+
+        AudioRecordingCallbackUtil(int session, int source) {
+            mTestSource = source;
+            mTestSession = session;
+            reset();
+        }
+
+        @Override
+        public void onRecordingConfigChanged(List<AudioRecordingConfiguration> configs) {
+            mCalled = true;
+            synchronized (mConfigLock) {
+                mConfigs = configs;
+            }
+            mCountDownLatch.countDown();
+        }
+
+        void await(long timeoutMs) {
+            try {
+                mCountDownLatch.await(timeoutMs, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+            }
+        }
+
+        boolean hasRecording(int session, int source) {
+            synchronized (mConfigLock) {
+                for (AudioRecordingConfiguration config : mConfigs) {
+                    if ((config.getClientAudioSessionId() == session)
+                            && (config.getAudioSource() == source)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    }
 }
