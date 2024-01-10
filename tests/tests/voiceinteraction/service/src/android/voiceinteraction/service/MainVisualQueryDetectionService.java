@@ -34,6 +34,7 @@ import android.os.Looper;
 import android.os.PersistableBundle;
 import android.os.Process;
 import android.os.SharedMemory;
+import android.service.voice.VisualQueryDetectedResult;
 import android.service.voice.VisualQueryDetectionService;
 import android.system.ErrnoException;
 import android.util.Log;
@@ -76,6 +77,7 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
     public static final int SCENARIO_QUERY_NO_ATTENTION = 5;
     public static final int SCENARIO_QUERY_NO_QUERY_FINISH = 6;
     public static final int SCENARIO_MULTIPLE_QUERIES_FINISHED = 7;
+    public static final int SCENARIO_COMPLEX_RESULT_STREAM_QUERY_ONLY = 8;
     public static final int SCENARIO_READ_FILE_MMAP_READ_ONLY = 100;
     public static final int SCENARIO_READ_FILE_MMAP_WRITE = 101;
     public static final int SCENARIO_READ_FILE_MMAP_MULTIPLE = 102;
@@ -264,6 +266,18 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
                     }
                     finishQuery();
                 }
+                lostAttention();
+            };
+        } else if (scenario == SCENARIO_COMPLEX_RESULT_STREAM_QUERY_ONLY) {
+            detectionJob = () -> {
+                gainedAttention();
+                streamQuery(
+                        new VisualQueryDetectedResult.Builder().setPartialQuery(FAKE_QUERY_FIRST)
+                                .build());
+                streamQuery(
+                        new VisualQueryDetectedResult.Builder().setPartialQuery(FAKE_QUERY_SECOND)
+                                .build());
+                finishQuery();
                 lostAttention();
             };
         } else if (scenario == SCENARIO_READ_FILE_MMAP_READ_ONLY

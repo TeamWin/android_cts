@@ -42,6 +42,7 @@ import android.service.voice.HotwordRejectedResult;
 import android.service.voice.HotwordTrainingData;
 import android.service.voice.SandboxedDetectionInitializer;
 import android.service.voice.SoundTriggerFailure;
+import android.service.voice.VisualQueryDetectedResult;
 import android.service.voice.VisualQueryDetectionService;
 import android.service.voice.VisualQueryDetectionServiceFailure;
 import android.service.voice.VisualQueryDetector;
@@ -739,6 +740,12 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                 public void onQueryDetected(@NonNull String transcribedText) {
                     Log.i(TAG, "onQueryDetected");
                     mCurrentQuery += transcribedText;
+                }
+
+                @Override
+                public void onQueryDetected(@NonNull VisualQueryDetectedResult partialResult) {
+                    Log.i(TAG, "onQueryDetected with VisualQueryDetectedResult");
+                    mCurrentQuery += partialResult.getPartialQuery();
                 }
 
                 @Override
