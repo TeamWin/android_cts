@@ -83,7 +83,6 @@ public class ByodHelperActivity extends Activity
             "com.android.cts.verifier.managedprovisioning.BYOD_KEYGUARD_DISABLED_FEATURES";
     public static final String ACTION_LOCKNOW =
             "com.android.cts.verifier.managedprovisioning.BYOD_LOCKNOW";
-    public static final String ACTION_TEST_NFC_BEAM = "com.android.cts.verifier.managedprovisioning.TEST_NFC_BEAM";
 
     public static final String EXTRA_PROVISIONED = "extra_provisioned";
     public static final String EXTRA_PARAMETER_1 = "extra_parameter_1";
@@ -335,12 +334,6 @@ public class ByodHelperActivity extends Activity
         } else if (ACTION_LOCKNOW.equals(action)) {
             mDevicePolicyManager.lockNow();
             setResult(RESULT_OK);
-        } else if (action.equals(ACTION_TEST_NFC_BEAM)) {
-            Intent testNfcBeamIntent = new Intent(this, NfcTestActivity.class);
-            testNfcBeamIntent.putExtras(intent);
-            startActivity(testNfcBeamIntent);
-            finish();
-            return;
         } else if (action.equals(ACTION_TEST_CROSS_PROFILE_INTENTS_DIALOG)) {
             sendIntentInsideChooser(new Intent(
                     CrossProfileTestActivity.ACTION_CROSS_PROFILE_TO_PERSONAL));
