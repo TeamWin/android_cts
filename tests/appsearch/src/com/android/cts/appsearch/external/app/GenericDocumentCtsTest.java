@@ -428,11 +428,10 @@ public class GenericDocumentCtsTest {
                 () -> builder.setPropertyDocument("propDocs", doc, nullDoc));
     }
 
-    /* TODO(adorokhine): uncomment this test once Builder#setId is no longer hidden in Framework
     @Test
     public void testDocument_toBuilder() {
         GenericDocument document1 =
-                new GenericDocument.Builder<>(/*namespace=* / "", "id1", "schemaType1")
+                new GenericDocument.Builder<>(/*namespace=*/ "", "id1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setPropertyLong("longKey1", 1L, 2L, 3L)
                         .setPropertyDouble("doubleKey1", 1.0, 2.0, 3.0)
@@ -478,7 +477,6 @@ public class GenericDocumentCtsTest {
                         .build();
         assertThat(document2).isEqualTo(expectedDoc);
     }
-    */
 
     @Test
     public void testDocument_toBuilder_doesNotModifyOriginal() {
