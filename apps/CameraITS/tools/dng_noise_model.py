@@ -191,7 +191,7 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
               */
       """)
       params_str = textwrap.indent(''.join(params), ' ' * 4)
-      code_params = '.noise_profile = {' + params_str + '},'
+      code_params = '.profile = {' + params_str + '},'
       code = code_comment + code_params
       text_file.write(code)
 
