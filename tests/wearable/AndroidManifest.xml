@@ -18,6 +18,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="android.wearable.cts" android:targetSandboxVersion="2">
 
+    <!-- Needed for using CompanionDeviceManager when pretending to be the wearable. -->
+    <uses-feature android:name="android.software.companion_device_setup" />
+    <uses-permission android:name="android.permission.DELIVER_COMPANION_MESSAGES" />
+
     <application>
         <uses-library android:name="android.test.runner" />
         <service
@@ -27,6 +31,11 @@
             <intent-filter>
                 <action android:name="android.service.wearable.WearableSensingService"/>
             </intent-filter>
+        </service>
+        <service
+            android:name=".CtsIsolatedWearableSensingService"
+            android:permission="android.permission.BIND_WEARABLE_SENSING_SERVICE"
+            android:isolatedProcess="true">
         </service>
     </application>
 
