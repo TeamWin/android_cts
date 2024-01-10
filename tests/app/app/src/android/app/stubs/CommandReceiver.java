@@ -71,6 +71,9 @@ public class CommandReceiver extends BroadcastReceiver {
     public static final int COMMAND_START_FOREGROUND_SERVICE_SPOOF_PACKAGE_NAME = 23;
     public static final int COMMAND_CREATE_ACTIVE_MEDIA_SESSION = 24;
     public static final int COMMAND_CREATE_ACTIVE_MEDIA_SESSION_FGS_DELEGATE = 25;
+    public static final int COMMAND_ACTIVATE_MEDIA_SESSION_FGS_DELEGATE = 26;
+    public static final int COMMAND_DEACTIVATE_MEDIA_SESSION_FGS_DELEGATE = 27;
+    public static final int COMMAND_RELEASE_MEDIA_SESSION_FGS_DELEGATE = 28;
 
     public static final String KEY_PENDING_INTENT = "android.app.stubs.key.PENDING_INTENT";
 
@@ -197,6 +200,23 @@ public class CommandReceiver extends BroadcastReceiver {
             case COMMAND_CREATE_ACTIVE_MEDIA_SESSION_FGS_DELEGATE:
                 doStartMediaPlaybackFgsDelegate(context, intent.getParcelableExtra(
                         Intent.EXTRA_REMOTE_CALLBACK, RemoteCallback.class));
+                break;
+            case COMMAND_ACTIVATE_MEDIA_SESSION_FGS_DELEGATE:
+                doChangeMediaPlaybackIsActiveFgsDelegate(
+                        /* isActive= */ true,
+                        intent.getParcelableExtra(
+                                Intent.EXTRA_REMOTE_CALLBACK, RemoteCallback.class));
+                break;
+            case COMMAND_DEACTIVATE_MEDIA_SESSION_FGS_DELEGATE:
+                doChangeMediaPlaybackIsActiveFgsDelegate(
+                        /* isActive= */ false,
+                        intent.getParcelableExtra(
+                                Intent.EXTRA_REMOTE_CALLBACK, RemoteCallback.class));
+                break;
+            case COMMAND_RELEASE_MEDIA_SESSION_FGS_DELEGATE:
+                doReleaseMediaPlaybackFgsDelegate(
+                        intent.getParcelableExtra(
+                                Intent.EXTRA_REMOTE_CALLBACK, RemoteCallback.class));
                 break;
         }
         if (resultExtras != null) {
@@ -493,32 +513,45 @@ public class CommandReceiver extends BroadcastReceiver {
 
     /**
      * Use FGS delegate to promote the app's procstate and provide keep-alive.
-     * @param context
-     * @param callback
      */
     private void doStartMediaPlaybackFgsDelegate(Context context, RemoteCallback callback) {
-        final MediaSession mediaSession = new MediaSession(context, TAG);
-        mediaSession.setCallback(new MediaSession.Callback() {
-            @Override
-            public void onPlay() {
-                super.onPlay();
-                setPlaybackState(PlaybackState.STATE_PLAYING, mediaSession);
-            }
+        mMediaSession = new MediaSession(context, TAG);
+        mMediaSession.setCallback(
+                new MediaSession.Callback() {
+                    @Override
+                    public void onPlay() {
+                        super.onPlay();
+                        setPlaybackState(PlaybackState.STATE_PLAYING, mMediaSession);
+                    }
 
-            @Override
-            public void onPause() {
-                super.onPause();
-                setPlaybackState(PlaybackState.STATE_PAUSED, mediaSession);
-            }
+                    @Override
+                    public void onPause() {
+                        super.onPause();
+                        setPlaybackState(PlaybackState.STATE_PAUSED, mMediaSession);
+                    }
 
-            @Override
-            public void onStop() {
-                super.onStop();
-                setPlaybackState(PlaybackState.STATE_STOPPED, mediaSession);
-                mediaSession.release();
-            }
-        });
-        mediaSession.setActive(true);
+                    @Override
+                    public void onStop() {
+                        super.onStop();
+                        setPlaybackState(PlaybackState.STATE_STOPPED, mMediaSession);
+                    }
+                });
+        mMediaSession.setActive(true);
+        callback.sendResult(null);
+    }
+
+    private void doChangeMediaPlaybackIsActiveFgsDelegate(
+            boolean isActive, RemoteCallback callback) {
+        if (mMediaSession != null) {
+            mMediaSession.setActive(isActive);
+        }
+        callback.sendResult(null);
+    }
+
+    private void doReleaseMediaPlaybackFgsDelegate(RemoteCallback callback) {
+        if (mMediaSession != null) {
+            mMediaSession.release();
+        }
         callback.sendResult(null);
     }
 
