@@ -28,7 +28,6 @@
     <application
         android:requestLegacyExternalStorage="true"
         android:usesCleartextTraffic="true">
-        <uses-library android:name="android.test.runner" />
         <uses-library android:name="org.apache.http.legacy" />
         <activity android:name="android.mediav2.cts.CodecTestActivity" />
     </application>
