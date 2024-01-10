@@ -35,6 +35,7 @@ import static org.junit.Assume.assumeTrue;
 import android.Manifest;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
+import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
@@ -43,6 +44,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.hardware.radio.RadioError;
+import android.location.Location;
+import android.location.LocationManager;
+import android.location.provider.ProviderProperties;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
 import android.nfc.NfcAdapter;
@@ -50,6 +54,8 @@ import android.os.Build;
 import android.os.CancellationSignal;
 import android.os.OutcomeReceiver;
 import android.os.PersistableBundle;
+import android.os.Process;
+import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
@@ -74,6 +80,7 @@ import android.uwb.UwbManager;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.LocationUtils;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.internal.telephony.flags.Flags;
 import com.android.internal.telephony.satellite.DatagramController;
@@ -129,6 +136,15 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                 new AntennaPosition(new AntennaDirection(2,2,2),
                         SatelliteManager.DEVICE_HOLD_POSITION_LANDSCAPE_LEFT));
     }
+    private static CarrierConfigReceiver sCarrierConfigReceiver;
+
+    private static final int SUB_ID = SubscriptionManager.DEFAULT_SUBSCRIPTION_ID;
+    private static final String OVERRIDING_COUNTRY_CODES = "US";
+    private static final String SATELLITE_COUNTRY_CODES = "US,UK,CA";
+    private static final String SATELLITE_S2_FILE = "google_us_san_sat_s2.dat";
+    private static final String TEST_PROVIDER = LocationManager.GPS_PROVIDER;
+    private static final float LOCATION_ACCURACY = 95;
+    private static LocationManager sLocationManager;
 
     BTWifiNFCStateReceiver mBTWifiNFCSateReceiver = null;
     UwbAdapterStateCallback mUwbAdapterStateCallback = null;
@@ -137,9 +153,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
     boolean mWifiInitState = false;
     boolean mNfcInitState = false;
     boolean mUwbInitState = false;
-    private static CarrierConfigReceiver sCarrierConfigReceiver;
 
-    private static final int SUB_ID = SubscriptionManager.DEFAULT_SUBSCRIPTION_ID;
 
     @Rule
     public final CheckFlagsRule mCheckFlagsRule =
@@ -158,9 +172,11 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
         sMockSatelliteServiceManager = new MockSatelliteServiceManager(
                 InstrumentationRegistry.getInstrumentation());
+        setUpSatelliteAccessAllowed();
         setupMockSatelliteService();
 
         sCarrierConfigReceiver = new CarrierConfigReceiver(SUB_ID);
+        sLocationManager = getContext().getSystemService(LocationManager.class);
 
         revokeSatellitePermission();
     }
@@ -202,8 +218,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             sSatelliteManager.unregisterForSatelliteProvisionStateChanged(
                     satelliteProvisionStateCallback);
         }
-
-        revokeSatellitePermission();
     }
 
     @AfterClass
@@ -222,6 +236,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertTrue(sMockSatelliteServiceManager.restoreSatelliteServicePackageName());
         waitFor(2000);
         sSatelliteManager.unregisterForSatelliteModemStateChanged(callback);
+        resetSatelliteAccessControlOverlayConfigs();
         afterAllTestsBase();
         sMockSatelliteServiceManager = null;
         sCarrierConfigReceiver = null;
@@ -3212,6 +3227,52 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         revokeSatellitePermission();
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_OEM_ENABLED_SATELLITE_FLAG)
+    public void testSatelliteAccessControl() {
+        if (!shouldTestSatelliteWithMockService()) return;
+
+        // Satellite is not allowed by modem
+        sMockSatelliteServiceManager.setSatelliteCommunicationAllowed(false);
+        verifyIsSatelliteAllowed(false);
+
+        // Satellite is allowed by modem
+        sMockSatelliteServiceManager.setSatelliteCommunicationAllowed(true);
+
+        // Test access controller using cached country codes
+        assertTrue(sMockSatelliteServiceManager.setSatelliteAccessControlOverlayConfigs(
+                false, true, null, 0, SATELLITE_COUNTRY_CODES));
+
+        // Allowed case
+        assertTrue(sMockSatelliteServiceManager.setCountryCodes(false, null, null, "US",
+                SystemClock.elapsedRealtimeNanos()));
+        verifyIsSatelliteAllowed(true);
+
+        // Disallowed case
+        assertTrue(sMockSatelliteServiceManager.setCountryCodes(false, null, null, "IN",
+                SystemClock.elapsedRealtimeNanos()));
+        verifyIsSatelliteAllowed(false);
+
+        // Test access controller using on-device data
+        assertTrue(sMockSatelliteServiceManager.setCountryCodes(false, null, null, null, 0));
+        assertTrue(sMockSatelliteServiceManager.setSatelliteAccessControlOverlayConfigs(
+                false, true, SATELLITE_S2_FILE, TimeUnit.MINUTES.toNanos(10), "US"));
+        registerTestLocationProvider();
+
+        // Set current location to Google San Diego office
+        setTestProviderLocation(32.909808231041644, -117.18185788819781);
+        verifyIsSatelliteAllowed(true);
+
+        // Set current location to Google Bangalore office
+        setTestProviderLocation(12.994021769576554, 12.994021769576554);
+        verifyIsSatelliteAllowed(false);
+
+        // Restore satellite access allowed
+        setUpSatelliteAccessAllowed();
+        revokeSatellitePermission();
+        unregisterTestLocationProvider();
+    }
+
     /**
      * Before calling this function, caller need to make sure the modem is in LISTENING or IDLE
      * state.
@@ -4179,5 +4240,86 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         }
 
         revokeSatellitePermission();
+    }
+
+    private Pair<Boolean, Integer> requestIsSatelliteCommunicationAllowedForCurrentLocation() {
+        final AtomicReference<Boolean> enabled = new AtomicReference<>();
+        final AtomicReference<Integer> callback = new AtomicReference<>();
+        CountDownLatch latch = new CountDownLatch(1);
+        OutcomeReceiver<Boolean, SatelliteManager.SatelliteException> receiver =
+                new OutcomeReceiver<>() {
+                    @Override
+                    public void onResult(Boolean result) {
+                        logd("isSatelliteAllowed.onResult: result=" + result);
+                        enabled.set(result);
+                        latch.countDown();
+                    }
+
+                    @Override
+                    public void onError(SatelliteManager.SatelliteException exception) {
+                        logd("isSatelliteAllowed.onError: onError=" + exception);
+                        callback.set(exception.getErrorCode());
+                        latch.countDown();
+                    }
+                };
+
+        sSatelliteManager.requestIsSatelliteCommunicationAllowedForCurrentLocation(
+                getContext().getMainExecutor(), receiver);
+        try {
+            assertTrue(latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
+        } catch (InterruptedException e) {
+            fail("isSatelliteAllowed: ex=" + e);
+        }
+        return new Pair<>(enabled.get(), callback.get());
+    }
+
+    private void verifyIsSatelliteAllowed(boolean allowed) {
+        grantSatellitePermission();
+        Pair<Boolean, Integer> result =
+                requestIsSatelliteCommunicationAllowedForCurrentLocation();
+        assertNotNull(result.first);
+        assertEquals(allowed, result.first);
+    }
+
+    private static void registerTestLocationProvider() {
+        requestMockLocationPermission(true);
+        sLocationManager.addTestProvider(TEST_PROVIDER,
+                new ProviderProperties.Builder().build());
+        sLocationManager.setTestProviderEnabled(TEST_PROVIDER, true);
+    }
+
+    private static void unregisterTestLocationProvider() {
+        requestMockLocationPermission(true);
+        sLocationManager.removeTestProvider(TEST_PROVIDER);
+        requestMockLocationPermission(false);
+    }
+
+    private void setTestProviderLocation(double latitude, double longitude) {
+        requestMockLocationPermission(true);
+        Location loc = LocationUtils.createLocation(
+                TEST_PROVIDER, latitude, longitude, LOCATION_ACCURACY);
+        sLocationManager.setTestProviderLocation(TEST_PROVIDER, loc);
+    }
+
+    private static void requestMockLocationPermission(boolean allowed) {
+        AppOpsManager aom = getContext().getSystemService(AppOpsManager.class);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(aom, (appOpsMan) -> appOpsMan
+                .setUidMode(AppOpsManager.OPSTR_MOCK_LOCATION, Process.myUid(),
+                        allowed ? AppOpsManager.MODE_ALLOWED : AppOpsManager.MODE_ERRORED));
+    }
+
+    private static void setUpSatelliteAccessAllowed() {
+        logd("setUpSatelliteAccessAllowed...");
+        assertTrue(sMockSatelliteServiceManager.setCountryCodes(false,
+                OVERRIDING_COUNTRY_CODES, null, null, 0));
+        assertTrue(sMockSatelliteServiceManager.setSatelliteAccessControlOverlayConfigs(
+                false, true, null, 0, SATELLITE_COUNTRY_CODES));
+    }
+
+    private static void resetSatelliteAccessControlOverlayConfigs() {
+        logd("resetSatelliteAccessControlOverlayConfigs");
+        assertTrue(sMockSatelliteServiceManager.setCountryCodes(true, null, null, null, 0));
+        assertTrue(sMockSatelliteServiceManager.setSatelliteAccessControlOverlayConfigs(
+                true, true, null, 0, null));
     }
 }

@@ -381,7 +381,7 @@ public class ArchiveTest {
     private void abandonPendingUnarchivalSessions() {
         List<PackageInstaller.SessionInfo> sessions = mPackageInstaller.getAllSessions();
         for (PackageInstaller.SessionInfo session : sessions) {
-            if (session.getAppPackageName().equals(ARCHIVE_APK_PACKAGE_NAME)) {
+            if (ARCHIVE_APK_PACKAGE_NAME.equals(session.getAppPackageName())) {
                 mPackageInstaller.abandonSession(session.getSessionId());
             }
         }

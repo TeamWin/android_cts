@@ -17,10 +17,10 @@
 package android.database.sqlite.cts;
 
 import android.content.Context;
-import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
 
 /**
  * Common utility methods for testing

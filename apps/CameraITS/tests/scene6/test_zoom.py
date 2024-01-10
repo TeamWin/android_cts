@@ -93,10 +93,10 @@ class ZoomTest(its_base_test.ItsBaseTest):
       logging.debug('capture size: %s', str(size))
       logging.debug('test TOLs: %s', str(test_tols))
 
-      # determine vendor API level and test_formats to test
+      # determine first API level and test_formats to test
       test_formats = _TEST_FORMATS
-      vendor_api_level = its_session_utils.get_vendor_api_level(self.dut.serial)
-      if vendor_api_level >= its_session_utils.ANDROID14_API_LEVEL:
+      first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
+      if first_api_level >= its_session_utils.ANDROID14_API_LEVEL:
         test_formats.append(_JPEG_STR)
 
       # do captures over zoom range and find circles with cv2

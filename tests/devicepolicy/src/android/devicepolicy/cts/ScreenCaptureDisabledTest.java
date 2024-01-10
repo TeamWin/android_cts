@@ -699,11 +699,18 @@ public final class ScreenCaptureDisabledTest {
         // as there could be notifications in the top part and white line(navigation bar) at bottom
         // which are included in the screenshot and are not redacted(black). It's not perfect, but
         // seems best option to avoid any flakiness at this point.
-        int[] pixels = new int[width * (height / 2)];
+        int len = width * (height / 2);
+        int[] pixels = new int[len];
         screenshot.getPixels(pixels, 0, width, 0, height / 4, width, height / 2);
 
-        for (int pixel : pixels) {
-            if (!(pixel == Color.BLACK || (pixel == Color.TRANSPARENT && isAutomotive()))) {
+        for (int i = 0; i < len; ++i) {
+            // Skip some pixels from the right to accommodate for the edge panel(present on
+            // some devices) which will not be redacted in the screenshot.
+            if ((i % width) /* X-position */ > (width - 34)) {
+                // skipping edge panel
+                continue;
+            }
+            if (!(pixels[i] == Color.BLACK || (pixels[i] == Color.TRANSPARENT && isAutomotive()))) {
                 return false;
             }
         }

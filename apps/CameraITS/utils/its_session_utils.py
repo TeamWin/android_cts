@@ -128,6 +128,8 @@ class ItsSession(object):
   SOCK_TIMEOUT = 20.0
   # Seconds timeout on performance measurement socket operation
   SOCK_TIMEOUT_FOR_PERF_MEASURE = 40.0
+  # Seconds timeout on preview recording socket operation.
+  SOCK_TIMEOUT_PREVIEW = 30.0  # test_imu_drift is 30s
 
   # Additional timeout in seconds when ITS service is doing more complicated
   # operations, for example: issuing warmup requests before actual capture.
@@ -727,7 +729,7 @@ class ItsSession(object):
       }
     """
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
-    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
+    timeout = self.SOCK_TIMEOUT_PREVIEW + self.EXTRA_SOCK_TIMEOUT
     self.sock.settimeout(timeout)
 
     data, _ = self.__read_response_from_socket()

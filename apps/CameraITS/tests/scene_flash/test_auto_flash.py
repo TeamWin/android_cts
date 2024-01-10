@@ -65,10 +65,10 @@ class AutoFlashTest(its_base_test.ItsBaseTest):
       test_name = os.path.join(self.log_path, _TEST_NAME)
 
       # check SKIP conditions
-      vendor_api_level = its_session_utils.get_vendor_api_level(self.dut.serial)
+      first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
       camera_properties_utils.skip_unless(
           camera_properties_utils.flash(props) and
-          vendor_api_level >= its_session_utils.ANDROID13_API_LEVEL)
+          first_api_level >= its_session_utils.ANDROID13_API_LEVEL)
 
       # establish connection with lighting controller
       arduino_serial_port = lighting_control_utils.lighting_control(

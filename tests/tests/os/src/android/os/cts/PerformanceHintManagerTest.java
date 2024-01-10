@@ -187,6 +187,9 @@ public class PerformanceHintManagerTest {
         assumeNotNull(s);
         s.sendHint(Session.CPU_LOAD_UP);
         s.sendHint(Session.CPU_LOAD_RESET);
+        s.sendHint(Session.GPU_LOAD_UP);
+        s.sendHint(Session.GPU_LOAD_DOWN);
+        s.sendHint(Session.GPU_LOAD_RESET);
     }
 
     @Test
