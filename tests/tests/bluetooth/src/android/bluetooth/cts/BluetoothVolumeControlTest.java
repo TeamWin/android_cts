@@ -49,6 +49,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
 import org.junit.runner.RunWith;
 
 import java.util.List;
@@ -392,6 +393,16 @@ public class BluetoothVolumeControlTest {
             mProfileConnectionlock.unlock();
         }
         return !mIsProfileReady;
+    }
+
+    private void enforceConnectAndPrivileged(ThrowingRunnable runnable) {
+        // Verify throws SecurityException without permission.BLUETOOTH_PRIVILEGED
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
+        assertThrows(SecurityException.class, runnable);
+
+        // Verify throws SecurityException without permission.BLUETOOTH_CONNECT
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_PRIVILEGED);
+        assertThrows(SecurityException.class, runnable);
     }
 
     private final class BluetoothVolumeControlServiceListener implements
