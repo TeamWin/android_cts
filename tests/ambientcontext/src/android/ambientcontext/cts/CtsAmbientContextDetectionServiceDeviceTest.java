@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.app.Flags;
 import android.app.ambientcontext.AmbientContextEvent;
 import android.app.ambientcontext.AmbientContextManager;
 import android.content.Context;
@@ -30,6 +31,7 @@ import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.service.ambientcontext.AmbientContextDetectionResult;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -66,12 +68,14 @@ public class CtsAmbientContextDetectionServiceDeviceTest {
     private static final String CTS_SERVICE_NAME = CTS_PACKAGE_NAME + "/."
                     + CtsAmbientContextDetectionService.class.getSimpleName();
     private static final int USER_ID = UserHandle.myUserId();
+    private static final int TEST_RATE = 60;
 
     private static final AmbientContextEvent FAKE_EVENT = new AmbientContextEvent.Builder()
             .setEventType(AmbientContextEvent.EVENT_COUGH)
             .setConfidenceLevel(AmbientContextEvent.LEVEL_HIGH)
             .setDensityLevel(AmbientContextEvent.LEVEL_MEDIUM)
             .build();
+
     private static final int TEMPORARY_SERVICE_DURATION = 5000;
 
     @Rule
@@ -156,6 +160,27 @@ public class CtsAmbientContextDetectionServiceDeviceTest {
                 .clearEvents()
                 .build();
         assertThat(result.getEvents()).isEmpty();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_AMBIENT_HEART_RATE)
+    public void testConstructAmbientContextDetectionResult_heartRateWithRate() {
+        AmbientContextEvent hrEvent = new AmbientContextEvent.Builder()
+                .setEventType(AmbientContextEvent.EVENT_HEART_RATE)
+                .setConfidenceLevel(AmbientContextEvent.LEVEL_HIGH)
+                .setDensityLevel(AmbientContextEvent.LEVEL_MEDIUM)
+                .setRatePerMinute(TEST_RATE)
+                .build();
+
+        List<AmbientContextEvent> events = Arrays.asList(new AmbientContextEvent[] {hrEvent});
+        AmbientContextDetectionResult result = new AmbientContextDetectionResult
+                .Builder(FAKE_APP_PACKAGE)
+                .addEvents(events)
+                .build();
+        List<AmbientContextEvent> actualEvents = result.getEvents();
+        assertThat(actualEvents.size()).isEqualTo(1);
+        assertThat(actualEvents).contains(hrEvent);
+        assertThat(actualEvents.get(0).getRatePerMinute()).isEqualTo(TEST_RATE);
     }
 
     private int getLastStatusCode() {
