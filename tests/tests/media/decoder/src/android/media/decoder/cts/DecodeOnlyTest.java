@@ -643,6 +643,7 @@ public class DecodeOnlyTest extends MediaTestBase {
         Thread.sleep(500);
         videoCodec.flush();
         audioCodec.flush();
+        audioTrack.flush();
         videoAsyncHandler.clearBufferQueue();
 
         // Frames at 7s of each file are not key frame, and there is non-zero key frame before it
