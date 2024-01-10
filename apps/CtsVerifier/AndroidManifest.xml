@@ -5353,12 +5353,6 @@
                        android:value="multi_display_mode" />
         </activity>
 
-        <activity android:name=".managedprovisioning.NfcTestActivity">
-            <meta-data android:name="test_required_features" android:value="android.hardware.nfc" />
-            <meta-data android:name="display_mode"
-                       android:value="single_display_mode" />
-        </activity>
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.android.cts.verifier.managedprovisioning.fileprovider"
