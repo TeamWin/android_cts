@@ -186,6 +186,13 @@ public class ManifestTestListAdapter extends TestListAdapter {
      */
     private static final String USER_TYPE_VISIBLE_BG_USER = "visible_background_non-profile_user";
 
+    /** The name of the camera ITS test of a {@link TestListItem}. */
+    private static final String CAMERA_ITS_TEST =
+            "com.android.cts.verifier.camera.its.ItsTestActivity";
+
+    /** The name of the camera ITS test (folded mode) of a {@link TestListItem}. */
+    private static final String CAMERA_ITS_TEST_FOLDED = CAMERA_ITS_TEST + "[folded]";
+
     private final HashSet<String> mDisabledTests;
 
     private Context mContext;
@@ -223,8 +230,9 @@ public class ManifestTestListAdapter extends TestListAdapter {
             }
         }
 
-        if (mTestFilter != null) {
-            // Filter test rows dynamically when the filter is specified.
+        if (mTestFilter != null || TestListActivity.getIsSystemEnabled()) {
+            // Filter test rows dynamically when the filter is specified or verifier-system plan is
+            // enabled.
             return getRowsWithDisplayMode(sCurrentDisplayMode.toString());
         } else {
             return mDisplayModesTests.getOrDefault(
@@ -607,6 +615,20 @@ public class ManifestTestListAdapter extends TestListAdapter {
                         .contains(mTestFilter.toLowerCase(Locale.getDefault()));
     }
 
+    /**
+     * Checks whether the test matches the current status of verifier-system plan.
+     *
+     * <p>When verifier-system plan is disabled, all CTS-V tests are shown.
+     *
+     * <p>When verifier-system plan is enabled, specific tests are filtered out, e.g., camera ITS.
+     */
+    private static boolean matchSystemPlanStatus(String testName) {
+        if (testName == null || !TestListActivity.getIsSystemEnabled()) {
+            return true;
+        }
+        return !testName.equals(CAMERA_ITS_TEST) && !testName.equals(CAMERA_ITS_TEST_FOLDED);
+    }
+
     private boolean isVisibleBackgroundNonProfileUser() {
         if (!SdkLevel.isAtLeastU()) {
             Log.d(LOG_TAG, "isVisibleBagroundNonProfileUser() returning false on pre-UDC device");
@@ -660,7 +682,8 @@ public class ManifestTestListAdapter extends TestListAdapter {
                     && matchAllConfigs(mContext, test.requiredConfigs)
                     && matchDisplayMode(test.displayMode, mode)
                     && !matchAnyExcludedUserType(test.excludedUserTypes)
-                    && macthTestFilter(test.title)) {
+                    && macthTestFilter(test.title)
+                    && matchSystemPlanStatus(test.testName)) {
                 if (test.applicableFeatures == null || hasAnyFeature(test.applicableFeatures)) {
                     // Add suffix in test name if the test is in the folded mode.
                     test.testName = setTestNameSuffix(mode, test.testName);
