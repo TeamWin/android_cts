@@ -1,4 +1,5 @@
 package: "android.cts.flags.tests"
+container: "system"
 flag {
   name: "readwrite_disabled_flag"
   namespace: "cts"

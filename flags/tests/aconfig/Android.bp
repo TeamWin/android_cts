@@ -21,6 +21,7 @@ package {
 aconfig_declarations {
     name: "cts_flags_tests",
     package: "android.cts.flags.tests",
+    container: "system",
     srcs: ["android.cts.flags.tests.aconfig"],
 }
 
