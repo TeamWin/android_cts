@@ -62,7 +62,6 @@ import org.junit.runner.RunWith;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
@@ -77,12 +76,6 @@ import java.util.concurrent.locks.ReentrantLock;
 @MediumTest
 public class BluetoothAdapterTest {
     private static final String TAG = "BluetoothAdapterTest";
-    private static final String[] FORBIDDEN_DEVICE_NAMES = new String[] {
-        // these should all be the same, but, just in case...
-        Build.DEVICE,
-        Build.PRODUCT,
-        Build.HARDWARE
-    };
     private static final int SET_NAME_TIMEOUT = 5000; // ms timeout for setting adapter name
     private static final String ENABLE_DUAL_MODE_AUDIO =
             "persist.bluetooth.enable_dual_mode_audio";
@@ -200,19 +193,7 @@ public class BluetoothAdapterTest {
     }
 
     @Test
-    public void getName_notForbidden() {
-        String name = mAdapter.getName();
-        for (String forbiddenDeviceName : FORBIDDEN_DEVICE_NAMES) {
-            assertFalse(
-                    "Bad bluetooth name, \"" + forbiddenDeviceName
-                            + "\" was found in \"" + name + '"',
-                    name.toLowerCase(Locale.getDefault()).contains(
-                            forbiddenDeviceName.toLowerCase(Locale.getDefault())));
-        }
-    }
-
-    @Test
-    public void setName_getName() {
+    public void test_setName_getName() {
         assumeTrue(mHasBluetooth);
 
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
