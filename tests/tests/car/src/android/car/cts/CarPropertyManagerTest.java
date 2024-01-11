@@ -97,8 +97,6 @@ import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
-import android.platform.test.flag.junit.CheckFlagsRule;
-import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.ArraySet;
 import android.util.Log;
@@ -119,7 +117,6 @@ import com.google.common.collect.Sets;
 
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -147,9 +144,6 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     private static final int VEHICLE_PROPERTY_GROUP_MASK = 0xf0000000;
     private static final int VEHICLE_PROPERTY_GROUP_SYSTEM = 0x10000000;
     private static final int VEHICLE_PROPERTY_GROUP_VENDOR = 0x20000000;
-
-    @Rule
-    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private static final long WAIT_CALLBACK = 1500L;
     private static final int NO_EVENTS = 0;
