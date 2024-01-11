@@ -23,6 +23,8 @@ import static com.google.common.truth.Truth.assertThat;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.Flags;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.ApplicationInfoFlags;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -60,6 +62,7 @@ public class InstallDontKillTest {
     private String mPathAfterFirstSplitInstall;
     private String mPathAfterSecondSplitInstall;
     private String mDeleteDelayInDeviceConfig;
+    private PackageManager mPackageManager;
 
     @Rule
     public final CheckFlagsRule mCheckFlagsRule =
@@ -71,8 +74,12 @@ public class InstallDontKillTest {
         mContext = instrumentation.getContext();
         mPackageName = mContext.getPackageName();
         mDeleteDelayInDeviceConfig = getDeleteDelayInDeviceConfig();
+        mPackageManager = mContext.getPackageManager();
+        // Make sure we only fetch the latest ApplicationInfo
+        PackageManager.disableApplicationInfoCache();
 
-        mOldPath = mContext.getApplicationInfo().getCodePath();
+        mOldPath = mPackageManager.getApplicationInfo(
+                mPackageName,  ApplicationInfoFlags.of(0)).getCodePath();
     }
 
     @After
@@ -111,18 +118,20 @@ public class InstallDontKillTest {
         assertThat(new File(mPathAfterFirstSplitInstall).exists()).isFalse();
     }
 
-    private void installSplitsWithDontKill() {
+    private void installSplitsWithDontKill() throws Exception {
         // Install a split for this test itself and check that the code path has changed
         assertThat(SystemUtil.runShellCommand(String.format(
                 "pm install -p %s --dont-kill %s", mPackageName, SPLIT_APK_1))
         ).isEqualTo("Success\n");
-        mPathAfterFirstSplitInstall = mContext.getApplicationInfo().getCodePath();
+        mPathAfterFirstSplitInstall = mPackageManager.getApplicationInfo(
+                mPackageName,  ApplicationInfoFlags.of(0)).getCodePath();
         assertThat(mPathAfterFirstSplitInstall).isNotEqualTo(mOldPath);
         // Do it again with another split
         assertThat(SystemUtil.runShellCommand(String.format(
                 "pm install -p %s --dont-kill %s", mPackageName, SPLIT_APK_2))
         ).isEqualTo("Success\n");
-        mPathAfterSecondSplitInstall = mContext.getApplicationInfo().getCodePath();
+        mPathAfterSecondSplitInstall = mPackageManager.getApplicationInfo(
+                mPackageName,  ApplicationInfoFlags.of(0)).getCodePath();
         assertThat(mPathAfterSecondSplitInstall).isNotEqualTo(mPathAfterFirstSplitInstall);
         // Test that the files in the new code path are accessible
         assertThat(new File(mPathAfterSecondSplitInstall, "base.apk").exists()).isTrue();

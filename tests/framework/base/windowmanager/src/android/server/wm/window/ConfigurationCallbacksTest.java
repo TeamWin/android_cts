@@ -158,13 +158,16 @@ public class ConfigurationCallbacksTest extends WindowManagerTestBase {
             "android.content.ComponentCallbacks#onConfigurationChanged",
     })
     public void testDisplayResize() {
-        final int offset = 100;
         final Size originalSize = mReportedDisplayMetrics.getSize();
+        // Use a negative offset in case the device set config_maxUiWidth.
+        final int offset = -Math.min(originalSize.getWidth() / 10, originalSize.getHeight() / 10);
+        final int newWidth = originalSize.getWidth() + offset;
+        final int newHeight = originalSize.getHeight() + offset;
+        assumeTrue("Can't resize the display smaller than min size",
+                newWidth >= 200 && newHeight >= 200);
 
         initTrackers();
-        mReportedDisplayMetrics.setSize(new Size(
-                originalSize.getWidth() + offset,
-                originalSize.getHeight() + offset));
+        mReportedDisplayMetrics.setSize(new Size(newWidth, newHeight));
         waitAndAssertDimensionsOffsetInCallbacks(offset);
     }
 

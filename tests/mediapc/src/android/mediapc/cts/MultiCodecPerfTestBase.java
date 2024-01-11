@@ -111,9 +111,8 @@ public class MultiCodecPerfTestBase {
                 .put(MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_1920x1080_6mbps_30fps_avc_cenc.mp4");
         m1080pWidevineTestFiles
                 .put(MediaFormat.MIMETYPE_VIDEO_HEVC, "bbb_1920x1080_4mbps_30fps_hevc_cenc.mp4");
-        // TODO(b/230682028)
-        // m1080pWidevineTestFiles
-        //         .put(MediaFormat.MIMETYPE_VIDEO_VP9, "bbb_1920x1080_4mbps_30fps_vp9_cenc.webm");
+        m1080pWidevineTestFiles
+                .put(MediaFormat.MIMETYPE_VIDEO_VP9, "bbb_1920x1080_4mbps_30fps_vp9_cenc.webm");
         m1080pWidevineTestFiles
                 .put(MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_1920x1080_4mbps_30fps_av1_cenc.mp4");
 
@@ -121,9 +120,8 @@ public class MultiCodecPerfTestBase {
                 .put(MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_3840x2160_18mbps_30fps_avc_cenc.mp4");
         m2160pPc14WidevineTestFiles
                 .put(MediaFormat.MIMETYPE_VIDEO_HEVC, "bbb_3840x2160_12mbps_30fps_hevc_cenc.mp4");
-        // TODO(b/230682028)
-        // m2160pWidevineTestFiles
-        //         .put(MediaFormat.MIMETYPE_VIDEO_VP9, "bbb_3840x2160_12mbps_30fps_vp9_cenc.webm");
+        m2160pPc14WidevineTestFiles
+                .put(MediaFormat.MIMETYPE_VIDEO_VP9, "bbb_3840x2160_12mbps_30fps_vp9_cenc.webm");
         // Limit AV1 4k tests to 1080p as per PC14 requirements
         m2160pPc14WidevineTestFiles
                 .put(MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_1920x1080_4mbps_30fps_av1_cenc.mp4");
