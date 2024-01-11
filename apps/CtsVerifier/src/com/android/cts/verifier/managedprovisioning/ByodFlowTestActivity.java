@@ -106,7 +106,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mCrossProfileVideoCaptureWithoutExtraOutputSupportTest;
     private DialogTestListItem mCrossProfileAudioCaptureSupportTest;
     private TestListItem mKeyguardDisabledFeaturesTest;
-    private DialogTestListItem mDisableNfcBeamTest;
     private TestListItem mAuthenticationBoundKeyTest;
     private TestListItem mEnableLocationModeTest;
     private TestListItem mDisableLocationModeThroughMainSwitchTest;
@@ -612,39 +611,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
             Toast.makeText(ByodFlowTestActivity.this,
                     R.string.provisioning_byod_no_video_capture_resolver, Toast.LENGTH_SHORT)
                     .show();
-        }
-
-        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC)
-                && getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC_BEAM)) {
-            mDisableNfcBeamTest = new DialogTestListItem(this, R.string.provisioning_byod_nfc_beam,
-                    "BYOD_DisableNfcBeamTest",
-                    R.string.provisioning_byod_nfc_beam_allowed_instruction,
-                    new Intent(ByodHelperActivity.ACTION_TEST_NFC_BEAM)) {
-                @Override
-                public void performTest(final DialogTestListActivity activity) {
-                    activity.showManualTestDialog(mDisableNfcBeamTest,
-                            new DefaultTestCallback(mDisableNfcBeamTest) {
-                        @Override
-                        public void onPass() {
-                            // Start a second test with beam disallowed by policy.
-                            Intent testNfcBeamIntent = new Intent(
-                                    ByodHelperActivity.ACTION_TEST_NFC_BEAM);
-                            testNfcBeamIntent.putExtra(NfcTestActivity.EXTRA_DISALLOW_BY_POLICY,
-                                    true);
-                            DialogTestListItem disableNfcBeamTest2 =
-                                    new DialogTestListItem(activity,
-                                    R.string.provisioning_byod_nfc_beam,
-                                    "BYOD_DisableNfcBeamTest",
-                                    R.string.provisioning_byod_nfc_beam_disallowed_instruction,
-                                    testNfcBeamIntent);
-                            // The result should be reflected on the original test.
-                            activity.showManualTestDialog(disableNfcBeamTest2,
-                                    new DefaultTestCallback(mDisableNfcBeamTest));
-                        }
-                    });
-                }
-            };
-            adapter.add(mDisableNfcBeamTest);
         }
 
         adapter.add(mKeyChainTest);
