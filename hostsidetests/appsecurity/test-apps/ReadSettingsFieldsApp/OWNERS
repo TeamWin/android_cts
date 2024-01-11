@@ -1,5 +1,5 @@
 # Bug component: 856262
-svetoslavganov@google.com
-toddke@google.com
+include platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+
 patb@google.com
 schfan@google.com
