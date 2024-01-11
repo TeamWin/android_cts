@@ -24,6 +24,7 @@ import android.app.compat.PackageOverride;
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
+import android.os.Build;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -107,13 +108,15 @@ public class TimingConstraintsTest extends BaseJobSchedulerTest {
         // Make sure the storage constraint is *not* met
         // for the duration of the override deadline.
         setStorageStateLow(true);
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> CompatChanges.putPackageOverrides(
-                        TestAppInterface.TEST_APP_PACKAGE,
-                        Map.of(TestAppInterface.ENFORCE_MINIMUM_TIME_WINDOWS,
-                                new PackageOverride.Builder().setEnabled(false).build())
-                ),
-                OVERRIDE_COMPAT_CHANGE_CONFIG_ON_RELEASE_BUILD, INTERACT_ACROSS_USERS_FULL);
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> CompatChanges.putPackageOverrides(
+                            TestAppInterface.TEST_APP_PACKAGE,
+                            Map.of(TestAppInterface.ENFORCE_MINIMUM_TIME_WINDOWS,
+                                    new PackageOverride.Builder().setEnabled(false).build())
+                    ),
+                    OVERRIDE_COMPAT_CHANGE_CONFIG_ON_RELEASE_BUILD, INTERACT_ACROSS_USERS_FULL);
+        }
         final long deadlineMs = 2000L;
         try (TestAppInterface testAppInterface =
                      new TestAppInterface(getContext(), EXPIRED_JOB_ID)) {
