@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.annotation.Nullable;
 import android.content.ComponentName;
@@ -32,10 +33,18 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.MbmsGroupCallSession;
 import android.telephony.cts.embmstestapp.CtsGroupCallService;
 import android.telephony.cts.embmstestapp.ICtsGroupCallMiddlewareControl;
 import android.telephony.mbms.MbmsGroupCallSessionCallback;
+
+import com.android.internal.telephony.flags.Flags;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -44,10 +53,12 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Before;
 
 public class MbmsGroupCallTestBase {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
+
     protected static final int ASYNC_TIMEOUT = 10000;
 
     protected static class TestCallback implements MbmsGroupCallSessionCallback {
@@ -140,6 +151,10 @@ public class MbmsGroupCallTestBase {
 
     @Before
     public void setUp() throws Exception {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(MbmsUtil.hasMbmsFeature());
+        }
+
         mContext = getContext();
         mHandlerThread = new HandlerThread("EmbmsCtsTestWorker");
         mHandlerThread.start();
@@ -151,9 +166,24 @@ public class MbmsGroupCallTestBase {
 
     @After
     public void tearDown() throws Exception {
-        mHandlerThread.quit();
-        mGroupCallSession.close();
-        mMiddlewareControl.reset();
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            if (mHandlerThread != null) {
+                mHandlerThread.quit();
+                mHandlerThread = null;
+            }
+            if (mGroupCallSession != null) {
+                mGroupCallSession.close();
+                mGroupCallSession = null;
+            }
+            if (mMiddlewareControl != null) {
+                mMiddlewareControl.reset();
+                mMiddlewareControl = null;
+            }
+        } else {
+            mHandlerThread.quit();
+            mGroupCallSession.close();
+            mMiddlewareControl.reset();
+        }
     }
 
     private void setupGroupCallSession() throws Exception {

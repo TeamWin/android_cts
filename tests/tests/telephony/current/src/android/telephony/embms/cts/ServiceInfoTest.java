@@ -18,17 +18,27 @@ package android.telephony.embms.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.mbms.StreamingServiceInfo;
+
+import com.android.internal.telephony.flags.Flags;
+
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import org.junit.Test;
-
 public class ServiceInfoTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
+
     private static final String ID = "StreamingServiceId";
     private static final Map<Locale, String> LOCALE_DICT = Map.of(
             Locale.US, "Entertainment Source 1",
@@ -44,6 +54,10 @@ public class ServiceInfoTest {
 
     @Test
     public void testDataAccess() {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(MbmsUtil.hasMbmsFeature());
+        }
+
         assertEquals(LOCALES.size(), STREAMING_SERVICE_INFO.getLocales().size());
         for (int i = 0; i < LOCALES.size(); i++) {
             assertTrue(STREAMING_SERVICE_INFO.getLocales().contains(LOCALES.get(i)));
