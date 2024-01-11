@@ -149,8 +149,8 @@ TEST_F(NdkBinderTest_APersistableBundle, PutAndGetAllTheThings) {
   EXPECT_EQ(outLong, kLongVal);
   EXPECT_TRUE(APersistableBundle_getDouble(bundle, "double", &outDouble));
   EXPECT_EQ(outDouble, kDoubleVal);
-  EXPECT_TRUE(
-      APersistableBundle_getString(bundle, "string", &outString, &stringAllocator, nullptr));
+  EXPECT_EQ(APersistableBundle_getString(bundle, "string", &outString, &stringAllocator, nullptr),
+            kStringVal.size());
   EXPECT_EQ(outString, kStringVal);
 
   int32_t sizeBytes = APersistableBundle_getBooleanVector(bundle, "boolv", outBoolV, 0);
@@ -212,6 +212,88 @@ TEST_F(NdkBinderTest_APersistableBundle, PutAndGetAllTheThings) {
 
   EXPECT_TRUE(APersistableBundle_getPersistableBundle(bundle, "pbundle", &outInnerBundle));
   EXPECT_TRUE(APersistableBundle_isEqual(innerBundle, outInnerBundle));
+}
+
+TEST_F(NdkBinderTest_APersistableBundle, WrongKeyBool) {
+  APersistableBundle* bundle = APersistableBundle_new();
+  ASSERT_NE(nullptr, bundle);
+
+  bool outBool = false;
+  EXPECT_FALSE(APersistableBundle_getBoolean(bundle, "not the right key", &outBool));
+}
+
+TEST_F(NdkBinderTest_APersistableBundle, WrongKeyString) {
+  APersistableBundle* bundle = APersistableBundle_new();
+  ASSERT_NE(nullptr, bundle);
+
+  char* outString = nullptr;
+  EXPECT_EQ(APersistableBundle_getString(bundle, "not the right key", &outString, &stringAllocator,
+                                         nullptr),
+            APERSISTABLEBUNDLE_KEY_NOT_FOUND);
+}
+
+TEST_F(NdkBinderTest_APersistableBundle, WrongKeyVector) {
+  APersistableBundle* bundle = APersistableBundle_new();
+  ASSERT_NE(nullptr, bundle);
+
+  bool* outBools = nullptr;
+  EXPECT_EQ(APersistableBundle_getBooleanVector(bundle, "not the right key", outBools, 0),
+            APERSISTABLEBUNDLE_KEY_NOT_FOUND);
+}
+
+TEST_F(NdkBinderTest_APersistableBundle, EmptyStringVal) {
+  APersistableBundle* bundle = APersistableBundle_new();
+  ASSERT_NE(nullptr, bundle);
+
+  APersistableBundle_putString(bundle, "key", "");
+  char* outString = nullptr;
+  EXPECT_EQ(APersistableBundle_getString(bundle, "key", &outString, &stringAllocator, nullptr), 0);
+}
+
+TEST_F(NdkBinderTest_APersistableBundle, EmptyVectorVal) {
+  APersistableBundle* bundle = APersistableBundle_new();
+  ASSERT_NE(nullptr, bundle);
+
+  // empty vector is size 0
+  const bool inEmptyBools[] = {};
+  APersistableBundle_putBooleanVector(bundle, "key", inEmptyBools, 0);
+  bool* outBools = nullptr;
+  EXPECT_EQ(APersistableBundle_getBooleanVector(bundle, "key", outBools, 0), 0);
+}
+
+TEST_F(NdkBinderTest_APersistableBundle, EmptyStringKeys) {
+  int32_t sizeBytes = sizeof(char*);
+  char** outKeys = (char**)malloc(sizeBytes);
+  APersistableBundle* bundle = APersistableBundle_new();
+  ASSERT_NE(nullptr, bundle);
+
+  // No keys yet, should be size 0
+  int32_t outSizeBytes =
+      APersistableBundle_getBooleanKeys(bundle, outKeys, sizeBytes, &stringAllocator, nullptr);
+  ASSERT_EQ(outSizeBytes, 0);
+
+  // Empty string as a key needs an entry like any other key
+  APersistableBundle_putBoolean(bundle, "", kBoolVal);
+  outSizeBytes =
+      APersistableBundle_getBooleanKeys(bundle, outKeys, sizeBytes, &stringAllocator, nullptr);
+  ASSERT_EQ(outSizeBytes, sizeof(char*));
+  EXPECT_EQ(0, std::strcmp("", outKeys[0]));
+}
+
+static char* failAllocator(int32_t, void*) {
+  return nullptr;
+}
+
+TEST_F(NdkBinderTest_APersistableBundle, FailAllocatorKeys) {
+  int32_t sizeBytes = sizeof(char*);
+  char** outKeys = (char**)malloc(sizeBytes);
+  APersistableBundle* bundle = APersistableBundle_new();
+  ASSERT_NE(nullptr, bundle);
+
+  APersistableBundle_putBoolean(bundle, "This will fail to allocate", kBoolVal);
+  int32_t outSizeBytes =
+      APersistableBundle_getBooleanKeys(bundle, outKeys, sizeBytes, &failAllocator, nullptr);
+  EXPECT_EQ(outSizeBytes, APERSISTABLEBUNDLE_ALLOCATOR_FAILED);
 }
 
 // Check bytes and string arrays for equality and free all of the outKeys
