@@ -66,6 +66,7 @@ import android.net.Uri;
 import android.net.wifi.CoexUnsafeChannel;
 import android.net.wifi.MscsParams;
 import android.net.wifi.OuiKeyedData;
+import android.net.wifi.QosCharacteristics;
 import android.net.wifi.QosPolicyParams;
 import android.net.wifi.ScanResult;
 import android.net.wifi.SoftApCapability;
@@ -6769,5 +6770,49 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
             }
             uiAutomation.dropShellPermissionIdentity();
         }
+    }
+
+    /*
+     * Tests the builder and get methods for {@link QosCharacteristics}.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_QOS_R3_SUPPORT)
+    @Test
+    public void testQosCharacteristicsBuilder() {
+        int minServiceIntervalMicros = 2000;
+        int maxServiceIntervalMicros = 5000;
+        int minDataRateKbps = 500;
+        int delayBoundMicros = 200;
+        int maxMsduSizeOctets = 4;
+        int serviceStartTimeMicros = 250;
+        int serviceStartTimeLinkId = 0x5;
+        int meanDataRateKbps = 1500;
+        int burstSizeOctets = 2;
+        int msduLifetimeMillis = 400;
+        int deliveryRatio = QosCharacteristics.DELIVERY_RATIO_99;
+        int countExponent = 5;
+
+        QosCharacteristics qosCharacteristics = new QosCharacteristics.Builder(
+                minServiceIntervalMicros, maxServiceIntervalMicros,
+                minDataRateKbps, delayBoundMicros)
+                .setBurstSizeOctets(burstSizeOctets)
+                .setMaxMsduSizeOctets(maxMsduSizeOctets)
+                .setServiceStartTimeInfo(serviceStartTimeMicros, serviceStartTimeLinkId)
+                .setMeanDataRateKbps(meanDataRateKbps)
+                .setMsduLifetimeMillis(msduLifetimeMillis)
+                .setMsduDeliveryInfo(deliveryRatio, countExponent)
+                .build();
+
+        assertEquals(minServiceIntervalMicros, qosCharacteristics.getMinServiceIntervalMicros());
+        assertEquals(maxServiceIntervalMicros, qosCharacteristics.getMaxServiceIntervalMicros());
+        assertEquals(minDataRateKbps, qosCharacteristics.getMinDataRateKbps());
+        assertEquals(delayBoundMicros, qosCharacteristics.getDelayBoundMicros());
+        assertEquals(maxMsduSizeOctets, qosCharacteristics.getMaxMsduSizeOctets());
+        assertEquals(serviceStartTimeMicros, qosCharacteristics.getServiceStartTimeMicros());
+        assertEquals(serviceStartTimeLinkId, qosCharacteristics.getServiceStartTimeLinkId());
+        assertEquals(meanDataRateKbps, qosCharacteristics.getMeanDataRateKbps());
+        assertEquals(burstSizeOctets, qosCharacteristics.getBurstSizeOctets());
+        assertEquals(msduLifetimeMillis, qosCharacteristics.getMsduLifetimeMillis());
+        assertEquals(deliveryRatio, qosCharacteristics.getDeliveryRatio());
+        assertEquals(countExponent, qosCharacteristics.getCountExponent());
     }
 }
