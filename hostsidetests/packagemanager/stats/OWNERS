@@ -1,7 +1,7 @@
 # Bug component: 36137
-toddke@google.com
+include platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+
 patb@google.com
 schfan@google.com
-chiuwinson@google.com
 alexbuy@google.com
 zyy@google.com
