@@ -40,10 +40,12 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
 
+import android.Manifest;
 import android.annotation.NonNull;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.MediaRoute2Info;
 import android.media.MediaRoute2ProviderService;
@@ -1058,21 +1060,25 @@ public class MediaRouter2Test {
             }
         };
 
-        ControllerCallback controllerCallback = new ControllerCallback() {
-            @Override
-            public void onControllerUpdated(RoutingController controller) {
-                if (onTransferLatch.getCount() != 0
-                        || !TextUtils.equals(controllers.get(0).getId(), controller.getId())) {
-                    return;
-                }
-                assertThat(controller.getSelectedRoutes()).hasSize(1);
-                assertThat(getOriginalRouteIds(controller.getSelectedRoutes()))
-                        .doesNotContain(ROUTE_ID1);
-                assertThat(getOriginalRouteIds(controller.getSelectedRoutes()))
-                        .contains(ROUTE_ID5_TO_TRANSFER_TO);
-                onControllerUpdatedLatch.countDown();
-            }
-        };
+        ControllerCallback controllerCallback =
+                new ControllerCallback() {
+                    @Override
+                    public void onControllerUpdated(RoutingController controller) {
+                        if (onTransferLatch.getCount() != 0
+                                || !TextUtils.equals(
+                                        controllers.get(0).getId(), controller.getId())) {
+                            return;
+                        }
+
+                        if (getOriginalRouteIds(controller.getSelectedRoutes())
+                                .contains(ROUTE_ID5_TO_TRANSFER_TO)) {
+                            assertThat(controller.getSelectedRoutes()).hasSize(1);
+                            assertThat(getOriginalRouteIds(controller.getSelectedRoutes()))
+                                    .doesNotContain(ROUTE_ID1);
+                            onControllerUpdatedLatch.countDown();
+                        }
+                    }
+                };
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
         RouteCallback routeCallback = new RouteCallback() {};
@@ -1080,17 +1086,16 @@ public class MediaRouter2Test {
 
         try {
             mRouter2.registerTransferCallback(mExecutor, transferCallback);
-            mRouter2.registerControllerCallback(mExecutor, controllerCallback);
             mRouter2.transferTo(routeToBegin);
             assertThat(onTransferLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
             assertThat(controllers).hasSize(1);
-            RoutingController controller = controllers.get(0);
 
             // Transfer to ROUTE_ID5_TO_TRANSFER_TO
             MediaRoute2Info routeToTransferTo = routes.get(ROUTE_ID5_TO_TRANSFER_TO);
             assertThat(routeToTransferTo).isNotNull();
 
+            mRouter2.registerControllerCallback(mExecutor, controllerCallback);
             mRouter2.transferTo(routeToTransferTo);
             assertThat(onControllerUpdatedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
         } finally {
@@ -1128,21 +1133,26 @@ public class MediaRouter2Test {
                 onTransferLatch.countDown();
             }
         };
-        ControllerCallback controllerCallback = new ControllerCallback() {
-            @Override
-            public void onControllerUpdated(RoutingController controller) {
-                if (onTransferLatch.getCount() != 0
-                        || !TextUtils.equals(controllers.get(0).getId(), controller.getId())) {
-                    return;
-                }
-                assertThat(controller.getSelectedRoutes()).hasSize(1);
-                assertThat(getOriginalRouteIds(controller.getSelectedRoutes()))
-                        .doesNotContain(ROUTE_ID1);
-                assertThat(getOriginalRouteIds(controller.getSelectedRoutes()))
-                        .contains(ROUTE_ID5_TO_TRANSFER_TO);
-                onControllerUpdatedLatch.countDown();
-            }
-        };
+        ControllerCallback controllerCallback =
+                new ControllerCallback() {
+                    @Override
+                    public void onControllerUpdated(RoutingController controller) {
+                        if (onTransferLatch.getCount() != 0
+                                || !TextUtils.equals(
+                                        mRouter2.getSystemController().getId(),
+                                        controller.getId())) {
+                            return;
+                        }
+
+                        if (getOriginalRouteIds(controller.getSelectedRoutes())
+                                .contains(ROUTE_ID5_TO_TRANSFER_TO)) {
+                            assertThat(controller.getSelectedRoutes()).hasSize(1);
+                            assertThat(getOriginalRouteIds(controller.getSelectedRoutes()))
+                                    .doesNotContain(ROUTE_ID1);
+                            onControllerUpdatedLatch.countDown();
+                        }
+                    }
+                };
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
         RouteCallback routeCallback = new RouteCallback() {};
@@ -1150,12 +1160,12 @@ public class MediaRouter2Test {
 
         try {
             mRouter2.registerTransferCallback(mExecutor, transferCallback);
-            mRouter2.registerControllerCallback(mExecutor, controllerCallback);
             mRouter2.transferTo(routeToBegin);
             assertThat(onTransferLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
             assertThat(controllers).hasSize(1);
 
+            mRouter2.registerControllerCallback(mExecutor, controllerCallback);
             // Transfer to ROUTE_ID5_TO_TRANSFER_TO
             MediaRoute2Info routeToTransferTo = routes.get(ROUTE_ID5_TO_TRANSFER_TO);
             assertThat(routeToTransferTo).isNotNull();
@@ -1430,6 +1440,72 @@ public class MediaRouter2Test {
             mRouter2.unregisterRouteCallback(routeCallback);
             mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0);
         }
+    }
+
+    @Test
+    public void adjustSelectedRouteVolume_callsOnControlledUpdated() throws InterruptedException {
+        if (mAudioManager.isVolumeFixed()) {
+            return;
+        }
+
+        final int maxVolume = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        final int minVolume = mAudioManager.getStreamMinVolume(AudioManager.STREAM_MUSIC);
+        final int originalVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+
+        MediaRoute2Info selectedSystemRoute =
+                mRouter2.getSystemController().getSelectedRoutes().get(0);
+
+        assertThat(selectedSystemRoute.getVolumeMax()).isEqualTo(maxVolume);
+        assertThat(selectedSystemRoute.getVolume()).isEqualTo(originalVolume);
+        assertThat(selectedSystemRoute.getVolumeHandling()).isEqualTo(PLAYBACK_VOLUME_VARIABLE);
+
+        final int targetVolume =
+                originalVolume == minVolume ? originalVolume + 1 : originalVolume - 1;
+        final CountDownLatch volumeUpdatedLatch = new CountDownLatch(1);
+
+        ControllerCallback callback =
+                new ControllerCallback() {
+                    @Override
+                    public void onControllerUpdated(@NonNull RoutingController controller) {
+                        if (!TextUtils.equals(
+                                controller.getId(), mRouter2.getSystemController().getId())) {
+                            return;
+                        }
+                        MediaRoute2Info controllerSelectedRoute =
+                                controller.getSelectedRoutes().get(0);
+
+                        if (controllerSelectedRoute.getVolume() == targetVolume) {
+                            volumeUpdatedLatch.countDown();
+                        }
+                    }
+                };
+
+        // Register a route callback for the router to connect to the service.
+        RouteCallback routeCallback = new RouteCallback() {};
+        mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
+
+        mRouter2.registerControllerCallback(mExecutor, callback);
+        try {
+            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0);
+            assertThat(volumeUpdatedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+        } finally {
+            mRouter2.unregisterControllerCallback(callback);
+            mRouter2.unregisterRouteCallback(routeCallback);
+            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0);
+        }
+    }
+
+    @Test
+    public void testGettingSystemMediaRouter2WithoutPermissionThrowsSecurityException() {
+        // Make sure that the permission is not given.
+        assertThat(mContext.checkSelfPermission(Manifest.permission.MEDIA_CONTENT_CONTROL))
+                .isNotEqualTo(PackageManager.PERMISSION_GRANTED);
+
+        assertThat(mContext.checkSelfPermission(Manifest.permission.MEDIA_ROUTING_CONTROL))
+                .isNotEqualTo(PackageManager.PERMISSION_GRANTED);
+
+        assertThrows(SecurityException.class,
+                () -> MediaRouter2.getInstance(mContext, mContext.getPackageName()));
     }
 
     @Test
