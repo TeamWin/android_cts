@@ -37,6 +37,9 @@
     <string name="search_label">TestListActivity</string>
     <string name="search_hint">Search Tests</string>
     <string name="search_title">Search</string>
+    <string name="system">System</string>
+    <string name="system_on">ON</string>
+    <string name="system_off">OFF</string>
 
     <!-- Strings for CtsReportLog warning -->
     <string name="reportlog_warning_title">CTS-Verifier Report Log</string>
