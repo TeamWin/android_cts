@@ -49,6 +49,7 @@ public class ScanningSettingsTest extends AndroidTestCase {
     private static final String TAG = "ScanningSettingsTest";
 
     private static final int TIMEOUT = 300_000; // 5 minutes
+    private static final int POLLING_INTERVAL_MILLIS = 1000; // 1 seconds.
     private static final String SETTINGS_PACKAGE = "com.android.settings";
 
     private static final String LOCATION_SERVICES_PREFERENCE_TITLE_RES =
@@ -135,10 +136,6 @@ public class ScanningSettingsTest extends AndroidTestCase {
     }
 
     private void launchLocationServicesSettings() {
-        // Start from the home screen
-        mDevice.pressHome();
-        mDevice.wait(Until.hasObject(By.pkg(mLauncherPackage).depth(0)), TIMEOUT);
-
         final Intent intent = new Intent(Settings.ACTION_LOCATION_SCANNING_SETTINGS);
         // Clear out any previous instances
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -176,13 +173,24 @@ public class ScanningSettingsTest extends AndroidTestCase {
             }
         }
 
-        // Click the preference to show the Scanning fragment
-        pref.click();
-
-        // Wait for the Scanning fragment to appear
-        mDevice.wait(
+        // Click the preference to show the Scanning fragment. The preference could be unclickable
+        // initially. So keep retrying until it's finally clicked.
+        //
+        // The following code:
+        // ```
+        //   pref.wait(Until.clickable(true), TIMEOUT);
+        // ```
+        // couldn't detect the clickable state of the object unfortunately. We still need to do the
+        // check-and-retry hack.
+        do {
+            try {
+                pref.click();
+            } catch (StaleObjectException exception) {
+                // Ignore
+            }
+        } while (!mDevice.wait(
                 Until.hasObject(By.res("com.android.settings:id/settingslib_main_switch_bar")),
-                TIMEOUT);
+                POLLING_INTERVAL_MILLIS));
     }
 
     private void clickAndWaitForSettingChange(
