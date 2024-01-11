@@ -56,6 +56,7 @@ import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.UiAutomatorUtils2
 import com.android.compatibility.common.util.UiDumpUtils
+import com.android.modules.utils.build.SdkLevel
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.hamcrest.CoreMatchers
@@ -383,6 +384,7 @@ class AppHibernationIntegrationTest {
     }
 
     private fun isArchivingEnabled(): Boolean {
+        if (!SdkLevel.isAtLeastV()) return false
         if (Flags.archiving()) return true
         var systemProperty: String? = null
         runWithShellPermissionIdentity {
