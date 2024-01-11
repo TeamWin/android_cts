@@ -50,8 +50,8 @@ import android.telephony.satellite.SatelliteCapabilitiesCallback;
 import android.telephony.satellite.SatelliteDatagram;
 import android.telephony.satellite.SatelliteDatagramCallback;
 import android.telephony.satellite.SatelliteManager;
+import android.telephony.satellite.SatelliteModemStateCallback;
 import android.telephony.satellite.SatelliteProvisionStateCallback;
-import android.telephony.satellite.SatelliteStateCallback;
 import android.telephony.satellite.SatelliteTransmissionUpdateCallback;
 import android.text.TextUtils;
 import android.util.Log;
@@ -403,7 +403,7 @@ public class SatelliteManagerTestBase {
         }
     }
 
-    protected static class SatelliteStateCallbackTest implements SatelliteStateCallback {
+    protected static class SatelliteModemStateCallbackTest implements SatelliteModemStateCallback {
         public int modemState = SatelliteManager.SATELLITE_MODEM_STATE_OFF;
         private List<Integer> mModemStates = new ArrayList<>();
         private final Object mModemStatesLock = new Object();
