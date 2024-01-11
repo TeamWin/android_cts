@@ -326,13 +326,13 @@ public abstract class JavaMidiTestModule extends MidiTestModule {
                 // Send a warm-up message...
                 logByteArray("warm-up: ", mWarmUpMsg, 0, mWarmUpMsg.length);
                 portSend(mIODevice.mSendPort, mWarmUpMsg, 0, mWarmUpMsg.length,
-                        mDeviceType == TESTID_BTLOOPBACK);
+                        false /*throttleData*/);
                 for (TestMessage msg : mTestMessages) {
                     if (DEBUG) {
                         logByteArray("send: ", msg.mMsgBytes, 0, msg.mMsgBytes.length);
                     }
                     portSend(mIODevice.mSendPort, msg.mMsgBytes, 0, msg.mMsgBytes.length,
-                            mDeviceType == TESTID_BTLOOPBACK);
+                            false /*throttleData*/);
                     totalSent += msg.mMsgBytes.length;
                 }
             }
