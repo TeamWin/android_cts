@@ -227,6 +227,7 @@ android_test {
         ":HelloVerifierReject",
         ":HelloVerifierDelayedReject",
         ":HelloVerifierDisabled",
+        ":HelloWorldSystemUserOnly",
     ],
     java_resources: [
         ":PackagePropertyTestApp1",
