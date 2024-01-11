@@ -97,5 +97,15 @@ for j in $(find ${CTS_ROOT}/android-cts/testcases -name '*.jar'); do
     JAR_PATH=${JAR_PATH}:$j
 done
 
-${JAVA_BINARY} $RDBG_FLAG -Xmx16g -XX:+HeapDumpOnOutOfMemoryError -cp ${JAR_PATH} -DCTS_ROOT=${CTS_ROOT} com.android.compatibility.common.tradefed.command.CompatibilityConsole "$@"
+if [ "$USE_ATS" == "true" ]; then
+    ATS_CONSOLE_JAR=${CTS_ROOT}/android-cts/tools/ats_console_deploy.jar
+    ATS_OLC_SERVER_JAR=${CTS_ROOT}/android-cts/tools/ats_olc_server_deploy.jar
+    checkFile ${ATS_CONSOLE_JAR}
+    checkFile ${ATS_OLC_SERVER_JAR}
+
+    LANG=en_US.UTF-8 TEST_TMPDIR=${CTS_ROOT}/android-cts/tmp ${JAVA_BINARY} --add-opens=java.base/java.lang=ALL-UNNAMED -Xmx16g -XX:+HeapDumpOnOutOfMemoryError -DXTS_ROOT=${CTS_ROOT} -DDEVICE_INFRA_SERVICE_FLAGS="--aapt=$(type -P aapt2 2>/dev/null) --adb=$(type -P adb 2>/dev/null) --ats_console_always_restart_olc_server=true --ats_console_olc_server_path=${ATS_OLC_SERVER_JAR} --enable_ats_console_olc_server=true --enable_xts_dynamic_downloader=true --public_dir=${CTS_ROOT}/android-cts/logs" -jar ${ATS_CONSOLE_JAR} "$@"
+else
+    ${JAVA_BINARY} $RDBG_FLAG -Xmx16g -XX:+HeapDumpOnOutOfMemoryError -cp ${JAR_PATH} -DCTS_ROOT=${CTS_ROOT} com.android.compatibility.common.tradefed.command.CompatibilityConsole "$@"
+fi
+
 
