@@ -32,6 +32,9 @@ android_library {
         "ConnectedAppsSDK_Processor",
         "TestApp_Processor",
     ],
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
 
 android_library {
@@ -416,7 +419,7 @@ java_plugin {
         "auto_service_annotations",
         "TestApp_Annotations",
         "ConnectedAppsSDK_Annotations",
-        "RemoteFrameworkClasses_Processor_Src"
+        "RemoteFrameworkClasses_Processor_Src",
     ],
     srcs: [
         "src/processor/main/java/com/android/bedstead/testapp/processor/Processor.java",

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="5" by="lint 4.1.0" client="cli" variant="all" version="4.1.0">
+<issues format="6" by="lint 8.4.0-alpha01" type="baseline" client="" dependencies="true" name="" variant="all" version="8.4.0-alpha01">
 
     <issue
         id="NewApi"
         message="`@android:style/Theme.Material` requires API level 21 (current min is 4)"
-        errorLine1="    &lt;style name=&quot;Theme_Base&quot; parent=&quot;@android:style/Theme.Material&quot;>"
+        errorLine1='    &lt;style name="Theme_Base" parent="@android:style/Theme.Material"&gt;'
         errorLine2="                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="cts/hostsidetests/appsecurity/test-apps/SplitApp/res/values/styles.xml"
@@ -15,7 +15,7 @@
     <issue
         id="NewApi"
         message="`android:navigationBarColor` requires API level 21 (current min is 4)"
-        errorLine1="        &lt;item name=&quot;android:navigationBarColor&quot;>@color/navigation_bar_color&lt;/item>"
+        errorLine1='        &lt;item name="android:navigationBarColor"&gt;@color/navigation_bar_color&lt;/item&gt;'
         errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="cts/hostsidetests/appsecurity/test-apps/SplitApp/res/values/styles.xml"
@@ -26,7 +26,7 @@
     <issue
         id="NewApi"
         message="`android:statusBarColor` requires API level 21 (current min is 4)"
-        errorLine1="        &lt;item name=&quot;android:statusBarColor&quot;>@color/status_bar_color&lt;/item>"
+        errorLine1='        &lt;item name="android:statusBarColor"&gt;@color/status_bar_color&lt;/item&gt;'
         errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="cts/hostsidetests/appsecurity/test-apps/SplitApp/res/values/styles.xml"
