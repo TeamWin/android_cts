@@ -18,6 +18,8 @@ package android.voiceinteraction.cts.unittests;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.testng.Assert.assertThrows;
+
 import android.os.Parcel;
 import android.service.voice.VisualQueryDetectedResult;
 
@@ -32,16 +34,30 @@ public class VisualQueryDetectedResultTest {
     private static final String TEST_QUERY = "What time is it?";
 
     @Test
+    public void testVisualQueryDetectedResult_setInvalidSpeakerId() throws Exception {
+        assertThrows(IllegalArgumentException.class,
+                () -> new VisualQueryDetectedResult.Builder().setSpeakerId(-1).build());
+        assertThrows(IllegalArgumentException.class,
+                () -> new VisualQueryDetectedResult.Builder().setSpeakerId(
+                        VisualQueryDetectedResult.getMaxSpeakerId() + 1).build());
+    }
+
+    @Test
     public void testVisualQueryDetectedResultBuilder() throws Exception {
         final VisualQueryDetectedResult visualQueryDetectedResult =
-                buildVisualQueryDetectedResult(/* partialQuery= */ TEST_QUERY);
+                buildVisualQueryDetectedResult(
+                        /* partialQuery= */ TEST_QUERY,
+                        /* speakerId= */ 1);
         assertVisualQueryDetectedResult(visualQueryDetectedResult);
+
     }
 
     @Test
     public void testHotwordDetectedResultParcelizeDeparcelize() throws Exception {
         final VisualQueryDetectedResult visualQueryDetectedResult =
-                buildVisualQueryDetectedResult(/* partialQuery= */ TEST_QUERY);
+                buildVisualQueryDetectedResult(
+                        /* partialQuery= */ TEST_QUERY,
+                        /* speakerId= */ 1);
         final Parcel p = Parcel.obtain();
         visualQueryDetectedResult.writeToParcel(p, 0);
         p.setDataPosition(0);
@@ -52,14 +68,18 @@ public class VisualQueryDetectedResultTest {
         assertVisualQueryDetectedResult(targetVisualQueryDetectedResult);
     }
 
-    private VisualQueryDetectedResult buildVisualQueryDetectedResult(String partialQuery) {
+    private VisualQueryDetectedResult buildVisualQueryDetectedResult(
+            String partialQuery,
+            int speakerId) {
         return new VisualQueryDetectedResult.Builder()
                 .setPartialQuery(TEST_QUERY)
+                .setSpeakerId(speakerId)
                 .build();
     }
 
     private void assertVisualQueryDetectedResult(
             VisualQueryDetectedResult visualQueryDetectedResult) {
         assertThat(visualQueryDetectedResult.getPartialQuery()).isEqualTo(TEST_QUERY);
+        assertThat(visualQueryDetectedResult.getSpeakerId()).isEqualTo(1);
     }
 }
