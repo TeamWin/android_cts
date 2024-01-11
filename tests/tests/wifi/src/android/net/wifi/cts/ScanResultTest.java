@@ -42,6 +42,7 @@ import android.net.wifi.WifiSsid;
 import android.os.Build;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresDevice;
 import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -278,7 +279,7 @@ public class ScanResultTest extends WifiJUnit4TestBase {
         }
    }
 
-    @VirtualDeviceNotSupported
+    @RequiresDevice
     @Test
     public void testScanResultTimeStamp() throws Exception {
         long timestamp = 0;

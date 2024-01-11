@@ -103,6 +103,7 @@ import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
+import android.platform.test.annotations.RequiresDevice;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
@@ -724,7 +725,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
      * run cts --class android.net.wifi.cts.WifiManagerTest --method testWifiScanTimestamp
      */
     @Test
-    @VirtualDeviceNotSupported
+    @RequiresDevice
     public void testWifiScanTimestamp() throws Exception {
         if (!hasLocationFeature()) {
             Log.d(TAG, "Skipping test as location is not supported");
@@ -3085,7 +3086,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
      * configuration.
      * @throws Exception
      */
-    @VirtualDeviceNotSupported
+    @RequiresDevice
     @Test
     public void testSetGetSoftApConfigurationAndSoftApCapabilityCallback() throws Exception {
         // check that softap mode is supported by the device
@@ -3198,7 +3199,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
      * Verify that startTetheredHotspot with specific channel config.
      * @throws Exception
      */
-    @VirtualDeviceNotSupported
+    @RequiresDevice
     @Test
     public void testStartTetheredHotspotWithChannelConfigAndSoftApStateAndInfoCallback()
             throws Exception {
@@ -3615,7 +3616,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     /**
      * Tests {@link WifiManager#getFactoryMacAddresses()} returns at least one valid MAC address.
      */
-    @VirtualDeviceNotSupported
+    @RequiresDevice
     @Test
     public void testGetFactoryMacAddresses() throws Exception {
         TestActionListener actionListener = new TestActionListener(mLock);
