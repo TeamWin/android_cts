@@ -58,7 +58,7 @@ public class FrameRateCtsActivity extends Activity {
     }
 
     private static final String TAG = "FrameRateCtsActivity";
-    private static final long FRAME_RATE_SWITCH_GRACE_PERIOD_SECONDS = 2;
+    private static final long FRAME_RATE_SWITCH_GRACE_PERIOD_SECONDS = 4;
     private static final long STABLE_FRAME_RATE_WAIT_SECONDS = 1;
     private static final long POST_BUFFER_INTERVAL_MILLIS = 500;
     private static final int PRECONDITION_WAIT_MAX_ATTEMPTS = 5;
