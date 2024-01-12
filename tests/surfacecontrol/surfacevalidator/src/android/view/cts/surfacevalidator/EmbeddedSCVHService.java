@@ -16,16 +16,26 @@
 
 package android.view.cts.surfacevalidator;
 
+import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
+
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.RemoteException;
 import android.util.Log;
+import android.view.Choreographer;
 import android.view.Display;
+import android.view.MotionEvent;
+import android.view.Surface;
+import android.view.SurfaceControl;
 import android.view.SurfaceControl.Transaction;
 import android.view.SurfaceControlViewHost;
 import android.view.View;
@@ -40,12 +50,18 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class EmbeddedSCVHService extends Service {
+    private static final long WAIT_TIME_S = 5L * HW_TIMEOUT_MULTIPLIER;
+
     private static final String TAG = "SCVHEmbeddedService";
     private SurfaceControlViewHost mVr;
 
     private Handler mHandler;
 
     private SlowView mSlowView;
+
+    private SurfaceControl mSurfaceControl;
+
+    private IBinder mInputToken;
 
     @Override
     public void onCreate() {
@@ -144,5 +160,66 @@ public class EmbeddedSCVHService extends Service {
                 throw new RuntimeException();
             });
         }
+
+        @Override
+        public IBinder attachEmbeddedSurfaceControl(SurfaceControl parentSc, int displayId,
+                IBinder hostToken, int width, int height, IMotionEventReceiver receiver) {
+            CountDownLatch registeredLatch = new CountDownLatch(1);
+            mHandler.post(() -> {
+                Paint paint = new Paint();
+                paint.setTextSize(40);
+                paint.setColor(Color.WHITE);
+
+                mSurfaceControl = new SurfaceControl.Builder().setName("Child SurfaceControl")
+                        .setParent(parentSc).setBufferSize(width, height).build();
+                new SurfaceControl.Transaction().setVisibility(mSurfaceControl, true).setCrop(
+                        mSurfaceControl, new Rect(0, 0, width, height)).apply();
+
+                Surface surface = new Surface(mSurfaceControl);
+                Canvas c = surface.lockCanvas(null);
+                c.drawColor(Color.BLUE);
+                surface.unlockCanvasAndPost(c);
+
+                mInputToken = getSystemService(WindowManager.class)
+                        .registerBatchedSurfaceControlInputReceiver(displayId,
+                                hostToken, mSurfaceControl, Choreographer.getInstance(), event -> {
+                                    if (event instanceof MotionEvent) {
+                                        try {
+                                            receiver.onMotionEventReceived(
+                                                    MotionEvent.obtain((MotionEvent) event));
+                                        } catch (RemoteException e) {
+                                            Log.e(TAG, "Failed to send motion event to host", e);
+                                        }
+                                    }
+                                    return false;
+                                });
+                registeredLatch.countDown();
+            });
+
+            try {
+                if (!registeredLatch.await(WAIT_TIME_S, TimeUnit.SECONDS)) {
+                    return null;
+                }
+            } catch (InterruptedException e) {
+                return null;
+            }
+            return mInputToken;
+        }
+
+        @Override
+        public void tearDownEmbeddedSurfaceControl() {
+            mHandler.post(() -> {
+                if (mSurfaceControl != null) {
+                    new Transaction().reparent(mSurfaceControl, null);
+                    mSurfaceControl.release();
+                }
+                if (mInputToken != null) {
+                    getSystemService(WindowManager.class)
+                            .unregisterSurfaceControlInputReceiver(mInputToken);
+                    mInputToken = null;
+                }
+            });
+        }
+
     }
 }

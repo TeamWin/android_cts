@@ -233,7 +233,7 @@ public class CtsWindowInfoUtils {
      * @return True if the window satisfies the visibility requirements before the timeout is
      * reached. False otherwise.
      */
-    public static boolean waitForWindowOnTop(int timeout, @NonNull TimeUnit unit,
+    public static boolean waitForWindowOnTop(long timeout, @NonNull TimeUnit unit,
                                              @NonNull Predicate<WindowInfo> predicate)
             throws InterruptedException {
         var latch = new CountDownLatch(1);
@@ -365,7 +365,7 @@ public class CtsWindowInfoUtils {
      * @return True if the window satisfies the visibility requirements before the timeout is
      * reached. False otherwise.
      */
-    public static boolean waitForWindowOnTop(int timeout, @NonNull TimeUnit unit,
+    public static boolean waitForWindowOnTop(long timeout, @NonNull TimeUnit unit,
             @NonNull Supplier<IBinder> windowTokenSupplier)
             throws InterruptedException {
         return waitForWindowOnTop(timeout, unit, windowInfo -> {
@@ -445,19 +445,25 @@ public class CtsWindowInfoUtils {
     }
 
     /**
-     * Tap on the center coordinates of the specified window.
+     * Tap on the center coordinates of the specified window and sends back the coordinates tapped
      * </p>
-     * @param instrumentation Instrumentation object to use for tap.
-     * @param windowTokenSupplier Supplies the window token for the window to wait on. The
-     *                            supplier is called each time window infos change. If the
-     *                            supplier returns null, the window is assumed not visible
-     *                            yet.
-     * @return true if successfully tapped on the coordinates, false otherwise.
      *
+     * @param instrumentation     Instrumentation object to use for tap.
+     * @param windowTokenSupplier Supplies the window token for the window to wait on. The supplier
+     *                            is called each time window infos change. If the supplier returns
+     *                            null, the window is assumed not visible yet.
+     * @param useGlobalInjection  Whether to use targeted injection (false) or global (true).
+     *                            Targeted injection will only send injected events to the owned
+     *                            test app, while global will send the events to the entire system,
+     *                            including spy windows (launcher/System UI). Always use targeted
+     *                            injection unless you know what you are doing.
+     * @param outCoords           If non null, the tapped coordinates will be set in the object.
+     * @return true if successfully tapped on the coordinates, false otherwise.
      * @throws InterruptedException if failed to wait for WindowInfo
      */
     public static boolean tapOnWindowCenter(Instrumentation instrumentation,
-            @NonNull Supplier<IBinder> windowTokenSupplier, boolean useGlobalInjection)
+            @NonNull Supplier<IBinder> windowTokenSupplier, boolean useGlobalInjection,
+            @Nullable Point outCoords)
             throws InterruptedException {
         Rect bounds = getWindowBoundsInDisplaySpace(windowTokenSupplier);
         if (bounds == null) {
@@ -467,19 +473,27 @@ public class CtsWindowInfoUtils {
         final Point coord = new Point(bounds.left + bounds.width() / 2,
                 bounds.top + bounds.height() / 2);
         sendTap(instrumentation, coord, useGlobalInjection);
+        if (outCoords != null) {
+            outCoords.set(coord.x, coord.y);
+        }
         return true;
     }
 
     /**
      * Tap on the coordinates of the specified window, offset by the value passed in.
      * </p>
-     * @param instrumentation Instrumentation object to use for tap.
-     * @param windowTokenSupplier Supplies the window token for the window to wait on. The
-     *                            supplier is called each time window infos change. If the
-     *                            supplier returns null, the window is assumed not visible
-     *                            yet.
-     * @param offset The offset from 0,0 of the window to tap on. If null, it will be ignored and
-     *               0,0 will be tapped.
+     *
+     * @param instrumentation     Instrumentation object to use for tap.
+     * @param windowTokenSupplier Supplies the window token for the window to wait on. The supplier
+     *                            is called each time window infos change. If the supplier returns
+     *                            null, the window is assumed not visible yet.
+     * @param offset              The offset from 0,0 of the window to tap on. If null, it will be
+     *                            ignored and 0,0 will be tapped.
+     * @param useGlobalInjection  Whether to use targeted injection (false) or global (true).
+     *                            Targeted injection will only send injected events to the owned
+     *                            test app, while global will send the events to the entire system,
+     *                            including spy windows (launcher/System UI). Always use targeted
+     *                            injection unless you know what you are doing.
      * @return true if successfully tapped on the coordinates, false otherwise.
      * @throws InterruptedException if failed to wait for WindowInfo
      */
