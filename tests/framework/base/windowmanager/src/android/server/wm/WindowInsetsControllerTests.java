@@ -61,6 +61,7 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.Insets;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
@@ -310,6 +311,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         // Assume we have the bars and they can be visible.
         final int types = statusBars();
         assumeTrue(rootView.getRootWindowInsets().isVisible(types));
+        // Get insets before hiding them.
+        final Insets insets = rootView.getRootWindowInsets().getInsets(types);
 
         rootView.getWindowInsetsController().setSystemBarsBehavior(BEHAVIOR_DEFAULT);
 
@@ -323,8 +326,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         // dragFromTopToCenter might expand notification shade.
         SystemClock.sleep(TIMEOUT_UPDATING_INPUT_WINDOW);
 
-        // Swiping from top of display can show bars.
-        dragFromTopToCenter(rootView);
+        // Swiping from edge of screen can show bars. Here edge can be top, bottom, right & left.
+        swipeFromEdgeOfScreen(insets, rootView);
         PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(types));
     }
 
@@ -501,6 +504,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         // Assume we have the bars and they can be visible.
         final int types = statusBars();
         assumeTrue(rootView.getRootWindowInsets().isVisible(types));
+        // Get insets before hiding them.
+        final Insets insets = rootView.getRootWindowInsets().getInsets(types);
 
         final int targetFlags = SYSTEM_UI_FLAG_IMMERSIVE | SYSTEM_UI_FLAG_FULLSCREEN;
 
@@ -519,7 +524,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
         // Swiping from top of display can show bars.
         ANIMATION_CALLBACK.reset();
-        dragFromTopToCenter(rootView);
+        // Swiping from edge of screen can show bars. Here edge can be top, bottom, right & left.
+        swipeFromEdgeOfScreen(insets, rootView);
         ANIMATION_CALLBACK.waitForFinishing();
         PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(types)
             && rootView.getSystemUiVisibility() != targetFlags);
@@ -539,7 +545,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
         // Swiping from top of display can show bars.
         ANIMATION_CALLBACK.reset();
-        dragFromTopToCenter(rootView);
+        // Swiping from edge of screen can show bars. Here edge can be top, bottom, right & left.
+        swipeFromEdgeOfScreen(insets, rootView);
         ANIMATION_CALLBACK.waitForFinishing();
         PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(types));
 
@@ -858,8 +865,32 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         dragOnDisplay(x, y, x, y);
     }
 
+    private void swipeFromEdgeOfScreen(Insets insets, View view) {
+        // Using the insets we determine where the insets are positioned.
+        // Based on insets location, swipe is done in the respective direction.
+        if (insets.right > 0) {
+            dragFromRightToCenter(view);
+        } else if (insets.bottom > 0) {
+            dragFromBottomToCenter(view);
+        } else if (insets.left > 0) {
+            dragFromLeftToCenter(view);
+        } else {
+            dragFromTopToCenter(view);
+        }
+    }
+
     private void dragFromTopToCenter(View view) {
         dragOnDisplay(view.getWidth() / 2f, 0 /* downY */,
+                view.getWidth() / 2f, view.getHeight() / 2f);
+    }
+
+    private void dragFromRightToCenter(View view) {
+        dragOnDisplay(view.getWidth() -1, view.getHeight() / 2f,
+                view.getWidth() / 2f, view.getHeight() / 2f);
+    }
+
+    private void dragFromBottomToCenter(View view) {
+        dragOnDisplay(view.getWidth() / 2f, view.getHeight() -1,
                 view.getWidth() / 2f, view.getHeight() / 2f);
     }
 
