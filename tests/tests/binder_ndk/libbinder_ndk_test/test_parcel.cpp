@@ -59,6 +59,16 @@ bool NdkBinderSenseOfEquality<AStatus*>(AStatus* a, AStatus* b) {
   return NdkBinderSenseOfEquality<const AStatus*>(a, b);
 }
 
+template <typename T>
+auto castForStream(T val) {
+  return val;
+}
+
+template <>
+auto castForStream(char16_t val) {
+  return static_cast<int>(val);
+}
+
 // These reads and writes an array of possible values all of the same type.
 template <typename T,
           binder_status_t (*write)(AParcel*, typename WriteFrom<T>::type),
@@ -84,7 +94,7 @@ void ExpectInOut(std::vector<T> in) {
           T readTarget = {};
           EXPECT_OK(read(out, &readTarget));
           EXPECT_TRUE(NdkBinderSenseOfEquality<T>(value, readTarget))
-              << value << " is not " << readTarget;
+              << castForStream(value) << " is not " << castForStream(readTarget);
           return STATUS_OK;
         }));
   }
