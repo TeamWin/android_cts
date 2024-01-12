@@ -39,6 +39,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -455,6 +456,53 @@ public class TelephonyRegistryManagerTest {
         public void onCarrierServiceChanged(@Nullable String carrierServicePackageName,
                 int carrierServiceUid) {
             mCarrierServiceQueue.offer(new Pair<>(carrierServicePackageName, carrierServiceUid));
+        }
+    }
+
+
+    private static class SimultaneousCallingListener extends TelephonyCallback implements
+            TelephonyCallback.SimultaneousCellularCallingSupportListener {
+
+        private final LinkedBlockingQueue<Set<Integer>> mQueue;
+
+        SimultaneousCallingListener(LinkedBlockingQueue<Set<Integer>> queue) {
+            mQueue = queue;
+        }
+
+        @Override
+        public void onSimultaneousCellularCallingSubscriptionsChanged(
+                @NonNull Set<Integer> simultaneousCallingSubscriptionIds) {
+            mQueue.offer(simultaneousCallingSubscriptionIds);
+        }
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_SIMULTANEOUS_CALLING_INDICATIONS)
+    @Test
+    public void testSimultaneousCellularCallingNotifications() throws Exception {
+        LinkedBlockingQueue<Set<Integer>> queue = new LinkedBlockingQueue<>(2);
+        SimultaneousCallingListener listener = new SimultaneousCallingListener(queue);
+        Context context = InstrumentationRegistry.getContext();
+        TelephonyManager telephonyManager = context.getSystemService(TelephonyManager.class);
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(telephonyManager,
+                (tm) -> tm.registerTelephonyCallback(context.getMainExecutor(), listener),
+                "android.permission.READ_PRIVILEGED_PHONE_STATE");
+        // get the current value
+        Set<Integer> initialVal = queue.poll(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        Set<Integer> testVal = new HashSet<>();
+        testVal.add(1000);
+        testVal.add(1100);
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyRegistryMgr,
+                    (trm) -> trm.notifySimultaneousCellularCallingSubscriptionsChanged(testVal));
+            Set<Integer> resultVal = queue.poll(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+            assertEquals(testVal, resultVal);
+        } finally {
+            // set back the initial value so that we do not cause an invalid value to be returned.
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyRegistryMgr,
+                    (trm) -> trm.notifySimultaneousCellularCallingSubscriptionsChanged(initialVal));
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(telephonyManager,
+                    (tm) -> tm.unregisterTelephonyCallback(listener));
         }
     }
 
