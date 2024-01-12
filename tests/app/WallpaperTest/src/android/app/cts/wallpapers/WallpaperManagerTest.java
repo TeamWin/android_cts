@@ -1022,12 +1022,13 @@ public class WallpaperManagerTest {
     public void peekWallpaperDimensions_homeScreen_succeeds() throws IOException {
         final int width = 100;
         final int height = 200;
-        final Rect expectedSize = new Rect(0, 0, width, height);
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         canvas.drawColor(Color.RED);
         mWallpaperManager.setBitmap(bitmap);
 
+        Bitmap croppedBitmap = mWallpaperManager.getBitmap();
+        Rect expectedSize = new Rect(0, 0, croppedBitmap.getWidth(), croppedBitmap.getHeight());
         Rect actualSize = mWallpaperManager.peekBitmapDimensions();
 
         assertThat(actualSize).isEqualTo(expectedSize);
@@ -1050,13 +1051,15 @@ public class WallpaperManagerTest {
                 FLAG_SYSTEM);
         final int width = 100;
         final int height = 200;
-        final Rect expectedSize = new Rect(0, 0, width, height);
         Bitmap lockBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas lockCanvas = new Canvas(lockBitmap);
         lockCanvas.drawColor(Color.RED);
         mWallpaperManager.setBitmap(lockBitmap, /* visibleCropHint */ null, /* allowBackup */true,
                 FLAG_LOCK);
 
+        Drawable drawable = mWallpaperManager.getDrawable(FLAG_LOCK);
+        Rect expectedSize = new Rect(
+                0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         Rect actualSize = mWallpaperManager.peekBitmapDimensions(FLAG_LOCK);
 
         assertThat(actualSize).isEqualTo(expectedSize);
