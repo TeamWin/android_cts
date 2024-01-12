@@ -15,13 +15,10 @@
  */
 package android.sdksandbox.webkit.cts;
 
-import android.app.sdksandbox.testutils.testscenario.KeepSdkSandboxAliveRule;
-
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -30,66 +27,62 @@ import org.junit.runner.RunWith;
 public class SdkSandboxWebChromeClientTest {
 
     @ClassRule
-    public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
-            new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
-
-    @Rule
-    public final WebViewSandboxTestRule sdkTester =
+    public static final WebViewSandboxTestRule sSdkTestSuiteSetup =
             new WebViewSandboxTestRule("android.webkit.cts.WebChromeClientTest");
 
     @Test
-    public void testOnProgressChanged() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnProgressChanged");
+    public void testOnProgressChanged() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnProgressChanged");
     }
 
     @Test
-    public void testOnReceivedTitle() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnReceivedTitle");
+    public void testOnReceivedTitle() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnReceivedTitle");
     }
 
     @Test
-    public void testOnReceivedIcon() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnReceivedIcon");
+    public void testOnReceivedIcon() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnReceivedIcon");
     }
 
     @Test
-    public void testWindows() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testWindows");
+    public void testWindows() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testWindows");
     }
 
     @Test
-    public void testBlockWindowsSync() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testBlockWindowsSync");
+    public void testBlockWindowsSync() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testBlockWindowsSync");
     }
 
     @Test
-    public void testBlockWindowsAsync() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testBlockWindowsAsync");
+    public void testBlockWindowsAsync() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testBlockWindowsAsync");
     }
 
     @Test
-    public void testOnJsAlert() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnJsAlert");
+    public void testOnJsAlert() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnJsAlert");
     }
 
     @Test
-    public void testOnJsConfirm() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnJsConfirm");
+    public void testOnJsConfirm() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnJsConfirm");
     }
 
     @Test
-    public void testOnJsPrompt() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnJsPrompt");
+    public void testOnJsPrompt() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnJsPrompt");
     }
 
     @Test
-    public void testOnConsoleMessage() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnConsoleMessage");
+    public void testOnConsoleMessage() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnConsoleMessage");
     }
 
     @Test
-    public void testOnJsBeforeUnloadIsCalled() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnJsBeforeUnloadIsCalled");
+    public void testOnJsBeforeUnloadIsCalled() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnJsBeforeUnloadIsCalled");
     }
 
 }
