@@ -28,11 +28,17 @@ android_test {
         "platform-test-annotations",
         "testng",
     ],
-    srcs: ["src/**/*.java"],
+    srcs: [
+         "src/**/*.java",
+         // TODO(b/263565193): Temp hack until NFC APK can link against module_current.
+         ":framework-nfc-updatable-sources",
+    ],
     // was: sdk_version: "current",
     libs: [
         "android.test.runner",
         "android.test.base",
+        "framework-nfc.impl",
+        "unsupportedappusage",
     ],
     // Tag this module as a cts test artifact
     test_suites: [
