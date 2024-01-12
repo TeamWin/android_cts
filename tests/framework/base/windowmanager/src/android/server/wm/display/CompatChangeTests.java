@@ -46,6 +46,8 @@ import static android.server.wm.allowsandboxingviewboundsapis.Components.ACTION_
 import static android.server.wm.allowsandboxingviewboundsapis.Components.ACTION_TEST_VIEW_SANDBOX_NOT_ALLOWED_PASSED;
 import static android.server.wm.allowsandboxingviewboundsapis.Components.TEST_VIEW_SANDBOX_ALLOWED_ACTIVITY;
 import static android.server.wm.allowsandboxingviewboundsapis.Components.TEST_VIEW_SANDBOX_ALLOWED_TIMEOUT_MS;
+import static android.server.wm.allowuseraspectratiofullscreenoverrideoptin.Components.ALLOW_USER_ASPECT_RATIO_FULLSCREEN_OVERRIDE_OPT_IN_ACTIVITY;
+import static android.server.wm.allowuseraspectratiofullscreenoverrideoptout.Components.ALLOW_USER_ASPECT_RATIO_FULLSCREEN_OVERRIDE_OPT_OUT_ACTIVITY;
 import static android.server.wm.allowuseraspectratiooverrideoptin.Components.ALLOW_USER_ASPECT_RATIO_OVERRIDE_OPT_IN_ACTIVITY;
 import static android.server.wm.allowuseraspectratiooverrideoptout.Components.ALLOW_USER_ASPECT_RATIO_OVERRIDE_OPT_OUT_ACTIVITY;
 import static android.server.wm.enablefakefocusoptin.Components.ENABLE_FAKE_FOCUS_OPT_IN_LEFT_ACTIVITY;
@@ -1414,6 +1416,152 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
                 NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY)) {
             assertFalse(session.getActivityState().getShouldEnableUserAspectRatioSettings());
         }
+    }
+
+    /**
+     * Test that the user aspect ratio fullscreen override is applicable through the user aspect
+     * ratio settings when {@link
+     * android.view.WindowManager#PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_FULLSCREEN_OVERRIDE} is
+     * set to true and {@link
+     * com.android.internal.R.bool.config_appCompatUserAppAspectRatioFullscreenIsEnabled} is true.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.WindowManager#PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_OVERRIDE"})
+    @RequiresFlagsEnabled(Flags.FLAG_APP_COMPAT_PROPERTIES_API)
+    public void testAllowUserAspectRatioFullscreen_propertyTrue_configEnabled_overrideAllowed() {
+        assumeTrue("Skipping test: config_appCompatUserAppAspectRatioSettingsIsEnabled not enabled",
+                isUserAppAspectRatioSettingsIsEnabled());
+        assumeTrue(
+                "Skipping test: config_appCompatUserAppAspectRatioFullscreenIsEnabled not enabled",
+                isUserAppAspectRatioFullscreenIsEnabled());
+
+        try (var session = new ActivitySessionCloseable(
+                ALLOW_USER_ASPECT_RATIO_FULLSCREEN_OVERRIDE_OPT_IN_ACTIVITY)) {
+            assertTrue(session.getActivityState().getIsUserFullscreenOverrideEnabled());
+        }
+    }
+
+    /**
+     * Test that the user aspect ratio fullscreen override is not applicable through the user aspect
+     * ratio settings when {@link
+     * android.view.WindowManager#PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_FULLSCREEN_OVERRIDE} is
+     * set to true but {@link
+     * com.android.internal.R.bool.config_appCompatUserAppAspectRatioFullscreenIsEnabled} is false.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.WindowManager#PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_OVERRIDE"})
+    @RequiresFlagsEnabled(Flags.FLAG_APP_COMPAT_PROPERTIES_API)
+    public void
+            testAllowUserAspectRatioFullscreen_propertyTrue_configDisabled_overrideNotAllowed() {
+        assumeTrue("Skipping test: config_appCompatUserAppAspectRatioSettingsIsEnabled not enabled",
+                isUserAppAspectRatioSettingsIsEnabled());
+        assumeFalse(
+                "Skipping test: config_appCompatUserAppAspectRatioFullscreenIsEnabled is enabled",
+                isUserAppAspectRatioFullscreenIsEnabled());
+
+        try (var session = new ActivitySessionCloseable(
+                ALLOW_USER_ASPECT_RATIO_FULLSCREEN_OVERRIDE_OPT_IN_ACTIVITY)) {
+            assertFalse(session.getActivityState().getIsUserFullscreenOverrideEnabled());
+        }
+    }
+
+    /**
+     * Test that the user aspect ratio fullscreen override is not applicable through the user aspect
+     * ratio settings when {@link
+     * android.view.WindowManager#PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_FULLSCREEN_OVERRIDE} is
+     * set to false but {@link
+     * com.android.internal.R.bool.config_appCompatUserAppAspectRatioFullscreenIsEnabled} is true.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.WindowManager#PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_OVERRIDE"})
+    @RequiresFlagsEnabled(Flags.FLAG_APP_COMPAT_PROPERTIES_API)
+    public void
+            testAllowUserAspectRatioFullscreen_propertyFalse_configEnabled_overrideNotAllowed() {
+        assumeTrue("Skipping test: config_appCompatUserAppAspectRatioSettingsIsEnabled not enabled",
+                isUserAppAspectRatioSettingsIsEnabled());
+        assumeTrue(
+                "Skipping test: config_appCompatUserAppAspectRatioFullscreenIsEnabled not enabled",
+                isUserAppAspectRatioFullscreenIsEnabled());
+
+        try (var session = new ActivitySessionCloseable(
+                ALLOW_USER_ASPECT_RATIO_FULLSCREEN_OVERRIDE_OPT_OUT_ACTIVITY)) {
+            assertFalse(session.getActivityState().getIsUserFullscreenOverrideEnabled());
+        }
+    }
+
+    /**
+     * Test that the user aspect ratio fullscreen override is not applicable through the user aspect
+     * ratio settings when {@link
+     * android.view.WindowManager#PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_FULLSCREEN_OVERRIDE} is
+     * set to false and {@link
+     * com.android.internal.R.bool.config_appCompatUserAppAspectRatioFullscreenIsEnabled} is false.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.WindowManager#PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_OVERRIDE"})
+    @RequiresFlagsEnabled(Flags.FLAG_APP_COMPAT_PROPERTIES_API)
+    public void
+            testAllowUserAspectRatioFullscreen_propertyFalse_configDisabled_overrideNotAllowed() {
+        assumeTrue("Skipping test: config_appCompatUserAppAspectRatioSettingsIsEnabled not enabled",
+                isUserAppAspectRatioSettingsIsEnabled());
+        assumeFalse(
+                "Skipping test: config_appCompatUserAppAspectRatioFullscreenIsEnabled is enabled",
+                isUserAppAspectRatioFullscreenIsEnabled());
+
+        try (var session = new ActivitySessionCloseable(
+                ALLOW_USER_ASPECT_RATIO_FULLSCREEN_OVERRIDE_OPT_OUT_ACTIVITY)) {
+            assertFalse(session.getActivityState().getIsUserFullscreenOverrideEnabled());
+        }
+    }
+
+    /**
+     * Test that the user aspect ratio fullscreen override is applicable through the user aspect
+     * ratio settings when {@link
+     * android.view.WindowManager#PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_FULLSCREEN_OVERRIDE} is
+     * unset but {@link
+     * com.android.internal.R.bool.config_appCompatUserAppAspectRatioFullscreenIsEnabled} is true.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.WindowManager#PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_OVERRIDE"})
+    @RequiresFlagsEnabled(Flags.FLAG_APP_COMPAT_PROPERTIES_API)
+    public void testAllowUserAspectRatioFullscreen_propertyUnset_configEnabled_overrideAllowed() {
+        assumeTrue("Skipping test: config_appCompatUserAppAspectRatioSettingsIsEnabled not enabled",
+                isUserAppAspectRatioSettingsIsEnabled());
+        assumeTrue(
+                "Skipping test: config_appCompatUserAppAspectRatioFullscreenIsEnabled not enabled",
+                isUserAppAspectRatioFullscreenIsEnabled());
+
+        try (var session = new ActivitySessionCloseable(
+                NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY)) {
+            assertTrue(session.getActivityState().getIsUserFullscreenOverrideEnabled());
+        }
+    }
+
+    /**
+     * Test that the user aspect ratio fullscreen override is not applicable through the user aspect
+     * ratio settings when {@link
+     * android.view.WindowManager#PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_FULLSCREEN_OVERRIDE} is
+     * set to unset but {@link
+     * com.android.internal.R.bool.config_appCompatUserAppAspectRatioFullscreenIsEnabled} is false.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.WindowManager#PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_OVERRIDE"})
+    @RequiresFlagsEnabled(Flags.FLAG_APP_COMPAT_PROPERTIES_API)
+    public void
+            testAllowUserAspectRatioFullscreen_propertyUnset_configDisabled_overrideNotAllowed() {
+        assumeTrue("Skipping test: config_appCompatUserAppAspectRatioSettingsIsEnabled not enabled",
+                isUserAppAspectRatioSettingsIsEnabled());
+        assumeFalse(
+                "Skipping test: config_appCompatUserAppAspectRatioFullscreenIsEnabled is enabled",
+                isUserAppAspectRatioFullscreenIsEnabled());
+
+        try (var session = new ActivitySessionCloseable(
+                NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY)) {
+            assertFalse(session.getActivityState().getIsUserFullscreenOverrideEnabled());
+        }
+    }
+
+    private boolean isUserAppAspectRatioFullscreenIsEnabled() {
+        return getBooleanConfig("config_appCompatUserAppAspectRatioFullscreenIsEnabled");
     }
 
     private boolean isUserAppAspectRatioSettingsIsEnabled() {
