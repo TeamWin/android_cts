@@ -15,13 +15,10 @@
  */
 package android.sdksandbox.webkit.cts;
 
-import android.app.sdksandbox.testutils.testscenario.KeepSdkSandboxAliveRule;
-
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -30,55 +27,51 @@ import org.junit.runner.RunWith;
 public class SdkSandboxWebViewZoomTest {
 
     @ClassRule
-    public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
-            new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
-
-    @Rule
-    public final WebViewSandboxTestRule sdkTester =
+    public static final WebViewSandboxTestRule sSdkTestSuiteSetup =
             new WebViewSandboxTestRule("android.webkit.cts.WebViewZoomTest");
 
     @Test
-    public void testZoomIn() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testZoomIn");
+    public void testZoomIn() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testZoomIn");
     }
 
     @Test
-    public void testGetZoomControls() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testGetZoomControls");
+    public void testGetZoomControls() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testGetZoomControls");
     }
 
     @Test
-    public void testInvokeZoomPicker() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testInvokeZoomPicker");
+    public void testInvokeZoomPicker() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testInvokeZoomPicker");
     }
 
     @Test
-    public void testZoom_canNotZoomInPastMaximum() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testZoom_canNotZoomInPastMaximum");
+    public void testZoom_canNotZoomInPastMaximum() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testZoom_canNotZoomInPastMaximum");
     }
 
     @Test
-    public void testZoom_canNotZoomOutPastMinimum() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testZoom_canNotZoomOutPastMinimum");
+    public void testZoom_canNotZoomOutPastMinimum() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testZoom_canNotZoomOutPastMinimum");
     }
 
     @Test
-    public void testCanZoomWhileZoomSupportedFalse() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testCanZoomWhileZoomSupportedFalse");
+    public void testCanZoomWhileZoomSupportedFalse() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testCanZoomWhileZoomSupportedFalse");
     }
 
     @Test
-    public void testZoomByPowerOfTwoIncrements() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testZoomByPowerOfTwoIncrements");
+    public void testZoomByPowerOfTwoIncrements() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testZoomByPowerOfTwoIncrements");
     }
 
     @Test
-    public void testZoomByNonPowerOfTwoIncrements() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testZoomByNonPowerOfTwoIncrements");
+    public void testZoomByNonPowerOfTwoIncrements() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testZoomByNonPowerOfTwoIncrements");
     }
 
     @Test
-    public void testScaleChangeCallbackMatchesGetScale() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testScaleChangeCallbackMatchesGetScale");
+    public void testScaleChangeCallbackMatchesGetScale() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testScaleChangeCallbackMatchesGetScale");
     }
 }
