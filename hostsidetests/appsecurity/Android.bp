@@ -187,6 +187,26 @@ java_test_host {
         ":v3-rsa-2048-declperm",
         // StatsdAppSecurityAtomTest
         ":CtsStatsSecurityApp",
+        // ApkVerityInstallTest
+        ":CtsApkVerityTestApp",
+        ":CtsApkVerityTestAppSplit",
+        // PackageSetInstallerTest
+        ":CtsPkgInstallerPermRequestApp",
+        // CtsAppDataIsolationAppA
+        ":CtsAppDataIsolationAppA",
+        ":CtsAppDataIsolationAppSharedA",
+        ":CtsAppDataIsolationAppDirectBootA",
+        ":CtsAppDataIsolationAppApi29A",
+        ":CtsAppDataIsolationAppB",
+        ":CtsAppDataIsolationAppSharedB",
+        // ReadableSettingsFieldsTest
+        ":CtsReadSettingsFieldsApp",
+        ":CtsReadSettingsFieldsAppTestOnly",
+        ":CtsReadSettingsFieldsAppTargetQ",
+        ":CtsReadSettingsFieldsAppTargetR",
+        ":CtsReadSettingsFieldsAppTargetS",
+        // UseProcessTest
+        ":CtsUseProcessFailActivity",
     ],
 }
 
