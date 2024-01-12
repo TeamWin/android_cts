@@ -18,7 +18,7 @@ package android.videocodec.cts;
 
 import static android.media.MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR;
 import static android.media.MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR;
-import static android.videocodec.cts.VideoEncoderInput.BIRTHDAY_FULLHD_LANDSCAPE;
+import static android.videocodec.cts.VideoEncoderValidationTestBase.BIRTHDAY_FULLHD_LANDSCAPE;
 import static android.videocodec.cts.VideoEncoderValidationTestBase.DIAGNOSTICS;
 import static android.videocodec.cts.VideoEncoderValidationTestBase.logAllFilesInCacheDir;
 
@@ -50,7 +50,7 @@ import java.util.List;
 public class VideoEncoderQualityRegressionTestBase {
     private static final String LOG_TAG =
             VideoEncoderQualityRegressionTestBase.class.getSimpleName();
-    private static final VideoEncoderInput.CompressedResource RES =
+    private static final VideoEncoderValidationTestBase.CompressedResource RES =
             BIRTHDAY_FULLHD_LANDSCAPE;
     private static final int WIDTH = 1920;
     private static final int HEIGHT = 1080;
@@ -65,6 +65,7 @@ public class VideoEncoderQualityRegressionTestBase {
     protected final String mCodecName;
     protected final String mMediaType;
     protected final int mBitRateMode;
+
     protected final ArrayList<String> mTmpFiles = new ArrayList<>();
 
     static {
@@ -146,7 +147,7 @@ public class VideoEncoderQualityRegressionTestBase {
             EncoderConfigParams[] cfgs = cfgsUnion.get(i);
             String mediaType = cfgs[0].mMediaType;
             VideoEncoderValidationTestBase vevtb = new VideoEncoderValidationTestBase(null,
-                    mediaType, null, null);
+                    mediaType, null, null, "");
             vevtb.setLoopBack(true);
             for (int j = 0; j < cfgs.length; j++) {
                 vevtb.encodeToMemory(encoderNames[i], cfgs[j], sActiveRawRes, FRAME_LIMIT, true,
