@@ -29,6 +29,8 @@ import android.os.Bundle;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.nfc.NfcDialogs;
 
+import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.List;
 
 public class PollingLoopEmulatorActivity extends BaseEmulatorActivity {
@@ -40,8 +42,10 @@ public class PollingLoopEmulatorActivity extends BaseEmulatorActivity {
     int mNfcOffCount = 0;
     boolean mAllowedTransaction = false;
     PendingIntent mPendingIntent;
+    String mCustomFrame = null;
 
     private static final String NFC_TECH_KEY = "NFC_TECH";
+    private static final String NFC_CUSTOM_FRAME = "NFC_CUSTOM_FRAME";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +71,10 @@ public class PollingLoopEmulatorActivity extends BaseEmulatorActivity {
         return "error";
     }
 
-    private static String getEmulatorString(Context context, int nfcTech) {
+    private static String getEmulatorString(Context context, int nfcTech, String customFrame) {
+        if (customFrame != null) {
+            return context.getString(R.string.nfc_polling_loop_custom_emulator);
+        }
         if (nfcTech == NfcAdapter.FLAG_READER_NFC_A) {
             return context.getString(R.string.nfc_polling_loop_a_emulator);
         } else if (nfcTech == NfcAdapter.FLAG_READER_NFC_B) {
@@ -78,7 +85,10 @@ public class PollingLoopEmulatorActivity extends BaseEmulatorActivity {
         return "error";
     }
 
-    private static String getEmulatorHelpString(Context context, int nfcTech) {
+    private static String getEmulatorHelpString(Context context, int nfcTech, String customFrame) {
+        if (customFrame != null) {
+            return context.getString(R.string.nfc_polling_loop_custom_emulator_help);
+        }
         if (nfcTech == NfcAdapter.FLAG_READER_NFC_A) {
             return context.getString(R.string.nfc_polling_loop_a_emulator_help);
         } else if (nfcTech == NfcAdapter.FLAG_READER_NFC_B) {
@@ -93,9 +103,10 @@ public class PollingLoopEmulatorActivity extends BaseEmulatorActivity {
     protected void onResume() {
         super.onResume();
         mNfcTech = getIntent().getIntExtra(NFC_TECH_KEY, NfcAdapter.FLAG_READER_NFC_A);
-        NfcDialogs.createHceTapReaderDialog(this, getEmulatorHelpString(this, mNfcTech))
-                .show();
-        setTitle(getEmulatorString(this, mNfcTech));
+        mCustomFrame = getIntent().getStringExtra(NFC_CUSTOM_FRAME);
+        NfcDialogs.createHceTapReaderDialog(this,
+                    getEmulatorHelpString(this, mNfcTech, mCustomFrame)).show();
+        setTitle(getEmulatorString(this, mNfcTech, mCustomFrame));
         mAdapter.disallowTransaction();
         getPassButton().setEnabled(false);
         setupServices(this, PollingLoopService.COMPONENT);
@@ -139,6 +150,12 @@ public class PollingLoopEmulatorActivity extends BaseEmulatorActivity {
         }
     };
 
+    static Intent buildEmulatorIntent(Context context, int nfcTech, String customFrame) {
+        Intent intent = buildEmulatorIntent(context, nfcTech);
+        intent.putExtra(NFC_CUSTOM_FRAME, customFrame);
+        return intent;
+    }
+
     static Intent buildEmulatorIntent(Context context, int nfcTech) {
         Intent intent = new Intent(context, PollingLoopEmulatorActivity.class);
         intent.putExtra(NFC_TECH_KEY, nfcTech);
@@ -164,7 +181,7 @@ public class PollingLoopEmulatorActivity extends BaseEmulatorActivity {
         for (Bundle frame : frames) {
             processPollingFrame(frame);
         }
-        if (seenCorrectPollingLoop() && !mAllowedTransaction) {
+        if (seenCorrectPollingLoop() && !mAllowedTransaction && mCustomFrame == null) {
             if (mAdapter.allowTransaction()) {
                 mAllowedTransaction = true;
             }
@@ -201,8 +218,15 @@ public class PollingLoopEmulatorActivity extends BaseEmulatorActivity {
             mNfcOnCount++;
         } else if (type == HostApduService.POLLING_LOOP_TYPE_OFF) {
             mNfcOffCount++;
+        } else if (type == HostApduService.POLLING_LOOP_TYPE_UNKNOWN) {
+            if (mCustomFrame != null && !mAllowedTransaction) {
+                byte[] passedData = frame.getByteArray("android.nfc.cardemulation.DATA");
+                byte[] data = Arrays.copyOfRange(passedData, 4, passedData.length - 4);
+                if (mCustomFrame.equals(HexFormat.of().formatHex(data))) {
+                    getPassButton().setEnabled(true);
+                }
+            }
         }
-
     }
 
     static Intent buildReaderIntent(Context context, int nfcTech) {

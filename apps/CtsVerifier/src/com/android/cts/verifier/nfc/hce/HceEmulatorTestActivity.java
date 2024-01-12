@@ -150,6 +150,11 @@ public class HceEmulatorTestActivity extends PassFailButtons.TestListActivity {
                         PollingLoopEmulatorActivity.buildEmulatorIntent(this,
                                 NfcAdapter.FLAG_READER_NFC_A | NfcAdapter.FLAG_READER_NFC_B),
                         null));
+                adapter.add(TestListItem.newTest(this, R.string.nfc_polling_loop_custom_emulator,
+                        getString(R.string.nfc_polling_loop_custom_emulator),
+                        PollingLoopEmulatorActivity.buildEmulatorIntent(this,
+                                NfcAdapter.FLAG_READER_NFC_A, "48656c6c6f20776f726c64"),
+                        null));
             }
 
             int firstSdk =
