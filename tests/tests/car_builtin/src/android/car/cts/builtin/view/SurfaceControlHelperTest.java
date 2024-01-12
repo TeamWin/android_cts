@@ -16,6 +16,7 @@
 
 package android.car.cts.builtin.view;
 
+import static android.car.feature.Flags.FLAG_CLUSTER_HEALTH_MONITORING;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -28,11 +29,15 @@ import android.car.builtin.view.SurfaceControlHelper;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.view.SurfaceControl;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -45,6 +50,9 @@ public final class SurfaceControlHelperTest {
 
     private final Instrumentation mInstrumentation = getInstrumentation();
     private final Context mContext = getInstrumentation().getContext();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private TestActivity mTestActivity;
 
@@ -73,6 +81,7 @@ public final class SurfaceControlHelperTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(FLAG_CLUSTER_HEALTH_MONITORING)
     public void testGetSurfaceControl() throws Exception {
         mTestActivity = launchTestActivity(TestActivity.class);
         SurfaceControl surface = SurfaceControlHelper.getSurfaceControl(mTestActivity);
