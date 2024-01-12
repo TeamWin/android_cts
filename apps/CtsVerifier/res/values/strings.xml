@@ -4429,7 +4429,8 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         Tap the \"DECLINE\" button and verify that:\n
         \n
-        - \"Taking bugreport...\" notification with an indefinite progress bar is no longer present.\n
+        <!-- Disabled in U due to b/317738856 -->
+        <!-- \"Taking bugreport...\" notification with an indefinite progress bar is no longer present.\n -->
         - Notification titled \"Device Owner Requesting Bugreport Tests\" with message \"Bugreport sharing declined\" is present.\n
         \n
         Dismiss the notifications and mark test as passed or failed.
@@ -4444,7 +4445,8 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         Tap the \"SHARE\" button and verify that:\n
         \n
-        - \"Taking bugreport...\" notification with an indefinite progress bar is no longer present.\n
+        <!-- Disabled in U due to b/317738856 -->
+        <!-- \"Taking bugreport...\" notification with an indefinite progress bar is no longer present.\n -->
         - Notification titled \"Sharing bugreport...\" with an indefinite progress bar is present.\n
         - After a few minutes (time necessary to wait for bugreport being collected) notification titled \"Sharing bugreport...\" is automatically dismissed and notification titled \"Device Owner Requesting Bugreport Tests\" with message \"Bugreport shared successfully\" is present.\n
         \n
@@ -4459,7 +4461,8 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         Wait for a few minutes (time necessary for bugreport to be collected) and verify that:\n
         \n
-        - \"Taking bugreport...\" notification with an indefinite progress bar is dismissed.\n
+        <!-- Disabled in U due to b/317738856 -->
+        <!-- \"Taking bugreport...\" notification with an indefinite progress bar is no longer present.\n -->
         - Notification titled \"Share bug report?\", that contains a message \"Your IT admin requested a bug report to help troubleshoot this device. Apps and data may be shared.\" and two buttons - \"DECLINE\" and \"SHARE\" is shown.\n
         \n
         Tap the \"DECLINE\" button and verify that:\n
@@ -4478,7 +4481,8 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         Wait for a few minutes (time necessary for bugreport to be collected) and verify that:\n
         \n
-        - \"Taking bugreport...\" notification with an indefinite progress bar is dismissed.\n
+        <!-- Disabled in U due to b/317738856 -->
+        <!-- \"Taking bugreport...\" notification with an indefinite progress bar is no longer present.\n -->
         - Notification titled \"Share bug report?\", that contains a message \"Your IT admin requested a bug report to help troubleshoot this device. Apps and data may be shared.\" and two buttons - \"DECLINE\" and \"SHARE\" is shown.\n
         \n
         Tap the \"SHARE\" button and verify that:\n
