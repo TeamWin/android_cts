@@ -1736,6 +1736,7 @@ public class WindowManagerState {
         private boolean mShouldOverrideMinAspectRatio;
         private boolean mShouldIgnoreOrientationRequestLoop;
         private boolean mShouldOverrideForceResizeApp;
+        private boolean mShouldEnableUserAspectRatioSettings;
 
         Activity(ActivityRecordProto proto, WindowContainer parent) {
             super(proto.windowToken.windowContainer);
@@ -1763,6 +1764,7 @@ public class WindowManagerState {
             mShouldOverrideMinAspectRatio = proto.shouldOverrideMinAspectRatio;
             mShouldIgnoreOrientationRequestLoop = proto.shouldIgnoreOrientationRequestLoop;
             mShouldOverrideForceResizeApp = proto.shouldOverrideForceResizeApp;
+            mShouldEnableUserAspectRatioSettings = proto.shouldEnableUserAspectRatioSettings;
         }
 
         @NonNull
@@ -1848,6 +1850,11 @@ public class WindowManagerState {
         public boolean getShouldOverrideForceResizeApp() {
             return mShouldOverrideForceResizeApp;
         }
+
+        public boolean getShouldEnableUserAspectRatioSettings() {
+            return mShouldEnableUserAspectRatioSettings;
+        }
+
 
         @Override
         public Rect getBounds() {
