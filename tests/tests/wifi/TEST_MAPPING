@@ -1,21 +1,13 @@
 {
   "presubmit-large": [
     {
-      "name": "CtsWifiTestCases",
-      "options": [
-        {
-          "exclude-annotation": "android.net.wifi.cts.VirtualDeviceNotSupported"
-        }
-      ]
+      "name": "CtsWifiTestCases"
     }
   ],
   "mainline-presubmit": [
     {
       "name": "CtsWifiTestCases[com.google.android.wifi.apex]",
       "options": [
-        {
-          "exclude-annotation": "android.net.wifi.cts.VirtualDeviceNotSupported"
-        },
         {
           "exclude-annotation": "com.android.compatibility.common.util.NonMainlineTest"
         }
