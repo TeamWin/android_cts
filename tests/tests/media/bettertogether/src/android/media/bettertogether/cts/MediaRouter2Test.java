@@ -1236,13 +1236,14 @@ public class MediaRouter2Test {
 
         try {
             mRouter2.registerTransferCallback(mExecutor, transferCallback);
-            mRouter2.registerControllerCallback(mExecutor, controllerCallback);
             mRouter2.transferTo(routeTransferFrom);
             assertThat(onTransferLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
             assertThat(controllers).hasSize(1);
             RoutingController controller = controllers.get(0);
 
+            // Registering the callback here to avoid unrelated calls related to the transfer above.
+            mRouter2.registerControllerCallback(mExecutor, controllerCallback);
             mRouter2.stop();
 
             // Select ROUTE_ID5_TO_TRANSFER_TO
