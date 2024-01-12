@@ -86,6 +86,7 @@ public class WebViewZoomTest extends SharedWebViewTest{
         }
         if (mWebServer != null) {
             mWebServer.shutdown();
+            mWebServer = null;
         }
 
         mActivity = null;
