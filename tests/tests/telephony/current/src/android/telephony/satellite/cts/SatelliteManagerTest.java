@@ -102,7 +102,7 @@ public class SatelliteManagerTest extends SatelliteManagerTestBase {
             if (provisioned && !sOriginalIsSatelliteEnabled) {
                 logd("Enable satellite");
 
-                SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
+                SatelliteModemStateCallbackTest callback = new SatelliteModemStateCallbackTest();
                 long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
                         getContext().getMainExecutor(), callback);
                 assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);
@@ -129,7 +129,7 @@ public class SatelliteManagerTest extends SatelliteManagerTestBase {
         if (sIsSatelliteSupported) {
             logd("Restore enabled state");
             if (isSatelliteEnabled() != sOriginalIsSatelliteEnabled) {
-                SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
+                SatelliteModemStateCallbackTest callback = new SatelliteModemStateCallbackTest();
                 long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
                         getContext().getMainExecutor(), callback);
                 assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);
@@ -449,7 +449,7 @@ public class SatelliteManagerTest extends SatelliteManagerTestBase {
     public void testSatelliteModemStateChanged() {
         if (!shouldTestSatellite()) return;
 
-        SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
+        SatelliteModemStateCallbackTest callback = new SatelliteModemStateCallbackTest();
 
         // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
         assertThrows(SecurityException.class, ()-> sSatelliteManager
@@ -501,7 +501,7 @@ public class SatelliteManagerTest extends SatelliteManagerTestBase {
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
         assertTrue(isSatelliteEnabled());
 
-        SatelliteStateCallbackTest callback1 = new SatelliteStateCallbackTest();
+        SatelliteModemStateCallbackTest callback1 = new SatelliteModemStateCallbackTest();
         long registerResult = sSatelliteManager
                 .registerForSatelliteModemStateChanged(getContext().getMainExecutor(), callback1);
         assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);

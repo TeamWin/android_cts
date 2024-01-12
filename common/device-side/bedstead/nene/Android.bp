@@ -18,9 +18,6 @@ android_library {
     ],
     manifest: "src/main/AndroidManifestInternal.xml",
     min_sdk_version: "29",
-    lint: {
-        baseline_filename: "lint-baseline.xml",
-    },
 }
 
 // TODO(b/203507664): Remove NeneInternal once we no longer need QUERY_ALL_PACKAGES to install
@@ -94,9 +91,6 @@ android_test {
     data: [":NeneTestApp1"],
     manifest: "src/test/AndroidManifest.xml",
     min_sdk_version: "29",
-    lint: {
-        baseline_filename: "lint-baseline.xml",
-    },
 }
 
 android_test {
@@ -124,9 +118,6 @@ android_test {
     manifest: "src/test/AndroidManifest.xml",
     min_sdk_version: "29",
     test_config: "InteractiveAndroidTest.xml",
-    lint: {
-        baseline_filename: "lint-baseline.xml",
-    },
 }
 
 android_test {
@@ -154,9 +145,6 @@ android_test {
     manifest: "src/benchmarks/AndroidManifest.xml",
     test_config: "src/benchmarks/AndroidTest.xml",
     min_sdk_version: "29",
-    lint: {
-        baseline_filename: "lint-baseline.xml",
-    },
 }
 
 android_test_helper_app {
@@ -166,7 +154,4 @@ android_test_helper_app {
     ],
     manifest: "testapps/TestApp1.xml",
     min_sdk_version: "29",
-    lint: {
-        baseline_filename: "lint-baseline.xml",
-    },
 }

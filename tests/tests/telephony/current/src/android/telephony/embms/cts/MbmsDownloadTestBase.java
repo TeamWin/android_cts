@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.annotation.Nullable;
 import android.content.ComponentName;
@@ -34,6 +35,8 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.MbmsDownloadSession;
 import android.telephony.cts.embmstestapp.CtsDownloadService;
 import android.telephony.cts.embmstestapp.ICtsDownloadMiddlewareControl;
@@ -43,6 +46,11 @@ import android.telephony.mbms.MbmsDownloadSessionCallback;
 import android.util.Log;
 
 import com.android.internal.os.SomeArgs;
+import com.android.internal.telephony.flags.Flags;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 
 import java.io.File;
 import java.util.List;
@@ -53,10 +61,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.junit.After;
-import org.junit.Before;
-
 public class MbmsDownloadTestBase {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
+
     protected static final int ASYNC_TIMEOUT = 10000;
 
     protected static class TestCallback extends MbmsDownloadSessionCallback {
@@ -131,6 +140,10 @@ public class MbmsDownloadTestBase {
 
     @Before
     public void setUp() throws Exception {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            assumeTrue(MbmsUtil.hasMbmsFeature());
+        }
+
         mContext = getContext();
         mHandlerThread = new HandlerThread("EmbmsCtsTestWorker");
         mHandlerThread.start();
@@ -150,6 +163,12 @@ public class MbmsDownloadTestBase {
 
     @After
     public void tearDown() throws Exception {
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            if (!MbmsUtil.hasMbmsFeature()) {
+                return;
+            }
+        }
+
         mHandlerThread.quit();
         mDownloadSession.close();
         mMiddlewareControl.reset();

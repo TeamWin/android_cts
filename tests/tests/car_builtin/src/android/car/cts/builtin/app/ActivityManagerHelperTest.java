@@ -23,6 +23,8 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeFalse;
+
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
@@ -158,7 +160,11 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testSetFocusedTask() throws Exception {
+    public void testSetFocusedRootTask() throws Exception {
+        // Don't run this test on automotive targets with splitscreen multitasking enabled due to
+        // it having root tasks which are not the leaf nodes in the view hierarchy. Instead use
+        // setFocusedTask for those targets.
+        assumeFalse(hasAutomotiveSplitscreenMultitaskingFeature());
         // setup
         ActivityA task1BottomActivity = launchTestActivity(ActivityA.class);
         ActivityB task1TopActivity = launchTestActivity(ActivityB.class);
@@ -183,7 +189,7 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
             mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
                     PERMISSION_MANAGE_ACTIVITY_TASKS);
 
-            ActivityManagerHelper.setFocusedTask(task1BottomActivity.getTaskId());
+            ActivityManagerHelper.setFocusedRootTask(task1BottomActivity.getTaskId());
         } finally {
             mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
         }

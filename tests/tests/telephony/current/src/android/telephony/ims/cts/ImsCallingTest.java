@@ -25,9 +25,12 @@ import static org.junit.Assert.fail;
 
 import android.annotation.NonNull;
 import android.content.Context;
+import android.database.ContentObserver;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.PersistableBundle;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
@@ -47,6 +50,8 @@ import android.telephony.cts.InCallServiceStateValidator;
 import android.telephony.emergency.EmergencyNumber;
 import android.telephony.ims.ImsCallProfile;
 import android.telephony.ims.ImsCallSessionListener;
+import android.telephony.ims.ImsManager;
+import android.telephony.ims.ImsMmTelManager;
 import android.telephony.ims.ImsStreamMediaProfile;
 import android.telephony.ims.MediaQualityStatus;
 import android.telephony.ims.feature.MmTelFeature;
@@ -97,6 +102,7 @@ public class ImsCallingTest extends ImsCallingBase {
     private static final long WAIT_FOR_STATE_CHANGE_TIMEOUT_MS = 10000;
 
     private static TelephonyManager sTelephonyManager;
+    private static Handler sHandler;
 
     static {
         initializeLatches();
@@ -120,6 +126,11 @@ public class ImsCallingTest extends ImsCallingBase {
         if (!isSimReady()) {
             return;
         }
+
+        if (Looper.getMainLooper() == null) {
+            Looper.prepareMainLooper();
+        }
+        sHandler = new Handler(Looper.getMainLooper());
 
         beforeAllTestsBase();
     }
@@ -1416,7 +1427,25 @@ public class ImsCallingTest extends ImsCallingBase {
         bundle.putBoolean(CarrierConfigManager.KEY_DROP_VIDEO_CALL_WHEN_ANSWERING_AUDIO_CALL_BOOL,
                 true);
         bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_WFC_IMS_AVAILABLE_BOOL, true);
+        bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_DEFAULT_WFC_IMS_ENABLED_BOOL, false);
         overrideCarrierConfig(bundle);
+
+        // Precondition : WFC disabled
+        Uri callingUri = Uri.withAppendedPath(
+                SubscriptionManager.WFC_ENABLED_CONTENT_URI, "" + sTestSub);
+        CountDownLatch contentObservedLatch = new CountDownLatch(1);
+        ContentObserver observer = createObserver(callingUri, contentObservedLatch);
+
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(sTestSub);
+
+        boolean isEnabled = ShellIdentityUtils.invokeMethodWithShellPermissions(mMmTelManager,
+                ImsMmTelManager::isVoWiFiSettingEnabled);
+        if (isEnabled) {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
+                    (m) -> m.setVoWiFiSettingEnabled(false));
+        }
+        waitForLatch(contentObservedLatch, observer);
 
         MmTelFeature.MmTelCapabilities capabilities =
                 new MmTelFeature.MmTelCapabilities(
@@ -1490,7 +1519,38 @@ public class ImsCallingTest extends ImsCallingBase {
         isCallDisconnected(mtCall, mtCallSession);
         assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
 
+        // Return the WFC activation status to before testing.
+        if (isEnabled) {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
+                    (m) -> m.setVoWiFiSettingEnabled(true));
+        }
+        waitForLatch(contentObservedLatch, observer);
+
         waitForUnboundService();
+    }
+
+    private ContentObserver createObserver(Uri observerUri, CountDownLatch latch) {
+        ContentObserver observer = new ContentObserver(sHandler) {
+            @Override
+            public void onChange(boolean selfChange, Uri uri) {
+                if (observerUri.equals(uri)) {
+                    latch.countDown();
+                }
+            }
+        };
+        getContext().getContentResolver().registerContentObserver(observerUri, true, observer);
+        return observer;
+    }
+
+    private void waitForLatch(CountDownLatch latch, ContentObserver observer) {
+        try {
+            // Wait for the ContentObserver to fire signalling the change.
+            latch.await(ImsUtils.TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail("Interrupted Exception waiting for latch countdown:" + e.getMessage());
+        } finally {
+            getContext().getContentResolver().unregisterContentObserver(observer);
+        }
     }
 
     private class TestTelephonyCallback extends TelephonyCallback

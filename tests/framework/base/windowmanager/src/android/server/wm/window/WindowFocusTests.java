@@ -466,7 +466,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
      */
     @FlakyTest(bugId = 292181914)
     @Test
-    public void testTapNonFocusableWindow() {
+    public void testTapNonFocusableWindow() throws Throwable {
         assumeTrue(supportsMultiDisplay());
         assumeFalse(perDisplayFocusEnabled());
 
@@ -482,7 +482,8 @@ public class WindowFocusTests extends WindowManagerTestBase {
             p.flags = LayoutParams.FLAG_NOT_FOCUSABLE;
             primaryActivity.getWindowManager().addView(view, p);
         });
-        getInstrumentation().waitForIdleSync();
+        assertTrue("Failed to reach stable window geometry",
+                waitForStableWindowGeometry(5, TimeUnit.SECONDS));
 
         tapOn(primaryActivity);
         // Ensure secondary activity still has focus

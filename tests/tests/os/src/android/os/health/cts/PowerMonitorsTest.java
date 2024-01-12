@@ -21,6 +21,7 @@ import static androidx.test.InstrumentationRegistry.getContext;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.os.ConditionVariable;
+import android.os.OutcomeReceiver;
 import android.os.PowerMonitor;
 import android.os.PowerMonitorReadings;
 import android.os.health.SystemHealthManager;
@@ -85,23 +86,26 @@ public class PowerMonitorsTest {
         }
 
         done.close();
-        shm.getPowerMonitorReadings(selectedMonitors, null,
-                readings -> {
-                    mReadings = readings;
-                    done.open();
-                },
-                exception -> {
-                    mException = exception;
-                    done.open();
-                }
-        );
+        shm.getPowerMonitorReadings(selectedMonitors, null, new OutcomeReceiver<>() {
+            @Override
+            public void onResult(PowerMonitorReadings readings) {
+                mReadings = readings;
+                done.open();
+            }
+
+            @Override
+            public void onError(RuntimeException error) {
+                mException = error;
+                done.open();
+            }
+        });
         done.block();
 
         assertThat(mException).isNull();
 
         for (PowerMonitor monitor : selectedMonitors) {
             assertThat(mReadings.getConsumedEnergy(monitor)).isAtLeast(0);
-            assertThat(mReadings.getTimestamp(monitor)).isGreaterThan(0);
+            assertThat(mReadings.getTimestampMillis(monitor)).isGreaterThan(0);
         }
     }
 }

@@ -62,6 +62,7 @@ import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.text.TextUtils;
 
+import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -643,6 +644,57 @@ public class SystemMediaRouter2Test {
     }
 
     @Test
+    public void adjustSelectedRouteVolume_invokesOnControllerUpdated() throws Exception {
+        if (mAudioManager.isVolumeFixed() || mAudioManager.isFullVolumeDevice()) {
+            return;
+        }
+
+        waitAndGetRoutes(FEATURE_LIVE_AUDIO);
+
+        final int maxVolume = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        final int minVolume = mAudioManager.getStreamMinVolume(AudioManager.STREAM_MUSIC);
+        final int originalVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+
+        MediaRoute2Info selectedSystemRoute =
+                mSystemRouter2ForCts.getSystemController().getSelectedRoutes().get(0);
+
+        assertThat(selectedSystemRoute.getVolumeMax()).isEqualTo(maxVolume);
+        assertThat(selectedSystemRoute.getVolume()).isEqualTo(originalVolume);
+        assertThat(selectedSystemRoute.getVolumeHandling()).isEqualTo(PLAYBACK_VOLUME_VARIABLE);
+
+        final int targetVolume =
+                originalVolume == minVolume ? originalVolume + 1 : originalVolume - 1;
+        final CountDownLatch latch = new CountDownLatch(1);
+        ControllerCallback controllerCallback =
+                new ControllerCallback() {
+                    @Override
+                    public void onControllerUpdated(@NonNull RoutingController controller) {
+                        if (!TextUtils.equals(
+                                controller.getId(),
+                                mSystemRouter2ForCts.getSystemController().getId())) {
+                            return;
+                        }
+                        MediaRoute2Info controllerSelectedRoute =
+                                controller.getSelectedRoutes().get(0);
+
+                        if (controllerSelectedRoute.getVolume() == targetVolume) {
+                            latch.countDown();
+                        }
+                    }
+                };
+
+        mSystemRouter2ForCts.registerControllerCallback(mExecutor, controllerCallback);
+
+        try {
+            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0);
+            assertThat(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+        } finally {
+            mSystemRouter2ForCts.unregisterControllerCallback(controllerCallback);
+            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0);
+        }
+    }
+
+    @Test
     public void testRouteCallbackOnPreferredFeaturesChanged() throws Exception {
         String testFeature = "testFeature";
         List<String> testFeatures = new ArrayList<>();
@@ -1039,16 +1091,22 @@ public class SystemMediaRouter2Test {
             }
         };
 
-        ControllerCallback controllerCallback = new ControllerCallback() {
-            @Override
-            public void onControllerUpdated(RoutingController controller) {
-                if (onTransferLatch.getCount() != 0
-                        || !TextUtils.equals(controllers.get(0).getId(), controller.getId())) {
-                    return;
-                }
-                onControllerUpdatedLatch.countDown();
-            }
-        };
+        ControllerCallback controllerCallback =
+                new ControllerCallback() {
+                    @Override
+                    public void onControllerUpdated(RoutingController controller) {
+                        if (onTransferLatch.getCount() != 0
+                                || !TextUtils.equals(
+                                        controllers.get(0).getId(), controller.getId())) {
+                            return;
+                        }
+                        if (!TextUtils.equals(
+                                controller.getSelectedRoutes().get(0).getOriginalId(),
+                                route.getOriginalId())) {
+                            onControllerUpdatedLatch.countDown();
+                        }
+                    }
+                };
 
         try {
             mSystemRouter2ForCts.registerTransferCallback(mExecutor, transferCallback);
@@ -1198,21 +1256,26 @@ public class SystemMediaRouter2Test {
             }
         };
 
-        ControllerCallback controllerCallback = new ControllerCallback() {
-            @Override
-            public void onControllerUpdated(RoutingController controller) {
-                if (onTransferLatch.getCount() != 0
-                        || !TextUtils.equals(controllers.get(0).getId(), controller.getId())) {
-                    return;
-                }
-                assertThat(controller.getSelectedRoutes()).hasSize(1);
-                assertThat(createRouteMap(controller.getSelectedRoutes())
-                        .containsKey(ROUTE_ID1)).isFalse();
-                assertThat(createRouteMap(controller.getSelectedRoutes())
-                        .containsKey(ROUTE_ID5_TO_TRANSFER_TO)).isTrue();
-                onControllerUpdatedLatch.countDown();
-            }
-        };
+        ControllerCallback controllerCallback =
+                new ControllerCallback() {
+                    @Override
+                    public void onControllerUpdated(RoutingController controller) {
+                        if (onTransferLatch.getCount() != 0
+                                || !TextUtils.equals(
+                                        controllers.get(0).getId(), controller.getId())) {
+                            return;
+                        }
+                        if (createRouteMap(controller.getSelectedRoutes())
+                                .containsKey(ROUTE_ID5_TO_TRANSFER_TO)) {
+                            assertThat(controller.getSelectedRoutes()).hasSize(1);
+                            assertThat(
+                                            createRouteMap(controller.getSelectedRoutes())
+                                                    .containsKey(ROUTE_ID1))
+                                    .isFalse();
+                            onControllerUpdatedLatch.countDown();
+                        }
+                    }
+                };
 
         try {
             mSystemRouter2ForCts.registerTransferCallback(mExecutor, transferCallback);

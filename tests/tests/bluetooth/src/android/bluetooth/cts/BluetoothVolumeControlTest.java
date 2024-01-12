@@ -26,7 +26,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.bluetooth.BluetoothAdapter;
@@ -50,6 +49,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
 import org.junit.runner.RunWith;
 
 import java.util.List;
@@ -212,17 +212,8 @@ public class BluetoothVolumeControlTest {
                 mBluetoothVolumeControl.unregisterCallback(null));
 
         // Test success register unregister
-        try {
-            mBluetoothVolumeControl.registerCallback(mTestExecutor, mTestCallback);
-        } catch (Exception e) {
-            fail("Exception caught from register(): " + e.toString());
-        }
-
-        try {
-            mBluetoothVolumeControl.unregisterCallback(mTestCallback);
-        } catch (Exception e) {
-            fail("Exception caught from unregister(): " + e.toString());
-        }
+        mBluetoothVolumeControl.registerCallback(mTestExecutor, mTestCallback);
+        mBluetoothVolumeControl.unregisterCallback(mTestCallback);
 
         TestUtils.dropPermissionAsShellUid();
         // Verify throws SecurityException without permission.BLUETOOTH_PRIVILEGED
@@ -240,11 +231,9 @@ public class BluetoothVolumeControlTest {
 
         mTestDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
 
-        try {
-            mBluetoothVolumeControl.setVolumeOffset(mTestDevice, 0);
-        } catch (Exception e) {
-            fail("Exception caught from connect(): " + e.toString());
-        }
+        mBluetoothVolumeControl.setVolumeOffset(mTestDevice, 0);
+
+        enforceConnectAndPrivileged(() -> mBluetoothVolumeControl.setVolumeOffset(mTestDevice, 0));
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_LEAUDIO_BROADCAST_VOLUME_CONTROL_FOR_CONNECTED_DEVICES)
@@ -256,23 +245,17 @@ public class BluetoothVolumeControlTest {
 
         mTestDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
 
-        try {
-            mBluetoothVolumeControl.setDeviceVolume(mTestDevice, mTestVolume, true);
-        } catch (Exception e) {
-            fail("Exception caught from connect(): " + e.toString());
-        }
-
-        try {
-            mBluetoothVolumeControl.setDeviceVolume(mTestDevice, mTestVolume, false);
-        } catch (Exception e) {
-            fail("Exception caught from connect(): " + e.toString());
-        }
+        mBluetoothVolumeControl.setDeviceVolume(mTestDevice, mTestVolume, true);
+        mBluetoothVolumeControl.setDeviceVolume(mTestDevice, mTestVolume, false);
 
         // volume expect in range [0, 255]
         assertThrows(IllegalArgumentException.class, () ->
                         mBluetoothVolumeControl.setDeviceVolume(mTestDevice, -1, true));
         assertThrows(IllegalArgumentException.class, () ->
                         mBluetoothVolumeControl.setDeviceVolume(mTestDevice, 256, true));
+
+        enforceConnectAndPrivileged(() -> mBluetoothVolumeControl
+                .setDeviceVolume(mTestDevice, mTestVolume, true));
     }
 
     @Test
@@ -282,6 +265,10 @@ public class BluetoothVolumeControlTest {
         assertNotNull(mBluetoothVolumeControl);
 
         mTestDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+
+        enforceConnectAndPrivileged(() -> mBluetoothVolumeControl
+                .isVolumeOffsetAvailable(mTestDevice));
+
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         // Verify returns false if bluetooth is not enabled
@@ -349,6 +336,8 @@ public class BluetoothVolumeControlTest {
         assertEquals(BluetoothProfile.CONNECTION_POLICY_FORBIDDEN,
                 mBluetoothVolumeControl.getConnectionPolicy(null));
 
+        enforceConnectAndPrivileged(() -> mBluetoothVolumeControl.getConnectionPolicy(testDevice));
+
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         // Verify returns false if bluetooth is not enabled
@@ -370,6 +359,8 @@ public class BluetoothVolumeControlTest {
         assertFalse(mBluetoothVolumeControl.setConnectionPolicy(
                 null, BluetoothProfile.CONNECTION_POLICY_ALLOWED));
 
+        enforceConnectAndPrivileged(() -> mBluetoothVolumeControl
+                .setConnectionPolicy(testDevice, BluetoothProfile.CONNECTION_POLICY_ALLOWED));
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         // Verify returns false if bluetooth is not enabled
@@ -415,6 +406,16 @@ public class BluetoothVolumeControlTest {
             mProfileConnectionlock.unlock();
         }
         return !mIsProfileReady;
+    }
+
+    private void enforceConnectAndPrivileged(ThrowingRunnable runnable) {
+        // Verify throws SecurityException without permission.BLUETOOTH_PRIVILEGED
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
+        assertThrows(SecurityException.class, runnable);
+
+        // Verify throws SecurityException without permission.BLUETOOTH_CONNECT
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_PRIVILEGED);
+        assertThrows(SecurityException.class, runnable);
     }
 
     private final class BluetoothVolumeControlServiceListener implements

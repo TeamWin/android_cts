@@ -26,4 +26,7 @@ android_library {
     srcs: ["src/**/*.java"],
     platform_apis: true,
     min_sdk_version: "29",
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
 }
