@@ -841,4 +841,15 @@ public class SatelliteManagerTest extends SatelliteManagerTestBase {
         assertThrows(SecurityException.class,
                 () -> sSatelliteManager.unregisterForSatelliteCapabilitiesChanged(callback));
     }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CARRIER_ENABLED_SATELLITE_FLAG)
+    public void testGetAggregateSatellitePlmnListForCarrier() {
+        if (!shouldTestSatellite()) return;
+
+        // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
+        assertThrows(SecurityException.class,
+                () -> sSatelliteManager.getAllSatellitePlmnsForCarrier(
+                        getActiveSubIDForCarrierSatelliteTest()));
+    }
 }

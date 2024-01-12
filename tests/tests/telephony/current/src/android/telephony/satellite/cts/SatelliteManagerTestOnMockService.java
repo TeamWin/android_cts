@@ -33,6 +33,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
+import android.annotation.FlaggedApi;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.app.AppOpsManager;
@@ -3271,6 +3272,56 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         setUpSatelliteAccessAllowed();
         revokeSatellitePermission();
         unregisterTestLocationProvider();
+    }
+
+    @Test
+    @FlaggedApi(Flags.FLAG_CARRIER_ENABLED_SATELLITE_FLAG)
+    public void testGetAllSatellitePlmnsForCarrier() {
+        if (!shouldTestSatelliteWithMockService() || !Flags.carrierEnabledSatelliteFlag()) return;
+
+        logd("testGetAggregateSatellitePlmnListForCarrier");
+        grantSatellitePermission();
+        beforeSatelliteForCarrierTest();
+        @SatelliteManager.SatelliteResult int expectedSuccess =
+                SatelliteManager.SATELLITE_RESULT_SUCCESS;
+
+        /* Test when satellite is supported in the carrier config */
+        setSatelliteError(expectedSuccess);
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(
+                CarrierConfigManager.KEY_SATELLITE_ATTACH_SUPPORTED_BOOL, true);
+        PersistableBundle plmnBundle = new PersistableBundle();
+        int[] intArray1 = {3, 5};
+        int[] intArray2 = {3};
+        plmnBundle.putIntArray("123411", intArray1);
+        plmnBundle.putIntArray("123412", intArray2);
+        bundle.putPersistableBundle(
+                CarrierConfigManager.KEY_CARRIER_SUPPORTED_SATELLITE_SERVICES_PER_PROVIDER_BUNDLE,
+                plmnBundle);
+        overrideCarrierConfig(sTestSubIDForCarrierSatellite, bundle);
+
+        ArrayList<String> expectedCarrierPlmnList = new ArrayList<>();
+        expectedCarrierPlmnList.add("123411");
+        expectedCarrierPlmnList.add("123412");
+        assertTrue(sMockSatelliteServiceManager.waitForEventOnSetSatellitePlmn(1));
+        List<String> carrierPlmnList = sMockSatelliteServiceManager.getCarrierPlmnList();
+        assertNotNull(carrierPlmnList);
+        assertEquals(expectedCarrierPlmnList, carrierPlmnList);
+
+        /* Aggregated satellite plmn should be same with allSatellitePlmnList */
+        List<String> aggregatedPlmnList = sSatelliteManager.getAllSatellitePlmnsForCarrier(
+                sTestSubIDForCarrierSatellite);
+        List<String> satellitePlmnListFromOverlayConfig =
+                sMockSatelliteServiceManager.getPlmnListFromOverlayConfig();
+        List<String> expectedAllSatellitePlmnList = SatelliteServiceUtils.mergeStrLists(
+                carrierPlmnList, satellitePlmnListFromOverlayConfig);
+        List<String> allSatellitePlmnList = sMockSatelliteServiceManager.getAllSatellitePlmnList();
+        assertNotNull(allSatellitePlmnList);
+        assertEquals(expectedAllSatellitePlmnList, allSatellitePlmnList);
+        assertEquals(expectedAllSatellitePlmnList, aggregatedPlmnList);
+
+        afterSatelliteForCarrierTest();
+        revokeSatellitePermission();
     }
 
     /**
