@@ -348,4 +348,20 @@ public class WifiInfoTest extends WifiJUnit4TestBase{
         wifiInfo.setVendorData(vendorData);
         assertTrue(vendorData.equals(wifiInfo.getVendorData()));
     }
+
+    /**
+     * Verify getPasspointUniqueId can be called.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
+    @Test
+    public void testGetPasspointUniqueId() {
+        WifiInfo.Builder builder = new WifiInfo.Builder()
+                .setSsid(TEST_SSID.getBytes(StandardCharsets.UTF_8))
+                .setBssid(TEST_BSSID)
+                .setRssi(TEST_RSSI)
+                .setNetworkId(TEST_NETWORK_ID);
+        WifiInfo wifiInfo = builder.build();
+        assertNull(wifiInfo.getPasspointUniqueId());
+    }
+
 }
