@@ -68,6 +68,8 @@ public final class DeviceConfigApiTests {
     private static final String VALUE4 = "value4";
     private static final String DEFAULT_VALUE = "default_value";
 
+    private static final String KEY_NON_EXISTING = "key_non_existing";
+
     private static final boolean DEFAULT_BOOLEAN_TRUE = true;
     private static final boolean DEFAULT_BOOLEAN_FALSE = false;
     private static final boolean BOOLEAN_TRUE = true;
@@ -1055,9 +1057,9 @@ public final class DeviceConfigApiTests {
 
     @Test
     public void testDeleteProperty_withNonExistingProperty() {
-        assertNull(DeviceConfig.getProperty(NAMESPACE1, KEY1));
+        assertNull(DeviceConfig.getProperty(NAMESPACE1, KEY_NON_EXISTING));
         // Test that deletion returns true when the key doesn't exist
-        deletePropertyAndAssertNoChange(NAMESPACE1, KEY1);
+        deletePropertyAndAssertNoChange(NAMESPACE1, KEY_NON_EXISTING);
     }
 
     @Test
@@ -1500,6 +1502,7 @@ public final class DeviceConfigApiTests {
         assertTrue(DeviceConfig.deleteProperty(namespace, name));
         assertNull("DeviceConfig.getProperty() must return null if property is deleted",
                 DeviceConfig.getProperty(namespace, name));
+        waitForListenerUpdateOrTimeout(receivedUpdates, 1);
         DeviceConfig.removeOnPropertiesChangedListener(changeListener);
 
         assertEquals("Received unexpected update to OnPropertiesChangedListener",
