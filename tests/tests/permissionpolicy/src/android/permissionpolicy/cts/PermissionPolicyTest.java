@@ -17,6 +17,9 @@
 package android.permissionpolicy.cts;
 
 import static android.content.pm.PermissionInfo.FLAG_INSTALLED;
+import static android.content.pm.PermissionInfo.PROTECTION_FLAG_MODULE;
+import static android.content.pm.PermissionInfo.PROTECTION_FLAG_PRIVILEGED;
+import static android.content.pm.PermissionInfo.PROTECTION_FLAG_ROLE;
 import static android.content.pm.PermissionInfo.PROTECTION_MASK_BASE;
 import static android.os.Build.VERSION.SECURITY_PATCH;
 
@@ -54,6 +57,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -65,16 +69,60 @@ import java.util.Set;
 @AppModeFull(reason = "Instant apps cannot read the system servers permission")
 @RunWith(AndroidJUnit4.class)
 public class PermissionPolicyTest {
-    private static final Date HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE = parseDate("2017-11-01");
-    private static final String HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PERMISSION
+    private static final String ACCESS_SMARTSPACE = "android.permission.ACCESS_SMARTSPACE";
+    private static final String ACCESSIBILITY_MOTION_EVENT_OBSERVING =
+            "android.permission.ACCESSIBILITY_MOTION_EVENT_OBSERVING";
+    private static final String ALWAYS_UPDATE_WALLPAPER =
+            "android.permission.ALWAYS_UPDATE_WALLPAPER";
+    private static final String CAMERA_HEADLESS_SYSTEM_USER =
+            "android.permission.CAMERA_HEADLESS_SYSTEM_USER";
+    private static final String CONTROL_REMOTE_APP_TRANSITION_ANIMATIONS =
+            "android.permission.CONTROL_REMOTE_APP_TRANSITION_ANIMATIONS";
+    private static final String GET_BINDING_UID_IMPORTANCE =
+            "android.permission.GET_BINDING_UID_IMPORTANCE";
+    private static final String HIDE_NON_SYSTEM_OVERLAY_WINDOWS
             = "android.permission.HIDE_NON_SYSTEM_OVERLAY_WINDOWS";
+    private static final String INTERNAL_SYSTEM_WINDOW =
+            "android.permission.INTERNAL_SYSTEM_WINDOW";
+    private static final String LAUNCH_PERMISSION_SETTINGS =
+            "android.permission.LAUNCH_PERMISSION_SETTINGS";
+    private static final String MANAGE_COMPANION_DEVICES =
+            "android.permission.MANAGE_COMPANION_DEVICES";
+    private static final String MANAGE_DISPLAYS = "android.permission.MANAGE_DISPLAYS";
+    private static final String MANAGE_REMOTE_AUTH = "android.permission.MANAGE_REMOTE_AUTH";
+    private static final String MEDIA_ROUTING_CONTROL = "android.permission.MEDIA_ROUTING_CONTROL";
+    private static final String MODIFY_DAY_NIGHT_MODE = "android.permission.MODIFY_DAY_NIGHT_MODE";
+    private static final String OBSERVE_APP_USAGE = "android.permission.OBSERVE_APP_USAGE";
+    private static final String OVERRIDE_SYSTEM_KEY_BEHAVIOR_IN_FOCUSED_WINDOW =
+            "android.permission.OVERRIDE_SYSTEM_KEY_BEHAVIOR_IN_FOCUSED_WINDOW";
+    private static final String PREPARE_FACTORY_RESET = "android.permission.PREPARE_FACTORY_RESET";
+    private static final String QUARANTINE_APPS = "android.permission.QUARANTINE_APPS";
+    private static final String READ_DROPBOX_DATA = "android.permission.READ_DROPBOX_DATA";
+    private static final String RECEIVE_SANDBOX_TRIGGER_AUDIO =
+            "android.permission.RECEIVE_SANDBOX_TRIGGER_AUDIO";
+    private static final String RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA =
+            "android.permission.RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA";
+    private static final String REGISTER_NSD_OFFLOAD_ENGINE =
+            "android.permission.REGISTER_NSD_OFFLOAD_ENGINE";
+    private static final String REPORT_USAGE_STATS = "android.permission.REPORT_USAGE_STATS";
+    private static final String RESET_HOTWORD_TRAINING_DATA_EGRESS_COUNT =
+            "android.permission.RESET_HOTWORD_TRAINING_DATA_EGRESS_COUNT";
+    private static final String SHOW_CUSTOMIZED_RESOLVER =
+            "android.permission.SHOW_CUSTOMIZED_RESOLVER";
+    private static final String START_ACTIVITIES_FROM_SDK_SANDBOX =
+            "android.permission.START_ACTIVITIES_FROM_SDK_SANDBOX";
+    private static final String STATUS_BAR_SERVICE = "android.permission.STATUS_BAR_SERVICE";
+    private static final String SUSPEND_APPS = "android.permission.SUSPEND_APPS";
+    private static final String SYNC_FLAGS = "android.permission.SYNC_FLAGS";
+    private static final String THREAD_NETWORK_PRIVILEGED =
+            "android.permission.THREAD_NETWORK_PRIVILEGED";
+    private static final String USE_COMPANION_TRANSPORTS =
+            "android.permission.USE_COMPANION_TRANSPORTS";
+    private static final String USE_REMOTE_AUTH = "android.permission.USE_REMOTE_AUTH";
+    private static final String WRITE_FLAGS = "android.permission.WRITE_FLAGS";
 
+    private static final Date HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE = parseDate("2017-11-01");
     private static final Date MANAGE_COMPANION_DEVICES_PATCH_DATE = parseDate("2020-07-01");
-    private static final String MANAGE_COMPANION_DEVICES_PERMISSION
-            = "android.permission.MANAGE_COMPANION_DEVICES";
-
-    private static final String SYNC_FLAGS_PERMISSION = "android.permission.SYNC_FLAGS";
-    private static final String WRITE_FLAGS_PERMISSION = "android.permission.WRITE_FLAGS";
 
     private static final String LOG_TAG = "PermissionProtectionTest";
 
@@ -93,6 +141,35 @@ public class PermissionPolicyTest {
 
     private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+    /** Permissions added in U QPR 2. */
+    private static final ArraySet<String> permissionsAddedInUqpr2 = new ArraySet<>(
+            new String[]{ACCESS_SMARTSPACE, ACCESSIBILITY_MOTION_EVENT_OBSERVING,
+                    ALWAYS_UPDATE_WALLPAPER, CAMERA_HEADLESS_SYSTEM_USER,
+                    GET_BINDING_UID_IMPORTANCE, LAUNCH_PERMISSION_SETTINGS, MANAGE_DISPLAYS,
+                    MANAGE_REMOTE_AUTH, MEDIA_ROUTING_CONTROL,
+                    OVERRIDE_SYSTEM_KEY_BEHAVIOR_IN_FOCUSED_WINDOW, PREPARE_FACTORY_RESET,
+                    READ_DROPBOX_DATA, RECEIVE_SANDBOX_TRIGGER_AUDIO,
+                    RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA, REGISTER_NSD_OFFLOAD_ENGINE,
+                    REPORT_USAGE_STATS, RESET_HOTWORD_TRAINING_DATA_EGRESS_COUNT,
+                    START_ACTIVITIES_FROM_SDK_SANDBOX, SHOW_CUSTOMIZED_RESOLVER, SYNC_FLAGS,
+                    THREAD_NETWORK_PRIVILEGED, USE_COMPANION_TRANSPORTS, USE_REMOTE_AUTH,
+                    QUARANTINE_APPS, WRITE_FLAGS});
+
+    /**
+     * Map of permissions to their protection flags in U and U QPR 1, for permissions that had their
+     * protection flags expanded in U QPR 2.
+     */
+    private static final Map<String, Integer> permissionsToLegacyProtection = new HashMap<>() {
+        {
+            put(CONTROL_REMOTE_APP_TRANSITION_ANIMATIONS, PROTECTION_FLAG_PRIVILEGED);
+            put(INTERNAL_SYSTEM_WINDOW, PROTECTION_FLAG_MODULE);
+            put(MODIFY_DAY_NIGHT_MODE, PROTECTION_FLAG_PRIVILEGED);
+            put(OBSERVE_APP_USAGE, PROTECTION_FLAG_PRIVILEGED);
+            put(STATUS_BAR_SERVICE, 0x0);
+            put(SUSPEND_APPS, PROTECTION_FLAG_ROLE);
+        }
+    };
 
     @Test
     public void shellIsOnlySystemAppThatRequestsRevokePostNotificationsWithoutKill() {
@@ -180,8 +257,15 @@ public class PermissionPolicyTest {
             // OEMs cannot remove permissions
             PermissionInfo declaredPermission = declaredPermissionsMap.get(expectedPermissionName);
             if (declaredPermission == null) {
-                offendingList.add("Permission " + expectedPermissionName + " must be declared");
-                continue;
+                // If expected permission is not found, it is possible that this build doesn't yet
+                // contain certain new permissions added in U QPR 2, in which case we skip the
+                // check.
+                if (permissionsAddedInUqpr2.contains(expectedPermissionName)) {
+                    continue;
+                } else {
+                    offendingList.add("Permission " + expectedPermissionName + " must be declared");
+                    continue;
+                }
             }
 
             // We want to end up with OEM defined permissions and groups to check their namespace
@@ -216,12 +300,21 @@ public class PermissionPolicyTest {
                     expectedPermission.protectionLevel & ~PROTECTION_MASK_BASE;
             final int declaredProtectionFlags = declaredPermission.getProtectionFlags();
             if (expectedProtectionFlags != declaredProtectionFlags) {
-                offendingList.add(
+                // If expected and declared protection flags do not match, it is possible that
+                // this build doesn't yet contain certain protection flags expanded in U QPR 2,
+                // in which case we check that the declared protection flags match those in U
+                // or U QPR 1.
+                if (permissionsToLegacyProtection.getOrDefault(expectedPermissionName, -1)
+                        == declaredProtectionFlags) {
+                    continue;
+                } else {
+                    offendingList.add(
                         String.format(
                                 "Permission %s invalid enforced protection %x, expected %x",
                                 expectedPermissionName,
                                 declaredProtectionFlags,
                                 expectedProtectionFlags));
+                }
             }
 
             // OEMs cannot change permission grouping
@@ -508,12 +601,9 @@ public class PermissionPolicyTest {
 
     private boolean shouldSkipPermission(String permissionName) {
         switch (permissionName) {
-            case SYNC_FLAGS_PERMISSION:
-            case WRITE_FLAGS_PERMISSION:
-                return true;  // Added in u-qpr.
-            case HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PERMISSION:
+            case HIDE_NON_SYSTEM_OVERLAY_WINDOWS:
                 return parseDate(SECURITY_PATCH).before(HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE);
-            case MANAGE_COMPANION_DEVICES_PERMISSION:
+            case MANAGE_COMPANION_DEVICES:
                 return parseDate(SECURITY_PATCH).before(MANAGE_COMPANION_DEVICES_PATCH_DATE);
             default:
                 return false;
