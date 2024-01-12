@@ -26,12 +26,90 @@ import its_base_test
 import camera_properties_utils
 import its_session_utils
 
+_RAD_TO_DEG = 180/math.pi
+_GYRO_DRIFT_THRESH = 0.01*_RAD_TO_DEG  # PASS/FAIL for gyro accumulated drift
+_GYRO_MEAN_THRESH = 0.01*_RAD_TO_DEG  # PASS/FAIL for gyro mean drift
+_GYRO_VAR_THRESH = 0.001*_RAD_TO_DEG**2  # PASS/FAIL for gyro variance drift
+_IMU_EVENTS_WAIT_TIME = 30  # seconds
 _NAME = os.path.basename(__file__).split('.')[0]
 _NSEC_TO_SEC = 1E-9
-_RAD_TO_DEG = 180/math.pi
-_MEAN_THRESH = 0.01*_RAD_TO_DEG  # PASS/FAIL thresh for gyro mean drift
-_SENSOR_EVENTS_WAIT_TIME = 30  # seconds
-_VAR_THRESH = 0.001*_RAD_TO_DEG**2  # PASS/FAIL thresh for gyro variance drift
+
+
+def define_3axis_plot(x, y, z, t, plot_name):
+  """Define common 3-axis plot figure, data, and title with RGB coloring.
+
+  Args:
+    x: list of x values
+    y: list of y values
+    z: list of z values
+    t: list of time values for x, y, z data
+    plot_name: str name of plot and figure
+  """
+  pylab.figure(plot_name)
+  pylab.plot(t, x, 'r', label='x')
+  pylab.plot(t, y, 'g', label='y')
+  pylab.plot(t, z, 'b', label='z')
+  pylab.xlabel('Time (seconds)')
+  pylab.title(plot_name)
+  pylab.legend()
+
+
+def plot_raw_gyro_data(x, y, z, t, log_path):
+  """Plot raw gyroscope output data.
+
+  Args:
+    x: list of x values
+    y: list of y values
+    z: list of z values
+    t: list of time values for x, y, z data
+    log_path: str of location for output path
+  """
+  # add y limits so plot doesn't look like amplified noise
+
+  plot_name = f'{_NAME}_gyro_raw'
+  define_3axis_plot(x, y, z, t, plot_name)
+  pylab.ylabel('Gyro raw output (degrees)')
+  pylab.ylim([min([np.amin(x), np.amin(y), np.amin(z), -_GYRO_MEAN_THRESH]),
+              max([np.amax(x), np.amax(y), np.amax(x), _GYRO_MEAN_THRESH])])
+  matplotlib.pyplot.savefig(f'{os.path.join(log_path, plot_name)}.png')
+
+
+def do_riemann_sums(x, y, z, t, log_path):
+  """Do integration estimation using Riemann sums and plot.
+
+  Args:
+    x: list of x values
+    y: list of y values
+    z: list of z values
+    t: list of time values for x, y, z data
+    log_path: str of location for output path
+  """
+  x_int, y_int, z_int = 0, 0, 0
+  x_sums, y_sums, z_sums = [0], [0], [0]
+  for i in range(len(t)):
+    if i > 0:
+      x_int += x[i] * (t[i] - t[i-1])
+      y_int += y[i] * (t[i] - t[i-1])
+      z_int += z[i] * (t[i] - t[i-1])
+      x_sums.append(x_int)
+      y_sums.append(y_int)
+      z_sums.append(z_int)
+
+  # find min/maxes
+  x_min, x_max = min(x_sums), max(x_sums)
+  y_min, y_max = min(y_sums), max(y_sums)
+  z_min, z_max = min(z_sums), max(z_sums)
+  logging.debug('Integrated drift min/max (degrees) in %d seconds, '
+                'x: %.3f/%.3f, y: %.3f/%.3f, z: %.3f/%.3f',
+                _IMU_EVENTS_WAIT_TIME, x_min, x_max, y_min, y_max, z_min, z_max)
+
+  # plot accumulated gyro drift
+  plot_name = f'{_NAME}_gyro_drift'
+  define_3axis_plot(x_sums, y_sums, z_sums, t, plot_name)
+  pylab.ylabel('Drift (degrees)')
+  pylab.ylim([min([x_min, y_min, z_min, -_GYRO_DRIFT_THRESH]),
+              max([x_max, y_max, z_max, _GYRO_DRIFT_THRESH])])
+  matplotlib.pyplot.savefig(f'{os.path.join(log_path, plot_name)}.png')
 
 
 def convert_events_to_arrays(events, t_factor, xyz_factor):
@@ -87,42 +165,28 @@ class ImuDriftTest(its_base_test.ItsBaseTest):
 
       # do preview recording
       cam.do_preview_recording(
-          video_size=preview_size, duration=_SENSOR_EVENTS_WAIT_TIME,
+          video_size=preview_size, duration=_IMU_EVENTS_WAIT_TIME,
           stabilize=True)
 
       # dump IMU events
       gyro_events = cam.get_sensor_events()['gyro']
 
-    name_with_log_path = os.path.join(self.log_path, _NAME)
-    xs, ys, zs, times = convert_events_to_arrays(
+    x_gyro, y_gyro, z_gyro, times = convert_events_to_arrays(
         gyro_events, _NSEC_TO_SEC, _RAD_TO_DEG)
 
-    # add y limits so plot doesn't look like amplified noise
-    y_min = min([np.amin(xs), np.amin(ys), np.amin(zs), -_MEAN_THRESH])
-    y_max = max([np.amax(xs), np.amax(ys), np.amax(xs), _MEAN_THRESH])
+    plot_raw_gyro_data(x_gyro, y_gyro, z_gyro, times, self.log_path)
+    do_riemann_sums(x_gyro, y_gyro, z_gyro, times, self.log_path)
 
-    pylab.figure()
-    pylab.plot(times, xs, 'r', label='x')
-    pylab.plot(times, ys, 'g', label='y')
-    pylab.plot(times, zs, 'b', label='z')
-    pylab.title(_NAME)
-    pylab.xlabel('Time (seconds)')
-    pylab.ylabel(f'Gyro readings (degrees)')
-    pylab.ylim([y_min, y_max])
-    pylab.ticklabel_format(axis='y', style='sci', scilimits=(-3, -3))
-    pylab.legend()
-    logging.debug('Saving plot')
-    matplotlib.pyplot.savefig(f'{name_with_log_path}_plot.png')
-
-    for samples in [xs, ys, zs]:
-      mean = samples.mean()
-      var = np.var(samples)
-      logging.debug('mean: %.3e', mean)
-      logging.debug('var: %.3e', var)
-      if mean >= _MEAN_THRESH:
-        raise AssertionError(f'mean: {mean}.3e, TOL={_MEAN_THRESH}')
-      if var >= _VAR_THRESH:
-        raise AssertionError(f'var: {var}.3e, TOL={_VAR_THRESH}')
+    for i, samples in enumerate([x_gyro, y_gyro, z_gyro]):
+      gyro_mean = samples.mean()
+      gyro_var = np.var(samples)
+      logging.debug('%s gyro_mean: %.3e', 'XYZ'[i], gyro_mean)
+      logging.debug('%s gyro_var: %.3e', 'XYZ'[i], gyro_var)
+      if gyro_mean >= _GYRO_MEAN_THRESH:
+        raise AssertionError(f'gyro_mean: {gyro_mean}.3e, '
+                             f'TOL={_GYRO_MEAN_THRESH}')
+      if gyro_var >= _GYRO_VAR_THRESH:
+        raise AssertionError(f'gyro_var: {gyro_var}.3e, TOL={_GYRO_VAR_THRESH}')
 
 
 if __name__ == '__main__':
