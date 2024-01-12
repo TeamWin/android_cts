@@ -21,7 +21,6 @@ import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.os.Bundle;
-import android.os.Parcel;
 import android.os.ResultReceiver;
 import android.util.Log;
 
@@ -51,7 +50,6 @@ public class ScheduleJobActivity extends Activity {
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, serviceComponentName)
                 .setTransientExtras(bundle)
                 .setMinimumLatency(1)
-                .setOverrideDeadline(1)
                 .build();
         JobScheduler jobScheduler = getSystemService(JobScheduler.class);
         jobScheduler.schedule(jobInfo);
