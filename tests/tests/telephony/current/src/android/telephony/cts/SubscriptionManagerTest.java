@@ -348,22 +348,22 @@ public class SubscriptionManagerTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_WORK_PROFILE_API_SPLIT)
+    @RequiresFlagsEnabled(Flags.FLAG_ENFORCE_SUBSCRIPTION_USER_FILTER)
     public void testForAllProfilesSubscriptionManager() {
         SubscriptionManager allProfileSm = InstrumentationRegistry.getContext()
                 .getSystemService(SubscriptionManager.class).createForAllUserProfiles();
 
-        List<SubscriptionInfo> specificProfilesubList = ShellIdentityUtils
+        List<SubscriptionInfo> specificProfileSubList = ShellIdentityUtils
                 .invokeMethodWithShellPermissions(mSm,
                         SubscriptionManager::getActiveSubscriptionInfoList);
         // Assert when there is no sim card present or detected
-        assertNotNull("Active subscriber required", specificProfilesubList);
+        assertNotNull("Active subscriber required", specificProfileSubList);
 
         List<SubscriptionInfo> allProfileSubList = ShellIdentityUtils
                 .invokeMethodWithShellPermissions(allProfileSm,
                         SubscriptionManager::getActiveSubscriptionInfoList);
 
-        assertTrue(allProfileSubList.size() >= specificProfilesubList.size());
+        assertTrue(allProfileSubList.size() >= specificProfileSubList.size());
     }
 
     @Test
