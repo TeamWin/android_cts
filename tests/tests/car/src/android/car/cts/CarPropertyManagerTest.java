@@ -1983,7 +1983,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testDriverDrowsinessAttentionSystemEnabledIfSupported() {
         getDriverDrowsinessAttentionSystemEnabledVerifier().verify();
     }
@@ -2011,13 +2011,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testDriverDrowsinessAttentionStateVerifierIfSupported() {
         getDriverDrowsinessAttentionStateVerifier().verify();
     }
 
     @Test
-    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testDriverDrowsinessAttentionStateAndErrorStateDontIntersect() {
         verifyEnumValuesAreDistinct(HANDS_ON_DETECTION_DRIVER_STATES, ERROR_STATES);
     }
@@ -2036,7 +2036,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testDriverDrowsinessAttentionWarningEnabledIfSupported() {
         getDriverDrowsinessAttentionWarningEnabledVerifier().verify();
     }
@@ -2064,13 +2064,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testDriverDrowsinessAttentionWarningIfSupported() {
         getDriverDrowsinessAttentionWarningVerifier().verify();
     }
 
     @Test
-    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testDriverDrowsinessAttentionWarningAndErrorStateDontIntersect() {
         verifyEnumValuesAreDistinct(DRIVER_DROWSINESS_ATTENTION_WARNINGS, ERROR_STATES);
     }
@@ -2089,7 +2089,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testDriverDistractionSystemEnabledIfSupported() {
         getDriverDistractionSystemEnabledVerifier().verify();
     }
@@ -2117,13 +2117,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testDriverDistractionStateVerifierIfSupported() {
         getDriverDistractionStateVerifier().verify();
     }
 
     @Test
-    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testDriverDistractionStateAndErrorStateDontIntersect() {
         verifyEnumValuesAreDistinct(DRIVER_DISTRACTION_STATES, ERROR_STATES);
     }
@@ -2142,7 +2142,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testDriverDistractionWarningEnabledIfSupported() {
         getDriverDistractionWarningEnabledVerifier().verify();
     }
@@ -2170,13 +2170,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testDriverDistractionWarningIfSupported() {
         getDriverDistractionWarningVerifier().verify();
     }
 
     @Test
-    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testDriverDistractionWarningAndErrorStateDontIntersect() {
         verifyEnumValuesAreDistinct(DRIVER_DISTRACTION_WARNINGS, ERROR_STATES);
     }
@@ -2679,7 +2679,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testUltrasonicsSensorPositionIfSupported() {
         getUltrasonicsSensorPositionVerifier().verify();
     }
@@ -2703,7 +2703,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testUltrasonicsSensorOrientationIfSupported() {
         getUltrasonicsSensorOrientationVerifier().verify();
     }
@@ -2735,7 +2735,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testUltrasonicsSensorFieldOfViewIfSupported() {
         getUltrasonicsSensorFieldOfViewVerifier().verify();
     }
@@ -2768,7 +2768,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testUltrasonicsSensorDetectionRangeIfSupported() {
         getUltrasonicsSensorDetectionRangeVerifier().verify();
     }
@@ -2826,7 +2826,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testUltrasonicsSensorSupportedRangesIfSupported() {
         getUltrasonicsSensorSupportedRangesVerifier().verify();
     }
@@ -2851,7 +2851,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @RequiresFlagsEnabled("android.car.feature.android_vic_vehicle_properties")
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testUltrasonicsSensorMeasuredDistanceIfSupported() {
         getUltrasonicsSensorMeasuredDistanceVerifier().verify();
     }
@@ -3156,6 +3156,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testVehicleDrivingAutomationCurrentLevelIfSupported() {
         getVehicleDrivingAutomationCurrentLevelVerifier().verify();
     }
@@ -3992,6 +3993,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testEvBatteryAverageTemperatureIfSupported() {
         getEvBatteryAverageTemperatureVerifier().verify();
     }
@@ -4351,6 +4353,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testImpactDetectedIfSupported() {
         getImpactDetectedVerifier().verify();
     }
@@ -5711,6 +5714,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testSeatAirbagsDeployedIfSupported() {
         getSeatAirbagsDeployedVerifier().verify();
     }
@@ -5727,6 +5731,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testSeatBeltPretensionerDeployedIfSupported() {
         getSeatBeltPretensionerDeployedVerifier().verify();
     }
@@ -5745,6 +5750,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testValetModeEnabledIfSupported() {
         getValetModeEnabledVerifier().verify();
     }
@@ -5763,6 +5769,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testHeadUpDisplayEnabledIfSupported() {
         getHeadUpDisplayEnabledVerifier().verify();
     }
@@ -6943,6 +6950,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testLowSpeedCollisionWarningEnabledIfSupported() {
         getLowSpeedCollisionWarningEnabledVerifier().verify();
     }
@@ -6974,11 +6982,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testLowSpeedCollisionWarningStateIfSupported() {
         getLowSpeedCollisionWarningStateVerifier().verify();
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testLowSpeedCollisionWarningStateWithErrorState() {
         verifyEnumValuesAreDistinct(LOW_SPEED_COLLISION_WARNING_STATES, ERROR_STATES);
     }
@@ -7005,11 +7015,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testElectronicStabilityControlStateIfSupported() {
         getElectronicStabilityControlStateVerifier().verify();
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testElectronicStabilityControlStateWithErrorState() {
         verifyEnumValuesAreDistinct(ELECTRONIC_STABILITY_CONTROL_STATES, ERROR_STATES);
     }
@@ -7028,6 +7040,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testElectronicStabilityControlEnabledIfSupported() {
         getElectronicStabilityControlEnabledVerifier().verify();
     }
@@ -7046,6 +7059,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testCrossTrafficMonitoringEnabledIfSupported() {
         getCrossTrafficMonitoringEnabledVerifier().verify();
     }
@@ -7072,6 +7086,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testCrossTrafficMonitoringWarningStateIfSupported() {
         getCrossTrafficMonitoringWarningStateVerifier().verify();
     }
@@ -7090,6 +7105,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testLowSpeedAutomaticEmergencyBrakingEnabledIfSupported() {
         getLowSpeedAutomaticEmergencyBrakingEnabledVerifier().verify();
     }
@@ -7117,11 +7133,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testLowSpeedAutomaticEmergencyBrakingStateIfSupported() {
         getLowSpeedAutomaticEmergencyBrakingStateVerifier().verify();
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testLowSpeedAutomaticEmergencyBrakingStateWithErrorState() {
         verifyEnumValuesAreDistinct(LOW_SPEED_AUTOMATIC_EMERGENCY_BRAKING_STATES, ERROR_STATES);
     }
@@ -8437,6 +8455,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testPermissionReadCarSeatBeltsGranted() {
         verifyExpectedPropertiesWhenPermissionsGranted(
                 PERMISSION_READ_CAR_SEAT_BELTS_PROPERTIES,
@@ -8444,6 +8463,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testPermissionReadImpactSensorsGranted() {
         verifyExpectedPropertiesWhenPermissionsGranted(
                 PERMISSION_READ_IMPACT_SENSORS_PROPERTIES,
@@ -8451,6 +8471,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testPermissionReadCarAirbagsGranted() {
         verifyExpectedPropertiesWhenPermissionsGranted(
                 PERMISSION_READ_CAR_AIRBAGS_PROPERTIES,
@@ -8535,6 +8556,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testPermissionControlCarDynamicsStateGranted() {
         verifyExpectedPropertiesWhenPermissionsGranted(
                 PERMISSION_CONTROL_CAR_DYNAMICS_STATE_PROPERTIES,
@@ -8626,6 +8648,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testPermissionCarDrivingStateGranted() {
         verifyExpectedPropertiesWhenPermissionsGranted(
                 PERMISSION_CAR_DRIVING_STATE_PROPERTIES,
@@ -8633,6 +8656,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testPermissionReadValetModeGranted() {
         verifyExpectedPropertiesWhenPermissionsGranted(
                 PERMISSION_READ_VALET_MODE_PROPERTIES,
@@ -8640,6 +8664,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testPermissionControlValetModeGranted() {
         verifyExpectedPropertiesWhenPermissionsGranted(
                 PERMISSION_CONTROL_VALET_MODE_PROPERTIES,
@@ -8647,6 +8672,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testPermissionReadHeadUpDisplayGranted() {
         verifyExpectedPropertiesWhenPermissionsGranted(
                 PERMISSION_READ_HEAD_UP_DISPLAY_PROPERTIES,
@@ -8654,6 +8680,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testPermissionControlHeadUpDisplayGranted() {
         verifyExpectedPropertiesWhenPermissionsGranted(
                 PERMISSION_CONTROL_HEAD_UP_DISPLAY_PROPERTIES,
