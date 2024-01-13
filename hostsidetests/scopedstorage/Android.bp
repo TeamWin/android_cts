@@ -62,54 +62,6 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
-    name: "CtsScopedStorageTestAppC",
-    manifest: "ScopedStorageTestHelper/TestAppC.xml",
-    static_libs: ["cts-scopedstorage-lib"],
-    sdk_version: "test_current",
-    target_sdk_version: "33",
-    min_sdk_version: "29",
-    srcs: ["ScopedStorageTestHelper/src/**/*.java"],
-    // Tag as a CTS artifact
-    test_suites: [
-        "general-tests",
-        "mts-mediaprovider",
-        "cts",
-    ],
-}
-
-android_test_helper_app {
-    name: "CtsScopedStorageTestAppC30",
-    manifest: "ScopedStorageTestHelper/TestAppC30.xml",
-    static_libs: ["cts-scopedstorage-lib"],
-    sdk_version: "test_current",
-    target_sdk_version: "30",
-    min_sdk_version: "29",
-    srcs: ["ScopedStorageTestHelper/src/**/*.java"],
-    // Tag as a CTS artifact
-    test_suites: [
-        "general-tests",
-        "mts-mediaprovider",
-        "cts",
-    ],
-}
-
-android_test_helper_app {
-    name: "CtsScopedStorageTestAppCLegacy",
-    manifest: "ScopedStorageTestHelper/TestAppCLegacy.xml",
-    static_libs: ["cts-scopedstorage-lib"],
-    sdk_version: "test_current",
-    target_sdk_version: "28",
-    min_sdk_version: "28",
-    srcs: ["ScopedStorageTestHelper/src/**/*.java"],
-    // Tag as a CTS artifact
-    test_suites: [
-        "general-tests",
-        "mts-mediaprovider",
-        "cts",
-    ],
-}
-
-android_test_helper_app {
     name: "CtsScopedStorageTestAppDLegacy",
     manifest: "ScopedStorageTestHelper/TestAppDLegacy.xml",
     static_libs: ["cts-scopedstorage-lib"],
@@ -226,8 +178,6 @@ android_test_helper_app {
         ":CtsScopedStorageTestAppA",
         ":CtsScopedStorageTestAppA31",
         ":CtsScopedStorageTestAppB",
-        ":CtsScopedStorageTestAppC",
-        ":CtsScopedStorageTestAppCLegacy",
     ],
 }
 
@@ -552,33 +502,18 @@ android_test {
         "android.test.runner",
     ],
     java_resources: [
-        ":CtsScopedStorageTestAppA",
         ":CtsScopedStorageTestAppB",
-        ":CtsScopedStorageTestAppC",
-        ":CtsScopedStorageTestAppC30",
-        ":CtsScopedStorageTestAppCLegacy",
         ":CtsScopedStorageTestAppDLegacy",
         ":CtsScopedStorageTestAppFileManager",
-        ":CtsScopedStorageTestAppFileManagerBypassDB",
-        ":CtsScopedStorageTestAppSystemGalleryBypassDB",
-        ":CtsScopedStorageTestAppSystemGallery30BypassDB",
         ":CtsTestAppWithQueryAllPackagesPermission",
         ":CtsTestAppWithQueriesTag",
-        ":CtsScopedStorageTestAppE30",
-        ":CtsScopedStorageTestAppE30FileManager",
     ],
     data: [
         ":CtsScopedStorageTestAppFileManager",
-        ":CtsScopedStorageTestAppA",
         ":CtsScopedStorageTestAppB",
         ":CtsScopedStorageTestAppDLegacy",
         ":CtsTestAppWithQueryAllPackagesPermission",
         ":CtsTestAppWithQueriesTag",
-        ":CtsScopedStorageTestAppE30",
-        ":CtsScopedStorageTestAppE30FileManager",
-        ":CtsScopedStorageTestAppSystemGalleryBypassDB",
-        ":CtsScopedStorageTestAppSystemGallery30BypassDB",
-        ":CtsScopedStorageTestAppFileManagerBypassDB",
     ],
     per_testcase_directory: true,
 }

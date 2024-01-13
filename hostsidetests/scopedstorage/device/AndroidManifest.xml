@@ -23,19 +23,11 @@
     <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
 
     <queries>
-        <package android:name="android.scopedstorage.cts.testapp.A.withres" />
-        <package android:name="android.scopedstorage.cts.testapp.A31.withres" />
         <package android:name="android.scopedstorage.cts.testapp.B.noperms" />
-        <package android:name="android.scopedstorage.cts.testapp.C" />
         <package android:name="android.scopedstorage.cts.testapp.D" />
         <package android:name="android.scopedstorage.cts.testapp.filemanager" />
-        <package android:name="android.scopedstorage.cts.testapp.filemanagerbypassdb" />
-        <package android:name="android.scopedstorage.cts.testapp.SystemGalleryBypassDB" />
         <package android:name="android.scopedstorage.cts.testapp.withqueriestag" />
         <package android:name="android.scopedstorage.cts.testapp.withqueryallpackagestag" />
-        <package android:name="android.scopedstorage.cts.testapp.SystemGallery30BypassDB" />
-        <package android:name="android.scopedstorage.cts.testapp.E30" />
-        <package android:name="android.scopedstorage.cts.testapp.E30.filemanager" />
     </queries>
 
     <application android:label="Scoped Storage Device Tests">
