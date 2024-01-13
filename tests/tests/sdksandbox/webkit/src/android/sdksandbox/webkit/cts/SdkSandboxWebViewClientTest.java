@@ -28,151 +28,146 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class SdkSandboxWebViewClientTest {
     // TODO(b/266051278): Uncomment this when we work out why preserving
-    // the SDK sandbox manager between tests cases {@link testOnRenderProcessGone}
-    // to fail.
-    //
-    // @ClassRule
-    // public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
-    //         new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
-
+    // the SDK sandbox manager between tests causes {@link testOnRenderProcessGone}
+    // to fail. Change sSdkTestSuiteSetup to a @ClassRule once this is fixed.
     @Rule
-    public final WebViewSandboxTestRule sdkTester =
+    public final WebViewSandboxTestRule sSdkTestSuiteSetup =
             new WebViewSandboxTestRule("android.webkit.cts.WebViewClientTest");
 
     @Test
-    public void testShouldOverrideUrlLoadingDefault() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testShouldOverrideUrlLoadingDefault");
+    public void testShouldOverrideUrlLoadingDefault() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testShouldOverrideUrlLoadingDefault");
     }
 
     @Test
-    public void testShouldOverrideUrlLoading() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testShouldOverrideUrlLoading");
+    public void testShouldOverrideUrlLoading() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testShouldOverrideUrlLoading");
     }
 
     @Test
-    public void testShouldOverrideUrlLoadingOnCreateWindow() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testShouldOverrideUrlLoadingOnCreateWindow");
+    public void testShouldOverrideUrlLoadingOnCreateWindow() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testShouldOverrideUrlLoadingOnCreateWindow");
     }
 
     @Test
-    public void testLoadPage() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testLoadPage");
+    public void testLoadPage() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testLoadPage");
     }
 
     @Test
-    public void testOnReceivedLoginRequest() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnReceivedLoginRequest");
+    public void testOnReceivedLoginRequest() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnReceivedLoginRequest");
     }
 
     @Test
-    public void testOnReceivedError() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnReceivedError");
+    public void testOnReceivedError() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnReceivedError");
     }
 
     @Test
-    public void testOnReceivedErrorForSubresource() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnReceivedErrorForSubresource");
+    public void testOnReceivedErrorForSubresource() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnReceivedErrorForSubresource");
     }
 
     @Test
-    public void testOnReceivedHttpError() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnReceivedHttpError");
+    public void testOnReceivedHttpError() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnReceivedHttpError");
     }
 
     @Test
-    public void testOnFormResubmission() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnFormResubmission");
+    public void testOnFormResubmission() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnFormResubmission");
     }
 
     @Test
-    public void testDoUpdateVisitedHistory() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testDoUpdateVisitedHistory");
+    public void testDoUpdateVisitedHistory() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testDoUpdateVisitedHistory");
     }
 
     @Test
-    public void testOnReceivedHttpAuthRequest() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnReceivedHttpAuthRequest");
+    public void testOnReceivedHttpAuthRequest() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnReceivedHttpAuthRequest");
     }
 
     @Test
-    public void testShouldOverrideKeyEvent() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testShouldOverrideKeyEvent");
+    public void testShouldOverrideKeyEvent() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testShouldOverrideKeyEvent");
     }
 
     @Test
-    public void testOnUnhandledKeyEvent() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnUnhandledKeyEvent");
+    public void testOnUnhandledKeyEvent() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnUnhandledKeyEvent");
     }
 
     @Test
-    public void testOnScaleChanged() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnScaleChanged");
+    public void testOnScaleChanged() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnScaleChanged");
     }
 
     @Test
-    public void testShouldInterceptRequestParams() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testShouldInterceptRequestParams");
+    public void testShouldInterceptRequestParams() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testShouldInterceptRequestParams");
     }
 
     @Test
-    public void testShouldInterceptRequestResponse() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testShouldInterceptRequestResponse");
+    public void testShouldInterceptRequestResponse() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testShouldInterceptRequestResponse");
     }
 
     @Test
-    public void testOnRenderProcessGoneDefault() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnRenderProcessGoneDefault");
+    public void testOnRenderProcessGoneDefault() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnRenderProcessGoneDefault");
     }
 
     @Test
-    public void testOnRenderProcessGone() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnRenderProcessGone");
-    }
-
-    // TODO(crbug/1245351): Remove @FlakyTest once bug fixed
-    @FlakyTest
-    @Test
-    public void testOnSafeBrowsingHitBackToSafety() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnSafeBrowsingHitBackToSafety");
+    public void testOnRenderProcessGone() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnRenderProcessGone");
     }
 
     // TODO(crbug/1245351): Remove @FlakyTest once bug fixed
     @FlakyTest
     @Test
-    public void testOnSafeBrowsingHitProceed() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnSafeBrowsingHitProceed");
+    public void testOnSafeBrowsingHitBackToSafety() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnSafeBrowsingHitBackToSafety");
     }
 
     // TODO(crbug/1245351): Remove @FlakyTest once bug fixed
     @FlakyTest
     @Test
-    public void testOnSafeBrowsingMalwareCode() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnSafeBrowsingMalwareCode");
+    public void testOnSafeBrowsingHitProceed() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnSafeBrowsingHitProceed");
     }
 
     // TODO(crbug/1245351): Remove @FlakyTest once bug fixed
     @FlakyTest
     @Test
-    public void testOnSafeBrowsingPhishingCode() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnSafeBrowsingPhishingCode");
+    public void testOnSafeBrowsingMalwareCode() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnSafeBrowsingMalwareCode");
     }
 
     // TODO(crbug/1245351): Remove @FlakyTest once bug fixed
     @FlakyTest
     @Test
-    public void testOnSafeBrowsingUnwantedSoftwareCode() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnSafeBrowsingUnwantedSoftwareCode");
+    public void testOnSafeBrowsingPhishingCode() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnSafeBrowsingPhishingCode");
     }
 
     // TODO(crbug/1245351): Remove @FlakyTest once bug fixed
     @FlakyTest
     @Test
-    public void testOnSafeBrowsingBillingCode() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnSafeBrowsingBillingCode");
+    public void testOnSafeBrowsingUnwantedSoftwareCode() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnSafeBrowsingUnwantedSoftwareCode");
+    }
+
+    // TODO(crbug/1245351): Remove @FlakyTest once bug fixed
+    @FlakyTest
+    @Test
+    public void testOnSafeBrowsingBillingCode() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnSafeBrowsingBillingCode");
     }
 
     @Test
-    public void testOnPageCommitVisibleCalled() throws Exception {
-        sdkTester.assertSdkTestRunPasses("testOnPageCommitVisibleCalled");
+    public void testOnPageCommitVisibleCalled() throws Throwable {
+        sSdkTestSuiteSetup.assertSdkTestRunPasses("testOnPageCommitVisibleCalled");
     }
 }
