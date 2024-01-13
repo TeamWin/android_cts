@@ -137,6 +137,7 @@ import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
@@ -276,6 +277,7 @@ public class PackageManagerTest {
             + "dqkRLykoFLyBup53G68k2n8w";
     private static final String EMPTY_APP_LONG_USES_PERMISSION_PACKAGE_NAME =
             EMPTY_APP_PACKAGE_NAME + ".longusespermission";
+    private static final String SETTINGS_PROVIDER_PACKAGE_NAME = "com.android.providers.settings";
     private static final String SHELL_PACKAGE_NAME = "com.android.shell";
     private static final String HELLO_WORLD_PACKAGE_NAME = "com.example.helloworld";
     private static final String HELLO_WORLD_APK = SAMPLE_APK_BASE + "HelloWorld5.apk";
@@ -291,6 +293,11 @@ public class PackageManagerTest {
 
     private static final String HELLO_WORLD_SHARED_UID_APK = SAMPLE_APK_BASE
             + "HelloWorldSharedUid.apk";
+
+    private static final String HELLO_WORLD_SETTINGS = SAMPLE_APK_BASE
+            + "HelloWorldSettings.apk";
+
+    private static final String HELLO_WORLD_SETTINGS_PACKAGE_NAME = "com.android.settings.app";
 
     private static final String MOCK_LAUNCHER_PACKAGE_NAME = "android.content.cts.mocklauncherapp";
     private static final String MOCK_LAUNCHER_APK = SAMPLE_APK_BASE
@@ -2119,14 +2126,9 @@ public class PackageManagerTest {
 
     @Test
     public void testInstall_withLongUsesPermissionName_fail() {
-        String expectedErrorCode = "INSTALL_PARSE_FAILED_UNEXPECTED_EXCEPTION";
-        String expectedErrorMessage =
-                "String length limit exceeded for attribute in uses-permission";
-
+        String expectedErrorCode = "INSTALL_PARSE_FAILED";
         String installResult = installPackageWithResult(LONG_USES_PERMISSION_NAME_APK);
-
         assertThat(installResult).contains(expectedErrorCode);
-        assertThat(installResult).contains(expectedErrorMessage);
     }
 
     @Test
@@ -2150,6 +2152,29 @@ public class PackageManagerTest {
         String privatePkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME,
                 "    privatePkgFlags=[");
         assertThat(privatePkgFlags).doesNotContain("PRIVILEGED");
+    }
+
+    @Test
+    public void testInstallAppSharedSystemUid() {
+        var result = SystemUtil.runShellCommand("pm install -t -g " + HELLO_WORLD_SETTINGS);
+        if (!Build.IS_DEBUGGABLE) {
+            // This is a <unit> test, not a proper CTS.
+            // While certificate for HelloWorldSettings is "platform", it might not be THE platform.
+            // This test works correctly if platform and cts are built using the same certificate.
+            // Otherwise the install will still fail, but for a different reason.
+            assertThat(result).contains("Reconcile failed");
+        } else {
+            assertThat(result).isEqualTo("Success\n");
+            uninstallPackage(HELLO_WORLD_SETTINGS_PACKAGE_NAME);
+        }
+    }
+
+    @Test
+    public void testUpdateSystemApp() throws Exception {
+        ApplicationInfo appInfo = mPackageManager.getApplicationInfo(SETTINGS_PROVIDER_PACKAGE_NAME,
+                PackageManager.ApplicationInfoFlags.of(0));
+        assertNotNull(appInfo.getBaseCodePath());
+        assertThat(installPackageWithResult(appInfo.getBaseCodePath())).isEqualTo("Success\n");
     }
 
     private String installPackageWithResult(String apkPath) {

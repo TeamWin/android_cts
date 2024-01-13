@@ -204,6 +204,7 @@ android_test {
         ":HelloWorld7",
         ":HelloWorldNoAppStorage",
         ":HelloWorldResHardening",
+        ":HelloWorldSettings",
         ":HelloWorldSdk1",
         ":HelloWorldSdk1DifferentSigner",
         ":HelloWorldSdk1MajorVersion2",
