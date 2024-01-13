@@ -16,6 +16,9 @@
 
 package android.appwidget.cts;
 
+import static android.appwidget.AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN;
+import static android.appwidget.AppWidgetProviderInfo.WIDGET_CATEGORY_KEYGUARD;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
@@ -45,6 +48,7 @@ import android.appwidget.cts.provider.AppWidgetProviderWithFeatures;
 import android.appwidget.cts.provider.FirstAppWidgetProvider;
 import android.appwidget.cts.provider.SecondAppWidgetProvider;
 import android.appwidget.cts.service.MyAppWidgetService;
+import android.appwidget.flags.Flags;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -58,10 +62,13 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService.RemoteViewsFactory;
+
+import com.android.compatibility.common.util.ApiTest;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -1417,6 +1424,62 @@ public class AppWidgetTest extends AppWidgetTestCase {
         assertNotNull(info.getActivityInfo());
         assertEquals(info.provider.getClassName(), info.getActivityInfo().name);
         assertEquals(info.provider.getPackageName(), info.getActivityInfo().packageName);
+    }
+
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @RequiresFlagsEnabled(Flags.FLAG_GENERATED_PREVIEWS)
+    @ApiTest(apis = {
+            "android.appwidget.AppWidgetManager#setWidgetPreview",
+            "android.appwidget.AppWidgetManager#getWidgetPreview",
+    })
+    @Test
+    public void testSetGeneratedPreview() {
+        final Context context = getInstrumentation().getTargetContext();
+        final ComponentName provider = getFirstWidgetComponent();
+        final AppWidgetProviderInfo initialInfo = getFirstAppWidgetProviderInfo();
+        assertThat(initialInfo.generatedPreviewCategories).isEqualTo(0);
+        assertThat(getAppWidgetManager().getWidgetPreview(initialInfo.provider,
+                    initialInfo.getProfile(), WIDGET_CATEGORY_HOME_SCREEN)).isNull();
+        assertThat(getAppWidgetManager().getWidgetPreview(initialInfo.provider,
+                    initialInfo.getProfile(), WIDGET_CATEGORY_KEYGUARD)).isNull();
+
+        final RemoteViews whiteLayout = new RemoteViews(context.getPackageName(),
+                R.layout.simple_white_layout);
+        final RemoteViews blackLayout = new RemoteViews(context.getPackageName(),
+                R.layout.simple_black_layout);
+
+        getAppWidgetManager().setWidgetPreview(provider, WIDGET_CATEGORY_HOME_SCREEN, whiteLayout);
+        getAppWidgetManager().setWidgetPreview(provider, WIDGET_CATEGORY_KEYGUARD, blackLayout);
+
+        final AppWidgetProviderInfo info = getFirstAppWidgetProviderInfo();
+        assertThat(info.generatedPreviewCategories).isEqualTo(
+                WIDGET_CATEGORY_HOME_SCREEN | WIDGET_CATEGORY_KEYGUARD);
+        final RemoteViews homePreview = getAppWidgetManager().getWidgetPreview(info.provider,
+                info.getProfile(), WIDGET_CATEGORY_HOME_SCREEN);
+        assertThat(homePreview).isNotNull();
+        final RemoteViews keyguardPreview = getAppWidgetManager().getWidgetPreview(
+                info.provider, info.getProfile(), WIDGET_CATEGORY_KEYGUARD);
+        assertThat(keyguardPreview).isNotNull();
+
+        assertThat(homePreview.getLayoutId()).isEqualTo(whiteLayout.getLayoutId());
+        assertThat(keyguardPreview.getLayoutId()).isEqualTo(blackLayout.getLayoutId());
+
+        // Update previews for homescreen
+        getAppWidgetManager().setWidgetPreview(provider, WIDGET_CATEGORY_HOME_SCREEN, blackLayout);
+        final RemoteViews updatedPreview = getAppWidgetManager().getWidgetPreview(info.provider,
+                info.getProfile(), WIDGET_CATEGORY_HOME_SCREEN);
+        assertThat(updatedPreview).isNotNull();
+        assertThat(updatedPreview.getLayoutId()).isEqualTo(blackLayout.getLayoutId());
+
+        // remove previews
+        getAppWidgetManager().removeWidgetPreview(provider, WIDGET_CATEGORY_HOME_SCREEN);
+        getAppWidgetManager().removeWidgetPreview(provider, WIDGET_CATEGORY_KEYGUARD);
+        final AppWidgetProviderInfo newInfo = getFirstAppWidgetProviderInfo();
+        assertThat(newInfo.generatedPreviewCategories).isEqualTo(0);
+        assertThat(getAppWidgetManager().getWidgetPreview(newInfo.provider, newInfo.getProfile(),
+                    WIDGET_CATEGORY_HOME_SCREEN)).isNull();
+        assertThat(getAppWidgetManager().getWidgetPreview(newInfo.provider, newInfo.getProfile(),
+                    WIDGET_CATEGORY_KEYGUARD)).isNull();
     }
 
     private void waitForCallCount(AtomicInteger counter, int expectedCount) {

@@ -22,7 +22,8 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail; import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeNotNull;
 
 import android.os.Flags;
 import android.os.HandlerThread;
@@ -311,7 +312,11 @@ public class PerformanceHintManagerTest {
         Session s = createSession();
         assumeNotNull(s);
         s.updateTargetWorkDuration(16);
-        WorkDuration workDuration = new WorkDuration(1000, 15, 11, 8);
+        WorkDuration workDuration = new WorkDuration();
+        workDuration.setWorkPeriodStartTimestampNanos(1000);
+        workDuration.setActualTotalDurationNanos(15);
+        workDuration.setActualCpuDurationNanos(11);
+        workDuration.setActualGpuDurationNanos(8);
         s.reportActualWorkDuration(workDuration);
     }
 

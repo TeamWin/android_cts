@@ -16,19 +16,28 @@
 
 package android.car.cts;
 
+import static android.car.feature.Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.car.cts.utils.VehiclePropertyUtils;
 import android.car.hardware.property.ElectronicStabilityControlState;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.List;
 
 public class ElectronicStabilityControlStateTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Test
+    @RequiresFlagsEnabled(FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testToString() {
         assertThat(ElectronicStabilityControlState.toString(
                 ElectronicStabilityControlState.OTHER))
@@ -44,6 +53,7 @@ public class ElectronicStabilityControlStateTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
     public void testAllElectronicStabilityControlStatesAreMappedInToString() {
         List<Integer> electronicStabilityControlStates = VehiclePropertyUtils
                 .getIntegersFromDataEnums(ElectronicStabilityControlState.class);

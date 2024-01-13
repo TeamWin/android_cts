@@ -55,6 +55,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.SigningInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.platform.test.annotations.AppModeFull;
@@ -73,6 +76,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -92,18 +96,6 @@ public class GlobalSearchSessionPlatformCtsTest {
     private static final long TIMEOUT_BIND_SERVICE_SEC = 10;
 
     private static final String TAG = "GlobalSearchSessionPlatformCtsTest";
-
-    // To generate, run `apksigner` on the build APK. e.g.
-    //   ./apksigner verify --print-certs \
-    //   ~/main/out/soong/.intermediates/cts/tests/appsearch/CtsAppSearchTestCases/\
-    //   android_common/CtsAppSearchTestCases.apk
-    // to get the SHA-256 digest. All characters need to be uppercase.
-    //
-    // Note: May need to switch the "sdk_version" of the test app from "test_current" to "30" before
-    // building the apk and running apksigner
-    private static final byte[] CTS_PKG_CERT_SHA256 =
-            BaseEncoding.base16()
-                    .decode("A40DA80A59D170CAA950CF15C18C454D47A39B26989D8B640ECD745BA71BF5DC");
 
     private static final String PKG_A = "com.android.cts.appsearch.helper.a";
 
@@ -179,6 +171,24 @@ public class GlobalSearchSessionPlatformCtsTest {
         clearData(PKG_B, DB_NAME);
     }
 
+    // This does not have a fixed certificate, so we need to get it live
+    private byte[] getCtsPackageSha256Cert() {
+        try {
+            PackageInfo packageInfo = mContext.getPackageManager().getPackageInfo(
+                    mContext.getPackageName(), PackageManager.GET_SIGNING_CERTIFICATES);
+            SigningInfo signingInfo = packageInfo.signingInfo;
+
+            if (signingInfo != null) {
+                MessageDigest md = MessageDigest.getInstance("SHA256");
+                md.update(signingInfo.getSigningCertificateHistory()[0].toByteArray());
+                return md.digest();
+            }
+        } catch (Exception e) {
+            // Invalid certificate or test setup failure, continue to return null
+        }
+        return null;
+    }
+
     // We could add a third package, PKG_C, that the cts package cannot query. However, this does
     // not allow us to bind to PKG_C, meaning we can't index documents in PKG_C, making it useless.
     // Instead, we will take advantage of the fact that the cts package can query both PKG_A and
@@ -225,7 +235,7 @@ public class GlobalSearchSessionPlatformCtsTest {
         mDb.setSchemaAsync(new SetSchemaRequest.Builder()
                 .addSchemas(ctsSchema, bSchema)
                 .setPubliclyVisibleSchema(ctsSchema.getSchemaType(),
-                        new PackageIdentifier(ctsPackageName, CTS_PKG_CERT_SHA256))
+                        new PackageIdentifier(ctsPackageName, getCtsPackageSha256Cert()))
                 .setPubliclyVisibleSchema(bSchema.getSchemaType(),
                         new PackageIdentifier(PKG_B, PKG_B_CERT_SHA256))
                 .build()).get();
@@ -284,7 +294,7 @@ public class GlobalSearchSessionPlatformCtsTest {
         try {
             ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
             commandReceiver.setUpPubliclyVisibleDocuments(
-                    ctsPackageName, CTS_PKG_CERT_SHA256, PKG_B, PKG_B_CERT_SHA256);
+                    ctsPackageName, getCtsPackageSha256Cert(), PKG_B, PKG_B_CERT_SHA256);
 
             // Assert that B sees two documents
             List<String> results = commandReceiver.globalSearch("pineapple");

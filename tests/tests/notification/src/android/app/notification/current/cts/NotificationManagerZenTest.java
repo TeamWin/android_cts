@@ -598,7 +598,10 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     private void deleteAllAutomaticZenRules() {
         Map<String, AutomaticZenRule> rules = mNotificationManager.getAutomaticZenRules();
         for (String ruleId : rules.keySet()) {
-            mNotificationManager.removeAutomaticZenRule(ruleId);
+            // Delete rules "as system" so they are not preserved.
+            // Otherwise, if updated with fromUser=true and then deleted "as app", they might be
+            // resurrected by other tests, making the outcome order-dependent.
+            runAsSystemUi(() -> mNotificationManager.removeAutomaticZenRule(ruleId));
         }
     }
 
@@ -801,7 +804,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                     .allowMedia(false)
                     .build());
             String id = mNotificationManager.addAutomaticZenRule(rule);
-            mRuleIds.add(id);
             // set condition of the automatic rule to TRUE
             Condition condition = new Condition(rule.getConditionId(), "summary",
                     Condition.STATE_TRUE);
@@ -869,8 +871,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
             Thread.sleep(300); // wait for rules to be applied - it's done asynchronously
 
-            mRuleIds.add(id1);
-            mRuleIds.add(id2);
             assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
 
             NotificationManager.Policy consolidatedPolicy =
@@ -913,7 +913,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 .allowChannels(ZenPolicy.CHANNEL_TYPE_PRIORITY)
                 .build());
         String id = mNotificationManager.addAutomaticZenRule(rule);
-        mRuleIds.add(id);
         // set condition of the automatic rule to TRUE
         Condition condition = new Condition(rule.getConditionId(), "summary",
                 Condition.STATE_TRUE);
@@ -938,7 +937,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         String id2 = mNotificationManager.addAutomaticZenRule(rule2);
         Condition onCondition2 = new Condition(rule2.getConditionId(), "summary",
                 Condition.STATE_TRUE);
-        mRuleIds.add(id2);
         mNotificationManager.setAutomaticZenRuleState(id2, onCondition2);
 
         // now priority channels are disallowed because "no channels" overrides "priority"
@@ -1022,7 +1020,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                     PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA, 0, 0));
             AutomaticZenRule rule = createRule("test_total_silence", INTERRUPTION_FILTER_NONE);
             String id = mNotificationManager.addAutomaticZenRule(rule);
-            mRuleIds.add(id);
             Condition condition =
                     new Condition(rule.getConditionId(), "summary", Condition.STATE_TRUE);
             mNotificationManager.setAutomaticZenRuleState(id, condition);
@@ -1066,7 +1063,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                     PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA, 0, 0));
             AutomaticZenRule rule = createRule("test_alarms", INTERRUPTION_FILTER_ALARMS);
             String id = mNotificationManager.addAutomaticZenRule(rule);
-            mRuleIds.add(id);
             Condition condition =
                     new Condition(rule.getConditionId(), "summary", Condition.STATE_TRUE);
             mNotificationManager.setAutomaticZenRuleState(id, condition);
@@ -1100,7 +1096,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
 
         assertNotNull(id);
-        mRuleIds.add(id);
         assertTrue(areRulesSame(ruleToCreate, mNotificationManager.getAutomaticZenRule(id)));
     }
 
@@ -1115,7 +1110,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         mNotificationManager.updateAutomaticZenRule(id, ruleToCreate);
 
         assertNotNull(id);
-        mRuleIds.add(id);
         assertTrue(areRulesSame(ruleToCreate, mNotificationManager.getAutomaticZenRule(id)));
     }
 
@@ -1128,7 +1122,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
 
         assertNotNull(id);
-        mRuleIds.add(id);
         mNotificationManager.removeAutomaticZenRule(id);
 
         assertNull(mNotificationManager.getAutomaticZenRule(id));
@@ -1142,7 +1135,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
         AutomaticZenRule ruleToCreate = createRule("Rule");
         String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
-        mRuleIds.add(id);
 
         // make sure DND is off
         assertExpectedDndState(INTERRUPTION_FILTER_ALL);
@@ -1162,7 +1154,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
         AutomaticZenRule ruleToCreate = createRule("Rule");
         String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
-        mRuleIds.add(id);
 
         // make sure DND is off
         // make sure DND is off
@@ -1191,7 +1182,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
         AutomaticZenRule ruleToCreate = createRule("Rule");
         String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
-        mRuleIds.add(id);
 
         // make sure DND is off
         assertExpectedDndState(INTERRUPTION_FILTER_ALL);
@@ -1216,12 +1206,10 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
         AutomaticZenRule ruleToCreate = createRule("Rule");
         String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
-        mRuleIds.add(id);
 
         AutomaticZenRule secondRuleToCreate = createRule("Rule 2");
         secondRuleToCreate.setInterruptionFilter(INTERRUPTION_FILTER_NONE);
         String secondId = mNotificationManager.addAutomaticZenRule(secondRuleToCreate);
-        mRuleIds.add(secondId);
 
         // make sure DND is off
         assertExpectedDndState(INTERRUPTION_FILTER_ALL);
@@ -1964,7 +1952,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 INTERRUPTION_FILTER_PRIORITY);
         rule.setZenPolicy(new ZenPolicy.Builder().disallowAllSounds().build());
         String id = mNotificationManager.addAutomaticZenRule(rule);
-        mRuleIds.add(id);  // will be cleaned up by tearDown
 
         // enable rule
         Condition condition = new Condition(rule.getConditionId(), "summary",
@@ -2006,7 +1993,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 .allowChannels(ZenPolicy.CHANNEL_TYPE_NONE)
                 .build());
         String id = mNotificationManager.addAutomaticZenRule(rule);
-        mRuleIds.add(id); // will be cleaned up by tearDown
 
         // enable rule
         Condition condition = new Condition(rule.getConditionId(), "summary",
@@ -2149,7 +2135,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
 
         assertNotNull(id);
-        mRuleIds.add(id);
         assertAllPublicSetFieldsEqual(ruleToCreate, mNotificationManager.getAutomaticZenRule(id));
     }
 
@@ -2168,7 +2153,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
         AutomaticZenRule ruleToCreate = createRule("testSnoozeRule");
         String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
-        mRuleIds.add(id);
 
         // enable DND
         Condition condition =
@@ -2201,7 +2185,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         // No broadcast expected on creation
         AutomaticZenRule ruleToCreate = createRule("testUnsnoozeRule_disableEnable");
         String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
-        mRuleIds.add(id);
 
         // enable DND
         Condition condition =
@@ -2308,7 +2291,8 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
-    public void addAutomaticZenRule_withInterruptionFilterAll_canBeUsed() {
+    public void addAutomaticZenRule_withInterruptionFilterAll_canBeUsed()
+            throws InterruptedException {
         AutomaticZenRule rule = createRule("Without filter", INTERRUPTION_FILTER_ALL);
         rule.setDeviceEffects(
                 new ZenDeviceEffects.Builder().setShouldDisplayGrayscale(true).build());
@@ -2327,12 +2311,14 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 new Condition(rule.getConditionId(), "summary", Condition.STATE_TRUE));
         assertThat(mNotificationManager.getCurrentInterruptionFilter()).isEqualTo(
                 INTERRUPTION_FILTER_ALL);
+        Thread.sleep(300); // Effects are applied asynchronously.
         assertThat(isColorDisplayManagerSaturationActivated()).isTrue();
 
         mNotificationManager.setAutomaticZenRuleState(ruleId,
                 new Condition(rule.getConditionId(), "summary", Condition.STATE_FALSE));
         assertThat(mNotificationManager.getCurrentInterruptionFilter()).isEqualTo(
                 INTERRUPTION_FILTER_ALL);
+        Thread.sleep(300); // Effects are applied asynchronously.
         assertThat(isColorDisplayManagerSaturationActivated()).isFalse();
 
         mNotificationManager.removeAutomaticZenRule(ruleId);
@@ -2517,6 +2503,41 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertThat(result.getUserModifiedFields()).isEqualTo(AutomaticZenRule.FIELD_NAME);
         assertThat(result.getZenPolicy().getUserModifiedFields()).isEqualTo(0);
         assertThat(result.getDeviceEffects().getUserModifiedFields()).isEqualTo(0);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void addAutomaticZenRule_forDeletedAndPreviouslyUserModifiedRule_restoresRule() {
+        AutomaticZenRule original = new AutomaticZenRule.Builder("Original", CONDITION_ID)
+                .setConfigurationActivity(CONFIG_ACTIVITY)
+                .setType(AutomaticZenRule.TYPE_IMMERSIVE)
+                .setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY)
+                .build();
+        String ruleId = mNotificationManager.addAutomaticZenRule(original);
+
+        // Rename it "from user".
+        AutomaticZenRule userUpdate = new AutomaticZenRule.Builder(original)
+                // User changes
+                .setName("Updated by user")
+                .build();
+        runAsSystemUi(
+                () -> mNotificationManager.updateAutomaticZenRule(ruleId, userUpdate,
+                        /* fromUser= */ true));
+
+        // Now delete it "from app".
+        mNotificationManager.removeAutomaticZenRule(ruleId);
+        assertThat(mNotificationManager.getAutomaticZenRule(ruleId)).isNull();
+
+        // Now create it "from app" again, with a new name.
+        AutomaticZenRule reAddRule = new AutomaticZenRule.Builder(original)
+                .setName("Here we go again")
+                .build();
+        String newRuleId = mNotificationManager.addAutomaticZenRule(reAddRule);
+
+        // The rule was added, but the user's customization was restored.
+        AutomaticZenRule finalRule = mNotificationManager.getAutomaticZenRule(newRuleId);
+        assertThat(finalRule).isNotNull();
+        assertThat(finalRule.getName()).isEqualTo("Updated by user");
     }
 
     @Test
@@ -2815,7 +2836,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     public void testIndividualRuleIntent_resolvesToActivity() {
         AutomaticZenRule ruleToCreate = createRule("testIndividualRuleIntent_resolvesToActivity");
         String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
-        mRuleIds.add(id);
         final PackageManager pm = mContext.getPackageManager();
         final Intent intent = new Intent(Settings.ACTION_AUTOMATIC_ZEN_RULE_SETTINGS);
         intent.setData(Uri.parse("package:" + STUB_PACKAGE_NAME));

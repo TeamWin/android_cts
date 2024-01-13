@@ -33,6 +33,7 @@ android_test {
     ],
     sdk_version: "test_current",
     static_libs: [
+        "android.appwidget.flags-aconfig-java",
         "mockito-target-minus-junit4",
         "ctstestrunner-axt",
         "junit",

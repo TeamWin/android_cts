@@ -71,6 +71,7 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.SoftApCapability;
 import android.net.wifi.SoftApConfiguration;
 import android.net.wifi.SoftApInfo;
+import android.net.wifi.UriParserResults;
 import android.net.wifi.WifiAvailableChannel;
 import android.net.wifi.WifiClient;
 import android.net.wifi.WifiConfiguration;
@@ -84,6 +85,7 @@ import android.net.wifi.WifiNetworkSelectionConfig;
 import android.net.wifi.WifiNetworkSuggestion;
 import android.net.wifi.WifiScanner;
 import android.net.wifi.WifiSsid;
+import android.net.wifi.WifiUriParser;
 import android.net.wifi.hotspot2.ConfigParser;
 import android.net.wifi.hotspot2.OsuProvider;
 import android.net.wifi.hotspot2.PasspointConfiguration;
@@ -103,6 +105,7 @@ import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
+import android.platform.test.annotations.RequiresDevice;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
@@ -724,7 +727,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
      * run cts --class android.net.wifi.cts.WifiManagerTest --method testWifiScanTimestamp
      */
     @Test
-    @VirtualDeviceNotSupported
+    @RequiresDevice
     public void testWifiScanTimestamp() throws Exception {
         if (!hasLocationFeature()) {
             Log.d(TAG, "Skipping test as location is not supported");
@@ -3085,7 +3088,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
      * configuration.
      * @throws Exception
      */
-    @VirtualDeviceNotSupported
+    @RequiresDevice
     @Test
     public void testSetGetSoftApConfigurationAndSoftApCapabilityCallback() throws Exception {
         // check that softap mode is supported by the device
@@ -3198,7 +3201,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
      * Verify that startTetheredHotspot with specific channel config.
      * @throws Exception
      */
-    @VirtualDeviceNotSupported
+    @RequiresDevice
     @Test
     public void testStartTetheredHotspotWithChannelConfigAndSoftApStateAndInfoCallback()
             throws Exception {
@@ -3615,7 +3618,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     /**
      * Tests {@link WifiManager#getFactoryMacAddresses()} returns at least one valid MAC address.
      */
-    @VirtualDeviceNotSupported
+    @RequiresDevice
     @Test
     public void testGetFactoryMacAddresses() throws Exception {
         TestActionListener actionListener = new TestActionListener(mLock);
@@ -6734,6 +6737,37 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
         } catch (Exception e) {
             fail("testEnableAndDisableMscs encountered an exception: " + e);
         } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Tests the result from {@link WifiUriParser#parseUri(String)} can be added.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_URI_PARSER)
+    @Test
+    public void testZxingNetworkFromUriParserCanBeAdded() throws Exception {
+        String testUriZx = "WIFI:S:testAbC;T:nopass";
+        UriParserResults result = WifiUriParser.parseUri(testUriZx);
+        assertNotNull(result);
+        assertEquals(result.getUriScheme(), UriParserResults.URI_SCHEME_ZXING_WIFI_NETWORK_CONFIG);
+        WifiConfiguration config = result.getWifiConfiguration();
+        assertNotNull(config);
+        // These below API's only work with privileged permissions (obtained via shell identity
+        // for test)
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation();
+        int networkId = INVALID_NETWORK_ID;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            // Verify that the network is added
+            networkId = sWifiManager.addNetwork(config);
+            assertNotEquals(INVALID_NETWORK_ID, networkId);
+        } finally {
+            if (networkId != INVALID_NETWORK_ID) {
+                // Clean up the previously added network
+                sWifiManager.removeNetwork(networkId);
+            }
             uiAutomation.dropShellPermissionIdentity();
         }
     }

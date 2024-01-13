@@ -38,8 +38,6 @@ import android.car.remoteaccess.RemoteTaskClientRegistrationInfo;
 import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
-import android.platform.test.flag.junit.CheckFlagsRule;
-import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -55,7 +53,6 @@ import com.android.internal.annotations.GuardedBy;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.time.Duration;
@@ -80,9 +77,6 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
     private CarRemoteAccessManager mCarRemoteAccessManager;
     private boolean mServerlessRemoteTaskClientSet = false;
     private String mPackageName;
-
-    @Rule
-    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setUp() throws Exception {

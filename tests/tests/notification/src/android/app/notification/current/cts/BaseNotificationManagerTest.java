@@ -97,7 +97,6 @@ public abstract class BaseNotificationManagerTest {
     protected ActivityManager mActivityManager;
     protected TestNotificationAssistant mAssistant;
     protected TestNotificationListener mListener;
-    protected List<String> mRuleIds;
     protected Instrumentation mInstrumentation;
     protected NotificationHelper mNotificationHelper;
 
@@ -118,7 +117,6 @@ public abstract class BaseNotificationManagerTest {
         mPackageManager = mContext.getPackageManager();
         mAudioManager = mContext.getSystemService(AudioManager.class);
         mRoleManager = mContext.getSystemService(RoleManager.class);
-        mRuleIds = new ArrayList<>();
 
         // ensure listener access isn't allowed before test runs (other tests could put
         // TestListener in an unexpected state)
@@ -138,15 +136,6 @@ public abstract class BaseNotificationManagerTest {
         setEnableServiceNotificationRateLimit(true);
 
         mNotificationManager.cancelAll();
-        if (mRuleIds != null && !mRuleIds.isEmpty()
-                && !mNotificationManager.isNotificationPolicyAccessGranted()) {
-            toggleNotificationPolicyAccess(mContext.getPackageName(), mInstrumentation, true);
-        }
-        if (mRuleIds != null) {
-            for (String id : mRuleIds) {
-                mNotificationManager.removeAutomaticZenRule(id);
-            }
-        }
 
         assertExpectedDndState(INTERRUPTION_FILTER_ALL);
 

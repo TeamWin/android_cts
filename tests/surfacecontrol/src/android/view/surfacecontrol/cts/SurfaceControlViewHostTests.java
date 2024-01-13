@@ -616,7 +616,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         // Tap where the embedded window is placed to ensure focus is given via touch
         assertTrue("Failed to tap on embedded",
                 tapOnWindowCenter(mInstrumentation, () -> mEmbeddedView.getWindowToken(),
-                        /* useGlobalInjection= */ true));
+                        /* useGlobalInjection= */ true, null /* outCoords */));
         assertWindowFocused(mEmbeddedView, true);
         // assert host does not have focus
         assertWindowFocused(mSurfaceView, false);
@@ -624,7 +624,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         // Tap where the host window is placed to ensure focus is given back to host when touched
         assertTrue("Failed to tap on host",
                 tapOnWindowCenter(mInstrumentation, () -> mViewParent.getWindowToken(),
-                        /* useGlobalInjection= */ true));
+                        /* useGlobalInjection= */ true, null /* outCoords */));
         assertWindowFocused(mEmbeddedView, false);
         // assert host does not have focus
         assertWindowFocused(mViewParent, true);
@@ -652,8 +652,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         waitUntilViewDrawn(embeddedViewChild);
 
         assertTrue("Failed to tap on embedded child",
-                tapOnWindowCenter(mInstrumentation, () -> embeddedViewChild.getWindowToken(),
-                        /* useGlobalInjection= */ true));
+                tapOnWindowCenter(mInstrumentation, embeddedViewChild::getWindowToken,
+                        /* useGlobalInjection= */ true, null /* outCoords */));
         // When tapping on the child embedded window, it should gain focus.
         assertWindowFocused(embeddedViewChild, true);
         // assert parent embedded window does not have focus.
@@ -688,7 +688,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
                     } catch (RemoteException e) {
                         return null;
                     }
-                }, /* useGlobalInjection= */ true));
+                }, /* useGlobalInjection= */ true, null /* outCoords */));
         assertTrue(mTestService.waitForFocus(true));
         // assert host does not have focus
         assertWindowFocused(mSurfaceView, false);
@@ -696,7 +696,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         // Tap where the host window is placed to ensure focus is given back to host when touched
         assertTrue("Failed to tap on host",
                 tapOnWindowCenter(mInstrumentation, () -> mViewParent.getWindowToken(),
-                        /* useGlobalInjection= */ true));
+                        /* useGlobalInjection= */ true, null /* outCoords */));
         assertTrue(mTestService.waitForFocus(false));
         // assert host does not have focus
         assertWindowFocused(mViewParent, true);
@@ -868,7 +868,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         // Check if SurfacePackage copy remains valid even though the original package has
         // been released.
         boolean success = tapOnWindowCenter(mInstrumentation,
-                () -> mEmbeddedView.getWindowToken(), /* useGlobalInjection= */ true);
+                () -> mEmbeddedView.getWindowToken(), /* useGlobalInjection= */ true,
+                null /* outCoords */);
         assertAndDumpWindowState(TAG, "Failed to find embedded window to tap", success);
         assertTrue(mClicked);
     }
@@ -999,8 +1000,9 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
         // Check to see if the click went through - this only would happen if the surface package
         // was replaced
-        boolean success = CtsWindowInfoUtils.tapOnWindowCenter(mInstrumentation,
-                () -> mEmbeddedView.getWindowToken(), /* useGlobalInjection= */ true);
+        boolean success = tapOnWindowCenter(mInstrumentation,
+                () -> mEmbeddedView.getWindowToken(), /* useGlobalInjection= */ true,
+                null /* outCoords */);
         assertAndDumpWindowState(TAG, "Failed to tap on window", success);
         assertTrue(mClicked);
     }
