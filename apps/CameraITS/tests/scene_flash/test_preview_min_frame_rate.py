@@ -83,8 +83,9 @@ class PreviewMinFrameRateTest(its_base_test.ItsBaseTest):
       # determine camera capabilities for preview
       preview_sizes = cam.get_supported_preview_sizes(
           self.camera_id)
-      supported_video_sizes = cam.get_supported_video_sizes_capped(self.camera_id)
-      max_video_size = supported_video_sizes[-1]  # choose largest available size
+      supported_video_sizes = cam.get_supported_video_sizes_capped(
+          self.camera_id)
+      max_video_size = supported_video_sizes[-1]  # largest available size
       logging.debug('Camera supported preview sizes: %s', preview_sizes)
       logging.debug('Camera supported video sizes: %s', supported_video_sizes)
 

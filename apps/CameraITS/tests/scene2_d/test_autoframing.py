@@ -11,9 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Verifies that autoframing can adjust fov to include all faces with different
-skin tones."""
-
+"""Verifies that autoframing can adjust FoV to include all faces."""
 
 import logging
 import os.path
@@ -41,13 +39,13 @@ class AutoframingTest(its_base_test.ItsBaseTest):
   """
 
   def save_image(self, cap, props, faces):
-    img, img_name, faces_cropped = self.get_image_data(cap, props,faces)
+    img, img_name, faces_cropped = self.get_image_data(cap, props, faces)
     # Save images with green boxes around faces
     opencv_processing_utils.draw_green_boxes_around_faces(
         img, faces_cropped, img_name)
 
   def assert_no_face_distortion(self, cap, props, faces):
-    img, img_name, faces_cropped = self.get_image_data(cap, props,faces)
+    img, img_name, faces_cropped = self.get_image_data(cap, props, faces)
     opencv_faces = opencv_processing_utils.find_opencv_faces(
         img, _CV2_FACE_SCALE_FACTOR, _CV2_FACE_MIN_NEIGHBORS)
     opencv_processing_utils.match_face_locations(
