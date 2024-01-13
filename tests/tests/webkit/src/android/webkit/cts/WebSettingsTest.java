@@ -114,6 +114,7 @@ public class WebSettingsTest extends SharedWebViewTest {
     public void tearDown() throws Exception {
         if (mWebServer != null) {
             mWebServer.shutdown();
+            mWebServer = null;
         }
         if (mOnUiThread != null) {
             mOnUiThread.cleanUp();
