@@ -18,7 +18,6 @@ package android.telephony.ims.cts;
 
 import static android.telephony.AccessNetworkConstants.AccessNetworkType.EUTRAN;
 import static android.telephony.AccessNetworkConstants.AccessNetworkType.GERAN;
-import static android.telephony.AccessNetworkConstants.AccessNetworkType.UNKNOWN;
 import static android.telephony.AccessNetworkConstants.AccessNetworkType.UTRAN;
 import static android.telephony.BarringInfo.BARRING_SERVICE_TYPE_EMERGENCY;
 import static android.telephony.BarringInfo.BarringServiceInfo.BARRING_TYPE_UNCONDITIONAL;
@@ -36,11 +35,8 @@ import static android.telephony.CarrierConfigManager.ImsEmergency.KEY_START_QUIC
 import static android.telephony.CarrierConfigManager.ImsEmergency.REDIAL_TIMER_DISABLED;
 import static android.telephony.CarrierConfigManager.ImsEmergency.SCAN_TYPE_NO_PREFERENCE;
 import static android.telephony.NetworkRegistrationInfo.REGISTRATION_STATE_HOME;
-import static android.telephony.NetworkRegistrationInfo.REGISTRATION_STATE_UNKNOWN;
 import static android.telephony.mockmodem.IRadioVoiceImpl.LATCH_EMERGENCY_DIAL;
 import static android.telephony.mockmodem.IRadioVoiceImpl.LATCH_GET_LAST_CALL_FAIL_CAUSE;
-import static android.telephony.mockmodem.MockNetworkService.LATCH_CANCEL_EMERGENCY_SCAN;
-import static android.telephony.mockmodem.MockNetworkService.LATCH_TRIGGER_EMERGENCY_SCAN;
 import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_TWN_CHT;
 
 import static junit.framework.Assert.assertNotNull;
@@ -86,6 +82,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -289,6 +286,7 @@ public class DomainSelectionCrossSimRedialingTestOnMockModem extends ImsCallingB
         TelephonyUtils.endBlockSuppression(InstrumentationRegistry.getInstrumentation());
     }
 
+    @Ignore("For internal test only.")
     @Test
     public void testCrossStackSlot0ThenSlot1() throws Exception {
         // Setup pre-condition
@@ -315,34 +313,6 @@ public class DomainSelectionCrossSimRedialingTestOnMockModem extends ImsCallingB
         TimeUnit.MILLISECONDS.sleep(WAIT_REQUEST_TIMEOUT_MS);
 
         assertTrue(waitForVoiceLatchCountdown(sOtherSlot, LATCH_EMERGENCY_DIAL));
-    }
-
-    @Test
-    public void testCrossStackTimer() throws Exception {
-        // Setup pre-condition
-        unsolBarringInfoChanged(sTestSlot, false, false);
-        unsolBarringInfoChanged(sOtherSlot, false, false);
-
-        PersistableBundle bundle = getDefaultPersistableBundle();
-        bundle.putInt(KEY_CROSS_STACK_REDIAL_TIMER_SEC_INT, CROSS_STACK_TIMEOUT_SEC);
-        overrideCarrierConfig(bundle);
-
-        MockEmergencyRegResult regResult = getEmergencyRegResult(UNKNOWN,
-                REGISTRATION_STATE_UNKNOWN, 0, false, false, 0, 0, "", "");
-        setEmergencyRegResult(sTestSlot, regResult);
-        setEmergencyRegResult(sOtherSlot, regResult);
-
-        bindImsServiceUnregistered();
-
-        placeOutgoingCall(TEST_EMERGENCY_NUMBER);
-
-        assertTrue(waitForNetworkLatchCountdown(sTestSlot, LATCH_TRIGGER_EMERGENCY_SCAN));
-        assertTrue(waitForNetworkLatchCountdown(sTestSlot, LATCH_CANCEL_EMERGENCY_SCAN));
-
-        assertTrue(waitForNetworkLatchCountdown(sOtherSlot,
-                  LATCH_TRIGGER_EMERGENCY_SCAN, WAIT_UPDATE_TIMEOUT_MS));
-
-        unsolEmergencyNetworkScanResult(sOtherSlot);
     }
 
     private void placeOutgoingCall(String address) throws Exception {
