@@ -109,12 +109,25 @@ public class AudioFocusTest {
     private Context mContext;
     private AudioManager mAM;
     private Instrumentation mInstrumentation;
+    /** notification volume to restore */
+    private int mInitialNotificationVolume;
+    /** ringer mode to restore */
+    private int mInitialRingerMode;
 
     @Before
     public void setUp() throws Exception {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getTargetContext();
         mAM = new AudioManager(mContext);
+
+        mInitialRingerMode = mAM.getRingerMode();
+        // need to set ringer mode to normal before starting the test so the volume (to be restored)
+        // can be queried
+        Utils.toggleNotificationPolicyAccess(mContext.getPackageName(), mInstrumentation, true);
+        mAM.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+        mInitialNotificationVolume = mAM.getStreamVolume(
+                AudioAttributes.toLegacyStreamType(NOTIFICATION_ATTRIBUTES));
+        Utils.toggleNotificationPolicyAccess(mContext.getPackageName(), mInstrumentation, false);
     }
 
     @After
@@ -126,6 +139,13 @@ public class AudioFocusTest {
                 mAM.exitAudioFocusFreezeForTest();
             }
         }
+        // restore ringer mode and notification volume
+        Utils.toggleNotificationPolicyAccess(
+                mContext.getPackageName(), mInstrumentation, true);
+        mAM.setStreamVolume(AudioAttributes.toLegacyStreamType(NOTIFICATION_ATTRIBUTES),
+                mInitialNotificationVolume, 0);
+        mAM.setRingerMode(mInitialRingerMode);
+        Utils.toggleNotificationPolicyAccess(mContext.getPackageName(), mInstrumentation, false);
     }
 
     @Test
@@ -627,6 +647,8 @@ public class AudioFocusTest {
                     mContext.getPackageName(), mInstrumentation, true);
 
             mAM.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+            final int streamType = AudioAttributes.toLegacyStreamType(NOTIFICATION_ATTRIBUTES);
+            mAM.setStreamVolume(streamType, mAM.getStreamMaxVolume(streamType), 0);
             assertEquals("GAIN_TRANSIENT_EXCLUSIVE request failed",
                     AudioManager.AUDIOFOCUS_REQUEST_GRANTED,
                     mAM.requestAudioFocus(EXCLUSIVE_FOCUS_REQUEST));
@@ -686,6 +708,8 @@ public class AudioFocusTest {
                     mContext.getPackageName(), mInstrumentation, true);
 
             mAM.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+            final int streamType = AudioAttributes.toLegacyStreamType(NOTIFICATION_ATTRIBUTES);
+            mAM.setStreamVolume(streamType, mAM.getStreamMaxVolume(streamType), 0);
             assertEquals("GAIN_TRANSIENT_EXCLUSIVE request failed",
                     AudioManager.AUDIOFOCUS_REQUEST_GRANTED,
                     mAM.requestAudioFocus(EXCLUSIVE_FOCUS_REQUEST));
