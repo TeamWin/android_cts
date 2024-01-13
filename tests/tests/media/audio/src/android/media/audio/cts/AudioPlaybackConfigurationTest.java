@@ -683,6 +683,12 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         AudioManager am = new AudioManager(getContext());
         assertNotNull("Could not create AudioManager", am);
 
+        boolean isMuted = am.isStreamMute(TEST_STREAM_FOR_USAGE);
+        if (isMuted) {
+            am.adjustStreamVolume(TEST_STREAM_FOR_USAGE, ADJUST_UNMUTE, 0);
+        }
+        Thread.sleep(TEST_TIMING_TOLERANCE_MS + PLAY_ROUTING_TIMING_TOLERANCE_MS);
+
         MyAudioPlaybackCallback callback = new MyAudioPlaybackCallback();
 
         try {
@@ -727,6 +733,10 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         } finally {
             am.unregisterAudioPlaybackCallback(callback);
             unmute.run();
+
+            if (isMuted) {
+                am.adjustStreamVolume(TEST_STREAM_FOR_USAGE, ADJUST_MUTE, 0);
+            }
         }
     }
 
