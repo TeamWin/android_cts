@@ -18,7 +18,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.server.biometrics.cts">
 
-    <application>
+    <application
+        android:label="CtsBiometricsTestCases">
         <uses-library android:name="android.test.runner" />
 
         <provider android:name="android.server.wm.TestJournalProvider"
