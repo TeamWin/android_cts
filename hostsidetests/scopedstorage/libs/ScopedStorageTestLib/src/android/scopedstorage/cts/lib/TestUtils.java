@@ -441,8 +441,10 @@ public class TestUtils {
             throws Exception {
         final String actionName = QUERY_MEDIA_BY_URI_QUERY;
         final Bundle bundle = new Bundle();
-        for (String columnName : projection) {
-            bundle.putString(columnName, "");
+        if (projection != null) {
+            for (String columnName : projection) {
+                bundle.putString(columnName, "");
+            }
         }
 
         return getFromTestApp(testApp, uri, actionName, bundle).getBundle(actionName);
