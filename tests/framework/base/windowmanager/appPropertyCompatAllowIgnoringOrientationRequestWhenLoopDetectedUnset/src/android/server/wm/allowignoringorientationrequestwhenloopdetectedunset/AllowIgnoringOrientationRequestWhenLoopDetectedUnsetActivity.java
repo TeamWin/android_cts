@@ -16,7 +16,7 @@
 
 package android.server.wm.allowignoringorientationrequestwhenloopdetectedunset;
 
-import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -30,7 +30,7 @@ public class AllowIgnoringOrientationRequestWhenLoopDetectedUnsetActivity extend
         super.onStart();
         // Create orientation request loop
         for (int i = 0; i <= MIN_COUNT_TO_IGNORE_REQUEST_IN_LOOP; i++) {
-            setRequestedOrientation(SCREEN_ORIENTATION_LANDSCAPE);
+            setRequestedOrientation(SCREEN_ORIENTATION_UNSPECIFIED);
         }
     }
 }
