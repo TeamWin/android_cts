@@ -33,6 +33,10 @@ import androidx.test.platform.app.InstrumentationRegistry;
  */
 public class VirtualDisplayCreator {
 
+    // TODO(b/320245345): Expose VIRTUAL_DISPLAY_FLAG_SUPPORTS_TOUCH as a Test API, and remove
+    // this constant.
+    private static final int VIRTUAL_DISPLAY_FLAG_SUPPORTS_TOUCH = 1 << 6;
+
     public static VirtualDisplay createVirtualDisplay(VirtualDevice virtualDevice, int flags) {
         return createVirtualDisplay(virtualDevice, 100 /* width */, 100 /* height */, flags);
     }
@@ -55,7 +59,9 @@ public class VirtualDisplayCreator {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         DisplayManager displayManager = context.getSystemService(DisplayManager.class);
         return displayManager.createVirtualDisplay(
-                VirtualDeviceRule.createDefaultVirtualDisplayConfigBuilder().build());
+                VirtualDeviceRule.createDefaultVirtualDisplayConfigBuilder()
+                        .setFlags(VIRTUAL_DISPLAY_FLAG_SUPPORTS_TOUCH)
+                        .build());
     }
 
     public static Point getDisplaySize(VirtualDisplay virtualDisplay) {
