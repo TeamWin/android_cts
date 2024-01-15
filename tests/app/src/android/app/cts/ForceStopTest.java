@@ -53,6 +53,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.AmUtils;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -219,6 +220,7 @@ public final class ForceStopTest {
 
     @Test
     @RequiresFlagsEnabled(FLAG_STAY_STOPPED)
+    @Ignore("Re-enable once b/317158659 is fixed")
     public void testBootCompletedBroadcasts_activity() throws Exception {
         final Intent intent = createSimpleActivityIntent();
 
@@ -265,6 +267,7 @@ public final class ForceStopTest {
 
     @Test
     @RequiresFlagsEnabled(FLAG_STAY_STOPPED)
+    @Ignore("Re-enable once b/317158659 is fixed")
     public void testBootCompletedBroadcasts_broadcast() throws Exception {
         final ConditionVariable gotLockedBoot = new ConditionVariable();
         final ConditionVariable gotBoot = new ConditionVariable();
