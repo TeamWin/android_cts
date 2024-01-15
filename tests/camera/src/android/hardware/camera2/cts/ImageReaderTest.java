@@ -16,6 +16,7 @@
 
 package android.hardware.camera2.cts;
 
+import static android.hardware.camera2.cts.CameraTestUtils.CAMERA_IDLE_TIMEOUT_MS;
 import static android.hardware.camera2.cts.CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS;
 import static android.hardware.camera2.cts.CameraTestUtils.SESSION_READY_TIMEOUT_MS;
 import static android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
@@ -1815,6 +1816,10 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 outputSurfaces.add(mReader.getSurface());
                 CaptureRequest.Builder requestBuilder = prepareCaptureRequestForSurfaces(
                         outputSurfaces, CameraDevice.TEMPLATE_STILL_CAPTURE);
+                // Need to consume the SESSION_READY state because stopCapture() waits
+                // on an additional SESSION_READY state.
+                mCameraSessionListener.getStateWaiter().
+                    waitForState(BlockingSessionCallback.SESSION_READY, CAMERA_IDLE_TIMEOUT_MS);
 
                 requestBuilder.set(
                         CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_OFF);
