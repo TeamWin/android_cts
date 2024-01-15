@@ -26,6 +26,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
@@ -271,7 +272,7 @@ public class AccessibilityTextActionTest {
     }
 
     @Test
-    public void testTextLocations_textViewShouldProvideWhenRequested() throws Exception {
+    public void testTextLocations_textViewShouldProvideWhenRequested() {
         final TextView textView = (TextView) mActivity.findViewById(R.id.text);
         // Use text with a strong s, since that gets replaced with a double s for all caps.
         // That replacement requires us to properly handle the length of the string changing.
@@ -287,25 +288,24 @@ public class AccessibilityTextActionTest {
         assertNull("Text locations should not be populated by default",
                 text.getExtras().getString(EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY));
 
-        final Bundle getTextArgs = getTextLocationArguments(text.getText().length());
-        assertTrue("Refresh failed", text.refreshWithExtraData(
-                AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY, getTextArgs));
+        waitForExtraTextData(text);
         assertNodeContainsTextLocationInfoOnOneLineLTR(text);
     }
 
     @Test
     @FlakyTest
-    public void testTextLocations_textOutsideOfViewBounds_locationsShouldBeNull() throws Exception {
+    public void testTextLocations_textOutsideOfViewBounds_locationsShouldBeNull() {
         final EditText editText = mActivity.findViewById(R.id.edit);
         makeTextViewVisibleAndSetText(editText, mActivity.getString(R.string.android_wiki));
 
         final AccessibilityNodeInfo text = sUiAutomation.getRootInActiveWindow()
-                .findAccessibilityNodeInfosByText(mActivity.getString(R.string.android_wiki)).get(0);
+                .findAccessibilityNodeInfosByText(
+                        mActivity.getString(R.string.android_wiki)).get(0);
         List<String> textAvailableExtraData = text.getAvailableExtraData();
         assertTrue("Text view should offer text location to accessibility",
                 textAvailableExtraData.contains(EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY));
 
-        Bundle extras = waitForExtraData(text, EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY);
+        Bundle extras = waitForExtraTextData(text);
         Parcelable[] parcelables = extras.getParcelableArray(
                 EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY, RectF.class);
         assertNotNull(parcelables);
@@ -336,7 +336,7 @@ public class AccessibilityTextActionTest {
             editText.scrollTo(0, oneLineDownY + 1);
         });
 
-        extras = waitForExtraData(text, EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY);
+        extras = waitForExtraTextData(text);
         parcelables = extras
                 .getParcelableArray(EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY, RectF.class);
         assertNotNull(parcelables);
@@ -349,7 +349,7 @@ public class AccessibilityTextActionTest {
     }
 
     @Test
-    public void testTextLocations_withRequestPreparer_shouldHoldOffUntilReady() throws Exception {
+    public void testTextLocations_withRequestPreparer_shouldHoldOffUntilReady() {
         final TextView textView = (TextView) mActivity.findViewById(R.id.text);
         makeTextViewVisibleAndSetText(textView, mActivity.getString(R.string.a_b));
 
@@ -387,9 +387,8 @@ public class AccessibilityTextActionTest {
         // Make the extra data request in another thread
         Runnable mockRunnableForData = mock(Runnable.class);
         new Thread(()-> {
-                assertTrue("Refresh failed", text.refreshWithExtraData(
-                        EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY, getTextArgs));
-                mockRunnableForData.run();
+            waitForExtraTextData(text);
+            mockRunnableForData.run();
         }).start();
 
         // The extra data request should trigger the request preparer
@@ -440,7 +439,7 @@ public class AccessibilityTextActionTest {
              * Don't worry about the return value, as we're timing out. We're just making
              * sure that we don't hang the system.
              */
-            text.refreshWithExtraData(EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY, getTextArgs);
+            waitForExtraTextData(text);
             mockRunnableForData.run();
         }).start();
 
@@ -455,18 +454,17 @@ public class AccessibilityTextActionTest {
     @Test
     @FlakyTest
     public void testTextLocation_testLocationBoundary_locationShouldBeLimitationLength() {
-        final TextView textView = (TextView) mActivity.findViewById(R.id.text);
+        final TextView textView = mActivity.findViewById(R.id.text);
         makeTextViewVisibleAndSetText(textView, mActivity.getString(R.string.a_b));
 
         final AccessibilityNodeInfo text = sUiAutomation.getRootInActiveWindow()
                 .findAccessibilityNodeInfosByText(mActivity.getString(R.string.a_b)).get(0);
 
-        final Bundle getTextArgs = getTextLocationArguments(Integer.MAX_VALUE);
-        assertTrue("Refresh failed", text.refreshWithExtraData(
-                AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY, getTextArgs));
+        Bundle extras = waitForExtraTextData(text, Integer.MAX_VALUE);
 
-        final Parcelable[] parcelables = text.getExtras()
-                .getParcelableArray(EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY);
+        final Parcelable[] parcelables = extras.getParcelableArray(
+                EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY, RectF.class);
+        assertNotNull(parcelables);
         final RectF[] locations = Arrays.copyOf(parcelables, parcelables.length, RectF[].class);
         assertEquals(locations.length,
                 AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_MAX_LENGTH);
@@ -506,7 +504,6 @@ public class AccessibilityTextActionTest {
 
     @Test
     public void testExtraRendering_textViewShouldProvideExtraDataTextSizeWhenRequested() {
-        final Bundle arg = new Bundle();
         final DisplayMetrics displayMetrics = mActivity.getResources().getDisplayMetrics();
         final TextView textView = mActivity.findViewById(R.id.text);
         final String stringToSet = mActivity.getString(R.string.foo_bar_baz);
@@ -525,10 +522,8 @@ public class AccessibilityTextActionTest {
 
         AccessibilityNodeInfo.ExtraRenderingInfo extraRenderingInfo;
         assertNull(info.getExtraRenderingInfo());
-        assertTrue("Refresh failed", info.refreshWithExtraData(
-                EXTRA_DATA_RENDERING_INFO_KEY , arg));
-        assertNotNull(info.getExtraRenderingInfo());
-        extraRenderingInfo = info.getExtraRenderingInfo();
+        extraRenderingInfo = waitForExtraRenderingInfo(info);
+        assertNotNull(extraRenderingInfo);
         assertNotNull(extraRenderingInfo.getLayoutSize());
         assertEquals(expectedWidthInPx, extraRenderingInfo.getLayoutSize().getWidth());
         assertEquals(expectedHeightInPx, extraRenderingInfo.getLayoutSize().getHeight());
@@ -538,9 +533,7 @@ public class AccessibilityTextActionTest {
         // After changing text size
         sInstrumentation.runOnMainSync(() ->
                 textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, newTextSize));
-        assertTrue("Refresh failed", info.refreshWithExtraData(
-                EXTRA_DATA_RENDERING_INFO_KEY, arg));
-        extraRenderingInfo = info.getExtraRenderingInfo();
+        extraRenderingInfo = waitForExtraRenderingInfo(info);
         assertEquals(expectedNewTextSize, extraRenderingInfo.getTextSizeInPx(), 0f);
         assertEquals(TypedValue.COMPLEX_UNIT_SP, extraRenderingInfo.getTextSizeUnit());
     }
@@ -554,11 +547,10 @@ public class AccessibilityTextActionTest {
         assertTrue("ViewGroup should offer extra data to accessibility",
                 info.getAvailableExtraData().contains(EXTRA_DATA_RENDERING_INFO_KEY));
         assertNull(info.getExtraRenderingInfo());
-        assertTrue("Refresh failed", info.refreshWithExtraData(
-                EXTRA_DATA_RENDERING_INFO_KEY, new Bundle()));
-        assertNotNull(info.getExtraRenderingInfo());
-        assertNotNull(info.getExtraRenderingInfo().getLayoutSize());
-        final Size size = info.getExtraRenderingInfo().getLayoutSize();
+        AccessibilityNodeInfo.ExtraRenderingInfo renderingInfo = waitForExtraRenderingInfo(info);
+        assertNotNull(renderingInfo);
+        assertNotNull(renderingInfo.getLayoutSize());
+        final Size size = renderingInfo.getLayoutSize();
         assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, size.getWidth());
         assertEquals(ViewGroup.LayoutParams.WRAP_CONTENT, size.getHeight());
     }
@@ -581,10 +573,9 @@ public class AccessibilityTextActionTest {
         return args;
     }
 
-    private void assertNodeContainsTextLocationInfoOnOneLineLTR(AccessibilityNodeInfo info)
-            throws Exception {
-        waitForExtraData(info, EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY);
-        final Parcelable[] parcelables = info.getExtras()
+    private void assertNodeContainsTextLocationInfoOnOneLineLTR(AccessibilityNodeInfo info) {
+        Bundle extras = waitForExtraTextData(info);
+        final Parcelable[] parcelables = extras
                 .getParcelableArray(EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY, RectF.class);
         assertNotNull(parcelables);
         final RectF[] locations = Arrays.copyOf(parcelables, parcelables.length, RectF[].class);
@@ -646,14 +637,39 @@ public class AccessibilityTextActionTest {
         sInstrumentation.waitForIdleSync();
     }
 
-    private Bundle waitForExtraData(AccessibilityNodeInfo node, String key) throws Exception {
-        // Node refresh must succeed and the resulting extras must contain the requested key.
-        TestUtils.waitUntil("Timed out waiting for extra data", () -> {
-            node.refreshWithExtraData(
-                    key, getTextLocationArguments(node.getText().length()));
-            return node.getExtras().containsKey(key);
-        });
+    private Bundle waitForExtraTextData(AccessibilityNodeInfo info) {
+        return waitForExtraTextData(info, info.getText().length());
+    }
 
-        return node.getExtras();
+    private Bundle waitForExtraTextData(AccessibilityNodeInfo info, int length) {
+        final Bundle getTextArgs = getTextLocationArguments(length);
+        // Node refresh must succeed and the resulting extras must contain the requested key.
+        try {
+            TestUtils.waitUntil("Timed out waiting for extra data", () -> {
+                info.refreshWithExtraData(
+                        EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY, getTextArgs);
+                return info.getExtras().containsKey(EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY);
+            });
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+
+        return info.getExtras();
+    }
+
+    private AccessibilityNodeInfo.ExtraRenderingInfo waitForExtraRenderingInfo(
+            AccessibilityNodeInfo info) {
+        // Node refresh must succeed and extraRenderingInfo must not be null.
+        try {
+            TestUtils.waitUntil("Timed out waiting for extra rendering data", () -> {
+                info.refreshWithExtraData(
+                        EXTRA_DATA_RENDERING_INFO_KEY, new Bundle());
+                return info.getExtraRenderingInfo() != null;
+            });
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+
+        return info.getExtraRenderingInfo();
     }
 }
