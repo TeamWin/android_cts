@@ -2157,12 +2157,15 @@ public class PackageManagerTest {
     @Test
     public void testInstallAppSharedSystemUid() {
         var result = SystemUtil.runShellCommand("pm install -t -g " + HELLO_WORLD_SETTINGS);
-        if (!Build.IS_DEBUGGABLE) {
+        if (result.contains("no signatures that match those in shared user android.uid.system")) {
             // This is a <unit> test, not a proper CTS.
             // While certificate for HelloWorldSettings is "platform", it might not be THE platform.
             // This test works correctly if platform and cts are built using the same certificate.
             // Otherwise the install will still fail, but for a different reason.
-            assertThat(result).contains("Reconcile failed");
+            return;
+        }
+        if (!Build.IS_DEBUGGABLE) {
+            assertThat(result).contains("Non-preload app associated with system signature");
         } else {
             assertThat(result).isEqualTo("Success\n");
             uninstallPackage(HELLO_WORLD_SETTINGS_PACKAGE_NAME);
