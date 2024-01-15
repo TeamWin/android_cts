@@ -87,6 +87,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -1386,12 +1389,79 @@ public class TestUtils {
         }
     }
 
+    private static void copyContentsAndDir(final Path source, final Path target)
+            throws IOException {
+        Files.walkFileTree(source, new java.nio.file.SimpleFileVisitor<Path>() {
+            private java.nio.file.FileVisitResult copyFileOrEmptyDir(final Path source,
+                    final Path sourceRoot, final Path targetRoot) throws IOException {
+                final Path target = targetRoot.resolve(sourceRoot.relativize(source));
+                Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING,
+                        java.nio.file.LinkOption.NOFOLLOW_LINKS);
+                return java.nio.file.FileVisitResult.CONTINUE;
+            }
+            @Override
+            public java.nio.file.FileVisitResult preVisitDirectory(Path sourceDir,
+                    java.nio.file.attribute.BasicFileAttributes attrs) throws IOException {
+                return copyFileOrEmptyDir(sourceDir, source, target);
+            }
+            @Override
+            public java.nio.file.FileVisitResult visitFile(Path sourceFile,
+                    java.nio.file.attribute.BasicFileAttributes attrs) throws IOException {
+                return copyFileOrEmptyDir(sourceFile, source, target);
+            }
+        });
+    }
+
+    private static boolean renameDirectoryWithOptionalFallbackToCopy(
+            File oldDirectory, File newDirectory, boolean allowCopyFallback) {
+        if (oldDirectory.renameTo(newDirectory)) {
+            return true;
+        }
+
+        if (!allowCopyFallback) {
+            return false;
+        }
+
+        if (!oldDirectory.isDirectory()) {
+            return false;
+        }
+        if (newDirectory.exists()
+                && (!newDirectory.isDirectory() || newDirectory.listFiles().length > 0)) {
+            return false;
+        }
+
+        final Path oldPath = oldDirectory.toPath();
+        final Path newPath = newDirectory.toPath();
+        Log.v(TAG, "Recovering failed rename from " + oldPath + " to " + newPath);
+        try {
+            copyContentsAndDir(oldPath, newPath);
+        } catch (IOException e) {
+            Log.v(TAG, "Failed to recover rename: ", e);
+            return false;
+        }
+        deleteRecursively(oldDirectory);
+        return true;
+    }
+
     /**
      * Asserts can rename directory.
      */
     public static void assertCanRenameDirectory(File oldDirectory, File newDirectory,
             @Nullable File[] oldFilesList, @Nullable File[] newFilesList) {
-        assertThat(oldDirectory.renameTo(newDirectory)).isTrue();
+        assertCanRenameDirectory(oldDirectory, newDirectory, oldFilesList, newFilesList,
+                false /* allowCopyFallback */);
+    }
+
+    /**
+     * Asserts can rename directory. When {@code allowCopyFallback} is true and the simple rename
+     * fails, falls back to recursively copying {@code oldDirectory} into {@code newDirectory}.
+     * Note that the file attributes will not be copied on the fallback.
+     */
+    public static void assertCanRenameDirectory(File oldDirectory, File newDirectory,
+            @Nullable File[] oldFilesList, @Nullable File[] newFilesList,
+            boolean allowCopyFallback) {
+        assertThat(renameDirectoryWithOptionalFallbackToCopy(
+                    oldDirectory, newDirectory, allowCopyFallback)).isTrue();
         assertThat(oldDirectory.exists()).isFalse();
         assertThat(newDirectory.exists()).isTrue();
         for (File file : oldFilesList != null ? oldFilesList : new File[0]) {
