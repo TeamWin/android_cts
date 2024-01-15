@@ -275,14 +275,19 @@ public class ScopedStorageTestHelper extends Activity {
     private Intent queryMediaByUri(String queryType) {
         final Intent intent = new Intent(queryType);
         final Uri uri = getIntent().getParcelableExtra(INTENT_EXTRA_URI);
-        final Bundle projection = getIntent().getBundleExtra(INTENT_EXTRA_ARGS);
+        final Bundle projectionBundle = getIntent().getBundleExtra(INTENT_EXTRA_ARGS);
+
+        String[] projection = null;
+        if (projectionBundle != null && !projectionBundle.isEmpty()) {
+            projection = projectionBundle.keySet().toArray(new String[0]);
+        }
 
         try (Cursor c = getContentResolver()
-                .query(uri, projection.keySet().toArray(new String[0]), null, null)) {
+                .query(uri, projection, null, null)) {
             final Bundle result = new Bundle();
             if (c.getCount() == 1) {
                 c.moveToFirst();
-                for (String column : projection.keySet()) {
+                for (String column : c.getColumnNames()) {
                     result.putString(column, c.getString(c.getColumnIndex(column)));
                 }
             } else {
