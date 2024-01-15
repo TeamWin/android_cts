@@ -67,12 +67,17 @@ public class HiddenApiTest extends AbstractApiTest {
     private final static Predicate<DexMember> FIELD_FILTER =
             dexMember -> (dexMember instanceof DexField);
 
+    // All tests here are currently skipped. If any gets enabled, the timeout
+    // for the first test to run needs to be sufficiently large on it to allow
+    // for loadFilters() to complete.
     @Test(timeout = 900000)
+    @Ignore("b/301075649")
     public void testSignatureMethodsThroughReflection() {
         doTestSignature(METHOD_FILTER,/* reflection= */ true, /* jni= */ false);
     }
 
     @Test
+    @Ignore("b/301075649")
     public void testSignatureMethodsThroughJni() {
         doTestSignature(METHOD_FILTER, /* reflection= */ false, /* jni= */ true);
     }
