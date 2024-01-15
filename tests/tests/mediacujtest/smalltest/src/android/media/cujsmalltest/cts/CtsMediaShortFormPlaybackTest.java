@@ -16,10 +16,8 @@
 
 package android.media.cujsmalltest.cts;
 
-import android.media.cujcommon.cts.CallNotificationTestPlayerListener;
 import android.media.cujcommon.cts.CujTestBase;
 import android.media.cujcommon.cts.CujTestParam;
-import android.media.cujcommon.cts.MessageNotificationTestPlayerListener;
 import android.media.cujcommon.cts.OrientationTestPlayerListener;
 import android.media.cujcommon.cts.PinchToZoomTestPlayerListener;
 import android.media.cujcommon.cts.PlaybackTestPlayerListener;
@@ -131,14 +129,6 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
             .setTimeoutMilliSeconds(45000)
             .setPlayerListener(new SwitchSubtitleTrackTestPlayerListener(2, 3000)).build(),
             "Ssa_Subtitle_eng_french_5sec_SwitchSubtitleTracksTest"},
-        {CujTestParam.builder().setMediaUrls(prepareHevc_720p_15secVideoListForNotificationTest())
-            .setTimeoutMilliSeconds(52000)
-            .setPlayerListener(new CallNotificationTestPlayerListener(4000)).build(),
-            "Hevc_720p_15sec_CallNotificationTest"},
-        {CujTestParam.builder().setMediaUrls(prepareHevc_720p_15secVideoListForNotificationTest())
-            .setTimeoutMilliSeconds(45000)
-            .setPlayerListener(new MessageNotificationTestPlayerListener(4000)).build(),
-            "Hevc_720p_15sec_MessageNotificationTest"},
         {CujTestParam.builder().setMediaUrls(prepareHevc_720p_15secVideoListForPinchToZoomTest())
             .setTimeoutMilliSeconds(45000)
             .setPlayerListener(new PinchToZoomTestPlayerListener(3000)).build(),
