@@ -32,6 +32,8 @@ import android.hardware.input.VirtualMouse;
 import android.hardware.input.VirtualMouseConfig;
 import android.hardware.input.VirtualNavigationTouchpad;
 import android.hardware.input.VirtualNavigationTouchpadConfig;
+import android.hardware.input.VirtualStylus;
+import android.hardware.input.VirtualStylusConfig;
 import android.hardware.input.VirtualTouchscreen;
 import android.hardware.input.VirtualTouchscreenConfig;
 import android.os.Handler;
@@ -120,6 +122,25 @@ public final class VirtualInputDeviceCreator {
                 navigationTouchpadConfig);
     }
 
+    public static VirtualStylus createStylus(VirtualDevice virtualDevice, String name,
+            VirtualDisplay display) {
+        final Point size = VirtualDisplayCreator.getDisplaySize(display);
+        return createStylus(virtualDevice, name, size.x, size.y,
+                display.getDisplay().getDisplayId());
+    }
+
+    public static VirtualStylus createStylus(VirtualDevice virtualDevice, String name,
+            int width, int height, int displayId) {
+        final VirtualStylusConfig config =
+                new VirtualStylusConfig.Builder(width, height)
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setInputDeviceName(name)
+                        .setAssociatedDisplayId(displayId)
+                        .build();
+        return virtualDevice.createVirtualStylus(config);
+    }
+
     public static void prepareInputDevice(InputManager inputManager, Runnable deviceCreator) {
         try (InputDeviceWaiter waiter = new InputDeviceWaiter(inputManager)) {
             deviceCreator.run();
@@ -136,6 +157,14 @@ public final class VirtualInputDeviceCreator {
             String name, VirtualDisplay display) {
         VirtualTouchscreen[] devices = new VirtualTouchscreen[1];
         prepareInputDevice(() -> devices[0] = createTouchscreen(virtualDevice, name, display));
+        assertThat(devices[0]).isNotNull();
+        return devices[0];
+    }
+
+    public static VirtualStylus createAndPrepareStylus(VirtualDevice virtualDevice,
+            String name, VirtualDisplay display) {
+        VirtualStylus[] devices = new VirtualStylus[1];
+        prepareInputDevice(() -> devices[0] = createStylus(virtualDevice, name, display));
         assertThat(devices[0]).isNotNull();
         return devices[0];
     }
