@@ -254,12 +254,27 @@ public final class RemoteControlPassthrough {
         for (Integer userControlPressKey : mUserControlPressKeys_20.keySet()) {
             hdmiCecClient.sendUserControlPressAndRelease(
                     sourceDevice, dutLogicalAddress, userControlPressKey, false);
+            // KEYCODE_SETUP_MENU might trigger the notification panel quitting the activity
+            // HdmiCecKeyEventCapture.
+            if (userControlPressKey == HdmiCecConstants.CEC_KEYCODE_SETUP_MENU) {
+                try {
+                    LogHelper.waitForLog(device, "ActivityTaskManager", 5,
+                            "TOGGLE_NOTIFICATION_HANDLER_PANEL");
+                    // HdmiCecKeyEventCapture activity should be resumed.
+                    device.executeShellCommand(START_COMMAND);
+                    continue;
+                } catch (Exception e) {
+                    // We have to send the key again since logcat was cleared.
+                    hdmiCecClient.sendUserControlPressAndRelease(
+                            sourceDevice, dutLogicalAddress, userControlPressKey, false);
+                }
+            }
             LogHelper.assertLog(
                     device,
                     CLASS,
                     "Short press KEYCODE_" + mUserControlPressKeys_20.get(userControlPressKey));
             // KEYCODE_HOME pressing will let the activity HdmiCecKeyEventCapture be paused.
-            // Resume the activity after tesing for KEYCODE_HOME pressing.
+            // Resume the activity after testing for KEYCODE_HOME pressing.
             if (userControlPressKey == HdmiCecConstants.CEC_KEYCODE_ROOT_MENU) {
                 device.executeShellCommand(START_COMMAND);
             }
