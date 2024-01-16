@@ -16,20 +16,31 @@
 
 package android.media.audio.cts;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
+
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.audiofx.AudioEffect;
 import android.os.Looper;
-import android.test.AndroidTestCase;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.runner.RunWith;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class PostProcTestBase extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class PostProcTestBase {
     private static final int CONTROL_PRIORITY = 100;
-
     protected int mSession = -1;
     protected boolean mHasControl = false;
     protected boolean mIsEnabled = false;
@@ -42,14 +53,17 @@ public class PostProcTestBase extends AndroidTestCase {
 
     private Map<UUID, Boolean> mOriginalEffectState = new HashMap<>();
 
+    protected static Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
     /**
      * All potential effects under test are disabled at setup.
      * Initial state is backuped, restored in tearDown
      * @throws Exception
      */
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
 
         final UUID[] effectTypes = {
                 AudioEffect.EFFECT_TYPE_BASS_BOOST,
@@ -75,13 +89,15 @@ public class PostProcTestBase extends AndroidTestCase {
             } catch (IllegalStateException e) {
             } catch (IllegalArgumentException e) {
             } catch (UnsupportedOperationException e) {
+            } catch (RuntimeException e) {
+                assumeFalse("skipping for instant",
+                        getContext().getPackageManager().isInstantApp());
             }
         }
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @After
+    public void tearDown() throws Exception {
         for (Map.Entry<UUID, Boolean> entry : mOriginalEffectState.entrySet()) {
             try {
                 AudioEffect effect = new AudioEffect(entry.getKey(),

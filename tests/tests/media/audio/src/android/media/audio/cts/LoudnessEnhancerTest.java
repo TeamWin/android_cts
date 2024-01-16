@@ -16,6 +16,12 @@
 
 package android.media.audio.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -26,6 +32,8 @@ import android.media.audiofx.Visualizer.MeasurementPeakRms;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
+import org.junit.Test;
+
 import java.util.UUID;
 
 @AppModeFull(reason = "Dynamic config disabled.")
@@ -33,6 +41,8 @@ public class LoudnessEnhancerTest extends PostProcTestBase {
 
     private String TAG = "LoudnessEnhancerTest";
     private LoudnessEnhancer mLE;
+
+    private static final float EPSILON = 0.00001f;
 
     //-----------------------------------------------------------------
     // LOUDNESS ENHANCER TESTS:
@@ -43,6 +53,7 @@ public class LoudnessEnhancerTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 0.0: test constructor and release
+    @Test
     public void test0_0ConstructorAndRelease() throws Exception {
         if (!hasAudioOutput()) {
             return;
@@ -63,6 +74,7 @@ public class LoudnessEnhancerTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 1.0: test set/get target gain
+    @Test
     public void test1_0TargetGain() throws Exception {
         if (!hasAudioOutput()) {
             return;
@@ -70,9 +82,11 @@ public class LoudnessEnhancerTest extends PostProcTestBase {
         getLoudnessEnhancer(0);
         try {
             mLE.setTargetGain(0);
-            assertEquals("target gain differs from value set", 0.0f, mLE.getTargetGain());
+            assertEquals("target gain differs from value set",
+                    0.0f, mLE.getTargetGain(), EPSILON);
             mLE.setTargetGain(800);
-            assertEquals("target gain differs from value set", 800.0f, mLE.getTargetGain());
+            assertEquals("target gain differs from value set",
+                    800.0f, mLE.getTargetGain(), EPSILON);
         } catch (IllegalArgumentException e) {
             fail("target gain illegal argument");
         } catch (UnsupportedOperationException e) {
@@ -89,6 +103,7 @@ public class LoudnessEnhancerTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 2.0: test setEnabled() and getEnabled() in valid state
+    @Test
     public void test2_0SetEnabledGetEnabled() throws Exception {
         if (!hasAudioOutput()) {
             return;
@@ -108,6 +123,7 @@ public class LoudnessEnhancerTest extends PostProcTestBase {
     }
 
     //Test case 2.1: test setEnabled() throws exception after release
+    @Test
     public void test2_1SetEnabledAfterRelease() throws Exception {
         if (!hasAudioOutput()) {
             return;
@@ -129,6 +145,7 @@ public class LoudnessEnhancerTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 3.0: test loudness gain change in audio
+    @Test
     public void test3_0MeasureGainChange() throws Exception {
         if (!hasAudioOutput()) {
             return;
@@ -191,7 +208,7 @@ public class LoudnessEnhancerTest extends PostProcTestBase {
             //run for a new set of 3 seconds, get new measurement
             mLE.setTargetGain(LOUDNESS_GAIN);
             assertEquals("target gain differs from value set", (float)LOUDNESS_GAIN,
-                    mLE.getTargetGain());
+                    mLE.getTargetGain(), EPSILON);
 
             mLE.setEnabled(true);
 
