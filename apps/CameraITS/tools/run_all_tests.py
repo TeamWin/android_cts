@@ -889,11 +889,12 @@ def main():
             output = subprocess.run(cmd, stdout=fp)
           # pylint: enable=subprocess-run-check
 
-          # Parse mobly logs to determine PASS/FAIL/SKIP & socket FAILs
+          # Parse mobly logs to determine PASS/FAIL(*)/SKIP & socket FAILs
           with open(
               os.path.join(topdir, MOBLY_TEST_SUMMARY_TXT_FILE), 'r') as file:
             test_code = output.returncode
             test_skipped = False
+            test_not_yet_mandated = False
             test_mpc_req = ''
             content = file.read()
 
@@ -916,12 +917,18 @@ def main():
               test_skipped = True
               break
 
+            if its_session_utils.NOT_YET_MANDATED_MESSAGE in content:
+              return_string = 'FAIL*'
+              num_not_mandated_fail += 1
+              test_not_yet_mandated = True
+              break
+
             if test_code == 0 and not test_skipped:
               return_string = 'PASS '
               num_pass += 1
               break
 
-            if test_code == 1:
+            if test_code == 1 and not test_not_yet_mandated:
               return_string = 'FAIL '
               if 'Problem with socket' in content and num_try != NUM_TRIES-1:
                 logging.info('Retry %s/%s', s, test)
@@ -1003,11 +1010,11 @@ def main():
   lighting_cntl = test_params_content.get('lighting_cntl', 'None')
   lighting_ch = test_params_content.get('lighting_ch', 'None')
   arduino_serial_port = lighting_control_utils.lighting_control(
-    lighting_cntl, lighting_ch)
+      lighting_cntl, lighting_ch)
 
   # turn OFF lights
   lighting_control_utils.set_lighting_state(
-    arduino_serial_port, lighting_ch, 'OFF')
+      arduino_serial_port, lighting_ch, 'OFF')
 
   if num_testbeds is not None:
     if testbed_index == _MAIN_TESTBED:

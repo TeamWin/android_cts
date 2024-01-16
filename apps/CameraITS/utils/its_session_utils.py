@@ -52,6 +52,7 @@ LEGACY_TABLET_NAME = 'dragon'
 TABLET_REQUIREMENTS_URL = 'https://source.android.com/docs/compatibility/cts/camera-its-box#tablet-requirements'
 BRIGHTNESS_ERROR_MSG = ('Tablet brightness not set as per '
                         f'{TABLET_REQUIREMENTS_URL} in the config file')
+NOT_YET_MANDATED_MESSAGE = 'Not yet mandated test'
 
 _VALIDATE_LIGHTING_PATCH_H = 0.05
 _VALIDATE_LIGHTING_PATCH_W = 0.05
@@ -2230,3 +2231,13 @@ def get_media_performance_class(device_id):
 def raise_mpc_assertion_error(required_mpc, test_name, found_mpc):
   raise AssertionError(f'With MPC >= {required_mpc}, {test_name} must be run. '
                        f'Found MPC: {found_mpc}')
+
+
+def raise_not_yet_mandated_error(message, api_level, mandated_api_level):
+  if api_level >= mandated_api_level:
+    raise AssertionError(
+        f'Test is mandated for API level {mandated_api_level} or above. '
+        f'Found API level {api_level}.\n\n{message}'
+    )
+  else:
+    raise AssertionError(f'{NOT_YET_MANDATED_MESSAGE}\n\n{message}')
