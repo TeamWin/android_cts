@@ -29,24 +29,28 @@ import its_session_utils
 _RAD_TO_DEG = 180/math.pi
 _GYRO_DRIFT_THRESH = 0.01*_RAD_TO_DEG  # PASS/FAIL for gyro accumulated drift
 _GYRO_MEAN_THRESH = 0.01*_RAD_TO_DEG  # PASS/FAIL for gyro mean drift
-_GYRO_VAR_THRESH = 0.001*_RAD_TO_DEG**2  # PASS/FAIL for gyro variance drift
+_GYRO_VAR_ATOL = 1E-7  # rad^2/sec^2/Hz from CDD C-1-7
 _IMU_EVENTS_WAIT_TIME = 30  # seconds
 _NAME = os.path.basename(__file__).split('.')[0]
 _NSEC_TO_SEC = 1E-9
 _RV_DRIFT_THRESH = 0.01*_RAD_TO_DEG  # PASS/FAIL for rotation vector drift
 
 
-def log_effective_sampling_rate(times, sensor):
-  """Log the effective sampling rate for gyro & RV.
+def calc_effective_sampling_rate(times, sensor):
+  """Calculate the effective sampling rate for gyro & RV.
 
   Args:
     times: array/list of times
     sensor: string of sensor type
+
+  Returns:
+    effective_sampling_rate
   """
   duration = times[-1] - times[0]
   num_pts = len(times)
   logging.debug('%s time: %.2fs, num_pts: %d, effective samping rate: %.2f Hz',
                 sensor, duration, num_pts, num_pts/duration)
+  return num_pts/duration
 
 
 def define_3axis_plot(x, y, z, t, plot_name):
@@ -212,7 +216,8 @@ class ImuDriftTest(its_base_test.ItsBaseTest):
     # process gyro data
     x_gyro, y_gyro, z_gyro, times = convert_events_to_arrays(
         gyro_events, _NSEC_TO_SEC, _RAD_TO_DEG)
-    log_effective_sampling_rate(times, 'gyro')  # SENSOR_DELAY_FASTEST
+    # gyro sampling rate is SENSOR_DELAY_FASTEST in ItsService.java
+    gyro_sampling_rate = calc_effective_sampling_rate(times, 'gyro')
 
     plot_raw_gyro_data(x_gyro, y_gyro, z_gyro, times, self.log_path)
     do_riemann_sums(x_gyro, y_gyro, z_gyro, times, self.log_path)
@@ -220,12 +225,14 @@ class ImuDriftTest(its_base_test.ItsBaseTest):
     # process rotation vector data
     x_rv, y_rv, z_rv, t_rv = convert_events_to_arrays(
         rv_events, _NSEC_TO_SEC, 1)
-    log_effective_sampling_rate(t_rv, 'RV')  # SENSOR_DELAY_FASTEST
+    # Rotation Vector sampling rate is SENSOR_DELAY_FASTEST in ItsService.java
+    calc_effective_sampling_rate(t_rv, 'RV')
 
     # plot rotation vector data
     plot_rotation_vector_data(x_rv, y_rv, z_rv, t_rv, self.log_path)
 
     # assert correct gyro behavior
+    gyro_var_atol = _GYRO_VAR_ATOL * gyro_sampling_rate * _RAD_TO_DEG**2
     for i, samples in enumerate([x_gyro, y_gyro, z_gyro]):
       gyro_mean = samples.mean()
       gyro_var = np.var(samples)
@@ -234,8 +241,9 @@ class ImuDriftTest(its_base_test.ItsBaseTest):
       if gyro_mean >= _GYRO_MEAN_THRESH:
         raise AssertionError(f'gyro_mean: {gyro_mean}.3e, '
                              f'TOL={_GYRO_MEAN_THRESH}')
-      if gyro_var >= _GYRO_VAR_THRESH:
-        raise AssertionError(f'gyro_var: {gyro_var}.3e, TOL={_GYRO_VAR_THRESH}')
+      if gyro_var >= gyro_var_atol:
+        raise AssertionError(f'gyro_var: {gyro_var}.3e, '
+                             f'ATOL={gyro_var_atol}.3e')
 
 
 if __name__ == '__main__':
