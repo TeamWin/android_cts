@@ -87,6 +87,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     private static final String ANSWER = "Answer";
     private static final String SET_INACTIVE = "SetInactive";
     private static final String DISCONNECT = "Disconnect";
+    private static final String SET_MUTE_STATE = "SetMuteState";
 
     // CallControlCallback
     private static final String ON_SET_ACTIVE = "OnSetActive";
@@ -239,7 +240,14 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         Log.i(TAG, "tearDown");
         if (mShouldTestTelecom) {
             cleanup();
-            mNotificationManager.deleteNotificationChannel(CALL_CHANNEL_ID); // tear down channel
+            try {
+                mNotificationManager.deleteNotificationChannel(CALL_CHANNEL_ID);
+            } catch (Exception e) {
+                // If there is an issue with deleting the notification channel, this should not
+                // cause the Telecom test to fail.
+                Log.w(TAG, String.format("tearDown: hit exception=[%s] while trying to delete"
+                        + " Telecom CTS Notification Channel", e));
+            }
         }
         super.tearDown();
     }
@@ -842,7 +850,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     @ApiTest(apis = {"android.telecom.TelecomManager#addCall",
             "android.telecom.CallControl#disconnect",
             "android.telecom.CallEventCallback#onMuteStateChanged"})
-    public void testMuteState() {
+    public void testGetMuteState() {
         if (!mShouldTestTelecom) {
             return;
         }
@@ -852,6 +860,37 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             assertFalse(mCall1.mEvents.mWasMuteStateChangedCalled);
             startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
             verifyMuteStateCallbackWasCalled(true, mCall1);
+            callControlAction(DISCONNECT, mCall1);
+        } finally {
+            cleanup();
+        }
+    }
+
+
+    /**
+     * test {@link CallControl#setMuteState(boolean, Executor, OutcomeReceiver)} changes the mute
+     * state of a call.
+     */
+    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @ApiTest(apis = {"android.telecom.TelecomManager#addCall",
+            "android.telecom.CallControl#disconnect",
+            "android.telecom.CallControl#setActive",
+            "android.telecom.CallControl#setMuteState",
+            "android.telecom.CallEventCallback#onMuteStateChanged"})
+    public void testSetMuteState() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        try {
+            cleanup();
+            mCall1.resetAllCallbackVerifiers();
+            assertFalse(mCall1.mEvents.mWasMuteStateChangedCalled);
+            startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
+            callControlAction(SET_ACTIVE, mCall1);
+            callControlAction(SET_MUTE_STATE, mCall1, true /* isMuted */);
+            waitUntilMuteStateIs(true /* isMuted */, mCall1);
+            callControlAction(SET_MUTE_STATE, mCall1, false /* isMuted */);
+            waitUntilMuteStateIs(false /* isMuted */, mCall1);
             callControlAction(DISCONNECT, mCall1);
         } finally {
             cleanup();
@@ -1039,6 +1078,25 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, FAIL_MSG_ON_MUTE_STATE_CHANGED);
     }
 
+
+    private void waitUntilMuteStateIs(boolean expected, TelecomCtsVoipCall call) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return expected;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return call.mEvents.isMuted();
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, expected
+                        ? "Wanted mute state to be <MUTED> but never reached the <MUTE> state" :
+                        "Wanted mute state to be <UN-MUTED> but never reached <UN-MUTED> state");
+    }
+
     public void requestAndAssertEndpointChange(TelecomCtsVoipCall call, CallEndpoint endpoint) {
         final CountDownLatch latch = new CountDownLatch(1);
         final android.telecom.cts.TelecomCtsVoipCall.LatchedOutcomeReceiver outcome =
@@ -1109,10 +1167,6 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        if (isArgumentAvailable(objects)) {
-            disconnectCause = new DisconnectCause((int) objects[0]);
-        }
-
         switch (action) {
             case SET_ACTIVE:
                 call.mCallControl.setActive(Runnable::run, outcome);
@@ -1127,7 +1181,17 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             case SET_INACTIVE:
                 call.mCallControl.setInactive(Runnable::run, outcome);
                 break;
+            case SET_MUTE_STATE:
+                boolean isMuted = false;
+                if (isArgumentAvailable(objects)) {
+                    isMuted = (boolean) objects[0];
+                }
+                call.mCallControl.setMuteState(isMuted, Runnable::run, outcome);
+                break;
             case DISCONNECT:
+                if (isArgumentAvailable(objects)) {
+                    disconnectCause = new DisconnectCause((int) objects[0]);
+                }
                 call.mCallControl.disconnect(disconnectCause, Runnable::run, outcome);
                 break;
             default:
