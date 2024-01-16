@@ -16,10 +16,16 @@
 
 package android.media.audio.cts;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.media.audiofx.HapticGenerator;
 import android.platform.test.annotations.AppModeSdkSandbox;
 
 import com.android.compatibility.common.util.NonMainlineTest;
+
+import org.junit.Test;
 
 @NonMainlineTest
 @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
@@ -36,6 +42,7 @@ public class HapticGeneratorTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 0.0: test constructor and release
+    @Test
     public void test0_0ConstructorAndRelease() throws Exception {
         if (!HapticGenerator.isAvailable()) {
             // HapticGenerator will only be created on devices supporting haptic playback
@@ -47,6 +54,7 @@ public class HapticGeneratorTest extends PostProcTestBase {
     }
 
     // Test case 0.1: test constructor and close
+    @Test
     public void test0_1ConstructorAndClose() throws Exception {
         if (!HapticGenerator.isAvailable()) {
             // HapticGenerator will only be created on devices supporting haptic playback
@@ -62,6 +70,7 @@ public class HapticGeneratorTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 1.0: test setEnabled() and getEnabled() in valid state
+    @Test
     public void test1_0SetEnabledGetEnabled() throws Exception {
         if (!HapticGenerator.isAvailable()) {
             // HapticGenerator will only be created on devices supporting haptic playback

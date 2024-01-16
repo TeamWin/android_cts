@@ -16,6 +16,11 @@
 
 package android.media.audio.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -26,6 +31,8 @@ import android.media.audiofx.Visualizer.MeasurementPeakRms;
 import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
+
+import org.junit.Test;
 
 import java.util.UUID;
 
@@ -54,6 +61,7 @@ public class VisualizerTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 0.0: test constructor and release
+    @Test
     public void test0_0ConstructorAndRelease() throws Exception {
         Visualizer visualizer = null;
         try {
@@ -75,6 +83,7 @@ public class VisualizerTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 1.0: capture rates
+    @Test
     public void test1_0CaptureRates() throws Exception {
         getVisualizer(0);
         try {
@@ -94,6 +103,7 @@ public class VisualizerTest extends PostProcTestBase {
     }
 
     //Test case 1.1: test capture size
+    @Test
     public void test1_1CaptureSize() throws Exception {
         getVisualizer(0);
         try {
@@ -124,6 +134,7 @@ public class VisualizerTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 2.0: test capture in polling mode
+    @Test
     public void test2_0PollingCapture() throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG,"AUDIO_OUTPUT feature not found. This system might not have a valid "
@@ -156,6 +167,7 @@ public class VisualizerTest extends PostProcTestBase {
     }
 
     //Test case 2.1: test capture with listener
+    @Test
     public void test2_1ListenerCapture() throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG,"AUDIO_OUTPUT feature not found. This system might not have a valid "
@@ -218,6 +230,7 @@ public class VisualizerTest extends PostProcTestBase {
     }
 
     //Test case 2.2: test capture with illegal size
+    @Test
     public void test2_2IllegalCaptureSize() throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG, "AUDIO_OUTPUT feature not found. This system might not have a valid "
@@ -246,6 +259,7 @@ public class VisualizerTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 3.0: test setting NONE measurement mode
+    @Test
     public void test3_0MeasurementModeNone() throws Exception {
         if (!hasAudioOutput()) {
             return;
@@ -278,6 +292,7 @@ public class VisualizerTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 4.0: test setting peak / RMS measurement mode
+    @Test
     public void test4_0MeasurementModePeakRms() throws Exception {
         if (!hasAudioOutput()) {
             return;
@@ -306,6 +321,7 @@ public class VisualizerTest extends PostProcTestBase {
     }
 
     //Test case 4.1: test measurement of peak / RMS
+    @Test
     public void test4_1MeasurePeakRms() throws Exception {
         if (!hasAudioOutput()) {
             return;
@@ -379,6 +395,7 @@ public class VisualizerTest extends PostProcTestBase {
     }
 
     //Test case 4.2: test measurement of peak / RMS in Long MP3
+    @Test
     public void test4_2MeasurePeakRmsLongMP3() throws Exception {
         if (!hasAudioOutput()) {
             return;

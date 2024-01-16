@@ -16,6 +16,12 @@
 
 package android.media.audio.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -32,9 +38,11 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.NonMainlineTest;
 
+import org.junit.Test;
+
 import java.util.UUID;
 
-@AppModeFull(reason = "Dynamic congic not supported")
+@AppModeFull(reason = "Dynamic config not supported")
 @NonMainlineTest
 public class AudioEffectTest extends PostProcTestBase {
 
@@ -61,7 +69,7 @@ public class AudioEffectTest extends PostProcTestBase {
     //----------------------------------
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         super.tearDown();
         releaseEffect();
         terminateMediaPlayerLooper();
@@ -73,6 +81,7 @@ public class AudioEffectTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 0.0: test queryEffects() and platfrom at least provides an Equalizer
+    @Test
     public void test0_0QueryEffects() throws Exception {
 
         AudioEffect.Descriptor[] desc = AudioEffect.queryEffects();
@@ -130,6 +139,7 @@ public class AudioEffectTest extends PostProcTestBase {
 //    Note: This test was removed because it used hidden api's.
 
     //Test case 1.3: test getEnabled() failure when called on released effect
+    @Test
     public void test1_3GetEnabledAfterRelease() throws Exception {
         try {
             AudioEffect effect = new AudioEffect(AudioEffect.EFFECT_TYPE_EQUALIZER,
@@ -152,10 +162,11 @@ public class AudioEffectTest extends PostProcTestBase {
     }
 
     //Test case 1.4: test contructor on mediaPlayer audio session
+    @Test
     public void test1_4InsertOnMediaPlayer() throws Exception {
         MediaPlayer mp = new MediaPlayer();
         assertNotNull("could not create mediaplayer", mp);
-        AssetFileDescriptor afd = mContext.getResources().openRawResourceFd(R.raw.testmp3);
+        AssetFileDescriptor afd = getContext().getResources().openRawResourceFd(R.raw.testmp3);
         try {
             mp.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
         } finally {
@@ -174,6 +185,7 @@ public class AudioEffectTest extends PostProcTestBase {
     }
 
     //Test case 1.5: test auxiliary effect attachement on MediaPlayer
+    @Test
     public void test1_5AuxiliaryOnMediaPlayer() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -184,7 +196,7 @@ public class AudioEffectTest extends PostProcTestBase {
             waitForLooperInitialization_l();
 
             mError = 0;
-            AssetFileDescriptor afd = mContext.getResources().openRawResourceFd(R.raw.testmp3);
+            AssetFileDescriptor afd = getContext().getResources().openRawResourceFd(R.raw.testmp3);
             try {
                 mMediaPlayer.setDataSource(afd.getFileDescriptor(),
                                            afd.getStartOffset(),
@@ -212,6 +224,7 @@ public class AudioEffectTest extends PostProcTestBase {
     }
 
     //Test case 1.6: test auxiliary effect attachement failure before setDatasource
+    @Test
     public void test1_6AuxiliaryOnMediaPlayerFailure() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -246,6 +259,7 @@ public class AudioEffectTest extends PostProcTestBase {
 
 
     //Test case 1.7: test auxiliary effect attachement on AudioTrack
+    @Test
     public void test1_7AuxiliaryOnAudioTrack() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -290,6 +304,7 @@ public class AudioEffectTest extends PostProcTestBase {
 
 
     //Test case 2.0: test setEnabled() and getEnabled() in valid state
+    @Test
     public void test2_0SetEnabledGetEnabled() throws Exception {
         try {
             AudioEffect effect = new AudioEffect(AudioEffect.EFFECT_TYPE_EQUALIZER,
@@ -317,6 +332,7 @@ public class AudioEffectTest extends PostProcTestBase {
     }
 
     //Test case 2.1: test setEnabled() throws exception after release
+    @Test
     public void test2_1SetEnabledAfterRelease() throws Exception {
         try {
             AudioEffect effect = new AudioEffect(AudioEffect.EFFECT_TYPE_EQUALIZER,
@@ -343,6 +359,7 @@ public class AudioEffectTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 3.0: test setParameter(byte[], byte[]) / getParameter(byte[], byte[])
+    @Test
     public void test3_0SetParameterByteArrayByteArray() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -377,6 +394,7 @@ public class AudioEffectTest extends PostProcTestBase {
     }
 
     //Test case 3.1: test setParameter(int, int) / getParameter(int, int[])
+    @Test
     public void test3_1SetParameterIntInt() throws Exception {
         if (!isEnvReverbAvailable()) {
             return;
@@ -411,6 +429,7 @@ public class AudioEffectTest extends PostProcTestBase {
     }
 
     //Test case 3.2: test setParameter(int, short) / getParameter(int, short[])
+    @Test
     public void test3_2SetParameterIntShort() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -443,6 +462,7 @@ public class AudioEffectTest extends PostProcTestBase {
     }
 
     //Test case 3.3: test setParameter(int, byte[]) / getParameter(int, byte[])
+    @Test
     public void test3_3SetParameterIntByteArray() throws Exception {
         if (!isEnvReverbAvailable()) {
             return;
@@ -479,6 +499,7 @@ public class AudioEffectTest extends PostProcTestBase {
     }
 
     //Test case 3.4: test setParameter(int[], int[]) / getParameter(int[], int[])
+    @Test
     public void test3_4SetParameterIntArrayIntArray() throws Exception {
         if (!isEnvReverbAvailable()) {
             return;
@@ -516,6 +537,7 @@ public class AudioEffectTest extends PostProcTestBase {
 
     //Test case 3.5: test setParameter(int[], short[]) / getParameter(int[], short[])
 
+    @Test
     public void test3_5SetParameterIntArrayShortArray() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -550,6 +572,7 @@ public class AudioEffectTest extends PostProcTestBase {
     }
 
     //Test case 3.6: test setParameter(int[], byte[]) / getParameter(int[], byte[])
+    @Test
     public void test3_6SetParameterIntArrayByteArray() throws Exception {
         if (!isEnvReverbAvailable()) {
             return;
@@ -587,6 +610,7 @@ public class AudioEffectTest extends PostProcTestBase {
     }
 
     //Test case 3.7: test setParameter() throws exception after release()
+    @Test
     public void test3_7SetParameterAfterRelease() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -615,6 +639,7 @@ public class AudioEffectTest extends PostProcTestBase {
     }
 
     //Test case 3.8: test getParameter() throws exception after release()
+    @Test
     public void test3_8GetParameterAfterRelease() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -648,6 +673,7 @@ public class AudioEffectTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 4.0: test control passed to higher priority client
+    @Test
     public void test4_0setEnabledLowerPriority() throws Exception {
         AudioEffect effect1 = null;
         AudioEffect effect2 = null;
@@ -686,6 +712,7 @@ public class AudioEffectTest extends PostProcTestBase {
     }
 
     //Test case 4.1: test control passed to higher priority client
+    @Test
     public void test4_1setParameterLowerPriority() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -738,6 +765,7 @@ public class AudioEffectTest extends PostProcTestBase {
     }
 
     //Test case 4.2: test control status listener
+    @Test
     public void test4_2ControlStatusListener() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -763,6 +791,7 @@ public class AudioEffectTest extends PostProcTestBase {
     }
 
     //Test case 4.3: test enable status listener
+    @Test
     public void test4_3EnableStatusListener() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -792,6 +821,7 @@ public class AudioEffectTest extends PostProcTestBase {
     }
 
     //Test case 4.4: test parameter changed listener
+    @Test
     public void test4_4ParameterChangedListener() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -828,6 +858,7 @@ public class AudioEffectTest extends PostProcTestBase {
 
 
     //Test case 5.0: test command method
+    @Test
     public void test5_0Command() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
