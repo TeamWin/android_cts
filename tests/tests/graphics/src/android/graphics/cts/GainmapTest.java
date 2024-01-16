@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -34,10 +35,14 @@ import android.graphics.ColorSpace;
 import android.graphics.Gainmap;
 import android.graphics.ImageDecoder;
 import android.graphics.Rect;
+import android.hardware.HardwareBuffer;
 import android.os.Parcel;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -48,8 +53,6 @@ import org.junit.runner.RunWith;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.function.Function;
-
-import junitparams.JUnitParamsRunner;
 
 @SmallTest
 @RunWith(JUnitParamsRunner.class)
@@ -112,13 +115,21 @@ public class GainmapTest {
     private void checkGainmap(Bitmap bitmap) throws Exception {
         assertNotNull(bitmap);
         assertTrue("Missing gainmap", bitmap.hasGainmap());
-        assertEquals(Bitmap.Config.ARGB_8888, bitmap.getConfig());
+        if (bitmap.getConfig() == Bitmap.Config.HARDWARE) {
+            assertEquals(HardwareBuffer.RGBA_8888, bitmap.getHardwareBuffer().getFormat());
+        } else {
+            assertEquals(Bitmap.Config.ARGB_8888, bitmap.getConfig());
+        }
         assertEquals(ColorSpace.Named.SRGB.ordinal(), bitmap.getColorSpace().getId());
         Gainmap gainmap = bitmap.getGainmap();
         assertNotNull(gainmap);
         Bitmap gainmapData = gainmap.getGainmapContents();
         assertNotNull(gainmapData);
-        assertEquals(Bitmap.Config.ARGB_8888, gainmapData.getConfig());
+        if (bitmap.getConfig() == Bitmap.Config.HARDWARE) {
+            assertEquals(HardwareBuffer.RGBA_8888, gainmapData.getHardwareBuffer().getFormat());
+        } else {
+            assertEquals(Bitmap.Config.ARGB_8888, gainmapData.getConfig());
+        }
 
         assertAllAre(0.f, gainmap.getEpsilonSdr());
         assertAllAre(0.f, gainmap.getEpsilonHdr());
@@ -130,18 +141,76 @@ public class GainmapTest {
         assertEquals(5f, gainmap.getDisplayRatioForFullHdr(), EPSILON);
     }
 
-    @Test
-    public void testDecodeGainmap() throws Exception {
-        Bitmap bitmap = ImageDecoder.decodeBitmap(
-                ImageDecoder.createSource(sContext.getResources(), R.raw.gainmap),
-                (decoder, info, source) -> decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE));
-        checkGainmap(bitmap);
+    private void checkFountainGainmap(Bitmap bitmap) throws Exception {
+        assertNotNull(bitmap);
+        assertTrue("Missing gainmap", bitmap.hasGainmap());
+        if (bitmap.getConfig() == Bitmap.Config.HARDWARE) {
+            assertEquals(HardwareBuffer.RGBA_8888, bitmap.getHardwareBuffer().getFormat());
+        } else {
+            assertEquals(Bitmap.Config.ARGB_8888, bitmap.getConfig());
+        }
+        assertEquals(ColorSpace.Named.SRGB.ordinal(), bitmap.getColorSpace().getId());
+        Gainmap gainmap = bitmap.getGainmap();
+        assertNotNull(gainmap);
+        Bitmap gainmapData = gainmap.getGainmapContents();
+        assertNotNull(gainmapData);
+        if (bitmap.getConfig() == Bitmap.Config.HARDWARE) {
+            final int gainmapFormat = gainmapData.getHardwareBuffer().getFormat();
+            if (gainmapFormat != HardwareBuffer.RGBA_8888 && gainmapFormat != HardwareBuffer.R_8) {
+                fail("Unexpected gainmap format " + gainmapFormat);
+            }
+        } else {
+            assertEquals(Bitmap.Config.ALPHA_8, gainmapData.getConfig());
+        }
+
+        assertAllAre(0.f, gainmap.getEpsilonSdr());
+        assertAllAre(0.f, gainmap.getEpsilonHdr());
+        assertAllAre(1.f, gainmap.getGamma());
+        assertEquals(1.f, gainmap.getMinDisplayRatioForHdrTransition(), EPSILON);
+
+        assertAllAre(10.63548f, gainmap.getRatioMax());
+        assertAllAre(1.0f, gainmap.getRatioMin());
+        assertEquals(10.63548f, gainmap.getDisplayRatioForFullHdr(), EPSILON);
+    }
+
+    interface DecoderVariation {
+        Bitmap decode(int id) throws Exception;
+    }
+
+    static DecoderVariation[] getGainmapDecodeVariations() {
+        final BitmapFactory.Options hardwareOptions = new BitmapFactory.Options();
+        hardwareOptions.inPreferredConfig = Bitmap.Config.HARDWARE;
+        DecoderVariation[] callables = new DecoderVariation[] {
+                (id) -> ImageDecoder.decodeBitmap(
+                        ImageDecoder.createSource(sContext.getResources(), id),
+                        (decoder, info, source) -> decoder.setAllocator(
+                                ImageDecoder.ALLOCATOR_SOFTWARE)),
+
+                (id) -> ImageDecoder.decodeBitmap(
+                        ImageDecoder.createSource(sContext.getResources(), id)),
+
+                (id) -> ImageDecoder.decodeBitmap(
+                        ImageDecoder.createSource(sContext.getResources(), id),
+                        (decoder, info, source) -> decoder.setTargetSampleSize(2)),
+
+                (id) -> BitmapFactory.decodeResource(sContext.getResources(), id),
+
+                (id) -> BitmapFactory.decodeResource(sContext.getResources(), id,
+                        hardwareOptions),
+        };
+        return callables;
     }
 
     @Test
-    public void testDecodeGainmapBitmapFactory() throws Exception {
-        Bitmap bitmap = BitmapFactory.decodeResource(sContext.getResources(), R.raw.gainmap);
-        checkGainmap(bitmap);
+    @Parameters(method = "getGainmapDecodeVariations")
+    public void testDecodeGainmap(DecoderVariation provider) throws Exception {
+        checkGainmap(provider.decode(R.raw.gainmap));
+    }
+
+    @Test
+    @Parameters(method = "getGainmapDecodeVariations")
+    public void testDecodeFountainGainmap(DecoderVariation provider) throws Exception {
+        checkFountainGainmap(provider.decode(R.raw.fountain_night));
     }
 
     @Test
