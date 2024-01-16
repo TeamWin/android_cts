@@ -95,6 +95,18 @@ android_test {
 }
 
 //-----------------------------------------------------------
+android_test {
+    name: "HelloWorldSystemUserOnly",
+    defaults: ["hello_world_defaults"],
+    srcs: ["src_system_user_only/**/*.java"],
+    manifest: "AndroidManifestSystemUserOnly.xml",
+    test_suites: [
+        "general-tests",
+    ],
+    v4_signature: true,
+}
+
+//-----------------------------------------------------------
 android_library {
     name: "HelloWorldResHardeningLib",
     defaults: ["cts_defaults"],
