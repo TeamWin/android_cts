@@ -17,7 +17,14 @@
 package android.media.cts;
 
 import android.media.AudioManager;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.media.audiofx.HapticGenerator;
+
+import org.junit.Test;
 
 @NonMediaMainlineTest
 public class HapticGeneratorTest extends PostProcTestBase {
@@ -33,6 +40,7 @@ public class HapticGeneratorTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 0.0: test constructor and release
+    @Test
     public void test0_0ConstructorAndRelease() throws Exception {
         if (!HapticGenerator.isAvailable()) {
             // HapticGenerator will only be created on devices supporting haptic playback
@@ -44,6 +52,7 @@ public class HapticGeneratorTest extends PostProcTestBase {
     }
 
     // Test case 0.1: test constructor and close
+    @Test
     public void test0_1ConstructorAndClose() throws Exception {
         if (!HapticGenerator.isAvailable()) {
             // HapticGenerator will only be created on devices supporting haptic playback
@@ -59,6 +68,7 @@ public class HapticGeneratorTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 1.0: test setEnabled() and getEnabled() in valid state
+    @Test
     public void test1_0SetEnabledGetEnabled() throws Exception {
         if (!HapticGenerator.isAvailable()) {
             // HapticGenerator will only be created on devices supporting haptic playback
