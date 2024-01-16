@@ -33,6 +33,20 @@ _GYRO_VAR_THRESH = 0.001*_RAD_TO_DEG**2  # PASS/FAIL for gyro variance drift
 _IMU_EVENTS_WAIT_TIME = 30  # seconds
 _NAME = os.path.basename(__file__).split('.')[0]
 _NSEC_TO_SEC = 1E-9
+_RV_DRIFT_THRESH = 0.01*_RAD_TO_DEG  # PASS/FAIL for rotation vector drift
+
+
+def log_effective_sampling_rate(times, sensor):
+  """Log the effective sampling rate for gyro & RV.
+
+  Args:
+    times: array/list of times
+    sensor: string of sensor type
+  """
+  duration = times[-1] - times[0]
+  num_pts = len(times)
+  logging.debug('%s time: %.2fs, num_pts: %d, effective samping rate: %.2f Hz',
+                sensor, duration, num_pts, num_pts/duration)
 
 
 def define_3axis_plot(x, y, z, t, plot_name):
@@ -54,6 +68,29 @@ def define_3axis_plot(x, y, z, t, plot_name):
   pylab.legend()
 
 
+def plot_rotation_vector_data(x, y, z, t, log_path):
+  """Plot raw gyroscope output data.
+
+  Args:
+    x: list of rotation vector x values
+    y: list of rotation vector y values
+    z: list of rotation vector z values
+    t: list of time values for x, y, z data
+    log_path: str of location for output path
+  """
+  # normalize to initial position
+  x = x - x[0]
+  y = y - y[0]
+  z = z - z[0]
+
+  plot_name = f'{_NAME}_rotation_vector'
+  define_3axis_plot(x, y, z, t, plot_name)
+  pylab.ylabel('Drift (degrees)')
+  pylab.ylim([min([np.amin(x), np.amin(y), np.amin(z), -_RV_DRIFT_THRESH]),
+              max([np.amax(x), np.amax(y), np.amax(x), _RV_DRIFT_THRESH])])
+  matplotlib.pyplot.savefig(f'{os.path.join(log_path, plot_name)}.png')
+
+
 def plot_raw_gyro_data(x, y, z, t, log_path):
   """Plot raw gyroscope output data.
 
@@ -64,7 +101,6 @@ def plot_raw_gyro_data(x, y, z, t, log_path):
     t: list of time values for x, y, z data
     log_path: str of location for output path
   """
-  # add y limits so plot doesn't look like amplified noise
 
   plot_name = f'{_NAME}_gyro_raw'
   define_3axis_plot(x, y, z, t, plot_name)
@@ -169,14 +205,27 @@ class ImuDriftTest(its_base_test.ItsBaseTest):
           stabilize=True)
 
       # dump IMU events
-      gyro_events = cam.get_sensor_events()['gyro']
+      sensor_events = cam.get_sensor_events()
+      gyro_events = sensor_events['gyro']  # raw gyro output
+      rv_events = sensor_events['rv']  # rotation vector
 
+    # process gyro data
     x_gyro, y_gyro, z_gyro, times = convert_events_to_arrays(
         gyro_events, _NSEC_TO_SEC, _RAD_TO_DEG)
+    log_effective_sampling_rate(times, 'gyro')  # SENSOR_DELAY_FASTEST
 
     plot_raw_gyro_data(x_gyro, y_gyro, z_gyro, times, self.log_path)
     do_riemann_sums(x_gyro, y_gyro, z_gyro, times, self.log_path)
 
+    # process rotation vector data
+    x_rv, y_rv, z_rv, t_rv = convert_events_to_arrays(
+        rv_events, _NSEC_TO_SEC, 1)
+    log_effective_sampling_rate(t_rv, 'RV')  # SENSOR_DELAY_FASTEST
+
+    # plot rotation vector data
+    plot_rotation_vector_data(x_rv, y_rv, z_rv, t_rv, self.log_path)
+
+    # assert correct gyro behavior
     for i, samples in enumerate([x_gyro, y_gyro, z_gyro]):
       gyro_mean = samples.mean()
       gyro_var = np.var(samples)
