@@ -103,6 +103,10 @@
                  android:resource="@xml/shortcut_target_activity"/>
         </activity>
 
+        <activity android:name=".AccessibilityEventAndCacheTest$TestActivity"
+                  android:screenOrientation="locked"
+                  android:exported="true" />
+
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
