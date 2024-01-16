@@ -356,6 +356,13 @@ public class TestActivity extends Activity {
                         .getString(EXTRA_AUTHORITY);
                 sendCheckUriPermission(remoteCallback, sourceAuthority, targetPackageName,
                         targetUid);
+            } else if (Constants.ACTION_CHECK_CONTENT_URI_PERMISSION_FULL.equals(action)) {
+                final String targetPackageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                final int targetUid = intent.getIntExtra(EXTRA_UID, INVALID_UID);
+                final String sourceAuthority = intent.getBundleExtra(EXTRA_DATA)
+                        .getString(EXTRA_AUTHORITY);
+                sendCheckContentUriPermissionFull(remoteCallback, sourceAuthority,
+                        targetPackageName, targetUid);
             } else if (Constants.ACTION_TAKE_PERSISTABLE_URI_PERMISSION.equals(action)) {
                 final Uri uri = intent.getData();
                 final int modeFlags = intent.getFlags() & (Intent.FLAG_GRANT_WRITE_URI_PERMISSION
@@ -982,10 +989,28 @@ public class TestActivity extends Activity {
 
     private void sendCheckUriPermission(RemoteCallback remoteCallback, String sourceAuthority,
             String targetPackageName, int targetUid) {
-        final Uri uri = Uri.parse("content://" + sourceAuthority);
-        grantUriPermission(targetPackageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        Uri uri = getContentUriAndGrantRead(sourceAuthority, targetPackageName);
         final int permissionResult = checkUriPermission(uri, 0 /* pid */, targetUid,
                 Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        revokeReadFromUriAndSendPermissionResult(uri, permissionResult, remoteCallback);
+    }
+
+    private void sendCheckContentUriPermissionFull(RemoteCallback remoteCallback,
+            String sourceAuthority, String targetPackageName, int targetUid) {
+        Uri uri = getContentUriAndGrantRead(sourceAuthority, targetPackageName);
+        final int permissionResult = checkContentUriPermissionFull(uri, 0 /* pid */, targetUid,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        revokeReadFromUriAndSendPermissionResult(uri, permissionResult, remoteCallback);
+    }
+
+    private Uri getContentUriAndGrantRead(String sourceAuthority, String targetPackageName) {
+        final Uri uri = Uri.parse("content://" + sourceAuthority);
+        grantUriPermission(targetPackageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        return uri;
+    }
+
+    private void revokeReadFromUriAndSendPermissionResult(Uri uri, int permissionResult,
+            RemoteCallback remoteCallback) {
         revokeUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
         final Bundle result = new Bundle();
         result.putInt(EXTRA_RETURN_RESULT, permissionResult);

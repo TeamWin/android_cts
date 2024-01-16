@@ -24,6 +24,7 @@ import static android.appenumeration.cts.Constants.ACTION_CAN_PACKAGE_QUERY;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_PACKAGE;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_SIGNATURES;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_URI_PERMISSION;
+import static android.appenumeration.cts.Constants.ACTION_CHECK_CONTENT_URI_PERMISSION_FULL;
 import static android.appenumeration.cts.Constants.ACTION_GET_CONTENT_PROVIDER_MIME_TYPE;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_ACCESSIBILITYSERVICES_PACKAGES;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_APPWIDGET_PROVIDERS;
@@ -180,6 +181,9 @@ import android.content.pm.Signature;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.filters.LargeTest;
 
@@ -191,6 +195,7 @@ import org.hamcrest.core.IsNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -211,6 +216,9 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
 
     private static final String SKIP_APP_FILTER_CACHE = "0";
     private static final String USE_APP_FILTER_CACHE = "1";
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Parameterized.Parameter
     public String mUseAppFilterCache;
@@ -1119,6 +1127,24 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
     }
 
     @Test
+    @RequiresFlagsEnabled(android.security.Flags.FLAG_CONTENT_URI_PERMISSION_APIS)
+    public void queriesPackageHasProvider_checkContentUriPermissionFull_canSeeNoApi()
+            throws Exception {
+        final int permissionResult = checkContentUriPermissionFull(QUERIES_PACKAGE_PROVIDER,
+                TARGET_NO_API);
+        assertThat(permissionResult, is(PackageManager.PERMISSION_GRANTED));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.security.Flags.FLAG_CONTENT_URI_PERMISSION_APIS)
+    public void queriesPackageHasProvider_checkContentUriPermissionFull_cannotSeeFilters()
+            throws Exception {
+        final int permissionResult = checkContentUriPermissionFull(QUERIES_PACKAGE_PROVIDER,
+                TARGET_FILTERS);
+        assertThat(permissionResult, is(PackageManager.PERMISSION_DENIED));
+    }
+
+    @Test
     public void queriesPackageHasProvider_grantUriPermission_canSeeNoApi() throws Exception {
         try {
             grantUriPermission(QUERIES_PACKAGE_PROVIDER, TARGET_NO_API);
@@ -1645,11 +1671,23 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
 
     private int checkUriPermission(String sourcePackageName, String targetPackageName)
             throws Exception {
+        return internalCheckUriPermissionOrContentUriPermissionFull(sourcePackageName,
+                targetPackageName, ACTION_CHECK_URI_PERMISSION);
+    }
+
+    private int checkContentUriPermissionFull(String sourcePackageName, String targetPackageName)
+            throws Exception {
+        return internalCheckUriPermissionOrContentUriPermissionFull(sourcePackageName,
+                targetPackageName, ACTION_CHECK_CONTENT_URI_PERMISSION_FULL);
+    }
+
+    private int internalCheckUriPermissionOrContentUriPermissionFull(String sourcePackageName,
+            String targetPackageName, String action) throws Exception {
         final int targetUid = sPm.getPackageUid(targetPackageName, PackageInfoFlags.of(0));
         final Bundle extraData = new Bundle();
         extraData.putString(EXTRA_AUTHORITY, sourcePackageName);
         final Result result = sendCommand(sourcePackageName, targetPackageName, targetUid,
-                extraData, ACTION_CHECK_URI_PERMISSION, /* waitForReady */ false);
+                extraData, action, /* waitForReady */ false);
         final Bundle response = result.await();
         return response.getInt(Intent.EXTRA_RETURN_RESULT);
     }
