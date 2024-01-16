@@ -166,6 +166,30 @@ java_test_host {
         ":v3-rsa-2048-decl-knownSigner-str-const-ec-p256-1",
         ":v3-rsa-2048-decl-knownSigner-str-res-ec-p256-1",
         ":v3-rsa-2048-declperm",
+        // StatsdAppSecurityAtomTest
+        ":CtsStatsSecurityApp",
+        // ApkVerityInstallTest
+        ":CtsApkVerityTestApp",
+        ":CtsApkVerityTestAppSplit",
+        // PackageSetInstallerTest
+        ":CtsPkgInstallerPermRequestApp",
+        // CtsAppDataIsolationAppA
+        ":CtsAppDataIsolationAppA",
+        ":CtsAppDataIsolationAppSharedA",
+        ":CtsAppDataIsolationAppDirectBootA",
+        ":CtsAppDataIsolationAppApi29A",
+        ":CtsAppDataIsolationAppB",
+        ":CtsAppDataIsolationAppSharedB",
+        // ReadableSettingsFieldsTest
+        ":CtsReadSettingsFieldsApp",
+        ":CtsReadSettingsFieldsAppTestOnly",
+        ":CtsReadSettingsFieldsAppTargetQ",
+        ":CtsReadSettingsFieldsAppTargetR",
+        ":CtsReadSettingsFieldsAppTargetS",
+        // UseProcessTest
+        ":CtsUseProcessFailActivity",
+        // PermissionEscalationTest
+        ":CtsDeclareNonRuntimePermissions",
     ],
     per_testcase_directory: true,
 }
