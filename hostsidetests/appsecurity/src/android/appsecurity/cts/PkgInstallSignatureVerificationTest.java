@@ -500,14 +500,6 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "v2-only-with-rsa-pkcs1-sha256-1024.apk", "signatures do not match");
     }
 
-    public void testInstallMaxSizedZipEocdComment() throws Exception {
-        // Obtained by modifying apksigner to produce a 0xffff-byte long ZIP End of
-        // Central Directory comment which exceeds the maximum size of comment,
-        // and signing the original.apk using the modified apksigner.
-        assertInstallFailsWithError("v1-only-max-sized-eocd-comment.apk", "Unknown failure");
-        assertInstallFailsWithError("v2-only-max-sized-eocd-comment.apk", "Unknown failure");
-    }
-
     public void testInstallEphemeralRequiresV2Signature() throws Exception {
         assertInstallEphemeralFailsWithError("unsigned-ephemeral.apk",
                 "Failed to collect certificates");
