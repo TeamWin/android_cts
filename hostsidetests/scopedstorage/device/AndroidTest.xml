@@ -17,7 +17,9 @@
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsScopedStorageDeviceOnlyTest.apk" />
+        <option name="test-file-name" value="CtsScopedStorageTestAppA34.apk" />
         <option name="test-file-name" value="CtsScopedStorageTestAppB.apk" />
+        <option name="test-file-name" value="CtsScopedStorageTestAppB34.apk" />
         <option name="test-file-name" value="CtsScopedStorageTestAppDLegacy.apk" />
         <option name="test-file-name" value="CtsScopedStorageTestAppFileManager.apk" />
         <option name="test-file-name" value="CtsTestAppWithQueryAllPackagesPermission.apk" />

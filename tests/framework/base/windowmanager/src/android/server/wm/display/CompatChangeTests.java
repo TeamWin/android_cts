@@ -93,6 +93,8 @@ import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.DeviceConfig;
 import android.server.wm.HelperActivities;
 import android.server.wm.MultiDisplayTestBase;
@@ -171,6 +173,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
 
     @Rule
     public TestRule compatChangeRule = new PlatformCompatChangeRule();
+    @Rule
+    public final CheckFlagsRule checkFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     @Override
@@ -1246,8 +1250,15 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
                 /* expected */ ACTIVITY_MIN_ASPECT_RATIO);
     }
 
+    /**
+     * Test that an activities min aspect ratio is overridden when {@link
+     * ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO} is enabled and {@link
+     * android.view.WindowManager#PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE} is true.
+     */
     @Test
-    @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO})
+    @ApiTest(apis = {"android.content.pm.ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO",
+            "android.view.WindowManager#PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE"})
+    @RequiresFlagsEnabled(Flags.FLAG_APP_COMPAT_PROPERTIES_API)
     public void testOverrideMinAspectRatio_propertyTrue_overrideEnabled_overrideApplied() {
         try (var compatChange = new CompatChangeCloseable(OVERRIDE_MIN_ASPECT_RATIO,
                 ALLOW_MIN_ASPECT_RATIO_OVERRIDE_OPT_IN_ACTIVITY.getPackageName());
@@ -1257,8 +1268,15 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         }
     }
 
+    /**
+     * Test that an activities min aspect ratio is not overridden when {@link
+     * ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO} is enabled but {@link
+     * android.view.WindowManager#PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE} is false.
+     */
     @Test
-    @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO})
+    @ApiTest(apis = {"android.content.pm.ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO",
+            "android.view.WindowManager#PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE"})
+    @RequiresFlagsEnabled(Flags.FLAG_APP_COMPAT_PROPERTIES_API)
     public void testOverrideMinAspectRatio_propertyFalse_overrideEnabled_overrideNotApplied() {
         try (var compatChange = new CompatChangeCloseable(OVERRIDE_MIN_ASPECT_RATIO,
                 ALLOW_MIN_ASPECT_RATIO_OVERRIDE_OPT_IN_ACTIVITY.getPackageName());
@@ -1268,7 +1286,15 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         }
     }
 
+    /**
+     * Test that an activities min aspect ratio is overridden when {@link
+     * ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO} is enabled and {@link
+     * android.view.WindowManager#PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE} is unset.
+     */
     @Test
+    @ApiTest(apis = {"android.content.pm.ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO",
+            "android.view.WindowManager#PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE"})
+    @RequiresFlagsEnabled(Flags.FLAG_APP_COMPAT_PROPERTIES_API)
     @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO})
     public void testOverrideMinAspectRatio_propertyNotSet_overrideEnabled_overrideApplied() {
         try (var session = new ActivitySessionCloseable(
@@ -1277,7 +1303,15 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         }
     }
 
+    /**
+     * Test that an activities min aspect ratio is not overridden when {@link
+     * ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO} is disabled and {@link
+     * android.view.WindowManager#PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE} is unset.
+     */
     @Test
+    @ApiTest(apis = {"android.content.pm.ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO",
+            "android.view.WindowManager#PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE"})
+    @RequiresFlagsEnabled(Flags.FLAG_APP_COMPAT_PROPERTIES_API)
     @DisableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO})
     public void testOverrideMinAspectRatio_propertyNotSet_overrideDisabled_overrideNotApplied() {
         try (var session = new ActivitySessionCloseable(
@@ -1286,18 +1320,32 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         }
     }
 
+    /**
+     * Test that an activities min aspect ratio is not overridden when {@link
+     * ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO} is disabled but {@link
+     * android.view.WindowManager#PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE} is true.
+     */
     @Test
-    @DisableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO})
-    public void testOverrideMinAspectRatio_propertyTrue_overrideDisabled_overrideNotApplied() {
+    @ApiTest(apis = {"android.content.pm.ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO",
+            "android.view.WindowManager#PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE"})
+    @RequiresFlagsEnabled(Flags.FLAG_APP_COMPAT_PROPERTIES_API)
+    public void testOverrideMinAspectRatio_propertyTrue_overrideUnset_overrideNotApplied() {
         try (var session = new ActivitySessionCloseable(
                 ALLOW_MIN_ASPECT_RATIO_OVERRIDE_OPT_IN_ACTIVITY)) {
             assertFalse(session.getActivityState().getShouldOverrideMinAspectRatio());
         }
     }
 
+    /**
+     * Test that an activities min aspect ratio is not overridden when {@link
+     * ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO} is disabled and {@link
+     * android.view.WindowManager#PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE} is false.
+     */
     @Test
-    @DisableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO})
-    public void testOverrideMinAspectRatio_propertyFalse_overrideDisabled_overrideNotApplied() {
+    @ApiTest(apis = {"android.content.pm.ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO",
+            "android.view.WindowManager#PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE"})
+    @RequiresFlagsEnabled(Flags.FLAG_APP_COMPAT_PROPERTIES_API)
+    public void testOverrideMinAspectRatio_propertyFalse_overrideUnset_overrideNotApplied() {
         try (var session = new ActivitySessionCloseable(
                 ALLOW_MIN_ASPECT_RATIO_OVERRIDE_OPT_OUT_ACTIVITY)) {
             assertFalse(session.getActivityState().getShouldOverrideMinAspectRatio());

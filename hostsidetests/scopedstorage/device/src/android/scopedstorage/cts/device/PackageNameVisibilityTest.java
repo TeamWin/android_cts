@@ -47,7 +47,7 @@ public final class PackageNameVisibilityTest {
 
     /**
      * The idea of this test is to create 2 media files by TEST_APP_A and TEST_APP_B and then
-     * query them from all 4 different apps to verify owner_package_name filtering.
+     * query them from different apps to verify owner_package_name filtering.
      * 1. Only owner_package_name of sMediaUriCreatedByAppB should be
      * visible to TEST_APP_WITH_APP_B_IN_QUERIES_TAG.
      * 2. Owner_package_name of both media files should be visible to
@@ -64,13 +64,17 @@ public final class PackageNameVisibilityTest {
             "TestAppWithQueryAllPackagesPermission",
             "android.scopedstorage.cts.testapp.withqueryallpackagestag", 1, false,
             "CtsTestAppWithQueryAllPackagesPermission.apk");
-    private static final TestApp TEST_APP_A = new TestApp("TestAppFileManager",
-            "android.scopedstorage.cts.testapp.filemanager", 1, false,
-            "CtsScopedStorageTestAppFileManager.apk");
+    private static final TestApp TEST_APP_A = new TestApp("TestAppA",
+            "android.scopedstorage.cts.testapp.A34.withres", 1, false,
+            "CtsScopedStorageTestAppA34.apk");
 
     private static final TestApp TEST_APP_B = new TestApp("TestAppB",
-            "android.scopedstorage.cts.testapp.B.noperms", 1, false,
-            "CtsScopedStorageTestAppB.apk");
+            "android.scopedstorage.cts.testapp.B34.withres", 1, false,
+            "CtsScopedStorageTestAppB34.apk");
+
+    private static final TestApp TEST_APP_TARGET_BELOW_34 = new TestApp("TestAppDLegacy",
+            "android.scopedstorage.cts.testapp.D", 1, false,
+            "CtsScopedStorageTestAppDLegacy.apk");
 
     private static Uri sMediaUriCreatedByAppA;
     private static Uri sMediaUriCreatedByAppB;
@@ -229,6 +233,25 @@ public final class PackageNameVisibilityTest {
 
         // Requested not self-owned media is present because of QUERY_ALL_PACKAGES permission
         assertEquals(1, resultSize);
+    }
+
+    @Test
+    public void testQueryWithNullProjection() throws Exception {
+        Bundle result = TestUtils.queryMediaByUriAs(TEST_APP_WITH_APP_B_IN_QUERIES_TAG,
+                sMediaUriCreatedByAppA, null);
+
+        // Owner_package_name is nullified even when passing null as a projection
+        assertEquals(null,
+                result.getString(MediaStore.Images.ImageColumns.OWNER_PACKAGE_NAME));
+    }
+
+    @Test
+    public void testTargetVersionBelow34() throws Exception {
+        final String[] ownerPackageNames = TestUtils.queryForOwnerPackageNamesAs(
+                TEST_APP_TARGET_BELOW_34, sMediaUriCreatedByAppA);
+
+        // Owner_package_name is not filtered because the querying app targets version below 34
+        assertEquals(Arrays.asList(TEST_APP_A.getPackageName()), Arrays.asList(ownerPackageNames));
     }
 
     private static Uri createMediaAs(TestApp testApp) {

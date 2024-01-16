@@ -120,6 +120,66 @@ public class VirtualInputEventCreator {
                 0 /* flags */);
     }
 
+    public static MotionEvent createStylusHoverMotionEvent(int action, float x, float y,
+            int toolType) {
+        return createStylusHoverMotionEvent(action, x, y, toolType, 0 /* buttonState */);
+    }
+
+    public static MotionEvent createStylusHoverMotionEvent(int action, float x, float y,
+            int toolType, int buttonState) {
+        return createStylusEvent(action, toolType, x, y, 0f /* pressure */, buttonState);
+    }
+
+    public static MotionEvent createStylusTouchMotionEvent(int action, float x, float y,
+            int toolType) {
+        return createStylusTouchMotionEvent(action, x, y, toolType, 0 /* buttonState */);
+    }
+
+    public static MotionEvent createStylusTouchMotionEvent(int action, float x, float y,
+            int toolType, float tilt, float orientation) {
+        return createStylusEvent(action, toolType, x, y, 1f /* pressure */, 0 /* buttonState */,
+                tilt, orientation);
+    }
+
+    public static MotionEvent createStylusTouchMotionEvent(int action, float x, float y,
+            int toolType, int buttonState) {
+        return createStylusEvent(action, toolType, x, y, 1f /* pressure */, buttonState);
+    }
+
+    public static MotionEvent createStylusEvent(int action, int toolType, float x, float y,
+            float pressure, int buttonState) {
+        return createStylusEvent(action, toolType, x, y, pressure, buttonState, 0f /* tilt */,
+                0f /* orientation */);
+    }
+
+    private static MotionEvent createStylusEvent(int action, int toolType, float x, float y,
+            float pressure, int buttonState, float tilt, float orientation) {
+        final MotionEvent.PointerProperties pointerProperties = new MotionEvent.PointerProperties();
+        pointerProperties.toolType = toolType;
+        final MotionEvent.PointerCoords pointerCoords = new MotionEvent.PointerCoords();
+        pointerCoords.setAxisValue(MotionEvent.AXIS_X, x);
+        pointerCoords.setAxisValue(MotionEvent.AXIS_Y, y);
+        pointerCoords.setAxisValue(MotionEvent.AXIS_PRESSURE, pressure);
+        pointerCoords.setAxisValue(MotionEvent.AXIS_TILT, tilt);
+        pointerCoords.setAxisValue(MotionEvent.AXIS_ORIENTATION, orientation);
+        return MotionEvent.obtain(
+                0 /* downTime */,
+                0 /* eventTime */,
+                action,
+                1 /* pointerCount */,
+                new MotionEvent.PointerProperties[]{pointerProperties},
+                new MotionEvent.PointerCoords[]{pointerCoords},
+                0 /* metaState */,
+                buttonState,
+                1f /* xPrecision */,
+                1f /* yPrecision */,
+                0 /* deviceId */,
+                0 /* edgeFlags */,
+                InputDevice.SOURCE_STYLUS | InputDevice.SOURCE_KEYBOARD
+                        | InputDevice.SOURCE_TOUCHSCREEN,
+                0 /* flags */);
+    }
+
     public static KeyEvent createKeyboardEvent(int action, int code) {
         return createKeyEvent(action, code, InputDevice.SOURCE_KEYBOARD);
     }

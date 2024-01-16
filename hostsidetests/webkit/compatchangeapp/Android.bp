@@ -1,4 +1,5 @@
-// Copyright (C) 2017 The Android Open Source Project
+//
+// Copyright (C) 2024 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,33 +12,35 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsSystemApiAnnotationTestCases",
-    defaults: [
-        "signature-api-check-defaults",
-    ],
+// Test app target for testing compatibility changes gated on targetSdkVersion.
+android_test_helper_app {
+    name: "CtsWebViewCompatChangeApp",
+    defaults: ["cts_support_defaults"],
+    platform_apis: true,
+    // Must be 1 version lower than the lowest targetSdkVersion used by tests.
+    // Tests currently start with features introduced in U, hence this value: V (34).
+    target_sdk_version: "34",
     static_libs: [
         "compatibility-device-util-axt",
+        "ctsdeviceutillegacy-axt",
+        "ctstestserver",
+        "ctstestrunner-axt",
+        "androidx.test.core",
     ],
-    java_resources: [
-        ":cts-system-current-api-gz",
-        ":cts-system-removed-api-gz",
-        ":cts-car-system-current-api-gz",
-        ":cts-car-system-removed-api-gz",
+    libs: [
+        "android.test.runner",
+        "android.test.base",
     ],
-    min_sdk_version: "27",
-
-    use_embedded_native_libs: false,
+    srcs: ["src/**/*.java"],
+    // Tag this module as a cts test artifact.
     test_suites: [
-        // b/307877675 this test can no longer be correctly implemented with Trunk Stable.
-        // TODO: remove this completely. For now, we just remove it from cts with an hope
-        // that we may be able to fix this in the future.
-        // "cts",
+        "cts",
         "general-tests",
     ],
 }

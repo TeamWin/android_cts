@@ -104,7 +104,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -954,28 +953,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
         waitForVoiceLatchCountdown(LATCH_GET_LAST_CALL_FAIL_CAUSE);
 
         verifyRescanPsPreferred();
-    }
-
-    @Ignore("TODO: switch the preferred transport between WWAN and IWLAN.")
-    @Test
-    public void testDefaultWifiImsRegisteredScanTimeoutSelectWifi() throws Exception {
-        // Setup pre-condition
-        PersistableBundle bundle = getDefaultPersistableBundle();
-        bundle.putInt(KEY_EMERGENCY_SCAN_TIMER_SEC_INT, 3);
-        overrideCarrierConfig(bundle);
-
-        MockEmergencyRegResult regResult = getEmergencyRegResult(EUTRAN, REGISTRATION_STATE_UNKNOWN,
-                0, false, false, 0, 0, "", "");
-        sMockModemManager.setEmergencyRegResult(sTestSlot, regResult);
-
-        bindImsService(ImsRegistrationImplBase.REGISTRATION_TECH_IWLAN);
-
-        placeOutgoingCall(TEST_EMERGENCY_NUMBER);
-        assertTrue(waitForNetworkLatchCountdown(LATCH_TRIGGER_EMERGENCY_SCAN));
-        TimeUnit.MILLISECONDS.sleep(WAIT_REQUEST_TIMEOUT_MS);
-        TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService()
-                .getMmTelFeature().getImsCallsession();
-        assertNotNull(callSession);
     }
 
     @Test
