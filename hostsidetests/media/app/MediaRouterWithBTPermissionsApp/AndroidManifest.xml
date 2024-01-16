@@ -34,6 +34,11 @@
             android:name=".ScreenOnActivity"
             android:exported="false"
             android:turnScreenOn="true" />
+
+        <activity
+                android:name=".ScanningActivity"
+                android:exported="false"
+                android:turnScreenOn="true"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

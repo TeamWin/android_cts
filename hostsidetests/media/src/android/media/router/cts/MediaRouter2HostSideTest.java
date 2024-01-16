@@ -35,9 +35,13 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.host.HostFlagsValueProvider;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.ApiTest;
+import com.android.media.flags.Flags;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.invoker.TestInformation;
@@ -50,6 +54,7 @@ import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
 import com.google.common.truth.Expect;
 
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -59,7 +64,14 @@ import java.io.FileNotFoundException;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
 
+    /** The maximum period of time to wait for a scan request to take effect, in milliseconds. */
+    private static final long WAIT_MS_SCAN_PROPAGATION = 3000;
+
     @ClassRule public static final Expect expect = Expect.create();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            HostFlagsValueProvider.createCheckFlagsRule(this::getDevice);
 
     @BeforeClassWithInfo
     public static void installApps(TestInformation testInfo)
@@ -268,6 +280,40 @@ public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
                 "selfScanOnlyProvider_notScannedByAnotherApp");
     }
 
+    @ApiTest(apis = {"android.media.MediaRouter2ProviderService#onBind"})
+    @AppModeFull
+    @RequiresDevice
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_PREVENTION_OF_KEEP_ALIVE_ROUTE_PROVIDERS)
+    @Test
+    public void providerServiceDoesNotAutoBindAfterCrashing() throws Throwable {
+        String startActivityCommand =
+                "am start %s/.ScanningActivity".formatted(MEDIA_ROUTER_TEST_PACKAGE);
+        getDevice().executeShellCommand(startActivityCommand);
+
+        boolean providerStarted =
+                waitForPackageRunningStatus(
+                        MEDIA_ROUTER_PROVIDER_1_PACKAGE, /* isPackageExpectedToRun= */ true);
+        assertWithMessage("Provider did not start after starting the scanning activity.")
+                .that(providerStarted)
+                .isTrue();
+
+        getDevice().executeShellCommand("am force-stop " + MEDIA_ROUTER_PROVIDER_1_PACKAGE);
+
+        boolean providerStopped =
+                waitForPackageRunningStatus(
+                        MEDIA_ROUTER_PROVIDER_1_PACKAGE, /* isPackageExpectedToRun= */ false);
+        assertWithMessage("Provider did not stop after force-stopping it.")
+                .that(providerStopped)
+                .isTrue();
+
+        boolean providerRestarted =
+                waitForPackageRunningStatus(
+                        MEDIA_ROUTER_PROVIDER_1_PACKAGE, /* isPackageExpectedToRun= */ true);
+        assertWithMessage("Provider restarted after force-stopping it.")
+                .that(providerRestarted)
+                .isFalse();
+    }
+
     private void setPermissionEnabled(String packageName, String permission, boolean enabled)
             throws DeviceNotAvailableException {
         String action = enabled ? "grant" : "revoke";
@@ -279,6 +325,29 @@ public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
             assertWithMessage("Setting permission %s failed: %s".formatted(permission, result))
                     .fail();
         }
+    }
+
+    /**
+     * Blocks execution until the package with the given name has the given running status.
+     *
+     * @param packageName The name of the package to check the running status for.
+     * @param isPackageExpectedToRun True if the expected running status is "running", and false if
+     *     the expected running status is "not running".
+     */
+    private boolean waitForPackageRunningStatus(String packageName, boolean isPackageExpectedToRun)
+            throws Throwable {
+        long start = System.currentTimeMillis();
+        while (isPackageRunning(packageName) != isPackageExpectedToRun) {
+            if (System.currentTimeMillis() - start > WAIT_MS_SCAN_PROPAGATION) {
+                return false;
+            }
+            Thread.sleep(/* millis= */ 200); // Wait a bit before we call adb again.
+        }
+        return true;
+    }
+
+    private boolean isPackageRunning(String packageName) throws DeviceNotAvailableException {
+        return !getDevice().executeShellCommand("pidof " + packageName).isEmpty();
     }
 
     private static void installTestApp(TestInformation testInfo, String apkName)
