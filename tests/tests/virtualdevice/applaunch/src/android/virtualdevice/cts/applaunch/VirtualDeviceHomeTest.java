@@ -81,29 +81,21 @@ import java.util.concurrent.TimeUnit;
 @RequiresFlagsEnabled(Flags.FLAG_VDM_CUSTOM_HOME)
 public class VirtualDeviceHomeTest {
 
-    private static final VirtualDisplayConfig HOME_DISPLAY_CONFIG =
+    private static final VirtualDisplayConfig.Builder HOME_DISPLAY_CONFIG =
             VirtualDeviceRule.createDefaultVirtualDisplayConfigBuilder()
                     .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
                             | DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED
-                            | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY)
-                    .setHomeSupported(true)
-                    .build();
-    private static final VirtualDisplayConfig UNTRUSTED_HOME_DISPLAY_CONFIG =
+                            | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY);
+    private static final VirtualDisplayConfig.Builder UNTRUSTED_HOME_DISPLAY_CONFIG =
             VirtualDeviceRule.createDefaultVirtualDisplayConfigBuilder()
                     .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
-                            | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY)
-                    .setHomeSupported(true)
-                    .build();
-    private static final VirtualDisplayConfig AUTO_MIRROR_HOME_DISPLAY_CONFIG =
+                            | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY);
+    private static final VirtualDisplayConfig.Builder AUTO_MIRROR_HOME_DISPLAY_CONFIG =
             VirtualDeviceRule.createDefaultVirtualDisplayConfigBuilder()
-                    .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR)
-                    .setHomeSupported(true)
-                    .build();
-    private static final VirtualDisplayConfig PUBLIC_HOME_DISPLAY_CONFIG =
+                    .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR);
+    private static final VirtualDisplayConfig.Builder PUBLIC_HOME_DISPLAY_CONFIG =
             VirtualDeviceRule.createDefaultVirtualDisplayConfigBuilder()
-                    .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC)
-                    .setHomeSupported(true)
-                    .build();
+                    .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC);
 
     private static final long TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(3);
 
@@ -292,12 +284,12 @@ public class VirtualDeviceHomeTest {
     }
 
     private void createVirtualDeviceAndHomeDisplay(
-            VirtualDisplayConfig virtualDisplayConfig, ComponentName homeComponent) {
-        assertThat(virtualDisplayConfig.isHomeSupported()).isTrue();
+            VirtualDisplayConfig.Builder virtualDisplayConfigBuilder, ComponentName homeComponent) {
         VirtualDeviceManager.VirtualDevice virtualDevice = mRule.createManagedVirtualDevice(
                 new VirtualDeviceParams.Builder().setHomeComponent(homeComponent).build());
         virtualDevice.addActivityListener(mContext.getMainExecutor(), mActivityListener);
-        mVirtualDisplay = mRule.createManagedVirtualDisplay(virtualDevice, virtualDisplayConfig);
+        mVirtualDisplay = mRule.createManagedVirtualDisplay(
+                virtualDevice, virtualDisplayConfigBuilder.setHomeSupported(true).build());
     }
 
     private void sendHomeIntentOnVirtualDisplay() {
