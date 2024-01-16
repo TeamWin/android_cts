@@ -20,19 +20,27 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Flags;
 import android.app.Notification;
 import android.app.Notification.TvExtender;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
+@RequiresFlagsEnabled(Flags.FLAG_API_TVEXTENDER)
 public class NotificationTvExtenderTest {
+
+    @Rule(order = 0)
+    public final CheckFlagsRule checkFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private Context mContext;
 
