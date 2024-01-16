@@ -208,7 +208,7 @@ public class PollingLoopEmulatorActivity extends BaseEmulatorActivity {
     }
 
     void processPollingFrame(Bundle frame) {
-        char type = frame.getChar(HostApduService.POLLING_LOOP_TYPE_KEY);
+        char type = frame.getChar(HostApduService.KEY_POLLING_LOOP_TYPE);
         if (type == HostApduService.POLLING_LOOP_TYPE_A) {
             mNfcACount++;
         } else if (type == HostApduService.POLLING_LOOP_TYPE_B) {
