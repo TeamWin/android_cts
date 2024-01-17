@@ -28,7 +28,6 @@ import com.android.internal.os.StatsdConfigProto;
 import com.android.os.AtomsProto;
 import com.android.os.AtomsProto.Atom;
 import com.android.os.StatsLog;
-import com.android.os.StatsLog.ConfigMetricsReport;
 import com.android.os.StatsLog.ConfigMetricsReportList;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.CollectingByteOutputReceiver;
@@ -49,9 +48,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -93,7 +90,7 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
         CLog.d("Installing app " + appFileName);
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         final String result = getDevice().installPackage(buildHelper.getTestFile(appFileName), true,
-                grantPermissions);
+                grantPermissions, "-t");
         assertWithMessage("Failed to install %s: %s", appFileName, result).that(result).isNull();
     }
 
