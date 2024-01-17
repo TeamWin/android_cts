@@ -35,6 +35,13 @@ public class ResourceManagerTestActivity2 extends ResourceManagerTestActivityBas
         if (codecCount == 0) {
             result = RESULT_CANCELED;
         }
-        finishWithResult(result);
+        // If we have set codec-importance, then we expect reclaim error, provided,
+        // the activity has already created MAX_INSTANCES of codecs.
+        // So wait for the codecs to be used and reclaim error to be thrown.
+        if (mChangingCodecImportance && result == RESULT_OK && codecCount < MAX_INSTANCES) {
+            useCodecs();
+        } else {
+            finishWithResult(result);
+        }
     }
 }

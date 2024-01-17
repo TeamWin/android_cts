@@ -16,6 +16,8 @@
 
 package android.media.misc.cts;
 
+import static com.android.media.codec.flags.Flags.codecImportance;
+
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Intent;
@@ -27,12 +29,14 @@ import android.os.Build;
 import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.util.Range;
 
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.NonMainlineTest;
+import com.android.media.codec.flags.Flags;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -225,9 +229,39 @@ public class ResourceManagerMultiTest {
         activity.finish();
     }
 
+    private void doTestCodecImportanceReclaimResource(
+            String codecName, String mimeType, int width, int height) throws Exception {
+        ResourceManagerStubActivity activity = mActivityRule.launchActivity(new Intent());
+        activity.doTestCodecImportanceReclaimResource(
+                codecName, mimeType, width, height,
+                true, /*high resolution*/
+                true  /*change importance during codec configuration*/);
+        activity.finish();
+    }
+
+    // Activity1 creates allowable number of codecs with given name (mCodecName)
+    // for the given mime type (mMimeType) and the resolution as a background task.
+    // Activity2 attempts to create at least one codec which should result it resource
+    // manager service reclaiming a codec from Activity1 (background activity - lower priority)
+    // Test verifies that the Activity1 has received a codec reclaim exception and
+    // the Activity2 could create at least one codec successfully.
     @Test
     public void testReclaimResource() throws Exception {
         assumeTrue("The Device should be on at least VNDK U", VNDK_IS_AT_LEAST_U);
         doTestReclaimResource(mCodecName, mMimeType, mWidth, mHeight);
+    }
+
+    // Activity creates allowable number of codecs with given name (mCodecName)
+    // for the given mime type (mMimeType) and the resolution.
+    // The first codec is configured at lower importance so that the test verifies
+    // that the first codec is reclaimed while starting a more important codec
+    // at the later stage (when all codec resources run out).
+    // Once the first (lower importance) is reclaimed, the test attempts to configure
+    // another lower importance codec, which it expects to fail.
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CODEC_IMPORTANCE)
+    public void testCodecImportanceReclaimResource() throws Exception {
+        assumeTrue("Codec Importance Feature is OFF", codecImportance());
+        doTestCodecImportanceReclaimResource(mCodecName, mMimeType, mWidth, mHeight);
     }
 }
