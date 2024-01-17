@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2023 The Android Open Source Project
+<!-- Copyright (C) 2024 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-     package="android.media.projection.cts"
+     package="android.media.projection.cts.sdk34"
      android:targetSandboxVersion="2">
 
     <!-- Do not declare SDK version here; it is set on a per-module bases in Android.bp -->
@@ -29,17 +29,9 @@
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
 
-    <application
-         android:requestLegacyExternalStorage="true"
-         android:largeHeap="true">
-        <activity android:name="android.media.projection.cts.MediaProjectionCustomIntentActivity"
-                  android:label="MediaProjectionActivity"
-                  android:screenOrientation="locked"/>
-    </application>
-
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-         android:targetPackage="android.media.projection.cts"
-         android:label="CTS tests of android.media.projection">
+         android:targetPackage="android.media.projection.cts.sdk34"
+         android:label="CTS tests of android.media.projection for SDK 34">
     </instrumentation>
 
 </manifest>

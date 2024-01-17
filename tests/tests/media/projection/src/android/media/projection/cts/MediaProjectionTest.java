@@ -34,7 +34,6 @@ import android.hardware.display.VirtualDisplay;
 import android.media.ImageReader;
 import android.media.cts.MediaProjectionActivity;
 import android.media.projection.MediaProjection;
-import android.media.projection.MediaProjectionManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.UserHandle;
@@ -78,7 +77,6 @@ public class MediaProjectionTest {
             new ActivityTestRule<>(MediaProjectionActivity.class, false, false);
 
     private MediaProjectionActivity mActivity;
-    private MediaProjectionManager mProjectionManager;
     private MediaProjection mMediaProjection;
     private MediaProjection.Callback mCallback = null;
     private ImageReader mImageReader;
@@ -95,7 +93,6 @@ public class MediaProjectionTest {
                     android.Manifest.permission.SYSTEM_ALERT_WINDOW,
                     new UserHandle(ActivityManager.getCurrentUser()));
         });
-        mProjectionManager = mContext.getSystemService(MediaProjectionManager.class);
         mTimeoutMs = 1000 * HW_TIMEOUT_MULTIPLIER;
     }
 
