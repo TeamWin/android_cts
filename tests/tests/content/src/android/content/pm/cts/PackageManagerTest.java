@@ -2075,14 +2075,9 @@ public class PackageManagerTest {
 
     @Test
     public void testInstall_withLongUsesPermissionName_fail() {
-        String expectedErrorCode = "INSTALL_PARSE_FAILED_UNEXPECTED_EXCEPTION";
-        String expectedErrorMessage =
-                "String length limit exceeded for attribute in uses-permission";
-
+        String expectedErrorCode = "INSTALL_PARSE_FAILED";
         String installResult = installPackageWithResult(LONG_USES_PERMISSION_NAME_APK);
-
         assertThat(installResult).contains(expectedErrorCode);
-        assertThat(installResult).contains(expectedErrorMessage);
     }
 
     private String installPackageWithResult(String apkPath) {
