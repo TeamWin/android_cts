@@ -233,7 +233,6 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
             max_camera_angle / max_gyro_angle)
         max_cam_gyro_angles[preview_size] = {'gyro': max_gyro_angle,
                                              'cam': max_camera_angle}
-
         # Assert phone is moved enough during test
         if max_gyro_angle < _MIN_PHONE_MOVEMENT_ANGLE:
           raise AssertionError(
