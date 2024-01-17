@@ -28,8 +28,6 @@ android_test {
         "general-tests",
         "mts",
         "sts",
-        "mcts-mediaprovider",
-        "mcts-documentsui",
     ],
     dex_preopt: {
         enabled: false,
