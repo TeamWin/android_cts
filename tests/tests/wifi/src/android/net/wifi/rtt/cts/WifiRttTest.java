@@ -26,6 +26,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.Mockito.mock;
 
 import android.net.MacAddress;
@@ -121,7 +122,7 @@ public class WifiRttTest extends TestBase {
         if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
             assertEquals(1, request.getRttResponders().size());
         }
-        range11mcApRequest(request, testAp);
+        rangeApRequest(request, testAp);
     }
 
     /**
@@ -181,7 +182,7 @@ public class WifiRttTest extends TestBase {
         if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
             assertEquals(1, request.getRttResponders().size());
         }
-        range11mcApRequest(request, testAp);
+        rangeApRequest(request, testAp);
     }
 
     /**
@@ -219,7 +220,7 @@ public class WifiRttTest extends TestBase {
         if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
             assertEquals(1, request.getRttResponders().size());
         }
-        range11mcApRequest(request, testAp);
+        rangeApRequest(request, testAp);
     }
 
     /**
@@ -228,7 +229,7 @@ public class WifiRttTest extends TestBase {
      * @param request the ranging request that is being tested
      * @param testAp the original test scan result to provide feedback on failure conditions
      */
-    private void range11mcApRequest(RangingRequest request, ScanResult testAp)
+    private void rangeApRequest(RangingRequest request, ScanResult testAp)
             throws InterruptedException {
         Thread.sleep(5000);
         List<RangingResult> allResults = new ArrayList<>();
@@ -269,14 +270,14 @@ public class WifiRttTest extends TestBase {
             statuses[i] = status;
             if (status == RangingResult.STATUS_SUCCESS) {
                 if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
-                    assertEquals(
-                            "Wi-Fi RTT results: invalid result (wrong rttBurstSize) entry on "
-                                    + "iteration "
-                                    + i,
-                            result.getNumAttemptedMeasurements(),
-                            RangingRequest.getMaxRttBurstSize());
-                    assertTrue("Wi-Fi RTT results: should be a 802.11MC measurement",
-                            result.is80211mcMeasurement());
+                    if (result.is80211mcMeasurement()) {
+                        assertEquals(
+                                "Wi-Fi RTT results: invalid result (wrong rttBurstSize) entry on "
+                                        + "iteration " + i, result.getNumAttemptedMeasurements(),
+                                RangingRequest.getMaxRttBurstSize());
+                    }
+                    assertTrue("Wi-Fi RTT results: should be a 802.11mc or 802.11az measurement",
+                            result.is80211mcMeasurement() || result.is80211azNtbMeasurement());
                 }
                 distanceSum += result.getDistanceMm();
                 if (i == 0) {
@@ -359,8 +360,6 @@ public class WifiRttTest extends TestBase {
         }
     }
 
-
-
     /**
      * Validate that when a request contains more range operations than allowed (by API) that we
      * get an exception.
@@ -381,7 +380,7 @@ public class WifiRttTest extends TestBase {
 
         ScanResult testApNon80211mc = null;
         if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
-            testApNon80211mc = getNone11McScanResult();
+            testApNon80211mc = getLegacyScanResult();
         }
         if (testApNon80211mc == null) {
             builder.addAccessPoints(List.of(testAp, testAp, testAp));
@@ -609,7 +608,7 @@ public class WifiRttTest extends TestBase {
         }
 
         // Scan for Non-IEEE 802.11mc supporting APs
-        ScanResult testAp = getNone11McScanResult();
+        ScanResult testAp = getLegacyScanResult();
         assertNotNull(
                 "Cannot find any test APs which are Non-IEEE 802.11mc - please verify that"
                         + " your test setup includes them!", testAp);
@@ -641,7 +640,7 @@ public class WifiRttTest extends TestBase {
         }
 
         // Scan for Non-IEEE 802.11mc supporting APs
-        ScanResult testAp = getNone11McScanResult();
+        ScanResult testAp = getLegacyScanResult();
         assertNotNull(
                 "Cannot find any test APs which are Non-IEEE 802.11mc - please verify that"
                         + " your test setup includes them!", testAp);
@@ -863,5 +862,27 @@ public class WifiRttTest extends TestBase {
         } catch (IllegalArgumentException e) {
 
         }
+    }
+
+    /**
+     * Test Wi-Fi RTT ranging operation using ScanResults in request:
+     * - Scan for visible APs for the test AP (which is validated to support IEEE 802.11az)
+     * - Perform N (constant) RTT operations
+     * - Validate:
+     *   - Failure ratio < threshold (constant)
+     *   - Result margin < threshold (constant)
+     */
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_RTT_11AZ_NTB_RANGING_SUPPORT)
+    public void testRangingToTest11azApUsingScanResult() throws InterruptedException {
+        assumeTrue(mCharacteristics != null && mCharacteristics.getBoolean(
+                WifiRttManager.CHARACTERISTICS_KEY_BOOLEAN_NTB_INITIATOR));
+        ScanResult testAp = getS11AzScanResult();
+        assertNotNull("Cannot find any test APs which support RTT / IEEE 802.11az"
+                + " - please verify that your test setup includes them!", testAp);
+        RangingRequest.Builder builder = new RangingRequest.Builder();
+        builder.addAccessPoint(testAp);
+        RangingRequest request = builder.build();
+        rangeApRequest(request, testAp);
     }
 }
