@@ -58,6 +58,7 @@ public class DropBoxTests {
     private static final String LOW_PRIORITY_TAG = "DropBoxTestsLowPriorityTag";
     private static final String ANOTHER_LOW_PRIORITY_TAG = "AnotherDropBoxTestsLowPriorityTag";
     private static final String GET_ENTRY_TAG = "DropBoxTestGetEntryTag";
+    private static final String READ_DROPBOX_ENABLED_PACKAGE_NAME = "android.dropboxmanager.cts";
     private static final long BROADCAST_RATE_LIMIT = 1000L;
     private static final long BROADCAST_DELAY_ALLOWED_ERROR = 200L;
 
@@ -113,7 +114,7 @@ public class DropBoxTests {
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mDropBoxManager = mContext.getSystemService(DropBoxManager.class);
 
-        if (mContext.getApplicationInfo().targetSdkVersion > 34) {
+        if (mContext.getPackageName().equals(READ_DROPBOX_ENABLED_PACKAGE_NAME)) {
             // Make sure the feature flag is enabled to ensure proper behavior
             assumeTrue(Flags.enableReadDropboxPermission());
         }
