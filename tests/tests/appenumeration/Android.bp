@@ -32,6 +32,7 @@ android_test {
         "CtsAppEnumerationTestLib",
         "cts-install-lib",
         "Harrier",
+        "android.security.flags-aconfig-java-host",
     ],
 
     srcs: ["src/**/*.java"],

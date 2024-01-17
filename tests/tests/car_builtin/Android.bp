@@ -37,6 +37,7 @@ android_test {
         "android.test.base",
     ],
     static_libs: [
+        "android.car.feature-aconfig-java",
         "android.car.test.utils",
         "androidx.test.rules",
         "androidx.test.ext.truth",

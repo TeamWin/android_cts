@@ -60,6 +60,7 @@ public class VirtualDeviceKeyguardTest {
 
     @Before
     public void setUp() throws Exception {
+        assumeTrue(supportsInsecureLock());
         mDefaultDeviceKeyguardManager = mContext.getSystemService(KeyguardManager.class);
 
         VirtualDevice virtualDevice = mVirtualDeviceRule.createManagedVirtualDevice();
@@ -69,8 +70,6 @@ public class VirtualDeviceKeyguardTest {
 
     @Test
     public void deviceIsNotSecure() {
-        assumeTrue(supportsLockScreen());
-
         try (LockScreenSession session = new LockScreenSession(sInstrumentation, mWmState)) {
             session.disableLockScreen();
 
@@ -114,10 +113,6 @@ public class VirtualDeviceKeyguardTest {
             assertThat(mVirtualDeviceKeyguardManager.isDeviceSecure()).isFalse();
             assertThat(mVirtualDeviceKeyguardManager.isDeviceLocked()).isFalse();
         }
-    }
-
-    protected boolean supportsLockScreen() {
-        return supportsInsecureLock() || supportsSecureLock();
     }
 
     /** Whether or not the device supports pin/pattern/password lock. */
