@@ -128,7 +128,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Tests zen/dnd related logic in NotificationManager.
@@ -635,24 +634,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 .build();
     }
 
-    private boolean areRulesSame(AutomaticZenRule a, AutomaticZenRule b) {
-        boolean isSame = a.isEnabled() == b.isEnabled()
-                && Objects.equals(a.getName(), b.getName())
-                && a.getInterruptionFilter() == b.getInterruptionFilter()
-                && Objects.equals(a.getConditionId(), b.getConditionId())
-                && Objects.equals(a.getOwner(), b.getOwner())
-                && Objects.equals(a.getZenPolicy(), b.getZenPolicy())
-                && Objects.equals(a.getConfigurationActivity(), b.getConfigurationActivity());
-        if (Flags.modesApi()) {
-            isSame = isSame
-                    && a.getType() == b.getType()
-                    && a.isManualInvocationAllowed() == b.isManualInvocationAllowed()
-                    && Objects.equals(a.getTriggerDescription(), b.getTriggerDescription())
-                    && a.getIconResId() == b.getIconResId();
-        }
-        return isSame;
-    }
-
     private AutomaticZenRule createRule(String name, int filter) {
         return new AutomaticZenRule(name, null,
                 new ComponentName(mContext, AutomaticZenRuleActivity.class),
@@ -1097,7 +1078,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
 
         assertNotNull(id);
-        assertTrue(areRulesSame(ruleToCreate, mNotificationManager.getAutomaticZenRule(id)));
+        assertRulesEqual(ruleToCreate, mNotificationManager.getAutomaticZenRule(id));
     }
 
     @Test
@@ -1111,7 +1092,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         mNotificationManager.updateAutomaticZenRule(id, ruleToCreate);
 
         assertNotNull(id);
-        assertTrue(areRulesSame(ruleToCreate, mNotificationManager.getAutomaticZenRule(id)));
+        assertRulesEqual(ruleToCreate, mNotificationManager.getAutomaticZenRule(id));
     }
 
     @Test
@@ -2136,7 +2117,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
 
         assertNotNull(id);
-        assertAllPublicSetFieldsEqual(ruleToCreate, mNotificationManager.getAutomaticZenRule(id));
+        assertRulesEqual(ruleToCreate, mNotificationManager.getAutomaticZenRule(id));
     }
 
     @Test
@@ -2249,45 +2230,28 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         Map<String, AutomaticZenRule> rules = mNotificationManager.getAutomaticZenRules();
 
         assertThat(rules).hasSize(2);
-        assertAllPublicSetFieldsEqual(rules.get(ruleId1), rule1);
-        assertAllPublicSetFieldsEqual(rules.get(ruleId2), rule2);
+        assertRulesEqual(rules.get(ruleId1), rule1);
+        assertRulesEqual(rules.get(ruleId2), rule2);
     }
 
-    private static void assertAllPublicSetFieldsEqual(AutomaticZenRule r1, AutomaticZenRule r2) {
+    private static void assertRulesEqual(AutomaticZenRule r1, AutomaticZenRule r2) {
         // Cannot test for exact equality because some extra fields (e.g. packageName,
-        // creationTime, userModifiedFields) come back. So we verify everything that the client app
-        // can set.
+        // creationTime) come back. So we verify everything that the client app can set.
         assertThat(r1.getConditionId()).isEqualTo(r2.getConditionId());
         assertThat(r1.getConfigurationActivity()).isEqualTo(r2.getConfigurationActivity());
         assertThat(r1.getInterruptionFilter()).isEqualTo(r2.getInterruptionFilter());
         assertThat(r1.getName()).isEqualTo(r2.getName());
         assertThat(r1.getOwner()).isEqualTo(r2.getOwner());
-        assertThat(clearUserModifiedFields(r1.getZenPolicy()))
-                .isEqualTo(clearUserModifiedFields(r2.getZenPolicy()));
+        assertThat(r1.getZenPolicy()).isEqualTo(r2.getZenPolicy());
         assertThat(r1.isEnabled()).isEqualTo(r2.isEnabled());
 
         if (Flags.modesApi()) {
-            assertThat(clearUserModifiedFields(r1.getDeviceEffects()))
-                    .isEqualTo(clearUserModifiedFields(r2.getDeviceEffects()));
+            assertThat(r1.getDeviceEffects()).isEqualTo(r2.getDeviceEffects());
             assertThat(r1.getIconResId()).isEqualTo(r2.getIconResId());
             assertThat(r1.getTriggerDescription()).isEqualTo(r2.getTriggerDescription());
             assertThat(r1.getType()).isEqualTo(r2.getType());
             assertThat(r1.isManualInvocationAllowed()).isEqualTo(r2.isManualInvocationAllowed());
         }
-    }
-
-    private static ZenPolicy clearUserModifiedFields(ZenPolicy policy) {
-        if (policy == null) {
-            return null;
-        }
-        return new ZenPolicy.Builder(policy).setUserModifiedFields(0).build();
-    }
-
-    private static ZenDeviceEffects clearUserModifiedFields(ZenDeviceEffects deviceEffects) {
-        if (deviceEffects == null) {
-            return null;
-        }
-        return new ZenDeviceEffects.Builder(deviceEffects).setUserModifiedFields(0).build();
     }
 
     @Test
@@ -2345,7 +2309,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
-    public void updateAutomaticZenRule_fromUser_updatesUserModifiedFields() {
+    public void updateAutomaticZenRule_fromUser_updatesRuleFully() {
         AutomaticZenRule original = new AutomaticZenRule.Builder("Original", CONDITION_ID)
                 .setConfigurationActivity(CONFIG_ACTIVITY)
                 .setType(AutomaticZenRule.TYPE_IMMERSIVE)
@@ -2362,37 +2326,47 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 .build();
         String ruleId = mNotificationManager.addAutomaticZenRule(original);
 
-        // Update the rule "from user".
-        AutomaticZenRule userUpdate = new AutomaticZenRule.Builder(original)
-                // User changes
-                .setName("Updated")
-                .setEnabled(false)
-                .setZenPolicy(new ZenPolicy.Builder(original.getZenPolicy())
+        // Update the rule "from user" once.
+        AutomaticZenRule firstUserUpdate = new AutomaticZenRule.Builder(original)
+                .setName("First update")
+                .setZenPolicy(new ZenPolicy.Builder()
                         .allowMedia(true)
                         .allowCalls(ZenPolicy.PEOPLE_TYPE_ANYONE)
+                        .build())
+                .build();
+        runAsSystemUi(
+                () -> mNotificationManager.updateAutomaticZenRule(ruleId, firstUserUpdate,
+                        /* fromUser= */ true));
+
+        // Verify the update succeeded.
+        AutomaticZenRule firstUserUpdateResult = mNotificationManager.getAutomaticZenRule(ruleId);
+        assertRulesEqual(firstUserUpdate, firstUserUpdateResult);
+
+        // Update the rule "from user" a second time.
+        AutomaticZenRule secondUserUpdate = new AutomaticZenRule.Builder(original)
+                // User changes
+                .setName("Updated again")
+                .setEnabled(false)
+                .setZenPolicy(new ZenPolicy.Builder()
+                        .allowMedia(true)
+                        .allowCalls(ZenPolicy.PEOPLE_TYPE_CONTACTS)
                         .build())
                 .setDeviceEffects(new ZenDeviceEffects.Builder(original.getDeviceEffects())
                         .setShouldDimWallpaper(true)
                         .build())
                 // Technically nothing stops this API call from also updating fields that should be
-                // the purview of the app, but those are NOT marked as user-modified.
+                // the purview of the app.
                 .setType(AutomaticZenRule.TYPE_DRIVING)
                 .setTriggerDescription("While driving")
                 .setIconResId(android.R.drawable.sym_def_app_icon)
                 .build();
         runAsSystemUi(
-                () -> mNotificationManager.updateAutomaticZenRule(ruleId, userUpdate,
+                () -> mNotificationManager.updateAutomaticZenRule(ruleId, secondUserUpdate,
                         /* fromUser= */ true));
 
-        AutomaticZenRule result = mNotificationManager.getAutomaticZenRule(ruleId);
-        assertAllPublicSetFieldsEqual(userUpdate, result);
-
-        assertThat(result.canUpdate()).isFalse();
-        assertThat(result.getUserModifiedFields()).isEqualTo(AutomaticZenRule.FIELD_NAME);
-        assertThat(result.getZenPolicy().getUserModifiedFields()).isEqualTo(
-                ZenPolicy.FIELD_PRIORITY_CATEGORY_MEDIA | ZenPolicy.FIELD_CALLS);
-        assertThat(result.getDeviceEffects().getUserModifiedFields()).isEqualTo(
-                ZenDeviceEffects.FIELD_DIM_WALLPAPER);
+        // The second update succeeded as well.
+        AutomaticZenRule secondUserUpdateResult = mNotificationManager.getAutomaticZenRule(ruleId);
+        assertRulesEqual(secondUserUpdate, secondUserUpdateResult);
     }
 
     @Test
@@ -2431,14 +2405,9 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 .build();
         mNotificationManager.updateAutomaticZenRule(ruleId, appUpdate);
 
-        // Update should be successful, and nothing is user-modified.
+        // Verify the update succeeded.
         AutomaticZenRule result = mNotificationManager.getAutomaticZenRule(ruleId);
-        assertAllPublicSetFieldsEqual(appUpdate, result);
-
-        assertThat(result.canUpdate()).isTrue();
-        assertThat(result.getUserModifiedFields()).isEqualTo(0);
-        assertThat(result.getZenPolicy().getUserModifiedFields()).isEqualTo(0);
-        assertThat(result.getDeviceEffects().getUserModifiedFields()).isEqualTo(0);
+        assertRulesEqual(appUpdate, result);
     }
 
     @Test
@@ -2463,7 +2432,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         // Minimally update the rule "from user".
         AutomaticZenRule userUpdate = new AutomaticZenRule.Builder(original)
                 // User changes
-                .setName("Updated")
+                .setName("Updated by user")
                 .build();
         runAsSystemUi(
                 () -> mNotificationManager.updateAutomaticZenRule(ruleId, userUpdate,
@@ -2486,7 +2455,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 .build();
         mNotificationManager.updateAutomaticZenRule(ruleId, appUpdate);
 
-        // The app-controlled fields should be updated
+        // The app-controlled fields should be updated.
         AutomaticZenRule result = mNotificationManager.getAutomaticZenRule(ruleId);
         assertThat(result.getType()).isEqualTo(appUpdate.getType());
         assertThat(result.getTriggerDescription()).isEqualTo(appUpdate.getTriggerDescription());
@@ -2498,12 +2467,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertThat(result.getName()).isEqualTo(userUpdate.getName());
         assertThat(result.getZenPolicy()).isEqualTo(original.getZenPolicy());
         assertThat(result.getDeviceEffects()).isEqualTo(original.getDeviceEffects());
-
-        // And the "user modified fields" should be those from the user update only.
-        assertThat(result.canUpdate()).isFalse();
-        assertThat(result.getUserModifiedFields()).isEqualTo(AutomaticZenRule.FIELD_NAME);
-        assertThat(result.getZenPolicy().getUserModifiedFields()).isEqualTo(0);
-        assertThat(result.getDeviceEffects().getUserModifiedFields()).isEqualTo(0);
     }
 
     @Test
