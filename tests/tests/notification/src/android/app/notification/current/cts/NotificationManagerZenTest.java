@@ -985,88 +985,70 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
     @Test
     public void testTotalSilenceOnlyMuteStreams() throws Exception {
-        final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
-        NotificationManager.Policy origPolicy = mNotificationManager.getNotificationPolicy();
-        try {
-            toggleNotificationPolicyAccess(mContext.getPackageName(),
-                    InstrumentationRegistry.getInstrumentation(), true);
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
 
-            // ensure volume is not muted/0 to start test
-            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
-            // exception for presidential alert
-            //mAudioManager.setStreamVolume(AudioManager.STREAM_ALARM, 1, 0);
-            mAudioManager.setStreamVolume(AudioManager.STREAM_SYSTEM, 1, 0);
-            mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 1, 0);
+        // ensure volume is not muted/0 to start test
+        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
+        // exception for presidential alert
+        //mAudioManager.setStreamVolume(AudioManager.STREAM_ALARM, 1, 0);
+        mAudioManager.setStreamVolume(AudioManager.STREAM_SYSTEM, 1, 0);
+        mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 1, 0);
 
-            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                    PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA, 0, 0));
-            AutomaticZenRule rule = createRule("test_total_silence", INTERRUPTION_FILTER_NONE);
-            String id = mNotificationManager.addAutomaticZenRule(rule);
-            Condition condition =
-                    new Condition(rule.getConditionId(), "summary", Condition.STATE_TRUE);
-            mNotificationManager.setAutomaticZenRuleState(id, condition);
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
+        AutomaticZenRule rule = createRule("test_total_silence", INTERRUPTION_FILTER_NONE);
+        String id = mNotificationManager.addAutomaticZenRule(rule);
+        Condition condition =
+                new Condition(rule.getConditionId(), "summary", Condition.STATE_TRUE);
+        mNotificationManager.setAutomaticZenRuleState(id, condition);
 
-            // delay for streams to get into correct mute states
-            Thread.sleep(2000);
-            assertTrue("Music (media) stream should be muted",
-                    mAudioManager.isStreamMute(AudioManager.STREAM_MUSIC));
-            assertTrue("System stream should be muted",
-                    mAudioManager.isStreamMute(AudioManager.STREAM_SYSTEM));
-            // exception for presidential alert
-            //assertTrue("Alarm stream should be muted",
-            //        mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
+        // delay for streams to get into correct mute states
+        Thread.sleep(1000);
+        assertTrue("Music (media) stream should be muted",
+                mAudioManager.isStreamMute(AudioManager.STREAM_MUSIC));
+        assertTrue("System stream should be muted",
+                mAudioManager.isStreamMute(AudioManager.STREAM_SYSTEM));
+        // exception for presidential alert
+        //assertTrue("Alarm stream should be muted",
+        //        mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
 
-            // Test requires that the phone's default state has no channels that can bypass dnd
-            // which we can't currently guarantee (b/169267379)
-            // assertTrue("Ringer stream should be muted",
-            //        mAudioManager.isStreamMute(AudioManager.STREAM_RING));
-        } finally {
-            mNotificationManager.setInterruptionFilter(originalFilter);
-            mNotificationManager.setNotificationPolicy(origPolicy);
-        }
+        // Test requires that the phone's default state has no channels that can bypass dnd
+        // which we can't currently guarantee (b/169267379)
+        // assertTrue("Ringer stream should be muted",
+        //        mAudioManager.isStreamMute(AudioManager.STREAM_RING));
     }
 
     @Test
     public void testAlarmsOnlyMuteStreams() throws Exception {
-        final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
-        NotificationManager.Policy origPolicy = mNotificationManager.getNotificationPolicy();
-        try {
-            toggleNotificationPolicyAccess(mContext.getPackageName(),
-                    InstrumentationRegistry.getInstrumentation(), true);
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
 
-            // ensure volume is not muted/0 to start test
-            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
-            mAudioManager.setStreamVolume(AudioManager.STREAM_ALARM, 1, 0);
-            mAudioManager.setStreamVolume(AudioManager.STREAM_SYSTEM, 1, 0);
-            mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 1, 0);
+        // ensure volume is not muted/0 to start test
+        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
+        mAudioManager.setStreamVolume(AudioManager.STREAM_ALARM, 1, 0);
+        mAudioManager.setStreamVolume(AudioManager.STREAM_SYSTEM, 1, 0);
+        mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 1, 0);
 
-            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                    PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA, 0, 0));
-            AutomaticZenRule rule = createRule("test_alarms", INTERRUPTION_FILTER_ALARMS);
-            String id = mNotificationManager.addAutomaticZenRule(rule);
-            Condition condition =
-                    new Condition(rule.getConditionId(), "summary", Condition.STATE_TRUE);
-            mNotificationManager.setAutomaticZenRuleState(id, condition);
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
+        mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
+                PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA, 0, 0));
+        AutomaticZenRule rule = createRule("test_alarms", INTERRUPTION_FILTER_ALARMS);
+        String id = mNotificationManager.addAutomaticZenRule(rule);
+        Condition condition =
+                new Condition(rule.getConditionId(), "summary", Condition.STATE_TRUE);
+        mNotificationManager.setAutomaticZenRuleState(id, condition);
 
-            // delay for streams to get into correct mute states
-            Thread.sleep(2000);
-            assertFalse("Music (media) stream should not be muted",
-                    mAudioManager.isStreamMute(AudioManager.STREAM_MUSIC));
-            assertTrue("System stream should be muted",
-                    mAudioManager.isStreamMute(AudioManager.STREAM_SYSTEM));
-            assertFalse("Alarm stream should not be muted",
-                    mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
+        // delay for streams to get into correct mute states
+        Thread.sleep(1000);
+        assertFalse("Music (media) stream should not be muted",
+                mAudioManager.isStreamMute(AudioManager.STREAM_MUSIC));
+        assertTrue("System stream should be muted",
+                mAudioManager.isStreamMute(AudioManager.STREAM_SYSTEM));
+        assertFalse("Alarm stream should not be muted",
+                mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
 
-            // Test requires that the phone's default state has no channels that can bypass dnd
-            // which we can't currently guarantee (b/169267379)
-            // assertTrue("Ringer stream should be muted",
-            //  mAudioManager.isStreamMute(AudioManager.STREAM_RING));
-        } finally {
-            mNotificationManager.setInterruptionFilter(originalFilter);
-            mNotificationManager.setNotificationPolicy(origPolicy);
-        }
+        // Test requires that the phone's default state has no channels that can bypass dnd
+        // which we can't currently guarantee (b/169267379)
+        // assertTrue("Ringer stream should be muted",
+        //  mAudioManager.isStreamMute(AudioManager.STREAM_RING));
     }
 
     @Test
