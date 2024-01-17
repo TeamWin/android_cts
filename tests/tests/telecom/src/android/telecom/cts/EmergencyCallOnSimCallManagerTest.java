@@ -58,7 +58,8 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
                     TEST_SIM_CALL_MANAGER_PHONE_ACCOUNT_HANDLE, ACCOUNT_LABEL)
             .setAddress(Uri.parse("tel:555-TEST"))
             .setSubscriptionAddress(Uri.parse("tel:555-TEST"))
-            .setCapabilities(PhoneAccount.CAPABILITY_CONNECTION_MANAGER)
+            .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER
+                    | PhoneAccount.CAPABILITY_CONNECTION_MANAGER)
             .setHighlightColor(Color.RED)
             .setShortDescription(ACCOUNT_LABEL)
             .setSupportedUriSchemes(Arrays.asList("tel"))
