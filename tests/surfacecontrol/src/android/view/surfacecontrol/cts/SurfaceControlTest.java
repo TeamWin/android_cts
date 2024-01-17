@@ -120,7 +120,7 @@ public class SurfaceControlTest {
 
     private ASurfaceControlTestActivity mActivity;
 
-    private long mDesiredPresentTime;
+    private long mDesiredPresentTimeNanos;
 
     @Before
     public void setup() {
@@ -1439,13 +1439,13 @@ public class SurfaceControlTest {
 
     class OnCompleteListenerHelper {
         private CountDownLatch mLatch = new CountDownLatch(1);
-        private long mLatchTime;
+        private long mLatchTimeNanos;
         private SyncFence mPresentFence;
 
         SurfaceControl.Transaction getTransaction() {
             return makeTransactionWithListener().addTransactionCompletedListener(
                     Runnable::run,  stats -> {
-                        mLatchTime = stats.getLatchTime();
+                        mLatchTimeNanos = stats.getLatchTimeNanos();
                         mPresentFence = stats.getPresentFence();
                         mLatch.countDown();
                     });
@@ -1459,8 +1459,8 @@ public class SurfaceControlTest {
             return mPresentFence;
         }
 
-        long getLatchTime() {
-            return mLatchTime;
+        long getLatchTimeNanos() {
+            return mLatchTimeNanos;
         }
 
         void close() {
@@ -1485,8 +1485,8 @@ public class SurfaceControlTest {
                         setSolidBuffer(surfaceControl, tx, DEFAULT_LAYOUT_WIDTH,
                                 DEFAULT_LAYOUT_HEIGHT, Color.RED);
 
-                        mDesiredPresentTime = System.nanoTime();
-                        tx.setDesiredPresentTime(mDesiredPresentTime).apply();
+                        mDesiredPresentTimeNanos = System.nanoTime();
+                        tx.setDesiredPresentTimeNanos(mDesiredPresentTimeNanos).apply();
                     }
                 },
                 new PixelChecker(Color.RED) { //10000
@@ -1497,13 +1497,13 @@ public class SurfaceControlTest {
                 }, 1);
 
         helper.waitForStats();
-        assertTrue(helper.getLatchTime() > 0);
+        assertTrue(helper.getLatchTimeNanos() > 0);
 
         assertTrue(helper.getPresentFence() != null);
         assertTrue(helper.getPresentFence().await(Duration.ofSeconds(5)));
         assertTrue("transaction was presented too early. presentTime="
                         + helper.getPresentFence().getSignalTime(),
-                helper.getPresentFence().getSignalTime() >= mDesiredPresentTime);
+                helper.getPresentFence().getSignalTime() >= mDesiredPresentTimeNanos);
         helper.close();
     }
 
@@ -1523,8 +1523,8 @@ public class SurfaceControlTest {
                         setSolidBuffer(surfaceControl, tx, DEFAULT_LAYOUT_WIDTH,
                                 DEFAULT_LAYOUT_HEIGHT, Color.RED);
 
-                        mDesiredPresentTime = System.nanoTime() + 30_000_000;
-                        tx.setDesiredPresentTime(mDesiredPresentTime).apply();
+                        mDesiredPresentTimeNanos = System.nanoTime() + 30_000_000;
+                        tx.setDesiredPresentTimeNanos(mDesiredPresentTimeNanos).apply();
                     }
                 },
                 new PixelChecker(Color.RED) { //10000
@@ -1535,12 +1535,12 @@ public class SurfaceControlTest {
                 }, 1);
 
         helper.waitForStats();
-        assertTrue(helper.getLatchTime() > 0);
+        assertTrue(helper.getLatchTimeNanos() > 0);
         assertTrue(helper.getPresentFence() != null);
         assertTrue(helper.getPresentFence().await(Duration.ofSeconds(5)));
         assertTrue("transaction was presented too early. presentTime="
                         + helper.getPresentFence().getSignalTime(),
-                helper.getPresentFence().getSignalTime() >= mDesiredPresentTime);
+                helper.getPresentFence().getSignalTime() >= mDesiredPresentTimeNanos);
         helper.close();
     }
 
@@ -1560,8 +1560,8 @@ public class SurfaceControlTest {
                         setSolidBuffer(surfaceControl, tx, DEFAULT_LAYOUT_WIDTH,
                                 DEFAULT_LAYOUT_HEIGHT, Color.RED);
 
-                        mDesiredPresentTime = System.nanoTime() + 100_000_000;
-                        tx.setDesiredPresentTime(mDesiredPresentTime).apply();
+                        mDesiredPresentTimeNanos = System.nanoTime() + 100_000_000;
+                        tx.setDesiredPresentTimeNanos(mDesiredPresentTimeNanos).apply();
                     }
                 },
                 new PixelChecker(Color.RED) { //10000
@@ -1572,12 +1572,12 @@ public class SurfaceControlTest {
                 }, 1);
 
         helper.waitForStats();
-        assertTrue(helper.getLatchTime() > 0);
+        assertTrue(helper.getLatchTimeNanos() > 0);
         assertTrue(helper.getPresentFence() != null);
         assertTrue(helper.getPresentFence().await(Duration.ofSeconds(5)));
         assertTrue("transaction was presented too early. presentTime="
                         + helper.getPresentFence().getSignalTime(),
-                helper.getPresentFence().getSignalTime() >= mDesiredPresentTime);
+                helper.getPresentFence().getSignalTime() >= mDesiredPresentTimeNanos);
         helper.close();
     }
 
@@ -1596,7 +1596,7 @@ public class SurfaceControlTest {
             public void onVsync(@NonNull Choreographer.FrameData frameData) {
                 long periodNanos = (long) (1e9 / mActivity.getDisplay().getRefreshRate());
                 long threshold = periodNanos / 2;
-                mDesiredPresentTime = frameData.getPreferredFrameTimeline()
+                mDesiredPresentTimeNanos = frameData.getPreferredFrameTimeline()
                         .getExpectedPresentationTimeNanos() - threshold;
                 transaction[0].setFrameTimeline(
                         frameData.getPreferredFrameTimeline().getVsyncId()).apply();
@@ -1623,12 +1623,12 @@ public class SurfaceControlTest {
                 }, 1);
 
         helper.waitForStats();
-        assertTrue(helper.getLatchTime() > 0);
+        assertTrue(helper.getLatchTimeNanos() > 0);
         assertTrue(helper.getPresentFence() != null);
         assertTrue(helper.getPresentFence().await(Duration.ofSeconds(5)));
         assertTrue("transaction was presented too early. presentTime="
                         + helper.getPresentFence().getSignalTime(),
-                helper.getPresentFence().getSignalTime() >= mDesiredPresentTime);
+                helper.getPresentFence().getSignalTime() >= mDesiredPresentTimeNanos);
         helper.close();
     }
 
@@ -1650,7 +1650,8 @@ public class SurfaceControlTest {
                 long threshold = periodNanos / 2;
                 Choreographer.FrameTimeline[] timelines = frameData.getFrameTimelines();
                 Choreographer.FrameTimeline lastTimeline = timelines[timelines.length - 1];
-                mDesiredPresentTime = lastTimeline.getExpectedPresentationTimeNanos() - threshold;
+                mDesiredPresentTimeNanos =
+                        lastTimeline.getExpectedPresentationTimeNanos() - threshold;
                 transaction[0].setFrameTimeline(lastTimeline.getVsyncId()).apply();
             }
         };
@@ -1674,12 +1675,12 @@ public class SurfaceControlTest {
                 }, 1);
 
         helper.waitForStats();
-        assertTrue(helper.getLatchTime() > 0);
+        assertTrue(helper.getLatchTimeNanos() > 0);
         assertTrue(helper.getPresentFence() != null);
         assertTrue(helper.getPresentFence().await(Duration.ofSeconds(5)));
         assertTrue("transaction was presented too early. presentTime="
                         + helper.getPresentFence().getSignalTime(),
-                helper.getPresentFence().getSignalTime() >= mDesiredPresentTime);
+                helper.getPresentFence().getSignalTime() >= mDesiredPresentTimeNanos);
         helper.close();
     }
 
