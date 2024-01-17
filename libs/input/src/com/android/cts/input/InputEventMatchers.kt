@@ -18,14 +18,13 @@ package com.android.cts.input.inputeventmatchers
 
 import android.graphics.Point
 import android.graphics.PointF
-import android.util.Log
 import android.view.KeyEvent
 import android.view.KeyEvent.keyCodeToString
 import android.view.MotionEvent
+import kotlin.math.abs
 import org.hamcrest.Description
 import org.hamcrest.Matcher
 import org.hamcrest.TypeSafeMatcher
-import org.junit.Assert.assertEquals
 
 private const val EPSILON = 0.001f
 
@@ -35,13 +34,8 @@ fun withCoords(pt: PointF): Matcher<MotionEvent> = object : TypeSafeMatcher<Moti
     }
 
     override fun matchesSafely(event: MotionEvent): Boolean {
-        try {
-            assertEquals("x", pt.x, event.getX(), EPSILON)
-            assertEquals("y", pt.y, event.getY(), EPSILON)
-            return true
-        } catch (e: Exception) {
-            return false
-        }
+        return (abs(event.x - pt.x) < EPSILON) &&
+                (abs(event.y - pt.y) < EPSILON)
     }
 }
 
@@ -52,14 +46,8 @@ fun withCoordsForPointerIndex(index: Int, pt: PointF): Matcher<MotionEvent> =
     }
 
     override fun matchesSafely(event: MotionEvent): Boolean {
-        try {
-            assertEquals("x", pt.x, event.getX(index), EPSILON)
-            assertEquals("y", pt.y, event.getY(index), EPSILON)
-            return true
-        } catch (e: Exception) {
-            Log.e("inputeventmatchers", "$e")
-            return false
-        }
+        return (abs(event.getX(index)) - pt.x < EPSILON) &&
+                (abs(event.getY(index)) - pt.y < EPSILON)
     }
 }
 
@@ -69,13 +57,8 @@ fun withRawCoords(pt: PointF): Matcher<MotionEvent> = object : TypeSafeMatcher<M
     }
 
     override fun matchesSafely(event: MotionEvent): Boolean {
-        try {
-            assertEquals("x", pt.x, event.getRawX(), EPSILON)
-            assertEquals("y", pt.y, event.getRawY(), EPSILON)
-            return true
-        } catch (e: Exception) {
-            return false
-        }
+        return (abs(event.rawX) - pt.x < EPSILON) &&
+                (abs(event.rawY) - pt.y < EPSILON)
     }
 
     override fun describeMismatchSafely(event: MotionEvent, mismatchDescription: Description) {
@@ -182,5 +165,77 @@ fun withKeyCode(keyCode: Int): Matcher<KeyEvent> = object : TypeSafeMatcher<KeyE
 
     override fun matchesSafely(event: KeyEvent): Boolean {
         return event.keyCode == keyCode
+    }
+}
+
+fun withEdgeFlags(edgeFlags: Int): Matcher<MotionEvent> = object : TypeSafeMatcher<MotionEvent>() {
+    override fun describeTo(description: Description) {
+        description.appendText("With edge flags = 0x${edgeFlags.toString(16)}")
+    }
+
+    override fun matchesSafely(event: MotionEvent): Boolean {
+        return (event.edgeFlags and edgeFlags) == edgeFlags
+    }
+}
+
+fun withDownTime(downTime: Long): Matcher<MotionEvent> = object : TypeSafeMatcher<MotionEvent>() {
+    override fun describeTo(description: Description) {
+        description.appendText("With down time = $downTime")
+    }
+
+    override fun matchesSafely(event: MotionEvent): Boolean {
+        return event.downTime == downTime
+    }
+}
+
+fun withMetaState(metaState: Int): Matcher<MotionEvent> = object : TypeSafeMatcher<MotionEvent>() {
+    override fun describeTo(description: Description) {
+        description.appendText("With meta state = 0x${metaState.toString(16)}")
+    }
+
+    override fun matchesSafely(event: MotionEvent): Boolean {
+        return event.metaState == metaState
+    }
+}
+
+fun withPressure(pressure: Float): Matcher<MotionEvent> = object : TypeSafeMatcher<MotionEvent>() {
+    override fun describeTo(description: Description) {
+        description.appendText("With pressure = $pressure")
+    }
+
+    override fun matchesSafely(event: MotionEvent): Boolean {
+        return abs(event.pressure - pressure) < EPSILON
+    }
+}
+
+fun withSize(size: Float): Matcher<MotionEvent> = object : TypeSafeMatcher<MotionEvent>() {
+    override fun describeTo(description: Description) {
+        description.appendText("With size = $size")
+    }
+
+    override fun matchesSafely(event: MotionEvent): Boolean {
+        return abs(event.size - size) < EPSILON
+    }
+}
+
+fun withXPrecision(xPrecision: Float):
+        Matcher<MotionEvent> = object : TypeSafeMatcher<MotionEvent>() {
+    override fun describeTo(description: Description) {
+        description.appendText("With xPrecision = $xPrecision")
+    }
+
+    override fun matchesSafely(event: MotionEvent): Boolean {
+        return abs(event.xPrecision - xPrecision) < EPSILON
+    }
+}
+
+fun withYPrecision(yPrecision: Float):
+        Matcher<MotionEvent> = object : TypeSafeMatcher<MotionEvent>() {
+    override fun describeTo(description: Description) {
+        description.appendText("With yPrecision = $yPrecision")
+    }
+
+    override fun matchesSafely(event: MotionEvent): Boolean {
+        return abs(event.yPrecision - yPrecision) < EPSILON
     }
 }

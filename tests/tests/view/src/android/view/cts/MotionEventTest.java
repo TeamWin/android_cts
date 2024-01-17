@@ -19,13 +19,31 @@ package android.view.cts;
 import static android.view.cts.MotionEventUtils.withCoords;
 import static android.view.cts.MotionEventUtils.withProperties;
 
+import static com.android.cts.input.inputeventmatchers.InputEventMatchersKt.withDeviceId;
+import static com.android.cts.input.inputeventmatchers.InputEventMatchersKt.withDownTime;
+import static com.android.cts.input.inputeventmatchers.InputEventMatchersKt.withEdgeFlags;
+import static com.android.cts.input.inputeventmatchers.InputEventMatchersKt.withEventTime;
+import static com.android.cts.input.inputeventmatchers.InputEventMatchersKt.withMetaState;
+import static com.android.cts.input.inputeventmatchers.InputEventMatchersKt.withMotionAction;
+import static com.android.cts.input.inputeventmatchers.InputEventMatchersKt.withPressure;
+import static com.android.cts.input.inputeventmatchers.InputEventMatchersKt.withRawCoords;
+import static com.android.cts.input.inputeventmatchers.InputEventMatchersKt.withSize;
+import static com.android.cts.input.inputeventmatchers.InputEventMatchersKt.withXPrecision;
+import static com.android.cts.input.inputeventmatchers.InputEventMatchersKt.withYPrecision;
+
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.graphics.Matrix;
+import android.graphics.PointF;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
@@ -41,6 +59,8 @@ import android.view.cts.MotionEventUtils.PointerPropertiesBuilder;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.cts.input.inputeventmatchers.InputEventMatchersKt;
 
 import org.junit.After;
 import org.junit.Before;
@@ -77,6 +97,8 @@ public class MotionEventTest {
     private static final float RAW_COORD_TOLERANCE = 0.001f;
 
     private static native void nativeMotionEventTest(MotionEvent event);
+
+    private static native MotionEvent obtainMotionEventCopyFromNative(MotionEvent event);
 
     static {
         System.loadLibrary("ctsview_jni");
@@ -1072,5 +1094,35 @@ public class MotionEventTest {
                 MotionEvent.ACTION_BUTTON_PRESS, X_3F, Y_4F, META_STATE);
         event.setActionButton(MotionEvent.BUTTON_PRIMARY);
         nativeMotionEventTest(event);
+    }
+
+    @Test
+    public void testNativeToJavaConverter() {
+        final MotionEvent javaMotionEvent = MotionEvent.obtain(mDownTime, mEventTime,
+                MotionEvent.ACTION_DOWN, X_3F, Y_4F, PRESSURE_1F, SIZE_1F, META_STATE,
+                X_PRECISION_3F, Y_PRECISION_4F, DEVICE_ID_1, EDGE_FLAGS);
+        final MotionEvent motionEventFromNative = obtainMotionEventCopyFromNative(javaMotionEvent);
+        assertNotSame(javaMotionEvent, motionEventFromNative);
+        assertThat(motionEventFromNative, allOf(
+                is(notNullValue()),
+                withEventTime(javaMotionEvent.getEventTime()),
+                withDownTime(javaMotionEvent.getDownTime()),
+                withMotionAction(javaMotionEvent.getAction()),
+                InputEventMatchersKt.withCoords(
+                        new PointF(javaMotionEvent.getX(), javaMotionEvent.getY())
+                ),
+                withRawCoords(new PointF(javaMotionEvent.getRawX(), javaMotionEvent.getRawY())),
+                withDeviceId(javaMotionEvent.getDeviceId()),
+                withEdgeFlags(javaMotionEvent.getEdgeFlags()),
+                withMetaState(javaMotionEvent.getMetaState()),
+                withPressure(javaMotionEvent.getPressure()),
+                withSize(javaMotionEvent.getSize()),
+                withXPrecision(javaMotionEvent.getXPrecision()),
+                withYPrecision(javaMotionEvent.getYPrecision())
+        ));
+        assertEquals(
+                javaMotionEvent.getEventTimeNanos(),
+                motionEventFromNative.getEventTimeNanos()
+        );
     }
 }
