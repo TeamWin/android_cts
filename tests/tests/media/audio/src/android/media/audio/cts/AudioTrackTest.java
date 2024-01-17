@@ -3166,6 +3166,85 @@ public class AudioTrackTest {
         }
     }
 
+    // Tests that the getPlaybackHeadPosition is 0 after creating the track and before starting
+    // to play even after setStartThresholdInFrames is called
+    @Test
+    public void testZeroPositionStartThresholdInFrames() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        AudioTrack audioTrack = null;
+        try {
+            // Build our audiotrack
+            audioTrack = new AudioTrack.Builder()
+                    .setAudioFormat(new AudioFormat.Builder()
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                            .build())
+                    .build();
+
+            int bufferSize = audioTrack.getBufferSizeInFrames();
+            final short[] bufferData = new short[bufferSize];
+            // Use a small part of the buffer size for the frames data
+            int frames = bufferSize / 4;
+            int errorMargin = frames / 2;
+            final short[] data = new short[frames];
+
+            audioTrack.write(data, 0 /* offsetInShorts */, data.length);
+            Thread.sleep(START_THRESHOLD_SLEEP_MILLIS);
+
+            assertEquals("PlaybackHeadPosition should be 0 before starting playback.",
+                    0 /* expectedFrames */, audioTrack.getPlaybackHeadPosition());
+
+            // set a start threshold smaller than the initial buffer size, but larger
+            // than the already written data
+            audioTrack.setStartThresholdInFrames(3 * frames);
+            Thread.sleep(START_THRESHOLD_SLEEP_MILLIS);
+
+            assertEquals("PlaybackHeadPosition should be 0 before starting playback and setting"
+                            + " the startThresholdInFrames.",
+                    0 /* expectedFrames */, audioTrack.getPlaybackHeadPosition());
+
+            // write some more data, but not enough to start playback
+            audioTrack.write(data, 0 /* offsetInShorts */, data.length);
+            Thread.sleep(START_THRESHOLD_SLEEP_MILLIS);
+
+            assertEquals("PlaybackHeadPosition should be 0 before starting playback and setting"
+                            + " the startThresholdInFrames and writing insufficient data.",
+                    0 /* expectedFrames */, audioTrack.getPlaybackHeadPosition());
+
+            // write some more data, a full buffer, more than the threshold
+            audioTrack.write(bufferData, 0 /* offsetInShorts */, data.length);
+            Thread.sleep(START_THRESHOLD_SLEEP_MILLIS);
+
+            assertEquals("PlaybackHeadPosition should be 0 before starting playback and setting"
+                            + " the startThresholdInFrames and writing sufficient data.",
+                    0 /* expectedFrames */, audioTrack.getPlaybackHeadPosition());
+
+            audioTrack.play();
+            int playbackHeadPosition = audioTrack.getPlaybackHeadPosition();
+
+            assertTrue("PlaybackHeadPosition should be almost 0 immediately after starting playback"
+                            + " with set startThresholdInFrames and sufficient written data,"
+                            + " but is " + playbackHeadPosition + ", with margin " + errorMargin,
+                    playbackHeadPosition < errorMargin);
+
+            // sleep a small amount of time to allow playback of some frames
+            Thread.sleep(frames * 1000L / audioTrack.getSampleRate());
+            playbackHeadPosition = audioTrack.getPlaybackHeadPosition();
+
+            assertTrue("PlaybackHeadPosition should be close to " + frames + " after starting"
+                    + " playback with set startThresholdInFrames and sufficient written data,"
+                    + " but is " + playbackHeadPosition + ", with margin " + errorMargin,
+                    playbackHeadPosition < frames + errorMargin);
+        } finally {
+            if (audioTrack != null) {
+                audioTrack.release();
+            }
+        }
+    }
+
     // Start threshold levels that we check.
     private enum ThresholdLevel { LOW, MEDIUM, HIGH };
     @Test
