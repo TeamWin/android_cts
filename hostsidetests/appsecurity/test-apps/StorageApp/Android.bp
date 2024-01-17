@@ -9,7 +9,7 @@ java_library {
     sdk_version: "test_current",
     libs: [
         "android.test.base",
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
     ],
 }
 
@@ -19,7 +19,7 @@ android_test_helper_app {
     sdk_version: "test_current",
     static_libs: [
         "androidx.test.rules",
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
     ],
     libs: ["android.test.base"],
     srcs: ["src/**/*.java"],
@@ -36,7 +36,7 @@ android_test_helper_app {
     sdk_version: "test_current",
     static_libs: [
         "androidx.test.rules",
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
     ],
     libs: ["android.test.base"],
     srcs: ["src/**/*.java"],
