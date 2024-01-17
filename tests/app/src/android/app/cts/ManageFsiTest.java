@@ -45,6 +45,8 @@ public class ManageFsiTest {
         final PackageManager pm = context.getPackageManager();
         assumeFalse("TV does not support fullscreen intents",
                 pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK));
+        assumeFalse("Watch does not support fullscreen intents",
+                pm.hasSystemFeature(PackageManager.FEATURE_WATCH));
 
         final Intent intent = new Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT);
         intent.setData(Uri.parse("package:" + STUB_PACKAGE_NAME));
