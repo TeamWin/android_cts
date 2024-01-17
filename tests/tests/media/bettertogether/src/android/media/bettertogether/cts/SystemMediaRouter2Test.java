@@ -1411,7 +1411,7 @@ public class SystemMediaRouter2Test {
         RoutingController controller = mAppRouter2.getSystemController();
         RoutingSessionInfo currentSessionInfo = controller.getRoutingSessionInfo();
 
-        assertThat(controller.wasTransferRequestedBySelf()).isTrue();
+        assertThat(controller.wasTransferInitiatedBySelf()).isTrue();
         assertThat(currentSessionInfo.getTransferReason()).isEqualTo(
                 RoutingSessionInfo.TRANSFER_REASON_APP);
     }
@@ -1445,7 +1445,7 @@ public class SystemMediaRouter2Test {
         RoutingController controller = mAppRouter2.getSystemController();
         RoutingSessionInfo currentSessionInfo = controller.getRoutingSessionInfo();
 
-        assertThat(controller.wasTransferRequestedBySelf()).isTrue();
+        assertThat(controller.wasTransferInitiatedBySelf()).isTrue();
         assertThat(currentSessionInfo.getTransferReason()).isEqualTo(
                 RoutingSessionInfo.TRANSFER_REASON_SYSTEM_REQUEST);
     }
@@ -1482,7 +1482,7 @@ public class SystemMediaRouter2Test {
 
         assertThat(sessionInfo.getTransferReason()).isEqualTo(
                 RoutingSessionInfo.TRANSFER_REASON_SYSTEM_REQUEST);
-        assertThat(routingController.wasTransferRequestedBySelf()).isFalse();
+        assertThat(routingController.wasTransferInitiatedBySelf()).isFalse();
 
         mAppRouter2.unregisterControllerCallback(controllerCallback);
     }
