@@ -77,7 +77,6 @@ android_test {
     srcs: ["src5/**/*.java"],
     manifest: "AndroidManifestProfileable.xml",
     test_suites: [
-        "vts10",
         "general-tests",
     ],
     v4_signature: true,
@@ -136,7 +135,6 @@ android_test {
     srcs: ["src_shell/**/*.java"],
     manifest: "AndroidManifestSystem.xml",
     test_suites: [
-        "vts10",
         "general-tests",
     ],
     v4_signature: true,
@@ -149,7 +147,6 @@ android_test {
     srcs: ["src_shell/**/*.java"],
     manifest: "AndroidManifestSharedUid.xml",
     test_suites: [
-        "vts10",
         "general-tests",
     ],
     v4_signature: true,
@@ -162,7 +159,6 @@ android_test {
     srcs: ["src_shell/**/*.java"],
     manifest: "AndroidManifestSettings.xml",
     test_suites: [
-        "vts10",
         "general-tests",
     ],
     v4_signature: true,
