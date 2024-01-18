@@ -18,6 +18,7 @@ package android.widget.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyFloat;
 import static org.mockito.Mockito.mock;
@@ -35,8 +36,11 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.CancellationSignal;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.text.Editable;
 import android.text.InputFilter;
 import android.text.Layout;
+import android.text.TextWatcher;
 import android.text.method.DigitsKeyListener;
 import android.text.method.PasswordTransformationMethod;
 import android.util.TypedValue;
@@ -63,6 +67,7 @@ import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.internal.graphics.ColorUtils;
+import com.android.text.flags.Flags;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -1694,6 +1699,7 @@ public class TextViewHandwritingGestureTest {
 
         // Set PasswordTransformation, which will replace all character to DOT.
         mEditText.setTransformationMethod(new PasswordTransformationMethod());
+        layoutEditText();
 
         String placeholder = PLACEHOLDER_TEXT_MULTI_LINE;
         String expectedText = DOT.repeat(expectedOffset) + placeholder
@@ -1725,6 +1731,7 @@ public class TextViewHandwritingGestureTest {
 
         // Set PasswordTransformation, which will replace all character to DOT.
         mEditText.setTransformationMethod(new PasswordTransformationMethod());
+        layoutEditText();
 
         String placeholder = PLACEHOLDER_TEXT_SINGLE_LINE;
         String expectedText = DOT.repeat(expectedOffset) + placeholder
@@ -1741,6 +1748,36 @@ public class TextViewHandwritingGestureTest {
         assertThat(mEditText.getLayout().getText().toString())
                 .isEqualTo(DOT.repeat(DEFAULT_TEXT.length()));
         assertCursorOffset(expectedOffset);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    @RequiresFlagsEnabled(Flags.FLAG_INSERT_MODE_NOT_UPDATE_SELECTION)
+    public void performInsertModeGesture_notTriggerTextWatcher() {
+        TextWatcher testTextWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                fail("TextWatcher#beforeTextChanged shouldn't be called when entering insert mode");
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                fail("TextWatcher#onTextChanged shouldn't be called when entering insert mode");
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                fail("TextWatcher#afterTextChanged shouldn't be called when entering insert mode");
+            }
+        };
+        mEditText.addTextChangedListener(testTextWatcher);
+
+        // Enter and exit the insert mode, the testTextWatcher shouldn't be called.
+        InsertModeGesture gesture = performInsertModeGesture(
+                new PointF(3 * CHAR_WIDTH_PX, mEditText.getLayout().getLineTop(0) - 1f),
+                /* setFallbackText= */ false);
+
+        gesture.getCancellationSignal().cancel();
     }
 
     private void setEditTextSingleLine() {
@@ -1886,7 +1923,18 @@ public class TextViewHandwritingGestureTest {
                 .build();
         InputConnection inputConnection = mEditText.onCreateInputConnection(new EditorInfo());
         inputConnection.performHandwritingGesture(gesture, Runnable::run, mResultConsumer);
+        // Performing insert mode will invalidate the layout and only updates it until relayout.
+        // Since the text EditText is headless, we have to call it manually.
+        layoutEditText();
         return gesture;
+    }
+
+    private void layoutEditText() {
+        mEditText.measure(
+                View.MeasureSpec.makeMeasureSpec(WIDTH, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(HEIGHT, View.MeasureSpec.EXACTLY));
+        mEditText.layout(0, 0, WIDTH, HEIGHT);
+        mEditText.setLayoutParams(new ViewGroup.LayoutParams(WIDTH, HEIGHT));
     }
 
     private void performAppendText(String text) {
