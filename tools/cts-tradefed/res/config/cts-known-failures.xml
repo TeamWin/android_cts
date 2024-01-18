@@ -362,4 +362,10 @@
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyTestCases[run-on-work-profile] android.devicepolicy.cts.SupportMessageTest#setShortSupportMessage_tooLongText_isTruncated[IncludeRunOnProfileOwnerProfileWithNoDeviceOwner]" />
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyTestCases[run-on-secondary-user] android.devicepolicy.cts.SupportMessageTest#setShortSupportMessage_tooLongText_isTruncated[IncludeRunOnAffiliatedProfileOwnerSecondaryUser]" />
 
+    <!-- b/320761239 -->
+    <option name="compatibility:exclude-filter" value="CtsAppOpsTestCases android.app.appops.cts.AttributionTest#cannotUseTooManyAttributions" />
+    <option name="compatibility:exclude-filter" value="CtsAppOpsTestCases android.app.appops.cts.AppOpEventCollectionTest#noteFromTwoProxiesAndVerifyProxyInfo" />
+    <option name="compatibility:exclude-filter" value="CtsAppOpsTestCases android.app.appops.cts.AppOpEventCollectionTest#startStopTrustedProxyVerifyRunningAndTime" />
+    <option name="compatibility:exclude-filter" value="CtsAppOpsTestCases android.app.appops.cts.AppOpEventCollectionTest#startStopTrustedAndUntrustedProxyVerifyProxyInfo" />
+
 </configuration>
