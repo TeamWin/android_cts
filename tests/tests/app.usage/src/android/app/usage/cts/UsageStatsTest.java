@@ -29,6 +29,7 @@ import static android.provider.DeviceConfig.NAMESPACE_APP_STANDBY;
 import static android.text.format.DateUtils.HOUR_IN_MILLIS;
 import static android.text.format.DateUtils.MINUTE_IN_MILLIS;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -1871,8 +1872,8 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         UsageEvents events = null;
         if (filteredEvents) {
             UsageEventsQuery query = new UsageEventsQuery.Builder(startTime, endTime)
-                    .addEventTypes(Event.FOREGROUND_SERVICE_START)
-                    .addEventTypes(Event.FOREGROUND_SERVICE_STOP)
+                    .setEventTypes(Event.FOREGROUND_SERVICE_START,
+                            Event.FOREGROUND_SERVICE_STOP)
                     .build();
             events = mUsageStatsManager.queryEvents(query);
         } else {
@@ -2479,9 +2480,8 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         final long startTime = endTime - MINUTE_IN_MILLIS;
         Random rnd = new Random();
         UsageEventsQuery.Builder queryBuilder = new UsageEventsQuery.Builder(startTime, endTime);
-        for (int i = 0; i < Event.MAX_EVENT_TYPE + 1; i++) {
-            queryBuilder.addEventTypes(rnd.nextInt(Event.MAX_EVENT_TYPE + 1));
-        }
+        queryBuilder.setEventTypes(rnd.nextInt(Event.MAX_EVENT_TYPE + 1),
+                rnd.nextInt(Event.MAX_EVENT_TYPE + 1), rnd.nextInt(Event.MAX_EVENT_TYPE + 1));
         UsageEventsQuery query = queryBuilder.build();
         Parcel p = Parcel.obtain();
         p.setDataPosition(0);
@@ -2491,7 +2491,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         UsageEventsQuery queryFromParcel = UsageEventsQuery.CREATOR.createFromParcel(p);
         assertEquals(query.getBeginTimeMillis(), queryFromParcel.getBeginTimeMillis());
         assertEquals(query.getEndTimeMillis(), queryFromParcel.getEndTimeMillis());
-        assertTrue(query.getEventTypes().equals(queryFromParcel.getEventTypes()));
+        assertArrayEquals(query.getEventTypes(), queryFromParcel.getEventTypes());
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
@@ -2503,7 +2503,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
 
         UsageEvents unfilteredEvents = mUsageStatsManager.queryEvents(startTime, endTime);
         UsageEventsQuery query = new UsageEventsQuery.Builder(startTime, endTime)
-                .addEventTypes(Event.ACTIVITY_RESUMED, Event.ACTIVITY_PAUSED)
+                .setEventTypes(Event.ACTIVITY_RESUMED, Event.ACTIVITY_PAUSED)
                 .build();
         UsageEvents filteredEvents = mUsageStatsManager.queryEvents(query);
         ArrayList<Event> filteredEventList = new ArrayList<>();
