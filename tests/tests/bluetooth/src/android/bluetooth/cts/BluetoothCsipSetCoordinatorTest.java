@@ -63,6 +63,7 @@ public class BluetoothCsipSetCoordinatorTest {
     private static final String TAG = BluetoothCsipSetCoordinatorTest.class.getSimpleName();
 
     private static final int PROXY_CONNECTION_TIMEOUT_MS = 500;  // ms timeout for Proxy Connect
+    private static final int TEST_CALLBACK_TIMEOUT_MS = 500;  // ms timeout for test callback
 
     private Context mContext;
     private BluetoothAdapter mAdapter;
@@ -73,6 +74,8 @@ public class BluetoothCsipSetCoordinatorTest {
     private Condition mConditionProfileConnection;
     private ReentrantLock mProfileConnectionlock;
     private boolean mGroupLockCallbackCalled;
+    private Condition mConditionTestCallback;
+    private ReentrantLock mTestCallbackLock;
     private TestCallback mTestCallback;
     private Executor mTestExecutor;
     private BluetoothDevice mTestDevice;
@@ -83,12 +86,38 @@ public class BluetoothCsipSetCoordinatorTest {
     class TestCallback implements BluetoothCsipSetCoordinator.ClientLockCallback {
         @Override
         public void onGroupLockSet(int groupId, int opStatus, boolean isLocked) {
-            mGroupLockCallbackCalled = true;
+            mTestCallbackLock.lock();
             assertTrue(groupId == mTestGroupId);
             assertTrue(opStatus == mTestOperationStatus);
             assertTrue(isLocked == mIsLocked);
+            mGroupLockCallbackCalled = true;
+            try {
+                mConditionTestCallback.signal();
+            } finally {
+                mTestCallbackLock.unlock();
+            }
         }
     };
+
+    private boolean waitForGroupLockCallback() {
+        mTestCallbackLock.lock();
+        try {
+            // Wait for call of group lock callback
+            while (!mGroupLockCallbackCalled) {
+                if (!mConditionTestCallback.await(
+                        TEST_CALLBACK_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                    // Timeout
+                    Log.e(TAG, "Timeout while waiting for Group Lock Callback");
+                    break;
+                } // else spurious wakeups
+            }
+        } catch (InterruptedException e) {
+            Log.e(TAG, "waitForGroupLockCallback: interrupted");
+        } finally {
+            mTestCallbackLock.unlock();
+        }
+        return mGroupLockCallbackCalled;
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -118,6 +147,10 @@ public class BluetoothCsipSetCoordinatorTest {
         Assume.assumeTrue(mAdapter.getProfileProxy(mContext,
                 new BluetoothCsipServiceListener(), BluetoothProfile.CSIP_SET_COORDINATOR));
 
+        mTestCallbackLock = new ReentrantLock();
+        mConditionTestCallback = mTestCallbackLock.newCondition();
+        mGroupLockCallbackCalled = false;
+
         mTestCallback = new TestCallback();
         mTestExecutor = mContext.getMainExecutor();
     }
@@ -131,6 +164,7 @@ public class BluetoothCsipSetCoordinatorTest {
             mTestDevice = null;
             mIsLocked = false;
             mTestOperationStatus = 0;
+            mGroupLockCallbackCalled = false;
             mTestCallback = null;
             mTestExecutor = null;
         }
@@ -243,6 +277,8 @@ public class BluetoothCsipSetCoordinatorTest {
             fail("Exception caught from register(): " + e.toString());
         }
 
+        assertTrue(waitForGroupLockCallback());
+
         long uuidLsb = 0x01;
         long uuidMsb = 0x01;
         UUID uuid = new UUID(uuidMsb, uuidLsb);
@@ -265,7 +301,7 @@ public class BluetoothCsipSetCoordinatorTest {
         mIsLocked = true;
 
         mTestCallback.onGroupLockSet(mTestGroupId, mTestOperationStatus, mIsLocked);
-        assertTrue(mGroupLockCallbackCalled);
+        assertTrue(waitForGroupLockCallback());
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
@@ -298,7 +334,7 @@ public class BluetoothCsipSetCoordinatorTest {
                 } // else spurious wakeups
             }
         } catch (InterruptedException e) {
-            Log.e(TAG, "waitForProfileConnect: interrrupted");
+            Log.e(TAG, "waitForProfileConnect: interrupted");
         } finally {
             mProfileConnectionlock.unlock();
         }
@@ -318,7 +354,7 @@ public class BluetoothCsipSetCoordinatorTest {
                 } // else spurious wakeups
             }
         } catch (InterruptedException e) {
-            Log.e(TAG, "waitForProfileDisconnect: interrrupted");
+            Log.e(TAG, "waitForProfileDisconnect: interrupted");
         } finally {
             mProfileConnectionlock.unlock();
         }
