@@ -20,7 +20,7 @@ import android.app.AppOpsManager
 import android.app.AppOpsManager.MAX_PRIORITY_UID_STATE
 import android.app.AppOpsManager.MIN_PRIORITY_UID_STATE
 import android.app.AppOpsManager.MODE_ALLOWED
-import android.app.AppOpsManager.OPSTR_ACCESS_NOTIFICATIONS
+import android.app.AppOpsManager.OPSTR_WIFI_SCAN
 import android.app.AppOpsManager.OP_FLAGS_ALL
 import android.app.AppOpsManager.OP_FLAG_SELF
 import android.app.AppOpsManager.OP_FLAG_TRUSTED_PROXIED
@@ -94,9 +94,9 @@ class AppOpEventCollectionTest {
 
     @Test
     fun ensureCorrectOpStr() {
-        appOpsManager.noteOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, null, null)
-        val opEntry = getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!
-        assertThat(opEntry.opStr).isEqualTo(OPSTR_ACCESS_NOTIFICATIONS)
+        appOpsManager.noteOp(OPSTR_WIFI_SCAN, myUid, myPackage, null, null)
+        val opEntry = getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!
+        assertThat(opEntry.opStr).isEqualTo(OPSTR_WIFI_SCAN)
     }
 
     @Test
@@ -104,13 +104,13 @@ class AppOpEventCollectionTest {
         val before = System.currentTimeMillis()
 
         // Start twice to also test switching uid state with nested starts running
-        appOpsManager.startOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, null, null)
-        appOpsManager.startOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, null, null)
+        appOpsManager.startOp(OPSTR_WIFI_SCAN, myUid, myPackage, null, null)
+        appOpsManager.startOp(OPSTR_WIFI_SCAN, myUid, myPackage, null, null)
 
         val beforeUidChange = System.currentTimeMillis()
         sleep(1)
 
-        assertThat(getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!
+        assertThat(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!
             .getLastAccessTime(MAX_PRIORITY_UID_STATE, UID_STATE_TOP, OP_FLAGS_ALL))
             .isIn(before..beforeUidChange)
 
@@ -120,23 +120,23 @@ class AppOpEventCollectionTest {
 
             eventually {
                 // The system remembers the time before and after the uid change as separate events
-                assertThat(getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!
+                assertThat(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!
                     .getLastAccessTime(UID_STATE_TOP + 1, MIN_PRIORITY_UID_STATE,
                         OP_FLAGS_ALL)).isAtLeast(beforeUidChange)
             }
         } finally {
-            appOpsManager.finishOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, null)
-            appOpsManager.finishOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, null)
+            appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, null)
+            appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, null)
         }
     }
 
     @Test
     fun noteWithAttributionAndCheckOpEntries() {
         val before = System.currentTimeMillis()
-        appOpsManager.noteOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, TEST_ATTRIBUTION_TAG, null)
+        appOpsManager.noteOp(OPSTR_WIFI_SCAN, myUid, myPackage, TEST_ATTRIBUTION_TAG, null)
         val after = System.currentTimeMillis()
 
-        val opEntry = getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!
+        val opEntry = getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!
         val attributionOpEntry = opEntry.attributedOpEntries[TEST_ATTRIBUTION_TAG]!!
 
         assertThat(attributionOpEntry.getLastAccessForegroundTime(OP_FLAG_SELF)).isIn(before..after)
@@ -181,13 +181,13 @@ class AppOpEventCollectionTest {
         assertThat(
             runWithShellPermissionIdentity {
                 appOpsManager.noteOp(
-                    OPSTR_ACCESS_NOTIFICATIONS, uid, BACKGROUND_PACKAGE, TEST_ATTRIBUTION_TAG, null
+                    OPSTR_WIFI_SCAN, uid, BACKGROUND_PACKAGE, TEST_ATTRIBUTION_TAG, null
                 )
             }
         ).isEqualTo(AppOpsManager.MODE_ALLOWED)
         val after = System.currentTimeMillis()
 
-        val opEntry = getOpEntry(uid, BACKGROUND_PACKAGE, OPSTR_ACCESS_NOTIFICATIONS)!!
+        val opEntry = getOpEntry(uid, BACKGROUND_PACKAGE, OPSTR_WIFI_SCAN)!!
         val attributionOpEntry = opEntry.attributedOpEntries[TEST_ATTRIBUTION_TAG]!!
 
         assertThat(attributionOpEntry.getLastAccessBackgroundTime(OP_FLAG_SELF)).isIn(before..after)
@@ -230,9 +230,9 @@ class AppOpEventCollectionTest {
         // Using the shell identity causes a trusted proxy note
         val afterTrusted = AtomicLong()
         runWithShellPermissionIdentity {
-            appOpsManager.noteProxyOp(OPSTR_ACCESS_NOTIFICATIONS, myPackage, myUid, null, null)
+            appOpsManager.noteProxyOp(OPSTR_WIFI_SCAN, myPackage, myUid, null, null)
             afterTrusted.set(System.currentTimeMillis())
-            appOpsManager.noteOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, null, null)
+            appOpsManager.noteOp(OPSTR_WIFI_SCAN, myUid, myPackage, null, null)
         }
 
         // Make sure timestamps are distinct
@@ -240,7 +240,7 @@ class AppOpEventCollectionTest {
 
         val after = System.currentTimeMillis()
 
-        val opEntry = getOpEntry(shellUid, SHELL_PACKAGE_NAME, OPSTR_ACCESS_NOTIFICATIONS)!!
+        val opEntry = getOpEntry(shellUid, SHELL_PACKAGE_NAME, OPSTR_WIFI_SCAN)!!
         val attributionOpEntry = opEntry.attributedOpEntries[null]!!
 
         assertThat(attributionOpEntry.getLastAccessTime(OP_FLAG_TRUSTED_PROXY))
@@ -262,17 +262,17 @@ class AppOpEventCollectionTest {
     @Test
     fun noteForTwoAttributionsCheckOpEntries() {
         val before = System.currentTimeMillis()
-        appOpsManager.noteOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, firstTag, null)
+        appOpsManager.noteOp(OPSTR_WIFI_SCAN, myUid, myPackage, firstTag, null)
         val afterFirst = System.currentTimeMillis()
 
         // Make sure timestamps are distinct
         sleep(1)
 
         // self note
-        appOpsManager.noteOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, secondTag, null)
+        appOpsManager.noteOp(OPSTR_WIFI_SCAN, myUid, myPackage, secondTag, null)
         val after = System.currentTimeMillis()
 
-        val opEntry = getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!
+        val opEntry = getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!
         val firstAttributionOpEntry = opEntry.attributedOpEntries[firstTag]!!
         val secondAttributionOpEntry = opEntry.attributedOpEntries[secondTag]!!
 
@@ -290,7 +290,7 @@ class AppOpEventCollectionTest {
         runWithShellPermissionIdentity {
             context.createAttributionContext(firstTag)
                 .getSystemService(AppOpsManager::class.java)!!
-                .noteProxyOp(OPSTR_ACCESS_NOTIFICATIONS, otherPkg, otherUid, null, null)
+                .noteProxyOp(OPSTR_WIFI_SCAN, otherPkg, otherUid, null, null)
         }
 
         // Make sure timestamps are distinct
@@ -299,9 +299,9 @@ class AppOpEventCollectionTest {
         // untrusted proxy note
         context.createAttributionContext(secondTag)
             .getSystemService(AppOpsManager::class.java)!!
-            .noteProxyOp(OPSTR_ACCESS_NOTIFICATIONS, otherPkg, otherUid, null, null)
+            .noteProxyOp(OPSTR_WIFI_SCAN, otherPkg, otherUid, null, null)
 
-        val opEntry = getOpEntry(otherUid, otherPkg, OPSTR_ACCESS_NOTIFICATIONS)!!
+        val opEntry = getOpEntry(otherUid, otherPkg, OPSTR_WIFI_SCAN)!!
         val attributionOpEntry = opEntry.attributedOpEntries[null]!!
 
         assertThat(attributionOpEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.packageName)
@@ -343,13 +343,13 @@ class AppOpEventCollectionTest {
         runWithShellPermissionIdentity {
             firstAttrManager = context.createAttributionContext(firstTag)!!
                 .getSystemService(AppOpsManager::class.java)!!
-            val start = firstAttrManager.startProxyOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS, otherUid, otherPkg,
+            val start = firstAttrManager.startProxyOpNoThrow(OPSTR_WIFI_SCAN, otherUid, otherPkg,
                     null, null)
             assertThat(start).isEqualTo(MODE_ALLOWED)
             sleep(1)
         }
 
-        with(getOpEntry(otherUid, otherPkg, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+        with(getOpEntry(otherUid, otherPkg, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[null]!!.isRunning).isTrue()
             assertThat(attributedOpEntries[null]?.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)!!
                 .packageName).isEqualTo(SHELL_PACKAGE_NAME)
@@ -358,19 +358,19 @@ class AppOpEventCollectionTest {
             assertThat(isRunning).isTrue()
         }
 
-        with(getOpEntry(shellUid, SHELL_PACKAGE_NAME, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+        with(getOpEntry(shellUid, SHELL_PACKAGE_NAME, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[firstTag]!!.isRunning).isTrue()
             assertThat(attributedOpEntries[firstTag]!!
                 .getLastProxyInfo(OP_FLAGS_ALL)).isNull()
         }
 
         runWithShellPermissionIdentity {
-            firstAttrManager.finishProxyOp(OPSTR_ACCESS_NOTIFICATIONS, otherUid, otherPkg, null)
+            firstAttrManager.finishProxyOp(OPSTR_WIFI_SCAN, otherUid, otherPkg, null)
         }
         sleep(1)
         val afterTrusted = System.currentTimeMillis()
 
-        val opEntry = getOpEntry(otherUid, otherPkg, OPSTR_ACCESS_NOTIFICATIONS)!!
+        val opEntry = getOpEntry(otherUid, otherPkg, OPSTR_WIFI_SCAN)!!
         val attributionOpEntry = opEntry.attributedOpEntries[null]!!
         assertThat(attributionOpEntry.isRunning).isFalse()
         assertThat(opEntry.isRunning).isFalse()
@@ -398,25 +398,25 @@ class AppOpEventCollectionTest {
         // Untrusted proxy op
         val secondAttrManager = context.createAttributionContext(secondTag)!!
             .getSystemService(AppOpsManager::class.java)!!
-        secondAttrManager.startProxyOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS, otherUid, otherPkg, null, null)
-        with(getOpEntry(otherUid, otherPkg, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+        secondAttrManager.startProxyOpNoThrow(OPSTR_WIFI_SCAN, otherUid, otherPkg, null, null)
+        with(getOpEntry(otherUid, otherPkg, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[null]?.getLastProxyInfo(OP_FLAG_UNTRUSTED_PROXIED)!!
                 .packageName).isEqualTo(myPackage)
             assertThat(attributedOpEntries[null]?.getLastProxyInfo(OP_FLAG_UNTRUSTED_PROXIED)!!
                 .attributionTag).isEqualTo(secondTag)
         }
 
-        with(getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+        with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[secondTag]!!.isRunning).isTrue()
             assertThat(attributedOpEntries[secondTag]!!
                 .getLastProxyInfo(OP_FLAGS_ALL)).isNull()
         }
 
-        secondAttrManager.finishProxyOp(OPSTR_ACCESS_NOTIFICATIONS, otherUid, otherPkg, null)
+        secondAttrManager.finishProxyOp(OPSTR_WIFI_SCAN, otherUid, otherPkg, null)
         sleep(1)
         val afterUntrusted = System.currentTimeMillis()
 
-        val opEntry = getOpEntry(otherUid, otherPkg, OPSTR_ACCESS_NOTIFICATIONS)!!
+        val opEntry = getOpEntry(otherUid, otherPkg, OPSTR_WIFI_SCAN)!!
         val attributionOpEntry = opEntry.attributedOpEntries[null]!!
 
         assertThat(attributionOpEntry.isRunning).isFalse()
@@ -442,22 +442,22 @@ class AppOpEventCollectionTest {
         runWithShellPermissionIdentity {
             firstAttrManager = context.createAttributionContext(firstTag)!!
                 .getSystemService(AppOpsManager::class.java)!!
-            val start = firstAttrManager.startProxyOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS, otherUid, otherPkg,
+            val start = firstAttrManager.startProxyOpNoThrow(OPSTR_WIFI_SCAN, otherUid, otherPkg,
                     null, null)
             sleep(1)
-            firstAttrManager.finishProxyOp(OPSTR_ACCESS_NOTIFICATIONS, otherUid, otherPkg, null)
+            firstAttrManager.finishProxyOp(OPSTR_WIFI_SCAN, otherUid, otherPkg, null)
             sleep(1)
         }
 
         // Untrusted proxy op
         val secondAttrManager = context.createAttributionContext(secondTag)!!
             .getSystemService(AppOpsManager::class.java)!!
-        secondAttrManager.startProxyOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS, otherUid, otherPkg, null, null)
+        secondAttrManager.startProxyOpNoThrow(OPSTR_WIFI_SCAN, otherUid, otherPkg, null, null)
 
         sleep(1)
-        secondAttrManager.finishProxyOp(OPSTR_ACCESS_NOTIFICATIONS, otherUid, otherPkg, null)
+        secondAttrManager.finishProxyOp(OPSTR_WIFI_SCAN, otherUid, otherPkg, null)
 
-        val opEntry = getOpEntry(otherUid, otherPkg, OPSTR_ACCESS_NOTIFICATIONS)!!
+        val opEntry = getOpEntry(otherUid, otherPkg, OPSTR_WIFI_SCAN)!!
         val attributionOpEntry = opEntry.attributedOpEntries[null]!!
         assertThat(attributionOpEntry.isRunning).isFalse()
         assertThat(opEntry.isRunning).isFalse()
@@ -480,7 +480,7 @@ class AppOpEventCollectionTest {
             runWithShellPermissionIdentity {
                 firstAttrManager = context.createAttributionContext(firstTag)!!
                         .getSystemService(AppOpsManager::class.java)!!
-                val start = firstAttrManager.startProxyOp(OPSTR_ACCESS_NOTIFICATIONS, Process.INVALID_UID,
+                val start = firstAttrManager.startProxyOp(OPSTR_WIFI_SCAN, Process.INVALID_UID,
                         otherPkg, null, null)
             }
         } catch (e: SecurityException) {
@@ -491,49 +491,49 @@ class AppOpEventCollectionTest {
 
     @Test
     fun startStopMultipleOpsAndVerifyIsRunning() {
-        appOpsManager.startOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, null, null)
+        appOpsManager.startOp(OPSTR_WIFI_SCAN, myUid, myPackage, null, null)
 
-        with(getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+        with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[null]!!.isRunning).isTrue()
             attributedOpEntries[TEST_ATTRIBUTION_TAG]?.let { assertThat(it.isRunning).isFalse() }
             assertThat(isRunning).isTrue()
         }
 
-        appOpsManager.startOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, TEST_ATTRIBUTION_TAG, null)
+        appOpsManager.startOp(OPSTR_WIFI_SCAN, myUid, myPackage, TEST_ATTRIBUTION_TAG, null)
 
-        with(getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+        with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[null]!!.isRunning).isTrue()
             assertThat(attributedOpEntries[TEST_ATTRIBUTION_TAG]!!.isRunning).isTrue()
             assertThat(isRunning).isTrue()
         }
 
-        appOpsManager.startOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, TEST_ATTRIBUTION_TAG, null)
+        appOpsManager.startOp(OPSTR_WIFI_SCAN, myUid, myPackage, TEST_ATTRIBUTION_TAG, null)
 
-        with(getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+        with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[null]!!.isRunning).isTrue()
             assertThat(attributedOpEntries[TEST_ATTRIBUTION_TAG]!!.isRunning).isTrue()
             assertThat(isRunning).isTrue()
         }
 
-        appOpsManager.finishOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, TEST_ATTRIBUTION_TAG)
+        appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, TEST_ATTRIBUTION_TAG)
 
-        with(getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+        with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[null]!!.isRunning).isTrue()
             assertThat(attributedOpEntries[TEST_ATTRIBUTION_TAG]!!.isRunning).isTrue()
             assertThat(isRunning).isTrue()
         }
 
-        appOpsManager.finishOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, TEST_ATTRIBUTION_TAG)
+        appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, TEST_ATTRIBUTION_TAG)
 
-        with(getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+        with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[null]!!.isRunning).isTrue()
             assertThat(attributedOpEntries[TEST_ATTRIBUTION_TAG]!!.isRunning).isFalse()
             assertThat(isRunning).isTrue()
         }
 
-        appOpsManager.finishOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, null)
+        appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, null)
 
-        with(getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+        with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[null]!!.isRunning).isFalse()
             assertThat(attributedOpEntries[TEST_ATTRIBUTION_TAG]!!.isRunning).isFalse()
             assertThat(isRunning).isFalse()
@@ -543,10 +543,10 @@ class AppOpEventCollectionTest {
     @Test
     fun startStopMultipleOpsAndVerifyLastAccess() {
         val beforeNullAttributionStart = System.currentTimeMillis()
-        appOpsManager.startOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, null, null)
+        appOpsManager.startOp(OPSTR_WIFI_SCAN, myUid, myPackage, null, null)
         val afterNullAttributionStart = System.currentTimeMillis()
 
-        with(getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+        with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[null]!!.getLastAccessTime(OP_FLAGS_ALL))
                 .isIn(beforeNullAttributionStart..afterNullAttributionStart)
             attributedOpEntries[TEST_ATTRIBUTION_TAG]?.let {
@@ -557,10 +557,10 @@ class AppOpEventCollectionTest {
         }
 
         val beforeFirstAttributionStart = System.currentTimeMillis()
-        appOpsManager.startOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, TEST_ATTRIBUTION_TAG, null)
+        appOpsManager.startOp(OPSTR_WIFI_SCAN, myUid, myPackage, TEST_ATTRIBUTION_TAG, null)
         val afterFirstAttributionStart = System.currentTimeMillis()
 
-        with(getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+        with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[null]!!.getLastAccessTime(OP_FLAGS_ALL))
                 .isIn(beforeNullAttributionStart..afterNullAttributionStart)
             assertThat(attributedOpEntries[TEST_ATTRIBUTION_TAG]!!.getLastAccessTime(OP_FLAGS_ALL))
@@ -569,10 +569,10 @@ class AppOpEventCollectionTest {
                 .isIn(beforeFirstAttributionStart..afterFirstAttributionStart)
         }
 
-        appOpsManager.startOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, TEST_ATTRIBUTION_TAG, null)
+        appOpsManager.startOp(OPSTR_WIFI_SCAN, myUid, myPackage, TEST_ATTRIBUTION_TAG, null)
 
         // Nested startOps do _not_ count as another access
-        with(getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+        with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[null]!!.getLastAccessTime(OP_FLAGS_ALL))
                 .isIn(beforeNullAttributionStart..afterNullAttributionStart)
             assertThat(attributedOpEntries[TEST_ATTRIBUTION_TAG]!!.getLastAccessTime(OP_FLAGS_ALL))
@@ -581,20 +581,20 @@ class AppOpEventCollectionTest {
                 .isIn(beforeFirstAttributionStart..afterFirstAttributionStart)
         }
 
-        appOpsManager.finishOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, TEST_ATTRIBUTION_TAG)
-        appOpsManager.finishOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, TEST_ATTRIBUTION_TAG)
-        appOpsManager.finishOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, null)
+        appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, TEST_ATTRIBUTION_TAG)
+        appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, TEST_ATTRIBUTION_TAG)
+        appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, null)
     }
 
     @Test
     fun startStopMultipleOpsAndVerifyDuration() {
         val beforeNullAttrStart = SystemClock.elapsedRealtime()
-        appOpsManager.startOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, null, null)
+        appOpsManager.startOp(OPSTR_WIFI_SCAN, myUid, myPackage, null, null)
         val afterNullAttrStart = SystemClock.elapsedRealtime()
 
         run {
             val beforeGetOp = SystemClock.elapsedRealtime()
-            with(getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+            with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
                 val afterGetOp = SystemClock.elapsedRealtime()
 
                 assertThat(attributedOpEntries[null]!!.getLastDuration(OP_FLAGS_ALL))
@@ -605,12 +605,12 @@ class AppOpEventCollectionTest {
         }
 
         val beforeAttrStart = SystemClock.elapsedRealtime()
-        appOpsManager.startOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, TEST_ATTRIBUTION_TAG, null)
+        appOpsManager.startOp(OPSTR_WIFI_SCAN, myUid, myPackage, TEST_ATTRIBUTION_TAG, null)
         val afterAttrStart = SystemClock.elapsedRealtime()
 
         run {
             val beforeGetOp = SystemClock.elapsedRealtime()
-            with(getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+            with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
                 val afterGetOp = SystemClock.elapsedRealtime()
 
                 assertThat(attributedOpEntries[null]!!.getLastDuration(OP_FLAGS_ALL))
@@ -625,13 +625,13 @@ class AppOpEventCollectionTest {
             }
         }
 
-        appOpsManager.startOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, TEST_ATTRIBUTION_TAG, null)
+        appOpsManager.startOp(OPSTR_WIFI_SCAN, myUid, myPackage, TEST_ATTRIBUTION_TAG, null)
 
         // Nested startOps do _not_ start another duration counting, hence the nested
         // startOp and finishOp calls have no affect
         run {
             val beforeGetOp = SystemClock.elapsedRealtime()
-            with(getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+            with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
                 val afterGetOp = SystemClock.elapsedRealtime()
 
                 assertThat(attributedOpEntries[null]!!.getLastDuration(OP_FLAGS_ALL))
@@ -644,11 +644,11 @@ class AppOpEventCollectionTest {
             }
         }
 
-        appOpsManager.finishOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, TEST_ATTRIBUTION_TAG)
+        appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, TEST_ATTRIBUTION_TAG)
 
         run {
             val beforeGetOp = SystemClock.elapsedRealtime()
-            with(getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+            with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
                 val afterGetOp = SystemClock.elapsedRealtime()
 
                 assertThat(attributedOpEntries[null]!!.getLastDuration(OP_FLAGS_ALL))
@@ -662,13 +662,13 @@ class AppOpEventCollectionTest {
         }
 
         val beforeAttrStop = SystemClock.elapsedRealtime()
-        appOpsManager.finishOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, TEST_ATTRIBUTION_TAG)
+        appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, TEST_ATTRIBUTION_TAG)
         sleep(1)
         val afterAttrStop = SystemClock.elapsedRealtime()
 
         run {
             val beforeGetOp = SystemClock.elapsedRealtime()
-            with(getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+            with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
                 val afterGetOp = SystemClock.elapsedRealtime()
 
                 assertThat(attributedOpEntries[null]!!.getLastDuration(OP_FLAGS_ALL))
@@ -682,10 +682,10 @@ class AppOpEventCollectionTest {
         }
 
         val beforeNullAttrStop = SystemClock.elapsedRealtime()
-        appOpsManager.finishOp(OPSTR_ACCESS_NOTIFICATIONS, myUid, myPackage, null)
+        appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, null)
         val afterNullAttrStop = SystemClock.elapsedRealtime()
 
-        with(getOpEntry(myUid, myPackage, OPSTR_ACCESS_NOTIFICATIONS)!!) {
+        with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[null]!!.getLastDuration(OP_FLAGS_ALL))
                 .isIn(beforeNullAttrStop -
                     afterNullAttrStart..afterNullAttrStop - beforeNullAttrStart)
