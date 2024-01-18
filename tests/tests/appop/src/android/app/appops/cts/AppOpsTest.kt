@@ -22,13 +22,15 @@ import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.AppOpsManager.MODE_DEFAULT
 import android.app.AppOpsManager.MODE_ERRORED
 import android.app.AppOpsManager.MODE_IGNORED
-import android.app.AppOpsManager.OPSTR_ACCESS_NOTIFICATIONS
 import android.app.AppOpsManager.OPSTR_ACCESS_RESTRICTED_SETTINGS
+import android.app.AppOpsManager.OPSTR_FINE_LOCATION
 import android.app.AppOpsManager.OPSTR_PHONE_CALL_CAMERA
 import android.app.AppOpsManager.OPSTR_PHONE_CALL_MICROPHONE
 import android.app.AppOpsManager.OPSTR_PICTURE_IN_PICTURE
-import android.app.AppOpsManager.OPSTR_VIBRATE
+import android.app.AppOpsManager.OPSTR_READ_CALENDAR
+import android.app.AppOpsManager.OPSTR_RECORD_AUDIO
 import android.app.AppOpsManager.OPSTR_WIFI_SCAN
+import android.app.AppOpsManager.OPSTR_WRITE_CALENDAR
 import android.app.AppOpsManager.OnOpChangedListener
 import android.content.Context
 import android.content.pm.PackageManager
@@ -40,6 +42,8 @@ import androidx.test.filters.FlakyTest
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.PollingCheck
 import com.google.common.truth.Truth.assertThat
+import java.util.HashMap
+import java.util.HashSet
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.concurrent.LinkedBlockingDeque
@@ -164,48 +168,48 @@ class AppOpsTest {
 
     @Test
     fun testNoteOpAndCheckOp() {
-        setOpMode(mOpPackageName, OPSTR_ACCESS_NOTIFICATIONS, MODE_ALLOWED)
-        assertEquals(MODE_ALLOWED, mAppOps.noteOp(OPSTR_ACCESS_NOTIFICATIONS,
+        setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
+        assertEquals(MODE_ALLOWED, mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        assertEquals(MODE_ALLOWED, mAppOps.noteOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS,
+        assertEquals(MODE_ALLOWED, mAppOps.noteOpNoThrow(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        assertEquals(MODE_ALLOWED, mAppOps.unsafeCheckOp(OPSTR_ACCESS_NOTIFICATIONS,
+        assertEquals(MODE_ALLOWED, mAppOps.unsafeCheckOp(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        assertEquals(MODE_ALLOWED, mAppOps.unsafeCheckOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS,
-                Process.myUid(), mOpPackageName))
-
-        setOpMode(mOpPackageName, OPSTR_ACCESS_NOTIFICATIONS, MODE_IGNORED)
-        assertEquals(MODE_IGNORED, mAppOps.noteOp(OPSTR_ACCESS_NOTIFICATIONS,
-                Process.myUid(), mOpPackageName))
-        assertEquals(MODE_IGNORED, mAppOps.noteOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS,
-                Process.myUid(), mOpPackageName))
-        assertEquals(MODE_IGNORED, mAppOps.unsafeCheckOp(OPSTR_ACCESS_NOTIFICATIONS,
-                Process.myUid(), mOpPackageName))
-        assertEquals(MODE_IGNORED, mAppOps.unsafeCheckOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS,
+        assertEquals(MODE_ALLOWED, mAppOps.unsafeCheckOpNoThrow(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
 
-        setOpMode(mOpPackageName, OPSTR_ACCESS_NOTIFICATIONS, MODE_DEFAULT)
-        assertEquals(MODE_DEFAULT, mAppOps.noteOp(OPSTR_ACCESS_NOTIFICATIONS,
+        setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_IGNORED)
+        assertEquals(MODE_IGNORED, mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        assertEquals(MODE_DEFAULT, mAppOps.noteOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS,
+        assertEquals(MODE_IGNORED, mAppOps.noteOpNoThrow(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        assertEquals(MODE_DEFAULT, mAppOps.unsafeCheckOp(OPSTR_ACCESS_NOTIFICATIONS,
+        assertEquals(MODE_IGNORED, mAppOps.unsafeCheckOp(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        assertEquals(MODE_DEFAULT, mAppOps.unsafeCheckOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS,
+        assertEquals(MODE_IGNORED, mAppOps.unsafeCheckOpNoThrow(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
 
-        setOpMode(mOpPackageName, OPSTR_ACCESS_NOTIFICATIONS, MODE_ERRORED)
-        assertEquals(MODE_ERRORED, mAppOps.noteOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS,
+        setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_DEFAULT)
+        assertEquals(MODE_DEFAULT, mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        assertEquals(MODE_ERRORED, mAppOps.unsafeCheckOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS,
+        assertEquals(MODE_DEFAULT, mAppOps.noteOpNoThrow(OPSTR_WRITE_CALENDAR,
+                Process.myUid(), mOpPackageName))
+        assertEquals(MODE_DEFAULT, mAppOps.unsafeCheckOp(OPSTR_WRITE_CALENDAR,
+                Process.myUid(), mOpPackageName))
+        assertEquals(MODE_DEFAULT, mAppOps.unsafeCheckOpNoThrow(OPSTR_WRITE_CALENDAR,
+                Process.myUid(), mOpPackageName))
+
+        setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
+        assertEquals(MODE_ERRORED, mAppOps.noteOpNoThrow(OPSTR_WRITE_CALENDAR,
+                Process.myUid(), mOpPackageName))
+        assertEquals(MODE_ERRORED, mAppOps.unsafeCheckOpNoThrow(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
         try {
-            mAppOps.noteOp(OPSTR_ACCESS_NOTIFICATIONS, Process.myUid(), mOpPackageName)
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName)
             fail("SecurityException expected")
         } catch (expected: SecurityException) {
         }
         try {
-            mAppOps.unsafeCheckOp(OPSTR_ACCESS_NOTIFICATIONS, Process.myUid(), mOpPackageName)
+            mAppOps.unsafeCheckOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName)
             fail("SecurityException expected")
         } catch (expected: SecurityException) {
         }
@@ -213,32 +217,32 @@ class AppOpsTest {
 
     @Test
     fun testStartOpAndFinishOp() {
-        setOpMode(mOpPackageName, OPSTR_ACCESS_NOTIFICATIONS, MODE_ALLOWED)
-        assertEquals(MODE_ALLOWED, mAppOps.startOp(OPSTR_ACCESS_NOTIFICATIONS,
+        setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
+        assertEquals(MODE_ALLOWED, mAppOps.startOp(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        mAppOps.finishOp(OPSTR_ACCESS_NOTIFICATIONS, Process.myUid(), mOpPackageName)
-        assertEquals(MODE_ALLOWED, mAppOps.startOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS,
+        mAppOps.finishOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName)
+        assertEquals(MODE_ALLOWED, mAppOps.startOpNoThrow(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        mAppOps.finishOp(OPSTR_ACCESS_NOTIFICATIONS,
+        mAppOps.finishOp(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName)
 
-        setOpMode(mOpPackageName, OPSTR_ACCESS_NOTIFICATIONS, MODE_IGNORED)
-        assertEquals(MODE_IGNORED, mAppOps.startOp(OPSTR_ACCESS_NOTIFICATIONS,
+        setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_IGNORED)
+        assertEquals(MODE_IGNORED, mAppOps.startOp(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
-        assertEquals(MODE_IGNORED, mAppOps.startOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS,
-                Process.myUid(), mOpPackageName))
-
-        setOpMode(mOpPackageName, OPSTR_ACCESS_NOTIFICATIONS, MODE_DEFAULT)
-        assertEquals(MODE_DEFAULT, mAppOps.startOp(OPSTR_ACCESS_NOTIFICATIONS,
-                Process.myUid(), mOpPackageName))
-        assertEquals(MODE_DEFAULT, mAppOps.startOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS,
+        assertEquals(MODE_IGNORED, mAppOps.startOpNoThrow(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
 
-        setOpMode(mOpPackageName, OPSTR_ACCESS_NOTIFICATIONS, MODE_ERRORED)
-        assertEquals(MODE_ERRORED, mAppOps.startOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS,
+        setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_DEFAULT)
+        assertEquals(MODE_DEFAULT, mAppOps.startOp(OPSTR_WRITE_CALENDAR,
+                Process.myUid(), mOpPackageName))
+        assertEquals(MODE_DEFAULT, mAppOps.startOpNoThrow(OPSTR_WRITE_CALENDAR,
+                Process.myUid(), mOpPackageName))
+
+        setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
+        assertEquals(MODE_ERRORED, mAppOps.startOpNoThrow(OPSTR_WRITE_CALENDAR,
                 Process.myUid(), mOpPackageName))
         try {
-            mAppOps.startOp(OPSTR_ACCESS_NOTIFICATIONS, Process.myUid(), mOpPackageName)
+            mAppOps.startOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName)
             fail("SecurityException expected")
         } catch (expected: SecurityException) {
         }
@@ -264,34 +268,34 @@ class AppOpsTest {
                     }
                 }
 
-            mAppOps.startWatchingActive(arrayOf(OPSTR_ACCESS_NOTIFICATIONS), Executor { it.run() },
+            mAppOps.startWatchingActive(arrayOf(OPSTR_WRITE_CALENDAR), Executor { it.run() },
                 activeWatcher)
             try {
-                mAppOps.startOp(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName, "firstAttribution",
+                mAppOps.startOp(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName, "firstAttribution",
                         null)
-                assertTrue(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, USER_SHELL_UID,
+                assertTrue(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, USER_SHELL_UID,
                         SHELL_PACKAGE_NAME))
                 gotActive.get(TIMEOUT_MS, TimeUnit.MILLISECONDS)
 
-                mAppOps.startOp(OPSTR_ACCESS_NOTIFICATIONS, Process.myUid(), mOpPackageName,
+                mAppOps.startOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName,
                     "secondAttribution", null)
-                assertTrue(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, USER_SHELL_UID,
+                assertTrue(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, USER_SHELL_UID,
                         SHELL_PACKAGE_NAME))
                 assertFalse(gotInActive.isDone)
 
-                mAppOps.finishOp(OPSTR_ACCESS_NOTIFICATIONS, USER_SHELL_UID, SHELL_PACKAGE_NAME,
+                mAppOps.finishOp(OPSTR_WRITE_CALENDAR, USER_SHELL_UID, SHELL_PACKAGE_NAME,
                     "firstAttribution")
 
                 // Allow some time for premature "watchingActive" callbacks to arrive
                 Thread.sleep(500)
 
-                assertTrue(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, USER_SHELL_UID,
+                assertTrue(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, USER_SHELL_UID,
                         SHELL_PACKAGE_NAME))
                 assertFalse(gotInActive.isDone)
 
-                mAppOps.finishOp(OPSTR_ACCESS_NOTIFICATIONS, USER_SHELL_UID, SHELL_PACKAGE_NAME,
+                mAppOps.finishOp(OPSTR_WRITE_CALENDAR, USER_SHELL_UID, SHELL_PACKAGE_NAME,
                     "secondAttribution")
-                assertFalse(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, USER_SHELL_UID,
+                assertFalse(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, USER_SHELL_UID,
                         SHELL_PACKAGE_NAME))
                 gotInActive.get(TIMEOUT_MS, TimeUnit.MILLISECONDS)
             } finally {
@@ -347,52 +351,52 @@ class AppOpsTest {
 
     @Test
     fun finishOpWithoutStartOp() {
-        assertFalse(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName))
+        assertFalse(mAppOps.isOpActive(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName))
 
-        mAppOps.finishOp(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName, null)
-        assertFalse(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName))
+        mAppOps.finishOp(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName, null)
+        assertFalse(mAppOps.isOpActive(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName))
     }
 
     @Test
     fun doubleFinishOpStartOp() {
-        assertFalse(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName))
+        assertFalse(mAppOps.isOpActive(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName))
 
-        mAppOps.startOp(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName, null, null)
-        assertTrue(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName))
+        mAppOps.startOp(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName, null, null)
+        assertTrue(mAppOps.isOpActive(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName))
 
-        mAppOps.finishOp(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName, null)
-        assertFalse(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName))
-        mAppOps.finishOp(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName, null)
-        assertFalse(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName))
+        mAppOps.finishOp(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName, null)
+        assertFalse(mAppOps.isOpActive(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName))
+        mAppOps.finishOp(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName, null)
+        assertFalse(mAppOps.isOpActive(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName))
     }
 
     @Test
     fun doubleFinishOpAfterDoubleStartOp() {
-        assertFalse(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName))
+        assertFalse(mAppOps.isOpActive(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName))
 
-        mAppOps.startOp(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName, null, null)
-        assertTrue(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName))
-        mAppOps.startOp(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName, null, null)
-        assertTrue(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName))
+        mAppOps.startOp(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName, null, null)
+        assertTrue(mAppOps.isOpActive(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName))
+        mAppOps.startOp(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName, null, null)
+        assertTrue(mAppOps.isOpActive(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName))
 
-        mAppOps.finishOp(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName, null)
-        assertTrue(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName))
-        mAppOps.finishOp(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName, null)
-        assertFalse(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName))
+        mAppOps.finishOp(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName, null)
+        assertTrue(mAppOps.isOpActive(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName))
+        mAppOps.finishOp(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName, null)
+        assertFalse(mAppOps.isOpActive(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName))
     }
 
     @Test
     fun noteOpWhileOpIsActive() {
-        assertFalse(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName))
+        assertFalse(mAppOps.isOpActive(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName))
 
-        mAppOps.startOp(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName, null, null)
-        assertTrue(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName))
+        mAppOps.startOp(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName, null, null)
+        assertTrue(mAppOps.isOpActive(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName))
 
-        mAppOps.noteOp(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName, null, null)
-        assertTrue(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName))
+        mAppOps.noteOp(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName, null, null)
+        assertTrue(mAppOps.isOpActive(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName))
 
-        mAppOps.finishOp(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName, null)
-        assertFalse(mAppOps.isOpActive(OPSTR_ACCESS_NOTIFICATIONS, mMyUid, mOpPackageName))
+        mAppOps.finishOp(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName, null)
+        assertFalse(mAppOps.isOpActive(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName))
     }
 
     @Test
@@ -429,33 +433,33 @@ class AppOpsTest {
     fun testWatchingMode() {
         val onOpChangeWatcher = FakeOnOppChangeListener()
         try {
-            setOpMode(mOpPackageName, OPSTR_ACCESS_NOTIFICATIONS, MODE_ALLOWED)
+            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
 
-            mAppOps.startWatchingMode(OPSTR_ACCESS_NOTIFICATIONS, mOpPackageName, onOpChangeWatcher)
+            mAppOps.startWatchingMode(OPSTR_WRITE_CALENDAR, mOpPackageName, onOpChangeWatcher)
 
             // Make a change to the app op's mode.
             var beforeChange = onOpChangeWatcher.onOpChangeCallbackCount
-            setOpMode(mOpPackageName, OPSTR_ACCESS_NOTIFICATIONS, MODE_ERRORED)
+            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
             PollingCheck.check("OpChange callback not received", TIMEOUT_MS) {
                 beforeChange != onOpChangeWatcher.onOpChangeCallbackCount
             }
             assertThat(onOpChangeWatcher.onOpChangeCallbackCount).isEqualTo(beforeChange + 1)
-            assertThat(onOpChangeWatcher.onOpChangeCallbackOp).isEqualTo(OPSTR_ACCESS_NOTIFICATIONS)
+            assertThat(onOpChangeWatcher.onOpChangeCallbackOp).isEqualTo(OPSTR_WRITE_CALENDAR)
             assertThat(onOpChangeWatcher.onOpChangeCallbackPackageName).isEqualTo(mOpPackageName)
 
             // Make another change to the app op's mode.
             beforeChange = onOpChangeWatcher.onOpChangeCallbackCount
-            setOpMode(mOpPackageName, OPSTR_ACCESS_NOTIFICATIONS, MODE_ALLOWED)
+            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
             PollingCheck.check("OpChange callback not received", TIMEOUT_MS) {
                 beforeChange != onOpChangeWatcher.onOpChangeCallbackCount
             }
             assertThat(onOpChangeWatcher.onOpChangeCallbackCount).isEqualTo(beforeChange + 1)
-            assertThat(onOpChangeWatcher.onOpChangeCallbackOp).isEqualTo(OPSTR_ACCESS_NOTIFICATIONS)
+            assertThat(onOpChangeWatcher.onOpChangeCallbackOp).isEqualTo(OPSTR_WRITE_CALENDAR)
             assertThat(onOpChangeWatcher.onOpChangeCallbackPackageName).isEqualTo(mOpPackageName)
 
             // Set mode to the same value as before - expect no call to the listener.
             beforeChange = onOpChangeWatcher.onOpChangeCallbackCount
-            setOpMode(mOpPackageName, OPSTR_ACCESS_NOTIFICATIONS, MODE_ALLOWED)
+            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
             // Adding a short sleep to ensure we do not miss the callback, if it does come.
             Thread.sleep(2000)
             assertThat(onOpChangeWatcher.onOpChangeCallbackCount).isEqualTo(beforeChange)
@@ -465,7 +469,7 @@ class AppOpsTest {
             // Make a change to the app op's mode. Since we already stopped watching the mode, the
             // listener shouldn't be called.
             beforeChange = onOpChangeWatcher.onOpChangeCallbackCount
-            setOpMode(mOpPackageName, OPSTR_ACCESS_NOTIFICATIONS, MODE_ERRORED)
+            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
             // Adding a short sleep to ensure we do not miss the callback, if it does come.
             Thread.sleep(2000)
             assertThat(onOpChangeWatcher.onOpChangeCallbackCount).isEqualTo(beforeChange)
@@ -479,16 +483,16 @@ class AppOpsTest {
     fun startWatchingNoted_withoutExecutor_whenOpNoted_receivesCallback() {
         val watcher = mock(AppOpsManager.OnOpNotedListener::class.java)
         try {
-            mAppOps.startWatchingNoted(arrayOf(OPSTR_ACCESS_NOTIFICATIONS), watcher)
+            mAppOps.startWatchingNoted(arrayOf(OPSTR_WRITE_CALENDAR), watcher)
 
-            mAppOps.noteOp(OPSTR_ACCESS_NOTIFICATIONS,
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
                     mMyUid, mOpPackageName,
                     "testAttribution",
                     /* message = */ null)
 
             verify(watcher, timeout(TIMEOUT_MS))
                     .onOpNoted(
-                            OPSTR_ACCESS_NOTIFICATIONS,
+                            OPSTR_WRITE_CALENDAR,
                             mMyUid,
                             mOpPackageName,
                             "testAttribution",
@@ -497,7 +501,7 @@ class AppOpsTest {
 
             Mockito.reset(watcher)
 
-            mAppOps.noteOp(OPSTR_ACCESS_NOTIFICATIONS,
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
                     mMyUid,
                     mOpPackageName,
                     /* attributionTag = */ null,
@@ -505,7 +509,7 @@ class AppOpsTest {
 
             verify(watcher, timeout(TIMEOUT_MS))
                     .onOpNoted(
-                            OPSTR_ACCESS_NOTIFICATIONS,
+                            OPSTR_WRITE_CALENDAR,
                             mMyUid,
                             mOpPackageName,
                             /* attributionTag = */ null,
@@ -515,7 +519,7 @@ class AppOpsTest {
             mAppOps.stopWatchingNoted(watcher)
             Mockito.reset(watcher)
 
-            mAppOps.noteOp(OPSTR_ACCESS_NOTIFICATIONS,
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
                     mMyUid,
                     mOpPackageName,
                     "testAttribution",
@@ -531,10 +535,10 @@ class AppOpsTest {
     fun startWatchingNoted_withExecutor_whenOpNoted_receivesCallback() {
         val watcher = mock(AppOpsManager.OnOpNotedListener::class.java)
         try {
-            mAppOps.startWatchingNoted(arrayOf(OPSTR_ACCESS_NOTIFICATIONS), { it.run() }, watcher)
+            mAppOps.startWatchingNoted(arrayOf(OPSTR_WRITE_CALENDAR), { it.run() }, watcher)
 
             mAppOps.noteOp(
-                    OPSTR_ACCESS_NOTIFICATIONS,
+                    OPSTR_WRITE_CALENDAR,
                     mMyUid,
                     mOpPackageName,
                     "testAttribution",
@@ -542,7 +546,7 @@ class AppOpsTest {
 
             verify(watcher, timeout(TIMEOUT_MS))
                     .onOpNoted(
-                            OPSTR_ACCESS_NOTIFICATIONS,
+                            OPSTR_WRITE_CALENDAR,
                             mMyUid,
                             mOpPackageName,
                             "testAttribution",
@@ -551,7 +555,7 @@ class AppOpsTest {
 
             Mockito.reset(watcher)
 
-            mAppOps.noteOp(OPSTR_ACCESS_NOTIFICATIONS,
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
                     mMyUid,
                     mOpPackageName,
                     /* attributionTag = */ null,
@@ -559,7 +563,7 @@ class AppOpsTest {
 
             verify(watcher, timeout(TIMEOUT_MS))
                     .onOpNoted(
-                            OPSTR_ACCESS_NOTIFICATIONS,
+                            OPSTR_WRITE_CALENDAR,
                             mMyUid,
                             mOpPackageName,
                             /* attributionTag = */ null,
@@ -569,7 +573,7 @@ class AppOpsTest {
             mAppOps.stopWatchingNoted(watcher)
             Mockito.reset(watcher)
 
-            mAppOps.noteOp(OPSTR_ACCESS_NOTIFICATIONS,
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
                     mMyUid,
                     mOpPackageName,
                     "testAttribution",
@@ -645,23 +649,21 @@ class AppOpsTest {
         // that other test methods in this class don't affect this test method, here we use
         // operations that are not used by any other test cases.
         val mustNotBeLogged = "Operation mustn't be logged before the test runs"
-        assumeTrue(mustNotBeLogged, !allowedOperationLogged(mOpPackageName, OPSTR_VIBRATE))
-        assumeTrue(mustNotBeLogged,
-            !allowedOperationLogged(mOpPackageName, OPSTR_ACCESS_NOTIFICATIONS))
+        assumeTrue(mustNotBeLogged, !allowedOperationLogged(mOpPackageName, OPSTR_RECORD_AUDIO))
+        assumeTrue(mustNotBeLogged, !allowedOperationLogged(mOpPackageName, OPSTR_READ_CALENDAR))
 
-        setOpMode(mOpPackageName, OPSTR_VIBRATE, MODE_ALLOWED)
-        setOpMode(mOpPackageName, OPSTR_ACCESS_NOTIFICATIONS, MODE_ERRORED)
+        setOpMode(mOpPackageName, OPSTR_RECORD_AUDIO, MODE_ALLOWED)
+        setOpMode(mOpPackageName, OPSTR_READ_CALENDAR, MODE_ERRORED)
 
         // Note an op that's allowed.
-        mAppOps.noteOp(OPSTR_VIBRATE, Process.myUid(), mOpPackageName)
+        mAppOps.noteOp(OPSTR_RECORD_AUDIO, Process.myUid(), mOpPackageName)
         val mustBeLogged = "Operation must be logged"
-        assertTrue(mustBeLogged, allowedOperationLogged(mOpPackageName, OPSTR_VIBRATE))
+        assertTrue(mustBeLogged, allowedOperationLogged(mOpPackageName, OPSTR_RECORD_AUDIO))
 
         // Note another op that's not allowed.
-        mAppOps.noteOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS, Process.myUid(), mOpPackageName)
-        assertTrue(mustBeLogged, allowedOperationLogged(mOpPackageName, OPSTR_VIBRATE))
-        assertTrue(mustBeLogged,
-            rejectedOperationLogged(mOpPackageName, OPSTR_ACCESS_NOTIFICATIONS))
+        mAppOps.noteOpNoThrow(OPSTR_READ_CALENDAR, Process.myUid(), mOpPackageName)
+        assertTrue(mustBeLogged, allowedOperationLogged(mOpPackageName, OPSTR_RECORD_AUDIO))
+        assertTrue(mustBeLogged, rejectedOperationLogged(mOpPackageName, OPSTR_READ_CALENDAR))
     }
 
     @Test
@@ -702,7 +704,7 @@ class AppOpsTest {
     @Test
     fun noteOpForBadUid() {
         runWithShellPermissionIdentity {
-            val mode = mAppOps.noteOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS, Process.myUid() + 1,
+            val mode = mAppOps.noteOpNoThrow(OPSTR_RECORD_AUDIO, Process.myUid() + 1,
                     mOpPackageName)
             assertEquals(mode, MODE_ERRORED)
         }
@@ -711,7 +713,7 @@ class AppOpsTest {
     @Test
     fun startOpForBadUid() {
         runWithShellPermissionIdentity {
-            val mode = mAppOps.startOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS, Process.myUid() + 1,
+            val mode = mAppOps.startOpNoThrow(OPSTR_RECORD_AUDIO, Process.myUid() + 1,
                     mOpPackageName)
             assertEquals(mode, MODE_ERRORED)
         }
@@ -719,19 +721,19 @@ class AppOpsTest {
 
     @Test
     fun checkOpForBadUid() {
-        val defaultMode = AppOpsManager.opToDefaultMode(OPSTR_ACCESS_NOTIFICATIONS)
+        val defaultMode = AppOpsManager.opToDefaultMode(OPSTR_RECORD_AUDIO)
 
         runWithShellPermissionIdentity {
-            mAppOps.setUidMode(OPSTR_ACCESS_NOTIFICATIONS, Process.myUid(), MODE_ERRORED)
+            mAppOps.setUidMode(OPSTR_RECORD_AUDIO, Process.myUid(), MODE_ERRORED)
             try {
-                val mode = mAppOps.unsafeCheckOpNoThrow(OPSTR_ACCESS_NOTIFICATIONS,
-                    Process.myUid() + 1, mOpPackageName)
+                val mode = mAppOps.unsafeCheckOpNoThrow(OPSTR_RECORD_AUDIO, Process.myUid() + 1,
+                        mOpPackageName)
 
                 // For invalid uids checkOp return the default mode
                 assertEquals(mode, defaultMode)
             } finally {
                 // Clear the uid state
-                mAppOps.setUidMode(OPSTR_ACCESS_NOTIFICATIONS, Process.myUid(), defaultMode)
+                mAppOps.setUidMode(OPSTR_RECORD_AUDIO, Process.myUid(), defaultMode)
             }
         }
     }
