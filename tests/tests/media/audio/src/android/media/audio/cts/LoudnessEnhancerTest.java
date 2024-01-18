@@ -32,11 +32,15 @@ import android.media.audiofx.Visualizer.MeasurementPeakRms;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.UUID;
 
 @AppModeFull(reason = "Dynamic config disabled.")
+@RunWith(AndroidJUnit4.class)
 public class LoudnessEnhancerTest extends PostProcTestBase {
 
     private String TAG = "LoudnessEnhancerTest";
