@@ -98,12 +98,20 @@ class UinputTouchDevice(
         injectEvent(intArrayOf(EV_ABS, ABS_MT_TOOL_TYPE, toolType))
     }
 
+    fun sendPressure(pressure: Int) {
+        injectEvent(intArrayOf(EV_ABS, ABS_MT_PRESSURE, pressure))
+    }
+
     fun sync() {
         injectEvent(intArrayOf(EV_SYN, SYN_REPORT, 0))
     }
 
     fun delay(delayMs: Int) {
         uinputDevice.injectDelay(delayMs)
+    }
+
+    fun getDeviceId(): Int {
+        return uinputDevice.getDeviceId()
     }
 
     private fun readRawResource(context: Context): String {
@@ -214,6 +222,7 @@ class UinputTouchDevice(
         const val ABS_MT_POSITION_Y = 0x36
         const val ABS_MT_TOOL_TYPE = 0x37
         const val ABS_MT_TRACKING_ID = 0x39
+        const val ABS_MT_PRESSURE = 0x3a
         const val BTN_TOUCH = 0x14a
         const val BTN_TOOL_FINGER = 0x145
         const val BTN_TOOL_DOUBLETAP = 0x14d
