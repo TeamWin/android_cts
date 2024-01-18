@@ -119,7 +119,9 @@ public class MediaRouter2DeviceTest {
                 .adoptShellPermissionIdentity(Manifest.permission.MEDIA_CONTENT_CONTROL);
         mRouter2Manager = MediaRouter2Manager.getInstance(mContext);
         mPlaceholderComponentName = new ComponentName(mContext, PlaceholderActivity.class);
+    }
 
+    private void launchScreenOnActivity() {
         // Launch ScreenOnActivity while tests are running for scanning to work. MediaRouter2 blocks
         // app scan requests while the screen is off for resource saving.
         Intent intent = new Intent(/* context= */ mContext, ScreenOnActivity.class);
@@ -140,6 +142,8 @@ public class MediaRouter2DeviceTest {
     @ApiTest(apis = {"android.media.RouteDiscoveryPreference, android.media.MediaRouter2"})
     @Test
     public void deduplicationIds_propagateAcrossApps() throws TimeoutException {
+        launchScreenOnActivity();
+
         RouteDiscoveryPreference preference =
                 new RouteDiscoveryPreference.Builder(
                                 List.of(FEATURE_SAMPLE), /* activeScan= */ true)
@@ -178,6 +182,8 @@ public class MediaRouter2DeviceTest {
     @ApiTest(apis = {"android.media.RouteDiscoveryPreference, android.media.MediaRouter2"})
     @Test
     public void deviceType_propagatesAcrossApps() throws TimeoutException {
+        launchScreenOnActivity();
+
         RouteDiscoveryPreference preference =
                 new RouteDiscoveryPreference.Builder(
                                 List.of(FEATURE_SAMPLE), /* activeScan= */ true)
@@ -316,6 +322,8 @@ public class MediaRouter2DeviceTest {
     @ApiTest(apis = {"android.media.RouteDiscoveryPreference, android.media.MediaRouter2"})
     @Test
     public void visibilityAndAllowedPackages_propagateAcrossApps() throws TimeoutException {
+        launchScreenOnActivity();
+
         RouteDiscoveryPreference preference =
                 new RouteDiscoveryPreference.Builder(
                                 List.of(FEATURE_SAMPLE), /* activeScan= */ true)
@@ -413,6 +421,8 @@ public class MediaRouter2DeviceTest {
     @ApiTest(apis = {"android.media.MediaRouter2"})
     @Test
     public void selfScanOnlyProvider_notScannedByAnotherApp() {
+        launchScreenOnActivity();
+
         RouteDiscoveryPreference preference =
                 new RouteDiscoveryPreference.Builder(
                                 List.of(FEATURE_SAMPLE), /* activeScan= */ true)

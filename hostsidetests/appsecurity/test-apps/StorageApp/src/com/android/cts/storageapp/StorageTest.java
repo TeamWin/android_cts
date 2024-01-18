@@ -163,16 +163,22 @@ public class StorageTest extends InstrumentationTestCase {
     }
 
     private void clearSpaceCar(UiDevice device) throws UiObjectNotFoundException {
-        UiScrollable localObject = new UiScrollable(new UiSelector().scrollable(true));
-        assertNotNull("Cannot find scrollable object.", localObject);
-        ((UiScrollable) localObject).setMaxSearchSwipes(10);
-        try {
-            ((UiScrollable) localObject).scrollIntoView(
-                    new UiSelector().textContains("internal storage"));
-        } catch (UiObjectNotFoundException localUiObjectNotFoundException) {
-            // Scrolling can fail if the UI is not scrollable
+        String storageString = "internal storage";
+        int i = device.findObjects(androidx.test.uiautomator.By.scrollable(true)).size();
+        for (int j = 0; j < i; j++) {
+            UiScrollable localObject = new UiScrollable(
+                    new UiSelector().scrollable(true).instance(j));
+            localObject.setMaxSearchSwipes(10);
+            try {
+                boolean found = localObject.scrollTextIntoView(storageString);
+                if (found) {
+                    break;
+                }
+            } catch (UiObjectNotFoundException localUiObjectNotFoundException) {
+                // Scrolling can fail if the UI is not scrollable
+            }
         }
-        device.findObject(new UiSelector().textContains("internal storage")).click();
+        device.findObject(new UiSelector().textContains(storageString)).click();
         device.waitForIdle();
 
         device.findObject(new UiSelector().textContains("Clear storage")).click();

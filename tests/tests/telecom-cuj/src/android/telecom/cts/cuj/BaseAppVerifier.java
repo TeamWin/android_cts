@@ -1,0 +1,281 @@
+/*
+ * Copyright (C) 2023 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.telecom.cts.cuj;
+
+import static android.telecom.cts.apps.TelecomTestApp.MANAGED_ADDRESS;
+import static android.telecom.cts.apps.TelecomTestApp.MANAGED_APP_CN;
+import static android.telecom.cts.apps.TelecomTestApp.MANAGED_APP_ID;
+import static android.telecom.cts.apps.TelecomTestApp.MANAGED_APP_LABEL;
+
+import android.graphics.Color;
+import android.net.Uri;
+import android.os.RemoteException;
+import android.telecom.Call;
+import android.telecom.CallAttributes;
+import android.telecom.CallEndpoint;
+import android.telecom.CallException;
+import android.telecom.PhoneAccount;
+import android.telecom.PhoneAccountHandle;
+import android.telecom.cts.apps.AppControlWrapper;
+import android.telecom.cts.apps.BaseAppVerifierImpl;
+import android.telecom.cts.apps.TelecomTestApp;
+import android.telecom.cts.apps.InCallServiceMethods;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.After;
+import org.junit.Before;
+
+import java.util.List;
+
+/**
+ * BaseAppVerifier should be extended by any test class that wants to bind to the test apps in the
+ * cts/tests/tests/telecomApps directory.
+ */
+public class BaseAppVerifier {
+    public static final boolean S_IS_TEST_DISABLED = true;
+    private BaseAppVerifierImpl mBaseAppVerifierImpl;
+    /***********************************************************
+     /  ManagedConnectionServiceApp - The PhoneAccountHandle and PhoneAccount must reside in the
+     /  CTS test process.
+     /***********************************************************/
+    PhoneAccountHandle mManagedHandle = new PhoneAccountHandle(MANAGED_APP_CN, MANAGED_APP_ID);
+    PhoneAccount mManagedAccount = PhoneAccount.builder(mManagedHandle, MANAGED_APP_LABEL)
+            .setAddress(Uri.parse(MANAGED_ADDRESS))
+            .setSubscriptionAddress(Uri.parse(MANAGED_ADDRESS))
+            .setCapabilities(PhoneAccount.CAPABILITY_VIDEO_CALLING
+                    | PhoneAccount.CAPABILITY_CALL_PROVIDER /* needed in order to be default sub */)
+            .setHighlightColor(Color.RED)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_SIP)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_VOICEMAIL)
+            .build();
+
+    /***********************************************************
+     /                 setUp and tearDown methods
+     /***********************************************************/
+    @Before
+    public void setUp() throws Exception {
+        mBaseAppVerifierImpl = new BaseAppVerifierImpl(
+                InstrumentationRegistry.getInstrumentation(),
+                mManagedAccount,
+                new InCallServiceMethods() {
+
+                    @Override
+                    public boolean isBound() {
+                        return CujInCallService.isServiceBound();
+                    }
+
+                    @Override
+                    public List<Call> getOngoingCalls() {
+                        return CujInCallService.getOngoingCalls();
+                    }
+
+                    @Override
+                    public Call getLastAddedCall() {
+                        return CujInCallService.getLastAddedCall();
+                    }
+
+                    @Override
+                    public int getCurrentCallCount() {
+                        return CujInCallService.getCurrentCallCount();
+                    }
+                });
+        mBaseAppVerifierImpl.setUp();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        mBaseAppVerifierImpl.tearDown();
+    }
+
+    /***********************************************************
+     /                 setUp and tearDown methods
+     /***********************************************************/
+
+    public AppControlWrapper bindToApp(TelecomTestApp applicationName) throws Exception {
+        return mBaseAppVerifierImpl.bindToApp(applicationName);
+    }
+
+    public List<AppControlWrapper> bindToApps(List<TelecomTestApp> applicationNames)
+            throws Exception {
+        return mBaseAppVerifierImpl.bindToApps(applicationNames);
+    }
+
+    public void tearDownApp(AppControlWrapper appControl) {
+        mBaseAppVerifierImpl.tearDownApp(appControl);
+    }
+
+    public void tearDownApps(List<AppControlWrapper> appControls) {
+        mBaseAppVerifierImpl.tearDownApps(appControls);
+    }
+
+    public CallAttributes getDefaultAttributes(TelecomTestApp name, boolean isOutgoing)
+            throws Exception {
+        return mBaseAppVerifierImpl.getDefaultAttributes(name, isOutgoing);
+    }
+
+    public CallAttributes getRandomAttributes(TelecomTestApp name, boolean isOutgoing)
+            throws Exception {
+        return mBaseAppVerifierImpl.getRandomAttributes(name, isOutgoing, true);
+    }
+
+    public String addOutgoingCallAndVerify(AppControlWrapper appControl)
+            throws Exception {
+        CallAttributes outgoingAttributes = mBaseAppVerifierImpl.getRandomAttributes(
+                appControl.getTelecomApps(),
+                true /*isOutgoing*/,
+                true /* isHoldable */);
+        return mBaseAppVerifierImpl.addCallAndVerify(appControl, outgoingAttributes);
+    }
+
+    public String addIncomingCallAndVerify(AppControlWrapper appControl)
+            throws Exception {
+        CallAttributes incomingAttributes = mBaseAppVerifierImpl.getRandomAttributes(
+                appControl.getTelecomApps(),
+                false /*isOutgoing*/,
+                true /* isHoldable */);
+        return mBaseAppVerifierImpl.addCallAndVerify(appControl, incomingAttributes);
+    }
+
+    public String addOutgoingCallAndVerify(AppControlWrapper appControl, boolean isHoldable)
+            throws Exception {
+        CallAttributes outgoingAttributes = mBaseAppVerifierImpl.getRandomAttributes(
+                appControl.getTelecomApps(),
+                true /*isOutgoing*/,
+                isHoldable /* isHoldable */);
+        return mBaseAppVerifierImpl.addCallAndVerify(appControl, outgoingAttributes);
+    }
+
+    public String addIncomingCallAndVerify(AppControlWrapper appControl, boolean isHoldable)
+            throws Exception {
+        CallAttributes incomingAttributes = mBaseAppVerifierImpl.getRandomAttributes(
+                appControl.getTelecomApps(),
+                false /*isOutgoing*/,
+                isHoldable /* isHoldable */);
+        return mBaseAppVerifierImpl.addCallAndVerify(appControl, incomingAttributes);
+    }
+
+    public String addCallAndVerify(AppControlWrapper appControl, CallAttributes attributes)
+            throws Exception {
+        return mBaseAppVerifierImpl.addCallAndVerify(appControl, attributes);
+    }
+
+    public void setCallState(AppControlWrapper appControl, String id, int callState)
+            throws Exception {
+        mBaseAppVerifierImpl.setCallState(appControl, id, callState);
+    }
+    public void setCallStateAndVerify(AppControlWrapper appControl, String id, int callState)
+            throws Exception {
+        mBaseAppVerifierImpl.setCallStateAndVerify(appControl, id, callState);
+    }
+
+    public void setCallStateAndVerify(AppControlWrapper appControl, String id, int targetCallState,
+                                      int arg) throws Exception {
+        mBaseAppVerifierImpl.setCallStateAndVerify(appControl, id, targetCallState, arg);
+    }
+
+    public void answerViaInCallServiceAndVerify(String id, int videoState) throws Exception {
+        mBaseAppVerifierImpl.answerViaInCallServiceAndVerify(id, videoState);
+    }
+
+    public CallException setCallStateButExpectOnError(AppControlWrapper appControl,
+                                                      String id,
+                                                      int targetCallState)
+            throws Exception {
+        return  mBaseAppVerifierImpl.setCallStateButExpectOnError(appControl, id, targetCallState);
+    }
+
+
+    public CallException setCallControlActionButExpectOnError(AppControlWrapper appControl,
+                                                              String id,
+                                                              int targetCallState,
+                                                              int arg) throws Exception {
+        return  mBaseAppVerifierImpl.setCallStateButExpectOnError(
+                appControl, id, targetCallState, arg);
+    }
+
+    public void verifyCallIsInState(String id, int state) throws Exception {
+        mBaseAppVerifierImpl.verifyCallIsInState(id, state);
+    }
+
+    public CallEndpoint getAnotherCallEndpoint(AppControlWrapper appControl, String id)
+            throws Exception {
+        return mBaseAppVerifierImpl.getAnotherCallEndpoint(appControl, id);
+    }
+
+    public void setAudioRouteStateAndVerify(AppControlWrapper appControl, String id,
+                                            CallEndpoint newCallEndpoint) throws Exception {
+        mBaseAppVerifierImpl.setAudioRouteStateAndVerify(appControl, id, newCallEndpoint);
+    }
+
+    public boolean isMuted(AppControlWrapper appControl, String id) throws RemoteException {
+        return mBaseAppVerifierImpl.isMuted(appControl, id);
+    }
+
+    public void setMuteState(AppControlWrapper appControl, String id, boolean isMuted)
+            throws RemoteException {
+        mBaseAppVerifierImpl.setMuteState(appControl, id, isMuted);
+    }
+
+    public CallEndpoint getCurrentCallEndpoint(AppControlWrapper appControl, String id)
+            throws Exception {
+        return mBaseAppVerifierImpl.getCurrentCallEndpoint(appControl, id);
+    }
+
+    public List<CallEndpoint> getAvailableCallEndpoints(AppControlWrapper appControl, String id)
+            throws Exception {
+        return mBaseAppVerifierImpl.getAvailableCallEndpoints(appControl, id);
+    }
+
+    public void registerDefaultPhoneAccount(AppControlWrapper appControl) throws RemoteException {
+        mBaseAppVerifierImpl.registerDefaultPhoneAccount(appControl);
+    }
+
+    public void registerCustomPhoneAccount(AppControlWrapper appControl, PhoneAccount account)
+            throws Exception {
+        mBaseAppVerifierImpl.registerCustomPhoneAccount(appControl, account);
+    }
+
+    public void unregisterPhoneAccountWithHandle(AppControlWrapper appControl,
+            PhoneAccountHandle handle) throws Exception {
+        mBaseAppVerifierImpl.unregisterPhoneAccountWithHandle(appControl, handle);
+    }
+
+    public List<PhoneAccountHandle> getAccountHandlesForApp(AppControlWrapper appControl)
+            throws Exception {
+        return mBaseAppVerifierImpl.getAccountHandlesForApp(appControl);
+    }
+
+    public boolean isPhoneAccountRegistered(PhoneAccountHandle handle) {
+        return mBaseAppVerifierImpl.isPhoneAccountRegistered(handle);
+    }
+
+    public void switchToAnotherCallEndpoint(AppControlWrapper appControl, String callId)
+            throws Exception {
+        CallEndpoint originalCallEndpoint = getCurrentCallEndpoint(appControl, callId);
+        CallEndpoint anotherCallEndpoint = getAnotherCallEndpoint(appControl, callId);
+        if (!originalCallEndpoint.equals(anotherCallEndpoint)) {
+            setAudioRouteStateAndVerify(appControl, callId, anotherCallEndpoint);
+            setAudioRouteStateAndVerify(appControl, callId, originalCallEndpoint);
+        }
+    }
+
+    public void assertAudioMode(final int expectedMode) {
+        mBaseAppVerifierImpl.assertAudioMode(expectedMode);
+    }
+}

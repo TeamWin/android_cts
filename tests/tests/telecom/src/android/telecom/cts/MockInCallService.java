@@ -38,7 +38,8 @@ import java.util.concurrent.TimeUnit;
 public class MockInCallService extends InCallService {
     private static final long TEST_TIMEOUT = 5000L;
     private static String LOG_TAG = "MockInCallService";
-    private final List<Call> mCalls = Collections.synchronizedList(new ArrayList<>());
+    private static final List<Call> sCalls = Collections.synchronizedList(new ArrayList<>());
+    private static Call sLastCall = null;
     private final List<Call> mConferenceCalls = Collections.synchronizedList(new ArrayList<>());
     private static InCallServiceCallbacks sCallbacks;
     private Map<Call, MockVideoCallCallback> mVideoCallCallbacks =
@@ -271,9 +272,10 @@ public class MockInCallService extends InCallService {
                 call.registerCallback(mCallCallback);
             }
         } else {
-            if (!mCalls.contains(call)) {
+            if (!sCalls.contains(call)) {
                 Log.i(LOG_TAG, "added call to list");
-                mCalls.add(call);
+                sCalls.add(call);
+                sLastCall = call;
                 call.registerCallback(mCallCallback);
                 VideoCall videoCall = call.getVideoCall();
                 if (videoCall != null) {
@@ -282,7 +284,7 @@ public class MockInCallService extends InCallService {
             }
         }
         if (getCallbacks() != null) {
-            getCallbacks().onCallAdded(call, mCalls.size() + mConferenceCalls.size());
+            getCallbacks().onCallAdded(call, sCalls.size() + mConferenceCalls.size());
         }
     }
 
@@ -293,10 +295,13 @@ public class MockInCallService extends InCallService {
         if (call.getDetails().hasProperty(Call.Details.PROPERTY_CONFERENCE) == true) {
             mConferenceCalls.remove(call);
         } else {
-            mCalls.remove(call);
+            sCalls.remove(call);
+            if (call.equals(sLastCall)) {
+                sLastCall = null;
+            }
         }
         if (getCallbacks() != null) {
-            getCallbacks().onCallRemoved(call, mCalls.size() + mConferenceCalls.size());
+            getCallbacks().onCallRemoved(call, sCalls.size() + mConferenceCalls.size());
             saveVideoCall(call, null /* remove videoCall */);
         }
     }
@@ -362,7 +367,7 @@ public class MockInCallService extends InCallService {
      * @return the number of calls currently added to the {@code InCallService}.
      */
     public int getCallCount() {
-        return mCalls.size();
+        return sCalls.size();
     }
 
     /**
@@ -376,18 +381,18 @@ public class MockInCallService extends InCallService {
      * @return the most recently added call that exists inside the {@code InCallService}
      */
     public Call getLastCall() {
-        if (!mCalls.isEmpty()) {
-            return mCalls.get(mCalls.size() - 1);
+        if (!sCalls.isEmpty()) {
+            return sCalls.get(sCalls.size() - 1);
         }
         return null;
     }
 
     public List<Call> getAllCalls() {
-        return mCalls;
+        return sCalls;
     }
 
     public Call getCallWithId(String id) {
-        for (Call call : mCalls) {
+        for (Call call : sCalls) {
             if (call.getDetails().getTelecomCallId().equals(id)) {
                 return call;
             }
@@ -396,7 +401,7 @@ public class MockInCallService extends InCallService {
     }
 
     public void clearCallList() {
-        mCalls.clear();
+        sCalls.clear();
     }
 
     /**
@@ -424,8 +429,8 @@ public class MockInCallService extends InCallService {
     }
 
     public void disconnectAllCalls() {
-        synchronized (mCalls) {
-            for (final Call call : mCalls) {
+        synchronized (sCalls) {
+            for (final Call call : sCalls) {
                 call.disconnect();
             }
         }
@@ -482,11 +487,23 @@ public class MockInCallService extends InCallService {
         Log.i(LOG_TAG, "Service has been unbound");
         assertTrue(mIsServiceBound);
         mIsServiceBound = false;
-        mCalls.clear();
+        sCalls.clear();
         return super.onUnbind(intent);
     }
 
     public static boolean isServiceBound() {
         return mIsServiceBound;
+    }
+
+    public static int getCurrentCallCount() {
+        return sCalls.size();
+    }
+
+    public static List<Call> getOngoingCalls() {
+        return sCalls;
+    }
+
+    public static Call getLastAddedCall() {
+        return sLastCall;
     }
 }

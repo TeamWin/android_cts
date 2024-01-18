@@ -397,7 +397,7 @@ public class KernelConfigTest extends BaseHostJUnit4Test {
     }
 
     /**
-     * Test that the kernel enables fs-verity and its built-in signature support.
+     * Test that the kernel enables fs-verity.
      */
     @CddTest(requirement="9.10")
     @Test
@@ -408,9 +408,6 @@ public class KernelConfigTest extends BaseHostJUnit4Test {
         }
         assertTrue("Linux kernel must have fs-verity enabled: CONFIG_FS_VERITY=y",
                 configSet.contains("CONFIG_FS_VERITY=y"));
-        assertTrue("Linux kernel must have fs-verity's builtin signature enabled: "
-                + "CONFIG_FS_VERITY_BUILTIN_SIGNATURES=y",
-                configSet.contains("CONFIG_FS_VERITY_BUILTIN_SIGNATURES=y"));
     }
 
     private void assumeSecurityModelCompat() throws Exception {

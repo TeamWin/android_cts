@@ -68,4 +68,7 @@
     <!-- String title for the shortcut target activity -->
     <string name="shortcut_target_title">Shortcut Target</string>
 
+    <!-- A text to be shown initially as a placeholder in some test -->
+    <string name="placeholder_text">Text</string>
+
 </resources>
