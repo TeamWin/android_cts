@@ -52,11 +52,13 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.ActivityManager.OnUidImportanceListener;
 import android.app.ActivityManager.RecentTaskInfo;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ActivityManager.RunningServiceInfo;
 import android.app.ActivityManager.RunningTaskInfo;
 import android.app.ActivityOptions;
+import android.app.Flags;
 import android.app.HomeVisibilityListener;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
@@ -104,6 +106,7 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.annotations.RestrictedBuildTest;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
@@ -2363,6 +2366,84 @@ public final class ActivityManagerTest {
             mActivityManager.noteForegroundResourceUseEnd(1, 1, 1);
         } catch (SecurityException e) {
             fail("Could not call noteForegroundResourceUseBegin with permission" + e.getMessage());
+        }
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_UID_IMPORTANCE_LISTENER_FOR_UIDS)
+    @Test
+    public void testAddOnUidImportanceListener() throws Exception {
+        final ApplicationInfo ai1 = mTargetContext.getPackageManager()
+                .getApplicationInfo(PACKAGE_NAME_APP1, 0);
+        final ApplicationInfo ai2 = mTargetContext.getPackageManager()
+                .getApplicationInfo(PACKAGE_NAME_APP2, 0);
+        final CountDownLatch[] latchHolder = new CountDownLatch[1];
+        final int[] expectedUidHolder = new int[1];
+        final OnUidImportanceListener listener = new OnUidImportanceListener() {
+            @Override
+            public void onUidImportance(int uid, int importance) {
+                if (uid == expectedUidHolder[0]) {
+                    latchHolder[0].countDown();
+                }
+            }
+        };
+        try {
+            // Make sure we could start activity from background
+            runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist +" + PACKAGE_NAME_APP1);
+
+            // If we didn't specify the target UID, we should be able to listen on all UID events.
+            mActivityManager.addOnUidImportanceListener(listener,
+                    RunningAppProcessInfo.IMPORTANCE_FOREGROUND);
+
+            latchHolder[0] = new CountDownLatch(1);
+            expectedUidHolder[0] = ai1.uid;
+            CommandReceiver.sendCommand(mTargetContext,
+                    CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            assertTrue("Failed to receive the UID importance changes",
+                    latchHolder[0].await(WAITFOR_MSEC, TimeUnit.MILLISECONDS));
+
+            latchHolder[0] = new CountDownLatch(1);
+            expectedUidHolder[0] = ai2.uid;
+            CommandReceiver.sendCommand(mTargetContext,
+                    CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
+            assertTrue("Failed to receive the UID importance changes",
+                    latchHolder[0].await(WAITFOR_MSEC, TimeUnit.MILLISECONDS));
+
+            launchHome();
+            mActivityManager.removeOnUidImportanceListener(listener);
+
+            // Listen on the APP1's UID importance changes only.
+            mActivityManager.addOnUidImportanceListener(listener,
+                    RunningAppProcessInfo.IMPORTANCE_FOREGROUND, new int[] {ai1.uid});
+
+            latchHolder[0] = new CountDownLatch(1);
+            expectedUidHolder[0] = ai1.uid;
+            CommandReceiver.sendCommand(mTargetContext,
+                    CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            assertTrue("Failed to receive the UID importance changes",
+                    latchHolder[0].await(WAITFOR_MSEC, TimeUnit.MILLISECONDS));
+
+            latchHolder[0] = new CountDownLatch(1);
+            expectedUidHolder[0] = ai2.uid;
+            CommandReceiver.sendCommand(mTargetContext,
+                    CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
+            assertFalse("It should not receive the UID importance changes",
+                    latchHolder[0].await(WAITFOR_MSEC, TimeUnit.MILLISECONDS));
+        } finally {
+            runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist -" + PACKAGE_NAME_APP1);
+
+            mActivityManager.removeOnUidImportanceListener(listener);
+
+            runWithShellPermissionIdentity(() -> {
+                // force stop test package, where the whole test process group will be killed.
+                mActivityManager.forceStopPackage(PACKAGE_NAME_APP1);
+                mActivityManager.forceStopPackage(PACKAGE_NAME_APP2);
+            });
         }
     }
 
