@@ -54,6 +54,7 @@ import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_ON
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BAR;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
@@ -119,7 +120,6 @@ import com.google.common.collect.Iterables;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -2568,7 +2568,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     }
 
     @Test
-    @Ignore // TODO: b/314285749 - Requires new APIs for verifying (to be added in b/313418335)
     @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
     public void setAutomaticZenRuleState_ruleWithNightMode_appliedImmediately() throws Exception {
         assertThat(isUiModeManagerThemeOverlayActive()).isFalse();
@@ -2593,7 +2592,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     }
 
     @Test
-    @Ignore // Requires new APIs for verifying, b/313418335
     @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
     public void setAutomaticZenRuleState_ruleWithNightMode_appliedOnScreenOff() throws Exception {
         assertThat(isUiModeManagerThemeOverlayActive()).isFalse();
@@ -2665,33 +2663,33 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     }
 
     private float getWallpaperManagerDimAmount() {
-        WallpaperManager wallpaperManager = mContext.getSystemService(WallpaperManager.class);
+        WallpaperManager wallpaperManager = checkNotNull(
+                mContext.getSystemService(WallpaperManager.class));
         return SystemUtil.runWithShellPermissionIdentity(
                 () -> wallpaperManager.getWallpaperDimAmount(),
                 Manifest.permission.SET_WALLPAPER_DIM_AMOUNT);
     }
 
     private boolean isPowerManagerAmbientDisplaySuppressed() {
-        PowerManager powerManager = mContext.getSystemService(PowerManager.class);
+        PowerManager powerManager = checkNotNull(mContext.getSystemService(PowerManager.class));
         return SystemUtil.runWithShellPermissionIdentity(
                 () -> powerManager.isAmbientDisplaySuppressed(),
                 Manifest.permission.READ_DREAM_STATE);
     }
 
     private boolean isColorDisplayManagerSaturationActivated() {
-        ColorDisplayManager colorDisplayManager = mContext.getSystemService(
-                ColorDisplayManager.class);
+        ColorDisplayManager colorDisplayManager = checkNotNull(
+                mContext.getSystemService(ColorDisplayManager.class));
         return SystemUtil.runWithShellPermissionIdentity(
                 () -> colorDisplayManager.isSaturationActivated(),
                 Manifest.permission.CONTROL_DISPLAY_COLOR_TRANSFORMS);
     }
 
     private boolean isUiModeManagerThemeOverlayActive() {
-        UiModeManager uiModeManager = mContext.getSystemService(UiModeManager.class);
+        UiModeManager uiModeManager = checkNotNull(mContext.getSystemService(UiModeManager.class));
         return SystemUtil.runWithShellPermissionIdentity(
-                () -> {
-                    throw new IllegalStateException("Not ready for testing yet");
-                },
+                () -> uiModeManager.getAttentionModeThemeOverlay()
+                        == UiModeManager.MODE_ATTENTION_THEME_OVERLAY_NIGHT,
                 Manifest.permission.MODIFY_DAY_NIGHT_MODE);
     }
 
