@@ -17,12 +17,9 @@
 package android.input.cts
 
 import android.graphics.Point
-import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.HEIGHT
-import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.WIDTH
 import android.platform.test.annotations.RequiresFlagsEnabled
 import android.platform.test.flag.junit.DeviceFlagsValueProvider
 import android.util.Log
-import android.util.Size
 import android.view.InputDevice
 import android.view.MotionEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -71,7 +68,8 @@ class MotionEventIsResampledTest {
                 virtualDisplayRule.virtualDisplay.display,
                 R.raw.test_touchscreen_register,
                 InputDevice.SOURCE_TOUCHSCREEN,
-                Size(WIDTH, HEIGHT),
+                /*useDisplaySize*/
+                true,
         )
         verifier = EventVerifier(virtualDisplayRule.activity::getInputEvent)
     }

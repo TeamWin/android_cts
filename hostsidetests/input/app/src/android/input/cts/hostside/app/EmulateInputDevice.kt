@@ -67,7 +67,8 @@ class EmulateInputDevice {
                 context.display,
                 R.raw.test_touchscreen_register,
                 InputDevice.SOURCE_TOUCHSCREEN,
-                screenSize,
+                /*useDisplaySize*/
+                true,
         ).use { touchscreen ->
             // Start the usage session.
             touchscreen.tapOnScreen()
@@ -82,20 +83,21 @@ class EmulateInputDevice {
 
     private fun UinputTouchDevice.tapOnScreen() {
         val pointer = Point(screenSize.width / 2, screenSize.height / 2)
+        val pointerId = 0
 
         // Down
         sendBtnTouch(true)
-        sendDown(0 /*id*/, pointer)
+        sendDown(pointerId, pointer)
         sync()
 
         // Move
         pointer.offset(1, 1)
-        sendMove(0 /*id*/, pointer)
+        sendMove(pointerId, pointer)
         sync()
 
         // Up
         sendBtnTouch(false)
-        sendUp(0 /*id*/)
+        sendUp(pointerId)
         sync()
     }
 

@@ -33,7 +33,7 @@ import org.junit.runner.Description
  */
 class DebugInputRule : TestWatcher() {
 
-    private companion object {
+    companion object {
         private val TAG = "DebugInput"
 
         // The list of log tags to enable when additional debugging of the input pipeline is
