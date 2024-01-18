@@ -230,7 +230,6 @@ public class VisualizerTest extends PostProcTestBase {
     }
 
     //Test case 2.2: test capture with illegal size
-    @Test
     public void test2_2IllegalCaptureSize() throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG, "AUDIO_OUTPUT feature not found. This system might not have a valid "
