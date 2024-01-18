@@ -48,6 +48,7 @@ android_test {
         "truth",
         "android.wifi.mockwifi",
         "wifi_aconfig_flags_lib",
+        "android.net.wifi.flags-aconfig-java",
         "flag-junit",
     ],
 

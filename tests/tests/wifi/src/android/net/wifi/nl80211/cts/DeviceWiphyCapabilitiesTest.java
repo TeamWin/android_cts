@@ -18,17 +18,21 @@ package android.net.wifi.nl80211.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.net.wifi.ScanResult;
 import android.net.wifi.cts.WifiFeature;
+import android.net.wifi.flags.Flags;
 import android.net.wifi.nl80211.DeviceWiphyCapabilities;
 import android.os.Parcel;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -37,6 +41,7 @@ import org.junit.runner.RunWith;
 /** CTS tests for {@link DeviceWiphyCapabilities}. */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@NonMainlineTest
 public class DeviceWiphyCapabilitiesTest {
 
     @Before
@@ -57,6 +62,9 @@ public class DeviceWiphyCapabilitiesTest {
         capa.setWifiStandardSupport(ScanResult.WIFI_STANDARD_11N, true);
         capa.setWifiStandardSupport(ScanResult.WIFI_STANDARD_11AC, true);
         capa.setWifiStandardSupport(ScanResult.WIFI_STANDARD_11AX, false);
+        if (Flags.getDeviceCrossAkmRoamingSupport()) {
+            capa.setMaxNumberAkms(2);
+        }
 
         Parcel parcel = Parcel.obtain();
         capa.writeToParcel(parcel, 0);
@@ -70,6 +78,9 @@ public class DeviceWiphyCapabilitiesTest {
                 .isTrue();
         assertThat(capaDeserialized.isWifiStandardSupported(ScanResult.WIFI_STANDARD_11AX))
                 .isFalse();
+        if (Flags.getDeviceCrossAkmRoamingSupport()) {
+            assertEquals(capaDeserialized.getMaxNumberAkms(), 2);
+        }
         assertThat(capaDeserialized).isEqualTo(capa);
         assertThat(capaDeserialized.hashCode()).isEqualTo(capa.hashCode());
     }
