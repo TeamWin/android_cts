@@ -26,8 +26,9 @@
 #include <libgen.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/system_properties.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <queue>
@@ -36,11 +37,12 @@
 #include <unordered_set>
 #include <vector>
 
-#include <android-base/file.h>
-#include <android-base/properties.h>
-#include <android-base/strings.h>
-#include <nativehelper/scoped_local_ref.h>
-#include <nativehelper/scoped_utf_chars.h>
+#include "android-base/file.h"
+#include "android-base/macros.h"
+#include "android-base/properties.h"
+#include "android-base/strings.h"
+#include "nativehelper/scoped_local_ref.h"
+#include "nativehelper/scoped_utf_chars.h"
 
 #if defined(__LP64__)
 #define LIB_DIR "lib64"
@@ -87,6 +89,11 @@ static bool is_directory(const char* path) {
   }
 
   return false;
+}
+
+static inline bool running_with_native_bridge() {
+  static const prop_info* pi = __system_property_find("ro.dalvik.vm.isa." ABI_STRING);
+  return pi != nullptr;
 }
 
 static bool not_accessible(const std::string& err) {
@@ -163,11 +170,14 @@ static std::string load_library(JNIEnv* env, jclass clazz, const std::string& pa
     java_load_lib_ok = env->GetStringLength(java_load_lib_errmsg) == 0;
   }
 
-  if (loaded_in_native != java_load_ok || java_load_ok != java_load_lib_ok) {
+  // When running with native bridge it is allowed to be able to open both device host and guest
+  // libraries from java, while native dlopen doesn't allow opening device host libraries from
+  // the device guest code.
+  if ((!running_with_native_bridge() && loaded_in_native != java_load_ok) ||
+      java_load_ok != java_load_lib_ok) {
     const std::string java_load_error(ScopedUtfChars(env, java_load_errmsg).c_str());
     error = "Inconsistent result for library \"" + path + "\": dlopen() " +
-            (loaded_in_native ? "succeeded" : "failed (" + error + ")") +
-            ", System.load() " +
+            (loaded_in_native ? "succeeded" : "failed (" + error + ")") + ", System.load() " +
             (java_load_ok ? "succeeded" : "failed (" + java_load_error + ")");
     if (test_system_load_library) {
       const std::string java_load_lib_error(ScopedUtfChars(env, java_load_lib_errmsg).c_str());
