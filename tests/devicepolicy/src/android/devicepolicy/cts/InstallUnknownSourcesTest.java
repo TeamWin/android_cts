@@ -25,6 +25,7 @@ import static org.testng.Assert.assertThrows;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
@@ -57,6 +58,7 @@ public class InstallUnknownSourcesTest {
     }
 
     @PolicyAppliesTest(policy = DisallowInstallUnknownSources.class)
+    @EnsureDoesNotHaveUserRestriction(DISALLOW_INSTALL_UNKNOWN_SOURCES)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_INSTALL_UNKNOWN_SOURCES")
     public void addUserRestriction_disallowInstallUnknownSources_isSet() {
@@ -74,6 +76,7 @@ public class InstallUnknownSourcesTest {
     }
 
     @PolicyDoesNotApplyTest(policy = DisallowInstallUnknownSources.class)
+    @EnsureDoesNotHaveUserRestriction(DISALLOW_INSTALL_UNKNOWN_SOURCES)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_INSTALL_UNKNOWN_SOURCES")
     public void addUserRestriction_disallowInstallUnknownSources_isNotSet() {
@@ -92,6 +95,7 @@ public class InstallUnknownSourcesTest {
     }
 
     @PolicyAppliesTest(policy = DisallowInstallUnknownSourcesGlobally.class)
+    @EnsureDoesNotHaveUserRestriction(DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY")
     public void addUserRestriction_disallowInstallUnknownSourcesGlobally_isSet() {
