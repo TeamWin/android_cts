@@ -22,6 +22,7 @@ android_test {
     platform_apis: true,
     static_libs: [
         "android.nfc.flags-aconfig-java",
+        "android.permission.flags-aconfig-java",
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
         "flag-junit",
@@ -30,14 +31,14 @@ android_test {
     ],
     srcs: [
          "src/**/*.java",
-         // TODO(b/263565193): Temp hack until NFC APK can link against module_current.
-         ":framework-nfc-updatable-sources",
     ],
-    // was: sdk_version: "current",
+    sdk_version: "core_current",
     libs: [
+        "framework-nfc.impl",
+        "framework",
+        "framework-res",
         "android.test.runner",
         "android.test.base",
-        "framework-nfc.impl",
         "unsupportedappusage",
     ],
     // Tag this module as a cts test artifact
