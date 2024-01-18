@@ -32,10 +32,14 @@ import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @NonMediaMainlineTest
 @AppModeFull(reason = "Fails in instant mode")
+@RunWith(AndroidJUnit4.class)
 public class EnvReverbTest extends PostProcTestBase {
 
     private String TAG = "EnvReverbTest";
@@ -47,6 +51,7 @@ public class EnvReverbTest extends PostProcTestBase {
     private EnvironmentalReverb mReverb = null;
     private EnvironmentalReverb mReverb2 = null;
     private ListenerThread mEffectListenerLooper = null;
+
 
     //-----------------------------------------------------------------
     // ENVIRONMENTAL REVERB TESTS:

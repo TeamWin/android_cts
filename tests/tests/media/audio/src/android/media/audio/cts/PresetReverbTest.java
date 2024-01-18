@@ -32,10 +32,14 @@ import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @NonMediaMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
+@RunWith(AndroidJUnit4.class)
 public class PresetReverbTest extends PostProcTestBase {
 
     private String TAG = "PresetReverbTest";
@@ -46,6 +50,7 @@ public class PresetReverbTest extends PostProcTestBase {
     private PresetReverb mReverb = null;
     private PresetReverb mReverb2 = null;
     private ListenerThread mEffectListenerLooper = null;
+
 
     //-----------------------------------------------------------------
     // PRESET REVERB TESTS:

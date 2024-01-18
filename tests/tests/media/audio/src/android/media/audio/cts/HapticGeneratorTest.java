@@ -24,9 +24,13 @@ import android.media.AudioManager;
 import android.media.audiofx.HapticGenerator;
 import android.media.cts.NonMediaMainlineTest;
 
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @NonMediaMainlineTest
+@RunWith(AndroidJUnit4.class)
 public class HapticGeneratorTest extends PostProcTestBase {
 
     private String TAG = "HapticGeneratorTest";
