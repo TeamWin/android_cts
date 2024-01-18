@@ -34,12 +34,16 @@ import android.util.Log;
 
 import android.media.cts.R;
 
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 
 @NonMediaMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
+@RunWith(AndroidJUnit4.class)
 public class VirtualizerTest extends PostProcTestBase {
 
     private String TAG = "VirtualizerTest";
