@@ -19,6 +19,8 @@ package android.hdmicec.cts.playback;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
@@ -206,6 +208,9 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
      */
     @Test
     public void cect_sendVolumeKeyPressToTv() throws Exception {
+        // The DUT won't send <User Control Pressed> messages if this condition is not met.
+        assumeTrue(isPlayingStreamMusicOnHdmiOut());
+
         ITestDevice device = getDevice();
         String ucpMessage;
         String command = "cmd hdmi_control setsam ";

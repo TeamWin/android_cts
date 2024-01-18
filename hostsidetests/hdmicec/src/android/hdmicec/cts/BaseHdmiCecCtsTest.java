@@ -694,4 +694,18 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         return isAudioOutputDeviceInList(audioOutputDevice,
                 "dumpsys audio | grep 'adjust-only absolute volume devices'");
     }
+
+    /**
+     * On Google TV devices the only stream played is STREAM_MUSIC.
+     * The method returns whether "Devices" in "STREAM_MUSIC" contains "hdmi" in audio dumpsys.
+     * This is required by tests where the DUT has to redirect volume key events as CEC
+     * <User Control Pressed> messages.
+     * This method might return false, because the set-up contains an HDMI Stub.
+     * See {@link android.media.AudioSystem#STREAM_MUSIC} and
+     * {@link android.media.AudioSystem#DEVICE_OUT_HDMI}.
+     */
+    public boolean isPlayingStreamMusicOnHdmiOut() throws DeviceNotAvailableException {
+        return getDevice().executeShellCommand("dumpsys audio | sed -n '/^- STREAM_MUSIC:/,/^$/p'"
+                + " | grep \"Devices\"").contains("hdmi");
+    }
 }
