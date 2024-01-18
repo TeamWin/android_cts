@@ -50,16 +50,19 @@ public class VirtualDisplayConfigTest {
 
     @Test
     public void parcelAndUnparcel_matches() {
+        final boolean customHomeEnabled = android.companion.virtual.flags.Flags.vdmCustomHome();
         final Surface surface = new Surface(new SurfaceTexture(/*texName=*/1));
-        final VirtualDisplayConfig originalConfig =
+        VirtualDisplayConfig.Builder builder =
                 new VirtualDisplayConfig.Builder(NAME, WIDTH, HEIGHT, DENSITY)
                         .setFlags(FLAGS)
                         .setSurface(surface)
                         .setDisplayCategories(Set.of("C1", "C2"))
                         .addDisplayCategory("C3")
-                        .setRequestedRefreshRate(REQUESTED_REFRESH_RATE)
-                        .setHomeSupported(true)
-                        .build();
+                        .setRequestedRefreshRate(REQUESTED_REFRESH_RATE);
+        if (customHomeEnabled) {
+            builder.setHomeSupported(true);
+        }
+        final VirtualDisplayConfig originalConfig = builder.build();
 
         assertThat(originalConfig.getName()).isEqualTo(NAME);
         assertThat(originalConfig.getWidth()).isEqualTo(WIDTH);
@@ -69,8 +72,9 @@ public class VirtualDisplayConfigTest {
         assertThat(originalConfig.getSurface()).isEqualTo(surface);
         assertThat(originalConfig.getDisplayCategories()).containsExactly("C1", "C2", "C3");
         assertThat(originalConfig.getRequestedRefreshRate()).isEqualTo(REQUESTED_REFRESH_RATE);
-        assertThat(originalConfig.isHomeSupported()).isEqualTo(
-                android.companion.virtual.flags.Flags.vdmCustomHome());
+        if (customHomeEnabled) {
+            assertThat(originalConfig.isHomeSupported()).isEqualTo(true);
+        }
 
         final Parcel parcel = Parcel.obtain();
         originalConfig.writeToParcel(parcel, /* flags= */ 0);
@@ -86,12 +90,14 @@ public class VirtualDisplayConfigTest {
         assertThat(recreatedConfig.getSurface()).isNotNull();
         assertThat(recreatedConfig.getDisplayCategories()).containsExactly("C1", "C2", "C3");
         assertThat(recreatedConfig.getRequestedRefreshRate()).isEqualTo(REQUESTED_REFRESH_RATE);
-        assertThat(recreatedConfig.isHomeSupported()).isEqualTo(
-                android.companion.virtual.flags.Flags.vdmCustomHome());
+        if (customHomeEnabled) {
+            assertThat(recreatedConfig.isHomeSupported()).isEqualTo(true);
+        }
     }
 
     @Test
     public void virtualDisplayConfig_onlyRequiredFields() {
+        final boolean customHomeEnabled = android.companion.virtual.flags.Flags.vdmCustomHome();
         final VirtualDisplayConfig config =
                 new VirtualDisplayConfig.Builder(NAME, WIDTH, HEIGHT, DENSITY).build();
 
@@ -99,7 +105,9 @@ public class VirtualDisplayConfigTest {
         assertThat(config.getSurface()).isNull();
         assertThat(config.getDisplayCategories()).isEmpty();
         assertThat(config.getRequestedRefreshRate()).isEqualTo(0.0f);
-        assertThat(config.isHomeSupported()).isFalse();
+        if (customHomeEnabled) {
+            assertThat(config.isHomeSupported()).isFalse();
+        }
     }
 
     @Test
