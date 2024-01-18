@@ -3769,6 +3769,44 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         assertFalse("not quarantined anymore", isPackageQuarantined(HELLO_WORLD_PACKAGE_NAME));
     }
 
+    @Test
+    public void testUidRemovedBroadcastNotReceivedForSharedUid() throws Exception {
+        // Installing a test app that shares SYSTEM_UID
+        var result = SystemUtil.runShellCommand("pm install -t -g " + HELLO_WORLD_SETTINGS);
+        if (result.contains("no signatures that match those in shared user android.uid.system")) {
+            // This test only works if platform and cts are built using the same certificate.
+            return;
+        }
+        if (!Build.IS_DEBUGGABLE) {
+            // Non-debuggable builds don't allow non-preloaded apps that use system certificate.
+            return;
+        }
+        assertThat(result).isEqualTo("Success\n");
+        assertTrue(isPackagePresent(HELLO_WORLD_SETTINGS_PACKAGE_NAME));
+        int currentUser = ActivityManager.getCurrentUser();
+        PackageBroadcastReceiver packageRemovedBroadcastReceiver = new PackageBroadcastReceiver(
+                HELLO_WORLD_SETTINGS_PACKAGE_NAME, currentUser, Intent.ACTION_PACKAGE_REMOVED
+        );
+        final IntentFilter packageRemovedIntentFilter =
+                new IntentFilter(Intent.ACTION_PACKAGE_REMOVED);
+        packageRemovedIntentFilter.addDataScheme("package");
+        PackageBroadcastReceiver uidRemovedBroadcastReceiver = new PackageBroadcastReceiver(
+                HELLO_WORLD_SETTINGS_PACKAGE_NAME, currentUser, Intent.ACTION_UID_REMOVED
+        );
+        final IntentFilter uidRemovedIntentFilter = new IntentFilter(Intent.ACTION_UID_REMOVED);
+        mContext.registerReceiver(packageRemovedBroadcastReceiver, packageRemovedIntentFilter);
+        mContext.registerReceiver(uidRemovedBroadcastReceiver, uidRemovedIntentFilter);
+
+        try {
+            uninstallPackage(HELLO_WORLD_SETTINGS_PACKAGE_NAME);
+            packageRemovedBroadcastReceiver.assertBroadcastReceived();
+            uidRemovedBroadcastReceiver.assertBroadcastNotReceived();
+        } finally {
+            mContext.unregisterReceiver(packageRemovedBroadcastReceiver);
+            mContext.unregisterReceiver(uidRemovedBroadcastReceiver);
+        }
+    }
+
     private boolean isPackageSuspended(String packageName) {
         return SystemUtil.runWithShellPermissionIdentity(
                 () -> mPackageManager.isPackageSuspended(packageName));
