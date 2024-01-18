@@ -21,6 +21,7 @@ java_test_host {
     srcs: ["src/*.java"],
     static_libs: [
         "compatibility-host-util",
+        "cts-host-utils",
     ],
     libs: [
         "cts-tradefed",
