@@ -21,10 +21,11 @@ package {
 android_test {
     name: "CtsNonProductionReadyNativeApiTestCases",
     srcs: ["src/**/*.java"],
+    // Include both the 32 and 64 bit versions.
+    compile_multilib: "both",
     static_libs: [
         "androidx.test.rules",
         "compatibility-device-util-axt",
-        "flag-junit",
     ],
     jni_libs: [
         "libnative-api-check-jni",
