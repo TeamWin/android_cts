@@ -16,6 +16,8 @@
 
 package android.media.misc.cts;
 
+import static org.junit.Assert.assertTrue;
+
 import android.hardware.Camera;
 import android.hardware.cts.helpers.CameraUtils;
 import android.media.MediaCodecList;
@@ -30,8 +32,6 @@ import android.os.Environment;
 import android.util.Log;
 import android.view.Surface;
 
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,8 +45,6 @@ import java.util.List;
 public class ResourceManagerRecorderActivity extends MediaStubActivity {
     private static final int VIDEO_FRAMERATE = 30;
     private static final int RECORD_TIME_MS = 3000;
-    private static final int VIDEO_WIDTH = 176;
-    private static final int VIDEO_HEIGHT = 144;
     private static final float LATITUDE = 0.0000f;
     private static final float LONGITUDE  = -180.0f;
     private static final float TOLERANCE = 0.0002f;
@@ -55,8 +53,8 @@ public class ResourceManagerRecorderActivity extends MediaStubActivity {
 
     private int mResult = RESULT_CANCELED;
     private boolean mHighResolution = false;
-    private int mVideoWidth = VIDEO_WIDTH;
-    private int mVideoHeight = VIDEO_HEIGHT;
+    private int mVideoWidth = 0;
+    private int mVideoHeight = 0;
     private int mVideoEncoderType = MediaRecorder.VideoEncoder.H264;
     private String mMime = MediaFormat.MIMETYPE_VIDEO_AVC;
     private Camera mCamera;
@@ -154,7 +152,7 @@ public class ResourceManagerRecorderActivity extends MediaStubActivity {
         // Pick the max or min resolution (width * height) based
         // on the requirement.
         long curMaxResolution = 0;
-        long curMinResolution = VIDEO_WIDTH * VIDEO_HEIGHT;
+        long curMinResolution = Long.MAX_VALUE;
         for (Camera.Size size : videoSizes) {
             long resolution = size.width * size.height;
             if (!mHighResolution && (resolution < curMinResolution)) {
