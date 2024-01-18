@@ -396,15 +396,17 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @EnsureHasPermission({Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME,
+            Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS})
     @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupInfosForZone",
-        "android.car.media.CarVolumeGroupInfo#getAudioDeviceAttributes"})
+            "android.car.media.CarVolumeGroupInfo#getAudioDeviceAttributes",
+            "android.car.media.CarVolumeGroupInfo#isDefault"})
     @RequiresFlagsEnabled(Flags.FLAG_CAR_AUDIO_DYNAMIC_DEVICES)
-    public void getVolumeGroupInfosForZone_forPrimaryZone_withAudioDeviceAttributes() {
+    public void getVolumeGroupInfosForZone_forPrimaryZone_withAudioDeviceAttributes()
+            throws Exception {
         assumeDynamicRoutingIsEnabled();
+        setUpDefaultCarAudioConfigurationForZone(PRIMARY_AUDIO_ZONE);
 
-        // TODO(b/307824959): Setup default config for test when dynamic switching
-        // is available for primary zone.
         List<CarVolumeGroupInfo> infos =
                 mCarAudioManager.getVolumeGroupInfosForZone(PRIMARY_AUDIO_ZONE);
 
@@ -1076,13 +1078,13 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @ApiTest(apis = {"android.car.media.CarAudioManager#getCurrentAudioZoneConfigInfo"})
     public void getCurrentAudioZoneConfigInfo() {
         assumeDynamicRoutingIsEnabled();
-        List<TestZoneConfigInfo> zoneConfigs = assumeSecondaryZoneConfigs();
+        List<TestZoneConfigIdInfo> zoneConfigs = assumeSecondaryZoneConfigs();
 
         CarAudioZoneConfigInfo currentZoneConfigInfo =
                 mCarAudioManager.getCurrentAudioZoneConfigInfo(mZoneId);
 
         assertWithMessage("Current zone config info")
-                .that(TestZoneConfigInfo.getZoneConfigFromInfo(currentZoneConfigInfo))
+                .that(TestZoneConfigIdInfo.getZoneConfigFromInfo(currentZoneConfigInfo))
                 .isIn(zoneConfigs);
     }
 
@@ -1092,22 +1094,26 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @ApiTest(apis = {"android.car.media.CarAudioManager#getCurrentAudioZoneConfigInfo",
             "android.car.media.CarAudioZoneConfigInfo#isActive",
             "android.car.media.CarAudioZoneConfigInfo#isSelected",
+            "android.car.media.CarAudioZoneConfigInfo#isDefault",
             "android.car.media.CarAudioZoneConfigInfo#getConfigVolumeGroups"})
     @RequiresFlagsEnabled(Flags.FLAG_CAR_AUDIO_DYNAMIC_DEVICES)
-    public void getCurrentAudioZoneConfigInfo_withDynamicDevicesEnabled() {
+    public void getCurrentAudioZoneConfigInfo_withDynamicDevicesEnabled() throws Exception {
         assumeDynamicRoutingIsEnabled();
-        List<TestZoneConfigInfo> zoneConfigs = assumeSecondaryZoneConfigs();
+        List<TestZoneConfigIdInfo> zoneConfigs = assumeSecondaryZoneConfigs();
+        setUpDefaultCarAudioConfigurationForZone(mZoneId);
 
         CarAudioZoneConfigInfo currentZoneConfigInfo =
                 mCarAudioManager.getCurrentAudioZoneConfigInfo(mZoneId);
 
         assertWithMessage("Current zone config info, with dynamic device enabled")
-                .that(TestZoneConfigInfo.getZoneConfigFromInfo(currentZoneConfigInfo))
+                .that(TestZoneConfigIdInfo.getZoneConfigFromInfo(currentZoneConfigInfo))
                 .isIn(zoneConfigs);
         assertWithMessage("Current zone config info active status")
                 .that(currentZoneConfigInfo.isActive()).isTrue();
         assertWithMessage("Current zone config info selected status")
                 .that(currentZoneConfigInfo.isSelected()).isTrue();
+        assertWithMessage("Current zone config info default indicator")
+                .that(currentZoneConfigInfo.isDefault()).isFalse();
         List<CarVolumeGroupInfo> currentInfos =
                 mCarAudioManager.getVolumeGroupInfosForZone(mZoneId);
         for (CarVolumeGroupInfo info : currentInfos) {
@@ -1131,16 +1137,16 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
     @ApiTest(apis = {"android.car.media.CarAudioManager#getAudioZoneConfigInfos"})
-    public void getAudioZoneConfigInfos_forPrimaryZone_onlyOneConfigExists() {
+    public void getAudioZoneConfigInfos_forPrimaryZone() {
         assumeDynamicRoutingIsEnabled();
-        TestZoneConfigInfo primaryZoneConfigFromDump = parsePrimaryZoneConfigs();
+        List<TestZoneConfigIdInfo> primaryZoneConfigsFromDump = parsePrimaryZoneConfigs();
 
         List<CarAudioZoneConfigInfo> zoneConfigInfos =
                 mCarAudioManager.getAudioZoneConfigInfos(PRIMARY_AUDIO_ZONE);
 
         assertWithMessage("Primary audio zone config")
-                .that(TestZoneConfigInfo.getZoneConfigListFromInfoList(zoneConfigInfos))
-                .containsExactly(primaryZoneConfigFromDump);
+                .that(TestZoneConfigIdInfo.getZoneConfigListFromInfoList(zoneConfigInfos))
+                .containsExactlyElementsIn(primaryZoneConfigsFromDump);
     }
 
     @Test
@@ -1148,13 +1154,13 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @ApiTest(apis = {"android.car.media.CarAudioManager#getAudioZoneConfigInfos"})
     public void getAudioZoneConfigInfos_forSecondaryZone() {
         assumeDynamicRoutingIsEnabled();
-        List<TestZoneConfigInfo> zoneConfigs = assumeSecondaryZoneConfigs();
+        List<TestZoneConfigIdInfo> zoneConfigs = assumeSecondaryZoneConfigs();
 
         List<CarAudioZoneConfigInfo> zoneConfigInfosFromDump =
                 mCarAudioManager.getAudioZoneConfigInfos(mZoneId);
 
         assertWithMessage("All zone config infos")
-                .that(TestZoneConfigInfo.getZoneConfigListFromInfoList(zoneConfigInfosFromDump))
+                .that(TestZoneConfigIdInfo.getZoneConfigListFromInfoList(zoneConfigInfosFromDump))
                 .containsExactlyElementsIn(zoneConfigs);
     }
 
@@ -1473,11 +1479,11 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
                 .collect(Collectors.toList());
     }
 
-    private List<TestZoneConfigInfo> assumeSecondaryZoneConfigs() {
+    private List<TestZoneConfigIdInfo> assumeSecondaryZoneConfigs() {
         List<Integer> audioZonesWithPassengers = getAvailablePassengerAudioZone();
         assumeFalse("Requires a zone with a passenger/user", audioZonesWithPassengers.isEmpty());
-        SparseArray<List<TestZoneConfigInfo>> zoneConfigs = parseAudioZoneConfigs();
-        List<TestZoneConfigInfo> secondaryZoneConfigs = null;
+        SparseArray<List<TestZoneConfigIdInfo>> zoneConfigs = parseAudioZoneConfigs();
+        List<TestZoneConfigIdInfo> secondaryZoneConfigs = null;
         for (int index = 0; index < audioZonesWithPassengers.size(); index++) {
             int zoneId = audioZonesWithPassengers.get(index);
             if (zoneConfigs.contains(zoneId) && zoneConfigs.get(zoneId).size() > 1) {
@@ -1491,16 +1497,16 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
         return secondaryZoneConfigs;
     }
 
-    private TestZoneConfigInfo parsePrimaryZoneConfigs() {
-        SparseArray<List<TestZoneConfigInfo>> zoneConfigs = parseAudioZoneConfigs();
-        List<TestZoneConfigInfo> primaryZoneConfigs = zoneConfigs.get(PRIMARY_AUDIO_ZONE);
+    private List<TestZoneConfigIdInfo> parsePrimaryZoneConfigs() {
+        SparseArray<List<TestZoneConfigIdInfo>> zoneConfigs = parseAudioZoneConfigs();
+        List<TestZoneConfigIdInfo> primaryZoneConfigs = zoneConfigs.get(PRIMARY_AUDIO_ZONE);
         assertWithMessage("Dumped primary audio zone configuration")
                 .that(primaryZoneConfigs).isNotNull();
-        return primaryZoneConfigs.get(0);
+        return primaryZoneConfigs;
     }
 
-    private SparseArray<List<TestZoneConfigInfo>> parseAudioZoneConfigs() {
-        SparseArray<List<TestZoneConfigInfo>> zoneConfigs = new SparseArray<>();
+    private SparseArray<List<TestZoneConfigIdInfo>> parseAudioZoneConfigs() {
+        SparseArray<List<TestZoneConfigIdInfo>> zoneConfigs = new SparseArray<>();
         if (Flags.carDumpToProto()) {
             List<CarAudioZoneProto> zoneProtoList = mCarAudioServiceProtoDump
                     .getCarAudioZonesList();
@@ -1514,7 +1520,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
                     }
                     int zoneConfigId = zoneConfigProtoList.get(configIndex).getId();
                     String configName = zoneConfigProtoList.get(configIndex).getName();
-                    zoneConfigs.get(zoneId).add(new TestZoneConfigInfo(zoneId, zoneConfigId,
+                    zoneConfigs.get(zoneId).add(new TestZoneConfigIdInfo(zoneId, zoneConfigId,
                             configName));
                 }
             }
@@ -1527,7 +1533,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
                 if (!zoneConfigs.contains(zoneId)) {
                     zoneConfigs.put(zoneId, new ArrayList<>());
                 }
-                zoneConfigs.get(zoneId).add(new TestZoneConfigInfo(zoneId, zoneConfigId,
+                zoneConfigs.get(zoneId).add(new TestZoneConfigIdInfo(zoneId, zoneConfigId,
                         configName));
             }
         }
@@ -1783,6 +1789,22 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
                 getNumberOfPrimaryZoneAudioMediaCallbacks() == 0);
     }
 
+    private void setUpDefaultCarAudioConfigurationForZone(int zoneId) throws Exception {
+        CarAudioZoneConfigInfo current =
+                mCarAudioManager.getCurrentAudioZoneConfigInfo(zoneId);
+        if (current != null && current.isDefault()) {
+            return;
+        }
+
+        CarAudioZoneConfigInfo defaultConfig =
+                mCarAudioManager.getAudioZoneConfigInfos(zoneId).stream()
+                        .filter(CarAudioZoneConfigInfo::isDefault).findFirst().orElseThrow();
+        Executor callbackExecutor = Executors.newFixedThreadPool(1);
+        TestSwitchAudioZoneConfigCallback callback = new TestSwitchAudioZoneConfigCallback();
+        mCarAudioManager.switchAudioZoneToConfig(defaultConfig, callbackExecutor, callback);
+        callback.receivedApproval();
+    }
+
     private void assumeDynamicRoutingIsEnabled() {
         assumeTrue("Requires dynamic audio routing",
                 mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING));
@@ -1936,12 +1958,12 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
         }
     }
 
-    private static final class TestZoneConfigInfo {
+    private static final class TestZoneConfigIdInfo {
         private final int mZoneId;
         private final int mConfigId;
         private final String mConfigName;
 
-        TestZoneConfigInfo(int zoneId, int configId, String configName) {
+        TestZoneConfigIdInfo(int zoneId, int configId, String configName) {
             mZoneId = zoneId;
             mConfigId = configId;
             mConfigName = configName;
@@ -1953,24 +1975,24 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
                 return true;
             }
 
-            if (!(o instanceof TestZoneConfigInfo)) {
+            if (!(o instanceof TestZoneConfigIdInfo)) {
                 return false;
             }
 
-            TestZoneConfigInfo that = (TestZoneConfigInfo) o;
+            TestZoneConfigIdInfo that = (TestZoneConfigIdInfo) o;
 
             return mZoneId == that.mZoneId && mConfigId == that.mConfigId
                     && mConfigName.equals(that.mConfigName);
         }
 
-        static TestZoneConfigInfo getZoneConfigFromInfo(CarAudioZoneConfigInfo configInfo) {
-            return new TestZoneConfigInfo(configInfo.getZoneId(), configInfo.getConfigId(),
+        static TestZoneConfigIdInfo getZoneConfigFromInfo(CarAudioZoneConfigInfo configInfo) {
+            return new TestZoneConfigIdInfo(configInfo.getZoneId(), configInfo.getConfigId(),
                     configInfo.getName());
         }
 
-        static List<TestZoneConfigInfo> getZoneConfigListFromInfoList(
+        static List<TestZoneConfigIdInfo> getZoneConfigListFromInfoList(
                 List<CarAudioZoneConfigInfo> configInfo) {
-            List<TestZoneConfigInfo> zoneConfigs = new ArrayList<>(configInfo.size());
+            List<TestZoneConfigIdInfo> zoneConfigs = new ArrayList<>(configInfo.size());
             Log.e(TAG, "getZoneConfigListFromInfoList " + configInfo.size());
             for (int index = 0; index < configInfo.size(); index++) {
                 zoneConfigs.add(getZoneConfigFromInfo(configInfo.get(index)));
