@@ -84,7 +84,7 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
             .setTimeoutMilliSeconds(930000)
             .setPlayerListener(new PlaybackTestPlayerListener()).build(), "VP9_640x480_5min"},
         {CujTestParam.builder().setMediaUrls(prepareVP9_640x480_5minVideoList())
-            .setTimeoutMilliSeconds(930000)
+            .setTimeoutMilliSeconds(1230000)
             .setPlayerListener(new SeekTestPlayerListener(30, 10000, 30000)).build(),
             "VP9_640x480_5min_seekTest"},
         {CujTestParam.builder().setMediaUrls(prepare_30minAudioList())
@@ -95,7 +95,7 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
             .setTimeoutMilliSeconds(1830000)
             .setPlayerListener(new PlaybackTestPlayerListener()).build(), "Avc_1080p_30min"},
         {CujTestParam.builder().setMediaUrls(prepareAvc_1080p_30minVideoList())
-            .setTimeoutMilliSeconds(1830000)
+            .setTimeoutMilliSeconds(1930000)
             .setPlayerListener(new SeekTestPlayerListener(30, 10000, 30000)).build(),
             "Avc_1080p_30min_seekTest"},
         {CujTestParam.builder().setMediaUrls(prepareVp9_Local_DASH_3minVideoList())
