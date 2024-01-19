@@ -19,6 +19,7 @@ package android.devicepolicy.cts;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
+import static com.android.bedstead.nene.notifications.NotificationListenerQuerySubject.assertThat;
 import static com.android.queryable.queries.ActivityQuery.activity;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -26,6 +27,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 
 import android.content.Intent;
+import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -37,6 +39,7 @@ import com.android.bedstead.harrier.policies.MaximumTimeOff;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.notifications.NotificationListener;
 import com.android.bedstead.nene.notifications.NotificationListenerQuerySubject;
+import com.android.bedstead.nene.packages.ComponentReference;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivityReference;
@@ -64,6 +67,7 @@ public final class MaximumTimeOffTest {
             ).get();
 
     @PolicyAppliesTest(policy = MaximumTimeOff.class)
+    @NotificationsTest
     public void setManagedProfileMaximumTimeOff_timesOut_personalAppsAreSuspended()
             throws Exception {
         long originalMaximumTimeOff =
@@ -75,25 +79,19 @@ public final class MaximumTimeOffTest {
             sDeviceState.dpc().devicePolicyManager().setManagedProfileMaximumTimeOff(
                     sDeviceState.dpc().componentName(), /* timeoutMs= */ 1);
 
-            sDeviceState.workProfile().setQuietMode(true);
+            try (NotificationListener notifications = TestApis.notifications().createListener()) {
+                sDeviceState.workProfile().setQuietMode(true);
 
-            // TODO(264248238): We should create a more direct way of figuring out the launch
-            //  was refused
-            Poll.forValue("Successfully launched", () -> {
-                // Ensure that we only see events from the current iteration
-                EventLogs.resetLogs();
-                startActivityWithoutBlocking(activity);
+                // Wait for us to be notified that personal apps are disabled
+                assertThat(notifications.query()
+                        .wherePackageName().isEqualTo("android")
+                        .whereNotification().channelId().isEqualTo("DEVICE_ADMIN_ALERTS"))
+                        .wasPosted();
+            }
 
-                try {
-                    activity.events().activityStarted().waitForEvent(Duration.ofSeconds(2));
-                    return true;
-                } catch (AssertionError e) {
-                    // No event
-                    return false;
-                }
-            }).toBeEqualTo(false)
-                    .errorOnFail()
-                    .await();
+            startActivityWithoutBlocking(activity);
+
+            assertBlockedByAdminDialogAppears();
         } finally {
             sDeviceState.workProfile().setQuietMode(false);
             sDeviceState.dpc().devicePolicyManager().setManagedProfileMaximumTimeOff(
@@ -122,7 +120,7 @@ public final class MaximumTimeOffTest {
 
             sDeviceState.workProfile().setQuietMode(true);
 
-            NotificationListenerQuerySubject.assertThat(
+            assertThat(
                     notifications.query()
                             .wherePackageName().isEqualTo("android")
                             .whereNotification().channelId().isEqualTo("DEVICE_ADMIN_ALERTS")
@@ -161,4 +159,17 @@ public final class MaximumTimeOffTest {
     }
 
     // TODO(264249662): Add missing coverage
+
+    private static final String BLOCKED_BY_ADMIN_DIALOG_CLASSNAME =
+            "com.android.settings.enterprise.ActionDisabledByAdminDialog";
+
+    private void assertBlockedByAdminDialogAppears() {
+        // TODO: We should move this into the enterprise/bedstead infra
+        Poll.forValue(
+                "foreground activity", () -> TestApis.activities().foregroundActivity())
+                .toMeet(
+                        (v) -> v.className()
+                                .equals(BLOCKED_BY_ADMIN_DIALOG_CLASSNAME))
+                .errorOnFail().await();
+    }
 }
