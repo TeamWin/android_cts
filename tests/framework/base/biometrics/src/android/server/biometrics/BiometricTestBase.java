@@ -41,8 +41,6 @@ import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricManager.Authenticators;
 import android.hardware.biometrics.BiometricPrompt;
 import android.hardware.biometrics.BiometricTestSession;
-import android.hardware.biometrics.PromptContentView;
-import android.hardware.biometrics.PromptVerticalListContentView;
 import android.hardware.biometrics.SensorProperties;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -93,7 +91,6 @@ abstract class BiometricTestBase extends ActivityManagerTestBase implements Test
     protected static final String TITLE_VIEW = "title";
     protected static final String SUBTITLE_VIEW = "subtitle";
     protected static final String DESCRIPTION_VIEW = "description";
-    protected static final String CONTENT_CONTAINER_VIEW = "customized_view_container";
 
     protected static final String VIEW_ID_PASSWORD_FIELD = "lockPassword";
     protected static final String KEY_ENTER = "key_enter";
@@ -366,7 +363,7 @@ abstract class BiometricTestBase extends ActivityManagerTestBase implements Test
         }
     }
 
-    protected BiometricPrompt showDefaultBiometricPrompt(int sensorId, int userId,
+    protected void showDefaultBiometricPrompt(int sensorId, int userId,
             boolean requireConfirmation, @NonNull BiometricPrompt.AuthenticationCallback callback,
             @NonNull CancellationSignal cancellationSignal) throws Exception {
         final Handler handler = new Handler(Looper.getMainLooper());
@@ -385,7 +382,6 @@ abstract class BiometricTestBase extends ActivityManagerTestBase implements Test
         prompt.authenticate(cancellationSignal, executor, callback);
 
         waitForState(STATE_AUTH_STARTED_UI_SHOWING);
-        return prompt;
     }
 
     /**
@@ -395,15 +391,13 @@ abstract class BiometricTestBase extends ActivityManagerTestBase implements Test
     protected void showDefaultBiometricPromptWithContents(int sensorId, int userId,
             boolean requireConfirmation, @NonNull BiometricPrompt.AuthenticationCallback callback,
             @NonNull String title, @NonNull String subtitle, @NonNull String description,
-            @NonNull PromptContentView contentView, @NonNull String negativeButtonText)
-            throws Exception {
+            @NonNull String negativeButtonText) throws Exception {
         final Handler handler = new Handler(Looper.getMainLooper());
         final Executor executor = handler::post;
         final BiometricPrompt prompt = new BiometricPrompt.Builder(mContext)
                 .setTitle(title)
                 .setSubtitle(subtitle)
                 .setDescription(description)
-                .setContentView(contentView)
                 .setConfirmationRequired(requireConfirmation)
                 .setNegativeButton(negativeButtonText, executor, (dialog, which) -> {
                     Log.d(TAG, "Negative button pressed");
@@ -425,27 +419,23 @@ abstract class BiometricTestBase extends ActivityManagerTestBase implements Test
         BiometricPrompt.AuthenticationCallback callback = mock(
                 BiometricPrompt.AuthenticationCallback.class);
         showDefaultBiometricPromptWithContents(sensorId, userId, false /* requireConfirmation */,
-                callback, "Title", "Subtitle", "Description",
-                new PromptVerticalListContentView.Builder().build(), "Negative Button");
+                callback, "Title", "Subtitle", "Description", "Negative Button");
         successfullyAuthenticate(session, userId);
     }
 
-    protected BiometricPrompt showBiometricPromptWithAuthenticators(int authenticators) {
+    protected void showBiometricPromptWithAuthenticators(int authenticators) {
         final Handler handler = new Handler(Looper.getMainLooper());
         final Executor executor = handler::post;
-        final BiometricPrompt.Builder promptBuilder = new BiometricPrompt.Builder(mContext)
+        final BiometricPrompt prompt = new BiometricPrompt.Builder(mContext)
                 .setTitle("Title")
                 .setSubtitle("Subtitle")
                 .setDescription("Description")
+                .setNegativeButton("Negative Button", executor, (dialog, which) -> {
+                    Log.d(TAG, "Negative button pressed");
+                })
                 .setAllowBackgroundAuthentication(true)
-                .setAllowedAuthenticators(authenticators);
-        if ((authenticators & Authenticators.DEVICE_CREDENTIAL) == 0) {
-            promptBuilder.setNegativeButton("Negative Button", executor, (dialog, which) -> {
-                Log.d(TAG, "Negative button pressed");
-            });
-        }
-
-        final BiometricPrompt prompt = promptBuilder.build();
+                .setAllowedAuthenticators(authenticators)
+                .build();
         prompt.authenticate(new CancellationSignal(), executor,
                 new BiometricPrompt.AuthenticationCallback() {
                     @Override
@@ -459,7 +449,6 @@ abstract class BiometricTestBase extends ActivityManagerTestBase implements Test
                         Log.d(TAG, "onAuthenticationSucceeded");
                     }
                 });
-        return prompt;
     }
 
     protected void launchActivityAndWaitForResumed(@NonNull ActivitySession activitySession) {
