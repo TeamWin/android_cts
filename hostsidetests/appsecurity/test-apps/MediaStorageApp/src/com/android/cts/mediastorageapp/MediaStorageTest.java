@@ -45,11 +45,6 @@ import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject;
-import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.support.test.uiautomator.UiScrollable;
-import android.support.test.uiautomator.UiSelector;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -967,15 +962,6 @@ public class MediaStorageTest {
             try (Cursor c = mContentResolver.query(red, null, null, null)) {
                 assertEquals(1, c.getCount());
             }
-        }
-    }
-
-    private static void scrollIntoView(UiSelector selector) {
-        UiScrollable uiScrollable = new UiScrollable(new UiSelector().scrollable(true));
-        try {
-            uiScrollable.scrollIntoView(selector);
-        } catch (UiObjectNotFoundException e) {
-            // Scrolling can fail if the UI is not scrollable
         }
     }
 
