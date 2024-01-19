@@ -42,6 +42,9 @@ public class AudioModeTest extends BaseAppVerifier {
      */
     @Test
     public void testOutgoingAudioMode_ManagedConnectionServiceApp() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper managedApp = null;
         try {
             managedApp = bindToApp(ManagedConnectionServiceApp);
@@ -57,6 +60,9 @@ public class AudioModeTest extends BaseAppVerifier {
      */
     @Test
     public void testIncomingAudioMode_ManagedConnectionServiceApp() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper managedApp = null;
         try {
             managedApp = bindToApp(ManagedConnectionServiceApp);
@@ -72,6 +78,9 @@ public class AudioModeTest extends BaseAppVerifier {
      */
     @Test
     public void testOutgoingAudioMode_ConnectionServiceVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper csVoipApp = null;
         try {
             csVoipApp = bindToApp(ConnectionServiceVoipAppMain);
@@ -87,6 +96,9 @@ public class AudioModeTest extends BaseAppVerifier {
      */
     @Test
     public void testIncomingAudioMode_ConnectionServiceVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper csVoipApp = null;
         try {
             csVoipApp = bindToApp(ConnectionServiceVoipAppMain);
@@ -102,6 +114,9 @@ public class AudioModeTest extends BaseAppVerifier {
      */
     @Test
     public void testAudioMode_TransactionalVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper transactionalApp = null;
         try {
             transactionalApp = bindToApp(TransactionalVoipAppMain);
@@ -117,6 +132,9 @@ public class AudioModeTest extends BaseAppVerifier {
      */
     @Test
     public void testIncomingAudioMode_TransactionalVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper transactionalApp = null;
         try {
             transactionalApp = bindToApp(TransactionalVoipAppMain);
