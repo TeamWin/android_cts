@@ -445,7 +445,7 @@ public class VulkanFeaturesTest {
         assertEquals(expectedVariant, actualVariant);
     }
 
-    @CddTest(requirement = "7.1.4.2")
+    @CddTest(requirement = "7.1.4.2/C-1-14")
     @Test
     public void testVulkanExposedDeviceExtensions() throws JSONException {
         assumeTrue("Skipping because Vulkan is not supported", mVulkanHardwareVersion != null);
