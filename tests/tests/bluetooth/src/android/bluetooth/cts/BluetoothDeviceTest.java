@@ -151,6 +151,14 @@ public class BluetoothDeviceTest {
     }
 
     @Test
+    public void getAddressType() {
+        // Skip the test if bluetooth or companion device are not present.
+        assumeTrue(mHasBluetooth && mHasCompanionDevice);
+
+        assertEquals(BluetoothDevice.ADDRESS_TYPE_PUBLIC, mFakeDevice.getAddressType());
+    }
+
+    @Test
     public void getIdentityAddress() {
         // Skip the test if bluetooth or companion device are not present.
         assumeTrue(mHasBluetooth && mHasCompanionDevice);
