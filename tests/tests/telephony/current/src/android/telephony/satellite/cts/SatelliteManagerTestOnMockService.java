@@ -383,6 +383,52 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
     }
 
     @Test
+    public void testProvisioningApiNotSupportedByVendorService() {
+        if (!shouldTestSatelliteWithMockService()) return;
+
+        logd("testProvisioningApiNotSupportedByVendorService: start");
+        grantSatellitePermission();
+
+        SatelliteProvisionStateCallbackTest satelliteProvisionStateCallback =
+                new SatelliteProvisionStateCallbackTest();
+        long registerError = sSatelliteManager.registerForSatelliteProvisionStateChanged(
+                getContext().getMainExecutor(), satelliteProvisionStateCallback);
+        assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerError);
+
+        if (isSatelliteProvisioned()) {
+            logd("testProvisioningApiNotSupportedByVendorService: dreprovision");
+            assertTrue(deprovisionSatellite());
+            assertTrue(satelliteProvisionStateCallback.waitUntilResult(1));
+            assertFalse(satelliteProvisionStateCallback.isProvisioned);
+        }
+
+        sMockSatelliteServiceManager.setProvisioningApiSupported(false);
+
+        logd("testProvisioningApiNotSupportedByVendorService: provision satellite service");
+        assertTrue(provisionSatellite());
+        assertTrue(satelliteProvisionStateCallback.waitUntilResult(1));
+        assertTrue(satelliteProvisionStateCallback.isProvisioned);
+        assertTrue(isSatelliteProvisioned());
+
+        logd("testProvisioningApiNotSupportedByVendorService: dreprovision satellite service");
+        assertTrue(deprovisionSatellite());
+        assertTrue(satelliteProvisionStateCallback.waitUntilResult(1));
+        assertFalse(satelliteProvisionStateCallback.isProvisioned);
+        assertFalse(isSatelliteProvisioned());
+
+        logd("testProvisioningApiNotSupportedByVendorService: restore provision state");
+        sMockSatelliteServiceManager.setProvisioningApiSupported(true);
+        assertTrue(provisionSatellite());
+        assertTrue(satelliteProvisionStateCallback.waitUntilResult(1));
+        assertTrue(satelliteProvisionStateCallback.isProvisioned);
+        assertTrue(isSatelliteProvisioned());
+        sSatelliteManager.unregisterForSatelliteProvisionStateChanged(
+                satelliteProvisionStateCallback);
+
+        revokeSatellitePermission();
+    }
+
+    @Test
     public void testPointingUICrashHandling() {
         if (!shouldTestSatelliteWithMockService()) return;
 

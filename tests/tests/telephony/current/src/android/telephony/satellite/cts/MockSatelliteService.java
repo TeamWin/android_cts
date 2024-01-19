@@ -109,6 +109,7 @@ public class MockSatelliteService extends SatelliteImplBase {
     private android.telephony.satellite.stub.NtnSignalStrength mNtnSignalStrength;
 
     private int[] mSupportedRadioTechnologies;
+    private boolean mIsProvisioningApiSupported = true;
 
     /**
      * Create MockSatelliteService using the Executor specified for methods being called from
@@ -346,6 +347,13 @@ public class MockSatelliteService extends SatelliteImplBase {
             }
             return;
         }
+        if (!mIsProvisioningApiSupported) {
+            if (mShouldRespondTelephony.get()) {
+                runWithExecutor(() -> errorCallback.accept(
+                        SatelliteResult.SATELLITE_RESULT_REQUEST_NOT_SUPPORTED));
+            }
+            return;
+        }
         if (mShouldRespondTelephony.get()) {
             runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
         }
@@ -362,6 +370,13 @@ public class MockSatelliteService extends SatelliteImplBase {
             }
             return;
         }
+        if (!mIsProvisioningApiSupported) {
+            if (mShouldRespondTelephony.get()) {
+                runWithExecutor(() -> errorCallback.accept(
+                        SatelliteResult.SATELLITE_RESULT_REQUEST_NOT_SUPPORTED));
+            }
+            return;
+        }
         if (mShouldRespondTelephony.get()) {
             runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
         }
@@ -375,6 +390,13 @@ public class MockSatelliteService extends SatelliteImplBase {
         if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
             if (mShouldRespondTelephony.get()) {
                 runWithExecutor(() -> errorCallback.accept(mErrorCode));
+            }
+            return;
+        }
+        if (!mIsProvisioningApiSupported) {
+            if (mShouldRespondTelephony.get()) {
+                runWithExecutor(() -> errorCallback.accept(
+                        SatelliteResult.SATELLITE_RESULT_REQUEST_NOT_SUPPORTED));
             }
             return;
         }
@@ -747,6 +769,13 @@ public class MockSatelliteService extends SatelliteImplBase {
     }
 
     /**
+     * Set whether provisioning API should be supported
+     */
+    public void setProvisioningApiSupported(boolean provisioningApiSupported) {
+        mIsProvisioningApiSupported = provisioningApiSupported;
+    }
+
+    /**
      * Helper method to verify that the satellite modem is properly configured to receive
      * requests.
      *
@@ -786,7 +815,7 @@ public class MockSatelliteService extends SatelliteImplBase {
     }
 
     /**
-     * Update the satellite provision state and notify listeners if it changed.
+     * Update the satellite provision state.
      *
      * @param isProvisioned {@code true} if the satellite is currently provisioned and
      *                      {@code false} if it is not.
@@ -794,13 +823,7 @@ public class MockSatelliteService extends SatelliteImplBase {
     private void updateSatelliteProvisionState(boolean isProvisioned) {
         logd("updateSatelliteProvisionState: isProvisioned=" + isProvisioned
                 + ", mIsProvisioned=" + mIsProvisioned);
-        if (isProvisioned == mIsProvisioned) {
-            return;
-        }
         mIsProvisioned = isProvisioned;
-        logd("updateSatelliteProvisionState: mRemoteListeners.size=" + mRemoteListeners.size());
-        mRemoteListeners.values().forEach(listener -> runWithExecutor(() ->
-                listener.onSatelliteProvisionStateChanged(mIsProvisioned)));
     }
 
     /**
