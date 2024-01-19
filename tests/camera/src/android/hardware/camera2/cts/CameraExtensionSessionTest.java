@@ -44,6 +44,7 @@ import android.graphics.SurfaceTexture;
 import android.hardware.HardwareBuffer;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraExtensionCharacteristics;
 import android.hardware.camera2.CameraExtensionSession;
 import android.hardware.camera2.CameraMetadata;
@@ -1888,33 +1889,48 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
             if (!staticMeta.isColorOutputSupported()) {
                 continue;
             }
-            Range<Float> zoomRatioRange = staticMeta.getZoomRatioRangeChecked();
-            if (zoomRatioRange.getUpper().equals(zoomRatioRange.getLower())) {
-                continue;
-            }
 
-            final float maxZoom = staticMeta.getAvailableMaxDigitalZoomChecked();
-            if (Math.abs(maxZoom - 1.0f) < ZOOM_ERROR_MARGIN) {
-                return;
-            }
-
-            Float zoomStep  =
-                    (zoomRatioRange.getUpper() - zoomRatioRange.getLower()) / ZOOM_RATIO_STEPS;
-            if (zoomStep < ZOOM_ERROR_MARGIN) {
-                continue;
-            }
-
-            ArrayList<Float> candidateZoomRatios = new ArrayList<>(ZOOM_RATIO_STEPS);
-            for (int step = 0; step < (ZOOM_RATIO_STEPS - 1); step++) {
-                candidateZoomRatios.add(step, zoomRatioRange.getLower() + step * zoomStep);
-            }
-            candidateZoomRatios.add(ZOOM_RATIO_STEPS - 1, zoomRatioRange.getUpper());
-
-            updatePreviewSurfaceTexture();
             CameraExtensionCharacteristics extensionChars =
                     mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
+
+            updatePreviewSurfaceTexture();
             List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
             for (Integer extension : supportedExtensions) {
+                final Range<Float> zoomRatioRange;
+                final float maxZoom;
+                if (Build.VERSION.DEVICE_INITIAL_SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                    zoomRatioRange =
+                            extensionChars.get(extension,
+                                    CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE);
+                    assertNotNull(
+                            "Zoom ratio range must be present in CameraExtensionCharacteristics",
+                            zoomRatioRange);
+                    maxZoom = zoomRatioRange.getUpper();
+                } else {
+                    zoomRatioRange = staticMeta.getZoomRatioRangeChecked();
+                    maxZoom = staticMeta.getAvailableMaxDigitalZoomChecked();
+                }
+
+                if (zoomRatioRange.getUpper().equals(zoomRatioRange.getLower())) {
+                    continue;
+                }
+
+                if (Math.abs(maxZoom - 1.0f) < ZOOM_ERROR_MARGIN) {
+                    return;
+                }
+
+                Float zoomStep  =
+                        (zoomRatioRange.getUpper() - zoomRatioRange.getLower()) / ZOOM_RATIO_STEPS;
+                if (zoomStep < ZOOM_ERROR_MARGIN) {
+                    continue;
+                }
+
+                ArrayList<Float> candidateZoomRatios = new ArrayList<>(ZOOM_RATIO_STEPS);
+                for (int step = 0; step < (ZOOM_RATIO_STEPS - 1); step++) {
+                    candidateZoomRatios.add(step, zoomRatioRange.getLower() + step * zoomStep);
+                }
+                candidateZoomRatios.add(ZOOM_RATIO_STEPS - 1, zoomRatioRange.getUpper());
+
                 Set<CaptureRequest.Key> supportedRequestKeys =
                         extensionChars.getAvailableCaptureRequestKeys(extension);
                 // The Night extension is required to support zoom controls start with Android V
