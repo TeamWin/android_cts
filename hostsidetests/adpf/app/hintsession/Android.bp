@@ -16,13 +16,44 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
+cc_test_library {
+    name: "libadpfhintsession_test_helper_jni",
+    min_sdk_version: "34",
+    srcs: [
+        "src/cpp/AndroidOut.cpp",
+        "src/cpp/JNIManager.cpp",
+        "src/cpp/main.cpp",
+        "src/cpp/Renderer.cpp",
+        "src/cpp/Shader.cpp",
+        "src/cpp/TextureAsset.cpp",
+        "src/cpp/Utility.cpp",
+        "src/cpp/external/android_native_app_glue.c",
+    ],
+    shared_libs: [
+        "libandroid",
+        "libjnigraphics",
+        "libnativehelper",
+        "libEGL",
+        "libGLESv3",
+        "liblog",
+    ],
+    cpp_std: "c++20",
+    stl: "c++_shared",
+    whole_static_libs: ["libnativetesthelper_jni"],
+    sdk_version: "current",
+}
+
 android_test_helper_app {
     name: "CtsADPFHintSessionDeviceApp",
+    min_sdk_version: "34",
     defaults: ["cts_adpf_defaults"],
     srcs: ["src/**/*.java"],
     static_libs: [
         "androidx.test.rules",
         "collector-device-lib",
+        "com.google.android.material_material",
+        "compatibility-device-util-axt",
     ],
     sdk_version: "current",
+    jni_libs: ["libadpfhintsession_test_helper_jni"],
 }
