@@ -19,12 +19,12 @@ package android.companion.cts.core
 import android.Manifest
 import android.companion.AssociationInfo
 import android.companion.CompanionDeviceManager.MESSAGE_REQUEST_PING
-import android.companion.CompanionDeviceManager.OnMessageReceivedListener
-import android.companion.CompanionDeviceManager.OnTransportsChangedListener
 import android.companion.cts.common.MAC_ADDRESS_A
 import android.companion.cts.common.SIMPLE_EXECUTOR
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import java.util.function.BiConsumer
+import java.util.function.Consumer
 import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,7 +42,7 @@ class TransportPermissionTest : CoreTestBase() {
     fun test_addOnTransportChangedListener_requiresPermission() {
         // Create a regular (not self-managed) association.
         targetApp.associate(MAC_ADDRESS_A)
-        val listener = OnTransportsChangedListener { _: MutableList<AssociationInfo> -> }
+        val listener = Consumer<List<AssociationInfo>> { _: List<AssociationInfo> -> }
 
         // Attempts to call addOnTransportChangedListener without the
         // USE_COMPANION_TRANSPORTS permission should lead to a SecurityException
@@ -73,7 +73,7 @@ class TransportPermissionTest : CoreTestBase() {
     fun test_addOnMessageReceivedListener_requiresPermission() {
         // Create a regular (not self-managed) association.
         targetApp.associate(MAC_ADDRESS_A)
-        val listener = OnMessageReceivedListener { _: Int, _: ByteArray -> }
+        val listener = BiConsumer<Int, ByteArray> { _: Int, _: ByteArray -> }
 
         // Attempts to call addOnMessageReceivedListener without the
         // USE_COMPANION_TRANSPORTS permission should lead to a SecurityException
