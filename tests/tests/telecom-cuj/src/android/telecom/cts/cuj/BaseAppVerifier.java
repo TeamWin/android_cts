@@ -32,8 +32,8 @@ import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.cts.apps.AppControlWrapper;
 import android.telecom.cts.apps.BaseAppVerifierImpl;
-import android.telecom.cts.apps.TelecomTestApp;
 import android.telecom.cts.apps.InCallServiceMethods;
+import android.telecom.cts.apps.TelecomTestApp;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -269,8 +269,9 @@ public class BaseAppVerifier {
             throws Exception {
         CallEndpoint originalCallEndpoint = getCurrentCallEndpoint(appControl, callId);
         CallEndpoint anotherCallEndpoint = getAnotherCallEndpoint(appControl, callId);
-        if (!originalCallEndpoint.equals(anotherCallEndpoint)) {
+        if (anotherCallEndpoint != null && !originalCallEndpoint.equals(anotherCallEndpoint)) {
             setAudioRouteStateAndVerify(appControl, callId, anotherCallEndpoint);
+            // reset the DUT to the original endpoint for cleanup purposes
             setAudioRouteStateAndVerify(appControl, callId, originalCallEndpoint);
         }
     }
