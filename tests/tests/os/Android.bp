@@ -92,6 +92,7 @@ android_ravenwood_test {
     srcs: [
         "src/android/os/cts/BadParcelableExceptionTest.java",
         "src/android/os/cts/BinderTest.java",
+        "src/android/os/cts/BuildTest.java",
         "src/android/os/cts/BundleTest.java",
         "src/android/os/cts/DeadObjectExceptionTest.java",
         "src/android/os/cts/HandlerTest.java",
