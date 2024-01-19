@@ -2497,7 +2497,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     @AppModeFull(reason = "No usage events access in instant apps")
     @RequiresFlagsEnabled(Flags.FLAG_FILTER_BASED_EVENT_QUERY_API)
     @Test
-    public void testQueryEventsWithFilter() throws Exception {
+    public void testQueryEventsWithEventTypeFilter() throws Exception {
         final long endTime = System.currentTimeMillis() - MINUTE_IN_MILLIS;
         final long startTime = Math.max(0, endTime - HOUR_IN_MILLIS); // 1 hour
 
@@ -2546,6 +2546,57 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         }
 
         // Two query results should be the same.
+        compareUsageEventList(unfilteredEventList, filteredEventList);
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsEnabled(Flags.FLAG_FILTER_BASED_EVENT_QUERY_API)
+    @Test
+    public void testQueryEventsWithPackageFilter() throws Exception {
+        final String fakePackageName = "android.fake.package.name";
+        final long endTime = System.currentTimeMillis() - MINUTE_IN_MILLIS;
+        final long startTime = Math.max(0, endTime - HOUR_IN_MILLIS); // 1 hour
+
+        UsageEventsQuery query = new UsageEventsQuery.Builder(startTime, endTime)
+                .setPackageNames(fakePackageName)
+                .build();
+        UsageEvents filteredEvents = mUsageStatsManager.queryEvents(query);
+        // Query for a fake package should get no usage event.
+        assertFalse(filteredEvents.hasNextEvent());
+
+        UsageEvents unfilteredEvents = mUsageStatsManager.queryEvents(startTime, endTime);
+        query = new UsageEventsQuery.Builder(startTime, endTime)
+                .setEventTypes(Event.ACTIVITY_RESUMED, Event.ACTIVITY_PAUSED)
+                .setPackageNames(TEST_APP_PKG, TEST_APP2_PKG)
+                .build();
+        filteredEvents = mUsageStatsManager.queryEvents(query);
+        ArrayList<Event> filteredEventList = new ArrayList<>();
+        ArrayList<Event> unfilteredEventList = new ArrayList<>();
+        while (unfilteredEvents.hasNextEvent()) {
+            final Event event = new Event();
+            unfilteredEvents.getNextEvent(event);
+            if (event.getEventType() != Event.ACTIVITY_RESUMED
+                    && event.getEventType() != Event.ACTIVITY_PAUSED) {
+                continue;
+            }
+            final String pkgName = event.getPackageName();
+            if (!TEST_APP_PKG.equals(pkgName)
+                    && !TEST_APP2_PKG.equals(pkgName)) {
+                continue;
+            }
+            unfilteredEventList.add(event);
+        }
+
+        while (filteredEvents.hasNextEvent()) {
+            final Event event = new Event();
+            filteredEvents.getNextEvent(event);
+            assertTrue(event.getEventType() == Event.ACTIVITY_RESUMED
+                    || event.getEventType() == Event.ACTIVITY_PAUSED);
+            final String pkgName = event.getPackageName();
+            assertTrue(TEST_APP_PKG.equals(pkgName) || TEST_APP2_PKG.equals(pkgName));
+            filteredEventList.add(event);
+        }
+
         compareUsageEventList(unfilteredEventList, filteredEventList);
     }
 
