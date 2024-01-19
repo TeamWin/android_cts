@@ -849,7 +849,7 @@ public class SatelliteManagerTest extends SatelliteManagerTestBase {
 
         // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
         assertThrows(SecurityException.class,
-                () -> sSatelliteManager.getAllSatellitePlmnsForCarrier(
+                () -> sSatelliteManager.getSatellitePlmnsForCarrier(
                         getActiveSubIDForCarrierSatelliteTest()));
     }
 }

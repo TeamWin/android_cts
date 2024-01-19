@@ -3328,7 +3328,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     @FlaggedApi(Flags.FLAG_CARRIER_ENABLED_SATELLITE_FLAG)
-    public void testGetAllSatellitePlmnsForCarrier() {
+    public void testGetSatellitePlmnsForCarrier() {
         if (!shouldTestSatelliteWithMockService() || !Flags.carrierEnabledSatelliteFlag()) return;
 
         logd("testGetAggregateSatellitePlmnListForCarrier");
@@ -3361,7 +3361,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertEquals(expectedCarrierPlmnList, carrierPlmnList);
 
         /* Aggregated satellite plmn should be same with allSatellitePlmnList */
-        List<String> aggregatedPlmnList = sSatelliteManager.getAllSatellitePlmnsForCarrier(
+        List<String> aggregatedPlmnList = sSatelliteManager.getSatellitePlmnsForCarrier(
                 sTestSubIDForCarrierSatellite);
         List<String> satellitePlmnListFromOverlayConfig =
                 sMockSatelliteServiceManager.getPlmnListFromOverlayConfig();
