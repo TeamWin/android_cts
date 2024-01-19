@@ -7107,6 +7107,126 @@ public class TextViewTest {
         // TODO(Bug: 22033189): Tests the set callback is actually used.
     }
 
+    @Test
+    public void testBackStopsActionMode() throws Throwable {
+        String text = "abcde";
+        mActivityRule.runOnUiThread(() -> {
+            FrameLayout layout = new FrameLayout(mActivity);
+            layout.setFocusable(true);
+            mActivity.setContentView(layout);
+            mTextView = new EditText(mActivity);
+            mTextView.setText(text, BufferType.SPANNABLE);
+            mTextView.setTextIsSelectable(true);
+            mTextView.requestFocus();
+            mTextView.setSelected(true);
+            mTextView.setTextClassifier(TextClassifier.NO_OP);
+            layout.addView(mTextView);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        ActionMode.Callback mockActionModeCallback = mock(ActionMode.Callback.class);
+        when(mockActionModeCallback.onCreateActionMode(any(ActionMode.class), any(Menu.class)))
+                .thenReturn(Boolean.TRUE);
+        mTextView.setCustomSelectionActionModeCallback(mockActionModeCallback);
+
+        mActivityRule.runOnUiThread(() -> {
+            // Set selection and start action mode.
+            final Bundle args = new Bundle();
+            args.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0);
+            args.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, text.length());
+            mTextView.performAccessibilityAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, args);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        mInstrumentation.sendCharacterSync(KeyEvent.KEYCODE_BACK);
+
+        verify(mockActionModeCallback).onDestroyActionMode(any(ActionMode.class));
+        assertTrue(mTextView.hasFocus());
+    }
+
+    @RequiresFlagsEnabled(com.android.text.flags.Flags.FLAG_ESCAPE_CLEARS_FOCUS)
+    @Test
+    public void testEscapeStopsActionModeThenClearsFocus() throws Throwable {
+        String text = "abcde";
+        mActivityRule.runOnUiThread(() -> {
+            FrameLayout layout = new FrameLayout(mActivity);
+            layout.setFocusable(true);
+            mActivity.setContentView(layout);
+            mTextView = new EditText(mActivity);
+            mTextView.setText(text, BufferType.SPANNABLE);
+            mTextView.setTextIsSelectable(true);
+            mTextView.requestFocus();
+            mTextView.setSelected(true);
+            mTextView.setTextClassifier(TextClassifier.NO_OP);
+            layout.addView(mTextView);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        ActionMode.Callback mockActionModeCallback = mock(ActionMode.Callback.class);
+        when(mockActionModeCallback.onCreateActionMode(any(ActionMode.class), any(Menu.class)))
+                .thenReturn(Boolean.TRUE);
+        mTextView.setCustomSelectionActionModeCallback(mockActionModeCallback);
+
+        mActivityRule.runOnUiThread(() -> {
+            // Set selection and start action mode.
+            final Bundle args = new Bundle();
+            args.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0);
+            args.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, text.length());
+            mTextView.performAccessibilityAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, args);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // First escape key press stops the action mode
+        mInstrumentation.sendCharacterSync(KeyEvent.KEYCODE_ESCAPE);
+
+        verify(mockActionModeCallback).onDestroyActionMode(any(ActionMode.class));
+        assertTrue(mTextView.hasFocus());
+
+        // Second escape key press clears focus
+        mInstrumentation.sendCharacterSync(KeyEvent.KEYCODE_ESCAPE);
+
+        assertFalse(mTextView.hasFocus());
+    }
+
+    @RequiresFlagsEnabled(com.android.text.flags.Flags.FLAG_ESCAPE_CLEARS_FOCUS)
+    @Test
+    public void testEscapeWithModifierDoesNotStopActionModeOrClearFocus() throws Throwable {
+        String text = "abcde";
+        mActivityRule.runOnUiThread(() -> {
+            FrameLayout layout = new FrameLayout(mActivity);
+            layout.setFocusable(true);
+            mActivity.setContentView(layout);
+            mTextView = new EditText(mActivity);
+            mTextView.setText(text, BufferType.SPANNABLE);
+            mTextView.setTextIsSelectable(true);
+            mTextView.requestFocus();
+            mTextView.setSelected(true);
+            mTextView.setTextClassifier(TextClassifier.NO_OP);
+            layout.addView(mTextView);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        ActionMode.Callback mockActionModeCallback = mock(ActionMode.Callback.class);
+        when(mockActionModeCallback.onCreateActionMode(any(ActionMode.class), any(Menu.class)))
+                .thenReturn(Boolean.TRUE);
+        mTextView.setCustomSelectionActionModeCallback(mockActionModeCallback);
+
+        mActivityRule.runOnUiThread(() -> {
+            // Set selection and start action mode.
+            final Bundle args = new Bundle();
+            args.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0);
+            args.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, text.length());
+            mTextView.performAccessibilityAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, args);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        mCtsKeyEventUtil.sendKeyWhileHoldingModifier(mInstrumentation,
+                KeyEvent.KEYCODE_ESCAPE, KeyEvent.KEYCODE_CTRL_LEFT);
+
+        verify(mockActionModeCallback, never()).onDestroyActionMode(any(ActionMode.class));
+        assertTrue(mTextView.hasFocus());
+    }
+
     @UiThreadTest
     @Test
     public void testRespectsViewFocusability() {
