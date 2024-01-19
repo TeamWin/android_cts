@@ -16,11 +16,14 @@
 
 package android.telecom.cts;
 
+import android.content.ComponentName;
+import android.os.Parcel;
 import android.telecom.PhoneAccount;
+import android.telecom.PhoneAccountHandle;
 import android.test.AndroidTestCase;
+import android.util.ArraySet;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import com.android.internal.telephony.flags.Flags;
 
 public class PhoneAccountTest extends AndroidTestCase {
     public static final String ACCOUNT_LABEL = "CTSPhoneAccountTest";
@@ -37,5 +40,75 @@ public class PhoneAccountTest extends AndroidTestCase {
                 .setCapabilities(PhoneAccount.CAPABILITY_VIDEO_CALLING)
                 .build();
         assertFalse(testPhoneAccount.hasCapabilities(PhoneAccount.CAPABILITY_CALL_COMPOSER));
+    }
+
+    public void testPhoneAccountSetCallingRestriction() {
+        if (!Flags.simultaneousCallingIndications()) {
+            return;
+        }
+        PhoneAccountHandle handle1 = new PhoneAccountHandle(
+                ComponentName.createRelative("pkg", "cls"), "123");
+        PhoneAccountHandle handle2 = new PhoneAccountHandle(
+                ComponentName.createRelative("pkg", "cls"), "456");
+        PhoneAccountHandle handle3 = new PhoneAccountHandle(
+                ComponentName.createRelative("pkg", "cls"), "789");
+
+        ArraySet<PhoneAccountHandle> testRestriction = new ArraySet<>(2);
+        testRestriction.add(handle2);
+        testRestriction.add(handle3);
+        PhoneAccount testPhoneAccount = new PhoneAccount.Builder(handle1, "test1")
+                .setSimultaneousCallingRestriction(testRestriction)
+                .build();
+        assertTrue(testPhoneAccount.hasSimultaneousCallingRestriction());
+
+        Parcel dataParceled = Parcel.obtain();
+        testPhoneAccount.writeToParcel(dataParceled, 0);
+        dataParceled.setDataPosition(0);
+        PhoneAccount resultPA =
+                PhoneAccount.CREATOR.createFromParcel(dataParceled);
+        dataParceled.recycle();
+
+        assertEquals(testPhoneAccount, resultPA);
+        assertTrue(resultPA.hasSimultaneousCallingRestriction());
+        assertEquals(testRestriction, resultPA.getSimultaneousCallingRestriction());
+    }
+
+    public void testPhoneAccountClearCallingRestriction() {
+        if (!Flags.simultaneousCallingIndications()) {
+            return;
+        }
+        PhoneAccountHandle handle1 = new PhoneAccountHandle(
+                ComponentName.createRelative("pkg", "cls"), "123");
+        PhoneAccountHandle handle2 = new PhoneAccountHandle(
+                ComponentName.createRelative("pkg", "cls"), "456");
+        PhoneAccountHandle handle3 = new PhoneAccountHandle(
+                ComponentName.createRelative("pkg", "cls"), "789");
+
+        ArraySet<PhoneAccountHandle> testRestriction = new ArraySet<>(2);
+        testRestriction.add(handle2);
+        testRestriction.add(handle3);
+        PhoneAccount pa = new PhoneAccount.Builder(handle1, "test1")
+                .setSimultaneousCallingRestriction(testRestriction)
+                .build();
+        PhoneAccount testPhoneAccount = new PhoneAccount.Builder(pa)
+                .clearSimultaneousCallingRestriction()
+                .build();
+        assertFalse(testPhoneAccount.hasSimultaneousCallingRestriction());
+
+        Parcel dataParceled = Parcel.obtain();
+        testPhoneAccount.writeToParcel(dataParceled, 0);
+        dataParceled.setDataPosition(0);
+        PhoneAccount resultPA =
+                PhoneAccount.CREATOR.createFromParcel(dataParceled);
+        dataParceled.recycle();
+
+        assertEquals(testPhoneAccount, resultPA);
+        assertFalse(testPhoneAccount.hasSimultaneousCallingRestriction());
+        try {
+            resultPA.getSimultaneousCallingRestriction();
+            fail("getSimultaneousCallingRestriction should throw IllegalStateException if not set");
+        } catch (IllegalStateException e) {
+            // expected
+        }
     }
 }
