@@ -34,6 +34,8 @@ import java.util.concurrent.TimeoutException;
  */
 public class CujTestBase {
 
+  static final String SHORTFORM_PLAYBAK_TEST_APP = "android.media.cujsmalltest.cts";
+
   static final int[] ORIENTATIONS = {
       ActivityInfo.SCREEN_ORIENTATION_PORTRAIT,
       ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,
