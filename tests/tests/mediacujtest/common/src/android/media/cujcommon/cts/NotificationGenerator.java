@@ -16,12 +16,16 @@
 
 package android.media.cujcommon.cts;
 
+import static android.media.cujcommon.cts.CujTestBase.SHORTFORM_PLAYBAK_TEST_APP;
+import static android.Manifest.permission.POST_NOTIFICATIONS;
+
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
+import android.permission.cts.PermissionUtils;
 
 public class NotificationGenerator {
 
@@ -31,7 +35,8 @@ public class NotificationGenerator {
   /**
    * Create and send a sample notification
    */
-  public static void createNotification(Context context) {
+  public static void createNotification(Context context) throws Exception {
+    PermissionUtils.grantPermission(SHORTFORM_PLAYBAK_TEST_APP, POST_NOTIFICATIONS);
     NotificationChannel notificationChannel = new NotificationChannel(
         CHANNEL_ID,
         "Channel 1",
@@ -50,6 +55,7 @@ public class NotificationGenerator {
         .setContentTitle("Sample Message Notification")
         .setContentText("This is a sample notification for E2E CUJ")
         .setCategory(Notification.CATEGORY_MESSAGE)
+        .setTimeoutAfter(3000)
         .setAutoCancel(true);
     notificationManager.notify(NOTIFICATION_ID, builder.build());
   }

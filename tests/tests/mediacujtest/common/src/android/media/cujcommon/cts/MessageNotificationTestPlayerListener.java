@@ -52,7 +52,11 @@ public class MessageNotificationTestPlayerListener extends PlayerListener {
     for (int i = 0; i < NUM_OF_MESSAGE_NOTIFICATIONS; i++) {
       mActivity.mPlayer.createMessage((messageType, payload) -> {
             // Place a sample message notification
-            NotificationGenerator.createNotification(mActivity);
+            try {
+              NotificationGenerator.createNotification(mActivity);
+            } catch (Exception e) {
+              throw new RuntimeException(e);
+            }
           }).setLooper(Looper.getMainLooper()).setPosition(mSendMessagePosition * (i + 1))
           .setDeleteAfterDelivery(true)
           .send();
