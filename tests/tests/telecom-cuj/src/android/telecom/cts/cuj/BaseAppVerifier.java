@@ -21,6 +21,7 @@ import static android.telecom.cts.apps.TelecomTestApp.MANAGED_APP_CN;
 import static android.telecom.cts.apps.TelecomTestApp.MANAGED_APP_ID;
 import static android.telecom.cts.apps.TelecomTestApp.MANAGED_APP_LABEL;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.RemoteException;
@@ -48,7 +49,9 @@ import java.util.List;
  */
 public class BaseAppVerifier {
     public static final boolean S_IS_TEST_DISABLED = true;
+    public boolean mShouldTestTelecom = true;
     private BaseAppVerifierImpl mBaseAppVerifierImpl;
+    private Context mContext = null;
     /***********************************************************
      /  ManagedConnectionServiceApp - The PhoneAccountHandle and PhoneAccount must reside in the
      /  CTS test process.
@@ -70,6 +73,11 @@ public class BaseAppVerifier {
      /***********************************************************/
     @Before
     public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mShouldTestTelecom = BaseAppVerifierImpl.shouldTestTelecom(mContext);
+        if (!mShouldTestTelecom) {
+            return;
+        }
         mBaseAppVerifierImpl = new BaseAppVerifierImpl(
                 InstrumentationRegistry.getInstrumentation(),
                 mManagedAccount,

@@ -75,7 +75,7 @@ public class UnholdableCallTest extends BaseAppVerifier {
      */
     @Test
     public void testSetHoldOnUnholdableCall_ManagedApp() throws Exception {
-        if (S_IS_TEST_DISABLED) {
+        if (!mShouldTestTelecom || S_IS_TEST_DISABLED) {
             return;
         }
         AppControlWrapper csApp = null;
@@ -104,7 +104,7 @@ public class UnholdableCallTest extends BaseAppVerifier {
      */
     @Test
     public void testSetHoldOnUnholdableCall_ConnectionServiceVoipAppMain() throws Exception {
-        if (S_IS_TEST_DISABLED) {
+        if (!mShouldTestTelecom || S_IS_TEST_DISABLED) {
             return;
         }
         AppControlWrapper csApp = null;
@@ -140,6 +140,9 @@ public class UnholdableCallTest extends BaseAppVerifier {
      */
     @Test
     public void testSetHoldOnUnholdableCall_TransactionalApp() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper transactionalApp = null;
         try {
             transactionalApp = bindToApp(TransactionalVoipAppMain);
@@ -195,6 +198,9 @@ public class UnholdableCallTest extends BaseAppVerifier {
      */
     @Test
     public void testAnswerIncomingWithOngoingUnholdableCall_TransactionalApp() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper transactionalApp = null;
         try {
             transactionalApp = bindToApp(TransactionalVoipAppMain);
@@ -242,7 +248,7 @@ public class UnholdableCallTest extends BaseAppVerifier {
     @Test
     public void testAnswerIncomingWithOngoingUnholdableCall_ConnectionServiceVoipAppMain()
             throws Exception {
-        if (S_IS_TEST_DISABLED) {
+        if (!mShouldTestTelecom || S_IS_TEST_DISABLED) {
             return;
         }
         AppControlWrapper csApp = null;
@@ -295,6 +301,9 @@ public class UnholdableCallTest extends BaseAppVerifier {
      */
     @Test
     public void testAnswerIncomingWithOngoingUnholdable_ManagedTransactionalApp() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper managedApp = null;
         AppControlWrapper transactionalApp = null;
         try {
