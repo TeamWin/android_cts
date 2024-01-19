@@ -22,6 +22,8 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
 
+    <uses-permission android:name="android.permission.MEDIA_ROUTING_CONTROL" />
+
     <application android:testOnly="true">
         <uses-library android:name="android.test.runner"/>
         <activity android:name=".PlaceholderActivity" android:exported="false">
@@ -31,7 +33,7 @@
         </activity>
 
         <activity
-            android:name=".ScreenOnActivity"
+            android:name="android.media.cts.app.common.ScreenOnActivity"
             android:exported="false"
             android:turnScreenOn="true" />
 
