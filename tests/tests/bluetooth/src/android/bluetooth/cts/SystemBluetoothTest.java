@@ -156,8 +156,11 @@ public class SystemBluetoothTest {
             assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
 
             if (!TestUtils.isLocationOn(mContext)) {
-                TestUtils.enableLocation(mContext);
                 recoverOffState = true;
+                TestUtils.enableLocation(mContext);
+                mUiAutomation.grantRuntimePermission(
+                        "android.bluetooth.cts",
+                        android.Manifest.permission.ACCESS_FINE_LOCATION);
             }
 
             mDiscoveryStartedLock = new ReentrantLock();
@@ -178,6 +181,9 @@ public class SystemBluetoothTest {
         } finally {
             if (recoverOffState) {
                 TestUtils.disableLocation(mContext);
+                mUiAutomation.revokeRuntimePermission(
+                        "android.bluetooth.cts",
+                        android.Manifest.permission.ACCESS_FINE_LOCATION);
             }
         }
     }

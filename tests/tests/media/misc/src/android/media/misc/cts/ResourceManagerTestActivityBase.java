@@ -37,9 +37,14 @@ public class ResourceManagerTestActivityBase extends Activity {
     // 10 seconds between I-frames
     private static final int IFRAME_INTERVAL = 10;
     protected static final int MAX_INSTANCES = 32;
+    // Less important codec of value 100.
+    private static final int CODEC_IMPORTANCE_100 = 100;
     private static final MediaCodecList sMCL = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
 
     private boolean mIsEncoder = false;
+    protected boolean mChangingCodecImportance = false;
+    private boolean mUseCodecImportanceAtConfig = false;
+    private boolean mUseCodecImportanceLater = false;
     private int mWidth = 0;
     private int mHeight = 0;
     protected String TAG;
@@ -47,6 +52,7 @@ public class ResourceManagerTestActivityBase extends Activity {
     private String mCodecName = "none";
 
     private ArrayList<MediaCodec> mCodecs = new ArrayList<MediaCodec>();
+    private MediaCodec mFirstMediaCodec;
 
     private class TestCodecCallback extends MediaCodec.Callback {
         @Override
@@ -62,7 +68,15 @@ public class ResourceManagerTestActivityBase extends Activity {
 
         @Override
         public void onError(MediaCodec codec, MediaCodec.CodecException e) {
-            Log.e(TAG, "onError " + codec.toString() + " errorCode " + e.getErrorCode());
+            int error = e.getErrorCode();
+            Log.e(TAG, "onError " + codec.toString() + " errorCode " + error);
+            if (mChangingCodecImportance && error == MediaCodec.CodecException.ERROR_RECLAIMED) {
+                if (mFirstMediaCodec == codec) {
+                    mGotReclaimedException = true;
+                    Log.d(TAG, "Codec " + codec + " Was expected to be Reclaimed");
+                }
+                codec.release();
+            }
         }
 
         @Override
@@ -189,6 +203,15 @@ public class ResourceManagerTestActivityBase extends Activity {
             } else if (mHeight >= 1080) {
                 highResolution = true;
             }
+
+            // See if we need to set codec-importance during config.
+            mUseCodecImportanceAtConfig = extras.getBoolean("codec-importance-at-config", false);
+            if (!mUseCodecImportanceAtConfig) {
+                // See if we need to set codec-importance later (using setParameters)
+                mUseCodecImportanceLater = extras.getBoolean("codec-importance-later", false);
+            }
+            // Setting this flag to track that we get an expected reclaim on expected codec.
+            mChangingCodecImportance = mUseCodecImportanceAtConfig | mUseCodecImportanceLater;
         }
 
         boolean shouldSkip = false;
@@ -231,6 +254,12 @@ public class ResourceManagerTestActivityBase extends Activity {
         return mCodecs.size();
     }
 
+    private void changeCodecImportance(MediaCodec codec, int importance) {
+        final Bundle params = new Bundle();
+        params.putInt(MediaFormat.KEY_IMPORTANCE, importance);
+        codec.setParameters(params);
+    }
+
     protected void allocateCodecs(int max, MediaCodecInfo info, boolean securePlayback,
             boolean highResolution) {
         mCodecName = info.getName();
@@ -238,13 +267,39 @@ public class ResourceManagerTestActivityBase extends Activity {
         CodecCapabilities caps = info.getCapabilitiesForType(mMime);
         MediaFormat format = getTestFormat(caps, securePlayback, highResolution);
         MediaCodec codec = null;
+        boolean firstCodec = true;
+        boolean loweredFirstCodecImportance = false;
+        boolean lastCodecAttemptWithImportance = false;
+        boolean loweredLastCodecImportance = false;
         for (int i = mCodecs.size(); i < max; ++i) {
             try {
                 Log.d(TAG, "Create codec " + mCodecName + " #" + i);
                 codec = MediaCodec.createByCodecName(mCodecName);
                 codec.setCallback(mCallback);
                 Log.d(TAG, "Configure codec " + format);
+
+                // if it's the first codec and if we are to set the importance while configuring,
+                // then set the same through MediaFormat with codec-importance as a lesser value.
+                if (firstCodec && mUseCodecImportanceAtConfig) {
+                    format.setInteger(MediaFormat.KEY_IMPORTANCE, CODEC_IMPORTANCE_100);
+                    mFirstMediaCodec = codec;
+                }
+                // The last codec creation failed because of insufficient resources.
+                // So, lets attempt to create one last codec with lesser importance (100)
+                // and expect it to fail as well.
+                if (lastCodecAttemptWithImportance) {
+                    format.setInteger(MediaFormat.KEY_IMPORTANCE, CODEC_IMPORTANCE_100);
+                    loweredLastCodecImportance = true;
+                }
                 codec.configure(format, null, null, flag);
+
+                // We don't want to lower the importance for other codecs.
+                // So, remove it from the format, if it were set above.
+                // The remaining codecs will have the default codec-importance as highest (0).
+                if (firstCodec && mUseCodecImportanceAtConfig) {
+                    format.removeKey(MediaFormat.KEY_IMPORTANCE);
+                    firstCodec = false;
+                }
                 Log.d(TAG, "Start codec " + format);
                 codec.start();
                 mCodecs.add(codec);
@@ -256,8 +311,32 @@ public class ResourceManagerTestActivityBase extends Activity {
                 Log.d(TAG, "IOException " + e.getMessage());
                 break;
             } catch (MediaCodec.CodecException e) {
-                Log.d(TAG, "CodecException 0x" + Integer.toHexString(e.getErrorCode()));
-                break;
+                int error = e.getErrorCode();
+                Log.d(TAG, "CodecException 0x" + Integer.toHexString(error));
+                if (mUseCodecImportanceLater && !loweredFirstCodecImportance
+                        && error == MediaCodec.CodecException.ERROR_INSUFFICIENT_RESOURCE) {
+                    // Making sure we have at least one codec started.
+                    Log.d(TAG, "Make Codec 0 less important so that it will be reclaimed");
+                    if (i > 0) {
+                        mFirstMediaCodec = mCodecs.get(0);
+                        changeCodecImportance(mFirstMediaCodec, CODEC_IMPORTANCE_100);
+                        // We are doing it only once.
+                        loweredFirstCodecImportance = true;
+                        continue;
+                    } else {
+                        // We don't have any codecs to lower the importance.
+                        break;
+                    }
+                } else if (!loweredLastCodecImportance && mChangingCodecImportance) {
+                    // The last codec start failed because of insufficient resources.
+                    // So, lets attempt to create one last codec with lesser importance (100)
+                    // and expect it to fail as well.
+                    Log.d(TAG, "Attempt creating less important codec and expect it to fail");
+                    lastCodecAttemptWithImportance = true;
+                    continue;
+                } else {
+                    break;
+                }
             } finally {
                 if (codec != null) {
                     Log.d(TAG, "release codec");
@@ -270,7 +349,7 @@ public class ResourceManagerTestActivityBase extends Activity {
 
     protected void finishWithResult(int result) {
         for (int i = 0; i < mCodecs.size(); ++i) {
-            Log.d(TAG, "release codec #" + i);
+            Log.d(TAG, "release codec #" + i + " : " + mCodecs.get(i).toString());
             mCodecs.get(i).release();
         }
         mCodecs.clear();

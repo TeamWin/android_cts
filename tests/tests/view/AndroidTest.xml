@@ -34,6 +34,8 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.view.cts" />
         <option name="runtime-hint" value="6m47s" />
+        <!-- 5 minutes: -->
+        <option name="test-timeout" value="300000" />
         <option name="hidden-api-checks" value="false" />
         <option name="isolated-storage" value="false" />
     </test>

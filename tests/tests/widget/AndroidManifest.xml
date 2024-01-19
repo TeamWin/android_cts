@@ -367,6 +367,7 @@
         <activity android:name="android.widget.cts.ListPopupWindowCtsActivity"
              android:label="ListPopupWindowCtsActivity"
              android:windowSoftInputMode="stateAlwaysHidden"
+             android:theme="@style/Theme_NoSwipeDismiss"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

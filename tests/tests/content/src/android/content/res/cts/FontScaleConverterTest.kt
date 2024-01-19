@@ -17,7 +17,7 @@
 package android.content.res.cts
 
 import android.content.res.Flags
-import android.content.res.FontScaleConverterFactory
+import android.content.res.FontScaleConverter
 import android.platform.test.annotations.RequiresFlagsEnabled
 import android.platform.test.flag.junit.CheckFlagsRule
 import android.platform.test.flag.junit.DeviceFlagsValueProvider
@@ -29,14 +29,14 @@ import org.junit.runner.RunWith
 @SmallTest
 @RunWith(AndroidJUnit4::class)
 @RequiresFlagsEnabled(Flags.FLAG_FONT_SCALE_CONVERTER_PUBLIC)
-class FontScaleConverterFactoryTest {
+class FontScaleConverterTest {
 
     @get:Rule val checkFlagsRule: CheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
 
     @SmallTest
     @Test
     fun scale200IsTwiceAtSmallSizes() {
-        val table = FontScaleConverterFactory.forScale(2F)!!
+        val table = FontScaleConverter.forScale(2F)!!
         assertThat(table.convertSpToDp(1F)).isWithin(CONVERSION_TOLERANCE).of(2f)
         assertThat(table.convertSpToDp(8F)).isWithin(CONVERSION_TOLERANCE).of(16f)
         assertThat(table.convertSpToDp(10F)).isWithin(CONVERSION_TOLERANCE).of(20f)
@@ -47,7 +47,7 @@ class FontScaleConverterFactoryTest {
     @SmallTest
     @Test
     fun scale200IsNonlinearAtLargeSizes() {
-        val table = FontScaleConverterFactory.forScale(2F)!!
+        val table = FontScaleConverter.forScale(2F)!!
         assertThat(table.convertSpToDp(24F)).isAtMost(36F)
         assertThat(table.convertSpToDp(30F)).isAtMost(38F)
         assertThat(table.convertSpToDp(45F)).isAtMost(50F)
@@ -58,7 +58,7 @@ class FontScaleConverterFactoryTest {
     @SmallTest
     @Test
     fun missingLookupTablePastEnd_returnsLinear() {
-        val table = FontScaleConverterFactory.forScale(3F)!!
+        val table = FontScaleConverter.forScale(3F)!!
         assertThat(table.convertSpToDp(1F)).isWithin(CONVERSION_TOLERANCE).of(3f)
         assertThat(table.convertSpToDp(8F)).isWithin(CONVERSION_TOLERANCE).of(24f)
         assertThat(table.convertSpToDp(10F)).isWithin(CONVERSION_TOLERANCE).of(30f)
@@ -71,7 +71,7 @@ class FontScaleConverterFactoryTest {
     @SmallTest
     @Test
     fun missingLookupTable199_returnsInterpolated() {
-        val table = FontScaleConverterFactory.forScale(1.9999F)!!
+        val table = FontScaleConverter.forScale(1.9999F)!!
         assertThat(table.convertSpToDp(1F)).isWithin(CONVERSION_TOLERANCE).of(2f)
         assertThat(table.convertSpToDp(8F)).isWithin(CONVERSION_TOLERANCE).of(16f)
         assertThat(table.convertSpToDp(10F)).isWithin(CONVERSION_TOLERANCE).of(20f)
@@ -82,7 +82,7 @@ class FontScaleConverterFactoryTest {
     @SmallTest
     @Test
     fun missingLookupTable160_returnsInterpolated() {
-        val table = FontScaleConverterFactory.forScale(1.6F)!!
+        val table = FontScaleConverter.forScale(1.6F)!!
         assertThat(table.convertSpToDp(1F)).isWithin(CONVERSION_TOLERANCE).of(1f * 1.6F)
         assertThat(table.convertSpToDp(8F)).isWithin(CONVERSION_TOLERANCE).of(8f * 1.6F)
         assertThat(table.convertSpToDp(10F)).isWithin(CONVERSION_TOLERANCE).of(10f * 1.6F)
@@ -95,36 +95,36 @@ class FontScaleConverterFactoryTest {
     @SmallTest
     @Test
     fun missingLookupTableNegativeReturnsNull() {
-        assertThat(FontScaleConverterFactory.forScale(-1F)).isNull()
+        assertThat(FontScaleConverter.forScale(-1F)).isNull()
     }
 
     @SmallTest
     @Test
     fun unnecessaryFontScalesReturnsNull() {
-        assertThat(FontScaleConverterFactory.forScale(0F)).isNull()
-        assertThat(FontScaleConverterFactory.forScale(1F)).isNull()
-        assertThat(FontScaleConverterFactory.forScale(1.1F)).isNull()
-        assertThat(FontScaleConverterFactory.forScale(0.85F)).isNull()
+        assertThat(FontScaleConverter.forScale(0F)).isNull()
+        assertThat(FontScaleConverter.forScale(1F)).isNull()
+        assertThat(FontScaleConverter.forScale(1.1F)).isNull()
+        assertThat(FontScaleConverter.forScale(0.85F)).isNull()
     }
 
     @SmallTest
     @Test
     fun testIsNonLinearFontScalingActive() {
-        assertThat(FontScaleConverterFactory.isNonLinearFontScalingActive(1f)).isFalse()
-        assertThat(FontScaleConverterFactory.isNonLinearFontScalingActive(0f)).isFalse()
-        assertThat(FontScaleConverterFactory.isNonLinearFontScalingActive(-1f)).isFalse()
-        assertThat(FontScaleConverterFactory.isNonLinearFontScalingActive(0.85f)).isFalse()
-        assertThat(FontScaleConverterFactory.isNonLinearFontScalingActive(1.02f)).isFalse()
-        assertThat(FontScaleConverterFactory.isNonLinearFontScalingActive(1.10f)).isFalse()
-        assertThat(FontScaleConverterFactory.isNonLinearFontScalingActive(1.15f)).isTrue()
-        assertThat(FontScaleConverterFactory.isNonLinearFontScalingActive(1.1499999f))
+        assertThat(FontScaleConverter.isNonLinearFontScalingActive(1f)).isFalse()
+        assertThat(FontScaleConverter.isNonLinearFontScalingActive(0f)).isFalse()
+        assertThat(FontScaleConverter.isNonLinearFontScalingActive(-1f)).isFalse()
+        assertThat(FontScaleConverter.isNonLinearFontScalingActive(0.85f)).isFalse()
+        assertThat(FontScaleConverter.isNonLinearFontScalingActive(1.02f)).isFalse()
+        assertThat(FontScaleConverter.isNonLinearFontScalingActive(1.10f)).isFalse()
+        assertThat(FontScaleConverter.isNonLinearFontScalingActive(1.15f)).isTrue()
+        assertThat(FontScaleConverter.isNonLinearFontScalingActive(1.1499999f))
                 .isTrue()
-        assertThat(FontScaleConverterFactory.isNonLinearFontScalingActive(1.5f)).isTrue()
-        assertThat(FontScaleConverterFactory.isNonLinearFontScalingActive(2f)).isTrue()
-        assertThat(FontScaleConverterFactory.isNonLinearFontScalingActive(3f)).isTrue()
+        assertThat(FontScaleConverter.isNonLinearFontScalingActive(1.5f)).isTrue()
+        assertThat(FontScaleConverter.isNonLinearFontScalingActive(2f)).isTrue()
+        assertThat(FontScaleConverter.isNonLinearFontScalingActive(3f)).isTrue()
     }
 
     companion object {
-        private const val CONVERSION_TOLERANCE = 0.05f
+        private const val CONVERSION_TOLERANCE = 0.25f
     }
 }

@@ -76,6 +76,11 @@ public final class PackageNameVisibilityTest {
             "android.scopedstorage.cts.testapp.D", 1, false,
             "CtsScopedStorageTestAppDLegacy.apk");
 
+    private static final TestApp TEST_APP_WITH_ACCESS_MEDIA_OWNER_PACKAGE_NAME = new TestApp(
+            "TestAppWithAccessMediaOwnerPackageNamePermission",
+            "android.scopedstorage.cts.testapp.WithAccessMediaOwnerPackageNamePerm", 1,
+            false, "CtsTestAppWithAccessMediaOwnerPackageNamePermission.apk");
+
     private static Uri sMediaUriCreatedByAppA;
     private static Uri sMediaUriCreatedByAppB;
 
@@ -232,6 +237,32 @@ public final class PackageNameVisibilityTest {
                 sMediaUriCreatedByAppB, queryArgs);
 
         // Requested not self-owned media is present because of QUERY_ALL_PACKAGES permission
+        assertEquals(1, resultSize);
+    }
+
+    @Test
+    public void testQueryProjWithAccessMediaOwnerPackageName() throws Exception {
+        final String[] ownerPackageNames = TestUtils.queryForOwnerPackageNamesAs(
+                TEST_APP_WITH_ACCESS_MEDIA_OWNER_PACKAGE_NAME, sMediaUriCreatedByAppA);
+
+        // Test app with ACCESS_MEDIA_OWNER_PACKAGE_NAME should
+        // be able to query owner_package_name of any media file
+        assertEquals(Arrays.asList(TEST_APP_A.getPackageName()), Arrays.asList(ownerPackageNames));
+    }
+
+    @Test
+    public void testQueryArgsWithAccessMediaOwnerPackageName() throws Exception {
+        Bundle queryArgs = new Bundle();
+        queryArgs.putString(ContentResolver.QUERY_ARG_SQL_SELECTION,
+                MediaStore.MediaColumns.OWNER_PACKAGE_NAME + " = ?");
+        queryArgs.putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
+                new String[]{TEST_APP_B.getPackageName()});
+
+        int resultSize = TestUtils.queryWithArgsAs(TEST_APP_WITH_ACCESS_MEDIA_OWNER_PACKAGE_NAME,
+                sMediaUriCreatedByAppB, queryArgs);
+
+        // Test app with ACCESS_MEDIA_OWNER_PACKAGE_NAME should be able
+        // to have owner_package_name in query arguments without any restrictions
         assertEquals(1, resultSize);
     }
 

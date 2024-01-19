@@ -15,28 +15,34 @@
  */
 package android.videoencodingquality.cts;
 
+import android.cts.host.utils.DeviceJUnit4ClassRunnerWithParameters;
+import android.cts.host.utils.DeviceJUnit4Parameterized;
+
 import com.android.compatibility.common.util.CddTest;
-import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil;
-import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.IAbi;
-import com.android.tradefed.testtype.IAbiReceiver;
-import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.UseParametersRunnerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Run the host-side video encoding quality test (go/pc14-veq)
@@ -44,26 +50,13 @@ import java.util.concurrent.TimeUnit;
  * code acquires the testsuite tar file, unpacks it, executes the script (which encodes and
  * measures) that report either PASS or FAIL.
  **/
-@RunWith(DeviceJUnit4ClassRunner.class)
+@RunWith(DeviceJUnit4Parameterized.class)
+@UseParametersRunnerFactory(DeviceJUnit4ClassRunnerWithParameters.RunnerFactory.class)
 @OptionClass(alias = "pc-veq-test")
-public class CtsVideoEncodingQualityHostTest implements IAbiReceiver, IBuildReceiver, IDeviceTest {
+public class CtsVideoEncodingQualityHostTest implements IDeviceTest {
 
     static final String BASE_URL =
             "https://storage.googleapis.com/android_media/cts/hostsidetests/pc14_veq/";
-
-    @Option(name = "force-to-run",
-            description = "Force to run the test even if the device is not a right performance "
-                    + "class device.")
-    private boolean mForceToRun = false;
-
-    @Option(name = "disable-b", description = "Disable b-frame-encoding.")
-    private boolean mDisableB = false;
-
-    @Option(name = "reset", description = "Start with a fresh directory.")
-    private boolean mReset = true;
-
-    @Option(name = "quick-check", description = "Run a quick check.")
-    private boolean mQuickCheck = false;
 
     // test is not valid before sdk 31, aka Android 12, aka Android S
     static final int MINIMUM_VALID_SDK = 31;
@@ -71,23 +64,122 @@ public class CtsVideoEncodingQualityHostTest implements IAbiReceiver, IBuildRece
     // media performance class 14
     static final int MEDIA_PERFORMANCE_CLASS_14 = 34;
 
-    /** A reference to the build info. */
-    private IBuildInfo mBuildInfo;
+    private static final Lock sLock = new ReentrantLock();
+    private static final Condition sCondition = sLock.newCondition();
+    private static boolean sIsTestSetUpDone = false;
+    private static File sDestination;
+    private static boolean sEarlyTermination;
+    private static int sMpc;
+    private static String sTargetSerial;
+
+    private final String mJsonName;
 
     /** A reference to the device under test. */
     private ITestDevice mDevice;
 
-    /** A reference to the ABI under test. */
-    private IAbi mAbi;
+    @Option(name = "force-to-run", description = "Force to run the test even if the device is not"
+            + " a right performance class device.")
+    private boolean mForceToRun = false;
 
-    @Override
-    public void setAbi(IAbi abi) {
-        mAbi = abi;
+    @Option(name = "skip-avc", description = "Skip avc encoder testing")
+    private boolean mSkipAvc = false;
+
+    @Option(name = "skip-hevc", description = "Skip hevc encoder testing")
+    private boolean mSkipHevc = false;
+
+    @Option(name = "skip-p", description = "Skip P only testing")
+    private boolean mSkipP = false;
+
+    @Option(name = "skip-b", description = "Skip B frame testing")
+    private boolean mSkipB = false;
+
+    @Option(name = "reset", description = "Start with a fresh directory.")
+    private boolean mReset = true;
+
+    @Option(name = "quick-check", description = "Run a quick check.")
+    private boolean mQuickCheck = false;
+
+    public CtsVideoEncodingQualityHostTest(String jsonName) {
+        mJsonName = jsonName;
     }
 
-    @Override
-    public void setBuild(IBuildInfo buildInfo) {
-        mBuildInfo = buildInfo;
+    private static final List<String> AVC_VBR_B0_PARAMS = Arrays.asList(
+            "AVICON-MOBILE-Beach-SO04-CRW02-L-420-8bit-SDR-1080p-30fps_hw_avc_vbr_b0.json",
+            "AVICON-MOBILE-BirthdayHalfway-SI17-CRUW03-L-420-8bit-SDR-1080p"
+                    + "-30fps_hw_avc_vbr_b0.json",
+            "AVICON-MOBILE-SelfieTeenKitchenSocialMedia-SS01-CF01-P-420-8bit-SDR-1080p"
+                    + "-30fps_hw_avc_vbr_b0.json",
+            "AVICON-MOBILE-Waterfall-SO05-CRW01-P-420-8bit-SDR-1080p-30fps_hw_avc_vbr_b0.json",
+            "AVICON-MOBILE-SelfieFamily-SF14-CF01-L-420-8bit-SDR-1080p-30fps_hw_avc_vbr_b0"
+                    + ".json",
+            "AVICON-MOBILE-River-SO03-CRW01-L-420-8bit-SDR-1080p-30fps_hw_avc_vbr_b0.json",
+            "AVICON-MOBILE-SelfieGroupGarden-SF15-CF01-P-420-8bit-SDR-1080p"
+                    + "-30fps_hw_avc_vbr_b0.json",
+            "AVICON-MOBILE-ConcertNear-SI10-CRW01-L-420-8bit-SDR-1080p-30fps_hw_avc_vbr_b0"
+                    + ".json",
+            "AVICON-MOBILE-SelfieCoupleCitySocialMedia-SS02-CF01-P-420-8bit-SDR-1080p"
+                    + "-30fps_hw_avc_vbr_b0.json");
+
+    private static final List<String> AVC_VBR_B3_PARAMS = Arrays.asList(
+            "AVICON-MOBILE-Beach-SO04-CRW02-L-420-8bit-SDR-1080p-30fps_hw_avc_vbr_b3.json",
+            "AVICON-MOBILE-BirthdayHalfway-SI17-CRUW03-L-420-8bit-SDR-1080p-30fps_hw_avc_vbr_b3"
+                    + ".json",
+            "AVICON-MOBILE-SelfieTeenKitchenSocialMedia-SS01-CF01-P-420-8bit-SDR-1080p"
+                    + "-30fps_hw_avc_vbr_b3.json",
+            "AVICON-MOBILE-Waterfall-SO05-CRW01-P-420-8bit-SDR-1080p-30fps_hw_avc_vbr_b3.json",
+            "AVICON-MOBILE-SelfieFamily-SF14-CF01-L-420-8bit-SDR-1080p-30fps_hw_avc_vbr_b3.json",
+            "AVICON-MOBILE-River-SO03-CRW01-L-420-8bit-SDR-1080p-30fps_hw_avc_vbr_b3.json",
+            "AVICON-MOBILE-SelfieGroupGarden-SF15-CF01-P-420-8bit-SDR-1080p-30fps_hw_avc_vbr_b3"
+                    + ".json",
+            "AVICON-MOBILE-ConcertNear-SI10-CRW01-L-420-8bit-SDR-1080p-30fps_hw_avc_vbr_b3.json",
+            "AVICON-MOBILE-SelfieCoupleCitySocialMedia-SS02-CF01-P-420-8bit-SDR-1080p"
+                    + "-30fps_hw_avc_vbr_b3.json");
+
+    private static final List<String> HEVC_VBR_B0_PARAMS = Arrays.asList(
+            "AVICON-MOBILE-Beach-SO04-CRW02-L-420-8bit-SDR-1080p-30fps_hw_hevc_vbr_b0.json",
+            "AVICON-MOBILE-BirthdayHalfway-SI17-CRUW03-L-420-8bit-SDR-1080p-30fps_hw_hevc_vbr_b0"
+                    + ".json",
+            "AVICON-MOBILE-SelfieTeenKitchenSocialMedia-SS01-CF01-P-420-8bit-SDR-1080p"
+                    + "-30fps_hw_hevc_vbr_b0.json",
+            "AVICON-MOBILE-Waterfall-SO05-CRW01-P-420-8bit-SDR-1080p-30fps_hw_hevc_vbr_b0.json",
+            "AVICON-MOBILE-SelfieFamily-SF14-CF01-L-420-8bit-SDR-1080p-30fps_hw_hevc_vbr_b0.json",
+            "AVICON-MOBILE-River-SO03-CRW01-L-420-8bit-SDR-1080p-30fps_hw_hevc_vbr_b0.json",
+            "AVICON-MOBILE-SelfieGroupGarden-SF15-CF01-P-420-8bit-SDR-1080p-30fps_hw_hevc_vbr_b0"
+                    + ".json",
+            "AVICON-MOBILE-ConcertNear-SI10-CRW01-L-420-8bit-SDR-1080p-30fps_hw_hevc_vbr_b0.json",
+            "AVICON-MOBILE-SelfieCoupleCitySocialMedia-SS02-CF01-P-420-8bit-SDR-1080p"
+                    + "-30fps_hw_hevc_vbr_b0.json");
+
+    private static final List<String> HEVC_VBR_B3_PARAMS = Arrays.asList(
+            "AVICON-MOBILE-Beach-SO04-CRW02-L-420-8bit-SDR-1080p-30fps_hw_hevc_vbr_b3.json",
+            "AVICON-MOBILE-BirthdayHalfway-SI17-CRUW03-L-420-8bit-SDR-1080p-30fps_hw_hevc_vbr_b3"
+                    + ".json",
+            "AVICON-MOBILE-SelfieTeenKitchenSocialMedia-SS01-CF01-P-420-8bit-SDR-1080p"
+                    + "-30fps_hw_hevc_vbr_b3.json",
+            "AVICON-MOBILE-Waterfall-SO05-CRW01-P-420-8bit-SDR-1080p-30fps_hw_hevc_vbr_b3.json",
+            "AVICON-MOBILE-SelfieFamily-SF14-CF01-L-420-8bit-SDR-1080p-30fps_hw_hevc_vbr_b3.json",
+            "AVICON-MOBILE-River-SO03-CRW01-L-420-8bit-SDR-1080p-30fps_hw_hevc_vbr_b3.json",
+            // Abnormal curve, not monotonically increasing.
+            /*"AVICON-MOBILE-SelfieGroupGarden-SF15-CF01-P-420-8bit-SDR-1080p-30fps_hw_hevc_vbr_b3"
+                    + ".json",*/
+            "AVICON-MOBILE-ConcertNear-SI10-CRW01-L-420-8bit-SDR-1080p-30fps_hw_hevc_vbr_b3.json",
+            "AVICON-MOBILE-SelfieCoupleCitySocialMedia-SS02-CF01-P-420-8bit-SDR-1080p"
+                    + "-30fps_hw_hevc_vbr_b3.json");
+
+    private static final List<String> QUICK_RUN_PARAMS = Arrays.asList(
+            "AVICON-MOBILE-SelfieTeenKitchenSocialMedia-SS01-CF01-P-420-8bit-SDR-1080p"
+                    + "-30fps_hw_avc_vbr_b0.json",
+            "AVICON-MOBILE-SelfieTeenKitchenSocialMedia-SS01-CF01-P-420-8bit-SDR-1080p"
+                    + "-30fps_hw_hevc_vbr_b0.json");
+
+    @Parameterized.Parameters(name = "{index}_{0}")
+    public static List<String> input() {
+        final List<String> args = new ArrayList<>();
+        args.addAll(AVC_VBR_B0_PARAMS);
+        args.addAll(AVC_VBR_B3_PARAMS);
+        args.addAll(HEVC_VBR_B0_PARAMS);
+        args.addAll(HEVC_VBR_B3_PARAMS);
+        return args;
     }
 
     @Override
@@ -105,14 +197,9 @@ public class CtsVideoEncodingQualityHostTest implements IAbiReceiver, IBuildRece
     }
 
     /**
-     * TODO: Add JavaDoc
+     * Sets up the necessary environment for the video encoding quality test.
      */
-    /**
-     * Verify the video encoding quality requirements for the performance class 14 devices.
-     */
-    @CddTest(requirements = {"2.2.7.1/5.8/H-1-1"})
-    @Test
-    public void testEncoding() throws Exception {
+    public void setupTestEnv() throws Exception {
         String sdkAsString = getProperty("ro.build.version.sdk");
         int sdk = Integer.parseInt(sdkAsString);
         Assume.assumeTrue(
@@ -123,26 +210,25 @@ public class CtsVideoEncodingQualityHostTest implements IAbiReceiver, IBuildRece
         LogUtil.CLog.i("Host OS = " + os);
 
         String pcAsString = getProperty("ro.odm.build.media_performance_class");
-        int mpc = 0;
         try {
-            mpc = Integer.parseInt("0" + pcAsString);
+            sMpc = Integer.parseInt("0" + pcAsString);
         } catch (Exception e) {
             LogUtil.CLog.i("Invalid pcAsString: " + pcAsString + ", exception: " + e);
-            mpc = 0;
+            sMpc = 0;
         }
 
         // Enable early termination on errors on the devices whose mpc's are not valid.
         // Run the entire test til the end on the devices whose mpc's are valid.
-        boolean earlyTermination = mpc < MEDIA_PERFORMANCE_CLASS_14;
+        sEarlyTermination = sMpc < MEDIA_PERFORMANCE_CLASS_14;
         if (mForceToRun) {
-            earlyTermination = false;       // Force to run the test til the end.
+            sEarlyTermination = false;       // Force to run the test til the end.
         }
 
-        String targetSerial = getDevice().getSerialNumber();
-        LogUtil.CLog.i("serial:\n\n" + targetSerial);
+        sTargetSerial = getDevice().getSerialNumber();
+        LogUtil.CLog.i("serial:\n\n" + sTargetSerial);
 
         String tmpBase = System.getProperty("java.io.tmpdir");
-        String dirName = "CtsVideoEncodingQualityHostTest_" + targetSerial;
+        String dirName = "CtsVideoEncodingQualityHostTest_" + sTargetSerial;
         String tmpDir = tmpBase + "/" + dirName;
 
         LogUtil.CLog.i("tmpBase= " + tmpBase + " tmpDir =" + tmpDir);
@@ -154,38 +240,70 @@ public class CtsVideoEncodingQualityHostTest implements IAbiReceiver, IBuildRece
         }
 
         // set up test directory, make sure it exists
-        File destination = new File(tmpDir);
+        sDestination = new File(tmpDir);
         try {
-            if (!destination.isDirectory()) {
-                destination.mkdirs();
+            if (!sDestination.isDirectory()) {
+                sDestination.mkdirs();
             }
         } catch (SecurityException e) {
-            LogUtil.CLog.e("Unable to establish temp directory " + destination.getPath());
+            LogUtil.CLog.e("Unable to establish temp directory " + sDestination.getPath());
         }
-        Assert.assertTrue("Failed to create test director: " + tmpDir, destination.isDirectory());
+        Assert.assertTrue("Failed to create test director: " + tmpDir, sDestination.isDirectory());
 
         // Download the testsuit tar file.
-        downloadFile("veqtests.tar.gz", destination);
+        downloadFile("veqtests-1_1.tar.gz", sDestination);
 
         // Unpack the testsuit tar file.
-        int result = runCommand("tar xvzf veqtests.tar.gz", destination);
-        Assert.assertTrue("Failed to untar veqtests.tar.gz", result == 0);
+        int result = runCommand("tar xvzf veqtests-1_1.tar.gz", sDestination);
+        Assert.assertTrue("Failed to untar veqtests-1_1.tar.gz", result == 0);
+
+        sIsTestSetUpDone = true;
+    }
+
+    /**
+     * Verify the video encoding quality requirements for the performance class 14 devices.
+     */
+    @CddTest(requirements = {"2.2.7.1/5.8/H-1-1"})
+    @Test
+    public void testEncoding() throws Exception {
+        Assume.assumeFalse("Skipping due to quick run mode",
+                mQuickCheck && !QUICK_RUN_PARAMS.contains(mJsonName));
+        Assume.assumeFalse("Skipping avc encoder tests",
+                mSkipAvc && (AVC_VBR_B0_PARAMS.contains(mJsonName) || AVC_VBR_B3_PARAMS.contains(
+                        mJsonName)));
+        Assume.assumeFalse("Skipping hevc encoder tests",
+                mSkipHevc && (HEVC_VBR_B0_PARAMS.contains(mJsonName) || HEVC_VBR_B3_PARAMS.contains(
+                        mJsonName)));
+        Assume.assumeFalse("Skipping b-frame tests",
+                mSkipB && (AVC_VBR_B3_PARAMS.contains(mJsonName) || HEVC_VBR_B3_PARAMS.contains(
+                        mJsonName)));
+        Assume.assumeFalse("Skipping non b-frame tests",
+                mSkipP && (AVC_VBR_B0_PARAMS.contains(mJsonName) || HEVC_VBR_B0_PARAMS.contains(
+                        mJsonName)));
+
+        // set up test environment
+        sLock.lock();
+        try {
+            if (!sIsTestSetUpDone) setupTestEnv();
+            sCondition.signalAll();
+        } finally {
+            sLock.unlock();
+        }
 
         // Execute the script to run the test.
-        String testCommand = "./testit.sh --serial " + targetSerial;
-        if (mQuickCheck) testCommand += " --enablequickrun YES";
-        if (mDisableB) testCommand += " --enableb NO";
-        if (earlyTermination) testCommand += " --exitonerror YES";
-        result = runCommand(testCommand, destination);
+        String testCommand = "./testit.sh --serial " + sTargetSerial;
+        if (sEarlyTermination) testCommand += " --exitonerror YES";
+        testCommand += " --jsonname " + mJsonName;
+        int result = runCommand(testCommand, sDestination);
 
-        if (mpc >= MEDIA_PERFORMANCE_CLASS_14 || mForceToRun) {
+        if (sMpc >= MEDIA_PERFORMANCE_CLASS_14 || mForceToRun) {
             Assert.assertTrue(
-                    "test device advertises mpc=" + mpc
+                    "test device advertises mpc=" + sMpc
                             + ", but failed to pass the video encoding quality test.",
                     result == 0);
         } else {
             Assume.assumeTrue(
-                    "test device advertises mpc=" + mpc
+                    "test device advertises mpc=" + sMpc
                             + ", and did not pass the video encoding quality test.",
                     result == 0);
         }

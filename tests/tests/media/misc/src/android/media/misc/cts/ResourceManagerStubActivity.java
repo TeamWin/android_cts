@@ -42,6 +42,7 @@ public class ResourceManagerStubActivity extends Activity {
     private int mType1 = ResourceManagerTestActivityBase.TYPE_NONSECURE;
     private int mType2 = ResourceManagerTestActivityBase.TYPE_NONSECURE;
     private boolean mWaitForReclaim = true;
+    private boolean mStartedOnlyOneActivity = false;
 
     private static final String ERROR_INSUFFICIENT_RESOURCES =
             "* Please check if the omx component is returning OMX_ErrorInsufficientResources " +
@@ -70,14 +71,14 @@ public class ResourceManagerStubActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.d(TAG, "Activity " + requestCode + " finished with resultCode " + resultCode);
         mResults[requestCode] = resultCode;
-        if (++mNumResults == mResults.length) {
+        if (++mNumResults == mResults.length || mStartedOnlyOneActivity) {
             synchronized (mFinishEvent) {
                 mFinishEvent.notify();
             }
         }
     }
 
-    private boolean processActivityResults() {
+    private void processActivityResults() {
         boolean result = true;
         for (int i = 0; result && i < mResults.length; ++i) {
             switch (mResults[i]) {
@@ -103,13 +104,34 @@ public class ResourceManagerStubActivity extends Activity {
             }
         }
 
-        return result;
+        if (!result) {
+            String failMessage = "The potential reasons for the failure:\n";
+            StringBuilder reasons = new StringBuilder();
+            reasons.append(ERROR_INSUFFICIENT_RESOURCES);
+            if (mType1 != mType2) {
+                reasons.append(ERROR_SUPPORTS_SECURE_WITH_NON_SECURE_CODEC);
+            }
+            if (mType1 == ResourceManagerTestActivityBase.TYPE_MIX
+                    && mType2 == ResourceManagerTestActivityBase.TYPE_SECURE) {
+                reasons.append(ERROR_SUPPORTS_MULTIPLE_SECURE_CODECS);
+            }
+            Assert.assertTrue(failMessage + reasons.toString(), result);
+        }
     }
 
     private void waitForActivitiesToComplete() throws InterruptedException {
         // Wait for all the activities to complete.
         synchronized (mFinishEvent) {
             while (mNumResults < mResults.length) {
+                mFinishEvent.wait();
+            }
+        }
+    }
+
+    private void waitForOneActivityToComplete() throws InterruptedException {
+        // Wait for one activity to complete.
+        synchronized (mFinishEvent) {
+            while (mNumResults != 1) {
                 mFinishEvent.wait();
             }
         }
@@ -153,20 +175,7 @@ public class ResourceManagerStubActivity extends Activity {
         thread.join();
         Log.i(TAG, "Activities completed");
 
-        boolean result = processActivityResults();
-        if (!result) {
-            String failMessage = "The potential reasons for the failure:\n";
-            StringBuilder reasons = new StringBuilder();
-            reasons.append(ERROR_INSUFFICIENT_RESOURCES);
-            if (mType1 != mType2) {
-                reasons.append(ERROR_SUPPORTS_SECURE_WITH_NON_SECURE_CODEC);
-            }
-            if (mType1 == ResourceManagerTestActivityBase.TYPE_MIX
-                    && mType2 == ResourceManagerTestActivityBase.TYPE_SECURE) {
-                reasons.append(ERROR_SUPPORTS_MULTIPLE_SECURE_CODECS);
-            }
-            Assert.assertTrue(failMessage + reasons.toString(), result);
-        }
+        processActivityResults();
     }
 
     public void testVideoCodecReclaim(boolean highResolution, String mimeType)
@@ -205,13 +214,7 @@ public class ResourceManagerStubActivity extends Activity {
         thread.join();
         Log.i(TAG, "Activities completed");
 
-        boolean result = processActivityResults();
-        if (!result) {
-            String failMessage = "The potential reasons for the failure:\n";
-            StringBuilder reasons = new StringBuilder();
-            reasons.append(ERROR_INSUFFICIENT_RESOURCES);
-            Assert.assertTrue(failMessage + reasons.toString(), result);
-        }
+        processActivityResults();
     }
 
     public void doTestReclaimResource(String codecName, String mimeType, int width, int height)
@@ -252,12 +255,59 @@ public class ResourceManagerStubActivity extends Activity {
         thread.join();
         Log.i(TAG, "Activities completed");
 
-        boolean result = processActivityResults();
-        if (!result) {
-            String failMessage = "The potential reasons for the failure:\n";
-            StringBuilder reasons = new StringBuilder();
-            reasons.append(ERROR_INSUFFICIENT_RESOURCES);
-            Assert.assertTrue(failMessage + reasons.toString(), result);
-        }
+        processActivityResults();
+    }
+
+    /**
+     * creates allowable number of decoders at given resolution.
+     * All the codecs are configured with the default importance (highest)
+     * But, when we get a INSUFFICIENT_RESOURCE, we lower the importance of the
+     * first codec so that we can create/start one more codec by reclaiming the
+     * first codec (that has lower importance now)
+     */
+    public void doTestCodecImportanceReclaimResource(
+            String codecName, String mimeType, int width, int height,
+            boolean highResolution, boolean changeImportanceAtConfig)
+            throws InterruptedException {
+        mWaitForReclaim = true;
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    Context context = getApplicationContext();
+                    Intent intent = new Intent(context, ResourceManagerTestActivity2.class);
+                    intent.putExtra("test-type", mType1);
+                    intent.putExtra("wait-for-reclaim", mWaitForReclaim);
+                    intent.putExtra("name", codecName);
+                    intent.putExtra("mime", mimeType);
+                    if (width == 0 || height == 0) {
+                        intent.putExtra("high-resolution", highResolution);
+                    } else {
+                        intent.putExtra("width", width);
+                        intent.putExtra("height", height);
+                    }
+                    if (changeImportanceAtConfig) {
+                        intent.putExtra("codec-importance-at-config", true);
+                    } else {
+                        intent.putExtra("codec-importance-later", true);
+                    }
+                    mStartedOnlyOneActivity = true;
+                    startActivityForResult(intent, mRequestCodes[0]);
+                    waitForOneActivityToComplete();
+                } catch (Exception e) {
+                    Log.d(TAG, "doTestCodecImportanceReclaimResource got exception "
+                            + e.toString());
+                }
+            }
+        };
+
+        thread.start();
+        Log.i(TAG, "Started and waiting for Activities");
+        thread.join();
+        Log.i(TAG, "Activities completed");
+
+        // Since we have started one activity, set the other activity code to success.
+        mResults[1] = RESULT_OK;
+        processActivityResults();
     }
 }

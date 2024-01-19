@@ -69,7 +69,6 @@ import android.view.View;
 import android.view.WindowManager.LayoutParams;
 
 import androidx.annotation.NonNull;
-import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -464,7 +463,6 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * Ensure that a non focused display does not become focused when tapping on a non-focusable
      * window on that display.
      */
-    @FlakyTest(bugId = 292181914)
     @Test
     public void testTapNonFocusableWindow() throws Throwable {
         assumeTrue(supportsMultiDisplay());

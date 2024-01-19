@@ -16,6 +16,8 @@
 
 package android.media.misc.cts;
 
+import static com.android.media.codec.flags.Flags.codecImportance;
+
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Intent;
@@ -23,12 +25,14 @@ import android.media.MediaFormat;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.NonMainlineTest;
+import com.android.media.codec.flags.Flags;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -70,6 +74,24 @@ public class ResourceManagerTest {
         if (SDK_IS_AT_LEAST_U || !highResolution) {
             ResourceManagerStubActivity activity = mActivityRule.launchActivity(new Intent());
             activity.testVideoCodecReclaim(highResolution, mimeType);
+            activity.finish();
+        } else {
+            assumeTrue("The Device should be on at least SDK U", false);
+        }
+    }
+
+    private void doTestCodecImportanceReclaim(boolean highResolution, String mimeType,
+            boolean changeImportanceAtConfig) throws Exception {
+        assumeTrue("Codec Importance Feature is OFF", codecImportance());
+        // Run high resolution test case only when the devices shipped on U.
+        if (SDK_IS_AT_LEAST_U || !highResolution) {
+            ResourceManagerStubActivity activity = mActivityRule.launchActivity(new Intent());
+            // Let the test pick the codec name, width, height.
+            String codecName = "none";
+            int width = 0;
+            int height = 0;
+            activity.doTestCodecImportanceReclaimResource(
+                    codecName, mimeType, width, height, highResolution, changeImportanceAtConfig);
             activity.finish();
         } else {
             assumeTrue("The Device should be on at least SDK U", false);
@@ -270,5 +292,129 @@ public class ResourceManagerTest {
     @Test
     public void testHEVCVideoCodecReclaimHighResolution() throws Exception {
         doTestVideoCodecReclaim(true, MediaFormat.MIMETYPE_VIDEO_HEVC);
+    }
+
+    // Activity creates allowable number of AVC decoders at
+    // lowest resolution supported.
+    // The first codec is configured at lower importance so that the test verifies
+    // that the first codec is reclaimed while starting a more important codec
+    // at the later stage (when all codec resources run out).
+    // Once the first (lower importance) is reclaimed, the test attempts to configure
+    // another lower importance codec, which it expects to fail.
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CODEC_IMPORTANCE)
+    public void testAVCVideoCodecImportanceReclaimLowResolution() throws Exception {
+        doTestCodecImportanceReclaim(false, /*low resolution*/
+                                     MediaFormat.MIMETYPE_VIDEO_AVC, /*use avc codec*/
+                                     true /*change importance during codec configuration*/);
+    }
+
+    // Activity creates allowable number of AVC decoders at
+    // highest resolution supported.
+    // The first codec is configured at lower importance so that the test verifies
+    // that the first codec is reclaimed while starting a more important codec
+    // at the later stage (when all codec resources run out).
+    // Once the first (lower importance) is reclaimed, the test attempts to configure
+    // another lower importance codec, which it expects to fail.
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CODEC_IMPORTANCE)
+    public void testAVCVideoCodecImportanceReclaimHighResolution() throws Exception {
+        doTestCodecImportanceReclaim(true, /*high resolution */
+                                     MediaFormat.MIMETYPE_VIDEO_AVC, /*use avc codec*/
+                                     true /*change importance during codec configuration*/);
+    }
+
+    // Activity creates allowable number of HEVC decoders at
+    // lowest resolution supported.
+    // The first codec is configured at lower importance so that the test verifies
+    // that the first codec is reclaimed while starting a more important codec
+    // at the later stage (when all codec resources run out).
+    // Once the first (lower importance) is reclaimed, the test attempts to configure
+    // another lower importance codec, which it expects to fail.
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CODEC_IMPORTANCE)
+    public void testHEVCVideoCodecImportanceReclaimLowResolution() throws Exception {
+        doTestCodecImportanceReclaim(false, /*low resolution*/
+                                     MediaFormat.MIMETYPE_VIDEO_HEVC, /*use hevc codec*/
+                                     true /*change importance during codec configuration*/);
+    }
+
+    // Activity creates allowable number of HEVC decoders at
+    // highest resolution supported.
+    // The first codec is configured at lower importance so that the test verifies
+    // that the first codec is reclaimed while starting a more important codec
+    // at the later stage (when all codec resources run out).
+    // Once the first (lower importance) is reclaimed, the test attempts to configure
+    // another lower importance codec, which it expects to fail.
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CODEC_IMPORTANCE)
+    public void testHEVCVideoCodecImportanceReclaimHighResolution() throws Exception {
+        doTestCodecImportanceReclaim(true, /*high resolution */
+                                     MediaFormat.MIMETYPE_VIDEO_HEVC, /*use hevc codec*/
+                                     true /*change importance during codec configuration*/);
+    }
+
+    // Activity creates allowable number of AVC decoders at
+    // lowest resolution supported.
+    // All the codecs are configured with the default importance (highest)
+    // But, when we get a INSUFFICIENT_RESOURCE, we lower the importance of the
+    // first codec so that we can create/start one more codec by reclaiming the
+    // first codec (that has lower importance now)
+    // Once the first (lower importance) is reclaimed, the test attempts to configure
+    // another lower importance codec, which it expects to fail.
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CODEC_IMPORTANCE)
+    public void testAVCVideoCodecImportanceReclaimWithSetParamLowResolution() throws Exception {
+        doTestCodecImportanceReclaim(false, /*low resolution*/
+                                     MediaFormat.MIMETYPE_VIDEO_AVC, /*use avc codec*/
+                                     false /*change importance after codec config with setParam*/);
+    }
+
+    // Activity creates allowable number of AVC decoders at
+    // highest resolution supported.
+    // All the codecs are configured with the default importance (highest)
+    // But, when we get a INSUFFICIENT_RESOURCE, we lower the importance of the
+    // first codec so that we can create/start one more codec by reclaiming the
+    // first codec (that has lower importance now)
+    // Once the first (lower importance) is reclaimed, the test attempts to configure
+    // another lower importance codec, which it expects to fail.
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CODEC_IMPORTANCE)
+    public void testAVCVideoCodecImportanceReclaimWithSetParamHighResolution() throws Exception {
+        doTestCodecImportanceReclaim(true, /*high resolution*/
+                                     MediaFormat.MIMETYPE_VIDEO_AVC, /*use avc codec*/
+                                     false /*change importance after codec config with setParam*/);
+    }
+
+    // Activity creates allowable number of HEVC decoders at
+    // lowest resolution supported.
+    // All the codecs are configured with the default importance (highest)
+    // But, when we get a INSUFFICIENT_RESOURCE, we lower the importance of the
+    // first codec so that we can create/start one more codec by reclaiming the
+    // first codec (that has lower importance now)
+    // Once the first (lower importance) is reclaimed, the test attempts to configure
+    // another lower importance codec, which it expects to fail.
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CODEC_IMPORTANCE)
+    public void testHEVCVideoCodecImportanceReclaimWithSetParamLowResolution() throws Exception {
+        doTestCodecImportanceReclaim(false, /*low resolution*/
+                                     MediaFormat.MIMETYPE_VIDEO_HEVC, /*use hevc codec*/
+                                     false /*change importance after codec config with setParam*/);
+    }
+
+    // Activity creates allowable number of HEVC decoders at
+    // highest resolution supported.
+    // All the codecs are configured with the default importance (highest)
+    // But, when we get a INSUFFICIENT_RESOURCE, we lower the importance of the
+    // first codec so that we can create/start one more codec by reclaiming the
+    // first codec (that has lower importance now)
+    // Once the first (lower importance) is reclaimed, the test attempts to configure
+    // another lower importance codec, which it expects to fail.
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CODEC_IMPORTANCE)
+    public void testHEVCVideoCodecImportanceReclaimWithSetParamHighResolution() throws Exception {
+        doTestCodecImportanceReclaim(true, /*high resolution */
+                                     MediaFormat.MIMETYPE_VIDEO_HEVC, /*use hevc codec*/
+                                     false /*change importance after codec config with setParam*/);
     }
 }

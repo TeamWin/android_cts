@@ -39,6 +39,7 @@ import android.net.wifi.rtt.ResponderConfig;
 import android.net.wifi.rtt.ResponderLocation;
 import android.net.wifi.rtt.WifiRttManager;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
@@ -46,6 +47,7 @@ import androidx.test.filters.LargeTest;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
+import com.android.wifi.flags.Flags;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -814,5 +816,52 @@ public class WifiRttTest extends TestBase {
             }
         }
 
+    }
+
+    /**
+     * Test RangingResult.Builder
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_RANGING_RESULT_BUILDER)
+    @Test
+    public void testRangingResultBuilder() {
+
+        byte[] lci = {1, 2, 3, 4};
+        byte[] lcr = {10, 20, 30, 40};
+
+        RangingResult rangingResult = new RangingResult.Builder()
+                .setMacAddress(MacAddress.fromString("00:11:22:33:44:55"))
+                .setStatus(RangingResult.STATUS_SUCCESS)
+                .setDistanceMm(100)
+                .setDistanceStdDevMm(33)
+                .setLci(lci)
+                .setLcr(lcr)
+                .setNumAttemptedMeasurements(10)
+                .setNumSuccessfulMeasurements(5)
+                .setRangingTimestampMillis(12345)
+                .setRssi(-77)
+                .build();
+
+        assertEquals(MacAddress.fromString("00:11:22:33:44:55"), rangingResult.getMacAddress());
+        assertEquals(RangingResult.STATUS_SUCCESS, rangingResult.getStatus());
+        assertEquals(100, rangingResult.getDistanceMm());
+        assertEquals(33, rangingResult.getDistanceStdDevMm());
+        assertArrayEquals(lci, rangingResult.getLci());
+        assertArrayEquals(lcr, rangingResult.getLcr());
+        assertEquals(10, rangingResult.getNumAttemptedMeasurements());
+        assertEquals(5, rangingResult.getNumSuccessfulMeasurements());
+        assertEquals(12345, rangingResult.getRangingTimestampMillis());
+        assertEquals(-77, rangingResult.getRssi());
+
+        try {
+            rangingResult = new RangingResult.Builder()
+                    .setStatus(RangingResult.STATUS_SUCCESS)
+                    .setDistanceMm(100)
+                    .setDistanceStdDevMm(33)
+                    .build();
+            assertEquals(RangingResult.STATUS_SUCCESS, rangingResult.getStatus());
+            fail("RangeResult need MAC address or Peer handle");
+        } catch (IllegalArgumentException e) {
+
+        }
     }
 }
