@@ -38,6 +38,7 @@ import android.content.pm.Signature;
 import android.hardware.radio.network.Domain;
 import android.hardware.radio.sim.Carrier;
 import android.hardware.radio.sim.CarrierRestrictions;
+import android.hardware.radio.sim.SimLockMultiSimPolicy;
 import android.hardware.radio.voice.LastCallFailCause;
 import android.hardware.radio.voice.UusInfo;
 import android.net.Uri;
@@ -48,6 +49,7 @@ import android.os.SystemProperties;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.telephony.CarrierInfo;
 import android.telecom.PhoneAccount;
 import android.telecom.TelecomManager;
 import android.telephony.AccessNetworkConstants;
@@ -65,6 +67,7 @@ import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SdkSuppress;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.internal.telephony.flags.Flags;
@@ -79,7 +82,9 @@ import org.junit.Test;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -1032,4 +1037,112 @@ public class TelephonyManagerTestOnMockModem {
         assertEquals(TelephonyManager.CARRIER_RESTRICTION_STATUS_RESTRICTED,
                 rules.getCarrierRestrictionStatus());
     }
+
+    @RequiresFlagsEnabled(Flags.FLAG_CARRIER_RESTRICTION_RULES_ENHANCEMENT)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    @Test
+    public void getCarrierRestrictionRules() {
+        assumeTrue(Flags.carrierRestrictionRulesEnhancement());
+        // settings the data in MockModem
+        android.hardware.radio.sim.CarrierRestrictions carrierRestrictions =
+                new android.hardware.radio.sim.CarrierRestrictions();
+        android.hardware.radio.sim.CarrierInfo carrierInfo = getCarrierInfo("321", "654", "Airtel",
+                null, null, null, null, null, null);
+        carrierRestrictions.allowedCarrierInfoList = new android.hardware.radio.sim.CarrierInfo[1];
+        carrierRestrictions.allowedCarrierInfoList[0] = carrierInfo;
+        sMockModemManager.setCarrierRestrictionRules(carrierRestrictions,
+                android.hardware.radio.sim.SimLockMultiSimPolicy.NO_MULTISIM_POLICY);
+
+        // calling TM API with shell permissions.
+        CarrierRestrictionRules carrierRules = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                sTelephonyManager, tm -> tm.getCarrierRestrictionRules());
+
+        // Verify the received CarrierRestrictionRules
+        assertTrue(carrierRules != null);
+        assertTrue(carrierRules.getAllowedCarriersInfoList() != null);
+        assertEquals(1, carrierRules.getAllowedCarriersInfoList().size());
+        CarrierInfo carrierInfo1 = carrierRules.getAllowedCarriersInfoList().get(0);
+        assertTrue(carrierInfo1 != null);
+        assertEquals(carrierInfo1.getMcc(), "321");
+        assertEquals(carrierInfo1.getMnc(), "654");
+        assertEquals(carrierInfo1.getSpn(), "Airtel");
+        assertEquals(carrierRules.getMultiSimPolicy(),
+                CarrierRestrictionRules.MULTISIM_POLICY_NONE);
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_CARRIER_RESTRICTION_RULES_ENHANCEMENT)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    @Test
+    public void getCarrierRestrictionRules_WithEphlmnList() {
+        assumeTrue(Flags.carrierRestrictionRulesEnhancement());
+        // settings the data in MockModem
+        android.hardware.radio.sim.CarrierRestrictions carrierRestrictions =
+                new android.hardware.radio.sim.CarrierRestrictions();
+        List<android.hardware.radio.sim.Plmn> plmnList = new ArrayList<>();
+        android.hardware.radio.sim.Plmn plmn1 = new android.hardware.radio.sim.Plmn();
+        plmn1.mcc = "*";
+        plmn1.mnc = "546";
+
+        android.hardware.radio.sim.Plmn plmn2 = new android.hardware.radio.sim.Plmn();
+        plmn2.mcc = "132";
+        plmn2.mnc = "***";
+
+        plmnList.add(plmn1);
+        plmnList.add(plmn2);
+
+        android.hardware.radio.sim.CarrierInfo carrierInfo = getCarrierInfo("*21", "**1", "Jio",
+                null, null, null, plmnList, null, null);
+        carrierRestrictions.allowedCarrierInfoList = new android.hardware.radio.sim.CarrierInfo[1];
+        carrierRestrictions.allowedCarrierInfoList[0] = carrierInfo;
+        sMockModemManager.setCarrierRestrictionRules(carrierRestrictions,
+                SimLockMultiSimPolicy.ACTIVE_SERVICE_ON_ANY_SLOT_TO_UNBLOCK_OTHER_SLOTS);
+
+        // calling TM API with shell permissions.
+        CarrierRestrictionRules carrierRules = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                sTelephonyManager, tm -> tm.getCarrierRestrictionRules());
+
+        // Verify the received CarrierRestrictionRules
+        assertTrue(carrierRules != null);
+        Log.d("TestonMockModem", "CTS carrierRules = " +carrierRules);
+        assertTrue(carrierRules.getAllowedCarriersInfoList() != null);
+        assertEquals(1, carrierRules.getAllowedCarriersInfoList().size());
+        CarrierInfo carrierInfo1 = carrierRules.getAllowedCarriersInfoList().get(0);
+        assertTrue(carrierInfo1 != null);
+        assertEquals(carrierInfo1.getMcc(), "*21");
+        assertEquals(carrierInfo1.getMnc(), "**1");
+        assertEquals(carrierInfo1.getSpn(), "Jio");
+        assertTrue(carrierInfo1.getEhplmn() != null);
+        assertTrue(carrierInfo1.getEhplmn().size() == 2);
+        String ehplmn1 = carrierInfo1.getEhplmn().get(0);
+        String ehplmn2 = carrierInfo1.getEhplmn().get(1);
+        String[] ehplmn1Tokens = ehplmn1.split(",");
+        String[] ehplmn2Tokens = ehplmn2.split(",");
+        assertEquals(ehplmn1Tokens[0], "*");
+        assertEquals(ehplmn1Tokens[1], "546");
+        assertEquals(ehplmn2Tokens[0], "132");
+        assertEquals(ehplmn2Tokens[1], "***");
+        assertEquals(carrierRules.getMultiSimPolicy(),
+                CarrierRestrictionRules.
+                        MULTISIM_POLICY_ACTIVE_SERVICE_ON_ANY_SLOT_TO_UNBLOCK_OTHER_SLOTS);
+    }
+
+    private android.hardware.radio.sim.CarrierInfo getCarrierInfo(String mcc, String mnc,
+            String spn, String gid1, String gid2, String imsi,
+            List<android.hardware.radio.sim.Plmn> ehplmn, String iccid, String impi) {
+        android.hardware.radio.sim.CarrierInfo carrierInfo =
+                new android.hardware.radio.sim.CarrierInfo();
+        carrierInfo.mcc = mcc;
+        carrierInfo.mnc = mnc;
+        carrierInfo.spn = spn;
+        carrierInfo.gid1 = gid1;
+        carrierInfo.gid2 = gid2;
+        carrierInfo.imsiPrefix = imsi;
+        carrierInfo.ehplmn = ehplmn;
+        carrierInfo.iccid = iccid;
+        carrierInfo.impi = impi;
+        return carrierInfo;
+    }
+
 }

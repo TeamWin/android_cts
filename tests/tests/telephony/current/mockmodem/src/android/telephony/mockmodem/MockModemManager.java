@@ -22,6 +22,7 @@ import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWE
 
 import android.content.Context;
 import android.hardware.radio.sim.Carrier;
+import android.hardware.radio.sim.CarrierRestrictions;
 import android.hardware.radio.voice.CdmaSignalInfoRecord;
 import android.hardware.radio.voice.UusInfo;
 import android.os.Build;
@@ -1072,5 +1073,11 @@ public class MockModemManager {
         Log.d(TAG, "waitForVoiceLatchCountdown[" + slotId + "]");
         return mMockModemService.getIRadioModem((byte) slotId)
                 .waitForLatchCountdown(slotId, waitMs);
+    }
+
+    public void setCarrierRestrictionRules(CarrierRestrictions carrierRestrictionRules,
+            int multiSimPolicy) {
+        mMockModemService.getIRadioSim().updateCarrierRestrictionRules(
+                carrierRestrictionRules, multiSimPolicy);
     }
 }
