@@ -67,8 +67,7 @@ class EmulateInputDevice {
                 context.display,
                 R.raw.test_touchscreen_register,
                 InputDevice.SOURCE_TOUCHSCREEN,
-                /*useDisplaySize*/
-                true,
+                useDisplaySize = true,
         ).use { touchscreen ->
             // Start the usage session.
             touchscreen.tapOnScreen()

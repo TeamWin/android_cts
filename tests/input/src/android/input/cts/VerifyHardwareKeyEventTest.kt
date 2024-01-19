@@ -72,8 +72,11 @@ class VerifyHardwareKeyEventTest {
      */
     @Test
     fun testVerifyHardwareKeyEvent() {
-        val keyboardDevice = UinputDevice.create(instrumentation, R.raw.test_keyboard_register,
-                InputDevice.SOURCE_KEYBOARD)
+        val keyboardDevice = UinputDevice.create(
+                instrumentation,
+                R.raw.test_keyboard_register,
+                InputDevice.SOURCE_KEYBOARD,
+        )
 
         val EV_SYN = 0
         val SYN_REPORT = 0
@@ -86,7 +89,7 @@ class VerifyHardwareKeyEventTest {
         // Send the UP event right away to avoid key repeat
         injectEvents(keyboardDevice, intArrayOf(EV_KEY, KEY_A, EV_KEY_UP, EV_SYN, SYN_REPORT, 0))
 
-        assertReceivedEventsCanBeVerified(2 /*numEvents*/)
+        assertReceivedEventsCanBeVerified(numEvents = 2)
 
         keyboardDevice.close()
     }
