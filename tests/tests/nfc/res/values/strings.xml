@@ -15,6 +15,4 @@
 -->
 <resources>
     <string name="CtsPaymentService">CTS Nfc Test Service</string>
-    <string name="CtsCustomPaymentService">CTS Nfc Custom Test Service</string>
-    <string name="CtsBackgroundPaymentService">CTS Nfc Background Test Service</string>
 </resources>

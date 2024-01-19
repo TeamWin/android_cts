@@ -1,5 +1,6 @@
 package android.nfc.cts;
 
+import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.Manifest.permission.MANAGE_DEFAULT_APPLICATIONS;
 
 import static org.junit.Assume.assumeTrue;
@@ -48,8 +49,6 @@ import org.mockito.internal.util.reflection.FieldReader;
 import org.mockito.internal.util.reflection.FieldSetter;
 
 import java.util.ArrayList;
-import java.util.HexFormat;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -342,14 +341,18 @@ public class NfcAdapterTest {
     @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_OBSERVE_MODE)
     @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
     public void testAllowTransaction() {
-        ComponentName originalDefault = null;
         try {
-            originalDefault = setDefaultPaymentService(CtsMyHostApduService.class);
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().adoptShellPermissionIdentity(WRITE_SECURE_SETTINGS);
+            Settings.Secure.putString(mContext.getContentResolver(),
+                    "nfc_payment_default_component",
+                    "android.nfc.cts/android.nfc.cts.CtsMyHostApduService");
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
             boolean result = adapter.allowTransaction();
             Assert.assertTrue(result);
         } finally {
-            setDefaultPaymentService(originalDefault);
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().dropShellPermissionIdentity();
         }
     }
 
@@ -357,14 +360,18 @@ public class NfcAdapterTest {
     @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_OBSERVE_MODE)
     @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
     public void testDisallowTransaction() {
-        ComponentName originalDefault = null;
         try {
-            originalDefault = setDefaultPaymentService(CtsMyHostApduService.class);
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().adoptShellPermissionIdentity(WRITE_SECURE_SETTINGS);
+            Settings.Secure.putString(mContext.getContentResolver(),
+                    "nfc_payment_default_component",
+                    "android.nfc.cts/android.nfc.cts.CtsMyHostApduService");
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
             boolean result = adapter.disallowTransaction();
             Assert.assertTrue(result);
         } finally {
-            setDefaultPaymentService(originalDefault);
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().dropShellPermissionIdentity();
         }
     }
 
@@ -398,7 +405,7 @@ public class NfcAdapterTest {
             Assert.assertTrue(result);
         } finally {
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-                .getUiAutomation().dropShellPermissionIdentity();
+                    .getUiAutomation().dropShellPermissionIdentity();
         }
     }
 
@@ -422,373 +429,73 @@ public class NfcAdapterTest {
 
     @Test
     @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP)
-    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
     public void testTypeAPollingLoopToDefault() {
-        ComponentName originalDefault = null;
-        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-        adapter.notifyHceDeactivated();
         try {
-            originalDefault = setDefaultPaymentService(CtsMyHostApduService.class);
-            ArrayList<Bundle> frames = new ArrayList<Bundle>(6);
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_ON));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_A));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_OFF));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_ON));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_A));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_OFF));
-            notifyPollingLoopAndWait(new ArrayList<Bundle>(frames),
-                    CtsMyHostApduService.class.getName());
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().adoptShellPermissionIdentity(WRITE_SECURE_SETTINGS);
+            Settings.Secure.putString(mContext.getContentResolver(),
+                    "nfc_payment_default_component",
+                    "android.nfc.cts/android.nfc.cts.CtsMyHostApduService");
+            Bundle frame = new Bundle();
+            frame.putChar(HostApduService.POLLING_LOOP_TYPE_KEY,
+                                HostApduService.POLLING_LOOP_TYPE_A);
+            notifyPollingLoopAndWait(frame, CtsMyHostApduService.class.getName());
         } finally {
-            setDefaultPaymentService(originalDefault);
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().dropShellPermissionIdentity();
         }
     }
 
     @Test
     @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP)
-    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
     public void testTypeAPollingLoopToForeground() {
         Activity activity = createAndResumeActivity();
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
         CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
-        try {
-            Assert.assertTrue(cardEmulation.setPreferredService(activity,
+        Assert.assertTrue(cardEmulation.setPreferredService(activity,
                     new ComponentName(mContext,
-                            CtsMyHostApduService.class)));
-            ArrayList<Bundle> frames = new ArrayList<Bundle>(6);
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_ON));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_A));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_OFF));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_ON));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_A));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_OFF));
-            notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
-        } finally {
-            Assert.assertTrue(cardEmulation.unsetPreferredService(activity));
-        }
-    }
-
-    @Test
-    @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP)
-    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
-    public void testCustomPollingLoopToCustomDynamic() {
-        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-        CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
-        ComponentName customServiceName = new ComponentName(mContext, CustomHostApduService.class);
-        String testName = new Object() {
-        }.getClass().getEnclosingMethod().getName();
-        String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
-        Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(customServiceName,
-                annotationStringHex));
-        ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
-        frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
-                HexFormat.of().parseHex(annotationStringHex)));
-        notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
-    }
-
-    @Test
-    @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP)
-    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
-    public void testThreeWayConflictPollingLoopToForegroundDynamic() {
-        ComponentName originalDefault = null;
-        Activity activity = createAndResumeActivity();
-        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-        CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
-        try {
-            originalDefault = setDefaultPaymentService(CustomHostApduService.class);
-            ComponentName ctsMyServiceName = new ComponentName(mContext,
-                    CtsMyHostApduService.class);
-            Assert.assertTrue(cardEmulation.setPreferredService(activity, ctsMyServiceName));
-            ComponentName customServiceName = new ComponentName(mContext,
-                    CustomHostApduService.class);
-            ComponentName backgroundServiceName = new ComponentName(mContext,
-                    BackgroundHostApduService.class);
-            String testName = new Object() {
-            }.getClass().getEnclosingMethod().getName();
-            String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
-            Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(customServiceName,
-                    annotationStringHex));
-            Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(
-                    backgroundServiceName, annotationStringHex));
-            Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(ctsMyServiceName,
-                    annotationStringHex));
-            ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
-            frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
-                    HexFormat.of().parseHex(annotationStringHex)));
-            notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
-        } finally {
-            Assert.assertTrue(cardEmulation.unsetPreferredService(activity));
-            setDefaultPaymentService(originalDefault);
-        }
-    }
-
-    @Test
-    @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP)
-    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
-    public void testBackgroundForegroundConflictPollingLoopToPaymentDynamic() {
-        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-        CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
-        Activity activity = createAndResumeActivity();
-        ComponentName customServiceName = new ComponentName(mContext,
-                CustomHostApduService.class);
-        try {
-            Assert.assertTrue(cardEmulation.setPreferredService(activity, customServiceName));
-            ComponentName backgroundServiceName = new ComponentName(mContext,
-                    BackgroundHostApduService.class);
-            String testName = new Object() {
-            }.getClass().getEnclosingMethod().getName();
-            String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
-            Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(customServiceName,
-                    annotationStringHex));
-            Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(
-                    backgroundServiceName, annotationStringHex));
-            ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
-            frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
-                    HexFormat.of().parseHex(annotationStringHex)));
-            notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
-        } finally {
-            Assert.assertTrue(cardEmulation.unsetPreferredService(activity));
-        }
-    }
-
-    @Test
-    @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP)
-    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
-    public void testBackgroundPaymentConflictPollingLoopToPaymentDynamic() {
-        ComponentName originalDefault = null;
-        try {
-            originalDefault = setDefaultPaymentService(CustomHostApduService.class);
-            NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-            CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
-            ComponentName customServiceName = new ComponentName(mContext,
-                    CustomHostApduService.class);
-            ComponentName backgroundServiceName = new ComponentName(mContext,
-                    BackgroundHostApduService.class);
-            String testName = new Object() {
-            }.getClass().getEnclosingMethod().getName();
-            String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
-            Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(customServiceName,
-                    annotationStringHex));
-            Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(
-                    backgroundServiceName, annotationStringHex));
-            ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
-            frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
-                    HexFormat.of().parseHex(annotationStringHex)));
-            notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
-        } finally {
-            setDefaultPaymentService(originalDefault);
-        }
-    }
-
-    @Test
-    @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP)
-    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
-    public void testCustomPollingLoopToCustom() {
-        String testName = new Object() {
-        }.getClass().getEnclosingMethod().getName();
-        String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
-        ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
-        frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
-                HexFormat.of().parseHex(annotationStringHex)));
-        notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
-    }
-
-    @Test
-    @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP)
-    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
-    public void testThreeWayConflictPollingLoopToForeground() {
-        ComponentName originalDefault = null;
-        Activity activity = createAndResumeActivity();
-        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-        CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
-        try {
-            originalDefault = setDefaultPaymentService(CustomHostApduService.class);
-            Assert.assertTrue(cardEmulation.setPreferredService(activity,
-                    new ComponentName(mContext, CtsMyHostApduService.class)));
-            String testName = new Object() {
-            }.getClass().getEnclosingMethod().getName();
-            String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
-            ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
-            frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
-                    HexFormat.of().parseHex(annotationStringHex)));
-            notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
-        } finally {
-            Assert.assertTrue(cardEmulation.unsetPreferredService(activity));
-            setDefaultPaymentService(originalDefault);
-        }
-    }
-
-    @Test
-    @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP)
-    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
-    public void testBackgroundForegroundConflictPollingLoopToPayment() {
-        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-        CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
-        Activity activity = createAndResumeActivity();
-        try {
-            Assert.assertTrue(cardEmulation.setPreferredService(activity,
-                    new ComponentName(mContext, CustomHostApduService.class)));
-            String testName = new Object() {
-            }.getClass().getEnclosingMethod().getName();
-            String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
-            ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
-            frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
-                    HexFormat.of().parseHex(annotationStringHex)));
-            notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
-        } finally {
-            Assert.assertTrue(cardEmulation.unsetPreferredService(activity));
-        }
-    }
-
-    @Test
-    @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP)
-    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
-    public void testBackgroundPaymentConflictPollingLoopToPayment() {
-        ComponentName originalDefault = null;
-        try {
-            originalDefault = setDefaultPaymentService(CustomHostApduService.class);
-            String testName = new Object() {
-            }.getClass().getEnclosingMethod().getName();
-            String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
-            ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
-            frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
-                    HexFormat.of().parseHex(annotationStringHex)));
-            notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
-        } finally {
-            setDefaultPaymentService(originalDefault);
-        }
-    }
-
-    private Bundle createFrame(char type) {
+                                      CtsMyHostApduService.class)));
         Bundle frame = new Bundle();
-        frame.putChar(HostApduService.POLLING_LOOP_TYPE_KEY, type);
-        return frame;
+        frame.putChar(HostApduService.POLLING_LOOP_TYPE_KEY,
+                            HostApduService.POLLING_LOOP_TYPE_A);
+        notifyPollingLoopAndWait(frame, CtsMyHostApduService.class.getName());
     }
 
-    private Bundle createFrameWithData(char type, byte[] data) {
-        Bundle frame = createFrame(type);
-        frame.putByteArray(HostApduService.POLLING_LOOP_DATA_KEY, data);
-        return frame;
-    }
-
-    private ComponentName setDefaultPaymentService(Class serviceClass) {
-        ComponentName componentName = setDefaultPaymentService(
-                new ComponentName(mContext, serviceClass));
-        if (componentName == null) {
-            return null;
-        }
-        return componentName;
-    }
-
-    private ComponentName getDefaultPaymentService() {
-        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-        CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
-        CharSequence desc = cardEmulation.getDescriptionForPreferredPaymentService();
-        if (desc == null) {
-            return null;
-        } else if (desc.toString().equals(mContext.getResources()
-                .getString(R.string.CtsPaymentService))) {
-            return new ComponentName(mContext, CtsMyHostApduService.class);
-        } else if (desc.toString().equals(mContext.getResources()
-                .getString(R.string.CtsCustomPaymentService))) {
-            return new ComponentName(mContext, CustomHostApduService.class);
-        } else if (desc.toString().equals(mContext.getResources()
-                .getString(R.string.CtsBackgroundPaymentService))) {
-            return new ComponentName(mContext, BackgroundHostApduService.class);
-        }
-        return null;
-    }
-
-    private ComponentName setDefaultPaymentService(ComponentName serviceName) {
-        try {
-            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-                    .getUiAutomation().adoptShellPermissionIdentity();
-
-            ComponentName originalValue = getDefaultPaymentService();
-            NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-            CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
-            Settings.Secure.putString(mContext.getContentResolver(),
-                    "nfc_payment_default_component", serviceName.flattenToString());
-            int count = 0;
-            while (!cardEmulation.isDefaultServiceForCategory(serviceName,
-                    CardEmulation.CATEGORY_PAYMENT) && count < 100) {
+    private void notifyPollingLoopAndWait(Bundle frame, String serviceName) {
+        BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Assert.assertEquals(serviceName,
+                        intent.getStringExtra(CtsMyHostApduService.SERVICE_NAME_EXTRA));
+                for (String key: frame.keySet()) {
+                    Assert.assertEquals(frame.getChar(key),
+                            intent.getBundleExtra(CtsMyHostApduService.POLLING_FRAME_EXTRA)
+                            .getChar(key));
+                }
                 synchronized (this) {
-                    try {
-                        this.wait(10);
-                    } catch (InterruptedException ie) {
-                    }
-                }
-            }
-            return originalValue;
-        } finally {
-            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-                    .getUiAutomation().dropShellPermissionIdentity();
-        }
-    }
-
-    static class PollLoopReceiver extends BroadcastReceiver {
-        int mFrameIndex = 0;
-        List<Bundle> mFrames;
-        String mServiceName;
-
-        PollLoopReceiver(List<Bundle> frames, String serviceName) {
-            mFrames = frames;
-            mServiceName = serviceName;
-        }
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            abortBroadcast();
-            Assert.assertEquals(mServiceName,
-                    intent.getStringExtra(CtsMyHostApduService.SERVICE_NAME_EXTRA));
-            ArrayList<Bundle> receivedFrames = intent.getParcelableArrayListExtra(
-                    CtsMyHostApduService.POLLING_FRAMES_EXTRA, Bundle.class);
-            for (Bundle receivedFrame : receivedFrames) {
-                if (mFrameIndex < mFrames.size()) {
-                    Assert.assertEquals(
-                            mFrames.get(mFrameIndex).getChar(HostApduService.POLLING_LOOP_TYPE_KEY),
-                            receivedFrame.getChar(HostApduService.POLLING_LOOP_TYPE_KEY));
-                    Assert.assertArrayEquals(
-                            mFrames.get(mFrameIndex).getByteArray(
-                                    HostApduService.POLLING_LOOP_DATA_KEY),
-                            receivedFrame.getByteArray(HostApduService.POLLING_LOOP_DATA_KEY));
-                } else {
-                    Assert.fail("received more frames than sent: " + receivedFrame);
-                }
-                mFrameIndex++;
-            }
-            synchronized (this) {
-                if (mFrameIndex >= mFrames.size()) {
                     notifyAll();
                 }
             }
-        }
-    }
-
-    private void notifyPollingLoopAndWait(List<Bundle> frames, String serviceName) {
-        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-        PollLoopReceiver receiver = new PollLoopReceiver(frames, serviceName);
+        };
         IntentFilter filter = new IntentFilter();
         filter.addAction(CtsMyHostApduService.POLLING_LOOP_RECEIVED_ACTION);
         mContext.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
-        for (Bundle frame : frames) {
-            adapter.notifyPollingLoop(frame);
-        }
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        adapter.notifyPollingLoop(frame);
+
         synchronized (receiver) {
             try {
-                receiver.wait(5000);
+                receiver.wait();
             } catch (InterruptedException ie) {
-                Assert.assertNull(ie);
+                Assert.assertNotNull(ie);
             }
         }
-        mContext.unregisterReceiver(receiver);
-        adapter.notifyHceDeactivated();
-        Assert.assertEquals(frames.size(), receiver.mFrameIndex);
+
     }
 
     private class CtsReaderCallback implements NfcAdapter.ReaderCallback {
         @Override
-        public void onTagDiscovered(Tag tag) {
-        }
+        public void onTagDiscovered(Tag tag) {}
     }
 
     private class CtsNfcUnlockHandler implements NfcAdapter.NfcUnlockHandler {
@@ -800,7 +507,7 @@ public class NfcAdapterTest {
 
     private Activity createAndResumeActivity() {
         Intent intent = new Intent(ApplicationProvider.getApplicationContext(),
-                NfcFCardEmulationActivity.class);
+            NfcFCardEmulationActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         Activity activity = InstrumentationRegistry.getInstrumentation().startActivitySync(intent);
         InstrumentationRegistry.getInstrumentation().callActivityOnResume(activity);
