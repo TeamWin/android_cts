@@ -25,7 +25,6 @@ import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.ORIENTATIO
 import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.ORIENTATION_270
 import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.ORIENTATION_90
 import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.WIDTH
-import android.util.Size
 import android.view.InputDevice
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
@@ -62,7 +61,8 @@ class TouchScreenTest {
                 virtualDisplayRule.virtualDisplay.display,
                 R.raw.test_touchscreen_register,
                 InputDevice.SOURCE_TOUCHSCREEN,
-                Size(WIDTH, HEIGHT),
+                /*useDisplaySize*/
+                true,
         )
         verifier = EventVerifier(virtualDisplayRule.activity::getInputEvent)
     }

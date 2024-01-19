@@ -24,7 +24,6 @@ import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.ORIENTATIO
 import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.ORIENTATION_270
 import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.ORIENTATION_90
 import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.WIDTH
-import android.util.Size
 import android.view.InputDevice
 import android.view.MotionEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -59,7 +58,8 @@ class DrawingTabletTest {
                 virtualDisplayRule.virtualDisplay.display,
                 R.raw.test_drawing_tablet_register,
                 InputDevice.SOURCE_MOUSE or InputDevice.SOURCE_STYLUS,
-                Size(WIDTH, HEIGHT),
+                /*useDisplaySize*/
+                true,
             )
         verifier = EventVerifier(virtualDisplayRule.activity::getInputEvent)
     }

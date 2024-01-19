@@ -18,9 +18,6 @@ package android.input.cts
 
 import android.app.StatusBarManager
 import android.graphics.Point
-import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.HEIGHT
-import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.WIDTH
-import android.util.Size
 import android.view.InputDevice.SOURCE_KEYBOARD
 import android.view.InputDevice.SOURCE_STYLUS
 import android.view.InputDevice.SOURCE_TOUCHSCREEN
@@ -159,7 +156,8 @@ class StylusButtonInputEventTest {
                 virtualDisplayRule.virtualDisplay.display,
                 R.raw.test_capacitive_stylus_register,
                 SOURCE_TOUCHSCREEN or SOURCE_STYLUS,
-                Size(WIDTH, HEIGHT),
+                /*useDisplaySize*/
+                true,
         ).use { uinputStylus ->
             val pointer = Point(100, 100)
             for (button in LINUX_KEYCODE_TO_MOTIONEVENT_BUTTON.entries.iterator()) {
@@ -217,7 +215,8 @@ class StylusButtonInputEventTest {
                 virtualDisplayRule.virtualDisplay.display,
                 R.raw.test_capacitive_stylus_register,
                 SOURCE_TOUCHSCREEN or SOURCE_STYLUS,
-                Size(WIDTH, HEIGHT),
+                /*useDisplaySize*/
+                true,
         ).use { uinputStylus ->
             val pointer = Point(100, 100)
             for (button in LINUX_KEYCODE_TO_MOTIONEVENT_BUTTON.entries.iterator()) {
