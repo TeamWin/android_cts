@@ -1017,3 +1017,29 @@ def autoframing(props):
   """
   return 'android.control.autoframingAvailable' in props and props[
       'android.control.autoframingAvailable'] == 1
+
+
+def ae_regions(props):
+  """Returns whether a device supports CONTROL_AE_REGIONS.
+
+  Args:
+    props: Camera properties object.
+
+  Returns:
+    Boolean. True if android.control.aeRegions is supported.
+  """
+  return 'android.control.maxRegionsAe' in props and props[
+      'android.control.maxRegionsAe'] != 0
+
+
+def awb_regions(props):
+  """Returns whether a device supports CONTROL_AWB_REGIONS.
+
+  Args:
+    props: Camera properties object.
+
+  Returns:
+    Boolean. True if android.control.awbRegions is supported.
+  """
+  return 'android.control.maxRegionsAwb' in props and props[
+      'android.control.maxRegionsAwb'] != 0

@@ -827,6 +827,49 @@ class ItsSession(object):
       cmd['aeTargetFpsMax'] = ae_target_fps_max
     return self._execute_preview_recording(cmd)
 
+  def do_preview_recording_with_dynamic_three_a_region(self, video_size,
+                                                       stabilize,
+                                                       three_a_regions,
+                                                       three_a_region_duration,
+                                                       ae_target_fps_min=None,
+                                                       ae_target_fps_max=None):
+    """Issue a preview request with dynamic 3A region and read back output object.
+
+    The resolution of the preview and its recording will be determined by
+    video_size. The recorded object consists of a path on the device at which
+    the recorded video is saved.
+
+    Args:
+      video_size: str; Preview resolution at which to record. ex. "1920x1080"
+      stabilize: boolean; Whether the preview should be stabilized.
+      three_a_regions: dictionary of (threeARegionStart/Change/End).
+        Used to control 3A region during recording.
+        threeARegionStart (metering rectangle) starting 3A region of recording.
+        threeARegionChange (metering rectangle) changed 3A region from start.
+        threeARegionEnd (metering rectangle) ending 3A region of recording.
+      three_a_region_duration: float; sleep in ms between 3A regions.
+      ae_target_fps_min: int; If not none, set CONTROL_AE_TARGET_FPS_RANGE min.
+      ae_target_fps_max: int; If not none, set CONTROL_AE_TARGET_FPS_RANGE max.
+    Returns:
+      video_recorded_object: The recorded object returned from ItsService.
+    """
+    cmd = {
+        _CMD_NAME_STR: 'doPreviewRecording',
+        _CAMERA_ID_STR: self._camera_id,
+        'videoSize': video_size,
+        'recordingDuration': 0,  # set to 0 to avoid JSONException
+        'stabilize': stabilize,
+        'threeARegionDuration': three_a_region_duration
+    }
+
+    cmd['threeARegionStart'] = three_a_regions['threeARegionStart']
+    cmd['threeARegionChange'] = three_a_regions['threeARegionChange']
+    cmd['threeARegionEnd'] = three_a_regions['threeARegionEnd']
+    if ae_target_fps_min and ae_target_fps_max:
+      cmd['aeTargetFpsMin'] = ae_target_fps_min
+      cmd['aeTargetFpsMax'] = ae_target_fps_max
+    return self._execute_preview_recording(cmd)
+
   def get_supported_video_qualities(self, camera_id):
     """Get all supported video qualities for this camera device.
 
