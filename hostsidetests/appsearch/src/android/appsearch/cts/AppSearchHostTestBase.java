@@ -34,6 +34,8 @@ public abstract class AppSearchHostTestBase extends BaseHostJUnit4Test {
             TARGET_PKG_A + ".AppSearchStorageAugmenterDeviceTest";
     protected static final String TEST_CONTACTS_INDEXER_CLASS_A =
             TARGET_PKG_A + ".ContactsIndexerDeviceTest";
+    protected static final String TEST_ENTERPRISE_CONTACTS_CLASS_A =
+            TARGET_PKG_A + ".EnterpriseContactsDeviceTest";
     protected static final String TARGET_APK_B = "CtsAppSearchHostTestHelperB.apk";
     protected static final String TARGET_PKG_B = "android.appsearch.app.helper_b";
     protected static final String TEST_CLASS_B = TARGET_PKG_B + ".AppSearchDeviceTest";
@@ -74,6 +76,20 @@ public abstract class AppSearchHostTestBase extends BaseHostJUnit4Test {
             @Nonnull Map<String, String> args) throws Exception {
         DeviceTestRunOptions deviceTestRunOptions = new DeviceTestRunOptions(TARGET_PKG_A)
                 .setTestClassName(TEST_CONTACTS_INDEXER_CLASS_A)
+                .setTestMethodName(testMethod)
+                .setMaxInstrumentationTimeoutMs(DEFAULT_INSTRUMENTATION_TIMEOUT_MS)
+                .setUserId(userId);
+        for (Map.Entry<String, String> entry : args.entrySet()) {
+            deviceTestRunOptions.addInstrumentationArg(entry.getKey(), entry.getValue());
+        }
+        assertWithMessage(testMethod + " failed").that(
+                runDeviceTests(deviceTestRunOptions)).isTrue();
+    }
+
+    protected void runEnterpriseContactsDeviceTestAsUserInPkgA(@Nonnull String testMethod,
+            int userId, @Nonnull Map<String, String> args) throws Exception {
+        DeviceTestRunOptions deviceTestRunOptions = new DeviceTestRunOptions(TARGET_PKG_A)
+                .setTestClassName(TEST_ENTERPRISE_CONTACTS_CLASS_A)
                 .setTestMethodName(testMethod)
                 .setMaxInstrumentationTimeoutMs(DEFAULT_INSTRUMENTATION_TIMEOUT_MS)
                 .setUserId(userId);

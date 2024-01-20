@@ -53,6 +53,7 @@ android_test_helper_app {
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "testng",
+        "service-appsearch-for-tests",
     ],
     srcs: [
         "test-apps/AppSearchHostTestHelperA/src/**/*.java",
