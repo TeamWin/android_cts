@@ -19,6 +19,23 @@ package android.adpf.common;
 public class ADPFHintSessionConstants {
     public static final String TEST_NAME_KEY = "Test_Name";
 
-    public static final int MINIMUM_VALID_SDK = 32; // T
+    public static final int MINIMUM_VALID_SDK = 33; // T
     public static final String IS_HINT_SESSION_SUPPORTED_KEY = "isHintSessionSupported";
+    public static final String BASELINE_KEY = "baseline";
+    public static final String LIGHT_LOAD_KEY = "light_load";
+    public static final String HEAVY_LOAD_KEY = "heavy_load";
+    public static final String TRANSITION_LOAD_KEY = "transition_load";
+
+    // public static final String SECOND_LIGHT_LOAD_KEY = "second_light_load";
+
+
+    public static final Double ERROR_MARGIN = 0.2;
+
+    // Used to determine which tests to run on the native side.
+    public static final String[] TESTS_ENABLED = new String[] {
+        BASELINE_KEY,
+        // LIGHT_LOAD_KEY,
+        // HEAVY_LOAD_KEY,
+        TRANSITION_LOAD_KEY,
+    };
 }

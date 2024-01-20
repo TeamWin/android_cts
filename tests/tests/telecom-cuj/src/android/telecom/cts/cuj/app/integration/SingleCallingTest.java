@@ -81,6 +81,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testOutgoingCall_ManagedConnectionServiceApp() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper managedApp = null;
         try {
             managedApp = bindToApp(ManagedConnectionServiceApp);
@@ -108,6 +111,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testIncomingCall_ManagedConnectionServiceApp() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper managedApp = null;
         try {
             managedApp = bindToApp(ManagedConnectionServiceApp);
@@ -142,6 +148,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testToggleMuteState_ManagedConnectionServiceApp() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper managedApp = null;
         try {
             managedApp = bindToApp(ManagedConnectionServiceApp);
@@ -167,6 +176,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testGetCurrentEndpoint_ManagedConnectionServiceApp() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper managedApp = null;
         try {
             managedApp = bindToApp(ManagedConnectionServiceApp);
@@ -192,6 +204,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testAvailableEndpoints_ManagedConnectionServiceApp() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper managedApp = null;
         try {
             managedApp = bindToApp(ManagedConnectionServiceApp);
@@ -226,6 +241,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testBasicAudioSwitchTest_ManagedConnectionServiceApp() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper managedApp = null;
         try {
             managedApp = bindToApp(ManagedConnectionServiceApp);
@@ -257,6 +275,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testOutgoingCall_ConnectionServiceVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper voipCsApp = null;
 
         try {
@@ -285,6 +306,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testIncomingCall_ConnectionServiceVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper voipCsApp = null;
 
         try {
@@ -316,6 +340,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testToggleMuteState_ConnectionServiceVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper voipCs = null;
         try {
             voipCs = bindToApp(ConnectionServiceVoipAppMain);
@@ -342,6 +369,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testGetCurrentEndpoint_ConnectionServiceVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper voipCs = null;
         try {
             voipCs = bindToApp(ConnectionServiceVoipAppMain);
@@ -368,6 +398,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testAvailableEndpoints_ConnectionServiceVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper voipCs = null;
         try {
             voipCs = bindToApp(ConnectionServiceVoipAppMain);
@@ -403,6 +436,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testBasicAudioSwitchTest_ConnectionServiceVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper voipCsApp = null;
         try {
             voipCsApp = bindToApp(ConnectionServiceVoipAppMain);
@@ -434,6 +470,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testOutgoingCall_ConnectionServiceVoipAppClone() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper voipCsApp = null;
 
         try {
@@ -462,6 +501,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testIncomingCall_ConnectionServiceVoipAppClone() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper voipCsApp = null;
 
         try {
@@ -493,6 +535,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testToggleMuteState_ConnectionServiceVoipAppClone() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper voipCs = null;
         try {
             voipCs = bindToApp(ConnectionServiceVoipAppClone);
@@ -519,6 +564,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testGetCurrentEndpoint_ConnectionServiceVoipAppClone() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper voipCs = null;
         try {
             voipCs = bindToApp(ConnectionServiceVoipAppClone);
@@ -545,6 +593,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testAvailableEndpoints_ConnectionServiceVoipAppClone() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper voipCs = null;
         try {
             voipCs = bindToApp(ConnectionServiceVoipAppClone);
@@ -579,6 +630,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testBasicAudioSwitchTest_ConnectionServiceVoipAppClone() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper voipCsApp = null;
 
         try {
@@ -615,6 +669,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testOutgoingCall_TransactionalVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper transactionalApp = null;
 
         try {
@@ -647,6 +704,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testIncomingCall_TransactionalVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper transactionalApp = null;
 
         try {
@@ -680,6 +740,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testIncomingVideoCall_TransactionalVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         CallAttributes incomingAttributes = getDefaultAttributes(TransactionalVoipAppMain,
                 false /*isOutgoing*/);
         AppControlWrapper transactionalApp = null;
@@ -716,6 +779,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testGetCurrentEndpoint_TransactionalVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper voipCs = null;
         try {
             voipCs = bindToApp(TransactionalVoipAppMain);
@@ -745,6 +811,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testAvailableEndpoints_TransactionalVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper voipCs = null;
         try {
             voipCs = bindToApp(TransactionalVoipAppMain);
@@ -783,6 +852,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testBasicAudioSwitchTest_TransactionalVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper transactionalApp = null;
         try {
             transactionalApp = bindToApp(TransactionalVoipAppMain);
@@ -818,6 +890,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testOutgoingCall_TransactionalVoipAppClone() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper transactionalApp = null;
         try {
             transactionalApp = bindToApp(TransactionalVoipAppClone);
@@ -849,6 +924,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testIncomingCall_TransactionalVoipAppClone() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper transactionalApp = null;
         try {
             transactionalApp = bindToApp(TransactionalVoipAppClone);
@@ -878,6 +956,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testGetCurrentEndpoint_TransactionalVoipAppClone() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper voipCs = null;
         try {
             voipCs = bindToApp(TransactionalVoipAppClone);
@@ -907,6 +988,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testAvailableEndpoints_TransactionalVoipAppClone() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper voipCs = null;
         try {
             voipCs = bindToApp(TransactionalVoipAppClone);
@@ -945,6 +1029,9 @@ public class SingleCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testBasicAudioSwitchTest_TransactionalVoipAppClone() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper transactionalApp = null;
         try {
             transactionalApp = bindToApp(TransactionalVoipAppClone);

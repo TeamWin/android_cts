@@ -98,7 +98,8 @@ public class TestBase extends WifiJUnit4TestBase {
     private static Boolean sWasScanThrottleEnabled;
     private static boolean sWasWifiEnabled;
     private static ScanResult s11McScanResult;
-    private static ScanResult sNone11McScanResult;
+    private static ScanResult s11AzScanResult;
+    private static ScanResult sLegacyScanResult;
 
     protected WifiRttManager mWifiRttManager;
     protected Bundle mCharacteristics;
@@ -294,17 +295,20 @@ public class TestBase extends WifiJUnit4TestBase {
             throws InterruptedException {
         int scanCount = 0;
 
-        Map<String, ScanResult> ap24Ghz = new HashMap<>();
-        Map<String, ScanResult> ap5Ghz = new HashMap<>();
+        Map<String, ScanResult> ap24Ghz11Mc = new HashMap<>();
+        Map<String, ScanResult> ap5Ghz11Mc = new HashMap<>();
+        Map<String, ScanResult> ap24Ghz11Az = new HashMap<>();
+        Map<String, ScanResult> ap5Ghz11Az = new HashMap<>();
+
         while (scanCount <= NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP) {
             for (ScanResult scanResult : scanAps()) {
-                if (!scanResult.is80211mcResponder()) {
+                if (!scanResult.is80211mcResponder() && !scanResult.is80211azNtbResponder()) {
                     if (scanResult.centerFreq0 < FREQUENCY_OF_5GHZ_BAND_IN_MHZ) {
                         continue;
                     }
-                    if (sNone11McScanResult == null
-                            || scanResult.level > sNone11McScanResult.level) {
-                        sNone11McScanResult = scanResult;
+                    if (sLegacyScanResult == null
+                            || scanResult.level > sLegacyScanResult.level) {
+                        sLegacyScanResult = scanResult;
                     }
                     continue;
                 }
@@ -312,35 +316,54 @@ public class TestBase extends WifiJUnit4TestBase {
                     continue;
                 }
                 if (is24Ghz(scanResult.frequency)) {
-                    ap24Ghz.put(scanResult.BSSID, scanResult);
+                    if (scanResult.is80211azNtbResponder()) {
+                        ap24Ghz11Az.put(scanResult.BSSID, scanResult);
+                    } else {
+                        ap24Ghz11Mc.put(scanResult.BSSID, scanResult);
+                    }
                 } else if (is5Ghz(scanResult.frequency)) {
-                    ap5Ghz.put(scanResult.BSSID, scanResult);
+                    if (scanResult.is80211azNtbResponder()) {
+                        ap5Ghz11Az.put(scanResult.BSSID, scanResult);
+                    } else {
+                        ap5Ghz11Mc.put(scanResult.BSSID, scanResult);
+                    }
                 }
             }
-            if (sNone11McScanResult == null) {
+            if (sLegacyScanResult == null) {
                 // Ongoing connection may cause scan failure, wait for a while before next scan.
                 Thread.sleep(INTERVAL_BETWEEN_FAILURE_SCAN_MILLIS);
             }
             scanCount++;
         }
 
-        if (!ap5Ghz.isEmpty()) {
-            s11McScanResult = getRandomScanResult(ap5Ghz.values());
-            return;
+        if (!ap5Ghz11Mc.isEmpty()) {
+            s11McScanResult = getRandomScanResult(ap5Ghz11Mc.values());
+        } else {
+            s11McScanResult = getRandomScanResult(ap24Ghz11Mc.values());
         }
-        s11McScanResult = getRandomScanResult(ap24Ghz.values());
+
+        if (!ap5Ghz11Az.isEmpty()) {
+            s11AzScanResult = getRandomScanResult(ap5Ghz11Az.values());
+        } else {
+            s11AzScanResult = getRandomScanResult(ap24Ghz11Az.values());
+        }
+
     }
 
     static Context getContext() {
         return sContext;
     }
 
+    static ScanResult getS11AzScanResult() {
+        return s11AzScanResult;
+    }
+
     static ScanResult getS11McScanResult() {
         return s11McScanResult;
     }
 
-    static ScanResult getNone11McScanResult() {
-        return sNone11McScanResult;
+    static ScanResult getLegacyScanResult() {
+        return sLegacyScanResult;
     }
 
     private static boolean is24Ghz(int freq) {

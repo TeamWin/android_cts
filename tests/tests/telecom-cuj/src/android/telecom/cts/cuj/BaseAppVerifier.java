@@ -21,6 +21,7 @@ import static android.telecom.cts.apps.TelecomTestApp.MANAGED_APP_CN;
 import static android.telecom.cts.apps.TelecomTestApp.MANAGED_APP_ID;
 import static android.telecom.cts.apps.TelecomTestApp.MANAGED_APP_LABEL;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.RemoteException;
@@ -32,8 +33,8 @@ import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.cts.apps.AppControlWrapper;
 import android.telecom.cts.apps.BaseAppVerifierImpl;
-import android.telecom.cts.apps.TelecomTestApp;
 import android.telecom.cts.apps.InCallServiceMethods;
+import android.telecom.cts.apps.TelecomTestApp;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -48,7 +49,9 @@ import java.util.List;
  */
 public class BaseAppVerifier {
     public static final boolean S_IS_TEST_DISABLED = true;
+    public boolean mShouldTestTelecom = true;
     private BaseAppVerifierImpl mBaseAppVerifierImpl;
+    private Context mContext = null;
     /***********************************************************
      /  ManagedConnectionServiceApp - The PhoneAccountHandle and PhoneAccount must reside in the
      /  CTS test process.
@@ -70,6 +73,11 @@ public class BaseAppVerifier {
      /***********************************************************/
     @Before
     public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mShouldTestTelecom = BaseAppVerifierImpl.shouldTestTelecom(mContext);
+        if (!mShouldTestTelecom) {
+            return;
+        }
         mBaseAppVerifierImpl = new BaseAppVerifierImpl(
                 InstrumentationRegistry.getInstrumentation(),
                 mManagedAccount,
@@ -269,8 +277,9 @@ public class BaseAppVerifier {
             throws Exception {
         CallEndpoint originalCallEndpoint = getCurrentCallEndpoint(appControl, callId);
         CallEndpoint anotherCallEndpoint = getAnotherCallEndpoint(appControl, callId);
-        if (!originalCallEndpoint.equals(anotherCallEndpoint)) {
+        if (anotherCallEndpoint != null && !originalCallEndpoint.equals(anotherCallEndpoint)) {
             setAudioRouteStateAndVerify(appControl, callId, anotherCallEndpoint);
+            // reset the DUT to the original endpoint for cleanup purposes
             setAudioRouteStateAndVerify(appControl, callId, originalCallEndpoint);
         }
     }

@@ -39,7 +39,9 @@ import static org.junit.Assert.fail;
 import android.app.AppOpsManager;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Process;
 import android.os.RemoteException;
@@ -61,6 +63,7 @@ import java.util.List;
  * application that is bound to in the cts/tests/tests/telecom-apps dir.
  */
 public class BaseAppVerifierImpl {
+    static final boolean HAS_TELECOM = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
     private static final String REGISTER_SIM_SUBSCRIPTION_PERMISSION =
             "android.permission.REGISTER_SIM_SUBSCRIPTION";
     private static final String MODIFY_PHONE_STATE_PERMISSION =
@@ -103,6 +106,14 @@ public class BaseAppVerifierImpl {
             ShellCommandExecutor.setDefaultDialer(mInstrumentation, mPreviousDefaultDialer);
         }
         ShellIdentityUtils.dropShellPermissionIdentity();
+    }
+
+    public static boolean shouldTestTelecom(Context context) {
+        if (!HAS_TELECOM) {
+            return false;
+        }
+        final PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_TELECOM);
     }
 
     public AppControlWrapper bindToApp(TelecomTestApp applicationName) throws Exception {

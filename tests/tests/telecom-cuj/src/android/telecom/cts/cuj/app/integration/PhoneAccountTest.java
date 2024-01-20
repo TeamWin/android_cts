@@ -67,6 +67,9 @@ public class PhoneAccountTest extends BaseAppVerifier {
      */
     @Test
     public void testAccountTest_ConnectionServiceVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper voipCsApp = null;
         try {
             voipCsApp = bindToApp(ConnectionServiceVoipAppMain);
@@ -100,6 +103,9 @@ public class PhoneAccountTest extends BaseAppVerifier {
      */
     @Test
     public void testCustomAccountTest_ConnectionServiceVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper voipCsApp = null;
         try {
             voipCsApp = bindToApp(ConnectionServiceVoipAppMain);
@@ -144,6 +150,9 @@ public class PhoneAccountTest extends BaseAppVerifier {
      */
     @Test
     public void testAccountTest_TransactionalVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper transactionalApp = null;
         try {
             transactionalApp = bindToApp(TransactionalVoipAppMain);
@@ -177,7 +186,7 @@ public class PhoneAccountTest extends BaseAppVerifier {
      */
     @Test
     public void testCustomAccountTest_TransactionalVoipAppMain() throws Exception {
-        if (S_IS_TEST_DISABLED) {
+        if (!mShouldTestTelecom || S_IS_TEST_DISABLED) {
             return;
         }
         AppControlWrapper transactionalApp = null;

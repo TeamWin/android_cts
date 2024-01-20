@@ -3177,37 +3177,39 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         mContext.registerReceiver(addedBroadcastReceiver, intentFilter);
         mContext.registerReceiver(removedBroadcastReceiver, intentFilter);
 
-        installPackage(HELLO_WORLD_APK);
-        // Make sure this broadcast is received so it doesn't affect the test later
-        addedBroadcastReceiver.assertBroadcastReceived();
-        byte[] archivedPackage = SystemUtil.runShellCommandByteOutput(
-                mInstrumentation.getUiAutomation(),
-                "pm get-archived-package-metadata " + HELLO_WORLD_PACKAGE_NAME);
-        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
-        // Make sure this broadcast is received so it doesn't affect the test later
-        removedBroadcastReceiver.assertBroadcastReceived();
+        try {
+            installPackage(HELLO_WORLD_APK);
+            // Make sure this broadcast is received so it doesn't affect the test later
+            addedBroadcastReceiver.assertBroadcastReceived();
+            byte[] archivedPackage = SystemUtil.runShellCommandByteOutput(
+                    mInstrumentation.getUiAutomation(),
+                    "pm get-archived-package-metadata " + HELLO_WORLD_PACKAGE_NAME);
+            uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+            // Make sure this broadcast is received so it doesn't affect the test later
+            removedBroadcastReceiver.assertBroadcastReceived();
 
-        addedBroadcastReceiver.reset();
-        removedBroadcastReceiver.reset();
+            addedBroadcastReceiver.reset();
+            removedBroadcastReceiver.reset();
 
-        assertEquals("Success\n", executeShellCommand(
-                String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
-                        archivedPackage.length), archivedPackage));
+            assertEquals("Success\n", executeShellCommand(
+                    String.format("pm install-archived -r -i %s -t -S %s",
+                            mContext.getPackageName(), archivedPackage.length), archivedPackage));
 
-        addedBroadcastReceiver.assertBroadcastReceived();
-        Intent addedIntent = addedBroadcastReceiver.getBroadcastResult();
-        assertNotNull(addedIntent);
-        assertTrue(addedIntent.getExtras().getBoolean(Intent.EXTRA_ARCHIVAL, false));
-        assertFalse(addedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false));
+            addedBroadcastReceiver.assertBroadcastReceived();
+            Intent addedIntent = addedBroadcastReceiver.getBroadcastResult();
+            assertNotNull(addedIntent);
+            assertTrue(addedIntent.getExtras().getBoolean(Intent.EXTRA_ARCHIVAL, false));
+            assertFalse(addedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false));
 
-        removedBroadcastReceiver.assertBroadcastReceived();
-        Intent removedIntent = removedBroadcastReceiver.getBroadcastResult();
-        assertNotNull(removedIntent);
-        assertTrue(removedIntent.getExtras().getBoolean(Intent.EXTRA_ARCHIVAL, false));
-        assertTrue(removedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false));
-
-        mContext.unregisterReceiver(addedBroadcastReceiver);
-        mContext.unregisterReceiver(removedBroadcastReceiver);
+            removedBroadcastReceiver.assertBroadcastReceived();
+            Intent removedIntent = removedBroadcastReceiver.getBroadcastResult();
+            assertNotNull(removedIntent);
+            assertTrue(removedIntent.getExtras().getBoolean(Intent.EXTRA_ARCHIVAL, false));
+            assertTrue(removedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false));
+        } finally {
+            mContext.unregisterReceiver(addedBroadcastReceiver);
+            mContext.unregisterReceiver(removedBroadcastReceiver);
+        }
     }
 
     // Same tests as above, but using direct PackageInstaller API calls.
@@ -3324,6 +3326,9 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         var archivedPackage = packageManager.getArchivedPackage(HELLO_WORLD_PACKAGE_NAME);
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
 
+        // Wait ACTION_PACKAGE_REMOVED was dispatched for uninstall HELLO_WORLD_PACKAGE_NAME
+        SystemClock.sleep(2_000);
+
         int currentUser = ActivityManager.getCurrentUser();
         PackageBroadcastReceiver addedBroadcastReceiver = new PackageBroadcastReceiver(
                 HELLO_WORLD_PACKAGE_NAME, currentUser, Intent.ACTION_PACKAGE_ADDED
@@ -3338,22 +3343,24 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         mContext.registerReceiver(addedBroadcastReceiver, intentFilter);
         mContext.registerReceiver(removedBroadcastReceiver, intentFilter);
 
-        installArchived(archivedPackage);
+        try {
+            installArchived(archivedPackage);
 
-        addedBroadcastReceiver.assertBroadcastReceived();
-        Intent addedIntent = addedBroadcastReceiver.getBroadcastResult();
-        assertNotNull(addedIntent);
-        assertTrue(addedIntent.getExtras().getBoolean(Intent.EXTRA_ARCHIVAL, false));
-        assertFalse(addedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false));
+            addedBroadcastReceiver.assertBroadcastReceived();
+            Intent addedIntent = addedBroadcastReceiver.getBroadcastResult();
+            assertNotNull(addedIntent);
+            assertTrue(addedIntent.getExtras().getBoolean(Intent.EXTRA_ARCHIVAL, false));
+            assertFalse(addedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false));
 
-        removedBroadcastReceiver.assertBroadcastReceived();
-        Intent removedIntent = removedBroadcastReceiver.getBroadcastResult();
-        assertNotNull(removedIntent);
-        assertTrue(removedIntent.getExtras().getBoolean(Intent.EXTRA_ARCHIVAL, false));
-        assertTrue(removedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false));
-
-        mContext.unregisterReceiver(addedBroadcastReceiver);
-        mContext.unregisterReceiver(removedBroadcastReceiver);
+            removedBroadcastReceiver.assertBroadcastReceived();
+            Intent removedIntent = removedBroadcastReceiver.getBroadcastResult();
+            assertNotNull(removedIntent);
+            assertTrue(removedIntent.getExtras().getBoolean(Intent.EXTRA_ARCHIVAL, false));
+            assertTrue(removedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false));
+        } finally {
+            mContext.unregisterReceiver(addedBroadcastReceiver);
+            mContext.unregisterReceiver(removedBroadcastReceiver);
+        }
     }
 
     private static Certificate readCertificate() throws Exception {
@@ -3425,32 +3432,36 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         intentFilter.addDataScheme("package");
         mContext.registerReceiver(removedBroadcastReceiver, intentFilter);
         mContext.registerReceiver(fullyRemovedBroadcastReceiver, intentFilter);
-        // Test uninstall -k without --user
-        uninstallPackageKeepData(HELLO_WORLD_PACKAGE_NAME);
-        removedBroadcastReceiver.assertBroadcastReceived();
-        fullyRemovedBroadcastReceiver.assertBroadcastNotReceived();
-        removedBroadcastReceiver.reset();
-        // Test uninstall -k with --user
-        installPackage(HELLO_WORLD_APK);
-        uninstallPackageKeepDataForUser(HELLO_WORLD_PACKAGE_NAME, currentUser);
-        removedBroadcastReceiver.assertBroadcastReceived();
-        fullyRemovedBroadcastReceiver.assertBroadcastNotReceived();
-        removedBroadcastReceiver.reset();
-        // Test uninstall without -k
-        installPackage(HELLO_WORLD_APK);
-        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
-        removedBroadcastReceiver.assertBroadcastReceived();
-        fullyRemovedBroadcastReceiver.assertBroadcastReceived();
-        removedBroadcastReceiver.reset();
-        fullyRemovedBroadcastReceiver.reset();
-        // Test uninstall --user without -k
-        installPackage(HELLO_WORLD_APK);
-        uninstallPackageForUser(HELLO_WORLD_PACKAGE_NAME, currentUser);
-        removedBroadcastReceiver.assertBroadcastReceived();
-        fullyRemovedBroadcastReceiver.assertBroadcastReceived();
-        // Clean up
-        mContext.unregisterReceiver(removedBroadcastReceiver);
-        mContext.unregisterReceiver(fullyRemovedBroadcastReceiver);
+
+        try {
+            // Test uninstall -k without --user
+            uninstallPackageKeepData(HELLO_WORLD_PACKAGE_NAME);
+            removedBroadcastReceiver.assertBroadcastReceived();
+            fullyRemovedBroadcastReceiver.assertBroadcastNotReceived();
+            removedBroadcastReceiver.reset();
+            // Test uninstall -k with --user
+            installPackage(HELLO_WORLD_APK);
+            uninstallPackageKeepDataForUser(HELLO_WORLD_PACKAGE_NAME, currentUser);
+            removedBroadcastReceiver.assertBroadcastReceived();
+            fullyRemovedBroadcastReceiver.assertBroadcastNotReceived();
+            removedBroadcastReceiver.reset();
+            // Test uninstall without -k
+            installPackage(HELLO_WORLD_APK);
+            uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+            removedBroadcastReceiver.assertBroadcastReceived();
+            fullyRemovedBroadcastReceiver.assertBroadcastReceived();
+            removedBroadcastReceiver.reset();
+            fullyRemovedBroadcastReceiver.reset();
+            // Test uninstall --user without -k
+            installPackage(HELLO_WORLD_APK);
+            uninstallPackageForUser(HELLO_WORLD_PACKAGE_NAME, currentUser);
+            removedBroadcastReceiver.assertBroadcastReceived();
+            fullyRemovedBroadcastReceiver.assertBroadcastReceived();
+        } finally {
+            // Clean up
+            mContext.unregisterReceiver(removedBroadcastReceiver);
+            mContext.unregisterReceiver(fullyRemovedBroadcastReceiver);
+        }
     }
 
     @Test
@@ -3472,20 +3483,25 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         intentFilter.addDataScheme("package");
         mContext.registerReceiver(replacedBroadcastReceiver, intentFilter);
         mContext.registerReceiver(addedBroadcastReceiver, intentFilter);
-        // Reinstall and verify that the correct broadcasts are received
-        installPackage(HELLO_WORLD_APK);
-        replacedBroadcastReceiver.assertBroadcastReceived();
-        final Intent replacedIntent = replacedBroadcastReceiver.getBroadcastResult();
-        assertThat(replacedIntent).isNotNull();
-        assertThat(replacedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false)).isTrue();
-        addedBroadcastReceiver.assertBroadcastReceived();
-        final Intent addedIntent = addedBroadcastReceiver.getBroadcastResult();
-        assertThat(addedIntent).isNotNull();
-        assertThat(addedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false)).isTrue();
-        // Clean up
-        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
-        mContext.unregisterReceiver(replacedBroadcastReceiver);
-        mContext.unregisterReceiver(addedBroadcastReceiver);
+
+        try {
+            // Reinstall and verify that the correct broadcasts are received
+            installPackage(HELLO_WORLD_APK);
+            replacedBroadcastReceiver.assertBroadcastReceived();
+            final Intent replacedIntent = replacedBroadcastReceiver.getBroadcastResult();
+            assertThat(replacedIntent).isNotNull();
+            assertThat(
+                    replacedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false)).isTrue();
+            addedBroadcastReceiver.assertBroadcastReceived();
+            final Intent addedIntent = addedBroadcastReceiver.getBroadcastResult();
+            assertThat(addedIntent).isNotNull();
+            assertThat(addedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false)).isTrue();
+            // Clean up
+            uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+        } finally {
+            mContext.unregisterReceiver(replacedBroadcastReceiver);
+            mContext.unregisterReceiver(addedBroadcastReceiver);
+        }
     }
 
     @Test

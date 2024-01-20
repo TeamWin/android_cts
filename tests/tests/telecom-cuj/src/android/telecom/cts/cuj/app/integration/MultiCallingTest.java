@@ -49,6 +49,9 @@ public class MultiCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testMultiCalling_SingleApp_ManagedApp() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         CallAttributes outgoingAttributes = getDefaultAttributes(ManagedConnectionServiceApp,
                 true /*isOutgoing*/);
         CallAttributes incomingAttributes = getDefaultAttributes(ManagedConnectionServiceApp,
@@ -82,6 +85,9 @@ public class MultiCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testMultiCalling_SingleApp_ConnectionServiceVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         CallAttributes outgoingAttributes = getDefaultAttributes(ConnectionServiceVoipAppMain,
                 true /*isOutgoing*/);
         CallAttributes incomingAttributes = getDefaultAttributes(ConnectionServiceVoipAppMain,
@@ -114,6 +120,9 @@ public class MultiCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testMultiCalling_SingleApp_TransactionalApp() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         CallAttributes outgoingAttributes = getDefaultAttributes(TransactionalVoipAppMain,
                 true /*isOutgoing*/);
         CallAttributes incomingAttributes = getDefaultAttributes(TransactionalVoipAppMain,
@@ -150,6 +159,9 @@ public class MultiCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testManagedAndTransactional() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         CallAttributes outgoingAttributes = getDefaultAttributes(ManagedConnectionServiceApp,
                 true /*isOutgoing*/);
         CallAttributes incomingAttributes = getDefaultAttributes(TransactionalVoipAppMain,
@@ -187,6 +199,9 @@ public class MultiCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testTransactionalAndManaged() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         CallAttributes outgoingAttributes = getDefaultAttributes(TransactionalVoipAppMain,
                 true /*isOutgoing*/);
         CallAttributes incomingAttributes = getDefaultAttributes(ManagedConnectionServiceApp,
@@ -224,6 +239,9 @@ public class MultiCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testManagedAndSelfManaged() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         CallAttributes outgoingAttributes = getDefaultAttributes(ManagedConnectionServiceApp,
                 true /*isOutgoing*/);
         CallAttributes incomingAttributes = getDefaultAttributes(ConnectionServiceVoipAppMain,
@@ -261,6 +279,9 @@ public class MultiCallingTest extends BaseAppVerifier {
      */
     @Test
     public void testSelfManagedAndManaged() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         CallAttributes outgoingAttributes = getDefaultAttributes(ConnectionServiceVoipAppMain,
                 true /*isOutgoing*/);
         CallAttributes incomingAttributes = getDefaultAttributes(ManagedConnectionServiceApp,

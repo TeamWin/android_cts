@@ -163,12 +163,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -6190,6 +6192,10 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.telephony.TelephonyManager#setVoiceServiceStateOverride"})
+    @RequiresFlagsEnabled(
+            com.android.server.telecom.flags.Flags.FLAG_TELECOM_RESOLVE_HIDDEN_DEPENDENCIES)
     public void testSetVoiceServiceStateOverride() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_CALLING));
         ServiceStateRadioStateListener callback = new ServiceStateRadioStateListener(
@@ -6820,6 +6826,54 @@ public class TelephonyManagerTest {
 
     @Test
     @ApiTest(apis = {
+            "android.telephony.TelephonyManager#getLastKnownCellIdentity"})
+    @RequiresFlagsEnabled(
+            com.android.server.telecom.flags.Flags.FLAG_TELECOM_RESOLVE_HIDDEN_DEPENDENCIES)
+    public void testGetLastKnownCellIdentity() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
+        // Revoking ACCESS_FINE_LOCATION will cause test to crash. Verify that security exception
+        // is still thrown if com.android.phone.permission.ACCESS_LAST_KNOWN_CELL_ID is
+        // not granted.
+        try {
+            mTelephonyManager.getLastKnownCellIdentity();
+            fail("TelephonyManager#resetSettings requires the"
+                    + " permission.ACCESS_LAST_KNOWN_CELL_ID.");
+        } catch (SecurityException e) {
+            //expected
+        }
+
+        // Obtain the primary cell identity from the NetworkRegistration info list.
+        ServiceState ss = mTelephonyManager.getServiceState();
+        List<NetworkRegistrationInfo> regInfos = ss != null
+                ? ss.getNetworkRegistrationInfoList()
+                : new ArrayList();
+
+        Optional<CellIdentity> primaryCellIdentity = regInfos.stream()
+                .filter(nri -> nri.getCellIdentity() != null)
+                .filter(nri -> nri.getTransportType() == AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
+                .sorted(Comparator.comparing(NetworkRegistrationInfo::isRegistered)
+                        .thenComparing((nri) -> nri.getDomain() & NetworkRegistrationInfo.DOMAIN_CS)
+                        .reversed())
+                .map(nri -> nri.getCellIdentity())
+                .distinct()
+                .findFirst();
+
+        try {
+            CellIdentity cellIdentity = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.getLastKnownCellIdentity(),
+                    permission.ACCESS_LAST_KNOWN_CELL_ID,
+                    permission.ACCESS_FINE_LOCATION);
+            assertEquals(
+                    cellIdentity,
+                    primaryCellIdentity.isPresent() ? primaryCellIdentity.get() : null);
+        } catch (SecurityException e) {
+            e.printStackTrace();
+            fail(e.toString());
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {
             "android.telephony.TelephonyManager#isNullCipherNotificationsEnabled",
             "android.telephony.TelephonyManager#setEnableNullCipherNotifications"})
     @RequiresFlagsEnabled(Flags.FLAG_ENABLE_MODEM_CIPHER_TRANSPARENCY)
@@ -6867,6 +6921,7 @@ public class TelephonyManagerTest {
                 }
         );
     }
+
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_DATA_ONLY_CELLULAR_SERVICE)
     @ApiTest(apis = {

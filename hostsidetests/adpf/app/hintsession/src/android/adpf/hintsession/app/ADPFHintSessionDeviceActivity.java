@@ -16,37 +16,53 @@
 
 package android.adpf.hintsession.app;
 
+import static android.adpf.common.ADPFHintSessionConstants.TESTS_ENABLED;
 import static android.adpf.common.ADPFHintSessionConstants.TEST_NAME_KEY;
+import static android.adpf.common.ADPFHintSessionConstants.IS_HINT_SESSION_SUPPORTED_KEY;
 
-import android.app.Activity;
+import android.app.NativeActivity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.PerformanceHintManager;
 import android.util.Log;
+import android.view.WindowManager;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A simple activity to create and use hint session APIs.
  */
-public class ADPFHintSessionDeviceActivity extends Activity {
-    public static class Result {
-        // if the activity runs successfully
-        boolean mIsSuccess = true;
-        // the error message if it fails to run
-        String mErrMsg;
+public class ADPFHintSessionDeviceActivity
+        extends NativeActivity {
+
+    static {
+        System.loadLibrary(
+                "adpfhintsession_test_helper_jni");
     }
 
-    private static final String TAG =
-            android.adpf.hintsession.app.ADPFHintSessionDeviceActivity.class.getSimpleName();
+    protected void onResume() {
+        super.onResume();
+        setFullscreen();
+    }
 
-    private PerformanceHintManager.Session mSession;
+    protected void setFailure(String message) {
+        synchronized (mMetrics) {
+            mMetrics.put("failure", message);
+        }
+    }
+
+    private static final String TAG = android.adpf.hintsession.app
+            .ADPFHintSessionDeviceActivity.class.getSimpleName();
 
     private final Map<String, String> mMetrics = new HashMap<>();
 
-    private final Result mResult = new Result();
+    /**
+     * Flag used to indicate tests are finished, used by
+     * waitForTestFinished to allow the instrumentation to block
+     * on test completion correctly.
+     */
+    private Boolean mFinished = false;
+    private final Object mFinishedLock = new Object();
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -55,45 +71,77 @@ public class ADPFHintSessionDeviceActivity extends Activity {
         String testName = intent.getStringExtra(
                 TEST_NAME_KEY);
         if (testName == null) {
-            synchronized (mResult) {
-                mResult.mIsSuccess = false;
-                mResult.mErrMsg = "test starts without name";
-            }
+            setFailure("Test starts without name");
             return;
         }
+        Log.e(TAG, "created");
+        sendConfigToNative(TESTS_ENABLED);
+    }
 
-        if (mSession == null) {
-            PerformanceHintManager hintManager = getApplicationContext().getSystemService(
-                    PerformanceHintManager.class);
-            long preferredRate = hintManager.getPreferredUpdateRateNanos();
-            synchronized (mMetrics) {
-                mMetrics.put("isHintSessionSupported", preferredRate < 0 ? "false" : "true");
-                mMetrics.put("preferredRate", String.valueOf(preferredRate));
-            }
-            if (hintManager.getPreferredUpdateRateNanos() < 0) {
-                Log.i(TAG, "Skipping the test as the hint session is not supported");
-                return;
-            }
-            final long id = android.os.Process.myTid();
-            mSession = hintManager.createHintSession(new int[]{(int) id},
-                    TimeUnit.MILLISECONDS.toNanos(10));
-            if (mSession == null) {
-                synchronized (mResult) {
-                    mResult.mIsSuccess = false;
-                    mResult.mErrMsg = "failed to create hint session";
-                }
-                return;
-            }
-        }
-        final long targetMillis = 10;
-        mSession.updateTargetWorkDuration(TimeUnit.MILLISECONDS.toNanos(targetMillis));
-        final long actualMillis = 5;
-        mSession.reportActualWorkDuration(TimeUnit.MILLISECONDS.toNanos(actualMillis));
+    private void setFullscreen() {
+        getWindow().setFlags(
+                WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
     }
 
     @Override
     public void onStart() {
         super.onStart();
+    }
+
+    /**
+     * Sends test information to the native code and signals
+     * it to start running performance tests.
+     */
+    public native void sendConfigToNative(String[] data);
+
+    /**
+     * Sends test information from the native code back up
+     * to the Java code once testing is complete
+     */
+    public void sendResultsToJava(String[] names,
+            String[] values) {
+        synchronized (mMetrics) {
+            for (int i = 0; i < names.length; ++i) {
+                mMetrics.put(names[i], values[i]);
+            }
+            String key = mMetrics.get(IS_HINT_SESSION_SUPPORTED_KEY);
+            if (key != null && key.equals("false")) {
+                Log.i(TAG, "Skipping the test as the hint session is not supported");
+            }
+        }
+
+        setFinished();
+    }
+
+    /**
+     * Signals to the app that everything is finished,
+     */
+    public void setFinished() {
+        synchronized (mFinishedLock) {
+            mFinished = true;
+            mFinishedLock.notifyAll();
+        }
+    }
+
+    /**
+     * Blocks until the test has completed, to allow instrumentation
+     * to wait for the test to completely finish
+     */
+    public void waitForTestFinished() {
+        while (true) {
+            synchronized (mFinishedLock) {
+                if (mFinished) {
+                    break;
+                }
+                try {
+                    mFinishedLock.wait();
+                } catch (InterruptedException e) {
+                    System.err.println("Interrupted!");
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -104,17 +152,4 @@ public class ADPFHintSessionDeviceActivity extends Activity {
             return new HashMap<>(mMetrics);
         }
     }
-
-    /**
-     * Gets the hint session test result.
-     */
-    public Result getResult() {
-        Result res = new Result();
-        synchronized (mResult) {
-            res.mIsSuccess = mResult.mIsSuccess;
-            res.mErrMsg = mResult.mErrMsg;
-        }
-        return res;
-    }
-
 }

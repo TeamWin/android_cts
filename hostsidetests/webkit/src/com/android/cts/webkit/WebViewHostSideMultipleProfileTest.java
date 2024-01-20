@@ -149,7 +149,9 @@ public class WebViewHostSideMultipleProfileTest extends BaseHostJUnit4Test {
     private void switchUser(int userId) throws DeviceNotAvailableException {
         if (!mDevice.switchUser(userId)) {
             stopAndRemoveUser(userId);
-            Assert.fail("Failed to switch to user " + userId);
+            Assert.fail("Failed to switch to user " + userId + ". This is usually not a bug in "
+                    + "WebView, but might mean a system process crashed. Check logcat for "
+                    + "\"FATAL EXCEPTION IN SYSTEM PROCESS\".");
         }
     }
 

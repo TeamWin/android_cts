@@ -37,6 +37,7 @@ android_test_helper_app {
         "gcatbox",
         "ats",
         "mcts",
+        "xrts",
     ],
     static_libs: [
         "compatibility-device-info",

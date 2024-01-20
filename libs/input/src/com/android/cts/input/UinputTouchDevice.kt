@@ -40,7 +40,7 @@ class UinputTouchDevice(
     display: Display,
     private val rawResource: Int,
     private val source: Int,
-    sizeOverride: Size? = null,
+    useDisplaySize: Boolean = false,
 ) :
     AutoCloseable {
 
@@ -51,7 +51,8 @@ class UinputTouchDevice(
     private val inputManager: InputManager
 
     init {
-        uinputDevice = createDevice(instrumentation, sizeOverride)
+        val size = Size(display.getMode().getPhysicalWidth(), display.getMode().getPhysicalHeight())
+        uinputDevice = createDevice(instrumentation, if (useDisplaySize) size else null)
         inputManager = instrumentation.targetContext.getSystemService(InputManager::class.java)!!
         associateWith(display)
         WindowManagerStateHelper().waitForAppTransitionIdleOnDisplay(display.displayId)
@@ -59,8 +60,11 @@ class UinputTouchDevice(
     }
 
     private fun injectEvent(events: IntArray) {
-        uinputDevice.injectEvents(events.joinToString(prefix = "[", postfix = "]",
-                separator = ","))
+        uinputDevice.injectEvents(events.joinToString(
+            prefix = "[",
+            postfix = "]",
+            separator = ",",
+        ))
     }
 
     fun sendBtnTouch(isDown: Boolean) {
@@ -134,14 +138,21 @@ class UinputTouchDevice(
 
         // Create the uinput device.
         val registerCommand = json.toString()
-        return UinputDevice(instrumentation, resourceDeviceId,
-                vendorId, productId, source, registerCommand)
+        return UinputDevice(
+            instrumentation,
+            resourceDeviceId,
+            vendorId,
+            productId,
+            source,
+            registerCommand
+        )
     }
 
     private fun associateWith(display: Display) {
         runWithShellPermissionIdentity(
                 { inputManager.addUniqueIdAssociation(port, display.uniqueId!!) },
-                "android.permission.ASSOCIATE_INPUT_DEVICE_TO_DISPLAY")
+                "android.permission.ASSOCIATE_INPUT_DEVICE_TO_DISPLAY"
+        )
         waitForDeviceUpdatesUntil {
             val inputDevice = inputManager.getInputDevice(uinputDevice.deviceId)
             display.displayId == inputDevice!!.associatedDisplayId
@@ -189,7 +200,8 @@ class UinputTouchDevice(
     override fun close() {
         runWithShellPermissionIdentity(
                 { inputManager.removeUniqueIdAssociation(port) },
-                "android.permission.ASSOCIATE_INPUT_DEVICE_TO_DISPLAY")
+                "android.permission.ASSOCIATE_INPUT_DEVICE_TO_DISPLAY"
+        )
         uinputDevice.close()
     }
 
