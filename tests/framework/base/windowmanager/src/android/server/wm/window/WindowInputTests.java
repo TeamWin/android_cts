@@ -789,7 +789,7 @@ public class WindowInputTests {
         Predicate<WindowInfo> hasInputConfigFlags =
                 windowInfo -> !windowInfo.isTouchable && !windowInfo.isFocusable;
         assertTrue(waitForWindowInfo(hasInputConfigFlags, 5, TimeUnit.SECONDS,
-                viewOverlap::getWindowToken));
+                viewOverlap::getWindowToken, viewOverlap.getDisplay().getDisplayId()));
 
         mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
         assertEquals(1, mClickCount);
