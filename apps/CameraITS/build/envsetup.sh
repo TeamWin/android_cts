@@ -70,9 +70,7 @@ echo "$COLOUR_VER" | grep -q -e "^0.4.*$" || \
 export PYTHONPATH="$PWD/utils:$PYTHONPATH"
 export PYTHONPATH="$PWD/tests:$PYTHONPATH"
 
-
-
-for M in sensor_fusion_utils capture_request_utils opencv_processing_utils image_processing_utils its_session_utils image_fov_utils zoom_capture_utils
+for M in sensor_fusion_utils capture_request_utils opencv_processing_utils image_processing_utils its_session_utils image_fov_utils zoom_capture_utils imu_processing_utils
 do
     python "utils/${M}_tests.py" 2>&1 | grep -q "OK" || \
         echo ">> Unit test for $M failed" >&2
