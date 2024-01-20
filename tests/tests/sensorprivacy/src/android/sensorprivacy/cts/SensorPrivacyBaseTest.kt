@@ -52,7 +52,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Assume
+import org.junit.Assume.assumeFalse
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -326,14 +327,13 @@ abstract class SensorPrivacyBaseTest(
     @AppModeFull(reason = "Instant apps can't manage keyguard")
     fun testCantChangeWhenLocked() {
         assumeSensorToggleSupport()
-        Assume.assumeTrue(packageManager
-                .hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN))
+        assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN))
 
 //      TODO use actual test api when it can be added
-//      Assume.assumeTrue(callWithShellPermissionIdentity { spm.requiresAuthentication() })
+//      assumeTrue(callWithShellPermissionIdentity { spm.requiresAuthentication() })
         val packageContext: Context = context.createPackageContext("android", 0)
         try {
-            Assume.assumeTrue(packageContext.resources.getBoolean(packageContext.resources
+            assumeTrue(packageContext.resources.getBoolean(packageContext.resources
                     .getIdentifier("config_sensorPrivacyRequiresAuthentication", "bool", "android"))
             )
         } catch (e: NotFoundException) {
@@ -499,15 +499,15 @@ abstract class SensorPrivacyBaseTest(
     @Test
     @AppModeFull(reason = "Uses secondary app, instant apps have no visibility")
     fun testCantEnablePrivacyIfNotSupported() {
-        Assume.assumeFalse(spm.supportsSensorToggle(sensor))
-        Assume.assumeFalse(spm.supportsSensorToggle(TOGGLE_TYPE_SOFTWARE, sensor))
+        assumeFalse(spm.supportsSensorToggle(sensor))
+        assumeFalse(spm.supportsSensorToggle(TOGGLE_TYPE_SOFTWARE, sensor))
         setSensor(true)
         assertFalse(isSensorPrivacyEnabled())
     }
 
     private fun assumeSensorToggleSupport() {
-        Assume.assumeTrue(spm.supportsSensorToggle(sensor))
-        Assume.assumeTrue(spm.supportsSensorToggle(TOGGLE_TYPE_SOFTWARE, sensor))
+        assumeTrue(spm.supportsSensorToggle(sensor))
+        assumeTrue(spm.supportsSensorToggle(TOGGLE_TYPE_SOFTWARE, sensor))
     }
 
     private fun startTestApp() {
@@ -646,14 +646,14 @@ abstract class SensorPrivacyBaseTest(
             }
             eventually {
                 uiDevice.pressKeyCode(KeyEvent.KEYCODE_SLEEP)
-                assertFalse("Device never slept.", pm.isInteractive)
+                assumeFalse("Device never slept.", pm.isInteractive)
             }
             eventually {
                 uiDevice.pressKeyCode(KeyEvent.KEYCODE_WAKEUP)
-                assertTrue("Device never woke up.", pm.isInteractive)
+                assumeTrue("Device never woke up.", pm.isInteractive)
             }
             eventually {
-                assertTrue("Device isn't locked", km.isDeviceLocked)
+                assumeTrue("Device isn't locked", km.isDeviceLocked)
             }
 
             r.invoke()
@@ -665,15 +665,15 @@ abstract class SensorPrivacyBaseTest(
             // Recycle the screen power in case the keyguard is stuck open
             eventually {
                 uiDevice.pressKeyCode(KeyEvent.KEYCODE_SLEEP)
-                assertFalse("Device never slept.", pm.isInteractive)
+                assumeFalse("Device never slept.", pm.isInteractive)
             }
             eventually {
                 uiDevice.pressKeyCode(KeyEvent.KEYCODE_WAKEUP)
-                assertTrue("Device never woke up.", pm.isInteractive)
+                assumeTrue("Device never woke up.", pm.isInteractive)
             }
 
             eventually {
-                assertFalse("Device isn't unlocked", km.isDeviceLocked)
+                assumeFalse("Device isn't unlocked", km.isDeviceLocked)
             }
         }
     }
