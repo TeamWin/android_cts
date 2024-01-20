@@ -49,7 +49,7 @@ public class ScheduleJobActivity extends Activity {
         bundle.putParcelable(RESULT_RECEIVER_EXTRA, resultReceiver);
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, serviceComponentName)
                 .setTransientExtras(bundle)
-                .setMinimumLatency(1)
+                .setExpedited(true)
                 .build();
         JobScheduler jobScheduler = getSystemService(JobScheduler.class);
         jobScheduler.schedule(jobInfo);
