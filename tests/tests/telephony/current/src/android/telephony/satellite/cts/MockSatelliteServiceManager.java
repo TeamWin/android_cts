@@ -1106,6 +1106,17 @@ class MockSatelliteServiceManager {
         mSatelliteService.clearSatelliteEnabledForCarrier();
     }
 
+    /**
+     * Set whether provisioning API should be supported
+     */
+    void setProvisioningApiSupported(boolean provisioningApiSupported) {
+        if (mSatelliteService == null) {
+            loge("setProvisioningApiSupported: mSatelliteService is null");
+            return;
+        }
+        mSatelliteService.setProvisioningApiSupported(provisioningApiSupported);
+    }
+
     @NonNull List<String> getPlmnListFromOverlayConfig() {
         String[] plmnArr = readStringArrayFromOverlayConfig(
                 R.array.config_satellite_providers);
