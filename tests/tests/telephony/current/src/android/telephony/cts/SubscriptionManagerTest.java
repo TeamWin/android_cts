@@ -21,6 +21,7 @@ import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_CONGESTED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_TEMPORARILY_NOT_METERED;
 import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
+import static android.telephony.SubscriptionManager.TRANSFER_STATUS_TRANSFERRED_OUT;
 import static android.telephony.TelephonyManager.SET_OPPORTUNISTIC_SUB_SUCCESS;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -484,7 +485,6 @@ public class SubscriptionManagerTest {
         } catch (SecurityException expected) {
             // expected
         }
-
     }
 
     @Test
@@ -1490,6 +1490,23 @@ public class SubscriptionManagerTest {
                 assertTrue(isValidServiceCapability(capability));
             }
         }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_SUPPORT_PSIM_TO_ESIM_CONVERSION)
+    public void testUpdateSubscription_transferStatus() throws Exception {
+        // Testing permission fail
+        try {
+            mSm.setTransferStatus(mSubId, TRANSFER_STATUS_TRANSFERRED_OUT);
+        } catch (SecurityException expected) {
+            fail();
+        }
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                (sm) -> sm.setTransferStatus(mSubId, TRANSFER_STATUS_TRANSFERRED_OUT));
+        SubscriptionInfo info = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getActiveSubscriptionInfo(mSubId));
+        assertEquals(info.getTransferStatus(), TRANSFER_STATUS_TRANSFERRED_OUT);
     }
 
     private boolean isValidServiceCapability(int capability) {
