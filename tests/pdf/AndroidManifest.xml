@@ -16,18 +16,16 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.graphics.pdf.cts"
-    android:targetSandboxVersion="2">
+          package="android.graphics.pdf.cts"
+          android:targetSandboxVersion="2">
 
-    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <application>
-        <uses-library android:name="android.test.runner" />
+        <uses-library android:name="android.test.runner"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.graphics.pdf.cts"
-                     android:label="CTS tests of android.graphics.pdf">
+                     android:label="CTS tests of android.graphics.pdf"
+                     android:targetPackage="android.graphics.pdf.cts">
     </instrumentation>
 
 </manifest>
