@@ -54,6 +54,7 @@ import android.util.Range;
 import android.util.Size;
 import android.view.Surface;
 
+import com.android.compatibility.common.util.MediaUtils;
 import com.android.internal.camera.flags.Flags;
 
 import java.util.ArrayList;
@@ -345,8 +346,11 @@ public final class FeatureCombinationTest extends Camera2AndroidTestCase {
                                                     < ((1e9 / fpsRange.getLower()) * 1.05)));
 
                                     // Check readout timestamp intervals to make sure targetFpsRange
-                                    // is met.
-                                    if (i > kWarmupFrames && readoutTimestamps != null) {
+                                    // is met. Skip for Cuttlefish due to performance reasons.
+                                    // TODO: (b/321824310) Remove the check once cuttlefish
+                                    // performance is improved.
+                                    if (!MediaUtils.onCuttlefish() && i > kWarmupFrames
+                                            && readoutTimestamps != null) {
                                         Long readoutInterval = readoutTimestamps.get(i)
                                                 - readoutTimestamps.get(i - 1);
                                         mCollector.expectTrue(
