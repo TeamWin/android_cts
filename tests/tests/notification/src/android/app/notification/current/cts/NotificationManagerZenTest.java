@@ -128,6 +128,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Tests zen/dnd related logic in NotificationManager.
@@ -178,6 +179,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     private static final int ICON_RES_ID =
             android.app.notification.current.cts.R.drawable.ic_android;
     private NotificationManager.Policy mOriginalPolicy;
+    private ZenPolicy mDefaultPolicy;
 
     @Rule(order = 0)
     public final CheckFlagsRule checkFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
@@ -211,6 +213,9 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                             | SUPPRESSED_EFFECT_FULL_SCREEN_INTENT,
                     CONVERSATION_SENDERS_IMPORTANT));
             mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
+
+            // Also get and cache the default policy for comparison later.
+            mDefaultPolicy = mNotificationManager.getDefaultZenPolicy();
         });
     }
 
@@ -634,6 +639,11 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 .build();
     }
 
+    // Returns whether ZenPolicies are equivalent after any unset fields are set to the defaults.
+    private boolean doPoliciesMatchWithDefaults(ZenPolicy a, ZenPolicy b) {
+        return Objects.equals(mDefaultPolicy.overwrittenWith(a), mDefaultPolicy.overwrittenWith(b));
+    }
+
     private AutomaticZenRule createRule(String name, int filter) {
         return new AutomaticZenRule(name, null,
                 new ComponentName(mContext, AutomaticZenRuleActivity.class),
@@ -798,22 +808,34 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             NotificationManager.Policy consolidatedPolicy =
                     mNotificationManager.getConsolidatedNotificationPolicy();
 
-            // reminders is allowed from the automatic rule's custom ZenPolicy
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_REMINDERS) != 0);
+            if (Flags.modesApi()) {
+                // Expect the final consolidated policy to be effectively equivalent to the
+                // specified custom policy with remaining fields filled in by defaults.
+                ZenPolicy fullySpecified = mDefaultPolicy.overwrittenWith(rule.getZenPolicy());
+                assertPolicyCategoriesMatchZenPolicy(consolidatedPolicy, fullySpecified);
+            } else {
+                // reminders is allowed from the automatic rule's custom ZenPolicy
+                assertTrue(
+                        (consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_REMINDERS) != 0);
 
-            // media is disallowed from the automatic rule's custom ZenPolicy
-            assertFalse((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MEDIA) != 0);
+                // media is disallowed from the automatic rule's custom ZenPolicy
+                assertFalse((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MEDIA) != 0);
 
-            // other stuff is from the default notification policy (see #setUp)
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_ALARMS) != 0);
-            assertTrue(
-                    (consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_CONVERSATIONS) != 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_CALLS) != 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_REPEAT_CALLERS)
-                    != 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MESSAGES) != 0);
-            assertFalse((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_SYSTEM) != 0);
-            assertFalse((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_EVENTS) != 0);
+                // other stuff is from the default notification policy (see #setUp)
+                assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_ALARMS) != 0);
+                assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_CONVERSATIONS)
+                        != 0);
+                assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_CALLS) != 0);
+                assertTrue(
+                        (consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_REPEAT_CALLERS)
+                            != 0);
+                assertTrue(
+                        (consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MESSAGES) != 0);
+                assertFalse(
+                        (consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_SYSTEM) != 0);
+                assertFalse(
+                        (consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_EVENTS) != 0);
+            }
         } finally {
             mNotificationManager.setInterruptionFilter(originalFilter);
             mNotificationManager.setNotificationPolicy(origPolicy);
@@ -833,13 +855,14 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                     INTERRUPTION_FILTER_PRIORITY);
             rule1.setZenPolicy(new ZenPolicy.Builder()
                     .allowReminders(false)
-                    .allowAlarms(false)
                     .allowSystem(true)
+                    .allowAlarms(false)
                     .build());
             AutomaticZenRule rule2 = createRule("test_consolidated_policy2",
                     INTERRUPTION_FILTER_PRIORITY);
             rule2.setZenPolicy(new ZenPolicy.Builder()
                     .allowReminders(true)
+                    .allowSystem(true)
                     .allowMedia(true)
                     .build());
             String id1 = mNotificationManager.addAutomaticZenRule(rule1);
@@ -858,24 +881,49 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             NotificationManager.Policy consolidatedPolicy =
                     mNotificationManager.getConsolidatedNotificationPolicy();
 
-            // reminders aren't allowed from rule1 overriding rule2
-            // (not allowed takes precedence over allowed)
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_REMINDERS) == 0);
+            if (Flags.modesApi()) {
+                // if modesApi is enabled, confirm that these settings match depending on the device
+                // defaults. Each rule inherits default values for any unset fields, so for fields
+                // where only one rule has expressed an explicit opinion about the setting, the
+                // default setting may be more restrictive and win.
+                ZenPolicy expectedCombined = new ZenPolicy.Builder()
+                        .allowReminders(false)  // rule1 wins over rule2
+                        .allowSystem(true)  // both active rules set this
+                        .allowAlarms(false)  // opinion only from rule1
+                        // media opinion only from rule2 (to be allowed); therefore it depends on
+                        // default settings
+                        .allowMedia(
+                                mDefaultPolicy.getPriorityCategoryAlarms() == ZenPolicy.STATE_ALLOW)
+                        .build();
 
-            // alarms aren't allowed from rule1
-            // (rule's custom zenPolicy overrides default policy)
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_ALARMS) == 0);
+                // The rest are entirely from the default policy.
+                ZenPolicy fullySpecified = mDefaultPolicy.overwrittenWith(expectedCombined);
+                assertPolicyCategoriesMatchZenPolicy(consolidatedPolicy, fullySpecified);
+            } else {
+                // reminders aren't allowed from rule1 overriding rule2
+                // (not allowed takes precedence over allowed)
+                assertTrue(
+                        (consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_REMINDERS) == 0);
 
-            // system is allowed from rule1, media is allowed from rule2
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_SYSTEM) != 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MEDIA) != 0);
+                // system allowed from both
+                assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_SYSTEM) != 0);
 
-            // other stuff is from the default notification policy (see #setUp)
-            assertTrue(
-                    (consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_CONVERSATIONS) != 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_CALLS) != 0);
-            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MESSAGES) != 0);
-            assertFalse((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_EVENTS) != 0);
+                // alarms aren't allowed from rule1, so that alarm setting will always win
+                assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_ALARMS) == 0);
+
+                // media is allowed from rule2
+                assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MEDIA) != 0);
+
+                // other stuff is from the default notification policy (see #setUp)
+                assertTrue(
+                        (consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_CONVERSATIONS)
+                            != 0);
+                assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_CALLS) != 0);
+                assertTrue(
+                        (consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MESSAGES) != 0);
+                assertFalse(
+                        (consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_EVENTS) != 0);
+            }
         } finally {
             mNotificationManager.setInterruptionFilter(originalFilter);
             mNotificationManager.setNotificationPolicy(origPolicy);
@@ -2216,7 +2264,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertRulesEqual(rules.get(ruleId2), rule2);
     }
 
-    private static void assertRulesEqual(AutomaticZenRule r1, AutomaticZenRule r2) {
+    private void assertRulesEqual(AutomaticZenRule r1, AutomaticZenRule r2) {
         // Cannot test for exact equality because some extra fields (e.g. packageName,
         // creationTime) come back. So we verify everything that the client app can set.
         assertThat(r1.getConditionId()).isEqualTo(r2.getConditionId());
@@ -2224,16 +2272,44 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertThat(r1.getInterruptionFilter()).isEqualTo(r2.getInterruptionFilter());
         assertThat(r1.getName()).isEqualTo(r2.getName());
         assertThat(r1.getOwner()).isEqualTo(r2.getOwner());
-        assertThat(r1.getZenPolicy()).isEqualTo(r2.getZenPolicy());
         assertThat(r1.isEnabled()).isEqualTo(r2.isEnabled());
 
         if (Flags.modesApi()) {
             assertThat(r1.getDeviceEffects()).isEqualTo(r2.getDeviceEffects());
+            assertThat(doPoliciesMatchWithDefaults(r1.getZenPolicy(), r2.getZenPolicy())).isTrue();
+
             assertThat(r1.getIconResId()).isEqualTo(r2.getIconResId());
             assertThat(r1.getTriggerDescription()).isEqualTo(r2.getTriggerDescription());
             assertThat(r1.getType()).isEqualTo(r2.getType());
             assertThat(r1.isManualInvocationAllowed()).isEqualTo(r2.isManualInvocationAllowed());
+        } else {
+            assertThat(r1.getZenPolicy()).isEqualTo(r2.getZenPolicy());
         }
+    }
+
+    // Checks that the priority categories in the provided NotificationManager.Policy match
+    // those of the provided ZenPolicy. Does not check call/message/conversation senders or
+    // visual effects.
+    private void assertPolicyCategoriesMatchZenPolicy(
+            NotificationManager.Policy nmPolicy, ZenPolicy zenPolicy) {
+        assertThat((nmPolicy.priorityCategories & PRIORITY_CATEGORY_ALARMS) != 0)
+                .isEqualTo(zenPolicy.getPriorityCategoryAlarms() == ZenPolicy.STATE_ALLOW);
+        assertThat((nmPolicy.priorityCategories & PRIORITY_CATEGORY_CALLS) != 0)
+                .isEqualTo(zenPolicy.getPriorityCategoryCalls() == ZenPolicy.STATE_ALLOW);
+        assertThat((nmPolicy.priorityCategories & PRIORITY_CATEGORY_CONVERSATIONS) != 0)
+                .isEqualTo(zenPolicy.getPriorityCategoryConversations() == ZenPolicy.STATE_ALLOW);
+        assertThat((nmPolicy.priorityCategories & PRIORITY_CATEGORY_EVENTS) != 0)
+                .isEqualTo(zenPolicy.getPriorityCategoryEvents() == ZenPolicy.STATE_ALLOW);
+        assertThat((nmPolicy.priorityCategories & PRIORITY_CATEGORY_MEDIA) != 0)
+                .isEqualTo(zenPolicy.getPriorityCategoryMedia() == ZenPolicy.STATE_ALLOW);
+        assertThat((nmPolicy.priorityCategories & PRIORITY_CATEGORY_MESSAGES) != 0)
+                .isEqualTo(zenPolicy.getPriorityCategoryMessages() == ZenPolicy.STATE_ALLOW);
+        assertThat((nmPolicy.priorityCategories & PRIORITY_CATEGORY_REMINDERS) != 0)
+                .isEqualTo(zenPolicy.getPriorityCategoryReminders() == ZenPolicy.STATE_ALLOW);
+        assertThat((nmPolicy.priorityCategories & PRIORITY_CATEGORY_REPEAT_CALLERS) != 0)
+                .isEqualTo(zenPolicy.getPriorityCategoryRepeatCallers() == ZenPolicy.STATE_ALLOW);
+        assertThat((nmPolicy.priorityCategories & PRIORITY_CATEGORY_SYSTEM) != 0)
+                .isEqualTo(zenPolicy.getPriorityCategorySystem() == ZenPolicy.STATE_ALLOW);
     }
 
     @Test
@@ -2307,13 +2383,20 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                         .build())
                 .build();
         String ruleId = mNotificationManager.addAutomaticZenRule(original);
+        ZenPolicy combinedPolicy = original.getZenPolicy();
 
         // Update the rule "from user" once.
+        // Set settings for events & calls that do not match the default so we're certain these
+        // changes will reflect that the "user" actually changed the fields.
         AutomaticZenRule firstUserUpdate = new AutomaticZenRule.Builder(original)
                 .setName("First update")
                 .setZenPolicy(new ZenPolicy.Builder()
-                        .allowMedia(true)
-                        .allowCalls(ZenPolicy.PEOPLE_TYPE_ANYONE)
+                        .allowEvents(
+                                mDefaultPolicy.getPriorityCategoryEvents() != ZenPolicy.STATE_ALLOW)
+                        .allowCalls(mDefaultPolicy.getPriorityCallSenders()
+                                == ZenPolicy.PEOPLE_TYPE_ANYONE
+                                        ? ZenPolicy.PEOPLE_TYPE_CONTACTS
+                                        : ZenPolicy.PEOPLE_TYPE_ANYONE)
                         .build())
                 .build();
         runAsSystemUi(
@@ -2321,8 +2404,13 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                         /* fromUser= */ true));
 
         // Verify the update succeeded.
+        combinedPolicy = combinedPolicy.overwrittenWith(firstUserUpdate.getZenPolicy());
         AutomaticZenRule firstUserUpdateResult = mNotificationManager.getAutomaticZenRule(ruleId);
-        assertRulesEqual(firstUserUpdate, firstUserUpdateResult);
+        AutomaticZenRule expectedRuleAfterFirstUpdate =
+                new AutomaticZenRule.Builder(firstUserUpdate)
+                        .setZenPolicy(combinedPolicy)
+                        .build();
+        assertRulesEqual(expectedRuleAfterFirstUpdate, firstUserUpdateResult);
 
         // Update the rule "from user" a second time.
         AutomaticZenRule secondUserUpdate = new AutomaticZenRule.Builder(original)
@@ -2347,8 +2435,13 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                         /* fromUser= */ true));
 
         // The second update succeeded as well.
+        combinedPolicy = combinedPolicy.overwrittenWith(secondUserUpdate.getZenPolicy());
         AutomaticZenRule secondUserUpdateResult = mNotificationManager.getAutomaticZenRule(ruleId);
-        assertRulesEqual(secondUserUpdate, secondUserUpdateResult);
+        AutomaticZenRule expectedRuleAfterSecondUpdate =
+                new AutomaticZenRule.Builder(secondUserUpdate)
+                        .setZenPolicy(combinedPolicy)
+                        .build();
+        assertRulesEqual(expectedRuleAfterSecondUpdate, secondUserUpdateResult);
     }
 
     @Test
@@ -2428,7 +2521,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 .setIconResId(android.R.drawable.sym_def_app_icon)
                 .setEnabled(false)
                 .setZenPolicy(new ZenPolicy.Builder(original.getZenPolicy())
-                        .allowMedia(true)
+                        .allowAlarms(true)
                         .allowCalls(ZenPolicy.PEOPLE_TYPE_ANYONE)
                         .build())
                 .setDeviceEffects(new ZenDeviceEffects.Builder(original.getDeviceEffects())
@@ -2447,7 +2540,8 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         // ... but nothing else should (even though those fields were not _specifically_ modified by
         // the user).
         assertThat(result.getName()).isEqualTo(userUpdate.getName());
-        assertThat(result.getZenPolicy()).isEqualTo(original.getZenPolicy());
+        assertThat(doPoliciesMatchWithDefaults(result.getZenPolicy(), original.getZenPolicy()))
+                .isTrue();
         assertThat(result.getDeviceEffects()).isEqualTo(original.getDeviceEffects());
     }
 
@@ -2501,6 +2595,42 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         AutomaticZenRule readRule = mNotificationManager.getAutomaticZenRule(ruleId);
 
         assertThat(readRule.getDeviceEffects()).isEqualTo(effects);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void addAutomaticZenRule_withUnderspecifiedPolicies_filledIn() {
+        AutomaticZenRule noPolicy = new AutomaticZenRule.Builder("no policy", CONDITION_ID)
+                .setConfigurationActivity(CONFIG_ACTIVITY)
+                .setType(AutomaticZenRule.TYPE_IMMERSIVE)
+                .setIconResId(android.app.notification.current.cts.R.drawable.ic_android)
+                .setTriggerDescription("whatever")
+                .setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY)
+                .setZenPolicy(null)  // not really necessary, but doing so explicitly anyway.
+                .build();
+        String noPolicyRuleId = mNotificationManager.addAutomaticZenRule(noPolicy);
+
+        // The resulting actual policy on the rule should be equivalent to the default, with all
+        // fields fully filled in (rather than being left as null).
+        AutomaticZenRule readRule = mNotificationManager.getAutomaticZenRule(noPolicyRuleId);
+        assertThat(readRule.getZenPolicy()).isEqualTo(mDefaultPolicy);
+
+        AutomaticZenRule underspecified = new AutomaticZenRule.Builder("some policy", CONDITION_ID)
+                .setConfigurationActivity(CONFIG_ACTIVITY)
+                .setType(AutomaticZenRule.TYPE_IMMERSIVE)
+                .setIconResId(android.app.notification.current.cts.R.drawable.ic_android)
+                .setTriggerDescription("whatever")
+                .setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY)
+                .setZenPolicy(new ZenPolicy.Builder()
+                        .allowAlarms(true)
+                        .allowMedia(false)
+                        .build())
+                .build();
+        String underspecRuleId = mNotificationManager.addAutomaticZenRule(underspecified);
+
+        AutomaticZenRule readRule2 = mNotificationManager.getAutomaticZenRule(underspecRuleId);
+        assertThat(readRule2.getZenPolicy()).isEqualTo(
+                mDefaultPolicy.overwrittenWith(underspecified.getZenPolicy()));
     }
 
     @Test
