@@ -153,8 +153,6 @@ public class LauncherAppsTest {
         mIntentSender = new ArchiveIntentSender();
         sUnarchiveReceiverPackageName = new CompletableFuture<>();
         setDefaultLauncher(mInstrumentation, mTestHome);
-        mLauncherApps.setArchiveCompatibilityOptions(
-                /* enableIconOverlay= */ true, /* enableUnarchivalSupport= */ false);
     }
 
     @After
