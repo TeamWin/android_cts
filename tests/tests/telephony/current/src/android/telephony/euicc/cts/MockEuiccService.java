@@ -35,6 +35,7 @@ import java.io.PrintWriter;
 public class MockEuiccService extends EuiccService {
     static String MOCK_EID = "89000000000000000000000000000000";
     static String MOCK_OS_VERSION = "1.0";
+    static final long MOCK_AVAILABLE_MEMORY = 123L;
     static final String MOCK_DUMPED_LOG = "log messages";
 
     interface IMockEuiccServiceCallback {
@@ -55,6 +56,12 @@ public class MockEuiccService extends EuiccService {
     public String onGetEid(int slotId) {
         sMockEuiccServiceCallback.setMethodCalled();
         return MOCK_EID;
+    }
+
+    @Override
+    public long onGetAvailableMemoryInBytes(int slotId) {
+        sMockEuiccServiceCallback.setMethodCalled();
+        return MOCK_AVAILABLE_MEMORY;
     }
 
     @Override

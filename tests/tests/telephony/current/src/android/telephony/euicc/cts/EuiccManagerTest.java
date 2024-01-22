@@ -29,6 +29,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.TelephonyManager;
@@ -146,6 +147,43 @@ public class EuiccManagerTest {
         // verify result is null
         assertNull(eid);
     }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ESIM_AVAILABLE_MEMORY)
+    public void testGetAvailableMemoryInBytes_euiccManagerDisabled() {
+        if (mEuiccManager.isEnabled()) {
+            return;
+        }
+
+        long availableMemoryInBytes = mEuiccManager.getAvailableMemoryInBytes();
+        assertEquals(EuiccManager.EUICC_MEMORY_FIELD_UNAVAILABLE, availableMemoryInBytes);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ESIM_AVAILABLE_MEMORY)
+    public void testGetAvailableMemoryInBytes_euiccManagerEnabled() {
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
+
+        long availableMemoryInBytes;
+        try {
+            availableMemoryInBytes = mEuiccManager.getAvailableMemoryInBytes();
+        } catch (UnsupportedOperationException e) {
+            // Expected when EuiccService#onGetAvailableMemoryInBytes() is not implemented.
+            return;
+        } catch (Exception e) {
+            fail("Exception occurred when retrieving the available memory: " + e.toString());
+            return;
+        }
+
+        // EuiccManager.EUICC_MEMORY_FIELD_UNAVAILABLE: when it fails to retrieve available
+        // memory because eUICC is not ready
+        // >= 0: the eUICC memory size can vary from [0, x]
+        assertTrue(availableMemoryInBytes == EuiccManager.EUICC_MEMORY_FIELD_UNAVAILABLE
+                    || availableMemoryInBytes >= 0);
+    }
+
 
     @Test
     public void testCreateForCardId() {

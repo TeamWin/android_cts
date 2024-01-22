@@ -25,6 +25,7 @@ import static org.junit.Assume.assumeTrue;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.service.euicc.DownloadSubscriptionResult;
@@ -37,6 +38,7 @@ import android.service.euicc.IDownloadSubscriptionCallback;
 import android.service.euicc.IEraseSubscriptionsCallback;
 import android.service.euicc.IEuiccService;
 import android.service.euicc.IEuiccServiceDumpResultCallback;
+import android.service.euicc.IGetAvailableMemoryInBytesCallback;
 import android.service.euicc.IGetDefaultDownloadableSubscriptionListCallback;
 import android.service.euicc.IGetDownloadableSubscriptionMetadataCallback;
 import android.service.euicc.IGetEidCallback;
@@ -95,6 +97,11 @@ public class EuiccServiceTest {
         @Override
         public String onGetEid(int slotId) {
             return null;
+        }
+
+        @Override
+        public long onGetAvailableMemoryInBytes(int slotId) {
+            return EuiccManager.EUICC_MEMORY_FIELD_UNAVAILABLE;
         }
 
         @Override
@@ -230,6 +237,31 @@ public class EuiccServiceTest {
                     @Override
                     public void onSuccess(String eid) {
                         assertEquals(MockEuiccService.MOCK_EID, eid);
+                        mCountDownLatch.countDown();
+                    }
+                });
+
+        try {
+            mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        assertTrue(mCallback.isMethodCalled());
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ESIM_AVAILABLE_MEMORY)
+    public void testOnGetAvailableMemoryInBytes() throws Exception {
+        mCountDownLatch = new CountDownLatch(1);
+
+        mEuiccServiceBinder.getAvailableMemoryInBytes(
+                MOCK_SLOT_ID,
+                new IGetAvailableMemoryInBytesCallback.Stub() {
+                    @Override
+                    public void onSuccess(long availableMemoryInBytes) {
+                        assertEquals(
+                                MockEuiccService.MOCK_AVAILABLE_MEMORY, availableMemoryInBytes);
                         mCountDownLatch.countDown();
                     }
                 });
