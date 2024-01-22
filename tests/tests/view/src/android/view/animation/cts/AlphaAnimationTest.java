@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 
 import android.content.Context;
 import android.content.res.XmlResourceParser;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.view.animation.AlphaAnimation;
@@ -40,6 +41,7 @@ import org.junit.runner.RunWith;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class AlphaAnimationTest {
     private Context mContext;
 

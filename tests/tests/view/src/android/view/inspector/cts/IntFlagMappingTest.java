@@ -19,6 +19,7 @@ package android.view.inspector.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.inspector.IntFlagMapping;
 
 import androidx.test.filters.SmallTest;
@@ -38,6 +39,7 @@ import java.util.Set;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public final class IntFlagMappingTest {
     @Test
     public void testNonExclusiveFlags() {
