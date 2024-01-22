@@ -103,14 +103,14 @@ class IncompleteMotionTest {
         val (x, y) = getViewCenterOnScreen(activity.window.decorView)
 
         // Start a valid touch stream
-        sendEvent(downTime, ACTION_DOWN, x, y, true /*sync*/)
+        sendEvent(downTime, ACTION_DOWN, x, y, sync = true)
         val resultFuture = CompletableFuture<Void>()
         // Lock up the UI thread. This ensures that the motion event that we will write will
         // not get processed by the app right away.
         activity.runOnUiThread {
             val sendMoveAndFocus = thread(start = true) {
                 try {
-                    sendEvent(downTime, ACTION_MOVE, x, y + 10, false /*sync*/)
+                    sendEvent(downTime, ACTION_MOVE, x, y + 10, sync = false)
                     // The MOVE event is sent async because the UI thread is blocked.
                     // Give dispatcher some time to send it to the app
                     SystemClock.sleep(700)
@@ -121,8 +121,13 @@ class IncompleteMotionTest {
                     val handler = Handler(looper)
                     val receiver = OverlayFocusedBroadcastReceiver()
                     val intentFilter = IntentFilter(OVERLAY_ACTIVITY_FOCUSED)
-                    activity.registerReceiver(receiver, intentFilter, null, handler,
-                                          Context.RECEIVER_EXPORTED)
+                    activity.registerReceiver(
+                        receiver,
+                        intentFilter,
+                        null,
+                        handler,
+                        Context.RECEIVER_EXPORTED,
+                    )
 
                     // Now send hasFocus=false event to the app by launching a new focusable window
                     startOverlayActivity()
@@ -159,7 +164,7 @@ class IncompleteMotionTest {
         // If the MOVE event is received, however, we can stop the test.
         PollingCheck.waitFor { activity.receivedMove() }
         // Finish the gesture. No dangling injected pointers should remain
-        sendEvent(downTime, ACTION_CANCEL, x, y, true /*sync*/)
+        sendEvent(downTime, ACTION_CANCEL, x, y, sync = true)
         // Before finishing the test, check that no exceptions occurred while running the
         // instructions in the 'sendMoveAndFocus' thread.
         resultFuture.get()
@@ -170,7 +175,8 @@ class IncompleteMotionTest {
             ACTION_DOWN -> downTime
             else -> SystemClock.uptimeMillis()
         }
-        val event = MotionEvent.obtain(downTime, eventTime, action, x, y, 0 /*metaState*/)
+        val metaState = 0
+        val event = MotionEvent.obtain(downTime, eventTime, action, x, y, metaState)
         event.source = InputDevice.SOURCE_TOUCHSCREEN
         instrumentation.uiAutomation.injectInputEvent(event, sync)
     }

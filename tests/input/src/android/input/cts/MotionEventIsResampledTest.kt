@@ -68,8 +68,7 @@ class MotionEventIsResampledTest {
                 virtualDisplayRule.virtualDisplay.display,
                 R.raw.test_touchscreen_register,
                 InputDevice.SOURCE_TOUCHSCREEN,
-                /*useDisplaySize*/
-                true,
+                useDisplaySize = true,
         )
         verifier = EventVerifier(virtualDisplayRule.activity::getInputEvent)
     }

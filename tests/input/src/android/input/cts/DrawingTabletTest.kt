@@ -58,8 +58,7 @@ class DrawingTabletTest {
                 virtualDisplayRule.virtualDisplay.display,
                 R.raw.test_drawing_tablet_register,
                 InputDevice.SOURCE_MOUSE or InputDevice.SOURCE_STYLUS,
-                /*useDisplaySize*/
-                true,
+                useDisplaySize = true,
             )
         verifier = EventVerifier(virtualDisplayRule.activity::getInputEvent)
     }

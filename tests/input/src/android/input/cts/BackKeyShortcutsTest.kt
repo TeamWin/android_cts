@@ -32,18 +32,22 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+private const val EV_KEY = 1
+private const val KEY_DOWN = 1
+private const val KEY_UP = 0
+private const val EV_SYN = 0
+private const val SYN_REPORT = 0
+
 private fun injectEvents(device: UinputDevice, events: IntArray) {
     device.injectEvents(events.joinToString(prefix = "[", postfix = "]", separator = ","))
 }
 
 private fun injectKeyDown(device: UinputDevice, scanCode: Int) {
-    injectEvents(device, intArrayOf(/* EV_KEY */ 1, scanCode, /* KEY_DOWN */ 1,
-            /* EV_SYN */ 0, /* SYN_REPORT */ 0, 0))
+    injectEvents(device, intArrayOf(EV_KEY, scanCode, KEY_DOWN, EV_SYN, SYN_REPORT, 0))
 }
 
 private fun injectKeyUp(device: UinputDevice, scanCode: Int) {
-    injectEvents(device, intArrayOf(/* EV_KEY */ 1, scanCode, /* KEY_UP */ 0,
-            /* EV_SYN */ 0, /* SYN_REPORT */ 0, 0))
+    injectEvents(device, intArrayOf(EV_KEY, scanCode, KEY_UP, EV_SYN, SYN_REPORT, 0))
 }
 
 /**
@@ -95,7 +99,8 @@ class BackKeyShortcutsTest {
     @Test
     fun testBackKeyMetaShortcuts() {
         UinputDevice.create(
-            instrumentation, R.raw.test_keyboard_register,
+            instrumentation,
+            R.raw.test_keyboard_register,
             InputDevice.SOURCE_KEYBOARD
         ).use { keyboardDevice ->
             activity.assertNoEvents()
