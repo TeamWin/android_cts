@@ -108,6 +108,9 @@ public class BaseAppVerifier {
 
     @After
     public void tearDown() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         mBaseAppVerifierImpl.tearDown();
     }
 
