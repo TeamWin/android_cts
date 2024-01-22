@@ -135,7 +135,10 @@ public class WifiLocationInfoBackgroundTest extends WifiJUnit4TestBase{
                 () -> sWifiManager.getConnectionInfo().getNetworkId() != -1);
         sPower = sContext.getSystemService(PowerManager.class);
         sLock = sPower.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
-        turnScreenOff();
+        if (!sLock.isHeld()) {
+            sLock.acquire();
+        }
+        lockScreen();
     }
 
     private static boolean isWearDevice() {
@@ -162,26 +165,27 @@ public class WifiLocationInfoBackgroundTest extends WifiJUnit4TestBase{
     public static void tearDownClass() throws Exception {
         if (!sShouldRunTest) return;
         if (!sWifiManager.isWifiEnabled()) setWifiEnabled(true);
+        if (sLock.isHeld()) {
+            sLock.release();
+        }
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> sWifiManager.setScanThrottleEnabled(sWasScanThrottleEnabled));
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> sWifiManager.setVerboseLoggingEnabled(sWasVerboseLoggingEnabled));
-        turnScreenOn();
+        unlockScreen();
     }
 
     private static void setWifiEnabled(boolean enable) throws Exception {
         ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.setWifiEnabled(enable));
     }
 
-    private static void turnScreenOn() throws Exception {
-        if (sLock.isHeld()) sLock.release();
+    private static void lockScreen() throws Exception {
+        SystemUtil.runShellCommand("input keyevent KEYCODE_SLEEP");
         SystemUtil.runShellCommand("input keyevent KEYCODE_WAKEUP");
-        SystemUtil.runShellCommand("wm dismiss-keyguard");
     }
 
-    private static void turnScreenOff() throws Exception {
-        if (!sLock.isHeld()) sLock.acquire();
-        SystemUtil.runShellCommand("input keyevent KEYCODE_SLEEP");
+    private static void unlockScreen() throws Exception {
+        SystemUtil.runShellCommand("wm dismiss-keyguard");
     }
 
     private static void installApp(String apk) throws InterruptedException {
