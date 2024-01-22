@@ -75,6 +75,7 @@ android_test {
     compile_multilib: "both",
     static_libs: [
         "android.media.audio-aconfig-java",
+        "com.android.media.audioserver-aconfig-java",
         "CtsVirtualDeviceCommonLib",
         "android.os.vibrator.flags-aconfig-java",
         "androidx.test.ext.junit",
