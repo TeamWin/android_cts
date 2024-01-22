@@ -42,8 +42,12 @@ import java.util.List;
  * utils to update shortcut targets to Accessibility Shortcut Settings.
  */
 public final class AccessibilityShortcutSettingsRule extends ExternalResource {
-    public static final int ACCESSIBILITY_BUTTON = 0;
-    public static final int ACCESSIBILITY_SHORTCUT_KEY = 1;
+    // ACCESSIBILITY_BUTTON should match the int defined in com.android.internal.accessibility
+    // .common.ShortcutConstants.UserShortcutType.SOFTWARE
+    public static final int ACCESSIBILITY_BUTTON = 1;
+    // ACCESSIBILITY_SHORTCUT_KEY should match the int defined in com.android.internal
+    // .accessibility.common.ShortcutConstants.UserShortcutType.HARDWARE
+    public static final int ACCESSIBILITY_SHORTCUT_KEY = 2;
 
     private static final String ACCESSIBILITY_BUTTON_TARGETS =
             "accessibility_button_targets";
