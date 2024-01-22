@@ -23,7 +23,8 @@
         android:theme="@style/Theme.HintSessionTest"
         android:label="HintSessionTest">
         <activity android:name=".ADPFHintSessionDeviceActivity"
-             android:exported="true">
+                  android:exported="true"
+                  android:turnScreenOn="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>

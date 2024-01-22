@@ -348,6 +348,9 @@ void Renderer::startHintSession(std::vector<int32_t> &tids, int64_t target) {
         lastTarget_ = target;
         hintSession_ =
                 APerformanceHint_createSession(hintManager_, tids.data(), tids.size(), target);
+        if (hintSession_ == nullptr) {
+            Utility::setFailure("Failed to create session", this);
+        }
     }
 }
 

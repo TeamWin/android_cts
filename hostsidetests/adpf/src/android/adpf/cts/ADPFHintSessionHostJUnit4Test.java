@@ -115,6 +115,10 @@ public class ADPFHintSessionHostJUnit4Test extends BaseHostJUnit4Test {
     public void testAdpfHintSession() throws Exception {
         checkMinSdkVersion();
         installPackage(PACKAGE_APK);
+        // wake up and unlock the device, otherwise the device test may crash on drawing GL
+        mDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        mDevice.executeShellCommand("input keyevent KEYCODE_MENU");
+        mDevice.executeShellCommand("wm dismiss-keyguard");
         runDeviceTests(TEST_PACKAGE_NAME, TEST_PACKAGE_NAME + "." + ADPF_DEVICE_TEST_CLASS);
         final TestDescription testDesc = new TestDescription(
                     TEST_PACKAGE_NAME + "." + ADPF_DEVICE_TEST_CLASS, "testAdpfHintSession"
