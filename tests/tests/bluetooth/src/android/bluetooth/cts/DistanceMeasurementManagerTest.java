@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.le.ChannelSoundingParams;
 import android.bluetooth.le.DistanceMeasurementManager;
 import android.bluetooth.le.DistanceMeasurementMethod;
 import android.bluetooth.le.DistanceMeasurementParams;
@@ -33,16 +34,21 @@ import android.bluetooth.le.DistanceMeasurementSession;
 import android.content.Context;
 import android.os.Build;
 import android.os.CancellationSignal;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bluetooth.flags.Flags;
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -65,6 +71,10 @@ public class DistanceMeasurementManagerTest {
 
         public void onResult(BluetoothDevice device, DistanceMeasurementResult result) {}
     };
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setUp() {
@@ -106,5 +116,28 @@ public class DistanceMeasurementManagerTest {
     public void getSupportedMethods() {
         List<DistanceMeasurementMethod> list = mDistanceMeasurementManager.getSupportedMethods();
         assertNotNull(list);
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_CHANNEL_SOUNDING)
+    @CddTest(requirements = {"7.4.3/C-2-1"})
+    @Test
+    public void getChannelSoundingMaxSupportedSecurityLevel() {
+        int securityLevel =
+                mDistanceMeasurementManager.getChannelSoundingMaxSupportedSecurityLevel(mDevice);
+        assertTrue(isValidSecurityLevel(securityLevel));
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_CHANNEL_SOUNDING)
+    @CddTest(requirements = {"7.4.3/C-2-1"})
+    @Test
+    public void getLocalChannelSoundingMaxSupportedSecurityLevel() {
+        int securityLevel =
+                mDistanceMeasurementManager.getLocalChannelSoundingMaxSupportedSecurityLevel();
+        assertTrue(isValidSecurityLevel(securityLevel));
+    }
+
+    private boolean isValidSecurityLevel(int securityLevel) {
+        return (securityLevel >= ChannelSoundingParams.CS_SECURITY_LEVEL_UNKNOWN
+                && securityLevel <= ChannelSoundingParams.CS_SECURITY_LEVEL_FOUR);
     }
 }
