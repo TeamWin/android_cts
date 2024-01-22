@@ -54,6 +54,7 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.Flags;
+import android.content.pm.LauncherApps;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
@@ -216,6 +217,34 @@ public class PackageInstallerArchiveTest {
         assertThat(actualBitmap).isNotNull();
 
         recycleBitmap(actualIcon, actualBitmap);
+    }
+
+    @Test
+    public void archiveApp_getApplicationIcon_compatOptionsOn() throws Exception {
+        installPackage(PACKAGE_NAME, APK_PATH);
+
+        runWithShellPermissionIdentity(
+                () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
+                        new IntentSender((IIntentSender) mArchiveIntentSender)),
+                Manifest.permission.DELETE_PACKAGES);
+        assertThat(mArchiveIntentSender.mStatus.get(5, TimeUnit.SECONDS)).isEqualTo(
+                PackageInstaller.STATUS_SUCCESS);
+
+        ApplicationInfo applicationInfo = mPackageManager.getPackageInfo(PACKAGE_NAME,
+                PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).applicationInfo;
+        Drawable overlaidIcon = mPackageManager.getApplicationIcon(applicationInfo);
+        Bitmap overlaidBitmap = drawableToBitmap(overlaidIcon);
+
+        mContext.getSystemService(LauncherApps.class)
+                .setArchiveCompatibilityOptions(
+                        /* enableIconOverlay= */ false, /* enableUnarchivalSupport= */ true);
+        Drawable rawIcon = mPackageManager.getApplicationIcon(applicationInfo);
+        Bitmap rawBitmap = drawableToBitmap(rawIcon);
+
+        assertThat(overlaidBitmap.sameAs(rawBitmap)).isFalse();
+
+        recycleBitmap(overlaidIcon, overlaidBitmap);
+        recycleBitmap(rawIcon, rawBitmap);
     }
 
     @Test

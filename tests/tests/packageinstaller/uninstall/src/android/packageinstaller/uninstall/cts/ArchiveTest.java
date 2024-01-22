@@ -31,12 +31,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.Flags;
+import android.content.pm.LauncherApps;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.PackageInfoFlags;
@@ -98,6 +100,7 @@ public class ArchiveTest {
     private UiDevice mUiDevice;
     private PackageManager mPackageManager;
     private PackageInstaller mPackageInstaller;
+    private LauncherApps mLauncherApps;
     private String mDefaultHome;
 
     @Rule
@@ -109,6 +112,7 @@ public class ArchiveTest {
         mContext = instrumentation.getTargetContext();
         mPackageManager = mContext.getPackageManager();
         mPackageInstaller = mPackageManager.getPackageInstaller();
+        mLauncherApps = mContext.getSystemService(LauncherApps.class);
         mContext.getPackageManager().setComponentEnabledSetting(
                 new ComponentName(mContext, UnarchiveBroadcastReceiver.class),
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
@@ -124,6 +128,8 @@ public class ArchiveTest {
         sUnarchiveReceiverPackageName = new CompletableFuture<>();
         sUnarchiveReceiverAllUsers = new CompletableFuture<>();
         mDefaultHome = getDefaultLauncher(instrumentation);
+        mLauncherApps.setArchiveCompatibilityOptions(
+                /* enableIconOverlay= */ false, /* enableUnarchivalSupport= */ false);
         // Prepare device to same state to make tests more independent.
         prepareDevice();
         abandonPendingUnarchivalSessions();
@@ -135,6 +141,8 @@ public class ArchiveTest {
         if (mDefaultHome != null) {
             setDefaultLauncher(InstrumentationRegistry.getInstrumentation(), mDefaultHome);
         }
+        mLauncherApps.setArchiveCompatibilityOptions(
+                /* enableIconOverlay= */ false, /* enableUnarchivalSupport= */ false);
     }
 
     private void uninstallPackage(String packageName) {
@@ -268,10 +276,11 @@ public class ArchiveTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
-    @Ignore("b/302114467")
     public void startUnarchival_permissionDialog() throws Exception {
         installPackage(ARCHIVE_APK);
         prepareDevice();
+        mLauncherApps.setArchiveCompatibilityOptions(
+                /* enableIconOverlay= */ true, /* enableUnarchivalSupport= */ true);
         LocalIntentSender archiveSender = new LocalIntentSender();
         runWithShellPermissionIdentity(
                 () ->
@@ -284,18 +293,17 @@ public class ArchiveTest {
                 PackageInstaller.STATUS_SUCCESS);
         ComponentName archiveComponentName = new ComponentName(ARCHIVE_APK_PACKAGE_NAME,
                 ARCHIVE_APK_ACTIVITY_NAME);
-        if (mDefaultHome != null) {
-            setDefaultLauncher(InstrumentationRegistry.getInstrumentation(), mDefaultHome);
-        }
+        setDefaultLauncher(InstrumentationRegistry.getInstrumentation(), mContext.getPackageName());
         prepareDevice();
 
-        SystemUtil.runShellCommand(
-                String.format(
-                        "am start -n %s", archiveComponentName.flattenToShortString()));
+        Intent intent = new Intent();
+        intent.setComponent(archiveComponentName);
+        intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
 
         mUiDevice.waitForIdle();
-        assertThat(waitFor(Until.findObject(By.textContains("Restore")))).isNotNull();
-        UiObject2 clickableView = mUiDevice.findObject(By.text("Restore"));
+        assertThat(waitFor(Until.findObject(By.res(SYSTEM_PACKAGE_NAME, "button1")))).isNotNull();
+        UiObject2 clickableView = mUiDevice.findObject(By.res(SYSTEM_PACKAGE_NAME, "button1"));
         if (clickableView == null) {
             Assert.fail("Restore button not shown");
         }
@@ -323,14 +331,13 @@ public class ArchiveTest {
                 PackageInstaller.STATUS_SUCCESS);
         ComponentName archiveComponentName = new ComponentName(ARCHIVE_APK_PACKAGE_NAME,
                 ARCHIVE_APK_ACTIVITY_NAME);
-        if (mDefaultHome != null) {
-            setDefaultLauncher(InstrumentationRegistry.getInstrumentation(), mDefaultHome);
-        }
+        setDefaultLauncher(InstrumentationRegistry.getInstrumentation(), mContext.getPackageName());
         prepareDevice();
 
-        SystemUtil.runShellCommand(
-                String.format(
-                        "am start -n %s", archiveComponentName.flattenToShortString()));
+        Intent intent = new Intent();
+        intent.setComponent(archiveComponentName);
+        intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
 
         mUiDevice.waitForIdle();
         int unarchiveId = getUnarchivalSessionId();
@@ -448,5 +455,8 @@ public class ArchiveTest {
         public void onFinished(int sessionId, boolean success) {
             mSessionIdFinished.complete(sessionId);
         }
+    }
+
+    public static class Launcher extends Activity {
     }
 }
