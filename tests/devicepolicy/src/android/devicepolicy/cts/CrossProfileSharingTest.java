@@ -40,6 +40,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -213,10 +214,13 @@ public final class CrossProfileSharingTest {
 
             TestApis.context().instrumentedContext().startActivity(switchToOtherProfileIntent);
 
+            ComponentName chooserActivityComponent = TestApis.activities()
+                    .getTargetActivityOfIntent(CHOOSER_INTENT,
+                            PackageManager.MATCH_DEFAULT_ONLY).componentName();
+
             Poll.forValue("Chooser activity launched",
                             () -> TestApis.activities().foregroundActivity().componentName())
-                    .toBeEqualTo(new ComponentName("com.android.intentresolver",
-                            "com.android.intentresolver.ChooserActivity"))
+                    .toBeEqualTo(chooserActivityComponent)
                     .errorOnFail()
                     .await();
         } finally {

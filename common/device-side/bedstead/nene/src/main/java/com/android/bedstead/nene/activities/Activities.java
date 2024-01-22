@@ -32,6 +32,8 @@ import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.app.ActivityTaskManager;
 import android.content.ComponentName;
+import android.content.Intent;
+import android.content.pm.ResolveInfo;
 import android.view.Display;
 
 import androidx.annotation.Nullable;
@@ -174,5 +176,19 @@ public final class Activities {
                 throw new NeneException("Error clearing all activities activity pre S", e);
             }
         }
+    }
+
+    /**
+     * Get the Component reference of an Intent using targetActivity
+     * @param intent The intent of the activity to be resolved
+     * @param flag Additional option flags to modify the data returned
+     * @return ComponentName of the activity
+     */
+    public ComponentReference getTargetActivityOfIntent(Intent intent, int flag) {
+        ResolveInfo resolveInfo = TestApis.context().instrumentedContext()
+                .getPackageManager().resolveActivity(intent, flag);
+        return new ComponentReference(new ComponentName(resolveInfo.activityInfo.packageName,
+                resolveInfo.activityInfo.targetActivity
+        ));
     }
 }
