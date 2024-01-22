@@ -57,6 +57,7 @@ public class CtsWearableSensingService extends WearableSensingService {
     private static String sPackageName = null;
     private static final HashMultimap<Integer, WearableSensingDataRequester> sDataRequesters =
             HashMultimap.create();
+    private static boolean sOnStopHotwordRecognitionCalled = false;
 
     @Override
     public void onDataStreamProvided(ParcelFileDescriptor parcelFileDescriptor,
@@ -102,6 +103,14 @@ public class CtsWearableSensingService extends WearableSensingService {
     }
 
     @Override
+    public void onStopHotwordRecognition(Consumer<Integer> statusConsumer) {
+        Log.i(TAG, "onStopHotwordRecognition");
+        sOnStopHotwordRecognitionCalled = true;
+        sStatusConsumer = statusConsumer;
+        sRespondLatch.countDown();
+    }
+
+    @Override
     public void onStartDetection(AmbientContextEventRequest request,
             String packageName,
             Consumer<AmbientContextDetectionServiceStatus> statusConsumer,
@@ -142,6 +151,7 @@ public class CtsWearableSensingService extends WearableSensingService {
         sServiceStatusToConsume = null;
         sPackageName = null;
         sDataRequesters.clear();
+        sOnStopHotwordRecognitionCalled = false;
     }
 
     public static void whenCallbackTriggeredRespondWithStatus(int status) {
@@ -223,5 +233,9 @@ public class CtsWearableSensingService extends WearableSensingService {
     /** Gets the data requesters registered for the provided data type. */
     public static Set<WearableSensingDataRequester> getDataRequesters(int dataType) {
         return sDataRequesters.get(dataType);
+    }
+
+    public static boolean getOnStopHotwordRecognitionCalled() {
+        return sOnStopHotwordRecognitionCalled;
     }
 }

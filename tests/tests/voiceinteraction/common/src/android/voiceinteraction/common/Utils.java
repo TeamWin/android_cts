@@ -190,6 +190,13 @@ public class Utils {
     public static final String KEY_TEST_SCENARIO = "testScenario";
     public static final String KEY_DETECTION_DELAY_MS = "detectionDelayMs";
     public static final String KEY_DETECTION_REJECTED = "detection_rejected";
+
+    /**
+     * The options key to indicate whether the MainHotwordDetectionService should accept the hotword
+     * audio stream no matter what it is.
+     */
+    public static final String KEY_ACCEPT_DETECTION = "accept_detection";
+
     public static final String KEY_INITIALIZATION_STATUS = "initialization_status";
     /**
      * It only works when the test scenario is
@@ -199,6 +206,23 @@ public class Utils {
      */
     public static final String KEY_AUDIO_EGRESS_USE_ILLEGAL_COPY_BUFFER_SIZE =
             "useIllegalCopyBufferSize";
+
+    /**
+     * The AlwaysOnHotwordDetector#updateState options key to indicate whether the
+     * MainHotwordDetectionService should close the audio stream received from an external source
+     * immediately after reading from it.
+     */
+    public static final String KEY_AUDIO_EGRESS_CLOSE_AUDIO_STREAM_AFTER_READ =
+            "closeAudioStreamAfterRead";
+
+    /**
+     * The AlwaysOnHotwordDetector#updateState options key to indicate whether the
+     * MainHotwordDetectionService should close the input audio stream if the output audio pipe is
+     * broken.
+     */
+    public static final String KEY_CLOSE_INPUT_AUDIO_STREAM_IF_OUTPUT_PIPE_BROKEN =
+            "closeInputAudioStreamIfOutputPipeBroken";
+
     public static final String KEY_TIMESTAMP_MILLIS = "timestamp_millis";
 
     public static final String VOICE_INTERACTION_KEY_CALLBACK = "callback";
@@ -254,12 +278,7 @@ public class Utils {
     public static final int FAKE_HOTWORD_OFFSET_MILLIS = 9;
     public static final int FAKE_HOTWORD_TRAINING_DATA_TIMEOUT_STAGE = 8;
 
-    private static final HotwordAudioStream HOTWORD_AUDIO_STREAM =
-            new HotwordAudioStream.Builder(createFakeAudioFormat(), createFakeAudioStream())
-                    .setInitialAudio(FAKE_HOTWORD_AUDIO_DATA)
-                    .setMetadata(createFakePersistableBundleData())
-                    .setTimestamp(createFakeAudioTimestamp())
-                    .build();
+    private static final HotwordAudioStream HOTWORD_AUDIO_STREAM = createNewHotwordAudioStream();
 
     private static final HotwordAudioStream HOTWORD_AUDIO_STREAM_WRONG_COPY_BUFFER_SIZE =
             new HotwordAudioStream.Builder(createFakeAudioFormat(), createFakeAudioStream())
@@ -269,15 +288,38 @@ public class Utils {
                     .build();
 
     public static final HotwordDetectedResult AUDIO_EGRESS_DETECTED_RESULT =
-            new HotwordDetectedResult.Builder().setAudioStreams(
-                    List.of(HOTWORD_AUDIO_STREAM)).build();
+            createNewAudioEgressDetectedResult(HOTWORD_AUDIO_STREAM);
 
     public static final HotwordDetectedResult AUDIO_EGRESS_DETECTED_RESULT_WRONG_COPY_BUFFER_SIZE =
-            new HotwordDetectedResult.Builder().setAudioStreams(
-                    List.of(HOTWORD_AUDIO_STREAM_WRONG_COPY_BUFFER_SIZE)).build();
+            createNewAudioEgressDetectedResult(HOTWORD_AUDIO_STREAM_WRONG_COPY_BUFFER_SIZE);
 
     public static final boolean SYSPROP_VISUAL_QUERY_SERVICE_ENABLED =
             SystemProperties.getBoolean("ro.hotword.visual_query_service_enabled", false);
+
+    /**
+     * Creates a new instance of HotwordDetectedResult that contains the provided
+     * hotwordAudioStream.
+     */
+    public static HotwordDetectedResult createNewAudioEgressDetectedResult(
+            HotwordAudioStream hotwordAudioStream) {
+        return new HotwordDetectedResult.Builder()
+                .setAudioStreams(List.of(hotwordAudioStream))
+                .build();
+    }
+
+    /** Creates an audio stream with FAKE_HOTWORD_AUDIO_DATA. */
+    public static HotwordAudioStream createNewHotwordAudioStream() {
+        return createNewHotwordAudioStream(createFakeAudioStream());
+    }
+
+    /** Creates an audio stream with FAKE_HOTWORD_AUDIO_DATA. */
+    public static HotwordAudioStream createNewHotwordAudioStream(ParcelFileDescriptor audioStream) {
+        return new HotwordAudioStream.Builder(createFakeAudioFormat(), audioStream)
+                .setInitialAudio(FAKE_HOTWORD_AUDIO_DATA)
+                .setMetadata(createFakePersistableBundleData())
+                .setTimestamp(createFakeAudioTimestamp())
+                .build();
+    }
 
     /**
      * Returns the PersistableBundle data that is used for testing.
