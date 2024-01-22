@@ -154,7 +154,7 @@ public class BatteryHealthTest {
                 .BATTERY_PROPERTY_PART_STATUS);
 
         assertThat(partStatus).isAtLeast(BatteryManager.PART_STATUS_UNSUPPORTED);
-        assertThat(partStatus).isAtLeast(BatteryManager.PART_STATUS_REPLACED + 1);
+        assertThat(partStatus).isAtMost(BatteryManager.PART_STATUS_REPLACED);
         mAutomation.dropShellPermissionIdentity();
     }
 
