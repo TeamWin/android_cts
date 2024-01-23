@@ -56,6 +56,7 @@ import android.app.appsearch.SearchSuggestionResult;
 import android.app.appsearch.SearchSuggestionSpec;
 import android.app.appsearch.SetSchemaRequest;
 import android.app.appsearch.StorageInfo;
+import android.app.appsearch.VisibilityConfig;
 import android.app.appsearch.exceptions.AppSearchException;
 import android.app.appsearch.testutil.AppSearchEmail;
 import android.app.appsearch.util.DocumentIdUtil;
@@ -528,6 +529,47 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(exception).hasMessageThat().containsMatch("Invalid cycle|Infinite loop");
     }
 
+    /** Test indexing maximum properties into a schema. */
+    @Test
+    public void testSetSchema_maxProperties() throws Exception {
+        int maxProperties = mDb1.getFeatures().getMaxIndexedProperties();
+        AppSearchSchema.Builder schemaBuilder = new AppSearchSchema.Builder("testSchema");
+        for (int i = 0; i < maxProperties; i++) {
+            schemaBuilder.addProperty(
+                    new StringPropertyConfig.Builder("string" + i)
+                            .setIndexingType(StringPropertyConfig.INDEXING_TYPE_EXACT_TERMS)
+                            .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
+                            .build());
+        }
+        AppSearchSchema maxSchema = schemaBuilder.build();
+        mDb1.setSchemaAsync(new SetSchemaRequest.Builder().addSchemas(maxSchema).build()).get();
+        Set<AppSearchSchema> actual1 = mDb1.getSchemaAsync().get().getSchemas();
+        assertThat(actual1).containsExactly(maxSchema);
+
+        schemaBuilder.addProperty(
+                new StringPropertyConfig.Builder("toomuch")
+                        .setIndexingType(StringPropertyConfig.INDEXING_TYPE_EXACT_TERMS)
+                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
+                        .build());
+        ExecutionException exception =
+                assertThrows(
+                        ExecutionException.class,
+                        () ->
+                                mDb1.setSchemaAsync(
+                                                new SetSchemaRequest.Builder()
+                                                        .addSchemas(schemaBuilder.build())
+                                                        .setForceOverride(true)
+                                                        .build())
+                                        .get());
+        Throwable cause = exception.getCause();
+        assertThat(cause).isInstanceOf(AppSearchException.class);
+        assertThat(cause.getMessage())
+                .isEqualTo(
+                        "Too many properties to be indexed, max "
+                                + "number of properties allowed: "
+                                + maxProperties);
+    }
+
     @Test
     public void testGetSchema_allPropertyTypes() throws Exception {
         AppSearchSchema inSchema =
@@ -878,6 +920,71 @@ public abstract class AppSearchSessionCtsTestBase {
                 .isEqualTo(
                         "Publicly visible schema are not supported on this "
                                 + "AppSearch implementation.");
+    }
+
+    @Test
+    public void testSetSchema_visibleToConfig() throws Exception {
+        assumeTrue(
+                mDb1.getFeatures()
+                        .isFeatureSupported(
+                                Features.SET_SCHEMA_REQUEST_ADD_SCHEMA_TYPE_VISIBLE_TO_CONFIG));
+        byte[] cert1 = new byte[32];
+        byte[] cert2 = new byte[32];
+        Arrays.fill(cert1, (byte) 1);
+        Arrays.fill(cert2, (byte) 2);
+        PackageIdentifier pkg1 = new PackageIdentifier("package1", cert1);
+        PackageIdentifier pkg2 = new PackageIdentifier("package2", cert2);
+        VisibilityConfig config1 =
+                new VisibilityConfig.Builder()
+                        .setNotDisplayedBySystem(true)
+                        .setPubliclyVisibleTargetPackage(pkg1)
+                        .addVisibleToPermissions(ImmutableSet.of(1, 2))
+                        .build();
+        VisibilityConfig config2 =
+                new VisibilityConfig.Builder()
+                        .setNotDisplayedBySystem(false)
+                        .setPubliclyVisibleTargetPackage(pkg2)
+                        .addVisibleToPermissions(ImmutableSet.of(3, 4))
+                        .build();
+        SetSchemaRequest request =
+                new SetSchemaRequest.Builder()
+                        .addSchemas(AppSearchEmail.SCHEMA)
+                        .addSchemaTypeVisibleToConfig("builtin:Email", config1)
+                        .addSchemaTypeVisibleToConfig("builtin:Email", config2)
+                        .build();
+        mDb1.setSchemaAsync(request).get();
+
+        GetSchemaResponse getSchemaResponse = mDb1.getSchemaAsync().get();
+        assertThat(getSchemaResponse.getSchemas()).containsExactly(AppSearchEmail.SCHEMA);
+        assertThat(getSchemaResponse.getSchemaTypesVisibleToConfigs())
+                .isEqualTo(ImmutableMap.of("builtin:Email", ImmutableSet.of(config1, config2)));
+    }
+
+    @Test
+    public void testSetSchema_visibleToConfig_unsupported() {
+        assumeFalse(
+                mDb1.getFeatures()
+                        .isFeatureSupported(
+                                Features.SET_SCHEMA_REQUEST_ADD_SCHEMA_TYPE_VISIBLE_TO_CONFIG));
+
+        VisibilityConfig config =
+                new VisibilityConfig.Builder()
+                        .setNotDisplayedBySystem(true)
+                        .addVisibleToPermissions(ImmutableSet.of(1, 2))
+                        .build();
+        SetSchemaRequest request =
+                new SetSchemaRequest.Builder()
+                        .addSchemas(new AppSearchSchema.Builder("Email").build())
+                        .addSchemaTypeVisibleToConfig("Email", config)
+                        .build();
+        Exception e =
+                assertThrows(
+                        UnsupportedOperationException.class,
+                        () -> mDb1.setSchemaAsync(request).get());
+        assertThat(e.getMessage())
+                .isEqualTo(
+                        "Schema visible to config are not supported on"
+                                + " this AppSearch implementation.");
     }
 
     @Test
