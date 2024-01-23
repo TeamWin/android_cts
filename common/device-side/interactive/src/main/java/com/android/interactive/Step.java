@@ -87,6 +87,9 @@ public abstract class Step<E> {
 
     private Optional<E> mValue = Optional.empty();
     private boolean mFailed = false;
+    // Whether there's a screenshot taken for this step.
+    // In case multiple close() calls creating multiple screenshot files.
+    private boolean mHasTakenScreenshot = false;
 
     private static Map<Class<? extends Step<?>>, Object> sStepCache = new HashMap<>();
 
@@ -146,7 +149,7 @@ public abstract class Step<E> {
                                         .terminalValue((b) -> step.hasFailed())
                                         .errorOnFail(
                                                 "Expected value from step. No value provided or"
-                                                    + " step failed.")
+                                                        + " step failed.")
                                         .timeout(MAX_STEP_DURATION)
                                         .await()
                                         .get();
@@ -226,7 +229,7 @@ public abstract class Step<E> {
         } catch (ClassCastException e) {
             throw new IllegalStateException(
                     "You cannot call pass() for a step which requires a return value. If no return"
-                        + " value is required, the step should use Nothing (not Void)");
+                            + " value is required, the step should use Nothing (not Void)");
         }
     }
 
@@ -344,8 +347,14 @@ public abstract class Step<E> {
         sWindowManager.updateViewLayout(mInstructionView, params);
     }
 
+    /**
+     * Closes the step, takes a screenshot of the device if the feature is enabled, and removes the
+     * instruction view if it's still there.
+     */
     protected void close() {
-        if (TestApis.instrumentation().arguments().getBoolean("TAKE_SCREENSHOT", false)) {
+        if (!mHasTakenScreenshot
+                && TestApis.instrumentation().arguments().getBoolean("TAKE_SCREENSHOT", false)) {
+            mHasTakenScreenshot = true;
             ScreenshotUtil.captureScreenshot(getClass().getCanonicalName());
         }
         if (mInstructionView != null) {
