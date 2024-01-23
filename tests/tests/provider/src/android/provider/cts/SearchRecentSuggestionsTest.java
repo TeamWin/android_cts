@@ -26,10 +26,10 @@ import android.test.ProviderTestCase2;
 
 import com.android.compatibility.common.util.PollingCheck;
 
-public class SearchRecentSuggestionsTest extends
-        ProviderTestCase2<TestSearchRecentSuggestionsProvider> {
-    private final static String AUTHORITY_HEAD = "content://"
-            + TestSearchRecentSuggestionsProvider.AUTHORITY;
+public class SearchRecentSuggestionsTest
+        extends ProviderTestCase2<TestSearchRecentSuggestionsProvider> {
+    private static final String AUTHORITY_HEAD =
+            "content://" + TestSearchRecentSuggestionsProvider.AUTHORITY;
 
     private Uri mTestUri;
     private TestSearchRecentSuggestionsProvider mTestSRSProvider;
@@ -44,19 +44,24 @@ public class SearchRecentSuggestionsTest extends
     }
 
     public SearchRecentSuggestionsTest() {
-        super(TestSearchRecentSuggestionsProvider.class,
+        super(
+                TestSearchRecentSuggestionsProvider.class,
                 TestSearchRecentSuggestionsProvider.AUTHORITY);
     }
 
     public void testConstructor() {
-        new SearchRecentSuggestions(mProviderContext, TestSearchRecentSuggestionsProvider.AUTHORITY,
+        new SearchRecentSuggestions(
+                mProviderContext,
+                TestSearchRecentSuggestionsProvider.AUTHORITY,
                 TestSearchRecentSuggestionsProvider.MODE);
     }
 
     public void testSearchRecentSuggestions() {
-        SearchRecentSuggestions srs = new MySearchRecentSuggestions(mProviderContext,
-                TestSearchRecentSuggestionsProvider.AUTHORITY,
-                TestSearchRecentSuggestionsProvider.MODE);
+        SearchRecentSuggestions srs =
+                new MySearchRecentSuggestions(
+                        mProviderContext,
+                        TestSearchRecentSuggestionsProvider.AUTHORITY,
+                        TestSearchRecentSuggestionsProvider.MODE);
         Cursor c = mTestSRSProvider.query(mTestUri, null, null, null, null);
 
         try {
@@ -71,13 +76,18 @@ public class SearchRecentSuggestionsTest extends
 
             waitForCursorCount(mTestUri, SearchRecentSuggestions.QUERIES_PROJECTION_2LINE, 1);
 
-            c = mTestSRSProvider.query(mTestUri, SearchRecentSuggestions.QUERIES_PROJECTION_2LINE,
-                    null, null, null);
+            c =
+                    mTestSRSProvider.query(
+                            mTestUri,
+                            SearchRecentSuggestions.QUERIES_PROJECTION_2LINE,
+                            null,
+                            null,
+                            null);
             c.moveToFirst();
-            assertEquals(query1, c
-                    .getString(SearchRecentSuggestions.QUERIES_PROJECTION_QUERY_INDEX));
-            assertEquals(line1, c
-                    .getString(SearchRecentSuggestions.QUERIES_PROJECTION_DISPLAY2_INDEX));
+            assertEquals(
+                    query1, c.getString(SearchRecentSuggestions.QUERIES_PROJECTION_QUERY_INDEX));
+            assertEquals(
+                    line1, c.getString(SearchRecentSuggestions.QUERIES_PROJECTION_DISPLAY2_INDEX));
             c.close();
 
             String query2 = "query2";
@@ -96,20 +106,25 @@ public class SearchRecentSuggestionsTest extends
 
             waitForCursorCount(mTestUri, SearchRecentSuggestions.QUERIES_PROJECTION_2LINE, 2);
 
-            c = mTestSRSProvider.query(mTestUri, SearchRecentSuggestions.QUERIES_PROJECTION_2LINE,
-                    null, null, null);
+            c =
+                    mTestSRSProvider.query(
+                            mTestUri,
+                            SearchRecentSuggestions.QUERIES_PROJECTION_2LINE,
+                            null,
+                            null,
+                            null);
 
             // and the left two should be: test2 and test3, test1 should be delete
             c.moveToFirst();
-            assertEquals(query2, c
-                    .getString(SearchRecentSuggestions.QUERIES_PROJECTION_QUERY_INDEX));
-            assertEquals(line2, c
-                    .getString(SearchRecentSuggestions.QUERIES_PROJECTION_DISPLAY2_INDEX));
+            assertEquals(
+                    query2, c.getString(SearchRecentSuggestions.QUERIES_PROJECTION_QUERY_INDEX));
+            assertEquals(
+                    line2, c.getString(SearchRecentSuggestions.QUERIES_PROJECTION_DISPLAY2_INDEX));
             c.moveToNext();
-            assertEquals(query3, c
-                    .getString(SearchRecentSuggestions.QUERIES_PROJECTION_QUERY_INDEX));
-            assertEquals(line3, c
-                    .getString(SearchRecentSuggestions.QUERIES_PROJECTION_DISPLAY2_INDEX));
+            assertEquals(
+                    query3, c.getString(SearchRecentSuggestions.QUERIES_PROJECTION_QUERY_INDEX));
+            assertEquals(
+                    line3, c.getString(SearchRecentSuggestions.QUERIES_PROJECTION_DISPLAY2_INDEX));
             c.close();
 
             // clear all history
@@ -138,24 +153,30 @@ public class SearchRecentSuggestionsTest extends
 
         mTestSRSProvider.insert(mTestUri, value);
 
-        Cursor cursor = mTestSRSProvider.query(mTestUri,
-                SearchRecentSuggestions.QUERIES_PROJECTION_2LINE,
-                "display1=\"" + insertDisplay1 + "\"", null, null);
+        Cursor cursor =
+                mTestSRSProvider.query(
+                        mTestUri,
+                        SearchRecentSuggestions.QUERIES_PROJECTION_2LINE,
+                        "display1=\"" + insertDisplay1 + "\"",
+                        null,
+                        null);
         try {
             assertNotNull(cursor);
             assertEquals(1, cursor.getCount());
             assertTrue(cursor.moveToFirst());
-            assertEquals(insertDisplay2, cursor
-                    .getString(SearchRecentSuggestions.QUERIES_PROJECTION_DISPLAY2_INDEX));
-            assertEquals(insertQuery, cursor
-                    .getString(SearchRecentSuggestions.QUERIES_PROJECTION_QUERY_INDEX));
+            assertEquals(
+                    insertDisplay2,
+                    cursor.getString(SearchRecentSuggestions.QUERIES_PROJECTION_DISPLAY2_INDEX));
+            assertEquals(
+                    insertQuery,
+                    cursor.getString(SearchRecentSuggestions.QUERIES_PROJECTION_QUERY_INDEX));
             assertEquals(1, cursor.getInt(SearchRecentSuggestions.QUERIES_PROJECTION_DATE_INDEX));
             cursor.close();
 
             // Test: update
             /**
-             * SearchRecentSuggestionsProvider.update is not implement, always
-             * throw an UnsupportedOperationException.
+             * SearchRecentSuggestionsProvider.update is not implement, always throw an
+             * UnsupportedOperationException.
              */
             value.clear();
             value.put("display1", updateDisplay1);
@@ -164,8 +185,8 @@ public class SearchRecentSuggestionsTest extends
             value.put("date", 2);
 
             try {
-                mTestSRSProvider.update(mTestUri, value, "display1=\"" + insertDisplay1 + "\"",
-                        null);
+                mTestSRSProvider.update(
+                        mTestUri, value, "display1=\"" + insertDisplay1 + "\"", null);
                 fail("There should be an UnsupportedOperationException thrown out.");
             } catch (UnsupportedOperationException e) {
                 // expected, test success.
@@ -173,9 +194,13 @@ public class SearchRecentSuggestionsTest extends
 
             // Test: delete
             mTestSRSProvider.delete(mTestUri, "display1=\"" + insertDisplay1 + "\"", null);
-            cursor = mTestSRSProvider.query(mTestUri,
-                    SearchRecentSuggestions.QUERIES_PROJECTION_2LINE, "display1=\""
-                            + insertDisplay1 + "\"", null, null);
+            cursor =
+                    mTestSRSProvider.query(
+                            mTestUri,
+                            SearchRecentSuggestions.QUERIES_PROJECTION_2LINE,
+                            "display1=\"" + insertDisplay1 + "\"",
+                            null,
+                            null);
             assertNotNull(cursor);
             assertEquals(0, cursor.getCount());
         } finally {
@@ -194,9 +219,9 @@ public class SearchRecentSuggestionsTest extends
         }
     }
 
-    private void waitForCursorCount(final Uri uri, final String[] projection,
-            final int expectedCount) {
-        new PollingCheck() {
+    private void waitForCursorCount(
+            final Uri uri, final String[] projection, final int expectedCount) {
+        new PollingCheck(/* timeout= */ 5_000) {
             @Override
             protected boolean check() {
                 Cursor cursor = null;

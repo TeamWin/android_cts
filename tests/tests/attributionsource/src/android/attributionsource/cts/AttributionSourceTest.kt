@@ -81,6 +81,7 @@ class AttributionSourceTest {
 
     @Test
     @ApiTest(apis = ["android.content.AttributionSource#getDeviceId"])
+    @RequiresFlagsEnabled(Flags.FLAG_DEVICE_AWARE_PERMISSION_APIS_ENABLED)
     fun testDefaultDeviceId() {
         val attributionSource = AttributionSource.Builder(Process.myUid()).build()
         assertEquals(Context.DEVICE_ID_DEFAULT, attributionSource.deviceId)
@@ -88,6 +89,7 @@ class AttributionSourceTest {
 
     @Test
     @ApiTest(apis = ["android.content.AttributionSource#getDeviceId"])
+    @RequiresFlagsEnabled(Flags.FLAG_DEVICE_AWARE_PERMISSION_APIS_ENABLED)
     fun testVirtualDeviceId() {
         // random integer
         val deviceId = 100

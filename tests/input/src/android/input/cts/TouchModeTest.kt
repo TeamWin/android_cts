@@ -80,7 +80,8 @@ class TouchModeTest {
 
     @Rule
     fun permissionsRule() = AdoptShellPermissionsRule(
-            instrumentation.getUiAutomation(), Manifest.permission.ADD_TRUSTED_DISPLAY
+            instrumentation.getUiAutomation(),
+            Manifest.permission.ADD_TRUSTED_DISPLAY
     )
 
     @Before
@@ -116,7 +117,8 @@ class TouchModeTest {
 
     fun isRunningActivitiesOnSecondaryDisplaysSupported(): Boolean {
         return instrumentation.context.packageManager.hasSystemFeature(
-                PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS)
+                PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS
+        )
     }
 
     @Test
@@ -136,7 +138,9 @@ class TouchModeTest {
         instrumentation.setInTouchMode(newTouchMode)
         try {
             assertThat(touchModeChangeListener.countDownLatch.await(
-                    TOUCH_MODE_PROPAGATION_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)).isTrue()
+                    TOUCH_MODE_PROPAGATION_TIMEOUT_MILLIS,
+                    TimeUnit.MILLISECONDS
+            )).isTrue()
         } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()
             throw RuntimeException(e)
@@ -174,8 +178,9 @@ class TouchModeTest {
     @Test
     fun testDetachedViewReturnsDefaultTouchMode() {
         val context = instrumentation.targetContext
-        val defaultInTouchMode = context.resources.getBoolean(context.resources
-                .getIdentifier("config_defaultInTouchMode", "bool", "android"))
+        val defaultInTouchMode = context.resources.getBoolean(
+            context.resources.getIdentifier("config_defaultInTouchMode", "bool", "android")
+        )
 
         val detachedView = View(activity)
 
@@ -193,9 +198,14 @@ class TouchModeTest {
     @Test
     fun testTouchModeUpdate_PerDisplayFocusDisabled() {
         assumeTrue(isRunningActivitiesOnSecondaryDisplaysSupported())
-        assumeFalse("This test requires config_perDisplayFocusEnabled to be false",
+        assumeFalse(
+                "This test requires config_perDisplayFocusEnabled to be false",
                 targetContext.resources.getBoolean(targetContext.resources.getIdentifier(
-                        "config_perDisplayFocusEnabled", "bool", "android")))
+                        "config_perDisplayFocusEnabled",
+                        "bool",
+                        "android",
+                ))
+        )
 
         val secondaryDisplayId = findOrCreateSecondaryDisplay()
 
@@ -215,16 +225,24 @@ class TouchModeTest {
     @Test
     fun testTouchModeUpdate_PerDisplayFocusEnabled() {
         assumeTrue(isRunningActivitiesOnSecondaryDisplaysSupported())
-        assumeTrue("This test requires config_perDisplayFocusEnabled to be true",
+        assumeTrue(
+                "This test requires config_perDisplayFocusEnabled to be true",
                 targetContext.resources.getBoolean(targetContext.resources.getIdentifier(
-                        "config_perDisplayFocusEnabled", "bool", "android")))
+                        "config_perDisplayFocusEnabled",
+                        "bool",
+                        "android"
+                ))
+        )
 
         val secondaryDisplayId = findOrCreateSecondaryDisplay()
 
         touchDownOnDefaultDisplay().use {
             assertThat(isInTouchMode()).isTrue()
-            assertSecondaryDisplayTouchModeState(secondaryDisplayId, isInTouch = false,
-                delayBeforeChecking = true)
+            assertSecondaryDisplayTouchModeState(
+                secondaryDisplayId,
+                isInTouch = false,
+                delayBeforeChecking = true
+            )
         }
     }
 
@@ -240,12 +258,16 @@ class TouchModeTest {
     fun testTouchModeUpdate_DisplayHasOwnFocus() {
         assumeTrue(isRunningActivitiesOnSecondaryDisplaysSupported())
         val secondaryDisplayId = createVirtualDisplay(
-                VIRTUAL_DISPLAY_FLAG_OWN_FOCUS or VIRTUAL_DISPLAY_FLAG_TRUSTED)
+                VIRTUAL_DISPLAY_FLAG_OWN_FOCUS or VIRTUAL_DISPLAY_FLAG_TRUSTED
+        )
 
         touchDownOnDefaultDisplay().use {
             assertThat(isInTouchMode()).isTrue()
-            assertSecondaryDisplayTouchModeState(secondaryDisplayId, isInTouch = false,
-                delayBeforeChecking = true)
+            assertSecondaryDisplayTouchModeState(
+                secondaryDisplayId,
+                isInTouch = false,
+                delayBeforeChecking = true
+            )
         }
     }
 
@@ -256,7 +278,7 @@ class TouchModeTest {
             d.displayId != Display.DEFAULT_DISPLAY && d.type == Display.TYPE_EXTERNAL
         }.findFirst()
         if (display.isEmpty) {
-            return createVirtualDisplay(/*flags=*/ 0)
+            return createVirtualDisplay(flags = 0)
         }
         return display.get().displayId
     }
@@ -301,18 +323,31 @@ class TouchModeTest {
 
     private fun touchDownOnDefaultDisplay(): AutoCloseable {
         val downTime = SystemClock.uptimeMillis()
-        val down = MotionEvent.obtain(downTime, downTime, ACTION_DOWN,
-                /* x= */ 100f, /* y= */ 100f, /* metaState= */ 0)
+        val down = MotionEvent.obtain(
+            downTime,
+            downTime,
+            ACTION_DOWN,
+            100f, // x
+            100f, // y
+            0 // metaState
+        )
         down.source = InputDevice.SOURCE_TOUCHSCREEN
-        instrumentation.uiAutomation.injectInputEvent(down, /* sync= */ true)
+        val sync = true
+        instrumentation.uiAutomation.injectInputEvent(down, sync)
 
         // Clean up by sending an up event so that we ensure gestures are injected consistently.
         return AutoCloseable {
             val upEventTime = SystemClock.uptimeMillis()
-            val up = MotionEvent.obtain(downTime, upEventTime, ACTION_UP,
-                /* x= */ 100f, /* y= */ 100f, /* metaState= */ 0)
+            val up = MotionEvent.obtain(
+                downTime,
+                upEventTime,
+                ACTION_UP,
+                100f, // x
+                100f, // y
+                0 // metaState
+            )
             up.source = InputDevice.SOURCE_TOUCHSCREEN
-            instrumentation.uiAutomation.injectInputEvent(up, /* sync= */ true)
+            instrumentation.uiAutomation.injectInputEvent(up, sync)
         }
     }
 

@@ -876,4 +876,28 @@ public class RollbackManagerTest {
         }
 
     }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_RECOVERABILITY_DETECTION)
+    public void testImpactLevelInRollback() throws Exception {
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.A2).setEnableRollback().setRollbackImpactLevel(1).commit();
+        RollbackUtils.waitForAvailableRollback(TestApp.A);
+        RollbackInfo rollback = RollbackUtils.getAvailableRollback(TestApp.A);
+
+        assertThat(rollback).isNotNull();
+        assertThat(rollback.getRollbackImpactLevel()).isEqualTo(1);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_RECOVERABILITY_DETECTION)
+    public void testImpactLevelInRollbackDefault() throws Exception {
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.A2).setEnableRollback().commit();
+        RollbackUtils.waitForAvailableRollback(TestApp.A);
+        RollbackInfo rollback = RollbackUtils.getAvailableRollback(TestApp.A);
+
+        assertThat(rollback).isNotNull();
+        assertThat(rollback.getRollbackImpactLevel()).isEqualTo(0);
+    }
 }
