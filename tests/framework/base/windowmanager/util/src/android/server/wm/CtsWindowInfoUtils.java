@@ -16,6 +16,8 @@
 
 package android.server.wm;
 
+import static android.view.Display.DEFAULT_DISPLAY;
+
 import static junit.framework.Assert.assertTrue;
 
 import android.Manifest;
@@ -28,7 +30,6 @@ import android.os.IBinder;
 import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.util.Log;
-import android.view.Display;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.Window;
@@ -40,6 +41,7 @@ import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
 
@@ -156,12 +158,13 @@ public class CtsWindowInfoUtils {
      *                            call the predicate on. The supplier is called each time window
      *                            info change. If the supplier returns null, the predicate is
      *                            assumed false for the current invocation.
+     * @param displayId           The id of the display on which to wait for the window of interest
      * @return True if the provided predicate is true for any invocation before the timeout is
      * reached. False otherwise.
      * @hide
      */
     public static boolean waitForWindowInfo(@NonNull Predicate<WindowInfo> predicate, long timeout,
-            @NonNull TimeUnit unit, @NonNull Supplier<IBinder> windowTokenSupplier)
+            @NonNull TimeUnit unit, @NonNull Supplier<IBinder> windowTokenSupplier, int displayId)
             throws InterruptedException {
         Predicate<List<WindowInfo>> wrappedPredicate = windowInfos -> {
             IBinder windowToken = windowTokenSupplier.get();
@@ -173,9 +176,9 @@ public class CtsWindowInfoUtils {
                 if (!windowInfo.isVisible) {
                     continue;
                 }
-                // only wait for default display.
+                // only wait for requested display.
                 if (windowInfo.windowToken == windowToken
-                        && windowInfo.displayId == Display.DEFAULT_DISPLAY) {
+                        && windowInfo.displayId == displayId) {
                     return predicate.test(windowInfo);
                 }
             }
@@ -189,14 +192,16 @@ public class CtsWindowInfoUtils {
      * Waits for the window associated with the view to be present.
      */
     public static boolean waitForWindowVisible(@NonNull View view) throws InterruptedException {
+        // Wait until view is attached to a display
+        PollingCheck.waitFor(() -> view.getDisplay() != null, "View not attached to a display");
         return waitForWindowInfo(windowInfo -> true, HW_TIMEOUT_MULTIPLIER * 5L, TimeUnit.SECONDS,
-                view::getWindowToken);
+                view::getWindowToken, view.getDisplay().getDisplayId());
     }
 
     public static boolean waitForWindowVisible(@NonNull IBinder windowToken)
             throws InterruptedException {
         return waitForWindowInfo(windowInfo -> true, HW_TIMEOUT_MULTIPLIER * 5L, TimeUnit.SECONDS,
-                () -> windowToken);
+                () -> windowToken, DEFAULT_DISPLAY);
     }
 
     /**
@@ -532,7 +537,7 @@ public class CtsWindowInfoUtils {
         };
 
         if (!waitForWindowInfo(predicate, 5L * HW_TIMEOUT_MULTIPLIER, TimeUnit.SECONDS,
-                windowTokenSupplier)) {
+                windowTokenSupplier, DEFAULT_DISPLAY)) {
             return null;
         }
         return bounds;
@@ -551,7 +556,7 @@ public class CtsWindowInfoUtils {
         };
 
         if (!waitForWindowInfo(predicate, 5L * HW_TIMEOUT_MULTIPLIER, TimeUnit.SECONDS,
-                windowTokenSupplier)) {
+                windowTokenSupplier, DEFAULT_DISPLAY)) {
             return null;
         }
         return bounds;
