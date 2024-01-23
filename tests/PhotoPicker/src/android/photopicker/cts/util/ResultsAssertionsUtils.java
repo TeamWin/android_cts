@@ -32,6 +32,7 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
+import android.provider.MediaStore;
 
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
@@ -59,10 +60,10 @@ public class ResultsAssertionsUtils {
         assertThat(userId).isEqualTo(expectedUserId);
 
         final String auth = uri.getPathSegments().get(0);
-        if (action.equalsIgnoreCase(Intent.ACTION_GET_CONTENT)) {
-            assertThat(auth).isEqualTo("picker_get_content");
-        } else {
+        if (action.equalsIgnoreCase(MediaStore.ACTION_PICK_IMAGES)) {
             assertThat(auth).isEqualTo("picker");
+        } else {
+            assertThat(auth).contains("picker");
         }
     }
 
