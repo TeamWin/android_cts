@@ -24,13 +24,20 @@ import static android.net.wifi.p2p.WifiP2pGroup.NETWORK_ID_TEMPORARY;
 import static org.junit.Assert.assertThrows;
 
 import android.net.MacAddress;
+import android.net.wifi.OuiKeyedData;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.os.Build;
+import android.os.PersistableBundle;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.test.AndroidTestCase;
 
 import androidx.test.filters.SdkSuppress;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.wifi.flags.Flags;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class WifiP2pConfigTest extends AndroidTestCase {
     private static final String TEST_NETWORK_NAME = "DIRECT-xy-Hello";
@@ -148,6 +155,20 @@ public class WifiP2pConfigTest extends AndroidTestCase {
                 .build();
         assertEquals(config.deviceAddress, TEST_DEVICE_ADDRESS);
         assertTrue(config.isJoinExistingGroup());
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    public void testWifiP2pConfigBuilderWithVendorData() {
+        OuiKeyedData vendorDataElement =
+                new OuiKeyedData.Builder(0x00aabbcc, new PersistableBundle()).build();
+        List<OuiKeyedData> vendorData = Arrays.asList(vendorDataElement);
+        WifiP2pConfig config = new WifiP2pConfig.Builder()
+                .setDeviceAddress(MacAddress.fromString(TEST_DEVICE_ADDRESS))
+                .setVendorData(vendorData)
+                .build();
+        assertTrue(vendorData.equals(config.getVendorData()));
     }
 
     private static void assertWifiP2pConfigHasFields(WifiP2pConfig config,

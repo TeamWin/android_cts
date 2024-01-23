@@ -1100,6 +1100,24 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         assertFalse(MY_RESPONSE.success);
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pConfig.Builder#setVendorData"})
+    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    @Test
+    public void testP2pConnectDoesNotThrowExceptionWithVendorData() {
+        OuiKeyedData vendorDataElement =
+                new OuiKeyedData.Builder(TEST_OUI, new PersistableBundle()).build();
+        List<OuiKeyedData> vendorData = Arrays.asList(vendorDataElement);
+        WifiP2pConfig config = new WifiP2pConfig.Builder()
+                .setDeviceAddress(MacAddress.fromString("aa:bb:cc:dd:ee:ff"))
+                .setVendorData(vendorData)
+                .build();
+        sWifiP2pManager.connect(sWifiP2pChannel, config, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertFalse(MY_RESPONSE.success);
+    }
+
     @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#setVendorElements"})
     @Test
     public void testP2pSetVendorElements() {
