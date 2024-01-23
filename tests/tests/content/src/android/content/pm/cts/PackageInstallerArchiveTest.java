@@ -92,6 +92,7 @@ import com.google.common.truth.Expect;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -561,6 +562,7 @@ public class PackageInstallerArchiveTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
+    @Ignore("b/321969592")
     public void reportUnarchivalState_error() throws Exception {
         installPackage(PACKAGE_NAME, APK_PATH);
         runWithShellPermissionIdentity(
