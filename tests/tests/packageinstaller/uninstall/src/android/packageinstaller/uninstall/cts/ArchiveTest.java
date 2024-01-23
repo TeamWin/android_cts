@@ -175,7 +175,6 @@ public class ArchiveTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
-    @Ignore("b/312463977")
     public void requestArchive_confirmationDialog() throws Exception {
         installPackage(ARCHIVE_APK);
         assertFalse(mPackageManager.getPackageInfo(ARCHIVE_APK_PACKAGE_NAME,
@@ -227,12 +226,15 @@ public class ArchiveTest {
         installPackage(ARCHIVE_APK);
         LocalIntentSender archiveSender = new LocalIntentSender();
         runWithShellPermissionIdentity(
-                () -> mPackageInstaller.requestArchive(ARCHIVE_APK_PACKAGE_NAME,
-                        archiveSender.getIntentSender()),
+                () -> {
+                    mPackageInstaller.requestArchive(ARCHIVE_APK_PACKAGE_NAME,
+                            archiveSender.getIntentSender());
+                    Intent archiveIntent = archiveSender.getResult();
+                    assertThat(archiveIntent.getIntExtra(PackageInstaller.EXTRA_STATUS,
+                            -100)).isEqualTo(
+                            PackageInstaller.STATUS_SUCCESS);
+                },
                 Manifest.permission.DELETE_PACKAGES);
-        Intent archiveIntent = archiveSender.getResult();
-        assertThat(archiveIntent.getIntExtra(PackageInstaller.EXTRA_STATUS, -100)).isEqualTo(
-                PackageInstaller.STATUS_SUCCESS);
 
         SessionListener sessionListener = new SessionListener();
         mPackageInstaller.registerSessionCallback(sessionListener,
@@ -313,14 +315,16 @@ public class ArchiveTest {
         prepareDevice();
         LocalIntentSender archiveSender = new LocalIntentSender();
         runWithShellPermissionIdentity(
-                () ->
-                        mPackageInstaller.requestArchive(
-                                ARCHIVE_APK_PACKAGE_NAME,
-                                archiveSender.getIntentSender()),
+                () -> {
+                    mPackageInstaller.requestArchive(
+                            ARCHIVE_APK_PACKAGE_NAME,
+                            archiveSender.getIntentSender());
+                    Intent archiveIntent = archiveSender.getResult();
+                    assertThat(archiveIntent.getIntExtra(PackageInstaller.EXTRA_STATUS,
+                            -100)).isEqualTo(
+                            PackageInstaller.STATUS_SUCCESS);
+                },
                 Manifest.permission.DELETE_PACKAGES);
-        Intent archiveIntent = archiveSender.getResult();
-        assertThat(archiveIntent.getIntExtra(PackageInstaller.EXTRA_STATUS, -100)).isEqualTo(
-                PackageInstaller.STATUS_SUCCESS);
         ComponentName archiveComponentName = new ComponentName(ARCHIVE_APK_PACKAGE_NAME,
                 ARCHIVE_APK_ACTIVITY_NAME);
         if (mDefaultHome != null) {
