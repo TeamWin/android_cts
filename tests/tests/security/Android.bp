@@ -261,7 +261,6 @@ android_test {
         "androidx.test.rules",
         "androidx.test.runner",
         "android-common",
-        "ctstestserver",
         "ctstestrunner-axt",
         "cts-install-lib",
         "compatibility-device-util-axt",
@@ -271,31 +270,15 @@ android_test {
         "permission-test-util-lib",
         "sts-device-util",
         "hamcrest-library",
-        "NeneInternal",
     ],
     libs: [
         "android.test.runner",
         "org.apache.http.legacy",
         "android.test.base",
     ],
-    jni_libs: [
-        "libctssecurity_jni",
-        "libcts_jni",
-        "libnativehelper_compat_libc++",
-        "libnativehelper",
-        "libcutils",
-        "libcrypto",
-        "libselinux",
-        "libc++",
-        "libpcre2",
-        "libpackagelistparser",
-        "libcve_2019_2213_jni",
-    ],
-    host_required: ["CtsBackupHostTestCases"],
     srcs: [
         "src/android/security/cts/PackageSignatureTest.java",
     ],
-    platform_apis: true,
     // Tag this module as a gts test artifact
     test_suites: [
         "gts",
@@ -305,4 +288,7 @@ android_test {
     per_testcase_directory: true,
     test_config: "AndroidTest_PackageSignatureTest.xml",
     manifest: "AndroidManifest_PackageSignatureTest.xml",
+    min_sdk_version: "31",
+    sdk_version: "system_34",
+    target_sdk_version: "34",
 }
