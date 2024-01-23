@@ -28,8 +28,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.PollingCheck
+import com.android.cts.input.inputeventmatchers.withFlags
+import com.android.cts.input.inputeventmatchers.withMotionAction
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import org.hamcrest.Matchers.allOf
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -75,19 +78,26 @@ class PointerCancelTest {
 
         // Start a valid touch stream
         touchInjector.sendMultiTouchEvent(arrayOf(pointerInDecorView, secondPointer), true)
-        verifier.assertReceivedDown()
-        verifier.assertReceivedMove()
-        verifier.assertReceivedPointerDown(1)
-        verifier.assertReceivedPointerCancel(1)
-        verifier.assertReceivedUp()
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_DOWN))
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_MOVE))
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_POINTER_DOWN, 1))
+        verifier.assertReceivedMotion(
+            allOf(
+                withMotionAction(MotionEvent.ACTION_POINTER_UP, 1),
+                withFlags(MotionEvent.FLAG_CANCELED)
+            )
+        )
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_UP))
     }
 
     @Test
     fun testPointerCancelForSplitTouch() {
         val view = addFloatingWindow()
         val pointerInFloating = getViewCenterOnScreen(view)
-        val pointerOutsideFloating = PointF(pointerInFloating.x + view.width / 2 + 1,
-                pointerInFloating.y + view.height / 2 + 1)
+        val pointerOutsideFloating = PointF(
+            pointerInFloating.x + view.width / 2 + 1,
+            pointerInFloating.y + view.height / 2 + 1
+        )
 
         val eventsInFloating = LinkedBlockingQueue<InputEvent>()
         view.setOnTouchListener { _, event ->
@@ -98,21 +108,21 @@ class PointerCancelTest {
         touchInjector.sendMultiTouchEvent(arrayOf(pointerInFloating, pointerOutsideFloating), true)
 
         // First finger down (floating window)
-        verifierForFloating.assertReceivedDown()
+        verifierForFloating.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_DOWN))
 
         // First finger move (floating window)
-        verifierForFloating.assertReceivedMove()
+        verifierForFloating.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_MOVE))
 
         // Second finger down (activity window)
-        verifier.assertReceivedDown()
-        verifierForFloating.assertReceivedMove()
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_DOWN))
+        verifierForFloating.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_MOVE))
 
         // ACTION_CANCEL with cancel flag (activity window)
-        verifier.assertReceivedCancel()
-        verifierForFloating.assertReceivedMove()
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_CANCEL))
+        verifierForFloating.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_MOVE))
 
         // First finger up (floating window)
-        verifierForFloating.assertReceivedUp()
+        verifierForFloating.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_UP))
     }
 
     private fun addFloatingWindow(): View {
@@ -120,7 +130,8 @@ class PointerCancelTest {
         val layoutParams = WindowManager.LayoutParams(
                 WindowManager.LayoutParams.TYPE_APPLICATION,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                        or WindowManager.LayoutParams.FLAG_SPLIT_TOUCH)
+                        or WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
+        )
         layoutParams.x = 0
         layoutParams.y = 0
         layoutParams.width = 100

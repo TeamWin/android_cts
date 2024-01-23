@@ -26,13 +26,19 @@ import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.ORIENTATIO
 import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.ORIENTATION_90
 import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.WIDTH
 import android.view.InputDevice
+import android.view.MotionEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.cts.input.DebugInputRule
 import com.android.cts.input.UinputTouchDevice
+import com.android.cts.input.inputeventmatchers.withCoords
+import com.android.cts.input.inputeventmatchers.withFlags
+import com.android.cts.input.inputeventmatchers.withMotionAction
+import org.hamcrest.Description
+import org.hamcrest.Matchers.allOf
+import org.hamcrest.TypeSafeMatcher
 import org.junit.After
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
@@ -91,19 +97,19 @@ class TouchScreenTest {
         touchScreen.sendBtnTouch(true)
         touchScreen.sendDown(pointerId, pointer)
         touchScreen.sync()
-        verifier.assertReceivedDown()
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_DOWN))
 
         // ACTION_MOVE
         pointer.offset(1, 1)
         touchScreen.sendMove(pointerId, pointer)
         touchScreen.sync()
-        verifier.assertReceivedMove()
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_MOVE))
 
         // ACTION_UP
         touchScreen.sendBtnTouch(false)
         touchScreen.sendUp(pointerId)
         touchScreen.sync()
-        verifier.assertReceivedUp()
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_UP))
     }
 
     @DebugInputRule.DebugInput(bug = 288321659)
@@ -118,29 +124,29 @@ class TouchScreenTest {
         touchScreen.sendBtnTouch(true)
         touchScreen.sendDown(pointerId0, pointer0)
         touchScreen.sync()
-        verifier.assertReceivedDown()
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_DOWN))
 
         // ACTION_POINTER_DOWN
         touchScreen.sendDown(pointerId1, pointer1)
         touchScreen.sync()
-        verifier.assertReceivedPointerDown(pointerId1)
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_POINTER_DOWN, 1))
 
         // ACTION_MOVE
         pointer1.offset(1, 1)
         touchScreen.sendMove(pointerId1, pointer1)
         touchScreen.sync()
-        verifier.assertReceivedMove()
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_MOVE))
 
         // ACTION_POINTER_UP
         touchScreen.sendUp(pointerId0)
         touchScreen.sync()
-        verifier.assertReceivedPointerUp(pointerId0)
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_POINTER_UP, 0))
 
         // ACTION_UP
         touchScreen.sendBtnTouch(false)
         touchScreen.sendUp(pointerId1)
         touchScreen.sync()
-        verifier.assertReceivedUp()
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_UP))
     }
 
     @DebugInputRule.DebugInput(bug = 288321659)
@@ -153,18 +159,18 @@ class TouchScreenTest {
         touchScreen.sendBtnTouch(true)
         touchScreen.sendDown(pointerId, pointer)
         touchScreen.sync()
-        verifier.assertReceivedDown()
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_DOWN))
 
         // ACTION_MOVE
         pointer.offset(1, 1)
         touchScreen.sendMove(pointerId, pointer)
         touchScreen.sync()
-        verifier.assertReceivedMove()
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_MOVE))
 
         // ACTION_CANCEL
         touchScreen.sendToolType(pointerId, UinputTouchDevice.MT_TOOL_PALM)
         touchScreen.sync()
-        verifier.assertReceivedCancel()
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_CANCEL))
 
         // No event
         touchScreen.sendBtnTouch(false)
@@ -188,29 +194,34 @@ class TouchScreenTest {
         touchScreen.sendBtnTouch(true)
         touchScreen.sendDown(pointerId0, pointer0)
         touchScreen.sync()
-        verifier.assertReceivedDown()
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_DOWN))
 
         // ACTION_MOVE
         pointer0.offset(1, 1)
         touchScreen.sendMove(pointerId0, pointer0)
         touchScreen.sync()
-        verifier.assertReceivedMove()
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_MOVE))
 
         // ACTION_POINTER_DOWN(1)
         touchScreen.sendDown(pointerId1, pointer1)
         touchScreen.sync()
-        verifier.assertReceivedPointerDown(pointerId1)
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_POINTER_DOWN, 1))
 
         // ACTION_POINTER_UP(1) with cancel flag
         touchScreen.sendToolType(pointerId1, UinputTouchDevice.MT_TOOL_PALM)
         touchScreen.sync()
-        verifier.assertReceivedPointerCancel(pointerId1)
+        verifier.assertReceivedMotion(
+            allOf(
+                withMotionAction(MotionEvent.ACTION_POINTER_UP, 1),
+                withFlags(MotionEvent.FLAG_CANCELED)
+            )
+        )
 
         // ACTION_UP
         touchScreen.sendBtnTouch(false)
         touchScreen.sendUp(pointerId0)
         touchScreen.sync()
-        verifier.assertReceivedUp()
+        verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_UP))
     }
 
     @Test
@@ -274,28 +285,39 @@ class TouchScreenTest {
         val pointer = Point(100, 100)
         val pointerId = 0
 
+        val withConsistentEventTime = object : TypeSafeMatcher<MotionEvent>() {
+            override fun describeTo(description: Description) {
+                description.appendText("getEventTimeNanos() is consistent with getEventTime()")
+            }
+
+            override fun matchesSafely(event: MotionEvent): Boolean {
+                return event.getEventTimeNanos() / 1_000_000 == event.getEventTime()
+            }
+        }
+
        // ACTION_DOWN
         touchScreen.sendBtnTouch(true)
         touchScreen.sendDown(pointerId, pointer)
         touchScreen.sync()
-        verifyEventTime()
+        verifier.assertReceivedMotion(
+            allOf(withMotionAction(MotionEvent.ACTION_DOWN), withConsistentEventTime)
+        )
 
         // ACTION_MOVE
         pointer.offset(1, 1)
         touchScreen.sendMove(pointerId, pointer)
         touchScreen.sync()
-        verifyEventTime()
+        verifier.assertReceivedMotion(
+            allOf(withMotionAction(MotionEvent.ACTION_MOVE), withConsistentEventTime)
+        )
 
         // ACTION_UP
         touchScreen.sendBtnTouch(false)
         touchScreen.sendUp(pointerId)
         touchScreen.sync()
-        verifyEventTime()
-    }
-
-    private fun verifyEventTime() {
-        val event = verifier.getMotionEvent()
-        assertEquals(event.getEventTimeNanos() / 1_000_000, event.getEventTime())
+        verifier.assertReceivedMotion(
+            allOf(withMotionAction(MotionEvent.ACTION_UP), withConsistentEventTime)
+        )
     }
 
     // Verifies that each of the four corners of the touch screen (lt, rt, rb, lb) map to the
@@ -307,12 +329,14 @@ class TouchScreenTest {
             touchScreen.sendBtnTouch(true)
             touchScreen.sendDown(pointerId, CORNERS[i])
             touchScreen.sync()
-            verifier.assertReceivedDown(expectedPoints[i])
+            verifier.assertReceivedMotion(
+                allOf(withMotionAction(MotionEvent.ACTION_DOWN), withCoords(expectedPoints[i]))
+            )
 
             touchScreen.sendBtnTouch(false)
             touchScreen.sendUp(pointerId)
             touchScreen.sync()
-            verifier.assertReceivedUp()
+            verifier.assertReceivedMotion(withMotionAction(MotionEvent.ACTION_UP))
         }
     }
 
