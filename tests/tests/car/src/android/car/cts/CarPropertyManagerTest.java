@@ -7950,6 +7950,67 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
                     "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents",
                     "android.car.hardware.property.Subscription.Builder#Builder",
+                    "android.car.hardware.property.Subscription.Builder#setUpdateRateFastest",
+                    "android.car.hardware.property.Subscription.Builder#addAreaId",
+                    "android.car.hardware.property.Subscription.Builder#build",
+                    "android.car.hardware.property.Subscription.Builder#"
+                            + "setVariableUpdateRateEnabled",
+                    "android.car.hardware.property.Subscription.Builder#"
+                            + "setResolution",
+                    "android.car.hardware.property.CarPropertyConfig#getAreaIdConfig",
+                    "android.car.hardware.property.AreaIdConfig#isVariableUpdateRateSupported"
+            })
+    @RequiresFlagsEnabled({Flags.FLAG_BATCHED_SUBSCRIPTIONS, Flags.FLAG_VARIABLE_UPDATE_RATE,
+            Flags.FLAG_SUBSCRIPTION_WITH_RESOLUTION})
+    public void testSubscribePropertyEventsForContinuousProperty_withResolution() throws Exception {
+        runWithShellPermissionIdentity(
+                () -> {
+                    int propId = VehiclePropertyIds.ENV_OUTSIDE_TEMPERATURE;
+                    CarPropertyConfig<?> carPropertyConfig =
+                            mCarPropertyManager.getCarPropertyConfig(propId);
+                    assumeTrue("The CarPropertyConfig of outside temperature does not exist",
+                            carPropertyConfig != null);
+
+                    long bufferMillis = 1_000; // 1 second
+                    long timeoutMillis = generateTimeoutMillis(carPropertyConfig.getMinSampleRate(),
+                            bufferMillis);
+                    CarPropertyEventCounter eventCounter = new CarPropertyEventCounter(
+                            timeoutMillis);
+
+                    Subscription speedSubscription = new Subscription
+                            .Builder(propId)
+                            .setUpdateRateUi()
+                            .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL)
+                            .setVariableUpdateRateEnabled(false)
+                            .setResolution(10.0f)
+                            .build();
+
+                    mCarPropertyManager.subscribePropertyEvents(
+                            List.of(speedSubscription), /* callbackExecutor= */ null,
+                            eventCounter);
+
+                    eventCounter.resetCountDownLatch(UI_RATE_EVENT_COUNTER);
+                    // Wait for subscription to receive some events.
+                    eventCounter.assertOnChangeEventCalled();
+
+                    mCarPropertyManager.unregisterCallback(eventCounter);
+
+                    for (CarPropertyValue<?> carPropertyValue :
+                            eventCounter.getReceivedCarPropertyValues()) {
+                        assertWithMessage("Incoming CarPropertyValue objects should have a value "
+                                + "rounded to 10")
+                                .that(((Float) carPropertyValue.getValue()).intValue() % 10 == 0)
+                                .isTrue();
+                    }
+                });
+    }
+
+    @Test
+    @ApiTest(
+            apis = {
+                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
+                    "android.car.hardware.property.CarPropertyManager#unsubscribePropertyEvents",
+                    "android.car.hardware.property.Subscription.Builder#Builder",
                     "android.car.hardware.property.Subscription.Builder#addAreaId",
                     "android.car.hardware.property.Subscription.Builder#build"
             })
@@ -9111,6 +9172,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
     private static class CarPropertyEventCounter implements CarPropertyEventCallback {
         private final Object mLock = new Object();
+        private final Set<CarPropertyValue<?>> mReceivedCarPropertyValues = new ArraySet<>();
         @GuardedBy("mLock")
         private final SparseArray<Integer> mEventCounter = new SparseArray<>();
         @GuardedBy("mLock")
@@ -9129,6 +9191,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
         CarPropertyEventCounter() {
             this(WAIT_CALLBACK);
+        }
+
+        public Set<CarPropertyValue<?>> getReceivedCarPropertyValues() {
+            return mReceivedCarPropertyValues;
         }
 
         public int receivedEvent(int propId) {
@@ -9158,6 +9224,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         @Override
         public void onChangeEvent(CarPropertyValue value) {
             synchronized (mLock) {
+                mReceivedCarPropertyValues.add(value);
                 int val = mEventCounter.get(value.getPropertyId(), 0) + 1;
                 mEventCounter.put(value.getPropertyId(), val);
                 mCountDownLatch.countDown();
