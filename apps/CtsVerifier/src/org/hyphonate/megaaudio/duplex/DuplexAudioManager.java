@@ -194,18 +194,22 @@ public class DuplexAudioManager {
         if (LOG) {
             Log.i(TAG, "start()...");
         }
-        int result = StreamBase.OK;
-        if (mRecorder != null && (result = mRecorder.startStream()) != StreamBase.OK) {
-            if (LOG) {
-                Log.i(TAG, "  recorder fails result:" + result);
-            }
-            return result;
-        }
 
+        int result = StreamBase.OK;
         if (mPlayer != null && (result = mPlayer.startStream()) != StreamBase.OK) {
             if (LOG) {
                 Log.i(TAG, "  player fails result:" + result);
             }
+            return result;
+        }
+
+        if (mRecorder != null && (result = mRecorder.startStream()) != StreamBase.OK) {
+            if (LOG) {
+                Log.i(TAG, "  recorder fails result:" + result);
+            }
+            // Shut down
+            stop();
+
             return result;
         }
 

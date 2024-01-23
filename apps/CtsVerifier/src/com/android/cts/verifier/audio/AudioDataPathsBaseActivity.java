@@ -261,24 +261,33 @@ public abstract class AudioDataPathsBaseActivity
             mInChannelCount = inChannelCount;
             mInSampleRate = inSampleRate;
 
+            initializeTestState();
+        }
+
+        private void initializeTestState() {
             mTestState = new int[NUM_TEST_APIS];
             for (int api = 0; api < NUM_TEST_APIS; api++) {
                 mTestState[api] = TestModule.TESTSTATUS_NOT_RUN;
             }
             mTestResults = new TestResults[NUM_TEST_APIS];
-        }
 
+        }
+        /**
+         * We need a more-or-less deep copy so as not to share mTestState and mTestResults
+         * arrays. We are only using this to setup closely related test modules, so it is
+         * sufficient to initialize mTestState and mTestResults to their "not tested" states.
+         *
+         * @return The (mostly) cloned TestModule object.
+         */
         @Override
-        public TestModule clone() {
-            TestModule newModule = new TestModule(
-                    mOutDeviceType, mOutSampleRate, mOutChannelCount,
-                    mInDeviceType, mInSampleRate, mInChannelCount);
-            newModule.setSources(mSourceProvider, mSinkProvider);
-            newModule.setInputPreset(mInputPreset);
-            newModule.setDescription(mDescription);
-            newModule.setAnalysisChannel(mAnalysisChannel);
-            newModule.setTransferType(mTransferType);
-            return newModule;
+        public TestModule clone() throws CloneNotSupportedException {
+            // this will clone all the simple data members
+            TestModule clonedModule = (TestModule) super.clone();
+
+            // Each clone needs it own set of states and results
+            clonedModule.initializeTestState();
+
+            return clonedModule;
         }
 
         public void setAnalysisType(int type) {
@@ -554,33 +563,47 @@ public abstract class AudioDataPathsBaseActivity
                 // we can get null here if the test was cancelled
                 Locale locale = Locale.getDefault();
                 String maxMagString = String.format(
-                        locale, "mag:%.4f ", results.mMaxMagnitude);
+                        locale, "mag:%.5f ", results.mMaxMagnitude);
                 String phaseJitterString = String.format(
-                        locale, "jitter:%.4f ", results.mPhaseJitter);
+                        locale, "jitter:%.5f ", results.mPhaseJitter);
 
                 boolean passMagnitude = mAnalysisType == TYPE_SIGNAL_PRESENCE
                         ? results.mMaxMagnitude >= mMinPassMagnitude
                         : results.mMaxMagnitude <= mMinPassMagnitude;
+
+                // Do we want a threshold value for jitter in crosstalk tests?
                 boolean passJitter =
                         results.mPhaseJitter <= mMaxPassJitter;
 
                 // Values / Criteria
+                // NOTE: The criteria is why the test passed or failed, not what
+                // was needed to pass.
+                // So, for a cross-talk test, "mag:0.01062 > 0.01000" means that the test
+                // failed, because 0.01062 > 0.01000
                 htmlFormatter.appendBreak();
-                htmlFormatter.openTextColor(passMagnitude ? "black" : "red")
-                        .appendText(maxMagString
-                                + String.format(locale,
-                                passMagnitude ? " >= %.4f " : " < %.4f ",
-                                mMinPassMagnitude))
-                        .closeTextColor();
+                htmlFormatter.openTextColor(passMagnitude ? "black" : "red");
+                if (mAnalysisType == TYPE_SIGNAL_PRESENCE) {
+                    htmlFormatter.appendText(maxMagString
+                            + String.format(locale,
+                            passMagnitude ? " >= %.5f " : " < %.5f ",
+                            mMinPassMagnitude));
+                } else {
+                    htmlFormatter.appendText(maxMagString
+                            + String.format(locale,
+                            passMagnitude ? " <= %.5f " : " > %.5f ",
+                            mMinPassMagnitude));
+                }
+                htmlFormatter.closeTextColor();
 
-                // Jitter isn't relevant to SIGNAL ABSENCE test
-                htmlFormatter.openTextColor(
-                                mAnalysisType != TYPE_SIGNAL_PRESENCE || passJitter
-                                        ? "black" : "red")
-                        .appendText(phaseJitterString
-                                + String.format(locale, passJitter ? " <= %.4f" : " > %.4f",
-                                mMaxPassJitter))
-                        .closeTextColor();
+                htmlFormatter.openTextColor(passJitter ? "black" : "red");
+                if (mAnalysisType == TYPE_SIGNAL_PRESENCE) {
+                    htmlFormatter.appendText(phaseJitterString
+                                    + String.format(locale, passJitter ? " <= %.5f" : " > %.5f",
+                                    mMaxPassJitter));
+                } else {
+                    htmlFormatter.appendText(phaseJitterString);
+                }
+                htmlFormatter.closeTextColor();
 
                 htmlFormatter.appendBreak();
             } // results != null
@@ -773,15 +796,23 @@ public abstract class AudioDataPathsBaseActivity
             mTestModules.add(module);
 
             if (mSupportsMMAP) {
-                TestModule moduleMMAP = module.clone();
-                moduleMMAP.setTransferType(TestModule.TRANSFER_MMAP_SHARED);
-                mTestModules.add(moduleMMAP);
+                try {
+                    TestModule moduleMMAP = module.clone();
+                    moduleMMAP.setTransferType(TestModule.TRANSFER_MMAP_SHARED);
+                    mTestModules.add(moduleMMAP);
+                } catch (CloneNotSupportedException ex) {
+                    Log.e(TAG, "Couldn't clone TestModule - TRANSFER_MMAP_SHARED");
+                }
             }
 
             if (mSupportsMMAPExclusive) {
-                TestModule moduleExclusive = module.clone();
-                moduleExclusive.setTransferType(TestModule.TRANSFER_MMAP_EXCLUSIVE);
-                mTestModules.add(moduleExclusive);
+                try {
+                    TestModule moduleExclusive = module.clone();
+                    moduleExclusive.setTransferType(TestModule.TRANSFER_MMAP_EXCLUSIVE);
+                    mTestModules.add(moduleExclusive);
+                } catch (CloneNotSupportedException ex) {
+                    Log.e(TAG, "Couldn't clone TestModule - TRANSFER_MMAP_EXCLUSIVE");
+                }
             }
         }
 
