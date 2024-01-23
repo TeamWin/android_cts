@@ -29,6 +29,10 @@ interface ICommandReceiver {
     boolean indexGloballySearchableDocument(in String databaseName, in String namespace,
         in String id, in List<Bundle> permissionBundles);
 
+    boolean indexGloballySearchableDocumentVisibleToConfig(in String databaseName,
+        in String namespace, in String id, in List<Bundle> packageBundles,
+        in List<Bundle> permissionBundles, in Bundle publicAclPackage);
+
     boolean indexNotGloballySearchableDocument(in String databaseName, in String namespace,
         in String id);
 

@@ -936,13 +936,11 @@ public abstract class AppSearchSessionCtsTestBase {
         PackageIdentifier pkg2 = new PackageIdentifier("package2", cert2);
         VisibilityConfig config1 =
                 new VisibilityConfig.Builder()
-                        .setNotDisplayedBySystem(true)
                         .setPubliclyVisibleTargetPackage(pkg1)
                         .addVisibleToPermissions(ImmutableSet.of(1, 2))
                         .build();
         VisibilityConfig config2 =
                 new VisibilityConfig.Builder()
-                        .setNotDisplayedBySystem(false)
                         .setPubliclyVisibleTargetPackage(pkg2)
                         .addVisibleToPermissions(ImmutableSet.of(3, 4))
                         .build();
@@ -969,7 +967,6 @@ public abstract class AppSearchSessionCtsTestBase {
 
         VisibilityConfig config =
                 new VisibilityConfig.Builder()
-                        .setNotDisplayedBySystem(true)
                         .addVisibleToPermissions(ImmutableSet.of(1, 2))
                         .build();
         SetSchemaRequest request =

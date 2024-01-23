@@ -184,7 +184,6 @@ public class GetSchemaResponseCtsTest {
     public void setVisibilityConfig() {
         VisibilityConfig visibilityConfig1 =
                 new VisibilityConfig.Builder()
-                        .setNotDisplayedBySystem(true)
                         .addVisibleToPackage(new PackageIdentifier("pkg1", new byte[32]))
                         .setPubliclyVisibleTargetPackage(
                                 new PackageIdentifier("pkg2", new byte[32]))
@@ -192,7 +191,6 @@ public class GetSchemaResponseCtsTest {
                         .build();
         VisibilityConfig visibilityConfig2 =
                 new VisibilityConfig.Builder()
-                        .setNotDisplayedBySystem(true)
                         .addVisibleToPackage(new PackageIdentifier("pkg3", new byte[32]))
                         .setPubliclyVisibleTargetPackage(
                                 new PackageIdentifier("pkg4", new byte[32]))

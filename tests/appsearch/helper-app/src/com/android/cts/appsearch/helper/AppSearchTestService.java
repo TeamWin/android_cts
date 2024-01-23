@@ -34,6 +34,7 @@ import android.app.appsearch.PutDocumentsRequest;
 import android.app.appsearch.SearchResultsShim;
 import android.app.appsearch.SearchSpec;
 import android.app.appsearch.SetSchemaRequest;
+import android.app.appsearch.VisibilityConfig;
 import android.app.appsearch.testutil.AppSearchEmail;
 import android.app.appsearch.testutil.AppSearchSessionShimImpl;
 import android.app.appsearch.testutil.GlobalSearchSessionShimImpl;
@@ -166,6 +167,75 @@ public class AppSearchTestService extends Service {
                                     .getIntegerArrayList("permission")));
                 }
                 db.setSchemaAsync(setSchemaRequestBuilder.build()).get();
+
+                AppSearchEmail emailDocument =
+                        new AppSearchEmail.Builder(namespace, id)
+                                .setFrom("from@example.com")
+                                .setTo("to1@example.com", "to2@example.com")
+                                .setSubject("subject")
+                                .setBody("this is the body of the email")
+                                .build();
+                checkIsBatchResultSuccess(
+                        db.putAsync(
+                                new PutDocumentsRequest.Builder()
+                                        .addGenericDocuments(emailDocument)
+                                        .build()));
+                return true;
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to index globally searchable document.", e);
+            }
+            return false;
+        }
+
+        /**
+         * Set A schema and index a document with specific visible to config setting to the
+         * given database.
+         *
+         * @param databaseName       The name of database to set the schema.
+         * @param namespace          The namespace of the indexed document
+         * @param id                 The id of the indexed document
+         * @param packageBundles     The VisibleToPackage settings in VisibleToConfig
+         * @param permissionBundles  The VisibleToPermission settings in VisibleToConfig
+         * @param publicAclPackage   The target public acl settings in VisibleToConfig
+         * @return whether this operation is successful.
+         */
+        @Override
+        public boolean indexGloballySearchableDocumentVisibleToConfig(
+                String databaseName, String namespace, String id, List<Bundle> packageBundles,
+                List<Bundle> permissionBundles, Bundle publicAclPackage) {
+            try {
+                AppSearchSessionShim db = AppSearchSessionShimImpl.createSearchSessionAsync(
+                        AppSearchTestService.this,
+                                new AppSearchManager.SearchContext.Builder(databaseName).build(),
+                                Executors.newCachedThreadPool())
+                        .get();
+
+                // By default, schemas/documents are globally searchable. We don't purposely set
+                // setSchemaTypeDisplayedBySystem(false) for this schema
+                VisibilityConfig.Builder configBuilder = new VisibilityConfig.Builder();
+                for (int i = 0; i < packageBundles.size(); i++) {
+                    configBuilder.addVisibleToPackage(
+                            new PackageIdentifier(
+                                    packageBundles.get(i).getString("packageName"),
+                                    packageBundles.get(i).getByteArray("sha256Cert")));
+                }
+                for (int i = 0; i < permissionBundles.size(); i++) {
+                    configBuilder.addVisibleToPermissions(
+                            new ArraySet<>(permissionBundles.get(i)
+                                    .getIntegerArrayList("permission")));
+                }
+                if (publicAclPackage != null) {
+                    configBuilder.setPubliclyVisibleTargetPackage(
+                            new PackageIdentifier(
+                                    publicAclPackage.getString("packageName"),
+                                    publicAclPackage.getByteArray("sha256Cert")));
+                }
+                db.setSchemaAsync(new SetSchemaRequest.Builder()
+                        .setForceOverride(true)
+                        .addSchemas(AppSearchEmail.SCHEMA)
+                        .addSchemaTypeVisibleToConfig(AppSearchEmail.SCHEMA_TYPE,
+                                configBuilder.build())
+                        .build()).get();
 
                 AppSearchEmail emailDocument =
                         new AppSearchEmail.Builder(namespace, id)
