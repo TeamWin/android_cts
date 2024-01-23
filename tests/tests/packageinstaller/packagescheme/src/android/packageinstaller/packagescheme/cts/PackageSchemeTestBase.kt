@@ -33,6 +33,8 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
+import androidx.test.uiautomator.UiScrollable
+import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -144,8 +146,14 @@ open class PackageSchemeTestBase {
         var latch: CountDownLatch? = null
         mScenario = ActivityScenario.launch(intent)
         mScenario!!.onActivity {
-            val button: UiObject2?
+            var button: UiObject2?
             val btnName: String
+            // Need to scroll the screen to get to the buttons on some form factors
+            // (e.g. on a watch).
+            val scrollable = UiScrollable(UiSelector().scrollable(true))
+            if (scrollable.exists()) {
+                scrollable.flingToEnd(10)
+            }
             if (packageHasVisibility && needTargetApp) {
                 button = mUiDevice.wait(
                     Until.findObject(getBySelector(NEGATIVE_BTN_ID)), DEFAULT_TIMEOUT)
@@ -156,7 +164,7 @@ open class PackageSchemeTestBase {
                 btnName = "OK"
             }
             assertWithMessage("$btnName not found").that(button).isNotNull()
-            button.click()
+            button?.click()
             latch = it.mLatch
         }
         latch!!.await()
