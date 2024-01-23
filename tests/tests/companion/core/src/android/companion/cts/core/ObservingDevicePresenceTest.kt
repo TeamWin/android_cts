@@ -17,8 +17,8 @@
 package android.companion.cts.core
 
 import android.Manifest
-import android.companion.CompanionDeviceService.DEVICE_EVENT_BLE_APPEARED
-import android.companion.CompanionDeviceService.DEVICE_EVENT_BLE_DISAPPEARED
+import android.companion.DevicePresenceEvent.EVENT_BLE_APPEARED
+import android.companion.DevicePresenceEvent.EVENT_BLE_DISAPPEARED
 import android.companion.Flags
 import android.companion.cts.common.MAC_ADDRESS_A
 import android.companion.cts.common.MAC_ADDRESS_B
@@ -57,7 +57,7 @@ class ObservingDevicePresenceTest : CoreTestBase() {
         targetApp.associate(MAC_ADDRESS_A)
         val associationId = cdm.myAssociations[0].id
         if (Flags.devicePresence()) {
-            simulateDeviceEvent(associationId, DEVICE_EVENT_BLE_APPEARED)
+            simulateDeviceEvent(associationId, EVENT_BLE_APPEARED)
         } else {
             simulateDeviceAppeared(associationId)
         }
@@ -70,7 +70,7 @@ class ObservingDevicePresenceTest : CoreTestBase() {
         assertEmpty(SecondaryCompanionService.connectedDevices)
 
         if (Flags.devicePresence()) {
-            simulateDeviceEvent(associationId, DEVICE_EVENT_BLE_DISAPPEARED)
+            simulateDeviceEvent(associationId, EVENT_BLE_DISAPPEARED)
         } else {
             simulateDeviceDisappeared(associationId)
         }
@@ -106,7 +106,7 @@ class ObservingDevicePresenceTest : CoreTestBase() {
         }
         // Simulate device appeared.
         if (Flags.devicePresence()) {
-            simulateDeviceEvent(associationId, DEVICE_EVENT_BLE_APPEARED)
+            simulateDeviceEvent(associationId, EVENT_BLE_APPEARED)
         } else {
             simulateDeviceAppeared(associationId)
         }
@@ -125,7 +125,7 @@ class ObservingDevicePresenceTest : CoreTestBase() {
         assertValidCompanionDeviceServicesRemainBound()
 
         if (Flags.devicePresence()) {
-            simulateDeviceEvent(associationId, DEVICE_EVENT_BLE_DISAPPEARED)
+            simulateDeviceEvent(associationId, EVENT_BLE_DISAPPEARED)
         } else {
             simulateDeviceDisappeared(associationId)
         }
@@ -151,7 +151,7 @@ class ObservingDevicePresenceTest : CoreTestBase() {
 
         // Simulate device appeared.
         if (Flags.devicePresence()) {
-            simulateDeviceEvent(associationId, DEVICE_EVENT_BLE_APPEARED)
+            simulateDeviceEvent(associationId, EVENT_BLE_APPEARED)
         } else {
             simulateDeviceAppeared(associationId)
         }
@@ -165,7 +165,7 @@ class ObservingDevicePresenceTest : CoreTestBase() {
 
         // Simulate device disappeared.
         if (Flags.devicePresence()) {
-            simulateDeviceEvent(associationId, DEVICE_EVENT_BLE_DISAPPEARED)
+            simulateDeviceEvent(associationId, EVENT_BLE_DISAPPEARED)
         } else {
             simulateDeviceDisappeared(associationId)
         }
@@ -178,7 +178,7 @@ class ObservingDevicePresenceTest : CoreTestBase() {
         val associationId = cdm.myAssociations[0].id
         // Simulate device appearing before observing it
         if (Flags.devicePresence()) {
-            simulateDeviceEvent(associationId, DEVICE_EVENT_BLE_APPEARED)
+            simulateDeviceEvent(associationId, EVENT_BLE_APPEARED)
         } else {
             simulateDeviceAppeared(associationId)
         }
@@ -196,7 +196,7 @@ class ObservingDevicePresenceTest : CoreTestBase() {
 
         // Clean-up
         if (Flags.devicePresence()) {
-            simulateDeviceEvent(associationId, DEVICE_EVENT_BLE_DISAPPEARED)
+            simulateDeviceEvent(associationId, EVENT_BLE_DISAPPEARED)
         } else {
             simulateDeviceDisappeared(associationId)
         }
@@ -216,7 +216,7 @@ class ObservingDevicePresenceTest : CoreTestBase() {
             cdm.startObservingDevicePresence(MAC_ADDRESS_B.toUpperCaseString())
         }
         if (Flags.devicePresence()) {
-            simulateDeviceEvent(idA, DEVICE_EVENT_BLE_APPEARED)
+            simulateDeviceEvent(idA, EVENT_BLE_APPEARED)
         } else {
             simulateDeviceAppeared(idA)
         }
@@ -233,7 +233,7 @@ class ObservingDevicePresenceTest : CoreTestBase() {
         )
 
         if (Flags.devicePresence()) {
-            simulateDeviceEvent(idB, DEVICE_EVENT_BLE_APPEARED)
+            simulateDeviceEvent(idB, EVENT_BLE_APPEARED)
         } else {
             simulateDeviceAppeared(idB)
         }
@@ -250,7 +250,7 @@ class ObservingDevicePresenceTest : CoreTestBase() {
 
         // "Disconnect" first device (A).
         if (Flags.devicePresence()) {
-            simulateDeviceEvent(idA, DEVICE_EVENT_BLE_DISAPPEARED)
+            simulateDeviceEvent(idA, EVENT_BLE_DISAPPEARED)
         } else {
             simulateDeviceDisappeared(idA)
         }
@@ -264,7 +264,7 @@ class ObservingDevicePresenceTest : CoreTestBase() {
 
         // "Disconnect" second (and last remaining) device (B).
         if (Flags.devicePresence()) {
-            simulateDeviceEvent(idB, DEVICE_EVENT_BLE_DISAPPEARED)
+            simulateDeviceEvent(idB, EVENT_BLE_DISAPPEARED)
         } else {
             simulateDeviceDisappeared(idB)
         }
@@ -291,8 +291,8 @@ class ObservingDevicePresenceTest : CoreTestBase() {
         }
 
         if (Flags.devicePresence()) {
-            simulateDeviceEvent(idA, DEVICE_EVENT_BLE_APPEARED)
-            simulateDeviceEvent(idB, DEVICE_EVENT_BLE_APPEARED)
+            simulateDeviceEvent(idA, EVENT_BLE_APPEARED)
+            simulateDeviceEvent(idB, EVENT_BLE_APPEARED)
         } else {
             simulateDeviceAppeared(idA)
             simulateDeviceAppeared(idB)
@@ -320,8 +320,8 @@ class ObservingDevicePresenceTest : CoreTestBase() {
         // Both valid services should unbind now.
         assertValidCompanionDeviceServicesUnbind()
         if (Flags.devicePresence()) {
-            simulateDeviceEvent(idA, DEVICE_EVENT_BLE_DISAPPEARED)
-            simulateDeviceEvent(idB, DEVICE_EVENT_BLE_DISAPPEARED)
+            simulateDeviceEvent(idA, EVENT_BLE_DISAPPEARED)
+            simulateDeviceEvent(idB, EVENT_BLE_DISAPPEARED)
         } else {
             simulateDeviceDisappeared(idA)
             simulateDeviceDisappeared(idB)

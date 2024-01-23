@@ -28,6 +28,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.net.MacAddress
+import android.os.ParcelUuid
 import android.os.Process
 import android.os.SystemClock.sleep
 import android.os.SystemClock.uptimeMillis
@@ -183,6 +184,12 @@ abstract class TestBase {
 
     fun simulateDeviceEvent(associationId: Int, event: Int) =
             runShellCommand("cmd companiondevice simulate-device-event $associationId $event")
+
+    fun simulateDeviceUuidEvent(uuid: ParcelUuid, event: Int) =
+            runShellCommand(
+                    "cmd companiondevice simulate-device-uuid-event " +
+                    "$uuid $targetPackageName $userId $event"
+            )
 }
 
 const val TAG = "CtsCompanionDeviceManagerTestCases"

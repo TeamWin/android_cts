@@ -17,8 +17,8 @@
 package android.companion.cts.core
 
 import android.Manifest.permission.REQUEST_COMPANION_SELF_MANAGED
-import android.companion.CompanionDeviceService.DEVICE_EVENT_SELF_MANAGED_APPEARED
-import android.companion.CompanionDeviceService.DEVICE_EVENT_SELF_MANAGED_DISAPPEARED
+import android.companion.DevicePresenceEvent.EVENT_SELF_MANAGED_APPEARED
+import android.companion.DevicePresenceEvent.EVENT_SELF_MANAGED_DISAPPEARED
 import android.companion.Flags
 import android.companion.cts.common.DEVICE_DISPLAY_NAME_A
 import android.companion.cts.common.DEVICE_DISPLAY_NAME_B
@@ -70,8 +70,8 @@ class SelfPresenceReportingTest : CoreTestBase() {
         assertValidCompanionDeviceServicesRemainBound()
         if (Flags.devicePresence()) {
             assertEquals(
-                    expected = DEVICE_EVENT_SELF_MANAGED_APPEARED,
-                    actual = PrimaryCompanionService.getCurrentState()
+                    expected = EVENT_SELF_MANAGED_APPEARED,
+                    actual = PrimaryCompanionService.getCurrentEvent()
             )
         }
 
@@ -81,8 +81,8 @@ class SelfPresenceReportingTest : CoreTestBase() {
         assertOnlyPrimaryCompanionDeviceServiceNotified(associationId, appeared = false)
         if (Flags.devicePresence()) {
             assertEquals(
-                    expected = DEVICE_EVENT_SELF_MANAGED_DISAPPEARED,
-                    actual = PrimaryCompanionService.getCurrentState()
+                    expected = EVENT_SELF_MANAGED_DISAPPEARED,
+                    actual = PrimaryCompanionService.getCurrentEvent()
             )
         }
         // Assert both services are unbound now

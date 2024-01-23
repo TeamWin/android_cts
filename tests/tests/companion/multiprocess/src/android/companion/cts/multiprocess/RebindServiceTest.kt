@@ -15,17 +15,25 @@
  */
 package android.companion.cts.multiprocess
 
+import android.Manifest
+import android.companion.DevicePresenceEvent.EVENT_BT_CONNECTED
+import android.companion.Flags
+import android.companion.ObservingDevicePresenceRequest
 import android.companion.cts.common.DEVICE_DISPLAY_NAME_A
 import android.companion.cts.common.DEVICE_DISPLAY_NAME_B
 import android.companion.cts.common.PRIMARY_PROCESS_NAME
 import android.companion.cts.common.SECONDARY_PROCESS_NAME
 import android.companion.cts.common.TestBase
+import android.companion.cts.common.UUID_A
 import android.companion.cts.common.assertApplicationBinds
 import android.companion.cts.common.killProcess
 import android.os.SystemClock
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.RequiresFlagsEnabled
+import android.platform.test.flag.junit.DeviceFlagsValueProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlin.test.fail
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -36,6 +44,9 @@ import org.junit.runner.RunWith
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 @RunWith(AndroidJUnit4::class)
 class RebindServiceTest : TestBase() {
+    @get:Rule
+    val checkFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
+
     @Test
     fun test_rebind_primary() {
         // Create a self-managed association.
@@ -109,6 +120,42 @@ class RebindServiceTest : TestBase() {
 
         // Primary service should be bound again.
         assertServiceBound("PrimaryCompanionService")
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_DEVICE_PRESENCE)
+    @Test
+    fun test_ObservingDeviceUuidPresence_rebind() {
+        val request = ObservingDevicePresenceRequest.Builder().setUuid(UUID_A).build()
+        withShellPermissionIdentity(
+            Manifest.permission.REQUEST_OBSERVE_DEVICE_UUID_PRESENCE,
+            Manifest.permission.REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE
+        ) {
+            cdm.startObservingDevicePresence(request)
+        }
+
+        simulateDeviceUuidEvent(UUID_A, EVENT_BT_CONNECTED)
+        assertApplicationBinds(cdm)
+
+        // Wait for secondary service to start.
+        SystemClock.sleep(2000)
+        // Kill the primary and secondary processes.
+        killProcess(PRIMARY_PROCESS_NAME)
+        killProcess(SECONDARY_PROCESS_NAME)
+
+        // Primary service should be unbound.
+        assertServiceNotBound("PrimaryCompanionService")
+
+        // Schedule rebind in 10 seconds but give it 11 seconds.
+        SystemClock.sleep(11000)
+        // Primary service should be still bound.
+        assertServiceBound("PrimaryCompanionService")
+
+        withShellPermissionIdentity(
+            Manifest.permission.REQUEST_OBSERVE_DEVICE_UUID_PRESENCE,
+            Manifest.permission.REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE
+        ) {
+            cdm.stopObservingDevicePresence(request)
+        }
     }
 
     private fun assertServiceBound(component: String) {
