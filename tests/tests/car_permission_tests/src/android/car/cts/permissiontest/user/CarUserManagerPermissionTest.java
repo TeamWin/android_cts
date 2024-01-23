@@ -30,6 +30,8 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 
+import android.car.cts.permissiontest.AbstractCarManagerPermissionTest;
+import android.car.feature.Flags;
 import android.car.user.CarUserManager;
 import android.car.user.CarUserManager.UserHandleSwitchUiCallback;
 import android.car.user.CarUserManager.UserLifecycleListener;
@@ -39,10 +41,9 @@ import android.car.user.UserRemovalRequest;
 import android.car.user.UserSwitchRequest;
 import android.content.pm.UserInfo;
 import android.os.UserHandle;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-import android.car.cts.permissiontest.AbstractCarManagerPermissionTest;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -66,6 +67,18 @@ public final class CarUserManagerPermissionTest extends AbstractCarManagerPermis
     public void testSwitchUser() throws Exception {
         Exception e = assertThrows(SecurityException.class,
                 () -> mCarUserManager.switchUser(
+                        new UserSwitchRequest.Builder(UserHandle.of(100)).build(), Runnable::run,
+                        (response) -> {
+                        }));
+        assertThat(e).hasMessageThat().contains(CREATE_USERS);
+        assertThat(e).hasMessageThat().contains(MANAGE_USERS);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_SWITCH_USER_IGNORING_UXR)
+    public void testSwitchUserIgnoringUxRestriction() throws Exception {
+        Exception e = assertThrows(SecurityException.class,
+                () -> mCarUserManager.switchUserIgnoringUxRestriction(
                         new UserSwitchRequest.Builder(UserHandle.of(100)).build(), Runnable::run,
                         (response) -> {
                         }));

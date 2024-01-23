@@ -63,12 +63,26 @@ public final class CarUserManagerHostTest extends CarHostJUnit4TestCase {
         assertWithMessage("removeUser(%s)", newUserid).that(result).contains(STATUS_SUCCESSFUL);
     }
 
+    @Test
+    public void testSwitchUserIgnoringUxRestriction() throws Exception {
+        int newUserid = createFullUser("CarUserManagerHostTest_User");
+
+        switchUser(newUserid, STATUS_SUCCESSFUL, "--ignore-uxr");
+    }
+
     /**
      * Switches the current user and checks that the expected result is emitted.
      */
     private void switchUser(int userId, String expected) throws Exception {
+        switchUser(userId, expected, "");
+    }
+
+    /**
+     * Switches the current user and checks that the expected result is emitted.
+     */
+    private void switchUser(int userId, String expected, String options) throws Exception {
         waitForCarServiceReady();
-        String output = executeCommand("cmd car_service switch-user %d", userId);
+        String output = executeCommand("cmd car_service switch-user %d %s", userId, options);
 
         assertWithMessage("switchUser(%s) ", userId).that(output).contains(expected);
 
