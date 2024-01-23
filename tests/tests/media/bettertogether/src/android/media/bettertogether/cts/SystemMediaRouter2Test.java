@@ -54,7 +54,6 @@ import android.media.MediaRouter2Manager;
 import android.media.RouteDiscoveryPreference;
 import android.media.RouteListingPreference;
 import android.media.RoutingSessionInfo;
-import android.os.Looper;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -219,7 +218,6 @@ public class SystemMediaRouter2Test {
                 .isSameInstanceAs(
                         MediaRouter2.getInstance(
                                 mContext,
-                                Looper.getMainLooper(),
                                 mContext.getPackageName(),
                                 mContext.getUser()));
     }
