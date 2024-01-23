@@ -47,6 +47,7 @@ import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
+import com.android.bedstead.nene.utils.ShellCommand
 import com.android.compatibility.common.util.DisableAnimationRule
 import com.android.compatibility.common.util.FutureResultActivity
 import com.android.compatibility.common.util.SystemUtil
@@ -424,6 +425,14 @@ open class PackageInstallerTestBase {
     fun setSecureFrp(secureFrp: Boolean) {
         uiDevice.executeShellCommand("settings " +
                 "put global secure_frp_mode ${if (secureFrp) 1 else 0}")
+    }
+
+    fun setUserRestriction(restriction: String, enabled: Boolean) {
+        ShellCommand.builder("pm set-user-restriction")
+            .asRoot(true)
+            .addOperand(restriction)
+            .addOperand(if (enabled) 1 else 0)
+            .execute()
     }
 
     @After
