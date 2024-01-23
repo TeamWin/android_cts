@@ -254,9 +254,7 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
     public void beforeTest() throws Exception {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY));
         assumeTrue(ImsUtils.shouldTestImsService());
-        if (!sSupportDomainSelection) {
-            return;
-        }
+        assumeTrue(sSupportDomainSelection);
 
         if (sMockModemManager != null) {
             unsolBarringInfoChanged(false);
@@ -268,10 +266,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @After
     public void afterTest() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         if (!mCalls.isEmpty() && (mCurrentCallId != null)) {
             Call call = mCalls.get(mCurrentCallId);
             call.disconnect();
@@ -305,10 +299,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCombinedImsRegisteredBarredSelectCs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         unsolBarringInfoChanged(true);
 
@@ -327,10 +317,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCombinedImsRegisteredSelectPs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -347,10 +333,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCombinedImsNotRegisteredSelectCs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -367,10 +349,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCombinedImsNotRegisteredBarredSelectCs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         unsolBarringInfoChanged(true);
 
@@ -389,10 +367,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCombinedImsRegisteredEmsOffBarredSelectCs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         unsolBarringInfoChanged(true);
 
@@ -411,10 +385,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCombinedImsRegisteredEmsOffSelectCs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -431,10 +401,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCombinedImsNotRegisteredEmsOffSelectCs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -451,10 +417,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCombinedImsNotRegisteredEmsOffBarredSelectCs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         unsolBarringInfoChanged(true);
 
@@ -473,10 +435,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCombinedImsRegisteredVopsOffBarredSelectCs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         unsolBarringInfoChanged(true);
 
@@ -495,10 +453,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCombinedImsRegisteredVopsOffSelectCs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -515,10 +469,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCombinedImsNotRegisteredVopsOffSelectCs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -535,10 +485,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCombinedImsNotRegisteredVopsOffBarredSelectCs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         unsolBarringInfoChanged(true);
 
@@ -557,10 +503,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCombinedImsRegisteredVopsOffEmsOffBarredSelectCs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         unsolBarringInfoChanged(true);
 
@@ -579,10 +521,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCombinedImsRegisteredVopsOffEmsOffSelectCs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -599,10 +537,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCombinedImsNotRegisteredVopsOffEmsOffSelectCs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -619,10 +553,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCombinedImsNotRegisteredVopsOffEmsOffBarredSelectCs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         unsolBarringInfoChanged(true);
 
@@ -641,10 +571,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCsSelectCs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -661,10 +587,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultEpsImsRegisteredBarredScanPsPreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         unsolBarringInfoChanged(true);
 
@@ -683,10 +605,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultEpsImsRegisteredSelectPs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -703,10 +621,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultEpsImsNotRegisteredSelectPs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -723,10 +637,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultEpsImsNotRegisteredBarredSelectScanPsPreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         unsolBarringInfoChanged(true);
 
@@ -745,10 +655,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultEpsImsRegisteredEmsOffBarredScanPsPreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         unsolBarringInfoChanged(true);
 
@@ -767,10 +673,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultEpsImsRegisteredEmsOffScanPsPreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -787,10 +689,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultEpsImsNotRegisteredEmsOffScanPsPreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -807,10 +705,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultEpsImsNotRegisteredEmsOffBarredScanPsPreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         unsolBarringInfoChanged(true);
 
@@ -829,10 +723,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultEpsImsRegisteredVopsOffBarredScanPsPreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         unsolBarringInfoChanged(true);
 
@@ -851,10 +741,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultEpsImsRegisteredVopsOffScanPsPreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -871,10 +757,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultEpsImsNotRegisteredVopsOffScanPsPreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -891,10 +773,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultEpsImsNotRegisteredVopsOffBarredScanPsPreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         unsolBarringInfoChanged(true);
 
@@ -913,10 +791,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultEpsImsRegisteredVopsOffEmsOffBarredScanPsPreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         unsolBarringInfoChanged(true);
 
@@ -935,10 +809,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultEpsImsRegisteredVopsOffEmsOffScanPsPreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -955,10 +825,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultEpsImsNotRegisteredVopsOffEmsOffScanPsPreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -975,10 +841,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultEpsNotRegisteredVopsOffEmsOffBarredScanPsPreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         unsolBarringInfoChanged(true);
 
@@ -997,10 +859,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultOutOfServiceScanPsPreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -1016,10 +874,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testVoLteOnEpsImsNotRegisteredSelectPs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         bundle.putBoolean(KEY_EMERGENCY_REQUIRES_VOLTE_ENABLED_BOOL, true);
@@ -1042,10 +896,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testVoLteOffEpsImsNotRegisteredScanCsPreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         bundle.putBoolean(KEY_EMERGENCY_REQUIRES_VOLTE_ENABLED_BOOL, true);
@@ -1068,10 +918,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testRequiresRegEpsImsNotRegisteredScanCsPreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         bundle.putBoolean(KEY_EMERGENCY_REQUIRES_IMS_REGISTRATION_BOOL, true);
@@ -1089,10 +935,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCsSelectCsFailedRescanPsPreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
@@ -1115,10 +957,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultWifiImsRegisteredScanTimeoutSelectWifiImsPdn() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         bundle.putInt(KEY_EMERGENCY_SCAN_TIMER_SEC_INT, 3);
@@ -1149,10 +987,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultWifiImsRegisteredCellularTimeoutSelectWifiImsPdn() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         bundle.putInt(KEY_EMERGENCY_SCAN_TIMER_SEC_INT, 0);
@@ -1184,10 +1018,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testDefaultCsThenPs() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         unsolBarringInfoChanged(true);
 
@@ -1218,10 +1048,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testNrEpsImsRegisteredEmcOffEmsOnScanLtePreferred() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         // NR has higher priority than LTE in configuration.
@@ -1244,10 +1070,6 @@ public class EmergencyCallDomainSelectionTestOnMockModem extends ImsCallingBase 
 
     @Test
     public void testOutGoingEmergencyCall() throws Exception {
-        if (!sSupportDomainSelection) {
-            return;
-        }
-
         // Setup pre-condition
         PersistableBundle bundle = getDefaultPersistableBundle();
         overrideCarrierConfig(bundle);
