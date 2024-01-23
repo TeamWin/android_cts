@@ -17,7 +17,6 @@ package android.packageinstaller.uninstall.cts;
 
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.content.pm.PackageInstaller.UNARCHIVAL_GENERIC_ERROR;
 import static android.content.pm.PackageManager.MATCH_ARCHIVED_PACKAGES;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
@@ -38,6 +37,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.Flags;
 import android.content.pm.PackageInstaller;
+import android.content.pm.PackageInstaller.UnarchivalState;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.PackageInfoFlags;
 import android.os.Handler;
@@ -334,8 +334,8 @@ public class ArchiveTest {
 
         mUiDevice.waitForIdle();
         int unarchiveId = getUnarchivalSessionId();
-        mPackageInstaller.reportUnarchivalStatus(unarchiveId, UNARCHIVAL_GENERIC_ERROR,
-                -1 /* requiredStorageBytes= */, null /* userActionIntent= */);
+        mPackageInstaller.reportUnarchivalState(
+                UnarchivalState.createGenericErrorState(unarchiveId));
 
         assertThat(waitFor(Until.findObject(By.textContains("Something went wrong")))).isNotNull();
         UiObject2 clickableView = mUiDevice.findObject(By.text("OK"));
