@@ -20,6 +20,7 @@ import android.os.RemoteException;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.provider.Settings;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.core.app.ApplicationProvider;
@@ -311,15 +312,16 @@ public class CardEmulationTest {
 
     @Test
     @RequiresFlagsEnabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
-    public void testGetPreferredPaymentService() throws NoSuchFieldException, RemoteException {
-        CardEmulation instance = createMockedInstance();
-        String description = "Preferred Payment Service Description";
-        ApduServiceInfo serviceInfo = new ApduServiceInfo(new ResolveInfo(), false,
-                /* description */ description, new ArrayList<AidGroup>(), new ArrayList<AidGroup>(),
-                false, 0, 0, "", "", "");
-        when(mEmulation.getPreferredPaymentService(anyInt())).thenReturn(serviceInfo);
-        ApduServiceInfo result = instance.getPreferredPaymentService();
-        Assert.assertEquals(serviceInfo, result);
+    public void testGetPreferredPaymentService() {
+        final String expectedPaymentService = "foo.bar/foo.bar.baz.Service";
+        Settings.Secure.putString(ApplicationProvider.getApplicationContext().getContentResolver(),
+                Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT, expectedPaymentService);
+
+        ComponentName paymentService = CardEmulation.getPreferredPaymentService(
+                ApplicationProvider.getApplicationContext());
+
+        Assert.assertEquals(paymentService,
+                ComponentName.unflattenFromString(expectedPaymentService));
     }
 
     private Activity createAndResumeActivity() {
