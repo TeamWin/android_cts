@@ -67,9 +67,8 @@ public class VirtualCameraConfigTest {
 
     @Test
     public void virtualCameraConfigBuilder_buildsCorrectConfig() {
-        VirtualCameraConfig config = new VirtualCameraConfig.Builder()
+        VirtualCameraConfig config = new VirtualCameraConfig.Builder(CAMERA_NAME)
                 .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT, CAMERA_MAX_FPS)
-                .setName(CAMERA_NAME)
                 .setVirtualCameraCallback(mExecutor, mCallback)
                 .setSensorOrientation(CAMERA_SENSOR_ORIENTATION)
                 .setLensFacing(CAMERA_LENS_FACING)
@@ -82,10 +81,9 @@ public class VirtualCameraConfigTest {
     @Test
     public void virtualCameraConfigBuilder_tooSmallWidth_throwsException() {
         assertThrows(IllegalArgumentException.class,
-                () -> new VirtualCameraConfig.Builder()
+                () -> new VirtualCameraConfig.Builder(CAMERA_NAME)
                         .addStreamConfig(0 /* width */, CAMERA_HEIGHT, CAMERA_FORMAT,
                                 CAMERA_MAX_FPS)
-                        .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, mCallback)
                         .setLensFacing(CAMERA_LENS_FACING)
                         .build());
@@ -94,10 +92,9 @@ public class VirtualCameraConfigTest {
     @Test
     public void virtualCameraConfigBuilder_tooLargeWidth_throwsException() {
         assertThrows(IllegalArgumentException.class,
-                () -> new VirtualCameraConfig.Builder()
+                () -> new VirtualCameraConfig.Builder(CAMERA_NAME)
                         .addStreamConfig(3000 /* width */, CAMERA_HEIGHT, CAMERA_FORMAT,
                                 CAMERA_MAX_FPS)
-                        .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, mCallback)
                         .setLensFacing(CAMERA_LENS_FACING)
                         .build());
@@ -106,10 +103,9 @@ public class VirtualCameraConfigTest {
     @Test
     public void virtualCameraConfigBuilder_tooSmallHeight_throwsException() {
         assertThrows(IllegalArgumentException.class,
-                () -> new VirtualCameraConfig.Builder()
+                () -> new VirtualCameraConfig.Builder(CAMERA_NAME)
                         .addStreamConfig(CAMERA_WIDTH, 0 /* height */, CAMERA_FORMAT,
                                 CAMERA_MAX_FPS)
-                        .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, mCallback)
                         .setLensFacing(CAMERA_LENS_FACING)
                         .build());
@@ -118,10 +114,9 @@ public class VirtualCameraConfigTest {
     @Test
     public void virtualCameraConfigBuilder_tooLargeHeight_throwsException() {
         assertThrows(IllegalArgumentException.class,
-                () -> new VirtualCameraConfig.Builder()
+                () -> new VirtualCameraConfig.Builder(CAMERA_NAME)
                         .addStreamConfig(CAMERA_WIDTH, 3000 /* height */, CAMERA_FORMAT,
                                 CAMERA_MAX_FPS)
-                        .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, mCallback)
                         .setLensFacing(CAMERA_LENS_FACING)
                         .build());
@@ -130,10 +125,9 @@ public class VirtualCameraConfigTest {
     @Test
     public void virtualCameraConfigBuilder_invalidFormat_throwsException() {
         assertThrows(IllegalArgumentException.class,
-                () -> new VirtualCameraConfig.Builder()
+                () -> new VirtualCameraConfig.Builder(CAMERA_NAME)
                         .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, -1 /* format */,
                                 CAMERA_MAX_FPS)
-                        .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, mCallback)
                         .setLensFacing(CAMERA_LENS_FACING)
                         .build());
@@ -142,10 +136,9 @@ public class VirtualCameraConfigTest {
     @Test
     public void virtualCameraConfigBuilder_tooLowMaximumFramesPerSecond_throwsException() {
         assertThrows(IllegalArgumentException.class,
-                () -> new VirtualCameraConfig.Builder()
+                () -> new VirtualCameraConfig.Builder(CAMERA_NAME)
                         .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT,
                                 0 /* maximumFramesPerSecond */)
-                        .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, mCallback)
                         .setLensFacing(CAMERA_LENS_FACING)
                         .build());
@@ -154,10 +147,9 @@ public class VirtualCameraConfigTest {
     @Test
     public void virtualCameraConfigBuilder_tooHighMaximumFramesPerSecond_throwsException() {
         assertThrows(IllegalArgumentException.class,
-                () -> new VirtualCameraConfig.Builder()
+                () -> new VirtualCameraConfig.Builder(CAMERA_NAME)
                         .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT,
                                 100 /* maximumFramesPerSecond */)
-                        .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, mCallback)
                         .setLensFacing(CAMERA_LENS_FACING)
                         .build());
@@ -166,9 +158,8 @@ public class VirtualCameraConfigTest {
     @Test
     public void virtualCameraConfigBuilder_nullName_throwsException() {
         assertThrows(NullPointerException.class,
-                () -> new VirtualCameraConfig.Builder()
+                () -> new VirtualCameraConfig.Builder(null /* name */)
                         .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT, CAMERA_MAX_FPS)
-                        .setName(null)
                         .setVirtualCameraCallback(mExecutor, mCallback)
                         .setLensFacing(CAMERA_LENS_FACING)
                         .build());
@@ -177,9 +168,8 @@ public class VirtualCameraConfigTest {
     @Test
     public void virtualCameraConfigBuilder_nullCallback_throwsException() {
         assertThrows(NullPointerException.class,
-                () -> new VirtualCameraConfig.Builder()
+                () -> new VirtualCameraConfig.Builder(CAMERA_NAME)
                         .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT, CAMERA_MAX_FPS)
-                        .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, null /* callback */)
                         .setLensFacing(CAMERA_LENS_FACING)
                         .build());
@@ -188,9 +178,8 @@ public class VirtualCameraConfigTest {
     @Test
     public void virtualCameraConfigBuilder_nullExecutor_throwsException() {
         assertThrows(NullPointerException.class,
-                () -> new VirtualCameraConfig.Builder()
+                () -> new VirtualCameraConfig.Builder(CAMERA_NAME)
                         .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT, CAMERA_MAX_FPS)
-                        .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(null /* executor */, mCallback)
                         .setLensFacing(CAMERA_LENS_FACING)
                         .build());
@@ -199,10 +188,9 @@ public class VirtualCameraConfigTest {
     @Test
     public void virtualCameraConfigBuilder_missingLensFacing_throwsException() {
         assertThrows(IllegalArgumentException.class,
-                () -> new VirtualCameraConfig.Builder()
+                () -> new VirtualCameraConfig.Builder(CAMERA_NAME)
                         .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT,
                                 CAMERA_MAX_FPS)
-                        .setName(CAMERA_NAME)
                         .setVirtualCameraCallback(mExecutor, mCallback)
                         .build());
     }
@@ -210,10 +198,9 @@ public class VirtualCameraConfigTest {
     @Test
     public void virtualCameraConfigBuilder_unsupportedLensFacing_throwsException() {
         assertThrows(IllegalArgumentException.class,
-                () -> new VirtualCameraConfig.Builder()
+                () -> new VirtualCameraConfig.Builder(CAMERA_NAME)
                         .addStreamConfig(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FORMAT,
                                 CAMERA_MAX_FPS)
-                        .setName(CAMERA_NAME)
                         .setLensFacing(LENS_FACING_EXTERNAL)
                         .setVirtualCameraCallback(mExecutor, mCallback)
                         .build());
