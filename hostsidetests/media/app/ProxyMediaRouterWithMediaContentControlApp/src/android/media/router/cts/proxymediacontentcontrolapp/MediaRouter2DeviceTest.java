@@ -30,7 +30,6 @@ import android.content.pm.PackageManager;
 import android.media.MediaRoute2Info;
 import android.media.MediaRouter2;
 import android.os.Bundle;
-import android.os.Looper;
 import android.os.UserHandle;
 import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -86,7 +85,6 @@ public class MediaRouter2DeviceTest {
         assertThat(
                         MediaRouter2.getInstance(
                                 mContext,
-                                Looper.getMainLooper(),
                                 MEDIA_ROUTER_SECONDARY_USER_HELPER_PACKAGE,
                                 UserHandle.of(targetUserId)))
                 .isNotNull();
@@ -107,7 +105,6 @@ public class MediaRouter2DeviceTest {
                 () ->
                         MediaRouter2.getInstance(
                                 mContext,
-                                Looper.getMainLooper(),
                                 MEDIA_ROUTER_SECONDARY_USER_HELPER_PACKAGE,
                                 UserHandle.of(targetUserId)));
     }
@@ -121,8 +118,7 @@ public class MediaRouter2DeviceTest {
                 () ->
                         MediaRouter2.getInstance(
                                 mContext,
-                                Looper.getMainLooper(),
-                                "FAKE_PACKAGE_NAME",
+                                /* clientPackageName */ "FAKE_PACKAGE_NAME",
                                 mContext.getUser()));
     }
 
@@ -132,7 +128,6 @@ public class MediaRouter2DeviceTest {
         assertThat(
                         MediaRouter2.getInstance(
                                 mContext,
-                                Looper.getMainLooper(),
                                 mContext.getPackageName(),
                                 mContext.getUser()))
                 .isNotNull();
