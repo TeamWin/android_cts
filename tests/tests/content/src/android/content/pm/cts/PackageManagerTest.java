@@ -2133,8 +2133,14 @@ public class PackageManagerTest {
 
     @Test
     public void testUpdateShellFailed() {
-        assertThat(SystemUtil.runShellCommand("pm install -t -g " + SHELL_NAME_APK)).contains(
+        var result = SystemUtil.runShellCommand("pm install -t -g " + SHELL_NAME_APK);
+        boolean installationNotAllowed = result.contains(
                 "Installation of this package is not allowed");
+        // This test works correctly if platform and cts are built using the same certificate.
+        // Otherwise the install will still fail, but for a different reason.
+        boolean signatureMismatch = result.contains(
+                "signatures do not match newer version");
+        assertTrue(installationNotAllowed || signatureMismatch);
     }
 
     @Test
