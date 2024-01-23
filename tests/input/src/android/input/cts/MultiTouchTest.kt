@@ -22,11 +22,16 @@ import android.content.pm.ActivityInfo
 import android.graphics.PointF
 import android.server.wm.WindowManagerStateHelper
 import android.view.Display.DEFAULT_DISPLAY
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.PollingCheck
+import com.android.cts.input.inputeventmatchers.withCoords
+import com.android.cts.input.inputeventmatchers.withCoordsForPointerIndex
+import com.android.cts.input.inputeventmatchers.withMotionAction
+import org.hamcrest.Matchers.allOf
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -87,11 +92,27 @@ class MultiTouchTest {
 
         touchInjector.sendMultiTouchEvent(arrayOf(firstPointerInScreen, secondPointerInScreen))
 
-        verifier.assertReceivedDown(testPointer)
-        verifier.assertReceivedMove(testPointer)
-        verifier.assertReceivedPointerDown(1, secondPointer)
-        verifier.assertReceivedPointerUp(1, secondPointer)
-        verifier.assertReceivedUp(testPointer)
+        verifier.assertReceivedMotion(
+            allOf(withMotionAction(MotionEvent.ACTION_DOWN), withCoords(testPointer))
+        )
+        verifier.assertReceivedMotion(
+            allOf(withMotionAction(MotionEvent.ACTION_MOVE), withCoords(testPointer))
+        )
+        verifier.assertReceivedMotion(
+            allOf(
+                withMotionAction(MotionEvent.ACTION_POINTER_DOWN, 1),
+                withCoordsForPointerIndex(1, secondPointer)
+            )
+        )
+        verifier.assertReceivedMotion(
+            allOf(
+                withMotionAction(MotionEvent.ACTION_POINTER_UP, 1),
+                withCoordsForPointerIndex(1, secondPointer)
+            )
+        )
+        verifier.assertReceivedMotion(
+            allOf(withMotionAction(MotionEvent.ACTION_UP), withCoords(testPointer))
+        )
     }
 
     companion object {
@@ -103,8 +124,12 @@ class MultiTouchTest {
             arrayOf(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE, 0, "LANDSCAPE"),
             arrayOf(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE, FLAG_SPLIT_TOUCH, "LANDSCAPE_SPLIT"),
             arrayOf(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE, 0, "REVERSE_LANDSCAPE"),
-            arrayOf(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE, FLAG_SPLIT_TOUCH,
-                    "REVERSE_LANDSCAPE_SPLIT"))
+            arrayOf(
+                ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE,
+                FLAG_SPLIT_TOUCH,
+                "REVERSE_LANDSCAPE_SPLIT",
+            )
+        )
 
         @JvmStatic
         fun getPositionInView(v: View): PointF {
