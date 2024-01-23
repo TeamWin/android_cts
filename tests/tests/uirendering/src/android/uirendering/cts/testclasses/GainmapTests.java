@@ -50,7 +50,6 @@ import com.android.graphics.hwui.flags.Flags;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.testng.Assert;
 
@@ -61,9 +60,6 @@ import java.util.function.Consumer;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class GainmapTests {
-
-    @Rule
-    public final TestName mTestName = new TestName();
 
     @Rule
     public final CheckFlagsRule mCheckFlagsRule =
@@ -155,7 +151,7 @@ public class GainmapTests {
             assertChannels(result.getColor(6, 2),
                     mapWhiteWithGain(gainmap, 0xFF / 255.f), delta);
         } catch (Throwable t) {
-            BitmapDumper.dumpBitmap(result, mTestName.getMethodName(), "GainmapTests");
+            BitmapDumper.dumpBitmap(result);
             throw t;
         }
     }
@@ -292,10 +288,8 @@ public class GainmapTests {
         shader.setOverrideGainmap(sNoOpGainmap);
         paint.setShader(shader);
         canvas.drawPaint(paint);
-        BitmapAsserter asserter =
-                new BitmapAsserter(this.getClass().getSimpleName(), mTestName.getMethodName());
-        asserter.assertBitmapIsVerified(result, new ColorVerifier(Color.WHITE, 3),
-                mTestName.getMethodName(), "");
+        BitmapAsserter.assertBitmapIsVerified(result, new ColorVerifier(Color.WHITE, 3),
+                "");
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_GAINMAP_ANIMATIONS)
@@ -350,10 +344,8 @@ public class GainmapTests {
         override.setRatioMax(1, 1, 1);
         shader.setOverrideGainmap(override);
         canvas.drawPaint(paint);
-        BitmapAsserter asserter =
-                new BitmapAsserter(this.getClass().getSimpleName(), mTestName.getMethodName());
-        asserter.assertBitmapIsVerified(result, new ColorVerifier(Color.WHITE, 3),
-                mTestName.getMethodName(), "");
+        BitmapAsserter.assertBitmapIsVerified(result, new ColorVerifier(Color.WHITE, 3),
+                "");
     }
 
     @Test

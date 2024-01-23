@@ -16,8 +16,6 @@
 
 package android.uirendering.cts.testclasses
 
-import androidx.test.InstrumentationRegistry
-
 import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -34,13 +32,14 @@ import android.uirendering.cts.bitmapverifiers.RectVerifier
 import android.uirendering.cts.bitmapverifiers.RegionVerifier
 import android.uirendering.cts.differencevisualizers.PassFailVisualizer
 import android.uirendering.cts.util.BitmapDumper
+import androidx.test.InstrumentationRegistry
 import junitparams.JUnitParamsRunner
 import junitparams.Parameters
-import org.junit.Test
-import org.junit.runner.RunWith
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import org.junit.Test
+import org.junit.runner.RunWith
 
 @RunWith(JUnitParamsRunner::class)
 class AImageDecoderTest {
@@ -68,8 +67,8 @@ class AImageDecoderTest {
     fun testToString() = nTestToString()
 
     private enum class Crop {
-        Top,    // Crop a section of the image that contains the top
-        Left,   // Crop a section of the image that contains the left
+        Top, // Crop a section of the image that contains the top
+        Left, // Crop a section of the image that contains the left
         None,
     }
 
@@ -129,8 +128,13 @@ class AImageDecoderTest {
     }
 
     // Create a Bitmap with the same size and colorspace as bitmap.
-    private fun makeEmptyBitmap(bitmap: Bitmap) = Bitmap.createBitmap(bitmap.width, bitmap.height,
-                bitmap.config!!, true, bitmap.colorSpace!!)
+    private fun makeEmptyBitmap(bitmap: Bitmap) = Bitmap.createBitmap(
+        bitmap.width,
+        bitmap.height,
+                bitmap.config!!,
+        true,
+        bitmap.colorSpace!!
+    )
 
     private fun setCrop(decoder: Long, rect: Rect): Int = with(rect) {
         nSetCrop(decoder, left, top, right, bottom)
@@ -166,8 +170,10 @@ class AImageDecoderTest {
         val decoder = nCreateFromAsset(asset)
         if (scaleFactor != 1.0f) {
             with(decodeAndCropper) {
-                assertEquals(nSetTargetSize(decoder, targetWidth, targetHeight),
-                        ANDROID_IMAGE_DECODER_SUCCESS)
+                assertEquals(
+                    nSetTargetSize(decoder, targetWidth, targetHeight),
+                        ANDROID_IMAGE_DECODER_SUCCESS
+                )
             }
         }
         with(decodeAndCropper.cropRect) {
@@ -184,8 +190,7 @@ class AImageDecoderTest {
             val verifier = GoldenImageVerifier(expectedBm, MSSIMComparer(mssimThreshold))
             if (!verifier.verify(testBm)) {
                 if (DEBUG_CAPTURE_IMAGES) {
-                    BitmapDumper.dumpBitmaps(expectedBm, testBm, "$testName(${image}_$i)",
-                            "AImageDecoderTest", PassFailVisualizer());
+                    BitmapDumper.dumpBitmaps(expectedBm, testBm, PassFailVisualizer())
                 }
                 fail("$image has mismatch in frame $i")
             }
@@ -231,8 +236,15 @@ class AImageDecoderTest {
         // Perceptually, this image looks reasonable, but the MSSIM is low enough to be
         // meaningless. It has been manually verified.
         if (image == "alphabetAnim.gif") return
-        decodeAndCropFrames(image, frameName, numFrames, .5f, Crop.None, .749,
-                "testDecodeFramesScaleDown")
+        decodeAndCropFrames(
+            image,
+            frameName,
+            numFrames,
+            .5f,
+            Crop.None,
+            .749,
+                "testDecodeFramesScaleDown"
+        )
     }
 
     @Test
@@ -259,8 +271,15 @@ class AImageDecoderTest {
         // Perceptually, this image looks reasonable, but the MSSIM is low enough to be
         // meaningless. It has been manually verified.
         if (image == "alphabetAnim.gif") return
-        decodeAndCropFrames(image, frameName, numFrames, .5f, Crop.Top, .749,
-                "testDecodeFramesAndCropTopScaleDown")
+        decodeAndCropFrames(
+            image,
+            frameName,
+            numFrames,
+            .5f,
+            Crop.Top,
+            .749,
+                "testDecodeFramesAndCropTopScaleDown"
+        )
     }
 
     @Test
@@ -287,8 +306,15 @@ class AImageDecoderTest {
         // Perceptually, this image looks reasonable, but the MSSIM is low enough to be
         // meaningless. It has been manually verified.
         if (image == "alphabetAnim.gif") return
-        decodeAndCropFrames(image, frameName, numFrames, .5f, Crop.Left, .596,
-                "testDecodeFramesAndCropLeftScaleDown")
+        decodeAndCropFrames(
+            image,
+            frameName,
+            numFrames,
+            .5f,
+            Crop.Left,
+            .596,
+                "testDecodeFramesAndCropLeftScaleDown"
+        )
     }
 
     @Test
@@ -328,8 +354,11 @@ class AImageDecoderTest {
             nDecode(decoder, testBm, ANDROID_IMAGE_DECODER_SUCCESS)
 
             val verifier = GoldenImageVerifier(frame0, MSSIMComparer(1.0))
-            assertTrue(verifier.verify(testBm), "Mismatch in $image after " +
-                        "decoding $framesBeforeReset and then rewinding!")
+            assertTrue(
+                verifier.verify(testBm),
+                "Mismatch in $image after " +
+                        "decoding $framesBeforeReset and then rewinding!"
+            )
 
             nDeleteDecoder(decoder)
             nCloseAsset(asset)
@@ -379,8 +408,13 @@ class AImageDecoderTest {
     }
 
     fun nonAnimatedAssets() = arrayOf(
-        "blue-16bit-prophoto.png", "green-p3.png", "linear-rgba16f.png", "orange-prophotorgb.png",
-        "animated_001.gif", "animated_002.gif", "sunset1.jpg"
+        "blue-16bit-prophoto.png",
+        "green-p3.png",
+        "linear-rgba16f.png",
+        "orange-prophotorgb.png",
+        "animated_001.gif",
+        "animated_002.gif",
+        "sunset1.jpg"
     )
 
     @Test
@@ -462,7 +496,9 @@ class AImageDecoderTest {
     }
 
     fun unpremulTestFiles() = arrayOf(
-        "alphabetAnim.gif", "animated_webp.webp", "stoplight.webp"
+        "alphabetAnim.gif",
+        "animated_webp.webp",
+        "stoplight.webp"
     )
 
     @Test
@@ -505,8 +541,10 @@ class AImageDecoderTest {
         val height = nGetHeight(decoder)
 
         assertEquals(ANDROID_IMAGE_DECODER_SUCCESS, nSetUnpremultipliedRequired(decoder, true))
-        assertEquals(ANDROID_IMAGE_DECODER_INVALID_SCALE,
-                nSetTargetSize(decoder, width * 2, height * 2))
+        assertEquals(
+            ANDROID_IMAGE_DECODER_INVALID_SCALE,
+                nSetTargetSize(decoder, width * 2, height * 2)
+        )
         nDeleteDecoder(decoder)
         nCloseAsset(asset)
     }
@@ -519,10 +557,14 @@ class AImageDecoderTest {
         val width = nGetWidth(decoder)
         val height = nGetHeight(decoder)
 
-        assertEquals(ANDROID_IMAGE_DECODER_SUCCESS,
-                nSetTargetSize(decoder, width * 2, height * 2))
-        assertEquals(ANDROID_IMAGE_DECODER_INVALID_CONVERSION,
-                nSetUnpremultipliedRequired(decoder, true))
+        assertEquals(
+            ANDROID_IMAGE_DECODER_SUCCESS,
+                nSetTargetSize(decoder, width * 2, height * 2)
+        )
+        assertEquals(
+            ANDROID_IMAGE_DECODER_INVALID_CONVERSION,
+                nSetUnpremultipliedRequired(decoder, true)
+        )
         nDeleteDecoder(decoder)
         nCloseAsset(asset)
     }
@@ -651,8 +693,11 @@ class AImageDecoderTest {
         for (i in 0 until numFrames) {
             assertEquals(ANDROID_IMAGE_DECODER_SUCCESS, nGetFrameInfo(decoder, frameInfo))
             val result = nAdvanceFrame(decoder)
-            val expectedResult = if (i == numFrames - 1) ANDROID_IMAGE_DECODER_FINISHED
-                                 else ANDROID_IMAGE_DECODER_SUCCESS
+            val expectedResult = if (i == numFrames - 1) {
+                ANDROID_IMAGE_DECODER_FINISHED
+            } else {
+                ANDROID_IMAGE_DECODER_SUCCESS
+            }
             assertEquals(expectedResult, result)
         }
 
@@ -669,10 +714,20 @@ class AImageDecoderTest {
         arrayOf<Any>("required_gif.gif", LongArray(7) { 100_000_000 }),
         arrayOf<Any>("required_webp.webp", LongArray(7) { 100_000_000 }),
         arrayOf<Any>("alphabetAnim.gif", LongArray(13) { 100_000_000 }),
-        arrayOf<Any>("blendBG.webp", longArrayOf(525_000_000, 500_000_000,
-                525_000_000, 437_000_000, 609_000_000, 729_000_000, 444_000_000)),
-        arrayOf<Any>("stoplight.webp", longArrayOf(1_000_000_000, 500_000_000,
-                                                    1_000_000_000))
+        arrayOf<Any>("blendBG.webp", longArrayOf(
+            525_000_000,
+            500_000_000,
+                525_000_000,
+            437_000_000,
+            609_000_000,
+            729_000_000,
+            444_000_000
+        )),
+        arrayOf<Any>("stoplight.webp", longArrayOf(
+            1_000_000_000,
+            500_000_000,
+                                                    1_000_000_000
+        ))
     )
 
     @Test
@@ -695,8 +750,11 @@ class AImageDecoderTest {
         val frameInfo = nCreateFrameInfo()
         var frame = 0
         do {
-            assertEquals(ANDROID_IMAGE_DECODER_SUCCESS, nGetFrameInfo(decoder, frameInfo),
-                "Failed to getFrameInfo for frame $frame of $image!")
+            assertEquals(
+                ANDROID_IMAGE_DECODER_SUCCESS,
+                nGetFrameInfo(decoder, frameInfo),
+                "Failed to getFrameInfo for frame $frame of $image!"
+            )
             test(frameInfo, frame)
             frame++
         } while (ANDROID_IMAGE_DECODER_SUCCESS == nAdvanceFrame(decoder))
@@ -774,13 +832,28 @@ class AImageDecoderTest {
     fun animationsAndAlphas() = arrayOf(
         arrayOf<Any>("animated.gif", BooleanArray(4) { true }),
         arrayOf<Any>("animated_webp.webp", BooleanArray(4) { true }),
-        arrayOf<Any>("required_gif.gif", booleanArrayOf(false, true, true, true,
-                true, true, true, true)),
+        arrayOf<Any>("required_gif.gif", booleanArrayOf(
+            false,
+            true,
+            true,
+            true,
+                true,
+            true,
+            true,
+            true
+        )),
         arrayOf<Any>("required_webp.webp", BooleanArray(7) { false }),
         arrayOf<Any>("alphabetAnim.gif", booleanArrayOf(true, false, true, false,
                 true, true, true, true, true, true, true, true, true)),
-        arrayOf<Any>("blendBG.webp", booleanArrayOf(false, true, false, true,
-                                                 false, true, true)),
+        arrayOf<Any>("blendBG.webp", booleanArrayOf(
+            false,
+            true,
+            false,
+            true,
+                                                 false,
+            true,
+            true
+        )),
         arrayOf<Any>("stoplight.webp", BooleanArray(3) { false })
     )
 
@@ -788,8 +861,12 @@ class AImageDecoderTest {
     @Parameters(method = "animationsAndAlphas")
     fun testAlphas(image: String, alphas: BooleanArray) = testFrameInfo(image) {
         frameInfo, i ->
-            assertEquals(alphas[i], nGetFrameAlpha(frameInfo), "Mismatch in alpha for $image frame $i " +
-                    "expected ${alphas[i]}")
+            assertEquals(
+                alphas[i],
+                nGetFrameAlpha(frameInfo),
+                "Mismatch in alpha for $image frame $i " +
+                    "expected ${alphas[i]}"
+            )
     }
 
     private val ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE = 1
@@ -799,16 +876,24 @@ class AImageDecoderTest {
     fun animationsAndDisposeOps() = arrayOf(
         arrayOf<Any>("animated.gif", IntArray(4) { ANDROID_IMAGE_DECODER_DISPOSE_OP_BACKGROUND }),
         arrayOf<Any>("animated_webp.webp", IntArray(4) { ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE }),
-        arrayOf<Any>("required_gif.gif", intArrayOf(ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
-                ANDROID_IMAGE_DECODER_DISPOSE_OP_BACKGROUND, ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
-                ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE, ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+        arrayOf<Any>("required_gif.gif", intArrayOf(
+            ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
                 ANDROID_IMAGE_DECODER_DISPOSE_OP_BACKGROUND,
-                ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE)),
-        arrayOf<Any>("required_webp.webp", intArrayOf(ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
-                ANDROID_IMAGE_DECODER_DISPOSE_OP_BACKGROUND, ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
-                ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE, ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+            ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+            ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
                 ANDROID_IMAGE_DECODER_DISPOSE_OP_BACKGROUND,
-                ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE)),
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE
+        )),
+        arrayOf<Any>("required_webp.webp", intArrayOf(
+            ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_BACKGROUND,
+            ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+            ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_BACKGROUND,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE
+        )),
         arrayOf<Any>("alphabetAnim.gif", intArrayOf(ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
                 ANDROID_IMAGE_DECODER_DISPOSE_OP_PREVIOUS,
                 ANDROID_IMAGE_DECODER_DISPOSE_OP_PREVIOUS,
@@ -837,15 +922,25 @@ class AImageDecoderTest {
         arrayOf<Any>("animated.gif", IntArray(4) { ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER }),
         arrayOf<Any>("animated_webp.webp", IntArray(4) { ANDROID_IMAGE_DECODER_BLEND_OP_SRC }),
         arrayOf<Any>("required_gif.gif", IntArray(7) { ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER }),
-        arrayOf<Any>("required_webp.webp", intArrayOf(ANDROID_IMAGE_DECODER_BLEND_OP_SRC,
-                ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER, ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER,
-                ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER, ANDROID_IMAGE_DECODER_BLEND_OP_SRC,
-                ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER, ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER)),
+        arrayOf<Any>("required_webp.webp", intArrayOf(
+            ANDROID_IMAGE_DECODER_BLEND_OP_SRC,
+                ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER,
+            ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER,
+                ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER,
+            ANDROID_IMAGE_DECODER_BLEND_OP_SRC,
+                ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER,
+            ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER
+        )),
         arrayOf<Any>("alphabetAnim.gif", IntArray(13) { ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER }),
-        arrayOf<Any>("blendBG.webp", intArrayOf(ANDROID_IMAGE_DECODER_BLEND_OP_SRC,
-                ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER, ANDROID_IMAGE_DECODER_BLEND_OP_SRC,
-                ANDROID_IMAGE_DECODER_BLEND_OP_SRC, ANDROID_IMAGE_DECODER_BLEND_OP_SRC,
-                ANDROID_IMAGE_DECODER_BLEND_OP_SRC, ANDROID_IMAGE_DECODER_BLEND_OP_SRC)),
+        arrayOf<Any>("blendBG.webp", intArrayOf(
+            ANDROID_IMAGE_DECODER_BLEND_OP_SRC,
+                ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER,
+            ANDROID_IMAGE_DECODER_BLEND_OP_SRC,
+                ANDROID_IMAGE_DECODER_BLEND_OP_SRC,
+            ANDROID_IMAGE_DECODER_BLEND_OP_SRC,
+                ANDROID_IMAGE_DECODER_BLEND_OP_SRC,
+            ANDROID_IMAGE_DECODER_BLEND_OP_SRC
+        )),
         arrayOf<Any>("stoplight.webp", IntArray(4) { ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER })
     )
 
@@ -853,8 +948,12 @@ class AImageDecoderTest {
     @Parameters(method = "animationsAndBlendOps")
     fun testBlendOps(image: String, blendOps: IntArray) = testFrameInfo(image) {
         frameInfo, i ->
-            assertEquals(blendOps[i], nGetBlendOp(frameInfo), "Mismatch in blend op for $image " +
-                        "frame $i, expected: ${blendOps[i]}")
+            assertEquals(
+                blendOps[i],
+                nGetBlendOp(frameInfo),
+                "Mismatch in blend op for $image " +
+                        "frame $i, expected: ${blendOps[i]}"
+            )
     }
 
     @Test
@@ -863,9 +962,11 @@ class AImageDecoderTest {
         // ANDROID_IMAGE_DECODER_DISPOSE_OP_PREVIOUS frame. The third frame looks different
         // depending on whether that is respected.
         val image = "RestorePrevious.gif"
-        val disposeOps = intArrayOf(ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+        val disposeOps = intArrayOf(
+            ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
                                     ANDROID_IMAGE_DECODER_DISPOSE_OP_PREVIOUS,
-                                    ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE)
+                                    ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE
+        )
         val asset = nOpenAsset(getAssets(), image)
         val decoder = nCreateFromAsset(asset)
 
@@ -876,7 +977,8 @@ class AImageDecoderTest {
         val verifiers = arrayOf<BitmapVerifier>(
             ColorVerifier(Color.BLACK, 0),
             RectVerifier(Color.BLACK, Color.RED, Rect(0, 0, 100, 80), 0),
-            RectVerifier(Color.BLACK, Color.GREEN, Rect(0, 0, 100, 50), 0))
+            RectVerifier(Color.BLACK, Color.GREEN, Rect(0, 0, 100, 50), 0)
+        )
 
         with(nCreateFrameInfo()) {
             for (i in 0..2) {
@@ -950,13 +1052,19 @@ class AImageDecoderTest {
         val decoder = nCreateFromAsset(asset)
         val ANDROID_BITMAP_FORMAT_RGB_565 = 4
         if (alphas[0]) {
-            assertEquals(ANDROID_IMAGE_DECODER_INVALID_CONVERSION,
-                    nSetAndroidBitmapFormat(decoder, ANDROID_BITMAP_FORMAT_RGB_565))
+            assertEquals(
+                ANDROID_IMAGE_DECODER_INVALID_CONVERSION,
+                    nSetAndroidBitmapFormat(decoder, ANDROID_BITMAP_FORMAT_RGB_565)
+            )
         } else {
-            assertEquals(ANDROID_IMAGE_DECODER_SUCCESS,
-                    nSetAndroidBitmapFormat(decoder, ANDROID_BITMAP_FORMAT_RGB_565))
-            assertEquals(ANDROID_IMAGE_DECODER_INVALID_STATE,
-                    nAdvanceFrame(decoder))
+            assertEquals(
+                ANDROID_IMAGE_DECODER_SUCCESS,
+                    nSetAndroidBitmapFormat(decoder, ANDROID_BITMAP_FORMAT_RGB_565)
+            )
+            assertEquals(
+                ANDROID_IMAGE_DECODER_INVALID_STATE,
+                    nAdvanceFrame(decoder)
+            )
         }
 
         nDeleteDecoder(decoder)
@@ -970,8 +1078,10 @@ class AImageDecoderTest {
         val inputStream = getAssets().open(image)
         val exifInterface = ExifInterface(inputStream)
         var rotation = 0
-        when (exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION,
-                ExifInterface.ORIENTATION_NORMAL)) {
+        when (exifInterface.getAttributeInt(
+            ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_NORMAL
+        )) {
             ExifInterface.ORIENTATION_NORMAL, ExifInterface.ORIENTATION_UNDEFINED -> return original
             ExifInterface.ORIENTATION_ROTATE_90 -> rotation = 90
             ExifInterface.ORIENTATION_ROTATE_180 -> rotation = 180

@@ -17,18 +17,21 @@
 package android.uirendering.cts.runner;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.server.wm.settings.SettingsSession;
 import android.support.test.uiautomator.UiDevice;
 import android.uirendering.cts.util.BitmapDumper;
 
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnitRunner;
 
 /**
  * TODO: Do some cool stuff we also want like sharing DrawActivity cross-class.
  */
 public class UiRenderingRunner extends AndroidJUnitRunner {
+    private static final boolean TAKE_SCREENSHOTS_ON_FAILURE = true;
 
     private static class ImmersiveConfirmationSetting extends SettingsSession<String> {
         ImmersiveConfirmationSetting() {
@@ -47,6 +50,15 @@ public class UiRenderingRunner extends AndroidJUnitRunner {
 
     @Override
     public void onCreate(Bundle arguments) {
+        // Inject our test monitor
+        String listeners = arguments.getString("listener");
+        if (listeners == null) {
+            listeners = TestArtifactCollector.class.getName();
+        } else {
+            listeners += "," + TestArtifactCollector.class.getName();
+        }
+        arguments.putString("listener", listeners);
+
         super.onCreate(arguments);
 
         // Disable immersive clings
@@ -61,7 +73,14 @@ public class UiRenderingRunner extends AndroidJUnitRunner {
         } catch (Exception e) {
         }
 
-        BitmapDumper.initialize(this);
+        if (TAKE_SCREENSHOTS_ON_FAILURE) {
+            TestArtifactCollector.addFailureListener(failure -> {
+                Bitmap screenshot = InstrumentationRegistry.getInstrumentation()
+                        .getUiAutomation().takeScreenshot();
+                BitmapDumper.dumpBitmap(screenshot, "fullscreenshot");
+                return null;
+            });
+        }
     }
 
     @Override
