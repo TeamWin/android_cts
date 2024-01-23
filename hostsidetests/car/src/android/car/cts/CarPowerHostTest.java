@@ -34,6 +34,7 @@ import com.android.tradefed.result.InputStreamSource;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.util.StreamUtil;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -69,6 +70,12 @@ public final class CarPowerHostTest extends CarHostJUnit4TestCase {
     @Rule
     public final CheckFlagsRule mCheckFlagsRule =
             HostFlagsValueProvider.createCheckFlagsRule(this::getDevice);
+
+    @Before
+    public void setUp() throws Exception {
+        // Clear the previous logs
+        executeCommand("logcat -c");
+    }
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_CAR_DUMP_TO_PROTO)
@@ -326,6 +333,7 @@ public final class CarPowerHostTest extends CarHostJUnit4TestCase {
             String suspendType) throws Exception {
         executeCommand("%s set-listener,%s,%s,%s", TEST_COMMAND_HEADER, listenerName,
                 completionType, suspendType);
+        waitForLogcatMsg("Listener set for " + listenerName);
     }
 
     private void clearListener() throws Exception {
