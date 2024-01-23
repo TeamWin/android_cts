@@ -1,6 +1,5 @@
 package android.nfc.cts;
 
-import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.Manifest.permission.MANAGE_DEFAULT_APPLICATIONS;
 
 import static org.junit.Assume.assumeTrue;
@@ -14,6 +13,7 @@ import static org.mockito.Mockito.doNothing;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.role.RoleManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -25,7 +25,6 @@ import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
-import android.provider.Settings;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.core.app.ApplicationProvider;
@@ -34,6 +33,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -70,6 +70,7 @@ public class NfcAdapterTest {
         // Backup the original service. It is being overridden
         // when creating a mocked adapter.
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        Assume.assumeNotNull(adapter);
         mSavedService = (INfcAdapter) (
             new FieldReader(adapter, adapter.getClass().getDeclaredField("sService")).read());
     }
@@ -79,6 +80,7 @@ public class NfcAdapterTest {
         if (!supportsHardware()) return;
         // Restore the original service.
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        Assume.assumeNotNull(adapter);
         FieldSetter.setField(adapter,
                 adapter.getClass().getDeclaredField("sService"), mSavedService);
     }
@@ -337,18 +339,14 @@ public class NfcAdapterTest {
     @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_OBSERVE_MODE)
     @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
     public void testAllowTransaction() {
+        ComponentName originalDefault = null;
         try {
-            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-                .getUiAutomation().adoptShellPermissionIdentity(WRITE_SECURE_SETTINGS);
-            Settings.Secure.putString(mContext.getContentResolver(),
-                    "nfc_payment_default_component",
-                    "android.nfc.cts/android.nfc.cts.CtsMyHostApduService");
+            originalDefault = setDefaultPaymentService(CtsMyHostApduService.class);
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
             boolean result = adapter.allowTransaction();
             Assert.assertTrue(result);
         } finally {
-            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-                .getUiAutomation().dropShellPermissionIdentity();
+            setDefaultPaymentService(originalDefault);
         }
     }
 
@@ -356,18 +354,14 @@ public class NfcAdapterTest {
     @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_OBSERVE_MODE)
     @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
     public void testDisallowTransaction() {
+        ComponentName originalDefault = null;
         try {
-            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-                .getUiAutomation().adoptShellPermissionIdentity(WRITE_SECURE_SETTINGS);
-            Settings.Secure.putString(mContext.getContentResolver(),
-                    "nfc_payment_default_component",
-                    "android.nfc.cts/android.nfc.cts.CtsMyHostApduService");
+            originalDefault = setDefaultPaymentService(CtsMyHostApduService.class);
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
             boolean result = adapter.disallowTransaction();
             Assert.assertTrue(result);
         } finally {
-            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-                .getUiAutomation().dropShellPermissionIdentity();
+            setDefaultPaymentService(originalDefault);
         }
     }
 
@@ -463,5 +457,18 @@ public class NfcAdapterTest {
                 });
         countDownLatch.await(2000, TimeUnit.MILLISECONDS);
         return result.get();
+    }
+
+    private ComponentName setDefaultPaymentService(Class serviceClass) {
+        ComponentName componentName = setDefaultPaymentService(
+                new ComponentName(mContext, serviceClass));
+        if (componentName == null) {
+            return null;
+        }
+        return componentName;
+    }
+
+    private ComponentName setDefaultPaymentService(ComponentName serviceName) {
+        return CardEmulationTest.setDefaultPaymentService(serviceName, mContext);
     }
 }
