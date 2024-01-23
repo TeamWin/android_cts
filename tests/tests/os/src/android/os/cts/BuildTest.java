@@ -66,9 +66,9 @@ public class BuildTest extends TestCase {
      */
     @CddTest(requirements = {"3.2.2/C-0-1"})
     public void testBuildProperties() throws Exception {
-        assertNotNull(DEVICE + " should be defined", getProperty(DEVICE));
-        assertNotNull(MANUFACTURER + "should be defined", getProperty(MANUFACTURER));
-        assertNotNull(MODEL + "should be defined", getProperty(MODEL));
+        assertNotNull("Build.DEVICE should be defined", Build.DEVICE);
+        assertNotNull("Build.MANUFACTURER should be defined", Build.MANUFACTURER);
+        assertNotNull("Build.MODEL should be defined", Build.MODEL);
     }
 
     /**
