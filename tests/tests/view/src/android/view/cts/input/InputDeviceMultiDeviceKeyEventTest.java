@@ -21,8 +21,10 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import android.Manifest;
 import android.app.Instrumentation;
 import android.hardware.input.InputManager;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 
@@ -32,6 +34,7 @@ import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.WindowUtil;
 import com.android.cts.input.UinputDevice;
 
@@ -57,6 +60,7 @@ import java.util.Arrays;
  */
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class InputDeviceMultiDeviceKeyEventTest {
     private static final String TAG = "InputDeviceMultiDeviceKeyEventTest";
     private static final String LABEL_PREFIX = "KEYCODE_";
@@ -84,7 +88,13 @@ public class InputDeviceMultiDeviceKeyEventTest {
             EV_KEY_CODE_2
     };
 
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            androidx.test.platform.app.InstrumentationRegistry
+                    .getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public ActivityTestRule<InputDeviceKeyLayoutMapTestActivity> mActivityRule =
             new ActivityTestRule<>(InputDeviceKeyLayoutMapTestActivity.class);
 

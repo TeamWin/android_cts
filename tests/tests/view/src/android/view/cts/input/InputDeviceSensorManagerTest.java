@@ -34,6 +34,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.MemoryFile;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.cts.R;
@@ -63,6 +64,7 @@ import java.util.concurrent.TimeUnit;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class InputDeviceSensorManagerTest {
     private static final String TAG = "InputDeviceSensorManagerTest";
     private static final int SENSOR_VEC_LENGTH = 3;
