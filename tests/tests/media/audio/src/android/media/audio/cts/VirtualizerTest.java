@@ -16,18 +16,21 @@
 
 package android.media.audio.cts;
 
-import android.content.Context;
-import android.media.audiofx.AudioEffect;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.media.AudioFormat;
+import android.media.audiofx.AudioEffect;
 import android.media.audiofx.Virtualizer;
 import android.media.cts.NonMediaMainlineTest;
-import android.media.cts.PostProcTestBase;
 import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
-import android.test.AndroidTestCase;
 import android.util.Log;
 
-import android.media.audio.cts.R;
+import org.junit.Test;
 
 import java.util.Arrays;
 
@@ -54,6 +57,7 @@ public class VirtualizerTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 0.0: test constructor and release
+    @Test
     public void test0_0ConstructorAndRelease() throws Exception {
         if (!isVirtualizerAvailable()) {
             return;
@@ -84,6 +88,7 @@ public class VirtualizerTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 1.0: test strength
+    @Test
     public void test1_0Strength() throws Exception {
         if (!isVirtualizerAvailable()) {
             return;
@@ -116,6 +121,7 @@ public class VirtualizerTest extends PostProcTestBase {
     }
 
     //Test case 1.1: test properties
+    @Test
     public void test1_1Properties() throws Exception {
         if (!isVirtualizerAvailable()) {
             return;
@@ -153,6 +159,7 @@ public class VirtualizerTest extends PostProcTestBase {
     }
 
     //Test case 1.2: test setStrength() throws exception after release
+    @Test
     public void test1_2SetStrengthAfterRelease() throws Exception {
         if (!isVirtualizerAvailable()) {
             return;
@@ -174,6 +181,7 @@ public class VirtualizerTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 2.0: test setEnabled() and getEnabled() in valid state
+    @Test
     public void test2_0SetEnabledGetEnabled() throws Exception {
         if (!isVirtualizerAvailable()) {
             return;
@@ -193,6 +201,7 @@ public class VirtualizerTest extends PostProcTestBase {
     }
 
     //Test case 2.1: test setEnabled() throws exception after release
+    @Test
     public void test2_1SetEnabledAfterRelease() throws Exception {
         if (!isVirtualizerAvailable()) {
             return;
@@ -214,6 +223,7 @@ public class VirtualizerTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 3.0: test control status listener
+    @Test
     public void test3_0ControlStatusListener() throws Exception {
         if (!isVirtualizerAvailable()) {
             return;
@@ -240,6 +250,7 @@ public class VirtualizerTest extends PostProcTestBase {
     }
 
     //Test case 3.1: test enable status listener
+    @Test
     public void test3_1EnableStatusListener() throws Exception {
         if (!isVirtualizerAvailable()) {
             return;
@@ -268,6 +279,7 @@ public class VirtualizerTest extends PostProcTestBase {
     }
 
     //Test case 3.2: test parameter changed listener
+    @Test
     public void test3_2ParameterChangedListener() throws Exception {
         if (!isVirtualizerAvailable()) {
             return;
@@ -304,6 +316,7 @@ public class VirtualizerTest extends PostProcTestBase {
     //   combinations must be supported, otherwise the effect doesn't really qualify as
     //   a virtualizer: AudioFormat.CHANNEL_OUT_STEREO or the quad and 5.1 side/back variants,
     //   in VIRTUALIZATION_MODE_BINAURAL or VIRTUALIZATION_MODE_TRANSAURAL
+    @Test
     public void test4_0FormatModeQuery() throws Exception {
         if (!isVirtualizerAvailable()) {
             return;
@@ -344,6 +357,7 @@ public class VirtualizerTest extends PostProcTestBase {
 
     //Test case 4.1: test that the capabilities reported by Virtualizer.canVirtualize(int,int)
     //   matches those returned by Virtualizer.getSpeakerAngles(int, int, int[])
+    @Test
     public void test4_1SpeakerAnglesCapaMatchesFormatModeCapa() throws Exception {
         if (!isVirtualizerAvailable()) {
             return;
@@ -387,6 +401,7 @@ public class VirtualizerTest extends PostProcTestBase {
 
     //Test case 4.2: test forcing virtualization mode: at least binaural or transaural must be
     //   supported
+    @Test
     public void test4_2VirtualizationMode() throws Exception {
         if (!isVirtualizerAvailable()) {
             return;
@@ -416,6 +431,7 @@ public class VirtualizerTest extends PostProcTestBase {
     }
 
     //Test case 4.3: test disabling virtualization maps to VIRTUALIZATION_MODE_OFF
+    @Test
     public void test4_3DisablingVirtualizationOff() throws Exception {
         if (!isVirtualizerAvailable()) {
             return;
@@ -439,6 +455,7 @@ public class VirtualizerTest extends PostProcTestBase {
     }
 
     //Test case 4.4: test forcing virtualization mode to AUTO
+    @Test
     public void test4_4VirtualizationModeAuto() throws Exception {
         if (!isVirtualizerAvailable()) {
             return;
@@ -463,6 +480,7 @@ public class VirtualizerTest extends PostProcTestBase {
     }
 
     //Test case 4.5: test for consistent capabilities if virtualizer is enabled or disabled
+    @Test
     public void test4_5ConsistentCapabilitiesWithEnabledDisabled() throws Exception {
         if (!isVirtualizerAvailable()) {
             return;
