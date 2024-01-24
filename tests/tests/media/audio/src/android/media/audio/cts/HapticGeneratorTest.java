@@ -22,11 +22,15 @@ import static org.junit.Assert.fail;
 
 import android.media.audiofx.HapticGenerator;
 
+import androidx.test.runner.AndroidJUnit4;
+
 import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @NonMainlineTest
+@RunWith(AndroidJUnit4.class)
 public class HapticGeneratorTest extends PostProcTestBase {
 
     private String TAG = "HapticGeneratorTest";
