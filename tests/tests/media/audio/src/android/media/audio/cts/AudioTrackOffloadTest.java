@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.annotation.Nullable;
 import android.annotation.RawRes;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioAttributes;
@@ -30,11 +31,18 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeSdkSandbox;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.compatibility.common.util.NonMainlineTest;
+import com.android.media.audioserver.Flags;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,9 +54,15 @@ import java.util.stream.IntStream;
 
 import javax.annotation.concurrent.GuardedBy;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 @NonMainlineTest
 @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
-public class AudioTrackOffloadTest extends CtsAndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class AudioTrackOffloadTest {
     private static final String TAG = "AudioTrackOffloadTest";
 
 
@@ -62,12 +76,14 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
 
     private static final AudioAttributes DEFAULT_ATTR = new AudioAttributes.Builder().build();
 
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
     // flag to indicate if AAC related tests need to be run or not.
     private boolean mTestAacSupport = false;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         boolean isWatch = getContext().getPackageManager()
                             .hasSystemFeature(PackageManager.FEATURE_WATCH);
         if (isWatch) {
@@ -75,6 +91,7 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
         }
     }
 
+    @Test
     public void testIsOffloadSupportedNullFormat() throws Exception {
         try {
             final boolean offloadableFormat = AudioManager.isOffloadedPlaybackSupported(null,
@@ -85,6 +102,7 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
         }
     }
 
+    @Test
     public void testIsOffloadSupportedNullAttributes() throws Exception {
         try {
             final boolean offloadableFormat = AudioManager.isOffloadedPlaybackSupported(
@@ -95,11 +113,13 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
         }
     }
 
+    @Test
     public void testExerciseIsOffloadSupported() throws Exception {
         final boolean offloadableFormat = AudioManager.isOffloadedPlaybackSupported(
                 getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3), DEFAULT_ATTR);
     }
 
+    @Test
     public void testGetPlaybackOffloadSupportNullFormat() throws Exception {
         try {
             final int offloadMode = AudioManager.getPlaybackOffloadSupport(null,
@@ -110,6 +130,7 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
         }
     }
 
+    @Test
     public void testGetPlaybackOffloadSupportNullAttributes() throws Exception {
         try {
             final int offloadMode = AudioManager.getPlaybackOffloadSupport(
@@ -120,27 +141,37 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
         }
     }
 
+    @Test
     public void testExerciseGetPlaybackOffloadSupport() throws Exception {
         final int offloadMode = AudioManager.getPlaybackOffloadSupport(
                 getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3), DEFAULT_ATTR);
-        assertTrue("getPlaybackOffloadSupport returned invalid mode: " + offloadMode,
-            offloadMode == AudioManager.PLAYBACK_OFFLOAD_NOT_SUPPORTED
+        assertWithMessage("getPlaybackOffloadSupport returned invalid mode: " + offloadMode)
+            .that(offloadMode == AudioManager.PLAYBACK_OFFLOAD_NOT_SUPPORTED
                 || offloadMode == AudioManager.PLAYBACK_OFFLOAD_SUPPORTED
-                || offloadMode == AudioManager.PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED);
+                || offloadMode == AudioManager.PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED)
+            .isTrue();
     }
 
+    @Test
     public void testMP3AudioTrackOffload() throws Exception {
         testAudioTrackOffload(R.raw.sine1khzs40dblong,
                 /* bitRateInkbps= */ 192,
                 getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3));
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_DIRECT_TRACK_REPRIORITIZATION)
     public void testMultipleAudioTrackOffloadPreemption() throws Exception {
         final int bitRateInkbps = 192;
         final var audioFormat = getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3);
 
         final AudioTrack trackOne = getOffloadAudioTrack(bitRateInkbps,
                     audioFormat, /* testName= */"testMultipleAudioTrackOffloadPreemption");
+
+        if (trackOne == null) {
+            // Offload not supported on this device, nothing to do.
+            return;
+        }
 
         AudioTrack trackTwo = null;
 
@@ -151,8 +182,9 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
             int bufferSizeInBytes3sec = bitRateInkbps * 1000 * BUFFER_SIZE_SEC / 8;
             final byte[] data = new byte[bufferSizeInBytes3sec];
             final int read = audioInputStream.read(data);
-            assertEquals("Could not read enough audio from the resource file",
-                    bufferSizeInBytes3sec, read);
+            assertWithMessage("Could not read enough audio from the resource file")
+                    .that(read)
+                    .isEqualTo(bufferSizeInBytes3sec);
 
             trackOne.play();
             new Thread(() -> {
@@ -192,8 +224,9 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
             synchronized (mPresEndLock) {
                 // We are at most PRESENTATION_END_TIMEOUT_MS + 1s after about 3s of data was
                 // supplied, presentation should have ended
-                assertEquals("onPresentationEnded not called one time",
-                        1, mCallback.mPresentationEndedTimes.size());
+                assertWithMessage("onPresentationEnded not called one time")
+                    .that(mCallback.mPresentationEndedTimes.size())
+                    .isEqualTo(1);
             }
         } finally {
             trackOne.release();
@@ -205,12 +238,14 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
     }
 
 
+    @Test
     public void testOpusAudioTrackOffload() throws Exception {
         testAudioTrackOffload(R.raw.testopus,
                 /* bitRateInkbps= */ 118, // Average
                 getAudioFormatWithEncoding(AudioFormat.ENCODING_OPUS));
     }
 
+    @Test
     public void testAacLCAudioTrackOffload() throws Exception {
         if (!mTestAacSupport) {
             return;
@@ -221,6 +256,7 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
     }
 
     @CddTest(requirement="5.5.4")
+    @Test
     public void testGaplessMP3AudioTrackOffload() throws Exception {
         // sine882hz3s has a gapless delay of 576 and padding of 756.
         // To speed up the test, trim additionally 1000 samples each (20 periods at 882hz, 22ms).
@@ -250,11 +286,18 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                 .setBufferSizeInBytes(bufferSizeInBytes)
                 .setOffloadedPlayback(true)
                 .build();
-        assertNotNull("Couldn't create offloaded AudioTrack", track);
-        assertEquals("Unexpected track sample rate", AUDIOTRACK_DEFAULT_SAMPLE_RATE,
-                track.getSampleRate());
-        assertEquals("Unexpected track channel mask", AUDIOTRACK_DEFAULT_CHANNEL_MASK,
-                track.getChannelConfiguration());
+
+        assertThat(track)
+                .isNotNull();
+
+        assertWithMessage("Unexpected track sample rate")
+            .that(track.getSampleRate())
+            .isEqualTo(AUDIOTRACK_DEFAULT_SAMPLE_RATE);
+
+        assertWithMessage("Unexpected track channel mask")
+            .that(track.getChannelConfiguration())
+            .isEqualTo(AUDIOTRACK_DEFAULT_CHANNEL_MASK);
+
         return track;
     }
 
@@ -284,8 +327,9 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
             int bufferSizeInBytes3sec = bitRateInkbps * 1000 * BUFFER_SIZE_SEC / 8;
             final byte[] data = new byte[bufferSizeInBytes3sec];
             final int read = audioInputStream.read(data);
-            assertEquals("Could not read enough audio from the resource file",
-                    bufferSizeInBytes3sec, read);
+            assertWithMessage("Could not read enough audio from the resource file")
+                .that(read)
+                .isEqualTo(bufferSizeInBytes3sec);
 
             track.play();
             writeAllBlocking(track, data);
@@ -305,8 +349,9 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
             synchronized (mPresEndLock) {
                 // We are at most PRESENTATION_END_TIMEOUT_MS + 1s after about 3s of data was
                 // supplied, presentation should have ended
-                assertEquals("onPresentationEnded not called one time",
-                        1, mCallback.mPresentationEndedTimes.size());
+                assertWithMessage("onPresentationEnded not called one time")
+                        .that(mCallback.mPresentationEndedTimes.size())
+                        .isEqualTo(1);
             }
         } finally {
             if (track != null) {
@@ -335,7 +380,9 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
         long checkStart = SystemClock.uptimeMillis();
         synchronized (mEventCallbackLock) {
             mEventCallbackLock.waitFor(timeoutMs, () -> mCallback.mDataRequestCount > 0);
-            assertTrue("onDataRequest not called", mCallback.mDataRequestCount > 0);
+            assertWithMessage("onDataRequest not called")
+                .that(mCallback.mDataRequestCount)
+                .isGreaterThan(0);
         }
         return (SystemClock.uptimeMillis() - checkStart);
     }
@@ -458,6 +505,8 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
      // Arbitrary values..
     private static final int TEST_DELAY = 50;
     private static final int TEST_PADDING = 100;
+
+    @Test
     public void testOffloadPadding() {
         AudioTrack track =
                 getOffloadAudioTrack(/* bitRateInkbps= */ 192,
@@ -467,30 +516,31 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
             return;
         }
 
-        assertTrue(track.getOffloadPadding() >= 0);
+        assertThat(track.getOffloadPadding() >= 0).isTrue();
 
         track.setOffloadDelayPadding(0 /*delayInFrames*/, 0 /*paddingInFrames*/);
 
         int offloadDelay;
         offloadDelay = track.getOffloadDelay();
-        assertEquals(0, offloadDelay);
+        assertThat(offloadDelay).isEqualTo(0);
 
         int padding = track.getOffloadPadding();
-        assertEquals(0, padding);
+        assertThat(padding).isEqualTo(0);
 
         track.setOffloadDelayPadding(
                 TEST_DELAY /*delayInFrames*/,
                 TEST_PADDING /*paddingInFrames*/);
         offloadDelay = track.getOffloadDelay();
-        assertEquals(TEST_DELAY, offloadDelay);
+        assertThat(offloadDelay).isEqualTo(TEST_DELAY);
         padding = track.getOffloadPadding();
-        assertEquals(TEST_PADDING, padding);
+        assertThat(padding).isEqualTo(TEST_PADDING);
     }
 
+    @Test
     public void testIsOffloadedPlayback() {
         // non-offloaded case
         AudioTrack nonOffloadTrack = allocNonOffloadAudioTrack();
-        assertFalse(nonOffloadTrack.isOffloadedPlayback());
+        assertThat(nonOffloadTrack.isOffloadedPlayback()).isFalse();
 
         // offloaded case
         AudioTrack offloadTrack =
@@ -500,13 +550,14 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
         if (offloadTrack == null) {
             return;
         }
-        assertTrue(offloadTrack.isOffloadedPlayback());
+        assertThat(offloadTrack.isOffloadedPlayback()).isTrue();
     }
 
+    @Test
     public void testSetOffloadEndOfStreamWithNonOffloadedTrack() {
         // Non-offload case
         AudioTrack nonOffloadTrack = allocNonOffloadAudioTrack();
-        assertFalse(nonOffloadTrack.isOffloadedPlayback());
+        assertThat(nonOffloadTrack.isOffloadedPlayback()).isFalse();
         org.testng.Assert.assertThrows(IllegalStateException.class,
                 nonOffloadTrack::setOffloadEndOfStream);
     }
@@ -517,6 +568,14 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
             .setSampleRate(AUDIOTRACK_DEFAULT_SAMPLE_RATE)
             .setChannelMask(AUDIOTRACK_DEFAULT_CHANNEL_MASK)
             .build();
+    }
+
+    private Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
+
+    private void fail(String msg) {
+        throw new AssertionError(msg);
     }
 
     private final Executor mExec = Runnable::run;

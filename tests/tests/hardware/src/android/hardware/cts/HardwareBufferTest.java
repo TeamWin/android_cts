@@ -89,8 +89,8 @@ public class HardwareBufferTest {
             HardwareBuffer.S_UI8,
             HardwareBuffer.YCBCR_P010,
             HardwareBuffer.R_8,
-            HardwareBuffer.R_16_UINT,
-            HardwareBuffer.RG_1616_UINT,
+            HardwareBuffer.R_16,
+            HardwareBuffer.RG_1616,
             HardwareBuffer.RGBA_10101010
         };
     }

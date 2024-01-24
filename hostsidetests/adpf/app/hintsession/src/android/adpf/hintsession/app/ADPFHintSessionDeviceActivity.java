@@ -20,6 +20,7 @@ import static android.adpf.common.ADPFHintSessionConstants.TESTS_ENABLED;
 import static android.adpf.common.ADPFHintSessionConstants.TEST_NAME_KEY;
 import static android.adpf.common.ADPFHintSessionConstants.IS_HINT_SESSION_SUPPORTED_KEY;
 
+import android.app.KeyguardManager;
 import android.app.NativeActivity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -67,6 +68,7 @@ public class ADPFHintSessionDeviceActivity
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
+        keepScreenOn();
         Intent intent = getIntent();
         String testName = intent.getStringExtra(
                 TEST_NAME_KEY);
@@ -76,6 +78,15 @@ public class ADPFHintSessionDeviceActivity
         }
         Log.e(TAG, "created");
         sendConfigToNative(TESTS_ENABLED);
+    }
+
+    private void keepScreenOn() {
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setTurnScreenOn(true);
+        KeyguardManager km = getSystemService(KeyguardManager.class);
+        if (km != null) {
+            km.requestDismissKeyguard(this, null);
+        }
     }
 
     private void setFullscreen() {

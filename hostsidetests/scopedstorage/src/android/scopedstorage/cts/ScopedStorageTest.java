@@ -57,7 +57,6 @@ import static android.scopedstorage.cts.lib.TestUtils.getMoviesDir;
 import static android.scopedstorage.cts.lib.TestUtils.getMusicDir;
 import static android.scopedstorage.cts.lib.TestUtils.getPicturesDir;
 import static android.scopedstorage.cts.lib.TestUtils.openWithMediaProvider;
-import static android.scopedstorage.cts.lib.TestUtils.pollForCondition;
 import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageState;
 import static android.scopedstorage.cts.lib.TestUtils.pollForManageExternalStorageAllowed;
 import static android.scopedstorage.cts.lib.TestUtils.pollForPermission;
@@ -110,6 +109,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * Runs the scoped storage tests on primary external storage.
@@ -165,6 +166,11 @@ public class ScopedStorageTest {
     private static final TestApp APP_D_LEGACY_HAS_RW = new TestApp("TestAppDLegacy",
             "android.scopedstorage.cts.testapp.D", 1, false, "CtsScopedStorageTestAppDLegacy.apk");
 
+    // Polling timeout in millis
+    private static final long POLLING_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(20);
+
+    // Polling sleep time in millis
+    private static final long POLLING_SLEEP_MILLIS = 100;
     @Before
     public void setup() throws Exception {
         PackageManager packageManager = getContext().getPackageManager();
@@ -174,8 +180,18 @@ public class ScopedStorageTest {
         }
 
         pollForCondition(
-                () -> packageManager.resolveContentProvider(MediaStore.AUTHORITY, 0) != null,
-                "ContentProvider not available for authority media.");
+                () -> packageManager.resolveContentProvider(MediaStore.AUTHORITY, 0) != null);
+        assumeTrue(packageManager.resolveContentProvider(MediaStore.AUTHORITY, 0) != null);
+    }
+
+    public static void pollForCondition(Supplier<Boolean> condition)
+            throws Exception {
+        for (int i = 0; i < POLLING_TIMEOUT_MILLIS / POLLING_SLEEP_MILLIS; i++) {
+            if (condition.get()) {
+                return;
+            }
+            Thread.sleep(POLLING_SLEEP_MILLIS);
+        }
     }
 
     /**

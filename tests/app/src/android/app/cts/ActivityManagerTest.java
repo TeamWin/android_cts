@@ -1896,7 +1896,7 @@ public final class ActivityManagerTest {
                                 .getRunningAppProcesses();
                         for (ActivityManager.RunningAppProcessInfo info: procs) {
                             if (info.importance
-                                    == ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED) {
+                                    >= ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE) {
                                 if (others.contains(info.processName)) {
                                     mActivityManager.killBackgroundProcesses(info.pkgList[0]);
                                 }

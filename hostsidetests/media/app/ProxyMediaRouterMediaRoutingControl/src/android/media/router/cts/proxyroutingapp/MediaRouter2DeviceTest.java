@@ -28,7 +28,6 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.MediaRouter2;
-import android.os.Looper;
 import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -113,7 +112,6 @@ public class MediaRouter2DeviceTest {
             assertThat(
                             MediaRouter2.getInstance(
                                     mContext,
-                                    Looper.getMainLooper(),
                                     mContext.getPackageName(),
                                     mContext.getUser()))
                     .isNotNull();
@@ -138,7 +136,6 @@ public class MediaRouter2DeviceTest {
                 () ->
                         MediaRouter2.getInstance(
                                 mContext,
-                                Looper.getMainLooper(),
                                 mContext.getPackageName(),
                                 mContext.getUser()));
     }

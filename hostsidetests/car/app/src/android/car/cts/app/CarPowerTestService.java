@@ -101,7 +101,7 @@ public final class CarPowerTestService extends Service {
             if (ready) {
                 mCarPowerManager = (CarPowerManager) car.getCarManager(
                         Car.POWER_SERVICE);
-                Log.d(TAG, "initManagers() completed");
+                Log.i(TAG, "initManagers() completed");
             } else {
                 mCarPowerManager = null;
                 Log.wtf(TAG, "initManagers() set to be null");
@@ -122,18 +122,18 @@ public final class CarPowerTestService extends Service {
 
     @Override
     public void onCreate() {
-        Log.d(TAG, "onCreate");
+        Log.i(TAG, "onCreate");
         super.onCreate();
         initCarApi();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand");
+        Log.i(TAG, "onStartCommand");
         super.onStartCommand(intent, flags, startId);
         Bundle extras = intent.getExtras();
         if (extras == null) {
-            Log.d(TAG, "onStartCommand(): empty extras");
+            Log.i(TAG, "onStartCommand(): empty extras");
             return START_NOT_STICKY;
         }
 
@@ -147,7 +147,7 @@ public final class CarPowerTestService extends Service {
 
     @Override
     public void onDestroy() {
-        Log.d(TAG, "onDestroy");
+        Log.i(TAG, "onDestroy");
         if (mCarApi != null) {
             mCarApi.disconnect();
         }
@@ -156,7 +156,7 @@ public final class CarPowerTestService extends Service {
 
     @Override
     protected void dump(FileDescriptor fd, PrintWriter writer, String[] args) {
-        Log.d(TAG, "Dumping mResultBuf: " + mResultBuf);
+        Log.i(TAG, "Dumping mResultBuf: " + mResultBuf);
         writer.println(mResultBuf);
     }
 
@@ -178,7 +178,7 @@ public final class CarPowerTestService extends Service {
     private boolean listenerStatesMatchExpected(WaitablePowerStateListener listener,
             List<Integer> expectedStates) throws InterruptedException {
         List<Integer> observedStates = listener.await();
-        Log.d(TAG, "observedStates: \n" + observedStates);
+        Log.i(TAG, "observedStates: \n" + observedStates);
         return observedStates.equals(expectedStates);
     }
 
@@ -206,46 +206,46 @@ public final class CarPowerTestService extends Service {
     private void parseCommandAndExecute(Bundle extras) {
         String commandString = extras.getString(CMD_IDENTIFIER);
         if (TextUtils.isEmpty(commandString)) {
-            Log.d(TAG, "empty power test command");
+            Log.i(TAG, "empty power test command");
             return;
         }
-        Log.d(TAG, "parseCommandAndExecute with: " + commandString);
+        Log.i(TAG, "parseCommandAndExecute with: " + commandString);
 
         String[] tokens = commandString.split(",");
         switch(tokens[0]) {
             case CMD_SET_LISTENER:
                 if (tokens.length != 4) {
-                    Log.d(TAG, "incorrect set-listener command format: " + commandString
+                    Log.i(TAG, "incorrect set-listener command format: " + commandString
                             + ", should be set-listener,[listener-name],"
                             + "[with-completion|without-completion],[s2r|s2d]");
                     break;
                 }
 
                 String completionType = tokens[2];
-                Log.d(TAG, "Set listener command completion type: " + completionType);
+                Log.i(TAG, "Set listener command completion type: " + completionType);
                 boolean withCompletion;
                 try {
                     withCompletion = isListenerWithCompletion(completionType);
                 } catch (IllegalArgumentException e) {
-                    Log.d(TAG, e.getMessage());
+                    Log.i(TAG, e.getMessage());
                     break;
                 }
 
                 String suspendType = tokens[3];
-                Log.d(TAG, "Set listener command suspend type: " + suspendType);
+                Log.i(TAG, "Set listener command suspend type: " + suspendType);
                 int expectedStatesSize;
                 try {
                     expectedStatesSize = getListenerExpectedStates(suspendType).size();
                 } catch (IllegalArgumentException e) {
-                    Log.d(TAG, e.getMessage());
+                    Log.i(TAG, e.getMessage());
                     break;
                 }
 
                 String listenerName = tokens[1];
-                Log.d(TAG, "Set listener command listener name: " + listenerName);
+                Log.i(TAG, "Set listener command listener name: " + listenerName);
                 synchronized (mLock) {
                     if (mListeners.containsKey(listenerName)) {
-                        Log.d(TAG, "there is already a with completion listener registered "
+                        Log.i(TAG, "there is already a with completion listener registered "
                                 + "with name " + listenerName);
                         break;
                     }
@@ -255,46 +255,47 @@ public final class CarPowerTestService extends Service {
                         setListenerWithoutCompletionLocked(listenerName, expectedStatesSize);
                     }
                 }
+                Log.i(TAG, "Listener set for " + listenerName);
                 break;
             case CMD_GET_LISTENER_STATES_RESULTS:
                 if (tokens.length != 4) {
-                    Log.d(TAG, "incorrect get-listener-states-results command format: "
+                    Log.i(TAG, "incorrect get-listener-states-results command format: "
                             + commandString + ", should be get-listener-states-results,"
                             + "[listener-name],[with-completion|without-completion],[s2r|s2d]");
                     break;
                 }
 
                 listenerName = tokens[1];
-                Log.d(TAG, "Get listener command get listener by name: " + listenerName);
+                Log.i(TAG, "Get listener command get listener by name: " + listenerName);
                 WaitablePowerStateListener listener;
                 synchronized (mLock) {
                     if (mListeners.containsKey(listenerName)) {
                         listener = mListeners.get(listenerName);
                     } else {
-                        Log.d(TAG, "there is no listener registered with name " + listenerName);
+                        Log.i(TAG, "there is no listener registered with name " + listenerName);
                         break;
                     }
                 }
 
                 completionType = tokens[2];
-                Log.d(TAG, "Get listener command completion type: " + listenerName);
+                Log.i(TAG, "Get listener command completion type: " + listenerName);
                 try {
                     withCompletion = isListenerWithCompletion(completionType);
                 } catch (IllegalArgumentException e) {
-                    Log.d(TAG, e.getMessage());
+                    Log.i(TAG, e.getMessage());
                     break;
                 }
 
                 suspendType = tokens[3];
-                Log.d(TAG, "Get listener command suspend type: " + suspendType);
+                Log.i(TAG, "Get listener command suspend type: " + suspendType);
                 List<Integer> expectedStates;
                 try {
                     expectedStates = getListenerExpectedStates(suspendType);
                 } catch (IllegalArgumentException e) {
-                    Log.d(TAG, e.getMessage());
+                    Log.i(TAG, e.getMessage());
                     break;
                 }
-                Log.d(TAG, "expectedStates: \n" + expectedStates);
+                Log.i(TAG, "expectedStates: \n" + expectedStates);
 
                 try {
                     boolean statesMatchExpected = listenerStatesMatchExpected(listener,
@@ -308,7 +309,7 @@ public final class CarPowerTestService extends Service {
                     }
                     mResultBuf.write(String.valueOf(statesMatchExpected));
                 } catch (InterruptedException e) {
-                    Log.d(TAG, "Getting listener states timed out");
+                    Log.i(TAG, "Getting listener states timed out");
                     break;
                 }
                 break;
@@ -316,7 +317,7 @@ public final class CarPowerTestService extends Service {
                 synchronized (mLock) {
                     mCarPowerManager.clearListener();
                 }
-                Log.d(TAG, "Listener cleared");
+                Log.i(TAG, "Listener cleared");
                 break;
             default:
                 throw new IllegalArgumentException("invalid power test command: " + commandString);
@@ -351,11 +352,11 @@ public final class CarPowerTestService extends Service {
                     (state) -> {
                         mReceivedStates.add(state);
                         mLatch.countDown();
-                        Log.d(TAG, "Listener observed state: " + state + ", received "
+                        Log.i(TAG, "Listener observed state: " + state + ", received "
                                 + "states: " + mReceivedStates + ", mLatch count:"
                                 + mLatch.getCount());
                     });
-            Log.d(TAG, "Listener without completion set");
+            Log.i(TAG, "Listener without completion set");
         }
     }
 
@@ -386,12 +387,12 @@ public final class CarPowerTestService extends Service {
                         }
                         mLatch.countDown();
                     });
-            Log.d(TAG, "Listener with completion set");
+            Log.i(TAG, "Listener with completion set");
         }
 
         boolean completablePowerStateChangeFutureIsValid() {
             if (!mInvalidFutureMap.isEmpty()) {
-                Log.d(TAG, "Wrong CompletablePowerStateChangeFuture(s) is(are) passed to the "
+                Log.i(TAG, "Wrong CompletablePowerStateChangeFuture(s) is(are) passed to the "
                         + "listener: " + mInvalidFutureMap);
                 return false;
             }

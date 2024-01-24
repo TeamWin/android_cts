@@ -30,6 +30,7 @@ import static org.junit.Assume.assumeTrue;
 import static org.mockito.Mockito.mock;
 
 import android.net.MacAddress;
+import android.net.wifi.OuiKeyedData;
 import android.net.wifi.ScanResult;
 import android.net.wifi.aware.PeerHandle;
 import android.net.wifi.cts.WifiBuildCompat;
@@ -39,11 +40,14 @@ import android.net.wifi.rtt.RangingResult;
 import android.net.wifi.rtt.ResponderConfig;
 import android.net.wifi.rtt.ResponderLocation;
 import android.net.wifi.rtt.WifiRttManager;
+import android.os.Build;
+import android.os.PersistableBundle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
+import androidx.test.filters.SdkSuppress;
 
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
@@ -884,5 +888,39 @@ public class WifiRttTest extends TestBase {
         builder.addAccessPoint(testAp);
         RangingRequest request = builder.build();
         rangeApRequest(request, testAp);
+    }
+
+    /*
+     * Test that vendor data can be set and retrieved properly in RangingRequest and RangingResult.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    @Test
+    public void testRangingRequestVendorData() {
+        // Default value should be an empty list
+        RangingRequest emptyRequest = new RangingRequest.Builder().build();
+        assertNotNull(emptyRequest.getVendorData());
+        assertTrue(emptyRequest.getVendorData().isEmpty());
+
+        RangingResult emptyResult = new RangingResult.Builder().setMacAddress(MAC).build();
+        assertNotNull(emptyResult.getVendorData());
+        assertTrue(emptyResult.getVendorData().isEmpty());
+
+        // Set and get vendor data
+        OuiKeyedData vendorDataElement =
+                new OuiKeyedData.Builder(0x00aabbcc, new PersistableBundle()).build();
+        List<OuiKeyedData> vendorData = Arrays.asList(vendorDataElement);
+
+        RangingRequest requestWithData = new RangingRequest.Builder()
+                .setVendorData(vendorData)
+                .build();
+        assertTrue(vendorData.equals(requestWithData.getVendorData()));
+
+        RangingResult resultWithData = new RangingResult.Builder()
+                .setMacAddress(MAC)
+                .setVendorData(vendorData)
+                .build();
+        assertTrue(vendorData.equals(resultWithData.getVendorData()));
     }
 }

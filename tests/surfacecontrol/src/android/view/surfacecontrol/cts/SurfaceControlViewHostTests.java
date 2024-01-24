@@ -1429,7 +1429,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         // window token. The supplier is called each time the predicate is
         // tested, eventually returning the window token.
         assertTrue(waitForWindowInfo(hasExpectedDimensions, 5, TimeUnit.SECONDS,
-                popupView::getWindowToken));
+                popupView::getWindowToken, mActivity.getDisplay().getDisplayId()));
     }
 
     @Test
@@ -1457,7 +1457,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         Predicate<WindowInfo> hasExpectedDimensions =
                 windowInfo -> windowInfo.bounds.width() == 50 && windowInfo.bounds.height() == 50;
         assertTrue(waitForWindowInfo(hasExpectedDimensions, 5, TimeUnit.SECONDS,
-                popupView::getWindowToken));
+                popupView::getWindowToken, mActivity.getDisplay().getDisplayId()));
     }
 
     class TouchTransferringView extends View {

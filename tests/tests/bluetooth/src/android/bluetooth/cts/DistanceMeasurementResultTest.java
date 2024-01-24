@@ -19,6 +19,7 @@ package android.bluetooth.cts;
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
 import static android.Manifest.permission.BLUETOOTH_PRIVILEGED;
 import static android.bluetooth.BluetoothStatusCodes.FEATURE_SUPPORTED;
+import static android.bluetooth.le.DistanceMeasurementResult.NADM_ATTACK_IS_VERY_UNLIKELY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
@@ -30,16 +31,21 @@ import android.bluetooth.le.DistanceMeasurementResult;
 import android.content.Context;
 import android.os.Build;
 import android.os.Parcel;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bluetooth.flags.Flags;
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -47,6 +53,10 @@ import org.junit.runner.RunWith;
 public class DistanceMeasurementResultTest {
     private Context mContext;
     private BluetoothAdapter mAdapter;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setUp() {
@@ -131,6 +141,49 @@ public class DistanceMeasurementResultTest {
         DistanceMeasurementResult result = new DistanceMeasurementResult.Builder(121.0, 120.0)
                 .setErrorAltitudeAngle(60).build();
         assertEquals(60.0, result.getErrorAltitudeAngle(), 0.0);
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_CHANNEL_SOUNDING)
+    @CddTest(requirements = {"7.4.3/C-2-1"})
+    @Test
+    public void setGetDelaySpreadMeters() {
+        DistanceMeasurementResult.Builder builder =
+                new DistanceMeasurementResult.Builder(121.0, 120.0);
+        assertThrows(IllegalArgumentException.class, () -> builder.setDelaySpreadMeters(-1));
+        DistanceMeasurementResult result = builder.setDelaySpreadMeters(60).build();
+        assertEquals(60.0, result.getDelaySpreadMeters(), 0.0);
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_CHANNEL_SOUNDING)
+    @CddTest(requirements = {"7.4.3/C-2-1"})
+    @Test
+    public void setGetConfidenceLevel() {
+        DistanceMeasurementResult.Builder builder =
+                new DistanceMeasurementResult.Builder(121.0, 120.0);
+        assertThrows(IllegalArgumentException.class, () -> builder.setConfidenceLevel(101));
+        DistanceMeasurementResult result = builder.setConfidenceLevel(0.5).build();
+        assertEquals(0.5, result.getConfidenceLevel(), 0.0);
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_CHANNEL_SOUNDING)
+    @CddTest(requirements = {"7.4.3/C-2-1"})
+    @Test
+    public void setGetDetectedAttackLevel() {
+        DistanceMeasurementResult.Builder builder =
+                new DistanceMeasurementResult.Builder(121.0, 120.0);
+        assertThrows(IllegalArgumentException.class, () -> builder.setDetectedAttackLevel(60));
+        DistanceMeasurementResult result =
+                builder.setDetectedAttackLevel(NADM_ATTACK_IS_VERY_UNLIKELY).build();
+        assertEquals(NADM_ATTACK_IS_VERY_UNLIKELY, result.getDetectedAttackLevel());
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_CHANNEL_SOUNDING)
+    @CddTest(requirements = {"7.4.3/C-2-1"})
+    @Test
+    public void setGetVelocityMetersPerSecond() {
+        DistanceMeasurementResult result = new DistanceMeasurementResult.Builder(121.0, 120.0)
+                .setVelocityMetersPerSecond(60).build();
+        assertEquals(60.0, result.getVelocityMetersPerSecond(), 0.0);
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1"})

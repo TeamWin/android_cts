@@ -22,6 +22,7 @@ import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.GetSchemaResponse;
 import android.app.appsearch.PackageIdentifier;
 import android.app.appsearch.SetSchemaRequest;
+import android.app.appsearch.VisibilityConfig;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -180,12 +181,49 @@ public class GetSchemaResponseCtsTest {
     }
 
     @Test
+    public void setVisibilityConfig() {
+        VisibilityConfig visibilityConfig1 =
+                new VisibilityConfig.Builder()
+                        .setNotDisplayedBySystem(true)
+                        .addVisibleToPackage(new PackageIdentifier("pkg1", new byte[32]))
+                        .setPubliclyVisibleTargetPackage(
+                                new PackageIdentifier("pkg2", new byte[32]))
+                        .addVisibleToPermissions(ImmutableSet.of(1, 2))
+                        .build();
+        VisibilityConfig visibilityConfig2 =
+                new VisibilityConfig.Builder()
+                        .setNotDisplayedBySystem(true)
+                        .addVisibleToPackage(new PackageIdentifier("pkg3", new byte[32]))
+                        .setPubliclyVisibleTargetPackage(
+                                new PackageIdentifier("pkg4", new byte[32]))
+                        .addVisibleToPermissions(ImmutableSet.of(3, 4))
+                        .build();
+
+        GetSchemaResponse getSchemaResponse =
+                new GetSchemaResponse.Builder()
+                        .setVersion(42)
+                        .setSchemaTypeVisibleToConfigs(
+                                "Email", ImmutableSet.of(visibilityConfig1, visibilityConfig2))
+                        .build();
+
+        assertThat(getSchemaResponse.getSchemaTypesVisibleToConfigs())
+                .containsExactly("Email", ImmutableSet.of(visibilityConfig1, visibilityConfig2));
+    }
+
+    @Test
     public void getEmptyVisibility() {
         GetSchemaResponse getSchemaResponse =
                 new GetSchemaResponse.Builder().setVersion(42).build();
         assertThat(getSchemaResponse.getSchemaTypesNotDisplayedBySystem()).isEmpty();
         assertThat(getSchemaResponse.getSchemaTypesVisibleToPackages()).isEmpty();
         assertThat(getSchemaResponse.getRequiredPermissionsForSchemaTypeVisibility()).isEmpty();
+    }
+
+    @Test
+    public void getEmptyVisibility_visibilityConfig() {
+        GetSchemaResponse getSchemaResponse =
+                new GetSchemaResponse.Builder().setVersion(42).build();
+        assertThat(getSchemaResponse.getSchemaTypesVisibleToConfigs()).isEmpty();
     }
 
     @Test

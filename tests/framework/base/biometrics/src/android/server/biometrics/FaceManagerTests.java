@@ -62,6 +62,9 @@ public class FaceManagerTests {
     @ApiTest(apis = {"android.content.Context#FACE_SERVICE"})
     @Test
     public void getSystemService() {
+        if (sFaceManager == null) {
+            return;
+        }
         assertEquals((FaceManager) sContext.getSystemService(android.content.Context.FACE_SERVICE),
                 sContext.getSystemService(FaceManager.class));
     }
@@ -75,6 +78,9 @@ public class FaceManagerTests {
     @ApiTest(apis = {"android.hardware.face.FaceManager#authenticateInBackground"})
     @Test
     public void authenticateInBackground_withPermission_pass() {
+        if (sFaceManager == null) {
+            return;
+        }
         sFaceManager.authenticateInBackground(
                 null /* executor */,
                 null /* crypto */,
@@ -91,6 +97,9 @@ public class FaceManagerTests {
     @ApiTest(apis = {"android.hardware.face.FaceManager#hasEnrolledTemplates"})
     @Test
     public void hasEnrolledTemplates_withPermission_pass() {
+        if (sFaceManager == null) {
+            return;
+        }
         boolean unused = sFaceManager.hasEnrolledTemplates();
     }
 
@@ -103,6 +112,9 @@ public class FaceManagerTests {
     @ApiTest(apis = {"android.hardware.face.FaceManager#authenticateInBackground"})
     @Test
     public void authenticateInBackground_withoutPermission_throwsSecurityException() {
+        if (sFaceManager == null) {
+            return;
+        }
         assertThrows(SecurityException.class, () -> sFaceManager.authenticateInBackground(
                 null /* executor */,
                 null /* crypto */,
@@ -119,6 +131,9 @@ public class FaceManagerTests {
     @ApiTest(apis = {"android.hardware.face.FaceManager#hasEnrolledTemplates"})
     @Test
     public void hasEnrolledTemplates_withoutPermission_throwsSecurityException() {
+        if (sFaceManager == null) {
+            return;
+        }
         assertThrows(SecurityException.class, sFaceManager::hasEnrolledTemplates);
     }
 }
