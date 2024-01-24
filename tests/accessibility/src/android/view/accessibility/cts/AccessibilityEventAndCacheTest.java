@@ -17,7 +17,7 @@
 package android.view.accessibility.cts;
 
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
-import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED;
+import static android.view.accessibility.AccessibilityEvent.CONTENT_CHANGE_TYPE_TEXT;
 import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED;
 
 import static org.junit.Assert.assertEquals;
@@ -113,7 +113,7 @@ public class AccessibilityEventAndCacheTest {
                 }),
                 event ->
                         event.getEventType() == TYPE_WINDOW_CONTENT_CHANGED
-                                && (event.getContentChangeTypes() & TYPE_VIEW_TEXT_CHANGED) != 0
+                                && (event.getContentChangeTypes() & CONTENT_CHANGE_TYPE_TEXT) != 0
                                 && TextUtils.equals("new 0", listNode.getChild(0).getText())
                                 && TextUtils.equals("new 1", listNode.getChild(1).getText())
                                 && TextUtils.equals("new 2", listNode.getChild(2).getText()),
