@@ -687,4 +687,6 @@
     <!--b/316187793 , b/317381115 -->
     <option name="compatibility:exclude-filter" value="BroadcastRestrictionsHostTest com.android.tests.sdksandbox.host.BroadcastRestrictionsHostTest#testRegisterBroadcastReceiver_restrictionsNotApplied" />
 
+    <!-- b/318756444 -->
+    <option name="compatibility:exclude-filter" value="CtsSettingsTestCases android.settings.cts.SettingsMultiPaneDeepLinkTest#deepLinkHomeActivity_splitNotSupported_deepLinkHomeDisabled" />
 </configuration>
