@@ -37,7 +37,6 @@ import android.uirendering.cts.testinfrastructure.CanvasClient;
 import android.uirendering.cts.testinfrastructure.DrawActivity;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import android.uirendering.cts.util.BitmapAsserter;
-
 import android.view.Gravity;
 import android.view.PixelCopy;
 import android.view.SurfaceControl;
@@ -548,10 +547,9 @@ public class SurfaceViewTests extends ActivityTestBase {
             // layer is not applied.
             assertFalse(transactionCommitted.await(1, TimeUnit.SECONDS));
             Bitmap screenshot = mScreenshotter.takeScreenshot(testInfo);
-            BitmapAsserter asserter =
-                    new BitmapAsserter(this.getClass().getSimpleName(), getName());
-            asserter.assertBitmapIsVerified(
-                    screenshot, new ColorVerifier(Color.RED, 2), getName(), "");
+
+            BitmapAsserter.assertBitmapIsVerified(
+                    screenshot, new ColorVerifier(Color.RED, 2), "");
             activity.runOnUiThread(() -> {
                 SurfaceHolder holder = helper.getSurfaceView().getHolder();
                 Canvas canvas = holder.lockHardwareCanvas();
@@ -561,8 +559,8 @@ public class SurfaceViewTests extends ActivityTestBase {
             assertTrue(transactionCommitted.await(1, TimeUnit.SECONDS));
             screenshot = mScreenshotter.takeScreenshot(testInfo);
             // Now that a new frame was drawn, the blue layer should be overlaid now.
-            asserter.assertBitmapIsVerified(
-                    screenshot, new ColorVerifier(Color.BLUE, 2), getName(), "");
+            BitmapAsserter.assertBitmapIsVerified(
+                    screenshot, new ColorVerifier(Color.BLUE, 2), "");
         } finally {
             activity.reset();
         }
@@ -604,9 +602,6 @@ public class SurfaceViewTests extends ActivityTestBase {
                     R.layout.frame_layout, null, initializer, true, false);
             assertTrue(latch.await(5, TimeUnit.SECONDS));
 
-            BitmapAsserter asserter =
-                    new BitmapAsserter(this.getClass().getSimpleName(), getName());
-
             // Layout the SurfaceView way offscreen which would cause it to get quick rejected.
             WidgetTestUtils.runOnMainAndDrawSync(surfaceViewGreen, () -> {
                 surfaceViewGreen.layout(
@@ -617,9 +612,9 @@ public class SurfaceViewTests extends ActivityTestBase {
             });
             waitForScreenshottable();
             Bitmap screenshot = mScreenshotter.takeScreenshot(testInfo);
-            asserter.assertBitmapIsVerified(
+            BitmapAsserter.assertBitmapIsVerified(
                     screenshot,
-                    new ColorVerifier(Color.RED, 0), getName(),
+                    new ColorVerifier(Color.RED, 0),
                     "Verifying red SurfaceControl");
         } finally {
             activity.reset();
@@ -651,13 +646,11 @@ public class SurfaceViewTests extends ActivityTestBase {
                     R.layout.frame_layout, null, initializer, true, false);
             assertTrue(latch.await(5, TimeUnit.SECONDS));
 
-            BitmapAsserter asserter =
-                    new BitmapAsserter(this.getClass().getSimpleName(), getName());
             waitForScreenshottable();
             Bitmap screenshot = mScreenshotter.takeScreenshot(testInfo);
-            asserter.assertBitmapIsVerified(
+            BitmapAsserter.assertBitmapIsVerified(
                     screenshot,
-                    new RectVerifier(Color.GREEN, Color.RED, clipRect), getName(),
+                    new RectVerifier(Color.GREEN, Color.RED, clipRect),
                     "Verifying red clipped SurfaceView");
         } finally {
             activity.reset();
@@ -689,14 +682,13 @@ public class SurfaceViewTests extends ActivityTestBase {
                     R.layout.frame_layout, null, initializer, true, false);
             assertTrue(latch.await(5, TimeUnit.SECONDS));
 
-            BitmapAsserter asserter =
-                    new BitmapAsserter(this.getClass().getSimpleName(), getName());
+
             waitForScreenshottable();
             Bitmap screenshot = mScreenshotter.takeScreenshot(testInfo);
-            asserter.assertBitmapIsVerified(
+            BitmapAsserter.assertBitmapIsVerified(
                     screenshot,
                     new RectVerifier(Color.GREEN, Color.RED,
-                            new Rect(20, 30, TEST_WIDTH, TEST_HEIGHT)), getName(),
+                            new Rect(20, 30, TEST_WIDTH, TEST_HEIGHT)),
                     "Verifying red clipped SurfaceView");
         } finally {
             activity.reset();
@@ -727,13 +719,12 @@ public class SurfaceViewTests extends ActivityTestBase {
                     R.layout.frame_layout, null, initializer, true, false);
             assertTrue(latch.await(5, TimeUnit.SECONDS));
 
-            BitmapAsserter asserter =
-                    new BitmapAsserter(this.getClass().getSimpleName(), getName());
+
             waitForScreenshottable();
             Bitmap screenshot = mScreenshotter.takeScreenshot(testInfo);
-            asserter.assertBitmapIsVerified(
+            BitmapAsserter.assertBitmapIsVerified(
                     screenshot,
-                    new ColorVerifier(Color.RED), getName(),
+                    new ColorVerifier(Color.RED),
                     "Verifying unclipped SurfaceView");
         } finally {
             activity.reset();
@@ -766,13 +757,12 @@ public class SurfaceViewTests extends ActivityTestBase {
                     R.layout.frame_layout, null, initializer, true, false);
             assertTrue(latch.await(5, TimeUnit.SECONDS));
 
-            BitmapAsserter asserter =
-                    new BitmapAsserter(this.getClass().getSimpleName(), getName());
+
             waitForScreenshottable();
             Bitmap screenshot = mScreenshotter.takeScreenshot(testInfo);
-            asserter.assertBitmapIsVerified(
+            BitmapAsserter.assertBitmapIsVerified(
                     screenshot,
-                    new RectVerifier(Color.GREEN, Color.RED, clipRect), getName(),
+                    new RectVerifier(Color.GREEN, Color.RED, clipRect),
                     "Verifying red clipped SurfaceView");
         } finally {
             activity.reset();
@@ -805,13 +795,12 @@ public class SurfaceViewTests extends ActivityTestBase {
                     R.layout.frame_layout, null, initializer, true, false);
             assertTrue(latch.await(5, TimeUnit.SECONDS));
 
-            BitmapAsserter asserter =
-                    new BitmapAsserter(this.getClass().getSimpleName(), getName());
+
             waitForScreenshottable();
             Bitmap screenshot = mScreenshotter.takeScreenshot(testInfo);
-            asserter.assertBitmapIsVerified(
+            BitmapAsserter.assertBitmapIsVerified(
                     screenshot,
-                    new RectVerifier(Color.GREEN, Color.RED, clipRect), getName(),
+                    new RectVerifier(Color.GREEN, Color.RED, clipRect),
                     "Verifying red clipped SurfaceView");
         } finally {
             activity.reset();

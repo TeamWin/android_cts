@@ -21,27 +21,15 @@ import static org.junit.Assert.fail;
 import android.graphics.Bitmap;
 import android.uirendering.cts.bitmapcomparers.BitmapComparer;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
-import android.uirendering.cts.differencevisualizers.DifferenceVisualizer;
 import android.uirendering.cts.differencevisualizers.PassFailVisualizer;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 public class BitmapAsserter {
-    private static final boolean TAKE_SCREENSHOTS_ON_FAILURE = true;
-    private DifferenceVisualizer mDifferenceVisualizer;
-    private String mClassName;
-
-    public BitmapAsserter(String className, String name) {
-        mClassName = className;
-        mDifferenceVisualizer = new PassFailVisualizer();
-    }
-
     /**
      * Compares the two bitmaps saved using the given test. If they fail, the files are saved using
      * the test name.
      */
-    public void assertBitmapsAreSimilar(Bitmap bitmap1, Bitmap bitmap2, BitmapComparer comparer,
-            String testName, String debugMessage) {
+    public static void assertBitmapsAreSimilar(Bitmap bitmap1, Bitmap bitmap2,
+            BitmapComparer comparer, String debugMessage) {
         boolean success;
         int width = bitmap1.getWidth();
         int height = bitmap1.getHeight();
@@ -57,8 +45,7 @@ public class BitmapAsserter {
         success = comparer.verifySame(pixels1, pixels2, 0, width, width, height);
 
         if (!success) {
-            BitmapDumper.dumpBitmaps(bitmap1, bitmap2, testName, mClassName, mDifferenceVisualizer);
-            onFailure(testName);
+            BitmapDumper.dumpBitmaps(bitmap1, bitmap2, new PassFailVisualizer());
         }
 
         assertTrue(debugMessage, success);
@@ -68,27 +55,12 @@ public class BitmapAsserter {
      * Tests to see if a bitmap passes a verifier's test. If it doesn't the bitmap is saved to the
      * sdcard.
      */
-    public void assertBitmapIsVerified(Bitmap bitmap, BitmapVerifier bitmapVerifier,
-            String testName, String debugMessage) {
-        if (testName == null) throw new NullPointerException("testName is null");
-        int width = bitmap.getWidth();
-        int height = bitmap.getHeight();
+    public static void assertBitmapIsVerified(Bitmap bitmap, BitmapVerifier bitmapVerifier,
+            String debugMessage) {
         boolean success = bitmapVerifier.verify(bitmap);
         if (!success) {
-            Bitmap croppedBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height);
-            BitmapDumper.dumpBitmaps(croppedBitmap, bitmapVerifier.getDifferenceBitmap(), testName,
-                    mClassName);
-            onFailure(testName);
+            BitmapDumper.dumpBitmaps(bitmap, bitmapVerifier.getDifferenceBitmap());
         }
         assertTrue(debugMessage, success);
-    }
-
-    private void onFailure(String testName) {
-        if (TAKE_SCREENSHOTS_ON_FAILURE) {
-            Bitmap screenshot = InstrumentationRegistry.getInstrumentation()
-                    .getUiAutomation().takeScreenshot();
-            BitmapDumper.dumpBitmap(screenshot, testName + "_fullscreenshot", mClassName);
-        }
-
     }
 }
