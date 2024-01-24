@@ -94,6 +94,27 @@ def validate_tablet_brightness(tablet_name, brightness):
       raise AssertionError(BRIGHTNESS_ERROR_MSG)
 
 
+def check_apk_installed(device_id, package_name):
+  """Verifies that an APK is installed on a given device.
+
+  Args:
+    device_id: str; ID of the device.
+    package_name: str; name of the package that should be installed.
+  """
+  verify_cts_cmd = (
+      f'adb -s {device_id} shell pm list packages | '
+      f'grep {package_name}'
+  )
+  bytes_output = subprocess.check_output(
+      verify_cts_cmd, stderr=subprocess.STDOUT, shell=True
+  )
+  output = str(bytes_output.decode('utf-8')).strip()
+  if package_name not in output:
+    raise AssertionError(
+        f'{package_name} not installed on device {device_id}!'
+    )
+
+
 class ItsSession(object):
   """Controls a device over adb to run ITS scripts.
 
