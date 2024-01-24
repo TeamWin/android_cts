@@ -449,7 +449,9 @@ public class CodecState {
             // yet, stopping the audio track now would result in getAudioTimeUs
             // returning 0 and prevent video samples from being presented.
             // We stop the audio track before the playback thread exits.
-            mAudioTrack.setEndOfStream();
+            if (mAudioTrack != null) {
+                mAudioTrack.setEndOfStream();
+            }
             return false;
         }
 
