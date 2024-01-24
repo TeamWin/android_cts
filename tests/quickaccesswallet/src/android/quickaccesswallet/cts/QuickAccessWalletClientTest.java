@@ -16,6 +16,7 @@
 package android.quickaccesswallet.cts;
 
 import static android.Manifest.permission.MANAGE_DEFAULT_APPLICATIONS;
+import static android.Manifest.permission.MANAGE_ROLE_HOLDERS;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -130,14 +131,13 @@ public class QuickAccessWalletClientTest {
     public void testIsWalletServiceAvailable_returnsFalseIfNoServiceAvailable() {
         setServiceState(TestQuickAccessWalletService.class,
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED);
-
-        QuickAccessWalletClient client = QuickAccessWalletClient.create(mContext);
+        QuickAccessWalletClient client = createClientWithManageRoleHolderPermission();
         assertThat(client.isWalletServiceAvailable()).isFalse();
     }
 
     @Test
     public void testIsWalletFeatureAvailableWhenDeviceLocked_checksSecureSettings() {
-        QuickAccessWalletClient client = QuickAccessWalletClient.create(mContext);
+        QuickAccessWalletClient client =  createClientWithManageRoleHolderPermission();
         String showCardsAndPasses =
                 mUserSettings.get(Settings.Secure.POWER_MENU_LOCKED_SHOW_CONTENT);
 
@@ -161,7 +161,7 @@ public class QuickAccessWalletClientTest {
         setServiceState(TestQuickAccessWalletService.class,
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED);
 
-        QuickAccessWalletClient client = QuickAccessWalletClient.create(mContext);
+        QuickAccessWalletClient client = createClientWithManageRoleHolderPermission();
 
         TestPendingIntentListener testPendingIntentListener = new TestPendingIntentListener();
 
@@ -189,7 +189,7 @@ public class QuickAccessWalletClientTest {
 
     @Test
     public void testGetWalletPendingIntent_serviceWithNoOverride_isNull() throws Exception {
-        QuickAccessWalletClient client = QuickAccessWalletClient.create(mContext);
+        QuickAccessWalletClient client = createClientWithManageRoleHolderPermission();
 
         TestPendingIntentListener testPendingIntentListener = new TestPendingIntentListener();
 
@@ -200,7 +200,7 @@ public class QuickAccessWalletClientTest {
 
     @Test
     public void testGetWalletCards_success() throws Exception {
-        QuickAccessWalletClient client = QuickAccessWalletClient.create(mContext);
+        QuickAccessWalletClient client = createClientWithManageRoleHolderPermission();
         assertThat(client.isWalletServiceAvailable()).isTrue();
         TestCallback callback = new TestCallback();
 
@@ -216,7 +216,7 @@ public class QuickAccessWalletClientTest {
     public void testGetWalletCards_failsIfNoServiceAvailable() throws Exception {
         setServiceState(TestQuickAccessWalletService.class,
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED);
-        QuickAccessWalletClient client = QuickAccessWalletClient.create(mContext);
+        QuickAccessWalletClient client = createClientWithManageRoleHolderPermission();
         assertThat(client.isWalletServiceAvailable()).isFalse();
         TestCallback callback = new TestCallback();
 
@@ -233,7 +233,7 @@ public class QuickAccessWalletClientTest {
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED);
         setServiceState(TestQuickAccessWalletService.class,
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED);
-        QuickAccessWalletClient client = QuickAccessWalletClient.create(mContext);
+        QuickAccessWalletClient client = createClientWithManageRoleHolderPermission();
         assertThat(client.isWalletServiceAvailable()).isFalse();
         TestCallback callback = new TestCallback();
 
@@ -252,7 +252,8 @@ public class QuickAccessWalletClientTest {
                 new GetWalletCardsResponse(Collections.singletonList(card), 0));
         TestCallback callback = new TestCallback();
 
-        QuickAccessWalletClient.create(mContext).getWalletCards(GET_WALLET_CARDS_REQUEST, callback);
+        createClientWithManageRoleHolderPermission()
+                .getWalletCards(GET_WALLET_CARDS_REQUEST, callback);
 
         callback.await(3, TimeUnit.SECONDS);
         assertThat(callback.mError).isNotNull();
@@ -431,7 +432,7 @@ public class QuickAccessWalletClientTest {
         assertThat(TestQuickAccessWalletService.isWalletDismissed()).isFalse();
         TestQuickAccessWalletService.setExpectedRequestCount(1);
 
-        QuickAccessWalletClient.create(mContext).notifyWalletDismissed();
+        createClientWithManageRoleHolderPermission().notifyWalletDismissed();
         TestQuickAccessWalletService.awaitRequests(3, TimeUnit.SECONDS);
 
         assertThat(TestQuickAccessWalletService.isWalletDismissed()).isTrue();
@@ -439,7 +440,7 @@ public class QuickAccessWalletClientTest {
 
     @Test
     public void testAddListener_sendEvent_success() throws Exception {
-        QuickAccessWalletClient client = QuickAccessWalletClient.create(mContext);
+        QuickAccessWalletClient client = createClientWithManageRoleHolderPermission();
         TestEventListener listener = new TestEventListener();
         TestQuickAccessWalletService.setExpectedRequestCount(1);
         client.addWalletServiceEventListener(listener);
@@ -454,7 +455,7 @@ public class QuickAccessWalletClientTest {
 
     @Test
     public void testRemoveListener_sendEvent_shouldNotBeDelivered() {
-        QuickAccessWalletClient client = QuickAccessWalletClient.create(mContext);
+        QuickAccessWalletClient client = createClientWithManageRoleHolderPermission();
         TestEventListener listener = new TestEventListener();
         client.addWalletServiceEventListener(listener);
         client.removeWalletServiceEventListener(listener);
@@ -472,7 +473,7 @@ public class QuickAccessWalletClientTest {
 
     @Test
     public void testDisconnect_shouldClearListenersAndDisconnect() throws Exception {
-        QuickAccessWalletClient client = QuickAccessWalletClient.create(mContext);
+        QuickAccessWalletClient client = createClientWithManageRoleHolderPermission();
         TestQuickAccessWalletService.setExpectedBindCount(1);
         TestQuickAccessWalletService.setExpectedUnbindCount(1);
 
@@ -485,7 +486,7 @@ public class QuickAccessWalletClientTest {
 
     @Test
     public void testConnect_disconnect_reconnect_shouldWork() throws Exception {
-        QuickAccessWalletClient client = QuickAccessWalletClient.create(mContext);
+        QuickAccessWalletClient client = createClientWithManageRoleHolderPermission();
 
         TestCallback callback = new TestCallback();
         client.getWalletCards(GET_WALLET_CARDS_REQUEST, callback);
@@ -505,7 +506,7 @@ public class QuickAccessWalletClientTest {
 
     @Test
     public void testCreateWalletIntent_parsesXmlAndUsesCorrectIntentAction() {
-        Intent walletIntent = QuickAccessWalletClient.create(mContext).createWalletIntent();
+        Intent walletIntent = createClientWithManageRoleHolderPermission().createWalletIntent();
         assertThat(walletIntent).isNotNull();
         assertThat(walletIntent.getAction()).isEqualTo(QuickAccessWalletService.ACTION_VIEW_WALLET);
         ComponentName expectedComponent = ComponentName.createRelative(mContext,
@@ -516,7 +517,7 @@ public class QuickAccessWalletClientTest {
     @Test
     public void testCreateWalletSettingsIntent_usesSettingsActionToFindAppropriateActivity() {
         Intent settingsIntent =
-                QuickAccessWalletClient.create(mContext).createWalletSettingsIntent();
+                createClientWithManageRoleHolderPermission().createWalletSettingsIntent();
         assertThat(settingsIntent).isNotNull();
         assertThat(settingsIntent.getAction()).isEqualTo(
                 QuickAccessWalletService.ACTION_VIEW_WALLET_SETTINGS);
@@ -637,6 +638,16 @@ public class QuickAccessWalletClientTest {
                     });
             countDownLatch.await(2000, TimeUnit.MILLISECONDS);
             return result.get();
+        } finally {
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+    private QuickAccessWalletClient createClientWithManageRoleHolderPermission() {
+        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation().adoptShellPermissionIdentity(MANAGE_ROLE_HOLDERS);
+        try {
+            return QuickAccessWalletClient.create(mContext);
         } finally {
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
                     .getUiAutomation().dropShellPermissionIdentity();
