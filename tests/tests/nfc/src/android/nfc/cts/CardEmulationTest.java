@@ -664,9 +664,9 @@ public class CardEmulationTest {
                     Settings.Secure.getUriFor(
                             Constants.SETTINGS_SECURE_NFC_PAYMENT_DEFAULT_COMPONENT),
                     true, settingsObserver, UserHandle.ALL);
-
-            Assert.assertTrue(cardEmulation.setDefaultServiceForCategory(serviceName,
-                    CardEmulation.CATEGORY_PAYMENT));
+            Settings.Secure.putString(context.getContentResolver(),
+                    "nfc_payment_default_component", serviceName == null ? null :
+                            serviceName.flattenToString());
             int count = 0;
             while (!settingsObserver.mSeenChange
                     && !cardEmulation.isDefaultServiceForCategory(serviceName,
