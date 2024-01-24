@@ -16,6 +16,7 @@
 
 package android.server.wm.jetpack.embedding;
 
+import static android.Manifest.permission.EMBED_ANY_APP_IN_UNTRUSTED_MODE;
 import static android.server.wm.jetpack.second.Components.EXTRA_LAUNCH_NON_EMBEDDABLE_ACTIVITY;
 import static android.server.wm.jetpack.second.Components.SECOND_ACTIVITY;
 import static android.server.wm.jetpack.second.Components.SECOND_ACTIVITY_UNKNOWN_EMBEDDING_CERTS;
@@ -35,15 +36,21 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.server.wm.NestedShellPermission;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
 import android.util.Pair;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.window.extensions.embedding.SplitPairRule;
 
 import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -61,6 +68,9 @@ import java.util.function.Predicate;
 @Presubmit
 @RunWith(AndroidJUnit4.class)
 public class ActivityEmbeddingCrossUidTests extends ActivityEmbeddingTestBase {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Override
     @After
@@ -195,5 +205,72 @@ public class ActivityEmbeddingCrossUidTests extends ActivityEmbeddingTestBase {
         // Verify that the original split was covered by the non-embeddable activity that was
         // launched outside the embedded container and expanded to full task size.
         assertTrue(waitForVisible(primaryActivity, false));
+    }
+
+    /**
+     * Tests that embedding an activity across UIDs is allowed if the host app has the role
+     * permission {@link EMBED_ANY_APP_IN_UNTRUSTED_MODE}.
+     */
+    @Test
+    @RequiresFlagsEnabled("com.android.window.flags.untrusted_embedding_any_app_permission")
+    public void testCrossUidActivityEmbeddingIsAllowedWithEmbedAnyAppPermission() {
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
+
+        final Predicate<Pair<Activity, Activity>> activityActivityPredicate =
+                activityActivityPair -> primaryActivity.equals(activityActivityPair.first);
+
+        SplitPairRule splitPairRule = new SplitPairRule.Builder(
+                activityActivityPredicate, activityIntentPair -> true /* activityIntentPredicate */,
+                parentWindowMetrics -> true /* parentWindowMetricsPredicate */)
+                .setDefaultSplitAttributes(DEFAULT_SPLIT_ATTRS).build();
+        mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
+
+        try {
+            InstrumentationRegistry
+                    .getInstrumentation()
+                    .getUiAutomation()
+                    .adoptShellPermissionIdentity(EMBED_ANY_APP_IN_UNTRUSTED_MODE);
+            // With the EMBED_ANY_APP_IN_UNTRUSTED_MODE permission, cross UID embedding is allowed
+            // even without the second app opt-in.
+            startActivityCrossUidInSplit(primaryActivity, SECOND_ACTIVITY_UNKNOWN_EMBEDDING_CERTS,
+                    splitPairRule, mSplitInfoConsumer, "id", true /* verify */);
+        } finally {
+            InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Tests that embedding an activity across UIDs is not allowed when the flag is disabled even
+     * if the host app has the role permission {@link EMBED_ANY_APP_IN_UNTRUSTED_MODE}.
+     */
+    @Test
+    @RequiresFlagsDisabled("com.android.window.flags.untrusted_embedding_any_app_permission")
+    public void testCrossUidActivityEmbeddingNotAllowedWithEmbedAnyAppPermission_flagDisabled() {
+        Activity primaryActivity = startFullScreenActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
+
+        final Predicate<Pair<Activity, Activity>> activityActivityPredicate =
+                activityActivityPair -> primaryActivity.equals(activityActivityPair.first);
+
+        SplitPairRule splitPairRule = new SplitPairRule.Builder(
+                activityActivityPredicate, activityIntentPair -> true /* activityIntentPredicate */,
+                parentWindowMetrics -> true /* parentWindowMetricsPredicate */)
+                .setDefaultSplitAttributes(DEFAULT_SPLIT_ATTRS).build();
+        mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
+
+        try {
+            InstrumentationRegistry
+                    .getInstrumentation()
+                    .getUiAutomation()
+                    .adoptShellPermissionIdentity(EMBED_ANY_APP_IN_UNTRUSTED_MODE);
+            // This should fail because the feature flag is disabled.
+            startActivityCrossUidInSplit_expectFail(primaryActivity,
+                    SECOND_ACTIVITY_UNKNOWN_EMBEDDING_CERTS, mSplitInfoConsumer);
+        } finally {
+            InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation().dropShellPermissionIdentity();
+        }
     }
 }
