@@ -163,6 +163,7 @@ class StylusButtonInputEventTest {
                 pointer.offset(1, 1)
 
                 uinputStylus.sendBtnTouch(true)
+                uinputStylus.sendPressure(255)
                 uinputStylus.sendBtn(button.key, true)
                 uinputStylus.sendDown(0, pointer, UinputTouchDevice.MT_TOOL_PEN)
                 uinputStylus.sync()
@@ -184,6 +185,7 @@ class StylusButtonInputEventTest {
 
                 uinputStylus.sendBtnTouch(false)
                 uinputStylus.sendBtn(button.key, false)
+                uinputStylus.sendPressure(0)
                 uinputStylus.sendUp(0)
                 uinputStylus.sync()
 
@@ -221,6 +223,7 @@ class StylusButtonInputEventTest {
                 pointer.offset(1, 1)
 
                 uinputStylus.sendBtnTouch(true)
+                uinputStylus.sendPressure(255)
                 uinputStylus.sendBtn(button.key, true)
                 uinputStylus.sendDown(0, pointer, UinputTouchDevice.MT_TOOL_PEN)
                 uinputStylus.sync()
@@ -234,6 +237,7 @@ class StylusButtonInputEventTest {
                 )
 
                 uinputStylus.sendBtnTouch(false)
+                uinputStylus.sendPressure(0)
                 uinputStylus.sendBtn(button.key, false)
                 uinputStylus.sendUp(0)
                 uinputStylus.sync()

@@ -4,7 +4,7 @@
   "command": "register",
   "name": "Test Stylus (USB)",
   "vid": 0x18d1,
-  "pid": 0xabcd,
+  "pid": 0xabce,
   "bus": "usb",
   "port": "usb:1",
   "configuration": [
@@ -15,6 +15,7 @@
       "ABS_MT_TOUCH_MAJOR",
       "ABS_MT_POSITION_X",
       "ABS_MT_POSITION_Y",
+      "ABS_MT_PRESSURE",
       "ABS_MT_TRACKING_ID",
       "ABS_MT_TOOL_TYPE"
     ]},
@@ -57,6 +58,14 @@
       "value": 0,
       "minimum": 0,
       "maximum": 0,               // Will be replaced to real display's height - 1
+      "fuzz": 0,
+      "flat": 0,
+      "resolution": 0
+    }},
+    {"code": "ABS_MT_PRESSURE", "info": {
+      "value": 0,
+      "minimum": 0,
+      "maximum": 255,
       "fuzz": 0,
       "flat": 0,
       "resolution": 0
