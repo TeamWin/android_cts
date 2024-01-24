@@ -42,13 +42,13 @@ oneway interface ILocalSatelliteListener {
 
     /**
      * Indicates that MockSatelliteService has just received the request
-     * pollPendingSatelliteSatelliteDatagrams from Telephony.
+     * pollPendingSatelliteDatagrams from Telephony.
      */
     void onPollPendingSatelliteDatagrams();
 
     /**
      * Indicates that MockSatelliteService has just received the request
-     * sendSatelliteSatelliteDatagram from Telephony.
+     * sendSatelliteDatagram from Telephony.
      */
     void onSendSatelliteDatagram(in SatelliteDatagram datagram, in boolean isEmergency);
 
