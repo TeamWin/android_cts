@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.graphics.Rect;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.Gravity;
 import android.view.View;
 
@@ -36,6 +37,7 @@ import org.junit.runner.RunWith;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class GravityTest {
     private Rect mInRect;
     private Rect mOutRect;

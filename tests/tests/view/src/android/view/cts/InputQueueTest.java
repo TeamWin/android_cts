@@ -18,8 +18,10 @@ package android.view.cts;
 
 import static org.junit.Assert.assertTrue;
 
+import android.Manifest;
 import android.app.Instrumentation;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.InputQueue;
 import android.view.MotionEvent;
 import android.view.Window;
@@ -28,6 +30,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,6 +42,7 @@ import org.junit.runner.RunWith;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class InputQueueTest {
     private static final String LOG_TAG = InputQueueTest.class.getSimpleName();
     static {
@@ -49,7 +54,13 @@ public class InputQueueTest {
     private static native boolean waitForEvent(InputQueue inputQueue);
     private static native void inputQueueTest(InputQueue inputQueue);
 
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            androidx.test.platform.app.InstrumentationRegistry
+                    .getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public ActivityTestRule<InputQueueCtsActivity> mTestActivityRule =
             new ActivityTestRule<>(InputQueueCtsActivity.class);
 

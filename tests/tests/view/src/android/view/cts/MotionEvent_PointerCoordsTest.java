@@ -18,6 +18,7 @@ package android.view.cts;
 
 import static android.view.cts.MotionEventUtils.withCoords;
 
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.MotionEvent;
 import android.view.cts.MotionEventUtils.PointerCoordsBuilder;
 
@@ -33,6 +34,7 @@ import org.junit.runner.RunWith;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class MotionEvent_PointerCoordsTest {
     private PointerCoordsBuilder mBuilder;
     private MotionEvent.PointerCoords mPointerCoords;
