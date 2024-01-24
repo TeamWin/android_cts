@@ -18,9 +18,6 @@ package android.app.appsearch.cts.app;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import android.app.appsearch.PackageIdentifier;
 import android.app.appsearch.VisibilityConfig;
 
@@ -40,13 +37,11 @@ public class VisibilityConfigCtsTest {
         Arrays.fill(cert2, (byte) 2);
         VisibilityConfig visibilityConfig =
                 new VisibilityConfig.Builder()
-                        .setNotDisplayedBySystem(true)
                         .addVisibleToPackage(new PackageIdentifier("pkg1", cert1))
                         .setPubliclyVisibleTargetPackage(new PackageIdentifier("pkg2", cert2))
                         .addVisibleToPermissions(ImmutableSet.of(1, 2))
                         .build();
 
-        assertTrue(visibilityConfig.isNotDisplayedBySystem());
         assertThat(visibilityConfig.getVisibleToPermissions())
                 .containsExactly(ImmutableSet.of(1, 2));
         assertThat(visibilityConfig.getVisibleToPackages())
@@ -60,7 +55,6 @@ public class VisibilityConfigCtsTest {
         // Create two VisibilityConfig instances with the same properties
         VisibilityConfig visibilityConfig1 =
                 new VisibilityConfig.Builder()
-                        .setNotDisplayedBySystem(true)
                         .addVisibleToPackage(new PackageIdentifier("pkg1", new byte[32]))
                         .setPubliclyVisibleTargetPackage(
                                 new PackageIdentifier("pkg2", new byte[32]))
@@ -69,7 +63,6 @@ public class VisibilityConfigCtsTest {
 
         VisibilityConfig visibilityConfig2 =
                 new VisibilityConfig.Builder()
-                        .setNotDisplayedBySystem(true)
                         .addVisibleToPackage(new PackageIdentifier("pkg1", new byte[32]))
                         .setPubliclyVisibleTargetPackage(
                                 new PackageIdentifier("pkg2", new byte[32]))
@@ -77,8 +70,8 @@ public class VisibilityConfigCtsTest {
                         .build();
 
         // Test equals method
-        assertEquals(visibilityConfig1, visibilityConfig2);
-        assertEquals(visibilityConfig2, visibilityConfig1);
+        assertThat(visibilityConfig1).isEqualTo(visibilityConfig2);
+        assertThat(visibilityConfig2).isEqualTo(visibilityConfig1);
     }
 
     @Test
@@ -91,7 +84,6 @@ public class VisibilityConfigCtsTest {
 
         VisibilityConfig.Builder builder =
                 new VisibilityConfig.Builder()
-                        .setNotDisplayedBySystem(true)
                         .addVisibleToPackage(
                                 new PackageIdentifier(visibleToPackage, visibleToPackageCert))
                         .setPubliclyVisibleTargetPackage(
@@ -104,20 +96,17 @@ public class VisibilityConfigCtsTest {
 
         VisibilityConfig rebuild =
                 builder.clearVisibleToPackages()
-                        .setNotDisplayedBySystem(false)
                         .setPubliclyVisibleTargetPackage(null)
                         .clearVisibleToPermissions()
                         .build();
 
         // Check if the properties are set correctly
-        assertThat(original.isNotDisplayedBySystem()).isTrue();
         assertThat(original.getVisibleToPackages())
                 .containsExactly(new PackageIdentifier(visibleToPackage, visibleToPackageCert));
         assertThat(original.getPubliclyVisibleTargetPackage())
                 .isEqualTo(new PackageIdentifier(publiclyVisibleTarget, publiclyVisibleTargetCert));
         assertThat(original.getVisibleToPermissions()).containsExactly(ImmutableSet.of(1, 2));
 
-        assertThat(rebuild.isNotDisplayedBySystem()).isFalse();
         assertThat(rebuild.getVisibleToPackages()).isEmpty();
         assertThat(rebuild.getPubliclyVisibleTargetPackage()).isNull();
         assertThat(rebuild.getVisibleToPermissions()).isEmpty();
