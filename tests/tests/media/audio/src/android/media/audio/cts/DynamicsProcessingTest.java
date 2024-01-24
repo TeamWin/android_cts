@@ -34,8 +34,12 @@ import android.media.audiofx.DynamicsProcessing.MbcBand;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
-import org.junit.Test;
+import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
 public class DynamicsProcessingTest extends PostProcTestBase {
 
     private static final String TAG = "DynamicsProcessingTest";
