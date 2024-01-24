@@ -29,9 +29,9 @@ import static com.android.compatibility.common.util.SystemUtil.runShellCommandOr
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static com.google.common.truth.Truth.assertWithMessage;
+import static com.google.common.truth.TruthJUnit.assume;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -193,6 +193,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     public void testBackgroundActivity_withinASMGracePeriod_isAllowed() throws Exception {
+        assumeSdkNewerThanUpsideDownCake();
         // Start AppA foreground activity
         startActivity(APP_A.FOREGROUND_ACTIVITY);
         // Don't press home button to avoid stop app switches
@@ -206,6 +207,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     @FlakyTest(bugId = 297339382)
     public void testBackgroundActivity_withinBalAfterAsmGracePeriod_isBlocked()
             throws Exception {
+        assumeSdkNewerThanUpsideDownCake();
         // Start AppA foreground activity
         startActivity(APP_A.FOREGROUND_ACTIVITY);
         // Don't press home button to avoid stop app switches
@@ -228,12 +230,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     public void testBackgroundActivityBlockedWhenForegroundActivityNotTop() throws Exception {
-        // Feature flag "ActivitySecurity__asm_restrictions_enabled" is set to 1 in
-        // BackgroundActivityTestBase. For backward compatibility reasons, it is only enabled
-        // for apps with targetSdkVersion starting Android V.
-        // TODO remove this assumption after V released.
-        assumeThat(mContext.getApplicationInfo().targetSdkVersion,
-                greaterThan(Build.VERSION_CODES.UPSIDE_DOWN_CAKE));
+        assumeSdkNewerThanUpsideDownCake();
 
         startActivity(APP_A.FOREGROUND_ACTIVITY);
         mContext.sendBroadcast(getLaunchActivitiesBroadcast(APP_A, APP_B.FOREGROUND_ACTIVITY));
@@ -318,6 +315,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     public void testActivityBlockedFromBgActivityInFgTask() {
+        assumeSdkNewerThanUpsideDownCake();
         // Launch Activity A, B in the same task with different processes.
         startActivity(APP_A.FOREGROUND_ACTIVITY);
         mContext.sendBroadcast(getLaunchActivitiesBroadcast(APP_A, APP_B.FOREGROUND_ACTIVITY));
@@ -1396,5 +1394,13 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     private static void sendPendingIntent(PendingIntent pi, TestServiceClient service)
             throws RemoteException {
         service.sendPendingIntent(pi, Bundle.EMPTY);
+    }
+
+    private void assumeSdkNewerThanUpsideDownCake() {
+        // Feature flag "ActivitySecurity__asm_restrictions_enabled" is set to 1 in
+        // BackgroundActivityTestBase. For backward compatibility reasons, it is only enabled
+        // for apps with targetSdkVersion starting Android V.
+        // TODO remove this assumption after V released.
+        assume().that(Build.VERSION.SDK_INT).isGreaterThan(Build.VERSION_CODES.UPSIDE_DOWN_CAKE);
     }
 }
