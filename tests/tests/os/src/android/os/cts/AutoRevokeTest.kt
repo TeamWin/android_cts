@@ -35,6 +35,7 @@ import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiObject2
 import android.support.test.uiautomator.UiObjectNotFoundException
 import android.view.accessibility.AccessibilityNodeInfo
+import android.widget.Switch
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnit4
@@ -356,7 +357,7 @@ class AutoRevokeTest {
                 // Setup
                 goToPermissions()
                 click("Calendar")
-                clickPermissionAllow()
+                click("Allow")
                 goBack()
                 goBack()
                 goBack()
