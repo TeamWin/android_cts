@@ -52,6 +52,7 @@ android_test {
         "flag-junit",
         "android.view.flags-aconfig-java",
         "android.view.inputmethod.flags-aconfig-java",
+        "com.android.input.flags-aconfig-java",
     ],
 
     jni_libs: [
