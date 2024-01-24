@@ -597,6 +597,8 @@ public class CardEmulationTest {
     private Bundle createFrame(char type) {
         Bundle frame = new Bundle();
         frame.putChar(HostApduService.POLLING_LOOP_TYPE_KEY, type);
+        byte gain = 0x08;
+        frame.putByte(HostApduService.POLLING_LOOP_GAIN_KEY, gain);
         return frame;
     }
 
@@ -724,6 +726,9 @@ public class CardEmulationTest {
                     Assert.assertEquals(
                             mFrames.get(mFrameIndex).getChar(HostApduService.POLLING_LOOP_TYPE_KEY),
                             receivedFrame.getChar(HostApduService.POLLING_LOOP_TYPE_KEY));
+                    Assert.assertEquals(
+                            mFrames.get(mFrameIndex).getByte(HostApduService.POLLING_LOOP_GAIN_KEY),
+                            receivedFrame.getByte(HostApduService.POLLING_LOOP_GAIN_KEY));
                     Assert.assertArrayEquals(
                             mFrames.get(mFrameIndex).getByteArray(
                                     HostApduService.POLLING_LOOP_DATA_KEY),
