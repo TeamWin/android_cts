@@ -16,6 +16,7 @@
 
 package android.view.animation.cts;
 
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.animation.LayoutAnimationController;
 
 import androidx.test.filters.SmallTest;
@@ -26,6 +27,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class LayoutAnimationController_AnimationParametersTest {
     @Test
     public void testConstructor() {

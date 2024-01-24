@@ -33,6 +33,7 @@ import android.content.ClipDescription;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.Presubmit;
 import android.util.Pair;
 import android.view.ContentInfo;
@@ -57,6 +58,7 @@ import org.junit.runner.RunWith;
 @Presubmit
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ContentInfoTest {
 
     @Test
