@@ -115,6 +115,7 @@ import java.security.cert.X509Certificate;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -184,6 +185,19 @@ public class KeyAttestationTest {
     @RequiresDevice
     @Test
     public void testEcAttestation() throws Exception {
+        testEcAttestation(false);
+    }
+
+    @RequiresDevice
+    @Test
+    public void testEcAttestation_StrongBox() throws Exception {
+        assumeTrue("This test is only applicable to devices with StrongBox",
+                TestUtils.hasStrongBox(getContext()));
+
+        testEcAttestation(true);
+    }
+
+    private void testEcAttestation(boolean isStrongBox) throws Exception {
         if (!TestUtils.isAttestationSupported()) {
             return;
         }
@@ -191,23 +205,37 @@ public class KeyAttestationTest {
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;
 
-        // Note: Curve and key sizes arrays must correspond.
-        String[] curves = {
-                "secp224r1", "secp256r1", "secp384r1", "secp521r1"
-        };
-        int[] keySizes = {
-                224, 256, 384, 521
-        };
-        byte[][] challenges = {
-                new byte[0], // empty challenge
-                "challenge".getBytes(), // short challenge
-                new byte[128], // long challenge
-        };
-        int[] purposes = {
+        final int[] purposes = {
                 KM_PURPOSE_SIGN, KM_PURPOSE_VERIFY, KM_PURPOSE_SIGN | KM_PURPOSE_VERIFY
         };
-        boolean[] devicePropertiesAttestationValues = {true, false};
-        boolean[] includeValidityDatesValues = {true, false};
+        final boolean[] devicePropertiesAttestationValues = {true, false};
+        final boolean[] includeValidityDatesValues = {true, false};
+        final String[] curves;
+        final int[] keySizes;
+        final byte[][] challenges;
+
+        if (isStrongBox) {
+            // StrongBox only supports secp256r1 keys.
+            curves = new String[] {"secp256r1"};
+            keySizes = new int[] {256};
+            challenges = new byte[][] {
+                    // Empty challange is not accepted by StrongBox.
+                    "challenge".getBytes(), // short challenge
+                    new byte[128], // long challenge
+            };
+        } else {
+            curves = new String[] {
+                    "secp224r1", "secp256r1", "secp384r1", "secp521r1"
+            };
+            keySizes = new int[]{
+                    224, 256, 384, 521
+            };
+            challenges = new byte[][]{
+                    new byte[0], // empty challenge
+                    "challenge".getBytes(), // short challenge
+                    new byte[128], // long challenge
+            };
+        }
 
         for (int curveIndex = 0; curveIndex < curves.length; ++curveIndex) {
             for (int challengeIndex = 0; challengeIndex < challenges.length; ++challengeIndex) {
@@ -217,7 +245,8 @@ public class KeyAttestationTest {
                             try {
                                 testEcAttestation(challenges[challengeIndex], includeValidityDates,
                                         curves[curveIndex], keySizes[curveIndex],
-                                        purposes[purposeIndex], devicePropertiesAttestation);
+                                        purposes[purposeIndex], devicePropertiesAttestation,
+                                        isStrongBox);
                             } catch (Throwable e) {
                                 boolean isIdAttestationFailure =
                                         (e.getCause() instanceof KeyStoreException)
@@ -267,6 +296,17 @@ public class KeyAttestationTest {
 
     @Test
     public void testEcAttestation_TooLargeChallenge() throws Exception {
+        testEcAttestation_TooLargeChallenge(false);
+    }
+
+    @Test
+    public void testEcAttestation_TooLargeChallenge_StrongBox() throws Exception {
+        assumeTrue("This test is only applicable to devices with StrongBox",
+                TestUtils.hasStrongBox(getContext()));
+        testEcAttestation_TooLargeChallenge(true);
+    }
+
+    private void testEcAttestation_TooLargeChallenge(boolean isStrongBox) throws Exception {
         if (!TestUtils.isAttestationSupported()) {
             return;
         }
@@ -275,7 +315,7 @@ public class KeyAttestationTest {
         for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
             try {
                 testEcAttestation(new byte[129], true /* includeValidityDates */, "secp256r1", 256,
-                        KM_PURPOSE_SIGN, devicePropertiesAttestation);
+                        KM_PURPOSE_SIGN, devicePropertiesAttestation, isStrongBox);
                 fail("Attestation challenges larger than 128 bytes should be rejected");
             } catch (ProviderException e) {
                 KeyStoreException cause = (KeyStoreException) e.getCause();
@@ -296,6 +336,17 @@ public class KeyAttestationTest {
 
     @Test
     public void testEcAttestation_NoChallenge() throws Exception {
+        testEcAttestation_NoChallenge(false);
+    }
+
+    @Test
+    public void testEcAttestation_NoChallenge_StrongBox() throws Exception {
+        assumeTrue("This test is only applicable to devices with StrongBox",
+                TestUtils.hasStrongBox(getContext()));
+        testEcAttestation_NoChallenge(true);
+    }
+
+    public void testEcAttestation_NoChallenge(boolean isStrongBox) throws Exception {
         boolean[] devicePropertiesAttestationValues = {true, false};
         for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
             String keystoreAlias = "test_key";
@@ -310,6 +361,7 @@ public class KeyAttestationTest {
                     .setKeyValidityForOriginationEnd(originationEnd)
                     .setKeyValidityForConsumptionEnd(consumptionEnd)
                     .setDevicePropertiesAttestationIncluded(devicePropertiesAttestation)
+                    .setIsStrongBoxBacked(isStrongBox)
                     .build();
 
             generateKeyPair(KEY_ALGORITHM_EC, spec);
@@ -386,7 +438,6 @@ public class KeyAttestationTest {
     public void testEcAttestation_DeviceLockedStrongbox() throws Exception {
         if (!TestUtils.hasStrongBox(getContext()))
             return;
-
         testEcAttestation_DeviceLocked(true /* expectStrongBox */);
     }
 
@@ -395,43 +446,7 @@ public class KeyAttestationTest {
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;
 
-        String keystoreAlias = "test_key";
-        Date now = new Date();
-        Date originationEnd = new Date(now.getTime() + ORIGINATION_TIME_OFFSET);
-        Date consumptionEnd = new Date(now.getTime() + CONSUMPTION_TIME_OFFSET);
-        KeyGenParameterSpec.Builder builder =
-            new KeyGenParameterSpec.Builder(keystoreAlias, PURPOSE_SIGN)
-                    .setAlgorithmParameterSpec(new ECGenParameterSpec("secp256r1"))
-                    .setAttestationChallenge(new byte[128])
-                    .setKeyValidityStart(now)
-                    .setKeyValidityForOriginationEnd(originationEnd)
-                    .setKeyValidityForConsumptionEnd(consumptionEnd);
-
-        generateKeyPair(KEY_ALGORITHM_EC, builder.build());
-
-        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
-        keyStore.load(null);
-
-        try {
-            Certificate certificates[] = keyStore.getCertificateChain(keystoreAlias);
-            verifyCertificateChain(certificates, false /* expectStrongBox */);
-            X509Certificate attestationCert = (X509Certificate) certificates[0];
-            Attestation attestation = Attestation.loadFromCertificate(attestationCert);
-            int kmVersionFromAttestation = attestation.keymasterVersion;
-            int keyStoreFeatureVersion = TestUtils.getFeatureVersionKeystore(getContext());
-
-            // Feature Version is required on devices launching with Android 12 (API Level
-            // 31) but may be reported on devices launching with an earlier version. If it's
-            // present, it must match what is reported in attestation.
-            if (PropertyUtil.getFirstApiLevel() >= 31) {
-                assertNotEquals(0, keyStoreFeatureVersion);
-            }
-            if (keyStoreFeatureVersion != 0) {
-                assertEquals(kmVersionFromAttestation, keyStoreFeatureVersion);
-            }
-        } finally {
-            keyStore.deleteEntry(keystoreAlias);
-        }
+        testAttestationKmVersionMatchesFeatureVersion(false);
     }
 
     @Test
@@ -448,18 +463,24 @@ public class KeyAttestationTest {
             return;
         }
 
+        testAttestationKmVersionMatchesFeatureVersion(true);
+    }
+
+    private void testAttestationKmVersionMatchesFeatureVersion(boolean isStrongBox)
+            throws  Exception {
+
         String keystoreAlias = "test_key";
         Date now = new Date();
         Date originationEnd = new Date(now.getTime() + ORIGINATION_TIME_OFFSET);
         Date consumptionEnd = new Date(now.getTime() + CONSUMPTION_TIME_OFFSET);
         KeyGenParameterSpec.Builder builder =
-            new KeyGenParameterSpec.Builder(keystoreAlias, PURPOSE_SIGN)
-                    .setAlgorithmParameterSpec(new ECGenParameterSpec("secp256r1"))
-                    .setAttestationChallenge(new byte[128])
-                    .setKeyValidityStart(now)
-                    .setKeyValidityForOriginationEnd(originationEnd)
-                    .setKeyValidityForConsumptionEnd(consumptionEnd)
-                    .setIsStrongBoxBacked(true);
+                new KeyGenParameterSpec.Builder(keystoreAlias, PURPOSE_SIGN)
+                        .setAlgorithmParameterSpec(new ECGenParameterSpec("secp256r1"))
+                        .setAttestationChallenge(new byte[128])
+                        .setKeyValidityStart(now)
+                        .setKeyValidityForOriginationEnd(originationEnd)
+                        .setKeyValidityForConsumptionEnd(consumptionEnd)
+                        .setIsStrongBoxBacked(isStrongBox);
 
         generateKeyPair(KEY_ALGORITHM_EC, builder.build());
 
@@ -468,19 +489,27 @@ public class KeyAttestationTest {
 
         try {
             Certificate certificates[] = keyStore.getCertificateChain(keystoreAlias);
-            verifyCertificateChain(certificates, true /* expectStrongBox */);
+            verifyCertificateChain(certificates, isStrongBox /* expectStrongBox */);
             X509Certificate attestationCert = (X509Certificate) certificates[0];
             Attestation attestation = Attestation.loadFromCertificate(attestationCert);
             int kmVersionFromAttestation = attestation.keymasterVersion;
+            int keyStoreFeatureVersion;
 
+            if (isStrongBox) {
+                keyStoreFeatureVersion =
+                        TestUtils.getFeatureVersionKeystoreStrongBox(getContext());
+            } else {
+                keyStoreFeatureVersion =
+                        TestUtils.getFeatureVersionKeystore(getContext());
+            }
             // Feature Version is required on devices launching with Android 12 (API Level
             // 31) but may be reported on devices launching with an earlier version. If it's
             // present, it must match what is reported in attestation.
             if (PropertyUtil.getFirstApiLevel() >= 31) {
-                assertNotEquals(0, keyStoreFeatureVersionStrongBox);
+                assertNotEquals(0, keyStoreFeatureVersion);
             }
-            if (keyStoreFeatureVersionStrongBox != 0) {
-                assertEquals(kmVersionFromAttestation, keyStoreFeatureVersionStrongBox);
+            if (keyStoreFeatureVersion != 0) {
+                assertEquals(kmVersionFromAttestation, keyStoreFeatureVersion);
             }
         } finally {
             keyStore.deleteEntry(keystoreAlias);
@@ -489,12 +518,26 @@ public class KeyAttestationTest {
 
     @Test
     public void testEcAttestation_KeyStoreExceptionWhenRequestingUniqueId() throws Exception {
+        testEcAttestation_KeyStoreExceptionWhenRequestingUniqueId(false);
+    }
+
+    @Test
+    public void testEcAttestation_KeyStoreExceptionWhenRequestingUniqueId_StrongBox()
+            throws Exception {
+        assumeTrue("This test is only applicable to devices with StrongBox",
+                TestUtils.hasStrongBox(getContext()));
+        testEcAttestation_KeyStoreExceptionWhenRequestingUniqueId(true);
+    }
+
+    private void testEcAttestation_KeyStoreExceptionWhenRequestingUniqueId(
+            boolean isStrongBox) throws Exception {
         String keystoreAlias = "test_key";
         KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(keystoreAlias, PURPOSE_SIGN)
                 .setAlgorithmParameterSpec(new ECGenParameterSpec("secp256r1"))
                 .setDigests(DIGEST_NONE, DIGEST_SHA256, DIGEST_SHA512)
                 .setAttestationChallenge(new byte[128])
                 .setUniqueIdIncluded(true)
+                .setIsStrongBoxBacked(isStrongBox)
                 .build();
 
         try {
@@ -517,6 +560,18 @@ public class KeyAttestationTest {
 
     @Test
     public void testEcAttestation_UniqueIdWorksWithCorrectPermission() throws Exception {
+        testEcAttestation_UniqueIdWorksWithCorrectPermission(false);
+    }
+    @Test
+    public void testEcAttestation_UniqueIdWorksWithCorrectPermission_StrongBox()
+            throws Exception {
+        assumeTrue("This test is only applicable to devices with StrongBox",
+                TestUtils.hasStrongBox(getContext()));
+        testEcAttestation_UniqueIdWorksWithCorrectPermission(true);
+    }
+
+    private void testEcAttestation_UniqueIdWorksWithCorrectPermission(boolean isStrongBox)
+            throws Exception {
         assumeTrue("Device doesn't have secure lock screen",
                 TestUtils.hasSecureLockScreen(getContext()));
         assumeTrue("Device does not support attestation", TestUtils.isAttestationSupported());
@@ -527,6 +582,7 @@ public class KeyAttestationTest {
                 .setDigests(DIGEST_NONE, DIGEST_SHA256, DIGEST_SHA512)
                 .setAttestationChallenge(new byte[128])
                 .setUniqueIdIncluded(true)
+                .setIsStrongBoxBacked(isStrongBox)
                 .build();
 
         KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
@@ -570,6 +626,18 @@ public class KeyAttestationTest {
     @RequiresDevice
     @Test
     public void testRsaAttestation() throws Exception {
+        testRsaAttestation(false);
+    }
+
+    @RequiresDevice
+    @Test
+    public void testRsaAttestation_StrongBox() throws Exception {
+        assumeTrue("This test is only applicable to devices with StrongBox",
+                TestUtils.hasStrongBox(getContext()));
+        testRsaAttestation(true);
+    }
+
+    private void testRsaAttestation(boolean isStrongBox) throws Exception {
         if (!TestUtils.isAttestationSupported()) {
             return;
         }
@@ -577,34 +645,11 @@ public class KeyAttestationTest {
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;
 
-        int[] keySizes = { // Smallish sizes to keep test runtimes down.
-                512, 768, 1024
-        };
-        byte[][] challenges = {
-                new byte[0], // empty challenge
-                "challenge".getBytes(), // short challenge
-                new byte[128] // long challenge
-        };
-        int[] purposes = {
+        final int[] purposes = {
                 PURPOSE_SIGN | PURPOSE_VERIFY,
                 PURPOSE_ENCRYPT | PURPOSE_DECRYPT,
         };
-        String[][] encryptionPaddingModes = {
-                {
-                        ENCRYPTION_PADDING_NONE
-                },
-                {
-                        ENCRYPTION_PADDING_RSA_OAEP,
-                },
-                {
-                        ENCRYPTION_PADDING_RSA_PKCS1,
-                },
-                {
-                        ENCRYPTION_PADDING_RSA_OAEP,
-                        ENCRYPTION_PADDING_RSA_PKCS1,
-                },
-        };
-        String[][] signaturePaddingModes = {
+        final String[][] signaturePaddingModes = {
                 {
                         SIGNATURE_PADDING_RSA_PKCS1,
                 },
@@ -616,7 +661,55 @@ public class KeyAttestationTest {
                         SIGNATURE_PADDING_RSA_PSS,
                 },
         };
-        boolean[] devicePropertiesAttestationValues = {true, false};
+        final boolean[] devicePropertiesAttestationValues = {true, false};
+        final int[] keySizes;
+        final byte[][] challenges;
+        final String[][] encryptionPaddingModes;
+
+        if (isStrongBox) {
+            // StrongBox has to support 2048 bit key.
+            keySizes = new int[] {2048};
+            challenges = new byte[][] {
+                    "challenge".getBytes(), // short challenge
+                    new byte[128] // long challenge
+            };
+            encryptionPaddingModes = new String [][] {
+                    {
+                            ENCRYPTION_PADDING_RSA_OAEP,
+                    },
+                    {
+                            ENCRYPTION_PADDING_RSA_PKCS1,
+                    },
+                    {
+                            ENCRYPTION_PADDING_RSA_OAEP,
+                            ENCRYPTION_PADDING_RSA_PKCS1,
+                    },
+            };
+        } else {
+            keySizes = new int[]{ // Smallish sizes to keep test runtimes down.
+                    512, 768, 1024
+            };
+            challenges = new byte[][]{
+                    new byte[0], // empty challenge
+                    "challenge".getBytes(), // short challenge
+                    new byte[128] // long challenge
+            };
+            encryptionPaddingModes = new String[][]{
+                    {
+                            ENCRYPTION_PADDING_NONE
+                    },
+                    {
+                            ENCRYPTION_PADDING_RSA_OAEP,
+                    },
+                    {
+                            ENCRYPTION_PADDING_RSA_PKCS1,
+                    },
+                    {
+                            ENCRYPTION_PADDING_RSA_OAEP,
+                            ENCRYPTION_PADDING_RSA_PKCS1,
+                    },
+            };
+        }
 
         for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
             for (int keySize : keySizes) {
@@ -624,10 +717,10 @@ public class KeyAttestationTest {
                     for (int purpose : purposes) {
                         if (isEncryptionPurpose(purpose)) {
                             testRsaAttestations(keySize, challenge, purpose, encryptionPaddingModes,
-                                    devicePropertiesAttestation);
+                                    devicePropertiesAttestation, isStrongBox);
                         } else {
                             testRsaAttestations(keySize, challenge, purpose, signaturePaddingModes,
-                                    devicePropertiesAttestation);
+                                    devicePropertiesAttestation, isStrongBox);
                         }
                     }
                 }
@@ -637,6 +730,18 @@ public class KeyAttestationTest {
 
     @Test
     public void testRsaAttestation_TooLargeChallenge() throws Exception {
+        testRsaAttestation_TooLargeChallenge(512, false);
+    }
+
+    @Test
+    public void testRsaAttestation_TooLargeChallenge_StrongBox() throws Exception {
+        assumeTrue("This test is only applicable to devices with StrongBox",
+                TestUtils.hasStrongBox(getContext()));
+        testRsaAttestation_TooLargeChallenge(2048, true);
+    }
+
+    private void testRsaAttestation_TooLargeChallenge(int keySize, boolean isStrongBox)
+            throws Exception {
         if (!TestUtils.isAttestationSupported()) {
             return;
         }
@@ -644,10 +749,10 @@ public class KeyAttestationTest {
         boolean[] devicePropertiesAttestationValues = {true, false};
         for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
             try {
-                testRsaAttestation(new byte[129], true /* includeValidityDates */, 512,
+                testRsaAttestation(new byte[129], true /* includeValidityDates */, keySize,
                         PURPOSE_SIGN,
                         null /* paddingModes; may be empty because we'll never test them */,
-                        devicePropertiesAttestation);
+                        devicePropertiesAttestation, isStrongBox);
                 fail("Attestation challenges larger than 128 bytes should be rejected");
             } catch(ProviderException e){
                 KeyStoreException cause = (KeyStoreException) e.getCause();
@@ -668,6 +773,17 @@ public class KeyAttestationTest {
 
     @Test
     public void testRsaAttestation_NoChallenge() throws Exception {
+        testRsaAttestation_NoChallenge(false);
+    }
+
+    @Test
+    public void testRsaAttestation_NoChallenge_StrongBox() throws Exception {
+        assumeTrue("This test is only applicable to devices with StrongBox",
+                TestUtils.hasStrongBox(getContext()));
+        testRsaAttestation_NoChallenge(true);
+    }
+
+    private void testRsaAttestation_NoChallenge(boolean isStrongBox) throws Exception {
         boolean[] devicePropertiesAttestationValues = {true, false};
         for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
             String keystoreAlias = "test_key";
@@ -681,6 +797,7 @@ public class KeyAttestationTest {
                     .setKeyValidityForOriginationEnd(originationEnd)
                     .setKeyValidityForConsumptionEnd(consumptionEnd)
                     .setDevicePropertiesAttestationIncluded(devicePropertiesAttestation)
+                    .setIsStrongBoxBacked(isStrongBox)
                     .build();
 
             generateKeyPair(KEY_ALGORITHM_RSA, spec);
@@ -762,6 +879,17 @@ public class KeyAttestationTest {
 
     @Test
     public void testAesAttestation() throws Exception {
+        testAesAttestation(false);
+    }
+
+    @Test
+    public void testAesAttestation_StrongBox() throws Exception {
+        assumeTrue("This test is only applicable to devices with StrongBox",
+                TestUtils.hasStrongBox(getContext()));
+        testAesAttestation(true);
+    }
+
+    private void testAesAttestation(boolean isStrongBox) throws Exception {
         boolean[] devicePropertiesAttestationValues = {true, false};
         for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
             String keystoreAlias = "test_key";
@@ -771,6 +899,7 @@ public class KeyAttestationTest {
                     .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                     .setAttestationChallenge(new byte[0])
                     .setDevicePropertiesAttestationIncluded(devicePropertiesAttestation)
+                    .setIsStrongBoxBacked(isStrongBox)
                     .build();
             generateKey(spec, KeyProperties.KEY_ALGORITHM_AES);
 
@@ -786,11 +915,23 @@ public class KeyAttestationTest {
 
     @Test
     public void testHmacAttestation() throws Exception {
+        testHmacAttestation(false);
+    }
+
+    @Test
+    public void testHmacAttestation_StrongBox() throws Exception {
+        assumeTrue("This test is only applicable to devices with StrongBox",
+                TestUtils.hasStrongBox(getContext()));
+        testHmacAttestation(true);
+    }
+
+    private void testHmacAttestation(boolean isStrongBox) throws Exception {
         boolean[] devicePropertiesAttestationValues = {true, false};
         for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
             String keystoreAlias = "test_key";
             KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(keystoreAlias, PURPOSE_SIGN)
                     .setDevicePropertiesAttestationIncluded(devicePropertiesAttestation)
+                    .setIsStrongBoxBacked(isStrongBox)
                     .build();
 
             generateKey(spec, KeyProperties.KEY_ALGORITHM_HMAC_SHA256);
@@ -806,13 +947,14 @@ public class KeyAttestationTest {
     }
 
     private void testRsaAttestations(int keySize, byte[] challenge, int purpose,
-            String[][] paddingModes, boolean devicePropertiesAttestation) throws Exception {
+            String[][] paddingModes, boolean devicePropertiesAttestation,
+            boolean isStrongBox) throws Exception {
         for (String[] paddings : paddingModes) {
             try {
                 testRsaAttestation(challenge, true /* includeValidityDates */, keySize, purpose,
-                        paddings, devicePropertiesAttestation);
+                        paddings, devicePropertiesAttestation, isStrongBox);
                 testRsaAttestation(challenge, false /* includeValidityDates */, keySize, purpose,
-                        paddings, devicePropertiesAttestation);
+                        paddings, devicePropertiesAttestation, isStrongBox);
             } catch (Throwable e) {
                 boolean isIdAttestationFailure =
                         (e.getCause() instanceof KeyStoreException)
@@ -966,8 +1108,8 @@ public class KeyAttestationTest {
 
     @SuppressWarnings("deprecation")
     private void testRsaAttestation(byte[] challenge, boolean includeValidityDates, int keySize,
-            int purposes, String[] paddingModes, boolean devicePropertiesAttestation)
-            throws Exception {
+            int purposes, String[] paddingModes, boolean devicePropertiesAttestation,
+            boolean isStrongBox) throws Exception {
         Log.i(TAG, "RSA key attestation with: challenge " + Arrays.toString(challenge) +
                 " / includeValidityDates " + includeValidityDates + " / keySize " + keySize +
                 " / purposes " + purposes + " / paddingModes " + Arrays.toString(paddingModes) +
@@ -982,7 +1124,8 @@ public class KeyAttestationTest {
                         .setKeySize(keySize)
                         .setDigests(DIGEST_NONE, DIGEST_SHA256, DIGEST_SHA512)
                         .setAttestationChallenge(challenge)
-                        .setDevicePropertiesAttestationIncluded(devicePropertiesAttestation);
+                        .setDevicePropertiesAttestationIncluded(devicePropertiesAttestation)
+                        .setIsStrongBoxBacked(isStrongBox);
 
         if (includeValidityDates) {
             builder.setKeyValidityStart(startTime)
@@ -1005,13 +1148,14 @@ public class KeyAttestationTest {
 
         try {
             Certificate certificates[] = keyStore.getCertificateChain(keystoreAlias);
-            verifyCertificateChain(certificates, false /* expectStrongBox */);
+            verifyCertificateChain(certificates, isStrongBox /* expectStrongBox */);
 
             X509Certificate attestationCert = (X509Certificate) certificates[0];
             Attestation attestation = Attestation.loadFromCertificate(attestationCert);
 
             checkRsaKeyDetails(attestation, keySize, purposes,
-                ImmutableSet.copyOf(paddingModes));
+                    (paddingModes == null)
+                            ? new HashSet<String>() : ImmutableSet.copyOf(paddingModes));
             checkKeyUsage(attestationCert, purposes);
             checkKeyIndependentAttestationInfo(challenge, purposes, startTime,
                 includeValidityDates, devicePropertiesAttestation, attestation);
@@ -1039,7 +1183,8 @@ public class KeyAttestationTest {
 
     @SuppressWarnings("deprecation")
     private void testEcAttestation(byte[] challenge, boolean includeValidityDates, String ecCurve,
-            int keySize, int purposes, boolean devicePropertiesAttestation) throws Exception {
+            int keySize, int purposes, boolean devicePropertiesAttestation,
+            boolean isStrongBox) throws Exception {
         Log.i(TAG, "EC key attestation with: challenge " + Arrays.toString(challenge) +
                 " / includeValidityDates " + includeValidityDates + " / ecCurve " + ecCurve +
                 " / keySize " + keySize + " / purposes " + purposes +
@@ -1054,7 +1199,8 @@ public class KeyAttestationTest {
                         .setAlgorithmParameterSpec(new ECGenParameterSpec(ecCurve))
                         .setDigests(DIGEST_NONE, DIGEST_SHA256, DIGEST_SHA512)
                         .setAttestationChallenge(challenge)
-                        .setDevicePropertiesAttestationIncluded(devicePropertiesAttestation);
+                        .setDevicePropertiesAttestationIncluded(devicePropertiesAttestation)
+                        .setIsStrongBoxBacked(isStrongBox);
 
         if (includeValidityDates) {
             builder.setKeyValidityStart(startTime)
@@ -1069,7 +1215,7 @@ public class KeyAttestationTest {
 
         try {
             Certificate certificates[] = keyStore.getCertificateChain(keystoreAlias);
-            verifyCertificateChain(certificates, false /* expectStrongBox */);
+            verifyCertificateChain(certificates, isStrongBox /* expectStrongBox */);
 
             X509Certificate attestationCert = (X509Certificate) certificates[0];
             Attestation attestation = Attestation.loadFromCertificate(attestationCert);
@@ -1107,7 +1253,8 @@ public class KeyAttestationTest {
             Attestation attestation) {
         final AuthorizationList keyDetailsList;
         final AuthorizationList nonKeyDetailsList;
-        if (attestation.getKeymasterSecurityLevel() == KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT) {
+        if (attestation.getKeymasterSecurityLevel() == KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT
+                || attestation.getKeymasterSecurityLevel() == KM_SECURITY_LEVEL_STRONG_BOX) {
             keyDetailsList = attestation.getTeeEnforced();
             nonKeyDetailsList = attestation.getSoftwareEnforced();
         } else {
@@ -1446,6 +1593,20 @@ public class KeyAttestationTest {
                 checkSystemPatchLevel(teeEnforced.getOsPatchLevel(), systemPatchLevel);
                 break;
 
+            case KM_SECURITY_LEVEL_STRONG_BOX:
+                assertThat("StrongBox attestation can only come from StrongBox keymaster",
+                        attestation.getKeymasterSecurityLevel(),
+                        is(KM_SECURITY_LEVEL_STRONG_BOX));
+                assertThat("KeyMaster version is not valid.", attestation.getKeymasterVersion(),
+                        either(is(2)).or(is(3)).or(is(4)).or(is(41))
+                                .or(is(100)).or(is(200)).or(is(300)));
+
+                checkRootOfTrust(attestation, false /* requireLocked */);
+                assertThat("StrongBox enforced OS version and system OS version must be same.",
+                        teeEnforced.getOsVersion(), is(systemOsVersion));
+                checkSystemPatchLevel(teeEnforced.getOsPatchLevel(), systemPatchLevel);
+                break;
+
             case KM_SECURITY_LEVEL_SOFTWARE:
                 if (attestation
                         .getKeymasterSecurityLevel() == KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT) {
@@ -1617,7 +1778,8 @@ public class KeyAttestationTest {
             Set<String> expectedPaddingModes) throws CertificateParsingException {
         AuthorizationList keyDetailsList;
         AuthorizationList nonKeyDetailsList;
-        if (attestation.getKeymasterSecurityLevel() == KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT) {
+        if (attestation.getKeymasterSecurityLevel() == KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT
+                || attestation.getKeymasterSecurityLevel() == KM_SECURITY_LEVEL_STRONG_BOX) {
             keyDetailsList = attestation.getTeeEnforced();
             nonKeyDetailsList = attestation.getSoftwareEnforced();
         } else {
@@ -1664,7 +1826,8 @@ public class KeyAttestationTest {
     private void checkEcKeyDetails(Attestation attestation, String ecCurve, int keySize) {
         AuthorizationList keyDetailsList;
         AuthorizationList nonKeyDetailsList;
-        if (attestation.getKeymasterSecurityLevel() == KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT) {
+        if (attestation.getKeymasterSecurityLevel() == KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT
+                || attestation.getKeymasterSecurityLevel() == KM_SECURITY_LEVEL_STRONG_BOX) {
             keyDetailsList = attestation.getTeeEnforced();
             nonKeyDetailsList = attestation.getSoftwareEnforced();
         } else {
