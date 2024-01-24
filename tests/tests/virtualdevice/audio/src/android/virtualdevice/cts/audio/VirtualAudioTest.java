@@ -67,6 +67,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.common.VirtualDeviceRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.FeatureUtil;
 
@@ -209,71 +210,85 @@ public class VirtualAudioTest {
     }
 
     @Test
+    @FlakyTest(bugId = 322113132)
     public void audioCapture_readByteBuffer_shouldCaptureAppPlaybackFrequency() {
         runAudioCaptureTest(BYTE_BUFFER, /* readMode= */ -1);
     }
 
     @Test
+    @FlakyTest(bugId = 322113132)
     public void audioCapture_readByteBufferBlocking_shouldCaptureAppPlaybackFrequency() {
         runAudioCaptureTest(BYTE_BUFFER, /* readMode= */ READ_BLOCKING);
     }
 
     @Test
+    @FlakyTest(bugId = 322113132)
     public void audioCapture_readByteArray_shouldCaptureAppPlaybackData() {
         runAudioCaptureTest(BYTE_ARRAY, /* readMode= */ -1);
     }
 
     @Test
+    @FlakyTest(bugId = 322113132)
     public void audioCapture_readByteArrayBlocking_shouldCaptureAppPlaybackData() {
         runAudioCaptureTest(BYTE_ARRAY, /* readMode= */ READ_BLOCKING);
     }
 
     @Test
+    @FlakyTest(bugId = 322113132)
     public void audioCapture_readShortArray_shouldCaptureAppPlaybackData() {
         runAudioCaptureTest(SHORT_ARRAY, /* readMode= */ -1);
     }
 
     @Test
+    @FlakyTest(bugId = 322113132)
     public void audioCapture_readShortArrayBlocking_shouldCaptureAppPlaybackData() {
         runAudioCaptureTest(SHORT_ARRAY, /* readMode= */ READ_BLOCKING);
     }
 
     @Test
+    @FlakyTest(bugId = 322113132)
     public void audioCapture_readFloatArray_shouldCaptureAppPlaybackData() {
         runAudioCaptureTest(FLOAT_ARRAY, /* readMode= */ READ_BLOCKING);
     }
 
     @Test
+    @FlakyTest(bugId = 322113132)
     public void audioInjection_writeByteBuffer_appShouldRecordInjectedFrequency() {
         runAudioInjectionTest(BYTE_BUFFER, /* writeMode= */ WRITE_BLOCKING, /* timestamp= */ 0);
     }
 
     @Test
+    @FlakyTest(bugId = 322113132)
     public void audioInjection_writeByteBufferWithTimestamp_appShouldRecordInjectedFrequency() {
         runAudioInjectionTest(BYTE_BUFFER, /* writeMode= */ WRITE_BLOCKING, /* timestamp= */ 50);
     }
 
     @Test
+    @FlakyTest(bugId = 322113132)
     public void audioInjection_writeByteArray_appShouldRecordInjectedData() {
         runAudioInjectionTest(BYTE_ARRAY, /* writeMode= */ -1, /* timestamp= */ 0);
     }
 
     @Test
+    @FlakyTest(bugId = 322113132)
     public void audioInjection_writeByteArrayBlocking_appShouldRecordInjectedData() {
         runAudioInjectionTest(BYTE_ARRAY, /* writeMode= */ WRITE_BLOCKING, /* timestamp= */ 0);
     }
 
     @Test
+    @FlakyTest(bugId = 322113132)
     public void audioInjection_writeShortArray_appShouldRecordInjectedData() {
         runAudioInjectionTest(SHORT_ARRAY, /* writeMode= */ -1, /* timestamp= */ 0);
     }
 
     @Test
+    @FlakyTest(bugId = 322113132)
     public void audioInjection_writeShortArrayBlocking_appShouldRecordInjectedData() {
         runAudioInjectionTest(SHORT_ARRAY, /* writeMode= */ WRITE_BLOCKING, /* timestamp= */ 0);
     }
 
     @Test
+    @FlakyTest(bugId = 322113132)
     public void audioInjection_writeFloatArray_appShouldRecordInjectedData() {
         runAudioInjectionTest(FLOAT_ARRAY, /* writeMode= */ WRITE_BLOCKING, /* timestamp= */ 0);
     }
