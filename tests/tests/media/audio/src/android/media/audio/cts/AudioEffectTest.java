@@ -39,12 +39,17 @@ import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.After;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.UUID;
 
 @AppModeFull(reason = "Dynamic congic not supported")
 @NonMediaMainlineTest
+@RunWith(AndroidJUnit4.class)
 public class AudioEffectTest extends PostProcTestBase {
 
     private String TAG = "AudioEffectTest";
@@ -69,9 +74,8 @@ public class AudioEffectTest extends PostProcTestBase {
     // AUDIOEFFECT TESTS:
     //----------------------------------
 
-    @Override
+    @After
     public void tearDown() throws Exception {
-        super.tearDown();
         releaseEffect();
         terminateMediaPlayerLooper();
         terminateListenerLooper();

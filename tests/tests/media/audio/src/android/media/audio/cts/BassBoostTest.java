@@ -28,9 +28,13 @@ import android.media.cts.NonMediaMainlineTest;
 import android.os.Looper;
 import android.util.Log;
 
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @NonMediaMainlineTest
+@RunWith(AndroidJUnit4.class)
 public class BassBoostTest extends PostProcTestBase {
 
     private String TAG = "BassBoostTest";
