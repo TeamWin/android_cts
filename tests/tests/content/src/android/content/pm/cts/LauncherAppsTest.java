@@ -103,8 +103,8 @@ public class LauncherAppsTest {
 
     private static final String PACKAGE_NAME = "android.content.cts";
     private static final String FULL_CLASS_NAME = "android.content.pm.cts.LauncherMockActivity";
-    private static final ComponentName FULL_COMPONENT_NAME = new ComponentName(
-            PACKAGE_NAME, FULL_CLASS_NAME);
+    private static final ComponentName FULL_COMPONENT_NAME =
+            new ComponentName(PACKAGE_NAME, FULL_CLASS_NAME);
 
     private static final String FULL_DISABLED_CLASS_NAME =
             "android.content.pm.cts.MockActivity_Disabled";
@@ -363,6 +363,22 @@ public class LauncherAppsTest {
         assertThat(info).isNotNull();
     }
 
+    @Test
+    @AppModeFull(reason = "Need special permission")
+    @RequiresFlagsEnabled(FLAG_ALLOW_PRIVATE_PROFILE)
+    public void testGetMarketIntent() {
+        IntentSender intentSender =
+                mLauncherApps.getAppMarketActivityIntent(PACKAGE_NAME, UserHandle.of(0));
+        assertThat(intentSender).isNotNull();
+    }
+
+    @Test
+    @AppModeFull(reason = "Need special permission")
+    @RequiresFlagsEnabled(FLAG_ALLOW_PRIVATE_PROFILE)
+    public void testGetPreInstalledSystemPackages() {
+        List<String> packages = mLauncherApps.getPreInstalledSystemPackages(UserHandle.of(0));
+        assertThat(packages).isNotNull();
+    }
 
     @Test
     @AppModeFull(reason = "Need special permission")
