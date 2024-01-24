@@ -1019,13 +1019,18 @@ public class ItsService extends Service implements SensorEventListener {
                     double zoomRatio = cmdObj.optDouble("zoomRatio");
                     int aeTargetFpsMin = cmdObj.optInt("aeTargetFpsMin");
                     int aeTargetFpsMax = cmdObj.optInt("aeTargetFpsMax");
+                    JSONArray threeARegionStart = cmdObj.optJSONArray("threeARegionStart");
+                    JSONArray threeARegionChange = cmdObj.optJSONArray("threeARegionChange");
+                    JSONArray threeARegionEnd = cmdObj.optJSONArray("threeARegionEnd");
+                    double threeARegionDuration = cmdObj.optDouble("threeARegionDuration");
                     double zoomStart = cmdObj.optDouble("zoomStart");
                     double zoomEnd = cmdObj.optDouble("zoomEnd");
                     double stepSize = cmdObj.optDouble("stepSize");
                     double stepDuration = cmdObj.optDouble("stepDuration");
                     doBasicPreviewRecording(cameraId, videoSize, recordingDuration,
                             stabilize, zoomRatio, aeTargetFpsMin, aeTargetFpsMax,
-                            zoomStart, zoomEnd, stepSize, stepDuration);
+                            threeARegionStart, threeARegionChange, threeARegionEnd,
+                            threeARegionDuration, zoomStart, zoomEnd, stepSize, stepDuration);
                 } else if ("isHLG10Supported".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
                     int profileId = cmdObj.getInt("profileId");
@@ -2813,7 +2818,8 @@ public class ItsService extends Service implements SensorEventListener {
      */
     private void doBasicPreviewRecording(String cameraId, String videoSizeString,
             int recordingDuration, boolean stabilize, double zoomRatio,
-            int aeTargetFpsMin, int aeTargetFpsMax,
+            int aeTargetFpsMin, int aeTargetFpsMax, JSONArray threeARegionStart,
+            JSONArray threeARegionChange, JSONArray threeARegionEnd, double threeARegionDuration,
             double zoomStart, double zoomEnd, double stepSize, double stepDuration)
             throws ItsException {
         RecordingResultListener recordingResultListener = new RecordingResultListener();
@@ -2865,7 +2871,35 @@ public class ItsService extends Service implements SensorEventListener {
                     mCameraThread.sleep((long) stepDuration);
                 }
             }
-            if (!Double.isNaN(stepDuration)) {
+            Rect activeArray = mCameraCharacteristics.get(
+                    CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+            int aaWidth = activeArray.right - activeArray.left;
+            int aaHeight = activeArray.bottom - activeArray.top;
+            JSONArray[] threeARegionRoutine = {
+                    threeARegionStart, threeARegionChange, threeARegionEnd};
+            if (threeARegionStart != null) {
+                for (JSONArray threeARegion : threeARegionRoutine){
+                    MeteringRectangle[] region = ItsUtils.getJsonWeightedRectsFromArray(
+                            threeARegion, /*normalized=*/true, aaWidth, aaHeight);
+                    Logt.i(TAG, String.format(
+                            Locale.getDefault(),
+                            "3A set to %s during preview recording.", Arrays.toString(region)));
+                    mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS, region);
+                    mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS, region);
+                    mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS, region);
+                    mSession.setRepeatingRequest(mCaptureRequestBuilder.build(),
+                            recordingResultListener, mCameraHandler);
+                    if (!Double.isNaN(threeARegionDuration)) {
+                        Logt.i(TAG, String.format(
+                                Locale.getDefault(),
+                                "Sleeping %.2f ms during recording", threeARegionDuration));
+                        mCameraThread.sleep((long) threeARegionDuration);
+                    } else {
+                        throw new ItsException("threeARegionDuration is not specified.");
+                    }
+                }
+            }
+            if (!Double.isNaN(stepDuration) || !Double.isNaN(threeARegionDuration)) {
                 mCameraThread.sleep(PREVIEW_RECORDING_FINAL_SLEEP_MS);
             } else {
                 mCameraThread.sleep(recordingDuration * 1000L);  // recordingDuration is in seconds
