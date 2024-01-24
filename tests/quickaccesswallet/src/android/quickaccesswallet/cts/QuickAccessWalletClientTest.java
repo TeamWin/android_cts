@@ -16,6 +16,7 @@
 package android.quickaccesswallet.cts;
 
 import static android.Manifest.permission.MANAGE_DEFAULT_APPLICATIONS;
+import static android.Manifest.permission.MANAGE_ROLE_HOLDERS;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -109,6 +110,9 @@ public class QuickAccessWalletClientTest {
             mUserSettings.syncSet(NFC_PAYMENT_DEFAULT_COMPONENT, component.flattenToString());
         }
         TestQuickAccessWalletService.resetStaticFields();
+
+        InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().adoptShellPermissionIdentity(MANAGE_ROLE_HOLDERS);
     }
 
     @After
@@ -124,6 +128,9 @@ public class QuickAccessWalletClientTest {
         setServiceState(QuickAccessWalletDelegateTargetActivityService.class,
                 PackageManager.COMPONENT_ENABLED_STATE_DEFAULT);
         TestQuickAccessWalletService.resetStaticFields();
+
+        InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().dropShellPermissionIdentity();
     }
 
     @Test
