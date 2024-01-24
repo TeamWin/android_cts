@@ -27,12 +27,13 @@ import camera_properties_utils
 import its_session_utils
 
 _RAD_TO_DEG = 180/math.pi
-_GYRO_DRIFT_THRESH = 0.01*_RAD_TO_DEG  # PASS/FAIL for gyro accumulated drift
+_GYRO_DRIFT_ATOL = 0.01*_RAD_TO_DEG  # PASS/FAIL for gyro accumulated drift
 _GYRO_MEAN_THRESH = 0.01*_RAD_TO_DEG  # PASS/FAIL for gyro mean drift
 _GYRO_VAR_ATOL = 1E-7  # rad^2/sec^2/Hz from CDD C-1-7
 _IMU_EVENTS_WAIT_TIME = 30  # seconds
 _NAME = os.path.basename(__file__).split('.')[0]
 _NSEC_TO_SEC = 1E-9
+_REAR_MAIN_CAMERA_ID = '0'
 _RV_DRIFT_THRESH = 0.01*_RAD_TO_DEG  # PASS/FAIL for rotation vector drift
 
 
@@ -123,6 +124,9 @@ def do_riemann_sums(x, y, z, t, log_path):
     z: list of z values
     t: list of time values for x, y, z data
     log_path: str of location for output path
+
+  Returns:
+    gyro drifts defined as x, y & z (max-min) values over test time
   """
   x_int, y_int, z_int = 0, 0, 0
   x_sums, y_sums, z_sums = [0], [0], [0]
@@ -147,9 +151,11 @@ def do_riemann_sums(x, y, z, t, log_path):
   plot_name = f'{_NAME}_gyro_drift'
   define_3axis_plot(x_sums, y_sums, z_sums, t, plot_name)
   pylab.ylabel('Drift (degrees)')
-  pylab.ylim([min([x_min, y_min, z_min, -_GYRO_DRIFT_THRESH]),
-              max([x_max, y_max, z_max, _GYRO_DRIFT_THRESH])])
+  pylab.ylim([min([x_min, y_min, z_min, -_GYRO_DRIFT_ATOL]),
+              max([x_max, y_max, z_max, _GYRO_DRIFT_ATOL])])
   matplotlib.pyplot.savefig(f'{os.path.join(log_path, plot_name)}.png')
+
+  return x_max-x_min, y_max-y_min, z_max-z_min
 
 
 def convert_events_to_arrays(events, t_factor, xyz_factor):
@@ -186,7 +192,8 @@ class ImuDriftTest(its_base_test.ItsBaseTest):
       # check SKIP conditions
       camera_properties_utils.skip_unless(
           camera_properties_utils.sensor_fusion(props) and
-          cam.get_sensors().get('gyro'))
+          cam.get_sensors().get('gyro') and
+          self.camera_id == _REAR_MAIN_CAMERA_ID)
 
       # load scene
       its_session_utils.load_scene(cam, props, self.scene,
@@ -220,7 +227,8 @@ class ImuDriftTest(its_base_test.ItsBaseTest):
     gyro_sampling_rate = calc_effective_sampling_rate(times, 'gyro')
 
     plot_raw_gyro_data(x_gyro, y_gyro, z_gyro, times, self.log_path)
-    do_riemann_sums(x_gyro, y_gyro, z_gyro, times, self.log_path)
+    x_gyro_drift, y_gyro_drift, z_gyro_drift = do_riemann_sums(
+        x_gyro, y_gyro, z_gyro, times, self.log_path)
 
     # process rotation vector data
     x_rv, y_rv, z_rv, t_rv = convert_events_to_arrays(
@@ -232,6 +240,7 @@ class ImuDriftTest(its_base_test.ItsBaseTest):
     plot_rotation_vector_data(x_rv, y_rv, z_rv, t_rv, self.log_path)
 
     # assert correct gyro behavior
+    first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
     gyro_var_atol = _GYRO_VAR_ATOL * gyro_sampling_rate * _RAD_TO_DEG**2
     for i, samples in enumerate([x_gyro, y_gyro, z_gyro]):
       gyro_mean = samples.mean()
@@ -244,7 +253,14 @@ class ImuDriftTest(its_base_test.ItsBaseTest):
       if gyro_var >= gyro_var_atol:
         raise AssertionError(f'gyro_var: {gyro_var}.3e, '
                              f'ATOL={gyro_var_atol}.3e')
-
+    # Android 15 checks
+    if first_api_level >= its_session_utils.ANDROID15_API_LEVEL:
+      if (x_gyro_drift >= _GYRO_DRIFT_ATOL or
+          y_gyro_drift >= _GYRO_DRIFT_ATOL or
+          z_gyro_drift >= _GYRO_DRIFT_ATOL):
+        raise AssertionError(f'gyro drift is too large! x: {x_gyro_drift}.3f, '
+                             f'y: {y_gyro_drift}.3f, z: {z_gyro_drift}.3f, '
+                             f'ATOL: {_GYRO_DRIFT_ATOL}')
 
 if __name__ == '__main__':
   test_runner.main()
