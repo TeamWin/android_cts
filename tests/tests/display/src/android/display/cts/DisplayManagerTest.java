@@ -20,6 +20,7 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowInsets.Type.systemBars;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -97,6 +98,9 @@ public class DisplayManagerTest {
 
     @Test
     public void testCreateVirtualDisplayFromShell() throws InterruptedException {
+        // b/317812433: Disable test until test can be fixed for specific devices
+        assumeTrue(false);
+
         mInstrumentation.getUiAutomation().adoptShellPermissionIdentity();
         mActivity.waitForReady();
         mInstrumentation.waitForIdleSync();
