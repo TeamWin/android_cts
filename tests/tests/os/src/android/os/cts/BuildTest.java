@@ -19,13 +19,21 @@ package android.os.cts;
 import static android.os.Build.VERSION.ACTIVE_CODENAMES;
 import static android.os.Build.VERSION_CODES.CUR_DEVELOPMENT;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.os.Build;
 import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 
 import com.android.compatibility.common.util.CddTest;
 
-import junit.framework.TestCase;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -38,7 +46,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class BuildTest extends TestCase {
+public class BuildTest {
+    @Rule public RavenwoodRule mRavenwood = new RavenwoodRule();
 
     private static final String RO_PRODUCT_CPU_ABILIST = "ro.product.cpu.abilist";
     private static final String RO_PRODUCT_CPU_ABILIST32 = "ro.product.cpu.abilist32";
@@ -50,7 +59,9 @@ public class BuildTest extends TestCase {
     /**
      * Verify that the values of the various CPU ABI fields are consistent.
      */
+    @Test
     @AppModeFull(reason = "Instant apps cannot access APIs")
+    @IgnoreUnderRavenwood(reason = "No shell commands")
     public void testCpuAbi() throws Exception {
         runTestCpuAbiCommon();
         if (android.os.Process.is64Bit()) {
@@ -64,7 +75,9 @@ public class BuildTest extends TestCase {
      * Check if minimal properties are set (note that these might come from either
      * /system/build.props or /oem/oem.props.
      */
+    @Test
     @CddTest(requirements = {"3.2.2/C-0-1"})
+    @IgnoreUnderRavenwood(reason = "No shell commands")
     public void testBuildProperties() throws Exception {
         assertNotNull("Build.DEVICE should be defined", Build.DEVICE);
         assertNotNull("Build.MANUFACTURER should be defined", Build.MANUFACTURER);
@@ -74,6 +87,7 @@ public class BuildTest extends TestCase {
     /**
      * Verify that the CPU ABI fields on device match the permitted ABIs defined by CDD.
      */
+    @Test
     public void testCpuAbi_valuesMatchPermitted() throws Exception {
         for (String abi : Build.SUPPORTED_ABIS) {
             if (abi.endsWith("-hwasan")) {
@@ -210,6 +224,7 @@ public class BuildTest extends TestCase {
         Pattern.compile("^([0-9A-Za-z._-]+)$");
 
     /** Tests that check for valid values of constants in Build. */
+    @Test
     public void testBuildConstants() {
         // Build.VERSION.* constants tested by BuildVersionTest
 
@@ -263,6 +278,8 @@ public class BuildTest extends TestCase {
     /**
      * Tests that check for valid values of codenames related constants.
      */
+    @Test
+    @IgnoreUnderRavenwood(reason = "No shell commands")
     public void testBuildCodenameConstants() {
         // CUR_DEVELOPMENT must be larger than any released version.
         Field[] fields = Build.VERSION_CODES.class.getDeclaredFields();
@@ -324,6 +341,7 @@ public class BuildTest extends TestCase {
      * Verify that SDK versions are bounded by both high and low expected
      * values.
      */
+    @Test
     public void testSdkInt() {
         assertTrue(
                 "Current SDK version " + Build.VERSION.SDK_INT
@@ -347,6 +365,7 @@ public class BuildTest extends TestCase {
     /**
      * Verify that MEDIA_PERFORMANCE_CLASS are bounded by both high and low expected values.
      */
+    @Test
     public void testMediaPerformanceClass() {
         // media performance class value of 0 is valid
         if (Build.VERSION.MEDIA_PERFORMANCE_CLASS == 0) {
