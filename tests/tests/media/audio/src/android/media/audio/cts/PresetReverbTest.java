@@ -16,16 +16,20 @@
 
 package android.media.audio.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.media.audiofx.AudioEffect;
-import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.audiofx.PresetReverb;
 import android.media.cts.NonMediaMainlineTest;
-import android.media.cts.PostProcTestBase;
 import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
-import android.test.AndroidTestCase;
 import android.util.Log;
+
+import org.junit.Test;
 
 @NonMediaMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
@@ -49,6 +53,7 @@ public class PresetReverbTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 0.0: test constructor and release
+    @Test
     public void test0_0ConstructorAndRelease() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -77,6 +82,7 @@ public class PresetReverbTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 1.0: test presets
+    @Test
     public void test1_0Presets() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -101,6 +107,7 @@ public class PresetReverbTest extends PostProcTestBase {
     }
 
     //Test case 1.1: test properties
+    @Test
     public void test1_1Properties() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -132,6 +139,7 @@ public class PresetReverbTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 2.0: test setEnabled() and getEnabled() in valid state
+    @Test
     public void test2_0SetEnabledGetEnabled() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -150,6 +158,7 @@ public class PresetReverbTest extends PostProcTestBase {
     }
 
     //Test case 2.1: test setEnabled() throws exception after release
+    @Test
     public void test2_1SetEnabledAfterRelease() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -170,6 +179,7 @@ public class PresetReverbTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 3.0: test control status listener
+    @Test
     public void test3_0ControlStatusListener() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -195,6 +205,7 @@ public class PresetReverbTest extends PostProcTestBase {
     }
 
     //Test case 3.1: test enable status listener
+    @Test
     public void test3_1EnableStatusListener() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
@@ -222,6 +233,7 @@ public class PresetReverbTest extends PostProcTestBase {
     }
 
     //Test case 3.2: test parameter changed listener
+    @Test
     public void test3_2ParameterChangedListener() throws Exception {
         if (!isPresetReverbAvailable()) {
             return;
