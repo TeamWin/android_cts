@@ -437,12 +437,12 @@ public class ZenPolicyTest {
     public void testAllowPriorityChannels() {
         ZenPolicy.Builder builder = new ZenPolicy.Builder();
         ZenPolicy policy = builder.allowPriorityChannels(true).build();
-        assertEquals(ZenPolicy.STATE_ALLOW, policy.getPriorityChannels());
+        assertEquals(ZenPolicy.STATE_ALLOW, policy.getPriorityChannelsAllowed());
         assertAllPriorityCategoriesUnset(policy);
         assertAllVisualEffectsUnset(policy);
 
         policy = builder.allowPriorityChannels(false).build();
-        assertEquals(ZenPolicy.STATE_DISALLOW, policy.getPriorityChannels());
+        assertEquals(ZenPolicy.STATE_DISALLOW, policy.getPriorityChannelsAllowed());
         assertAllPriorityCategoriesUnset(policy);
         assertAllVisualEffectsUnset(policy);
     }
