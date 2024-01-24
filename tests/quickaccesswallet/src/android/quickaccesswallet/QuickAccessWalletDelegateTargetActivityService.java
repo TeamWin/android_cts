@@ -21,10 +21,8 @@ import android.content.Intent;
 
 import androidx.annotation.Nullable;
 
-/**
- * Extends {@link TestQuickAccessWalletService} to allow for a different manifest configuration.
- */
-public class QuickAccessWalletDelegateTargetActivityService extends TestQuickAccessWalletService {
+public class QuickAccessWalletDelegateTargetActivityService extends
+        TestBaseQuickAccessWalletService {
 
     @Nullable
     @Override
