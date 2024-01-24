@@ -149,6 +149,10 @@ public class JobThrottlingTest {
         mDeviceConfigStateHelper.set(
                 new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_JOB_SCHEDULER)
                         .setInt("min_ready_non_active_jobs_count", 0)
+                        // Disable batching behavior.
+                        .setInt("min_ready_cpu_only_jobs_count", 0)
+                        .setInt("min_ready_non_active_jobs_count", 0)
+                        .setString("conn_transport_batch_threshold", "")
                         // Disable flex behavior.
                         .setInt("fc_applied_constraints", 0).build());
         mActivityManagerDeviceConfigStateHelper =
