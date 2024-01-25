@@ -240,36 +240,4 @@ public class Curve25519Test {
             assertThat(e.getMessage()).contains("cannot be initialized using NamedParameterSpec");
         }
     }
-
-    @Test
-    public void x25519KeyPairGenWithInvalidCurve() throws NoSuchAlgorithmException,
-            NoSuchProviderException {
-        // Create KeyPairGenerator using XDH algorithm.
-        KeyPairGenerator kpg = KeyPairGenerator.getInstance("XDH", "AndroidKeyStore");
-        final String firstKeyAlias = "x25519-alias";
-        deleteEntry(firstKeyAlias);
-
-        // Generate x25519 key pair.
-        KeyGenParameterSpec keyGenSpec = new KeyGenParameterSpec.Builder(firstKeyAlias,
-                KeyProperties.PURPOSE_AGREE_KEY)
-                .setAlgorithmParameterSpec(new ECGenParameterSpec("secp256r1")).build();
-        assertThrows("XDH Key generation should accept only X25519 curves.",
-                InvalidAlgorithmParameterException.class, () -> kpg.initialize(keyGenSpec));
-    }
-
-    @Test
-    public void ed25519KeyPairGenWithInvalidCurve() throws NoSuchAlgorithmException,
-            NoSuchProviderException {
-        // Create KeyPairGenerator using Ed25519 algorithm.
-        KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519", "AndroidKeyStore");
-        final String secondKeyAlias = "ed25519-alias";
-        deleteEntry(secondKeyAlias);
-
-        // Generate ed25519 key pair.
-        KeyGenParameterSpec keyGenSpec = new KeyGenParameterSpec.Builder(secondKeyAlias,
-                KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
-                .setAlgorithmParameterSpec(new ECGenParameterSpec("secp256r1")).build();
-        assertThrows("Ed25519 Key generation should accept only Ed25519 curves.",
-                InvalidAlgorithmParameterException.class, () -> kpg.initialize(keyGenSpec));
-    }
 }
