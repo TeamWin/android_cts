@@ -31,6 +31,13 @@
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="appops set android.packageinstaller.tapjacking.cts REQUEST_INSTALL_PACKAGES allow" />
         <option name="teardown-command" value="appops set android.packageinstaller.tapjacking.cts REQUEST_INSTALL_PACKAGES default" />
+        <!-- Ensure the UI is ready and in an idle state before running tests -->
+        <option name="run-command" value="input keyevent KEYCODE_WAKEUP" />
+        <option name="run-command" value="wm dismiss-keyguard" />
+        <!-- Collapse notifications -->
+        <option name="run-command" value="cmd statusbar collapse" />
+        <!-- dismiss all system dialogs before launch test -->
+        <option name="run-command" value="am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
