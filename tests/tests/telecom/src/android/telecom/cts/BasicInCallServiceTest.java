@@ -32,8 +32,6 @@ import android.text.TextUtils;
 
 import com.android.compatibility.common.util.CddTest;
 
-import org.junit.Test;
-
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -65,7 +63,7 @@ public class BasicInCallServiceTest extends InstrumentationTestCase {
 
     @CddTest(requirement = "7.4.1.2/C-1-3")
     public void testResolveInCallIntent() {
-        if (!shouldTestTelecom(mContext)) {
+        if (!shouldTestTelecom(mContext) || !TestUtils.hasTelephonyFeature(mContext)) {
             return;
         }
         PackageManager packageManager = mContext.getPackageManager();
@@ -96,7 +94,7 @@ public class BasicInCallServiceTest extends InstrumentationTestCase {
      * SIM card inserted.
      */
     public void testTelephonyCall_bindsToInCallServiceAndAddsCall() {
-        if (!shouldTestTelecom(mContext)) {
+        if (!shouldTestTelecom(mContext) || !TestUtils.hasTelephonyFeature(mContext)) {
             return;
         }
 
