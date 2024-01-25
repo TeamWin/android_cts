@@ -121,8 +121,6 @@ public class RequirementConstants {
     public static final String CONCURRENT_REAR_FRONT_SUPPORTED = "rear_front_concurrent_camera";
     public static final String REAR_CAMERA_PREVIEW_STABILIZATION_SUPPORTED =
             "rear_camera_preview_stabilization_supported";
-    public static final String FRONT_CAMERA_PREVIEW_STABILIZATION_SUPPORTED =
-            "front_camera_preview_stabilization_supported";
     public static final String REAR_CAMERA_LOGICAL_MULTI_CAMERA_REQ_MET =
             "rear_camera_logical_multi_camera_req_met";
     public static final String FRONT_CAMERA_LOGICAL_MULTI_CAMERA_REQ_MET =
