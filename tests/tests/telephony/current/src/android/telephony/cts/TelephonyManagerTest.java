@@ -6875,9 +6875,9 @@ public class TelephonyManagerTest {
     @Test
     @ApiTest(apis = {
             "android.telephony.TelephonyManager#isNullCipherNotificationsEnabled",
-            "android.telephony.TelephonyManager#setEnableNullCipherNotifications"})
+            "android.telephony.TelephonyManager#setNullCipherNotificationsEnabled"})
     @RequiresFlagsEnabled(Flags.FLAG_ENABLE_MODEM_CIPHER_TRANSPARENCY)
-    public void testSetEnableNullCipherNotifications() {
+    public void testsetNullCipherNotificationsEnabled() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
         if (mNetworkHalVersion < RADIO_HAL_VERSION_2_2) {
             Log.d(TAG,
@@ -6886,13 +6886,13 @@ public class TelephonyManagerTest {
         }
 
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                (tm) -> tm.setEnableNullCipherNotifications(true));
+                (tm) -> tm.setNullCipherNotificationsEnabled(true));
         boolean enabled = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.isNullCipherNotificationsEnabled());
         assertTrue(enabled);
 
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                (tm) -> tm.setEnableNullCipherNotifications(false));
+                (tm) -> tm.setNullCipherNotificationsEnabled(false));
         enabled = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.isNullCipherNotificationsEnabled());
         assertFalse(enabled);
@@ -6901,7 +6901,7 @@ public class TelephonyManagerTest {
     @Test
     @ApiTest(apis = {
             "android.telephony.TelephonyManager#isNullCipherNotificationsEnabled",
-            "android.telephony.TelephonyManager#setEnableNullCipherNotifications"})
+            "android.telephony.TelephonyManager#setNullCipherNotificationsEnabled"})
     @RequiresFlagsEnabled(Flags.FLAG_ENABLE_MODEM_CIPHER_TRANSPARENCY)
     public void testNullCipherNotificationsPermissions() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
@@ -6912,7 +6912,7 @@ public class TelephonyManagerTest {
         }
 
         assertThrows(SecurityException.class, () -> {
-                    mTelephonyManager.setEnableNullCipherNotifications(true);
+                    mTelephonyManager.setNullCipherNotificationsEnabled(true);
                 }
         );
 
