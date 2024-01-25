@@ -20,9 +20,11 @@ import android.app.AppOpsManager
 import android.app.AppOpsManager.OPSTR_READ_CONTACTS
 import android.app.AppOpsManager.OPSTR_WIFI_SCAN
 import android.app.AppOpsManager.OP_FLAGS_ALL
+import android.content.Context
 import android.content.Intent
 import android.content.ComponentName
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.AsbSecurityTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
@@ -189,8 +191,58 @@ class AttributionTest {
         installApk("AppWithLongAttributionTag.apk")
     }
 
+    @AsbSecurityTest(cveBugId = [304983146])
     @Test(expected = AssertionError::class)
     fun cannotUseTooManyAttributions() {
         installApk("AppWithTooManyAttributions.apk")
+    }
+
+    @AsbSecurityTest(cveBugId = [304983146])
+    @Test
+    fun noteProxyOpDoesNotPersistInvalidAttribution() {
+        noteProxyOpForAttribution("invalid", ATTRIBUTION_1)
+        assertThat(getPersistedAttribution(ATTRIBUTION_1))
+                .isNull()
+    }
+
+    @AsbSecurityTest(cveBugId = [304983146])
+    @Test
+    fun noteProxyOpPersistsValidAttribution() {
+        noteProxyOpForAttribution(ATTRIBUTION_2, ATTRIBUTION_2)
+        assertThat(getPersistedAttribution(ATTRIBUTION_2))
+                .isEqualTo(ATTRIBUTION_2)
+    }
+
+    @AsbSecurityTest(cveBugId = [304983146])
+    @Test
+    fun startProxyOpDoesNotPersistInvalidAttribution() {
+        startProxyOpForAttribution("invalid", ATTRIBUTION_1)
+        assertThat(getPersistedAttribution(ATTRIBUTION_1))
+                .isNull()
+    }
+
+    @AsbSecurityTest(cveBugId = [304983146])
+    @Test
+    fun startProxyOpPersistsValidAttribution() {
+        startProxyOpForAttribution(ATTRIBUTION_2, ATTRIBUTION_2)
+        assertThat(getPersistedAttribution(ATTRIBUTION_2))
+                .isEqualTo(ATTRIBUTION_2)
+    }
+
+    private fun noteProxyOpForAttribution(attributionForContextCreation: String, attributionForNoteOp: String) {
+        val ctx = context.createAttributionContext(attributionForContextCreation)
+        val appOpsManager = ctx.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        appOpsManager.noteProxyOp(OPSTR_WIFI_SCAN, APP_PKG, appUid, attributionForNoteOp, "message")
+    }
+
+    private fun startProxyOpForAttribution(attributionForContextCreation: String, attributionForNoteOp: String) {
+        val ctx = context.createAttributionContext(attributionForContextCreation)
+        val appOpsManager = ctx.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        appOpsManager.startProxyOp(OPSTR_WIFI_SCAN, appUid, APP_PKG, attributionForNoteOp,"message")
+    }
+
+    private fun getPersistedAttribution(attribution: String) : String? {
+        val entry = getOpEntry(appUid, APP_PKG, OPSTR_WIFI_SCAN) as AppOpsManager.OpEntry
+        return entry.attributedOpEntries[attribution]?.getLastProxyInfo(OP_FLAGS_ALL)?.attributionTag
     }
 }
