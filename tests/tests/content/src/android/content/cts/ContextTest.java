@@ -17,6 +17,9 @@
 package android.content.cts;
 
 import static android.Manifest.permission.READ_WALLPAPER_INTERNAL;
+import static android.content.cts.contenturitestapp.IContentUriTestService.PKG_ACCESS_TYPE_GENERAL;
+import static android.content.cts.contenturitestapp.IContentUriTestService.PKG_ACCESS_TYPE_GRANT;
+import static android.content.cts.contenturitestapp.IContentUriTestService.PKG_ACCESS_TYPE_NONE;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
@@ -35,6 +38,7 @@ import android.app.Activity;
 import android.app.AppOpsManager;
 import android.app.BroadcastOptions;
 import android.app.Instrumentation;
+import android.app.Service;
 import android.app.WallpaperManager;
 import android.content.ActivityNotFoundException;
 import android.content.AttributionSource;
@@ -46,6 +50,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.cts.contenturitestapp.IContentUriTestService;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Resources.NotFoundException;
@@ -69,6 +74,9 @@ import android.os.Looper;
 import android.os.Process;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -85,6 +93,7 @@ import com.android.cts.IBinderPermissionTestService;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -132,6 +141,7 @@ public class ContextTest {
     public static final String NOT_GRANTED_PERMISSION = "android.permission.HARDWARE_TEST";
 
     private static final int BROADCAST_TIMEOUT = 10000;
+    private static final int SERVICE_TIMEOUT = 15000;
     private static final int ROOT_UID = 0;
 
     /**
@@ -140,6 +150,15 @@ public class ContextTest {
     private static final String EXTERNAL_APP_BROADCAST_COMMAND =
             "am broadcast -a " + ResultReceiver.MOCK_ACTION + " -f "
                     + Intent.FLAG_RECEIVER_FOREGROUND;
+
+    /* TestService for testCheckContentUriPermissionFull tests. */
+    private static final String PKG_TEST_SERVICE = "android.content.cts.contenturitestapp";
+    private static final String CLS_TEST_SERVICE = PKG_TEST_SERVICE + ".TestService";
+    private static final ComponentName COMPONENT_CONTENT_URI_TEST_SERVICE =
+            new ComponentName(PKG_TEST_SERVICE, CLS_TEST_SERVICE);
+
+    private IContentUriTestService mContentUriTestService;
+    private ServiceConnection mContentUriServiceConnection;
 
     private Object mLockObj;
 
@@ -151,6 +170,10 @@ public class ContextTest {
     private ServiceConnection mBinderPermissionTestConnection;
 
     protected Context mContext;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     /**
      * Returns the Context object that's being tested.
@@ -1376,7 +1399,7 @@ public class ContextTest {
 
         int retValue = mContext.checkCallingOrSelfUriPermission(uri,
                 Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        assertEquals(PackageManager.PERMISSION_DENIED, retValue);
+        assertEquals(PERMISSION_DENIED, retValue);
     }
 
     @Test
@@ -1389,21 +1412,21 @@ public class ContextTest {
     public void testCheckPermissionGranted() {
         int returnValue = mContext.checkPermission(
                 GRANTED_PERMISSION, Process.myPid(), Process.myUid());
-        assertEquals(PackageManager.PERMISSION_GRANTED, returnValue);
+        assertEquals(PERMISSION_GRANTED, returnValue);
     }
 
     @Test
     public void testCheckPermissionNotGranted() {
         int returnValue = mContext.checkPermission(
                 NOT_GRANTED_PERMISSION, Process.myPid(), Process.myUid());
-        assertEquals(PackageManager.PERMISSION_DENIED, returnValue);
+        assertEquals(PERMISSION_DENIED, returnValue);
     }
 
     @Test
     public void testCheckPermissionRootUser() {
         // Test with root user, everything will be granted.
         int returnValue = mContext.checkPermission(NOT_GRANTED_PERMISSION, 1, ROOT_UID);
-        assertEquals(PackageManager.PERMISSION_GRANTED, returnValue);
+        assertEquals(PERMISSION_GRANTED, returnValue);
     }
 
     @Test
@@ -1417,19 +1440,19 @@ public class ContextTest {
 
         // Test with invalid uid and included granted permission.
         int returnValue = mContext.checkPermission(GRANTED_PERMISSION, 1, -11);
-        assertEquals(PackageManager.PERMISSION_DENIED, returnValue);
+        assertEquals(PERMISSION_DENIED, returnValue);
     }
 
     @Test
     public void testCheckSelfPermissionGranted() {
         int returnValue = mContext.checkSelfPermission(GRANTED_PERMISSION);
-        assertEquals(PackageManager.PERMISSION_GRANTED, returnValue);
+        assertEquals(PERMISSION_GRANTED, returnValue);
     }
 
     @Test
     public void testCheckSelfPermissionNotGranted() {
         int returnValue = mContext.checkSelfPermission(NOT_GRANTED_PERMISSION);
-        assertEquals(PackageManager.PERMISSION_DENIED, returnValue);
+        assertEquals(PERMISSION_DENIED, returnValue);
     }
 
     @Test
@@ -1454,10 +1477,10 @@ public class ContextTest {
     public void testCheckCallingOrSelfPermission_noIpc() {
         // There's no ongoing Binder call, so this package's permissions are checked.
         int retValue = mContext.checkCallingOrSelfPermission(GRANTED_PERMISSION);
-        assertEquals(PackageManager.PERMISSION_GRANTED, retValue);
+        assertEquals(PERMISSION_GRANTED, retValue);
 
         retValue = mContext.checkCallingOrSelfPermission(NOT_GRANTED_PERMISSION);
-        assertEquals(PackageManager.PERMISSION_DENIED, retValue);
+        assertEquals(PERMISSION_DENIED, retValue);
     }
 
     @Test
@@ -1466,11 +1489,11 @@ public class ContextTest {
         try {
             int retValue = mBinderPermissionTestService.doCheckCallingOrSelfPermission(
                     GRANTED_PERMISSION);
-            assertEquals(PackageManager.PERMISSION_GRANTED, retValue);
+            assertEquals(PERMISSION_GRANTED, retValue);
 
             retValue = mBinderPermissionTestService.doCheckCallingOrSelfPermission(
                     NOT_GRANTED_PERMISSION);
-            assertEquals(PackageManager.PERMISSION_DENIED, retValue);
+            assertEquals(PERMISSION_DENIED, retValue);
         } finally {
             mContext.unbindService(mBinderPermissionTestConnection);
         }
@@ -1511,7 +1534,7 @@ public class ContextTest {
     public void testCheckCallingPermission_noIpc() {
         // Denied because no IPC is active.
         int retValue = mContext.checkCallingPermission(GRANTED_PERMISSION);
-        assertEquals(PackageManager.PERMISSION_DENIED, retValue);
+        assertEquals(PERMISSION_DENIED, retValue);
     }
 
     @Test
@@ -1548,11 +1571,11 @@ public class ContextTest {
         try {
             int returnValue = mBinderPermissionTestService.doCheckCallingPermission(
                     GRANTED_PERMISSION);
-            assertEquals(PackageManager.PERMISSION_GRANTED, returnValue);
+            assertEquals(PERMISSION_GRANTED, returnValue);
 
             returnValue = mBinderPermissionTestService.doCheckCallingPermission(
                     NOT_GRANTED_PERMISSION);
-            assertEquals(PackageManager.PERMISSION_DENIED, returnValue);
+            assertEquals(PERMISSION_DENIED, returnValue);
         } finally {
             mContext.unbindService(mBinderPermissionTestConnection);
         }
@@ -1578,7 +1601,7 @@ public class ContextTest {
         assertTrue("Service not bound", mContext.bindService(
                 intent, mBinderPermissionTestConnection, Context.BIND_AUTO_CREATE));
 
-        new PollingCheck(15 * 1000) {
+        new PollingCheck(SERVICE_TIMEOUT) {
             protected boolean check() {
                 return mBinderPermissionTestService != null; // Service was bound.
             }
@@ -1614,11 +1637,11 @@ public class ContextTest {
 
         int retValue = mContext.checkUriPermission(uri, Binder.getCallingPid(), 0,
                 Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        assertEquals(PackageManager.PERMISSION_GRANTED, retValue);
+        assertEquals(PERMISSION_GRANTED, retValue);
 
         retValue = mContext.checkUriPermission(uri, Binder.getCallingPid(),
                 Binder.getCallingUid(), Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        assertEquals(PackageManager.PERMISSION_DENIED, retValue);
+        assertEquals(PERMISSION_DENIED, retValue);
     }
 
     @Test
@@ -1628,12 +1651,169 @@ public class ContextTest {
         int retValue = mContext.checkUriPermission(uri, NOT_GRANTED_PERMISSION,
                 NOT_GRANTED_PERMISSION, Binder.getCallingPid(), 0,
                 Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        assertEquals(PackageManager.PERMISSION_GRANTED, retValue);
+        assertEquals(PERMISSION_GRANTED, retValue);
 
         retValue = mContext.checkUriPermission(uri, NOT_GRANTED_PERMISSION,
                 NOT_GRANTED_PERMISSION, Binder.getCallingPid(), Binder.getCallingUid(),
                 Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        assertEquals(PackageManager.PERMISSION_DENIED, retValue);
+        assertEquals(PERMISSION_DENIED, retValue);
+    }
+
+    @RequiresFlagsEnabled(android.security.Flags.FLAG_CONTENT_URI_PERMISSION_APIS)
+    @Test
+    public void testCheckContentUriPermissionFull_exceptionsAndNonExistentProviders() {
+        final int myPid = Process.myPid();
+        final int myUid = Process.myUid();
+        final Uri nonExistentContentUri = Uri.parse("content://provider.does.not.exist");
+        final Uri fileUri = Uri.parse("file://some.file");
+        try {
+            mContext.checkContentUriPermissionFull(nonExistentContentUri, myPid, myUid,
+                    /* modeFlags */ 0);
+            fail("Shouldn't accept non-access mode flags");
+        } catch (IllegalArgumentException expected) {
+        }
+
+        try {
+            mContext.checkContentUriPermissionFull(nonExistentContentUri, myPid, myUid,
+                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+            fail("Shouldn't accept non-access mode flags");
+        } catch (IllegalArgumentException expected) {
+        }
+
+        try {
+            mContext.checkContentUriPermissionFull(fileUri, myPid, myUid,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            fail("Shouldn't accept non-content URIs");
+        } catch (IllegalArgumentException expected) {
+        }
+
+        int res = mContext.checkContentUriPermissionFull(fileUri, myPid, Process.INVALID_UID,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        String msg = "Should return PERMISSION_DENIED for an invalid UID";
+        assertEquals(msg, PERMISSION_DENIED, res);
+
+        // Non-existent content URI
+        res = mContext.checkContentUriPermissionFull(nonExistentContentUri, myPid,
+                myUid, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        msg = "Should return PERMISSION_DENIED for a non-existent content URI";
+        assertEquals(msg, PERMISSION_DENIED, res);
+    }
+
+    /**
+     * This test does the following:
+     * 1. Binds to TestService in {@link android.content.cts.contenturitestapp}.
+     * 2. Sends a message to TestService requesting a content URI that this package has (or doesn't
+     *    have) access to via grants or general permissions.
+     * 3. Checks the result from checkContentUriPermissionFull().
+     */
+    @RequiresFlagsEnabled(android.security.Flags.FLAG_CONTENT_URI_PERMISSION_APIS)
+    @Test
+    public void testCheckContentUriPermissionFull_withGrantsAndGeneralAccess() {
+        try {
+            setUpContentUriTestServiceConnection();
+
+            internalTestCheckContentUriPermissionFull(PKG_ACCESS_TYPE_NONE,
+                    /* modeFlagsTestHasAccessTo */ 0);
+
+            int[] packageAccessTypeValues = new int[] {
+                    PKG_ACCESS_TYPE_GRANT,
+                    PKG_ACCESS_TYPE_GENERAL
+            };
+            int[] modeFlagsTestHasAccessToValues = new int[] {
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            };
+
+            for (int packageAccessType: packageAccessTypeValues) {
+                for (int modeFlagsTestHasAccessTo: modeFlagsTestHasAccessToValues) {
+                    internalTestCheckContentUriPermissionFull(packageAccessType,
+                            modeFlagsTestHasAccessTo);
+                }
+            }
+        } catch (Exception e) {
+            fail(e.getMessage());
+        } finally {
+            mContext.unbindService(mContentUriServiceConnection);
+        }
+    }
+
+    private void setUpContentUriTestServiceConnection() {
+        mContentUriServiceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                mContentUriTestService = IContentUriTestService.Stub.asInterface(service);
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                mContentUriTestService = null;
+            }
+        };
+
+        Intent intent = new Intent();
+        intent.setComponent(COMPONENT_CONTENT_URI_TEST_SERVICE);
+        assertTrue(mContext.bindService(intent, mContentUriServiceConnection,
+                Service.BIND_AUTO_CREATE));
+
+        new PollingCheck(SERVICE_TIMEOUT) {
+            protected boolean check() {
+                return mContentUriTestService != null;
+            }
+        }.run();
+    }
+
+    private void internalTestCheckContentUriPermissionFull(int packageAccessType,
+            int modeFlagsTestHasAccessTo) throws Exception {
+        Uri contentUri = mContentUriTestService.getContentUri(packageAccessType,
+                modeFlagsTestHasAccessTo);
+        String argsInfo = "packageAccessType: " + packageAccessType + ", modeFlags: "
+                + modeFlagsTestHasAccessTo;
+        assertNotNull("Can't retrieve content URI for args (" + argsInfo + ")", contentUri);
+
+        boolean hasRead = (modeFlagsTestHasAccessTo & Intent.FLAG_GRANT_READ_URI_PERMISSION) != 0;
+        boolean hasWrite = (modeFlagsTestHasAccessTo & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != 0;
+        final int myPid = Process.myPid();
+        final int myUid = Process.myUid();
+
+        // Checks for read permission
+        String msg = getInternalContentUriErrorMessage(hasRead, "read", packageAccessType,
+                contentUri);
+        int expected = hasRead ? PERMISSION_GRANTED : PERMISSION_DENIED;
+        int actual = mContext.checkContentUriPermissionFull(contentUri, myPid, myUid,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        assertEquals(msg, expected, actual);
+
+        // Checks for write permission
+        msg = getInternalContentUriErrorMessage(hasWrite, "write", packageAccessType, contentUri);
+        expected = hasWrite ? PERMISSION_GRANTED : PERMISSION_DENIED;
+        actual = mContext.checkContentUriPermissionFull(contentUri, myPid, myUid,
+                Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        assertEquals(msg, expected, actual);
+
+        // Checks for read and write permissions
+        msg = getInternalContentUriErrorMessage(hasRead && hasWrite, "read and write",
+                packageAccessType, contentUri);
+        expected = (hasRead && hasWrite) ? PERMISSION_GRANTED : PERMISSION_DENIED;
+        actual = mContext.checkContentUriPermissionFull(contentUri, myPid, myUid,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        assertEquals(msg, expected, actual);
+    }
+
+    private String getInternalContentUriErrorMessage(boolean has, String permissions,
+            int packageAccessType, Uri contentUri) {
+        StringBuilder sb = new StringBuilder("Should");
+        if (!has) sb.append("n't");
+        sb.append(" have ");
+        sb.append(permissions);
+        sb.append(" for: ");
+        sb.append(contentUri);
+        if (packageAccessType == PKG_ACCESS_TYPE_GRANT) {
+            sb.append(" via grant");
+        } else if (packageAccessType == PKG_ACCESS_TYPE_GENERAL) {
+            sb.append(" via permission");
+        }
+        return sb.toString();
     }
 
     @Test
@@ -1658,7 +1838,7 @@ public class ContextTest {
 
         int retValue = mContext.checkCallingUriPermission(uri,
                 Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        assertEquals(PackageManager.PERMISSION_DENIED, retValue);
+        assertEquals(PERMISSION_DENIED, retValue);
     }
 
     @Test

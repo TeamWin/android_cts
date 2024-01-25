@@ -46,6 +46,11 @@
     <!-- Used for PackageManager test, don't delete this INTERNET permission -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
+    <!-- Used for ContextTest#testCheckContentUriPermissionFull tests -->
+    <uses-permission android:name="android.permission.ONLY_READ_TEST_PROVIDER_READ_PERMISSION" />
+    <uses-permission android:name="android.permission.ONLY_WRITE_TEST_PROVIDER_WRITE_PERMISSION" />
+    <uses-permission android:name="android.permission.READ_WRITE_TEST_PROVIDER_PERMISSION" />
+
     <!-- Used for PackageManager test, don't delete this permission-tree -->
     <permission-tree android:name="android.content.cts.permission.TEST_DYNAMIC"
          android:label="Test Tree"/>
