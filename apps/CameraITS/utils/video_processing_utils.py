@@ -27,7 +27,10 @@ import image_processing_utils
 
 
 AREA_720P_VIDEO = 1280*720
+COLORSPACE_SDR = 'bt709'
+COLORSPACE_HDR = 'bt2020'
 HR_TO_SEC = 3600
+INDEX_FIRST_SUBGROUP = 1
 MIN_TO_SEC = 60
 
 ITS_SUPPORTED_QUALITIES = (
@@ -332,7 +335,8 @@ def get_average_frame_rate(video_file_name_with_path):
     output = str(raw_output.decode('utf-8')).strip()
     logging.debug('ffprobe command %s output: %s', ' '.join(cmd), output)
     average_frame_rate_data = (
-        re.search(r'avg_frame_rate=*([0-9]+/[0-9]+)', output).group(1)
+        re.search(r'avg_frame_rate=*([0-9]+/[0-9]+)', output)
+        .group(INDEX_FIRST_SUBGROUP)
     )
     average_frame_rate = (int(average_frame_rate_data.split('/')[0]) /
                           int(average_frame_rate_data.split('/')[1]))
@@ -374,7 +378,8 @@ def get_frame_deltas(video_file_name_with_path, timestamp_type='pts'):
     for line in output:
       if timestamp_type not in line:
         continue
-      curr_time = float(re.search(r'time= *([0-9][0-9\.]*)', line).group(1))
+      curr_time = float(re.search(r'time= *([0-9][0-9\.]*)', line)
+                        .group(INDEX_FIRST_SUBGROUP))
       if prev_time is not None:
         deltas.append(curr_time - prev_time)
       prev_time = curr_time
@@ -382,3 +387,47 @@ def get_frame_deltas(video_file_name_with_path, timestamp_type='pts'):
     return deltas
   else:
     raise AssertionError('ffprobe failed to provide frame delta data')
+
+
+def get_video_colorspace(log_path, video_file_name):
+  """Get the video colorspace.
+
+  Args:
+    log_path: path for video file directory
+    video_file_name: name of the video file
+  Returns:
+    video colorspace, e.g. BT.2020 or BT.709
+  """
+
+  cmd = ['ffprobe',
+         '-show_streams',
+         '-select_streams',
+         'v:0',
+         '-of',
+         'json',
+         '-i',
+         os.path.join(log_path, video_file_name)
+         ]
+  logging.debug('Get the video colorspace')
+  raw_output = ''
+  try:
+    raw_output = subprocess.check_output(cmd,
+                                         stdin=subprocess.DEVNULL,
+                                         stderr=subprocess.STDOUT)
+  except subprocess.CalledProcessError as e:
+    raise AssertionError(str(e.output)) from e
+
+  logging.debug('raw_output: %s', raw_output)
+  if raw_output:
+    colorspace = ''
+    output = str(raw_output.decode('utf-8')).strip().split('\n')
+    logging.debug('output: %s', output)
+    for line in output:
+      logging.debug('line: %s', line)
+      metadata = re.search(r'"color_space": ("[a-z0-9]*")', line)
+      if metadata:
+        colorspace = metadata.group(INDEX_FIRST_SUBGROUP)
+    logging.debug('Colorspace: %s', colorspace)
+    return colorspace
+  else:
+    raise AssertionError('ffprobe failed to provide color space')
