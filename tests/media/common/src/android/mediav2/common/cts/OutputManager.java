@@ -461,7 +461,7 @@ public class OutputManager {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         if (!this.equalsPtsList(o)) return false;
-        if (!this.equalsByteOutput(o)) return false;
+        if (!this.equalsDequeuedOutput(o)) return false;
         return true;
     }
 
@@ -472,9 +472,48 @@ public class OutputManager {
         return arePtsListsIdentical(mOutPtsList, that.mOutPtsList, mSharedErrorLogs);
     }
 
+    public boolean equalsByteOutput(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        OutputManager that = (OutputManager) o;
+        boolean isEqual = true;
+        if (mMemIndex == that.mMemIndex) {
+            if (!Arrays.equals(mMemory, that.mMemory)) {
+                isEqual = false;
+                int count = 0;
+                StringBuilder msg = new StringBuilder();
+                for (int i = 0; i < mMemIndex; i++) {
+                    if (mMemory[i] != that.mMemory[i]) {
+                        count++;
+                        msg.append(String.format(Locale.getDefault(),
+                                "At offset %d, ref buffer val is %x and test buffer val is %x \n",
+                                i, mMemory[i], that.mMemory[i]));
+                        if (count == 20) {
+                            msg.append("stopping after 20 mismatches, ...\n");
+                            break;
+                        }
+                    }
+                }
+                if (count != 0) {
+                    mSharedErrorLogs.append("Ref and Test outputs are not identical \n");
+                    mSharedErrorLogs.append(msg);
+                }
+            }
+        } else {
+            isEqual = false;
+            mSharedErrorLogs.append("ref and test output sizes are not identical \n");
+            mSharedErrorLogs.append(
+                    String.format(Locale.getDefault(), "Ref output buffer size %d \n", mMemIndex));
+            mSharedErrorLogs.append(
+                    String.format(Locale.getDefault(), "Test output buffer size %d \n",
+                            that.mMemIndex));
+        }
+        return isEqual;
+    }
+
     // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
     // produce multiple progressive frames?) For now, do not verify timestamps.
-    public boolean equalsByteOutput(Object o) {
+    public boolean equalsDequeuedOutput(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         OutputManager that = (OutputManager) o;
@@ -529,36 +568,8 @@ public class OutputManager {
                         + "'true' to dump the outputs for further analysis. \n");
             }
         }
-        if (mMemIndex == that.mMemIndex) {
-            if (!Arrays.equals(mMemory, that.mMemory)) {
-                isEqual = false;
-                int count = 0;
-                StringBuilder msg = new StringBuilder();
-                for (int i = 0; i < mMemIndex; i++) {
-                    if (mMemory[i] != that.mMemory[i]) {
-                        count++;
-                        msg.append(String.format(Locale.getDefault(),
-                                "At offset %d, ref buffer val is %x and test buffer val is %x \n",
-                                i, mMemory[i], that.mMemory[i]));
-                        if (count == 20) {
-                            msg.append("stopping after 20 mismatches, ...\n");
-                            break;
-                        }
-                    }
-                }
-                if (count != 0) {
-                    mSharedErrorLogs.append("Ref and Test outputs are not identical \n");
-                    mSharedErrorLogs.append(msg);
-                }
-            }
-        } else {
+        if (!equalsByteOutput(that)) {
             isEqual = false;
-            mSharedErrorLogs.append("ref and test output sizes are not identical \n");
-            mSharedErrorLogs.append(
-                    String.format(Locale.getDefault(), "Ref output buffer size %d \n", mMemIndex));
-            mSharedErrorLogs.append(
-                    String.format(Locale.getDefault(), "Test output buffer size %d \n",
-                            that.mMemIndex));
         }
         return isEqual;
     }
