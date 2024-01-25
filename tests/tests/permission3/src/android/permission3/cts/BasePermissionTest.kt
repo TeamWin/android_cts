@@ -104,6 +104,11 @@ abstract class BasePermissionTest {
         @JvmStatic
         protected val isAutomotive =
             packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+        @JvmStatic
+        protected val isAutomotiveSplitscreen = isAutomotive &&
+            packageManager.hasSystemFeature(
+                    /* PackageManager.FEATURE_CAR_SPLITSCREEN_MULTITASKING */
+                    "android.software.car.splitscreen_multitasking")
     }
 
     @get:Rule
