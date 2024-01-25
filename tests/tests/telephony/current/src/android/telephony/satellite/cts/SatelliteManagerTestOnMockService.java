@@ -3327,9 +3327,28 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         setTestProviderLocation(32.909808231041644, -117.18185788819781);
         verifyIsSatelliteAllowed(true);
 
+        SatelliteModemStateCallbackTest callback = new SatelliteModemStateCallbackTest();
+        long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
+                getContext().getMainExecutor(), callback);
+        assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);
+        assertTrue(callback.waitUntilResult(1));
+        if (!isSatelliteEnabled()) {
+            requestSatelliteEnabled(true);
+            assertTrue(callback.waitUntilResult(1));
+            assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
+            assertTrue(isSatelliteEnabled());
+        }
+
         // Set current location to Google Bangalore office
         setTestProviderLocation(12.994021769576554, 12.994021769576554);
         verifyIsSatelliteAllowed(false);
+
+        // Even though satellite is not allowed at the current location, disabling satellite should
+        // succeed
+        requestSatelliteEnabled(false);
+        assertTrue(callback.waitUntilModemOff());
+        assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
+        assertFalse(isSatelliteEnabled());
 
         // Restore satellite access allowed
         setUpSatelliteAccessAllowed();
