@@ -677,6 +677,18 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         return MY_RESPONSE.deviceName;
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pGroup#setVendorData"})
+    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    @Test
+    public void testWifiP2pGroupSetAndGetVendorData() {
+        List<OuiKeyedData> vendorData = createTestOuiKeyedDataList(5);
+        WifiP2pGroup group = new WifiP2pGroup();
+        group.setVendorData(vendorData);
+        assertTrue(vendorData.equals(group.getVendorData()));
+    }
+
     @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#setDeviceName"})
     @Test
     public void testSetDeviceName() {
