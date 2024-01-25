@@ -116,7 +116,10 @@ public class BroadcastFreezerTest extends BaseBroadcastTest {
                 isProcessFrozen(testPid));
         SystemClock.sleep(APP_FREEZING_DELAY_MS + ERROR_MARGIN_MS
                 - (SystemClock.uptimeMillis() - startTimeMs));
-        assertTrue("Unfrozen for longer than expected", isProcessFrozen(testPid));
+        // Depending on the MCP limits, the process should have got killed or should be frozen at
+        // this point.
+        assertThrows("Process is still alive and unfrozen for longer than expected",
+                RemoteException.class, () -> cmdReceiver.getPid());
     }
 
     /**
