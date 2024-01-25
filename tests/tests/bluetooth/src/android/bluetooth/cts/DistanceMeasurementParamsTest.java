@@ -19,6 +19,8 @@ package android.bluetooth.cts;
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
 import static android.Manifest.permission.BLUETOOTH_PRIVILEGED;
 import static android.bluetooth.BluetoothStatusCodes.FEATURE_SUPPORTED;
+import static android.bluetooth.le.ChannelSoundingParams.CS_SECURITY_LEVEL_TWO;
+import static android.bluetooth.le.ChannelSoundingParams.LOCATION_TYPE_OUTDOOR;
 import static android.bluetooth.le.ChannelSoundingParams.SIGHT_TYPE_LINE_OF_SIGHT;
 import static android.bluetooth.le.DistanceMeasurementMethod.DISTANCE_MEASUREMENT_METHOD_RSSI;
 import static android.bluetooth.le.DistanceMeasurementParams.REPORT_FREQUENCY_HIGH;
@@ -150,6 +152,29 @@ public class DistanceMeasurementParamsTest {
         DistanceMeasurementParams params = new DistanceMeasurementParams.Builder(mDevice)
                 .setChannelSoundingParams(csParams).build();
         assertEquals(csParams, params.getChannelSoundingParams());
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_CHANNEL_SOUNDING)
+    @CddTest(requirements = {"7.4.3/C-2-1"})
+    @Test
+    public void readWriteParcelForCs() {
+        Parcel parcel = Parcel.obtain();
+        ChannelSoundingParams csParams = new ChannelSoundingParams.Builder()
+                .setSightType(SIGHT_TYPE_LINE_OF_SIGHT)
+                .setLocationType(LOCATION_TYPE_OUTDOOR)
+                .setCsSecurityLevel(CS_SECURITY_LEVEL_TWO)
+                .build();
+        DistanceMeasurementParams params = new DistanceMeasurementParams.Builder(mDevice)
+                .setChannelSoundingParams(csParams)
+                .build();
+        params.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        DistanceMeasurementParams paramsFromParcel =
+                DistanceMeasurementParams.CREATOR.createFromParcel(parcel);
+        ChannelSoundingParams csParamsFromParcel = paramsFromParcel.getChannelSoundingParams();
+        assertEquals(csParams.getSightType(), csParamsFromParcel.getSightType());
+        assertEquals(csParams.getLocationType(), csParamsFromParcel.getLocationType());
+        assertEquals(csParams.getCsSecurityLevel(), csParamsFromParcel.getCsSecurityLevel());
     }
 
     private void assertParamsEquals(DistanceMeasurementParams p, DistanceMeasurementParams other) {
