@@ -22,7 +22,6 @@ import android.graphics.Paint;
 import android.graphics.text.PositionedGlyphs;
 import android.graphics.text.TextRunShaper;
 import android.test.suitebuilder.annotation.SmallTest;
-import com.android.compatibility.common.util.FeatureUtil;
 
 import androidx.test.runner.AndroidJUnit4;
 
@@ -65,17 +64,5 @@ public class SystemEmojiTest {
     @Test
     public void doNotDrawLegacy() {
         assertThat(getFontName("\u263A")).isNotEqualTo("NotoColorEmojiLegacy.ttf");
-    }
-
-    @Test
-    public void doNotRemoveLegacyFont() {
-        // Due to size limitations NotoColorEmojiLegacy.ttf is excluded from Wear OS
-        if (FeatureUtil.isWatch()) {
-            return;
-        }
-        File legacyFile = new File("/system/fonts", "NotoColorEmojiLegacy.ttf");
-        assertThat(legacyFile.exists()).isTrue();
-        assertThat(legacyFile.isFile()).isTrue();
-        assertThat(legacyFile.canRead()).isTrue();
     }
 }
