@@ -218,27 +218,9 @@ public class USBAudioPeripheralAttributesActivity extends USBAudioPeripheralActi
                             " p" + ListsHelper.textFormatHex(attribs.mSampleRates) + "\n");
                 }
 
-                // Channel Masks
-                if (deviceInfo.getChannelIndexMasks().length == 0 &&
-                    deviceInfo.getChannelMasks().length == 0) {
-                    sb.append("Output - No Peripheral Channel Masks\n");
-                } else {
-                    // Channel Index Masks
-                    if (!ListsHelper.isSubset(deviceInfo.getChannelIndexMasks(),
-                            attribs.mChannelIndexMasks)) {
-                        sb.append("Output - Channel Index Masks Mismatch" +
-                                " d" + ListsHelper.textFormatHex(deviceInfo.getChannelIndexMasks()) +
-                                " p" + ListsHelper.textFormatHex(attribs.mChannelIndexMasks) + "\n");
-                    }
-
-                    // Channel Position Masks
-                    if (!ListsHelper.isSubset(deviceInfo.getChannelMasks(),
-                            attribs.mChannelPositionMasks)) {
-                        sb.append("Output - Channel Position Masks Mismatch" +
-                                " d" + ListsHelper.textFormatHex(deviceInfo.getChannelMasks()) +
-                                " p" + ListsHelper.textFormatHex(attribs.mChannelPositionMasks) + "\n");
-                    }
-                }
+                // Do not compare channel masks here as the USB devices may only report
+                // supported channel counts. In that case, different HALs may have different
+                // mapping from channel count to channel mask.
 
                 // Report
                 if (sb.toString().length() == 0){
@@ -286,24 +268,9 @@ public class USBAudioPeripheralAttributesActivity extends USBAudioPeripheralActi
                             " p" + ListsHelper.textFormatDecimal(attribs.mSampleRates) + "\n");
                 }
 
-                // Channel Masks
-                if (deviceInfo.getChannelIndexMasks().length == 0 &&
-                        deviceInfo.getChannelMasks().length == 0) {
-                    sb.append("Input - No Peripheral Channel Masks\n");
-                } else {
-                    if (!ListsHelper.isSubset(deviceInfo.getChannelIndexMasks(),
-                            attribs.mChannelIndexMasks)) {
-                        sb.append("Input - Channel Index Masks Mismatch" +
-                                " d" + ListsHelper.textFormatHex(deviceInfo.getChannelIndexMasks()) +
-                                " p" + ListsHelper.textFormatHex(attribs.mChannelIndexMasks) + "\n");
-                    }
-                    if (!ListsHelper.isSubset(deviceInfo.getChannelMasks(),
-                            attribs.mChannelPositionMasks)) {
-                        sb.append("Input - Channel Position Masks Mismatch" +
-                                " d" + ListsHelper.textFormatHex(deviceInfo.getChannelMasks()) +
-                                " p" + ListsHelper.textFormatHex(attribs.mChannelPositionMasks) + "\n");
-                    }
-                }
+                // Do not compare channel masks here as the USB devices may only report
+                // supported channel counts. In that case, different HALs may have different
+                // mapping from channel count to channel mask.
                 if (sb.toString().length() == 0){
                     metaSb.append("Input - Match\n");
                     inPass = true;
