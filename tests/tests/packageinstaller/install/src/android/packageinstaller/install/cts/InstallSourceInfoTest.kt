@@ -25,6 +25,7 @@ import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.TimeUnit
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -36,6 +37,20 @@ class InstallSourceInfoTest : PackageInstallerTestBase() {
     }
 
     private val ourPackageName = context.packageName
+
+    @Before
+    fun prepareDevice() {
+        // Unlock screen.
+        uiDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP")
+        // Dismiss keyguard, in case it's set as "Swipe to unlock".
+        uiDevice.executeShellCommand("wm dismiss-keyguard")
+        // Collapse notifications.
+        uiDevice.executeShellCommand("cmd statusbar collapse")
+        // Dismiss all system dialogs before launch test.
+        uiDevice.executeShellCommand("am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS")
+        // Disable AiAi.
+        uiDevice.executeShellCommand("settings put secure odi_captions_enabled 0")
+    }
 
     @Test
     fun installViaIntent() {
