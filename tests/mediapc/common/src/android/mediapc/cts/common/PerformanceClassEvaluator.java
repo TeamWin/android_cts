@@ -1596,14 +1596,9 @@ public class PerformanceClassEvaluator {
                     supported);
         }
 
-        public void setFrontPreviewStabilizationSupported(boolean supported) {
-            this.setMeasuredValue(RequirementConstants.FRONT_CAMERA_PREVIEW_STABILIZATION_SUPPORTED,
-                    supported);
-        }
-
         /**
          * [2.2.7.2/7.5/H-1-12] MUST support CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION
-         * for both primary front and primary back camera.
+         * for the primary back camera.
          */
         public static PreviewStabilizationRequirement createPreviewStabilizationReq() {
             RequiredMeasurement<Boolean> rearRequirement = RequiredMeasurement
@@ -1611,18 +1606,10 @@ public class PerformanceClassEvaluator {
                     .setId(RequirementConstants.REAR_CAMERA_PREVIEW_STABILIZATION_SUPPORTED)
                     .setPredicate(RequirementConstants.BOOLEAN_EQ)
                     .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
-                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, true)
-                    .build();
-            RequiredMeasurement<Boolean> frontRequirement = RequiredMeasurement
-                    .<Boolean>builder()
-                    .setId(RequirementConstants.FRONT_CAMERA_PREVIEW_STABILIZATION_SUPPORTED)
-                    .setPredicate(RequirementConstants.BOOLEAN_EQ)
-                    .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
-                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, true)
                     .build();
 
             return new PreviewStabilizationRequirement(RequirementConstants.R7_5__H_1_12,
-                    rearRequirement, frontRequirement);
+                    rearRequirement);
         }
     }
 
