@@ -39,6 +39,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.eventually
+import com.android.compatibility.common.util.SystemUtil.getEventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.UiAutomatorUtils
@@ -645,15 +646,15 @@ abstract class SensorPrivacyBaseTest(
             runWithShellPermissionIdentity {
                 assertTrue(km.setLock(KeyguardManager.PIN, pin, KeyguardManager.PIN, null))
             }
-            eventually {
+            getEventually {
                 uiDevice.pressKeyCode(KeyEvent.KEYCODE_SLEEP)
                 assumeFalse("Device never slept.", pm.isInteractive)
             }
-            eventually {
+            getEventually {
                 uiDevice.pressKeyCode(KeyEvent.KEYCODE_WAKEUP)
                 assumeTrue("Device never woke up.", pm.isInteractive)
             }
-            eventually {
+            getEventually {
                 assumeTrue("Device isn't locked", km.isDeviceLocked)
             }
 
@@ -664,16 +665,16 @@ abstract class SensorPrivacyBaseTest(
             }
 
             // Recycle the screen power in case the keyguard is stuck open
-            eventually {
+            getEventually {
                 uiDevice.pressKeyCode(KeyEvent.KEYCODE_SLEEP)
                 assumeFalse("Device never slept.", pm.isInteractive)
             }
-            eventually {
+            getEventually {
                 uiDevice.pressKeyCode(KeyEvent.KEYCODE_WAKEUP)
                 assumeTrue("Device never woke up.", pm.isInteractive)
             }
 
-            eventually {
+            getEventually {
                 assumeFalse("Device isn't unlocked", km.isDeviceLocked)
             }
         }
