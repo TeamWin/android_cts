@@ -305,6 +305,8 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.security.cts.CVE_2022_20429.PocActivity" />
+
         <service android:name="android.security.cts.AttributionSourceService"
             android:enabled="true"
             android:exported="true"
