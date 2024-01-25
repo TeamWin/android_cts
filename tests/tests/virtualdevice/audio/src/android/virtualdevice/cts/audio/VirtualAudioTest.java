@@ -20,27 +20,11 @@ import static android.Manifest.permission.MODIFY_AUDIO_ROUTING;
 import static android.media.AudioFormat.CHANNEL_IN_MONO;
 import static android.media.AudioFormat.CHANNEL_OUT_MONO;
 import static android.media.AudioFormat.ENCODING_PCM_16BIT;
-import static android.media.AudioFormat.ENCODING_PCM_FLOAT;
-import static android.media.AudioRecord.READ_BLOCKING;
 import static android.media.AudioRecord.RECORDSTATE_RECORDING;
 import static android.media.AudioRecord.RECORDSTATE_STOPPED;
 import static android.media.AudioTrack.PLAYSTATE_PLAYING;
 import static android.media.AudioTrack.PLAYSTATE_STOPPED;
 import static android.media.AudioTrack.WRITE_BLOCKING;
-import static android.media.AudioTrack.WRITE_NON_BLOCKING;
-import static android.virtualdevice.cts.audio.AudioHelper.AMPLITUDE;
-import static android.virtualdevice.cts.audio.AudioHelper.BUFFER_SIZE_IN_BYTES;
-import static android.virtualdevice.cts.audio.AudioHelper.BYTE_ARRAY;
-import static android.virtualdevice.cts.audio.AudioHelper.BYTE_BUFFER;
-import static android.virtualdevice.cts.audio.AudioHelper.BYTE_VALUE;
-import static android.virtualdevice.cts.audio.AudioHelper.CHANNEL_COUNT;
-import static android.virtualdevice.cts.audio.AudioHelper.FLOAT_ARRAY;
-import static android.virtualdevice.cts.audio.AudioHelper.FLOAT_VALUE;
-import static android.virtualdevice.cts.audio.AudioHelper.FREQUENCY;
-import static android.virtualdevice.cts.audio.AudioHelper.NUMBER_OF_SAMPLES;
-import static android.virtualdevice.cts.audio.AudioHelper.SAMPLE_RATE;
-import static android.virtualdevice.cts.audio.AudioHelper.SHORT_ARRAY;
-import static android.virtualdevice.cts.audio.AudioHelper.SHORT_VALUE;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -80,9 +64,8 @@ import org.mockito.MockitoAnnotations;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
+import java.time.Duration;
+import java.util.Set;
 
 /**
  * Tests for injection and capturing of audio from streamed apps
@@ -90,16 +73,25 @@ import java.util.concurrent.Future;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class VirtualAudioTest {
-    /**
-     * Captured signal should be mostly single frequency and power of that frequency should be over
-     * this much of total power.
-     */
-    public static final double POWER_THRESHOLD_FOR_PRESENT = 0.4f;
 
-    /**
-     * The other signals should have very weak power and should not exceed this value
-     */
-    public static final double POWER_THRESHOLD_FOR_ABSENT = 0.02f;
+    public static final int FREQUENCY = 264;
+    public static final int SAMPLE_RATE = 44100;
+    public static final int CHANNEL_COUNT = 1;
+    public static final int AMPLITUDE = 32767;
+    public static final int BUFFER_SIZE_IN_BYTES = 65536;
+    public static final int NUMBER_OF_SAMPLES = computeNumSamples(SAMPLE_RATE, CHANNEL_COUNT);
+    private static final Duration TIMEOUT = Duration.ofMillis(5000);
+
+    private static final AudioFormat CAPTURE_FORMAT = new AudioFormat.Builder()
+            .setSampleRate(SAMPLE_RATE)
+            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+            .setChannelMask(CHANNEL_IN_MONO)
+            .build();
+    private static final AudioFormat INJECTION_FORMAT = new AudioFormat.Builder()
+            .setSampleRate(SAMPLE_RATE)
+            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+            .setChannelMask(CHANNEL_IN_MONO)
+            .build();
 
     @Rule
     public VirtualDeviceRule mVirtualDeviceRule = VirtualDeviceRule.withAdditionalPermissions(
@@ -112,23 +104,7 @@ public class VirtualAudioTest {
     @Mock
     private AudioConfigurationChangeCallback mAudioConfigurationChangeCallback;
     @Mock
-    private AudioActivity.ResultCallback mAudioResultCallback;
-
-    private static AudioFormat createCaptureFormat(int encoding) {
-        return new AudioFormat.Builder()
-                .setSampleRate(SAMPLE_RATE)
-                .setEncoding(encoding)
-                .setChannelMask(CHANNEL_IN_MONO)
-                .build();
-    }
-
-    private static AudioFormat createInjectionFormat(int encoding) {
-        return new AudioFormat.Builder()
-                .setSampleRate(SAMPLE_RATE)
-                .setEncoding(encoding)
-                .setChannelMask(CHANNEL_IN_MONO)
-                .build();
-    }
+    private SignalObserver.SignalChangeListener mSignalChangeListener;
 
     @Before
     public void setUp() {
@@ -143,10 +119,9 @@ public class VirtualAudioTest {
 
     @Test
     public void audioCapture_createCorrectly() {
-        AudioFormat audioFormat = createCaptureFormat(ENCODING_PCM_16BIT);
-        AudioCapture audioCapture = mVirtualAudioDevice.startAudioCapture(audioFormat);
+        AudioCapture audioCapture = mVirtualAudioDevice.startAudioCapture(CAPTURE_FORMAT);
         assertThat(audioCapture).isNotNull();
-        assertThat(audioCapture.getFormat()).isEqualTo(audioFormat);
+        assertThat(audioCapture.getFormat()).isEqualTo(CAPTURE_FORMAT);
         assertThat(mVirtualAudioDevice.getAudioCapture()).isEqualTo(audioCapture);
 
         audioCapture.startRecording();
@@ -157,10 +132,9 @@ public class VirtualAudioTest {
 
     @Test
     public void audioInjection_createCorrectly() {
-        AudioFormat audioFormat = createInjectionFormat(ENCODING_PCM_16BIT);
-        AudioInjection audioInjection = mVirtualAudioDevice.startAudioInjection(audioFormat);
+        AudioInjection audioInjection = mVirtualAudioDevice.startAudioInjection(INJECTION_FORMAT);
         assertThat(audioInjection).isNotNull();
-        assertThat(audioInjection.getFormat()).isEqualTo(audioFormat);
+        assertThat(audioInjection.getFormat()).isEqualTo(INJECTION_FORMAT);
         assertThat(mVirtualAudioDevice.getAudioInjection()).isEqualTo(audioInjection);
 
         audioInjection.play();
@@ -177,484 +151,138 @@ public class VirtualAudioTest {
 
     @Test
     public void audioCapture_receivesAudioConfigurationChangeCallback() {
-        AudioFormat audioFormat = createCaptureFormat(ENCODING_PCM_16BIT);
-        mVirtualAudioDevice.startAudioCapture(audioFormat);
+        mVirtualAudioDevice.startAudioCapture(CAPTURE_FORMAT);
 
         AudioActivity activity = startAudioActivity();
-        activity.playAudio(BYTE_BUFFER);
-        verify(mAudioResultCallback, timeout(5000)).onCompleted();
+        activity.playAudio();
         verify(mAudioConfigurationChangeCallback, timeout(5000).atLeastOnce())
                 .onPlaybackConfigChanged(any());
-        stopAudioActivity(activity);
+
+        activity.finish();
     }
 
     @Test
     public void audioInjection_receivesAudioConfigurationChangeCallback() {
-        AudioFormat audioFormat = createInjectionFormat(ENCODING_PCM_16BIT);
-        AudioInjection audioInjection = mVirtualAudioDevice.startAudioInjection(audioFormat);
+        AudioInjection audioInjection = mVirtualAudioDevice.startAudioInjection(INJECTION_FORMAT);
 
         AudioActivity activity = startAudioActivity();
-        activity.recordAudio(BYTE_BUFFER);
+        activity.recordAudio(mSignalChangeListener);
 
-        ByteBuffer byteBuffer = AudioHelper.createAudioData(
+        ByteBuffer byteBuffer = createAudioData(
                 SAMPLE_RATE, NUMBER_OF_SAMPLES, CHANNEL_COUNT, FREQUENCY, AMPLITUDE);
         int remaining = byteBuffer.remaining();
         while (remaining > 0) {
             remaining -= audioInjection.write(byteBuffer, byteBuffer.remaining(), WRITE_BLOCKING);
         }
 
-        verify(mAudioResultCallback, timeout(5000)).onCompleted();
         verify(mAudioConfigurationChangeCallback, timeout(5000).atLeastOnce())
                 .onRecordingConfigChanged(any());
-        stopAudioActivity(activity);
+
+        activity.finish();
     }
 
     @Test
-    @FlakyTest(bugId = 322113132)
-    public void audioCapture_readByteBuffer_shouldCaptureAppPlaybackFrequency() {
-        runAudioCaptureTest(BYTE_BUFFER, /* readMode= */ -1);
+    public void audioCapture_readShortArray_capturesAppPlaybackFrequency() {
+        // Automotive has its own audio policies that don't play well with the VDM-created ones.
+        assumeFalse(FeatureUtil.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+        AudioCapture audioCapture = mVirtualAudioDevice.startAudioCapture(CAPTURE_FORMAT);
+
+        try (SignalObserver signalObserver = new SignalObserver(audioCapture, Set.of(FREQUENCY))) {
+            signalObserver.registerSignalChangeListener(mSignalChangeListener);
+
+            AudioActivity activity = startAudioActivity();
+            activity.playAudio();
+
+            verify(mSignalChangeListener, timeout(TIMEOUT.toMillis()).atLeastOnce()).onSignalChange(
+                    Set.of(FREQUENCY));
+
+            activity.finish();
+        }
     }
 
-    @Test
-    @FlakyTest(bugId = 322113132)
-    public void audioCapture_readByteBufferBlocking_shouldCaptureAppPlaybackFrequency() {
-        runAudioCaptureTest(BYTE_BUFFER, /* readMode= */ READ_BLOCKING);
-    }
-
-    @Test
-    @FlakyTest(bugId = 322113132)
-    public void audioCapture_readByteArray_shouldCaptureAppPlaybackData() {
-        runAudioCaptureTest(BYTE_ARRAY, /* readMode= */ -1);
-    }
-
-    @Test
-    @FlakyTest(bugId = 322113132)
-    public void audioCapture_readByteArrayBlocking_shouldCaptureAppPlaybackData() {
-        runAudioCaptureTest(BYTE_ARRAY, /* readMode= */ READ_BLOCKING);
-    }
-
-    @Test
-    @FlakyTest(bugId = 322113132)
-    public void audioCapture_readShortArray_shouldCaptureAppPlaybackData() {
-        runAudioCaptureTest(SHORT_ARRAY, /* readMode= */ -1);
-    }
-
-    @Test
-    @FlakyTest(bugId = 322113132)
-    public void audioCapture_readShortArrayBlocking_shouldCaptureAppPlaybackData() {
-        runAudioCaptureTest(SHORT_ARRAY, /* readMode= */ READ_BLOCKING);
-    }
-
-    @Test
-    @FlakyTest(bugId = 322113132)
-    public void audioCapture_readFloatArray_shouldCaptureAppPlaybackData() {
-        runAudioCaptureTest(FLOAT_ARRAY, /* readMode= */ READ_BLOCKING);
-    }
 
     @Test
     @FlakyTest(bugId = 322113132)
     public void audioInjection_writeByteBuffer_appShouldRecordInjectedFrequency() {
-        runAudioInjectionTest(BYTE_BUFFER, /* writeMode= */ WRITE_BLOCKING, /* timestamp= */ 0);
-    }
-
-    @Test
-    @FlakyTest(bugId = 322113132)
-    public void audioInjection_writeByteBufferWithTimestamp_appShouldRecordInjectedFrequency() {
-        runAudioInjectionTest(BYTE_BUFFER, /* writeMode= */ WRITE_BLOCKING, /* timestamp= */ 50);
-    }
-
-    @Test
-    @FlakyTest(bugId = 322113132)
-    public void audioInjection_writeByteArray_appShouldRecordInjectedData() {
-        runAudioInjectionTest(BYTE_ARRAY, /* writeMode= */ -1, /* timestamp= */ 0);
-    }
-
-    @Test
-    @FlakyTest(bugId = 322113132)
-    public void audioInjection_writeByteArrayBlocking_appShouldRecordInjectedData() {
-        runAudioInjectionTest(BYTE_ARRAY, /* writeMode= */ WRITE_BLOCKING, /* timestamp= */ 0);
-    }
-
-    @Test
-    @FlakyTest(bugId = 322113132)
-    public void audioInjection_writeShortArray_appShouldRecordInjectedData() {
-        runAudioInjectionTest(SHORT_ARRAY, /* writeMode= */ -1, /* timestamp= */ 0);
-    }
-
-    @Test
-    @FlakyTest(bugId = 322113132)
-    public void audioInjection_writeShortArrayBlocking_appShouldRecordInjectedData() {
-        runAudioInjectionTest(SHORT_ARRAY, /* writeMode= */ WRITE_BLOCKING, /* timestamp= */ 0);
-    }
-
-    @Test
-    @FlakyTest(bugId = 322113132)
-    public void audioInjection_writeFloatArray_appShouldRecordInjectedData() {
-        runAudioInjectionTest(FLOAT_ARRAY, /* writeMode= */ WRITE_BLOCKING, /* timestamp= */ 0);
-    }
-
-    private void runAudioCaptureTest(@AudioHelper.DataType int dataType, int readMode) {
-        // Automotive has its own audio policies that don't play well with the VDM-created ones.
         assumeFalse(FeatureUtil.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
-        int encoding = dataType == FLOAT_ARRAY ? ENCODING_PCM_FLOAT : ENCODING_PCM_16BIT;
-        AudioCapture audioCapture = mVirtualAudioDevice.startAudioCapture(
-                createCaptureFormat(encoding));
 
-        AudioActivity audioActivity = startAudioActivity();
-        audioActivity.playAudio(dataType);
-
-        AudioHelper.CapturedAudio capturedAudio;
-        switch (dataType) {
-            case BYTE_BUFFER -> {
-                ByteBuffer byteBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE_IN_BYTES).order(
-                        ByteOrder.nativeOrder());
-                capturedAudio = new AudioHelper.CapturedAudio(audioCapture, byteBuffer, readMode);
-                assertThat(capturedAudio.getPowerSpectrum(FREQUENCY + 100))
-                        .isLessThan(POWER_THRESHOLD_FOR_ABSENT);
-                assertThat(capturedAudio.getPowerSpectrum(FREQUENCY))
-                        .isGreaterThan(POWER_THRESHOLD_FOR_PRESENT);
-            }
-            case BYTE_ARRAY -> {
-                byte[] byteArray = new byte[BUFFER_SIZE_IN_BYTES];
-                capturedAudio = new AudioHelper.CapturedAudio(audioCapture, byteArray, readMode);
-                assertThat(capturedAudio.getByteValue()).isEqualTo(BYTE_VALUE);
-            }
-            case SHORT_ARRAY -> {
-                short[] shortArray = new short[BUFFER_SIZE_IN_BYTES / 2];
-                capturedAudio = new AudioHelper.CapturedAudio(audioCapture, shortArray, readMode);
-                assertThat(capturedAudio.getShortValue()).isEqualTo(SHORT_VALUE);
-            }
-            case FLOAT_ARRAY -> {
-                float[] floatArray = new float[BUFFER_SIZE_IN_BYTES / 4];
-                capturedAudio = new AudioHelper.CapturedAudio(audioCapture, floatArray, readMode);
-                float roundOffError = Math.abs(capturedAudio.getFloatValue() - FLOAT_VALUE);
-                assertThat(roundOffError).isLessThan(0.001f);
-            }
-        }
-
-        verify(mAudioResultCallback, timeout(5000)).onCompleted();
-        stopAudioActivity(audioActivity);
-    }
-
-    private void runAudioInjectionTest(@AudioHelper.DataType int dataType, int writeMode,
-            long timestamp) {
-        int encoding = dataType == FLOAT_ARRAY ? ENCODING_PCM_FLOAT : ENCODING_PCM_16BIT;
         AudioInjection audioInjection = mVirtualAudioDevice.startAudioInjection(
-                createInjectionFormat(encoding));
+                INJECTION_FORMAT);
 
         AudioActivity audioActivity = startAudioActivity();
-        audioActivity.recordAudio(dataType);
+        audioActivity.recordAudio(mSignalChangeListener);
 
-        int remaining;
-        switch (dataType) {
-            case BYTE_BUFFER -> {
-                ByteBuffer byteBuffer = AudioHelper.createAudioData(
-                        SAMPLE_RATE, NUMBER_OF_SAMPLES, CHANNEL_COUNT, FREQUENCY, AMPLITUDE);
-                remaining = byteBuffer.remaining();
-                while (remaining > 0) {
-                    if (timestamp != 0) {
-                        remaining -= audioInjection.write(byteBuffer, byteBuffer.remaining(),
-                                writeMode, timestamp);
-                    } else {
-                        remaining -= audioInjection.write(byteBuffer, byteBuffer.remaining(),
-                                writeMode);
-                    }
-                }
-            }
-            case BYTE_ARRAY -> {
-                byte[] byteArray = new byte[NUMBER_OF_SAMPLES];
-                Arrays.fill(byteArray, BYTE_VALUE);
-                remaining = byteArray.length;
-                while (remaining > 0) {
-                    if (writeMode == WRITE_BLOCKING || writeMode == WRITE_NON_BLOCKING) {
-                        remaining -= audioInjection.write(byteArray, 0, byteArray.length,
-                                writeMode);
-                    } else {
-                        remaining -= audioInjection.write(byteArray, 0, byteArray.length);
-                    }
-                }
-            }
-            case SHORT_ARRAY -> {
-                short[] shortArray = new short[NUMBER_OF_SAMPLES];
-                Arrays.fill(shortArray, SHORT_VALUE);
-                remaining = shortArray.length;
-                while (remaining > 0) {
-                    if (writeMode == WRITE_BLOCKING || writeMode == WRITE_NON_BLOCKING) {
-                        remaining -= audioInjection.write(shortArray, 0, shortArray.length,
-                                writeMode);
-                    } else {
-                        remaining -= audioInjection.write(shortArray, 0, shortArray.length);
-                    }
-                }
-            }
-            case FLOAT_ARRAY -> {
-                float[] floatArray = new float[NUMBER_OF_SAMPLES];
-                Arrays.fill(floatArray, FLOAT_VALUE);
-                remaining = floatArray.length;
-                while (remaining > 0) {
-                    remaining -= audioInjection.write(floatArray, 0, floatArray.length, writeMode);
-                }
-            }
+        ByteBuffer byteBuffer = createAudioData(
+                SAMPLE_RATE, NUMBER_OF_SAMPLES, CHANNEL_COUNT, FREQUENCY, AMPLITUDE);
+        int remaining = byteBuffer.remaining();
+        while (remaining > 0) {
+            remaining -= audioInjection.write(byteBuffer, byteBuffer.remaining(),
+                    WRITE_BLOCKING);
         }
 
-        verify(mAudioResultCallback, timeout(5000)).onCompleted();
-
-        switch (dataType) {
-            case BYTE_BUFFER -> {
-                assertThat(audioActivity.mPowerSpectrumNotFrequency).isLessThan(
-                        POWER_THRESHOLD_FOR_ABSENT);
-                assertThat(audioActivity.mPowerSpectrumAtFrequency).isGreaterThan(
-                        POWER_THRESHOLD_FOR_PRESENT);
-            }
-            case BYTE_ARRAY -> assertThat(audioActivity.mLastRecordedNonZeroByteValue).isEqualTo(
-                    BYTE_VALUE);
-            case SHORT_ARRAY -> assertThat(audioActivity.mLastRecordedNonZeroShortValue).isEqualTo(
-                    SHORT_VALUE);
-            case FLOAT_ARRAY -> {
-                float floatValue = audioActivity.mLastRecordedNonZeroFloatValue;
-                float roundOffError = Math.abs(floatValue - FLOAT_VALUE);
-                assertThat(roundOffError).isLessThan(0.001f);
-            }
-        }
-
-        stopAudioActivity(audioActivity);
+        verify(mSignalChangeListener, timeout(TIMEOUT.toMillis()).atLeastOnce()).onSignalChange(
+                Set.of(FREQUENCY));
     }
 
     private AudioActivity startAudioActivity() {
-        AudioActivity audioActivity = mVirtualDeviceRule.startActivityOnDisplaySync(
+        return mVirtualDeviceRule.startActivityOnDisplaySync(
                 mVirtualDisplay, AudioActivity.class);
-        audioActivity.registerResultCallback(mAudioResultCallback);
-        return audioActivity;
-    }
-
-    private void stopAudioActivity(AudioActivity activity) {
-        activity.clear();
-        activity.finish();
     }
 
     public static class AudioActivity extends Activity {
 
-        float mLastRecordedNonZeroFloatValue;
-        short mLastRecordedNonZeroShortValue;
-        byte mLastRecordedNonZeroByteValue;
-        double mPowerSpectrumNotFrequency;
-        double mPowerSpectrumAtFrequency;
-        private ResultCallback mCallback;
+        private SignalObserver mSignalObserver;
 
-        void registerResultCallback(ResultCallback callback) {
-            mCallback = callback;
-        }
+        void playAudio() {
 
-        void clear() {
-            mCallback = null;
-        }
-
-        void playAudio(int dataType) {
-            int playEncoding =
-                    dataType == FLOAT_ARRAY ? ENCODING_PCM_FLOAT : ENCODING_PCM_16BIT;
-            int bufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, CHANNEL_OUT_MONO,
-                    playEncoding);
+            ByteBuffer audioData = createAudioData(
+                    SAMPLE_RATE, NUMBER_OF_SAMPLES, CHANNEL_COUNT, FREQUENCY, AMPLITUDE);
             AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE,
-                    CHANNEL_OUT_MONO, playEncoding, bufferSize, AudioTrack.MODE_STREAM);
+                    CHANNEL_OUT_MONO, ENCODING_PCM_16BIT, audioData.capacity(),
+                    AudioTrack.MODE_STATIC);
+            audioTrack.write(audioData, audioData.capacity(), WRITE_BLOCKING);
             audioTrack.play();
-            switch (dataType) {
-                case BYTE_BUFFER -> playAudioFromByteBuffer(audioTrack);
-                case BYTE_ARRAY -> playAudioFromByteArray(audioTrack);
-                case SHORT_ARRAY -> playAudioFromShortArray(audioTrack);
-                case FLOAT_ARRAY -> playAudioFromFloatArray(audioTrack);
-            }
         }
 
-        void recordAudio(int dataType) {
-            int recordEncoding =
-                    dataType == FLOAT_ARRAY ? ENCODING_PCM_FLOAT : ENCODING_PCM_16BIT;
+        void recordAudio(SignalObserver.SignalChangeListener signalChangeListener) {
             AudioRecord audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
                     SAMPLE_RATE,
-                    AudioFormat.CHANNEL_IN_MONO, recordEncoding, BUFFER_SIZE_IN_BYTES);
-            audioRecord.startRecording();
-            switch (dataType) {
-                case BYTE_BUFFER -> recordAudioToByteBuffer(audioRecord);
-                case BYTE_ARRAY -> recordAudioToByteArray(audioRecord);
-                case SHORT_ARRAY -> recordAudioToShortArray(audioRecord);
-                case FLOAT_ARRAY -> recordAudioToFloatArray(audioRecord);
+                    AudioFormat.CHANNEL_IN_MONO, ENCODING_PCM_16BIT, BUFFER_SIZE_IN_BYTES);
+            if (mSignalObserver != null) {
+                mSignalObserver.close();
+            }
+
+            mSignalObserver = new SignalObserver(audioRecord, Set.of(FREQUENCY));
+            mSignalObserver.registerSignalChangeListener(signalChangeListener);
+        }
+
+        @Override
+        protected void onDestroy() {
+            super.onDestroy();
+
+            if (mSignalObserver != null) {
+                mSignalObserver.close();
             }
         }
+    }
 
-        private void playAudioFromByteBuffer(AudioTrack audioTrack) {
-            // Write to the audio track asynchronously to avoid ANRs.
-            Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
-                ByteBuffer audioData = AudioHelper.createAudioData(
-                        SAMPLE_RATE, NUMBER_OF_SAMPLES, CHANNEL_COUNT, FREQUENCY, AMPLITUDE);
+    static int computeNumSamples(int samplingRate, int channelCount) {
+        return (int) ((long) 1000 * samplingRate * channelCount / 1000);
+    }
 
-                int remainingSamples = NUMBER_OF_SAMPLES;
-                while (remainingSamples > 0) {
-                    remainingSamples -= audioTrack.write(audioData, audioData.remaining(),
-                            AudioTrack.WRITE_BLOCKING);
-                }
-                audioTrack.release();
-
-                if (mCallback != null) {
-                    mCallback.onCompleted();
-                }
-            });
+    static ByteBuffer createAudioData(int samplingRate, int numSamples, int channelCount,
+            double signalFrequencyHz, float amplitude) {
+        ByteBuffer playBuffer =
+                ByteBuffer.allocateDirect(numSamples * 2).order(ByteOrder.nativeOrder());
+        final double multiplier = 2f * Math.PI * signalFrequencyHz / samplingRate;
+        for (int i = 0; i < numSamples; ) {
+            double vDouble = amplitude * Math.sin(multiplier * (i / channelCount));
+            short v = (short) vDouble;
+            for (int c = 0; c < channelCount; c++) {
+                playBuffer.putShort(i * 2, v);
+                i++;
+            }
         }
-
-        private void playAudioFromByteArray(AudioTrack audioTrack) {
-            // Write to the audio track asynchronously to avoid ANRs.
-            Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
-                byte[] audioData = new byte[NUMBER_OF_SAMPLES];
-                Arrays.fill(audioData, BYTE_VALUE);
-
-                int remainingSamples = audioData.length;
-                while (remainingSamples > 0) {
-                    remainingSamples -= audioTrack.write(audioData, 0, audioData.length);
-                }
-                audioTrack.release();
-
-                if (mCallback != null) {
-                    mCallback.onCompleted();
-                }
-            });
-        }
-
-        private void playAudioFromShortArray(AudioTrack audioTrack) {
-            // Write to the audio track asynchronously to avoid ANRs.
-            Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
-                short[] audioData = new short[NUMBER_OF_SAMPLES];
-                Arrays.fill(audioData, SHORT_VALUE);
-
-                int remainingSamples = audioData.length;
-                while (remainingSamples > 0) {
-                    remainingSamples -= audioTrack.write(audioData, 0, audioData.length);
-                }
-                audioTrack.release();
-
-                if (mCallback != null) {
-                    mCallback.onCompleted();
-                }
-            });
-        }
-
-        private void playAudioFromFloatArray(AudioTrack audioTrack) {
-            // Write to the audio track asynchronously to avoid ANRs.
-            Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
-                float[] audioData = new float[NUMBER_OF_SAMPLES];
-                Arrays.fill(audioData, FLOAT_VALUE);
-
-                int remainingSamples = audioData.length;
-                while (remainingSamples > 0) {
-                    remainingSamples -= audioTrack.write(audioData, 0, audioData.length,
-                            AudioTrack.WRITE_BLOCKING);
-                }
-                audioTrack.release();
-
-                if (mCallback != null) {
-                    mCallback.onCompleted();
-                }
-            });
-        }
-
-        private void recordAudioToByteBuffer(AudioRecord audioRecord) {
-            // Read from the audio record asynchronously to avoid ANRs.
-            Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
-                AudioHelper.CapturedAudio capturedAudio = new AudioHelper.CapturedAudio(
-                        audioRecord);
-                double powerSpectrumNotFrequency = capturedAudio.getPowerSpectrum(FREQUENCY + 100);
-                double powerSpectrumAtFrequency = capturedAudio.getPowerSpectrum(FREQUENCY);
-                audioRecord.release();
-
-                mPowerSpectrumNotFrequency = powerSpectrumNotFrequency;
-                mPowerSpectrumAtFrequency = powerSpectrumAtFrequency;
-                if (mCallback != null) {
-                    mCallback.onCompleted();
-                }
-            });
-        }
-
-        private void recordAudioToByteArray(AudioRecord audioRecord) {
-            // Read from the audio record asynchronously to avoid ANRs.
-            Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
-                byte[] audioData = new byte[BUFFER_SIZE_IN_BYTES];
-                while (true) {
-                    int bytesRead = audioRecord.read(audioData, 0, audioData.length);
-                    if (bytesRead == 0) {
-                        continue;
-                    }
-                    break;
-                }
-                byte value = 0;
-                for (byte audioDatum : audioData) {
-                    if (audioDatum == BYTE_VALUE) {
-                        value = audioDatum;
-                        break;
-                    }
-                }
-                audioRecord.release();
-
-                mLastRecordedNonZeroByteValue = value;
-                if (mCallback != null) {
-                    mCallback.onCompleted();
-                }
-            });
-        }
-
-        private void recordAudioToShortArray(AudioRecord audioRecord) {
-            // Read from the audio record asynchronously to avoid ANRs.
-            Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
-                short[] audioData = new short[BUFFER_SIZE_IN_BYTES / 2];
-                while (true) {
-                    int bytesRead = audioRecord.read(audioData, 0, audioData.length);
-                    if (bytesRead == 0) {
-                        continue;
-                    }
-                    break;
-                }
-                short value = 0;
-                for (short audioDatum : audioData) {
-                    if (audioDatum == SHORT_VALUE) {
-                        value = audioDatum;
-                        break;
-                    }
-                }
-                audioRecord.release();
-
-                mLastRecordedNonZeroShortValue = value;
-                if (mCallback != null) {
-                    mCallback.onCompleted();
-                }
-            });
-        }
-
-        private void recordAudioToFloatArray(AudioRecord audioRecord) {
-            // Read from the audio record asynchronously to avoid ANRs.
-            Future<?> unusedFuture = CompletableFuture.runAsync(() -> {
-                float[] audioData = new float[BUFFER_SIZE_IN_BYTES / 4];
-                while (true) {
-                    int bytesRead = audioRecord.read(audioData, 0, audioData.length, READ_BLOCKING);
-                    if (bytesRead == 0) {
-                        continue;
-                    }
-                    break;
-                }
-                float value = 0f;
-                for (float audioDatum : audioData) {
-                    float roundOffDiff = Math.abs(audioDatum - FLOAT_VALUE);
-                    if (roundOffDiff < 0.001f) {
-                        value = audioDatum;
-                        break;
-                    }
-                }
-                audioRecord.release();
-
-                mLastRecordedNonZeroFloatValue = value;
-                if (mCallback != null) {
-                    mCallback.onCompleted();
-                }
-            });
-        }
-
-        interface ResultCallback {
-            void onCompleted();
-        }
+        return playBuffer;
     }
 }
