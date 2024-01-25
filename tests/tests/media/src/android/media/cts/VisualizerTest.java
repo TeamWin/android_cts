@@ -34,12 +34,16 @@ import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.io.File;
 import java.util.UUID;
 
-import org.junit.Test;
-
 @AppModeFull(reason = "TODO: evaluate and port to instant")
+@RunWith(AndroidJUnit4.class)
 public class VisualizerTest extends PostProcTestBase {
 
     private String TAG = "VisualizerTest";
