@@ -68,6 +68,10 @@ public class SmsUsageMonitorShortCodeTest {
             new ShortCodeTest("al", "55600", SMS_CATEGORY_PREMIUM_SHORT_CODE),
             new ShortCodeTest("al", "654321", SMS_CATEGORY_NOT_SHORT_CODE),
 
+            new ShortCodeTest("ae", "625315", SMS_CATEGORY_NOT_SHORT_CODE),
+            new ShortCodeTest("ae", "6211", SMS_CATEGORY_POSSIBLE_PREMIUM_SHORT_CODE),
+            new ShortCodeTest("ae", "6253", SMS_CATEGORY_FREE_SHORT_CODE),
+
             new ShortCodeTest("am", "112", expectedReturnCode("112")),
             new ShortCodeTest("am", "101", SMS_CATEGORY_FREE_SHORT_CODE),
             new ShortCodeTest("am", "102", SMS_CATEGORY_FREE_SHORT_CODE),
@@ -153,6 +157,10 @@ public class SmsUsageMonitorShortCodeTest {
             new ShortCodeTest("cn", "1065123456", SMS_CATEGORY_FREE_SHORT_CODE),
             new ShortCodeTest("cn", "1066335588", SMS_CATEGORY_PREMIUM_SHORT_CODE),
 
+            new ShortCodeTest("co", "4912891", SMS_CATEGORY_NOT_SHORT_CODE),
+            new ShortCodeTest("co", "491272", SMS_CATEGORY_POSSIBLE_PREMIUM_SHORT_CODE),
+            new ShortCodeTest("co", "491289", SMS_CATEGORY_FREE_SHORT_CODE),
+
             new ShortCodeTest("cy", "112", SMS_CATEGORY_NOT_SHORT_CODE),
             new ShortCodeTest("cy", "116117", SMS_CATEGORY_FREE_SHORT_CODE),
             new ShortCodeTest("cy", "4321", SMS_CATEGORY_POSSIBLE_PREMIUM_SHORT_CODE),
@@ -192,6 +200,14 @@ public class SmsUsageMonitorShortCodeTest {
             new ShortCodeTest("dk", "1259", SMS_CATEGORY_PREMIUM_SHORT_CODE),
             new ShortCodeTest("dk", "16123", SMS_CATEGORY_POSSIBLE_PREMIUM_SHORT_CODE),
             new ShortCodeTest("dk", "987654321", SMS_CATEGORY_NOT_SHORT_CODE),
+
+            new ShortCodeTest("do", "9128922", SMS_CATEGORY_NOT_SHORT_CODE),
+            new ShortCodeTest("do", "912898", SMS_CATEGORY_POSSIBLE_PREMIUM_SHORT_CODE),
+            new ShortCodeTest("do", "912892", SMS_CATEGORY_FREE_SHORT_CODE),
+
+            new ShortCodeTest("ec", "4664534", SMS_CATEGORY_NOT_SHORT_CODE),
+            new ShortCodeTest("ec", "466499", SMS_CATEGORY_POSSIBLE_PREMIUM_SHORT_CODE),
+            new ShortCodeTest("ec", "466453", SMS_CATEGORY_FREE_SHORT_CODE),
 
             new ShortCodeTest("ee", "112", expectedReturnCode("112")),
             new ShortCodeTest("ee", "116117", SMS_CATEGORY_FREE_SHORT_CODE),
@@ -282,7 +298,13 @@ public class SmsUsageMonitorShortCodeTest {
             new ShortCodeTest("il", "5432", SMS_CATEGORY_POSSIBLE_PREMIUM_SHORT_CODE),
             new ShortCodeTest("il", "4422", SMS_CATEGORY_PREMIUM_SHORT_CODE),
             new ShortCodeTest("il", "4545", SMS_CATEGORY_PREMIUM_SHORT_CODE),
-            new ShortCodeTest("il", "98765", SMS_CATEGORY_NOT_SHORT_CODE),
+            new ShortCodeTest("il", "987651", SMS_CATEGORY_NOT_SHORT_CODE),
+            new ShortCodeTest("il", "374771", SMS_CATEGORY_NOT_SHORT_CODE),
+            new ShortCodeTest("il", "37499", SMS_CATEGORY_POSSIBLE_PREMIUM_SHORT_CODE),
+            new ShortCodeTest("il", "37477", SMS_CATEGORY_FREE_SHORT_CODE),
+            new ShortCodeTest("il", "668191", SMS_CATEGORY_NOT_SHORT_CODE),
+            new ShortCodeTest("il", "6688", SMS_CATEGORY_POSSIBLE_PREMIUM_SHORT_CODE),
+            new ShortCodeTest("il", "6681", SMS_CATEGORY_FREE_SHORT_CODE),
 
             new ShortCodeTest("it", "112", SMS_CATEGORY_NOT_SHORT_CODE),
             new ShortCodeTest("it", "116117", SMS_CATEGORY_FREE_SHORT_CODE),
@@ -346,6 +368,9 @@ public class SmsUsageMonitorShortCodeTest {
             new ShortCodeTest("mx", "7766", SMS_CATEGORY_PREMIUM_SHORT_CODE),
             new ShortCodeTest("mx", "23456", SMS_CATEGORY_POSSIBLE_PREMIUM_SHORT_CODE),
             new ShortCodeTest("mx", "53035", SMS_CATEGORY_PREMIUM_SHORT_CODE),
+            new ShortCodeTest("mx", "5503461", SMS_CATEGORY_NOT_SHORT_CODE),
+            new ShortCodeTest("mx", "550399", SMS_CATEGORY_POSSIBLE_PREMIUM_SHORT_CODE),
+            new ShortCodeTest("mx", "550346", SMS_CATEGORY_FREE_SHORT_CODE),
 
             new ShortCodeTest("my", "112", SMS_CATEGORY_NOT_SHORT_CODE),
             new ShortCodeTest("my", "1234", SMS_CATEGORY_NOT_SHORT_CODE),
@@ -353,6 +378,10 @@ public class SmsUsageMonitorShortCodeTest {
             new ShortCodeTest("my", "32298", SMS_CATEGORY_PREMIUM_SHORT_CODE),
             new ShortCodeTest("my", "33776", SMS_CATEGORY_PREMIUM_SHORT_CODE),
             new ShortCodeTest("my", "345678", SMS_CATEGORY_NOT_SHORT_CODE),
+
+            new ShortCodeTest("na", "400059", SMS_CATEGORY_NOT_SHORT_CODE),
+            new ShortCodeTest("na", "40009", SMS_CATEGORY_POSSIBLE_PREMIUM_SHORT_CODE),
+            new ShortCodeTest("na", "40005", SMS_CATEGORY_FREE_SHORT_CODE),
 
             new ShortCodeTest("nl", "112", SMS_CATEGORY_NOT_SHORT_CODE),
             new ShortCodeTest("nl", "116117", SMS_CATEGORY_FREE_SHORT_CODE),
