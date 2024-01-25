@@ -634,6 +634,9 @@ public class QuickAccessWalletClientTest {
                 .getUiAutomation().adoptShellPermissionIdentity(MANAGE_DEFAULT_APPLICATIONS);
         try {
             RoleManager roleManager = context.getSystemService(RoleManager.class);
+            if (!roleManager.isRoleAvailable(RoleManager.ROLE_WALLET)) {
+                return false;
+            }
             CountDownLatch countDownLatch = new CountDownLatch(1);
             AtomicReference<Boolean> result = new AtomicReference<>(false);
             roleManager.setDefaultApplication(RoleManager.ROLE_WALLET,
