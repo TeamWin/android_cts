@@ -102,8 +102,7 @@ class FontScaleConverterTest {
     @Test
     fun unnecessaryFontScalesReturnsNull() {
         assertThat(FontScaleConverter.forScale(0F)).isNull()
-        assertThat(FontScaleConverter.forScale(1F)).isNull()
-        assertThat(FontScaleConverter.forScale(1.1F)).isNull()
+        assertThat(FontScaleConverter.forScale(1.0F)).isNull()
         assertThat(FontScaleConverter.forScale(0.85F)).isNull()
     }
 
@@ -115,7 +114,7 @@ class FontScaleConverterTest {
         assertThat(FontScaleConverter.isNonLinearFontScalingActive(-1f)).isFalse()
         assertThat(FontScaleConverter.isNonLinearFontScalingActive(0.85f)).isFalse()
         assertThat(FontScaleConverter.isNonLinearFontScalingActive(1.02f)).isFalse()
-        assertThat(FontScaleConverter.isNonLinearFontScalingActive(1.10f)).isFalse()
+        assertThat(FontScaleConverter.isNonLinearFontScalingActive(1.10f)).isTrue()
         assertThat(FontScaleConverter.isNonLinearFontScalingActive(1.15f)).isTrue()
         assertThat(FontScaleConverter.isNonLinearFontScalingActive(1.1499999f))
                 .isTrue()
