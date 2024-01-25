@@ -28,16 +28,9 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeThat;
-import static org.junit.Assume.assumeTrue;
+import static com.google.common.truth.TruthJUnit.assume;
 
 import android.Manifest;
 import android.app.ActivityOptions;
@@ -86,8 +79,6 @@ import androidx.test.uiautomator.Until;
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.window.flags.Flags;
 
-import org.junit.Assume;
-import org.junit.AssumptionViolatedException;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -175,9 +166,9 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         launchActivity(APP_A.BACKGROUND_ACTIVITY);
 
         // If the activity launches, it means the START_ACTIVITIES_FROM_BACKGROUND permission works.
-        assertEquals("Launched activity should be at the top",
-                ComponentNameUtils.getActivityName(APP_A.BACKGROUND_ACTIVITY),
-                mWmState.getTopActivityName(0));
+        assertWithMessage("Launched activity should be at the top")
+                .that(mWmState.getTopActivityName(0))
+                .isEqualTo(ComponentNameUtils.getActivityName(APP_A.BACKGROUND_ACTIVITY));
     }
 
     @Test
@@ -193,6 +184,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     public void testBackgroundActivity_withinASMGracePeriod_isAllowed() throws Exception {
+        assumeSdkNewerThanUpsideDownCake();
         // Start AppA foreground activity
         startActivity(APP_A.FOREGROUND_ACTIVITY);
         // Don't press home button to avoid stop app switches
@@ -206,6 +198,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     @FlakyTest(bugId = 297339382)
     public void testBackgroundActivity_withinBalAfterAsmGracePeriod_isBlocked()
             throws Exception {
+        assumeSdkNewerThanUpsideDownCake();
         // Start AppA foreground activity
         startActivity(APP_A.FOREGROUND_ACTIVITY);
         // Don't press home button to avoid stop app switches
@@ -228,12 +221,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     public void testBackgroundActivityBlockedWhenForegroundActivityNotTop() throws Exception {
-        // Feature flag "ActivitySecurity__asm_restrictions_enabled" is set to 1 in
-        // BackgroundActivityTestBase. For backward compatibility reasons, it is only enabled
-        // for apps with targetSdkVersion starting Android V.
-        // TODO remove this assumption after V released.
-        assumeThat(mContext.getApplicationInfo().targetSdkVersion,
-                greaterThan(Build.VERSION_CODES.UPSIDE_DOWN_CAKE));
+        assumeSdkNewerThanUpsideDownCake();
 
         startActivity(APP_A.FOREGROUND_ACTIVITY);
         mContext.sendBroadcast(getLaunchActivitiesBroadcast(APP_A, APP_B.FOREGROUND_ACTIVITY));
@@ -318,6 +306,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     public void testActivityBlockedFromBgActivityInFgTask() {
+        assumeSdkNewerThanUpsideDownCake();
         // Launch Activity A, B in the same task with different processes.
         startActivity(APP_A.FOREGROUND_ACTIVITY);
         mContext.sendBroadcast(getLaunchActivitiesBroadcast(APP_A, APP_B.FOREGROUND_ACTIVITY));
@@ -971,8 +960,10 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     public void testDeviceOwner() throws Exception {
-        assumeTrue("Device doesn't support FEATURE_DEVICE_ADMIN",
-                mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN));
+        assume().withMessage("Device doesn't support FEATURE_DEVICE_ADMIN")
+                .that(mContext.getPackageManager()
+                        .hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN))
+                .isTrue();
 
         // Remove existing guest user. The device may already have a guest present if it is
         // configured with config_guestUserAutoCreated.
@@ -1003,7 +994,8 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
             Log.d(TAG, "users: " + cmdResult);
             cmdResult = runShellCommandOrThrow("dpm list-owner");
             Log.d(TAG, "device owners: " + cmdResult);
-            throw new AssumptionViolatedException("This test needs to be able to set device owner");
+            assume().withMessage("This test needs to be able to set device owner")
+                    .fail();
         }
 
         // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
@@ -1181,10 +1173,10 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     private void clickAllowBindWidget(Components app, ResultReceiver resultReceiver)
             throws Exception {
         PackageManager pm = mContext.getPackageManager();
-        Assume.assumeTrue(pm.hasSystemFeature(PackageManager.FEATURE_APP_WIDGETS));
+        assume().that(pm.hasSystemFeature(PackageManager.FEATURE_APP_WIDGETS)).isTrue();
         // Skip on auto and TV devices only as they don't support appwidget bind.
-        Assume.assumeFalse(pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
-        Assume.assumeFalse(pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY));
+        assume().that(pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)).isFalse();
+        assume().that(pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY)).isFalse();
 
         // Create appWidgetId so we can send it to app, to request bind widget and start config
         // activity.
@@ -1212,11 +1204,9 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
                 settingsPkgName = ri.activityInfo.packageName;
             }
         }
-        assertNotEquals("Cannot find settings app", "", settingsPkgName);
-
-        if (!device.wait(Until.hasObject(By.pkg(settingsPkgName)), 1000 * 10)) {
-            fail("Unable to start AllowBindAppWidgetActivity");
-        }
+        assertWithMessage("Cannot find settings app").that(settingsPkgName).isNotEmpty();
+        assertWithMessage("Unable to start AllowBindAppWidgetActivity")
+                .that(device.wait(Until.hasObject(By.pkg(settingsPkgName)), 1000 * 10)).isTrue();
         boolean buttonClicked = false;
         BySelector selector = By.clickable(true);
         List<UiObject2> objects = device.findObjects(selector);
@@ -1231,9 +1221,9 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
                 break;
             }
         }
-        if (!device.wait(Until.gone(By.pkg(settingsPkgName)), 1000 * 10) || !buttonClicked) {
-            fail("Create' button not found/clicked");
-        }
+        assertWithMessage("Create' button not found/clicked")
+                .that(device.wait(Until.gone(By.pkg(settingsPkgName)), 1000 * 10) && buttonClicked)
+                .isTrue();
 
         // Wait the bind widget activity goes away.
         waitUntilForegroundChanged(settingsPkgName, false,
@@ -1248,8 +1238,8 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     private void assumeSetupComplete() {
-        assumeThat(Settings.Secure.getInt(mContext.getContentResolver(),
-                Settings.Secure.USER_SETUP_COMPLETE, 0), is(1));
+        assume().that(Settings.Secure.getInt(mContext.getContentResolver(),
+                Settings.Secure.USER_SETUP_COMPLETE, 0)).isEqualTo(1);
     }
 
     private boolean checkPackageResumed(String pkg) {
@@ -1274,9 +1264,9 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     private void assertActivityNotResumed(Components app) throws Exception {
-        assertFalse("Test activity is resumed",
+        assertWithMessage("Test activity is resumed").that(
                 waitUntilForegroundChanged(app.APP_PACKAGE_NAME, true,
-                        ACTIVITY_NOT_RESUMED_TIMEOUT_MS));
+                        ACTIVITY_NOT_RESUMED_TIMEOUT_MS)).isFalse();
     }
 
     private void pressHomeAndResumeAppSwitch() {
@@ -1366,7 +1356,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         final int mode = allow ? MODE_ALLOWED : MODE_ERRORED;
         final String opStr = "android:system_alert_window";
         AppOpsUtils.setOpMode(packageName, opStr, mode);
-        assertEquals(AppOpsUtils.getOpMode(packageName, opStr), mode);
+        assertThat(AppOpsUtils.getOpMode(packageName, opStr)).isEqualTo(mode);
     }
 
     private static void startBackgroundActivity(TestServiceClient service, Components app)
@@ -1396,5 +1386,13 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     private static void sendPendingIntent(PendingIntent pi, TestServiceClient service)
             throws RemoteException {
         service.sendPendingIntent(pi, Bundle.EMPTY);
+    }
+
+    private void assumeSdkNewerThanUpsideDownCake() {
+        // Feature flag "ActivitySecurity__asm_restrictions_enabled" is set to 1 in
+        // BackgroundActivityTestBase. For backward compatibility reasons, it is only enabled
+        // for apps with targetSdkVersion starting Android V.
+        // TODO remove this assumption after V released.
+        assume().that(Build.VERSION.SDK_INT).isGreaterThan(Build.VERSION_CODES.UPSIDE_DOWN_CAKE);
     }
 }
