@@ -335,6 +335,8 @@ public class AssistantStackTests extends ActivityManagerTestBase {
         try (final AssistantSession assistantSession = new AssistantSession()) {
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
 
+            // start home to ensure the foreground app is no longer the assistant activity.
+            launchHomeActivity();
             // Launch the assistant
             launchActivityOnDisplayNoWait(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION,
                     mAssistantDisplayId);
