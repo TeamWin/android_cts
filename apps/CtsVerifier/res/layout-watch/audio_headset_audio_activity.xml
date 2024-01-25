@@ -18,6 +18,7 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:id="@+id/scrollView"
         android:padding="29dp">
 
     <LinearLayout
@@ -44,7 +45,6 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal" >
-
                     <Button
                             android:id="@+id/headset_analog_port_yes"
                             android:layout_width="wrap_content"
@@ -65,6 +65,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:id="@+id/headset_analog_plug_message"/>
+            <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/headset_analog_device_type"/>
             <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -132,7 +136,8 @@
             <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/analog_headset_keycodes_label"/>
+                    android:text="@string/analog_headset_keycodes_label"
+                    android:id="@+id/headset_keycodes"/>
             <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
