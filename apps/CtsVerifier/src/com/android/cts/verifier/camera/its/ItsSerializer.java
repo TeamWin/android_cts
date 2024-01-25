@@ -483,6 +483,10 @@ public class ItsSerializer {
         JSONObject jsonObj = new JSONObject();
         for (CaptureResult.Key<?> key : recordingResult.getKeys()) {
             Object value = recordingResult.getResult(key);
+            if (value == null) {
+                Logt.w(TAG, "Key value is null for: " + key.toString());
+                continue;
+            }
             Type keyType = value.getClass();
             MetadataEntry entry;
             if (keyType instanceof GenericArrayType) {
@@ -491,7 +495,11 @@ public class ItsSerializer {
                 entry = serializeEntry(keyType, key, value);
             }
             try {
-                jsonObj.put(entry.key, entry.value);
+                if (entry != null) {
+                    jsonObj.put(entry.key, entry.value);
+                } else {
+                    Logt.w(TAG, "Key entry is null for: " + key.toString());
+                }
             } catch (org.json.JSONException e) {
                 throw new ItsException("JSON error for key: " + key.getName() + ": ", e);
             }

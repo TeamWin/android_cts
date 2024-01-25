@@ -21,6 +21,7 @@ import static org.junit.Assert.fail;
 
 import android.app.Instrumentation;
 import android.hardware.input.InputManager;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.InputDevice;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -36,6 +37,7 @@ import org.junit.runner.RunWith;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class InputDeviceEnabledTest {
     private InputManager mInputManager;
 

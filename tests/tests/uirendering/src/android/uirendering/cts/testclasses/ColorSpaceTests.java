@@ -213,8 +213,7 @@ public class ColorSpaceTests extends ActivityTestBase {
         Color color = result.getColor(16, 16).convert(
                 ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB));
         if (color.red() > 1 || color.blue() > 1 || color.green() > 1) {
-            BitmapDumper.dumpBitmap(result, "testEmojiRespectsColorSpace",
-                    this.getClass().getName());
+            BitmapDumper.dumpBitmap(result);
             Assert.fail("Emoji failed colorspace conversion; got " + color.red() + ", "
                     + color.blue() + ", " + color.green());
         }
@@ -303,8 +302,7 @@ public class ColorSpaceTests extends ActivityTestBase {
             }
         }
         // All pixels failed
-        BitmapDumper.dumpBitmap(result, "testMultiAtlasGlyphsWithColorSpace",
-                this.getClass().getName());
+        BitmapDumper.dumpBitmap(result);
         Assert.fail("Failed to render render glyphs from multiple atlases while a colorspace"
                         + " conversion was set. All pixels were either white or black.");
     }

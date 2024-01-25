@@ -30,9 +30,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.cts.input.UinputTouchDevice
+import com.android.cts.input.inputeventmatchers.withCoords
+import com.android.cts.input.inputeventmatchers.withMotionAction
+import com.android.cts.input.inputeventmatchers.withSource
+import com.android.cts.input.inputeventmatchers.withToolType
+import org.hamcrest.Matchers.allOf
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -122,18 +126,19 @@ class DrawingTabletTest {
             assertEquals(transformToExpectedPoint(INJECTION_POINTS[i]), expected)
 
             if (expected != null) {
-                val downEvent = verifier.getMotionEvent()
-                assertEquals("action", MotionEvent.ACTION_DOWN, downEvent.actionMasked)
-                assertTrue(
-                    "source",
-                    downEvent.isFromSource(InputDevice.SOURCE_STYLUS or InputDevice.SOURCE_MOUSE)
-                )
-                assertEquals("tool type", MotionEvent.TOOL_TYPE_STYLUS, downEvent.getToolType(0))
-                assertEquals("x", expected.x, downEvent.x, EPSILON)
-                assertEquals("y", expected.y, downEvent.y, EPSILON)
+                verifier.assertReceivedMotion(allOf(
+                    withMotionAction(MotionEvent.ACTION_DOWN),
+                    withSource(InputDevice.SOURCE_STYLUS or InputDevice.SOURCE_MOUSE),
+                    withToolType(MotionEvent.TOOL_TYPE_STYLUS),
+                    withCoords(expected)
+                ))
 
-                verifier.assertReceivedMove(expected)
-                verifier.assertReceivedUp(expected)
+                verifier.assertReceivedMotion(
+                    allOf(withMotionAction(MotionEvent.ACTION_MOVE), withCoords(expected))
+                )
+                verifier.assertReceivedMotion(
+                    allOf(withMotionAction(MotionEvent.ACTION_UP), withCoords(expected))
+                )
             }
         }
         virtualDisplayRule.activity.assertNoEvents()

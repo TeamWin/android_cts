@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.View;
 import android.view.inspector.InspectionCompanion;
 import android.view.inspector.PropertyMapper;
@@ -41,6 +42,7 @@ import org.junit.runner.RunWith;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class StaticInspectionCompanionProviderTest {
     private StaticInspectionCompanionProvider mProvider;
 

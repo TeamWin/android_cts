@@ -27,6 +27,7 @@ import android.os.SystemClock;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.os.VibratorManager;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.cts.R;
@@ -55,6 +56,7 @@ import java.util.List;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class InputDeviceVibratorManagerTest {
     private static final String TAG = "InputDeviceVibratorTest";
     private InputManager mInputManager;

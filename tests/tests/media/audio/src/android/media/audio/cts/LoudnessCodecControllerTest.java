@@ -115,7 +115,7 @@ public class LoudnessCodecControllerTest {
             mAt.release();
             mAt = null;
         }
-        mLcc.release();
+        mLcc.close();
     }
 
     @Test
@@ -246,7 +246,7 @@ public class LoudnessCodecControllerTest {
     public void addMediaCodec_afterRelease_noUpdate() throws Exception {
         final MediaCodec mediaCodec = createMediaCodec(/*configure*/true);
         try {
-            mLcc.release();
+            mLcc.close();
             mLcc.addMediaCodec(mediaCodec);
             Thread.sleep(TEST_LOUDNESS_CALLBACK_TIMEOUT.toMillis());
 
@@ -310,7 +310,7 @@ public class LoudnessCodecControllerTest {
             mLcc.addMediaCodec(mediaCodec1);
             Thread.sleep(TEST_LOUDNESS_CALLBACK_TIMEOUT.toMillis());
 
-            mLcc.release();
+            mLcc.close();
             mLcc.addMediaCodec(mediaCodec2);
             Thread.sleep(TEST_LOUDNESS_CALLBACK_TIMEOUT.toMillis());
 

@@ -16,10 +16,18 @@
 
 package android.content.cts;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
+
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
 import android.platform.test.annotations.AppModeFull;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Test {@link ContextWrapper}.
@@ -34,15 +42,17 @@ import android.platform.test.annotations.AppModeFull;
  * in this class.
  */
 @AppModeFull // TODO(Instant) Figure out which APIs should work.
+@RunWith(JUnit4.class)
 public class ContextWrapperTest extends ContextTest {
 
     /**
      * Returns the ContextWrapper object that's being tested.
      */
     protected Context getContextUnderTest() {
-        return new ContextWrapper(getContext());
+        return new ContextWrapper(super.getContextUnderTest());
     }
 
+    @Test
     public void testConstructor() {
         new ContextWrapper(mContext);
 
@@ -50,6 +60,7 @@ public class ContextWrapperTest extends ContextTest {
         new ContextWrapper(null);
     }
 
+    @Test
     public void testAccessBaseContext() throws PackageManager.NameNotFoundException {
         Context context = getContext();
         MockContextWrapper testContextWrapper = new MockContextWrapper(context);

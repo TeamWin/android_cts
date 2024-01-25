@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 
 import android.graphics.Matrix;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.animation.Transformation;
 
 import androidx.test.filters.SmallTest;
@@ -32,6 +33,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class TransformationTest {
     private static final float COMPARISON_DELTA = 0.001f;
 

@@ -196,22 +196,6 @@ def run(cmd):
     subprocess.check_call(cmd.split(), stdout=devnull, stderr=subprocess.STDOUT)
 
 
-def check_cts_apk_installed(device_id):
-  """Verifies that CtsVerifer.apk is installed on a given device."""
-  verify_cts_cmd = (
-      f'adb -s {device_id} shell pm list packages | '
-      f'grep {CTS_VERIFIER_PACKAGE_NAME}'
-  )
-  raw_output = subprocess.check_output(
-      verify_cts_cmd, stderr=subprocess.STDOUT, shell=True
-  )
-  output = str(raw_output.decode('utf-8')).strip()
-  if CTS_VERIFIER_PACKAGE_NAME not in output:
-    raise AssertionError(
-        f"{CTS_VERIFIER_PACKAGE_NAME} not in {device_id}'s list of packages!"
-    )
-
-
 def report_result(device_id, camera_id, results):
   """Sends a pass/fail result to the device, via an intent.
 
@@ -630,7 +614,7 @@ def main():
   enable_external_storage(device_id)
 
   # Verify that CTS Verifier is installed
-  check_cts_apk_installed(device_id)
+  its_session_utils.check_apk_installed(device_id, CTS_VERIFIER_PACKAGE_NAME)
   # Check whether the dut is foldable or not
   testing_foldable_device = True if test_params_content[
       'foldable_device'] == 'True' else False

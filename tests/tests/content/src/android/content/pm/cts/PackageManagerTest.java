@@ -2133,8 +2133,14 @@ public class PackageManagerTest {
 
     @Test
     public void testUpdateShellFailed() {
-        assertThat(SystemUtil.runShellCommand("pm install -t -g " + SHELL_NAME_APK)).contains(
+        var result = SystemUtil.runShellCommand("pm install -t -g " + SHELL_NAME_APK);
+        boolean installationNotAllowed = result.contains(
                 "Installation of this package is not allowed");
+        // This test works correctly if platform and cts are built using the same certificate.
+        // Otherwise the install will still fail, but for a different reason.
+        boolean signatureMismatch = result.contains(
+                "signatures do not match newer version");
+        assertTrue(installationNotAllowed || signatureMismatch);
     }
 
     @Test
@@ -3035,13 +3041,15 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
 
     @Test
     public void testInstallArchivedFromArchived() throws Exception {
+        final int userId = mContext.getUserId();
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
 
         assertEquals("Success\n", SystemUtil.runShellCommand(
                 String.format("pm install -r -i %s -t -g %s", mContext.getPackageName(),
                         HELLO_WORLD_APK)));
         assertThat(SystemUtil.runShellCommand(
-                String.format("pm archive %s", HELLO_WORLD_PACKAGE_NAME))).isEqualTo("Success\n");
+                String.format("pm archive --user %s %s", userId, HELLO_WORLD_PACKAGE_NAME))
+            ).isEqualTo("Success\n");
         // Check "installed" flag.
         var applicationInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
                 PackageManager.PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).applicationInfo;

@@ -15,10 +15,9 @@
  */
 package android.uirendering.cts.util;
 
-import android.app.Instrumentation;
 import android.graphics.Bitmap;
-import android.os.Bundle;
 import android.uirendering.cts.differencevisualizers.DifferenceVisualizer;
+import android.uirendering.cts.runner.TestArtifactCollector;
 import android.util.Log;
 
 import java.io.File;
@@ -29,80 +28,12 @@ import java.io.FileOutputStream;
  */
 public final class BitmapDumper {
     private static final String TAG = "BitmapDumper";
-    private static final String KEY_PREFIX = "uirendering_";
     private static final String TYPE_IDEAL_RENDERING = "idealCapture";
     private static final String TYPE_TESTED_RENDERING = "testedCapture";
     private static final String TYPE_VISUALIZER_RENDERING = "visualizer";
     private static final String TYPE_SINGULAR = "capture";
 
-    // Magic number for an in-progress status report
-    private static final int INST_STATUS_IN_PROGRESS = 2;
-    private static File sDumpDirectory;
-    private static Instrumentation sInstrumentation;
-
     private BitmapDumper() {}
-
-    public static void initialize(Instrumentation instrumentation) {
-        sInstrumentation = instrumentation;
-        sDumpDirectory = instrumentation.getContext().getExternalCacheDir();
-        if (sDumpDirectory == null) {
-            sDumpDirectory = instrumentation.getContext().getCacheDir();
-        }
-
-        // Cleanup old tests
-        // These are removed on uninstall anyway but just in case...
-        File[] toRemove = sDumpDirectory.listFiles();
-        if (toRemove != null && toRemove.length > 0) {
-            for (File file : toRemove) {
-                deleteContentsAndDir(file);
-            }
-        }
-    }
-
-    private static boolean deleteContentsAndDir(File dir) {
-        if (deleteContents(dir)) {
-            return dir.delete();
-        } else {
-            return false;
-        }
-    }
-
-    private static boolean deleteContents(File dir) {
-        File[] files = dir.listFiles();
-        boolean success = true;
-        if (files != null) {
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    success &= deleteContents(file);
-                }
-                if (!file.delete()) {
-                    Log.w(TAG, "Failed to delete " + file);
-                    success = false;
-                }
-            }
-        }
-        return success;
-    }
-
-    private static File getFile(String className, String testName, String type) {
-        File testDirectory = new File(sDumpDirectory, className);
-        testDirectory.mkdirs();
-        return new File(testDirectory, testName + "_" + type + ".png");
-    }
-
-    private static String bypassContentProvider(File file) {
-        // TradeFed currently insists on bouncing off of a content provider for the path
-        // we are using, but that content provider will never have permissions
-        // Since we want to avoid needing to use requestLegacyStorage & there's currently no
-        // option to tell TF to not use the content provider, just break its file
-        // detection pattern
-        // b/183140644
-        return "/." + file.getAbsolutePath();
-    }
-
-    private static String keyForType(String type) {
-        return KEY_PREFIX + type + "_" + System.nanoTime();
-    }
 
     /**
      * Saves two files, one the capture of an ideal drawing, and one the capture of the tested
@@ -110,8 +41,8 @@ public final class BitmapDumper {
      * method.
      * The files are saved to the sdcard directory
      */
-    public static void dumpBitmaps(Bitmap idealBitmap, Bitmap testedBitmap, String testName,
-            String className, DifferenceVisualizer differenceVisualizer) {
+    public static void dumpBitmaps(Bitmap idealBitmap, Bitmap testedBitmap,
+            DifferenceVisualizer differenceVisualizer) {
         Bitmap visualizerBitmap;
 
         int width = idealBitmap.getWidth();
@@ -125,47 +56,39 @@ public final class BitmapDumper {
         visualizerBitmap.setPixels(visualizerArray, 0, width, 0, 0, width, height);
         Bitmap croppedBitmap = Bitmap.createBitmap(testedBitmap, 0, 0, width, height);
 
-        File idealFile = getFile(className, testName, TYPE_IDEAL_RENDERING);
-        File testedFile = getFile(className, testName, TYPE_TESTED_RENDERING);
-        File visualizerFile = getFile(className, testName, TYPE_VISUALIZER_RENDERING);
-        saveBitmap(idealBitmap, idealFile);
-        saveBitmap(croppedBitmap, testedFile);
-        saveBitmap(visualizerBitmap, visualizerFile);
-
-        Bundle report = new Bundle();
-        report.putString(keyForType(TYPE_IDEAL_RENDERING), bypassContentProvider(idealFile));
-        report.putString(keyForType(TYPE_TESTED_RENDERING), bypassContentProvider(testedFile));
-        report.putString(keyForType(TYPE_VISUALIZER_RENDERING),
-                bypassContentProvider(visualizerFile));
-        sInstrumentation.sendStatus(INST_STATUS_IN_PROGRESS, report);
+        dumpBitmap(idealBitmap, TYPE_IDEAL_RENDERING);
+        dumpBitmap(croppedBitmap, TYPE_TESTED_RENDERING);
+        dumpBitmap(visualizerBitmap, TYPE_VISUALIZER_RENDERING);
     }
 
-    public static void dumpBitmaps(Bitmap testedBitmap, Bitmap visualizerBitmap, String testName,
-            String className) {
-
-        File testedFile = getFile(className, testName, TYPE_TESTED_RENDERING);
-        File visualizerFile = getFile(className, testName, TYPE_VISUALIZER_RENDERING);
-        saveBitmap(testedBitmap, testedFile);
-        saveBitmap(visualizerBitmap, visualizerFile);
-
-        Bundle report = new Bundle();
-        report.putString(keyForType(TYPE_TESTED_RENDERING),
-                bypassContentProvider(testedFile));
-        report.putString(keyForType(TYPE_VISUALIZER_RENDERING),
-                bypassContentProvider(visualizerFile));
-        sInstrumentation.sendStatus(INST_STATUS_IN_PROGRESS, report);
+    /**
+     * Dumps the given test bitamp & visualizer bitmap
+     */
+    public static void dumpBitmaps(Bitmap testedBitmap, Bitmap visualizerBitmap) {
+        dumpBitmap(testedBitmap, TYPE_TESTED_RENDERING);
+        dumpBitmap(visualizerBitmap, TYPE_VISUALIZER_RENDERING);
     }
 
-    public static void dumpBitmap(Bitmap bitmap, String testName, String className) {
+    /**
+     * Dumps the given bitmap with a generic label
+     */
+    public static void dumpBitmap(Bitmap bitmap) {
+        dumpBitmap(bitmap, TYPE_SINGULAR);
+    }
+
+    /**
+     * Dumps the given bitmap with the given label
+     */
+    public static void dumpBitmap(Bitmap bitmap, String label) {
         if (bitmap == null) {
-            Log.d(TAG, "File not saved, bitmap was null for test : " + testName);
+            Log.d(TAG, "File not saved, bitmap was null");
             return;
         }
-        File capture = getFile(className, testName, TYPE_SINGULAR);
-        saveBitmap(bitmap, capture);
-        Bundle report = new Bundle();
-        report.putString(keyForType(TYPE_SINGULAR), bypassContentProvider(capture));
-        sInstrumentation.sendStatus(INST_STATUS_IN_PROGRESS, report);
+
+        TestArtifactCollector.addArtifact(label + ".png", file -> {
+            saveBitmap(bitmap, file);
+            return null;
+        });
     }
 
     private static void logIfBitmapSolidColor(String fileName, Bitmap bitmap) {
@@ -182,11 +105,6 @@ public final class BitmapDumper {
     }
 
     private static void saveBitmap(Bitmap bitmap, File file) {
-        if (bitmap == null) {
-            Log.d(TAG, "File not saved, bitmap was null");
-            return;
-        }
-
         logIfBitmapSolidColor(file.getName(), bitmap);
 
         try (FileOutputStream fileStream = new FileOutputStream(file)) {

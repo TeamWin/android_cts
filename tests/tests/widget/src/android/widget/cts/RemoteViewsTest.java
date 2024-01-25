@@ -16,6 +16,7 @@
 
 package android.widget.cts;
 
+import static android.appwidget.flags.Flags.drawDataParcel;
 import static android.util.TypedValue.COMPLEX_UNIT_DIP;
 import static android.util.TypedValue.COMPLEX_UNIT_PX;
 import static android.view.inputmethod.Flags.FLAG_HOME_SCREEN_HANDWRITING_DELEGATOR;
@@ -122,6 +123,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -471,6 +473,40 @@ public class RemoteViewsTest {
                 .getResources().getDrawable(R.drawable.testimage);
         WidgetTestUtils.assertEquals(d.getBitmap(),
                 ((BitmapDrawable) image.getDrawable()).getBitmap());
+    }
+
+    @Test
+    public void testApplyWithDrawInstructions() throws Throwable {
+        if (!drawDataParcel()) {
+            return;
+        }
+        final RemoteViews.DrawInstructions drawInstructions = getDrawInstructions();
+        final Uri uri = Uri.parse("ctstest://RemoteView/test");
+        final PendingIntent pi = PendingIntent.getActivity(mContext, 0,
+                new Intent(Intent.ACTION_VIEW, uri), PendingIntent.FLAG_IMMUTABLE);
+        final Intent i = new Intent().putExtra("TEST", "Success");
+        final ActivityMonitor am = mInstrumentation.addMonitor(
+                MockURLSpanTestActivity.class.getName(), null, false);
+        Activity newActivity = am.waitForActivityWithTimeout(TEST_TIMEOUT);
+        assertNull(newActivity);
+        final int viewId = 1;
+        mActivityRule.runOnUiThread(() -> {
+            mRemoteViews = new RemoteViews(drawInstructions);
+            mRemoteViews.setPendingIntentTemplate(viewId, pi);
+            mRemoteViews.setOnClickFillInIntent(viewId, i);
+            mResult = mRemoteViews.apply(mContext, null);
+        });
+        assertEquals(drawInstructions, mResult.getTag());
+    }
+
+    private RemoteViews.DrawInstructions getDrawInstructions() {
+        final byte[] first = new byte[] {'f', 'i', 'r', 's', 't'};
+        final byte[] second = new byte[] {'s', 'e', 'c', 'o', 'n', 'd'};
+        final RemoteViews.DrawInstructions drawInstructions =
+                new RemoteViews.DrawInstructions.Builder(
+                        Collections.singletonList(first)).build();
+        drawInstructions.appendInstructions(second);
+        return drawInstructions;
     }
 
     @Test

@@ -29,10 +29,14 @@ import android.telecom.TelecomManager;
 import android.test.InstrumentationTestCase;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.internal.telephony.flags.Flags;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -147,6 +151,73 @@ public class PhoneAccountOperationsTest extends InstrumentationTestCase {
             // Force tearDown if setUp errors out to ensure unused listeners are cleaned up.
             super.tearDown();
         }
+    }
+
+    public void testRegisterPhoneAccount_simultaneousCallingRestrictions() {
+        if (!shouldTestTelecom(mContext) || !Flags.simultaneousCallingIndications()) {
+            return;
+        }
+        PhoneAccountHandle testPhoneAccountInvalid = new PhoneAccountHandle(
+                        new ComponentName("com.android.anotherPackage", COMPONENT),
+                        ACCOUNT_ID_1);
+
+        // Empty Set
+        PhoneAccount accountEmptyRestrictions = new PhoneAccount.Builder(TEST_SIM_PHONE_ACCOUNT)
+                .setSimultaneousCallingRestriction(Collections.emptySet())
+                .build();
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelecomManager, tm -> {
+            try {
+                tm.registerPhoneAccount(accountEmptyRestrictions);
+                PhoneAccount testAcct = tm.getPhoneAccount(TEST_PHONE_ACCOUNT_HANDLE);
+                assertTrue(testAcct.hasSimultaneousCallingRestriction());
+                assertEquals(Collections.emptySet(), testAcct.getSimultaneousCallingRestriction());
+            } catch (SecurityException e) {
+                throw new AssertionError("TelecomManager#registerPhoneAccount must not throw a"
+                        + " SecurityException if there is a restriction set with no entries");
+            } finally {
+                tm.unregisterPhoneAccount(TEST_PHONE_ACCOUNT_HANDLE);
+            }
+        });
+
+        // One valid entry in the Set
+        Set<PhoneAccountHandle> handles = new HashSet<>(2);
+        handles.add(TEST_PHONE_ACCOUNT_HANDLE_2);
+        PhoneAccount accountRestrictions = new PhoneAccount.Builder(TEST_SIM_PHONE_ACCOUNT)
+                .setSimultaneousCallingRestriction(handles)
+                .build();
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelecomManager, tm -> {
+            try {
+                tm.registerPhoneAccount(accountRestrictions);
+                PhoneAccount testAcct = tm.getPhoneAccount(TEST_PHONE_ACCOUNT_HANDLE);
+                assertTrue(testAcct.hasSimultaneousCallingRestriction());
+                assertEquals(handles, testAcct.getSimultaneousCallingRestriction());
+            } catch (SecurityException e) {
+                throw new AssertionError("TelecomManager#registerPhoneAccount must not throw a"
+                        + " SecurityException if there is a restriction set with"
+                        + " PhoneAccountHandles containing the same package name");
+            } finally {
+                tm.unregisterPhoneAccount(TEST_PHONE_ACCOUNT_HANDLE);
+            }
+        });
+
+        // One valid and one invalid entry in the Set
+        handles.add(testPhoneAccountInvalid);
+        PhoneAccount accountInvalidRestrictions = new PhoneAccount.Builder(TEST_SIM_PHONE_ACCOUNT)
+                .setSimultaneousCallingRestriction(handles)
+                .build();
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelecomManager, tm -> {
+            try {
+                tm.registerPhoneAccount(accountInvalidRestrictions);
+                throw new AssertionError("TelecomManager#registerPhoneAccount MUST throw a"
+                        + " SecurityException if there is a restriction set containing one or more"
+                        + " PhoneAccountHandles with a different package name");
+            } catch (SecurityException e) {
+                //expected
+            } finally {
+                tm.unregisterPhoneAccount(TEST_PHONE_ACCOUNT_HANDLE);
+            }
+        });
     }
 
     public void testRegisterPhoneAccount_correctlyThrowsSecurityException() throws Exception {

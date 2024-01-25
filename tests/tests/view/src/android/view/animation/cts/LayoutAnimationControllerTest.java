@@ -21,7 +21,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import android.Manifest;
 import android.content.res.XmlResourceParser;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.view.View;
@@ -42,6 +44,8 @@ import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -49,6 +53,7 @@ import org.junit.runner.RunWith;
 
 @LargeTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class LayoutAnimationControllerTest {
     /** Duration defined in layout_anim_controller_animation.xml is 1000 */
     private static final int DURATION = 1000;
@@ -66,7 +71,13 @@ public class LayoutAnimationControllerTest {
     private ListView mListView;
     private LayoutAnimationController mController;
 
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            androidx.test.platform.app.InstrumentationRegistry
+                    .getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public ActivityTestRule<LayoutAnimCtsActivity> mActivityRule =
             new ActivityTestRule<>(LayoutAnimCtsActivity.class);
 
