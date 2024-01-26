@@ -19,7 +19,8 @@ package android.net.cts.legacy.api22.permission;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.filters.SmallTest;
 
 /**
 * Test that protected android.net.ConnectivityManager methods cannot be called without
