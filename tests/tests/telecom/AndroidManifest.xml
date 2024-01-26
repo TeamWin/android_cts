@@ -30,6 +30,7 @@
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
     <uses-permission android:name="android.permission.READ_CALL_LOG"/>
     <uses-permission android:name="android.permission.READ_LOGS"/>
+    <uses-permission android:name="android.permission.READ_DROPBOX_DATA"/>
     <uses-permission android:name="android.permission.REGISTER_CALL_PROVIDER"/>
     <uses-permission android:name="android.permission.ACCEPT_HANDOVER"/>
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS"/>
