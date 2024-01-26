@@ -186,6 +186,28 @@ public class DistanceMeasurementResultTest {
         assertEquals(60.0, result.getVelocityMetersPerSecond(), 0.0);
     }
 
+    @RequiresFlagsEnabled(Flags.FLAG_CHANNEL_SOUNDING)
+    @CddTest(requirements = {"7.4.3/C-2-1"})
+    @Test
+    public void readWriteParcelForCs() {
+        Parcel parcel = Parcel.obtain();
+        DistanceMeasurementResult result = new DistanceMeasurementResult.Builder(10.0, 5.0)
+                .setDelaySpreadMeters(20)
+                .setConfidenceLevel(0.5)
+                .setDetectedAttackLevel(NADM_ATTACK_IS_VERY_UNLIKELY)
+                .setVelocityMetersPerSecond(30)
+                .build();
+        result.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        DistanceMeasurementResult resultFromParcel =
+                DistanceMeasurementResult.CREATOR.createFromParcel(parcel);
+        assertEquals(result.getDelaySpreadMeters(), resultFromParcel.getDelaySpreadMeters(), 0.0);
+        assertEquals(result.getConfidenceLevel(), resultFromParcel.getConfidenceLevel(), 0.0);
+        assertEquals(result.getDetectedAttackLevel(), resultFromParcel.getDetectedAttackLevel());
+        assertEquals(result.getVelocityMetersPerSecond(),
+                resultFromParcel.getVelocityMetersPerSecond(), 0.0);
+    }
+
     @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void illegalArgument() {
