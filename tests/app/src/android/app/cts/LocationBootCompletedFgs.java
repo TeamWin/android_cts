@@ -16,7 +16,7 @@
 
 package android.app.cts;
 
-import static android.app.cts.BootCompletedFgsStartTest.BOOT_COMPLETED_FGS_FINISHED;
+import static android.app.cts.fgs.bootcompleted.BootCompletedFgsStartTest.BOOT_COMPLETED_FGS_FINISHED;
 import static android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION;
 
 import android.app.Notification;
