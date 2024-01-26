@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class TestActivity extends Activity implements View.OnLayoutChangeListener {
     private CountDownLatch mLayoutLatch;
+    private CountDownLatch mFocusLatch = new CountDownLatch(1);
     private static CountDownLatch sResumeLatch = new CountDownLatch(1);
 
     @Override
@@ -45,6 +46,13 @@ public class TestActivity extends Activity implements View.OnLayoutChangeListene
     public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft,
             int oldTop, int oldRight, int oldBottom) {
         mLayoutLatch.countDown();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasWindowFocus) {
+        if (hasWindowFocus) {
+            mFocusLatch.countDown();
+        }
     }
 
     @Override
@@ -70,6 +78,26 @@ public class TestActivity extends Activity implements View.OnLayoutChangeListene
     public boolean waitForLayout() {
         try {
             return mLayoutLatch.await(3, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Resets the focus counter.
+     */
+    public void resetFocusCounter() {
+        mFocusLatch = new CountDownLatch(1);
+    }
+
+    /**
+     * Waits for receiving the first window focus.
+     *
+     * @return {@code true} if the window ever becomes the focused window.
+     */
+    public boolean waitForFocus() {
+        try {
+            return mFocusLatch.await(3, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             return false;
         }

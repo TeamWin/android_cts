@@ -78,6 +78,11 @@
                   android:process=":Rear_display_crash_process"
                   android:exported="true"
         />
+        <activity android:name="android.server.wm.jetpack.utils.TestFocusPrimaryActivity"
+                  android:label="TestFocusPrimaryActivity" />
+        <activity android:name="android.server.wm.jetpack.utils.TestFocusSecondaryActivity"
+                  android:label="TestFocusSecondaryActivity" />
+
         <!-- The provider properties must match the shared one defined in the util module. -->
         <provider android:name="android.server.wm.activity.lifecycle.EventLog"
                   android:authorities="android.server.wm.jetpack.logprovider"
