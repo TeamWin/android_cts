@@ -23,7 +23,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.os.Handler;
@@ -60,8 +59,6 @@ public class EmbeddedSCVHService extends Service {
     private SlowView mSlowView;
 
     private SurfaceControl mSurfaceControl;
-
-    private IBinder mInputToken;
 
     @Override
     public void onCreate() {
@@ -162,15 +159,12 @@ public class EmbeddedSCVHService extends Service {
         }
 
         @Override
-        public IBinder attachEmbeddedSurfaceControl(SurfaceControl parentSc, int displayId,
+        public String attachEmbeddedSurfaceControl(SurfaceControl parentSc, int displayId,
                 IBinder hostToken, int width, int height, IMotionEventReceiver receiver) {
             CountDownLatch registeredLatch = new CountDownLatch(1);
+            String name = "Child SurfaceControl";
             mHandler.post(() -> {
-                Paint paint = new Paint();
-                paint.setTextSize(40);
-                paint.setColor(Color.WHITE);
-
-                mSurfaceControl = new SurfaceControl.Builder().setName("Child SurfaceControl")
+                mSurfaceControl = new SurfaceControl.Builder().setName(name)
                         .setParent(parentSc).setBufferSize(width, height).build();
                 new SurfaceControl.Transaction().setVisibility(mSurfaceControl, true).setCrop(
                         mSurfaceControl, new Rect(0, 0, width, height)).apply();
@@ -180,7 +174,7 @@ public class EmbeddedSCVHService extends Service {
                 c.drawColor(Color.BLUE);
                 surface.unlockCanvasAndPost(c);
 
-                mInputToken = getSystemService(WindowManager.class)
+                getSystemService(WindowManager.class)
                         .registerBatchedSurfaceControlInputReceiver(displayId,
                                 hostToken, mSurfaceControl, Choreographer.getInstance(), event -> {
                                     if (event instanceof MotionEvent) {
@@ -198,25 +192,25 @@ public class EmbeddedSCVHService extends Service {
 
             try {
                 if (!registeredLatch.await(WAIT_TIME_S, TimeUnit.SECONDS)) {
+                    Log.e(TAG, "Failed to wait for input to be registered");
                     return null;
                 }
             } catch (InterruptedException e) {
                 return null;
             }
-            return mInputToken;
+            // Use name instead of token because retrieving the token is a through a TestApi that
+            // this process is unable to call
+            return name;
         }
 
         @Override
         public void tearDownEmbeddedSurfaceControl() {
             mHandler.post(() -> {
                 if (mSurfaceControl != null) {
+                    getSystemService(WindowManager.class)
+                            .unregisterSurfaceControlInputReceiver(mSurfaceControl);
                     new Transaction().reparent(mSurfaceControl, null);
                     mSurfaceControl.release();
-                }
-                if (mInputToken != null) {
-                    getSystemService(WindowManager.class)
-                            .unregisterSurfaceControlInputReceiver(mInputToken);
-                    mInputToken = null;
                 }
             });
         }
