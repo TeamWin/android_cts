@@ -2679,13 +2679,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         getUltrasonicsSensorPositionVerifier().verify();
     }
 
-    private VehiclePropertyVerifier<Integer[]> getUltrasonicsSensorOrientationVerifier() {
+    private VehiclePropertyVerifier<Float[]> getUltrasonicsSensorOrientationVerifier() {
         return VehiclePropertyVerifier.newBuilder(
                         VehiclePropertyIds.ULTRASONICS_SENSOR_ORIENTATION,
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                         VehicleAreaType.VEHICLE_AREA_TYPE_VENDOR,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                        Integer[].class, mCarPropertyManager)
+                        Float[].class, mCarPropertyManager)
                 .setCarPropertyValueVerifier(
                         (carPropertyConfig, propertyId, areaId, timestampNanos, orientations) -> {
                             assertWithMessage("ULTRASONICS_SENSOR_ORIENTATION must specify 4 "
