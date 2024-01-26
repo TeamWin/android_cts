@@ -33,6 +33,7 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telecom.cts.carmodetestapp.ICtsCarModeInCallServiceControl;
 import android.telecom.cts.carmodetestappselfmanaged.CtsCarModeInCallServiceControlSelfManaged;
+import android.util.ArraySet;
 import android.util.Log;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -41,6 +42,7 @@ import com.android.internal.telephony.flags.Flags;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -130,6 +132,84 @@ public class PhoneAccountRegistrarTest extends BaseTelecomTestWithMockServices {
             // cleanup accounts registered
             accounts.stream().forEach(
                     d -> mTelecomManager.unregisterPhoneAccount(d.getAccountHandle()));
+        }
+    }
+
+    /**
+     * Tests a scenario where a PhoneAccount with more than MAX_PHONE_ACCOUNT_REGISTRATIONS
+     * PhoneAccountHandles set as a simultaneous calling restriction throws an
+     * {@link IllegalArgumentException}.
+     */
+    public void testExceptionThrownDueToInvalidSimultaneousCallRestriction_tooManyAccounts() {
+        if (!mShouldTestTelecom || !Flags.simultaneousCallingIndications()) return;
+
+        // ensure the test starts without any phone accounts registered to the test package
+        cleanupPhoneAccounts();
+
+        // Create MAX_PHONE_ACCOUNT_REGISTRATIONS + 1 via helper function
+        ArrayList<PhoneAccountHandle> restrictionHandles =
+                TestUtils.generateRandomPhoneAccountHandles(SEED,
+                MAX_PHONE_ACCOUNT_REGISTRATIONS + 1, TestUtils.PACKAGE, TestUtils.COMPONENT);
+        PhoneAccountHandle acctHandle = TestUtils.makePhoneAccountHandle(
+                TestUtils.DEFAULT_TEST_ACCOUNT_1_ID);
+        PhoneAccount acct = TestUtils.buildSelfManagedPhoneAccount(acctHandle,
+                        TestUtils.ACCOUNT_LABEL)
+                .setSimultaneousCallingRestriction(new ArraySet<>(restrictionHandles)).build();
+
+        try {
+            // Try to register more phone accounts than allowed by the upper bound limit
+            // MAX_PHONE_ACCOUNT_REGISTRATIONS
+            mTelecomManager.registerPhoneAccount(acct);
+            // A successful test should never reach this line of execution.
+            // However, if it does, fail the test by throwing a fail(...)
+            fail("Test failed. The test did not throw an IllegalArgumentException when "
+                    + "registering a phone account where the Set of PhoneAccountHandles in the "
+                    + "simultaneous calling restriction is over the upper bound: "
+                    + "MAX_PHONE_ACCOUNT_REGISTRATIONS");
+        } catch (IllegalArgumentException e) {
+            // Assert the IllegalArgumentException was thrown
+            assertNotNull(e.toString());
+        } finally {
+            // Cleanup accounts registered
+            mTelecomManager.unregisterPhoneAccount(acctHandle);
+        }
+    }
+
+    /**
+     * Tests a scenario where a PhoneAccount contains a simultaneous calling restriction and the
+     * associated PhoneAccountHandle contains an ID where the field exceeds the maximum size.
+     */
+    public void testExceptionThrownDueToInvalidSimultaneousCallRestriction_invalidId() {
+        if (!mShouldTestTelecom || !Flags.simultaneousCallingIndications()) return;
+
+        // ensure the test starts without any phone accounts registered to the test package
+        cleanupPhoneAccounts();
+
+        // Exceed the field size for the ID
+        ArraySet<PhoneAccountHandle> invalidRestrictionHandles = new ArraySet<>(1);
+        invalidRestrictionHandles.add(TestUtils.makePhoneAccountHandle("a".repeat(257)));
+        PhoneAccountHandle acctHandle = TestUtils.makePhoneAccountHandle(
+                TestUtils.DEFAULT_TEST_ACCOUNT_1_ID);
+        PhoneAccount acct = TestUtils.buildSelfManagedPhoneAccount(acctHandle,
+                        TestUtils.ACCOUNT_LABEL)
+                .setSimultaneousCallingRestriction(invalidRestrictionHandles).build();
+
+        try {
+            // Try to register more phone accounts than allowed by the upper bound limit
+            // MAX_PHONE_ACCOUNT_REGISTRATIONS
+            mTelecomManager.registerPhoneAccount(acct);
+            // A successful test should never reach this line of execution.
+            // However, if it does, fail the test by throwing a fail(...)
+            fail("Test failed. The test did not throw an IllegalArgumentException when "
+                    + "registering a phone account where the Set of PhoneAccountHandles in the "
+                    + "simultaneous calling restriction is over the upper bound: "
+                    + "MAX_PHONE_ACCOUNT_REGISTRATIONS");
+        } catch (IllegalArgumentException e) {
+            // Assert the IllegalArgumentException was thrown
+            assertNotNull(e.toString());
+        } finally {
+            // Cleanup accounts registered
+            mTelecomManager.unregisterPhoneAccount(acctHandle);
         }
     }
 
@@ -519,11 +599,12 @@ public class PhoneAccountRegistrarTest extends BaseTelecomTestWithMockServices {
         // ensure the test starts without any phone accounts registered to the test package
         cleanupPhoneAccounts();
 
+        Random random = new Random(SEED);
         PhoneAccountHandle currentHandle = TestUtils.createPhoneAccountHandle(
-                SEED, TestUtils.PACKAGE, TestUtils.REMOTE_COMPONENT,
+                random, TestUtils.PACKAGE, TestUtils.REMOTE_COMPONENT,
                 Process.myUserHandle().getIdentifier());
         PhoneAccountHandle otherHandle = TestUtils.createPhoneAccountHandle(
-                SEED, TestUtils.PACKAGE, TestUtils.REMOTE_COMPONENT,
+                random, TestUtils.PACKAGE, TestUtils.REMOTE_COMPONENT,
                 UserHandle.MIN_SECONDARY_USER_ID);
 
         PhoneAccount currentAccount = new PhoneAccount.Builder(
