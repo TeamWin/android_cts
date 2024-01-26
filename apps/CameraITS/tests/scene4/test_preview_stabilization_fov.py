@@ -27,7 +27,6 @@ import its_session_utils
 import opencv_processing_utils
 import video_processing_utils
 
-_PREVIEW_STABILIZATION_MODE_PREVIEW = 2
 _VIDEO_DURATION = 3  # seconds
 
 _MAX_STABILIZED_RADIUS_RATIO = 1.25  # An FOV reduction of 20% corresponds to an
@@ -163,7 +162,7 @@ class PreviewStabilizationFoVTest(its_base_test.ItsBaseTest):
 
       camera_properties_utils.skip_unless(
           supported_stabilization_modes is not None
-          and _PREVIEW_STABILIZATION_MODE_PREVIEW
+          and camera_properties_utils.STABILIZATION_MODE_PREVIEW
           in supported_stabilization_modes,
           'Preview Stabilization not supported',
       )

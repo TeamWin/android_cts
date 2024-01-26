@@ -13,7 +13,6 @@
 # limitations under the License.
 """Verify preview is stable during phone movement."""
 
-import fnmatch
 import logging
 import os
 import threading
@@ -23,22 +22,14 @@ from mobly import test_runner
 
 import its_base_test
 import camera_properties_utils
-import image_processing_utils
 import its_session_utils
+import preview_stabilization_utils
 import sensor_fusion_utils
 import video_processing_utils
 
-_ASPECT_RATIO_16_9 = 16/9  # determine if preview fmt > 16:9
-_IMG_FORMAT = 'png'
-_MIN_PHONE_MOVEMENT_ANGLE = 5  # degrees
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
-_NUM_ROTATIONS = 24
-_START_FRAME = 30  # give 3A some frames to warm up
 _TEST_REQUIRED_MPC = 33
-_VIDEO_DELAY_TIME = 5.5  # seconds
 _VIDEO_DURATION = 5.5  # seconds
-_PREVIEW_STABILIZATION_FACTOR = 0.7  # 70% of gyro movement allowed
-_PREVIEW_STABILIZATION_MODE_PREVIEW = 2
 
 
 def _collect_data(cam, tablet_device, preview_size, rot_rig):
@@ -75,7 +66,7 @@ def _collect_data(cam, tablet_device, preview_size, rot_rig):
       args=(
           rot_rig['cntl'],
           rot_rig['ch'],
-          _NUM_ROTATIONS,
+          preview_stabilization_utils.NUM_ROTATIONS,
           sensor_fusion_utils.ARDUINO_ANGLES_STABILIZATION,
           servo_speed,
           sensor_fusion_utils.ARDUINO_MOVE_TIME_STABILIZATION,
@@ -85,9 +76,10 @@ def _collect_data(cam, tablet_device, preview_size, rot_rig):
   p.start()
 
   cam.start_sensor_events()
-  # Record video and return recording object
-  time.sleep(_VIDEO_DELAY_TIME)  # allow time for rig to start moving
+  # Allow time for rig to start moving.
+  time.sleep(preview_stabilization_utils.VIDEO_DELAY_TIME)
 
+  # Record video and return recording object.
   recording_obj = cam.do_preview_recording(preview_size, _VIDEO_DURATION, True)
   logging.debug('Recorded output path: %s', recording_obj['recordedOutputPath'])
   logging.debug('Tested quality: %s', recording_obj['quality'])
@@ -135,7 +127,7 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
 
       # Check media performance class
       should_run = (supported_stabilization_modes is not None and
-                    _PREVIEW_STABILIZATION_MODE_PREVIEW in
+                    camera_properties_utils.STABILIZATION_MODE_PREVIEW in
                     supported_stabilization_modes)
       media_performance_class = its_session_utils.get_media_performance_class(
           self.dut.serial)
@@ -171,103 +163,31 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
       logging.debug('Supported preview resolutions: %s',
                     supported_preview_sizes)
 
-      max_cam_gyro_angles = {}
+      stabilization_result = {}
 
       for preview_size in supported_preview_sizes:
         recording_obj = _collect_data(
             cam, self.tablet_device, preview_size, rot_rig)
-
-        # Grab the video from the save location on DUT
-        self.dut.adb.pull([recording_obj['recordedOutputPath'], log_path])
-        file_name = recording_obj['recordedOutputPath'].split('/')[-1]
-        logging.debug('recorded file name: %s', file_name)
 
         # Get gyro events
         logging.debug('Reading out inertial sensor events')
         gyro_events = cam.get_sensor_events()['gyro']
         logging.debug('Number of gyro samples %d', len(gyro_events))
 
-        # Get all frames from the video
-        file_list = video_processing_utils.extract_all_frames_from_video(
-            log_path, file_name, _IMG_FORMAT
-        )
-        frames = []
+        # Grab the video from the save location on DUT
+        self.dut.adb.pull([recording_obj['recordedOutputPath'], log_path])
 
-        logging.debug('Number of frames %d', len(file_list))
-        for file in file_list:
-          img = image_processing_utils.convert_image_to_numpy_array(
-              os.path.join(log_path, file)
-          )
-          frames.append(img / 255)
-        frame_shape = frames[0].shape
-        logging.debug('Frame size %d x %d', frame_shape[1], frame_shape[0])
+        stabilization_result[preview_size] = (
+            preview_stabilization_utils.verify_preview_stabilization(
+                recording_obj, gyro_events, _NAME, log_path, facing)
+        )
 
-        # Extract camera rotations
-        img_h = frames[0].shape[0]
-        file_name_stem = f'{os.path.join(log_path, _NAME)}_{preview_size}'
-        cam_rots = sensor_fusion_utils.get_cam_rotations(
-            frames[_START_FRAME : len(frames)],
-            facing,
-            img_h,
-            file_name_stem,
-            _START_FRAME,
-            stabilized_video=True
-        )
-        sensor_fusion_utils.plot_camera_rotations(cam_rots, _START_FRAME,
-                                                  preview_size, file_name_stem)
-        max_camera_angle = sensor_fusion_utils.calc_max_rotation_angle(
-            cam_rots, 'Camera')
-
-        # Extract gyro rotations
-        sensor_fusion_utils.plot_gyro_events(
-            gyro_events, f'{_NAME}_{preview_size}', log_path
-        )
-        gyro_rots = sensor_fusion_utils.conv_acceleration_to_movement(
-            gyro_events, _VIDEO_DELAY_TIME
-        )
-        max_gyro_angle = sensor_fusion_utils.calc_max_rotation_angle(
-            gyro_rots, 'Gyro')
-        logging.debug(
-            'Max deflection (degrees) %s: video: %.3f, gyro: %.3f ratio: %.4f',
-            preview_size, max_camera_angle, max_gyro_angle,
-            max_camera_angle / max_gyro_angle)
-        max_cam_gyro_angles[preview_size] = {'gyro': max_gyro_angle,
-                                             'cam': max_camera_angle}
-        # Assert phone is moved enough during test
-        if max_gyro_angle < _MIN_PHONE_MOVEMENT_ANGLE:
-          raise AssertionError(
-              f'Phone not moved enough! Movement: {max_gyro_angle}, '
-              f'THRESH: {_MIN_PHONE_MOVEMENT_ANGLE} degrees')
 
       # Assert PASS/FAIL criteria
       test_failures = []
-      for preview_size, max_angles in max_cam_gyro_angles.items():
-        w_x_h = preview_size.split('x')
-        if int(w_x_h[0])/int(w_x_h[1]) > _ASPECT_RATIO_16_9:
-          preview_stabilization_factor = _PREVIEW_STABILIZATION_FACTOR * 1.1
-        else:
-          preview_stabilization_factor = _PREVIEW_STABILIZATION_FACTOR
-        if max_angles['cam'] >= max_angles['gyro']*preview_stabilization_factor:
-          test_failures.append(
-              f'{preview_size} preview not stabilized enough! '
-              f"Max preview angle:  {max_angles['cam']:.3f}, "
-              f"Max gyro angle: {max_angles['gyro']:.3f}, "
-              f"ratio: {max_angles['cam']/max_angles['gyro']:.3f} "
-              f'THRESH: {preview_stabilization_factor}.')
-        # Delete saved frames if the format is a PASS
-        else:
-          try:
-            tmpdir = os.listdir(log_path)
-          except FileNotFoundError:
-            logging.debug('Tmp directory: %s not found', log_path)
-          for file in tmpdir:
-            if fnmatch.fnmatch(file, f'*_{preview_size}_stabilized_frame_*'):
-              file_to_remove = os.path.join(log_path, file)
-              try:
-                os.remove(file_to_remove)
-              except FileNotFoundError:
-                logging.debug('File Not Found: %s', str(file))
-          logging.debug('Format %s passes, frame images removed', preview_size)
+      for _, result_per_size in stabilization_result.items():
+        if result_per_size['failure'] is not None:
+          test_failures.append(result_per_size['failure'])
 
       if test_failures:
         raise AssertionError(test_failures)
