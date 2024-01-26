@@ -75,6 +75,8 @@ def convert_and_compare_captures(cap_raw, cap_yuv, props,
   rms_diff = image_processing_utils.compute_image_rms_difference_1d(
       rgb_means_yuv, rgb_means_raw)
   msg = f'{raw_fmt} diff: {rms_diff:.4f}'
+  # Log rms-diff, so that it can be written to the report log.
+  print(f'test_yuv_plus_raw_rms_diff: {rms_diff:.4f}')
   logging.debug('%s', msg)
   if rms_diff >= _THRESHOLD_MAX_RMS_DIFF:
     return f'{msg}, spec: {_THRESHOLD_MAX_RMS_DIFF}'

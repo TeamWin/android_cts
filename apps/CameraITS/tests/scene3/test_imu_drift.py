@@ -50,8 +50,9 @@ def calc_effective_sampling_rate(times, sensor):
   """
   duration = times[-1] - times[0]
   num_pts = len(times)
-  logging.debug('%s time: %.2fs, num_pts: %d, effective samping rate: %.2f Hz',
+  logging.debug('%s time: %.2fs, num_pts: %d, effective sampling rate: %.2f Hz',
                 sensor, duration, num_pts, num_pts/duration)
+  print(f'test_imu_drift_sampling_rate_hz: {num_pts/duration:.2f}')
   return num_pts/duration
 
 
