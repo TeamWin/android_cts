@@ -89,7 +89,11 @@ public class ChannelSoundingParamsTest {
     public void createFromParcel() {
         final Parcel parcel = Parcel.obtain();
         try {
-            ChannelSoundingParams params = new ChannelSoundingParams.Builder().build();
+            ChannelSoundingParams params = new ChannelSoundingParams.Builder()
+                    .setSightType(SIGHT_TYPE_LINE_OF_SIGHT)
+                    .setLocationType(LOCATION_TYPE_OUTDOOR)
+                    .setCsSecurityLevel(CS_SECURITY_LEVEL_TWO)
+                    .build();
             params.writeToParcel(parcel, 0);
             parcel.setDataPosition(0);
             ChannelSoundingParams paramsFromParcel =
