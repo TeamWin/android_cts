@@ -38,6 +38,7 @@ public class MainInteractionSession extends VoiceInteractionSession {
     public static final String ACTION_SESSION_STARTED = "session_started";
     public static final String ACTION_SCREENSHOT_RECEIVED = "screenshot_received";
     public static final String ACTION_ASSIST_DATA_RECEIVED = "assist_data_received";
+    public static final String ACTION_ON_SHOW_RECEIVED = "on_show_received";
     public static final String EXTRA_RECEIVED = "received";
 
     Intent mStartIntent;
@@ -74,6 +75,7 @@ public class MainInteractionSession extends VoiceInteractionSession {
             return;
         }
         mStartIntent = args.getParcelable("intent");
+        notifyTestReceiver(ACTION_ON_SHOW_RECEIVED, args);
         if (mStartIntent != null) {
             startVoiceActivity(mStartIntent);
         } else if ((showFlags & SHOW_SOURCE_ACTIVITY) == SHOW_SOURCE_ACTIVITY) {

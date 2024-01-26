@@ -21,6 +21,7 @@ import static org.junit.Assert.fail;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.util.Log;
 import android.voiceinteraction.service.MainInteractionSession;
 
@@ -34,8 +35,8 @@ public class VoiceInteractionTestReceiver extends BroadcastReceiver {
     private static CountDownLatch sServiceStartedLatch = new CountDownLatch(1);
     private static Intent sReceivedIntent;
     private static CountDownLatch sScreenshotReceivedLatch = new CountDownLatch(1);
-
     private static CountDownLatch sAssistDataReceivedLatch = new CountDownLatch(1);
+    private static CountDownLatch sOnShowReceivedLatch = new CountDownLatch(1);
 
     public static void waitSessionStarted(long timeout, TimeUnit unit) throws InterruptedException {
         if (!sServiceStartedLatch.await(timeout, unit)) {
@@ -73,6 +74,16 @@ public class VoiceInteractionTestReceiver extends BroadcastReceiver {
         return sReceivedIntent.getBooleanExtra(MainInteractionSession.EXTRA_RECEIVED, false);
     }
 
+    /** Waits for onShow being called. */
+    public static Bundle waitOnShowReceived(long timeout, TimeUnit unit)
+            throws InterruptedException {
+        if (!sOnShowReceivedLatch.await(timeout, unit)) {
+            // Timeout. Assume this means no assist data is sent to VoiceInteractionService.
+            return null;
+        }
+        return sReceivedIntent.getExtras();
+    }
+
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.i(TAG, "Got broadcast that MainInteractionService started");
@@ -83,6 +94,8 @@ public class VoiceInteractionTestReceiver extends BroadcastReceiver {
                     sScreenshotReceivedLatch.countDown();
             case MainInteractionSession.ACTION_ASSIST_DATA_RECEIVED ->
                     sAssistDataReceivedLatch.countDown();
+            case MainInteractionSession.ACTION_ON_SHOW_RECEIVED ->
+                    sOnShowReceivedLatch.countDown();
         }
     }
 
@@ -92,5 +105,6 @@ public class VoiceInteractionTestReceiver extends BroadcastReceiver {
         sServiceStartedLatch = new CountDownLatch(1);
         sScreenshotReceivedLatch = new CountDownLatch(1);
         sAssistDataReceivedLatch = new CountDownLatch(1);
+        sOnShowReceivedLatch = new CountDownLatch(1);
     }
 }

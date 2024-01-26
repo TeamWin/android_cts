@@ -19,6 +19,7 @@ package android.voiceinteraction.cts;
 import static android.Manifest.permission.CAPTURE_AUDIO_HOTWORD;
 import static android.Manifest.permission.MANAGE_HOTWORD_DETECTION;
 import static android.Manifest.permission.RECORD_AUDIO;
+import static android.service.voice.VoiceInteractionSession.KEY_FOREGROUND_ACTIVITIES;
 import static android.service.voice.VoiceInteractionSession.KEY_SHOW_SESSION_ID;
 import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
 
@@ -185,6 +186,29 @@ public class VoiceInteractionServiceTest extends AbstractHdsTestCase {
                 TimeUnit.SECONDS);
 
         assertThat(obtainedAssistData).isFalse();
+    }
+
+    @ApiTest(apis = {"android.service.voice.VoiceInteractionSession#onShow"})
+    @Test
+    public void onShow_hasForegroundActivities() throws Exception {
+        startActivityAndShowSession(sDeviceState.initialUser());
+        Bundle onShowArgs = VoiceInteractionTestReceiver.waitOnShowReceived(5,
+                TimeUnit.SECONDS);
+
+        assertThat(onShowArgs).isNotNull();
+        assertThat(onShowArgs.containsKey(KEY_FOREGROUND_ACTIVITIES)).isTrue();
+    }
+
+    @ApiTest(apis = {"android.service.voice.VoiceInteractionSession#onShow"})
+    @Test
+    @EnsureHasPrivateProfile
+    public void onShow_privateProfile_noForegroundActivities() throws Exception {
+        startActivityAndShowSession(sDeviceState.privateProfile());
+        Bundle onShowArgs = VoiceInteractionTestReceiver.waitOnShowReceived(5,
+                TimeUnit.SECONDS);
+
+        assertThat(onShowArgs).isNotNull();
+        assertThat(onShowArgs.containsKey(KEY_FOREGROUND_ACTIVITIES)).isFalse();
     }
 
     private void startActivityAndShowSession(UserReference userToStartActivity) {
