@@ -800,7 +800,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                 mCodec.stop();
                 mCodec.release();
                 mExtractor.release();
-                if (!(mIsInterlaced ? ref.equalsByteOutput(mOutputBuff) :
+                if (!(mIsInterlaced ? ref.equalsDequeuedOutput(mOutputBuff) :
                         ref.equals(mOutputBuff))) {
                     fail("Decoder output received for file " + mSrcFiles[0]
                             + " is not identical to the output received for file " + file + "\n"

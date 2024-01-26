@@ -129,8 +129,6 @@ public class RequirementConstants {
     public static final String FRONT_CAMERA_LATENCY = "front_camera_latency";
     public static final String FRONT_CAMERA_LOGICAL_MULTI_CAMERA_REQ_MET =
             "front_camera_logical_multi_camera_req_met";
-    public static final String FRONT_CAMERA_PREVIEW_STABILIZATION_SUPPORTED =
-            "front_camera_preview_stabilization_supported";
     public static final String FRONT_CAMERA_STREAM_USECASE_SUPPORTED =
             "front_camera_stream_usecase_supported";
     public static final String FRONT_CAMERA_TIMESTAMP_SOURCE =

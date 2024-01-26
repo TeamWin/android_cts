@@ -117,17 +117,17 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     private static MockSatelliteServiceManager sMockSatelliteServiceManager;
 
-    /** SatelliteCapabilities constant indicating that the radio technology is proprietary. */
+    /* SatelliteCapabilities constant indicating that the radio technology is proprietary. */
     private static final Set<Integer> SUPPORTED_RADIO_TECHNOLOGIES;
     static {
         SUPPORTED_RADIO_TECHNOLOGIES = new HashSet<>();
         SUPPORTED_RADIO_TECHNOLOGIES.add(SatelliteManager.NT_RADIO_TECHNOLOGY_PROPRIETARY);
     }
-    /** SatelliteCapabilities constant indicating that pointing to satellite is required. */
+    /* SatelliteCapabilities constant indicating that pointing to satellite is required. */
     private static final boolean POINTING_TO_SATELLITE_REQUIRED = true;
-    /** SatelliteCapabilities constant indicating the maximum number of characters per datagram. */
+    /* SatelliteCapabilities constant indicating the maximum number of characters per datagram. */
     private static final int MAX_BYTES_PER_DATAGRAM = 339;
-    /** SatelliteCapabilites constant antenna position map received from satellite modem. */
+    /* SatelliteCapabilites constant antenna position map received from satellite modem. */
     private static final Map<Integer, AntennaPosition> ANTENNA_POSITION_MAP;
     static {
         ANTENNA_POSITION_MAP = new HashMap<>();
@@ -1330,7 +1330,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertNotNull(errorCode);
         assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_ERROR);
 
-        /**
+        /*
          * Send datagram transfer state should have the following transitions:
          * 1) SENDING to SENDING_FAILED
          * 2) SENDING_FAILED to IDLE
@@ -2020,7 +2020,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertNotNull(errorCode);
         assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_ERROR);
 
-        /**
+        /*
          * Send datagram transfer state should have the following transitions:
          * 1) IDLE to SENDING
          * 2) SENDING to SENDING_FAILED
@@ -2319,7 +2319,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertNotNull(errorCode);
         assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_NOT_REACHABLE);
 
-        /**
+        /*
          * Send datagram transfer state should have the following transitions:
          * 1) IDLE to SENDING
          * 2) SENDING to SENDING_FAILED
@@ -2359,7 +2359,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         }
         assertNull(errorCode);
 
-        /**
+        /*
          * Send datagram transfer state should have the following transitions:
          * 1) IDLE to SENDING
          */
@@ -2386,7 +2386,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertNotNull(errorCode);
         assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
-        /**
+        /*
          * Send datagram transfer state should have the following transitions:
          * 1) SENDING to SEND_SUCCESS
          * 2) SEND_SUCCESS to IDLE
@@ -2418,7 +2418,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         }
         assertNull(errorCode);
 
-        /**
+        /*
          * Send datagram transfer state should have the following transitions:
          * 1) IDLE to SENDING
          */
@@ -2445,7 +2445,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertNotNull(errorCode);
         assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_REQUEST_ABORTED);
 
-        /**
+        /*
          * Send datagram transfer state should have the following transitions:
          * 1) SENDING to SENDING_FAILED
          * 2) SENDING_FAILED to IDLE
@@ -2900,7 +2900,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                 SatelliteManager.SATELLITE_RESULT_SUCCESS;
         @SatelliteManager.SatelliteResult int expectedError;
 
-        /** Test when satellite is not supported in the carrier config */
+        /* Test when satellite is not supported in the carrier config */
         PersistableBundle bundle = new PersistableBundle();
         bundle.putBoolean(
                 CarrierConfigManager.KEY_SATELLITE_ATTACH_SUPPORTED_BOOL, false);
@@ -2913,7 +2913,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertNull(pair.second);
 
 
-        /** Test when satellite is supported in the carrier config */
+        /* Test when satellite is supported in the carrier config */
         setSatelliteError(expectedSuccess);
         bundle = new PersistableBundle();
         bundle.putBoolean(
@@ -2948,14 +2948,14 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertEquals(true, pair.first.booleanValue());
         assertNull(pair.second);
 
-        /** Test when satellite is supported, and requested satellite disabled */
+        /* Test when satellite is supported, and requested satellite disabled */
         requestSatelliteAttachEnabledForCarrier(false, expectedSuccess);
         assertEquals(false, getIsSatelliteEnabledForCarrierFromMockService());
         pair = requestIsSatelliteAttachEnabledForCarrier();
         assertEquals(false, pair.first.booleanValue());
         assertNull(pair.second);
 
-        /** Test when satellite is supported, but modem returns INVALID_MODEM_STATE */
+        /* Test when satellite is supported, but modem returns INVALID_MODEM_STATE */
         expectedError = SatelliteManager.SATELLITE_RESULT_INVALID_MODEM_STATE;
         setSatelliteError(expectedError);
         requestSatelliteAttachEnabledForCarrier(true, expectedError);
@@ -2964,7 +2964,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertEquals(true, pair.first.booleanValue());
         assertNull(pair.second);
 
-        /** Test when satellite is supported, and requested satellite disabled */
+        /* Test when satellite is supported, and requested satellite disabled */
         expectedError = SatelliteManager.SATELLITE_RESULT_SUCCESS;
         requestSatelliteAttachEnabledForCarrier(false, expectedError);
         assertEquals(false, getIsSatelliteEnabledForCarrierFromMockService());
@@ -2972,7 +2972,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertEquals(false, pair.first.booleanValue());
         assertNull(pair.second);
 
-        /** Test when satellite is supported, but modem returns RADIO_NOT_AVAILABLE */
+        /* Test when satellite is supported, but modem returns RADIO_NOT_AVAILABLE */
         expectedError = SatelliteManager.SATELLITE_RESULT_RADIO_NOT_AVAILABLE;
         setSatelliteError(expectedError);
         requestSatelliteAttachEnabledForCarrier(true, expectedError);
@@ -2996,7 +2996,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         @SatelliteManager.SatelliteResult int expectedSuccess =
                 SatelliteManager.SATELLITE_RESULT_SUCCESS;
 
-        /** Test when satellite is supported but there is a restriction reason */
+        /* Test when satellite is supported but there is a restriction reason */
         setSatelliteError(expectedSuccess);
         PersistableBundle bundle = new PersistableBundle();
         bundle.putBoolean(
@@ -3012,38 +3012,38 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertNull(pair.second);
         assertEquals(false, getIsSatelliteEnabledForCarrierFromMockService());
 
-        /** If the restriction reason 'GEOLOCATION' is removed and the restriction reason is
-         * empty, re-evaluate and trigger enable/disable again */
+        /* If the restriction reason 'GEOLOCATION' is removed and the restriction reason is
+           empty, re-evaluate and trigger enable/disable again */
         requestRemoveSatelliteAttachRestrictionForCarrier(restrictionReason,
                 SatelliteManager.SATELLITE_RESULT_SUCCESS);
         verifySatelliteAttachRestrictionForCarrier(restrictionReason, false);
         assertEquals(true, getIsSatelliteEnabledForCarrierFromMockService());
 
-        /** If the restriction reason 'GEOLOCATION' is added and the restriction reason becomes
-         * 'GEOLOCATION', re-evaluate and trigger enable/disable again */
+        /* If the restriction reason 'GEOLOCATION' is added and the restriction reason becomes
+           'GEOLOCATION', re-evaluate and trigger enable/disable again */
         requestAddSatelliteAttachRestrictionForCarrier(restrictionReason,
                 SatelliteManager.SATELLITE_RESULT_SUCCESS);
         verifySatelliteAttachRestrictionForCarrier(restrictionReason, true);
         assertEquals(false, getIsSatelliteEnabledForCarrierFromMockService());
 
-        /** If the restriction reason 'ENTITLEMENT' is added and the restriction reasons become
-         * ‘GEOLOCATION’ and ‘ENTITLEMENT.’ re-evaluate and trigger enable/disable again */
+        /* If the restriction reason 'ENTITLEMENT' is added and the restriction reasons become
+           ‘GEOLOCATION’ and ‘ENTITLEMENT.’ re-evaluate and trigger enable/disable again */
         restrictionReason = SATELLITE_COMMUNICATION_RESTRICTION_REASON_ENTITLEMENT;
         requestAddSatelliteAttachRestrictionForCarrier(restrictionReason,
                 SatelliteManager.SATELLITE_RESULT_SUCCESS);
         verifySatelliteAttachRestrictionForCarrier(restrictionReason, true);
         assertEquals(false, getIsSatelliteEnabledForCarrierFromMockService());
 
-        /** If the restriction reason 'ENTITLEMENT' is removed and the restriction reason becomes
-         * ‘GEOLOCATION’, re-evaluate and trigger enable/disable again */
+        /* If the restriction reason 'ENTITLEMENT' is removed and the restriction reason becomes
+           ‘GEOLOCATION’, re-evaluate and trigger enable/disable again */
         requestRemoveSatelliteAttachRestrictionForCarrier(restrictionReason,
                 SatelliteManager.SATELLITE_RESULT_SUCCESS);
         restrictionReason = SATELLITE_COMMUNICATION_RESTRICTION_REASON_GEOLOCATION;
         verifySatelliteAttachRestrictionForCarrier(restrictionReason, true);
         assertEquals(false, getIsSatelliteEnabledForCarrierFromMockService());
 
-        /** If the restriction reason 'GEOLOCATION' is removed and the restriction reason becomes
-         *  empty, re-evaluate and trigger enable/disable again */
+        /* If the restriction reason 'GEOLOCATION' is removed and the restriction reason becomes
+            empty, re-evaluate and trigger enable/disable again */
         requestRemoveSatelliteAttachRestrictionForCarrier(restrictionReason,
                 SatelliteManager.SATELLITE_RESULT_SUCCESS);
         verifySatelliteAttachRestrictionForCarrier(restrictionReason, false);
@@ -3065,12 +3065,8 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                 new NtnSignalStrengthCallbackTest();
 
         /* register callback for non-terrestrial network signal strength changed event */
-        try {
-            sSatelliteManager.registerForNtnSignalStrengthChanged(
-                    getContext().getMainExecutor(), ntnSignalStrengthCallbackTest);
-        } catch (SatelliteManager.SatelliteException ex) {
-            throw new AssertionError();
-        }
+        sSatelliteManager.registerForNtnSignalStrengthChanged(getContext().getMainExecutor(),
+                ntnSignalStrengthCallbackTest);
 
         @NtnSignalStrength.NtnSignalStrengthLevel int expectedLevel =
                 NtnSignalStrength.NTN_SIGNAL_STRENGTH_NONE;
@@ -3266,7 +3262,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertNotNull(errorCode);
         assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
-        /**
+        /*
          * Send datagram transfer state should have the following transitions:
          * 1) IDLE to SENDING
          * 2) SENDING to SEND_SUCCESS
@@ -3331,9 +3327,28 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         setTestProviderLocation(32.909808231041644, -117.18185788819781);
         verifyIsSatelliteAllowed(true);
 
+        SatelliteModemStateCallbackTest callback = new SatelliteModemStateCallbackTest();
+        long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
+                getContext().getMainExecutor(), callback);
+        assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);
+        assertTrue(callback.waitUntilResult(1));
+        if (!isSatelliteEnabled()) {
+            requestSatelliteEnabled(true);
+            assertTrue(callback.waitUntilResult(1));
+            assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
+            assertTrue(isSatelliteEnabled());
+        }
+
         // Set current location to Google Bangalore office
         setTestProviderLocation(12.994021769576554, 12.994021769576554);
         verifyIsSatelliteAllowed(false);
+
+        // Even though satellite is not allowed at the current location, disabling satellite should
+        // succeed
+        requestSatelliteEnabled(false);
+        assertTrue(callback.waitUntilModemOff());
+        assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
+        assertFalse(isSatelliteEnabled());
 
         // Restore satellite access allowed
         setUpSatelliteAccessAllowed();
@@ -3391,7 +3406,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         revokeSatellitePermission();
     }
 
-    /**
+    /*
      * Before calling this function, caller need to make sure the modem is in LISTENING or IDLE
      * state.
      */
@@ -3425,7 +3440,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertNotNull(errorCode);
         assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, (long) errorCode);
 
-        /**
+        /*
          * Modem state should have the following transitions:
          * 1) IDLE to TRANSFERRING.
          * 2) TRANSFERRING to LISTENING.
@@ -3443,7 +3458,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_LISTENING,
                 callback.getModemState(1));
 
-        /**
+        /*
          * On entering LISTENING state, we expect one event of EventOnSatelliteListeningEnabled with
          * value true. On exiting LISTENING state, we expect one event of
          * EventOnSatelliteListeningEnabled with value false.
@@ -3466,7 +3481,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         sMockSatelliteServiceManager.clearListeningEnabledList();
     }
 
-    /**
+    /*
      * Before calling this function, caller need to make sure the modem is in LISTENING or IDLE
      * state.
      */
@@ -3516,7 +3531,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         sMockSatelliteServiceManager.setErrorCode(SatelliteResult.SATELLITE_RESULT_SUCCESS);
     }
 
-    /**
+    /*
      * Before calling this function, caller need to make sure the modem is in LISTENING state.
      */
     private void receiveSatelliteDatagramWithSuccessfulResult(
@@ -3565,7 +3580,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         sSatelliteManager.unregisterForSatelliteDatagram(satelliteDatagramCallback);
     }
 
-    /**
+    /*
      * Before calling this function, caller need to make sure the modem is in LISTENING state.
      */
     private void receiveSatelliteDatagramWithFailedResult(
@@ -3592,7 +3607,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE,
                 callback.getModemState(1));
 
-        /**
+        /*
          * On entering LISTENING state, we expect one event of EventOnSatelliteListeningEnabled with
          * value true. On exiting LISTENING state, we expect one event of
          * EventOnSatelliteListeningEnabled with value false.
@@ -3678,7 +3693,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
         assertTrue(sMockSatelliteServiceManager.waitForEventOnSendSatelliteDatagram(1));
 
-        /**
+        /*
          * Send datagram transfer state should have the following transitions:
          * 1) IDLE to SENDING
          * 2) SENDING to SENDING_SUCCESS
@@ -3735,7 +3750,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
         assertTrue(sMockSatelliteServiceManager.waitForEventOnSendSatelliteDatagram(1));
 
-        /**
+        /*
          * Send datagram transfer state should have the following transitions:
          * 1) IDLE to SENDING
          * 2) SENDING to SENDING_SUCCESS

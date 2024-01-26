@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package android.security.cts;
 
+import static org.junit.Assume.assumeNoException;
+
 import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
@@ -25,17 +27,20 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2018_9564 extends NonRootSecurityTestCase {
+public class CVE_2023_40111 extends NonRootSecurityTestCase {
 
-    /**
-     * b/114238578
-     * Vulnerability Behaviour: SIGSEGV in self
-     */
-    @AsbSecurityTest(cveBugId = 114238578)
+    @AsbSecurityTest(cveBugId = 272024837)
     @Test
-    public void testPocCVE_2018_9564() throws Exception {
-        AdbUtils.assumeHasNfc(getDevice());
-        pocPusher.only64();
-        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2018-9564", null, getDevice());
+    public void testPocCVE_2023_40111() {
+        try {
+            // Install the app
+            installPackage("CVE-2023-40111.apk");
+
+            // Run the test "testCVE_2023_40111"
+            final String testPkg = "android.security.cts.CVE_2023_40111";
+            runDeviceTests(testPkg, testPkg + ".DeviceTest", "testCVE_2023_40111");
+        } catch (Exception e) {
+            assumeNoException(e);
+        }
     }
 }

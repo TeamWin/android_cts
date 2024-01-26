@@ -677,6 +677,18 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         return MY_RESPONSE.deviceName;
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pGroup#setVendorData"})
+    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    @Test
+    public void testWifiP2pGroupSetAndGetVendorData() {
+        List<OuiKeyedData> vendorData = createTestOuiKeyedDataList(5);
+        WifiP2pGroup group = new WifiP2pGroup();
+        group.setVendorData(vendorData);
+        assertTrue(vendorData.equals(group.getVendorData()));
+    }
+
     @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#setDeviceName"})
     @Test
     public void testSetDeviceName() {
@@ -1094,6 +1106,24 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
                 .setDeviceAddress(MacAddress.fromString("aa:bb:cc:dd:ee:ff"))
                 .setGroupClientIpProvisioningMode(
                         GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL)
+                .build();
+        sWifiP2pManager.connect(sWifiP2pChannel, config, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertFalse(MY_RESPONSE.success);
+    }
+
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pConfig.Builder#setVendorData"})
+    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    @Test
+    public void testP2pConnectDoesNotThrowExceptionWithVendorData() {
+        OuiKeyedData vendorDataElement =
+                new OuiKeyedData.Builder(TEST_OUI, new PersistableBundle()).build();
+        List<OuiKeyedData> vendorData = Arrays.asList(vendorDataElement);
+        WifiP2pConfig config = new WifiP2pConfig.Builder()
+                .setDeviceAddress(MacAddress.fromString("aa:bb:cc:dd:ee:ff"))
+                .setVendorData(vendorData)
                 .build();
         sWifiP2pManager.connect(sWifiP2pChannel, config, sActionListener);
         assertTrue(waitForServiceResponse(MY_RESPONSE));

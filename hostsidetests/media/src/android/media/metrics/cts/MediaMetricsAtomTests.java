@@ -17,6 +17,7 @@
 package android.media.metrics.cts;
 
 import static android.media.cts.MediaMetricsTestConstants.LOG_SESSION_ID_KEY;
+import static android.os.statsd.media.MediaEditingExtensionAtoms.MEDIA_EDITING_ENDED_REPORTED_FIELD_NUMBER;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -25,6 +26,7 @@ import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
+import android.os.statsd.media.MediaEditingExtensionAtoms;
 
 import com.android.os.AtomsProto;
 import com.android.os.StatsLog;
@@ -41,6 +43,7 @@ import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
 import com.android.tradefed.util.RunUtil;
 
 import com.google.common.truth.Correspondence;
+import com.google.protobuf.ExtensionRegistry;
 
 import org.junit.After;
 import org.junit.Before;
@@ -439,6 +442,60 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
         assertThat(result.getExperimentIds()).isNotEqualTo(null);
         // TODO: needs Base64 decoders to verify the data
         assertThat(result.getDrmSessionId()).isNotEqualTo(null);
+    }
+
+    @Test
+    public void testEditingEndedEvent_default() throws Exception {
+        ConfigUtils.uploadConfigForPushedAtom(
+                getDevice(), TEST_PKG, MEDIA_EDITING_ENDED_REPORTED_FIELD_NUMBER);
+        ExtensionRegistry registry = ExtensionRegistry.newInstance();
+        MediaEditingExtensionAtoms.registerAllExtensions(registry);
+
+        DeviceUtils.runDeviceTests(
+                getDevice(),
+                TEST_PKG,
+                "android.media.metrics.cts.MediaMetricsAtomHostSideTests",
+                "testEditingEndedEvent_default",
+                new LogSessionIdListener());
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        List<StatsLog.EventMetricData> data =
+                ReportUtils.getEventMetricDataList(getDevice(), registry);
+        assertThat(data).hasSize(1);
+        MediaEditingExtensionAtoms.MediaEditingEndedReported atom =
+                data.get(0)
+                        .getAtom()
+                        .getExtension(MediaEditingExtensionAtoms.mediaEditingEndedReported);
+        assertThat(atom.getTimeSinceEditingCreatedMillis()).isEqualTo(-1L);
+        assertThat(atom.getFinalState().toString()).isEqualTo("SUCCEEDED");
+        assertThat(atom.getErrorCode().toString()).isEqualTo("ERROR_CODE_NONE");
+    }
+
+    @Test
+    public void testEditingEndedEvent_error() throws Exception {
+        ConfigUtils.uploadConfigForPushedAtom(
+                getDevice(), TEST_PKG, MEDIA_EDITING_ENDED_REPORTED_FIELD_NUMBER);
+        ExtensionRegistry registry = ExtensionRegistry.newInstance();
+        MediaEditingExtensionAtoms.registerAllExtensions(registry);
+
+        DeviceUtils.runDeviceTests(
+                getDevice(),
+                TEST_PKG,
+                "android.media.metrics.cts.MediaMetricsAtomHostSideTests",
+                "testEditingEndedEvent_error",
+                new LogSessionIdListener());
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        List<StatsLog.EventMetricData> data =
+                ReportUtils.getEventMetricDataList(getDevice(), registry);
+        assertThat(data).hasSize(1);
+        MediaEditingExtensionAtoms.MediaEditingEndedReported atom =
+                data.get(0)
+                        .getAtom()
+                        .getExtension(MediaEditingExtensionAtoms.mediaEditingEndedReported);
+        assertThat(atom.getTimeSinceEditingCreatedMillis()).isEqualTo(17630000L);
+        assertThat(atom.getFinalState().toString()).isEqualTo("ERROR");
+        assertThat(atom.getErrorCode().toString()).isEqualTo("ERROR_CODE_FAILED_RUNTIME_CHECK");
     }
 
     @Test

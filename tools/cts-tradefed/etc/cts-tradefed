@@ -104,7 +104,7 @@ done
 
 if [ "$USE_ATS" == "true" ]; then
     ATS_CONSOLE_JAR=${CTS_ROOT}/android-cts/tools/ats_console_deploy.jar
-    ATS_OLC_SERVER_JAR=${CTS_ROOT}/android-cts/tools/ats_olc_server_deploy.jar
+    ATS_OLC_SERVER_JAR=${CTS_ROOT}/android-cts/tools/ats_olc_server_local_mode_deploy.jar
     checkFile ${ATS_CONSOLE_JAR}
     checkFile ${ATS_OLC_SERVER_JAR}
 

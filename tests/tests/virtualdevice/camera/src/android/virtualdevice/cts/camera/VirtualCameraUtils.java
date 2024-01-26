@@ -31,9 +31,8 @@ public final class VirtualCameraUtils {
     static VirtualCameraConfig createVirtualCameraConfig(
             int width, int height, int format, int maximumFramesPerSecond, int sensorOrientation,
             int lensFacing, String name, Executor executor, VirtualCameraCallback callback) {
-        return new VirtualCameraConfig.Builder()
+        return new VirtualCameraConfig.Builder(name)
                 .addStreamConfig(width, height, format, maximumFramesPerSecond)
-                .setName(name)
                 .setVirtualCameraCallback(executor, callback)
                 .setSensorOrientation(sensorOrientation)
                 .setLensFacing(lensFacing)

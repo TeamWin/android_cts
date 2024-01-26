@@ -73,9 +73,8 @@ public class EnterpriseContactsDeviceTest {
             ApplicationProvider.getApplicationContext().getPackageName();
     private static final String DATABASE_NAME = "contacts";
 
-    // These constants are hidden in SetSchemaRequest
+    // This constant is hidden in SetSchemaRequest
     private static final int ENTERPRISE_ACCESS = 7;
-    private static final int ENTERPRISE_CONTACTS_DEVICE_POLICY = 8;
 
     private EnterpriseGlobalSearchSessionShim mEnterpriseSession;
 
@@ -148,8 +147,7 @@ public class EnterpriseContactsDeviceTest {
     @Test
     public void setUpEnterpriseContacts() throws Exception {
         setUpEnterpriseContactsWithPermissions(ImmutableSet.of(SetSchemaRequest.READ_CONTACTS,
-                ENTERPRISE_ACCESS,
-                ENTERPRISE_CONTACTS_DEVICE_POLICY));
+                ENTERPRISE_ACCESS));
     }
 
     @Test
