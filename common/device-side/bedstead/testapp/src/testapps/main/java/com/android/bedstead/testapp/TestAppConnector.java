@@ -32,13 +32,13 @@ import java.util.concurrent.ScheduledExecutorService;
 @CustomProfileConnector(uncaughtExceptionsPolicy = UncaughtExceptionsPolicy.NOTIFY_SUPPRESS)
 public interface TestAppConnector extends ProfileConnector {
 
-    ScheduledExecutorService EXECUTOR_SERVICE = Executors.newSingleThreadScheduledExecutor();
+    ScheduledExecutorService EXECUTOR_SERVICE = Executors.newScheduledThreadPool(5);
 
     /** Create {@link TestAppConnector}. */
     static TestAppConnector create(Context context, ConnectionBinder binder) {
         return GeneratedTestAppConnector.builder(context)
                 .setBinder(binder)
-//                .setScheduledExecutorService(EXECUTOR_SERVICE)
+                .setScheduledExecutorService(EXECUTOR_SERVICE)
                 .build();
     }
 }
