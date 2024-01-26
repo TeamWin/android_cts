@@ -29,7 +29,6 @@ import android.os.Bundle;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.nfc.NfcDialogs;
 
-import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
 
@@ -221,8 +220,7 @@ public class PollingLoopEmulatorActivity extends BaseEmulatorActivity {
         } else if (type == HostApduService.POLLING_LOOP_TYPE_UNKNOWN) {
             if (mCustomFrame != null && !mAllowedTransaction) {
                 byte[] passedData = frame.getByteArray("android.nfc.cardemulation.DATA");
-                byte[] data = Arrays.copyOfRange(passedData, 4, passedData.length - 4);
-                if (mCustomFrame.equals(HexFormat.of().formatHex(data))) {
+                if (mCustomFrame.equals(HexFormat.of().formatHex(passedData))) {
                     getPassButton().setEnabled(true);
                 }
             }
