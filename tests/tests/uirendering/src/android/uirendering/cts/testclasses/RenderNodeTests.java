@@ -29,6 +29,8 @@ import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
+import android.graphics.ColorSpace;
+import android.graphics.HardwareBufferRenderer;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Point;
@@ -39,7 +41,9 @@ import android.graphics.RenderNode;
 import android.graphics.RuntimeShader;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
+import android.hardware.HardwareBuffer;
 import android.uirendering.cts.R;
+import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
 import android.uirendering.cts.bitmapverifiers.BlurPixelVerifier;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.bitmapverifiers.RectVerifier;
@@ -57,9 +61,11 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -951,5 +957,95 @@ public class RenderNodeTests extends ActivityTestBase {
                 .runWithVerifier(new ColorVerifier(Color.BLUE));
     }
 
+    static void assertRender(RenderNode root, BitmapVerifier verifier) throws Exception {
+        HardwareBuffer buffer = HardwareBuffer.create(TEST_WIDTH, TEST_HEIGHT,
+                HardwareBuffer.RGBA_8888, 1,
+                HardwareBuffer.USAGE_GPU_COLOR_OUTPUT | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE);
+        ColorSpace colorSpace = ColorSpace.get(ColorSpace.Named.SRGB);
+        HardwareBufferRenderer renderer = new HardwareBufferRenderer(buffer);
+        renderer.setContentRoot(root);
+        CountDownLatch fence = new CountDownLatch(1);
+        HardwareBufferRenderer.RenderResult[] renderResult =
+                new HardwareBufferRenderer.RenderResult[1];
+        renderer.obtainRenderRequest()
+                .setColorSpace(colorSpace)
+                .draw(Runnable::run, result -> {
+                    renderResult[0] = result;
+                    fence.countDown();
+                });
+        assertTrue(fence.await(5, TimeUnit.SECONDS));
+        assertEquals(HardwareBufferRenderer.RenderResult.SUCCESS, renderResult[0].getStatus());
+        assertTrue(renderResult[0].getFence().await(Duration.ofSeconds(5)));
+        Bitmap hwResult = Bitmap.wrapHardwareBuffer(buffer, colorSpace);
+        Bitmap result = hwResult.copy(Bitmap.Config.ARGB_8888, false);
+        assertTrue(verifier.verify(result));
+    }
 
+    @Test
+    public void testUpdateModel() throws Exception {
+        // Create a simple tree in the shape of
+        //           root
+        //          /    \
+        //       rootA   rootB
+        //              /     \
+        //           rootB1  rootB2
+        RenderNode root = new RenderNode("root");
+        root.setPosition(0, 0, TEST_WIDTH, TEST_HEIGHT);
+        RenderNode rootA = new RenderNode("root-A");
+        rootA.setPosition(0, 0, TEST_WIDTH / 2, TEST_HEIGHT);
+        RenderNode rootB = new RenderNode("root-B");
+        rootB.setPosition(0, 0, TEST_WIDTH, TEST_HEIGHT);
+        RenderNode rootB1 = new RenderNode("root-B-1");
+        rootB1.setPosition(TEST_WIDTH / 2, 0, TEST_WIDTH, TEST_HEIGHT / 2);
+        RenderNode rootB2 = new RenderNode("root-B-2");
+        rootB2.setPosition(TEST_WIDTH / 2, TEST_HEIGHT / 2, TEST_WIDTH, TEST_HEIGHT);
+
+        RecordingCanvas canvas = null;
+        canvas = root.beginRecording();
+        canvas.drawRenderNode(rootA);
+        canvas.drawRenderNode(rootB);
+        root.endRecording();
+
+        canvas = rootB.beginRecording();
+        canvas.drawRenderNode(rootB1);
+        canvas.drawRenderNode(rootB2);
+        rootB.endRecording();
+
+        canvas = rootA.beginRecording();
+        canvas.drawColor(Color.RED);
+        rootA.endRecording();
+
+        canvas = rootB1.beginRecording();
+        canvas.drawColor(Color.RED);
+        rootB1.endRecording();
+
+        canvas = rootB2.beginRecording();
+        canvas.drawColor(Color.RED);
+        rootB2.endRecording();
+
+        assertRender(root, new ColorVerifier(Color.RED));
+
+        canvas = rootB2.beginRecording();
+        canvas.drawColor(Color.BLUE);
+        rootB2.endRecording();
+
+        assertRender(root, new RectVerifier(Color.RED, Color.BLUE,
+                new Rect(TEST_WIDTH / 2, TEST_HEIGHT / 2, TEST_WIDTH, TEST_HEIGHT)));
+
+        canvas = rootB1.beginRecording();
+        canvas.drawColor(Color.BLUE);
+        rootB1.endRecording();
+
+        assertRender(root, new RectVerifier(Color.RED, Color.BLUE,
+                new Rect(TEST_WIDTH / 2, 0, TEST_WIDTH, TEST_HEIGHT)));
+
+        canvas = rootB.beginRecording();
+        canvas.drawColor(Color.GREEN);
+        rootB.endRecording();
+        canvas = rootA.beginRecording();
+        canvas.drawColor(Color.GREEN);
+        rootA.endRecording();
+
+        assertRender(root, new ColorVerifier(Color.GREEN));
+    }
 }
