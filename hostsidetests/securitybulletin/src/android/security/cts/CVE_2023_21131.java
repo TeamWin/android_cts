@@ -29,7 +29,7 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CVE_2023_21131 extends NonRootSecurityTestCase {
 
-    @AsbSecurityTest(cveBugId = 238108059)
+    @AsbSecurityTest(cveBugId = 265015796)
     @Test
     public void testPocCVE_2023_21131() {
         try {
@@ -39,7 +39,7 @@ public class CVE_2023_21131 extends NonRootSecurityTestCase {
 
             final String testPkg = "android.security.cts.CVE_2023_21131_test";
 
-            // Run the test "testCVE_2023_35669"
+            // Run the test "testCVE_2023_21131"
             runDeviceTests(testPkg, testPkg + ".DeviceTest", "testCVE_2023_21131");
         } catch (Exception e) {
             assumeNoException(e);
