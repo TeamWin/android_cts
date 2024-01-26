@@ -47,10 +47,26 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
+    name: "CtsUseEmbeddedDexApp_Canonical_PerProcess",
+    defaults: ["cts_use_embedded_dex_test_defaults"],
+    manifest: "AndroidManifest_use_per_process.xml",
+    min_sdk_version: "27",
+    use_embedded_dex: true,
+}
+
+android_test_helper_app {
     name: "CtsUseEmbeddedDexApp_DexCompressed",
     defaults: ["cts_use_embedded_dex_test_defaults"],
     // Not specifying use_embedded_dex keeps dex compressed
     min_sdk_version: "28",
+}
+
+android_test_helper_app {
+    name: "CtsUseEmbeddedDexApp_DexCompressed_PerProcess",
+    defaults: ["cts_use_embedded_dex_test_defaults"],
+    manifest: "AndroidManifest_use_per_process.xml",
+    min_sdk_version: "27",
+    // Not specifying use_embedded_dex keeps dex compressed
 }
 
 android_test_helper_app {

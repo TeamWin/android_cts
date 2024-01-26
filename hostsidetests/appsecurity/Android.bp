@@ -67,6 +67,8 @@ java_defaults {
         "cts-host-utils",
         "cts-statsd-atom-host-test-utils",
         "sts-host-util",
+        "flag-junit-host",
+        "com.android.internal.pm.pkg.component.flags-aconfig-java-host",
     ],
 
     java_resource_dirs: ["res"],
@@ -260,7 +262,9 @@ java_test_host {
     ],
     data: [
         ":CtsUseEmbeddedDexApp_Canonical",
+        ":CtsUseEmbeddedDexApp_Canonical_PerProcess",
         ":CtsUseEmbeddedDexApp_DexCompressed",
+        ":CtsUseEmbeddedDexApp_DexCompressed_PerProcess",
         ":CtsUseEmbeddedDexApp_NotPreferred",
         ":CtsUseEmbeddedDexAppSplit_Canonical",
         ":CtsUseEmbeddedDexAppSplit_CompressedDex",
