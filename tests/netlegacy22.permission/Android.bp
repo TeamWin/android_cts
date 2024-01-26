@@ -24,6 +24,7 @@ android_test {
     static_libs: ["ctstestrunner-axt"],
     // Tag this module as a cts test artifact
     test_suites: [
+        "androidx.test.rules",
         "cts",
         "general-tests",
     ],

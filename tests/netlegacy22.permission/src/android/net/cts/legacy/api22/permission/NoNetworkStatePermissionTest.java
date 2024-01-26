@@ -19,8 +19,8 @@ package android.net.cts.legacy.api22.permission;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
-import java.net.InetAddress;
+
+import androidx.test.filters.SmallTest;
 
 /**
  * Verify ConnectivityManager related methods without specific network state permissions.
