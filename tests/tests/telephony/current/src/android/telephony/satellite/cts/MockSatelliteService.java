@@ -40,7 +40,6 @@ import android.telephony.satellite.stub.SatelliteResult;
 import android.telephony.satellite.stub.SatelliteService;
 import android.util.Log;
 
-import com.android.internal.telephony.satellite.SatelliteServiceUtils;
 import com.android.internal.util.FunctionalUtils;
 import com.android.telephony.Rlog;
 
@@ -585,8 +584,7 @@ public class MockSatelliteService extends SatelliteImplBase {
             return;
         }
         if (mShouldRespondTelephony.get()) {
-            runWithExecutor(() -> callback.accept(
-                    SatelliteServiceUtils.fromNtnSignalStrength(mNtnSignalStrength)));
+            runWithExecutor(() -> callback.accept(mNtnSignalStrength));
         }
     }
 
