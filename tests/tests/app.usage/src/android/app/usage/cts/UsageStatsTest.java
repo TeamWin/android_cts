@@ -272,7 +272,9 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         }
 
         // delete any usagestats data that was created for the test packages
-        clearTestPackagesData(mContext.getUserId());
+        if (mContext != null) {
+            clearTestPackagesData(mContext.getUserId());
+        }
 
         // Destroy the other user if created
         if (mOtherUser != 0) {
@@ -313,8 +315,10 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     }
 
     private void clearTestPackagesData(int userId) throws Exception {
-        executeShellCmd(MessageFormat.format(PRUNE_PACKAGE_DATA_SHELL_COMMAND, mTargetPackage,
-                userId));
+        if (mTargetPackage != null) {
+            executeShellCmd(MessageFormat.format(PRUNE_PACKAGE_DATA_SHELL_COMMAND, mTargetPackage,
+                    userId));
+        }
         executeShellCmd(MessageFormat.format(PRUNE_PACKAGE_DATA_SHELL_COMMAND, TEST_APP_PKG,
                 userId));
         executeShellCmd(MessageFormat.format(PRUNE_PACKAGE_DATA_SHELL_COMMAND, TEST_APP2_PKG,
