@@ -222,6 +222,7 @@ public class ZoomCaptureTest extends Camera2AndroidTestCase {
                     seqId, CAPTURE_WAIT_TIMEOUT_MS * candidateZoomRatios.size());
 
             float lastZoomRatio = Float.NaN;
+            float lastFocalLength = Float.NaN;
             Rect lastActiveCropRegion = new Rect();
             String lastActivePhysicalId = new String();
             while (listener.hasMoreResults() && mStaticInfo.isActivePhysicalCameraIdSupported()) {
@@ -251,15 +252,35 @@ public class ZoomCaptureTest extends Camera2AndroidTestCase {
                     if (activeCropRegion != null) {
                         Float zoomRatio = CameraTestUtils.getValueNotNull(result,
                                 CaptureResult.CONTROL_ZOOM_RATIO);
-                        if ((zoomRatio != lastZoomRatio) && (zoomRatio > lastZoomRatio)) {
+                        float [] lensIntrinsics = result.get(
+                                CaptureResult.LENS_INTRINSIC_CALIBRATION);
+                        float focalLength = Float.NaN;
+                        if (lensIntrinsics != null) {
+                            focalLength = lensIntrinsics[0];
+                        }
+                        if ((!Float.isNaN(lastZoomRatio)) && (zoomRatio > lastZoomRatio)) {
                             if (lastActivePhysicalId.equals(activePhysicalId)) {
                                 assertTrue(lastActiveCropRegion.contains(activeCropRegion));
-                            } else {
-                                lastActivePhysicalId = activePhysicalId;
+
+                                if (!Float.isNaN(lastFocalLength)) {
+                                    float digitalZoomApplied =
+                                            ((float) lastActiveCropRegion.width()) /
+                                                    activeCropRegion.width();
+                                    float opticalZoomApplied = (focalLength / lastFocalLength);
+                                    float combinedZoomApplied =
+                                            digitalZoomApplied * opticalZoomApplied;
+                                    float zoomReported = zoomRatio / lastZoomRatio;
+                                    assertTrue("Combined zoom: " + combinedZoomApplied +
+                                                    " too far apart from reported zoom: " +
+                                            zoomReported, Math.abs(
+                                            combinedZoomApplied - zoomReported) <= 0.0001);
+                                }
                             }
-                            lastZoomRatio = zoomRatio;
-                            lastActiveCropRegion = activeCropRegion;
                         }
+                        lastActivePhysicalId = activePhysicalId;
+                        lastZoomRatio = zoomRatio;
+                        lastActiveCropRegion = activeCropRegion;
+                        lastFocalLength = focalLength;
                     }
 
                     LensIntrinsicsSample [] samples = result.get(
