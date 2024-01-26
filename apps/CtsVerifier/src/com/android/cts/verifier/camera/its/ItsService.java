@@ -1121,10 +1121,24 @@ public class ItsService extends Service implements SensorEventListener {
                 JSONArray rvs = new JSONArray();
                 for (MySensorEvent event : events) {
                     JSONObject obj = new JSONObject();
-                    obj.put("time", event.timestamp);
-                    obj.put("x", event.values[0]);
-                    obj.put("y", event.values[1]);
-                    obj.put("z", event.values[2]);
+                    if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
+                        float[] mRotationMatrix = new float[16];
+                        float[] orientationVals = new float[3];
+                        SensorManager.getRotationMatrixFromVector(mRotationMatrix, event.values);
+                        SensorManager.getOrientation(mRotationMatrix, orientationVals);
+                        orientationVals[0] = (float) Math.toDegrees(orientationVals[0]);
+                        orientationVals[1] = (float) Math.toDegrees(orientationVals[1]);
+                        orientationVals[2] = (float) Math.toDegrees(orientationVals[2]);
+                        obj.put("time", event.timestamp);
+                        obj.put("x", orientationVals[0]);
+                        obj.put("y", orientationVals[1]);
+                        obj.put("z", orientationVals[2]);
+                    } else {
+                        obj.put("time", event.timestamp);
+                        obj.put("x", event.values[0]);
+                        obj.put("y", event.values[1]);
+                        obj.put("z", event.values[2]);
+                    }
                     if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
                         accels.put(obj);
                     } else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
