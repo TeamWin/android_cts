@@ -21,7 +21,9 @@ import static java.util.Objects.requireNonNull;
 
 import android.app.ActivityManager;
 import android.app.ActivityManager.MemoryInfo;
-import android.platform.test.flag.junit.SetFlagsRule;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.view.flags.Flags;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
@@ -40,7 +42,7 @@ public class SurfaceOOMTest {
     public static final int MEMORY_MULTIPLIER = 2;
 
     @Rule
-    public final SetFlagsRule mSetFlagsRule = new SetFlagsRule();
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Rule
     public ActivityScenarioRule<SurfaceOOMTestActivity> mActivityRule =
@@ -54,9 +56,8 @@ public class SurfaceOOMTest {
     }
 
     @Test(timeout = 5 * 60 * 1000)
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_SURFACE_NATIVE_ALLOC_REGISTRATION_RO)
     public void testSurfaceGarbageCollection() throws Throwable {
-        mSetFlagsRule.enableFlags(Flags.FLAG_ENABLE_SURFACE_NATIVE_ALLOC_REGISTRATION);
-
         long imageSizeBytes = BIG_WIDTH * BIG_HEIGHT * BYTES_PER_PIXEL;
         long numSurfacesToCreate = MEMORY_MULTIPLIER * (getMemoryInfo().totalMem / imageSizeBytes);
 

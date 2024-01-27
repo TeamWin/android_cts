@@ -26,6 +26,8 @@ import static android.telephony.DataSpecificRegistrationInfo.LTE_ATTACH_TYPE_UNK
 import static android.telephony.PhoneCapability.DEVICE_NR_CAPABILITY_NSA;
 import static android.telephony.PhoneCapability.DEVICE_NR_CAPABILITY_SA;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -64,6 +66,7 @@ import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.DropBoxManager;
 import android.os.Looper;
 import android.os.Parcel;
 import android.os.PersistableBundle;
@@ -78,6 +81,7 @@ import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
+import android.telecom.cts.TestUtils;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.Annotation.RadioPowerState;
 import android.telephony.AvailableNetworkInfo;
@@ -377,6 +381,20 @@ public class TelephonyManagerTest {
                 Arrays.asList(TelephonyManager.NETWORK_TYPE_TD_SCDMA));
     }
 
+    /**
+     * Emergency call diagnostic data configs
+     */
+    private static final String DROPBOX_TAG = "ecall_diagnostic_data";
+    private static final String TELECOM_DUMPSYS_COMMAND = "dumpsys telecom";
+    private static final String TELEPHONY_DUMPSYS_COMMAND = "dumpsys telephony.registry";
+    private static final String LOGCAT_BINARY = "/system/bin/logcat";
+    private static final String DIAG_ERROR_MSG = "DiagnosticDataCollector error executing cmd";
+    public static final int MAX_LINES_TO_VERIFY_IN_DUMPSYS_OUTPUT = 20;
+    private static final int MAX_READ_BYTES_PER_DROP_BOX_ENTRY = 5000;
+    private static final int DROP_BOX_LATCH_TIMEOUT = 3000;
+    private CountDownLatch mLatchForDropBox;
+    private IntentFilter mDropBoxIntentFilter;
+
     private int mTestSub;
     private int mNetworkHalVersion;
     private int mModemHalVersion;
@@ -492,7 +510,9 @@ public class TelephonyManagerTest {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(android.Manifest.permission.READ_PHONE_STATE);
         saveAllowedNetworkTypesForAllReasons();
-
+        mLatchForDropBox = new CountDownLatch(1);
+        mDropBoxIntentFilter = new IntentFilter();
+        mDropBoxIntentFilter.addAction(DropBoxManager.ACTION_DROPBOX_ENTRY_ADDED);
         // Wait previously queued broadcasts to complete before starting the test
         AmUtils.waitForBroadcastBarrier();
     }
@@ -6920,6 +6940,129 @@ public class TelephonyManagerTest {
                     mTelephonyManager.isNullCipherNotificationsEnabled();
                 }
         );
+    }
+
+    @Test
+    @ApiTest(apis = {"android.telephony.TelephonyManager#EmergencyCallDiagnosticParams"})
+    @RequiresFlagsEnabled(
+            com.android.server.telecom.flags.Flags.FLAG_TELECOM_RESOLVE_HIDDEN_DEPENDENCIES)
+    public void testEmergencyCallDiagnosticParams() {
+        long startTime = SystemClock.elapsedRealtime();
+        TelephonyManager.EmergencyCallDiagnosticParams.Builder callDiagnosticBuilder =
+                new TelephonyManager.EmergencyCallDiagnosticParams.Builder();
+        TelephonyManager.EmergencyCallDiagnosticParams params = callDiagnosticBuilder
+                .setTelecomDumpSysCollectionEnabled(true)
+                .setTelephonyDumpSysCollectionEnabled(true)
+                .setLogcatCollectionStartTimeMillis(startTime)
+                .build();
+        assertTrue(params.isTelecomDumpSysCollectionEnabled());
+        assertTrue(params.isTelephonyDumpSysCollectionEnabled());
+        assertTrue(params.isLogcatCollectionEnabled());
+        assertEquals(startTime, params.getLogcatCollectionStartTimeMillis());
+
+        params = callDiagnosticBuilder
+                .setTelecomDumpSysCollectionEnabled(false)
+                .setTelephonyDumpSysCollectionEnabled(false)
+                .setLogcatCollectionStartTimeMillis(-1L)
+                .build();
+        assertFalse(params.isTelecomDumpSysCollectionEnabled());
+        assertFalse(params.isTelephonyDumpSysCollectionEnabled());
+        assertFalse(params.isLogcatCollectionEnabled());
+    }
+
+    @Test
+    @ApiTest(apis = {"android.telephony.TelephonyManager#persistEmergencyCallDiagnosticData"})
+    @RequiresFlagsEnabled(
+            com.android.server.telecom.flags.Flags.FLAG_TELECOM_RESOLVE_HIDDEN_DEPENDENCIES)
+    public void testPersistEmergencyCallDiagnosticData() throws Exception {
+        long startTime = SystemClock.elapsedRealtime();
+        getContext().registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String tag =
+                        intent.getStringExtra(DropBoxManager.EXTRA_TAG);
+                if (tag.equals(DROPBOX_TAG)) {
+                    Log.d(TAG, "entry added to dropbox");
+                    mLatchForDropBox.countDown();
+                }
+            }
+        }, mDropBoxIntentFilter);
+
+        TelephonyManager.EmergencyCallDiagnosticParams.Builder callDiagnosticBuilder =
+                new TelephonyManager.EmergencyCallDiagnosticParams.Builder();
+        persistCallDiagnostics(callDiagnosticBuilder, true /* setTelecomDump */,
+                false /* setTelephonyDump */, false /* setLogcatDump */);
+        String telecomDumpOutput = TestUtils.executeShellCommand(getInstrumentation(),
+                TELECOM_DUMPSYS_COMMAND);
+        long nextEntryTime = verifyEmergencyDropBoxEntriesCreatedAndDumped(
+                startTime, telecomDumpOutput, false);
+
+        persistCallDiagnostics(callDiagnosticBuilder, false /* setTelecomDump */,
+                true /* setTelephonyDump */, false /* setLogcatDump */);
+        String telephonyDumpOutput = TestUtils.executeShellCommand(getInstrumentation(),
+                TELEPHONY_DUMPSYS_COMMAND);
+        nextEntryTime = verifyEmergencyDropBoxEntriesCreatedAndDumped(
+                nextEntryTime, telephonyDumpOutput, false);
+
+        String logcatSystemRadioCmd = LOGCAT_BINARY + " -t " + startTime
+                + " -b system,radio";
+        persistCallDiagnostics(callDiagnosticBuilder, false /* setTelecomDump */,
+                false /* setTelephonyDump */, true /* setLogcatDump */);
+        String logcatDumpOutput = TestUtils.executeShellCommand(getInstrumentation(),
+                logcatSystemRadioCmd);
+        verifyEmergencyDropBoxEntriesCreatedAndDumped(nextEntryTime, logcatDumpOutput, true);
+    }
+
+    private void persistCallDiagnostics(
+            TelephonyManager.EmergencyCallDiagnosticParams.Builder callDiagnosticBuilder,
+            boolean setTelecomDump, boolean setTelephonyDump, boolean setLogcatDump)
+            throws InterruptedException {
+        TelephonyManager.EmergencyCallDiagnosticParams params = callDiagnosticBuilder
+                .setTelecomDumpSysCollectionEnabled(setTelecomDump)
+                .setTelephonyDumpSysCollectionEnabled(setTelephonyDump)
+                .setLogcatCollectionStartTimeMillis(
+                        setLogcatDump ? SystemClock.elapsedRealtime() : -1L)
+                .build();
+
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.persistEmergencyCallDiagnosticData(DROPBOX_TAG, params),
+                    permission.DUMP);
+        } catch (SecurityException e) {
+            e.printStackTrace();
+            fail(e.toString());
+        }
+        assertTrue(mLatchForDropBox.await(DROP_BOX_LATCH_TIMEOUT, TimeUnit.MILLISECONDS));
+        mLatchForDropBox = new CountDownLatch(1);
+    }
+
+    private long verifyEmergencyDropBoxEntriesCreatedAndDumped(
+            long entriesAfterTime, String dumpsysOutput, boolean allowSkipDumpsysVerification
+    ) {
+        DropBoxManager dm = getContext().getSystemService(DropBoxManager.class);
+        DropBoxManager.Entry entry;
+
+        entry = dm.getNextEntry(DROPBOX_TAG, entriesAfterTime);
+        if (allowSkipDumpsysVerification && entry == null) {
+            return -1L;
+        }
+
+        assertNotNull("No emergency diagnostic dropbox entries found", entry);
+        long entryTime = entry.getTimeMillis();
+        String [] content = entry.getText(MAX_READ_BYTES_PER_DROP_BOX_ENTRY).split(
+                System.lineSeparator());
+        assertNotNull("Dropbox entry content is null", content);
+        int lineCount = 1;
+        for (String line : content) {
+            assertFalse(line.contains(DIAG_ERROR_MSG));
+            //verify that corresponding dumpsys output also has this data
+            if (lineCount++ < MAX_LINES_TO_VERIFY_IN_DUMPSYS_OUTPUT) {
+                //we only check top x lines to verify presence in dumpsys output
+                assertTrue("line not found: " + line, dumpsysOutput.contains(line));
+            }
+        }
+        entry.close();
+        return entryTime;
     }
 
     @Test

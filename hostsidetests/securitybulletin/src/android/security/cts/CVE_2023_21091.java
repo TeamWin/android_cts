@@ -20,6 +20,7 @@ import static org.junit.Assume.assumeNoException;
 
 import android.platform.test.annotations.AsbSecurityTest;
 
+import com.android.sts.common.UserUtils;
 import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -33,32 +34,23 @@ public class CVE_2023_21091 extends NonRootSecurityTestCase {
     @AsbSecurityTest(cveBugId = 257954050)
     @Test
     public void testCVE_2023_21091() {
-        ITestDevice device = null;
-        int testUserId = -1;
         try {
-            device = getDevice();
+            ITestDevice device = getDevice();
+            final String testPkg = "android.security.cts.CVE_2023_21091";
 
             // Creating a new user.
-            testUserId = device.createUser("testUser");
-            device.startUser(testUserId);
-            device.switchUser(testUserId);
+            try (AutoCloseable asSecondaryUser =
+                    new UserUtils.SecondaryUser(device)
+                            .name("cve_2023_21091_user")
+                            .doSwitch()
+                            .withUser()) {
+                installPackage("CVE-2023-21091.apk", "--user " + device.getCurrentUser());
 
-            final String testPkg = "android.security.cts.CVE_2023_21091";
-            installPackage("CVE-2023-21091.apk", "--user " + testUserId);
-
-            runDeviceTests(testPkg, testPkg + ".DeviceTest", "testPocCVE_2023_21091");
+                // Run DeviceTest
+                runDeviceTests(testPkg, testPkg + ".DeviceTest", "testPocCVE_2023_21091");
+            }
         } catch (Exception e) {
             assumeNoException(e);
-        } finally {
-            try {
-                if (testUserId != -1) {
-                    device.switchUser(0);
-                    device.stopUser(testUserId);
-                    device.removeUser(testUserId);
-                }
-            } catch (Exception ignored) {
-                // ignore the exceptions
-            }
         }
     }
 }

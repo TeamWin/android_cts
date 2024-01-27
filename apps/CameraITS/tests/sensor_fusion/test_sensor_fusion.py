@@ -418,6 +418,8 @@ class SensorFusionTest(its_base_test.ItsBaseTest):
     corr_dist = scipy.spatial.distance.correlation(cam_rots, gyro_rots)
     logging.debug('Best correlation of %f at shift of %.3fms',
                   corr_dist, offset_ms)
+    print(f'test_sensor_fusion_corr_dist: {corr_dist}')
+    print(f'test_sensor_fusion_offset_ms: {offset_ms:.3f}')
 
     # Assert PASS/FAIL criteria.
     if corr_dist > _CORR_DIST_THRESH_MAX:

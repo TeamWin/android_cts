@@ -46,6 +46,7 @@ RESULT_FAIL = 'FAIL'
 RESULT_NOT_EXECUTED = 'NOT_EXECUTED'
 RESULT_KEY = 'result'
 METRICS_KEY = 'mpc_metrics'
+PERFORMANCE_KEY = 'performance_metrics'
 SUMMARY_KEY = 'summary'
 RESULT_VALUES = (RESULT_PASS, RESULT_FAIL, RESULT_NOT_EXECUTED)
 CTS_VERIFIER_PACKAGE_NAME = 'com.android.cts.verifier'
@@ -785,6 +786,7 @@ def main():
     for s in per_camera_scenes:
       results[s]['TEST_STATUS'] = []
       results[s][METRICS_KEY] = []
+      results[s][PERFORMANCE_KEY] = []
 
       # unit is millisecond for execution time record in CtsVerifier
       scene_start_time = int(round(time.time() * 1000))
@@ -880,6 +882,7 @@ def main():
             test_skipped = False
             test_not_yet_mandated = False
             test_mpc_req = ''
+            perf_test_metrics = ''
             content = file.read()
 
             # Find media performance class logging
@@ -893,6 +896,15 @@ def main():
                   one_line)
               if mpc_string_match:
                 test_mpc_req = one_line
+                break
+
+            for one_line in lines:
+              # regular expression pattern must match in ItsTestActivity.java.
+              perf_metrics_string_match = re.search(
+                  '^test.*:',
+                  one_line)
+              if perf_metrics_string_match:
+                perf_test_metrics = one_line
                 break
 
             if 'Test skipped' in content:
@@ -930,6 +942,8 @@ def main():
             'status': return_string.strip()})
         if test_mpc_req:
           results[s][METRICS_KEY].append(test_mpc_req)
+        if perf_test_metrics:
+          results[s][PERFORMANCE_KEY].append(perf_test_metrics)
         msg_short = f'{return_string} {test}'
         scene_test_summary += msg_short + '\n'
         if (test in _LIGHTING_CONTROL_TESTS and
@@ -979,6 +993,7 @@ def main():
     # Log results per camera
     if num_testbeds is None or testbed_index == _MAIN_TESTBED:
       logging.info('Reporting camera %s ITS results to CtsVerifier', camera_id)
+      logging.info('ITS results to CtsVerifier: %s', results)
       report_result(device_id, camera_id, results)
     else:
       write_result(testbed_index, device_id, camera_id, results)

@@ -110,5 +110,8 @@ class YuvPlusJpegTest(its_base_test.ItsBaseTest):
       if rms_diff >= _THRESHOLD_MAX_RMS_DIFF:
         raise AssertionError(msg + f', spec: {_THRESHOLD_MAX_RMS_DIFF}')
 
+      # Log rms-diff, so that it can be written to the report log.
+      print(f'test_yuv_plus_jpeg_rms_diff:{rms_diff:.4f}')
+
 if __name__ == '__main__':
   test_runner.main()

@@ -562,7 +562,20 @@ public class CtsWindowInfoUtils {
         return bounds;
     }
 
-    private static void sendTap(Instrumentation instrumentation, Point coord,
+    /**
+     * Sends tap to the specified coordinates.
+     * </p>
+     *
+     * @param instrumentation    Instrumentation object to use for tap.
+     * @param coord              The coordinates to tap on in display space.
+     * @param useGlobalInjection Whether to use targeted injection (false) or global (true).
+     *                           Targeted injection will only send injected events to the owned
+     *                           test app, while global will send the events to the entire system,
+     *                           including spy windows (launcher/System UI). Always use targeted
+     *                           injection unless you know what you are doing.
+     * @throws InterruptedException if failed to wait for WindowInfo
+     */
+    public static void sendTap(Instrumentation instrumentation, Point coord,
             boolean useGlobalInjection) {
         // Get anchor coordinates on the screen
         final long downTime = SystemClock.uptimeMillis();

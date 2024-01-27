@@ -43,6 +43,7 @@ import com.android.cts.verifier.DialogTestListActivity;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.TestResult;
 import com.android.internal.util.ArrayUtils;
+import com.android.cts.verifier.CtsVerifierReportLog;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -93,6 +94,15 @@ public class ItsTestActivity extends DialogTestListActivity {
     private static final Pattern MPC12_JPEG_CAPTURE_PATTERN =
             Pattern.compile("1080p_jpeg_capture_time_ms:(\\d+(\\.\\d+)?)");
     private static final int AVAILABILITY_TIMEOUT_MS = 10;
+
+    private static final Pattern PERF_METRICS_YUV_PLUS_JPEG_PATTERN =
+            Pattern.compile("test_yuv_plus_jpeg_rms_diff:(\\d+(\\.\\d+)?)");
+    private static final Pattern PERF_METRICS_YUV_PLUS_RAW_PATTERN =
+            Pattern.compile("test_yuv_plus_raw_rms_diff:(\\d+(\\.\\d+)?)");
+    private static final Pattern PERF_METRICS_IMU_DRIFT_PATTERN =
+            Pattern.compile("test_imu_drift_sampl_rate:(\\d+(\\.\\d+)?)");
+
+    private static final String REPORT_LOG_NAME = "CtsCameraITSTestCases";
 
     private final ResultReceiver mResultsReceiver = new ResultReceiver();
     private boolean mReceiverRegistered = false;
@@ -165,6 +175,10 @@ public class ItsTestActivity extends DialogTestListActivity {
             mPce.addR7_5__H_1_5();
     PerformanceClassEvaluator.CameraLatencyRequirement mLaunchLatencyReq =
             mPce.addR7_5__H_1_6();
+    private CtsVerifierReportLog mReportLog;
+    // Json Array to store all jsob objects with ITS metrics information
+    // stored in the report log
+    private final JSONArray mFinalPerfMetricsArr = new JSONArray();
 
     private static class HandlerExecutor implements Executor {
         private final Handler mHandler;
@@ -287,6 +301,8 @@ public class ItsTestActivity extends DialogTestListActivity {
                         scenes.add(keys.next());
                     }
 
+                    JSONObject camJsonObj = new JSONObject();
+                    camJsonObj.put("camera_id", cameraId);
                     // Update test execution results
                     for (String scene : scenes) {
                         JSONObject sceneResult = jsonResults.getJSONObject(scene);
@@ -329,11 +345,34 @@ public class ItsTestActivity extends DialogTestListActivity {
                                 return;
                             }
                         }
+
+                        if (sceneResult.isNull("performance_metrics")) {
+                            continue;
+                        }
+
+                        // Update performance metrics with metrics data from all
+                        // scenes for each camera
+                        JSONArray mArr = sceneResult.getJSONArray("performance_metrics");
+                        for (int i = 0; i < mArr.length(); i++) {
+                            String perfResult = mArr.getString(i);
+                            if (!matchPerfMetricsResult(perfResult, camJsonObj)) {
+                                Log.e(TAG, "Error parsing perf result string:" + perfResult);
+                                return;
+                            }
+                        }
                     }
+                    // Add performance metrics for all scenes along with camera_id as json arr
+                    // to CtsVerifierReportLog for each camera.
+                    mFinalPerfMetricsArr.put(camJsonObj);
+                    mReportLog.addValues("perf_metrics", mFinalPerfMetricsArr);
                 } catch (org.json.JSONException e) {
                     Log.e(TAG, "Error reading json result string:" + results , e);
                     return;
                 }
+
+                // Submitting the report log generates a CtsCameraITSTestCases.reportlog.json
+                // on device at path /sdcard/ReportLogFiles
+                mReportLog.submit();
 
                 // Set summary if all scenes reported
                 if (mSummaryMap.keySet().containsAll(mAllScenes)) {
@@ -450,7 +489,51 @@ public class ItsTestActivity extends DialogTestListActivity {
             }
             return true;
         }
+
+        private boolean matchPerfMetricsResult(String perfMetricsResult, JSONObject obj) {
+            Matcher yuvPlusJpegMetricsMatcher = PERF_METRICS_YUV_PLUS_JPEG_PATTERN.matcher(
+                        perfMetricsResult);
+            boolean yuvPlusJpegMetricsMatches = yuvPlusJpegMetricsMatcher.matches();
+
+            Matcher yuvPlusRawMetricsMatcher = PERF_METRICS_YUV_PLUS_RAW_PATTERN.matcher(
+                        perfMetricsResult);
+            boolean yuvPlusRawMetricsMatches = yuvPlusRawMetricsMatcher.matches();
+
+            Matcher imuDriftMetricsMatcher = PERF_METRICS_IMU_DRIFT_PATTERN.matcher(
+                        perfMetricsResult);
+            boolean imuDriftMetricsMatches = imuDriftMetricsMatcher.matches();
+
+            if (!yuvPlusJpegMetricsMatches && !yuvPlusRawMetricsMatches
+                        && !imuDriftMetricsMatches) {
+                return false;
+            }
+
+            try {
+                if (yuvPlusJpegMetricsMatches) {
+                    Log.i(TAG, "jpeg pattern  matches");
+                    float diff = Float.parseFloat(yuvPlusJpegMetricsMatcher.group(1));
+                    obj.put("yuv_plus_jpeg_rms_diff", diff);
+                }
+
+                if (yuvPlusRawMetricsMatches) {
+                    Log.i(TAG, "raw pattern  matches");
+                    float diff = Float.parseFloat(yuvPlusRawMetricsMatcher.group(1));
+                    obj.put("yuv_plus_raw_rms_diff", diff);
+                }
+
+                if (imuDriftMetricsMatches) {
+                    Log.i(TAG, "imu drift matches");
+                    float samplRate = Float.parseFloat(imuDriftMetricsMatcher.group(1));
+                    obj.put("imu_drift_sampling_rate", samplRate);
+                }
+            } catch (org.json.JSONException e) {
+                Log.e(TAG, "Error when serializing the metrics into a JSONObject" , e);
+            }
+
+            return true;
+        }
     }
+
 
     private class FoldStateListener implements
             DeviceStateManager.DeviceStateCallback {
@@ -493,6 +576,10 @@ public class ItsTestActivity extends DialogTestListActivity {
     protected void onCreate(Bundle savedInstanceState) {
         // Hide the test if all camera devices are legacy
         mCameraManager = this.getSystemService(CameraManager.class);
+        if (mReportLog == null) {
+            mReportLog =
+                    new CtsVerifierReportLog(REPORT_LOG_NAME, "camera_its_results");
+        }
         Context context = this.getApplicationContext();
         if (mAllScenes == null) {
             mAllScenes = new TreeSet<>(mComparator);

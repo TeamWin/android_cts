@@ -24,6 +24,7 @@ import numpy as np
 
 import its_base_test
 import camera_properties_utils
+import imu_processing_utils
 import its_session_utils
 
 _RAD_TO_DEG = 180/math.pi
@@ -49,8 +50,9 @@ def calc_effective_sampling_rate(times, sensor):
   """
   duration = times[-1] - times[0]
   num_pts = len(times)
-  logging.debug('%s time: %.2fs, num_pts: %d, effective samping rate: %.2f Hz',
+  logging.debug('%s time: %.2fs, num_pts: %d, effective sampling rate: %.2f Hz',
                 sensor, duration, num_pts, num_pts/duration)
+  print(f'test_imu_drift_sampling_rate_hz: {num_pts/duration:.2f}')
   return num_pts/duration
 
 
@@ -65,9 +67,9 @@ def define_3axis_plot(x, y, z, t, plot_name):
     plot_name: str name of plot and figure
   """
   pylab.figure(plot_name)
-  pylab.plot(t, x, 'r', label='x')
-  pylab.plot(t, y, 'g', label='y')
-  pylab.plot(t, z, 'b', label='z')
+  pylab.plot(t, x, 'r.', label='x', alpha=0.5, clip_on=False)
+  pylab.plot(t, y, 'g.', label='y', alpha=0.5, clip_on=False)
+  pylab.plot(t, z, 'b.', label='z', alpha=0.5, clip_on=False)
   pylab.xlabel('Time (seconds)')
   pylab.title(plot_name)
   pylab.legend()
@@ -83,16 +85,32 @@ def plot_rotation_vector_data(x, y, z, t, log_path):
     t: list of time values for x, y, z data
     log_path: str of location for output path
   """
-  # normalize to initial position
-  x = x - x[0]
-  y = y - y[0]
-  z = z - z[0]
 
+  # plot RV data
   plot_name = f'{_NAME}_rotation_vector'
   define_3axis_plot(x, y, z, t, plot_name)
-  pylab.ylabel('Drift (degrees)')
-  pylab.ylim([min([np.amin(x), np.amin(y), np.amin(z), -_RV_DRIFT_THRESH]),
-              max([np.amax(x), np.amax(y), np.amax(x), _RV_DRIFT_THRESH])])
+  pylab.ylabel('RV (degrees)')
+  pylab.ylim([-180, 180])
+  pylab.yticks([-180, -135, -90, -45, 0, 45, 90, 135, 180])
+  matplotlib.pyplot.savefig(f'{os.path.join(log_path, plot_name)}.png')
+
+  # find drift per sample and min/max
+  x_drift = imu_processing_utils.calc_rv_drift(x)
+  y_drift = imu_processing_utils.calc_rv_drift(y)
+  z_drift = imu_processing_utils.calc_rv_drift(z)
+  x_drift_min, x_drift_max = min(x_drift), max(x_drift)
+  y_drift_min, y_drift_max = min(y_drift), max(y_drift)
+  z_drift_min, z_drift_max = min(z_drift), max(z_drift)
+  logging.debug('RV drift (degrees) x: %.3f/%.3f, y: %.3f/%.3f, z: %.3f/%.3f',
+                x_drift_min, x_drift_max, y_drift_min, y_drift_max,
+                z_drift_min, z_drift_max)
+
+  # plot RV drift
+  plot_name = f'{_NAME}_rotation_vector_drift'
+  define_3axis_plot(x_drift, y_drift, z_drift, t, plot_name)
+  pylab.ylabel('RV drift (degrees)')
+  pylab.ylim([min([x_drift_min, y_drift_min, z_drift_min, -_RV_DRIFT_THRESH]),
+              max([x_drift_max, y_drift_max, z_drift_max, _RV_DRIFT_THRESH])])
   matplotlib.pyplot.savefig(f'{os.path.join(log_path, plot_name)}.png')
 
 
@@ -143,9 +161,9 @@ def do_riemann_sums(x, y, z, t, log_path):
   x_min, x_max = min(x_sums), max(x_sums)
   y_min, y_max = min(y_sums), max(y_sums)
   z_min, z_max = min(z_sums), max(z_sums)
-  logging.debug('Integrated drift min/max (degrees) in %d seconds, '
+  logging.debug('Integrated gyro drift min/max (degrees) '
                 'x: %.3f/%.3f, y: %.3f/%.3f, z: %.3f/%.3f',
-                _IMU_EVENTS_WAIT_TIME, x_min, x_max, y_min, y_max, z_min, z_max)
+                x_min, x_max, y_min, y_max, z_min, z_max)
 
   # plot accumulated gyro drift
   plot_name = f'{_NAME}_gyro_drift'
@@ -206,8 +224,8 @@ class ImuDriftTest(its_base_test.ItsBaseTest):
       preview_size = supported_preview_sizes[-1]
       logging.debug('Tested preview resolution: %s', preview_size)
 
-      # start collecting gyro events
-      logging.debug('Collecting gyro events')
+      # start collecting IMU events
+      logging.debug('Collecting IMU events')
       cam.start_sensor_events()
 
       # do preview recording

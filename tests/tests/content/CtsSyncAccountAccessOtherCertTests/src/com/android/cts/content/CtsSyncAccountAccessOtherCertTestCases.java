@@ -28,6 +28,7 @@ import static com.android.cts.content.Utils.requestSync;
 import static com.android.cts.content.Utils.withAccount;
 
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -46,6 +47,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.Direction;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.UiObjectNotFoundException;
@@ -113,15 +115,11 @@ public class CtsSyncAccountAccessOtherCertTestCases {
         UiDevice uiDevice = getUiDevice();
         if (uiDevice.openNotification()) {
             Thread.sleep(1000);
-            for (int i = 0; i < 5; i++) {
-                final UiObject2 clear = uiDevice
-                        .wait(Until.findObject(By.text("Clear all")), 2000);
-                if (clear != null) {
-                    clear.click();
-                    break;
-                }
-                scrollNotifications();
-            }
+            UiObject2 scrollable = uiDevice.findObject(By.scrollable(true));
+            UiObject2 clear =
+                    scrollable.scrollUntil(Direction.DOWN, Until.findObject(By.text("Clear all")));
+            assumeNotNull(clear);
+            clear.click();
         }
 
         try (AutoCloseable ignored = withAccount(activity.getActivity())) {
