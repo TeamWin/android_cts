@@ -490,6 +490,10 @@ public class Components extends ComponentsBase {
         // with the value.
         public static final String ACTION_UPDATE_PIP_STATE =
                 "android.server.wm.app.PipActivity.update_pip_state";
+        // Intent action that this activity dynamically registers to enter picture-in-picture
+        // then wait for the onPictureInPictureUiStateChanged callback.
+        public static final String ACTION_ENTER_PIP_AND_WAIT_FOR_UI_STATE =
+                "android.server.wm.app.PipActivity.enter_pip_and_wait_for_ui_state";
         // Intent action that this activity dynamically registers to set requested orientation.
         // Will apply the orientation to the value set in the EXTRA_FIXED_ORIENTATION extra.
         public static final String ACTION_SET_REQUESTED_ORIENTATION =
@@ -595,6 +599,8 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_PIP_ON_PAUSE_CALLBACK = "pip_on_pause_callback";
         // Result key for obtaining the PictureInPictureUiState#isStashed result
         public static final String UI_STATE_STASHED_RESULT = "ui_state_stashed_result";
+        // Result key for obtaining the PictureInPictureUiState#isEnteringPip result
+        public static final String UI_STATE_ENTERING_PIP_RESULT = "ui_state_entering_result";
         // Result key for obtaining the Activity#isInPictureInPictureMode result
         public static final String IS_IN_PIP_MODE_RESULT = "is_in_pip_mode_result";
     }
