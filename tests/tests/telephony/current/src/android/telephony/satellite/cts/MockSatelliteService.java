@@ -428,7 +428,7 @@ public class MockSatelliteService extends SatelliteImplBase {
     @Override
     public void sendSatelliteDatagram(@NonNull SatelliteDatagram datagram, boolean isEmergency,
             @NonNull IIntegerConsumer errorCallback) {
-        logd("sendSatelliteDatagram: mErrorCode=" + mErrorCode);
+        logd("sendDatagram: mErrorCode=" + mErrorCode);
 
         if (mWaitToSend.get()) {
             synchronized (mSendDatagramWithDelayLock) {
@@ -442,7 +442,7 @@ public class MockSatelliteService extends SatelliteImplBase {
                 runWithExecutor(() -> mLocalListener.onSendSatelliteDatagram(
                         datagram, isEmergency));
             } else {
-                loge("sendSatelliteDatagram: mLocalListener is null");
+                loge("sendDatagram: mLocalListener is null");
             }
         } else {
             updateSatelliteModemState(
@@ -460,7 +460,7 @@ public class MockSatelliteService extends SatelliteImplBase {
                 runWithExecutor(() -> mLocalListener.onSendSatelliteDatagram(
                         datagram, isEmergency));
             } else {
-                loge("sendSatelliteDatagram: mLocalListener is null");
+                loge("sendDatagram: mLocalListener is null");
             }
             updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_IDLE);
         }
@@ -484,7 +484,7 @@ public class MockSatelliteService extends SatelliteImplBase {
     @Override
     public void requestIsSatelliteCommunicationAllowedForCurrentLocation(
             @NonNull IIntegerConsumer errorCallback, @NonNull IBooleanConsumer callback) {
-        logd("requestIsSatelliteCommunicationAllowedForCurrentLocation: mErrorCode=" + mErrorCode);
+        logd("requestIsCommunicationAllowedForCurrentLocation: mErrorCode=" + mErrorCode);
         if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
             if (mShouldRespondTelephony.get()) {
                 runWithExecutor(() -> errorCallback.accept(mErrorCode));

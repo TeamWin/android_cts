@@ -704,7 +704,7 @@ public class SatelliteManagerTestBase {
         String mText = "This is test provision data.";
         byte[] testProvisionData = mText.getBytes();
 
-        sSatelliteManager.provisionSatelliteService(
+        sSatelliteManager.provisionService(
                 TOKEN, testProvisionData, null, getContext().getMainExecutor(), error::offer);
         Integer errorCode;
         try {
@@ -723,7 +723,7 @@ public class SatelliteManagerTestBase {
     protected static boolean deprovisionSatellite() {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
 
-        sSatelliteManager.deprovisionSatelliteService(
+        sSatelliteManager.deprovisionService(
                 TOKEN, getContext().getMainExecutor(), error::offer);
         Integer errorCode;
         try {
@@ -758,7 +758,7 @@ public class SatelliteManagerTestBase {
                     }
                 };
 
-        sSatelliteManager.requestIsSatelliteProvisioned(
+        sSatelliteManager.requestIsProvisioned(
                 getContext().getMainExecutor(), receiver);
         try {
             assertTrue(latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
@@ -799,7 +799,7 @@ public class SatelliteManagerTestBase {
                 };
 
 
-        sSatelliteManager.requestIsSatelliteEnabled(
+        sSatelliteManager.requestIsEnabled(
                 getContext().getMainExecutor(), receiver);
         try {
             assertTrue(latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
@@ -862,7 +862,7 @@ public class SatelliteManagerTestBase {
 
     protected static void requestSatelliteEnabled(boolean enabled) {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
-        sSatelliteManager.requestSatelliteEnabled(
+        sSatelliteManager.requestEnabled(
                 enabled, false, getContext().getMainExecutor(), error::offer);
         Integer errorCode;
         try {
@@ -877,7 +877,7 @@ public class SatelliteManagerTestBase {
 
     protected static void requestSatelliteEnabled(boolean enabled, long timeoutMillis) {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
-        sSatelliteManager.requestSatelliteEnabled(
+        sSatelliteManager.requestEnabled(
                 enabled, false, getContext().getMainExecutor(), error::offer);
         Integer errorCode;
         try {
@@ -892,7 +892,7 @@ public class SatelliteManagerTestBase {
 
     protected static int requestSatelliteEnabledWithResult(boolean enabled, long timeoutMillis) {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
-        sSatelliteManager.requestSatelliteEnabled(
+        sSatelliteManager.requestEnabled(
                 enabled, false, getContext().getMainExecutor(), error::offer);
         Integer errorCode = null;
         try {
@@ -907,7 +907,7 @@ public class SatelliteManagerTestBase {
 
     protected static void requestSatelliteEnabledForDemoMode(boolean enabled) {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
-        sSatelliteManager.requestSatelliteEnabled(
+        sSatelliteManager.requestEnabled(
                 enabled, true, getContext().getMainExecutor(), error::offer);
         Integer errorCode;
         try {
@@ -923,7 +923,7 @@ public class SatelliteManagerTestBase {
     protected static void requestSatelliteEnabled(boolean enabled, boolean demoEnabled,
             int expectedError) {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
-        sSatelliteManager.requestSatelliteEnabled(
+        sSatelliteManager.requestEnabled(
                 enabled, demoEnabled, getContext().getMainExecutor(), error::offer);
         Integer errorCode;
         try {
@@ -955,7 +955,7 @@ public class SatelliteManagerTestBase {
                     }
                 };
 
-        sSatelliteManager.requestIsSatelliteSupported(getContext().getMainExecutor(),
+        sSatelliteManager.requestIsSupported(getContext().getMainExecutor(),
                 receiver);
         try {
             assertTrue(latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
