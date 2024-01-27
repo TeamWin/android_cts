@@ -13,6 +13,7 @@
 # limitations under the License.
 """Utility functions for IMU data processing."""
 
+
 def calc_rv_drift(data):
   """Calculate data drift accounting for +/-180 degrees for stationary DUT.
 
@@ -22,9 +23,9 @@ def calc_rv_drift(data):
   Returns:
     list of data-data[0] drift
   """
-  data_360 = [i+360 if i < 0 else i for i in data]
+  data_360 = [i % 360 for i in data]
   drift = []
-  for i, d in enumerate(data_360):
+  for d in data_360:
     if d - data_360[0] <= -180:
       drift.append(d - data_360[0] + 360)
     elif d - data_360[0] > 180:
