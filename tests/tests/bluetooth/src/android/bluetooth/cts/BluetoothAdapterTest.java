@@ -193,7 +193,7 @@ public class BluetoothAdapterTest {
     }
 
     @Test
-    public void test_setName_getName() {
+    public void setName_getName() {
         assumeTrue(mHasBluetooth);
 
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
