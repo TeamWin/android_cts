@@ -427,6 +427,8 @@ public class VirtualDeviceManagerBasicTest {
     public void createDeviceContext_defaultDeviceId() {
         Context defaultDeviceContext = mContext.createDeviceContext(DEVICE_ID_DEFAULT);
         assertThat(defaultDeviceContext.getDeviceId()).isEqualTo(DEVICE_ID_DEFAULT);
+        assertThat(defaultDeviceContext.getAttributionSource().getDeviceId()).isEqualTo(
+                DEVICE_ID_DEFAULT);
     }
 
     @Test
@@ -434,6 +436,8 @@ public class VirtualDeviceManagerBasicTest {
         Context virtualDeviceContext =
                 mContext.createDeviceContext(mVirtualDevice.getDeviceId());
         assertThat(virtualDeviceContext.getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
+        assertThat(virtualDeviceContext.getAttributionSource().getDeviceId()).isEqualTo(
+                mVirtualDevice.getDeviceId());
 
         // The default device context should be available from the virtual device one.
         Context defaultDeviceContext = virtualDeviceContext.createDeviceContext(DEVICE_ID_DEFAULT);
