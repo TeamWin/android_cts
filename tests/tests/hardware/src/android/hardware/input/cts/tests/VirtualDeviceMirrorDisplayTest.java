@@ -383,7 +383,8 @@ public class VirtualDeviceMirrorDisplayTest extends InputTestCase {
         }
     }
 
-    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_STYLUS)
+    @RequiresFlagsEnabled({Flags.FLAG_INTERACTIVE_SCREEN_MIRROR,
+            Flags.FLAG_CONSISTENT_DISPLAY_FLAGS, Flags.FLAG_VIRTUAL_STYLUS})
     @Test
     public void virtualStylus_touchEvent() {
         try (VirtualStylus stylus = VirtualInputDeviceCreator.createAndPrepareStylus(mVirtualDevice,
@@ -394,8 +395,8 @@ public class VirtualDeviceMirrorDisplayTest extends InputTestCase {
             mTestActivity.getWindow().getDecorView().requestUnbufferedDispatch(
                     InputDevice.SOURCE_STYLUS);
 
-            final int x = 50;
-            final int y = 50;
+            final int x = mDisplayWidth / 2;
+            final int y = mDisplayHeight / 2;
             final int toolType = VirtualStylusMotionEvent.TOOL_TYPE_STYLUS;
             // The number of move events that are sent between the down and up event.
             final int moveEventCount = 5;
