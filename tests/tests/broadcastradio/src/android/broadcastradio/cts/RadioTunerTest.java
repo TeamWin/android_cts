@@ -22,10 +22,12 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.graphics.Bitmap;
 import android.hardware.radio.Flags;
 import android.hardware.radio.ProgramList;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager;
+import android.hardware.radio.RadioMetadata;
 import android.hardware.radio.RadioTuner;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 
@@ -322,6 +324,39 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
     }
 
     @Test
+    @ApiTest(apis = {"android.hardware.radio.RadioMetadata#getBitmapId",
+            "android.hardware.radio.RadioTuner#getMetadataImage"})
+    @RequiresFlagsEnabled(Flags.FLAG_HD_RADIO_IMPROVED)
+    public void getMetadataImage() throws Exception {
+        openAmFmTuner();
+        TestOnCompleteListener completeListener = new TestOnCompleteListener();
+        try (ProgramList list = assumeNonNullProgramList()) {
+            list.addOnCompleteListener(completeListener);
+            mExpect.withMessage("Program list update completion")
+                    .that(completeListener.waitForCallback()).isTrue();
+            ProgramSelector selector = getSelectorWithBitmap(list.toList());
+            assume().withMessage("Program selector of program info with bitmap key in program list")
+                    .that(selector).isNotNull();
+            mRadioTuner.tune(selector);
+            mExpect.withMessage("Program info callback for tune operation")
+                    .that(mCallback.waitForProgramInfoChangeCallback(TUNE_CALLBACK_TIMEOUT_MS))
+                    .isTrue();
+            RadioManager.ProgramInfo currentInfo = mCallback.currentProgramInfo;
+            mCallback.reset();
+            int bitmapId = assumeImageMetadataId(currentInfo);
+
+            Bitmap bitmap = mRadioTuner.getMetadataImage(bitmapId);
+
+            mExpect.withMessage("Bitmap metadata").that(bitmap).isNotNull();
+        } catch (IllegalArgumentException e) {
+            mExpect.withMessage("Exception for bitmap unavailable").that(e)
+                    .hasMessageThat().contains("not available");
+            mExpect.withMessage("Bitmap metadata without updated from tuner")
+                    .that(mCallback.currentProgramInfo).isNotNull();
+        }
+    }
+
+    @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#isConfigFlagSupported",
             "android.hardware.radio.RadioTuner#isConfigFlagSet"})
     public void isConfigFlagSet_forTunerNotSupported_throwsException() throws Exception {
@@ -387,6 +422,33 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
         ProgramList list = mRadioTuner.getDynamicProgramList(filter);
         assume().withMessage("Dynamic program list supported").that(list).isNotNull();
         return list;
+    }
+
+    private ProgramSelector getSelectorWithBitmap(List<RadioManager.ProgramInfo> programInfoList) {
+        for (int i = 0; i < programInfoList.size(); i++) {
+            RadioMetadata metadata = programInfoList.get(i).getMetadata();
+            int iconId = metadata.getBitmapId(RadioMetadata.METADATA_KEY_ICON);
+            if (iconId != 0) {
+                return programInfoList.get(i).getSelector();
+            }
+            int artId = metadata.getBitmapId(RadioMetadata.METADATA_KEY_ART);
+            if (artId != 0) {
+                return programInfoList.get(i).getSelector();
+            }
+        }
+        return null;
+    }
+
+    private int assumeImageMetadataId(RadioManager.ProgramInfo info) {
+        RadioMetadata metadata = info.getMetadata();
+        int iconId = metadata.getBitmapId(RadioMetadata.METADATA_KEY_ICON);
+        int artId = metadata.getBitmapId(RadioMetadata.METADATA_KEY_ART);
+        assumeTrue("Bitmap id not supported", iconId != 0 || artId != 0);
+        if (iconId != 0) {
+            return iconId;
+        } else {
+            return artId;
+        }
     }
 
     private static final class TestOnCompleteListener implements ProgramList.OnCompleteListener {
