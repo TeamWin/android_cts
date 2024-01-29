@@ -16,8 +16,8 @@
 
 package com.android.cts.verifier.net;
 
-import com.android.cts.verifier.PassFailButtons;
-import com.android.cts.verifier.R;
+import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
+import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -42,20 +42,20 @@ import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.android.cts.verifier.PassFailButtons;
+import com.android.cts.verifier.R;
+
 import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Field;
+import java.net.HttpURLConnection;
 import java.net.Inet6Address;
 import java.net.InetAddress;
-import java.net.HttpURLConnection;
-import java.net.UnknownHostException;
 import java.net.URL;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.net.UnknownHostException;
 import java.util.Random;
-
-import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
-import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A CTS Verifier test case for testing IPv6 network background connectivity.
@@ -119,6 +119,8 @@ public class ConnectivityBackgroundTestActivity extends PassFailButtons.Activity
         super.onCreate(savedInstanceState);
         configureFromSystemServices();
         setupUserInterface();
+        // start foreground service to avoid being frozen (b/284060686)
+        startForegroundService(new Intent(this, ConnectivityForegroundService.class));
     }
 
     @Override
@@ -127,6 +129,7 @@ public class ConnectivityBackgroundTestActivity extends PassFailButtons.Activity
         stopAnyExistingTestingThread();
         unregisterReceiver(mReceiver);
         mWakeLock.release();
+        stopService(new Intent(this, ConnectivityForegroundService.class));
         super.onDestroy();
     }
 
