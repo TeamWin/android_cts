@@ -272,6 +272,10 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
       Assume.assumeTrue("Skipping " + mTestType + " as device doesn't support call feature",
           deviceSupportPhoneCall(mActivity));
     }
+    if (mCujTestParam.playerListener().isPinchToZoomTest()) {
+      Assume.assumeFalse("Skipping " + mTestType + " as watch doesn't support zoom behaviour yet",
+          isWatchDevice(mActivity));
+    }
     play(mCujTestParam.mediaUrls(), mCujTestParam.timeoutMilliSeconds());
   }
 }

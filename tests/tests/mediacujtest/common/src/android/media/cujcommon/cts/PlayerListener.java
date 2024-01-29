@@ -103,6 +103,13 @@ public abstract class PlayerListener implements Player.Listener {
   }
 
   /**
+   * Returns True for PinchToZoom test.
+   */
+  public final boolean isPinchToZoomTest() {
+    return getTestType().equals(TestType.PINCH_TO_ZOOM_TEST);
+  }
+
+  /**
    * Returns expected playback time for the playlist.
    */
   public final long getExpectedTotalTime() {
