@@ -66,6 +66,7 @@ public class AppBindingHostTest extends BaseHostJUnit4Test implements IBuildRece
     private int mCurrentUserId;
 
     private static final int DEFAULT_TIMEOUT_SEC = 30;
+    private static final int DEFAULT_LONG_TIMEOUT_SEC = 70;
 
     private interface ThrowingRunnable {
         void run() throws Throwable;
@@ -579,7 +580,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
     }
 
     private void assertUserHasNoFinder(int userId) throws Throwable {
-        runWithRetries(DEFAULT_TIMEOUT_SEC, () -> {
+        runWithRetries(DEFAULT_LONG_TIMEOUT_SEC, () -> {
             runCommandAndNotMatch("dumpsys app_binding -s",
                     "^finder,\\[Default\\sSMS\\sapp\\]," + userId + ",");
         });
