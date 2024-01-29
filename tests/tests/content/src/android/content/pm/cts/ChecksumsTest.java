@@ -26,12 +26,10 @@ import static android.content.pm.Checksum.TYPE_WHOLE_MERKLE_ROOT_4K_SHA256;
 import static android.content.pm.Checksum.TYPE_WHOLE_SHA1;
 import static android.content.pm.Checksum.TYPE_WHOLE_SHA256;
 import static android.content.pm.Checksum.TYPE_WHOLE_SHA512;
-import static android.content.pm.Flags.FLAG_ARCHIVING;
 import static android.content.pm.PackageInstaller.LOCATION_DATA_APP;
 import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
 import static android.content.pm.PackageManager.TRUST_ALL;
 import static android.content.pm.PackageManager.TRUST_NONE;
-import static android.security.Flags.FLAG_DEPRECATE_FSV_SIG;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -333,7 +331,7 @@ public class ChecksumsTest {
 
     @LargeTest
     @Test
-    @RequiresFlagsDisabled(FLAG_DEPRECATE_FSV_SIG)
+    @RequiresFlagsDisabled(android.security.Flags.FLAG_DEPRECATE_FSV_SIG)
     public void testFixedFSVerityDefaultChecksums() throws Exception {
         assumeTrue(isApkVerityEnabled());
         uninstallPackageSilently(FIXED_FSVERITY_PACKAGE_NAME);
@@ -365,7 +363,7 @@ public class ChecksumsTest {
 
     @LargeTest
     @Test
-    @RequiresFlagsDisabled(FLAG_DEPRECATE_FSV_SIG)
+    @RequiresFlagsDisabled(android.security.Flags.FLAG_DEPRECATE_FSV_SIG)
     public void testFixedFSVerityDefaultChecksumsIncremental() throws Exception {
         assumeTrue(checkIncrementalDeliveryFeature());
 
@@ -408,7 +406,7 @@ public class ChecksumsTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(FLAG_ARCHIVING)
+    @RequiresFlagsEnabled(android.content.pm.Flags.FLAG_ARCHIVING)
     public void testArchivedDefaultChecksums() throws Exception {
         uninstallPackageSilently(FIXED_PACKAGE_NAME);
         installPackage(TEST_FIXED_APK);
@@ -421,7 +419,7 @@ public class ChecksumsTest {
 
         // Install as archived.
         Assert.assertEquals("Success\n", executeShellCommand(
-                String.format("pm install-archived -r -i %s -t -S %s",
+                String.format("pm install-archived --bypass-low-target-sdk-block -r -i %s -t -S %s",
                         getContext().getPackageName(), archivedPackage.length), archivedPackage));
         assertTrue(isPackagePresent(FIXED_PACKAGE_NAME));
 
@@ -616,6 +614,7 @@ public class ChecksumsTest {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
             params.installFlags |= PackageManager.INSTALL_REPLACE_EXISTING;
+            params.installFlags |= PackageManager.INSTALL_BYPASS_LOW_TARGET_SDK_BLOCK;
 
             final int sessionId = installer.createSession(params);
             Session session = installer.openSession(sessionId);
@@ -673,6 +672,7 @@ public class ChecksumsTest {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
             params.installFlags |= PackageManager.INSTALL_REPLACE_EXISTING;
+            params.installFlags |= PackageManager.INSTALL_BYPASS_LOW_TARGET_SDK_BLOCK;
 
             final int sessionId = installer.createSession(params);
             Session session = installer.openSession(sessionId);
@@ -1450,6 +1450,7 @@ public class ChecksumsTest {
         try {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+            params.installFlags |= PackageManager.INSTALL_BYPASS_LOW_TARGET_SDK_BLOCK;
 
             final int sessionId = installer.createSession(params);
             Session session = installer.openSession(sessionId);
@@ -1469,6 +1470,7 @@ public class ChecksumsTest {
         try {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+            params.installFlags |= PackageManager.INSTALL_BYPASS_LOW_TARGET_SDK_BLOCK;
 
             final int sessionId = installer.createSession(params);
             Session session = installer.openSession(sessionId);
@@ -1482,6 +1484,7 @@ public class ChecksumsTest {
             dropShellPermissionIdentity();
         }
     }
+
     private void installApkWithChecksumsIncrementally(final String inPath) throws Exception {
         installApkWithChecksumsIncrementally(inPath, TEST_FIXED_APK, TEST_FIXED_APK_DIGESTS,
                 NO_SIGNATURE);
@@ -1494,6 +1497,7 @@ public class ChecksumsTest {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
             params.installFlags |= PackageManager.INSTALL_REPLACE_EXISTING;
+            params.installFlags |= PackageManager.INSTALL_BYPASS_LOW_TARGET_SDK_BLOCK;
             params.setDataLoaderParams(DataLoaderParams.forIncremental(new ComponentName("android",
                     PackageManagerShellCommandDataLoader.class.getName()), ""));
 
@@ -1565,27 +1569,31 @@ public class ChecksumsTest {
     private void installPackage(String baseName) throws IOException {
         File file = new File(createApkPath(baseName));
         Assert.assertEquals("Success\n", executeShellCommand(
-                "pm install -t -g " + file.getPath()));
+                "pm install -t -g --bypass-low-target-sdk-block " + file.getPath()));
     }
 
     private void installPackageIncrementally(String baseName) throws IOException {
         File file = new File(createApkPath(baseName));
         Assert.assertEquals("Success\n", executeShellCommand(
-                "pm install-incremental -t -g " + file.getPath()));
+                "pm install-incremental -t -g --bypass-low-target-sdk-block " + file.getPath()));
     }
 
     private void installSplits(String[] baseNames) throws IOException {
         String[] splits = Arrays.stream(baseNames).map(
                 baseName -> createApkPath(baseName)).toArray(String[]::new);
         Assert.assertEquals("Success\n",
-                executeShellCommand("pm install -t -g " + String.join(" ", splits)));
+                executeShellCommand(
+                        "pm install -t -g --bypass-low-target-sdk-block " + String.join(" ",
+                                splits)));
     }
 
     private void installFilesIncrementally(String[] baseNames) throws IOException {
         String[] splits = Arrays.stream(baseNames).map(
                 baseName -> createApkPath(baseName)).toArray(String[]::new);
         Assert.assertEquals("Success\n",
-                executeShellCommand("pm install-incremental -t -g " + String.join(" ", splits)));
+                executeShellCommand(
+                        "pm install-incremental -t -g --bypass-low-target-sdk-block " + String.join(
+                                " ", splits)));
     }
 
     private static void writeFileToSession(PackageInstaller.Session session, String name,
