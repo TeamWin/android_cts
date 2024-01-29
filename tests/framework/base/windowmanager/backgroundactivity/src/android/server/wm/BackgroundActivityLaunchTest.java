@@ -1388,7 +1388,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         service.sendPendingIntent(pi, Bundle.EMPTY);
     }
 
-    private void assumeSdkNewerThanUpsideDownCake() {
+    static void assumeSdkNewerThanUpsideDownCake() {
         // Feature flag "ActivitySecurity__asm_restrictions_enabled" is set to 1 in
         // BackgroundActivityTestBase. For backward compatibility reasons, it is only enabled
         // for apps with targetSdkVersion starting Android V.
