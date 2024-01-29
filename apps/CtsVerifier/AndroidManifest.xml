@@ -43,6 +43,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <uses-permission android:name="android.permission.FULLSCREEN" />
     <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -2201,6 +2202,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity-alias>
+
+        <service
+            android:name=".net.ConnectivityForegroundService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false">
+        </service>
 
         <activity android:name=".net.ConnectivityBackgroundTestActivity"
                 android:exported="true"
