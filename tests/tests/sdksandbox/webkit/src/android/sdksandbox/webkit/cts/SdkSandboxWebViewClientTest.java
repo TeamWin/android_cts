@@ -20,18 +20,15 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class SdkSandboxWebViewClientTest {
-    // TODO(b/266051278): Uncomment this when we work out why preserving
-    // the SDK sandbox manager between tests causes {@link testOnRenderProcessGone}
-    // to fail. Change sSdkTestSuiteSetup to a @ClassRule once this is fixed.
-    @Rule
-    public final WebViewSandboxTestRule sSdkTestSuiteSetup =
+    @ClassRule
+    public static final WebViewSandboxTestRule sSdkTestSuiteSetup =
             new WebViewSandboxTestRule("android.webkit.cts.WebViewClientTest");
 
     @Test

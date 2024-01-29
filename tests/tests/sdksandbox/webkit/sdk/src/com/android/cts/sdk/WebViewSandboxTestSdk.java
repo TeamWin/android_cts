@@ -27,8 +27,11 @@ import android.webkit.WebView;
 import android.webkit.cts.IHostAppInvoker;
 import android.webkit.cts.SharedWebViewTest;
 import android.webkit.cts.SharedWebViewTestEnvironment;
+import android.webkit.cts.WebkitUtils;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.view.ViewGroup;
+import android.view.ViewParent;
 
 import androidx.annotation.Nullable;
 
@@ -74,6 +77,20 @@ public class WebViewSandboxTestSdk extends SdkSandboxTestScenarioRunner {
         }
 
         return rootLayout;
+    }
+
+    @Override
+    public void cleanUpOnTestFinish() {
+        // Enforcing UI thread cleanup after Binder thread execution to match test origin
+        // and prevent threading issues.
+        WebkitUtils.onMainThreadSync(() -> {
+            WebView webView = mTestInstance.getTestEnvironment().getWebView();
+            ViewParent webviewParent = webView.getParent();
+            if (webviewParent instanceof ViewGroup) {
+                ((ViewGroup) webviewParent).removeView(webView);
+            }
+        webView.destroy();
+        });
     }
 
     private FrameLayout wrapWebViewInLayout(WebView webView) {
