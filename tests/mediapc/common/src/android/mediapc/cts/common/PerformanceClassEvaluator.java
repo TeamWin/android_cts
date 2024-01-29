@@ -1606,6 +1606,7 @@ public class PerformanceClassEvaluator {
                     .setId(RequirementConstants.REAR_CAMERA_PREVIEW_STABILIZATION_SUPPORTED)
                     .setPredicate(RequirementConstants.BOOLEAN_EQ)
                     .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, true)
                     .build();
 
             return new PreviewStabilizationRequirement(RequirementConstants.R7_5__H_1_12,
