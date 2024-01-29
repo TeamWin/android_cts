@@ -53,6 +53,7 @@ public class EnterpriseContactsMultiUserTest extends AppSearchHostTestBase {
     private static int sSecondaryUserId;
     private static int sEnterpriseProfileUserId;
     private static boolean sIsTemporaryEnterpriseProfile;
+    private static ITestDevice sDevice;
 
     @BeforeClassWithInfo
     public static void setUpClass(TestInformation testInfo) throws Exception {
@@ -62,6 +63,7 @@ public class EnterpriseContactsMultiUserTest extends AppSearchHostTestBase {
         sPrimaryUserId = device.getPrimaryUserId();
         sSecondaryUserId = createSecondaryUser(device);
         sEnterpriseProfileUserId = getOrCreateEnterpriseProfile(testInfo.getDevice());
+        sDevice = device;
     }
 
     @AfterClassWithInfo
@@ -104,7 +106,6 @@ public class EnterpriseContactsMultiUserTest extends AppSearchHostTestBase {
     @Before
     public void setUp() throws Exception {
         installPackageAsUser(TARGET_APK_A, /*grantPermission=*/ true, sPrimaryUserId);
-        installPackageAsUser(TARGET_APK_A, /*grantPermission=*/ true, sSecondaryUserId);
         installPackageAsUser(TARGET_APK_A, /*grantPermission=*/ true, sEnterpriseProfileUserId);
     }
 
@@ -131,6 +132,21 @@ public class EnterpriseContactsMultiUserTest extends AppSearchHostTestBase {
     }
 
     @Test
+    public void testMainUser_doesNotHaveEnterpriseAccessIfEnterpriseProfileIsStopped()
+            throws Exception {
+        setUpEnterpriseContacts();
+        try {
+            assertThat(sDevice.stopUser(sEnterpriseProfileUserId, /*waitFlag=*/ true, /*forceFlag=*/
+                    true)).isTrue();
+            runEnterpriseContactsDeviceTestAsUserInPkgA("testDoesNotHaveEnterpriseAccess",
+                    sPrimaryUserId,
+                    Collections.emptyMap());
+        } finally {
+            assertThat(sDevice.startUser(sEnterpriseProfileUserId, /*waitFlag=*/ true)).isTrue();
+        }
+    }
+
+    @Test
     public void testMainUser_doesNotHaveEnterpriseAccessToNonEnterpriseSchema() throws Exception {
         setUpEnterpriseContactsWithoutEnterprisePermissions();
         runEnterpriseContactsDeviceTestAsUserInPkgA("testDoesNotHaveEnterpriseAccess",
@@ -148,6 +164,7 @@ public class EnterpriseContactsMultiUserTest extends AppSearchHostTestBase {
 
     @Test
     public void testSecondaryUser_doesNotHaveEnterpriseAccess() throws Exception {
+        installPackageAsUser(TARGET_APK_A, /*grantPermission=*/ true, sSecondaryUserId);
         setUpEnterpriseContacts();
         runEnterpriseContactsDeviceTestAsUserInPkgA("testDoesNotHaveEnterpriseAccess",
                 sSecondaryUserId,
