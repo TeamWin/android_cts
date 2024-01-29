@@ -50,10 +50,13 @@ def calc_effective_sampling_rate(times, sensor):
   """
   duration = times[-1] - times[0]
   num_pts = len(times)
+  sampling_rate = num_pts / duration
   logging.debug('%s time: %.2fs, num_pts: %d, effective sampling rate: %.2f Hz',
-                sensor, duration, num_pts, num_pts/duration)
-  print(f'test_imu_drift_sampling_rate_hz: {num_pts/duration:.2f}')
-  return num_pts/duration
+                sensor, duration, num_pts, sampling_rate)
+  if sensor == 'gyro':  # print duration 1x
+    print(f'{_NAME}_duration_seconds: {duration:.2f}')
+  print(f'{_NAME}_{sensor}_sampling_rate_hz: {sampling_rate:.2f}')
+  return sampling_rate
 
 
 def define_3axis_plot(x, y, z, t, plot_name):
@@ -104,6 +107,8 @@ def plot_rotation_vector_data(x, y, z, t, log_path):
   logging.debug('RV drift (degrees) x: %.3f/%.3f, y: %.3f/%.3f, z: %.3f/%.3f',
                 x_drift_min, x_drift_max, y_drift_min, y_drift_max,
                 z_drift_min, z_drift_max)
+  print(f'{_NAME}_rv_drift_degrees_xyz: [{(x_drift_max-x_drift_min):.2f}, '
+        f'{(y_drift_max-y_drift_min):.2f}, {(z_drift_max-z_drift_min):.2f}]')
 
   # plot RV drift
   plot_name = f'{_NAME}_rotation_vector_drift'
@@ -164,6 +169,8 @@ def do_riemann_sums(x, y, z, t, log_path):
   logging.debug('Integrated gyro drift min/max (degrees) '
                 'x: %.3f/%.3f, y: %.3f/%.3f, z: %.3f/%.3f',
                 x_min, x_max, y_min, y_max, z_min, z_max)
+  print(f'{_NAME}_gyro_drift_degrees_xyz: [{(x_max-x_min):.2f}, '
+        f'{(y_max-y_min):.2f}, {(z_max-z_min):.2f}]')
 
   # plot accumulated gyro drift
   plot_name = f'{_NAME}_gyro_drift'
