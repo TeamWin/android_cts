@@ -86,6 +86,13 @@ public class CujTestBase {
   }
 
   /**
+   * Whether the device is a watch.
+   */
+  public static boolean isWatchDevice(final Activity activity) {
+    return activity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
+  }
+
+  /**
    * Prepare the player, input list and add input list to player's playlist. After that, play for
    * the provided playlist and validate playback time.
    *
