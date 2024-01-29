@@ -352,7 +352,10 @@ public class MockWifiTest {
         scanResult.bssid = TestBssid;
         scanResult.infoElement = TestInfoElement;
         scanResult.frequency = TestFrequency;
-        scanResult.tsf = SystemClock.elapsedRealtime() * 1000;
+        // Add extra 4 seconds as the scan result timestamp to simulate the real behavior
+        // like scan result will return after scan triggered 4 ~ 6 seconds.
+        // It also avoid the timing issue cause scan result is filtered with old scan time.
+        scanResult.tsf = (SystemClock.elapsedRealtime() + 4) * 1000;
         scanResult.capability = TestCapability;
         scanResult.radioChainInfos = new ArrayList<>(Arrays.asList(
                 new RadioChainInfo(RadioChainIds[0], RadioChainLevels[0]),
