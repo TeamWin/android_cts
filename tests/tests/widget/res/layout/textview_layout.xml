@@ -394,6 +394,13 @@
                 android:justificationMode="inter_word" />
 
             <TextView
+                android:id="@+id/textview_justification_inter_character"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text"
+                android:justificationMode="inter_character" />
+
+            <TextView
                 android:id="@+id/textview_textappearance_attrs1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -497,6 +504,20 @@
                 android:layout_height="wrap_content"
                 android:text="@string/sample_text"
                 style="@style/LineBreakConfig_loose_phrase" />
+
+            <TextView
+                android:id="@+id/use_bounds_for_width_false"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text"
+                android:useBoundsForWidth="false" />
+
+            <TextView
+                android:id="@+id/use_bounds_for_width_true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text"
+                android:useBoundsForWidth="true" />
         </LinearLayout>
 
 </ScrollView>
