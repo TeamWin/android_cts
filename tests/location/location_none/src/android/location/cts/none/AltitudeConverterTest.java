@@ -49,52 +49,76 @@ public class AltitudeConverterTest {
 
     @Test
     public void testAddMslAltitudeToLocation_expectedBehavior() throws IOException {
-        // Interpolates between bffffc, 955554, and 000004.
+        // Interpolates in boundary region (bffffc).
         Location location = new Location("");
-        location.setLatitude(-35.246789);
-        location.setLongitude(-44.962683);
+        location.setLatitude(-35.334815);
+        location.setLongitude(-45);
         location.setAltitude(-1);
         location.setVerticalAccuracyMeters(1);
         // Requires data to be loaded from raw assets.
+        assertThat(mAltitudeConverter.addMslAltitudeToLocation(location)).isFalse();
+        assertThat(location.hasMslAltitude()).isFalse();
+        assertThat(location.hasMslAltitudeAccuracy()).isFalse();
+        // Loads data from raw assets.
         mAltitudeConverter.addMslAltitudeToLocation(mContext, location);
-        assertThat(location.getMslAltitudeMeters()).isWithin(2).of(5.1076);
+        assertThat(location.getMslAltitudeMeters()).isWithin(2).of(5.0622);
         assertThat(location.getMslAltitudeAccuracyMeters()).isGreaterThan(1f);
         assertThat(location.getMslAltitudeAccuracyMeters()).isLessThan(1.1f);
 
-        // Again interpolates between bffffc, 955554, and 000004.
+        // Again interpolates at same location to assert no loading from raw assets. Also checks
+        // behavior w.r.t. invalid vertical accuracy.
         location = new Location("");
-        location.setLatitude(-35.246789);
-        location.setLongitude(-44.962683);
-        location.setAltitude(-1);
-        location.setVerticalAccuracyMeters(1);
-        // Requires no data to be loaded from raw assets.
-        mAltitudeConverter.addMslAltitudeToLocation(mContext, location);
-        assertThat(location.getMslAltitudeMeters()).isWithin(2).of(5.1076);
-        assertThat(location.getMslAltitudeAccuracyMeters()).isGreaterThan(1f);
-        assertThat(location.getMslAltitudeAccuracyMeters()).isLessThan(1.1f);
-
-        // Interpolate between 955554, 000004, 00000c, and 95554c - no vertical accuracy.
-        location = new Location("");
-        location.setLatitude(-35.176383);
-        location.setLongitude(-44.962683);
+        location.setLatitude(-35.334815);
+        location.setLongitude(-45);
         location.setAltitude(-1);
         location.setVerticalAccuracyMeters(-1); // Invalid vertical accuracy
         // Requires no data to be loaded from raw assets.
+        assertThat(mAltitudeConverter.addMslAltitudeToLocation(location)).isTrue();
+        assertThat(location.getMslAltitudeMeters()).isWithin(2).of(5.0622);
+        assertThat(location.hasMslAltitudeAccuracy()).isFalse();
+        // Results in same outcome.
         mAltitudeConverter.addMslAltitudeToLocation(mContext, location);
-        assertThat(location.getMslAltitudeMeters()).isWithin(2).of(5.1919);
+        assertThat(location.getMslAltitudeMeters()).isWithin(2).of(5.0622);
         assertThat(location.hasMslAltitudeAccuracy()).isFalse();
 
-        // Interpolates somewhere else more interesting, i.e., Hawaii.
+        // Interpolates out of boundary region, e.g., Hawaii.
         location = new Location("");
         location.setLatitude(19.545519);
         location.setLongitude(-155.998774);
         location.setAltitude(-1);
         location.setVerticalAccuracyMeters(1);
         // Requires data to be loaded from raw assets.
+        assertThat(mAltitudeConverter.addMslAltitudeToLocation(location)).isFalse();
+        assertThat(location.hasMslAltitude()).isFalse();
+        assertThat(location.hasMslAltitudeAccuracy()).isFalse();
+        // Loads data from raw assets.
         mAltitudeConverter.addMslAltitudeToLocation(mContext, location);
         assertThat(location.getMslAltitudeMeters()).isWithin(2).of(-19.2359);
         assertThat(location.getMslAltitudeAccuracyMeters()).isGreaterThan(1f);
         assertThat(location.getMslAltitudeAccuracyMeters()).isLessThan(1.1f);
+
+        // The following round out test coverage for boundary regions.
+
+        location = new Location("");
+        location.setLatitude(-35.229154);
+        location.setLongitude(44.925335);
+        location.setAltitude(-1);
+        mAltitudeConverter.addMslAltitudeToLocation(mContext, location);
+        assertThat(location.getMslAltitudeMeters()).isWithin(2).of(-34.1913);
+
+        location = new Location("");
+        location.setLatitude(-35.334815);
+        location.setLongitude(45);
+        location.setAltitude(-1);
+        mAltitudeConverter.addMslAltitudeToLocation(mContext, location);
+        assertThat(location.getMslAltitudeMeters()).isWithin(2).of(-34.2258);
+
+        location = new Location("");
+        location.setLatitude(35.229154);
+        location.setLongitude(-44.925335);
+        location.setAltitude(-1);
+        mAltitudeConverter.addMslAltitudeToLocation(mContext, location);
+        assertThat(location.getMslAltitudeMeters()).isWithin(2).of(-11.0691);
     }
 
     @Test
