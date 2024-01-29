@@ -1,4 +1,4 @@
-// Copyright (C) 2016 The Android Open Source Project
+// Copyright (C) 2024 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,35 +16,18 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsAndroidAppTestCases",
-    defaults: ["cts_defaults"],
-    platform_apis: true,
-    libs: [
-        "android.test.runner",
-        "android.test.base",
-    ],
-    static_libs: [
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
-        "androidx.test.ext.junit",
-        "androidx.test.rules",
-        "junit",
-        "mockito-target-minus-junit4",
-        "android.security.flags-aconfig-java",
-        "flag-junit",
-    ],
+android_test_helper_app {
+    name: "CtsTestComponentCallerApp",
     srcs: [
         "src/**/*.java",
-        "test-apps/TestComponentCallerApp/**/Constants.java",
     ],
-    // Tag this module as a cts test artifact
+    sdk_version: "current",
+    defaults: [
+        "cts_defaults",
+    ],
+    // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
-    ],
-    data: [
-        ":CtsTestShareIdentityApp",
-        ":CtsTestComponentCallerApp",
     ],
 }
