@@ -19,10 +19,11 @@ package android.videocodec.cts;
 import static android.media.MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR;
 import static android.media.MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR;
 import static android.mediav2.common.cts.CodecTestBase.ComponentClass.HARDWARE;
+import static android.videocodec.cts.VideoEncoderInput.getRawResource;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.media.MediaCodecInfo;
@@ -33,18 +34,14 @@ import android.mediav2.common.cts.RawResource;
 
 import com.android.compatibility.common.util.ApiTest;
 
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -65,7 +62,6 @@ import java.util.List;
  */
 @RunWith(Parameterized.class)
 public class VideoEncoderMinMaxTest extends VideoEncoderValidationTestBase {
-    private static final String LOG_TAG = VideoEncoderMinMaxTest.class.getSimpleName();
     private static final float MIN_ACCEPTABLE_QUALITY = 20.0f;  // psnr in dB
     private static final int FRAME_LIMIT = 300;
     private static final int TARGET_WIDTH = 1280;
@@ -73,23 +69,6 @@ public class VideoEncoderMinMaxTest extends VideoEncoderValidationTestBase {
     private static final int TARGET_FRAME_RATE = 30;
     private static final int TARGET_BIT_RATE = 5000000;
     private static final List<Object[]> exhaustiveArgsList = new ArrayList<>();
-    private static final HashMap<String, RawResource> RES_YUV_MAP = new HashMap<>();
-
-    @BeforeClass
-    public static void decodeResourcesToYuv() {
-        ArrayList<CompressedResource> resources = new ArrayList<>();
-        for (Object[] arg : exhaustiveArgsList) {
-            resources.add((CompressedResource) arg[2]);
-        }
-        decodeStreamsToYuv(resources, RES_YUV_MAP, LOG_TAG);
-    }
-
-    @AfterClass
-    public static void cleanUpResources() {
-        for (RawResource res : RES_YUV_MAP.values()) {
-            new File(res.mFileName).delete();
-        }
-    }
 
     private static EncoderConfigParams getVideoEncoderCfgParams(String mediaType, int bitRateMode,
             int maxBFrames, int intraInterval) {
@@ -114,11 +93,10 @@ public class VideoEncoderMinMaxTest extends VideoEncoderValidationTestBase {
             for (int maxBFrames : maxBFramesPerSubGop) {
                 for (int intraInterval : intraIntervals) {
                     for (int bitRateMode : bitRateModes) {
-                        // mediaType, cfg, resource file
+                        // mediaType, cfg
                         exhaustiveArgsList.add(
                                 new Object[]{mediaType, getVideoEncoderCfgParams(mediaType,
-                                        bitRateMode, maxBFrames,
-                                        intraInterval), BIRTHDAY_FULLHD_LANDSCAPE});
+                                        bitRateMode, maxBFrames, intraInterval)});
                     }
                 }
             }
@@ -260,7 +238,7 @@ public class VideoEncoderMinMaxTest extends VideoEncoderValidationTestBase {
         return newParamList;
     }
 
-    @Parameterized.Parameters(name = "{index}_{0}_{1}_{4}")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{3}")
     public static Collection<Object[]> input() throws CloneNotSupportedException {
         addParams();
         return updateParamList(prepareParamList(exhaustiveArgsList, true, false, true, false,
@@ -268,9 +246,8 @@ public class VideoEncoderMinMaxTest extends VideoEncoderValidationTestBase {
     }
 
     public VideoEncoderMinMaxTest(String encoder, String mediaType, EncoderConfigParams cfgParams,
-            CompressedResource res, @SuppressWarnings("unused") String testLabel,
-            String allTestParams) {
-        super(encoder, mediaType, cfgParams, res, allTestParams);
+            @SuppressWarnings("unused") String testLabel, String allTestParams) {
+        super(encoder, mediaType, cfgParams, allTestParams);
     }
 
     @Before
@@ -300,9 +277,9 @@ public class VideoEncoderMinMaxTest extends VideoEncoderValidationTestBase {
         formats.add(format);
         assertTrue("Encoder: " + mCodecName + " doesn't support format: " + format,
                 areFormatsSupported(mCodecName, mMediaType, formats));
-        RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
-        assumeNotNull("no raw resource found for testing config : " + mEncCfgParams[0]
-                + mTestConfig + mTestEnv + DIAGNOSTICS, res);
+        RawResource res = getRawResource(mEncCfgParams[0]);
+        assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
+                + mTestEnv + DIAGNOSTICS, res);
         encodeToMemory(mCodecName, mEncCfgParams[0], res, FRAME_LIMIT, false, true);
         CompareStreams cs = null;
         StringBuilder msg = new StringBuilder();
