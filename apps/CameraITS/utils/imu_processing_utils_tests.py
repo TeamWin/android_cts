@@ -43,7 +43,7 @@ class ImuProcessingUtilsTest(unittest.TestCase):
     self.assertEqual(imu_processing_utils.calc_rv_drift(c), c_drift,
                      'c_drift is incorrect')
     self.assertTrue(np.allclose(imu_processing_utils.calc_rv_drift(d), d_drift),
-                     'd_drift is incorrect')
+                    'd_drift is incorrect')
 
 
 if __name__ == '__main__':
