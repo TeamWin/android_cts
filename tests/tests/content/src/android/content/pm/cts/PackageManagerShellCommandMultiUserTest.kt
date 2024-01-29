@@ -42,7 +42,6 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.UserManager
 import android.platform.test.annotations.AppModeFull
-import android.platform.test.annotations.RequiresFlagsDisabled
 import android.platform.test.annotations.RequiresFlagsEnabled
 import android.platform.test.flag.junit.CheckFlagsRule
 import android.platform.test.flag.junit.DeviceFlagsValueProvider
@@ -654,18 +653,30 @@ class PackageManagerShellCommandMultiUserTest {
     }
 
     @Test
-    @RequiresFlagsDisabled(FLAG_NULLABLE_DATA_DIR)
-    fun testNullableDataDirDisabled() {
-        expectHasDataDirAfterUninstall(true)
-    }
-
-    @Test
     @RequiresFlagsEnabled(FLAG_NULLABLE_DATA_DIR)
-    fun testNullableDataDirEnabled() {
-        expectHasDataDirAfterUninstall(false)
-    }
+    fun testNullableDataDir() {
+        testUninstallSetup()
+        // Delete data on second user only
+        uninstallPackageAsUser(TEST_APP_PACKAGE, secondaryUser)
+        assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id())).isEqualTo("true")
+        assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id())).isEqualTo("false")
+        assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser)).isTrue()
+        assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser)).isFalse()
+        runWithShellPermissionIdentity(
+                uiAutomation,
+                {
+                    val cxtPrimaryUser = context.createContextAsUser(primaryUser.userHandle(), 0)
+                    val cxtSecondaryUser = context.createContextAsUser(
+                            secondaryUser.userHandle(),
+                            0
+                    )
+                    assertThat(hasDataDir(TEST_APP_PACKAGE, cxtPrimaryUser)).isTrue()
+                    assertThat(hasDataDir(TEST_APP_PACKAGE, cxtSecondaryUser)).isFalse()
+                },
+                Manifest.permission.INTERACT_ACROSS_USERS,
+                Manifest.permission.INTERACT_ACROSS_USERS_FULL
+        )
 
-    private fun expectHasDataDirAfterUninstall(expectHasDataDir: Boolean) {
         testUninstallSetup()
         // Delete data on secondary user but keep data on primary user
         uninstallPackageWithKeepData(TEST_APP_PACKAGE, primaryUser)
@@ -684,8 +695,7 @@ class PackageManagerShellCommandMultiUserTest {
                             0
                     )
                     assertThat(hasDataDir(TEST_APP_PACKAGE, cxtPrimaryUser)).isTrue()
-                    assertThat(hasDataDir(TEST_APP_PACKAGE, cxtSecondaryUser))
-                            .isEqualTo(expectHasDataDir)
+                    assertThat(hasDataDir(TEST_APP_PACKAGE, cxtSecondaryUser)).isFalse()
                 },
                 Manifest.permission.INTERACT_ACROSS_USERS,
                 Manifest.permission.INTERACT_ACROSS_USERS_FULL
