@@ -1085,6 +1085,9 @@ public class VehiclePropertyVerifier<T> {
         }
         List<Integer> hvacTemperatureSetConfigArray =
                 hvacTemperatureSetCarPropertyConfig.getConfigArray();
+        if (hvacTemperatureSetConfigArray.isEmpty()) {
+            return;
+        }
         float minTempInCelsius = hvacTemperatureSetConfigArray.get(0).floatValue() / 10f;
         float minTempInFahrenheit = hvacTemperatureSetConfigArray.get(3).floatValue() / 10f;
 
@@ -1823,7 +1826,9 @@ public class VehiclePropertyVerifier<T> {
         }
         List<Integer> hvacTemperatureSetConfigArray =
                 hvacTemperatureSetCarPropertyConfig.getConfigArray();
-
+        if (hvacTemperatureSetConfigArray.isEmpty()) {
+            return;
+        }
         Integer minTempInCelsiusTimesTen =
                 hvacTemperatureSetConfigArray.get(0);
         Integer maxTempInCelsiusTimesTen =
