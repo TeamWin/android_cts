@@ -17,7 +17,8 @@
     <string name="app_name">CTS Verifier</string>
     <string name="module_id">noabi CtsVerifier</string>
 
-    <string name="title_version">CTS Verifier %1$s</string>
+    <string name="title_version">Verifier %1$s</string>
+    <string name="version_number_format">Version #: %d</string>
 
     <string name="pass_button_text">Pass</string>
     <string name="info_button_text">Info</string>
@@ -36,6 +37,9 @@
     <string name="search_label">TestListActivity</string>
     <string name="search_hint">Search Tests</string>
     <string name="search_title">Search</string>
+    <string name="system">System</string>
+    <string name="system_on">ON</string>
+    <string name="system_off">OFF</string>
 
     <!-- Strings for CtsReportLog warning -->
     <string name="reportlog_warning_title">CTS-Verifier Report Log</string>
