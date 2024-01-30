@@ -51,7 +51,6 @@ import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.common.VirtualDeviceRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.FeatureUtil;
 
@@ -66,6 +65,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.time.Duration;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Tests for injection and capturing of audio from streamed apps
@@ -151,77 +151,70 @@ public class VirtualAudioTest {
 
     @Test
     public void audioCapture_receivesAudioConfigurationChangeCallback() {
-        mVirtualAudioDevice.startAudioCapture(CAPTURE_FORMAT);
+        AudioCapture capture = mVirtualAudioDevice.startAudioCapture(CAPTURE_FORMAT);
 
         AudioActivity activity = startAudioActivity();
-        activity.playAudio();
+        AudioTrack audioTrack = activity.playAudio();
         verify(mAudioConfigurationChangeCallback, timeout(5000).atLeastOnce())
                 .onPlaybackConfigChanged(any());
 
+        audioTrack.stop();
         activity.finish();
+        capture.stop();
     }
 
     @Test
-    public void audioInjection_receivesAudioConfigurationChangeCallback() {
-        AudioInjection audioInjection = mVirtualAudioDevice.startAudioInjection(INJECTION_FORMAT);
-
-        AudioActivity activity = startAudioActivity();
-        activity.recordAudio(mSignalChangeListener);
-
+    public void audioInjection_receivesAudioConfigurationChangeCallback() throws Exception {
         ByteBuffer byteBuffer = createAudioData(
                 SAMPLE_RATE, NUMBER_OF_SAMPLES, CHANNEL_COUNT, FREQUENCY, AMPLITUDE);
-        int remaining = byteBuffer.remaining();
-        while (remaining > 0) {
-            remaining -= audioInjection.write(byteBuffer, byteBuffer.remaining(), WRITE_BLOCKING);
+        try (AudioInjector ignored = new AudioInjector(byteBuffer, mVirtualAudioDevice)) {
+
+            AudioActivity audioActivity = startAudioActivity();
+            audioActivity.recordAudio(mSignalChangeListener);
+
+            verify(mAudioConfigurationChangeCallback, timeout(5000).atLeastOnce())
+                    .onRecordingConfigChanged(any());
+            audioActivity.finish();
         }
-
-        verify(mAudioConfigurationChangeCallback, timeout(5000).atLeastOnce())
-                .onRecordingConfigChanged(any());
-
-        activity.finish();
     }
 
     @Test
-    public void audioCapture_readShortArray_capturesAppPlaybackFrequency() {
+    public void audioCapture_capturesAppPlaybackFrequency() {
         // Automotive has its own audio policies that don't play well with the VDM-created ones.
         assumeFalse(FeatureUtil.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+
         AudioCapture audioCapture = mVirtualAudioDevice.startAudioCapture(CAPTURE_FORMAT);
 
         try (SignalObserver signalObserver = new SignalObserver(audioCapture, Set.of(FREQUENCY))) {
             signalObserver.registerSignalChangeListener(mSignalChangeListener);
 
             AudioActivity activity = startAudioActivity();
-            activity.playAudio();
+            AudioTrack audioTrack = activity.playAudio();
 
             verify(mSignalChangeListener, timeout(TIMEOUT.toMillis()).atLeastOnce()).onSignalChange(
                     Set.of(FREQUENCY));
 
+            audioTrack.stop();
             activity.finish();
+            audioCapture.stop();
         }
     }
 
 
     @Test
-    @FlakyTest(bugId = 322113132)
-    public void audioInjection_writeByteBuffer_appShouldRecordInjectedFrequency() {
+    public void audioInjection_appShouldRecordInjectedFrequency() throws Exception {
         assumeFalse(FeatureUtil.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
-
-        AudioInjection audioInjection = mVirtualAudioDevice.startAudioInjection(
-                INJECTION_FORMAT);
-
-        AudioActivity audioActivity = startAudioActivity();
-        audioActivity.recordAudio(mSignalChangeListener);
 
         ByteBuffer byteBuffer = createAudioData(
                 SAMPLE_RATE, NUMBER_OF_SAMPLES, CHANNEL_COUNT, FREQUENCY, AMPLITUDE);
-        int remaining = byteBuffer.remaining();
-        while (remaining > 0) {
-            remaining -= audioInjection.write(byteBuffer, byteBuffer.remaining(),
-                    WRITE_BLOCKING);
-        }
+        try (AudioInjector ignored = new AudioInjector(byteBuffer, mVirtualAudioDevice)) {
 
-        verify(mSignalChangeListener, timeout(TIMEOUT.toMillis()).atLeastOnce()).onSignalChange(
-                Set.of(FREQUENCY));
+            AudioActivity audioActivity = startAudioActivity();
+            audioActivity.recordAudio(mSignalChangeListener);
+
+            verify(mSignalChangeListener, timeout(TIMEOUT.toMillis()).atLeastOnce()).onSignalChange(
+                    Set.of(FREQUENCY));
+        }
     }
 
     private AudioActivity startAudioActivity() {
@@ -233,7 +226,7 @@ public class VirtualAudioTest {
 
         private SignalObserver mSignalObserver;
 
-        void playAudio() {
+        AudioTrack playAudio() {
 
             ByteBuffer audioData = createAudioData(
                     SAMPLE_RATE, NUMBER_OF_SAMPLES, CHANNEL_COUNT, FREQUENCY, AMPLITUDE);
@@ -242,6 +235,8 @@ public class VirtualAudioTest {
                     AudioTrack.MODE_STATIC);
             audioTrack.write(audioData, audioData.capacity(), WRITE_BLOCKING);
             audioTrack.play();
+
+            return audioTrack;
         }
 
         void recordAudio(SignalObserver.SignalChangeListener signalChangeListener) {
@@ -263,6 +258,49 @@ public class VirtualAudioTest {
             if (mSignalObserver != null) {
                 mSignalObserver.close();
             }
+        }
+    }
+
+    private static class AudioInjector implements AutoCloseable {
+
+        private final ByteBuffer mAudioDataByteBuffer;
+        private final VirtualAudioDevice mVirtualAudioDevice;
+
+        private final AtomicBoolean mRunning = new AtomicBoolean(true);
+
+        private final Thread mAudioInjectorThread = new Thread() {
+            @Override
+            public void run() {
+                super.run();
+
+                AudioInjection audioInjection = mVirtualAudioDevice.startAudioInjection(
+                        INJECTION_FORMAT);
+                audioInjection.play();
+                while (mRunning.get() && !isInterrupted()) {
+                    int remaining = mAudioDataByteBuffer.remaining();
+                    while (remaining > 0 && mRunning.get() && !isInterrupted()) {
+                        remaining -= audioInjection.write(mAudioDataByteBuffer,
+                                mAudioDataByteBuffer.remaining(),
+                                WRITE_BLOCKING);
+                    }
+                    mAudioDataByteBuffer.rewind();
+                }
+                audioInjection.stop();
+            }
+        };
+
+        AudioInjector(ByteBuffer audioDataByteBuffer, VirtualAudioDevice virtualAudioDevice) {
+            mAudioDataByteBuffer = audioDataByteBuffer;
+            mVirtualAudioDevice = virtualAudioDevice;
+            mAudioInjectorThread.start();
+        }
+
+
+        @Override
+        public void close() throws Exception {
+            mRunning.set(false);
+            mAudioInjectorThread.interrupt();
+            mAudioInjectorThread.join();
         }
     }
 

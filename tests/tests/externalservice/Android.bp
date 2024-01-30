@@ -29,6 +29,8 @@ android_test {
         "CtsExternalServiceCommon",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
+        "flag-junit",
+        "android.content.flags-aconfig-java",
     ],
     libs: ["android.test.base"],
     srcs: ["src/**/*.java"],

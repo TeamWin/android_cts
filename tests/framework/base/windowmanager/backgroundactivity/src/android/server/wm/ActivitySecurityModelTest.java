@@ -58,6 +58,7 @@ public class ActivitySecurityModelTest extends BackgroundActivityTestBase {
      */
     @Test
     public void testActivitySandwich_launchBlocked() {
+        BackgroundActivityLaunchTest.assumeSdkNewerThanUpsideDownCake();
         new ActivityStartVerifier()
                 .setupTaskWithForegroundActivity(APP_A)
                 .startFromForegroundActivity(APP_A)

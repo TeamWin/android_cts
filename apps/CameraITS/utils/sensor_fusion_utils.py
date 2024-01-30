@@ -312,7 +312,7 @@ def rotation_rig(rotate_cntl, rotate_ch, num_rotations, angles, servo_speed,
   established before rotation.
 
   Args:
-    rotate_cntl: str to identify as 'arduino' or 'canakit' controller.
+    rotate_cntl: str to identify 'arduino', 'canakit' or 'external' controller.
     rotate_ch: str to identify rotation channel number.
     num_rotations: int number of rotations.
     angles: list of ints; servo angle to move to.
@@ -331,6 +331,8 @@ def rotation_rig(rotate_cntl, rotate_ch, num_rotations, angles, servo_speed,
     set_servo_speed(rotate_ch, servo_speed, arduino_serial_port, delay=0)
   elif rotate_cntl.lower() == 'canakit':
     canakit_serial_port = serial_port_def('Canakit')
+  elif rotate_cntl.lower() == 'external':
+    logging.info('External rotation control.')
   else:
     logging.info('No rotation rig defined. Manual test: rotate phone by hand.')
 
