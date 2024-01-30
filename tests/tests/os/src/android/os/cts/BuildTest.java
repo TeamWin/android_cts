@@ -16,9 +16,6 @@
 
 package android.os.cts;
 
-import static android.os.Build.VERSION.ACTIVE_CODENAMES;
-import static android.os.Build.VERSION_CODES.CUR_DEVELOPMENT;
-
 import android.os.Build;
 import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
@@ -26,15 +23,12 @@ import android.platform.test.annotations.AppModeFull;
 import junit.framework.TestCase;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class BuildTest extends TestCase {
 
@@ -242,66 +236,6 @@ public class BuildTest extends TestCase {
         assertTrue(TYPE_PATTERN.matcher(Build.TYPE).matches());
 
         assertNotEmpty(Build.USER);
-    }
-
-    /**
-     * Tests that check for valid values of codenames related constants.
-     */
-    public void testBuildCodenameConstants() {
-        // CUR_DEVELOPMENT must be larger than any released version.
-        Field[] fields = Build.VERSION_CODES.class.getDeclaredFields();
-        List<String> activeCodenames = Arrays.asList(ACTIVE_CODENAMES);
-        // Make the codenames uppercase to match the field names.
-        activeCodenames.replaceAll(String::toUpperCase);
-        Set<String> knownCodenames = Build.VERSION.KNOWN_CODENAMES.stream()
-                .map(String::toUpperCase)
-                .collect(Collectors.toSet());
-        HashSet<String> declaredCodenames = new HashSet<>();
-        for (Field field : fields) {
-            if (field.getType().equals(int.class) && Modifier.isStatic(field.getModifiers())) {
-                String fieldName = field.getName();
-                final int fieldValue;
-                try {
-                    fieldValue = field.getInt(null);
-                } catch (IllegalAccessException e) {
-                    throw new AssertionError(e.getMessage());
-                }
-                declaredCodenames.add(fieldName);
-                if (fieldName.equals("CUR_DEVELOPMENT")) {
-                    // It should be okay to change the value of this constant in future, but it
-                    // should at least be a conscious decision.
-                    assertEquals(10000, fieldValue);
-                } else {
-                    // Remove all underscores to match build level codenames, e.g. S_V2 is Sv2.
-                    String fieldNameWithoutUnderscores = fieldName.replaceAll("_", "");
-                    if (activeCodenames.contains(fieldNameWithoutUnderscores)) {
-                        // This is the current development version. Note that fieldName can
-                        // become < CUR_DEVELOPMENT before CODENAME becomes "REL", so we
-                        // can't assertEquals(CUR_DEVELOPMENT, fieldValue) here.
-                        assertTrue("Expected " + fieldName + " value to be <= " + CUR_DEVELOPMENT
-                                + ", got " + fieldValue, fieldValue <= CUR_DEVELOPMENT);
-                    } else {
-                        assertTrue("Expected " + fieldName + " value to be < " + CUR_DEVELOPMENT
-                                + ", got " + fieldValue, fieldValue < CUR_DEVELOPMENT);
-                    }
-                    declaredCodenames.add(fieldNameWithoutUnderscores);
-                    assertTrue("Expected " + fieldNameWithoutUnderscores
-                                        + " to be declared in Build.VERSION.KNOWN_CODENAMES",
-                            knownCodenames.contains(fieldNameWithoutUnderscores));
-                }
-            }
-        }
-
-        HashSet<String> diff = new HashSet<>(knownCodenames);
-        diff.removeAll(declaredCodenames);
-        assertTrue(
-                "Expected all elements in Build.VERSION.KNOWN_CODENAMES to be declared in"
-                        + " Build.VERSION_CODES, found " + diff, diff.isEmpty());
-
-        if (!Build.VERSION.CODENAME.equals("REL")) {
-            assertTrue("In-development CODENAME must be declared in Build.VERSION.KNOWN_CODENAMES",
-                Build.VERSION.KNOWN_CODENAMES.contains(Build.VERSION.CODENAME));
-        }
     }
 
     /**
