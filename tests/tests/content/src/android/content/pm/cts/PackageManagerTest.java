@@ -64,10 +64,9 @@ import static android.content.pm.PackageManager.SYSTEM_APP_STATE_HIDDEN_UNTIL_IN
 import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.parsePackageDump;
 import static android.os.UserHandle.CURRENT;
 import static android.os.UserHandle.USER_CURRENT;
-
+import static android.security.Flags.FLAG_ENFORCE_INTENT_FILTER_MATCH;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -165,7 +164,6 @@ import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
 import com.android.internal.security.VerityUtils;
-
 import com.google.common.truth.Expect;
 
 import junit.framework.AssertionFailedError;
@@ -472,6 +470,7 @@ public class PackageManagerTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(FLAG_ENFORCE_INTENT_FILTER_MATCH)
     public void testEnforceIntentToMatchIntentFilter() {
         var override = Map.of(ENFORCE_INTENTS_TO_MATCH_INTENT_FILTERS_CHANGEID,
                 new PackageOverride.Builder().setEnabled(true).build());
@@ -486,37 +485,43 @@ public class PackageManagerTest {
         Intent intent = new Intent();
         List<ResolveInfo> results;
 
-        /* Implicit intent tests */
+        /* Non-component intent tests */
 
         intent.setPackage(INTENT_RESOLUTION_TEST_PKG_NAME);
 
-        // Implicit intents with matching intent filter
+        // Package intents with matching intent filter
         intent.setAction(RESOLUTION_TEST_ACTION_NAME);
+        results = mPackageManager.queryIntentActivities(intent, emptyFlags);
+        assertEquals(2 /* TestPmActivity and TestPmActivityWithDefault */, results.size());
+        // MATCH_DEFAULT_ONLY will change the result
         results = mPackageManager.queryIntentActivities(intent, activityFlags);
-        assertEquals(1, results.size());
+        assertEquals(1 /* TestPmActivityWithDefault */, results.size());
         results = mPackageManager.queryIntentServices(intent, emptyFlags);
         assertEquals(1, results.size());
         results = mPackageManager.queryBroadcastReceivers(intent, emptyFlags);
         assertEquals(1, results.size());
 
-        // Implicit intents with non-matching intent filter
+        // Package intents with non-matching intent filter
         intent.setAction(NON_EXISTENT_ACTION_NAME);
-        results = mPackageManager.queryIntentActivities(intent, activityFlags);
+        results = mPackageManager.queryIntentActivities(intent, emptyFlags);
         assertEquals(0, results.size());
         results = mPackageManager.queryIntentServices(intent, emptyFlags);
         assertEquals(0, results.size());
         results = mPackageManager.queryBroadcastReceivers(intent, emptyFlags);
         assertEquals(0, results.size());
 
-        /* Explicit intent tests */
+        /* Component intent tests */
 
         intent = new Intent();
         ComponentName comp;
 
-        // Explicit intents with matching intent filter
+        // Component intents with matching intent filter
         intent.setAction(RESOLUTION_TEST_ACTION_NAME);
         comp = new ComponentName(INTENT_RESOLUTION_TEST_PKG_NAME, ACTIVITY_NAME);
         intent.setComponent(comp);
+        results = mPackageManager.queryIntentActivities(intent, emptyFlags);
+        assertEquals(1, results.size());
+        // MATCH_DEFAULT_ONLY shall NOT change the result
         results = mPackageManager.queryIntentActivities(intent, activityFlags);
         assertEquals(1, results.size());
         comp = new ComponentName(INTENT_RESOLUTION_TEST_PKG_NAME, SERVICE_NAME);
@@ -528,11 +533,11 @@ public class PackageManagerTest {
         results = mPackageManager.queryBroadcastReceivers(intent, emptyFlags);
         assertEquals(1, results.size());
 
-        // Explicit intents with non-matching intent filter
+        // Component intents with non-matching intent filter
         intent.setAction(NON_EXISTENT_ACTION_NAME);
         comp = new ComponentName(INTENT_RESOLUTION_TEST_PKG_NAME, ACTIVITY_NAME);
         intent.setComponent(comp);
-        results = mPackageManager.queryIntentActivities(intent, activityFlags);
+        results = mPackageManager.queryIntentActivities(intent, emptyFlags);
         assertEquals(0, results.size());
         comp = new ComponentName(INTENT_RESOLUTION_TEST_PKG_NAME, SERVICE_NAME);
         intent.setComponent(comp);
@@ -574,11 +579,11 @@ public class PackageManagerTest {
         results = mPackageManager.queryBroadcastReceivers(intent, emptyFlags);
         assertEquals(0, results.size());
 
-        // Explicit intents with non-matching intent filter on our own package
+        // Component intents with non-matching intent filter on our own package
         intent.setAction(NON_EXISTENT_ACTION_NAME);
         comp = new ComponentName(PACKAGE_NAME, ACTIVITY_NAME);
         intent.setComponent(comp);
-        results = mPackageManager.queryIntentActivities(intent, activityFlags);
+        results = mPackageManager.queryIntentActivities(intent, emptyFlags);
         assertEquals(1, results.size());
         comp = new ComponentName(PACKAGE_NAME, SERVICE_NAME);
         intent.setComponent(comp);
@@ -599,6 +604,9 @@ public class PackageManagerTest {
         // Matching intent and matching selector
         selector.setAction(SELECTOR_ACTION_NAME);
         intent.setAction(RESOLUTION_TEST_ACTION_NAME);
+        results = mPackageManager.queryIntentActivities(intent, emptyFlags);
+        assertEquals(1, results.size());
+        // MATCH_DEFAULT_ONLY shall NOT change the result
         results = mPackageManager.queryIntentActivities(intent, activityFlags);
         assertEquals(1, results.size());
         results = mPackageManager.queryIntentServices(intent, emptyFlags);
@@ -609,7 +617,7 @@ public class PackageManagerTest {
         // Matching intent and non-matching selector
         selector.setAction(NON_EXISTENT_ACTION_NAME);
         intent.setAction(RESOLUTION_TEST_ACTION_NAME);
-        results = mPackageManager.queryIntentActivities(intent, activityFlags);
+        results = mPackageManager.queryIntentActivities(intent, emptyFlags);
         assertEquals(0, results.size());
         results = mPackageManager.queryIntentServices(intent, emptyFlags);
         assertEquals(0, results.size());
@@ -619,7 +627,7 @@ public class PackageManagerTest {
         // Non-matching intent and matching selector
         selector.setAction(SELECTOR_ACTION_NAME);
         intent.setAction(NON_EXISTENT_ACTION_NAME);
-        results = mPackageManager.queryIntentActivities(intent, activityFlags);
+        results = mPackageManager.queryIntentActivities(intent, emptyFlags);
         assertEquals(0, results.size());
         results = mPackageManager.queryIntentServices(intent, emptyFlags);
         assertEquals(0, results.size());
@@ -665,8 +673,6 @@ public class PackageManagerTest {
                 OVERRIDE_COMPAT_CHANGE_CONFIG_ON_RELEASE_BUILD);
 
         final var emptyFlags = PackageManager.ResolveInfoFlags.of(0);
-        final var activityFlags = PackageManager.ResolveInfoFlags.of(
-                PackageManager.MATCH_DEFAULT_ONLY);
 
         Intent intent = new Intent();
         List<ResolveInfo> results;
@@ -678,7 +684,7 @@ public class PackageManagerTest {
         intent.setAction(NON_EXISTENT_ACTION_NAME);
         comp = new ComponentName(INTENT_RESOLUTION_TEST_PKG_NAME, ACTIVITY_NAME);
         intent.setComponent(comp);
-        results = mPackageManager.queryIntentActivities(intent, activityFlags);
+        results = mPackageManager.queryIntentActivities(intent, emptyFlags);
         assertEquals(1, results.size());
         comp = new ComponentName(INTENT_RESOLUTION_TEST_PKG_NAME, SERVICE_NAME);
         intent.setComponent(comp);
@@ -699,7 +705,7 @@ public class PackageManagerTest {
         // Non-matching intent and matching selector
         selector.setAction(SELECTOR_ACTION_NAME);
         intent.setAction(NON_EXISTENT_ACTION_NAME);
-        results = mPackageManager.queryIntentActivities(intent, activityFlags);
+        results = mPackageManager.queryIntentActivities(intent, emptyFlags);
         assertEquals(1, results.size());
         results = mPackageManager.queryIntentServices(intent, emptyFlags);
         assertEquals(1, results.size());
