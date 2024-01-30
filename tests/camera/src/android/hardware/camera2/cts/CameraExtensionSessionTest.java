@@ -611,11 +611,11 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                             if (captureFormat == ImageFormat.JPEG
                                     || captureFormat == ImageFormat.JPEG_R) {
                                 verifyJpegOrientation(imgPostview, postviewSize,
-                                        jpegOrientation);
+                                        jpegOrientation, captureFormat);
+                            } else {
+                                validateImage(imgPostview, postviewSize.getWidth(),
+                                        postviewSize.getHeight(), captureFormat, null);
                             }
-                            validateImage(imgPostview, postviewSize.getWidth(),
-                                    postviewSize.getHeight(), captureFormat, null);
-
 
                             Long imgTsPostview = imgPostview.getTimestamp();
                             imgPostview.close();
@@ -627,10 +627,11 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                             if (captureFormat == ImageFormat.JPEG
                                     || captureFormat == ImageFormat.JPEG_R) {
                                 verifyJpegOrientation(img, maxSize,
-                                        jpegOrientation);
+                                        jpegOrientation, captureFormat);
+                            } else {
+                                validateImage(img, maxSize.getWidth(),
+                                        maxSize.getHeight(), captureFormat, null);
                             }
-                            validateImage(img, maxSize.getWidth(),
-                                    maxSize.getHeight(), captureFormat, null);
 
                             Long imgTs = img.getTimestamp();
                             img.close();
@@ -808,10 +809,11 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                             if (captureFormat == ImageFormat.JPEG
                                     || captureFormat == ImageFormat.JPEG_R) {
                                 verifyJpegOrientation(img, maxSize,
-                                        jpegOrientation);
+                                        jpegOrientation, captureFormat);
+                            } else {
+                                validateImage(img, maxSize.getWidth(),
+                                        maxSize.getHeight(), captureFormat, null);
                             }
-                            validateImage(img, maxSize.getWidth(),
-                                    maxSize.getHeight(), captureFormat, null);
 
                             Long imgTs = img.getTimestamp();
                             img.close();
@@ -1262,7 +1264,8 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         }
     }
 
-    private void verifyJpegOrientation(Image img, Size jpegSize, int requestedOrientation)
+    private void verifyJpegOrientation(Image img, Size jpegSize, int requestedOrientation,
+                int captureFormat)
             throws IOException {
         byte[] blobBuffer = getDataFromImage(img);
         String blobFilename = mTestRule.getDebugFileNameBase() + "/verifyJpegKeys.jpeg";
@@ -1282,7 +1285,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         /**
          * Device captured image doesn't respect the requested orientation,
          * which means it rotates the image buffer physically. Then we
-         * should swap the exif width/height accordingly to compare.
+         * should swap the jpegSize width/height accordingly to compare.
          */
         boolean deviceRotatedImage = exifOrientation == ExifInterface.ORIENTATION_UNDEFINED;
 
@@ -1290,7 +1293,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
             // Case 1.
             boolean needSwap = (requestedOrientation % 180 == 90);
             if (needSwap) {
-                exifSize = new Size(exifHeight, exifWidth);
+                jpegSize = new Size(jpegSize.getHeight(), jpegSize.getWidth());
             }
         } else {
             // Case 2.
@@ -1299,6 +1302,23 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         }
 
         assertEquals("Exif size should match jpeg capture size", jpegSize, exifSize);
+
+        byte[] data = getDataFromImage(img);
+        assertTrue("Invalid image data", data != null && data.length > 0);
+
+        switch (captureFormat) {
+            case ImageFormat.JPEG:
+                validateJpegData(data, jpegSize.getWidth(), jpegSize.getHeight(),
+                        null /*filePath*/);
+                break;
+            case ImageFormat.JPEG_R:
+                validateJpegData(data, jpegSize.getWidth(), jpegSize.getHeight(),
+                        null /*filePath*/, null /*colorSpace*/, true /*gainMapPresent*/);
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported format for JPEG validation: "
+                        + captureFormat);
+        }
     }
 
     private static int getExifOrientationInDegree(int exifOrientation) {
