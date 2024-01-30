@@ -559,6 +559,9 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                         try {
                             mediaCodec = MediaCodec.createByCodecName(codecName);
                             assertNotNull(mediaCodec);
+                            if (!mediaCodec.getCodecInfo().isHardwareAccelerated()) {
+                                continue;
+                            }
 
                             openDevice(cameraIdsUnderTest[i]);
 
