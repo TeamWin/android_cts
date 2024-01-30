@@ -104,6 +104,9 @@ public class WifiLocationInfoBackgroundTest extends WifiJUnit4TestBase{
         }
         sShouldRunTest = true;
 
+        sPower = sContext.getSystemService(PowerManager.class);
+        sLock = sPower.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
+
         sWifiManager = sContext.getSystemService(WifiManager.class);
         assertThat(sWifiManager).isNotNull();
 
@@ -133,8 +136,6 @@ public class WifiLocationInfoBackgroundTest extends WifiJUnit4TestBase{
                 "Wifi not connected",
                 WIFI_CONNECT_TIMEOUT_MILLIS,
                 () -> sWifiManager.getConnectionInfo().getNetworkId() != -1);
-        sPower = sContext.getSystemService(PowerManager.class);
-        sLock = sPower.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
         if (!sLock.isHeld()) {
             sLock.acquire();
         }
