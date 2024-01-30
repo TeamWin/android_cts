@@ -58,6 +58,10 @@ import com.android.compatibility.common.util.PollingCheck;
 
 import com.google.common.collect.ImmutableList;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+import junitparams.naming.TestCaseName;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -71,10 +75,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import junitparams.naming.TestCaseName;
-
 /** Abstract implementation for {@link android.speech.SpeechRecognizer} CTS tests. */
 @RunWith(JUnitParamsRunner.class)
 abstract class AbstractRecognitionServiceTest {
@@ -85,11 +85,11 @@ abstract class AbstractRecognitionServiceTest {
     private static final long SEQUENCE_TEST_WAIT_TIMEOUT_MS = 5000L;
     private static final long ACTIVITY_INIT_WAIT_TIMEOUT_MS = 5000L;
 
-    private static final String CTS_VOICE_RECOGNITION_SERVICE =
+    /* package */ static final String CTS_VOICE_RECOGNITION_SERVICE =
             "android.recognitionservice.service/android.recognitionservice.service"
                     + ".CtsVoiceRecognitionService";
 
-    private static final String IN_PACKAGE_RECOGNITION_SERVICE =
+    /* package */ static final String IN_PACKAGE_RECOGNITION_SERVICE =
             "android.voicerecognition.cts/android.voicerecognition.cts.CtsRecognitionService";
 
     // Expected to create 1 more recognizer than what the concurrency limit is,
@@ -202,6 +202,11 @@ abstract class AbstractRecognitionServiceTest {
                 .isEqualTo(List.of("pt", "de"));
         assertThat(rs.getOnlineLanguages())
                 .isEqualTo(List.of("zh", "fr"));
+        assertThat(CtsRecognitionService.sBindCount.get()).isGreaterThan(0);
+
+        mActivity.destroyRecognizerDefault();
+        mUiDevice.waitForIdle();
+        PollingCheck.waitFor(() -> CtsRecognitionService.sBindCount.get() == 0);
     }
 
     @Test
@@ -218,6 +223,11 @@ abstract class AbstractRecognitionServiceTest {
         PollingCheck.waitFor(SEQUENCE_TEST_WAIT_TIMEOUT_MS,
                 () -> CtsRecognitionService.sDownloadTriggers.size() > 0);
         assertThat(CtsRecognitionService.sDownloadTriggers).hasSize(1);
+        assertThat(CtsRecognitionService.sBindCount.get()).isGreaterThan(0);
+
+        mActivity.destroyRecognizerDefault();
+        mUiDevice.waitForIdle();
+        PollingCheck.waitFor(() -> CtsRecognitionService.sBindCount.get() == 0);
     }
 
     @Test
@@ -246,6 +256,11 @@ abstract class AbstractRecognitionServiceTest {
         assertThat(listener.mCallbacks)
                 .containsExactlyElementsIn(mdei.mExpectedCallbacks)
                 .inOrder();
+        assertThat(CtsRecognitionService.sBindCount.get()).isGreaterThan(0);
+
+        mActivity.destroyRecognizerDefault();
+        mUiDevice.waitForIdle();
+        PollingCheck.waitFor(() -> CtsRecognitionService.sBindCount.get() == 0);
     }
 
     static ModelDownloadExecutionInfo.Scenario[] modelDownloadScenarios() {
@@ -498,6 +513,10 @@ abstract class AbstractRecognitionServiceTest {
             assertThat(ri.mErrorCodesReceived).isEqualTo(sei.mExpectedErrorCodesReceived);
         }
         assertThat(CtsRecognitionService.sInstructedCallbackMethods).isEmpty();
+
+        mActivity.destroyAllRecognizers();
+        mUiDevice.waitForIdle();
+        PollingCheck.waitFor(() -> CtsRecognitionService.sBindCount.get() == 0);
     }
 
     private static void prepareDevice() {

@@ -19,11 +19,14 @@ package android.util.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 import android.util.Xml;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xml.sax.Attributes;
@@ -41,7 +44,10 @@ import java.util.Vector;
 //FIXME: This is a duplicated testcase. Need to improve the coverage tool in future.
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@IgnoreUnderRavenwood(blockedBy = Xml.class)
 public class XmlEncodingTest {
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule();
 
     private static final String STR_ISO_8859_1 = "ISO-8859-1";
     private static final String STR_US_ASCII = "US-ASCII";

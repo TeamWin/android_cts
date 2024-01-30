@@ -18,6 +18,7 @@ package com.android.cts.verifier.presence;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.AdvertisingSetParameters;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -75,6 +76,8 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
     private String mReferenceDeviceName;
     private CheckBox mIsReferenceDeviceCheckbox;
     private CheckBox mIsManualPassCheckbox;
+    private CheckBox mUseExtendedAdvertisementCheckbox;
+    private EditText mTxPowerInput;
     private boolean mIsManualPass;
     private byte mCurrentReferenceDeviceId = 0;
     private byte mRssiMedianFromReferenceDevice = 0;
@@ -95,6 +98,8 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
         mDeviceFoundTextView = findViewById(R.id.device_found_info);
         mReferenceDeviceIdInput = findViewById(R.id.ref_device_id_input);
         mIsReferenceDeviceCheckbox = findViewById(R.id.is_reference_device);
+        mUseExtendedAdvertisementCheckbox = findViewById(R.id.use_extended_advertisement);
+        mTxPowerInput = findViewById(R.id.tx_power_input);
         mIsManualPassCheckbox = findViewById(R.id.is_manual_pass);
         mDutModeLayout = findViewById(R.id.dut_mode_layout);
         mRefModeLayout = findViewById(R.id.ref_mode_layout);
@@ -122,6 +127,13 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
         });
         mIsManualPassCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             mIsManualPass = isChecked;
+        });
+        mUseExtendedAdvertisementCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                mTxPowerInput.setVisibility(View.VISIBLE);
+            } else {
+                mTxPowerInput.setVisibility(View.GONE);
+            }
         });
         mStartTestButton.setOnClickListener(v -> startTestAsDut());
         mStopTestButton.setOnClickListener(v -> stopTest());
@@ -284,9 +296,13 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
         } else {
             packetDeviceName = DEVICE_NAME;
         }
+        int advertiseTxPower = mTxPowerInput.getText().toString().isEmpty() ?
+                AdvertisingSetParameters.TX_POWER_HIGH : Integer.parseInt(
+                mTxPowerInput.getText().toString());
         mBleAdvertiser.startAdvertising(
                 new BleAdvertisingPacket(packetDeviceName, randomAdvertiserDeviceId,
-                        mRssiMedianFromReferenceDevice).toBytes());
+                        mRssiMedianFromReferenceDevice).toBytes(),
+                mUseExtendedAdvertisementCheckbox.isChecked(), advertiseTxPower);
         mStartAdvertisingButton.setEnabled(false);
         mStopAdvertisingButton.setEnabled(true);
     }

@@ -38,7 +38,7 @@ public class BalService extends Service {
     public void onCreate() {
         Log.i("BalService", "Service started");
         mHandler = new Handler();
-        mHandler.postDelayed(this::startBackgroundActivity, 1000 * 30);
+        mHandler.postDelayed(this::startBackgroundActivity, 1000 * 11);
         super.onCreate();
     }
 

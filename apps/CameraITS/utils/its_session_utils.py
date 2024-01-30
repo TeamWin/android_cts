@@ -36,7 +36,10 @@ import opencv_processing_utils
 
 ANDROID13_API_LEVEL = 33
 ANDROID14_API_LEVEL = 34
+ANDROID15_API_LEVEL = 35
 CHART_DISTANCE_NO_SCALING = 0
+IMAGE_FORMAT_JPEG = 256
+IMAGE_FORMAT_YUV_420_888 = 35
 LOAD_SCENE_DELAY_SEC = 3
 SCALING_TO_FILE_ATOL = 0.01
 SINGLE_CAPTURE_NCAP = 1
@@ -146,12 +149,16 @@ class ItsSession(object):
 
   IMAGE_FORMAT_LIST_1 = [
       'jpegImage', 'rawImage', 'raw10Image', 'raw12Image', 'rawStatsImage',
-      'dngImage', 'y8Image', 'jpeg_rImage'
+      'dngImage', 'y8Image', 'jpeg_rImage',
+      'rawQuadBayerImage', 'rawQuadBayerStatsImage',
+      'raw10StatsImage', 'raw10QuadBayerStatsImage', 'raw10QuadBayerImage'
   ]
 
   IMAGE_FORMAT_LIST_2 = [
       'jpegImage', 'rawImage', 'raw10Image', 'raw12Image', 'rawStatsImage',
-      'yuvImage', 'jpeg_rImage'
+      'yuvImage', 'jpeg_rImage',
+      'rawQuadBayerImage', 'rawQuadBayerStatsImage',
+      'raw10StatsImage', 'raw10QuadBayerStatsImage', 'raw10QuadBayerImage'
   ]
 
   CAP_JPEG = {'format': 'jpeg'}
@@ -527,6 +534,17 @@ class ItsSession(object):
       raise error_util.CameraItsError('Invalid command response')
     return data['objValue']
 
+  def get_camera_name(self):
+    """Gets the camera name.
+
+    Returns:
+      The camera name with camera id and/or hidden physical id.
+    """
+    if self._hidden_physical_id:
+      return f'{self._camera_id}.{self._hidden_physical_id}'
+    else:
+      return self._camera_id
+
   def get_unavailable_physical_cameras(self, camera_id):
     """Get the unavailable physical cameras ids.
 
@@ -686,23 +704,11 @@ class ItsSession(object):
     logging.debug('VideoRecordingObject: %s', data)
     return data[_OBJ_VALUE_STR]
 
-  def do_preview_recording(self, video_size, duration, stabilize,
-                           zoom_ratio=None, ae_target_fps_min=None,
-                           ae_target_fps_max=None):
-    """Issue a preview request and read back the preview recording object.
-
-    The resolution of the preview and its recording will be determined by
-    video_size. The duration is the time in seconds for which the preview will
-    be recorded. The recorded object consists of a path on the device at
-    which the recorded video is saved.
+  def _execute_preview_recording(self, cmd):
+    """Send preview recording command over socket and retrieve output object.
 
     Args:
-      video_size: str; Preview resolution at which to record. ex. "1920x1080"
-      duration: int; The time in seconds for which the video will be recorded.
-      stabilize: boolean; Whether the preview should be stabilized or not
-      zoom_ratio: float; zoom ratio. None if default zoom
-      ae_target_fps_min: int; CONTROL_AE_TARGET_FPS_RANGE min. Set if not None
-      ae_target_fps_max: int; CONTROL_AE_TARGET_FPS_RANGE max. Set if not None
+      cmd: dict; Mapping from command key to corresponding value
     Returns:
       video_recorded_object: The recorded object returned from ItsService which
       contains path at which the recording is saved on the device, quality of
@@ -720,7 +726,37 @@ class ItsSession(object):
         }
       }
     """
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
+    self.sock.settimeout(timeout)
 
+    data, _ = self.__read_response_from_socket()
+    logging.debug('VideoRecordingObject: %s', str(data))
+    if data[_TAG_STR] != 'recordingResponse':
+      raise error_util.CameraItsError(
+          f'Invalid response from command{cmd[_CMD_NAME_STR]}')
+    return data[_OBJ_VALUE_STR]
+
+  def do_preview_recording(self, video_size, duration, stabilize,
+                           zoom_ratio=None, ae_target_fps_min=None,
+                           ae_target_fps_max=None):
+    """Issue a preview request and read back the preview recording object.
+
+    The resolution of the preview and its recording will be determined by
+    video_size. The duration is the time in seconds for which the preview will
+    be recorded. The recorded object consists of a path on the device at
+    which the recorded video is saved.
+
+    Args:
+      video_size: str; Preview resolution at which to record. ex. "1920x1080"
+      duration: int; The time in seconds for which the video will be recorded.
+      stabilize: boolean; Whether the preview should be stabilized or not
+      zoom_ratio: float; static zoom ratio. None if default zoom
+      ae_target_fps_min: int; CONTROL_AE_TARGET_FPS_RANGE min. Set if not None
+      ae_target_fps_max: int; CONTROL_AE_TARGET_FPS_RANGE max. Set if not None
+    Returns:
+      video_recorded_object: The recorded object returned from ItsService
+    """
     cmd = {
         _CMD_NAME_STR: 'doPreviewRecording',
         _CAMERA_ID_STR: self._camera_id,
@@ -736,16 +772,57 @@ class ItsSession(object):
     if ae_target_fps_min and ae_target_fps_max:
       cmd['aeTargetFpsMin'] = ae_target_fps_min
       cmd['aeTargetFpsMax'] = ae_target_fps_max
-    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
-    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
-    self.sock.settimeout(timeout)
+    return self._execute_preview_recording(cmd)
 
-    data, _ = self.__read_response_from_socket()
-    logging.debug('VideoRecordingObject: %s', str(data))
-    if data[_TAG_STR] != 'recordingResponse':
-      raise error_util.CameraItsError(
-          f'Invalid response from command{cmd[_CMD_NAME_STR]}')
-    return data[_OBJ_VALUE_STR]
+  def do_preview_recording_with_dynamic_zoom(self, video_size, stabilize,
+                                             sweep_zoom,
+                                             ae_target_fps_min=None,
+                                             ae_target_fps_max=None):
+    """Issue a preview request with dynamic zoom and read back output object.
+
+    The resolution of the preview and its recording will be determined by
+    video_size. The duration will be determined by the duration at each zoom
+    ratio and the total number of zoom ratios. The recorded object consists
+    of a path on the device at which the recorded video is saved.
+
+    Args:
+      video_size: str; Preview resolution at which to record. ex. "1920x1080"
+      stabilize: boolean; Whether the preview should be stabilized or not
+      sweep_zoom: tuple of (zoom_start, zoom_end, step_size, step_duration).
+        Used to control zoom ratio during recording.
+        zoom_start (float) is the starting zoom ratio during recording
+        zoom_end (float) is the ending zoom ratio during recording
+        step_size (float) is the step for zoom ratio during recording
+        step_duration (float) sleep in ms between zoom ratios
+      ae_target_fps_min: int; CONTROL_AE_TARGET_FPS_RANGE min. Set if not None
+      ae_target_fps_max: int; CONTROL_AE_TARGET_FPS_RANGE max. Set if not None
+    Returns:
+      video_recorded_object: The recorded object returned from ItsService
+    """
+    cmd = {
+        _CMD_NAME_STR: 'doPreviewRecording',
+        _CAMERA_ID_STR: self._camera_id,
+        'videoSize': video_size,
+        'recordingDuration': 0,  # for interoperability
+        'stabilize': stabilize
+    }
+    zoom_start, zoom_end, step_size, step_duration = sweep_zoom
+    if (not self.zoom_ratio_within_range(zoom_start) or
+        not self.zoom_ratio_within_range(zoom_end)):
+      raise AssertionError(
+          f'Starting zoom ratio {zoom_start} or '
+          f'ending zoom ratio {zoom_end} out of range'
+      )
+    if zoom_start > zoom_end or step_size < 0:
+      raise NotImplementedError('Only increasing zoom ratios are supported')
+    cmd['zoomStart'] = zoom_start
+    cmd['zoomEnd'] = zoom_end
+    cmd['stepSize'] = step_size
+    cmd['stepDuration'] = step_duration
+    if ae_target_fps_min and ae_target_fps_max:
+      cmd['aeTargetFpsMin'] = ae_target_fps_min
+      cmd['aeTargetFpsMax'] = ae_target_fps_max
+    return self._execute_preview_recording(cmd)
 
   def get_supported_video_qualities(self, camera_id):
     """Get all supported video qualities for this camera device.
@@ -926,7 +1003,12 @@ class ItsSession(object):
         'rawStats': [],
         'dng': [],
         'jpeg': [],
-        'y8': []
+        'y8': [],
+        'rawQuadBayer': [],
+        'rawQuadBayerStats': [],
+        'raw10Stats': [],
+        'raw10QuadBayerStats': [],
+        'raw10QuadBayer': [],
     }
 
     # Only allow yuv output to multiple targets
@@ -1115,7 +1197,8 @@ class ItsSession(object):
                  cap_request,
                  out_surfaces=None,
                  reprocess_format=None,
-                 repeat_request=None):
+                 repeat_request=None,
+                 reuse_session=False):
     """Issue capture request(s), and read back the image(s) and metadata.
 
     The main top-level function for capturing one or more images using the
@@ -1252,6 +1335,8 @@ class ItsSession(object):
       reprocess_format: (Optional) The reprocessing format. If not
         None,reprocessing will be enabled.
       repeat_request: Repeating request list.
+      reuse_session: True if ItsService.java should try to use
+        the existing CameraCaptureSession.
 
     Returns:
       An object, list of objects, or list of lists of objects, where each
@@ -1303,6 +1388,7 @@ class ItsSession(object):
           'width': max_yuv_size[0],
           'height': max_yuv_size[1]
       }]
+    cmd['reuseSession'] = reuse_session
 
     ncap = len(cmd['captureRequests'])
     nsurf = 1 if out_surfaces is None else len(cmd['outputSurfaces'])
@@ -1329,7 +1415,12 @@ class ItsSession(object):
             'dng': [],
             'jpeg': [],
             'jpeg_r': [],
-            'y8': []
+            'y8': [],
+            'rawQuadBayer': [],
+            'rawQuadBayerStats': [],
+            'raw10Stats': [],
+            'raw10QuadBayerStats': [],
+            'raw10QuadBayer': [],
         }
 
     for cam_id in cam_ids:
@@ -1389,6 +1480,12 @@ class ItsSession(object):
     raw_formats += 1 if 'raw10' in formats else 0
     raw_formats += 1 if 'raw12' in formats else 0
     raw_formats += 1 if 'rawStats' in formats else 0
+    raw_formats += 1 if 'rawQuadBayer' in formats else 0
+    raw_formats += 1 if 'rawQuadBayerStats' in formats else 0
+    raw_formats += 1 if 'raw10Stats' in formats else 0
+    raw_formats += 1 if 'raw10QuadBayer' in formats else 0
+    raw_formats += 1 if 'raw10QuadBayerStats' in formats else 0
+
     if raw_formats > 1:
       raise error_util.CameraItsError('Different raw formats not supported')
 
@@ -1537,6 +1634,9 @@ class ItsSession(object):
 
   # pylint: disable=dangerous-default-value
   def do_3a(self,
+            fmt=None,
+            width=None,
+            height=None,
             regions_ae=[[0, 0, 1, 1, 1]],
             regions_awb=[[0, 0, 1, 1, 1]],
             regions_af=[[0, 0, 1, 1, 1]],
@@ -1549,7 +1649,8 @@ class ItsSession(object):
             ev_comp=0,
             auto_flash=False,
             mono_camera=False,
-            zoom_ratio=None):
+            zoom_ratio=None,
+            reuse_session=False):
     """Perform a 3A operation on the device.
 
     Triggers some or all of AE, AWB, and AF, and returns once they have
@@ -1559,6 +1660,9 @@ class ItsSession(object):
     Throws an assertion if 3A fails to converge.
 
     Args:
+      fmt: Format to configure a CameraCaptureSession.
+      width: Width to configure a CameraCaptureSession.
+      height: Height to configure a CameraCaptureSession.
       regions_ae: List of weighted AE regions.
       regions_awb: List of weighted AWB regions.
       regions_af: List of weighted AF regions.
@@ -1572,6 +1676,8 @@ class ItsSession(object):
       auto_flash: AE control boolean to enable auto flash.
       mono_camera: Boolean for monochrome camera.
       zoom_ratio: Zoom ratio. None if default zoom
+      reuse_session: True if ItsService.java should try to use
+        the existing CameraCaptureSession.
 
       Region format in args:
          Arguments are lists of weighted regions; each weighted region is a
@@ -1593,6 +1699,15 @@ class ItsSession(object):
     logging.debug('Running vendor 3A on device')
     cmd = {}
     cmd[_CMD_NAME_STR] = 'do3A'
+    if fmt:
+      if fmt == 'yuv':
+        cmd['format'] = IMAGE_FORMAT_YUV_420_888
+      elif fmt == 'jpeg' or fmt == 'jpg':
+        cmd['format'] = IMAGE_FORMAT_JPEG
+    if width:
+      cmd['width'] = width
+    if height:
+      cmd['height'] = height
     cmd['regions'] = {
         'ae': sum(regions_ae, []),
         'awb': sum(regions_awb, []),
@@ -1614,6 +1729,7 @@ class ItsSession(object):
         cmd['zoomRatio'] = zoom_ratio
       else:
         raise AssertionError(f'Zoom ratio {zoom_ratio} out of range')
+    cmd['reuseSession'] = reuse_session
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
     # Wait for each specified 3A to converge.
@@ -1692,29 +1808,29 @@ class ItsSession(object):
         chart_distance, camera_fov)
     if math.isclose(
         chart_scaling,
-        opencv_processing_utils.SCALE_RFOV_IN_WFOV_BOX,
+        opencv_processing_utils.SCALE_WIDE_IN_22CM_RIG,
         abs_tol=SCALING_TO_FILE_ATOL):
-      file_name = f'{scene}_{opencv_processing_utils.SCALE_RFOV_IN_WFOV_BOX}x_scaled.png'
+      file_name = f'{scene}_{opencv_processing_utils.SCALE_WIDE_IN_22CM_RIG}x_scaled.png'
     elif math.isclose(
         chart_scaling,
-        opencv_processing_utils.SCALE_TELE_IN_WFOV_BOX,
+        opencv_processing_utils.SCALE_TELE_IN_22CM_RIG,
         abs_tol=SCALING_TO_FILE_ATOL):
-      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE_IN_WFOV_BOX}x_scaled.png'
+      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE_IN_22CM_RIG}x_scaled.png'
     elif math.isclose(
         chart_scaling,
-        opencv_processing_utils.SCALE_TELE25_IN_RFOV_BOX,
+        opencv_processing_utils.SCALE_TELE25_IN_31CM_RIG,
         abs_tol=SCALING_TO_FILE_ATOL):
-      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE25_IN_RFOV_BOX}x_scaled.png'
+      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE25_IN_31CM_RIG}x_scaled.png'
     elif math.isclose(
         chart_scaling,
-        opencv_processing_utils.SCALE_TELE40_IN_RFOV_BOX,
+        opencv_processing_utils.SCALE_TELE40_IN_31CM_RIG,
         abs_tol=SCALING_TO_FILE_ATOL):
-      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE40_IN_RFOV_BOX}x_scaled.png'
+      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE40_IN_31CM_RIG}x_scaled.png'
     elif math.isclose(
         chart_scaling,
-        opencv_processing_utils.SCALE_TELE_IN_RFOV_BOX,
+        opencv_processing_utils.SCALE_TELE_IN_31CM_RIG,
         abs_tol=SCALING_TO_FILE_ATOL):
-      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE_IN_RFOV_BOX}x_scaled.png'
+      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE_IN_31CM_RIG}x_scaled.png'
     else:
       file_name = f'{scene}.png'
     logging.debug('Scene to load: %s', file_name)
@@ -1992,14 +2108,14 @@ def load_scene(cam, props, scene, tablet, chart_distance, lighting_check=True,
   rfov_camera_in_rfov_box = (
       math.isclose(
           chart_distance,
-          opencv_processing_utils.CHART_DISTANCE_RFOV, rel_tol=0.1) and
+          opencv_processing_utils.CHART_DISTANCE_31CM, rel_tol=0.1) and
       opencv_processing_utils.FOV_THRESH_TELE <= float(camera_fov)
-      <= opencv_processing_utils.FOV_THRESH_WFOV)
+      <= opencv_processing_utils.FOV_THRESH_UW)
   wfov_camera_in_wfov_box = (
       math.isclose(
           chart_distance,
-          opencv_processing_utils.CHART_DISTANCE_WFOV, rel_tol=0.1) and
-      float(camera_fov) > opencv_processing_utils.FOV_THRESH_WFOV)
+          opencv_processing_utils.CHART_DISTANCE_22CM, rel_tol=0.1) and
+      float(camera_fov) > opencv_processing_utils.FOV_THRESH_UW)
   if (rfov_camera_in_rfov_box or wfov_camera_in_wfov_box) and lighting_check:
     cam.do_3a()
     cap = cam.do_capture(

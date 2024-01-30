@@ -15,7 +15,6 @@
  */
 package android.cts.statsdatom.statsd;
 
-import com.android.tradefed.util.RunUtil;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -29,8 +28,10 @@ import com.android.os.AtomsProto.Atom;
 import com.android.os.StatsLog.EventMetricData;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.RunUtil;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -252,7 +253,6 @@ public class ProcStateAtomTests extends DeviceTestCase implements IBuildReceiver
         Set<Integer> onStates = CACHED_STATES;
         Set<Integer> offStates = complement(onStates);
 
-        List<Set<Integer>> stateSet = Arrays.asList(onStates, offStates); // state sets, in order
         ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 PROC_STATE_ATOM_TAG, /*useUidAttributionChain=*/false);
 
@@ -274,10 +274,22 @@ public class ProcStateAtomTests extends DeviceTestCase implements IBuildReceiver
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         // First, clear out any incidental cached states of step #1, prior to step #2.
         AtomTestUtils.popUntilFind(data, BG_STATES, PROC_STATE_FUNCTION);
+        CLog.d("After clearing cached states:\n");
+        ReportUtils.printEventMetricDataList(data);
         // Now clear out the bg state from step #2 (since we are interested in the cache after it).
         AtomTestUtils.popUntilFind(data, onStates, PROC_STATE_FUNCTION);
-        // The result is that data should start at step #3, definitively in a cached state.
-        AtomTestUtils.assertStatesOccurredInOrder(stateSet, data, 1_000, PROC_STATE_FUNCTION);
+        CLog.d("After clearing bg states:\n");
+        ReportUtils.printEventMetricDataList(data);
+
+        // The first element in data is a cached state (unless empty) and there should be
+        // at least one other element with non-cached state.
+        assertWithMessage("Cached state is not present").that(data).isNotEmpty();
+
+        List<Integer> states = data.stream()
+                                       .map(EventMetricData::getAtom)
+                                       .map(PROC_STATE_FUNCTION)
+                                       .collect(Collectors.toList());
+        assertWithMessage("Non-cached state is not present").that(states).containsAnyIn(offStates);
     }
 
     public void testValidityOfStates() throws Exception {

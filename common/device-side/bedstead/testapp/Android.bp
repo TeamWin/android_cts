@@ -16,6 +16,7 @@ android_library {
     sdk_version: "test_current",
     srcs: [
         "src/testapps/main/java/**/*.java",
+        "src/testapps/main/java/**/*.kt",
     ],
     static_libs: [
         "EventLib",
@@ -38,6 +39,7 @@ android_library {
     sdk_version: "test_current",
     srcs: [
         "src/library/main/java/**/*.java",
+        "src/library/main/java/**/*.kt",
     ],
     static_libs: [
         "Nene",
@@ -66,6 +68,7 @@ android_test {
     name: "TestAppTest",
     srcs: [
         "src/test/java/**/*.java",
+        "src/test/java/**/*.kt",
     ],
     test_suites: [
         "general-tests",
@@ -400,6 +403,7 @@ java_library {
     name: "TestApp_Annotations",
     srcs: [
         "src/processor/main/java/com/android/bedstead/testapp/processor/annotations/*.java",
+        "src/processor/main/java/com/android/bedstead/testapp/processor/annotations/*.kt",
     ],
     host_supported: true,
 }

@@ -35,25 +35,6 @@ public class TransferProfileOwnerOutgoingTest extends DeviceAndProfileOwnerTrans
         super.setUp();
         setupTestParameters(DevicePolicyManager.ACTION_PROFILE_OWNER_CHANGED);
     }
-
-    @Test
-    public void testTransferWithPoliciesOutgoing() throws Throwable {
-        int passwordLength = 123;
-        int passwordExpirationTimeout = 456;
-        DevicePolicyManager parentDevicePolicyManager =
-                mDevicePolicyManager.getParentProfileInstance(mOutgoingComponentName);
-        mDevicePolicyManager.setCameraDisabled(mOutgoingComponentName, true);
-        mDevicePolicyManager.setPasswordQuality(
-                mOutgoingComponentName, DevicePolicyManager.PASSWORD_QUALITY_NUMERIC);
-        mDevicePolicyManager.setPasswordMinimumLength(mOutgoingComponentName, passwordLength);
-        mDevicePolicyManager.setCrossProfileCallerIdDisabled(mOutgoingComponentName, true);
-        parentDevicePolicyManager.setPasswordExpirationTimeout(
-                mOutgoingComponentName, passwordExpirationTimeout);
-
-        PersistableBundle b = new PersistableBundle();
-        mDevicePolicyManager.transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
-    }
-
     @Test
     public void testTransferOwnership() throws Throwable {
         PersistableBundle b = new PersistableBundle();

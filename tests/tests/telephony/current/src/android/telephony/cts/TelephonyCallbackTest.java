@@ -367,12 +367,13 @@ public class TelephonyCallbackTest {
 
         assertTrue(mOnServiceStateChangedCalled);
 
-        // reset and un-register
-        mOnServiceStateChangedCalled = false;
+        // un-register
         if (mServiceStateCallback != null) {
             // un-register the listener
             mTelephonyManager.unregisterTelephonyCallback(mServiceStateCallback);
         }
+        // reset after un-register
+        mOnServiceStateChangedCalled = false;
         synchronized (mLock) {
             if (!mOnServiceStateChangedCalled) {
                 mLock.wait(WAIT_TIME);

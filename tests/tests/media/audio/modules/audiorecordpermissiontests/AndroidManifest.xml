@@ -24,7 +24,7 @@
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
          android:targetPackage="android.media.audio.cts.audiorecordpermissiontests"
-         android:label="STS test for record permissions">
+         android:label="CTS test for record permissions">
     </instrumentation>
 
 </manifest>

@@ -17,7 +17,7 @@
 package android.hardware.camera2.cts;
 
 import static android.hardware.camera2.cts.CameraTestUtils.*;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.*;
+import static android.hardware.camera2.cts.CameraTestUtils.MaxStreamSizes.*;
 
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;

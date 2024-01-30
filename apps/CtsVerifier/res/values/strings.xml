@@ -51,6 +51,16 @@
         <a href="https://source.android.com/compatibility/cts/verifier">https://source.android.com/compatibility/cts/verifier</a>
     </string>
 
+    <!-- Strings for non-SDK interfaces accessibility warning -->
+    <string name="nonsdk_interfaces_warning_title">CTS-Verifier non-SDK interfaces accessibility</string>
+    <string name="nonsdk_interfaces_warning_body">Can\'t access non-SDK interfaces.
+        \n\nPlease allow CTS Verifier to access non-SDK interfaces by running the following commands:
+        \n\n<code>adb shell settings put global hidden_api_policy 1</code>
+        \n\nTest instructions are found in the \"Using CTS Verifier\" document found at
+        <a href="https://source.android.com/compatibility/cts/verifier">https://source.android.com/compatibility/cts/verifier</a>
+        \n\nAfter setting up the CTS test environment, please relaunch the CTS Verifier app to rerun the test.
+    </string>
+
     <!-- Strings for TestListActivity -->
     <string name="test_category_audio">Audio</string>
     <string name="test_category_camera">Camera</string>
@@ -167,6 +177,25 @@
         If Garage Mode ran as required, the pass button will be enabled.</string>
     <string name="car_component_power_on_policy_check">Verify Component Power On Policy</string>
     <string name="car_component_power_off_policy_check">Verify Component Power Off Policy</string>
+    <string name="car_uxre_test">Car UX Restrictions Test</string>
+    <string name="car_uxre_test_req_distraction_optimization">Requires Distraction Optimization</string>
+    <string name="car_uxre_test_not_req_distraction_optimization">No Distraction Optimization required</string>
+    <string name="car_uxre_test_parked">Parked</string>
+    <string name="car_uxre_test_idling">Idling</string>
+    <string name="car_uxre_test_moving">Moving</string>
+    <string name="car_uxre_test_unknown">Unknown</string>
+    <string name="car_uxre_test_driving_state">Driving state: %s</string>
+    <string name="car_uxre_test_test_pass">Finished, please mark test as passed</string>
+    <string name="car_uxre_test_test_progress">Test in progress</string>
+    <string name="car_uxre_test_desc">
+        For driver: Put the car in driving mode and make sure that the CTS Verifier activity is
+        blocked. Then park the car and make sure the CTS Verifier activity is shown again and mark
+        it as pass; mark it as fail if the CTS Verifier activity does not get blocked.
+        \n\n
+        For passenger: Put the car in driving mode and make sure that the CTS Verifier activity is
+        not blocked. Then park the car and make sure the CTS Verifier activity is still shown and
+        mark it as pass; mark it as fail if the CTS Verifier activity gets blocked.
+    </string>
     <string name="car_power_policy_test">Car Power Policy Test</string>
     <string name="car_power_policy_test_desc">
         This test verifies that Wi-Fi, Bluetooth and Location settings UI behaviors with respect
@@ -394,9 +423,9 @@
     <string name="biometric_test_set_user_authentication_credential_aead_cipher_label">4j: Aead Cipher, Credential</string>
     <string name="biometric_test_set_user_authentication_biometric_aead_cipher_label">4k: Aead Cipher, Biometric</string>
     <string name="biometric_test_set_user_authentication_biometric_credential_aead_cipher_label">4l: Aead Cipher, Biometric or Credential</string>
-    <string name="biometric_test_set_user_authentication_biometric_or_credential_key_agreement_label">4m: Key Agreement, Biometric or Credential</string>
-    <string name="biometric_test_set_user_authentication_credential_key_agreement_label">4n: Key Agreement, Credential</string>
-    <string name="biometric_test_set_user_authentication_biometric_key_agreement_label">4o: Key Agreement, Biometric</string>
+    <string name="biometric_test_set_user_authentication_credential_key_agreement_label">4m: Key Agreement, Credential</string>
+    <string name="biometric_test_set_user_authentication_biometric_key_agreement_label">4n: Key Agreement, Biometric</string>
+    <string name="biometric_test_set_user_authentication_biometric_or_credential_key_agreement_label">4o: Key Agreement, Biometric or Credential</string>
     <string name="biometric_test_set_user_authentication_credential_instructions">This test checks the correctness of the KeyGenParameterSpec.Builder#setUserAuthenticationParameters(int, int) API for AUTH_DEVICE_CREDENTIAL.
         Buttons for completed tasks will become invisible. It\'s normal for buttons to be disabled for a few seconds during this test.</string>
     <string name="biometric_test_set_user_authentication_biometric_instructions">This test checks the correctness of the KeyGenParameterSpec.Builder#setUserAuthenticationParameters(int, int) API for AUTH_BIOMETRIC_STRONG.
@@ -2405,6 +2434,9 @@
     <string name="test_access_ringer_mode">Test access ringer mode</string>
     <string name="test_ringer_mode_policy_access">Test ringer mode policy access</string>
     <string name="test_volume_dnd_affected_stream">Test volume change</string>
+    <string name="test_volume_stream_1">Test volume change part 1</string>
+    <string name="test_volume_stream_2">Test volume change part 2</string>
+    <string name="test_volume_stream_3">Test volume change part 3</string>
     <string name="test_mute_dnd_affected_streams">Test mute streams</string>
     <string name="test_ringer_manager">Test RingtoneManager</string>
     <string name="enable_sound_effects">Please enable Tap &amp; click sounds in Sound settings.</string>
@@ -2476,7 +2508,7 @@
         Swipe it to either side to dismiss it.\n
         Pass the test if it can be dismissed from the lock screen.</string>
     <string name="non_dismissable_notif_from_the_ls">Lock the screen and find the NotifDismissTest notification.\n
-        Try to dismiss it. Verify that it is non-dismissible.\n
+        Swipe it to either side to dismiss it. Verify that it is non-dismissible.\n
         Fail the test if it could be dismissed from the lock screen.</string>
     <string name="fsi_test">Notification Full Screen Intent Test</string>
     <string name="fsi_test_info">This test checks the behavior of Notifications
@@ -2534,6 +2566,29 @@
     <string name="fsi_sticky_hun_60s">There should be a Heads Up Notification on the screen.\n
         It would show for 60s.\n
         Fail the test if it doesn\'t show or disappears within 60s.</string>
+    <string name="notification_style_test">Notification Styles Test</string>
+    <string name="notification_style_test_info">This test checks that Notification Styles are rendered as expected.</string>
+    <string name="ns_custom_content_instructions">A notification with custom (app-provided) content was posted. Open the notification shade, collapse the notification (if it\'s expanded) and verify that:
+        \n\u2022 There is appropriate padding between the blue section and all other visual elements.
+        \n\u2022 The small icon (A) is clearly visible outside the blue region.
+        \n\u2022 If an expand/collapse affordance is present, it is clearly visible outside the blue region.
+        \nIt should look approximately like the image below (when factoring for theme, dynamic color, etc). </string>
+    <string name="ns_custom_big_content_instructions">A notification with custom (app-provided) content was posted. Open the notification shade, expand the notification (if it\'s collapsed), and verify that:
+        \n\u2022 There is appropriate padding between the blue section and all other visual elements.
+        \n\u2022 The small icon (B) is clearly visible outside the blue region.
+        \n\u2022 The App Name (\"CTS Verifier\") is clearly visible outside the blue region.
+        \n\u2022 If an expand/collapse affordance is present, it is clearly visible outside the blue region.
+        \nIt should look approximately like the image below (when factoring for theme, dynamic color, etc). </string>
+    <string name="ns_custom_heads_up_content_instructions">A notification with custom (app-provided) content was shown in heads-up. While in this state, verify that:
+        \n\u2022 There is appropriate padding between the blue section and all other visual elements.
+        \n\u2022 The small icon (C) is clearly visible outside the blue region.
+        \n\u2022 If an expand/collapse affordance is present, it is clearly visible outside the blue region.
+        \nIt should look approximately like the image below (when factoring for theme, dynamic color, etc). </string>
+    <string name="notification_custom_layout_text">Custom content here!</string>
+    <string name="ns_custom_content_alt_text">This is the expanded version of the notification.\nPlease collapse it to check the custom content view.</string>
+    <string name="ns_custom_big_content_alt_text">This is the collapsed version of the notification.\nPlease expand it to check the custom big content view.</string>
+    <string name="ns_custom_heads_up_content_alt_text">This is the expanded version of the notification.\nPlease collapse it (while it\'s showing as heads-up, not in the shade) to check the heads-up content view.</string>
+    <string name="ns_bigpicture_animated_instructions">A notification with an animated BigPicture was posted. Expand it, and verify that the image is indeed animated.</string>
     <string name="np_start_channel_settings">Launch Channel Settings</string>
     <string name="np_start_security_settings">Launch Security Settings</string>
     <string name="np_start_notif_settings">Launch Notification Settings</string>
@@ -5404,8 +5459,6 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_uap_notifications_test">USB Audio Peripheral Notifications Test</string>
     <string name="uapPeripheralProfileAttributes">USB Audio Peripheral Attributes</string>
     <string name="audio_uap_play_test">USB Audio Peripheral Play Test</string>
-    <string name="uapPlayTestInstructions">Connect the USB Audio Interface Peripheral and press the
-        PLAY button below. Verify that a tone is correctly played.</string>
     <string name="uapPlayStopTestInstructions">Connect the USB Audio Interface Peripheral and press the
         PLAY button below. Verify that a tone is correctly played. Then press the STOP button.
     </string>
@@ -5413,8 +5466,6 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_uap_play_stopBtn">Stop</string>
 
     <string name="audio_uap_record_test">USB Audio Peripheral Record Test</string>
-    <string name="uapRecordTestInstructions">Connect the USB Audio Peripheral and press the RECORD or
-        RECORD LOOPBACK button below. Verify that a tone is correctly played.</string>
     <string name="audio_uap_record_recordBtn">Record</string>
     <string name="audio_uap_record_recordLoopbackBtn">Record Loopback</string>
     <string name="audio_uap_record_stopBtn">Stop</string>
@@ -5623,6 +5674,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_ok">Ok</string>
     <string name="audio_general_start">Start</string>
     <string name="audio_general_stop">Stop</string>
+    <string name="audio_general_done">Done</string>
     <string name="audio_general_status">Status</string>
     <string name="audio_general_pass">PASS</string>
     <string name="audio_general_teststatus_pass">Test Status: PASS</string>
@@ -5633,7 +5685,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_required">Required</string>
     <string name="audio_general_run">Run</string>
     <string name="audio_general_cancel">Cancel</string>
-
+    <string name="audio_general_left">Left</string>
+    <string name="audio_general_right">Right</string>
     <string name="audio_general_Input">Input</string>
     <string name="audio_general_Output">Output</string>
 
@@ -5654,28 +5707,78 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_record_colon"> record:</string>
 
     <!-- Audio Data Paths Test-->
-    <string name="audio_datapaths_test">Audio Data Paths Test</string>
-    <string name="audio_datapaths_info">This test verifies basic functionality over a set of audio routes
-        \nTest Setup:
-        \n - It may be necessary to go to the \"Sound &amp; vibration\" settings panel to set the volume level for each output device.
-        \n 1. With no audio peripherals connected, adjust the \"Media volume\" to max.
-        \n 2. (If applicable) insert the analog loopback adapter into the 3.5mm headset jack and adjust the \"Media volume\" to max.
-        \n 3. (If applicable) connect a USB audio interface and adjust the \"Media volume\" to max.
-        \n - If the device has a 3.5mm headset jack, insert a loopback adapter in the jack. (See the \"Audio Loopback Latency Test\" for a description).
-        \n - If the device supports audio over USB, connect a USB audio interface with loopback cables. (See the \"Audio Loopback Latency Test\" for a description).
-        \n   The test will display valid data paths with an asterix appended to the data path name.
-        \nTest Execution:
-        \n - Place the device on a flat surface in a quiet room.
-        \n - Select the \"Native API\" button.
-        \n - Press the \"Start\" button. The test will step through the list of valid data paths playing a tone and recording it\'s presence or absence.
-        Be aware that the test will play tones through the internal speaker even if an analog loopback plug and/or USB loopback device is connected.
-        \n - Select the \"Java API\" button.
-        \n - Press the \"Start\" button to repeat each data path test for the Java API.
-        \nTest Completion:
-        \n - Once each of the data paths and APIs have been measured, the test can be marked successful.
+    <string name="audio_datapaths_clearresults">Clear Results</string>
+    <string name="audio_datapaths_legacy">Legacy</string>
+    <string name="audio_datapaths_mmap_shared">MMAP Shared</string>
+    <string name="audio_datapaths_mmap_exclusive">MMAP Exclusive</string>
+    <string name="audio_datapaths_invalid_transfer">Invalid Transfer Type</string>
+
+    <string name="audio_datapaths_calibrate">Calibrate Audio</string>
+    <string name="audio_datapaths_calibratetitle">Calibrate Loopback Audio</string>
+
+    <string name="audio_datapaths_speakermic_test">Audio Data Paths Speaker/Mic Test</string>
+    <string name="audio_datapaths_speakermic_info">This test verifies basic functionality over a set of audio routes
+        \n\nTest Setup:
+        \n • It may be necessary to go to the \"Sound &amp; vibration\" settings panel to set the volume level for the output device.
+        \n   With no audio peripherals connected, adjust the \"Media volume\" to max.
+        \n The test will display valid data paths with an asterisk appended to the data path name.
+        \n\nTest Execution:
+        \n • Place the device on a flat surface in a quiet room.
+        \n • Select the \"Native API\" button.
+        \n • Press the \"Start\" button. The test will step through the list of valid data paths playing a tone and noting its presence or absence.
+        \n • Select the \"Java API\" button.
+        \n • Press the \"Start\" button to repeat each data path test for the Java API.
+        \n\nTest Completion:
+        \n • Once each of the data paths and APIs have been measured, the test can be marked successful.
     </string>
+
+    <string name="audio_datapaths_mic">Mic:</string>
+    <string name="audio_datapaths_speaker">Speaker:</string>
+    <string name="audio_datapaths_MMAP">MMAP:"</string>
+    <string name="audio_datapaths_MMAP_exclusive">MMAP Exclusive:"</string>
+    <string name="audio_datapaths_analog_test">Audio Data Paths Analog Jack Test</string>
+    <string name="audio_datapaths_analog_info">This test verifies basic functionality over a set of audio routes
+        \n\nNote that if the DUT does not have an analog headset port, this test can be skipped.
+        \n\nTest Setup:
+        \n • It may be necessary to go to the \"Sound &amp; vibration\" settings panel to set the volume level for each output device.
+        \n • Insert the analog loopback adapter into the 3.5mm headset jack and adjust the \"Media volume\" to max.
+        \n • Leave the loopback adapter in the jack. (See the \"Audio Loopback Latency Test\" for a description).
+        \n The test will display valid data paths with an asterisk appended to the data path name.
+        \n\nTest Execution:
+        \n • Select the \"Native API\" button.
+        \n • Press the \"Start\" button. The test will step through the list of valid data paths playing a tone and noting its presence or absence.
+        \n • Select the \"Java API\" button.
+        \n • Press the \"Start\" button to repeat each data path test for the Java API.
+        \n\nTest Completion:
+        \n • Once each of the data paths and APIs have been measured, the test can be marked successful.
+    </string>
+    <string name="audio_datapaths_analog_nodevices">There are no peripherals currently available for this test. If the DUT does not support
+        an Analog Headset Jack, the test may PASS. If the DUT does support an Analog Headset Jack, please insert an Analog Loopback Plug
+        into the Analog Headset Jack and run the test.</string>
+
+    <string name="audio_datapaths_USB_test">Audio Data Paths USB Test</string>
+    <string name="audio_datapaths_USB_info">This test verifies basic functionality over a set of audio routes
+        \nTest Setup:
+        \n • It may be necessary to go to the \"Sound &amp; vibration\" settings panel to set the volume level for each output device.
+        \n • Connect a USB audio interface with loopback cabling and adjust the \"Media volume\" to max.
+        \n The test will display valid data paths with an asterisk appended to the data path name.
+        \n\nTest Execution:
+        \n • Select the \"Native API\" button.
+        \n • Press the \"Start\" button. The test will step through the list of valid data paths playing a tone and noting its presence or absence.
+        \n • Select the \"Java API\" button.
+        \n • Press the \"Start\" button to repeat each data path test for the Java API.
+        \n\nTest Completion:
+        \n • Once each of the data paths and APIs have been measured, the test can be marked successful.
+    </string>
+    <string name="audio_datapaths_usb_nodevices">There are no peripherals currently available for this test. If the DUT does not support
+        USB audio, the test may PASS. If the DUT does support USB audio, please connect each type of USB audio peripheral and
+        run the test for each type.</string>
+    <string name="audio_datapaths_usb_nextperipheral">Please connect the next USB peripheral to be tested and
+        run the test again.</string>
     <string name="audio_datapaths_noio">"No valid datapaths. PASS."</string>
     <string name="audio_datapaths_results">%1$s\n%2$s -> %3$s</string>
+
+    <string name="audio_loopback_calibrate_default">Default</string>
 
     <!-- Audio Loopback Latency Test -->
     <string name="audio_loopback_latency_test">Audio Loopback Latency Test</string>
@@ -5749,6 +5852,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_loopback_resultcode_failprousb">Result: Fail - Pro Audio USB latency not met.</string>
     <string name="audio_loopback_resultcode_fail24bit">Result: Fail - 24-bit playback requirement no met.</string>
     <string name="audio_loopback_resultcode_failproaudiowired">Result: Fail - Pro Audio latency for wired path not met.</string>
+    <string name="audio_loopback_resultcode_warningtimestamp">Result: Warning - Timestamp latency accuracy not met.</string>
     <string name="audio_loopback_resultcode_invalid">Result: Invalid result code.</string>
 
     <!-- Audio Cold-Start Latency Test -->
@@ -5919,21 +6023,22 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="analog_headset_volup">VOLUME_UP</string>
     <string name="analog_headset_voldown">VOLUME_DOWN</string>
     <string name="analog_headset_test">Analog Headset Test</string>
-    <string name="analog_headset_pass_noheadset">"PASS (No headset port available)"</string>
+    <string name="analog_headset_pass_noheadset">"PASS - No headset port available"</string>
+    <string name="analog_headset_headset_unknown">FAIL - Headset State Unknown</string>
     <string name="analog_headset_pass">PASS</string>
     <string name="analog_headset_port_detected">"Analog port detected"</string>
     <string name="analog_headset_press_buttons">Press each button on the headset verify recognition</string>
     <string name="analog_headset_no_buttons">No buttons detected</string>
-    <string name="analog_headset_headset_connected">Headset connected</string>
-    <string name="analog_headset_no_headset">No Headset - Connect headset to 3.5mm analog jack</string>
+    <string name="analog_headset_headset_connected">Analog headset connected</string>
+    <string name="analog_headset_no_headset">No Analog Headset - Connect headset to 3.5mm jack</string>
     <string name="analog_headset_action_received">ACTION_HEADSET_PLUG received - </string>
     <string name="analog_headset_unplugged">Unplugged</string>
     <string name="analog_headset_plugged">Plugged</string>
     <string name="analog_headset_mic"> [mic]</string>
     <string name="analog_headset_reportnojack">No analog Jack. PASS</string>
     <string name="analog_headset_no_jack">No analog jack detected. Please connect a headset, or PASS</string>
-    <string name="analog_headset_connect_headset">Please connect a headset</string>
-    <string name="analog_headset_play_audio">Please test audio through the headset</string>
+    <string name="analog_headset_connect_headset">Please connect an analog headset</string>
+    <string name="analog_headset_play_audio">Please test audio through the analog headset</string>
     <string name="analog_headset_test_buttons">Please test transport buttons</string>
 
     <string name="analog_headset_test_info">This test tests the following functionality with respect to wired analog headsets.\n
@@ -5978,6 +6083,8 @@ Follow the instructions on the screen to measure the frequency response for the 
         \nThe test passes if all routes demonstrate the correct stream disconnection behavior.
     </string>
     <string name="audio_disconnect_wired_prompt">Does this device support an analog or USB audio peripheral?</string>
+    <string name="audio_disconnect_port_detected">"Wired device support detected"</string>
+
     <!--Audio Frequency Global strings -->
     <string name="af_button_play">Play</string>
     <string name="af_button_stop">Stop</string>
@@ -6261,22 +6368,6 @@ Follow the instructions on the screen to measure the frequency response for the 
         displayed along with the name of the associated profile. If the peripheral matches the
         profile, the test passes. If not, the mismatches are displayed.
     </string>
-
-    <!-- USB Audio Peripheral Play Test -->
-    <string name="usbaudio_play_test"> USB Audio Peripheral Play Test</string>
-    <string name="usbaudio_play_info">
-        This test requires that you have connected a USB Audio Interface peripheral and
-        some way to monitor the output. Press the \"Play\" button and verify that a tone is produced.
-       </string>
-
-    <!-- USB Audio Peripheral Record Test -->
-    <string name="usbaudio_record_test"> USB Audio Peripheral Record Test</string>
-    <string name="usbaudio_record_info">
-        This test requires that you have connected a USB Audio Interface peripheral.
-        Connect the outputs to the inputs (with patch cables). Start playback by pressing the
-        \"Record Loopback\" button and verify that the recorded signal is displayed in the wave
-        display view. (It may be necessary to adjust the input controls on the peripheral).
-       </string>
 
     <!-- USB Audio Peripheral Buttons Test -->
     <string name="usbaudio_buttons_test"> USB Audio Peripheral Buttons Test</string>
@@ -6846,16 +6937,19 @@ Follow the instructions on the screen to measure the frequency response for the 
         AudioDescriptor must only be used to report audio device capabilities that are not able to
         describe by Android defined enums.\n
         \nTo execute test:\n
-        1. Plug in HDMI cable if HDMI is supported on the device.\n
-        2. The test will execute automatically and verify the reported AudioDescriptor when the
-        activity is created and when audio device connection is changed.
+        1. Plug in HDMI cable if there is an HDMI port on the device.\n
+        2. The test will run when clicking TEST button.\n
     </string>
-    <string name="audio_descriptor_HDMI_support_label">HDMI support:</string>
-    <string name="audio_descriptor_has_hdmi_support">Has HDMI support</string>
-    <string name="audio_descriptor_NA">N/A</string>
+    <string name="audio_descriptor_run_test">Test</string>
+    <string name="audio_descriptor_HDMI_support_label">HDMI connection status:</string>
+    <string name="audio_descriptor_has_hdmi_support">Has HDMI Port</string>
+    <string name="audio_descriptor_hdmi_NA">N/A. HDMI support is not claimed.</string>
     <string name="audio_descriptor_hdmi_pending">No HDMI detected. Pending&#8230;</string>
+    <string name="audio_descriptor_hdmi_connected">Connected.</string>
     <string name="audio_descriptor_pass">Pass</string>
-    <string name="audio_descriptor_hdmi_not_reported">No HDMI device connected</string>
+    <string name="audio_descriptor_hdmi_claimed_but_not_connected">
+        HDMI is claimed as supported but not yet connected.
+    </string>
     <string name="audio_descriptor_standard_none">Standard is none.</string>
     <string name="audio_descriptor_is_null">Audio descriptor is null.</string>
     <string name="audio_descriptor_unrecognized_standard">Standard %1$d is unrecognized.</string>
@@ -6879,6 +6973,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="audio_descriptor_hdmi_message">
         Please connect an HDMI peripheral to validate AudioDescriptor.
     </string>
+
     <string name="uwb">Uwb</string>
     <string name="presence_test">Presence Test</string>
     <string name="presence_test_info">
@@ -6892,6 +6987,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     </string>
     <string name="is_reference_device_checkbox_text">Is Reference Device</string>
     <string name="is_manual_pass_text">Pass test manually after test completion</string>
+    <string name="use_extended_advertisement_text">Use extended advertisement</string>
     <string name="uwb_precision">Uwb Precision Test</string>
     <string name="uwb_short_range">Uwb Short Range Test</string>
     <string name="uwb_precision_instruction">
@@ -6920,6 +7016,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="dut_test_result_info_presence">Tx RSSI median: %1$d. Rx RSSI median received from reference device: %2$d</string>
     <string name="ref_test_result_info_presence">Rx RSSI median computed: %1$d.</string>
     <string name="reference_device_id_input_presence">Enter the device ID displayed on the advertising device</string>
+    <string name="tx_power_input_presence">Optional. Configure advertising TX power. Default is 1(TX_POWER_HIGH)</string>
 
     <!-- Strings for BLE RSSI Precision Test -->
     <string name="ble_rssi_precision_name">BLE RSSI Precision Test</string>

@@ -53,6 +53,7 @@ import android.util.Log;
 import android.view.Display;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -1236,6 +1237,26 @@ public class MediaMetadataRetrieverTest {
                 0 /*primary*/, true /*useGrid*/, true /*checkColor*/);
     }
 
+    @Test
+    // TODO(b/296893703): Replace this with Build.VERSION_CODES.V once it exists.
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    public void testGetImageAtIndexAvifWithCrop() throws Exception {
+        // sample_1960x1120_crop_20_20_1920_1080.avif is a 1960x1120 AVIF image with the crop window
+        // set to left: 20 top: 20 crop width: 1920 crop height: 1080. The cropped image should
+        // contain the same pixels as other sample AVIF images. So in order to verify the cropping,
+        // it is sufficient to pass checkColor to true to testGetImage.  If the cropping was
+        // incorrect, then checking of color bars will fail. The expected width and height should be
+        // that of the cropped image.
+        if (!MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_AV1, 1960, 1120, 30)) {
+            MediaUtils.skipTest("No AV1 codec for 1960x1120");
+            return;
+        }
+        testGetImage("sample_1960x1120_crop_20_20_1920_1080.avif", 1920, 1080, "image/avif",
+                0 /*rotation*/, 1 /*imageCount*/, 0 /*primary*/, false /*useGrid*/,
+                true /*checkColor*/);
+    }
+
     /**
      * Determines if two color values are approximately equal.
      */
@@ -1301,6 +1322,8 @@ public class MediaMetadataRetrieverTest {
                 for (int imageIndex = 0; imageIndex < imageCount; imageIndex++) {
                     timer.start();
                     bitmap = mRetriever.getImageAtIndex(imageIndex);
+                    assertEquals("Wrong bitmap width", width, bitmap.getWidth());
+                    assertEquals("Wrong bitmap height", height, bitmap.getHeight());
                     assertNotNull("Failed to retrieve image at index " + imageIndex, bitmap);
                     timer.end();
                     timer.printDuration("getImageAtIndex");
@@ -1328,6 +1351,8 @@ public class MediaMetadataRetrieverTest {
                 timer.end();
                 timer.printDuration("getPrimaryImage");
 
+                assertEquals("Wrong bitmap width", width, bitmap.getWidth());
+                assertEquals("Wrong bitmap height", height, bitmap.getHeight());
                 assertTrue("Color block for primary image doesn't match",
                         approxEquals(COLOR_BLOCK, Color.valueOf(
                                 bitmap.getPixel(r.centerX(), height - r.centerY()))));
@@ -1337,6 +1362,8 @@ public class MediaMetadataRetrieverTest {
                 // This should match the primary image as well.
                 inputStream = new FileInputStream(mInpPrefix + res);
                 bitmap = BitmapFactory.decodeStream(inputStream);
+                assertEquals("Wrong bitmap width", width, bitmap.getWidth());
+                assertEquals("Wrong bitmap height", height, bitmap.getHeight());
                 assertTrue("Color block for bitmap decoding doesn't match",
                         approxEquals(COLOR_BLOCK, Color.valueOf(
                                 bitmap.getPixel(r.centerX(), height - r.centerY()))));

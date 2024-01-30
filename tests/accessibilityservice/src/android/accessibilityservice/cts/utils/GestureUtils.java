@@ -24,6 +24,7 @@ import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.graphics.Path;
 import android.graphics.PointF;
+import android.view.Display;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 
@@ -53,25 +54,26 @@ public class GestureUtils {
     private GestureUtils() {}
 
     public static CompletableFuture<Void> dispatchGesture(
-            InstrumentedAccessibilityService service,
-            GestureDescription gesture) {
+            InstrumentedAccessibilityService service, GestureDescription gesture) {
         CompletableFuture<Void> result = new CompletableFuture<>();
-        GestureResultCallback callback = new GestureResultCallback() {
-            @Override
-            public void onCompleted(GestureDescription gestureDescription) {
-                result.complete(null);
-            }
+        GestureResultCallback callback =
+                new GestureResultCallback() {
+                    @Override
+                    public void onCompleted(GestureDescription gestureDescription) {
+                        result.complete(null);
+                    }
 
-            @Override
-            public void onCancelled(GestureDescription gestureDescription) {
-                result.cancel(false);
-            }
-        };
-        service.runOnServiceSync(() -> {
-            if (!service.dispatchGesture(gesture, callback, null)) {
-                result.completeExceptionally(new IllegalStateException());
-            }
-        });
+                    @Override
+                    public void onCancelled(GestureDescription gestureDescription) {
+                        result.cancel(false);
+                    }
+                };
+        service.runOnServiceSync(
+                () -> {
+                    if (!service.dispatchGesture(gesture, callback, null)) {
+                        result.completeExceptionally(new IllegalStateException());
+                    }
+                });
         return result;
     }
 
@@ -80,8 +82,11 @@ public class GestureUtils {
     }
 
     public static StrokeDescription pointerUp(StrokeDescription lastStroke) {
-        return lastStroke.continueStroke(path(lastPointOf(lastStroke)),
-                endTimeOf(lastStroke), ViewConfiguration.getTapTimeout(), false);
+        return lastStroke.continueStroke(
+                path(lastPointOf(lastStroke)),
+                endTimeOf(lastStroke),
+                ViewConfiguration.getTapTimeout(),
+                false);
     }
 
     public static PointF lastPointOf(StrokeDescription stroke) {
@@ -94,8 +99,7 @@ public class GestureUtils {
     }
 
     public static StrokeDescription longClick(PointF point) {
-        return new StrokeDescription(path(point), 0,
-                ViewConfiguration.getLongPressTimeout() * 3);
+        return new StrokeDescription(path(point), 0, ViewConfiguration.getLongPressTimeout() * 3);
     }
 
     public static StrokeDescription swipe(PointF from, PointF to) {
@@ -106,10 +110,28 @@ public class GestureUtils {
         return new StrokeDescription(path(from, to), 0, duration);
     }
 
+    /**
+     * Simulates a touch exploration swipe that is interrupted partway through for a specified
+     * amount of time, and then continued.
+     */
+    public static GestureDescription interruptedSwipe(PointF from, PointF to, long duration) {
+        GestureDescription.Builder builder = new GestureDescription.Builder();
+        long time = 0;
+        PointF midpoint = new PointF((from.x + to.x) / 2.0f, (from.y + to.y) / 2.0f);
+        StrokeDescription swipe1 = new StrokeDescription(path(from, midpoint), 0, duration / 2);
+        builder.addStroke(swipe1);
+        time += swipe1.getDuration() + STROKE_TIME_GAP_MS;
+        StrokeDescription swipe2 = startingAt(time, swipe(midpoint, to, duration / 2));
+        builder.addStroke(swipe2);
+        return builder.build();
+    }
+
     public static StrokeDescription drag(StrokeDescription from, PointF to) {
         return from.continueStroke(
                 path(lastPointOf(from), to),
-                endTimeOf(from), ViewConfiguration.getTapTimeout(), true);
+                endTimeOf(from),
+                ViewConfiguration.getTapTimeout(),
+                true);
     }
 
     public static Path path(PointF first, PointF... rest) {
@@ -165,19 +187,35 @@ public class GestureUtils {
     }
 
     public static GestureDescription doubleTap(PointF point) {
-        return multiTap(point, 2);
+        return doubleTap(point, Display.DEFAULT_DISPLAY);
+    }
+
+    /** Generates a double-tap gesture. */
+    public static GestureDescription doubleTap(PointF point, int displayId) {
+        return multiTap(point, 2, 0, displayId);
     }
 
     public static GestureDescription tripleTap(PointF point) {
-        return multiTap(point, 3);
+        return tripleTap(point, Display.DEFAULT_DISPLAY);
+    }
+/** Generates a triple-tap gesture. */
+
+    public static GestureDescription tripleTap(PointF point, int displayId) {
+        return multiTap(point, 3, 0, displayId);
     }
 
     public static GestureDescription multiTap(PointF point, int taps) {
         return multiTap(point, taps, 0);
-        }
+    }
 
     public static GestureDescription multiTap(PointF point, int taps, int slop) {
+        return multiTap(point, taps, 0, Display.DEFAULT_DISPLAY);
+    }
+
+    /** Generates a single-finger multi-tap gesture. */
+    public static GestureDescription multiTap(PointF point, int taps, int slop, int displayId) {
         GestureDescription.Builder builder = new GestureDescription.Builder();
+        builder.setDisplayId(displayId);
         long time = 0;
         if (taps > 0) {
             // Place first tap on the point itself.
@@ -196,10 +234,15 @@ public class GestureUtils {
     }
 
     public static GestureDescription doubleTapAndHold(PointF point) {
+        return doubleTapAndHold(point, Display.DEFAULT_DISPLAY);
+    }
+
+    /** Generates a single-finger double-tap and hold gesture. */
+    public static GestureDescription doubleTapAndHold(PointF point, int displayId) {
         GestureDescription.Builder builder = new GestureDescription.Builder();
+        builder.setDisplayId(displayId);
         StrokeDescription tap1 = click(point);
-        StrokeDescription tap2 =
-                startingAt(endTimeOf(tap1) + STROKE_TIME_GAP_MS, longClick(point));
+        StrokeDescription tap2 = startingAt(endTimeOf(tap1) + STROKE_TIME_GAP_MS, longClick(point));
         builder.addStroke(tap1);
         builder.addStroke(tap2);
         return builder.build();
@@ -256,8 +299,7 @@ public class GestureUtils {
 
             @Override
             public void describeMismatchSafely(MotionEvent event, Description description) {
-                description.appendText(
-                        "received (" + event.getX() + ", " + event.getY() + ")");
+                description.appendText("received (" + event.getX() + ", " + event.getY() + ")");
             }
         };
     }
@@ -291,7 +333,9 @@ public class GestureUtils {
     }
 
     /**
-     * Simulates a user placing one finger on the screen for a specified amount of time and then multi-tapping with a second finger.
+     * Simulates a user placing one finger on the screen for a specified amount of time and then
+     * multi-tapping with a second finger.
+     *
      * @param explorePoint Where to place the first finger.
      * @param tapPoint Where to tap with the second finger.
      * @param taps The number of second-finger taps.
@@ -325,8 +369,13 @@ public class GestureUtils {
      * @param slop Slop range the finger tapped.
      * @param displayId Which display to dispatch the gesture.
      */
-    public static GestureDescription multiFingerMultiTap(PointF basePoint, PointF delta,
-            int fingerCount, int tapCount, int slop, int displayId) {
+    public static GestureDescription multiFingerMultiTap(
+            PointF basePoint,
+            PointF delta,
+            int fingerCount,
+            int tapCount,
+            int slop,
+            int displayId) {
         assertTrue(fingerCount >= 2);
         assertTrue(tapCount > 0);
         final int strokeCount = fingerCount * tapCount;
@@ -381,7 +430,7 @@ public class GestureUtils {
         // The first tap
         for (int i = 0; i < fingerCount; i++) {
             pointers[i] = add(basePoint, times(i, delta));
-            if(tapCount == 1) {
+            if (tapCount == 1) {
                 strokes[i] = longClick(pointers[i]);
             } else {
                 strokes[i] = click(pointers[i]);

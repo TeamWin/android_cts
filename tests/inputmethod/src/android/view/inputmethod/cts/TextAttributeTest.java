@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.os.Parcel;
 import android.os.PersistableBundle;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.inputmethod.TextAttribute;
 
 import androidx.test.filters.SmallTest;
@@ -33,6 +34,7 @@ import java.util.List;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class TextAttributeTest {
     private static final String SUGGESTION = "suggestion";
     private static final String EXTRAS_KEY = "extras_key";

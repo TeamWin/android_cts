@@ -27,6 +27,9 @@ android_test {
         "permission-test-util-lib",
         "compatibility-device-util-axt",
         "CtsAppTestStubsShared",
+        "android.service.notification.flags-aconfig-java",
+        "android.app.flags-aconfig-java",
+        "flag-junit",
     ],
     libs: [
         "android.test.runner",
@@ -40,6 +43,14 @@ android_test {
         ":NotificationTrampoline",
         ":NotificationTrampolineApi30",
         ":NotificationTrampolineApi32",
+        ":NotificationPressure00",
+        ":NotificationPressure01",
+        ":NotificationPressure02",
+        ":NotificationPressure03",
+        ":NotificationPressure04",
+        ":NotificationPressure05",
+        ":NotificationPressure06",
+        ":NotificationPressure07",
     ],
     instrumentation_for: "CtsAppTestStubs",
     srcs: [
@@ -55,5 +66,5 @@ android_test {
     ],
     sdk_version: "test_current",
     target_sdk_version: "current",
-    min_sdk_version: "29",
+    min_sdk_version: "34",
 }

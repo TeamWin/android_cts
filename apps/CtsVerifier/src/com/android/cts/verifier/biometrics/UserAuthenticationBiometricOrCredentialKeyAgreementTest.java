@@ -45,12 +45,12 @@ public class UserAuthenticationBiometricOrCredentialKeyAgreementTest
         return new ExpectedResults() {
             @Override
             boolean shouldCredentialUnlockPerUseKey() {
-                return false;
+                return true;
             }
 
             @Override
             boolean shouldCredentialUnlockTimedKey() {
-                return false;
+                return true;
             }
 
             @Override

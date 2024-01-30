@@ -16,22 +16,21 @@
 
 package android.server.wm.jetpack.signed;
 
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.assumeExtensionSupportedDevice;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.getWindowExtensions;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.EMBEDDED_ACTIVITY_ID;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitPairRuleBuilder;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityCrossUidInSplit;
-import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
-import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.EXTRA_EMBED_ACTIVITY;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.EXTRA_SPLIT_RATIO;
-
 import static org.junit.Assume.assumeNotNull;
 
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
+import android.server.wm.jetpack.extensions.util.TestValueCountConsumer;
 import android.server.wm.jetpack.utils.TestActivityKnownEmbeddingCerts;
-import android.server.wm.jetpack.utils.TestValueCountConsumer;
 
 import androidx.window.extensions.WindowExtensions;
 import androidx.window.extensions.embedding.ActivityEmbeddingComponent;

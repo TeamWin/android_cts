@@ -30,5 +30,6 @@ android_test_helper_app {
         enabled: false,
     },
     min_sdk_version: "29",
+    target_sdk_version: "34",
     updatable: true,
 }

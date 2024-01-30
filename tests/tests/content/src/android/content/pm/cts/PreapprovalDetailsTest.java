@@ -23,6 +23,7 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.icu.util.ULocale;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 
 import androidx.test.runner.AndroidJUnit4;
 
@@ -34,6 +35,7 @@ import org.junit.runner.RunWith;
 /**
  * Test {@link PreapprovalDetails}
  */
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 @RunWith(AndroidJUnit4.class)
 public class PreapprovalDetailsTest {
     private static final Bitmap TEST_APP_ICON = Bitmap.createBitmap(42, 42, Config.ARGB_8888);

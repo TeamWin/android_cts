@@ -18,13 +18,17 @@ package {
 
 android_library {
     name: "CtsVirtualDeviceCommonLib",
+    min_sdk_version: "30",
     srcs: [
-        "aidl/**/*.aidl",
         "src/**/*.java",
     ],
     static_libs: [
         "androidx.test.ext.junit",
-        "compatibility-device-util-axt",
+        "cts-wm-util",
+        "junit",
+        "flag-junit",
+        "android.companion.virtual.flags-aconfig-java",
+        "android.companion.virtualdevice.flags-aconfig-java",
     ],
     manifest: "AndroidManifest.xml",
 }

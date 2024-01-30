@@ -31,8 +31,11 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 import com.google.common.base.Suppliers;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.junit.AfterClass;
@@ -48,6 +51,8 @@ import static org.junit.Assert.assertNull;
 @RunWith(AndroidJUnit4.class)
 public abstract class AbstractApiTest {
 
+    private static final String TAG = "AbstractApiTest";
+
     /**
      * The name of the optional instrumentation option that contains the name of the dynamic config
      * data set that contains the expected failures.
@@ -57,6 +62,12 @@ public abstract class AbstractApiTest {
     private TestResultObserver mResultObserver;
 
     ClassProvider mClassProvider;
+
+    private static Predicate<String> sListFilteringPredicate = null;
+
+    public static void setListFilteringPredicate(Predicate<String> p) {
+        sListFilteringPredicate = p;
+    }
 
     /**
      * The list of expected failures.
@@ -178,12 +189,28 @@ public abstract class AbstractApiTest {
         })::get;
     }
 
+    static String[] maybeFilterCommaSeparatedElements(String elements) {
+        // default implementation is unfiltered
+        String[] allElements = elements.split(",");
+        if (sListFilteringPredicate == null) {
+            return allElements;
+        }
+        final ArrayList<String> filteredElements = new ArrayList<>();
+        for (String s : allElements) {
+            if (sListFilteringPredicate.test(s)) {
+                Log.d(TAG, "maybeFilterCommaSeparatedElements adding filtered element: " + s);
+                filteredElements.add(s);
+            }
+        }
+        return filteredElements.toArray(new String[filteredElements.size()]);
+    }
+
     static String[] getCommaSeparatedListOptional(Bundle instrumentationArgs, String key) {
         String argument = instrumentationArgs.getString(key);
         if (argument == null) {
             return new String[0];
         }
-        return argument.split(",");
+        return maybeFilterCommaSeparatedElements(argument);
     }
 
     static Supplier<String[]> getSupplierOfAMandatoryCommaSeparatedListArgument(String key) {
@@ -198,7 +225,7 @@ public abstract class AbstractApiTest {
         if (argument == null) {
             throw new IllegalStateException("Could not find required argument '" + key + "'");
         }
-        return argument.split(",");
+        return maybeFilterCommaSeparatedElements(argument);
     }
 
     /**

@@ -24,6 +24,7 @@ import android.hardware.cts.helpers.SensorCtsHelper;
 import android.hardware.cts.helpers.SensorStats;
 import android.hardware.cts.helpers.TestSensorEnvironment;
 import android.hardware.cts.helpers.sensoroperations.TestSensorOperation;
+import android.platform.test.annotations.PlatinumTest;
 
 import com.android.compatibility.common.util.CddTest;
 
@@ -160,6 +161,7 @@ public class SingleSensorTests extends SensorTestCase {
         runSensorTest(Sensor.TYPE_ACCELEROMETER, RATE_100HZ);
     }
 
+    @PlatinumTest
     public void testAccelerometer_50hz() throws Throwable {
         runSensorTest(Sensor.TYPE_ACCELEROMETER, RATE_50HZ);
     }

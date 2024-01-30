@@ -29,7 +29,6 @@ import static android.os.Build.VERSION_CODES.S_V2;
 import static android.os.Build.VERSION_CODES.TIRAMISU;
 import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
 import static android.os.Process.myUserHandle;
-
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SYSTEM_USER_TYPE_NAME;
@@ -59,6 +58,7 @@ import com.android.bedstead.nene.utils.Versions;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -189,6 +189,20 @@ public final class Users {
     /** Get a {@link UserReference} for the system user. */
     public UserReference system() {
         return find(0);
+    }
+
+    /** Get a {@link UserReference} for the main user, if one exists. Null otherwise. */
+    @Nullable
+    public UserReference main() {
+        UserHandle mainUser;
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(QUERY_USERS)) {
+            mainUser = sUserManager.getMainUser();
+        }
+        if (mainUser == null) {
+            return null;
+        }
+        return find(mainUser);
     }
 
     /** Get a {@link UserReference} by {@code id}. */
@@ -338,7 +352,7 @@ public final class Users {
     private UserType managedProfileUserType() {
         UserType.MutableUserType managedProfileMutableUserType = new UserType.MutableUserType();
         managedProfileMutableUserType.mName = MANAGED_PROFILE_TYPE_NAME;
-        managedProfileMutableUserType.mBaseType = Set.of(UserType.BaseType.PROFILE);
+        managedProfileMutableUserType.mBaseType = new HashSet<>(Arrays.asList(UserType.BaseType.PROFILE));
         managedProfileMutableUserType.mEnabled = true;
         managedProfileMutableUserType.mMaxAllowed = -1;
         managedProfileMutableUserType.mMaxAllowedPerParent = 1;
@@ -349,7 +363,7 @@ public final class Users {
         UserType.MutableUserType managedProfileMutableUserType = new UserType.MutableUserType();
         managedProfileMutableUserType.mName = SYSTEM_USER_TYPE_NAME;
         managedProfileMutableUserType.mBaseType =
-                Set.of(UserType.BaseType.FULL, UserType.BaseType.SYSTEM);
+                new HashSet<>(Arrays.asList(UserType.BaseType.FULL, UserType.BaseType.SYSTEM));
         managedProfileMutableUserType.mEnabled = true;
         managedProfileMutableUserType.mMaxAllowed = -1;
         managedProfileMutableUserType.mMaxAllowedPerParent = -1;
@@ -359,7 +373,7 @@ public final class Users {
     private UserType secondaryUserType() {
         UserType.MutableUserType managedProfileMutableUserType = new UserType.MutableUserType();
         managedProfileMutableUserType.mName = SECONDARY_USER_TYPE_NAME;
-        managedProfileMutableUserType.mBaseType = Set.of(UserType.BaseType.FULL);
+        managedProfileMutableUserType.mBaseType = new HashSet<>(Arrays.asList(UserType.BaseType.FULL));
         managedProfileMutableUserType.mEnabled = true;
         managedProfileMutableUserType.mMaxAllowed = -1;
         managedProfileMutableUserType.mMaxAllowedPerParent = -1;
@@ -575,7 +589,12 @@ public final class Users {
         return UserManager.supportsMultipleUsers();
     }
 
+    /**
+     * Note: This method should not be run on < S.
+     */
     static Stream<UserInfo> users() {
+        Versions.requireMinimumVersion(S);
+
         if (Permissions.sIgnorePermissions.get()) {
             return sUserManager.getUsers(
                     /* excludePartial= */ false,

@@ -16,7 +16,10 @@
 
 package android.content.pm.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
+import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -24,18 +27,45 @@ import android.content.pm.ProviderInfo;
 import android.content.res.XmlResourceParser;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
+import android.util.StringBuilderPrinter;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import libcore.io.IoUtils;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Iterator;
 import java.util.List;
 
+@RunWith(AndroidJUnit4.class)
 @AppModeFull // TODO(Instant) Figure out which APIs should work.
-public class ProviderInfoTest extends AndroidTestCase {
+public class ProviderInfoTest {
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
     private static final String PACKAGE_NAME = "android.content.cts";
     private static final String PROVIDER_NAME = "android.content.cts.MockContentProvider";
 
+    private Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
+
+    @Test
+    public void testSimple() {
+        ProviderInfo info = new ProviderInfo();
+        new ProviderInfo(info);
+        assertNotNull(info.toString());
+        info.dump(new StringBuilderPrinter(new StringBuilder()), "");
+    }
+
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testProviderInfo() throws NameNotFoundException {
         PackageManager pm = getContext().getPackageManager();
         Parcel p = Parcel.obtain();
@@ -57,6 +87,8 @@ public class ProviderInfoTest extends AndroidTestCase {
         }
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testProviderMetaData() {
         final ProviderInfo info = getContext().getPackageManager()
                 .resolveContentProvider("android.content.cts.fileprovider",

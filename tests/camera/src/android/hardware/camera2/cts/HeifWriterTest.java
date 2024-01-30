@@ -99,7 +99,7 @@ public class HeifWriterTest extends Camera2AndroidTestCase {
         boolean sessionFailure = false;
         Integer[] sessionStates = {BlockingSessionCallback.SESSION_READY,
                 BlockingSessionCallback.SESSION_CONFIGURE_FAILED};
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             try {
                 Log.v(TAG, "Testing HEIF capture for Camera " + id);
                 openDevice(id);

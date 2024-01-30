@@ -48,9 +48,12 @@ private fun getStylusMotionEvent(
         action: Int,
         x: Float,
         y: Float,
-        ): MotionEvent{
+        tilt: Float = 0.0f,
+        orientation: Float = 0.0f,
+        ): MotionEvent {
     return getMotionEvent(
-            eventTime, action, STYLUS_DEVICE_ID, x, y, SOURCE_STYLUS, TOOL_TYPE_STYLUS)
+            eventTime, action, STYLUS_DEVICE_ID, x, y, tilt, orientation,
+            SOURCE_STYLUS, TOOL_TYPE_STYLUS)
 }
 
 private fun getTouchMotionEvent(
@@ -58,9 +61,12 @@ private fun getTouchMotionEvent(
         action: Int,
         x: Float,
         y: Float,
-        ): MotionEvent{
+        tilt: Float = 0.0f,
+        orientation: Float = 0.0f,
+        ): MotionEvent {
     return getMotionEvent(
-            eventTime, action, TOUCH_DEVICE_ID, x, y, SOURCE_TOUCHSCREEN, TOOL_TYPE_FINGER)
+            eventTime, action, TOUCH_DEVICE_ID, x, y, tilt, orientation,
+            SOURCE_TOUCHSCREEN, TOOL_TYPE_FINGER)
 }
 
 private fun getMotionEvent(
@@ -69,9 +75,11 @@ private fun getMotionEvent(
         deviceId: Int,
         x: Float,
         y: Float,
+        tilt: Float,
+        orientation: Float,
         source: Int,
         toolType: Int,
-        ): MotionEvent{
+        ): MotionEvent {
     val pointerCount = 1
     val properties = arrayOfNulls<MotionEvent.PointerProperties>(pointerCount)
     val coords = arrayOfNulls<MotionEvent.PointerCoords>(pointerCount)
@@ -83,6 +91,8 @@ private fun getMotionEvent(
         coords[i] = PointerCoords()
         coords[i]!!.x = x
         coords[i]!!.y = y
+        coords[i]!!.setAxisValue(MotionEvent.AXIS_TILT, tilt)
+        coords[i]!!.orientation = orientation
     }
 
     return MotionEvent.obtain(/*downTime=*/0, eventTime.toMillis(), action, properties.size,
@@ -177,6 +187,43 @@ class MotionPredictorTest {
         assertEquals(10f, predicted.getX(), /*delta=*/5f)
         assertEquals(expectedY, predicted.getY(), /*delta=*/15f)
         assertEquals(STYLUS_DEVICE_ID, predicted.deviceId)
+    }
+
+    /**
+     * Tilt and orientation should be set for predictions.
+     */
+    @Test
+    fun testTiltOrientation() {
+        val predictor = MotionPredictor(context)
+        assumeTrue(predictor.isPredictionAvailable(STYLUS_DEVICE_ID, SOURCE_STYLUS))
+
+        val tilt = Math.PI.toFloat() / 4
+        val orientation = -Math.PI.toFloat() / 4
+
+        var eventTime = Duration.ofMillis(0) // t= 0 ms
+        predictor.record(
+            getStylusMotionEvent(eventTime, ACTION_DOWN, /*x=*/10f, /*y=*/20f, tilt, orientation)
+        )
+
+        // Send a few coordinates
+        eventTime += Duration.ofMillis(8) // t= 8 ms
+        predictor.record(
+            getStylusMotionEvent(eventTime, ACTION_MOVE, /*x=*/10f, /*y=*/20f, tilt, orientation)
+        )
+
+        eventTime += Duration.ofMillis(8) // t= 16 ms
+        predictor.record(
+            getStylusMotionEvent(eventTime, ACTION_MOVE, /*x=*/10f, /*y=*/30f, tilt, orientation)
+        )
+
+        // Ask for a prediction.
+        val predicted = predictor.predict(Duration.ofMillis(24).toNanos())
+        assertNotNull(predicted)
+
+        // The predicted tilt and orientation should closely match that of the recorded events.
+        val tolerance = Math.PI.toFloat() / 16
+        assertEquals(tilt, predicted!!.getAxisValue(MotionEvent.AXIS_TILT, 0), /*delta=*/tolerance)
+        assertEquals(orientation, predicted.getOrientation(0), /*delta=*/tolerance)
     }
 
     /**

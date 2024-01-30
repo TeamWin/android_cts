@@ -43,7 +43,7 @@ public class GnssPsdsDownloadStatsTest extends DeviceTestCase implements IBuildR
             "cmd location providers send-extra-command gps force_psds_injection";
     private static final String PSDS_SUPPORTED = "mSupportsPsds=true";
     private static final String PSDS_SERVER_CONFIGURED = "PsdsServerConfigured=true";
-    private static final long PSDS_DOWNLOAD_TIMEOUT_MILLIS = 5000;
+    private static final long PSDS_DOWNLOAD_TIMEOUT_MILLIS = 10000;
     private IBuildInfo mCtsBuild;
 
     @Override

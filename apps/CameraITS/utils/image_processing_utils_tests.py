@@ -21,6 +21,7 @@ import unittest
 
 import cv2
 import numpy
+from PIL import Image
 
 import image_processing_utils
 
@@ -107,6 +108,32 @@ class ImageProcessingUtilsTest(unittest.TestCase):
     y_ref = [i*2 for i in ref_image]
     self.assertTrue(numpy.allclose(y, y_ref, atol=1/lut_max))
 
+  def test_p3_img_has_wide_gamut(self):
+    # (255, 0, 0) and (0, 255, 0) in sRGB converted to Display P3
+    srgb_red = numpy.array([[[234, 51, 35]]], dtype='uint8')
+    srgb_green = numpy.array([[[117, 252, 76]]], dtype='uint8')
+
+    # Maximum blue is the same in both sRGB and Display P3
+    blue = numpy.array([[[0, 0, 255]]], dtype='uint8')
+
+    # Max red and green in Display P3
+    p3_red = numpy.array([[[255, 0, 0]]], dtype='uint8')
+    p3_green = numpy.array([[[0, 255, 0]]], dtype='uint8')
+
+    self.assertFalse(image_processing_utils.p3_img_has_wide_gamut(
+        Image.fromarray(srgb_red)))
+
+    self.assertFalse(image_processing_utils.p3_img_has_wide_gamut(
+        Image.fromarray(srgb_green)))
+
+    self.assertFalse(image_processing_utils.p3_img_has_wide_gamut(
+        Image.fromarray(blue)))
+
+    self.assertTrue(image_processing_utils.p3_img_has_wide_gamut(
+        Image.fromarray(p3_red)))
+
+    self.assertTrue(image_processing_utils.p3_img_has_wide_gamut(
+        Image.fromarray(p3_green)))
 
 if __name__ == '__main__':
   unittest.main()

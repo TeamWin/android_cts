@@ -28,9 +28,11 @@ import android.view.View;
 import android.widget.Gallery;
 
 import androidx.test.annotation.UiThreadTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -48,6 +50,7 @@ public class CharacterPickerDialogTest {
     @Before
     public void setup() {
         mActivity = mActivityRule.getActivity();
+        WindowUtil.waitForFocus(mActivity);
     }
 
     @UiThreadTest

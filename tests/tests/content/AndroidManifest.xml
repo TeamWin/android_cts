@@ -37,6 +37,8 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <!-- Used for ContextTest#testCreatePackageContextAsUser -->
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS"/>
@@ -380,6 +382,13 @@
                 <action android:name="android.content.cts.BroadcastReceiverTest.BROADCAST_DISABLED"/>
             </intent-filter>
         </receiver>
+        <receiver android:name="android.content.pm.cts.PackageInstallerArchiveTest$UnarchiveBroadcastReceiver"
+                  android:enabled="true"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.UNARCHIVE_PACKAGE"/>
+            </intent-filter>
+        </receiver>
 
         <activity android:name="android.content.cts.AvailableIntentsActivity"
              android:label="AvailableIntentsActivity"
@@ -466,14 +475,16 @@
         </provider>
         <provider android:name="android.content.cts.MockSRSProvider"
              android:authorities="android.content.cts.MockSRSProvider"
-             android:exported="false"
+             android:exported="true"
              android:multiprocess="false"/>
         <provider android:name="android.content.cts.DummyProvider"
              android:authorities="android.content.cts.dummyprovider"
+             android:exported="true"
              android:multiprocess="true"/>
         <provider android:name="android.content.cts.MockRemoteContentProvider"
              android:authorities="remotectstest"
              android:process=":remoteprovider"
+             android:exported="true"
              android:multiprocess="false"/>
         <provider android:name="androidx.core.content.FileProvider"
              android:authorities="android.content.cts.fileprovider"
@@ -485,6 +496,7 @@
         <provider android:name="android.content.cts.TestPagingContentProvider"
              android:authorities="android.content.cts.testpagingprovider"
              android:process=":testpagingprovider"
+             android:exported="true"
              android:multiprocess="false"/>
 
         <provider android:name="android.content.cts.MockBuggyProvider"
@@ -625,8 +637,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
          android:targetPackage="android.content.cts"
          android:label="CTS tests of android.content">
-        <meta-data android:name="listener"
-             android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
 
     <instrumentation android:name="android.content.pm.cts.TestPmInstrumentation"

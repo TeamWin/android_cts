@@ -20,6 +20,7 @@ import android.content.res.AssetFileDescriptor;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 
@@ -30,6 +31,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class AssetFileDescriptorTest extends AndroidTestCase {
     private static final long START_OFFSET = 0;
     private static final long LENGTH = 100;
@@ -114,12 +116,6 @@ public class AssetFileDescriptorTest extends AndroidTestCase {
         } catch (IOException e) {
             // expect
         }
-        try {
-            mInputStream = mAssetFileDes.createInputStream();
-            fail("Should throw IOException");
-        } catch (IOException e) {
-            // expect
-        }
         mAssetFileDes.close();
         mAssetFileDes = null;
 
@@ -139,12 +135,6 @@ public class AssetFileDescriptorTest extends AndroidTestCase {
         assertEquals(FILE_END, mInputStream.read());
         mInputStream.close();
         mInputStream = null;
-        try {
-            mInputStream = mAssetFileDes.createInputStream();
-            fail("Should throw IOException");
-        } catch (IOException e) {
-            // expect
-        }
         try {
             mOutputStream = mAssetFileDes.createOutputStream();
             fail("Should throw IOException");

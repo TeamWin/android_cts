@@ -22,6 +22,7 @@
 #
 # > pydoc image_processing_utils
 #
+"""Tutorial script for CameraITS tests."""
 import capture_request_utils
 import image_processing_utils
 import its_base_test

@@ -19,7 +19,11 @@ package {
 java_test_host {
     name: "CtsAppCloningHostTest",
     srcs: [
-        "hostside/src/**/*.java",
+        "hostside/src/com/android/cts/appcloning/BaseHostTestCase.java",
+        "hostside/src/com/android/cts/appcloning/AppCloningBaseHostTest.java",
+        "hostside/src/com/android/cts/appcloning/media/*.java",
+        "hostside/src/com/android/cts/appcloning/media/**/*.java",
+        "hostside/src/com/android/cts/appcloning/media/AppCloningHostTest.java",
     ],
     libs: [
         "cts-tradefed",
@@ -40,9 +44,61 @@ java_test_host {
         ":CtsAppCloningIntentRedirectionCloneProfileApp",
         ":CtsAppCloningIntentRedirectionOwnerProfileApp",
         ":CtsIntentRedirectionTestApp",
+        ":CtsAppCloningStorageStatsApp",
+    ],
+}
+
+java_test_host {
+    name: "CtsAppCloningContactsSharingTest",
+    srcs: [
+        "hostside/src/com/android/cts/appcloning/BaseHostTestCase.java",
+        "hostside/src/com/android/cts/appcloning/AppCloningBaseHostTest.java",
+        "hostside/src/com/android/cts/appcloning/contacts/*.java",
+    ],
+    libs: [
+        "cts-tradefed",
+        "tradefed",
+        "testng",
+        "compatibility-host-util",
+
+    ],
+    static_libs: ["modules-utils-build-testing"],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "general-tests",
+        "cts",
+    ],
+    test_config: "ContactsSharingAppCloningTest.xml",
+    data: [
         ":CtsAppCloningNotLaunchableCloneProfileApp",
         ":CtsAppCloningLaunchableCloneProfileApp",
         ":CtsManagedProfileOwnerApp",
-        ":CtsAppCloningStorageStatsApp",
+    ],
+}
+
+java_test_host {
+    name: "CtsAppCloningIntentRedirectionTest",
+    srcs: [
+        "hostside/src/com/android/cts/appcloning/BaseHostTestCase.java",
+        "hostside/src/com/android/cts/appcloning/AppCloningBaseHostTest.java",
+        "hostside/src/com/android/cts/appcloning/intent/*.java",
+    ],
+    libs: [
+        "cts-tradefed",
+        "tradefed",
+        "testng",
+        "compatibility-host-util",
+    ],
+    static_libs: ["modules-utils-build-testing"],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "general-tests",
+        "cts",
+    ],
+    test_config: "IntentRedirectionAppCloningTest.xml",
+    data: [
+        ":CtsAppCloningIntentRedirectionCloneProfileApp",
+        ":CtsAppCloningIntentRedirectionOwnerProfileApp",
+        ":CtsIntentRedirectionTestApp",
     ],
 }

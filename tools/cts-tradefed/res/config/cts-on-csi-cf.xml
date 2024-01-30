@@ -20,7 +20,7 @@
 
     <!-- Troublesome tests that often crash the system -->
     <option name="compatibility:exclude-filter" value="CtsPackageInstallTestCases android.packageinstaller.install.cts.IntentTest#packageNotInstalledSecureFrp" />
-    <option name="compatibility:exclude-filter" value="CtsPermission3TestCases android.permission3.cts.PermissionReviewTest" />
+    <option name="compatibility:exclude-filter" value="CtsPermissionUiTestCases android.permissionui.cts.PermissionReviewTest" />
 
     <!-- CTS modules that fail to run to complete on Android S CSI/CF -->
     <option name="compatibility:exclude-filter" value="CtsAppEnumerationTestCases" />

@@ -42,7 +42,7 @@ import android.speech.RecognitionListener
 import android.speech.SpeechRecognizer
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
-import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -371,7 +371,7 @@ class RuntimePermissionsAppOpTrackingTest {
         val result = SystemUtil.runWithShellPermissionIdentity<List<AppOpsManager.PackageOps>> {
             appOpsManager.getPackagesForOps(null as Array<String>?)
         }
-        assertThat(result.size).isAtLeast(1)
+        assertWithMessage("Expected at least one package").that(result.size).isAtLeast(1)
     }
 
     @Test
@@ -891,14 +891,16 @@ class RuntimePermissionsAppOpTrackingTest {
                 val attributedOpEntry = opEntry.attributedOpEntries[
                         attributionSource.attributionTag]
                 if (attributedOpEntry != null) {
-                    assertThat(attributedOpEntry.getLastAccessBackgroundTime(
+                    assertWithMessage("Found background accessor op, did not expect to")
+                        .that(attributedOpEntry.getLastAccessBackgroundTime(
                             AppOpsManager.OP_FLAG_SELF
-                            or AppOpsManager.OP_FLAG_UNTRUSTED_PROXY
-                            or AppOpsManager.OP_FLAG_TRUSTED_PROXY)).isEqualTo(-1)
-                    assertThat(attributedOpEntry.getLastAccessBackgroundTime(
+                                or AppOpsManager.OP_FLAG_UNTRUSTED_PROXY
+                                or AppOpsManager.OP_FLAG_TRUSTED_PROXY)).isEqualTo(-1)
+                    assertWithMessage("Found foreground accessor op, did not expect to")
+                        .that(attributedOpEntry.getLastAccessForegroundTime(
                             AppOpsManager.OP_FLAG_SELF
-                            or AppOpsManager.OP_FLAG_UNTRUSTED_PROXY
-                            or AppOpsManager.OP_FLAG_TRUSTED_PROXY)).isEqualTo(-1)
+                                or AppOpsManager.OP_FLAG_UNTRUSTED_PROXY
+                                or AppOpsManager.OP_FLAG_TRUSTED_PROXY)).isEqualTo(-1)
                 }
             }
         }
@@ -952,14 +954,16 @@ class RuntimePermissionsAppOpTrackingTest {
                     attributionSource.attributionTag) ?: return
             val attributedPackageOp = attributedPackageOps.getOp(op)
             if (attributedPackageOp != null) {
-                assertThat(attributedPackageOp.getBackgroundAccessCount(
+                assertWithMessage("Found background historical accessor access, did not expect to")
+                    .that(attributedPackageOp.getBackgroundAccessCount(
                         AppOpsManager.OP_FLAG_SELF
-                                or AppOpsManager.OP_FLAG_UNTRUSTED_PROXY
-                                or AppOpsManager.OP_FLAG_TRUSTED_PROXY)).isEqualTo(0)
-                assertThat(attributedPackageOp.getBackgroundAccessCount(
+                            or AppOpsManager.OP_FLAG_UNTRUSTED_PROXY
+                            or AppOpsManager.OP_FLAG_TRUSTED_PROXY)).isEqualTo(0)
+                assertWithMessage("Found foreground historical accessor access, did not expect to")
+                    .that(attributedPackageOp.getForegroundAccessCount(
                         AppOpsManager.OP_FLAG_SELF
-                                or AppOpsManager.OP_FLAG_UNTRUSTED_PROXY
-                                or AppOpsManager.OP_FLAG_TRUSTED_PROXY)).isEqualTo(0)
+                            or AppOpsManager.OP_FLAG_UNTRUSTED_PROXY
+                            or AppOpsManager.OP_FLAG_TRUSTED_PROXY)).isEqualTo(0)
             }
         }
 
@@ -999,9 +1003,12 @@ class RuntimePermissionsAppOpTrackingTest {
                     attributedOpEntry.getLastProxyInfo(
                             AppOpsManager.OP_FLAG_UNTRUSTED_PROXIED)
                 }
-                assertThat(opProxyInfo!!.uid).isEqualTo(attributionSource.uid)
-                assertThat(opProxyInfo.packageName).isEqualTo(attributionSource.packageName)
-                assertThat(opProxyInfo.attributionTag).isEqualTo(attributionSource.attributionTag)
+                assertWithMessage("proxy uid is not equal to expected")
+                    .that(opProxyInfo!!.uid).isEqualTo(attributionSource.uid)
+                assertWithMessage("proxy package name is not equal to expected")
+                    .that(opProxyInfo.packageName).isEqualTo(attributionSource.packageName)
+                assertWithMessage("proxy attribution tag is not equal to expected")
+                    .that(opProxyInfo.attributionTag).isEqualTo(attributionSource.attributionTag)
             }
         }
 
@@ -1039,7 +1046,8 @@ class RuntimePermissionsAppOpTrackingTest {
             assertForeground: Boolean,
             assertRunning: Boolean
         ) {
-            assertThat(opEntry.isRunning).isEqualTo(assertRunning)
+            assertWithMessage("Unexpected op running state")
+                .that(opEntry.isRunning).isEqualTo(assertRunning)
             assertTimeInRangeIfRequired(opEntry, assertedFlag,
                     AppOpsManager.OP_FLAG_SELF,
                     assertForeground, beginTimeMillis, endTimeMillis)
@@ -1056,11 +1064,11 @@ class RuntimePermissionsAppOpTrackingTest {
                     AppOpsManager.OP_FLAG_UNTRUSTED_PROXIED,
                     assertForeground, beginTimeMillis, endTimeMillis)
             if (assertForeground) {
-                assertThat(opEntry.getLastAccessBackgroundTime(AppOpsManager.OP_FLAGS_ALL))
-                        .isEqualTo(-1)
+                assertWithMessage("Did not expect to find a background access").that(
+                    opEntry.getLastAccessBackgroundTime(AppOpsManager.OP_FLAGS_ALL)).isEqualTo(-1)
             } else {
-                assertThat(opEntry.getLastAccessForegroundTime(AppOpsManager.OP_FLAGS_ALL))
-                        .isEqualTo(-1)
+                assertWithMessage("Did not expect to find a foreground access").that(
+                    opEntry.getLastAccessForegroundTime(AppOpsManager.OP_FLAGS_ALL)).isEqualTo(-1)
             }
         }
 
@@ -1081,8 +1089,11 @@ class RuntimePermissionsAppOpTrackingTest {
             } else {
                 opEntry.getLastAccessBackgroundTime(accessedFlag)
             }
-            assertThat(accessTime).isAtLeast(beginTimeMillis)
-            assertThat(accessTime).isAtMost(endTimeMillis)
+            val typeString = if (assertForeground) "foreground" else "background"
+            assertWithMessage("$typeString access time $accessTime is not after $beginTimeMillis")
+                    .that(accessTime).isAtLeast(beginTimeMillis)
+            assertWithMessage("$typeString access time $accessTime is not at before $endTimeMillis")
+                    .that(accessTime).isAtMost(endTimeMillis)
         }
 
         private fun assertAccessCount(
@@ -1102,11 +1113,11 @@ class RuntimePermissionsAppOpTrackingTest {
             assertAccessCountIfRequired(historicalOp, AppOpsManager.OP_FLAG_UNTRUSTED_PROXIED,
                     assertedFlag, assertForeground, assertedAccessCount)
             if (assertForeground) {
-                assertThat(historicalOp.getBackgroundAccessCount(
-                        AppOpsManager.OP_FLAGS_ALL)).isEqualTo(0)
+                assertWithMessage("Did not expect to find a background access").that(
+                    historicalOp.getBackgroundAccessCount(AppOpsManager.OP_FLAGS_ALL)).isEqualTo(0)
             } else {
-                assertThat(historicalOp.getForegroundAccessCount(
-                        AppOpsManager.OP_FLAGS_ALL)).isEqualTo(0)
+                assertWithMessage("Did not expect to find a foreground access").that(
+                    historicalOp.getForegroundAccessCount(AppOpsManager.OP_FLAGS_ALL)).isEqualTo(0)
             }
         }
 
@@ -1126,7 +1137,8 @@ class RuntimePermissionsAppOpTrackingTest {
             } else {
                 historicalOp.getBackgroundAccessCount(accessedFlag)
             }
-            assertThat(accessCount).isEqualTo(assertedAccessCount)
+            assertWithMessage("Found incorrect number of accesses")
+                .that(accessCount).isEqualTo(assertedAccessCount)
         }
 
         private fun findPackageOps(

@@ -29,4 +29,7 @@ public interface BooleanQuery<E extends Queryable> extends Query<Boolean> {
     E isTrue();
     E isFalse();
     E isEqualTo(boolean value);
+
+    /** Require the {@link Boolean} matches the requirements of the query annotation. */
+    E matchesAnnotation(com.android.queryable.annotations.BooleanQuery queryAnnotation);
 }

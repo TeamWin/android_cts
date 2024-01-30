@@ -19,194 +19,301 @@ package android.car.cts;
 import static android.car.CarOccupantZoneManager.OCCUPANT_TYPE_DRIVER;
 import static android.car.cts.utils.ShellPermissionUtils.runWithShellPermissionIdentity;
 import static android.car.media.CarAudioManager.AUDIO_FEATURE_DYNAMIC_ROUTING;
-import static android.car.media.CarAudioManager.AUDIO_FEATURE_VOLUME_GROUP_MUTING;
 import static android.car.media.CarAudioManager.CarVolumeCallback;
+
+import static androidx.lifecycle.Lifecycle.State.RESUMED;
+import static androidx.lifecycle.Lifecycle.State.STARTED;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.car.Car;
 import android.car.CarOccupantZoneManager;
 import android.car.CarOccupantZoneManager.OccupantZoneInfo;
-import android.car.annotation.ApiRequirements;
 import android.car.media.CarAudioManager;
 import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.content.Intent;
 import android.graphics.Point;
-import android.graphics.Rect;
-import android.os.ConditionVariable;
-import android.util.SparseArray;
+import android.os.UserHandle;
+import android.util.Pair;
 import android.view.Display;
 import android.view.InputEvent;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
-import androidx.lifecycle.Lifecycle;
 import androidx.test.core.app.ActivityScenario;
-import androidx.test.filters.FlakyTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.internal.annotations.GuardedBy;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
+import java.util.concurrent.atomic.AtomicReference;
 
-@RunWith(AndroidJUnit4.class)
-@FlakyTest(bugId = 279829443)
-public class CarInputTest extends AbstractCarTestCase {
-    private static final String TAG = CarInputTest.class.getSimpleName();
+/**
+ * This test requires a device with one active passenger occupant. It also requires that the
+ * current user is the driver and not some passenger - this test won't work if
+ * `--user-type secondary_user_on_secondary_display` flag is passed.
+ */
+public final class CarInputTest extends AbstractCarTestCase {
+    public static final String TAG = CarInputTest.class.getSimpleName();
     private static final long ACTIVITY_WAIT_TIME_OUT_MS = 10_000L;
     private static final int DEFAULT_WAIT_MS = 5_000;
     private static final int NO_EVENT_WAIT_MS = 100;
-    private static final String PREFIX_INJECTING_KEY_CMD = "cmd car_service inject-key";
+
+    // Inject event commands.
+    private static final String OPTION_SEAT = "-s";
+    private static final String OPTION_ACTION = "-a";
+    private static final String OPTION_COUNT = "-c";
+    private static final String OPTION_POINTER_ID = "-p";
+    private static final String PREFIX_INJECTING_KEY_CMD =
+            "cmd car_service inject-key " + OPTION_SEAT + " %d %d";
     private static final String PREFIX_INJECTING_MOTION_CMD = "cmd car_service inject-motion";
-    private static final String OPTION_SEAT = " -s ";
-    private static final String OPTION_ACTION = " -a ";
-    private static final String OPTION_COUNT = " -c ";
-    private static final String OPTION_POINTER_ID = " -p ";
 
     private CarOccupantZoneManager mCarOccupantZoneManager;
-    private SparseArray<ActivityScenario<TestActivity>> mActivityScenariosPerDisplay =
-            new SparseArray<>();
-    private SparseArray<TestActivity> mActivitiesPerDisplay = new SparseArray<>();
+
+    // Driver's associated occupant zone and display id.
+    private OccupantZoneInfo mDriverZoneInfo;
+    private int mDriverDisplayId;
+
+    // This field contains the occupant zone and display id for one randomly picked logged
+    //  passenger.
+    private OccupantZoneInfo mPassengerZoneInfo;
+    private Display mPassengerDisplay;
 
     @Before
-    public void setUp() throws Exception {
-        mCarOccupantZoneManager =
-                (CarOccupantZoneManager) getCar().getCarManager(Car.CAR_OCCUPANT_ZONE_SERVICE);
+    public void setUp() {
+        mCarOccupantZoneManager = getCar().getCarManager(CarOccupantZoneManager.class);
+
+        // Set the driver's zone and display and ensure this test is running with as the driver
+        // user.
+        var driverZoneAndDisplay = getDriverZoneAndDisplay();
+        mDriverZoneInfo = driverZoneAndDisplay.first;
+        mDriverDisplayId = driverZoneAndDisplay.second.getDisplayId();
+        assumeTestRunAsDriver();
+
+        // Set driver zone and display for one randomly chose passenger.
+        var anyPassengerZoneAndDisplay = pickAnyPassengerZoneAndDisplay();
+        assumeTrue("This test requires (at least) one active passenger occupant",
+                anyPassengerZoneAndDisplay.isPresent());
+        mPassengerZoneInfo = anyPassengerZoneAndDisplay.get().first;
+        mPassengerDisplay = anyPassengerZoneAndDisplay.get().second;
     }
 
-    @After
-    public void tearDown() throws Exception {
-        clearActivities();
-    }
-
-    private void clearActivities() {
-        for (int i = 0; i < mActivityScenariosPerDisplay.size(); i++) {
-            mActivityScenariosPerDisplay.valueAt(i).close();
-        }
-        mActivityScenariosPerDisplay.clear();
-        mActivitiesPerDisplay.clear();
+    private void assumeTestRunAsDriver() {
+        int userId = mCarOccupantZoneManager.getUserForOccupant(mDriverZoneInfo);
+        assumeTrue("This test can't run with the test user as a passenger (test is running as {"
+                        + ActivityManager.getCurrentUser() + "}, but driver user id is {" + userId
+                        + "})",
+                ActivityManager.getCurrentUser() == userId);
     }
 
     @Test
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
-    public void testHomeKeyForEachPassengerMainDisplay_bringsHomeForTheDisplayOnly()
-            throws Exception {
-        forEachPassengerMainDisplay((zone, display) -> {
-            launchActivitiesOnAllMainDisplays();
-            int targetDisplayId = display.getDisplayId();
+    public void testHomeKeyForAnyPassengerMainDisplay_bringsHomeForThePassengerDisplayOnly() {
+        // Launches TestActivity on both driver and passenger displays.
+        var intent = new Intent(mContext, TestActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        // Uses ShellPermission to launch an Activity on the different displays.
+        runWithShellPermissionIdentity(() -> {
+            try (ActivityScenario<TestActivity> driverActivityScenario = ActivityScenario.launch(
+                    intent,
+                    ActivityOptions.makeBasic().setLaunchDisplayId(mDriverDisplayId).toBundle())) {
+                try (ActivityScenario<TestActivity> passengerActivityScenario =
+                             ActivityScenario.launch(
+                                     intent,
+                                     ActivityOptions.makeBasic().setLaunchDisplayId(
+                                             mPassengerDisplay.getDisplayId()).toBundle())) {
 
-            injectKeyByShell(zone, KeyEvent.KEYCODE_HOME);
+                    final var latch = new CountDownLatch(2);
+                    driverActivityScenario.onActivity(unused -> latch.countDown());
+                    final var passengerActivity = new AtomicReference<TestActivity>();
+                    passengerActivityScenario.onActivity(a -> {
+                        passengerActivity.set(a);
+                        latch.countDown();
+                    });
+                    assertWithMessage("Waited for TestActivity to start on both "
+                            + "driver and passenger displays.").that(
+                            latch.await(ACTIVITY_WAIT_TIME_OUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
-            PollingCheck.waitFor(DEFAULT_WAIT_MS, () -> {
-                return mActivityScenariosPerDisplay.get(targetDisplayId).getState()
-                        != Lifecycle.State.RESUMED;
-            }, "Unable to reach home screen on display " + targetDisplayId);
-            for (int i = 0; i < mActivityScenariosPerDisplay.size(); i++) {
-                int displayId = mActivityScenariosPerDisplay.keyAt(i);
-                if (displayId == targetDisplayId) {
-                    continue;
+                    doTestHomeKeyForAnyPassengerMainDisplay(driverActivityScenario,
+                            passengerActivityScenario);
                 }
-                assertWithMessage("Home key should not affect the other displays."
-                        + " Home key was injected to display " + targetDisplayId + ", but display "
-                        + displayId + " was affected.")
-                        .that(mActivityScenariosPerDisplay.valueAt(i).getState())
-                        .isEqualTo(Lifecycle.State.RESUMED);
             }
-            // Recreate the test activity for next test
-            clearActivities();
+        });
+    }
+
+    private void doTestHomeKeyForAnyPassengerMainDisplay(
+            ActivityScenario<TestActivity> driverActivityScenario,
+            ActivityScenario<TestActivity> passengerActivityScenario) {
+
+        injectKeyByShell(mPassengerZoneInfo, KeyEvent.KEYCODE_HOME);
+
+        // Verify that driver's activity wasn't affected by the HOME key event.
+        assertWithMessage("Home key should not affect the driver main display."
+                + " Home key was injected to display "
+                + mPassengerDisplay.getDisplayId() + ", but display "
+                + mDriverDisplayId + " was affected.")
+                .that(driverActivityScenario.getState()).isEqualTo(RESUMED);
+
+        // Verify that passenger's activity was affected by the HOME key event.
+        assertWithMessage("Home key should affect the passenger main display."
+                + " Home key was injected to display "
+                + mDriverDisplayId + ", but display wasn't affected (expected "
+                + "activity state to be STARTED, but instead it was "
+                + passengerActivityScenario.getState() + ")")
+                .that(passengerActivityScenario.getState()).isEqualTo(STARTED);
+    }
+
+    @Test
+    @CddTest(requirements = {"TODO(b/262236403)"})
+    public void testBackKeyForAnyPassengerMainDisplay() {
+        // Start TestActivity on passenger's display.
+        var intent = new Intent(mContext, TestActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        // Uses ShellPermission to launch an Activity on the different displays.
+        runWithShellPermissionIdentity(() -> {
+            try (ActivityScenario<TestActivity> passengerActivityScenario =
+                         ActivityScenario.launch(
+                                 intent,
+                                 ActivityOptions.makeBasic().setLaunchDisplayId(
+                                         mPassengerDisplay.getDisplayId()).toBundle())) {
+                final var latch = new CountDownLatch(1);
+                final var passengerActivity = new AtomicReference<TestActivity>();
+                passengerActivityScenario.onActivity(a -> {
+                    passengerActivity.set(a);
+                    latch.countDown();
+                });
+                assertWithMessage("Waited for TestActivity to start on "
+                        + "passenger displays.").that(
+                        latch.await(ACTIVITY_WAIT_TIME_OUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+
+                int keyCode = KeyEvent.KEYCODE_BACK;
+
+                injectKeyByShell(mPassengerZoneInfo, keyCode);
+
+                assertReceivedKeyCode(passengerActivity.get(), mPassengerDisplay.getDisplayId(),
+                        keyCode);
+            }
         });
     }
 
     @Test
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
-    public void testBackKeyForEachPassengerMainDisplay() throws Exception {
-        launchActivitiesOnAllMainDisplays();
-        forEachPassengerMainDisplay((zone, display) -> {
-            int displayId = display.getDisplayId();
+    public void testAKeyForAnyPassengerMainDisplay() {
+        // Start TestActivity on passenger's display.
+        var intent = new Intent(mContext, TestActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        // Uses ShellPermission to launch an Activity on the different displays.
+        runWithShellPermissionIdentity(() -> {
+            try (ActivityScenario<TestActivity> passengerActivityScenario =
+                         ActivityScenario.launch(
+                                 intent,
+                                 ActivityOptions.makeBasic().setLaunchDisplayId(
+                                         mPassengerDisplay.getDisplayId()).toBundle())) {
+                final var latch = new CountDownLatch(1);
+                final var passengerActivity = new AtomicReference<TestActivity>();
+                passengerActivityScenario.onActivity(a -> {
+                    passengerActivity.set(a);
+                    latch.countDown();
+                });
+                assertWithMessage("Waited for TestActivity to start on "
+                        + "passenger displays.").that(
+                        latch.await(ACTIVITY_WAIT_TIME_OUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
-            injectKeyByShell(zone, KeyEvent.KEYCODE_BACK);
+                int keyCode = KeyEvent.KEYCODE_A;
+                injectKeyByShell(mPassengerZoneInfo, keyCode);
 
-            assertReceivedKeyCode(displayId, KeyEvent.KEYCODE_BACK);
+                assertReceivedKeyCode(passengerActivity.get(), mPassengerDisplay.getDisplayId(),
+                        keyCode);
+            }
         });
     }
 
     @Test
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
-    public void testAKeyForEachPassengerMainDisplay() throws Exception {
-        launchActivitiesOnAllMainDisplays();
-        forEachPassengerMainDisplay((zone, display) -> {
-            int displayId = display.getDisplayId();
+    public void testPowerKeyForAnyPassengerMainDisplay() {
+        // Start TestActivity on passenger's display.
+        var intent = new Intent(mContext, TestActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        // Uses ShellPermission to launch an Activity on the different displays.
+        runWithShellPermissionIdentity(() -> {
+            try (ActivityScenario<TestActivity> passengerActivityScenario =
+                         ActivityScenario.launch(
+                                 intent,
+                                 ActivityOptions.makeBasic().setLaunchDisplayId(
+                                         mPassengerDisplay.getDisplayId()).toBundle())) {
+                final var latch = new CountDownLatch(1);
+                final var passengerActivity = new AtomicReference<TestActivity>();
+                passengerActivityScenario.onActivity(a -> {
+                    passengerActivity.set(a);
+                    latch.countDown();
+                });
+                assertWithMessage("Waited for TestActivity to start on "
+                        + "passenger displays.").that(
+                        latch.await(ACTIVITY_WAIT_TIME_OUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
-            injectKeyByShell(zone, KeyEvent.KEYCODE_A);
+                // Screen off
+                int keyCode = KeyEvent.KEYCODE_POWER;
 
-            assertReceivedKeyCode(displayId, KeyEvent.KEYCODE_A);
+                injectKeyByShell(mPassengerZoneInfo, keyCode);
+                PollingCheck.waitFor(DEFAULT_WAIT_MS, () -> {
+                    return mPassengerDisplay.getState() == Display.STATE_OFF;
+                }, "Display state should be off");
+
+                // Screen on
+                injectKeyByShell(mPassengerZoneInfo, keyCode);
+                PollingCheck.waitFor(DEFAULT_WAIT_MS, () -> {
+                    return mPassengerDisplay.getState() == Display.STATE_ON;
+                }, "Display state should be on");
+            }
         });
     }
 
     @Test
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
-    public void testPowerKeyForEachPassengerMainDisplay() throws Exception {
-        forEachPassengerMainDisplay((zone, display) -> {
-            // Screen off
-            injectKeyByShell(zone, KeyEvent.KEYCODE_POWER);
-            PollingCheck.waitFor(DEFAULT_WAIT_MS, () -> {
-                return display.getState() == Display.STATE_OFF;
-            }, "Display state should be off");
-
-            // Screen on
-            injectKeyByShell(zone, KeyEvent.KEYCODE_POWER);
-            PollingCheck.waitFor(DEFAULT_WAIT_MS, () -> {
-                return display.getState() == Display.STATE_ON;
-            }, "Display state should be on");
-        });
-    }
-
-    @Test
-    @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    public void testVolumeDownKeyForEachPassengerMainDisplay() throws Exception {
-        CarAudioManager audioManager = (CarAudioManager) getCar().getCarManager(Car.AUDIO_SERVICE);
+    public void testVolumeUpKeyForAnyPassengerMainDisplay() {
+        var audioManager = getCar().getCarManager(CarAudioManager.class);
         assumeTrue(audioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING));
-        CarVolumeMonitor callback = new CarVolumeMonitor();
+
+        var callback = new CarVolumeMonitor();
         audioManager.registerCarVolumeCallback(callback);
 
+        // Start TestActivity on passenger's display.
+        var intent = new Intent(mContext, TestActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        // Uses ShellPermission to launch an Activity on the different displays.
         try {
-            forEachPassengerMainDisplay((zone, display) -> {
-                injectKeyByShell(zone, KeyEvent.KEYCODE_VOLUME_DOWN);
+            runWithShellPermissionIdentity(() -> {
+                try (ActivityScenario<TestActivity> passengerActivityScenario =
+                             ActivityScenario.launch(
+                                     intent,
+                                     ActivityOptions.makeBasic().setLaunchDisplayId(
+                                             mPassengerDisplay.getDisplayId()).toBundle())) {
+                    injectKeyByShell(mPassengerZoneInfo,
+                            KeyEvent.KEYCODE_VOLUME_UP);
 
-                assertWithMessage("CarVolumeCallback#onGroupVolumeChanged should be called")
-                        .that(callback.receivedGroupVolumeChanged(zone.zoneId))
-                        .isTrue();
-                callback.reset();
+                    assertWithMessage("CarVolumeCallback#onGroupVolumeChanged should be called")
+                            .that(callback.receivedGroupVolumeChanged(
+                                    mPassengerZoneInfo.zoneId))
+                            .isTrue();
+
+                    callback.reset();
+                }
             });
         } finally {
             audioManager.unregisterCarVolumeCallback(callback);
@@ -215,53 +322,35 @@ public class CarInputTest extends AbstractCarTestCase {
 
     @Test
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    public void testVolumeUpKeyForEachPassengerMainDisplay() throws Exception {
-        CarAudioManager audioManager = (CarAudioManager) getCar().getCarManager(Car.AUDIO_SERVICE);
+    public void testVolumeMuteKeyForAnyPassengerMainDisplay() {
+        var audioManager = getCar().getCarManager(CarAudioManager.class);
         assumeTrue(audioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING));
-        CarVolumeMonitor callback = new CarVolumeMonitor();
+
+        var callback = new CarVolumeMonitor();
         audioManager.registerCarVolumeCallback(callback);
 
+        // Start TestActivity on passenger's display.
+        var intent = new Intent(mContext, TestActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        // Uses ShellPermission to launch an Activity on the different displays.
         try {
-            forEachPassengerMainDisplay((zone, display) -> {
-                injectKeyByShell(zone, KeyEvent.KEYCODE_VOLUME_UP);
-
-                assertWithMessage("CarVolumeCallback#onGroupVolumeChanged should be called")
-                        .that(callback.receivedGroupVolumeChanged(zone.zoneId))
-                        .isTrue();
-                callback.reset();
-            });
-        } finally {
-            audioManager.unregisterCarVolumeCallback(callback);
-        }
-    }
-
-    @Test
-    @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
-    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
-    public void testVolumeMuteKeyForEachPassengerMainDisplay() throws Exception {
-        CarAudioManager audioManager = (CarAudioManager) getCar().getCarManager(Car.AUDIO_SERVICE);
-        assumeTrue(audioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING));
-        assumeTrue(audioManager.isAudioFeatureEnabled(AUDIO_FEATURE_VOLUME_GROUP_MUTING));
-        CarVolumeMonitor callback = new CarVolumeMonitor();
-        audioManager.registerCarVolumeCallback(callback);
-
-        try {
-            forEachPassengerMainDisplay((zone, display) -> {
-                try {
-                    injectKeyByShell(zone, KeyEvent.KEYCODE_VOLUME_MUTE);
+            runWithShellPermissionIdentity(() -> {
+                try (ActivityScenario<TestActivity> passengerActivityScenario =
+                             ActivityScenario.launch(
+                                     intent,
+                                     ActivityOptions.makeBasic().setLaunchDisplayId(
+                                             mPassengerDisplay.getDisplayId()).toBundle())) {
+                    injectKeyByShell(mPassengerZoneInfo, KeyEvent.KEYCODE_VOLUME_MUTE);
 
                     assertWithMessage("CarVolumeCallback#onMasterMuteChanged should be called")
-                            .that(callback.receivedGroupMuteChanged(zone.zoneId))
+                            .that(callback.receivedGroupMuteChanged(mPassengerZoneInfo.zoneId))
                             .isTrue();
-                    assertThat(audioManager.isVolumeGroupMuted(zone.zoneId, callback.groupId))
+                    assertThat(
+                            audioManager.isVolumeGroupMuted(mPassengerZoneInfo.zoneId,
+                                    callback.mGroupId))
                             .isTrue();
-                } finally {
-                    injectKeyByShell(zone, KeyEvent.KEYCODE_VOLUME_MUTE);
+                    callback.reset();
                 }
             });
         } finally {
@@ -271,151 +360,224 @@ public class CarInputTest extends AbstractCarTestCase {
 
     @Test
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
-    public void testSingleTouchForEachPassengerMainDisplay() throws Exception {
-        launchActivitiesOnAllMainDisplays();
-        forEachPassengerMainDisplay((zone, display) -> {
-            int displayId = display.getDisplayId();
-            Point pointer1 = getDisplayCenter(displayId);
+    public void testSingleTouchForAnyPassengerMainDisplay() {
+        // Start activity on both driver and passenger displays.
+        var intent = new Intent(mContext, TestActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        // Uses ShellPermission to launch an Activity on the different displays.
+        runWithShellPermissionIdentity(() -> {
+            try (ActivityScenario<TestActivity> driverActivityScenario = ActivityScenario.launch(
+                    intent,
+                    ActivityOptions.makeBasic().setLaunchDisplayId(
+                            mDriverDisplayId).toBundle())) {
+                try (ActivityScenario<TestActivity> passengerActivityScenario =
+                             ActivityScenario.launch(
+                                     intent,
+                                     ActivityOptions.makeBasic().setLaunchDisplayId(
+                                             mPassengerDisplay.getDisplayId()).toBundle())) {
 
-            injectTouchByShell(zone, MotionEvent.ACTION_DOWN, pointer1);
-            assertReceivedMotionAction(displayId, MotionEvent.ACTION_DOWN);
+                    final var latch = new CountDownLatch(2);
+                    final var driverActivity = new AtomicReference<TestActivity>();
+                    driverActivityScenario.onActivity(a -> {
+                        driverActivity.set(a);
+                        latch.countDown();
+                    });
+                    final var passengerActivity = new AtomicReference<TestActivity>();
+                    passengerActivityScenario.onActivity(a -> {
+                        passengerActivity.set(a);
+                        latch.countDown();
+                    });
+                    assertWithMessage("Waited for TestActivity to start on both "
+                            + "driver and passenger displays.").that(
+                            latch.await(ACTIVITY_WAIT_TIME_OUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
-            pointer1.offset(1, 1);
-            injectTouchByShell(zone, MotionEvent.ACTION_MOVE, pointer1);
-            assertReceivedMotionAction(displayId, MotionEvent.ACTION_MOVE);
-
-            injectTouchByShell(zone, MotionEvent.ACTION_UP, pointer1);
-            assertReceivedMotionAction(displayId, MotionEvent.ACTION_UP);
+                    doTestSingleTouchForAnyPassenger(driverActivity.get(), passengerActivity.get());
+                }
+            }
         });
+    }
+
+    private void doTestSingleTouchForAnyPassenger(
+            TestActivity driverActivity,
+            TestActivity passengerActivity) throws InterruptedException {
+
+        var pointer = getDisplayCenter(passengerActivity);
+
+        injectTouchByShell(mPassengerZoneInfo, MotionEvent.ACTION_DOWN, pointer);
+        assertReceivedMotionAction(passengerActivity,
+                mPassengerDisplay.getDisplayId(),
+                MotionEvent.ACTION_DOWN);
+        driverActivity.assertNoEvents();
+
+        pointer.offset(1, 1);
+        injectTouchByShell(mPassengerZoneInfo, MotionEvent.ACTION_MOVE, pointer);
+        assertReceivedMotionAction(passengerActivity,
+                mPassengerDisplay.getDisplayId(),
+                MotionEvent.ACTION_MOVE);
+        driverActivity.assertNoEvents();
+
+        injectTouchByShell(mPassengerZoneInfo, MotionEvent.ACTION_UP, pointer);
+        assertReceivedMotionAction(passengerActivity,
+                mPassengerDisplay.getDisplayId(),
+                MotionEvent.ACTION_UP);
+        driverActivity.assertNoEvents();
     }
 
     @Test
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
-    public void testMultiTouchForEachPassengerMainDisplay() throws Exception {
-        launchActivitiesOnAllMainDisplays();
-        forEachPassengerMainDisplay((zone, display) -> {
-            int displayId = display.getDisplayId();
-            Point pointer1 = getDisplayCenter(displayId);
-            Point pointer2 = getDisplayCenter(displayId);
-            pointer2.offset(100, 100);
-            Point[] pointers = new Point[] {pointer1, pointer2};
-
-            injectTouchByShell(zone, MotionEvent.ACTION_DOWN, pointer1);
-            assertReceivedMotionAction(displayId, MotionEvent.ACTION_DOWN);
-
-            injectTouchByShell(zone, MotionEvent.ACTION_POINTER_DOWN, pointers);
-            assertReceivedMotionAction(displayId, MotionEvent.ACTION_POINTER_DOWN);
-
-            pointer2.offset(1, 1);
-            injectTouchByShell(zone, MotionEvent.ACTION_MOVE, pointers);
-            assertReceivedMotionAction(displayId, MotionEvent.ACTION_MOVE);
-
-            injectTouchByShell(zone, MotionEvent.ACTION_POINTER_UP, pointers);
-            assertReceivedMotionAction(displayId, MotionEvent.ACTION_POINTER_UP);
-
-            injectTouchByShell(zone, MotionEvent.ACTION_UP, pointer1);
-            assertReceivedMotionAction(displayId, MotionEvent.ACTION_UP);
-        });
-    }
-
-    private void assertReceivedKeyCode(int displayId, int keyCode) throws Exception {
-        InputEvent downEvent = mActivitiesPerDisplay.get(displayId).getInputEvent();
-        InputEvent upEvent = mActivitiesPerDisplay.get(displayId).getInputEvent();
-        assertWithMessage("Activity on display " + displayId + " must receive key event, keyCode="
-                + KeyEvent.keyCodeToString(keyCode))
-                .that(downEvent instanceof KeyEvent).isTrue();
-        assertWithMessage("Activity on display " + displayId + " must receive key event, keyCode="
-                + KeyEvent.keyCodeToString(keyCode))
-                .that(upEvent instanceof KeyEvent).isTrue();
-
-        KeyEvent downKey = (KeyEvent) downEvent;
-        KeyEvent upKey = (KeyEvent) upEvent;
-        assertWithMessage("Activity on display " + displayId
-                + " must receive " + KeyEvent.keyCodeToString(keyCode))
-                .that(downKey.getKeyCode()).isEqualTo(keyCode);
-        assertWithMessage("Activity on display " + displayId
-                + " must receive down event, keyCode=" + KeyEvent.keyCodeToString(keyCode))
-                .that(downKey.getAction()).isEqualTo(KeyEvent.ACTION_DOWN);
-        assertWithMessage("Activity on display " + displayId
-                + " must receive " + KeyEvent.keyCodeToString(keyCode))
-                .that(upKey.getKeyCode()).isEqualTo(keyCode);
-        assertWithMessage("Activity on display " + displayId
-                + " must receive up event, keyCode=" + KeyEvent.keyCodeToString(keyCode))
-                .that(upKey.getAction()).isEqualTo(KeyEvent.ACTION_UP);
-
-        assertNoEventsExceptFor(displayId);
-    }
-
-    private void assertReceivedMotionAction(int displayId, int actionMasked) throws Exception {
-        InputEvent event = mActivitiesPerDisplay.get(displayId).getInputEvent();
-        assertWithMessage("Activity on display " + displayId + " must receive motion event, action="
-                + MotionEvent.actionToString(actionMasked))
-                .that(event instanceof MotionEvent).isTrue();
-        MotionEvent motionEvent = (MotionEvent) event;
-        assertWithMessage("Activity on display " + displayId
-                + " must receive " + MotionEvent.actionToString(actionMasked))
-                .that(motionEvent.getActionMasked()).isEqualTo(actionMasked);
-        assertNoEventsExceptFor(displayId);
-    }
-
-    private void assertNoEventsExceptFor(int displayId) throws Exception {
-        for (int i = 0; i < mActivitiesPerDisplay.size(); i++) {
-            if (mActivitiesPerDisplay.keyAt(i) == displayId) {
-                continue;
-            }
-            mActivitiesPerDisplay.valueAt(i).assertNoEvents();
-        }
-    }
-
-    private void assertNoEvents(int displayId) throws Exception {
-        mActivitiesPerDisplay.get(displayId).assertNoEvents();
-    }
-
-    private void launchActivitiesOnAllMainDisplays() throws Exception {
-        // Launch the TestActivity on all main displays for driver and passenger
-        forEachMainDisplay(/* includesDriver= */ true, (zone, display) -> {
-            launchActivity(display.getDisplayId());
-        });
-    }
-
-    private void launchActivity(int displayId) {
-        ConditionVariable activityReferenceObtained = new ConditionVariable();
-        // Uses ShellPermisson to launch an Activitiy on the different displays.
+    public void testMultiTouchForAnyPassengerMainDisplay() {
+        // Start activity on both driver and passenger displays.
+        var intent = new Intent(mContext, TestActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        // Uses ShellPermission to launch an Activity on the different displays.
         runWithShellPermissionIdentity(() -> {
-            Intent intent = new Intent(mContext, TestActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
-            ActivityScenario<TestActivity> activityScenario = ActivityScenario.launch(intent,
-                    ActivityOptions.makeBasic().setLaunchDisplayId(displayId).toBundle());
-            activityScenario.onActivity(activity -> {
-                mActivitiesPerDisplay.put(displayId, activity);
-                activityReferenceObtained.open();
-            });
-            mActivityScenariosPerDisplay.put(displayId, activityScenario);
+            try (ActivityScenario<TestActivity> driverActivityScenario = ActivityScenario.launch(
+                    intent,
+                    ActivityOptions.makeBasic().setLaunchDisplayId(
+                            mDriverDisplayId).toBundle())) {
+
+                try (ActivityScenario<TestActivity> passengerActivityScenario =
+                             ActivityScenario.launch(
+                                     intent,
+                                     ActivityOptions.makeBasic().setLaunchDisplayId(
+                                             mPassengerDisplay.getDisplayId()).toBundle())) {
+
+                    final var latch = new CountDownLatch(2);
+                    final var driverActivity = new AtomicReference<TestActivity>();
+                    driverActivityScenario.onActivity(a -> {
+                        driverActivity.set(a);
+                        latch.countDown();
+                    });
+                    final var passengerActivity = new AtomicReference<TestActivity>();
+                    passengerActivityScenario.onActivity(a -> {
+                        passengerActivity.set(a);
+                        latch.countDown();
+                    });
+                    assertWithMessage("Waited for TestActivity to start on both "
+                            + "driver and passenger displays.").that(
+                            latch.await(ACTIVITY_WAIT_TIME_OUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+
+                    doTestMultiTouchForAnyPassenger(driverActivity, passengerActivity);
+                }
+            }
         });
-        activityReferenceObtained.block(ACTIVITY_WAIT_TIME_OUT_MS);
-        assertWithMessage("Failed to acquire activity reference.")
-                .that(mActivitiesPerDisplay.get(displayId))
-                .isNotNull();
+    }
+
+    private void doTestMultiTouchForAnyPassenger(AtomicReference<TestActivity> driverActivity,
+            AtomicReference<TestActivity> passengerActivity) throws InterruptedException {
+        var pointer1 = getDisplayCenter(passengerActivity.get());
+        var pointer2 = getDisplayCenter(passengerActivity.get());
+        pointer2.offset(100, 100);
+        var pointers = new Point[]{pointer1, pointer2};
+
+        injectTouchByShell(mPassengerZoneInfo, MotionEvent.ACTION_DOWN, pointer1);
+        assertReceivedMotionAction(passengerActivity.get(),
+                mPassengerDisplay.getDisplayId(),
+                MotionEvent.ACTION_DOWN);
+        driverActivity.get().assertNoEvents();
+
+        injectTouchByShell(mPassengerZoneInfo, MotionEvent.ACTION_POINTER_DOWN,
+                pointers);
+        assertReceivedMotionAction(passengerActivity.get(),
+                mPassengerDisplay.getDisplayId(),
+                MotionEvent.ACTION_POINTER_DOWN);
+        driverActivity.get().assertNoEvents();
+
+        pointer2.offset(1, 1);
+        injectTouchByShell(mPassengerZoneInfo, MotionEvent.ACTION_MOVE, pointers);
+        assertReceivedMotionAction(passengerActivity.get(),
+                mPassengerDisplay.getDisplayId(),
+                MotionEvent.ACTION_MOVE);
+        driverActivity.get().assertNoEvents();
+
+        injectTouchByShell(mPassengerZoneInfo, MotionEvent.ACTION_POINTER_UP, pointers);
+        assertReceivedMotionAction(passengerActivity.get(),
+                mPassengerDisplay.getDisplayId(),
+                MotionEvent.ACTION_POINTER_UP);
+        driverActivity.get().assertNoEvents();
+
+        injectTouchByShell(mPassengerZoneInfo, MotionEvent.ACTION_UP, pointer1);
+        assertReceivedMotionAction(passengerActivity.get(),
+                mPassengerDisplay.getDisplayId(),
+                MotionEvent.ACTION_UP);
+        driverActivity.get().assertNoEvents();
+    }
+
+    private Pair<OccupantZoneInfo, Display> getDriverZoneAndDisplay() {
+        var zones =
+                mCarOccupantZoneManager.getAllOccupantZones().stream().filter(
+                        o -> o.occupantType == OCCUPANT_TYPE_DRIVER).toList();
+        assertWithMessage("Expected occupant zones to contain the driver occupant zone").that(
+                zones).hasSize(1);
+        var driverZone = zones.get(0);
+        var display = mCarOccupantZoneManager.getDisplayForOccupant(driverZone,
+                CarOccupantZoneManager.DISPLAY_TYPE_MAIN);
+        return new Pair<>(driverZone, display);
+    }
+
+    private Optional<Pair<OccupantZoneInfo, Display>> pickAnyPassengerZoneAndDisplay() {
+        var zones =
+                mCarOccupantZoneManager.getAllOccupantZones().stream().filter(
+                        o -> o.occupantType != OCCUPANT_TYPE_DRIVER
+                                && mCarOccupantZoneManager.getUserForOccupant(o)
+                                != UserHandle.USER_NULL).toList();
+        if (zones.isEmpty()) {
+            return Optional.empty();
+        }
+        var passengerZone = zones.get(0);
+        var display = mCarOccupantZoneManager.getDisplayForOccupant(passengerZone,
+                CarOccupantZoneManager.DISPLAY_TYPE_MAIN);
+        return Optional.of(new Pair<>(passengerZone, display));
     }
 
     private static void injectKeyByShell(OccupantZoneInfo zone, int keyCode) {
-        assumeNotNull(zone);
+        String command = String.format(PREFIX_INJECTING_KEY_CMD, zone.seat, keyCode);
+        runShellCommand(command);
+    }
 
-        // Generate a command message
-        runShellCommand(PREFIX_INJECTING_KEY_CMD + OPTION_SEAT + zone.seat + ' ' + keyCode);
+    private void assertReceivedKeyCode(TestActivity passengerActivity, int passengerDisplayId,
+            int keyCode) {
+        var downEvent = passengerActivity.getInputEvent();
+        var upEvent = passengerActivity.getInputEvent();
+        assertWithMessage("Activity on display " + passengerDisplayId
+                + " must receive key event, keyCode="
+                + KeyEvent.keyCodeToString(keyCode))
+                .that(downEvent instanceof KeyEvent).isTrue();
+        assertWithMessage("Activity on display " + passengerDisplayId
+                + " must receive key event, keyCode="
+                + KeyEvent.keyCodeToString(keyCode))
+                .that(upEvent instanceof KeyEvent).isTrue();
+        assertWithMessage("Activity on display " + passengerDisplayId
+                + " must receive " + KeyEvent.keyCodeToString(keyCode))
+                .that(((KeyEvent) downEvent).getKeyCode()).isEqualTo(keyCode);
+        assertWithMessage("Activity on display " + passengerDisplayId
+                + " must receive down event, keyCode=" + KeyEvent.keyCodeToString(keyCode))
+                .that(((KeyEvent) downEvent).getAction()).isEqualTo(KeyEvent.ACTION_DOWN);
+        assertWithMessage("Activity on display " + passengerDisplayId
+                + " must receive " + KeyEvent.keyCodeToString(keyCode))
+                .that(((KeyEvent) upEvent).getKeyCode()).isEqualTo(keyCode);
+        assertWithMessage("Activity on display " + passengerDisplayId
+                + " must receive up event, keyCode=" + KeyEvent.keyCodeToString(keyCode))
+                .that(((KeyEvent) upEvent).getAction()).isEqualTo(KeyEvent.ACTION_UP);
+    }
+
+    private void assertReceivedMotionAction(TestActivity activity, int displayId,
+            int actionMasked) {
+        var event = activity.getInputEvent();
+        assertWithMessage("Activity on display " + displayId + " must receive motion event, action="
+                + MotionEvent.actionToString(actionMasked))
+                .that(event instanceof MotionEvent).isTrue();
+        var motionEvent = (MotionEvent) event;
+        assertWithMessage("Activity on display " + displayId
+                + " must receive " + MotionEvent.actionToString(actionMasked))
+                .that(motionEvent.getActionMasked()).isEqualTo(actionMasked);
     }
 
     private static void injectTouchByShell(OccupantZoneInfo zone, int action, Point p) {
-        injectTouchByShell(zone, action, new Point[] {p});
+        injectTouchByShell(zone, action, new Point[]{p});
     }
 
     private static void injectTouchByShell(OccupantZoneInfo zone, int action, Point[] p) {
-        assumeNotNull(zone);
-
         int pointerCount = p.length;
         if (action == MotionEvent.ACTION_POINTER_DOWN || action == MotionEvent.ACTION_POINTER_UP) {
             int index = p.length - 1;
@@ -423,79 +585,42 @@ public class CarInputTest extends AbstractCarTestCase {
         }
 
         // Generate a command message
-        StringBuilder sb = new StringBuilder()
+        var sb = new StringBuilder()
                 .append(PREFIX_INJECTING_MOTION_CMD)
-                .append(OPTION_SEAT)
-                .append(zone.seat)
-                .append(OPTION_ACTION)
-                .append(action)
-                .append(OPTION_COUNT)
-                .append(pointerCount);
-        sb.append(OPTION_POINTER_ID);
+                .append(' ').append(OPTION_SEAT)
+                .append(' ').append(zone.seat)
+                .append(' ').append(OPTION_ACTION)
+                .append(' ').append(action)
+                .append(' ').append(OPTION_COUNT)
+                .append(' ').append(pointerCount);
+        sb.append(' ').append(OPTION_POINTER_ID);
         for (int i = 0; i < pointerCount; i++) {
-            sb.append(i);
             sb.append(' ');
+            sb.append(i);
         }
         for (int i = 0; i < pointerCount; i++) {
+            sb.append(' ');
             sb.append(p[i].x);
             sb.append(' ');
             sb.append(p[i].y);
-            sb.append(' ');
         }
         runShellCommand(sb.toString());
     }
 
-    private Point getDisplayCenter(int displayId) {
-        Rect rect = mActivitiesPerDisplay.get(displayId).getWindowManager()
-                .getCurrentWindowMetrics().getBounds();
+    private Point getDisplayCenter(TestActivity activity) {
+        var rect = activity.getWindowManager().getCurrentWindowMetrics().getBounds();
         return new Point(rect.width() / 2, rect.height() / 2);
-    }
-
-    private void forEachPassengerMainDisplay(ThrowingBiConsumer<OccupantZoneInfo, Display> consumer)
-            throws Exception {
-        forEachMainDisplay(/* includesDriver= */ false, consumer);
-    }
-
-    private void forEachMainDisplay(boolean includesDriver,
-            ThrowingBiConsumer<OccupantZoneInfo, Display> consumer) throws Exception {
-        assumeTrue("No passenger zones", mCarOccupantZoneManager.hasPassengerZones());
-        List<OccupantZoneInfo> zones = mCarOccupantZoneManager.getAllOccupantZones();
-        for (OccupantZoneInfo zone : zones) {
-            if (!includesDriver && zone.occupantType == OCCUPANT_TYPE_DRIVER) {
-                continue;
-            }
-            Display display = mCarOccupantZoneManager.getDisplayForOccupant(zone,
-                    CarOccupantZoneManager.DISPLAY_TYPE_MAIN);
-            if (display == null) {
-                continue;
-            }
-            consumer.acceptOrThrow(zone, display);
-        }
-    }
-
-    /**
-     * A {@link BiConsumer} that allows throwing checked exceptions from its single abstract method.
-     *
-     * Can be used together with {@link #uncheckExceptions} to effectively turn a lambda expression
-     * that throws a checked exception into a regular {@link BiConsumer}
-     */
-    @FunctionalInterface
-    @SuppressWarnings("FunctionalInterfaceMethodChanged")
-    public interface ThrowingBiConsumer<T, U> extends BiConsumer<T, U> {
-        void acceptOrThrow(T t, U u) throws Exception;
-
-        @Override
-        default void accept(T t, U u) {
-            try {
-                acceptOrThrow(t, u);
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-        }
     }
 
     public static class TestActivity extends Activity {
         private LinkedBlockingQueue<InputEvent> mEvents = new LinkedBlockingQueue<>();
+        public boolean mPaused = false;
+
+        @Override
+        protected void onPause() {
+            super.onPause();
+            mPaused = true;
+        }
 
         @Override
         public boolean dispatchTouchEvent(MotionEvent ev) {
@@ -509,13 +634,19 @@ public class CarInputTest extends AbstractCarTestCase {
             return true;
         }
 
-        public InputEvent getInputEvent() throws InterruptedException {
-            return mEvents.poll(DEFAULT_WAIT_MS, TimeUnit.MILLISECONDS);
+        public InputEvent getInputEvent() {
+            try {
+                return mEvents.poll(DEFAULT_WAIT_MS, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            }
         }
 
         public void assertNoEvents() throws InterruptedException {
             InputEvent event = mEvents.poll(NO_EVENT_WAIT_MS, TimeUnit.MILLISECONDS);
-            assertWithMessage("Expected no events, but received %s", event).that(event).isNull();
+            assertWithMessage("Expected no events, but received %s", event).that(
+                    event).isNull();
         }
     }
 
@@ -530,8 +661,8 @@ public class CarInputTest extends AbstractCarTestCase {
         @GuardedBy("mLock")
         private CountDownLatch mGroupMuteChangeLatch = new CountDownLatch(1);
 
-        public int zoneId = INVALID_ZONE_ID;
-        public int groupId = INVALID_VOLUME_GROUP_ID;
+        public int mZoneId = INVALID_ZONE_ID;
+        public int mGroupId = INVALID_VOLUME_GROUP_ID;
 
         boolean receivedGroupVolumeChanged(int zoneId) throws InterruptedException {
             CountDownLatch countDownLatch;
@@ -539,7 +670,7 @@ public class CarInputTest extends AbstractCarTestCase {
                 countDownLatch = mGroupVolumeChangeLatch;
             }
             boolean succeed = countDownLatch.await(DEFAULT_WAIT_MS, TimeUnit.MILLISECONDS);
-            return succeed && this.zoneId == zoneId;
+            return succeed && this.mZoneId == zoneId;
         }
 
         boolean receivedGroupMuteChanged(int zoneId) throws InterruptedException {
@@ -548,23 +679,23 @@ public class CarInputTest extends AbstractCarTestCase {
                 countDownLatch = mGroupMuteChangeLatch;
             }
             boolean succeed = countDownLatch.await(DEFAULT_WAIT_MS, TimeUnit.MILLISECONDS);
-            return succeed && this.zoneId == zoneId;
+            return succeed && this.mZoneId == zoneId;
         }
 
         void reset() {
             synchronized (mLock) {
                 mGroupVolumeChangeLatch = new CountDownLatch(1);
                 mGroupMuteChangeLatch = new CountDownLatch(1);
-                zoneId = INVALID_ZONE_ID;
-                groupId = INVALID_VOLUME_GROUP_ID;
+                mZoneId = INVALID_ZONE_ID;
+                mGroupId = INVALID_VOLUME_GROUP_ID;
             }
         }
 
         @Override
         public void onGroupVolumeChanged(int zoneId, int groupId, int flags) {
             synchronized (mLock) {
-                this.zoneId = zoneId;
-                this.groupId = groupId;
+                mZoneId = zoneId;
+                mGroupId = groupId;
                 mGroupVolumeChangeLatch.countDown();
             }
         }
@@ -572,8 +703,8 @@ public class CarInputTest extends AbstractCarTestCase {
         @Override
         public void onGroupMuteChanged(int zoneId, int groupId, int flags) {
             synchronized (mLock) {
-                this.zoneId = zoneId;
-                this.groupId = groupId;
+                mZoneId = zoneId;
+                mGroupId = groupId;
                 mGroupMuteChangeLatch.countDown();
             }
         }

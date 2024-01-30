@@ -26,6 +26,9 @@ public class MultiProcessUtils {
     /** Intent action for tracking AccessibilityServiceStateChangeListener calls. */
     public static final String ACCESSIBILITY_SERVICE_STATE = "ACCESSIBILITY_SERVICE_STATE";
 
+    /** Intent action for tracking AccessibilityStateChangeListener calls. */
+    public static final String ACCESSIBILITY_STATE = "ACCESSIBILITY_STATE";
+
     /** Intent extra to track enabled states. */
     public static final String EXTRA_ENABLED = "extra_enabled";
 

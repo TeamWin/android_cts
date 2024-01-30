@@ -25,15 +25,16 @@ java_test_host {
         "app/src/android/car/cts/app/PowerPolicyTestCommandStatus.java",
         "app/src/android/car/cts/app/PowerPolicyTestCommandType.java",
         ":cartelemetryservice-proto-srcs",
+        ":car-service-dump-proto-srcs",
     ],
     proto: {
         type: "lite",
     },
     libs: [
-        "cts-tradefed",
-        "tradefed",
         "compatibility-host-util",
+        "cts-tradefed",
         "libprotobuf-java-full",
+        "tradefed",
         "truth",
     ],
     // tag this module as a cts test artifact
@@ -44,12 +45,15 @@ java_test_host {
         "automotive-general-tests",
     ],
     static_libs: [
+        "android.car.feature-aconfig-java-host",
         "car-cts-host-util",
         "cts-statsd-atom-host-test-utils",
+        "flag-junit-host",
     ],
     data: [
         ":CtsCarApp",
         ":CtsCarWatchdogSharedApp",
         ":CtsCarWatchdogSecondSharedApp",
+        ":CtsCarWatchdogDeviceTestApp",
     ],
 }

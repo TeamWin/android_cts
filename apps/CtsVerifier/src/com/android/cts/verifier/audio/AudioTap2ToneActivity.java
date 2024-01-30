@@ -38,6 +38,7 @@ import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.analyzers.TapLatencyAnalyzer;
 import com.android.cts.verifier.audio.audiolib.AudioSystemFlags;
 import com.android.cts.verifier.audio.audiolib.CircularBufferFloat;
+import com.android.cts.verifier.audio.audiolib.DisplayUtils;
 import com.android.cts.verifier.audio.audiolib.StatUtils;
 import com.android.cts.verifier.audio.audiolib.WaveformView;
 import com.android.cts.verifier.audio.sources.BlipAudioSourceProvider;
@@ -208,6 +209,8 @@ public class AudioTap2ToneActivity
 
         ((Button) findViewById(R.id.tap2tone_clearResults)).setOnClickListener(this);
 
+        getPassButton().setOnClickListener(this);
+
         mSpecView = (TextView) findViewById(R.id.tap2tone_specTxt);
         mResultsView = (TextView) findViewById(R.id.tap2tone_resultTxt);
         mStatsView = (TextView) findViewById(R.id.tap2tone_statsTxt);
@@ -246,7 +249,16 @@ public class AudioTap2ToneActivity
         // MegaAudio Initialization
         StreamBase.setup(this);
 
+        stopAudio();
         calculateTestPass();
+
+        DisplayUtils.setKeepScreenOn(this, true);
+    }
+
+    @Override
+    public void onStop() {
+        stopAudio();
+        super.onStop();
     }
 
     private void startAudio() {
@@ -261,7 +273,7 @@ public class AudioTap2ToneActivity
             mDuplexAudioManager.setNumRecorderChannels(NUM_RECORD_CHANNELS);
         }
 
-        if (mDuplexAudioManager.setupStreams(mApi, BuilderBase.TYPE_JAVA) == StreamBase.OK) {
+        if (mDuplexAudioManager.buildStreams(mApi, BuilderBase.TYPE_JAVA) == StreamBase.OK) {
             mBuffSizeView.setText(
                     getString(R.string.audio_general_play_colon)
                             + mDuplexAudioManager.getNumPlayerBufferFrames()
@@ -284,8 +296,8 @@ public class AudioTap2ToneActivity
             mDuplexAudioManager.stop();
             // is there a teardown method here?
             mIsRecording = false;
-            enableAudioButtons(!mIsRecording, mIsRecording);
         }
+        enableAudioButtons(!mIsRecording, mIsRecording);
     }
 
     private void resetStats() {

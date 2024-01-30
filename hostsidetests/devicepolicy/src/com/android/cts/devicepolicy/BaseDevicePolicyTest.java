@@ -746,6 +746,10 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         assumeTrue("device doesn't support multiple users", mSupportsMultiUser);
     }
 
+    protected final void assumeHasMainUser() throws DeviceNotAvailableException {
+        Integer user = getDevice().getMainUserId();
+        assumeTrue("device doesn't have a main user", user != null);
+    }
     protected final void assumeHasWifiFeature() throws DeviceNotAvailableException {
         assumeHasDeviceFeature(FEATURE_WIFI);
     }

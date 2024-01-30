@@ -22,11 +22,37 @@ android_test {
     static_libs: [
         "androidx.test.rules",
         "compatibility-device-util-axt",
+        "dropbox_flags_lib",
+        "cts_flags_tests_java",
+        "flag-junit",
+        "platform-test-annotations",
     ],
     srcs: ["src/**/*.java"],
     test_suites: [
         "cts",
         "general-tests",
     ],
+    platform_apis: true,
+}
+
+android_test {
+    name: "CtsDropBoxManagerTestCasesAPI34",
+    defaults: ["cts_defaults"],
+    static_libs: [
+        "androidx.test.rules",
+        "compatibility-device-util-axt",
+        "dropbox_flags_lib",
+        "cts_flags_tests_java",
+        "flag-junit",
+        "platform-test-annotations",
+    ],
+    srcs: ["src/**/*.java"],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    manifest: "AndroidManifest2.xml",
+    test_config: "AndroidTest2.xml",
+    target_sdk_version: "34",
     platform_apis: true,
 }

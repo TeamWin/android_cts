@@ -20,22 +20,23 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
 
 /**
- * TestApi to access resources
+ * TestApi to access resources.
  */
 @Experimental
 public final class Resources extends ResourcesWrapper {
 
-    public static final Resources sInstance = new Resources();
+    public static final Resources sInstance = new Resources(
+            TestApis.context().instrumentedContext().getResources());
 
-    private Resources() {
-        super(TestApis.context().instrumentedContext().getResources());
+    private Resources(android.content.res.Resources resources) {
+        super(resources);
     }
 
     /**
-     * Get reference to system level resources
+     * Get reference to system level resources.
      */
-    public ResourcesWrapper system() {
-        return new ResourcesWrapper(android.content.res.Resources.getSystem());
+    public SystemResources system() {
+        return SystemResources.sInstance;
     }
 
 }

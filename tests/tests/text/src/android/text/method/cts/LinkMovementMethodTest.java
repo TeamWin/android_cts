@@ -44,11 +44,13 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -81,6 +83,8 @@ public class LinkMovementMethodTest {
     @Before
     public void setup() throws Throwable {
         mActivity = mActivityRule.getActivity();
+        WindowUtil.waitForFocus(mActivity);
+
         mMethod = new LinkMovementMethod();
 
         // Set the content view with a text view which contains 3 lines,
@@ -292,6 +296,52 @@ public class LinkMovementMethodTest {
     }
 
     @UiThreadTest
+    @Test
+    public void testOnTouchEvent_outsideLineBounds() {
+        assertSelection(mSpannable, -1);
+
+        // press on first line (clickable)
+        assertTrue(pressOnLine(0));
+        assertSelectClickableLeftToRight(mSpannable, mClickable0);
+
+        // release above first line
+        float x = (mView.getLayout().getLineLeft(0) + mView.getLayout().getLineRight(0)) / 2f;
+        float y = -1f;
+        assertFalse(performMotionAtPoint(x, y, MotionEvent.ACTION_UP));
+        verify(mClickable0, never()).onClick(any());
+
+        // press on first line (clickable)
+        assertTrue(pressOnLine(0));
+        assertSelectClickableLeftToRight(mSpannable, mClickable0);
+
+        // release to left of first line
+        x = mView.getLayout().getLineLeft(0) - 1f;
+        y = (mView.getLayout().getLineTop(0) + mView.getLayout().getLineBottom(0)) / 2f;
+        assertFalse(performMotionAtPoint(x, y, MotionEvent.ACTION_UP));
+        verify(mClickable0, never()).onClick(any());
+
+        // press on first line (clickable)
+        assertTrue(pressOnLine(0));
+        assertSelectClickableLeftToRight(mSpannable, mClickable0);
+
+        // release to right of first line
+        x = mView.getLayout().getLineRight(0) + 1f;
+        y = (mView.getLayout().getLineTop(0) + mView.getLayout().getLineBottom(0)) / 2f;
+        assertFalse(performMotionAtPoint(x, y, MotionEvent.ACTION_UP));
+        verify(mClickable0, never()).onClick(any());
+
+        // press on last line (clickable)
+        assertTrue(pressOnLine(2));
+        assertSelectClickableLeftToRight(mSpannable, mClickable1);
+
+        // release below last line
+        x = (mView.getLayout().getLineLeft(0) + mView.getLayout().getLineRight(0)) / 2f;
+        y = mView.getLayout().getHeight() + 1f;
+        assertFalse(performMotionAtPoint(x, y, MotionEvent.ACTION_UP));
+        verify(mClickable1, never()).onClick(any());
+    }
+
+    @UiThreadTest
     @Test(expected=NullPointerException.class)
     public void testOnTouchEvent_nullViewParam() {
         long now = SystemClock.uptimeMillis();
@@ -485,13 +535,15 @@ public class LinkMovementMethodTest {
         return clickableSpan;
     }
 
-    private boolean performMotionOnLine(int line, int action) {
-        int x = (mView.getLayout().getLineStart(line) + mView.getLayout().getLineEnd(line)) / 2;
-        int y = (mView.getLayout().getLineTop(line) + mView.getLayout().getLineBottom(line)) / 2;
+    private boolean performMotionAtPoint(float x, float y, int action) {
         long now = SystemClock.uptimeMillis();
+        return mMethod.onTouchEvent(mView, mSpannable, MotionEvent.obtain(now, now, action, x, y, 0));
+    }
 
-        return mMethod.onTouchEvent(mView, mSpannable,
-                MotionEvent.obtain(now, now, action, x, y, 0));
+    private boolean performMotionOnLine(int line, int action) {
+        float x = (mView.getLayout().getLineLeft(line) + mView.getLayout().getLineRight(line)) / 2f;
+        float y = (mView.getLayout().getLineTop(line) + mView.getLayout().getLineBottom(line)) / 2f;
+        return performMotionAtPoint(x, y, action);
     }
 
     private boolean pressOnLine(int line) {

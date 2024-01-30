@@ -34,7 +34,6 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.stats.devicepolicy.EventId;
-import android.util.Log;
 
 import com.android.activitycontext.ActivityContext;
 import com.android.bedstead.harrier.BedsteadJUnit4;

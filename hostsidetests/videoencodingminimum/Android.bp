@@ -18,6 +18,7 @@ package {
 
 java_test_host {
     name: "CtsVideoQualityFloorHostTestCases",
+    defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
     libs: [
         "cts-tradefed",
@@ -25,9 +26,10 @@ java_test_host {
         "tradefed",
     ],
     test_suites: [
-        "cts-tradefed",
+        // need to straighten out host tool dependencies before it goes back into CTS
+        // (ffmpeg and mediainfo used in scripts)
+        // "cts",
         "cts-shim-host-lib",
         "tradefed",
     ],
 }
-

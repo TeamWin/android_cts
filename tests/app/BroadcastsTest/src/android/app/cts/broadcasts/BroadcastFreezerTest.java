@@ -25,6 +25,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.BroadcastOptions;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.PowerExemptionManager;
 import android.os.RemoteException;
@@ -40,6 +41,8 @@ import com.android.compatibility.common.util.SystemUtil;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.List;
 
 @RunWith(BroadcastsTestRunner.class)
 public class BroadcastFreezerTest extends BaseBroadcastTest {
@@ -157,5 +160,53 @@ public class BroadcastFreezerTest extends BaseBroadcastTest {
         AmUtils.waitForBroadcastBarrier();
         assertThat(resultReceiver.getResult())
                 .isEqualTo(Common.ORDERED_BROADCAST_RESULT_DATA);
+    }
+
+    @Test
+    public void testBroadcastDelivery_pendingFreezeCancelled() throws Exception {
+        assumeTrue(isAppFreezerEnabled());
+
+        TestServiceConnection connection1 = bindToHelperService(HELPER_PKG1);
+        final ICommandReceiver cmdReceiver1;
+        try {
+            cmdReceiver1 = connection1.getCommandReceiver();
+
+            TestServiceConnection connection2 = bindToHelperService(HELPER_PKG2);
+            final ICommandReceiver cmdReceiver2;
+            final Intent intent = new Intent(TEST_ACTION1)
+                    .setPackage(HELPER_PKG2);
+            final BroadcastOptions options = BroadcastOptions.makeBasic()
+                    .setDeferralPolicy(BroadcastOptions.DEFERRAL_POLICY_UNTIL_ACTIVE);
+            try {
+                cmdReceiver2 = connection2.getCommandReceiver();
+                cmdReceiver2.clearCookie(TEST_ACTION1);
+                final IntentFilter filter = new IntentFilter(TEST_ACTION1);
+                cmdReceiver2.monitorBroadcasts(filter, TEST_ACTION1);
+
+                cmdReceiver1.sendBroadcast(intent, options.toBundle());
+
+                AmUtils.waitForBroadcastBarrier();
+                verifyReceivedBroadcasts(cmdReceiver2, TEST_ACTION1, List.of(intent), true, null);
+            } finally {
+                connection2.unbind();
+            }
+
+            // Wait for some time to get the process into a freezable state but not till it is
+            // frozen.
+            SystemClock.sleep(SHORT_FREEZER_TIMEOUT_MS / 2);
+
+            connection2 = bindToHelperService(HELPER_PKG2);
+            try {
+                cmdReceiver2.clearCookie(TEST_ACTION1);
+                cmdReceiver1.sendBroadcast(intent, options.toBundle());
+
+                AmUtils.waitForBroadcastBarrier();
+                verifyReceivedBroadcasts(cmdReceiver2, TEST_ACTION1, List.of(intent), true, null);
+            } finally {
+                connection2.unbind();
+            }
+        } finally {
+            connection1.unbind();
+        }
     }
 }

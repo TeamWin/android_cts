@@ -30,14 +30,13 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.ZipUtil;
 
-import org.hamcrest.CustomTypeSafeMatcher;
-import org.hamcrest.Matcher;
+import com.google.common.truth.Expect;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ErrorCollector;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
@@ -87,7 +86,7 @@ public class ApexSignatureVerificationTest extends BaseHostJUnit4Test {
     private ITestDevice mDevice;
 
     @Rule
-    public final ErrorCollector mErrorCollector = new ErrorCollector();
+    public final Expect mExpect = Expect.create();
 
     @Before
     public void setUp() throws Exception {
@@ -128,7 +127,7 @@ public class ApexSignatureVerificationTest extends BaseHostJUnit4Test {
         for (Map.Entry<String, File> entry : mExtractedTestDirMap.entrySet()) {
             final File pubKeyFile = FileUtil.findFile(entry.getValue(), APEX_PUB_KEY_NAME);
 
-            assertWithMessage("apex:" + entry.getKey() + " do not contain pubkey").that(
+            assertWithMessage("apex:" + entry.getKey() + " does not contain pubkey").that(
                     pubKeyFile.exists()).isTrue();
         }
     }
@@ -153,8 +152,10 @@ public class ApexSignatureVerificationTest extends BaseHostJUnit4Test {
 
             while (it.hasNext()) {
                 final File wellKnownKey = (File) it.next();
-                verifyPubKey("must not use well known pubkey", pubKeyFile,
-                        pubkeyShouldNotEqualTo(wellKnownKey));
+                mExpect.withMessage(
+                        entry.getKey() + " must not use well known pubkey "
+                                + wellKnownKey.getName())
+                        .that(areKeysMatching(pubKeyFile, wellKnownKey)).isFalse();
             }
         }
     }
@@ -192,7 +193,8 @@ public class ApexSignatureVerificationTest extends BaseHostJUnit4Test {
         try {
             apexes = mDevice.getActiveApexes();
             for (ITestDevice.ApexInfo ap : apexes) {
-                if (!ap.sourceDir.startsWith("/data/")) {
+                // Compressed APEXes on /system are decompressed to /data/apex/decompressed
+                if (!ap.sourceDir.startsWith("/data/apex/active")) {
                     mPreloadedApexPathMap.put(ap.name, ap.sourceDir);
                 }
             }
@@ -279,24 +281,14 @@ public class ApexSignatureVerificationTest extends BaseHostJUnit4Test {
         assertThat(mWellKnownKeyFileList).isNotEmpty();
     }
 
-    private <T> void verifyPubKey(String reason, T actual, Matcher<? super T> matcher) {
-        mErrorCollector.checkThat(reason, actual, matcher);
-    }
-
-    private static Matcher<File> pubkeyShouldNotEqualTo(File wellknownKey) {
-        return new CustomTypeSafeMatcher<File>("must not match well known key ") {
-            @Override
-            protected boolean matchesSafely(File actual) {
-                boolean isMatchWellknownKey = false;
-                try {
-                    isMatchWellknownKey = FileUtil.compareFileContents(actual, wellknownKey);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                // Assert fail if the keys matched
-                return !isMatchWellknownKey;
-            }
-        };
+    private static boolean areKeysMatching(File pubkey, File wellknownKey) {
+        try {
+            return FileUtil.compareFileContents(pubkey, wellknownKey);
+        } catch (IOException e) {
+            throw new AssertionError(
+                    "Failed to compare " + pubkey.getAbsolutePath() + " and "
+                            + wellknownKey.getAbsolutePath());
+        }
     }
 
     /**

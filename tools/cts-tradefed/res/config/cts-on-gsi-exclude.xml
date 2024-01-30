@@ -96,7 +96,7 @@
     <option name="compatibility:exclude-filter" value="CtsAppCloningHostTest android.scopedstorage.cts.host.AppCloningHostTest#testCreateCloneUserFile" />
 
     <!-- b/194146521 -->
-    <option name="compatibility:exclude-filter" value="CtsPermission3TestCases android.permission3.cts.PermissionTest23#testNoResidualPermissionsOnUninstall" />
+    <option name="compatibility:exclude-filter" value="CtsPermissionUiTestCases android.permissionui.cts.PermissionTest23#testNoResidualPermissionsOnUninstall" />
 
       <!-- b/199996926 - No UWB stack support in AOSP for Android S -->
     <option name="compatibility:exclude-filter" value="CtsUwbTestCases" />
@@ -158,10 +158,10 @@
     <option name="compatibility:exclude-filter" value="CtsUwbMultiDeviceTestCase_FiraRangingTests" />
 
     <!-- b/296896687 -->
-    <option name="compatibility:exclude-filter" value="CtsSurfaceControlTests android.view.surfacecontrol.cts.ASurfaceControlTest#testSurfaceTransaction_setDesiredPresentTime_30ms" />
-    <option name="compatibility:exclude-filter" value="CtsSurfaceControlTests android.view.surfacecontrol.cts.ASurfaceControlTest#testSurfaceTransaction_setDesiredPresentTime_100ms" />
-    <option name="compatibility:exclude-filter" value="CtsSurfaceControlTests android.view.surfacecontrol.cts.ASurfaceControlTest#testSurfaceTransaction_setFrameTimeline_preferredIndex" />
-    <option name="compatibility:exclude-filter" value="CtsSurfaceControlTests android.view.surfacecontrol.cts.ASurfaceControlTest#testSurfaceTransaction_setFrameTimeline_notPreferredIndex" />
+    <option name="compatibility:exclude-filter" value="CtsViewTestCases android.view.cts.ASurfaceControlTest#testSurfaceTransaction_setDesiredPresentTime_30ms" />
+    <option name="compatibility:exclude-filter" value="CtsViewTestCases android.view.cts.ASurfaceControlTest#testSurfaceTransaction_setDesiredPresentTime_100ms" />
+    <option name="compatibility:exclude-filter" value="CtsViewTestCases android.view.cts.ASurfaceControlTest#testSurfaceTransaction_setFrameTimeline_preferredIndex" />
+    <option name="compatibility:exclude-filter" value="CtsViewTestCases android.view.cts.ASurfaceControlTest#testSurfaceTransaction_setFrameTimeline_notPreferredIndex" />
 
     <!-- b/298915013 Remove CtsKeystoreTestCases android.keystore.cts.KeyAttestationTest from cts-on-gsi -->
     <option name="compatibility:exclude-filter" value="CtsKeystoreTestCases android.keystore.cts.AttestKeyTest#testEcAttestKey_StrongBox" />
@@ -171,7 +171,4 @@
 
     <!-- b/318588433 Remove CtsAppTestCases android.app.cts.SystemFeaturesTest#testNfcFeatures from cts-on-gsi -->
     <option name="compatibility:exclude-filter" value="CtsAppTestCases android.app.cts.SystemFeaturesTest#testNfcFeatures" />
-
-    <!-- b/319046794 -->
-    <option name="compatibility:exclude-filter" value="CtsAppCloningHostTest" />
 </configuration>

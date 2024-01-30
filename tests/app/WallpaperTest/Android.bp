@@ -22,6 +22,8 @@ android_test {
     static_libs: [
         "cts-opengl-util",
         "cts-wm-util",
+        "TestParameterInjector",
+        "com.android.window.flags.window-aconfig-java",
     ],
     srcs: [
         "src/**/*.java",

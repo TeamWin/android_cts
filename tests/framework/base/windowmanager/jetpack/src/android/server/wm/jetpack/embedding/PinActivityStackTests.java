@@ -16,6 +16,12 @@
 
 package android.server.wm.jetpack.embedding;
 
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_CREATE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_PAUSE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_RESUME;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_START;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.checkOrder;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.transition;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.EXPAND_SPLIT_ATTRS;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitPairRuleBuilder;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRuleBuilderWithPrimaryActivityClass;
@@ -30,6 +36,7 @@ import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
+import android.util.Pair;
 import android.util.Size;
 
 import androidx.annotation.NonNull;
@@ -45,6 +52,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Tests for the {@link androidx.window.extensions} implementation provided on the device (and only
@@ -60,7 +68,7 @@ import java.util.Collections;
         "androidx.window.extensions.embedding.ActivityEmbeddingComponent#pinTopActivityStack",
         "androidx.window.extensions.embedding.ActivityEmbeddingComponent#unpinTopActivityStack"
 })
-public class PinActivityStackTests extends ActivityEmbeddingTestBase {
+public class PinActivityStackTests extends ActivityEmbeddingLifecycleTestBase {
     private Activity mPrimaryActivity;
     private Activity mPinnedActivity;
     private String mPinnedActivityId = "pinActivity";
@@ -81,10 +89,24 @@ public class PinActivityStackTests extends ActivityEmbeddingTestBase {
     }
 
     /**
-     * Verifies that the activity navigation are isolated after the top ActivityStack is pinned.
+     * Verifies that the activity starts in a new container and the navigation are isolated after
+     * the top ActivityStack is pinned.
      */
     @Test
-    public void testPinTopActivityStack() {
+    public void testPinTopActivityStack_createContainerForNewActivity() {
+        pinTopActivityStackAndVerifyLifecycle(true /* newPrimaryContainer */);
+    }
+
+    /**
+     * Verifies that the activity starts in the same container and the navigation are isolated
+     * after the top ActivityStack is pinned.
+     */
+    @Test
+    public void testPinTopActivityStack_reuseContainerForNewActivity() {
+        pinTopActivityStackAndVerifyLifecycle(false /* newPrimaryContainer */);
+    }
+
+    private void pinTopActivityStackAndVerifyLifecycle(boolean newPrimaryContainer) {
         // Launch a secondary activity to side
         mPinnedActivity = startActivityAndVerifySplitAttributes(mPrimaryActivity,
                 TestActivityWithId.class, mWildcardSplitPairRule,
@@ -92,6 +114,11 @@ public class PinActivityStackTests extends ActivityEmbeddingTestBase {
 
         // Pin the top ActivityStack
         assertTrue(pinTopActivityStack());
+        mEventLog.clear();
+
+        if (!newPrimaryContainer) {
+            mActivityEmbeddingComponent.setEmbeddingRules(Collections.emptySet());
+        }
 
         // Start an Activity from the primary ActivityStack
         final String activityId1 = "Activity1";
@@ -101,6 +128,14 @@ public class PinActivityStackTests extends ActivityEmbeddingTestBase {
         waitAndAssertResumed(activityId1);
         waitAndAssertResumed(mPinnedActivityId);
         waitAndAssertNotVisible(mPrimaryActivity);
+        final List<Pair<String, String>> expectedLifecycle = List.of(
+                transition(TestConfigChangeHandlingActivity.class, ON_PAUSE),
+                transition(TestActivityWithId.class, ON_CREATE),
+                transition(TestActivityWithId.class, ON_START),
+                transition(TestActivityWithId.class, ON_RESUME));
+        assertTrue("Pause existing primary Activity before resuming another activity on top",
+                mLifecycleTracker.waitForConditionWithTimeout(() ->
+                        checkOrder(mEventLog, expectedLifecycle)));
         final Activity activity1 = getResumedActivityById(activityId1);
 
         // Start an Activity from the pinned ActivityStack
@@ -118,9 +153,11 @@ public class PinActivityStackTests extends ActivityEmbeddingTestBase {
         activity2.finish();
         mPinnedActivity.finish();
 
-        // Verifies both the two activities left are split side-by-side.
         waitAndAssertResumed(activity1);
-        waitAndAssertResumed(mPrimaryActivity);
+        if (newPrimaryContainer) {
+            // Verifies primary activity is resumed due to the two activities split side-by-side.
+            waitAndAssertResumed(mPrimaryActivity);
+        }
     }
 
     /**

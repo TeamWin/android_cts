@@ -22,15 +22,19 @@ import org.hyphonate.megaaudio.player.NativeAudioSource;
 /**
  * Provides a BlipAudioSource
  */
-public class BlipAudioSourceProvider implements AudioSourceProvider {
+public class BlipAudioSourceProvider extends AudioSourceProvider {
     @Override
     public AudioSource getJavaSource() {
-        return new BlipAudioSource();
+        return mActiveSource = mJavaSource != null
+                ? mJavaSource
+                : (mJavaSource = new BlipAudioSource());
     }
 
     @Override
-    public NativeAudioSource getNativeSource() {
-        return new NativeAudioSource(allocNativeSource());
+    public AudioSource getNativeSource() {
+        return mActiveSource = mNativeSource != null
+                ? mNativeSource
+                : (mNativeSource = new NativeAudioSource(allocNativeSource()));
     }
 
     private native long allocNativeSource();

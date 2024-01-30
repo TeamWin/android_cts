@@ -2303,9 +2303,9 @@ public final class ActivityManagerTest {
         assumeNonHeadlessSystemUserMode();
 
         runWithShellPermissionIdentity(() -> {
-            int currentUser = mActivityManager.getCurrentUser();
+            int currentUser = ActivityManager.getCurrentUser();
             assertTrue(mActivityManager.switchUser(UserHandle.SYSTEM));
-            mActivityManager.switchUser(UserHandle.of(currentUser));
+            assertTrue(switchUser(currentUser, /* waitForSwitchToComplete= */ true));
         });
     }
 
@@ -2316,8 +2316,11 @@ public final class ActivityManagerTest {
                         + "config_canSwitchToHeadlessSystemUser is enabled.",
                 canSwitchToHeadlessSystemUser());
 
-        runWithShellPermissionIdentity(() ->
-                assumeTrue(mActivityManager.switchUser(UserHandle.SYSTEM)));
+        runWithShellPermissionIdentity(() -> {
+            int currentUser = ActivityManager.getCurrentUser();
+            assumeTrue(mActivityManager.switchUser(UserHandle.SYSTEM));
+            assertTrue(switchUser(currentUser, /* waitForSwitchToComplete= */ true));
+        });
     }
 
     @Test
@@ -2355,6 +2358,16 @@ public final class ActivityManagerTest {
         } catch (SecurityException e) {
             fail("Could not call noteForegroundResourceUseBegin with permission" + e.getMessage());
         }
+    }
+
+    private boolean switchUser(int userId, boolean waitForSwitchToComplete) throws IOException {
+        StringBuilder userSwitchCommand = new StringBuilder("am switch-user ");
+        if (waitForSwitchToComplete) {
+            userSwitchCommand.append("-w ");
+        }
+
+        userSwitchCommand.append(userId);
+        return runShellCommand(mInstrumentation, userSwitchCommand.toString()).isEmpty();
     }
 
     private CountDownLatch startRemoteActivityAndLinkToDeath(ComponentName activity,

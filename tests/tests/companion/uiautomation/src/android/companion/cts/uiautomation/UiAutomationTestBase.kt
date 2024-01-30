@@ -238,16 +238,11 @@ open class UiAutomationTestBase(
             } else {
                 // First, select the device in the device chooser dialog.
                 confirmationUi.waitAndClickOnFirstFoundDevice()
-                // Do not need to click the positive button if the CDM dialog no longer exists at
-                // this point, which means the OS is running the older flow from udc-dev.
-                if (confirmationUi.isCdmDialogExists()) {
-                    // Second, wait until the permissionList dialog shows up and scroll
-                    // to the bottom.
-                    confirmationUi.scrollToBottom()
-                    // Third, tap the `Allow` bottom.
-                    callback.assertInvokedByActions {
-                        confirmationUi.waitUntilPositiveButtonIsEnabledAndClick()
-                    }
+                // Second, wait until the permissionList dialog shows up and scroll to the bottom.
+                confirmationUi.scrollToBottom()
+                // Third, tap the `Allow` bottom.
+                callback.assertInvokedByActions {
+                    confirmationUi.waitUntilPositiveButtonIsEnabledAndClick()
                 }
             }
         } else {

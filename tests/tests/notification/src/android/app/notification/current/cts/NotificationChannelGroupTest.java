@@ -16,39 +16,48 @@
 
 package android.app.notification.current.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import android.app.NotificationChannelGroup;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
 
-public class NotificationChannelGroupTest extends AndroidTestCase {
+import androidx.test.runner.AndroidJUnit4;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(AndroidJUnit4.class)
+public class NotificationChannelGroupTest {
+
+    @Test
     public void testDescribeContents() {
         final int expected = 0;
         NotificationChannelGroup group = new NotificationChannelGroup("1", "1");
         assertEquals(expected, group.describeContents());
     }
 
+    @Test
     public void testConstructor() {
         NotificationChannelGroup group =  new NotificationChannelGroup("1", "one");
         assertEquals("1", group.getId());
-        assertEquals("one", group.getName());
+        assertEquals("one", group.getName().toString());
         assertFalse(group.isBlocked());
         assertNull(group.getDescription());
         assertEquals(0, group.getChannels().size());
         assertEquals(0, group.getUserLockedFields());
     }
 
+    @Test
     public void testIsBlocked() {
         NotificationChannelGroup group =  new NotificationChannelGroup("1", "one");
         group.setBlocked(true);
         assertTrue(group.isBlocked());
     }
 
+    @Test
     public void testWriteToParcel() {
         NotificationChannelGroup group = new NotificationChannelGroup("1", "one");
         group.setBlocked(true);
@@ -61,13 +70,14 @@ public class NotificationChannelGroupTest extends AndroidTestCase {
         assertEquals(group, fromParcel);
     }
 
+    @Test
     public void testClone() {
         NotificationChannelGroup group =  new NotificationChannelGroup("1", "one");
         group.setBlocked(true);
         group.setDescription("bananas");
         NotificationChannelGroup cloned = group.clone();
         assertEquals("1", cloned.getId());
-        assertEquals("one", cloned.getName());
+        assertEquals("one", cloned.getName().toString());
         assertTrue(cloned.isBlocked());
         assertEquals("bananas", cloned.getDescription());
     }

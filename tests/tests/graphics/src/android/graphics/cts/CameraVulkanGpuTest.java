@@ -75,7 +75,9 @@ public class CameraVulkanGpuTest {
         }
 
         loadCameraAndVerifyFrameImport(InstrumentationRegistry.getContext().getAssets());
+        loadCameraAndVerifyFrameImportWithAIMAGE_FORMAT_YUV_420_888(InstrumentationRegistry.getContext().getAssets());
     }
 
     private static native void loadCameraAndVerifyFrameImport(AssetManager assetManager);
+    private static native void loadCameraAndVerifyFrameImportWithAIMAGE_FORMAT_YUV_420_888(AssetManager assetManager);
 }

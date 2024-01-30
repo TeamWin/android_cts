@@ -17,15 +17,16 @@
 package android.wallpapereffectsgeneration.cts;
 
 import static android.app.wallpapereffectsgeneration.CinematicEffectResponse.CINEMATIC_EFFECT_STATUS_ERROR;
-import static android.app.wallpapereffectsgeneration.CinematicEffectResponse.CINEMATIC_EFFECT_STATUS_NOT_READY;
 import static android.app.wallpapereffectsgeneration.CinematicEffectResponse.CINEMATIC_EFFECT_STATUS_OK;
 
 import android.app.wallpapereffectsgeneration.CinematicEffectRequest;
 import android.app.wallpapereffectsgeneration.CinematicEffectResponse;
+import android.os.CountDownTimer;
 import android.service.wallpapereffectsgeneration.WallpaperEffectsGenerationService;
 import android.util.Log;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * WallpaperEffectsGenerationService implementation for cts tests.
@@ -37,6 +38,9 @@ public class CtsWallpaperEffectsGenerationService extends WallpaperEffectsGenera
     private static final boolean DEBUG = false;
     public static final String SERVICE_NAME = "android.wallpapereffectsgeneration.cts/."
             + CtsWallpaperEffectsGenerationService.class.getSimpleName();
+
+    private static final int WAIT_TIMEOUT_MILLIS = 5000;
+    private static final int COUNT_DOWN_TIMER_INTERVAL_MILLIS = 1000;
 
     private static Watcher sWatcher;
 
@@ -58,26 +62,38 @@ public class CtsWallpaperEffectsGenerationService extends WallpaperEffectsGenera
 
         String taskId = cinematicEffectRequest.getTaskId();
         if (taskId.contains("pending")) {
-            // Do nothing. Simulate it takes a long time to process.
-            return;
+            simulateLongRunningTask(taskId);
         }
         if (taskId.contains("error")) {
             super.returnCinematicEffectResponse(
                     createCinematicEffectResponse(taskId, CINEMATIC_EFFECT_STATUS_ERROR));
-        } else if (taskId.contains("initial")) {
-            // Use this status code to tell the difference between initial call and calls in the
-            // real test case.
-            super.returnCinematicEffectResponse(
-                    createCinematicEffectResponse(taskId, CINEMATIC_EFFECT_STATUS_NOT_READY));
         } else {
             super.returnCinematicEffectResponse(
                     createCinematicEffectResponse(taskId, CINEMATIC_EFFECT_STATUS_OK));
         }
-        sWatcher.requested.countDown();
     }
 
     private CinematicEffectResponse createCinematicEffectResponse(String taskId, int status) {
         return new CinematicEffectResponse.Builder(status, taskId).build();
+    }
+
+    private void simulateLongRunningTask(String taskId) {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        new CountDownTimer(WAIT_TIMEOUT_MILLIS, COUNT_DOWN_TIMER_INTERVAL_MILLIS) {
+            public void onTick(long millisUntilFinished) {
+            }
+
+            public void onFinish() {
+                countDownLatch.countDown();
+            }
+        }.start();
+        try {
+            countDownLatch.await(WAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+            super.returnCinematicEffectResponse(
+                    createCinematicEffectResponse(taskId, CINEMATIC_EFFECT_STATUS_OK));
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Long running task interrupted");
+        }
     }
 
 
@@ -108,13 +124,7 @@ public class CtsWallpaperEffectsGenerationService extends WallpaperEffectsGenera
 
     public static final class Watcher {
         public CountDownLatch created = new CountDownLatch(1);
-        public CountDownLatch requested = new CountDownLatch(1);
-        public CountDownLatch initialCallReturned = new CountDownLatch(1);
         public CountDownLatch destroyed = new CountDownLatch(1);
-        public CountDownLatch okResponse = new CountDownLatch(1);
-        public CountDownLatch errorResponse = new CountDownLatch(1);
-        public CountDownLatch pendingResponse = new CountDownLatch(1);
-        public CountDownLatch tooManyRequestsResponse = new CountDownLatch(1);
 
         /**
          * Can be used to verify that API specific service methods are called. Not a real mock as

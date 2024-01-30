@@ -36,6 +36,7 @@ import android.app.UiAutomation;
 import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
+import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.service.voice.AlwaysOnHotwordDetector;
@@ -73,7 +74,7 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "No real use case for instant mode hotword detection service")
-public class HotwordDetectionServiceStressTest {
+public class HotwordDetectionServiceStressTest extends AbstractHdsTestCase {
 
     private static final String TAG = "HotwordDetectionServiceStressTest";
 
@@ -85,17 +86,29 @@ public class HotwordDetectionServiceStressTest {
 
     private CountDownLatch mLatch = null;
 
+    private String mOpNoted = "";
+
     private final AppOpsManager mAppOpsManager = sInstrumentation.getContext()
             .getSystemService(AppOpsManager.class);
 
     private final AppOpsManager.OnOpNotedListener mOnOpNotedListener =
             (op, uid, pkgName, attributionTag, flags, result) -> {
-                Log.d(TAG, "Get OnOpNotedListener callback op = " + op);
-                if (AppOpsManager.OPSTR_RECORD_AUDIO.equals(op)) {
+                Log.d(TAG, "Get OnOpNotedListener callback op = " + op + ", uid = " + uid);
+                // We adopt ShellPermissionIdentity for RECORD_AUDIO to pass the permission check,
+                // so the uid should be the shell uid.
+                if (Process.SHELL_UID == uid && op.equals(AppOpsManager.OPSTR_RECORD_AUDIO)) {
                     if (mLatch != null) {
                         mLatch.countDown();
                     }
                 }
+                // We do not adopt ShellPermissionIdentity for RECEIVE_SANDBOX_TRIGGER_AUDIO so the
+                // uid should be the current process uid.
+                if (Process.myUid() == uid && op.equals(RECEIVE_SANDBOX_TRIGGER_AUDIO_OP_STR)) {
+                    if (mLatch != null) {
+                        mLatch.countDown();
+                    }
+                }
+                mOpNoted = op;
             };
 
     private CtsBasicVoiceInteractionService mService;
@@ -147,8 +160,12 @@ public class HotwordDetectionServiceStressTest {
         // VoiceInteractionServiceConnectedRule handles the service connected,
         // the test should be able to get service
         mService = (CtsBasicVoiceInteractionService) BaseVoiceInteractionService.getService();
+
         // Check the test can get the service
         Objects.requireNonNull(mService);
+
+        // Set whether voice activation permission check is enabled.
+        mService.setVoiceActivationPermissionEnabled(mVoiceActivationPermissionEnabled);
 
         // Wait the original HotwordDetectionService finish clean up to avoid flaky
         // This also waits for mic indicator disappear
@@ -419,7 +436,8 @@ public class HotwordDetectionServiceStressTest {
     private void startWatchingNoted() {
         runWithShellPermissionIdentity(() -> {
             if (mAppOpsManager != null) {
-                mAppOpsManager.startWatchingNoted(new String[]{AppOpsManager.OPSTR_RECORD_AUDIO},
+                mAppOpsManager.startWatchingNoted(new String[]{
+                        AppOpsManager.OPSTR_RECORD_AUDIO, RECEIVE_SANDBOX_TRIGGER_AUDIO_OP_STR},
                         mOnOpNotedListener);
             }
         });
@@ -440,9 +458,18 @@ public class HotwordDetectionServiceStressTest {
             // TODO: test Auto indicator
         } else if (sPkgMgr.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             // The privacy chips/indicators are not implemented on Wear
+        } else if (mVoiceActivationPermissionEnabled) {
+            boolean isNoted = mLatch.await(Helper.CLEAR_CHIP_MS, TimeUnit.MILLISECONDS);
+            assertThat(isNoted).isEqualTo(shouldNote);
+            if (isNoted) {
+                assertThat(mOpNoted).isEqualTo(RECEIVE_SANDBOX_TRIGGER_AUDIO_OP_STR);
+            }
         } else {
             boolean isNoted = mLatch.await(Helper.CLEAR_CHIP_MS, TimeUnit.MILLISECONDS);
             assertThat(isNoted).isEqualTo(shouldNote);
+            if (isNoted) {
+                assertThat(mOpNoted).isEqualTo(AppOpsManager.OPSTR_RECORD_AUDIO);
+            }
         }
     }
 }

@@ -246,9 +246,9 @@ public final class CommandSession {
                     .getParcelable(COMMAND_GET_NAME);
         }
 
-        public boolean isUidAccesibleOnDisplay() {
-            return sendCommandAndWaitReply(COMMAND_DISPLAY_ACCESS_CHECK, null).getBoolean(
-                    KEY_UID_HAS_ACCESS_ON_DISPLAY);
+        public boolean isUidAccessibleOnDisplay() {
+            return sendCommandAndWaitReply(COMMAND_DISPLAY_ACCESS_CHECK, null)
+                    .getBoolean(KEY_UID_HAS_ACCESS_ON_DISPLAY);
         }
 
         /** Send command to the associated activity. */
@@ -402,21 +402,21 @@ public final class CommandSession {
     }
 
     /** For LaunchProxy to setup launch parameter that establishes session. */
-    interface LaunchInjector {
+    public interface LaunchInjector {
         void setupIntent(Intent intent);
         void setupShellCommand(StringBuilder shellCommand);
     }
 
     /** A proxy to launch activity by intent or shell command. */
-    interface LaunchProxy {
+    public interface LaunchProxy {
         void setLaunchInjector(LaunchInjector injector);
         default Bundle getExtras() { return null; }
         void execute();
         boolean shouldWaitForLaunched();
     }
 
-    abstract static class DefaultLaunchProxy implements LaunchProxy {
-        LaunchInjector mLaunchInjector;
+    public abstract static class DefaultLaunchProxy implements LaunchProxy {
+        protected LaunchInjector mLaunchInjector;
 
         @Override
         public boolean shouldWaitForLaunched() {

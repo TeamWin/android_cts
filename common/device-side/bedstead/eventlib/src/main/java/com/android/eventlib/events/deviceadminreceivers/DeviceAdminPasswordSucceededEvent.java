@@ -58,7 +58,7 @@ public final class DeviceAdminPasswordSucceededEvent extends Event {
                 mDeviceAdminReceiver = new DeviceAdminReceiverQueryHelper<>(this);
         IntentQueryHelper<DeviceAdminPasswordSucceededEventQuery> mIntent =
                 new IntentQueryHelper<>(this);
-        UserHandleQueryHelper<DeviceAdminPasswordSucceededEventQuery> mUserHandle =
+        UserHandleQueryHelper<DeviceAdminPasswordSucceededEventQuery> mUser =
                 new UserHandleQueryHelper<DeviceAdminPasswordSucceededEventQuery>(this);
 
         private DeviceAdminPasswordSucceededEventQuery(String packageName) {
@@ -85,8 +85,8 @@ public final class DeviceAdminPasswordSucceededEvent extends Event {
          * {@link DeviceAdminReceiver#onPasswordSucceeded(Context, Intent, UserHandle)}.
          */
         @CheckResult
-        public UserHandleQuery<DeviceAdminPasswordSucceededEventQuery> whereUserHandle() {
-            return mUserHandle;
+        public UserHandleQuery<DeviceAdminPasswordSucceededEventQuery> whereUser() {
+            return mUser;
         }
 
         @Override
@@ -97,7 +97,7 @@ public final class DeviceAdminPasswordSucceededEvent extends Event {
             if (!mDeviceAdminReceiver.matches(event.mDeviceAdminReceiver)) {
                 return false;
             }
-            if (!mUserHandle.matches(event.mUserHandle)) {
+            if (!mUser.matches(event.mUserHandle)) {
                 return false;
             }
             return true;
@@ -108,7 +108,7 @@ public final class DeviceAdminPasswordSucceededEvent extends Event {
             return toStringBuilder(DeviceAdminPasswordSucceededEvent.class, this)
                     .field("intent", mIntent)
                     .field("deviceAdminReceiver", mDeviceAdminReceiver)
-                    .field("userHandle", mUserHandle)
+                    .field("userHandle", mUser)
                     .toString();
         }
     }

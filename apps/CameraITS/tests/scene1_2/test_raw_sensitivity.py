@@ -15,6 +15,7 @@
 
 
 import logging
+import math
 import os.path
 import matplotlib
 from matplotlib import pylab
@@ -26,6 +27,7 @@ import capture_request_utils
 import image_processing_utils
 import its_session_utils
 
+_BLACK_LEVEL_RTOL = 0.005  # 0.5%
 _GR_PLANE_IDX = 1  # GR plane index in RGGB data
 _IMG_STATS_GRID = 9  # Center 11.11%
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -89,20 +91,21 @@ class RawSensitivityTest(its_base_test.ItsBaseTest):
         fmt = define_raw_stats_fmt(props)
         cap = cam.do_capture(req, fmt)
 
-        if self.debug_mode:
-          img = image_processing_utils.convert_capture_to_rgb_image(
-              cap, props=props)
-          image_processing_utils.write_image(
-              img, f'{name_with_log_path}_{s}_{e}ns.jpg', True)
-
-        # Measure variance
-        _, var_image = image_processing_utils.unpack_rawstats_capture(cap)
+        # Measure mean & variance
+        mean_img, var_img = image_processing_utils.unpack_rawstats_capture(cap)
         cfa_idxs = image_processing_utils.get_canonical_cfa_order(props)
+        black_levels = image_processing_utils.get_black_levels(props)
         white_level = float(props['android.sensor.info.whiteLevel'])
-        var = var_image[_IMG_STATS_GRID//2, _IMG_STATS_GRID//2,
-                        cfa_idxs[_GR_PLANE_IDX]]/white_level**2
-        logging.debug('s=%d, e=%d, var=%e', s, e, var)
+        var = var_img[_IMG_STATS_GRID//2, _IMG_STATS_GRID//2,
+                      cfa_idxs[_GR_PLANE_IDX]]/white_level**2
+        mean = mean_img[_IMG_STATS_GRID//2, _IMG_STATS_GRID//2,
+                        cfa_idxs[_GR_PLANE_IDX]]
+        logging.debug('s: %d, e: %d, mean: %.2f, var: %e', s, e, mean, var)
         variances.append(var)
+
+      # Flag dark images
+      if math.isclose(mean, max(black_levels), rel_tol=_BLACK_LEVEL_RTOL):
+        raise AssertionError(f'Images are too dark! Center mean: {mean:.2f}')
 
       # Create plot
       pylab.figure(_NAME)
@@ -114,9 +117,11 @@ class RawSensitivityTest(its_base_test.ItsBaseTest):
       pylab.title(_NAME)
       matplotlib.pyplot.savefig(f'{name_with_log_path}_variances.png')
 
-      # Test that each shot is noisier than previous
+      # Test each shot noisier than previous and save img on FAIL
       for i in range(len(variances) - 1):
         if variances[i] >= variances[i+1]/_VAR_THRESH:
+          image_processing_utils.capture_scene_image(
+              cam, props, name_with_log_path)
           raise AssertionError(f'variances [i]: {variances[i]:5f}, [i+1]: '
                                f'{variances[i+1]:.5f}, THRESH: {_VAR_THRESH}')
 

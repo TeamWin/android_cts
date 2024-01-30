@@ -1139,6 +1139,35 @@ public class LegacyStorageTest {
         verifyUpdateToExternalPrivateDirsViaRelativePath_denied();
     }
 
+    @Test
+    public void testInsertToOtherAppPrivateDirFails() throws Exception {
+        try {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Files.FileColumns.DATA,
+                    "/storage/emulated/0/Android/media/com.example.aospoc/../../../../../../../."
+                            + "./../../storage/emulated/0/Android/data/com.android"
+                            + ".gallery3d/secret.txt/../../../../../../../../../../../../."
+                            + "./storage/emulated/0/Android/data/com.android.gallery3d/text.txt");
+
+            getContentResolver().insert(MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL),
+                    values);
+            fail("Insertion expected to fail for private path");
+        } catch (IllegalArgumentException expected) {
+        }
+
+        try {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Files.FileColumns.RELATIVE_PATH,
+                    "Android/data/com.example.aospoc/");
+            values.put(MediaStore.Files.FileColumns.DISPLAY_NAME, "text.txt");
+
+            getContentResolver().insert(MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL),
+                    values);
+            fail("Insertion expected to fail for private path");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
     private static void assertCanCreateFile(File file) throws IOException {
         if (file.exists()) {
             file.delete();

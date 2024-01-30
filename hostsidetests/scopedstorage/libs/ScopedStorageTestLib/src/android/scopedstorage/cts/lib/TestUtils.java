@@ -93,6 +93,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -118,6 +119,10 @@ public class TestUtils {
     public static final String DELETE_FILE_QUERY = "android.scopedstorage.cts.deletefile";
     public static final String DELETE_MEDIA_BY_URI_QUERY =
             "android.scopedstorage.cts.deletemediabyuri";
+    public static final String UPDATE_MEDIA_BY_URI_QUERY =
+            "android.scopedstorage.cts.update_media_by_uri";
+    public static final String QUERY_MEDIA_BY_URI_QUERY =
+            "android.scopedstorage.cts.query_media_by_uri";
     public static final String DELETE_RECURSIVE_QUERY = "android.scopedstorage.cts.deleteRecursive";
     public static final String CAN_OPEN_FILE_FOR_READ_QUERY =
             "android.scopedstorage.cts.can_openfile_read";
@@ -167,6 +172,7 @@ public class TestUtils {
 
     private static final long POLLING_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(20);
     private static final long POLLING_SLEEP_MILLIS = 100;
+    private static final long APP_INSTALL_TIMEOUT_MILLIS = TimeUnit.MINUTES.toMillis(8);
 
     /**
      * Creates the top level default directories.
@@ -410,6 +416,36 @@ public class TestUtils {
     public static int deleteMediaByUriAs(TestApp testApp, Uri uri) throws Exception {
         final String actionName = DELETE_MEDIA_BY_URI_QUERY;
         return getFromTestApp(testApp, uri, actionName).getInt(actionName);
+    }
+
+    /**
+     * Makes the given {@code testApp} update the media rows for the given {@code uri} by
+     * updating values for the provided {@code attributes}.
+     *
+     * <p>This method drops shell permission identity.
+     */
+    public static boolean updateMediaByUriAs(TestApp testApp, Uri uri, Bundle attributes)
+            throws Exception {
+        final String actionName = UPDATE_MEDIA_BY_URI_QUERY;
+        return getFromTestApp(testApp, uri, actionName, attributes).getBoolean(actionName);
+    }
+
+    /**
+     * Makes the given {@code testApp} query media file by the given {@code uri}
+     * and {@code projection}. An empty result will be returned if {@code uri}
+     * indicates location of multiple files or no files at all.
+     *
+     * <p>This method drops shell permission identity.
+     */
+    public static Bundle queryMediaByUriAs(TestApp testApp, Uri uri, Set<String> projection)
+            throws Exception {
+        final String actionName = QUERY_MEDIA_BY_URI_QUERY;
+        final Bundle bundle = new Bundle();
+        for (String columnName : projection) {
+            bundle.putString(columnName, "");
+        }
+
+        return getFromTestApp(testApp, uri, actionName, bundle).getBundle(actionName);
     }
 
     /**
@@ -709,6 +745,7 @@ public class TestUtils {
      */
     public static void installApp(TestApp testApp, boolean grantStoragePermission)
             throws Exception {
+        Log.d(TAG, String.format("Started installation of %s app", testApp.getPackageName()));
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             final String packageName = testApp.getPackageName();
@@ -717,29 +754,51 @@ public class TestUtils {
             if (isAppInstalled(testApp)) {
                 Uninstall.packages(packageName);
             }
-            Install.single(testApp).commit();
+            Install.single(testApp).setTimeout(APP_INSTALL_TIMEOUT_MILLIS).commit();
             assertThat(InstallUtils.getInstalledVersion(packageName)).isEqualTo(1);
             if (grantStoragePermission) {
-                grantPermission(packageName, Manifest.permission.READ_EXTERNAL_STORAGE);
-                if (SdkLevel.isAtLeastT()) {
-                    grantPermission(packageName, Manifest.permission.READ_MEDIA_IMAGES);
-                    grantPermission(packageName, Manifest.permission.READ_MEDIA_AUDIO);
-                    grantPermission(packageName, Manifest.permission.READ_MEDIA_VIDEO);
-                }
+                addressStoragePermissions(packageName, true);
             }
+            Log.d(TAG, String.format("Successfully installed %s app", testApp.getPackageName()));
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
     }
 
+    /**
+     * Grants or revokes storage read permissions.
+     */
+    public static void addressStoragePermissions(String packageName, boolean grantPermission) {
+        if (grantPermission) {
+            grantPermission(packageName, Manifest.permission.READ_EXTERNAL_STORAGE);
+            if (SdkLevel.isAtLeastT()) {
+                grantPermission(packageName, Manifest.permission.READ_MEDIA_IMAGES);
+                grantPermission(packageName, Manifest.permission.READ_MEDIA_AUDIO);
+                grantPermission(packageName, Manifest.permission.READ_MEDIA_VIDEO);
+            }
+        } else {
+            revokePermission(packageName, Manifest.permission.READ_EXTERNAL_STORAGE);
+            if (SdkLevel.isAtLeastT()) {
+                revokePermission(packageName, Manifest.permission.READ_MEDIA_IMAGES);
+                revokePermission(packageName, Manifest.permission.READ_MEDIA_AUDIO);
+                revokePermission(packageName, Manifest.permission.READ_MEDIA_VIDEO);
+            }
+        }
+    }
+
     public static boolean isAppInstalled(TestApp testApp) {
-        return InstallUtils.getInstalledVersion(testApp.getPackageName()) != -1;
+        boolean isAppInstalled = InstallUtils.getInstalledVersion(testApp.getPackageName()) != -1;
+
+        Log.d(TAG, String.format("Test app %s is %sinstalled", testApp.getPackageName(),
+                isAppInstalled ? "" : "not "));
+        return isAppInstalled;
     }
 
     /**
      * Uninstalls a {@link TestApp}.
      */
     public static void uninstallApp(TestApp testApp) throws Exception {
+        Log.d(TAG, String.format("Started to uninstall %s test app", testApp.getPackageName()));
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             final String packageName = testApp.getPackageName();
@@ -747,6 +806,7 @@ public class TestUtils {
 
             Uninstall.packages(packageName);
             assertThat(InstallUtils.getInstalledVersion(packageName)).isEqualTo(-1);
+            Log.d(TAG, String.format("Successfully uninstalled %s app", testApp.getPackageName()));
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
@@ -1669,15 +1729,34 @@ public class TestUtils {
 
     public static File[] getDefaultTopLevelDirs() {
         if (BuildCompat.isAtLeastS()) {
-            return new File[]{getAlarmsDir(), getAndroidDir(), getAudiobooksDir(), getDcimDir(),
-                    getDocumentsDir(), getDownloadDir(), getMusicDir(), getMoviesDir(),
-                    getNotificationsDir(), getPicturesDir(), getPodcastsDir(), getRecordingsDir(),
-                    getRingtonesDir()};
+            return new File[] {
+                getAlarmsDir(),
+                getAudiobooksDir(),
+                getDcimDir(),
+                getDocumentsDir(),
+                getDownloadDir(),
+                getMusicDir(),
+                getMoviesDir(),
+                getNotificationsDir(),
+                getPicturesDir(),
+                getPodcastsDir(),
+                getRecordingsDir(),
+                getRingtonesDir()
+            };
         }
-        return new File[]{getAlarmsDir(), getAndroidDir(), getAudiobooksDir(), getDcimDir(),
-                getDocumentsDir(), getDownloadDir(), getMusicDir(), getMoviesDir(),
-                getNotificationsDir(), getPicturesDir(), getPodcastsDir(),
-                getRingtonesDir()};
+        return new File[] {
+            getAlarmsDir(),
+            getAudiobooksDir(),
+            getDcimDir(),
+            getDocumentsDir(),
+            getDownloadDir(),
+            getMusicDir(),
+            getMoviesDir(),
+            getNotificationsDir(),
+            getPicturesDir(),
+            getPodcastsDir(),
+            getRingtonesDir()
+        };
     }
 
     private static void assertInputStreamContent(InputStream in, byte[] expectedContent)

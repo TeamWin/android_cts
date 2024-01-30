@@ -26,6 +26,7 @@
                   android:exported="true">
             <meta-data android:name="android.app.device_admin"
                        android:resource="@xml/device_admin"/>
+            <meta-data android:name="supports-transfer-ownership" android:value="true"/>
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/>
             </intent-filter>

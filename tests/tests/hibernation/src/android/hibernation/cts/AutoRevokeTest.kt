@@ -21,6 +21,7 @@ import android.app.Instrumentation
 import android.content.Context
 import android.content.Intent
 import android.content.Intent.ACTION_AUTO_REVOKE_PERMISSIONS
+import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.PERMISSION_DENIED
@@ -28,19 +29,21 @@ import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.content.res.Resources
 import android.net.Uri
 import android.os.Build
+import android.os.Process
 import android.os.UserHandle
 import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig
 import android.safetycenter.SafetyCenterIssue
 import android.safetycenter.SafetyCenterManager
-import android.support.test.uiautomator.By
-import android.support.test.uiautomator.BySelector
-import android.support.test.uiautomator.UiObject2
-import android.support.test.uiautomator.UiObjectNotFoundException
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.test.InstrumentationRegistry
+import androidx.test.filters.FlakyTest
 import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnit4
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.BySelector
+import androidx.test.uiautomator.UiObject2
+import androidx.test.uiautomator.UiObjectNotFoundException
 import com.android.compatibility.common.util.ApiTest
 import com.android.compatibility.common.util.CddTest
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
@@ -85,9 +88,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-private const val READ_CALENDAR = "android.permission.READ_CALENDAR"
-private const val BLUETOOTH_CONNECT = "android.permission.BLUETOOTH_CONNECT"
-
 /**
  * Test for auto revoke
  */
@@ -115,6 +115,12 @@ class AutoRevokeTest {
         private const val STORE_EXACT_TIME_KEY = "permission_changes_store_exact_time"
         private const val UNUSED_APPS_SOURCE_ID = "AndroidPermissionAutoRevoke"
         private const val UNUSED_APPS_ISSUE_ID = "unused_apps_issue"
+        private const val PERMISSION_USER_SENSITIVE_FLAG =
+                PackageManager.FLAG_PERMISSION_USER_SENSITIVE_WHEN_GRANTED or
+                PackageManager.FLAG_PERMISSION_USER_SENSITIVE_WHEN_DENIED
+
+        private const val READ_CALENDAR = "android.permission.READ_CALENDAR"
+        private const val BLUETOOTH_CONNECT = "android.permission.BLUETOOTH_CONNECT"
 
         @JvmStatic
         @BeforeClass
@@ -143,6 +149,7 @@ class AutoRevokeTest {
             // picker" which may cover another UI elements on freeform window configuration.
             runShellCommandOrThrow("input keyevent 82")
         }
+        runShellCommandOrThrow("am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS")
         resetJob(context)
         bypassBatterySavingRestrictions(context)
 
@@ -167,6 +174,7 @@ class AutoRevokeTest {
 
     @AppModeFull(reason = "Uses separate apps for testing")
     @Test
+    @FlakyTest(bugId = 293171897)
     @CddTest(requirement = "3.5.2/C-1-2")
     fun testUnusedApp_getsPermissionRevoked() {
         assumeFalse(
@@ -198,8 +206,10 @@ class AutoRevokeTest {
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")
+    @FlakyTest(bugId = 293171897)
     @Test
     @CddTest(requirement = "3.5.1/C-1-1")
+    // TODO(b/238677038): In addition to flaking in general, this test also fails on R base image
     fun testUnusedApp_uninstallApp() {
         assumeFalse(
             "Unused apps screen may be unavailable on TV",
@@ -275,6 +285,7 @@ class AutoRevokeTest {
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")
+    @FlakyTest(bugId = 293171897)
     @Test
     fun testAppWithPermissionsChangedRecently_doesNotGetPermissionRevoked() {
         val unusedThreshold = 15_000L
@@ -301,6 +312,7 @@ class AutoRevokeTest {
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")
+    @FlakyTest(bugId = 293171897)
     @Test
     fun testPermissionEventCleanupService_scrubsEvents() {
         val unusedThreshold = 15_000L
@@ -360,10 +372,12 @@ class AutoRevokeTest {
         withUnusedThresholdMs(4L) {
             withDummyApp {
                 // Setup
+                val pm = context.packageManager
                 grantPermission()
                 assertPermission(PERMISSION_GRANTED)
-                startApp()
-                assertAllowlistState(false)
+                runWithShellPermissionIdentity {
+                    assertFalse(pm.isAutoRevokeWhitelisted(supportedAppPackageName))
+                }
 
                 // Verify
                 goToPermissions()
@@ -384,8 +398,9 @@ class AutoRevokeTest {
                 Thread.sleep(500L)
 
                 // Verify
-                startApp()
-                assertAllowlistState(true)
+                runWithShellPermissionIdentity {
+                    assertTrue(pm.isAutoRevokeWhitelisted(supportedAppPackageName))
+                }
                 assertPermission(PERMISSION_GRANTED)
             }
         }
@@ -443,6 +458,7 @@ class AutoRevokeTest {
 
     @AppModeFull(reason = "Uses separate apps for testing")
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    @FlakyTest(bugId = 293171897)
     @Test
     fun testAutoRevoke_showsUpInSafetyCenter() {
         assumeTrue(deviceSupportsSafetyCenter())
@@ -572,6 +588,7 @@ class AutoRevokeTest {
         assertPermission(PERMISSION_GRANTED)
         startApp()
         killDummyApp()
+        SystemUtil.waitForBroadcasts()
     }
 
     private fun startApp() {
@@ -641,6 +658,11 @@ class AutoRevokeTest {
         permission: String = READ_CALENDAR
     ) {
         instrumentation.uiAutomation.grantRuntimePermission(packageName, permission)
+        runWithShellPermissionIdentity {
+            context.packageManager.updatePermissionFlags(permission, packageName,
+                    PERMISSION_USER_SENSITIVE_FLAG, PERMISSION_USER_SENSITIVE_FLAG,
+                    Process.myUserHandle())
+        }
     }
 
     private fun assertPermission(
@@ -654,7 +676,8 @@ class AutoRevokeTest {
     private fun goToPermissions(packageName: String = supportedAppPackageName) {
         context.startActivity(Intent(ACTION_AUTO_REVOKE_PERMISSIONS)
                 .setData(Uri.fromParts("package", packageName, null))
-                .addFlags(FLAG_ACTIVITY_NEW_TASK))
+                .addFlags(FLAG_ACTIVITY_NEW_TASK)
+                .addFlags(FLAG_ACTIVITY_CLEAR_TASK))
 
         waitForIdle()
 

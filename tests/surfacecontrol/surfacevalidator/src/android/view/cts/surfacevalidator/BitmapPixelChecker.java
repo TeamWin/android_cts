@@ -18,6 +18,7 @@ package android.view.cts.surfacevalidator;
 
 import static android.view.WindowInsets.Type.displayCutout;
 import static android.view.WindowInsets.Type.systemBars;
+import static android.view.cts.surfacevalidator.CapturedActivity.STORAGE_DIR;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -86,6 +87,9 @@ public class BitmapPixelChecker {
         }
     }
 
+    /**
+     * @param expectedMatchingPixels Pass in -1 if you want all the pixels to match.
+     */
     public static void validateScreenshot(TestName testName, Activity activity,
             BitmapPixelChecker pixelChecker, int expectedMatchingPixels, Insets insets) {
         Bitmap screenshot =
@@ -104,6 +108,9 @@ public class BitmapPixelChecker {
         pixelChecker.applyInsetsToLogBounds(insets);
         Log.d(TAG, "Checking bounds " + bounds + " boundsToLog=" + pixelChecker.mBoundToLog);
         int numMatchingPixels = pixelChecker.getNumMatchingPixels(swBitmap, bounds);
+        if (expectedMatchingPixels == -1) {
+            expectedMatchingPixels = bounds.width() * bounds.height();
+        }
         boolean numMatches = expectedMatchingPixels == numMatchingPixels;
         if (!numMatches) {
             saveFailureCaptures(swBitmap, activity.getClass(), testName);
@@ -116,6 +123,7 @@ public class BitmapPixelChecker {
 
     private static void saveFailureCaptures(Bitmap failFrame, Class<?> clazz, TestName name) {
         String directoryName = Environment.getExternalStorageDirectory()
+                + "/" + STORAGE_DIR
                 + "/" + clazz.getSimpleName()
                 + "/" + name.getMethodName();
         File testDirectory = new File(directoryName);

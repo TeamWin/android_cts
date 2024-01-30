@@ -22,7 +22,6 @@ android_test_helper_app {
     static_libs: [
         "cts-install-lib",
         "androidx.test.rules",
-        "Nene",
     ],
     srcs: ["src/**/*.java"],
     test_suites: [

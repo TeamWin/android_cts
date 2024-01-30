@@ -24,9 +24,11 @@ import android.util.TypedValue;
 import android.widget.EditText;
 
 import androidx.test.annotation.UiThreadTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -54,6 +56,9 @@ public class ReplacementTransformationMethodTest {
     @UiThreadTest
     @Before
     public void setup() throws Throwable {
+        CtsActivity activity = mActivityRule.getActivity();
+        WindowUtil.waitForFocus(activity);
+
         mEditText = new EditTextNoIme(mActivityRule.getActivity());
         mEditText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
     }

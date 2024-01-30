@@ -37,6 +37,8 @@ import android.util.Range;
 import android.util.Rational;
 import android.util.Size;
 
+import com.android.internal.camera.flags.Flags;
+
 import junit.framework.Assert;
 
 import java.lang.reflect.Array;
@@ -619,6 +621,48 @@ public class StaticMetadata {
         }
 
         return hasFlash;
+    }
+
+    public Boolean isManualFlashStrengthControlSupported() {
+        if (Flags.cameraManualFlashStrengthControl()) {
+            Key<Boolean> key = CameraCharacteristics.FLASH_INFO_AVAILABLE;
+            Boolean hasFlash = getValueFromKeyNonNull(key);
+            Key<Integer> singleMaxLevelKey = CameraCharacteristics.FLASH_SINGLE_STRENGTH_MAX_LEVEL;
+            Integer singleMaxLevel = getValueFromKeyNonNull(singleMaxLevelKey);
+            Key<Integer> torchMaxLevelKey = CameraCharacteristics.FLASH_TORCH_STRENGTH_MAX_LEVEL;
+            Integer torchMaxLevel = getValueFromKeyNonNull(torchMaxLevelKey);
+            if (hasFlash && (singleMaxLevel > 1) && (torchMaxLevel > 1)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks if low light boost is available as an AE mode and the luminance range is defined
+     */
+    public Boolean isAeModeLowLightBoostSupported() {
+        if (Flags.cameraAeModeLowLightBoost()) {
+            boolean hasAeModeLowLightBoost = false;
+            Key<int[]> keyAeAvailableModes = CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES;
+            int[] aeAvailableModes = getValueFromKeyNonNull(keyAeAvailableModes);
+            for (int aeMode : aeAvailableModes) {
+                if (aeMode
+                        == CameraMetadata.CONTROL_AE_MODE_ON_LOW_LIGHT_BOOST_BRIGHTNESS_PRIORITY) {
+                    hasAeModeLowLightBoost = true;
+                    break;
+                }
+            }
+
+            if (hasAeModeLowLightBoost) {
+                Key<Range<Float>> keyLowLightBoostLuminanceRange =
+                        CameraCharacteristics.CONTROL_LOW_LIGHT_BOOST_INFO_LUMINANCE_RANGE;
+                Range<Float> lowLightBoostLuminanceRange =
+                        getValueFromKeyNonNull(keyLowLightBoostLuminanceRange);
+                return lowLightBoostLuminanceRange != null;
+            }
+        }
+        return false;
     }
 
     public int[] getAvailableTestPatternModesChecked() {

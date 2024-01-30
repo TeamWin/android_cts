@@ -238,6 +238,11 @@ public class ActivityManagerTest extends StsExtraBusinessLogicTestCase {
                     SurfaceControl.Transaction t, IBinder mergeTarget,
                     IRemoteTransitionFinishedCallback finishCallback) throws RemoteException {
             }
+
+            @Override
+            public void onTransitionConsumed(IBinder transition, boolean aborted)
+                throws RemoteException {
+            }
         });
         ActivityOptions opts = ActivityOptions.makeRemoteTransition(someRemote);
         assertTrue(waitUntil(() -> baseActivity.mResumed));
@@ -281,6 +286,11 @@ public class ActivityManagerTest extends StsExtraBusinessLogicTestCase {
                     SurfaceControl.Transaction t, IBinder mergeTarget,
                     IRemoteTransitionFinishedCallback finishCallback) throws RemoteException {
                 remoteCalled[0] = true;
+            }
+
+            @Override
+            public void onTransitionConsumed(IBinder transition, boolean aborted)
+                throws RemoteException {
             }
         });
         ActivityOptions opts = ActivityOptions.makeRemoteTransition(someRemote);

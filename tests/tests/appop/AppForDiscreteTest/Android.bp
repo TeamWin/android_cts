@@ -18,6 +18,10 @@ package {
 
 android_test_helper_app {
     name: "AppForDiscreteTest",
+    defaults: [
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
 
     srcs: ["src/**/*.kt"],
 
@@ -29,5 +33,5 @@ android_test_helper_app {
         "cts",
         "general-tests",
         "mts",
-    ]
+    ],
 }

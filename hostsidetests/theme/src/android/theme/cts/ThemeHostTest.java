@@ -16,8 +16,6 @@
 
 package android.theme.cts;
 
-import android.platform.test.annotations.RequiresDevice;
-
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.CollectingOutputReceiver;
@@ -224,12 +222,39 @@ public class ThemeHostTest extends DeviceTestCase {
         // Stop any existing instances.
         mDevice.executeShellCommand(STOP_CMD);
 
-        // Start instrumentation test.
-        final CollectingOutputReceiver receiver = new CollectingOutputReceiver();
-        mDevice.executeShellCommand(START_CMD, receiver, TEST_RESULT_TIMEOUT,
-                TimeUnit.MILLISECONDS, 0);
-
-        return receiver.getOutput().contains("OK ");
+        // try a maximum of 3 times
+        for (int i = 0; i < 3; i++) {
+            final CollectingOutputReceiver receiver = new CollectingOutputReceiver();
+            final Exception[] exception = new Exception[1];
+            Thread thread = new Thread(() -> {
+                // Start instrumentation test.
+                try {
+                    mDevice.executeShellCommand(START_CMD, receiver, TEST_RESULT_TIMEOUT,
+                            TimeUnit.MILLISECONDS, 0);
+                } catch (Exception e) {
+                    exception[0] = e;
+                }
+            });
+            thread.start();
+            try {
+                // Wait 30 seconds to see if the test starts.
+                thread.join(30_000);
+            } catch (InterruptedException e) {
+                // will retry if the test failed to start
+            }
+            if (exception[0] != null) {
+                throw exception[0];
+            }
+            if (!receiver.getOutput().contains("ReferenceImagesTest")) {
+                // Stop the test and try again
+                mDevice.executeShellCommand(STOP_CMD);
+                thread.join();
+            } else {
+                thread.join(); // test was started, so wait for it to finish
+                return receiver.getOutput().contains("OK ");
+            }
+        }
+        return false; // Tried 3 times and failed to execute it all 3 times
     }
 
     private static String getDensityBucketForDevice(ITestDevice device) {

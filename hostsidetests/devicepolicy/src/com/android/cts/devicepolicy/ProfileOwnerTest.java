@@ -59,23 +59,8 @@ public final class ProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testAdminActionBookkeeping() throws Exception {
-        executeProfileOwnerTest("AdminActionBookkeepingTest");
-    }
-
-    @Test
-    public void testAppUsageObserver() throws Exception {
-        executeProfileOwnerTest("AppUsageObserverTest");
-    }
-
-    @Test
     public void testDevicePolicySafetyCheckerIntegration_allOperations() throws Exception {
         executeDevicePolicySafetyCheckerIntegrationTest("testAllOperations");
-    }
-
-    @Test
-    public void testDevicePolicySafetyCheckerIntegration_isSafeOperation() throws Exception {
-        executeDevicePolicySafetyCheckerIntegrationTest("testIsSafeOperation");
     }
 
     @Test

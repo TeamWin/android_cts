@@ -16,10 +16,9 @@
 
 package android.server.wm.jetpack;
 
-import static android.server.wm.jetpack.utils.ExtensionUtil.EXTENSION_VERSION_1;
-import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
-import static android.server.wm.jetpack.utils.ExtensionUtil.getExtensionVersion;
-
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.EXTENSION_VERSION_1;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.assumeExtensionSupportedDevice;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.getExtensionVersion;
 import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.Presubmit;

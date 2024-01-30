@@ -63,7 +63,8 @@ class ModifierKeyRemappingTest {
             KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_SHIFT_RIGHT, KeyEvent.KEYCODE_CAPS_LOCK
         )
 
-        val KEY_ALT_LEFT = 56
+        // Linux keycode defined in the "linux/input-event-codes.h" header.
+        val KEY_LEFTALT = 56
     }
 
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -180,8 +181,8 @@ class ModifierKeyRemappingTest {
             PollingCheck.waitFor { getModifierKeyRemapping().size == 1 }
             activity.assertNoEvents()
 
-            injectKeyDown(keyboardDevice, KEY_ALT_LEFT)
-            injectKeyUp(keyboardDevice, KEY_ALT_LEFT)
+            injectKeyDown(keyboardDevice, KEY_LEFTALT)
+            injectKeyUp(keyboardDevice, KEY_LEFTALT)
 
             assertReceivedEventsCorrectlyMapped(2, KeyEvent.KEYCODE_SHIFT_LEFT)
 
@@ -189,8 +190,8 @@ class ModifierKeyRemappingTest {
             // Wait for handler to execute and clear all remappings
             PollingCheck.waitFor { getModifierKeyRemapping().isEmpty() }
 
-            injectKeyDown(keyboardDevice, KEY_ALT_LEFT)
-            injectKeyUp(keyboardDevice, KEY_ALT_LEFT)
+            injectKeyDown(keyboardDevice, KEY_LEFTALT)
+            injectKeyUp(keyboardDevice, KEY_LEFTALT)
 
             assertReceivedEventsCorrectlyMapped(2, KeyEvent.KEYCODE_ALT_LEFT)
 
@@ -215,8 +216,8 @@ class ModifierKeyRemappingTest {
             PollingCheck.waitFor { inputManager.getInputDevice(keyboardDevice.deviceId) != null }
             activity.assertNoEvents()
 
-            injectKeyDown(keyboardDevice, KEY_ALT_LEFT)
-            injectKeyUp(keyboardDevice, KEY_ALT_LEFT)
+            injectKeyDown(keyboardDevice, KEY_LEFTALT)
+            injectKeyUp(keyboardDevice, KEY_LEFTALT)
 
             assertReceivedEventsCorrectlyMapped(2, KeyEvent.KEYCODE_SHIFT_LEFT)
 
@@ -224,8 +225,8 @@ class ModifierKeyRemappingTest {
             // Wait for handler to execute and clear all remappings
             PollingCheck.waitFor { getModifierKeyRemapping().isEmpty() }
 
-            injectKeyDown(keyboardDevice, KEY_ALT_LEFT)
-            injectKeyUp(keyboardDevice, KEY_ALT_LEFT)
+            injectKeyDown(keyboardDevice, KEY_LEFTALT)
+            injectKeyUp(keyboardDevice, KEY_LEFTALT)
 
             assertReceivedEventsCorrectlyMapped(2, KeyEvent.KEYCODE_ALT_LEFT)
 

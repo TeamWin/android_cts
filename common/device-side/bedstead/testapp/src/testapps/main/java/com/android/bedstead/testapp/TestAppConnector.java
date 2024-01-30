@@ -24,15 +24,21 @@ import com.google.android.enterprise.connectedapps.annotations.CustomProfileConn
 import com.google.android.enterprise.connectedapps.annotations.GeneratedProfileConnector;
 import com.google.android.enterprise.connectedapps.annotations.UncaughtExceptionsPolicy;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
 /** Connector for use for communication with Test Apps. */
 @GeneratedProfileConnector
 @CustomProfileConnector(uncaughtExceptionsPolicy = UncaughtExceptionsPolicy.NOTIFY_SUPPRESS)
 public interface TestAppConnector extends ProfileConnector {
 
+    ScheduledExecutorService EXECUTOR_SERVICE = Executors.newSingleThreadScheduledExecutor();
+
     /** Create {@link TestAppConnector}. */
     static TestAppConnector create(Context context, ConnectionBinder binder) {
         return GeneratedTestAppConnector.builder(context)
                 .setBinder(binder)
+//                .setScheduledExecutorService(EXECUTOR_SERVICE)
                 .build();
     }
 }

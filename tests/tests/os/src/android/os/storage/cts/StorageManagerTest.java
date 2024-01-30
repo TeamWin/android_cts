@@ -49,6 +49,7 @@ import android.os.storage.StorageManager;
 import android.os.storage.StorageManager.StorageVolumeCallback;
 import android.os.storage.StorageVolume;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.provider.DeviceConfig;
 import android.system.ErrnoException;
 import android.system.Os;
@@ -93,6 +94,7 @@ import java.util.stream.Collectors;
 // TODO(b/278069249): Investigate why the order matters, and possibly remove the annotation.
 @RunWith(AndroidJUnit4.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class StorageManagerTest {
 
     private static final String TAG = StorageManager.class.getSimpleName();

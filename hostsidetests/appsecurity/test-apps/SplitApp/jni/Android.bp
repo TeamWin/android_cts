@@ -86,7 +86,6 @@ cc_test_library {
     ],
 }
 
-
 TARGET_TEST_SUITES = [
     "cts",
     "general-tests",

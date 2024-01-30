@@ -258,7 +258,11 @@ public class ActivityLauncher {
         try {
             if (getBoolean(extras, KEY_LAUNCH_PENDING)) {
                 PendingIntent pendingIntent = PendingIntent.getActivity(launchContext,
-                        0, newIntent, PendingIntent.FLAG_IMMUTABLE);
+                        0, newIntent, PendingIntent.FLAG_IMMUTABLE,
+                        ActivityOptions.makeBasic()
+                                .setPendingIntentCreatorBackgroundActivityStartMode(
+                                        ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
+                                .toBundle());
                 pendingIntent.send();
             } else {
                 launchContext.startActivity(newIntent, optionsBundle);

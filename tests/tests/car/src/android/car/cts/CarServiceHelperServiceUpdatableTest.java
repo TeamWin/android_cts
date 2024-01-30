@@ -28,8 +28,6 @@ import static org.junit.Assume.assumeThat;
 
 import android.app.UiAutomation;
 import android.car.Car;
-import android.car.annotation.ApiRequirements;
-import android.car.test.ApiCheckerRule.IgnoreInvalidApi;
 import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.car.user.CarUserManager;
 import android.car.user.CarUserManager.UserLifecycleEvent;
@@ -42,7 +40,7 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.SystemUtil;
@@ -70,10 +68,7 @@ public final class CarServiceHelperServiceUpdatableTest extends AbstractCarTestC
     }
 
     @Test
-    @ApiTest(apis = {"com.android.internal.car.CarServiceHelperService#dump(PrintWriter,String[])"})
-    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
+    @ApiTest(apis = {"com.android.internal.car.CarServiceHelperService#dump"})
     public void testCarServiceHelperServiceDump() throws Exception {
         assumeSystemServerDumpSupported();
 
@@ -84,11 +79,8 @@ public final class CarServiceHelperServiceUpdatableTest extends AbstractCarTestC
 
     @Test
     @ApiTest(apis = {
-            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
+            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump"
     })
-    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     public void testCarServiceHelperServiceDump_carServiceProxy() throws Exception {
         assumeSystemServerDumpSupported();
 
@@ -99,11 +91,8 @@ public final class CarServiceHelperServiceUpdatableTest extends AbstractCarTestC
 
     @Test
     @ApiTest(apis = {
-            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
+            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump"
     })
-    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     public void testCarServiceHelperServiceDump_serviceStacks() throws Exception {
         assumeSystemServerDumpSupported();
 

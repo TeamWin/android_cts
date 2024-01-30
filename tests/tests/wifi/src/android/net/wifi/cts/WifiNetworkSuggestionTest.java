@@ -148,6 +148,9 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
                 () -> sWifiManager.isScanThrottleEnabled());
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> sWifiManager.setScanThrottleEnabled(false));
+        // turn screen on
+        sTestHelper.turnScreenOn();
+
 
         // enable Wifi
         sWasWifiEnabled = ShellIdentityUtils.invokeWithShellPermissions(
@@ -205,8 +208,6 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     public void setUp() throws Exception {
         assumeTrue(sShouldRunTest);
         mExecutorService = Executors.newSingleThreadScheduledExecutor();
-        // turn screen on
-        sTestHelper.turnScreenOn();
 
         // Disconnect current network if any.
         ShellIdentityUtils.invokeWithShellPermissions(
@@ -219,10 +220,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
                 () -> sWifiManager.getConnectionInfo().getNetworkId() == -1);
 
         // Clear any existing app state before each test.
-        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(sContext)) {
-            ShellIdentityUtils.invokeWithShellPermissions(
-                    () -> sWifiManager.removeAppState(myUid(), sContext.getPackageName()));
-        }
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.removeAppState(myUid(), sContext.getPackageName()));
     }
 
     @After
@@ -234,11 +233,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
         }
         mExecutorService.shutdownNow();
         // Clear any existing app state after each test.
-        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(sContext)) {
-            ShellIdentityUtils.invokeWithShellPermissions(
-                    () -> sWifiManager.removeAppState(myUid(), sContext.getPackageName()));
-        }
-        sTestHelper.turnScreenOff();
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.removeAppState(myUid(), sContext.getPackageName()));
     }
 
     private static final String CA_SUITE_B_RSA3072_CERT_STRING =

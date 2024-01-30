@@ -38,9 +38,12 @@ import android.telecom.CallAttributes;
 import android.telecom.CallControl;
 import android.telecom.CallException;
 import android.telecom.PhoneAccount;
+import android.telecom.StreamingCall;
 import android.telecom.cts.streamingtestapp.CtsCallStreamingService;
 import android.telecom.cts.streamingtestapp.ICtsCallStreamingServiceControl;
 import android.util.Log;
+
+import com.android.server.telecom.flags.Flags;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -158,7 +161,13 @@ public class CallStreamingTest extends BaseTelecomTestWithMockServices {
         Bundle theExtras = bundle.getBundle(CtsCallStreamingService.EXTRA_CALL_EXTRAS);
 
         // Verify that the StreamingCall got the right call ID.
-        assertEquals(callId[0].toString(), theExtras.getString("android.telecom.extra.CALL_ID"));
+        if (Flags.callDetailsIdChanges()){
+            assertEquals(callId[0].toString(),
+                    theExtras.getString(StreamingCall.EXTRA_CALL_ID));
+        } else {
+            assertEquals(callId[0].toString(),
+                    theExtras.getString("android.telecom.extra.CALL_ID"));
+        }
 
         // confirm the audio mode is for comm redirect
         AudioManager audioManager = mContext.getSystemService(AudioManager.class);

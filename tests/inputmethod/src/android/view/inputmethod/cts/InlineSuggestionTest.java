@@ -24,6 +24,7 @@ import static org.testng.Assert.assertThrows;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Size;
 import android.view.inputmethod.InlineSuggestion;
 import android.view.inputmethod.InlineSuggestionInfo;
@@ -42,6 +43,7 @@ import java.util.function.Consumer;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class InlineSuggestionTest {
     private static final String TAG = "InlineSuggestionTest";
 

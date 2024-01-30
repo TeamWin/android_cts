@@ -17,8 +17,8 @@
 package com.android.cts.managedprofile;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Primitives;
 
 import org.w3c.dom.Document;
@@ -26,7 +26,10 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.util.zip.GZIPInputStream;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -42,7 +45,8 @@ public class CurrentApiHelper {
      * <p><b>Note:</b> must be consistent with
      * {@code cts/hostsidetests/devicepolicy/AndroidTest.xml}
      */
-    private static final String CURRENT_API_FILE = "/data/local/tmp/device-policy-test/current.api";
+    private static final String CURRENT_API_FILE =
+            "/data/local/tmp/device-policy-test/current.api.gz";
 
     private static final String LOG_TAG = "CurrentApiHelper";
 
@@ -124,9 +128,10 @@ public class CurrentApiHelper {
 
     private static Document parseXmlFile(String filePath) throws Exception {
         File apiFile = new File(filePath);
+        InputStream input = new GZIPInputStream(new FileInputStream(apiFile));
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
-        Document dom = db.parse(apiFile.toURI().toString());
+        Document dom = db.parse(input);
 
         return dom;
     }

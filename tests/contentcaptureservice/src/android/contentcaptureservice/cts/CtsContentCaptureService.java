@@ -276,8 +276,8 @@ public class CtsContentCaptureService extends ContentCaptureService {
             mOnDisconnectListener = null;
             latch.countDown();
         }
-        sw.mDestroyed.countDown();
         clearServiceWatcher();
+        sw.mDestroyed.countDown();
     }
 
     /**

@@ -176,7 +176,7 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
     }
 
     @Test
-    public void testRequestPinAppWidgetNotAllBal() throws Exception {
+    public void testRequestPinAppWidgetNotAllowBal() throws Exception {
         String launcherPkg = "android.appwidget.cts.packages.launcher1";
         setLauncher(launcherPkg + "/" + LAUNCHER_CLASS);
         Context context = getInstrumentation().getContext();
@@ -205,9 +205,9 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
         SystemUtil.runWithShellPermissionIdentity(ActivityManager::resumeAppSwitches);
 
         boolean result = false;
-        // The background activity will be launched 30s after the BalService starts. The
+        // The background activity will be launched 11s after the BalService starts. The
         // waitForFocusedActivity only waits for 5s. So put it in a for loop.
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 5; i++) {
             result = mWmState.waitForFocusedActivity(
                     "Empty Activity is launched", new ComponentName(context, EmptyActivity.class));
             if (result) break;

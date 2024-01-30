@@ -40,6 +40,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Size;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -53,6 +54,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ContentResolverWrapTest {
     private static final String AUTHORITY = "com.example";
     private static final Uri URI = Uri.parse("content://" + AUTHORITY);

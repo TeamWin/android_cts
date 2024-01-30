@@ -34,6 +34,7 @@ import androidx.test.uiautomator.UiScrollable;
 import androidx.test.uiautomator.UiSelector;
 import androidx.test.uiautomator.Until;
 
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 public class UiAutomatorUtils2 {
@@ -45,7 +46,7 @@ public class UiAutomatorUtils2 {
     private static final double DEFAULT_SWIPE_DEADZONE_PCT_TV       = 0.1f;
     private static final double DEFAULT_SWIPE_DEADZONE_PCT_ALL      = 0.25f;
     /**
-     * On Wear, some cts tests like CtsPermission3TestCases that run on
+     * On Wear, some cts tests like CtsPermissionUiTestCases that run on
      * low performance device. Keep 0.05 to have better matching.
      */
     private static final double DEFAULT_SWIPE_DEADZONE_PCT_WEAR     = 0.05f;
@@ -58,6 +59,40 @@ public class UiAutomatorUtils2 {
 
     public static UiDevice getUiDevice() {
         return UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+    }
+
+    private static int convertDpToPx(float dp) {
+        return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp,
+                ApplicationProvider.getApplicationContext().getResources().getDisplayMetrics()));
+    }
+
+    private static double getSwipeDeadZonePct() {
+        if (FeatureUtil.isTV()) {
+            return DEFAULT_SWIPE_DEADZONE_PCT_TV;
+        } else if (FeatureUtil.isWatch()) {
+            return DEFAULT_SWIPE_DEADZONE_PCT_WEAR;
+        } else {
+            return DEFAULT_SWIPE_DEADZONE_PCT_ALL;
+        }
+    }
+
+    public static void waitUntilObjectGone(BySelector selector) {
+        waitUntilObjectGone(selector, 20_000);
+    }
+
+    public static void waitUntilObjectGone(BySelector selector, long timeoutMs) {
+        try {
+            if (getUiDevice().wait(Until.gone(selector), timeoutMs)) {
+                return;
+            }
+        } catch (StaleObjectException exception) {
+            // UiDevice.wait() may cause StaleObjectException if the {@link View} attached to
+            // UiObject2 is no longer in the view tree.
+            return;
+        }
+
+        throw new RuntimeException("view " + selector + " is still visible after " + timeoutMs
+                + "ms");
     }
 
     public static UiObject2 waitFindObject(BySelector selector) throws UiObjectNotFoundException {
@@ -77,21 +112,6 @@ public class UiAutomatorUtils2 {
     public static UiObject2 waitFindObjectOrNull(BySelector selector)
             throws UiObjectNotFoundException {
         return waitFindObjectOrNull(selector, 20_000);
-    }
-
-    private static int convertDpToPx(float dp) {
-        return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp,
-                ApplicationProvider.getApplicationContext().getResources().getDisplayMetrics()));
-    }
-
-    private static double getSwipeDeadZonePct() {
-        if (FeatureUtil.isTV()) {
-            return DEFAULT_SWIPE_DEADZONE_PCT_TV;
-        } else if (FeatureUtil.isWatch()) {
-            return DEFAULT_SWIPE_DEADZONE_PCT_WEAR;
-        } else {
-            return DEFAULT_SWIPE_DEADZONE_PCT_ALL;
-        }
     }
 
     public static UiObject2 waitFindObjectOrNull(BySelector selector, long timeoutMs)
@@ -140,7 +160,19 @@ public class UiAutomatorUtils2 {
                         scrolledPastCollapsibleToolbar = false;
                     } else {
                         Rect boundsBeforeScroll = scrollable.getBounds();
-                        boolean scrollAtStartOrEnd = !scrollable.scrollForward();
+                        boolean scrollAtStartOrEnd;
+                        boolean isWearCompose = FeatureUtil.isWatch() && Objects.equals(
+                                scrollable.getPackageName(),
+                                InstrumentationRegistry.getInstrumentation().getContext()
+                                        .getPackageManager().getPermissionControllerPackageName());
+                        if (isWearCompose) {
+                            // TODO(b/306483780): Removed the condition once the scrollForward is
+                            //  fixed.
+                            scrollable.scrollForward();
+                            scrollAtStartOrEnd = false;
+                        } else {
+                            scrollAtStartOrEnd = !scrollable.scrollForward();
+                        }
                         // The scrollable view may no longer be scrollable after the toolbar is
                         // collapsed.
                         if (scrollable.exists()) {
@@ -172,7 +204,7 @@ public class UiAutomatorUtils2 {
         if (scrollable != null && scrollable.exists()) {
             final Rect scrollableBounds = scrollable.getVisibleBounds();
             final int distanceToSwipe = collapsingToolbar.getVisibleBounds().height() / 2;
-            getUiDevice().drag(scrollableBounds.centerX(), scrollableBounds.centerY(),
+            getUiDevice().swipe(scrollableBounds.centerX(), scrollableBounds.centerY(),
                     scrollableBounds.centerX(), scrollableBounds.centerY() - distanceToSwipe,
                     steps);
         } else {

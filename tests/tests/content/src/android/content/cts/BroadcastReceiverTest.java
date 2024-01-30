@@ -34,6 +34,7 @@ import android.os.FileUtils;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.ActivityInstrumentationTestCase2;
 
 import androidx.test.InstrumentationRegistry;
@@ -51,6 +52,7 @@ import java.util.concurrent.TimeUnit;
  * Test {@link BroadcastReceiver}.
  * TODO:  integrate the existing tests.
  */
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<MockActivity> {
     private static final int RESULT_INITIAL_CODE = 1;
     private static final String RESULT_INITIAL_DATA = "initial data";

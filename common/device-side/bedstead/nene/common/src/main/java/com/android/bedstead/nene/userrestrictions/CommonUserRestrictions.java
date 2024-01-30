@@ -94,6 +94,9 @@ public final class CommonUserRestrictions {
     /** See {@code android.os.UserManager#DISALLOW_ADD_CLONE_PROFILE} */
     public static final String DISALLOW_ADD_CLONE_PROFILE = "no_add_clone_profile";
 
+    /** See {@code android.os.UserManager#DISALLOW_ADD_PRIVATE_PROFILE} */
+    public static final String DISALLOW_ADD_PRIVATE_PROFILE = "no_add_private_profile";
+
     /** See {@code android.os.UserManager#ENSURE_VERIFY_APPS} */
     public static final String ENSURE_VERIFY_APPS = "ensure_verify_apps";
 
@@ -276,6 +279,7 @@ public final class CommonUserRestrictions {
             DISALLOW_ADD_USER,
             DISALLOW_ADD_MANAGED_PROFILE,
             DISALLOW_ADD_CLONE_PROFILE,
+            DISALLOW_ADD_PRIVATE_PROFILE,
             ENSURE_VERIFY_APPS,
             DISALLOW_CONFIG_CELL_BROADCASTS,
             DISALLOW_CONFIG_MOBILE_NETWORKS,

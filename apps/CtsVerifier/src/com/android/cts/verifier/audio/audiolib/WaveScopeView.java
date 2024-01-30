@@ -31,11 +31,12 @@ public class WaveScopeView extends View {
 
     private int mBackgroundColor = Color.WHITE;
     private int mTraceColor = Color.BLACK;
+    private int mLimitsColor = Color.YELLOW;
+    private int mZeroColor = Color.RED;
     private int mTextColor = Color.CYAN;
 
     private float mDisplayFontSize = 32f;
 
-    private short[] mPCM16Buffer;
     private float[] mPCMFloatBuffer;
 
     private int mNumChannels = 2;
@@ -45,6 +46,9 @@ public class WaveScopeView extends View {
     private boolean mDisplayMaxMagnitudes = false;
     private boolean mDisplayPersistentMaxMagnitude = false;
     private float mPersistentMaxMagnitude;
+    private boolean mDisplayLimits = false;
+    private boolean mDisplayZero = false;
+    private float mVerticalInset = 10.0f;
 
     private float[] mPointsBuffer;
 
@@ -58,7 +62,17 @@ public class WaveScopeView extends View {
     @Override
     public void setBackgroundColor(int color) { mBackgroundColor = color; }
 
-    public void setTraceColor(int color) { mTraceColor = color; }
+    public void setTraceColor(int color) {
+        mTraceColor = color;
+    }
+
+    public void setLimitsColor(int color) {
+        mLimitsColor = color;
+    }
+
+    public void setZeroColor(int color) {
+        mZeroColor = color;
+    }
 
     public boolean getDisplayBufferSize() {
         return mDisplayBufferSize;
@@ -76,6 +90,14 @@ public class WaveScopeView extends View {
         mDisplayPersistentMaxMagnitude = display;
     }
 
+    public void setDisplayLimits(boolean display) {
+        mDisplayLimits = display;
+    }
+
+    public void setDisplayZero(boolean display) {
+        mDisplayZero = display;
+    }
+
     /**
      * Clears persistent max magnitude so a new value can be calculated.
      */
@@ -83,21 +105,8 @@ public class WaveScopeView extends View {
         mPersistentMaxMagnitude = 0.0f;
     }
 
-    public void setPCM16Buff(short[] smpl16Buff, int numChans, int numFrames) {
-        mPCM16Buffer = smpl16Buff;
-        mPCMFloatBuffer = null;
-
-        mNumChannels = numChans;
-        mNumFrames = numFrames;
-
-        setupPointBuffer();
-
-        invalidate();
-    }
-
     public void setPCMFloatBuff(float[] smplFloatBuff, int numChans, int numFrames) {
         mPCMFloatBuffer = smplFloatBuff;
-        mPCM16Buffer = null;
 
         mNumChannels = numChans;
         mNumFrames = numFrames;
@@ -127,8 +136,10 @@ public class WaveScopeView extends View {
         }
 
         // Canvas.drawLines() uses 2 points (float pairs) per line-segment
-        mPointsBuffer = new float[mNumFrames * 4];
-
+        // Only reallocate if we need more space.
+        if (mPointsBuffer == null || (mNumFrames * 4) > mPointsBuffer.length) {
+            mPointsBuffer = new float[mNumFrames * 4];
+        }
         float xIncr = (float) width / (float) mNumFrames;
 
         float X = 0;
@@ -145,70 +156,6 @@ public class WaveScopeView extends View {
     }
 
     /**
-     * Draws 1 channel of an interleaved block of SMPL16 samples.
-     * @param cvs The Canvas to draw into.
-     * @param samples The (potentially) multi-channel sample block.
-     * @param numFrames The number of FRAMES in the specified sample block.
-     * @param numChans The number of interleaved channels in the specified sample block.
-     * @param chanIndex The (0-based) index of the channel to draw.
-     * @param zeroY The Y-coordinate of sample value 0 (zero).
-     */
-    private void drawChannel16(Canvas cvs, short[] samples, int numFrames, int numChans,
-            int chanIndex, float zeroY) {
-        float yScale = getHeight() / (float) (Short.MAX_VALUE * 2 * numChans);
-        int pntIndex = 1; // of the first Y coordinate
-        float Y = zeroY;
-        int smplIndex = chanIndex;
-        if (numFrames > mNumFrames) {
-            // This shouldn't happen, but there could be a race condition where a callback
-            // with a larger frame count comes around after changing this view in anticipation
-            // of a smaller count
-            numFrames = mNumFrames;
-        }
-        if (mDisplayMaxMagnitudes) {
-            short maxMagnitude = 0;
-            for (int frame = 0; frame < numFrames; frame++) {
-                mPointsBuffer[pntIndex] = Y;
-                pntIndex += 2;
-
-                short smpl = samples[smplIndex];
-                if (smpl > maxMagnitude) {
-                    maxMagnitude = smpl;
-                } else if (-smpl > maxMagnitude) {
-                    maxMagnitude = (short) -smpl;
-                }
-
-                Y = zeroY - (smpl * yScale);
-
-                mPointsBuffer[pntIndex] = Y;
-                pntIndex += 2;
-
-                smplIndex += numChans;
-            }
-            mPaint.setColor(mTextColor);
-            mPaint.setTextSize(mDisplayFontSize);
-            cvs.drawText("" + maxMagnitude, 0, zeroY, mPaint);
-
-            mPaint.setColor(mTraceColor);
-            cvs.drawLines(mPointsBuffer, mPaint);
-        } else {
-            for (int frame = 0; frame < numFrames; frame++) {
-                mPointsBuffer[pntIndex] = Y;
-                pntIndex += 2;
-
-                Y = zeroY - (samples[smplIndex] * yScale);
-
-                mPointsBuffer[pntIndex] = Y;
-                pntIndex += 2;
-
-                smplIndex += numChans;
-            }
-            mPaint.setColor(mTraceColor);
-            cvs.drawLines(mPointsBuffer, mPaint);
-        }
-    }
-
-    /**
      * Draws 1 channel of an interleaved block of FLOAT samples.
      * @param cvs The Canvas to draw into.
      * @param samples The (potentially) multi-channel sample block.
@@ -217,23 +164,32 @@ public class WaveScopeView extends View {
      * @param chanIndex The (0-based) index of the channel to draw.
      * @param zeroY The Y-coordinate of sample value 0 (zero).
      */
+    private static final int FLOATS_PER_POINT = 2;
     private void drawChannelFloat(Canvas cvs, float[] samples, int numFrames, int numChans,
             int chanIndex, float zeroY) {
-        float yScale = getHeight() / (float) (2 * numChans);
-        int pntIndex = 1; // of the first Y coordinate
-        float Y = zeroY;
-        int smplIndex = chanIndex;
-        if (numFrames > mNumFrames) {
-            // This shouldn't happen, but there could be a race condition where a callback
-            // with a larger frame count comes around after changing this view in anticipation
-            // of a smaller count
-            numFrames = mNumFrames;
+
+        float height = getHeight() - mVerticalInset * 2.0f * (float) numChans;
+        zeroY +=  mVerticalInset;
+
+        if (mDisplayZero) {
+            mPaint.setColor(mZeroColor);
+            float endX = mPointsBuffer[mPointsBuffer.length - FLOATS_PER_POINT];
+            cvs.drawLine(0, zeroY, endX, zeroY, mPaint);
         }
+
+        // 2 here is the range between MIN_FLOAT_SAMPLE (-1.0) and MAX_FLOAT_SAMPLE (1.0)
+        float yScale = height / (float) (2 * numChans);
+        int pntIndex = 1; // of the first Y coordinate
+        int smplIndex = chanIndex;
+        float yCoord = zeroY - (samples[smplIndex] * yScale);
+        // use a local reference to the points in case a realloc rolls around.
+        float[] localPointsBuffer = mPointsBuffer;
         if (mDisplayMaxMagnitudes) {
             float maxMagnitude = 0f;
+            // ensure we don't step past the end of the points buffer
             for (int frame = 0; frame < numFrames; frame++) {
-                mPointsBuffer[pntIndex] = Y;
-                pntIndex += 2;
+                localPointsBuffer[pntIndex] = yCoord;
+                pntIndex += FLOATS_PER_POINT;
 
                 float smpl = samples[smplIndex];
                 if (smpl > maxMagnitude) {
@@ -242,33 +198,33 @@ public class WaveScopeView extends View {
                     maxMagnitude = -smpl;
                 }
 
-                Y = zeroY - (smpl * yScale);
+                yCoord = zeroY - (smpl * yScale);
 
-                mPointsBuffer[pntIndex] = Y;
-                pntIndex += 2;
+                localPointsBuffer[pntIndex] = yCoord;
+                pntIndex += FLOATS_PER_POINT;
 
                 smplIndex += numChans;
             }
             mPaint.setColor(mTextColor);
             mPaint.setTextSize(mDisplayFontSize);
-            cvs.drawText("" + maxMagnitude, 0, zeroY, mPaint);
+            cvs.drawText(String.format("%.2f", maxMagnitude), 0, zeroY, mPaint);
 
             mPaint.setColor(mTraceColor);
-            cvs.drawLines(mPointsBuffer, mPaint);
+            cvs.drawLines(localPointsBuffer, mPaint);
         } else {
             for (int frame = 0; frame < numFrames; frame++) {
-                mPointsBuffer[pntIndex] = Y;
-                pntIndex += 2;
+                localPointsBuffer[pntIndex] = yCoord;
+                pntIndex += FLOATS_PER_POINT;
 
-                Y = zeroY - (samples[smplIndex] * yScale);
+                yCoord = zeroY - (samples[smplIndex] * yScale);
 
-                mPointsBuffer[pntIndex] = Y;
-                pntIndex += 2;
+                localPointsBuffer[pntIndex] = yCoord;
+                pntIndex += FLOATS_PER_POINT;
 
                 smplIndex += numChans;
             }
             mPaint.setColor(mTraceColor);
-            cvs.drawLines(mPointsBuffer, mPaint);
+            cvs.drawLines(localPointsBuffer, mPaint);
         }
 
         if (mDisplayPersistentMaxMagnitude) {
@@ -280,11 +236,20 @@ public class WaveScopeView extends View {
                     mPersistentMaxMagnitude = -samples[smplIndex];
                 }
 
-                Y = mDisplayFontSize + (chanIndex * (getHeight() / mNumChannels));
+                yCoord = mDisplayFontSize + (chanIndex * (getHeight() / mNumChannels));
                 mPaint.setColor(mTextColor);
                 mPaint.setTextSize(mDisplayFontSize);
-                cvs.drawText("" + mPersistentMaxMagnitude, 0, Y, mPaint);
+                cvs.drawText(String.format("%.2f", mPersistentMaxMagnitude), 0, yCoord, mPaint);
             }
+        }
+
+        if (mDisplayLimits) {
+            mPaint.setColor(mLimitsColor);
+            float endX = mPointsBuffer[mPointsBuffer.length - FLOATS_PER_POINT];
+            yCoord = zeroY + yScale;
+            cvs.drawLine(0, yCoord, endX, yCoord, mPaint);
+            yCoord = zeroY + -yScale;
+            cvs.drawLine(0, yCoord, endX, yCoord, mPaint);
         }
     }
 
@@ -301,14 +266,7 @@ public class WaveScopeView extends View {
             canvas.drawText("" + mNumFrames + " frames", 0, height, mPaint);
         }
 
-        if (mPCM16Buffer != null) {
-            float yOffset = height / (2.0f * mNumChannels);
-            float yDelta = height / (float) mNumChannels;
-            for(int channel = 0; channel < mNumChannels; channel++) {
-                drawChannel16(canvas, mPCM16Buffer, mNumFrames, mNumChannels, channel, yOffset);
-                yOffset += yDelta;
-            }
-        } else if (mPCMFloatBuffer != null) {
+        if (mPCMFloatBuffer != null) {
             float yOffset = height / (2.0f * mNumChannels);
             float yDelta = height / (float) mNumChannels;
             for(int channel = 0; channel < mNumChannels; channel++) {
@@ -316,6 +274,5 @@ public class WaveScopeView extends View {
                 yOffset += yDelta;
             }
         }
-        // Log.i("WaveView", "onDraw() - done");
     }
 }

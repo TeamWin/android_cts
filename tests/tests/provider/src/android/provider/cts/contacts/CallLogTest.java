@@ -29,10 +29,12 @@ import android.net.Uri;
 import android.os.OutcomeReceiver;
 import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
+import android.os.UserManager;
 import android.provider.CallLog;
 import android.provider.CallLog.Calls;
 import android.provider.cts.R;
 import android.test.InstrumentationTestCase;
+import android.util.Log;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
@@ -51,6 +53,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class CallLogTest extends InstrumentationTestCase {
+    private static final String TAG = CallLogTest.class.getSimpleName();
     // Test Call Log Entry
     private static final String TEST_NUMBER = "5625698388";
     private static final int TEST_DATE = 1000;
@@ -82,6 +85,7 @@ public class CallLogTest extends InstrumentationTestCase {
     // Test Failure Error
     private static final String TEST_FAIL_DID_NOT_TRHOW_SE =
             "fail test because Security Exception was not throw";
+    private static final String HSUM_MGG = "in headless system user mode (HSUM); skipping tests.";
     // Instance vars
     private ContentResolver mContentResolver;
 
@@ -146,6 +150,10 @@ public class CallLogTest extends InstrumentationTestCase {
      * and asserts the entries are returned.
      */
     public void testPopulateAndQueryCallAndVoicemailLogs() {
+        if (UserManager.isHeadlessSystemUserMode()) {
+            Log.i(TAG, "testPopulateAndQueryCallAndVoicemailLogs: " + HSUM_MGG);
+            return;
+        }
         Context context = getInstrumentation().getContext();
         if (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELECOM)) {
             // This is tied to default-dialer, so don't test if the device doesn't have telecom.
@@ -229,6 +237,10 @@ public class CallLogTest extends InstrumentationTestCase {
      * ParcelFileDescriptor is returned.
      */
     public void testOpenFileOutsideOfScopeThrowsException() throws FileNotFoundException {
+        if (UserManager.isHeadlessSystemUserMode()) {
+            Log.i(TAG, "testOpenFileOutsideOfScopeThrowsException: " + HSUM_MGG);
+            return;
+        }
         try {
             Context context = getInstrumentation().getContext();
             ContentResolver resolver = context.getContentResolver();
@@ -268,6 +280,10 @@ public class CallLogTest extends InstrumentationTestCase {
      * in a table that is not owned by the Call Log directory.
      */
     public void testInsertFileOutsideOfScopeThrowsException() {
+        if (UserManager.isHeadlessSystemUserMode()) {
+            Log.i(TAG, "testInsertFileOutsideOfScopeThrowsException: " + HSUM_MGG);
+            return;
+        }
         try {
             Context context = getInstrumentation().getContext();
             ContentResolver resolver = context.getContentResolver();
@@ -283,6 +299,10 @@ public class CallLogTest extends InstrumentationTestCase {
     }
 
     public void testGetLastOutgoingCall() {
+        if (UserManager.isHeadlessSystemUserMode()) {
+            Log.i(TAG, "testGetLastOutgoingCall: " + HSUM_MGG);
+            return;
+        }
         // Clear call log and ensure there are no outgoing calls
         Context context = getInstrumentation().getContext();
         ContentResolver resolver = context.getContentResolver();

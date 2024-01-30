@@ -84,9 +84,10 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
 
     private void testBurst(int fmt, int burstSize, boolean checkFrameRate, boolean testStillBokeh)
             throws Exception {
-        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
+        String[] cameraIdsUnderTest = getCameraIdsUnderTest();
+        for (int i = 0; i < cameraIdsUnderTest.length; i++) {
             try {
-                String id = mCameraIdsUnderTest[i];
+                String id = cameraIdsUnderTest[i];
 
                 StaticMetadata staticInfo = mAllStaticInfo.get(id);
                 if (!staticInfo.isColorOutputSupported()) {

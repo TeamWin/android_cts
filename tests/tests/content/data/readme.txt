@@ -38,3 +38,5 @@ Print out the content of the signature:
     openssl pkcs7 -print -inform DER -in CtsPkgInstallTinyAppV2V3V4.digests.signature
 
 malformed.apk is a copy of CtsPkgInstallTinyAppV2V3V4.apk, and malformed.apk.idsig is a purposefully created idsig causing OOM
+
+cts-testkey1.x509.pem is a copy of cts/hostsidetests/appsecurity/certs/cts-testkey1.x509.pem

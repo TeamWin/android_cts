@@ -28,6 +28,7 @@ import android.widget.TextView;
 
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.audio.audiolib.DisplayUtils;
 
 // MegaAudio
 import org.hyphonate.megaaudio.common.BuilderBase;
@@ -515,6 +516,8 @@ public class AudioDisconnectActivity
         setTestConfigs();
 
         enableTestButtons(false, false);
+
+        DisplayUtils.setKeepScreenOn(this, true);
     }
 
     @Override

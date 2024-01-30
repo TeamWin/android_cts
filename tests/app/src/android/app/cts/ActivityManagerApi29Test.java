@@ -47,7 +47,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.permission.cts.PermissionUtils;
-import android.provider.DeviceConfig;
 import android.provider.Settings;
 
 import androidx.test.InstrumentationRegistry;
@@ -82,7 +81,6 @@ public class ActivityManagerApi29Test {
     private static final String ACTION_SERVICE_START_RESULT =
             "android.app.cts.activitymanager.api29.LocationForegroundService.RESULT";
     private static final String SERVICE_NAME = ".LocationForegroundService";
-    private static final String PROPERTY_PERMISSIONS_HUB_ENABLED = "permissions_hub_enabled";
     private static final int WAITFOR_MSEC = 10000;
     private static final int NOTEOP_COUNT = 5;
 
@@ -110,7 +108,6 @@ public class ActivityManagerApi29Test {
     }
 
     private String mOldAppOpsSettings;
-    private boolean mWasPermissionsHubEnabled = false;
     private WatchUidRunner mUidWatcher;
 
     @Before
@@ -128,10 +125,6 @@ public class ActivityManagerApi29Test {
                     Settings.Global.APP_OPS_CONSTANTS,
                     "top_state_settle_time=0,fg_service_state_settle_time=0,"
                     + "bg_state_settle_time=0");
-            mWasPermissionsHubEnabled = DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_PRIVACY,
-                    PROPERTY_PERMISSIONS_HUB_ENABLED, false);
-            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY,
-                    PROPERTY_PERMISSIONS_HUB_ENABLED, Boolean.toString(true), false);
             sAppOps.clearHistory();
             sAppOps.resetHistoryParameters(); }
         );
@@ -148,9 +141,6 @@ public class ActivityManagerApi29Test {
             // restore old AppOps settings.
             Settings.Global.putString(sContext.getContentResolver(),
                     Settings.Global.APP_OPS_CONSTANTS, mOldAppOpsSettings);
-            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY,
-                    PROPERTY_PERMISSIONS_HUB_ENABLED, Boolean.toString(mWasPermissionsHubEnabled),
-                    false);
             sAppOps.clearHistory();
             sAppOps.resetHistoryParameters(); }
         );

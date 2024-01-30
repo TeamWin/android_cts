@@ -234,7 +234,37 @@ public class AutofillSaveDialogTest extends AutoFillServiceTestCase.ManualActivi
     @Test
     @CddTest(requirement = "9.8.14/C1-1")
     // This test asserts save dialog is suppressed when there is credman field in screen
-    public void testSuppressingSaveDialogOnActivityThatOnlyHasCredmanField() throws Exception {
+    public void testSuppressSaveDialog_onOnlyCredmanFields_withIsCredential() throws Exception {
+        testSuppressSaveDialog_OnCredmanOnlyFields(false);
+    }
+
+    @Test
+    @CddTest(requirement = "9.8.14/C1-1")
+    // This test asserts save dialog is suppressed when there is credman field in screen
+    public void testSuppressSaveDialog_onOnlyCredmanFields_withAutofillHint() throws Exception {
+        testSuppressSaveDialog_OnCredmanOnlyFields(true);
+    }
+
+    @Test
+    @CddTest(requirement = "9.8.14/C1-1")
+    // This test asserts save dialog is suppressed when there is both credman and non-credman fields
+    // in activity
+    public void testSuppressSaveDialog_onMixedFields_withIsCredential()
+            throws Exception {
+        testSuppressSaveDialog_onMixedFields(false);
+    }
+
+    @Test
+    @CddTest(requirement = "9.8.14/C1-1")
+    // This test asserts save dialog is suppressed when there is both credman and non-credman fields
+    // in activity
+    public void testSuppressSaveDialog_onMixedFields_withAutofillHint()
+            throws Exception {
+        testSuppressSaveDialog_onMixedFields(true);
+    }
+
+    private void testSuppressSaveDialog_OnCredmanOnlyFields(boolean useAutofillHint)
+            throws Exception {
         // Set service.
         enableService();
 
@@ -245,7 +275,7 @@ public class AutofillSaveDialogTest extends AutoFillServiceTestCase.ManualActivi
 
         // Start LoginActivity.
         startActivityWithFlag(SimpleBeforeLoginActivity.getCurrentActivity(),
-                LoginImportantForCredentialManagerActivity.class, /* flags= */ 0);
+                LoginImportantForCredentialManagerActivity.class, /* flags= */ 0, useAutofillHint);
         mUiBot.assertShownByRelativeId(
                 LoginImportantForCredentialManagerActivity.ID_USERNAME_CONTAINER);
 
@@ -273,11 +303,7 @@ public class AutofillSaveDialogTest extends AutoFillServiceTestCase.ManualActivi
         mUiBot.assertSaveNotShowing();
     }
 
-    @Test
-    @CddTest(requirement = "9.8.14/C1-1")
-    // This test asserts save dialog is suppressed when there is both credman and non-credman fields
-    // in activity
-    public void testSuppressingSaveDialogOnActivityThatHasBothCredmanFieldAndNonCredmanField()
+    private void testSuppressSaveDialog_onMixedFields(boolean useAutofillHint)
             throws Exception {
         // Set service.
         enableService();
@@ -289,7 +315,8 @@ public class AutofillSaveDialogTest extends AutoFillServiceTestCase.ManualActivi
 
         // Start LoginActivity.
         startActivityWithFlag(SimpleBeforeLoginActivity.getCurrentActivity(),
-                LoginMixedImportantForCredentialManagerActivity.class, /* flags= */ 0);
+                LoginMixedImportantForCredentialManagerActivity.class, /* flags= */ 0,
+                useAutofillHint);
         mUiBot.assertShownByRelativeId(
                 LoginMixedImportantForCredentialManagerActivity.ID_USERNAME_CONTAINER);
 
@@ -319,8 +346,15 @@ public class AutofillSaveDialogTest extends AutoFillServiceTestCase.ManualActivi
     }
 
     private void startActivityWithFlag(Context context, Class<?> clazz, int flags) {
-        final Intent intent = new Intent(context, clazz);
-        intent.setFlags(flags);
+        startActivityWithFlag(context, clazz, flags, false);
+    }
+
+    private void startActivityWithFlag(Context context, Class<?> clazz, int flags,
+                                       boolean useAutofillHint) {
+        final Intent intent = new Intent(context, clazz)
+                .setFlags(flags)
+                .putExtra("useAutofillHint", useAutofillHint);
+
         context.startActivity(intent);
     }
 }

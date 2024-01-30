@@ -29,6 +29,7 @@ import static org.junit.Assert.assertFalse;
 import android.app.WindowConfiguration;
 import android.os.Process;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Pair;
 import android.view.View;
 import android.view.Window;
@@ -60,6 +61,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @MediumTest
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ImeInsetsControllerTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
 

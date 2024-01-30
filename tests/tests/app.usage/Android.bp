@@ -21,10 +21,12 @@ android_test {
     defaults: ["cts_defaults"],
     platform_apis: true,
     static_libs: [
+        "android.app.usage.flags-aconfig-java",
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "cts-wm-util",
+        "flag-junit",
         "junit",
         "permission-test-util-lib",
         "androidx.test.uiautomator_uiautomator",
@@ -153,4 +155,21 @@ android_test_helper_app {
     aaptflags: [
         "--rename-manifest-package android.app.usage.cts.test.exactalarm",
     ],
+}
+
+filegroup {
+    name: "cts-common-test-src",
+    srcs: [
+        "src/**/UsageStatsTestRunner.java",
+        "src/**/DumpOnFailureRule.java",
+    ],
+    path: "src",
+}
+
+filegroup {
+    name: "cts-common-test-aidl",
+    srcs: [
+        "TestApp1/aidl/**/*.aidl",
+    ],
+    path: "TestApp1/aidl",
 }

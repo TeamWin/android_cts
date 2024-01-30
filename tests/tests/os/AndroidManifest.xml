@@ -134,7 +134,7 @@
         <service android:name="android.os.cts.ParcelExceptionService"
              android:process=":remote"
              android:exported="true"/>
-        <service android:name="android.os.cts.ParcelTest$ParcelObjectFreeService"
+        <service android:name="android.os.cts.ParcelIntegrationTest$ParcelObjectFreeService"
              android:process=":remote"
              android:exported="true"/>
 
@@ -222,8 +222,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
          android:targetPackage="android.os.cts"
          android:label="CTS tests of android.os">
-        <meta-data android:name="listener"
-             android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
 
 </manifest>

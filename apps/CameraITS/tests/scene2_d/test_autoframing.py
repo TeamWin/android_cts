@@ -40,6 +40,30 @@ class AutoframingTest(its_base_test.ItsBaseTest):
   """Test autoframing for faces with different skin tones.
   """
 
+  def save_image(self, cap, props, faces):
+    img, img_name, faces_cropped = self.get_image_data(cap, props,faces)
+    # Save images with green boxes around faces
+    opencv_processing_utils.draw_green_boxes_around_faces(
+        img, faces_cropped, img_name)
+
+  def assert_no_face_distortion(self, cap, props, faces):
+    img, img_name, faces_cropped = self.get_image_data(cap, props,faces)
+    opencv_faces = opencv_processing_utils.find_opencv_faces(
+        img, _CV2_FACE_SCALE_FACTOR, _CV2_FACE_MIN_NEIGHBORS)
+    opencv_processing_utils.match_face_locations(
+        faces_cropped, opencv_faces, img, img_name)
+
+  def get_image_data(self, cap, props, faces):
+    img = image_processing_utils.convert_capture_to_rgb_image(
+        cap, props=props)
+    img_name = os.path.join(self.log_path, _NAME) + '.jpg'
+
+    crop_region = cap['metadata']['android.scaler.cropRegion']
+    faces_cropped = opencv_processing_utils.correct_faces_for_crop(
+        faces, img, crop_region)
+
+    return img, img_name, faces_cropped
+
   def test_autoframing(self):
     """Test if fov gets adjusted to accommodate all the faces in the frame.
 
@@ -85,21 +109,10 @@ class AutoframingTest(its_base_test.ItsBaseTest):
         # Face detection and autoframing could take several frames to warm up,
         # but should detect the correct number of faces before the last frame
         if autoframing_state == _AUTOFRAMING_CONVERGED:
-          # Save image when autoframing state converges
           control_zoom_ratio = cap['metadata']['android.control.zoomRatio']
           logging.debug('Control zoom ratio: %d', control_zoom_ratio)
-          img = image_processing_utils.convert_capture_to_rgb_image(
-              cap, props=props)
-          file_name_stem = os.path.join(self.log_path, _NAME)
-          img_name = f'{file_name_stem}.jpg'
-
-          # Save images with green boxes around faces
-          crop_region = cap['metadata']['android.scaler.cropRegion']
-          faces_cropped = opencv_processing_utils.correct_faces_for_crop(
-              faces, img, crop_region)
-          opencv_processing_utils.draw_green_boxes_around_faces(
-              img, faces_cropped, img_name)
-
+          # Save image when autoframing state converges
+          self.save_image(caps, props, faces)
           num_faces_found = len(faces)
           if num_faces_found != _NUM_FACES:
             raise AssertionError('Wrong num of faces found! Found: '
@@ -107,14 +120,14 @@ class AutoframingTest(its_base_test.ItsBaseTest):
 
           # Also check the faces with open cv to make sure the scene is not
           # distorted or anything.
-          opencv_faces = opencv_processing_utils.find_opencv_faces(
-              img, _CV2_FACE_SCALE_FACTOR, _CV2_FACE_MIN_NEIGHBORS)
-          opencv_processing_utils.match_face_locations(
-              faces_cropped, opencv_faces, img, img_name)
+          self.assert_no_face_distortion(caps, props, faces)
           break
 
         # Autoframing didn't converge till the last frame
         elif i == _NUM_TEST_FRAMES - 1:
+          # Save image (for debugging) when autoframing state hasn't converged
+          # by the last frame
+          self.save_image(caps, props, faces)
           raise AssertionError('Autoframing failed to converge')
 
         logging.debug('Faces: %s', str(faces))

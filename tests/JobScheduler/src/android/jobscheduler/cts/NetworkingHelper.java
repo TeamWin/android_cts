@@ -52,8 +52,6 @@ import com.android.compatibility.common.util.CallbackAsserter;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
-import junit.framework.AssertionFailedError;
-
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -61,7 +59,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class NetworkingHelper {
+public class NetworkingHelper implements AutoCloseable {
     private static final String TAG = "JsNetworkingUtils";
 
     private static final String RESTRICT_BACKGROUND_GET_CMD =
@@ -109,10 +107,12 @@ public class NetworkingHelper {
         mInitialLocationMode = Settings.Secure.getString(
                 mContext.getContentResolver(), Settings.Secure.LOCATION_MODE);
         mInitialWiFiState = mHasWifi && isWifiEnabled();
+
+        ensureSavedWifiNetwork();
     }
 
-    /** Ensures that the device has a wifi network saved. */
-    void ensureSavedWifiNetwork() throws Exception {
+    /** Ensures that the device has a wifi network saved if it has the wifi feature. */
+    private void ensureSavedWifiNetwork() throws Exception {
         if (!mHasWifi) {
             return;
         }
@@ -155,6 +155,32 @@ public class NetworkingHelper {
                 () -> ssid.set(mWifiManager.getConnectionInfo().getSSID()),
                 Manifest.permission.ACCESS_FINE_LOCATION);
         return unquoteSSID(ssid.get());
+    }
+
+    boolean hasCellularNetwork() throws Exception {
+        if (!mHasTelephony) {
+            Log.d(TAG, "Telephony feature not found");
+            return false;
+        }
+
+        if (isAirplaneModeOn()) {
+            // Shortcut. When mHasTelephony=true, setAirplaneMode makes sure the cellular network
+            // is connected before returning. Thus, if we turn airplane mode off and the wait
+            // succeeds, we can assume there's a cellular network.
+            setAirplaneMode(false);
+            return true;
+        }
+
+        Network[] networks = mConnectivityManager.getAllNetworks();
+        for (Network network : networks) {
+            if (mConnectivityManager.getNetworkCapabilities(network)
+                    .hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                return true;
+            }
+        }
+
+        Log.d(TAG, "Cellular network not found");
+        return false;
     }
 
     boolean hasEthernetConnection() {
@@ -309,6 +335,10 @@ public class NetworkingHelper {
      * Taken from {@link android.net.http.cts.ApacheHttpClientTest}.
      */
     void setWifiState(final boolean enable) throws Exception {
+        if (!mHasWifi) {
+            Log.w(TAG, "Tried to change wifi state when device doesn't have wifi feature");
+            return;
+        }
         if (enable != isWiFiConnected()) {
             NetworkRequest nr = new NetworkRequest.Builder().clearCapabilities().build();
             NetworkCapabilities nc = new NetworkCapabilities.Builder()
@@ -350,7 +380,7 @@ public class NetworkingHelper {
             if (mWifiManager.isWifiEnabled() != mInitialWiFiState) {
                 try {
                     setWifiState(mInitialWiFiState);
-                } catch (AssertionFailedError e) {
+                } catch (AssertionError e) {
                     // Don't fail the test just because wifi state wasn't set in tearDown.
                     Log.e(TAG, "Failed to return wifi state to " + mInitialWiFiState, e);
                 }
@@ -364,6 +394,11 @@ public class NetworkingHelper {
         }
 
         setLocationMode(mInitialLocationMode);
+    }
+
+    @Override
+    public void close() throws Exception {
+        tearDown();
     }
 
     private String unquoteSSID(String ssid) {

@@ -16,18 +16,22 @@
 
 package android.os.cts;
 
+import static android.os.Flags.batterySaverSupportedCheckApi;
+
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Flags;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.LargeTest;
 import android.provider.Settings.Global;
 import android.test.AndroidTestCase;
+
+import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.CallbackAsserter;
@@ -102,8 +106,12 @@ public class PowerManagerTest extends AndroidTestCase {
     }
 
     public void testPowerManager_getPowerSaveMode() {
+        PowerManager manager = BatteryUtils.getPowerManager();
+        if (batterySaverSupportedCheckApi() && !manager.isBatterySaverSupported()) {
+            return;
+        }
+
         SystemUtil.runWithShellPermissionIdentity(() -> {
-            PowerManager manager = BatteryUtils.getPowerManager();
             ContentResolver resolver = getContext().getContentResolver();
 
             // Verify we can change it to percentage.
@@ -121,8 +129,12 @@ public class PowerManagerTest extends AndroidTestCase {
     }
 
     public void testPowerManager_setDynamicPowerSavings() {
+        PowerManager manager = BatteryUtils.getPowerManager();
+        if (batterySaverSupportedCheckApi() && !manager.isBatterySaverSupported()) {
+            return;
+        }
+
         SystemUtil.runWithShellPermissionIdentity(() -> {
-            PowerManager manager = BatteryUtils.getPowerManager();
             ContentResolver resolver = getContext().getContentResolver();
 
             // Verify settings are actually updated.
@@ -141,6 +153,9 @@ public class PowerManagerTest extends AndroidTestCase {
     @LargeTest
     public void testPowerManager_batteryDischargePrediction() throws Exception {
         final PowerManager manager = BatteryUtils.getPowerManager();
+        if (batterySaverSupportedCheckApi() && !manager.isBatterySaverSupported()) {
+            return;
+        }
 
         if (!BatteryUtils.hasBattery()) {
             assertNull(manager.getBatteryDischargePrediction());

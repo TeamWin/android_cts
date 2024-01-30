@@ -58,7 +58,7 @@ import java.util.Set;
  * Build/Install/Run:
  *     atest CtsWindowManagerJetpackTestCases:ActivityEmbeddingBoundsTests
  */
-@ApiTest(apis = "androidx.window.extensions.embedding.SplitPairRule#getDefaultSplitAttributes")
+@ApiTest(apis = {"androidx.window.extensions.embedding.SplitPairRule#getDefaultSplitAttributes"})
 @Presubmit
 @RunWith(AndroidJUnit4.class)
 public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
@@ -117,8 +117,8 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
      * Tests that the activity bounds for activities in a split match the LTR layout direction
      * provided in the {@link SplitPairRule}.
      */
-    @ApiTest(apis = "androidx.window.extensions.embedding.SplitAttributes"
-            + ".LayoutDirection#LEFT_TO_RIGHT")
+    @ApiTest(apis = {"androidx.window.extensions.embedding.SplitAttributes"
+            + ".LayoutDirection#LEFT_TO_RIGHT"})
     @Test
     public void testLayoutDirection_LeftToRight() {
         // Create a split pair rule with layout direction LEFT_TO_RIGHT and a split ratio that
@@ -139,8 +139,8 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
      * Tests that the activity bounds for activities in a split match the RTL layout direction
      * provided in the {@link SplitPairRule}.
      */
-    @ApiTest(apis = "androidx.window.extensions.embedding.SplitAttributes"
-            + ".LayoutDirection#RIGHT_TO_LEFT")
+    @ApiTest(apis = {"androidx.window.extensions.embedding.SplitAttributes"
+            + ".LayoutDirection#RIGHT_TO_LEFT"})
     @Test
     public void testLayoutDirection_RightToLeft() {
         // Create a split pair rule with layout direction RIGHT_TO_LEFT and a split ratio that
@@ -161,8 +161,8 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
      * Tests that the activity bounds for activities in a split match the Locale layout direction
      * provided in the {@link SplitPairRule}.
      */
-    @ApiTest(apis = "androidx.window.extensions.embedding.SplitAttributes"
-            + ".LayoutDirection#LOCALE")
+    @ApiTest(apis = {"androidx.window.extensions.embedding.SplitAttributes"
+            + ".LayoutDirection#LOCALE"})
     @Test
     public void testLayoutDirection_Locale() {
         // Create a split pair rule with layout direction LOCALE and a split ratio that results in
@@ -178,8 +178,8 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
                 splitPairRule, "secondaryActivityId", mSplitInfoConsumer);
     }
 
-    @ApiTest(apis = "androidx.window.extensions.embedding.SplitAttributes"
-            + ".LayoutDirection#TOP_TO_BOTTOM")
+    @ApiTest(apis = {"androidx.window.extensions.embedding.SplitAttributes"
+            + ".LayoutDirection#TOP_TO_BOTTOM"})
     @Test
     public void testLayoutDirection_TopToBottom() {
         // Create a split pair rule with layout direction TOP_TO_BOTTOM and a split ratio that
@@ -196,8 +196,8 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
                 splitPairRule, "secondaryActivityId", mSplitInfoConsumer);
     }
 
-    @ApiTest(apis = "androidx.window.extensions.embedding.SplitAttributes"
-            + ".LayoutDirection#BOTTOM_TO_TOP")
+    @ApiTest(apis = {"androidx.window.extensions.embedding.SplitAttributes"
+            + ".LayoutDirection#BOTTOM_TO_TOP"})
     @Test
     public void testLayoutDirection_BottomToTop() {
         // Create a split pair rule with layout direction BOTTOM_TO_TOP and a split ratio that
@@ -219,8 +219,8 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
      * {@link SplitPairRule}, and is not assumed to be 0.5 or match the split ratio of the previous
      * top-most activity split.
      */
-    @ApiTest(apis = "androidx.window.extensions.embedding.SplitAttributes"
-            + ".SplitType.RatioSplitType#getRatio")
+    @ApiTest(apis = {"androidx.window.extensions.embedding.SplitAttributes"
+            + ".SplitType.RatioSplitType#getRatio"})
     @Test
     public void testSplitRatio() {
         final String activityAId = "activityA";
@@ -269,8 +269,8 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
         assertValidSplit(activityA, activityB, splitPairRuleAB);
     }
 
-    @ApiTest(apis = "androidx.window.extensions.embedding.SplitAttributes.HingeSplitType"
-            + "#HingeSplitType")
+    @ApiTest(apis = {"androidx.window.extensions.embedding.SplitAttributes.HingeSplitType"
+            + "#HingeSplitType"})
     @Test
     public void testHingeSplitType() {
         TestConfigChangeHandlingActivity primaryActivity = startFullScreenActivityNewTask(

@@ -58,7 +58,6 @@ import android.autofillservice.cts.testcore.OneTimeCancellationSignalListener;
 import android.content.ComponentName;
 import android.os.CancellationSignal;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.util.ArraySet;
 import android.util.Log;
@@ -68,6 +67,7 @@ import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 import android.widget.EditText;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.uiautomator.UiObject2;
 
 import org.junit.Ignore;

@@ -33,6 +33,13 @@ public class StubMotionInterceptingAccessibilityService extends InstrumentedAcce
         setServiceInfo(info);
     }
 
+    /** Sets the motion event sources to intercept but not consume events from.*/
+    public void setObservedMotionEventSources(int sources) {
+        AccessibilityServiceInfo info = getServiceInfo();
+        info.setObservedMotionEventSources(sources);
+        setServiceInfo(info);
+    }
+
     public void setOnMotionEventListener(Consumer<MotionEvent> listener) {
         mMotionEventListener = listener;
         getServiceInfo();

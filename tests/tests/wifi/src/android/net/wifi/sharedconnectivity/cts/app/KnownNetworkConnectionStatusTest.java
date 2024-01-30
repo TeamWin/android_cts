@@ -22,6 +22,8 @@ import static android.net.wifi.sharedconnectivity.app.KnownNetworkConnectionStat
 import static android.net.wifi.sharedconnectivity.app.KnownNetworkConnectionStatus.CONNECTION_STATUS_SAVE_FAILED;
 import static android.net.wifi.sharedconnectivity.app.NetworkProviderInfo.DEVICE_TYPE_TABLET;
 
+import static com.android.wifi.flags.Flags.networkProviderBatteryChargingStatus;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
@@ -36,7 +38,9 @@ import android.os.Parcel;
 import androidx.test.filters.SdkSuppress;
 
 import com.android.compatibility.common.util.NonMainlineTest;
+import com.android.modules.utils.build.SdkLevel;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -50,13 +54,26 @@ public class KnownNetworkConnectionStatusTest {
     private static final int NETWORK_SOURCE = NETWORK_SOURCE_NEARBY_SELF;
     private static final String SSID = "TEST_SSID";
     private static final int[] SECURITY_TYPES = {SECURITY_TYPE_WEP};
-    private static final NetworkProviderInfo NETWORK_PROVIDER_INFO =
-            new NetworkProviderInfo.Builder("TEST_NAME", "TEST_MODEL")
-                    .setDeviceType(DEVICE_TYPE_TABLET).setConnectionStrength(2)
-                    .setBatteryPercentage(50).build();
     private static final String SSID_1 = "TEST_SSID1";
     private static final String BUNDLE_KEY = "INT-KEY";
     private static final int BUNDLE_VALUE = 1;
+
+    private NetworkProviderInfo mNetworkProviderInfo;
+
+    @Before
+    public void setUp() {
+        NetworkProviderInfo.Builder builder =
+                new NetworkProviderInfo.Builder("TEST_NAME", "TEST_MODEL")
+                        .setDeviceType(DEVICE_TYPE_TABLET)
+                        .setConnectionStrength(2)
+                        .setBatteryPercentage(50);
+
+        if (networkProviderBatteryChargingStatus() && SdkLevel.isAtLeastV()) {
+            builder.setBatteryCharging(false);
+        }
+
+        mNetworkProviderInfo = builder.build();
+    }
 
     @Test
     public void parcelOperation() {
@@ -132,7 +149,7 @@ public class KnownNetworkConnectionStatusTest {
 
     private KnownNetwork.Builder buildKnownNetworkBuilder() {
         KnownNetwork.Builder builder = new KnownNetwork.Builder().setNetworkSource(NETWORK_SOURCE)
-                .setSsid(SSID).setNetworkProviderInfo(NETWORK_PROVIDER_INFO);
+                .setSsid(SSID).setNetworkProviderInfo(mNetworkProviderInfo);
         Arrays.stream(SECURITY_TYPES).forEach(builder::addSecurityType);
         return builder;
     }

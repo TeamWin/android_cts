@@ -30,6 +30,7 @@ _NAME = os.path.basename(__file__).split('.')[0]
 _N = 20  # Number of samples averaged together, in the plot.
 _NSEC_TO_SEC = 1E-9
 _MEAN_THRESH = 0.01  # PASS/FAIL threshold for gyro mean drift
+_SENSOR_EVENTS_WAIT_TIME = 5  # seconds
 _VAR_THRESH = 0.001  # PASS/FAIL threshold for gyro variance drift
 
 
@@ -51,7 +52,7 @@ class GyroBiasTest(its_base_test.ItsBaseTest):
 
       logging.debug('Collecting gyro events')
       cam.start_sensor_events()
-      time.sleep(5)
+      time.sleep(_SENSOR_EVENTS_WAIT_TIME)  # run sensors to get events
       gyro_events = cam.get_sensor_events()['gyro']
 
     name_with_log_path = os.path.join(self.log_path, _NAME)

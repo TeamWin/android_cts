@@ -235,20 +235,24 @@ public final class AutoFillServiceTestCase {
         }
 
         protected LoginImportantForCredentialManagerActivity
-                    startLoginImportantForCredentialManagerActivity() throws Exception {
+                    startLoginImportantForCredentialManagerActivity(boolean useAutofillHint)
+                throws Exception {
             final Intent intent =
                     new Intent(mContext, LoginImportantForCredentialManagerActivity.class)
-                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        .putExtra("useAutofillHint", useAutofillHint);
             mContext.startActivity(intent);
             mUiBot.assertShownByRelativeId(Helper.ID_USERNAME_LABEL);
             return LoginImportantForCredentialManagerActivity.getCurrentActivity();
         }
 
         protected LoginMixedImportantForCredentialManagerActivity
-                startLoginMixedImportantForCredentialManagerActivity() throws Exception {
+                startLoginMixedImportantForCredentialManagerActivity(boolean useAutofillHInt)
+                throws Exception {
             final Intent intent =
                     new Intent(mContext, LoginMixedImportantForCredentialManagerActivity.class)
-                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        .putExtra("useAutofillHint", useAutofillHInt);
             mContext.startActivity(intent);
             mUiBot.assertShownByRelativeId(Helper.ID_USERNAME_LABEL);
             return LoginMixedImportantForCredentialManagerActivity.getCurrentActivity();
@@ -390,6 +394,13 @@ public final class AutoFillServiceTestCase {
                             "include_all_autofill_type_not_none_views_in_assist_structure",
                             Boolean.toString(false)))
 
+
+                //
+                // Max input size to provide autofill suggestion should be 3
+                .around(new DeviceConfigStateChangerRule(sContext, DeviceConfig.NAMESPACE_AUTOFILL,
+                            "max_input_length_for_autofill",
+                            Integer.toString(3)))
+
                 //
                 // Finally, let subclasses add their own rules (like ActivityTestRule)
                 .around(getMainTestRule());
@@ -500,6 +511,8 @@ public final class AutoFillServiceTestCase {
 
             assumeFalse("Device is half-folded",
                     Helper.isDeviceInState(mContext, Helper.DeviceStateEnum.HALF_FOLDED));
+
+            assumeFalse("Device is TV", Helper.isTv(mContext));
 
             // Set orientation as portrait, otherwise some tests might fail due to elements not
             // fitting in, IME orientation, etc...

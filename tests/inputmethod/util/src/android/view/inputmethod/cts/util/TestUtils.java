@@ -51,6 +51,8 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -68,6 +70,34 @@ public final class TestUtils {
      */
     public static void runOnMainSync(@NonNull Runnable task) {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(task);
+    }
+
+    /**
+     * Executes a call on the application's main thread, blocking until it is complete. When a
+     * Throwable is thrown in the runnable, the exception is propagated back to the
+     * caller's thread. If it is an unchecked throwable, it will be rethrown as is. If it is a
+     * checked exception, it will be rethrown as a {@link RuntimeException}.
+     *
+     * <p>A simple wrapper for {@link Instrumentation#runOnMainSync(Runnable)}.</p>
+     *
+     * @param task task to be called on the UI thread
+     */
+    public static void runOnMainSyncWithRethrowing(@NonNull Runnable task) {
+        FutureTask<Void> wrapped = new FutureTask<>(task, null);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(wrapped);
+        try {
+            wrapped.get();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof RuntimeException) {
+                throw (RuntimeException) cause;
+            } else if (cause instanceof Error) {
+                throw (Error) cause;
+            }
+            throw new RuntimeException(cause);
+        }
     }
 
     /**
@@ -230,18 +260,7 @@ public final class TestUtils {
      * @return the injected MotionEvent.
      */
     public static MotionEvent injectStylusDownEvent(@NonNull View view, int x, int y) {
-        int[] xy = new int[2];
-        view.getLocationOnScreen(xy);
-        x += xy[0];
-        y += xy[1];
-
-        // Inject stylus ACTION_DOWN
-        long downTime = SystemClock.uptimeMillis();
-        final MotionEvent downEvent =
-                getMotionEvent(downTime, downTime, MotionEvent.ACTION_DOWN, x, y,
-                        MotionEvent.TOOL_TYPE_STYLUS);
-        injectMotionEvent(downEvent, true /* sync */);
-        return downEvent;
+        return injectStylusEvent(view, MotionEvent.ACTION_DOWN, x, y);
     }
 
     /**
@@ -252,17 +271,28 @@ public final class TestUtils {
      * @return the injected MotionEvent.
      */
     public static MotionEvent injectStylusUpEvent(@NonNull View view, int x, int y) {
+        return injectStylusEvent(view, MotionEvent.ACTION_UP, x, y);
+    }
+
+    public static void injectStylusHoverEvents(@NonNull View view, int x, int y) {
+        injectStylusEvent(view, MotionEvent.ACTION_HOVER_ENTER, x, y);
+        injectStylusEvent(view, MotionEvent.ACTION_HOVER_MOVE, x, y);
+        injectStylusEvent(view, MotionEvent.ACTION_HOVER_EXIT, x, y);
+    }
+
+    private static MotionEvent injectStylusEvent(@NonNull View view, int action, int x, int y) {
         int[] xy = new int[2];
         view.getLocationOnScreen(xy);
         x += xy[0];
         y += xy[1];
 
-        // Inject stylus ACTION_DOWN
-        long downTime = SystemClock.uptimeMillis();
-        final MotionEvent upEvent = getMotionEvent(downTime, downTime, MotionEvent.ACTION_UP, x, y,
-                MotionEvent.TOOL_TYPE_STYLUS);
-        injectMotionEvent(upEvent, true /* sync */);
-        return upEvent;
+        // Inject stylus action
+        long eventTime = SystemClock.uptimeMillis();
+        final MotionEvent event =
+                getMotionEvent(eventTime, eventTime, action, x, y,
+                        MotionEvent.TOOL_TYPE_STYLUS);
+        injectMotionEvent(event, true /* sync */);
+        return event;
     }
 
     /**

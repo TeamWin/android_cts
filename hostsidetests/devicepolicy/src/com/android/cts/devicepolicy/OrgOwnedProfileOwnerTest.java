@@ -298,19 +298,6 @@ public final class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
-    @FlakyTest(bugId = 137088260)
-    @Test
-    public void testWifi() throws Exception {
-        assumeHasWifiFeature();
-
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".WifiTest", "testGetWifiMacAddress", mUserId);
-    }
-
-    @Test
-    public void testFactoryResetProtectionPolicy() throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".FactoryResetProtectionPolicyTest", mUserId);
-    }
-
     @LargeTest
     @Test
     @Ignore("b/145932189")
@@ -346,11 +333,6 @@ public final class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testAdminConfiguredNetworks() throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AdminConfiguredNetworksTest", mUserId);
-    }
-
-    @Test
     public void testSetKeyguardDisabledFeatures() throws Exception {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".KeyguardDisabledFeaturesTest",
                 "testSetKeyguardDisabledFeatures_onParent", mUserId);
@@ -368,53 +350,9 @@ public final class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         getDevice().executeShellCommand(cmd);
     }
 
-    @Test
-    public void testPersonalAppsSuspensionNormalApp() throws Exception {
-        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
-        // Initially the app should be launchable.
-        assertCanStartPersonalApp(DEVICE_ADMIN_PKG, true);
-        setPersonalAppsSuspended(true);
-        // Now the app should be suspended and not launchable
-        assertCanStartPersonalApp(DEVICE_ADMIN_PKG, false);
-        setPersonalAppsSuspended(false);
-        // Should be launchable again.
-        assertCanStartPersonalApp(DEVICE_ADMIN_PKG, true);
-    }
-
-    @Test
-    public void testPersonalAppsSuspensionInstalledApp() throws Exception {
-        setPersonalAppsSuspended(true);
-
-        installAppAsUser(TEST_IME_APK, mPrimaryUserId);
-
-        // Wait until package install broadcast is processed
-        waitForBroadcastIdle();
-
-        assertCanStartPersonalApp(TEST_IME_PKG, false);
-        setPersonalAppsSuspended(false);
-    }
-
     private void setPersonalAppsSuspended(boolean suspended) throws DeviceNotAvailableException {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
                 suspended ? "testSuspendPersonalApps" : "testUnsuspendPersonalApps", mUserId);
-    }
-
-    @Test
-    public void testPersonalAppsSuspensionSms() throws Exception {
-        assumeHasTelephonyFeature();
-        assumeSupportsSms();
-
-        // Install an SMS app and make it the default.
-        installAppAsUser(SIMPLE_SMS_APP_APK, mPrimaryUserId);
-        addSmsRole(SIMPLE_SMS_APP_PKG, mPrimaryUserId);
-        try {
-            setPersonalAppsSuspended(true);
-            // Default sms app should not be suspended.
-            assertCanStartPersonalApp(SIMPLE_SMS_APP_PKG, true);
-            setPersonalAppsSuspended(false);
-        } finally {
-            removeSmsRole(SIMPLE_SMS_APP_PKG, mPrimaryUserId);
-        }
     }
 
     private void addSmsRole(String app, int userId) throws Exception {
@@ -435,20 +373,6 @@ public final class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         // Active IME should not be suspended.
         assertCanStartPersonalApp(TEST_IME_PKG, true);
         setPersonalAppsSuspended(false);
-    }
-
-    @Test
-    public void testCanRestrictAccountManagementOnParentProfile() throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AccountManagementParentTest",
-                "testSetAccountManagementDisabledOnParent", mUserId);
-        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
-        try {
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AccountManagementParentTest",
-                    "testAccountManagementDisabled", mPrimaryUserId);
-        } finally {
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AccountManagementParentTest",
-                    "testEnableAccountManagement", mUserId);
-        }
     }
 
     @Test

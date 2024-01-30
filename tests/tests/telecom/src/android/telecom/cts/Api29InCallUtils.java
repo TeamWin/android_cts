@@ -12,7 +12,7 @@ import android.util.Pair;
 
 import junit.framework.TestCase;
 
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public final class Api29InCallUtils {
@@ -28,13 +28,13 @@ public final class Api29InCallUtils {
                         CtsApi29InCallServiceControl.class.getName());
 
         bindIntent.setComponent(controlComponentName);
-        LinkedBlockingQueue<ICtsApi29InCallServiceControl> result = new LinkedBlockingQueue<>(1);
+        CompletableFuture<ICtsApi29InCallServiceControl> resultFuture = new CompletableFuture<>();
 
         ServiceConnection serviceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
                 Log.i(LOG_TAG, "Service Connected: " + name);
-                result.offer(ICtsApi29InCallServiceControl.Stub.asInterface(service));
+                resultFuture.complete(ICtsApi29InCallServiceControl.Stub.asInterface(service));
             }
 
             @Override
@@ -49,7 +49,8 @@ public final class Api29InCallUtils {
             TestCase.fail("Failed to get control interface -- bind error");
         }
         return Pair.create(serviceConnection,
-                result.poll(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, TimeUnit.MILLISECONDS));
+                resultFuture.get(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                        TimeUnit.MILLISECONDS));
     }
 
     public static void tearDownControl(Context context, ServiceConnection serviceConnection) {

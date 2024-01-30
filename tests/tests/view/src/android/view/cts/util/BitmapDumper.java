@@ -108,7 +108,7 @@ public final class BitmapDumper {
         saveBitmap(bitmap, capture);
         Log.d(TAG, testName + " saved " + capture.getAbsolutePath());
         Bundle report = new Bundle();
-        report.putString(KEY_PREFIX + TYPE_SINGULAR, bypassContentProvider(capture));
+        report.putString(KEY_PREFIX + TYPE_SINGULAR + testName, bypassContentProvider(capture));
         sInstrumentation.sendStatus(INST_STATUS_IN_PROGRESS, report);
     }
 

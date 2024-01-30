@@ -28,6 +28,9 @@ android_test {
         "androidx.test.ext.junit",
         "testng",
         "platform-compat-test-rules",
+        "flag-junit",
+        "android.service.voice.flags-aconfig-java",
+        "android.permission.flags-aconfig-java",
     ],
     aidl: {
         local_include_dirs: [
@@ -51,7 +54,6 @@ android_test {
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "gts",
         "general-tests",
     ],
     sdk_version: "test_current",

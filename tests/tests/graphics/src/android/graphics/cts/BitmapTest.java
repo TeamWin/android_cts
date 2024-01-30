@@ -15,12 +15,15 @@
  */
 package android.graphics.cts;
 
+import static android.graphics.cts.utils.LeakTest.runNotLeakingTest;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNoException;
@@ -44,7 +47,6 @@ import android.graphics.Paint;
 import android.graphics.Picture;
 import android.graphics.Shader;
 import android.hardware.HardwareBuffer;
-import android.os.Debug;
 import android.os.Parcel;
 import android.os.StrictMode;
 import android.util.DisplayMetrics;
@@ -58,12 +60,14 @@ import com.android.compatibility.common.util.BitmapUtils;
 import com.android.compatibility.common.util.ColorUtils;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -74,11 +78,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 
 @SmallTest
 @RunWith(JUnitParamsRunner.class)
@@ -664,11 +663,26 @@ public class BitmapTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testWrapHardwareBufferWithInvalidUsageFails() {
+    @Test
+    public void testWrapHardwareBufferMissingGpuUsageFails() {
         try (HardwareBuffer hwBuffer = HardwareBuffer.create(512, 512, HardwareBuffer.RGBA_8888, 1,
             HardwareBuffer.USAGE_CPU_WRITE_RARELY)) {
-            Bitmap bitmap = Bitmap.wrapHardwareBuffer(hwBuffer, ColorSpace.get(Named.SRGB));
+            assertThrows(IllegalArgumentException.class, () -> {
+                Bitmap.wrapHardwareBuffer(hwBuffer, ColorSpace.get(Named.SRGB));
+            });
+        }
+    }
+
+    @Test
+    public void testWrapHardwareBufferWithProtectedUsageFails() {
+        try (HardwareBuffer hwBuffer = HardwareBuffer.create(512, 512, HardwareBuffer.RGBA_8888, 1,
+                HardwareBuffer.USAGE_GPU_COLOR_OUTPUT
+                        | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE
+                        | HardwareBuffer.USAGE_COMPOSER_OVERLAY
+                        | HardwareBuffer.USAGE_PROTECTED_CONTENT)) {
+            assertThrows(IllegalArgumentException.class, () -> {
+                Bitmap.wrapHardwareBuffer(hwBuffer, ColorSpace.get(Named.SRGB));
+            });
         }
     }
 
@@ -2257,84 +2271,6 @@ public class BitmapTest {
                 Bitmap.createBitmap(b).isMutable());
     }
 
-    private static void runGcAndFinalizersSync() {
-        Runtime.getRuntime().gc();
-        Runtime.getRuntime().runFinalization();
-
-        final CountDownLatch fence = new CountDownLatch(1);
-        new Object() {
-            @Override
-            protected void finalize() throws Throwable {
-                try {
-                    fence.countDown();
-                } finally {
-                    super.finalize();
-                }
-            }
-        };
-        try {
-            do {
-                Runtime.getRuntime().gc();
-                Runtime.getRuntime().runFinalization();
-            } while (!fence.await(100, TimeUnit.MILLISECONDS));
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    private static File sProcSelfFd = new File("/proc/self/fd");
-    private static int getFdCount() {
-        return sProcSelfFd.listFiles().length;
-    }
-
-    private static void assertNotLeaking(int iteration,
-            Debug.MemoryInfo start, Debug.MemoryInfo end) {
-        Debug.getMemoryInfo(end);
-        assertNotEquals(0, start.getTotalPss());
-        assertNotEquals(0, end.getTotalPss());
-        if (end.getTotalPss() - start.getTotalPss() > 5000 /* kB */) {
-            runGcAndFinalizersSync();
-            Debug.getMemoryInfo(end);
-            if (end.getTotalPss() - start.getTotalPss() > 7000 /* kB */) {
-                // Guarded by if so we don't continually generate garbage for the
-                // assertion string.
-                assertEquals("Memory leaked, iteration=" + iteration,
-                        start.getTotalPss(), end.getTotalPss(),
-                        7000 /* kb */);
-            }
-        }
-    }
-
-    private static void runNotLeakingTest(Runnable test) {
-        Debug.MemoryInfo meminfoStart = new Debug.MemoryInfo();
-        Debug.MemoryInfo meminfoEnd = new Debug.MemoryInfo();
-        int fdCount = -1;
-        // Do a warmup to reach steady-state memory usage
-        for (int i = 0; i < 50; i++) {
-            test.run();
-        }
-        runGcAndFinalizersSync();
-        Debug.getMemoryInfo(meminfoStart);
-        fdCount = getFdCount();
-        // Now run the test
-        for (int i = 0; i < 2000; i++) {
-            if (i % 100 == 5) {
-                assertNotLeaking(i, meminfoStart, meminfoEnd);
-                final int curFdCount = getFdCount();
-                if (curFdCount - fdCount > 10) {
-                    fail(String.format("FDs leaked. Expected=%d, current=%d, iteration=%d",
-                            fdCount, curFdCount, i));
-                }
-            }
-            test.run();
-        }
-        assertNotLeaking(2000, meminfoStart, meminfoEnd);
-        final int curFdCount = getFdCount();
-        if (curFdCount - fdCount > 10) {
-            fail(String.format("FDs leaked. Expected=%d, current=%d", fdCount, curFdCount));
-        }
-    }
-
     @Test
     @LargeTest
     public void testHardwareBitmapNotLeaking() {
@@ -2392,6 +2328,8 @@ public class BitmapTest {
             surface.unlockCanvasAndPost(canvas);
             bitmap.recycle();
         });
+
+        surface.release();
         renderTarget.destroy();
     }
 
@@ -2500,13 +2438,17 @@ public class BitmapTest {
         // The Bitmap is already in shared memory, so no work is done.
         Bitmap shared2 = shared.asShared();
         assertSame(shared, shared2);
+
+        original.recycle();
+        shared.recycle();
+        shared2.recycle();
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testAsSharedRecycled() {
         Bitmap bitmap = Bitmap.createBitmap(10, 10, Config.ARGB_8888);
         bitmap.recycle();
-        bitmap.asShared();
+        assertThrows(IllegalStateException.class, bitmap::asShared);
     }
 
     @Test
@@ -2721,7 +2663,7 @@ public class BitmapTest {
 
                 int dataSpace = nGetDataSpace(bm);
                 assertEquals("Bitmap with " + c + " and " + bm.getColorSpace()
-                        + " has unexpected data space", DataSpace.fromColorSpace(colorSpace),
+                        + " has unexpected data space", colorSpace.getDataSpace(),
                         dataSpace);
             }
         }

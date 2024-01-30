@@ -113,11 +113,12 @@ public class Camera2MultiViewTestCase extends Camera2ParameterizedTestCase {
         }
         assertNotNull("Unable to get texture view", mTextureView);
         mCameraIdMap = new HashMap<String, Integer>();
-        int numCameras = mCameraIdsUnderTest.length;
+        String[] cameraIdsUnderTest = getCameraIdsUnderTest();
+        int numCameras = cameraIdsUnderTest.length;
         mCameraHolders = new CameraHolder[numCameras];
         for (int i = 0; i < numCameras; i++) {
-            mCameraHolders[i] = new CameraHolder(mCameraIdsUnderTest[i]);
-            mCameraIdMap.put(mCameraIdsUnderTest[i], i);
+            mCameraHolders[i] = new CameraHolder(cameraIdsUnderTest[i]);
+            mCameraIdMap.put(cameraIdsUnderTest[i], i);
         }
         mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
     }

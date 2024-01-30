@@ -223,14 +223,14 @@ public class InstallSessionParamsUnitTest {
 
     @Before
     public void onBefore() throws Exception {
-        PackageManagerShellCommandTest.setSystemProperty(
+        PackageManagerShellCommandInstallTest.setSystemProperty(
                 "debug.pm.install_skip_size_check_for_maxint", "1");
     }
 
     @After
     public void onAfter() throws Exception {
         // Set the test override to invalid.
-        PackageManagerShellCommandTest.setSystemProperty(
+        PackageManagerShellCommandInstallTest.setSystemProperty(
                 "debug.pm.install_skip_size_check_for_maxint", "invalid");
     }
 

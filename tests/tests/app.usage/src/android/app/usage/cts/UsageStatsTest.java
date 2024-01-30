@@ -26,6 +26,8 @@ import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_NEVER;
 import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_RARE;
 import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_WORKING_SET;
 import static android.provider.DeviceConfig.NAMESPACE_APP_STANDBY;
+import static android.text.format.DateUtils.HOUR_IN_MILLIS;
+import static android.text.format.DateUtils.MINUTE_IN_MILLIS;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -41,14 +43,18 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.AppOpsManager;
+import android.app.Instrumentation;
 import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.UiAutomation;
 import android.app.usage.EventStats;
+import android.app.usage.Flags;
 import android.app.usage.UsageEvents;
 import android.app.usage.UsageEvents.Event;
+import android.app.usage.UsageEventsQuery;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.BroadcastReceiver;
@@ -60,8 +66,10 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcel;
+import android.os.PersistableBundle;
 import android.os.Process;
 import android.os.SystemClock;
 import android.os.UserHandle;
@@ -71,6 +79,10 @@ import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 import android.platform.test.annotations.AsbSecurityTest;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.Settings;
 import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerStateHelper;
@@ -97,6 +109,7 @@ import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -108,6 +121,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -203,8 +217,12 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     private static final String TEST_NOTIFICATION_TEXT_1 = "Test content 1";
     private static final String TEST_NOTIFICATION_TEXT_2 = "Test content 2";
 
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
     private Context mContext;
     private UiDevice mUiDevice;
+    private UiAutomation mUiAutomation;
     private ActivityManager mAm;
     private UsageStatsManager mUsageStatsManager;
     private KeyguardManager mKeyguardManager;
@@ -217,8 +235,10 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
 
     @Before
     public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        mContext = instrumentation.getContext();
+        mUiDevice = UiDevice.getInstance(instrumentation);
+        mUiAutomation = instrumentation.getUiAutomation();
         mAm = mContext.getSystemService(ActivityManager.class);
         mUsageStatsManager = (UsageStatsManager) mContext.getSystemService(
                 Context.USAGE_STATS_SERVICE);
@@ -271,6 +291,8 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
                     REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL,
                     REVOKE_RUNTIME_PERMISSIONS);
         }
+
+        mUiAutomation.dropShellPermissionIdentity();
     }
 
     private static void assertLessThan(long left, long right) {
@@ -1485,7 +1507,6 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         return latestTime;
     }
 
-
     private ArrayList<Event> waitForEventCount(int[] whichEvents, long startTime, int count) {
         return waitForEventCount(whichEvents, startTime, count, null);
     }
@@ -1823,8 +1844,20 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsDisabled(Flags.FLAG_FILTER_BASED_EVENT_QUERY_API)
     @Test
     public void testForegroundService() throws Exception {
+        testForegroundServiceHelper(/* filteredEvents= */ false);
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsEnabled(Flags.FLAG_FILTER_BASED_EVENT_QUERY_API)
+    @Test
+    public void testForegroundService_withQueryFilter() throws Exception {
+        testForegroundServiceHelper(/* filteredEvents= */ true);
+    }
+
+    private void testForegroundServiceHelper(boolean filteredEvents) {
         // This test start a foreground service then stop it. The event list should have one
         // FOREGROUND_SERVICE_START and one FOREGROUND_SERVICE_STOP event.
         final long startTime = System.currentTimeMillis();
@@ -1835,7 +1868,16 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         mContext.stopService(new Intent(mContext, TestService.class));
         mUiDevice.wait(Until.gone(By.clazz(TestService.class)), TIMEOUT);
         final long endTime = System.currentTimeMillis();
-        UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
+        UsageEvents events = null;
+        if (filteredEvents) {
+            UsageEventsQuery query = new UsageEventsQuery.Builder(startTime, endTime)
+                    .addEventTypes(Event.FOREGROUND_SERVICE_START)
+                    .addEventTypes(Event.FOREGROUND_SERVICE_STOP)
+                    .build();
+            events = mUsageStatsManager.queryEvents(query);
+        } else {
+            events = mUsageStatsManager.queryEvents(startTime, endTime);
+        }
 
         int numStarts = 0;
         int numStops = 0;
@@ -1845,6 +1887,9 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         while (events.hasNextEvent()) {
             UsageEvents.Event event = new UsageEvents.Event();
             assertTrue(events.getNextEvent(event));
+            assertTrue(!filteredEvents
+                    || (event.getEventType() == Event.FOREGROUND_SERVICE_START
+                            || event.getEventType() == Event.FOREGROUND_SERVICE_STOP));
             if (mTargetPackage.equals(event.getPackageName())
                     || TestService.class.getName().equals(event.getClassName())) {
                 if (event.getEventType() == Event.FOREGROUND_SERVICE_START) {
@@ -1863,7 +1908,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         assertLessThan(startIdx, stopIdx);
 
         final Map<String, UsageStats> map = mUsageStatsManager.queryAndAggregateUsageStats(
-            startTime, endTime);
+                startTime, endTime);
         final UsageStats stats = map.get(mTargetPackage);
         assertNotNull(stats);
         final long lastTimeUsed = stats.getLastTimeForegroundServiceUsed();
@@ -2167,9 +2212,23 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsDisabled(Flags.FLAG_REPORT_USAGE_STATS_PERMISSION)
     @Test
     @AsbSecurityTest(cveBugId = 229633537)
     public void testReportChooserSelection() throws Exception {
+        testReportChooserSelectionNoPermissionCheck();
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsEnabled(Flags.FLAG_REPORT_USAGE_STATS_PERMISSION)
+    @Test
+    @AsbSecurityTest(cveBugId = 229633537)
+    public void testReportChooserSelectionWithPermission() throws Exception {
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.REPORT_USAGE_STATS);
+        testReportChooserSelectionNoPermissionCheck();
+    }
+
+    private void testReportChooserSelectionNoPermissionCheck() throws Exception {
         // attempt to report an event with a null package, should fail.
         try {
             mUsageStatsManager.reportChooserSelection(null, 0,
@@ -2243,6 +2302,163 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsEnabled(Flags.FLAG_REPORT_USAGE_STATS_PERMISSION)
+    @Test
+    public void testReportChooserSelectionAccess() throws Exception {
+        try {
+            // only system uid or holders of the REPORT_USAGE_EVENTS should be able to report events
+            mUsageStatsManager.reportChooserSelection(TEST_APP_PKG, 0,
+                    "text/plain", null, "android.intent.action.SEND");
+            fail("Able to report a chooser selection from CTS test");
+        } catch (SecurityException expected) { }
+
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.REPORT_USAGE_STATS);
+        mUsageStatsManager.reportChooserSelection(TEST_APP_PKG, 0,
+                "text/plain", null, "android.intent.action.SEND");
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsEnabled(Flags.FLAG_REPORT_USAGE_STATS_PERMISSION)
+    @Test
+    public void testReportUserInteractionAccess() throws Exception {
+        try {
+            // only system uid or holders of the REPORT_USAGE_EVENTS should be able to report events
+            mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, 0);
+            fail("Able to report a user interaction from CTS test");
+        } catch (SecurityException expected) { }
+
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.REPORT_USAGE_STATS);
+        mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, 0);
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsEnabled(Flags.FLAG_REPORT_USAGE_STATS_PERMISSION)
+    @Test
+    public void testCrossUserReportUserInteractionAccess() throws Exception {
+        assumeTrue(UserManager.supportsMultipleUsers());
+        // Create user
+        final int userId = createUser("Test User");
+        startUser(userId, true);
+        installExistingPackageAsUser(mContext.getPackageName(), userId);
+        installExistingPackageAsUser(TEST_APP_PKG, userId);
+
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.REPORT_USAGE_STATS);
+        try {
+            mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, /* userId= */ userId);
+            fail("Able to report cross user interaction without INTERACT_ACROSS_USERS_FULLi"
+                    + " permission from CTS test");
+        } catch (SecurityException expected) {
+            // Do nothing.
+        }
+
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.REPORT_USAGE_STATS,
+                Manifest.permission.INTERACT_ACROSS_USERS_FULL);
+        mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, userId);
+        // user cleanup done in @After.
+    }
+
+    /**
+     * Test to ensure the {@link UsageStatsManager#reportUserInteraction(String, int, Bundle)}
+     * is enforce with {@link android.Manifest.permission#REPORT_USAGE_STATS}
+     */
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_USER_INTERACTION_TYPE_API)
+    public void testReportUserInteractionWithTypeAccess() throws Exception {
+        final PersistableBundle extras = new PersistableBundle();
+        extras.putString(UsageStatsManager.EXTRA_EVENT_CATEGORY, "fake.namespace.category");
+        extras.putString(UsageStatsManager.EXTRA_EVENT_ACTION, "fakeaction");
+        try {
+            // only system uid or holders of the REPORT_USAGE_EVENTS should be able to report events
+            mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, /* userId */0, extras);
+            fail("Able to report a user interaction from CTS test");
+        } catch (SecurityException expected) { }
+
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.REPORT_USAGE_STATS);
+        mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, 0, extras);
+    }
+
+    /**
+     * Tests to ensure {@link UsageStatsManager#reportUserInteraction(String, int, Bundle)}
+     * with valid package and user interaction event type is able to report the user
+     * interaction events.
+     */
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
+    @RequiresFlagsEnabled({Flags.FLAG_USER_INTERACTION_TYPE_API,
+            Flags.FLAG_REPORT_USAGE_STATS_PERMISSION})
+    public void testReportUserInteraction() throws Exception {
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.REPORT_USAGE_STATS);
+        // attempt to report an event with a null package, should fail.
+        try {
+            mUsageStatsManager.reportUserInteraction(null, /* userId= */ 0,
+                    /* extras=*/ PersistableBundle.EMPTY);
+            fail("able to report a user interaction with a null package");
+        } catch (NullPointerException expected) { }
+
+        // attempt to report an event with non-existent package, should fail.
+        final PersistableBundle extras = new PersistableBundle();
+        final String interactionCategoryValue = "android.app.notification";
+        final String interactionActionValue = "click";
+        extras.putString(UsageStatsManager.EXTRA_EVENT_CATEGORY, interactionCategoryValue);
+        extras.putString(UsageStatsManager.EXTRA_EVENT_ACTION, interactionActionValue);
+        try {
+            mUsageStatsManager.reportUserInteraction("android.app.usage.cts.nonexistent.pkg", 0,
+                    extras);
+            fail("able to report a user interaction with non-existent package name");
+        } catch (IllegalArgumentException expected) { }
+
+        // attempt to report an event with an empty extras, should fail.
+        try {
+            mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, /* userId= */ 0,
+                    /* extras= */ PersistableBundle.EMPTY);
+            fail("able to report a user interaction with empty extras");
+        } catch (IllegalArgumentException expected) { }
+
+        // attempt to report an event with empty category or action, should fail.
+        extras.putString(UsageStatsManager.EXTRA_EVENT_CATEGORY, "");
+        extras.putString(UsageStatsManager.EXTRA_EVENT_ACTION, interactionActionValue);
+        try {
+            mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, /* userId= */ 0,
+                    /* extras= */ extras);
+            fail("able to report a user interaction with empty category");
+        } catch (IllegalArgumentException expected) { }
+
+        extras.putString(UsageStatsManager.EXTRA_EVENT_CATEGORY, interactionCategoryValue);
+        extras.putString(UsageStatsManager.EXTRA_EVENT_ACTION, "");
+        try {
+            mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, /* userId= */ 0,
+                    /* extras= */ extras);
+            fail("able to report a user interaction with empty action");
+        } catch (IllegalArgumentException expected) { }
+
+        // report a valid user interaction event - should be found.
+        extras.putString(UsageStatsManager.EXTRA_EVENT_CATEGORY, interactionCategoryValue);
+        extras.putString(UsageStatsManager.EXTRA_EVENT_ACTION, interactionActionValue);
+        long startTime = System.currentTimeMillis();
+        mUsageStatsManager.reportUserInteraction(TEST_APP_PKG, /* userId */ 0, extras);
+        Thread.sleep(500); // wait for a while for the event to report via the handler.
+        UsageEvents userInteractionEvents = mUsageStatsManager.queryEvents(
+                startTime - 1000, System.currentTimeMillis() + 1000);
+        boolean found = false;
+        while (userInteractionEvents.hasNextEvent()) {
+            final Event ev = new Event();
+            userInteractionEvents.getNextEvent(ev);
+            if (ev.getEventType() != Event.USER_INTERACTION) {
+                continue;
+            }
+            PersistableBundle interactionExtras = ev.getExtras();
+            assertEquals(interactionCategoryValue,
+                    interactionExtras.getString(UsageStatsManager.EXTRA_EVENT_CATEGORY));
+            assertEquals(interactionActionValue,
+                    interactionExtras.getString(UsageStatsManager.EXTRA_EVENT_ACTION));
+            found = true;
+            break;
+        }
+        assertTrue("Couldn't find the reported user interaction event.", found);
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testLocusIdEventsVisibility() throws Exception {
         final long startTime = System.currentTimeMillis();
@@ -2253,6 +2469,138 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         final UsageEvents allEvents = queryEventsAsShell(startTime, endTime);
         verifyLocusIdEventVisibility(restrictedEvents, false);
         verifyLocusIdEventVisibility(allEvents, true);
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsEnabled(Flags.FLAG_FILTER_BASED_EVENT_QUERY_API)
+    @Test
+    public void testUsageEventsQueryParceling() throws Exception {
+        final long endTime = System.currentTimeMillis();
+        final long startTime = endTime - MINUTE_IN_MILLIS;
+        Random rnd = new Random();
+        UsageEventsQuery.Builder queryBuilder = new UsageEventsQuery.Builder(startTime, endTime);
+        for (int i = 0; i < Event.MAX_EVENT_TYPE + 1; i++) {
+            queryBuilder.addEventTypes(rnd.nextInt(Event.MAX_EVENT_TYPE + 1));
+        }
+        UsageEventsQuery query = queryBuilder.build();
+        Parcel p = Parcel.obtain();
+        p.setDataPosition(0);
+        query.writeToParcel(p, 0);
+        p.setDataPosition(0);
+
+        UsageEventsQuery queryFromParcel = UsageEventsQuery.CREATOR.createFromParcel(p);
+        assertEquals(query.getBeginTimeMillis(), queryFromParcel.getBeginTimeMillis());
+        assertEquals(query.getEndTimeMillis(), queryFromParcel.getEndTimeMillis());
+        assertTrue(query.getEventTypes().equals(queryFromParcel.getEventTypes()));
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsEnabled(Flags.FLAG_FILTER_BASED_EVENT_QUERY_API)
+    @Test
+    public void testQueryEventsWithFilter() throws Exception {
+        final long endTime = System.currentTimeMillis() - MINUTE_IN_MILLIS;
+        final long startTime = Math.max(0, endTime - HOUR_IN_MILLIS); // 1 hour
+
+        UsageEvents unfilteredEvents = mUsageStatsManager.queryEvents(startTime, endTime);
+        UsageEventsQuery query = new UsageEventsQuery.Builder(startTime, endTime)
+                .addEventTypes(Event.ACTIVITY_RESUMED, Event.ACTIVITY_PAUSED)
+                .build();
+        UsageEvents filteredEvents = mUsageStatsManager.queryEvents(query);
+        ArrayList<Event> filteredEventList = new ArrayList<>();
+        ArrayList<Event> unfilteredEventList = new ArrayList<>();
+        while (unfilteredEvents.hasNextEvent()) {
+            final Event event = new Event();
+            unfilteredEvents.getNextEvent(event);
+            if (event.getEventType() == Event.ACTIVITY_RESUMED
+                    || event.getEventType() == Event.ACTIVITY_PAUSED) {
+                unfilteredEventList.add(event);
+            }
+        }
+
+        while (filteredEvents.hasNextEvent()) {
+            final Event event = new Event();
+            filteredEvents.getNextEvent(event);
+            assertTrue(event.getEventType() == Event.ACTIVITY_RESUMED
+                    || event.getEventType() == Event.ACTIVITY_PAUSED);
+            filteredEventList.add(event);
+        }
+
+        compareUsageEventList(unfilteredEventList, filteredEventList);
+
+        // Test with empty event types, it should behave the same with the non-filter one
+        unfilteredEvents = mUsageStatsManager.queryEvents(startTime, endTime);
+        query = new UsageEventsQuery.Builder(startTime, endTime).build();
+        filteredEvents = mUsageStatsManager.queryEvents(query);
+        unfilteredEventList = new ArrayList<>();
+        filteredEventList = new ArrayList<>();
+        while (unfilteredEvents.hasNextEvent()) {
+            final Event event = new Event();
+            unfilteredEvents.getNextEvent(event);
+            unfilteredEventList.add(event);
+        }
+
+        while (filteredEvents.hasNextEvent()) {
+            final Event event = new Event();
+            filteredEvents.getNextEvent(event);
+            filteredEventList.add(event);
+        }
+
+        // Two query results should be the same.
+        compareUsageEventList(unfilteredEventList, filteredEventList);
+    }
+
+    private static void compareUsageEventList(List<Event> unfilteredEventList,
+            List<Event> filteredEventList) {
+        // There should be same number of usage events.
+        assertEquals(unfilteredEventList.size(), filteredEventList.size());
+
+        for (Event event : filteredEventList) {
+            // Each event should be appeared in both query results.
+            boolean found = false;
+            for (int i = 0; i < unfilteredEventList.size(); i++) {
+                if (compareEvent(event, unfilteredEventList.get(i))) {
+                    found = true;
+                    break;
+                }
+            }
+            assertTrue(found);
+        }
+    }
+
+    private static boolean compareEvent(Event ue1, Event ue2) {
+        boolean result = (ue1.mEventType == ue2.mEventType)
+                && (ue1.mTimeStamp ==  ue2.mTimeStamp)
+                && (ue1.mInstanceId == ue2.mInstanceId)
+                && Objects.equals(ue1.mPackage, ue2.mPackage)
+                && Objects.equals(ue1.mClass, ue2.mClass)
+                && Objects.equals(ue1.mTaskRootPackage, ue2.mTaskRootPackage)
+                && Objects.equals(ue1.mTaskRootClass, ue2.mTaskRootClass)
+                && (ue1.mFlags == ue2.mFlags);
+
+        switch (ue1.mEventType) {
+            case Event.CONFIGURATION_CHANGE:
+                result &= Objects.equals(ue1.mConfiguration, ue2.mConfiguration);
+                break;
+            case Event.SHORTCUT_INVOCATION:
+                result &= Objects.equals(ue1.mShortcutId, ue2.mShortcutId);
+                break;
+            case Event.CHOOSER_ACTION:
+                result &= Objects.equals(ue1.mAction, ue2.mAction);
+                result &= Objects.equals(ue1.mContentType, ue2.mContentType);
+                result &= Arrays.equals(ue1.mContentAnnotations, ue2.mContentAnnotations);
+                break;
+            case Event.STANDBY_BUCKET_CHANGED:
+                result &= (ue1.mBucketAndReason == ue2.mBucketAndReason);
+                break;
+            case Event.NOTIFICATION_INTERRUPTION:
+                result &= Objects.equals(ue1.mNotificationChannelId, ue2.mNotificationChannelId);
+                break;
+            case Event.LOCUS_ID_SET:
+                result &= Objects.equals(ue1.mLocusId, ue2.mLocusId);
+                break;
+        }
+
+        return result;
     }
 
     private void startAndDestroyActivityWithLocus() {

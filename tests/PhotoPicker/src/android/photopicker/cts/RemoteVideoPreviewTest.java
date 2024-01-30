@@ -16,8 +16,8 @@
 
 package android.photopicker.cts;
 
+import static android.photopicker.cts.PhotoPickerCloudUtils.disableDeviceConfigSync;
 import static android.photopicker.cts.PhotoPickerCloudUtils.enableCloudMediaAndSetAllowedCloudProviders;
-import static android.photopicker.cts.PickerProviderMediaGenerator.setCloudProvider;
 import static android.photopicker.cts.PickerProviderMediaGenerator.syncCloudProvider;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.deleteMedia;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.REGEX_PACKAGE_NAME;
@@ -48,19 +48,23 @@ import android.photopicker.cts.cloudproviders.CloudProviderPrimary.CloudMediaSur
 import android.provider.MediaStore;
 import android.util.Pair;
 
+import androidx.annotation.Nullable;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.UiObject;
 import androidx.test.uiautomator.UiSelector;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -72,7 +76,7 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
-
+    private static final String TAG = RemoteVideoPreviewTest.class.getSimpleName();
     private MediaGenerator mCloudPrimaryMediaGenerator;
     private final List<Uri> mUriList = new ArrayList<>();
 
@@ -87,21 +91,34 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
     private CloudMediaSurfaceControllerImpl mSurfaceControllerListener;
     // This is required to assert the order in which the APIs are called.
     private InOrder mAssertInOrder;
+    @Nullable
+    private static DeviceStatePreserver sDeviceStatePreserver;
+
+    @BeforeClass
+    public static void setUpBeforeClass() throws IOException {
+        sDeviceStatePreserver = new DeviceStatePreserver(sDevice);
+        sDeviceStatePreserver.saveCurrentCloudProviderState();
+        disableDeviceConfigSync();
+
+        // This is a self-instrumentation test, so both "target" package name and "own" package name
+        // should be the same (android.photopicker.cts).
+        enableCloudMediaAndSetAllowedCloudProviders(sTargetPackageName);
+    }
+
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        sDeviceStatePreserver.restoreCloudProviderState();
+    }
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-
         mCloudPrimaryMediaGenerator = PickerProviderMediaGenerator.getMediaGenerator(
                 mContext, CloudProviderPrimary.AUTHORITY);
         mCloudPrimaryMediaGenerator.resetAll();
         mCloudPrimaryMediaGenerator.setMediaCollectionId(COLLECTION_1);
 
-        // This is a self-instrumentation test, so both "target" package name and "own" package name
-        // should be the same (android.photopicker.cts).
-        enableCloudMediaAndSetAllowedCloudProviders(sTargetPackageName);
-
-        setCloudProvider(mContext, CloudProviderPrimary.AUTHORITY);
+        setCloudProvider(CloudProviderPrimary.AUTHORITY);
         assertThat(MediaStore.isCurrentCloudMediaProviderAuthority(mContext.getContentResolver(),
                 CloudProviderPrimary.AUTHORITY)).isTrue();
 
@@ -119,7 +136,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
             mActivity.finish();
         }
         if (mCloudPrimaryMediaGenerator != null) {
-            setCloudProvider(mContext, null);
+            setCloudProvider(null);
         }
     }
 
@@ -229,7 +246,6 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
     }
 
     @Test
-    @Ignore("Test have changed after Android U CTS cut")
     public void testVideoPreviewProgressIndicator() throws Exception {
         initCloudProviderWithVideo(Arrays.asList(Pair.create(null, CLOUD_ID1)));
         launchPreviewMultiple(/* count */ 1);
@@ -240,7 +256,6 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
     }
 
     @Test
-    @Ignore("Test have changed after Android U CTS cut")
     public void testVideoPreviewPermanentError() throws Exception {
         initCloudProviderWithVideo(Arrays.asList(Pair.create(null, CLOUD_ID1)));
         launchPreviewMultiple(/* count */ 1);
@@ -251,7 +266,6 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
     }
 
     @Test
-    @Ignore("Test have changed after Android U CTS cut")
     public void testVideoPreviewRetriableError() throws Exception {
         initCloudProviderWithVideo(Arrays.asList(Pair.create(null, CLOUD_ID1)));
         final int surfaceId = 0;

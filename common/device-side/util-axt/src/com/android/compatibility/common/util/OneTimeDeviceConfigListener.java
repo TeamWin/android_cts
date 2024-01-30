@@ -52,13 +52,17 @@ public final class OneTimeDeviceConfigListener implements OnPropertiesChangedLis
         mNamespace = Objects.requireNonNull(namespace);
         mKey = Objects.requireNonNull(key);
         mTimeoutMs = timeoutMs;
+        Log.v(TAG, "Constructor: namespace=" + mNamespace + ", key=" + key
+                + ", timeoutMs=" + timeoutMs);
     }
 
     @Override
     public void onPropertiesChanged(@NonNull Properties properties) {
+        Log.v(TAG, "onPropertiesChanged(): namespace=" + properties.getNamespace());
         if (!properties.getNamespace().equals(mNamespace)
                 || !properties.getKeyset().contains(mKey)) {
-            Log.d(TAG, "ignoring callback for namespace: " + properties.getNamespace());
+            Log.d(TAG, "ignoring callback  - wrong namespace or it doesn't contains the key "
+                    + "(keySet=" + properties.getKeyset() + ")");
             return;
         }
         mLatch.countDown();

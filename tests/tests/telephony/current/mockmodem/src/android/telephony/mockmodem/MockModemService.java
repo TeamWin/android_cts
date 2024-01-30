@@ -53,6 +53,7 @@ public class MockModemService extends Service {
     public static final String PHONE_ID = "phone_id";
 
     private static MockModemConfigInterface sMockModemConfigInterface;
+    private static MockCentralizedNetworkAgent sMockCentralizedNetworkAgent;
     private static IRadioConfigImpl sIRadioConfigImpl;
     private static IRadioModemImpl[] sIRadioModemImpl;
     private static IRadioSimImpl[] sIRadioSimImpl;
@@ -144,7 +145,10 @@ public class MockModemService extends Service {
         }
 
         sMockModemConfigInterface = new MockModemConfigBase(mContext, mNumOfSim, mNumOfPhone);
-        sIRadioConfigImpl = new IRadioConfigImpl(this, sMockModemConfigInterface, PHONE_ID_0);
+        sIRadioConfigImpl = new IRadioConfigImpl(this,
+            sMockModemConfigInterface,
+            sMockCentralizedNetworkAgent,
+            PHONE_ID_0);
         sIRadioModemImpl = new IRadioModemImpl[mNumOfPhone];
         sIRadioSimImpl = new IRadioSimImpl[mNumOfPhone];
         sIRadioNetworkImpl = new IRadioNetworkImpl[mNumOfPhone];
@@ -162,7 +166,11 @@ public class MockModemService extends Service {
             sIRadioVoiceImpl[i] = new IRadioVoiceImpl(this, sMockModemConfigInterface, i);
             sIRadioImsImpl[i] = new IRadioImsImpl(this, sMockModemConfigInterface, i);
         }
-
+        try {
+            sMockCentralizedNetworkAgent.setNetworkAgentInfo(sIRadioDataImpl, mNumOfPhone);
+        } catch (Exception e) {
+            Log.e(TAG, "Exception error: " + e);
+        }
         mBinder = new LocalBinder();
     }
 
@@ -400,5 +408,9 @@ public class MockModemService extends Service {
 
     public IRadioImsImpl getIRadioIms(byte phoneId) {
         return sIRadioImsImpl[phoneId];
+    }
+
+    public int getActiveMockModemCount() {
+        return mNumOfPhone;
     }
 }

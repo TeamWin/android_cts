@@ -70,6 +70,7 @@ public class BitmapAsserter {
      */
     public void assertBitmapIsVerified(Bitmap bitmap, BitmapVerifier bitmapVerifier,
             String testName, String debugMessage) {
+        if (testName == null) throw new NullPointerException("testName is null");
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
         boolean success = bitmapVerifier.verify(bitmap);

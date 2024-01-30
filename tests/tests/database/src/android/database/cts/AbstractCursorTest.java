@@ -16,6 +16,16 @@
 
 package android.database.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import android.app.Instrumentation;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.database.AbstractCursor;
 import android.database.CharArrayBuffer;
@@ -28,14 +38,23 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 import android.provider.Settings;
-import android.test.InstrumentationTestCase;
 
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -44,7 +63,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * Test {@link AbstractCursor}.
  */
-public class AbstractCursorTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class AbstractCursorTest {
+    @Rule public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
     private static final int POSITION0 = 0;
     private static final int POSITION1 = 1;
     private  static final int ROW_MAX = 10;
@@ -64,32 +86,44 @@ public class AbstractCursorTest extends InstrumentationTestCase {
 
     private static final long ON_CHANGE_TIMEOUT_MS = 5000;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    // This timeout value allows for the 10s delay that occurs if an app moves to the CACHED_EMPTY
+    // process state.
+    // TODO(b/292616209) Remove the possibility of the 10s delay and eliminate this long timeout.
+    private static final long ON_CHANGE_TIMEOUT_LONG_MS = ON_CHANGE_TIMEOUT_MS + 10_000;
 
-        setupDatabase();
+    @Before
+    public void setUp() throws Exception {
         ArrayList<ArrayList> list = createTestList(ROW_MAX, COLUMN_NAMES.length);
         mTestAbstractCursor = new TestAbstractCursor(COLUMN_NAMES, list);
+
+        if (mRavenwood.isUnderRavenwood()) return;
+        setupDatabase();
         mContext = getInstrumentation().getContext();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        mDatabaseCursor.close();
+    @After
+    public void tearDown() throws Exception {
         mTestAbstractCursor.close();
+
+        if (mRavenwood.isUnderRavenwood()) return;
+        mDatabaseCursor.close();
         mDatabase.close();
         if (mDatabaseFile.exists()) {
             mDatabaseFile.delete();
         }
-        super.tearDown();
     }
 
+    private Instrumentation getInstrumentation() {
+        return InstrumentationRegistry.getInstrumentation();
+    }
+
+    @Test
     public void testConstructor() {
         TestAbstractCursor abstractCursor = new TestAbstractCursor();
         assertEquals(-1, abstractCursor.getPosition());
     }
 
+    @Test
     public void testGetBlob() {
         try {
             mTestAbstractCursor.getBlob(0);
@@ -99,58 +133,64 @@ public class AbstractCursorTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testRegisterDataSetObserver() {
         MockDataSetObserver datasetObserver = new MockDataSetObserver();
 
         try {
-            mDatabaseCursor.unregisterDataSetObserver(datasetObserver);
+            mTestAbstractCursor.unregisterDataSetObserver(datasetObserver);
             fail("Can't unregister DataSetObserver before it is registered.");
         } catch (IllegalStateException e) {
             // expected
         }
 
-        mDatabaseCursor.registerDataSetObserver(datasetObserver);
+        mTestAbstractCursor.registerDataSetObserver(datasetObserver);
 
         try {
-            mDatabaseCursor.registerDataSetObserver(datasetObserver);
+            mTestAbstractCursor.registerDataSetObserver(datasetObserver);
             fail("Can't register DataSetObserver twice before unregister it.");
         } catch (IllegalStateException e) {
             // expected
         }
 
-        mDatabaseCursor.unregisterDataSetObserver(datasetObserver);
-        mDatabaseCursor.registerDataSetObserver(datasetObserver);
+        mTestAbstractCursor.unregisterDataSetObserver(datasetObserver);
+        mTestAbstractCursor.registerDataSetObserver(datasetObserver);
     }
 
+    @Test
     public void testRegisterContentObserver() {
         MockContentObserver contentObserver = new MockContentObserver();
 
         try {
-            mDatabaseCursor.unregisterContentObserver(contentObserver);
+            mTestAbstractCursor.unregisterContentObserver(contentObserver);
             fail("Can't unregister ContentObserver before it is registered.");
         } catch (IllegalStateException e) {
             // expected
         }
 
-        mDatabaseCursor.registerContentObserver(contentObserver);
+        mTestAbstractCursor.registerContentObserver(contentObserver);
 
         try {
-            mDatabaseCursor.registerContentObserver(contentObserver);
+            mTestAbstractCursor.registerContentObserver(contentObserver);
             fail("Can't register DataSetObserver twice before unregister it.");
         } catch (IllegalStateException e) {
             // expected
         }
 
-        mDatabaseCursor.unregisterContentObserver(contentObserver);
-        mDatabaseCursor.registerContentObserver(contentObserver);
+        mTestAbstractCursor.unregisterContentObserver(contentObserver);
+        mTestAbstractCursor.registerContentObserver(contentObserver);
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = ContentResolver.class)
     public void testSetNotificationUri() {
         final Uri testUri = Settings.System.getUriFor(Settings.System.TIME_12_24);
         mDatabaseCursor.setNotificationUri(getInstrumentation().getContext().getContentResolver(),
                 testUri);
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = ContentResolver.class)
     public void testSetNotificationUris_selfNotify() throws Exception {
         final Uri testUri1 = Settings.System.getUriFor(Settings.System.TIME_12_24);
         final Uri testUri2 = Settings.Global.getUriFor(
@@ -167,7 +207,9 @@ public class AbstractCursorTest extends InstrumentationTestCase {
         observer.waitForOnChange(ON_CHANGE_TIMEOUT_MS);
     }
 
+    @Test
     @AppModeFull
+    @IgnoreUnderRavenwood(blockedBy = ContentResolver.class)
     public void testSetNotificationsUris() throws Exception {
         final Uri queryUri = Uri.parse("content://com.android.cts.providerapp");
         try (Cursor cursor = mContext.getContentResolver().query(queryUri, null, null, null)) {
@@ -175,13 +217,15 @@ public class AbstractCursorTest extends InstrumentationTestCase {
             cursor.registerContentObserver(observer);
 
             mContext.getContentResolver().call(queryUri, "notify", "1", null);
-            observer.waitForOnChange(ON_CHANGE_TIMEOUT_MS);
+            observer.waitForOnChange(ON_CHANGE_TIMEOUT_LONG_MS);
             observer.resetOnChangeWatch();
             mContext.getContentResolver().call(queryUri, "notify", "2", null);
-            observer.waitForOnChange(ON_CHANGE_TIMEOUT_MS);
+            observer.waitForOnChange(ON_CHANGE_TIMEOUT_LONG_MS);
         }
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = ContentResolver.class)
     public void testGetNotificationUris() throws Exception {
         final Uri[] notificationUris = new Uri[] {
                 Settings.Global.getUriFor(Settings.Global.MODE_RINGER),
@@ -193,23 +237,26 @@ public class AbstractCursorTest extends InstrumentationTestCase {
         Assert.assertArrayEquals(notificationUris, actualNotificationUris.toArray(new Uri[0]));
     }
 
+    @Test
     public void testRespond() {
         Bundle b = new Bundle();
-        Bundle bundle = mDatabaseCursor.respond(b);
+        Bundle bundle = mTestAbstractCursor.respond(b);
         assertSame(Bundle.EMPTY, bundle);
 
-        bundle = mDatabaseCursor.respond(null);
+        bundle = mTestAbstractCursor.respond(null);
         assertSame(Bundle.EMPTY, bundle);
     }
 
+    @Test
     public void testRequery() {
         MockDataSetObserver mock = new MockDataSetObserver();
-        mDatabaseCursor.registerDataSetObserver(mock);
+        mTestAbstractCursor.registerDataSetObserver(mock);
         assertFalse(mock.hadCalledOnChanged());
-        mDatabaseCursor.requery();
+        mTestAbstractCursor.requery();
         assertTrue(mock.hadCalledOnChanged());
     }
 
+    @Test
     public void testOnChange() throws InterruptedException {
         MockContentObserver mock = new MockContentObserver();
         mTestAbstractCursor.registerContentObserver(mock);
@@ -217,6 +264,7 @@ public class AbstractCursorTest extends InstrumentationTestCase {
         mock.waitForOnChange(ON_CHANGE_TIMEOUT_MS);
     }
 
+    @Test
     public void testOnMove() {
         assertFalse(mTestAbstractCursor.getOnMoveRet());
         mTestAbstractCursor.moveToFirst();
@@ -230,6 +278,7 @@ public class AbstractCursorTest extends InstrumentationTestCase {
         assertEquals(5, mTestAbstractCursor.getNewPos());
     }
 
+    @Test
     public void testOnMove_samePosition() {
         mTestAbstractCursor.moveToFirst();
         mTestAbstractCursor.moveToPosition(5);
@@ -240,82 +289,86 @@ public class AbstractCursorTest extends InstrumentationTestCase {
         assertEquals(6, mTestAbstractCursor.getRowsMovedSum());
     }
 
+    @Test
     public void testMoveToPrevious() {
         // Test moveToFirst, isFirst, moveToNext, getPosition
-        assertTrue(mDatabaseCursor.moveToFirst());
-        assertTrue(mDatabaseCursor.isFirst());
-        assertEquals(0, mDatabaseCursor.getPosition());
-        assertTrue(mDatabaseCursor.moveToNext());
-        assertEquals(1, mDatabaseCursor.getPosition());
-        assertFalse(mDatabaseCursor.isFirst());
-        assertTrue(mDatabaseCursor.moveToNext());
-        assertEquals(2, mDatabaseCursor.getPosition());
+        assertTrue(mTestAbstractCursor.moveToFirst());
+        assertTrue(mTestAbstractCursor.isFirst());
+        assertEquals(0, mTestAbstractCursor.getPosition());
+        assertTrue(mTestAbstractCursor.moveToNext());
+        assertEquals(1, mTestAbstractCursor.getPosition());
+        assertFalse(mTestAbstractCursor.isFirst());
+        assertTrue(mTestAbstractCursor.moveToNext());
+        assertEquals(2, mTestAbstractCursor.getPosition());
 
         // invoke moveToPosition with a number larger than row count.
-        assertFalse(mDatabaseCursor.moveToPosition(30000));
-        assertEquals(mDatabaseCursor.getCount(), mDatabaseCursor.getPosition());
+        assertFalse(mTestAbstractCursor.moveToPosition(30000));
+        assertEquals(mTestAbstractCursor.getCount(), mTestAbstractCursor.getPosition());
 
-        assertFalse(mDatabaseCursor.moveToPosition(-1));
-        assertEquals(-1, mDatabaseCursor.getPosition());
-        assertTrue(mDatabaseCursor.isBeforeFirst());
+        assertFalse(mTestAbstractCursor.moveToPosition(-1));
+        assertEquals(-1, mTestAbstractCursor.getPosition());
+        assertTrue(mTestAbstractCursor.isBeforeFirst());
 
-        mDatabaseCursor.moveToPosition(5);
-        assertEquals(5, mDatabaseCursor.getPosition());
+        mTestAbstractCursor.moveToPosition(5);
+        assertEquals(5, mTestAbstractCursor.getPosition());
 
         // Test moveToPrevious
-        assertTrue(mDatabaseCursor.moveToPrevious());
-        assertEquals(4, mDatabaseCursor.getPosition());
-        assertTrue(mDatabaseCursor.moveToPrevious());
-        assertEquals(3, mDatabaseCursor.getPosition());
-        assertTrue(mDatabaseCursor.moveToPrevious());
-        assertEquals(2, mDatabaseCursor.getPosition());
+        assertTrue(mTestAbstractCursor.moveToPrevious());
+        assertEquals(4, mTestAbstractCursor.getPosition());
+        assertTrue(mTestAbstractCursor.moveToPrevious());
+        assertEquals(3, mTestAbstractCursor.getPosition());
+        assertTrue(mTestAbstractCursor.moveToPrevious());
+        assertEquals(2, mTestAbstractCursor.getPosition());
 
         // Test moveToLast, isLast, moveToPrevius, isAfterLast.
-        assertFalse(mDatabaseCursor.isLast());
-        assertTrue(mDatabaseCursor.moveToLast());
-        assertTrue(mDatabaseCursor.isLast());
-        assertFalse(mDatabaseCursor.isAfterLast());
+        assertFalse(mTestAbstractCursor.isLast());
+        assertTrue(mTestAbstractCursor.moveToLast());
+        assertTrue(mTestAbstractCursor.isLast());
+        assertFalse(mTestAbstractCursor.isAfterLast());
 
-        assertFalse(mDatabaseCursor.moveToNext());
-        assertTrue(mDatabaseCursor.isAfterLast());
-        assertFalse(mDatabaseCursor.moveToNext());
-        assertTrue(mDatabaseCursor.isAfterLast());
-        assertFalse(mDatabaseCursor.isLast());
-        assertTrue(mDatabaseCursor.moveToPrevious());
-        assertTrue(mDatabaseCursor.isLast());
-        assertTrue(mDatabaseCursor.moveToPrevious());
-        assertFalse(mDatabaseCursor.isLast());
+        assertFalse(mTestAbstractCursor.moveToNext());
+        assertTrue(mTestAbstractCursor.isAfterLast());
+        assertFalse(mTestAbstractCursor.moveToNext());
+        assertTrue(mTestAbstractCursor.isAfterLast());
+        assertFalse(mTestAbstractCursor.isLast());
+        assertTrue(mTestAbstractCursor.moveToPrevious());
+        assertTrue(mTestAbstractCursor.isLast());
+        assertTrue(mTestAbstractCursor.moveToPrevious());
+        assertFalse(mTestAbstractCursor.isLast());
 
         // Test move(int).
-        mDatabaseCursor.moveToFirst();
-        assertEquals(0, mDatabaseCursor.getPosition());
-        assertFalse(mDatabaseCursor.move(-1));
-        assertEquals(-1, mDatabaseCursor.getPosition());
-        assertTrue(mDatabaseCursor.move(1));
-        assertEquals(0, mDatabaseCursor.getPosition());
+        mTestAbstractCursor.moveToFirst();
+        assertEquals(0, mTestAbstractCursor.getPosition());
+        assertFalse(mTestAbstractCursor.move(-1));
+        assertEquals(-1, mTestAbstractCursor.getPosition());
+        assertTrue(mTestAbstractCursor.move(1));
+        assertEquals(0, mTestAbstractCursor.getPosition());
 
-        assertTrue(mDatabaseCursor.move(5));
-        assertEquals(5, mDatabaseCursor.getPosition());
-        assertTrue(mDatabaseCursor.move(-1));
-        assertEquals(4, mDatabaseCursor.getPosition());
+        assertTrue(mTestAbstractCursor.move(5));
+        assertEquals(5, mTestAbstractCursor.getPosition());
+        assertTrue(mTestAbstractCursor.move(-1));
+        assertEquals(4, mTestAbstractCursor.getPosition());
 
-        mDatabaseCursor.moveToLast();
-        assertTrue(mDatabaseCursor.isLast());
-        assertFalse(mDatabaseCursor.isAfterLast());
-        assertFalse(mDatabaseCursor.move(1));
-        assertFalse(mDatabaseCursor.isLast());
-        assertTrue(mDatabaseCursor.isAfterLast());
-        assertTrue(mDatabaseCursor.move(-1));
-        assertTrue(mDatabaseCursor.isLast());
-        assertFalse(mDatabaseCursor.isAfterLast());
+        mTestAbstractCursor.moveToLast();
+        assertTrue(mTestAbstractCursor.isLast());
+        assertFalse(mTestAbstractCursor.isAfterLast());
+        assertFalse(mTestAbstractCursor.move(1));
+        assertFalse(mTestAbstractCursor.isLast());
+        assertTrue(mTestAbstractCursor.isAfterLast());
+        assertTrue(mTestAbstractCursor.move(-1));
+        assertTrue(mTestAbstractCursor.isLast());
+        assertFalse(mTestAbstractCursor.isAfterLast());
     }
 
+    @Test
     public void testIsClosed() {
-        assertFalse(mDatabaseCursor.isClosed());
-        mDatabaseCursor.close();
-        assertTrue(mDatabaseCursor.isClosed());
+        assertFalse(mTestAbstractCursor.isClosed());
+        mTestAbstractCursor.close();
+        assertTrue(mTestAbstractCursor.isClosed());
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = CursorWindow.class)
     public void testGetWindow() {
         CursorWindow window = new CursorWindow(false);
         assertEquals(0, window.getNumRows());
@@ -332,28 +385,35 @@ public class AbstractCursorTest extends InstrumentationTestCase {
         window.clear();
     }
 
+    @Test
     public void testGetWantsAllOnMoveCalls() {
-        assertFalse(mDatabaseCursor.getWantsAllOnMoveCalls());
+        assertFalse(mTestAbstractCursor.getWantsAllOnMoveCalls());
     }
 
+    @Test
     public void testIsFieldUpdated() {
         mTestAbstractCursor.moveToFirst();
         assertFalse(mTestAbstractCursor.isFieldUpdated(0));
     }
 
+    @Test
     public void testGetUpdatedField() {
         mTestAbstractCursor.moveToFirst();
         assertNull(mTestAbstractCursor.getUpdatedField(0));
     }
 
+    @Test
     public void testGetExtras() {
-        assertSame(Bundle.EMPTY, mDatabaseCursor.getExtras());
+        assertSame(Bundle.EMPTY, mTestAbstractCursor.getExtras());
     }
 
+    @Test
     public void testGetCount() {
-        assertEquals(DATA_COUNT, mDatabaseCursor.getCount());
+        assertEquals(DATA_COUNT, mTestAbstractCursor.getCount());
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testGetColumnNames() {
         String[] names = mDatabaseCursor.getColumnNames();
         assertEquals(COLUMN_NAMES1.length, names.length);
@@ -363,11 +423,15 @@ public class AbstractCursorTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testGetColumnName() {
         assertEquals(COLUMN_NAMES1[0], mDatabaseCursor.getColumnName(0));
         assertEquals(COLUMN_NAMES1[1], mDatabaseCursor.getColumnName(1));
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testGetColumnIndexOrThrow() {
         final String COLUMN_FAKE = "fake_name";
         assertEquals(POSITION0, mDatabaseCursor.getColumnIndex(COLUMN_NAMES1[POSITION0]));
@@ -383,23 +447,30 @@ public class AbstractCursorTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testGetColumnIndex() {
         assertEquals(POSITION0, mDatabaseCursor.getColumnIndex(COLUMN_NAMES1[POSITION0]));
         assertEquals(POSITION1, mDatabaseCursor.getColumnIndex(COLUMN_NAMES1[POSITION1]));
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testGetColumnCount() {
         assertEquals(COLUMN_NAMES1.length, mDatabaseCursor.getColumnCount());
     }
 
+    @Test
     public void testDeactivate() {
         MockDataSetObserver mock = new MockDataSetObserver();
-        mDatabaseCursor.registerDataSetObserver(mock);
+        mTestAbstractCursor.registerDataSetObserver(mock);
         assertFalse(mock.hadCalledOnInvalid());
-        mDatabaseCursor.deactivate();
+        mTestAbstractCursor.deactivate();
         assertTrue(mock.hadCalledOnInvalid());
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = CursorWindow.class)
     public void testCopyStringToBuffer() {
         CharArrayBuffer ca = new CharArrayBuffer(1000);
         mTestAbstractCursor.moveToFirst();
@@ -414,6 +485,7 @@ public class AbstractCursorTest extends InstrumentationTestCase {
         assertEquals(sb.toString(), new String(ca.data, 0, ca.sizeCopied));
     }
 
+    @Test
     public void testCheckPosition() {
         // Test with position = -1.
         try {
@@ -437,6 +509,7 @@ public class AbstractCursorTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testSetExtras() {
         Bundle b = new Bundle();
         mTestAbstractCursor.setExtras(b);
@@ -691,4 +764,3 @@ public class AbstractCursorTest extends InstrumentationTestCase {
         }
     }
 }
-

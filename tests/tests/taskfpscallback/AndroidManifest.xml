@@ -35,7 +35,5 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
          android:targetPackage="android.taskfpscallback.cts"
          android:label="CTS tests of android TaskFpsCallback service">
-        <meta-data android:name="listener"
-             android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
 </manifest>

@@ -33,6 +33,8 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.modules.utils.build.SdkLevel;
 
+import org.junit.runners.model.TestTimedOutException;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.concurrent.Callable;
@@ -344,6 +346,8 @@ public class SystemUtil {
             try {
                 r.run();
                 return;
+            } catch (TestTimedOutException e) {
+                throw new RuntimeException(e);
             } catch (Throwable e) {
                 if (System.currentTimeMillis() - start < timeoutMillis) {
                     try {
@@ -385,6 +389,8 @@ public class SystemUtil {
         while (true) {
             try {
                 return c.call();
+            } catch (TestTimedOutException e) {
+                throw e;
             } catch (Throwable e) {
                 if (System.currentTimeMillis() - start < timeoutMillis) {
                     try {
@@ -409,5 +415,16 @@ public class SystemUtil {
             cmd = "am wait-for-broadcast-idle";
         }
         runShellCommand(cmd);
+    }
+
+    /**
+     * waits for a particular broadcast dispatch.
+     */
+    public static void waitForBroadcastDispatch(@NonNull String action) {
+        if (SdkLevel.isAtLeastU()) {
+            runShellCommand(String.format("am wait-for-broadcast-dispatch -a %s", action));
+        } else {
+            runShellCommand("am wait-for-broadcast-idle");
+        }
     }
 }

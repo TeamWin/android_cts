@@ -673,6 +673,7 @@ public class TestHelper {
         @Override
         public void onUserSelectionCallbackRegistration(
                 WifiManager.NetworkRequestUserSelectionCallback userSelectionCallback) {
+            Log.d(TAG, "onUserSelectionCallbackRegistration");
             synchronized (mLock) {
                 onRegistrationCalled = true;
                 this.userSelectionCallback = userSelectionCallback;
@@ -682,6 +683,7 @@ public class TestHelper {
 
         @Override
         public void onAbort() {
+            Log.d(TAG, "onAbort");
             synchronized (mLock) {
                 onAbortCalled = true;
                 mLock.notify();
@@ -690,6 +692,7 @@ public class TestHelper {
 
         @Override
         public void onMatch(List<ScanResult> scanResults) {
+            Log.d(TAG, "onMatch");
             synchronized (mLock) {
                 // This can be invoked multiple times. So, ignore after the first one to avoid
                 // disturbing the rest of the test sequence.
@@ -702,6 +705,7 @@ public class TestHelper {
 
         @Override
         public void onUserSelectionConnectSuccess(WifiConfiguration config) {
+            Log.d(TAG, "onUserSelectionConnectSuccess");
             synchronized (mLock) {
                 onConnectSuccessCalled = true;
                 mLock.notify();
@@ -710,6 +714,7 @@ public class TestHelper {
 
         @Override
         public void onUserSelectionConnectFailure(WifiConfiguration config) {
+            Log.d(TAG, "onUserSelectionConnectFailure");
             synchronized (mLock) {
                 onConnectFailureCalled = true;
                 mLock.notify();
@@ -821,6 +826,7 @@ public class TestHelper {
             Thread.sleep(1_000);
             // Start the UI interactions.
             uiThread.start();
+            assertThat(localOnlyListener.await(DURATION_MILLIS)).isFalse();
             // now wait for callback
             assertThat(testNetworkCallback.waitForAnyCallback(DURATION_NETWORK_CONNECTION_MILLIS))
                     .isTrue();
@@ -840,7 +846,6 @@ public class TestHelper {
                         assertThat(wifiInfo.isPrimary()).isTrue();
                     }
                 }
-                assertThat(localOnlyListener.await(DURATION_NETWORK_CONNECTION_MILLIS)).isFalse();
                 assertThat(localOnlyListener.onFailureCalled).isFalse();
             }
         } catch (Throwable e /* catch assertions & exceptions */) {

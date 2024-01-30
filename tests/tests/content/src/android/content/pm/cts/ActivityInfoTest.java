@@ -16,22 +16,54 @@
 
 package android.content.pm.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import android.content.cts.MockActivity;
 import android.content.ComponentName;
+import android.content.Context;
+import android.content.cts.MockActivity;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.AppModeSdkSandbox;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 import android.util.StringBuilderPrinter;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test {@link ActivityInfo}.
  */
-public class ActivityInfoTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
+public class ActivityInfoTest {
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
     ActivityInfo mActivityInfo;
 
+    private Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
+
+    @Test
+    public void testSimple() {
+        ActivityInfo info = new ActivityInfo();
+        new ActivityInfo(info);
+        assertNotNull(info.toString());
+        info.dump(new StringBuilderPrinter(new StringBuilder()), "");
+    }
+
+    @Test
     public void testConstructor() {
         new ActivityInfo();
 
@@ -46,10 +78,12 @@ public class ActivityInfoTest extends AndroidTestCase {
         }
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testWriteToParcel() throws NameNotFoundException {
-        ComponentName componentName = new ComponentName(mContext, MockActivity.class);
+        ComponentName componentName = new ComponentName(getContext(), MockActivity.class);
 
-        mActivityInfo = mContext.getPackageManager().getActivityInfo(
+        mActivityInfo = getContext().getPackageManager().getActivityInfo(
                 componentName, PackageManager.GET_META_DATA);
 
         Parcel p = Parcel.obtain();
@@ -73,10 +107,12 @@ public class ActivityInfoTest extends AndroidTestCase {
         }
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testGetThemeResource() throws NameNotFoundException {
-        ComponentName componentName = new ComponentName(mContext, MockActivity.class);
+        ComponentName componentName = new ComponentName(getContext(), MockActivity.class);
 
-        mActivityInfo = mContext.getPackageManager().getActivityInfo(
+        mActivityInfo = getContext().getPackageManager().getActivityInfo(
                 componentName, PackageManager.GET_META_DATA);
 
         assertEquals(mActivityInfo.applicationInfo.theme, mActivityInfo.getThemeResource());
@@ -84,23 +120,27 @@ public class ActivityInfoTest extends AndroidTestCase {
         assertEquals(mActivityInfo.theme, mActivityInfo.getThemeResource());
     }
 
+    @Test
     public void testToString() throws NameNotFoundException {
         mActivityInfo = new ActivityInfo();
         assertNotNull(mActivityInfo.toString());
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testDescribeContents() throws NameNotFoundException {
         mActivityInfo = new ActivityInfo();
         assertEquals(0, mActivityInfo.describeContents());
 
-        ComponentName componentName = new ComponentName(mContext, MockActivity.class);
+        ComponentName componentName = new ComponentName(getContext(), MockActivity.class);
 
-        mActivityInfo = mContext.getPackageManager().getActivityInfo(
+        mActivityInfo = getContext().getPackageManager().getActivityInfo(
                 componentName, PackageManager.GET_META_DATA);
 
         assertEquals(0, mActivityInfo.describeContents());
     }
 
+    @Test
     public void testDump() {
         mActivityInfo = new ActivityInfo();
 

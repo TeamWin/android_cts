@@ -6,7 +6,8 @@ android_library {
     name: "MetricsRecorder",
     sdk_version: "test_current",
     srcs: [
-        "src/main/java/**/*.java"
+        "src/main/java/**/*.java",
+        "src/main/java/**/*.kt",
     ],
     manifest: "src/main/AndroidManifest.xml",
     static_libs: [

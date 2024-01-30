@@ -22,10 +22,12 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.hardware.radio.Flags;
 import android.hardware.radio.ProgramList;
 import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager;
 import android.hardware.radio.RadioTuner;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -34,6 +36,9 @@ import com.android.compatibility.common.util.ApiTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -193,8 +198,7 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
     }
 
     @Test
-    @ApiTest(apis = {
-            "android.hardware.radio.RadioTuner#tune(android.hardware.radio.ProgramSelector)"})
+    @ApiTest(apis = {"android.hardware.radio.RadioTuner#tune"})
     public void tune_withFmSelector_onProgramInfoChangedInvoked() throws Exception {
         openAmFmTuner();
         int freq = mFmBandConfig.getLowerLimit() + mFmBandConfig.getSpacing();
@@ -251,13 +255,67 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
         openAmFmTuner();
         TestOnCompleteListener completeListener = new TestOnCompleteListener();
 
-        ProgramList list = mRadioTuner.getDynamicProgramList(/* filter= */ null);
-        assume().withMessage("Dynamic program list supported").that(list).isNotNull();
+        ProgramList list = assumeNonNullProgramList();
         try {
             list.addOnCompleteListener(completeListener);
 
             mExpect.withMessage("List update completion").that(completeListener.waitForCallback())
                     .isTrue();
+        } finally {
+            list.close();
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.hardware.radio.ProgramList#getProgramInfos"})
+    @RequiresFlagsEnabled(Flags.FLAG_HD_RADIO_IMPROVED)
+    public void getProgramInfos_fromDynamicProgramList() throws Exception {
+        openAmFmTuner();
+        TestOnCompleteListener completeListener = new TestOnCompleteListener();
+        ProgramList list = assumeNonNullProgramList();
+        try {
+            list.addOnCompleteListener(completeListener);
+            mExpect.withMessage("List update completion before getting program info")
+                    .that(completeListener.waitForCallback()).isTrue();
+            List<RadioManager.ProgramInfo> programInfoList = list.toList();
+            assume().withMessage("Non-empty program program list")
+                    .that(programInfoList).isNotEmpty();
+            RadioManager.ProgramInfo firstProgram = programInfoList.get(0);
+
+            mExpect.withMessage("Program list infos")
+                    .that(list.getProgramInfos(firstProgram.getSelector().getPrimaryId()))
+                    .contains(firstProgram);
+        } finally {
+            list.close();
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.hardware.radio.RadioTuner#getDynamicProgramList",
+            "android.hardware.radio.RadioTuner#tune"})
+    public void tune_withHdSelectorFromDynamicProgramList() throws Exception {
+        ProgramList.Filter hdFilter = new ProgramList.Filter(
+                Set.of(ProgramSelector.IDENTIFIER_TYPE_HD_STATION_ID_EXT), Collections.emptySet(),
+                /* includeCategories= */ true, /* excludeModifications= */ false);
+        openAmFmTuner();
+        TestOnCompleteListener completeListener = new TestOnCompleteListener();
+        ProgramList list = assumeNonNullFiltereredDynamicProgramList(hdFilter);
+        try {
+            list.addOnCompleteListener(completeListener);
+            mExpect.withMessage("HD program list update completion")
+                    .that(completeListener.waitForCallback()).isTrue();
+            List<RadioManager.ProgramInfo> programInfoList = list.toList();
+            assume().withMessage("Non-empty HD radio program program list")
+                    .that(programInfoList).isNotEmpty();
+            ProgramSelector firstHdSelector = programInfoList.get(0).getSelector();
+
+            mRadioTuner.tune(firstHdSelector);
+
+            mExpect.withMessage("Program info callback for HD tune operation")
+                    .that(mCallback.waitForProgramInfoChangeCallback(TUNE_CALLBACK_TIMEOUT_MS))
+                    .isTrue();
+            mExpect.withMessage("HD program selector tuned to")
+                    .that(mCallback.currentProgramInfo.getSelector()).isEqualTo(firstHdSelector);
         } finally {
             list.close();
         }
@@ -319,6 +377,16 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
                 .that(mRadioTuner.isConfigFlagSet(TEST_CONFIG_FLAG)).isFalse();
         mExpect.withMessage("Config flag callback count when setting false config flag value")
                 .that(mCallback.configFlagCount).isEqualTo(0);
+    }
+
+    private ProgramList assumeNonNullProgramList() {
+        return assumeNonNullFiltereredDynamicProgramList(/* filter= */ null);
+    }
+
+    private ProgramList assumeNonNullFiltereredDynamicProgramList(ProgramList.Filter filter) {
+        ProgramList list = mRadioTuner.getDynamicProgramList(filter);
+        assume().withMessage("Dynamic program list supported").that(list).isNotNull();
+        return list;
     }
 
     private static final class TestOnCompleteListener implements ProgramList.OnCompleteListener {

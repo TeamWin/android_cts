@@ -18,25 +18,30 @@ package android.content.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.mockito.Mockito.mock;
-
 import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.PersistableBundle;
+import android.platform.test.annotations.AppModeSdkSandbox;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 import android.util.Log;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ClipDataTest {
     private static final String LOG_TAG = "ClipDataTest";
+
+    @Rule public final RavenwoodRule mRavenwood = new RavenwoodRule();
 
     @Test
     public void testToString_text() {
@@ -63,6 +68,7 @@ public class ClipDataTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = android.util.TimeUtils.class)
     public void testToString_metadata() {
         ClipDescription description = new ClipDescription("secret-label",
                 new String[]{"text/plain"});
@@ -91,7 +97,7 @@ public class ClipDataTest {
         ClipData.Item item = new ClipData.Item(
                 "secret-text",
                 "secret-html",
-                mock(Intent.class),
+                new Intent(),
                 Uri.parse("content://secret"));
         String[] mimeTypes = {
                 ClipDescription.MIMETYPE_TEXT_PLAIN,

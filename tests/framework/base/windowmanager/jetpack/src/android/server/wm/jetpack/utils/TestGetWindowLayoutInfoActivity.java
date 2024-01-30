@@ -16,11 +16,9 @@
 
 package android.server.wm.jetpack.utils;
 
-import static android.server.wm.jetpack.utils.SidecarUtil.getSidecarInterface;
+import static android.server.wm.jetpack.extensions.util.SidecarUtil.getSidecarInterface;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getActivityWindowToken;
-
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assert.assertEquals;
 
 import android.os.Bundle;

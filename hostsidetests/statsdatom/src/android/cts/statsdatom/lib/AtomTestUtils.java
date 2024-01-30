@@ -28,6 +28,7 @@ import com.android.utils.SparseIntArray;
 
 import com.google.common.collect.Range;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -71,12 +72,18 @@ public final class AtomTestUtils {
             Function<AtomsProto.Atom, Integer> getStateFromAtom) {
         // Sometimes, there are more events than there are states.
         // Eg: When the screen turns off, it may go into OFF and then DOZE immediately.
-        assertWithMessage("Number of result states").that(data.size()).isAtLeast(stateSets.size());
         final SparseIntArray dataStateCount = new SparseIntArray();
+        final List<Integer> dataStates = new ArrayList<>(data.size());
         for (StatsLog.EventMetricData emd : data) {
             final int state = getStateFromAtom.apply(emd.getAtom());
+            dataStates.add(state);
             dataStateCount.put(state, dataStateCount.get(state, 0) + 1);
         }
+
+        assertWithMessage("Number of recorded states must be >= expected states"
+                + " (dataStates=%s, stateSets=%s)", dataStates, stateSets)
+                .that(data.size()).isAtLeast(stateSets.size());
+
         for (Set<Integer> states : stateSets) {
             for (int state : states) {
                 final int count = dataStateCount.get(state);

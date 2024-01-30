@@ -19,14 +19,19 @@ package com.android.bedstead.nene;
 import com.android.bedstead.nene.accessibility.Accessibility;
 import com.android.bedstead.nene.accounts.Accounts;
 import com.android.bedstead.nene.activities.Activities;
+import com.android.bedstead.nene.adb.Adb;
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.bluetooth.Bluetooth;
 import com.android.bedstead.nene.broadcasts.Broadcasts;
-import com.android.bedstead.nene.context.Context;
+import com.android.bedstead.nene.bugreports.BugReports;
+import com.android.bedstead.nene.certificates.Certificates;
 import com.android.bedstead.nene.content.Content;
+import com.android.bedstead.nene.context.Context;
+import com.android.bedstead.nene.context.Context;
 import com.android.bedstead.nene.credentials.Credentials;
 import com.android.bedstead.nene.device.Device;
 import com.android.bedstead.nene.devicepolicy.DevicePolicy;
+import com.android.bedstead.nene.dumpsys.Dumpsys;
 import com.android.bedstead.nene.flags.Flags;
 import com.android.bedstead.nene.inputmethods.InputMethods;
 import com.android.bedstead.nene.instrumentation.Instrumentation;
@@ -35,13 +40,17 @@ import com.android.bedstead.nene.logcat.Logcat;
 import com.android.bedstead.nene.notifications.Notifications;
 import com.android.bedstead.nene.packages.Packages;
 import com.android.bedstead.nene.permissions.Permissions;
+import com.android.bedstead.nene.properties.Properties;
 import com.android.bedstead.nene.resources.Resources;
 import com.android.bedstead.nene.roles.Roles;
 import com.android.bedstead.nene.services.Services;
 import com.android.bedstead.nene.settings.Settings;
 import com.android.bedstead.nene.systemproperties.SystemProperties;
+import com.android.bedstead.nene.telecom.Telecom;
+import com.android.bedstead.nene.telephony.Telephony;
 import com.android.bedstead.nene.ui.Ui;
 import com.android.bedstead.nene.users.Users;
+import com.android.bedstead.nene.wallpaper.Wallpaper;
 import com.android.bedstead.nene.wifi.Wifi;
 
 /**
@@ -61,7 +70,7 @@ public final class TestApis {
 
     /** Access Test APIs related to device policy. */
     public static DevicePolicy devicePolicy() {
-        return DevicePolicy.sInstance;
+        return DevicePolicy.INSTANCE;
     }
 
     /** Access Test APIs related to permissions. */
@@ -76,7 +85,7 @@ public final class TestApis {
 
     /** Access Test APIs relating to Settings. */
     public static Settings settings() {
-        return Settings.sInstance;
+        return Settings.INSTANCE;
     }
 
     /** Access Test APIs related to System Properties. */
@@ -92,7 +101,7 @@ public final class TestApis {
 
     /** Access Test APIs related to notifications. */
     public static Notifications notifications() {
-        return Notifications.sInstance;
+        return Notifications.INSTANCE;
     }
 
     /** Access Test APIs related to the device. */
@@ -109,7 +118,7 @@ public final class TestApis {
     /** Access Test APIs related to accessibility. */
     @Experimental
     public static Accessibility accessibility() {
-        return Accessibility.sInstance;
+        return Accessibility.INSTANCE;
     }
 
     /** Access Test APIs related to bluetooth. */
@@ -120,7 +129,7 @@ public final class TestApis {
 
     /** Access Test APIs related to wifi. */
     public static Wifi wifi() {
-        return Wifi.sInstance;
+        return Wifi.INSTANCE;
     }
 
     /** Access Test APIs related to input methods. */
@@ -171,7 +180,7 @@ public final class TestApis {
     /** Access Test APIs related to telecom */
     @Experimental
     public static Telecom telecom() {
-        return Telecom.sInstance;
+        return Telecom.INSTANCE;
     }
 
     /** Access Test APIs related to logcat */
@@ -195,9 +204,45 @@ public final class TestApis {
         return Services.sInstance;
     }
 
+    /** Access Test APIs related to adb. */
+    public static Adb adb() {
+        return Adb.INSTANCE;
+    }
+
+    /** Access Test APIs related to certificates. */
+    public static Certificates certificates() {
+        return Certificates.sInstance;
+    }
+
+    /** Access Test APIs related to wallpaper. */
+    public static Wallpaper wallpaper() {
+        return Wallpaper.INSTANCE;
+    }
+
+    /** Access Test APIs related to telephony. */
+    public static Telephony telephony() {
+        return Telephony.INSTANCE;
+    }
+
+    /** Access Test APIs related to bug reports. */
+    public static BugReports bugReports() {
+        return BugReports.INSTANCE;
+    }
+
+    /** Test APIs related to System Properties. */
+    public static Properties properties() {
+        return Properties.INSTANCE;
+    }
+
+    /** Access Test APIs related to dumpsys. */
+    public static Dumpsys dumpsys() {
+        return Dumpsys.INSTANCE;
+    }
+
     /** @deprecated Use statically */
     @Deprecated()
     public TestApis() {
 
     }
 }
+

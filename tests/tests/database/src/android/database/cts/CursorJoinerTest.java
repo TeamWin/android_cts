@@ -16,17 +16,33 @@
 
 package android.database.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorJoiner;
 import android.database.CursorJoiner.Result;
 import android.database.sqlite.SQLiteDatabase;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 
-public class CursorJoinerTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class CursorJoinerTest {
+    @Rule public final RavenwoodRule mRavenwood = new RavenwoodRule();
 
     private static final int TEST_ITEM_COUNT = 10;
     private static final int DEFAULT_TABLE1_VALUE_BEGINS = 1;
@@ -44,19 +60,27 @@ public class CursorJoinerTest extends AndroidTestCase {
     private SQLiteDatabase mDatabase;
     private File mDatabaseFile;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
+        if (mRavenwood.isUnderRavenwood()) return;
+
         setupDatabase();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
+        if (mRavenwood.isUnderRavenwood()) return;
+
         mDatabase.close();
         mDatabaseFile.delete();
-        super.tearDown();
     }
 
+    private Context getContext() {
+        return InstrumentationRegistry.getTargetContext();
+    }
+
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testCursorJoinerAndIterator() {
         Cursor cursor1 = getCursor(TABLE_NAME_1, null, null);
         Cursor cursor2 = getCursor(TABLE_NAME_2, null, null);
@@ -131,6 +155,8 @@ public class CursorJoinerTest extends AndroidTestCase {
         closeCursor(cursor1);
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testNext() {
         String[] columnNames = new String[] { "number" };
         Cursor cursor1 = getCursor(TABLE_NAME_1, null, columnNames);

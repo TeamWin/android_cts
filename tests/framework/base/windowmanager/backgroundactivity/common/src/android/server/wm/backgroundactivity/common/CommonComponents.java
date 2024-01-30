@@ -27,6 +27,8 @@ import java.lang.annotation.RetentionPolicy;
 public class CommonComponents {
 
     public static final String EVENT_NOTIFIER_EXTRA = "EVENT_NOTIFIER_EXTRA";
+    public static final String TEST_SERVICE =
+            "android.server.wm.backgroundactivity.common.TestService";
     public static final CommonForegroundActivityExtras COMMON_FOREGROUND_ACTIVITY_EXTRAS =
             new CommonForegroundActivityExtras();
 
@@ -37,16 +39,14 @@ public class CommonComponents {
     }
 
     @IntDef({
-            Event.APP_A_SEND_PENDING_INTENT_BROADCAST_RECEIVED,
-            Event.APP_B_START_PENDING_INTENT_BROADCAST_RECEIVED,
+            Event.BROADCAST_RECEIVED,
             Event.APP_A_START_BACKGROUND_ACTIVITY_BROADCAST_RECEIVED,
             Event.APP_A_START_WIDGET_CONFIG_ACTIVITY,
             Event.APP_A_LAUNCHER_MOVING_TO_BACKGROUND_ACTIVITY,
     })
     @Retention(RetentionPolicy.SOURCE)
     public @interface Event {
-        int APP_A_SEND_PENDING_INTENT_BROADCAST_RECEIVED = 0;
-        int APP_B_START_PENDING_INTENT_BROADCAST_RECEIVED = 1;
+        int BROADCAST_RECEIVED = 0;
         int APP_A_START_BACKGROUND_ACTIVITY_BROADCAST_RECEIVED = 2;
         int APP_A_START_WIDGET_CONFIG_ACTIVITY = 3;
         int APP_A_LAUNCHER_MOVING_TO_BACKGROUND_ACTIVITY = 4;

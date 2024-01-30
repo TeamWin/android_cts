@@ -19,6 +19,8 @@ package android.net.wifi.sharedconnectivity.cts.app;
 import static android.net.wifi.sharedconnectivity.app.NetworkProviderInfo.DEVICE_TYPE_LAPTOP;
 import static android.net.wifi.sharedconnectivity.app.NetworkProviderInfo.DEVICE_TYPE_PHONE;
 
+import static com.android.wifi.flags.Flags.networkProviderBatteryChargingStatus;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
@@ -31,6 +33,7 @@ import android.os.Parcel;
 import androidx.test.filters.SdkSuppress;
 
 import com.android.compatibility.common.util.NonMainlineTest;
+import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.Test;
 
@@ -45,6 +48,7 @@ public class NetworkProviderInfoTest {
     private static final String DEVICE_NAME = "TEST_NAME";
     private static final String DEVICE_MODEL = "TEST_MODEL";
     private static final int BATTERY_PERCENTAGE = 50;
+    private static final boolean BATTERY_CHARGING = false;
     private static final int CONNECTION_STRENGTH = 2;
     private static final String BUNDLE_KEY = "INT-KEY";
     private static final int BUNDLE_VALUE = 1;
@@ -53,6 +57,7 @@ public class NetworkProviderInfoTest {
     private static final String DEVICE_NAME_1 = "TEST_NAME1";
     private static final String DEVICE_MODEL_1 = "TEST_MODEL1";
     private static final int BATTERY_PERCENTAGE_1 = 30;
+    private static final boolean BATTERY_CHARGING_1 = true;
     private static final int CONNECTION_STRENGTH_1 = 1;
 
     @Test
@@ -93,6 +98,12 @@ public class NetworkProviderInfoTest {
                 .setBatteryPercentage(BATTERY_PERCENTAGE_1);
         assertThat(builder.build()).isNotEqualTo(info1);
 
+        if (networkProviderBatteryChargingStatus() && SdkLevel.isAtLeastV()) {
+            builder = buildNetworkProviderInfoBuilder()
+                    .setBatteryCharging(BATTERY_CHARGING_1);
+            assertThat(builder.build()).isNotEqualTo(info1);
+        }
+
         builder = buildNetworkProviderInfoBuilder()
                 .setConnectionStrength(CONNECTION_STRENGTH_1);
         assertThat(builder.build()).isNotEqualTo(info1);
@@ -105,6 +116,9 @@ public class NetworkProviderInfoTest {
         assertThat(info.getDeviceName()).isEqualTo(DEVICE_NAME);
         assertThat(info.getModelName()).isEqualTo(DEVICE_MODEL);
         assertThat(info.getBatteryPercentage()).isEqualTo(BATTERY_PERCENTAGE);
+        if (SdkLevel.isAtLeastV()) {
+            assertThat(info.isBatteryCharging()).isEqualTo(BATTERY_CHARGING);
+        }
         assertThat(info.getConnectionStrength()).isEqualTo(CONNECTION_STRENGTH);
         assertThat(info.getExtras().getInt(BUNDLE_KEY)).isEqualTo(BUNDLE_VALUE);
     }
@@ -173,10 +187,18 @@ public class NetworkProviderInfoTest {
     }
 
     private NetworkProviderInfo.Builder buildNetworkProviderInfoBuilder() {
-        return new NetworkProviderInfo.Builder(DEVICE_NAME, DEVICE_MODEL).setDeviceType(DEVICE_TYPE)
-                .setBatteryPercentage(BATTERY_PERCENTAGE)
-                .setConnectionStrength(CONNECTION_STRENGTH)
-                .setExtras(buildBundle());
+        NetworkProviderInfo.Builder builder =
+                        new NetworkProviderInfo.Builder(DEVICE_NAME, DEVICE_MODEL)
+                        .setDeviceType(DEVICE_TYPE)
+                        .setBatteryPercentage(BATTERY_PERCENTAGE)
+                        .setConnectionStrength(CONNECTION_STRENGTH)
+                        .setExtras(buildBundle());
+
+        if (SdkLevel.isAtLeastV()) {
+            builder.setBatteryCharging(BATTERY_CHARGING);
+        }
+
+        return builder;
     }
 
     private Bundle buildBundle() {

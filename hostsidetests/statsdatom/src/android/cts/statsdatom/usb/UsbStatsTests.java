@@ -20,7 +20,11 @@ import static android.service.ComplianceWarning.COMPLIANCE_WARNING_OTHER;
 import static android.service.ComplianceWarning.COMPLIANCE_WARNING_BC_1_2;
 import static android.service.ComplianceWarning.COMPLIANCE_WARNING_DEBUG_ACCESSORY;
 import static android.service.ComplianceWarning.COMPLIANCE_WARNING_MISSING_RP;
-import static android.service.ComplianceWarning.COMPLIANCE_WARNING_UNSPECIFIED;
+import static android.service.ComplianceWarning.COMPLIANCE_WARNING_INPUT_POWER_LIMITED;
+import static android.service.ComplianceWarning.COMPLIANCE_WARNING_MISSING_DATA_LINES;
+import static android.service.ComplianceWarning.COMPLIANCE_WARNING_ENUMERATION_FAIL;
+import static android.service.ComplianceWarning.COMPLIANCE_WARNING_FLAKY_CONNECTION;
+import static android.service.ComplianceWarning.COMPLIANCE_WARNING_UNRELIABLE_IO;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -28,27 +32,39 @@ import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
+import android.hardware.usb.flags.Flags;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.host.HostFlagsValueProvider;
 import android.service.ComplianceWarning;
-import android.service.ServiceProtoEnums;
-
 
 import com.android.os.AtomsProto;
 import com.android.os.StatsLog;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.log.LogUtil;
-import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.RunUtil;
 
-import java.util.Arrays;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.List;
 
-public class UsbStatsTests extends DeviceTestCase implements IBuildReceiver {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class UsbStatsTests extends BaseHostJUnit4Test implements IBuildReceiver {
     private IBuildInfo mCtsBuild;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            HostFlagsValueProvider.createCheckFlagsRule(this::getDevice);
+
+    @Before
+    public void setUp() throws Exception {
         assertThat(mCtsBuild).isNotNull();
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
@@ -57,12 +73,11 @@ public class UsbStatsTests extends DeviceTestCase implements IBuildReceiver {
         RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         DeviceUtils.uninstallStatsdTestApp(getDevice());
-        super.tearDown();
     }
 
     @Override
@@ -95,6 +110,7 @@ public class UsbStatsTests extends DeviceTestCase implements IBuildReceiver {
     /**
      * Tests that each compliance warning gets logged
      */
+    @Test
     public void testUsbComplianceWarnings() throws Exception {
         ComplianceWarning[] warnings = new ComplianceWarning[] {
                 COMPLIANCE_WARNING_DEBUG_ACCESSORY,
@@ -126,6 +142,50 @@ public class UsbStatsTests extends DeviceTestCase implements IBuildReceiver {
                 COMPLIANCE_WARNING_BC_1_2,
                 COMPLIANCE_WARNING_MISSING_RP,
                 COMPLIANCE_WARNING_OTHER
+        );
+
+        resetSimulatedUsbPorts();
+    }
+
+    /**
+     * Tests that each compliance warning gets logged
+     * TODO: merge this test case with testUsbComplianceWarnings once the flag is finalized
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_USB_DATA_COMPLIANCE_WARNING)
+    @Test
+    public void testUsbDataComplianceWarnings() throws Exception {
+        ComplianceWarning[] warnings = new ComplianceWarning[] {
+                COMPLIANCE_WARNING_INPUT_POWER_LIMITED,
+                COMPLIANCE_WARNING_MISSING_DATA_LINES,
+                COMPLIANCE_WARNING_ENUMERATION_FAIL,
+                COMPLIANCE_WARNING_FLAKY_CONNECTION,
+                COMPLIANCE_WARNING_UNRELIABLE_IO
+        };
+
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                AtomsProto.Atom.USB_COMPLIANCE_WARNINGS_REPORTED_FIELD_NUMBER);
+
+        createSimulatedUsbPort();
+
+        // Trigger Compliance Warnings
+        simulateComplianceWarnings(warnings);
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_SHORT);
+
+        List<StatsLog.EventMetricData> eventMetrics =
+                ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(eventMetrics.size()).isEqualTo(1);
+
+        // Retrieve atom and compliance warning list
+        AtomsProto.Atom atom = eventMetrics.get(0).getAtom();
+        List<ComplianceWarning> pushedComplianceWarnings =
+                atom.getUsbComplianceWarningsReported().getComplianceWarningsList();
+        assertThat(pushedComplianceWarnings).isNotEmpty();
+        assertThat(pushedComplianceWarnings).containsExactly(
+                COMPLIANCE_WARNING_INPUT_POWER_LIMITED,
+                COMPLIANCE_WARNING_MISSING_DATA_LINES,
+                COMPLIANCE_WARNING_ENUMERATION_FAIL,
+                COMPLIANCE_WARNING_FLAKY_CONNECTION,
+                COMPLIANCE_WARNING_UNRELIABLE_IO
         );
 
         resetSimulatedUsbPorts();

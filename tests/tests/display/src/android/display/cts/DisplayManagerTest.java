@@ -36,6 +36,7 @@ import android.media.ImageReader;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Log;
 import android.view.SurfaceControl;
 import android.view.ViewTreeObserver;
@@ -60,6 +61,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class DisplayManagerTest {
     private static final String TAG = "DisplayManagerTest";
     @Rule

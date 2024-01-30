@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.app.PendingIntent;
 import android.autofillservice.cts.R;
 import android.autofillservice.cts.activities.AbstractAutoFillActivity;
@@ -296,7 +297,11 @@ public abstract class CustomDescriptionWithLinkTestCase<A extends AbstractAutoFi
     protected final CustomDescription.Builder newCustomDescriptionBuilder(Intent intent) {
         final RemoteViews presentation = newTemplate();
         final PendingIntent pendingIntent =
-                PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_MUTABLE);
+                PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_MUTABLE,
+                        ActivityOptions.makeBasic()
+                                .setPendingIntentCreatorBackgroundActivityStartMode(
+                                        ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
+                                .toBundle());
         presentation.setOnClickPendingIntent(R.id.link, pendingIntent);
         return new CustomDescription.Builder(presentation);
     }

@@ -48,7 +48,7 @@ class EmulateInputDevice {
     @Before
     fun setUp() {
         activityRule.scenario.onActivity { context = it }
-        val dm = DisplayMetrics().also { context.display!!.getRealMetrics(it) }
+        val dm = DisplayMetrics().also { context.display.getRealMetrics(it) }
         screenSize = Size(dm.widthPixels, dm.heightPixels)
     }
 
@@ -64,10 +64,10 @@ class EmulateInputDevice {
     fun useTouchscreenForFiveSeconds() {
         UinputTouchDevice(
                 instrumentation,
-                context.display!!,
-                screenSize,
+                context.display,
                 R.raw.test_touchscreen_register,
-                InputDevice.SOURCE_TOUCHSCREEN
+                InputDevice.SOURCE_TOUCHSCREEN,
+                screenSize,
         ).use { touchscreen ->
             // Start the usage session.
             touchscreen.tapOnScreen()
@@ -86,13 +86,152 @@ class EmulateInputDevice {
         // Down
         sendBtnTouch(true)
         sendDown(0 /*id*/, pointer)
+        sync()
 
         // Move
         pointer.offset(1, 1)
         sendMove(0 /*id*/, pointer)
+        sync()
 
         // Up
         sendBtnTouch(false)
         sendUp(0 /*id*/)
+        sync()
+    }
+
+    @Test
+    fun useTouchpadWithFingersAndPalms() {
+        UinputTouchDevice(
+                instrumentation,
+                context.display,
+                R.raw.test_touchpad_register,
+                InputDevice.SOURCE_TOUCHPAD or InputDevice.SOURCE_MOUSE,
+        ).use { touchpad ->
+            for (i in 0 until 3) {
+                val pointer = Point(100, 200)
+                touchpad.sendBtnTouch(true)
+                touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, true)
+                touchpad.sendDown(0, pointer, UinputTouchDevice.MT_TOOL_FINGER)
+                touchpad.sync()
+
+                touchpad.sendBtnTouch(false)
+                touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, false)
+                touchpad.sendUp(0)
+                touchpad.sync()
+            }
+            for (i in 0 until 2) {
+                val pointer = Point(100, 200)
+                touchpad.sendBtnTouch(true)
+                touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, true)
+                touchpad.sendDown(0, pointer, UinputTouchDevice.MT_TOOL_PALM)
+                touchpad.sync()
+
+                touchpad.sendBtnTouch(false)
+                touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, false)
+                touchpad.sendUp(0)
+                touchpad.sync()
+            }
+        }
+    }
+
+    @Test
+    fun pinchOnTouchpad() {
+        UinputTouchDevice(
+            instrumentation,
+            context.display,
+            R.raw.test_touchpad_register,
+            InputDevice.SOURCE_TOUCHPAD or InputDevice.SOURCE_MOUSE
+        ).use { touchpad ->
+            val pointer0 = Point(500, 500)
+            val pointer1 = Point(700, 700)
+            touchpad.sendBtnTouch(true)
+            touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, true)
+            touchpad.sendDown(0, pointer0)
+            touchpad.sync()
+
+            touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, false)
+            touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_DOUBLETAP, true)
+            touchpad.sendDown(1, pointer1)
+            touchpad.sync()
+            Thread.sleep(TOUCHPAD_SCAN_DELAY_MILLIS)
+
+            for (rep in 0 until 10) {
+                pointer0.offset(-20, -20)
+                touchpad.sendMove(0, pointer0)
+                pointer1.offset(20, 20)
+                touchpad.sendMove(1, pointer1)
+                touchpad.sync()
+                Thread.sleep(TOUCHPAD_SCAN_DELAY_MILLIS)
+            }
+
+            touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_DOUBLETAP, false)
+            touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, true)
+            touchpad.sendUp(0)
+            touchpad.sync()
+
+            touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, false)
+            touchpad.sendBtnTouch(false)
+            touchpad.sendUp(1)
+            touchpad.sync()
+            Thread.sleep(TOUCHPAD_POST_GESTURE_DELAY_MILLIS)
+        }
+    }
+
+    @Test
+    fun twoFingerSwipeOnTouchpad() {
+        multiFingerSwipe(2)
+    }
+
+    @Test
+    fun threeFingerSwipeOnTouchpad() {
+        multiFingerSwipe(3)
+    }
+
+    @Test
+    fun fourFingerSwipeOnTouchpad() {
+        multiFingerSwipe(4)
+    }
+
+    private fun multiFingerSwipe(numFingers: Int) {
+        UinputTouchDevice(
+            instrumentation,
+            context.display,
+            R.raw.test_touchpad_register,
+            InputDevice.SOURCE_TOUCHPAD or InputDevice.SOURCE_MOUSE
+        ).use { touchpad ->
+            val pointers = Array(numFingers) { i -> Point(500 + i * 200, 500) }
+            touchpad.sendBtnTouch(true)
+            touchpad.sendBtn(UinputTouchDevice.toolBtnForFingerCount(numFingers), true)
+            for (i in pointers.indices) {
+                touchpad.sendDown(i, pointers[i])
+            }
+            touchpad.sync()
+            Thread.sleep(TOUCHPAD_SCAN_DELAY_MILLIS)
+
+            for (rep in 0 until 10) {
+                for (i in pointers.indices) {
+                    pointers[i].offset(0, 40)
+                    touchpad.sendMove(i, pointers[i])
+                }
+                touchpad.sync()
+                Thread.sleep(TOUCHPAD_SCAN_DELAY_MILLIS)
+            }
+
+            for (i in pointers.indices) {
+                touchpad.sendUp(i)
+            }
+            touchpad.sendBtn(UinputTouchDevice.toolBtnForFingerCount(numFingers), false)
+            touchpad.sendBtnTouch(false)
+            touchpad.sync()
+            Thread.sleep(TOUCHPAD_POST_GESTURE_DELAY_MILLIS)
+        }
+    }
+
+    companion object {
+        const val TOUCHPAD_SCAN_DELAY_MILLIS: Long = 5
+
+        // This delay seems to be necessary to let the gesture be properly processed and added to
+        // metrics before the touchpad device is torn down.
+        const val TOUCHPAD_POST_GESTURE_DELAY_MILLIS: Long = 500
     }
 }

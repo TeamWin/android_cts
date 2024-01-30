@@ -26,6 +26,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
 import android.os.Process;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.text.InputType;
 import android.view.View;
 import android.view.ViewGroup;
@@ -58,6 +59,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class SearchViewTest extends EndToEndImeTestBase {
     static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     static final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(2);

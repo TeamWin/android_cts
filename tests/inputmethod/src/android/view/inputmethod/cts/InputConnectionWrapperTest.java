@@ -29,11 +29,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.testng.Assert.assertSame;
 import static org.testng.Assert.expectThrows;
 
 import android.content.ClipDescription;
 import android.net.Uri;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.inputmethod.CompletionInfo;
@@ -43,9 +45,13 @@ import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
 import android.view.inputmethod.InputContentInfo;
+import android.view.inputmethod.SurroundingText;
+import android.view.inputmethod.TextSnapshot;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,6 +59,7 @@ import org.mockito.ArgumentCaptor;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class InputConnectionWrapperTest {
     @Test
     public void testInputConnectionWrapper() {
@@ -168,6 +175,18 @@ public class InputConnectionWrapperTest {
                 Uri.parse("https://example.com"));
         wrapper.commitContent(inputContentInfo, 0 /* flags */, null /* opt */);
         verify(inputConnection, times(1)).commitContent(inputContentInfo, 0, null);
+    }
+
+    @ApiTest(apis = { "android.view.inputmethod.InputConnectionWrapper#takeSnapshot" })
+    @Test
+    public void testTakeSnapshot() {
+        final InputConnection ic = mock(InputConnection.class);
+        final InputConnectionWrapper wrapper = new InputConnectionWrapper(ic, true);
+        final TextSnapshot snapshot = new TextSnapshot(new SurroundingText("text", 1, 2, 0), 1, 2,
+                EditorInfo.TYPE_TEXT_FLAG_CAP_WORDS);
+        doReturn(snapshot).when(ic).takeSnapshot();
+        assertSame(snapshot, wrapper.takeSnapshot());
+        verify(ic, times(1)).takeSnapshot();
     }
 
     @Test

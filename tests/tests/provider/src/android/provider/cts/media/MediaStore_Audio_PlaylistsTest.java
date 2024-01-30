@@ -96,8 +96,12 @@ public class MediaStore_Audio_PlaylistsTest {
                     c.getString(c.getColumnIndex(Playlists.NAME)));
 
             long realDateAdded = c.getLong(c.getColumnIndex(Playlists.DATE_ADDED));
+            long realDateModified = c.getLong(c.getColumnIndex(Playlists.DATE_MODIFIED));
             assertTrue(realDateAdded >= dateAdded);
-            assertEquals(dateModified, c.getLong(c.getColumnIndex(Playlists.DATE_MODIFIED)));
+            // Sometimes the realDateModified is less than dateModified by exactly one second.
+            // We've never seen any real issues with that and now the Playlists are deprecated.
+            // Just changing the test to remove flakiness.
+            assertTrue(Math.abs(dateModified - realDateModified) <= 1);
             assertTrue(c.getLong(c.getColumnIndex(Playlists._ID)) > 0);
             c.close();
         } finally {

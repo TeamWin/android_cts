@@ -52,6 +52,7 @@
         <!-- Portrait setup of PreferenceWithHeaders -->
         <activity
             android:name="PreferenceWithHeadersPortrait"
+            android:enableOnBackInvokedCallback="false"
             android:screenOrientation="portrait"/>
         <activity android:name="FragmentPreferences" />
     </application>
@@ -59,8 +60,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.preference.cts"
                      android:label="CTS tests of android.preference">
-        <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 
 </manifest>

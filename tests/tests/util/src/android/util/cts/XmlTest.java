@@ -20,7 +20,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
+import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 import android.util.AttributeSet;
 import android.util.Xml;
 
@@ -28,6 +31,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xml.sax.Attributes;
@@ -53,6 +57,7 @@ import java.util.Vector;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class XmlTest {
+    @Rule public RavenwoodRule mRavenwood = new RavenwoodRule();
 
     private static final String STR_INVALIDATE_EN_CODING = "invalidateEnCoding";
     private static final String STR_N2 = "-2";
@@ -92,6 +97,7 @@ public class XmlTest {
             + "\"/></" + TAG_TEST + ">";
 
     @Test
+    @IgnoreUnderRavenwood
     public void testParseStringContentHandler() {
         final String xmlStr = "<Test><Son name=\"abc\"/></Test>";
         DefaultContentHandler dc = new DefaultContentHandler();
@@ -192,6 +198,7 @@ public class XmlTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood
     public void testParseReaderContentHander() {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         DataOutputStream dout = new DataOutputStream(bout);
@@ -241,6 +248,7 @@ public class XmlTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood
     public void testParseInputStreamEncodingContentHandler() {
         // test US-ASCII
         DefaultContentHandler dc = new DefaultContentHandler();
@@ -381,6 +389,7 @@ public class XmlTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood
     public void testFindEncodingByName() {
 
         try {
@@ -401,9 +410,10 @@ public class XmlTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood
     public void testAsAttributeSet() {
-        XmlResourceParser xp = InstrumentationRegistry.getTargetContext().getResources().getLayout(
-                R.layout.xml_test);
+        Resources res = InstrumentationRegistry.getTargetContext().getResources();
+        XmlResourceParser xp = res.getLayout(R.layout.xml_test);
         int eventType = -1;
         try {
             eventType = xp.getEventType();

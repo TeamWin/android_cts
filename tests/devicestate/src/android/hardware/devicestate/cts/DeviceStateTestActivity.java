@@ -34,6 +34,7 @@ public class DeviceStateTestActivity extends Activity {
 
     public boolean requestStateFailed = false;
     public boolean cancelStateRequestFailed = false;
+    public boolean mResumed = false;
     private DeviceStateManager mDeviceStateManager;
 
     @Override
@@ -59,5 +60,17 @@ public class DeviceStateTestActivity extends Activity {
         } catch (SecurityException e) {
             cancelStateRequestFailed = true;
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mResumed = false;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mResumed = true;
     }
 }

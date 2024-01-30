@@ -18,24 +18,10 @@ package android.app.cts.wallpapers;
 
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 
-import android.app.UiAutomation;
 import android.content.Context;
-import android.hardware.display.DisplayManager;
-import android.os.ParcelFileDescriptor;
-import android.server.wm.UiDeviceUtils;
 import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerStateHelper;
-import android.view.Display;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
-import com.android.compatibility.common.util.TestUtils;
-
-import org.junit.Assume;
-
-import java.io.BufferedReader;
-import java.io.FileDescriptor;
-import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,13 +31,9 @@ import java.util.List;
  */
 public class WallpaperWindowsTestUtils {
     private static Context sContext;
-    private static DisplayManager sDisplayManager;
-    private static UiAutomation sUiAutomation;
 
     public static void setContext(Context context) {
         sContext = context;
-        sDisplayManager = context.getSystemService(DisplayManager.class);
-        sUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
     }
 
     public static class WallpaperWindowsHelper {
@@ -61,16 +43,6 @@ public class WallpaperWindowsTestUtils {
 
         public WallpaperWindowsHelper(WindowManagerStateHelper windowManagerStateHelper) {
             mWmState = windowManagerStateHelper;
-        }
-
-        public void showHomeScreenAndUpdate() throws Exception {
-            showHomeScreen(mWmState);
-            updateWindows();
-        }
-
-        public void showLockScreenAndUpdate() throws Exception {
-            showLockScreen();
-            updateWindows();
         }
 
         public String dumpWindows() {
@@ -83,10 +55,6 @@ public class WallpaperWindowsTestUtils {
             StringBuilder msgWindows = new StringBuilder();
             mPackageNames.forEach(p -> msgWindows.append(p).append(", "));
             return "[" + msgWindows + "]";
-        }
-
-        public List<String> getAllWallpaperPackages() {
-            return mPackageNames;
         }
 
         /**
@@ -136,54 +104,5 @@ public class WallpaperWindowsTestUtils {
             mPackageNames = new ArrayList<>();
             mWallpaperWindows.forEach(w -> mPackageNames.add(w.getPackageName()));
         }
-    }
-
-    public static void runWithKeyguardEnabled(WindowManagerStateHelper wmState,
-            Runnable runnable) throws Exception {
-        boolean isDisabled;
-        try (ParcelFileDescriptor parcelFileDescriptor = sUiAutomation.executeShellCommand(
-                "locksettings get-disabled")) {
-            FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
-            BufferedReader reader = new BufferedReader(new FileReader(fileDescriptor));
-            isDisabled = "true".equals(reader.readLine());
-        }
-        try {
-            if (isDisabled) setKeyguardUnlockMethod(wmState, false);
-            runnable.run();
-        } finally {
-            if (isDisabled) setKeyguardUnlockMethod(wmState, true);
-        }
-    }
-
-    private static void setKeyguardUnlockMethod(
-            WindowManagerStateHelper wmState, boolean setDisabled) throws Exception {
-        try {
-            sUiAutomation.executeShellCommand("locksettings clear");
-            sUiAutomation.executeShellCommand("locksettings set-disabled " + setDisabled);
-        } catch (IllegalArgumentException e) {
-            Assume.assumeNoException(e);
-        }
-        // Unlock device to make the changes effective from the next unlock
-        showHomeScreen(wmState);
-    }
-
-    private static void showLockScreen() throws Exception {
-        if (sDisplayManager == null) throw new Exception("No display");
-        Display display = sDisplayManager.getDisplay(sContext.getDisplayId());
-
-        UiDeviceUtils.pressSleepButton();
-        TestUtils.waitUntil("display does not turn off", 5, () -> !isDisplayOn(display));
-        UiDeviceUtils.pressWakeupButton();
-        TestUtils.waitUntil("display does not turn on", 5, () -> isDisplayOn(display));
-    }
-
-    private static void showHomeScreen(WindowManagerStateHelper wmSH) throws Exception {
-        showLockScreen();
-        UiDeviceUtils.pressUnlockButton();
-        wmSH.waitForKeyguardGone();
-    }
-
-    private static boolean isDisplayOn(Display display) {
-        return display != null && display.getState() == Display.STATE_ON;
     }
 }

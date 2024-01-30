@@ -615,7 +615,6 @@ public class Components extends ComponentsBase {
 
     public static class UnresponsiveActivity {
         public static final String EXTRA_ON_CREATE_DELAY_MS = "ON_CREATE_DELAY_MS";
-        public static final String EXTRA_DELAY_UI_THREAD_MS = "DELAY_UI_THREAD_MS";
         public static final String EXTRA_ON_KEYDOWN_DELAY_MS = "ON_KEYDOWN_DELAY_MS";
         public static final String EXTRA_ON_MOTIONEVENT_DELAY_MS = "ON_MOTIONEVENT_DELAY_MS";
         public static final String PROCESS_NAME = ".unresponsive_activity_process";

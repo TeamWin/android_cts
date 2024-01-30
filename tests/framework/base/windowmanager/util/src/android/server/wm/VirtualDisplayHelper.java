@@ -36,7 +36,7 @@ import com.android.compatibility.common.util.SystemUtil;
 /**
  * Helper class to create virtual display.
  */
-class VirtualDisplayHelper {
+public class VirtualDisplayHelper {
 
     private boolean mPublicDisplay = false;
     private boolean mCanShowWithInsecureKeyguard = false;
@@ -56,22 +56,23 @@ class VirtualDisplayHelper {
     private VirtualDisplay mVirtualDisplay;
     private boolean mCreated;
 
-    VirtualDisplayHelper setPublicDisplay(boolean publicDisplay) {
+    public VirtualDisplayHelper setPublicDisplay(boolean publicDisplay) {
         mPublicDisplay = publicDisplay;
         return this;
     }
 
-    VirtualDisplayHelper setCanShowWithInsecureKeyguard(boolean canShowWithInsecureKeyguard) {
+    public VirtualDisplayHelper setCanShowWithInsecureKeyguard(
+            boolean canShowWithInsecureKeyguard) {
         mCanShowWithInsecureKeyguard = canShowWithInsecureKeyguard;
         return this;
     }
 
-    VirtualDisplayHelper setShowSystemDecorations(boolean showSystemDecorations) {
+    public VirtualDisplayHelper setShowSystemDecorations(boolean showSystemDecorations) {
         mShowSystemDecorations = showSystemDecorations;
         return this;
     }
 
-    int createAndWaitForDisplay() {
+    public int createAndWaitForDisplay() {
         SystemUtil.runWithShellPermissionIdentity(() -> {
             createVirtualDisplay();
             waitForDisplayState(mVirtualDisplay.getDisplay().getDisplayId(), true /* wantOn */);
@@ -80,17 +81,17 @@ class VirtualDisplayHelper {
         return mVirtualDisplay.getDisplay().getDisplayId();
     }
 
-    void turnDisplayOff() {
+    public void turnDisplayOff() {
         mVirtualDisplay.setSurface(null);
         waitForDisplayState(mVirtualDisplay.getDisplay().getDisplayId(), false /* wantOn */);
     }
 
-    void turnDisplayOn() {
+    public void turnDisplayOn() {
         mVirtualDisplay.setSurface(mReader.getSurface());
         waitForDisplayState(mVirtualDisplay.getDisplay().getDisplayId(), true /* wantOn */);
     }
 
-    void releaseDisplay() {
+    public void releaseDisplay() {
         if (mCreated) {
             mVirtualDisplay.release();
             mReader.close();
@@ -126,7 +127,7 @@ class VirtualDisplayHelper {
                 VIRTUAL_DISPLAY_NAME, WIDTH, HEIGHT, DENSITY, mReader.getSurface(), flags);
     }
 
-    static void waitForDefaultDisplayState(boolean wantOn) {
+    public static void waitForDefaultDisplayState(boolean wantOn) {
         waitForDisplayState(DEFAULT_DISPLAY, wantOn);
     }
 

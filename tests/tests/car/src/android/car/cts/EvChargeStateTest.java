@@ -21,19 +21,12 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.car.cts.utils.VehiclePropertyUtils;
 import android.car.hardware.property.EvChargeState;
-import android.car.test.ApiCheckerRule.Builder;
 
 import org.junit.Test;
 
 import java.util.List;
 
 public final class EvChargeStateTest extends AbstractCarLessTestCase {
-
-    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
-    @Override
-    protected void configApiCheckerRule(Builder builder) {
-        builder.disableAnnotationsCheck();
-    }
 
     @Test
     public void testToString() {

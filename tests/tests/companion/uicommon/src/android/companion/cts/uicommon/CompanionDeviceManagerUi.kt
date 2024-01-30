@@ -24,8 +24,6 @@ import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.SearchCondition
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
-import androidx.test.uiautomator.UiScrollable
-import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -52,9 +50,9 @@ open class CompanionDeviceManagerUi(private val ui: UiDevice) {
 
     fun waitAndClickOnFirstFoundDevice() {
         val firstDevice = ui.waitLongAndFind(
-            Until.findObject(
-                DEVICE_LIST_WITH_ITEMS), "The item in the Device List not found or empty")
-            .children[0]
+                Until.findObject(
+                        DEVICE_LIST_WITH_ITEMS), "The item in the Device List not found or empty")
+                .children[0]
 
         val startTime = SystemClock.uptimeMillis()
         var elapsedTime = 0L
@@ -62,7 +60,7 @@ open class CompanionDeviceManagerUi(private val ui: UiDevice) {
         // or it times out after 5s.
         while (ui.hasObject(DEVICE_LIST) && elapsedTime < 5.seconds.inWholeMilliseconds) {
             firstDevice.click()
-            SystemClock.sleep(0.2.seconds.inWholeMilliseconds)
+            sleep(0.2.seconds.inWholeMilliseconds)
             elapsedTime = SystemClock.uptimeMillis() - startTime
         }
     }
@@ -101,19 +99,22 @@ open class CompanionDeviceManagerUi(private val ui: UiDevice) {
         Until.findObject(POSITIVE_BUTTON), "Positive button")
 
     fun scrollToBottom() {
-        if (SCROLLABLE_PERMISSION_LIST.waitForExists(2.seconds.inWholeMilliseconds)) {
-            SCROLLABLE_PERMISSION_LIST.scrollToEnd(MAX_SWIPE)
+        ui.wait(Until.findObject(SCROLLABLE_PERMISSION_LIST), 2.seconds.inWholeMilliseconds)?.let {
             val positiveButton = waitUntilPositiveButtonAppeared()
-            val isEnabled = positiveButton.wait(
-                Until.enabled(positiveButton.isEnabled), 5.seconds.inWholeMilliseconds)
-            if (!isEnabled) {
-                error("Positive button is not enabled")
+
+            // swipe up (or scroll down) until "Allow" button is enabled
+            val startTime = SystemClock.uptimeMillis()
+            var elapsedTime = 0L
+            while (!positiveButton.isEnabled && elapsedTime < 5.seconds.inWholeMilliseconds) {
+                it.swipe(Direction.UP, 1.0F)
+
+                // Wait before consecutive swipes
+                if (!positiveButton.isEnabled) {
+                    sleep(0.2.seconds.inWholeMilliseconds)
+                }
+                elapsedTime = SystemClock.uptimeMillis() - startTime
             }
         }
-    }
-
-    fun isCdmDialogExists(): Boolean {
-        return ui.wait(Until.hasObject(CONFIRMATION_UI), 2.seconds.inWholeMilliseconds)
     }
 
     protected fun click(selector: BySelector, description: String) = ui.waitShortAndFind(
@@ -124,8 +125,6 @@ open class CompanionDeviceManagerUi(private val ui: UiDevice) {
         private const val PACKAGE_NAME = "com.android.companiondevicemanager"
         private const val NOTIFICATION_PACKAGE_NAME = "com.android.settings"
         private const val NOTIFICATION_PACKAGE_NAME_AUTO = "com.android.car.settings"
-
-        private const val MAX_SWIPE = 10
 
         private val CONFIRMATION_UI = By.pkg(PACKAGE_NAME)
                 .res(PACKAGE_NAME, "activity_confirmation")
@@ -147,8 +146,8 @@ open class CompanionDeviceManagerUi(private val ui: UiDevice) {
         private val DEVICE_LIST_WITH_ITEMS = By.copy(DEVICE_LIST)
                 .hasDescendant(DEVICE_LIST_ITEM)
 
-        private val SCROLLABLE_PERMISSION_LIST = UiScrollable(
-            UiSelector().resourceId("$PACKAGE_NAME:id/permission_list"))
+        private val SCROLLABLE_PERMISSION_LIST = By.pkg(PACKAGE_NAME)
+                .res(PACKAGE_NAME, "permission_list")
 
         private val SYSTEM_DATA_TRANSFER_CONFIRMATION_UI = By.pkg(PACKAGE_NAME)
                 .res(PACKAGE_NAME, "data_transfer_confirmation")

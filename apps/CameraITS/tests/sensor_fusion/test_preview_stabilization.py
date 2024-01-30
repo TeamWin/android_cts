@@ -13,6 +13,7 @@
 # limitations under the License.
 """Verify preview is stable during phone movement."""
 
+import fnmatch
 import logging
 import os
 import threading
@@ -24,20 +25,15 @@ import its_base_test
 import camera_properties_utils
 import image_processing_utils
 import its_session_utils
-import opencv_processing_utils
 import sensor_fusion_utils
 import video_processing_utils
 
-_ARDUINO_ANGLES = (10, 25)  # degrees
-_ARDUINO_MOVE_TIME = 0.30  # seconds
-_ARDUINO_SERVO_SPEED = 10
 _ASPECT_RATIO_16_9 = 16/9  # determine if preview fmt > 16:9
 _IMG_FORMAT = 'png'
 _MIN_PHONE_MOVEMENT_ANGLE = 5  # degrees
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NUM_ROTATIONS = 24
 _START_FRAME = 30  # give 3A some frames to warm up
-_TABLET_SERVO_SPEED = 20
 _TEST_REQUIRED_MPC = 33
 _VIDEO_DELAY_TIME = 5.5  # seconds
 _VIDEO_DURATION = 5.5  # seconds
@@ -45,7 +41,7 @@ _PREVIEW_STABILIZATION_FACTOR = 0.7  # 70% of gyro movement allowed
 _PREVIEW_STABILIZATION_MODE_PREVIEW = 2
 
 
-def _collect_data(cam, tablet_device, video_size, rot_rig):
+def _collect_data(cam, tablet_device, preview_size, rot_rig):
   """Capture a new set of data from the device.
 
   Captures camera preview frames while the user is moving the device in
@@ -54,7 +50,7 @@ def _collect_data(cam, tablet_device, video_size, rot_rig):
   Args:
     cam: camera object
     tablet_device: boolean; based on config file
-    video_size: str; video resolution. ex. '1920x1080'
+    preview_size: str; preview stream resolution. ex. '1920x1080'
     rot_rig: dict with 'cntl' and 'ch' defined
 
   Returns:
@@ -71,18 +67,18 @@ def _collect_data(cam, tablet_device, video_size, rot_rig):
     sensor_fusion_utils.establish_serial_comm(serial_port)
   # Start camera vibration
   if tablet_device:
-    servo_speed = _TABLET_SERVO_SPEED
+    servo_speed = sensor_fusion_utils.ARDUINO_SERVO_SPEED_STABILIZATION_TABLET
   else:
-    servo_speed = _ARDUINO_SERVO_SPEED
+    servo_speed = sensor_fusion_utils.ARDUINO_SERVO_SPEED_STABILIZATION
   p = threading.Thread(
       target=sensor_fusion_utils.rotation_rig,
       args=(
           rot_rig['cntl'],
           rot_rig['ch'],
           _NUM_ROTATIONS,
-          _ARDUINO_ANGLES,
+          sensor_fusion_utils.ARDUINO_ANGLES_STABILIZATION,
           servo_speed,
-          _ARDUINO_MOVE_TIME,
+          sensor_fusion_utils.ARDUINO_MOVE_TIME_STABILIZATION,
           serial_port,
       ),
   )
@@ -92,7 +88,7 @@ def _collect_data(cam, tablet_device, video_size, rot_rig):
   # Record video and return recording object
   time.sleep(_VIDEO_DELAY_TIME)  # allow time for rig to start moving
 
-  recording_obj = cam.do_preview_recording(video_size, _VIDEO_DURATION, True)
+  recording_obj = cam.do_preview_recording(preview_size, _VIDEO_DURATION, True)
   logging.debug('Recorded output path: %s', recording_obj['recordedOutputPath'])
   logging.debug('Tested quality: %s', recording_obj['quality'])
 
@@ -149,9 +145,6 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
 
       camera_properties_utils.skip_unless(should_run)
 
-      # Calculate camera FoV and convert from string to float
-      camera_fov = float(cam.calc_camera_fov(props))
-
       # Log ffmpeg version being used
       video_processing_utils.log_ffmpeg_version()
 
@@ -180,8 +173,9 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
 
       max_cam_gyro_angles = {}
 
-      for video_size in supported_preview_sizes:
-        recording_obj = _collect_data(cam, self.tablet_device, video_size, rot_rig)
+      for preview_size in supported_preview_sizes:
+        recording_obj = _collect_data(
+            cam, self.tablet_device, preview_size, rot_rig)
 
         # Grab the video from the save location on DUT
         self.dut.adb.pull([recording_obj['recordedOutputPath'], log_path])
@@ -210,7 +204,7 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
 
         # Extract camera rotations
         img_h = frames[0].shape[0]
-        file_name_stem = f'{os.path.join(log_path, _NAME)}_{video_size}'
+        file_name_stem = f'{os.path.join(log_path, _NAME)}_{preview_size}'
         cam_rots = sensor_fusion_utils.get_cam_rotations(
             frames[_START_FRAME : len(frames)],
             facing,
@@ -220,13 +214,13 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
             stabilized_video=True
         )
         sensor_fusion_utils.plot_camera_rotations(cam_rots, _START_FRAME,
-                                                  video_size, file_name_stem)
+                                                  preview_size, file_name_stem)
         max_camera_angle = sensor_fusion_utils.calc_max_rotation_angle(
             cam_rots, 'Camera')
 
         # Extract gyro rotations
         sensor_fusion_utils.plot_gyro_events(
-            gyro_events, f'{_NAME}_{video_size}', log_path
+            gyro_events, f'{_NAME}_{preview_size}', log_path
         )
         gyro_rots = sensor_fusion_utils.conv_acceleration_to_movement(
             gyro_events, _VIDEO_DELAY_TIME
@@ -235,10 +229,10 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
             gyro_rots, 'Gyro')
         logging.debug(
             'Max deflection (degrees) %s: video: %.3f, gyro: %.3f ratio: %.4f',
-            video_size, max_camera_angle, max_gyro_angle,
+            preview_size, max_camera_angle, max_gyro_angle,
             max_camera_angle / max_gyro_angle)
-        max_cam_gyro_angles[video_size] = {'gyro': max_gyro_angle,
-                                           'cam': max_camera_angle}
+        max_cam_gyro_angles[preview_size] = {'gyro': max_gyro_angle,
+                                             'cam': max_camera_angle}
 
         # Assert phone is moved enough during test
         if max_gyro_angle < _MIN_PHONE_MOVEMENT_ANGLE:
@@ -261,6 +255,20 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
               f"Max gyro angle: {max_angles['gyro']:.3f}, "
               f"ratio: {max_angles['cam']/max_angles['gyro']:.3f} "
               f'THRESH: {preview_stabilization_factor}.')
+        # Delete saved frames if the format is a PASS
+        else:
+          try:
+            tmpdir = os.listdir(log_path)
+          except FileNotFoundError:
+            logging.debug('Tmp directory: %s not found', log_path)
+          for file in tmpdir:
+            if fnmatch.fnmatch(file, f'*_{preview_size}_stabilized_frame_*'):
+              file_to_remove = os.path.join(log_path, file)
+              try:
+                os.remove(file_to_remove)
+              except FileNotFoundError:
+                logging.debug('File Not Found: %s', str(file))
+          logging.debug('Format %s passes, frame images removed', preview_size)
 
       if test_failures:
         raise AssertionError(test_failures)

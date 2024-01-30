@@ -25,6 +25,7 @@ import com.android.compatibility.common.util.CddTest
 import com.android.os.StatsLog.EventMetricData
 import com.android.os.input.InputDeviceUsageReported
 import com.android.os.input.InputExtensionAtoms
+import com.android.os.input.TouchpadUsage
 import com.android.tradefed.testtype.DeviceTestCase
 import com.android.tradefed.util.RunUtil
 import com.google.protobuf.ExtensionRegistry
@@ -49,11 +50,14 @@ class InputAtomsTest : DeviceTestCase() {
         const val EMULATE_INPUT_DEVICE_CLASS = "$TEST_APP_PACKAGE.EmulateInputDevice"
     }
 
+    private val registry: ExtensionRegistry = ExtensionRegistry.newInstance()
+
     override fun setUp() {
         super.setUp()
         ConfigUtils.removeConfig(device)
         ReportUtils.clearReports(device)
         RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG.toLong())
+        InputExtensionAtoms.registerAllExtensions(registry)
     }
 
     override fun tearDown() {
@@ -64,9 +68,6 @@ class InputAtomsTest : DeviceTestCase() {
 
     @CddTest(requirements = ["6.1/C-0-10"])
     fun testInputDeviceUsageAtom() {
-        val registry: ExtensionRegistry = ExtensionRegistry.newInstance()
-        InputExtensionAtoms.registerAllExtensions(registry)
-
         val builder = ConfigUtils.createConfigBuilder("AID_NOBODY")
         ConfigUtils.addEventMetric(builder,
                 InputExtensionAtoms.INPUTDEVICE_USAGE_REPORTED_FIELD_NUMBER)
@@ -116,6 +117,146 @@ class InputAtomsTest : DeviceTestCase() {
         assertThat(data, hasItem<EventMetricData>(
                 member("atom", { atom.getExtension(InputExtensionAtoms.inputdeviceUsageReported) },
                         matchesAtom)))
+    }
+
+    @CddTest(requirements = ["6.1/C-0-10"])
+    fun testTouchpadUsageAtom_FingerAndPalmCounts() {
+        setupTouchpadUsageConfig()
+
+        DeviceUtils.runDeviceTests(
+                device,
+                TEST_APP_PACKAGE,
+                EMULATE_INPUT_DEVICE_CLASS,
+                "useTouchpadWithFingersAndPalms")
+
+        // Trigger atom pull.
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(device)
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG.toLong())
+
+        val atoms = ReportUtils.getGaugeMetricAtoms(device, registry, false)
+        assertThat(atoms.size, equalTo(1))
+        val touchpadUsage: TouchpadUsage = atoms[0].getExtension(InputExtensionAtoms.touchpadUsage)
+        assertThat(touchpadUsage, Matchers.allOf<TouchpadUsage>(
+                member("fingerCount", { fingerCount }, equalTo(3)),
+                member("palmCount", { palmCount }, equalTo(2)),
+        ))
+    }
+
+    @CddTest(requirements = ["6.1/C-0-10"])
+    fun testTouchpadUsageAtom_TwoFingerSwipeCount() {
+        setupTouchpadUsageConfig()
+
+        DeviceUtils.runDeviceTests(
+            device,
+            TEST_APP_PACKAGE,
+            EMULATE_INPUT_DEVICE_CLASS,
+            "twoFingerSwipeOnTouchpad"
+        )
+
+        // Trigger atom pull.
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(device)
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG.toLong())
+
+        val atoms = ReportUtils.getGaugeMetricAtoms(device, registry, false)
+        assertThat(atoms.size, equalTo(1))
+        val touchpadUsage: TouchpadUsage = atoms[0].getExtension(InputExtensionAtoms.touchpadUsage)
+        assertThat(touchpadUsage, Matchers.allOf<TouchpadUsage>(
+            member("twoFingerSwipeGestureCount", { twoFingerSwipeGestureCount }, equalTo(1)),
+            member("threeFingerSwipeGestureCount", { threeFingerSwipeGestureCount }, equalTo(0)),
+            member("fourFingerSwipeGestureCount", { fourFingerSwipeGestureCount }, equalTo(0)),
+            member("pinchGestureCount", { pinchGestureCount }, equalTo(0)),
+        ))
+    }
+
+    @CddTest(requirements = ["6.1/C-0-10"])
+    fun testTouchpadUsageAtom_ThreeFingerSwipeCount() {
+        setupTouchpadUsageConfig()
+
+        DeviceUtils.runDeviceTests(
+            device,
+            TEST_APP_PACKAGE,
+            EMULATE_INPUT_DEVICE_CLASS,
+            "threeFingerSwipeOnTouchpad"
+        )
+
+        // Trigger atom pull.
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(device)
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG.toLong())
+
+        val atoms = ReportUtils.getGaugeMetricAtoms(device, registry, false)
+        assertThat(atoms.size, equalTo(1))
+        val touchpadUsage: TouchpadUsage = atoms[0].getExtension(InputExtensionAtoms.touchpadUsage)
+        assertThat(touchpadUsage, Matchers.allOf<TouchpadUsage>(
+            member("twoFingerSwipeGestureCount", { twoFingerSwipeGestureCount }, equalTo(0)),
+            member("threeFingerSwipeGestureCount", { threeFingerSwipeGestureCount }, equalTo(1)),
+            member("fourFingerSwipeGestureCount", { fourFingerSwipeGestureCount }, equalTo(0)),
+            member("pinchGestureCount", { pinchGestureCount }, equalTo(0)),
+        ))
+    }
+
+    @CddTest(requirements = ["6.1/C-0-10"])
+    fun testTouchpadUsageAtom_FourFingerSwipeCount() {
+        setupTouchpadUsageConfig()
+
+        DeviceUtils.runDeviceTests(
+            device,
+            TEST_APP_PACKAGE,
+            EMULATE_INPUT_DEVICE_CLASS,
+            "fourFingerSwipeOnTouchpad"
+        )
+
+        // Trigger atom pull.
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(device)
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG.toLong())
+
+        val atoms = ReportUtils.getGaugeMetricAtoms(device, registry, false)
+        assertThat(atoms.size, equalTo(1))
+        val touchpadUsage: TouchpadUsage = atoms[0].getExtension(InputExtensionAtoms.touchpadUsage)
+        assertThat(touchpadUsage, Matchers.allOf<TouchpadUsage>(
+            member("twoFingerSwipeGestureCount", { twoFingerSwipeGestureCount }, equalTo(0)),
+            member("threeFingerSwipeGestureCount", { threeFingerSwipeGestureCount }, equalTo(0)),
+            member("fourFingerSwipeGestureCount", { fourFingerSwipeGestureCount }, equalTo(1)),
+            member("pinchGestureCount", { pinchGestureCount }, equalTo(0)),
+        ))
+    }
+
+    @CddTest(requirements = ["6.1/C-0-10"])
+    fun testTouchpadUsageAtom_PinchCount() {
+        setupTouchpadUsageConfig()
+
+        DeviceUtils.runDeviceTests(
+            device,
+            TEST_APP_PACKAGE,
+            EMULATE_INPUT_DEVICE_CLASS,
+            "pinchOnTouchpad"
+        )
+
+        // Trigger atom pull.
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(device)
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG.toLong())
+
+        val atoms = ReportUtils.getGaugeMetricAtoms(device, registry, false)
+        assertThat(atoms.size, equalTo(1))
+        val touchpadUsage: TouchpadUsage = atoms[0].getExtension(InputExtensionAtoms.touchpadUsage)
+        assertThat(touchpadUsage, Matchers.allOf<TouchpadUsage>(
+            member("twoFingerSwipeGestureCount", { twoFingerSwipeGestureCount }, equalTo(0)),
+            member("threeFingerSwipeGestureCount", { threeFingerSwipeGestureCount }, equalTo(0)),
+            member("fourFingerSwipeGestureCount", { fourFingerSwipeGestureCount }, equalTo(0)),
+            member("pinchGestureCount", { pinchGestureCount }, equalTo(1)),
+        ))
+    }
+
+    private fun setupTouchpadUsageConfig() {
+        val builder = ConfigUtils.createConfigBuilder("AID_NOBODY")
+        ConfigUtils.addGaugeMetric(builder, InputExtensionAtoms.TOUCHPAD_USAGE_FIELD_NUMBER)
+        ConfigUtils.uploadConfig(device, builder)
+
+        // Trigger an atom pull and clear any returned atoms before running the rest of the test.
+        // This avoids flakes caused by the daily touchpad usage atom causing multiple atoms to be
+        // returned by getGaugeMetricAtoms later in the test.
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(device)
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG.toLong())
+        ReportUtils.getGaugeMetricAtoms(device, registry, false)
     }
 }
 

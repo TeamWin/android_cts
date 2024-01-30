@@ -597,7 +597,9 @@ public class TvInteractiveAppServiceTest {
         }
         mInstrumentation.waitForIdleSync();
         mActivity = null;
-        mActivityScenario.close();
+        if (mActivityScenario != null) {
+            mActivityScenario.close();
+        }
     }
 
     @Test

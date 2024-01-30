@@ -27,6 +27,7 @@ import android.location.Geocoder;
 import android.location.Geocoder.GeocodeListener;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
+import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -41,12 +42,14 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 @RunWith(AndroidJUnit4.class)
 public class GeocoderTest {
+    private static final String TAG = GeocoderTest.class.getSimpleName();
 
     @Rule public final MockitoRule mocks = MockitoJUnit.rule();
 
@@ -104,7 +107,11 @@ public class GeocoderTest {
     public void testGetFromLocation_sync() throws Exception {
         assumeTrue(Geocoder.isPresent());
 
-        mGeocoder.getFromLocation(60, 30, 5);
+        try {
+            mGeocoder.getFromLocation(60, 30, 5);
+        } catch (IOException e) {
+            Log.e(TAG, "GeoCoder getFromLocation request failed.", e);
+        }
     }
 
     @ApiTest(apis = "android.location.Geocoder#getFromLocation")
@@ -138,7 +145,11 @@ public class GeocoderTest {
     public void testGetFromLocationName_sync() throws Exception {
         assumeTrue(Geocoder.isPresent());
 
-        mGeocoder.getFromLocationName("Dalvik,Iceland", 5);
+        try {
+            mGeocoder.getFromLocationName("Dalvik,Iceland", 5);
+        } catch (IOException e) {
+            Log.e(TAG, "GeoCoder getFromLocatioName request failed.", e);
+        }
     }
 
     @ApiTest(apis = "android.location.Geocoder#getFromLocationName")

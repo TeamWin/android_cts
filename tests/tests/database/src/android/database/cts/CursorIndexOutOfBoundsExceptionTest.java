@@ -16,11 +16,20 @@
 
 package android.database.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import android.database.CursorIndexOutOfBoundsException;
-import android.test.AndroidTestCase;
 
-public class CursorIndexOutOfBoundsExceptionTest extends AndroidTestCase {
+import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class CursorIndexOutOfBoundsExceptionTest {
+
+    @Test
     public void testConstructors() {
         int INDEX = 100;
         int SIZE = 99;

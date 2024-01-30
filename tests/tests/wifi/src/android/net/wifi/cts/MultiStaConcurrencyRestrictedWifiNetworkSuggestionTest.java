@@ -26,8 +26,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
-import android.content.pm.PackageManager;
-import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
@@ -78,100 +76,88 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
     private static boolean sWasWifiEnabled;
     private static boolean sShouldRunTest = false;
 
-    private Context mContext;
-    private WifiManager mWifiManager;
-    private ConnectivityManager mConnectivityManager;
-    private UiDevice mUiDevice;
+    private static Context sContext;
+    private static WifiManager sWifiManager;
+    private static ConnectivityManager sConnectivityManager;
+    private static UiDevice sUiDevice;
     private WifiConfiguration mTestNetworkForRestrictedConnection;
     private WifiConfiguration mTestNetworkForInternetConnection;
     private ConnectivityManager.NetworkCallback mNetworkCallback;
     private ConnectivityManager.NetworkCallback mNsNetworkCallback;
     private ScheduledExecutorService mExecutorService;
-    private TestHelper mTestHelper;
+    private static TestHelper sTestHelper;
 
     private static final int DURATION_MILLIS = 10_000;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        sContext = InstrumentationRegistry.getInstrumentation().getContext();
         // skip the test if WiFi is not supported or not automotive platform.
         // Don't use assumeTrue in @BeforeClass
-        if (!WifiFeature.isWifiSupported(context)) return;
-        sShouldRunTest = true;
+        if (!WifiFeature.isWifiSupported(sContext)) return;
 
-        WifiManager wifiManager = context.getSystemService(WifiManager.class);
-        assertThat(wifiManager).isNotNull();
+        sWifiManager = sContext.getSystemService(WifiManager.class);
+        assertThat(sWifiManager).isNotNull();
+        if (!sWifiManager.isStaConcurrencyForRestrictedConnectionsSupported()) {
+            return;
+        }
+        sShouldRunTest = true;
+        sConnectivityManager = sContext.getSystemService(ConnectivityManager.class);
+        sUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        sTestHelper = new TestHelper(sContext, sUiDevice);
+
+        // turn screen on
+        sTestHelper.turnScreenOn();
 
         // turn on verbose logging for tests
         sWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> wifiManager.isVerboseLoggingEnabled());
+                () -> sWifiManager.isVerboseLoggingEnabled());
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> wifiManager.setVerboseLoggingEnabled(true));
+                () -> sWifiManager.setVerboseLoggingEnabled(true));
         // Disable scan throttling for tests.
         sWasScanThrottleEnabled = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> wifiManager.isScanThrottleEnabled());
+                () -> sWifiManager.isScanThrottleEnabled());
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> wifiManager.setScanThrottleEnabled(false));
+                () -> sWifiManager.setScanThrottleEnabled(false));
 
         // enable Wifi
         sWasWifiEnabled = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> wifiManager.isWifiEnabled());
-        if (!wifiManager.isWifiEnabled()) {
-            ShellIdentityUtils.invokeWithShellPermissions(() -> wifiManager.setWifiEnabled(true));
+                () -> sWifiManager.isWifiEnabled());
+        if (!sWifiManager.isWifiEnabled()) {
+            ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.setWifiEnabled(true));
         }
-        PollingCheck.check("Wifi not enabled", DURATION_MILLIS, () -> wifiManager.isWifiEnabled());
+        PollingCheck.check("Wifi not enabled", DURATION_MILLIS,
+                () -> sWifiManager.isWifiEnabled());
     }
 
     @AfterClass
     public static void tearDownClass() throws Exception {
         if (!sShouldRunTest) return;
 
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        WifiManager wifiManager = context.getSystemService(WifiManager.class);
-        assertThat(wifiManager).isNotNull();
-
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> wifiManager.setScanThrottleEnabled(sWasScanThrottleEnabled));
+                () -> sWifiManager.setScanThrottleEnabled(sWasScanThrottleEnabled));
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> wifiManager.setVerboseLoggingEnabled(sWasVerboseLoggingEnabled));
+                () -> sWifiManager.setVerboseLoggingEnabled(sWasVerboseLoggingEnabled));
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> wifiManager.setWifiEnabled(sWasWifiEnabled));
+                () -> sWifiManager.setWifiEnabled(sWasWifiEnabled));
     }
 
     @Before
     public void setUp() throws Exception {
         assumeTrue(sShouldRunTest);
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mWifiManager = mContext.getSystemService(WifiManager.class);
-        mConnectivityManager = mContext.getSystemService(ConnectivityManager.class);
-        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mExecutorService = Executors.newSingleThreadScheduledExecutor();
-        mTestHelper = new TestHelper(mContext, mUiDevice);
-
-        // skip the test if WiFi is not supported or not automitve platform.
-        assumeTrue(WifiFeature.isWifiSupported(mContext));
-        // skip the test if location is not supported
-        assumeTrue(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION));
-        // skip if multi STA not supported.
-        assumeTrue(mWifiManager.isStaConcurrencyForRestrictedConnectionsSupported());
-
-        assertWithMessage("Please enable location for this test!").that(
-                mContext.getSystemService(LocationManager.class).isLocationEnabled()).isTrue();
-
-        // turn screen on
-        mTestHelper.turnScreenOn();
 
         // Clear any existing app state before each test.
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
+                () -> sWifiManager.removeAppState(myUid(), sContext.getPackageName()));
 
         // We need 2 AP's for the test. If there are 2 networks saved on the device and in range,
         // use those. Otherwise, check if there are 2 BSSID's in range for the only saved network.
         // This assumes a CTS test environment with at least 2 connectable bssid's (Is that ok?).
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.getPrivilegedConfiguredNetworks());
+                () -> sWifiManager.getPrivilegedConfiguredNetworks());
         List<WifiConfiguration> matchingNetworksWithBssid =
-                TestHelper.findMatchingSavedNetworksWithBssid(mWifiManager, savedNetworks, 2);
+                TestHelper.findMatchingSavedNetworksWithBssid(sWifiManager, savedNetworks, 2);
         assertWithMessage("Need at least 2 saved network bssids in range").that(
                 matchingNetworksWithBssid.size()).isAtLeast(2);
         // Pick any 2 bssid for test.
@@ -188,16 +174,16 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> {
                     for (WifiConfiguration savedNetwork : savedNetworks) {
-                        mWifiManager.disableNetwork(savedNetwork.networkId);
+                        sWifiManager.disableNetwork(savedNetwork.networkId);
                     }
-                    mWifiManager.disconnect();
+                    sWifiManager.disconnect();
                 });
 
         // Wait for Wifi to be disconnected.
         PollingCheck.check(
                 "Wifi not disconnected",
                 20_000,
-                () -> mWifiManager.getConnectionInfo().getNetworkId() == -1);
+                () -> sWifiManager.getConnectionInfo().getNetworkId() == -1);
     }
 
     @After
@@ -206,22 +192,22 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
         // Re-enable networks.
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> {
-                    for (WifiConfiguration savedNetwork : mWifiManager.getConfiguredNetworks()) {
-                        mWifiManager.enableNetwork(savedNetwork.networkId, false);
+                    for (WifiConfiguration savedNetwork : sWifiManager.getConfiguredNetworks()) {
+                        sWifiManager.enableNetwork(savedNetwork.networkId, false);
                     }
                 });
         // Release the requests after the test.
         if (mNetworkCallback != null) {
-            mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
+            sConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
         }
         if (mNsNetworkCallback != null) {
-            mConnectivityManager.unregisterNetworkCallback(mNsNetworkCallback);
+            sConnectivityManager.unregisterNetworkCallback(mNsNetworkCallback);
         }
         mExecutorService.shutdownNow();
         // Clear any existing app state after each test.
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
-        mTestHelper.turnScreenOff();
+                () -> sWifiManager.removeAppState(myUid(), sContext.getPackageName()));
+        sTestHelper.turnScreenOff();
     }
 
     /**
@@ -233,7 +219,7 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
     @Test
     public void testConnectToOemPaidSuggestionWhenConnectedToInternetNetwork() throws Exception {
         // First trigger internet connectivity.
-        mNetworkCallback = mTestHelper.testConnectionFlowWithConnect(
+        mNetworkCallback = sTestHelper.testConnectionFlowWithConnect(
                 mTestNetworkForInternetConnection);
 
         // Now trigger restricted connection.
@@ -242,12 +228,12 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
                         mTestNetworkForRestrictedConnection)
                         .setOemPaid(true)
                         .build();
-        mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
+        mNsNetworkCallback = sTestHelper.testConnectionFlowWithSuggestion(
                 mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
                 Set.of(NET_CAPABILITY_OEM_PAID), false/* restrictedNetwork */);
 
         // Ensure that there are 2 wifi connections available for apps.
-        assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(2);
+        assertThat(sTestHelper.getNumWifiConnections()).isEqualTo(2);
     }
 
     /**
@@ -264,16 +250,16 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
                         mTestNetworkForRestrictedConnection)
                         .setOemPaid(true)
                         .build();
-        mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
+        mNsNetworkCallback = sTestHelper.testConnectionFlowWithSuggestion(
                 mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
                 Set.of(NET_CAPABILITY_OEM_PAID), false);
 
         // Now trigger internet connectivity.
-        mNetworkCallback = mTestHelper.testConnectionFlowWithConnect(
+        mNetworkCallback = sTestHelper.testConnectionFlowWithConnect(
                 mTestNetworkForInternetConnection);
 
         // Ensure that there are 2 wifi connections available for apps.
-        assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(2);
+        assertThat(sTestHelper.getNumWifiConnections()).isEqualTo(2);
     }
 
     /**
@@ -285,7 +271,7 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
     @Test
     public void testConnectToOemPrivateSuggestionWhenConnectedToInternetNetwork() throws Exception {
         // First trigger internet connectivity.
-        mNetworkCallback = mTestHelper.testConnectionFlowWithConnect(
+        mNetworkCallback = sTestHelper.testConnectionFlowWithConnect(
                 mTestNetworkForInternetConnection);
 
         // Now trigger restricted connection.
@@ -294,12 +280,12 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
                         mTestNetworkForRestrictedConnection)
                         .setOemPrivate(true)
                         .build();
-        mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
+        mNsNetworkCallback = sTestHelper.testConnectionFlowWithSuggestion(
                 mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
                 Set.of(NET_CAPABILITY_OEM_PRIVATE), false/* restrictedNetwork */);
 
         // Ensure that there are 2 wifi connections available for apps.
-        assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(2);
+        assertThat(sTestHelper.getNumWifiConnections()).isEqualTo(2);
     }
 
     /**
@@ -316,16 +302,16 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
                         mTestNetworkForRestrictedConnection)
                         .setOemPrivate(true)
                         .build();
-        mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
+        mNsNetworkCallback = sTestHelper.testConnectionFlowWithSuggestion(
                 mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
                 Set.of(NET_CAPABILITY_OEM_PRIVATE), false/* restrictedNetwork */);
 
         // Now trigger internet connectivity.
-        mNetworkCallback = mTestHelper.testConnectionFlowWithConnect(
+        mNetworkCallback = sTestHelper.testConnectionFlowWithConnect(
                 mTestNetworkForInternetConnection);
 
         // Ensure that there are 2 wifi connections available for apps.
-        assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(2);
+        assertThat(sTestHelper.getNumWifiConnections()).isEqualTo(2);
     }
 
     /**
@@ -339,7 +325,7 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
     public void testConnectToOemPaidSuggestionFailureWhenConnectedToInternetNetwork()
             throws Exception {
         // First trigger internet connectivity.
-        mNetworkCallback = mTestHelper.testConnectionFlowWithConnect(
+        mNetworkCallback = sTestHelper.testConnectionFlowWithConnect(
                 mTestNetworkForInternetConnection);
 
         // Now trigger restricted connection.
@@ -348,12 +334,12 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
                         mTestNetworkForRestrictedConnection)
                         .setOemPaid(true)
                         .build();
-        mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
+        mNsNetworkCallback = sTestHelper.testConnectionFailureFlowWithSuggestion(
                 mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
                 Set.of(NET_CAPABILITY_OEM_PRIVATE));
 
         // Ensure that there is only 1 connection available for apps.
-        assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(1);
+        assertThat(sTestHelper.getNumWifiConnections()).isEqualTo(1);
     }
 
     /**
@@ -367,7 +353,7 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
     public void testConnectToOemPrivateSuggestionFailureWhenConnectedToInternetNetwork()
             throws Exception {
         // First trigger internet connectivity.
-        mNetworkCallback = mTestHelper.testConnectionFlowWithConnect(
+        mNetworkCallback = sTestHelper.testConnectionFlowWithConnect(
                 mTestNetworkForInternetConnection);
 
         // Now trigger restricted connection.
@@ -376,12 +362,12 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
                         mTestNetworkForRestrictedConnection)
                         .setOemPrivate(true)
                         .build();
-        mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
+        mNsNetworkCallback = sTestHelper.testConnectionFailureFlowWithSuggestion(
                 mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
                 Set.of(NET_CAPABILITY_OEM_PAID));
 
         // Ensure that there is only 1 connection available for apps.
-        assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(1);
+        assertThat(sTestHelper.getNumWifiConnections()).isEqualTo(1);
     }
 
     /**
@@ -396,7 +382,7 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
             testConnectToSuggestionFailureWithOemPaidNetCapabilityWhenConnectedToInternetNetwork()
             throws Exception {
         // First trigger internet connectivity.
-        mNetworkCallback = mTestHelper.testConnectionFlowWithConnect(
+        mNetworkCallback = sTestHelper.testConnectionFlowWithConnect(
                 mTestNetworkForInternetConnection);
 
         // Now trigger restricted connection.
@@ -404,12 +390,12 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
                 TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
                         mTestNetworkForRestrictedConnection)
                         .build();
-        mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
+        mNsNetworkCallback = sTestHelper.testConnectionFailureFlowWithSuggestion(
                 mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
                 Set.of(NET_CAPABILITY_OEM_PAID));
 
         // Ensure that there is only 1 connection available for apps.
-        assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(1);
+        assertThat(sTestHelper.getNumWifiConnections()).isEqualTo(1);
     }
 
     /**
@@ -424,7 +410,7 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
         testConnectToSuggestionFailureWithOemPrivateNetCapabilityWhenConnectedToInternetNetwork()
             throws Exception {
         // First trigger internet connectivity.
-        mNetworkCallback = mTestHelper.testConnectionFlowWithConnect(
+        mNetworkCallback = sTestHelper.testConnectionFlowWithConnect(
                 mTestNetworkForInternetConnection);
 
         // Now trigger restricted connection.
@@ -432,11 +418,11 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
                 TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
                         mTestNetworkForRestrictedConnection)
                         .build();
-        mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
+        mNsNetworkCallback = sTestHelper.testConnectionFailureFlowWithSuggestion(
                 mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
                 Set.of(NET_CAPABILITY_OEM_PRIVATE));
 
         // Ensure that there is only 1 connection available for apps.
-        assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(1);
+        assertThat(sTestHelper.getNumWifiConnections()).isEqualTo(1);
     }
 }

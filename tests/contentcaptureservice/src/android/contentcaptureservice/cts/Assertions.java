@@ -324,6 +324,17 @@ final class Assertions {
         ).collect(Collectors.toList());
     }
 
+    /** Gets a list of events that are related to view changes only. */
+    public static List<ContentCaptureEvent> getViewLevelEvents(
+            @NonNull List<ContentCaptureEvent> events) {
+        return Collections.unmodifiableList(events).stream().filter(
+                e -> e.getType() == TYPE_WINDOW_BOUNDS_CHANGED
+                        || e.getType() == TYPE_VIEW_INSETS_CHANGED
+                        || e.getType() == TYPE_VIEW_TREE_APPEARING
+                        || e.getType() == TYPE_VIEW_TREE_APPEARED
+        ).collect(Collectors.toList());
+    }
+
     /**
      * Asserts that a session for the given activity has events at all.
      */

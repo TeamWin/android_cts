@@ -23,6 +23,8 @@ import static android.net.wifi.sharedconnectivity.app.HotspotNetworkConnectionSt
 import static android.net.wifi.sharedconnectivity.app.HotspotNetworkConnectionStatus.CONNECTION_STATUS_TETHERING_TIMEOUT;
 import static android.net.wifi.sharedconnectivity.app.NetworkProviderInfo.DEVICE_TYPE_TABLET;
 
+import static com.android.wifi.flags.Flags.networkProviderBatteryChargingStatus;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
@@ -37,7 +39,9 @@ import android.os.Parcel;
 import androidx.test.filters.SdkSuppress;
 
 import com.android.compatibility.common.util.NonMainlineTest;
+import com.android.modules.utils.build.SdkLevel;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -49,10 +53,6 @@ import java.util.Arrays;
 @NonMainlineTest
 public class HotspotNetworkConnectionStatusTest {
     private static final long DEVICE_ID = 11L;
-    private static final NetworkProviderInfo NETWORK_PROVIDER_INFO =
-            new NetworkProviderInfo.Builder("TEST_NAME", "TEST_MODEL")
-                    .setDeviceType(DEVICE_TYPE_TABLET).setConnectionStrength(2)
-                    .setBatteryPercentage(50).build();
     private static final int NETWORK_TYPE = NETWORK_TYPE_CELLULAR;
     private static final String NETWORK_NAME = "TEST_NETWORK";
     private static final String HOTSPOT_SSID = "TEST_SSID";
@@ -61,6 +61,23 @@ public class HotspotNetworkConnectionStatusTest {
     private static final long DEVICE_ID_1 = 111L;
     private static final String BUNDLE_KEY = "INT-KEY";
     private static final int BUNDLE_VALUE = 1;
+
+    private NetworkProviderInfo mNetworkProviderInfo;
+
+    @Before
+    public void setUp() {
+        NetworkProviderInfo.Builder builder =
+                new NetworkProviderInfo.Builder("TEST_NAME", "TEST_MODEL")
+                        .setDeviceType(DEVICE_TYPE_TABLET)
+                        .setConnectionStrength(2)
+                        .setBatteryPercentage(50);
+
+        if (networkProviderBatteryChargingStatus() && SdkLevel.isAtLeastV()) {
+            builder.setBatteryCharging(false);
+        }
+
+        mNetworkProviderInfo = builder.build();
+    }
 
     @Test
     public void parcelOperation() {
@@ -137,7 +154,7 @@ public class HotspotNetworkConnectionStatusTest {
     private HotspotNetwork.Builder buildHotspotNetworkBuilder() {
         HotspotNetwork.Builder builder = new HotspotNetwork.Builder()
                 .setDeviceId(DEVICE_ID)
-                .setNetworkProviderInfo(NETWORK_PROVIDER_INFO)
+                .setNetworkProviderInfo(mNetworkProviderInfo)
                 .setHostNetworkType(NETWORK_TYPE)
                 .setNetworkName(NETWORK_NAME)
                 .setHotspotSsid(HOTSPOT_SSID)

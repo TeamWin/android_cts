@@ -35,12 +35,12 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -66,9 +66,9 @@ public class TransformationMethodTest {
 
     @Before
     public void setup() throws Throwable {
-        mActivity = mActivityRule.getActivity();
-        PollingCheck.waitFor(1000, mActivity::hasWindowFocus);
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
+        WindowUtil.waitForFocus(mActivity);
         mMethod = mock(TransformationMethod.class);
         when(mMethod.getTransformation(any(), any())).then(returnsFirstArg());
 

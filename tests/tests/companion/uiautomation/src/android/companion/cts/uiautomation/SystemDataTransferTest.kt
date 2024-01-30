@@ -23,6 +23,7 @@ import android.app.Activity.RESULT_OK
 import android.companion.AssociationInfo
 import android.companion.CompanionDeviceManager
 import android.companion.CompanionException
+import android.companion.Flags
 import android.companion.cts.common.CompanionActivity
 import android.content.Intent
 import android.os.OutcomeReceiver
@@ -93,16 +94,27 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
 
     @Test
     fun test_userConsent_allow() {
-        val association = associate()
+        val association1 = associate()
 
-        val resultCode = requestPermissionTransferUserConsent(association.id, ACTION_CLICK_ALLOW)
+        if (Flags.permSyncUserConsent()) {
+            assertFalse(cdm.isPermissionTransferUserConsented(association1.id))
+        }
+
+        val resultCode = requestPermissionTransferUserConsent(association1.id, ACTION_CLICK_ALLOW)
 
         assertEquals(expected = RESULT_OK, actual = resultCode)
+        if (Flags.permSyncUserConsent()) {
+            assertTrue(cdm.isPermissionTransferUserConsented(association1.id))
+        }
     }
 
     @Test
     fun test_userConsent_disallow() {
         val association = associate()
+
+        if (Flags.permSyncUserConsent()) {
+            assertFalse(cdm.isPermissionTransferUserConsented(association.id))
+        }
 
         val resultCode = requestPermissionTransferUserConsent(
             association.id,
@@ -110,40 +122,71 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         )
 
         assertEquals(expected = RESULT_CANCELED, actual = resultCode)
+        if (Flags.permSyncUserConsent()) {
+            assertFalse(cdm.isPermissionTransferUserConsented(association.id))
+        }
     }
 
     @Test
     fun test_userConsent_cancel() {
         val association = associate()
 
+        if (Flags.permSyncUserConsent()) {
+            assertFalse(cdm.isPermissionTransferUserConsented(association.id))
+        }
+
         requestPermissionTransferUserConsent(association.id, ACTION_PRESS_BACK)
+
+        if (Flags.permSyncUserConsent()) {
+            assertFalse(cdm.isPermissionTransferUserConsented(association.id))
+        }
     }
 
     @Test
     fun test_userConsent_allowThenDisallow() {
         val association = associate()
 
+        if (Flags.permSyncUserConsent()) {
+            assertFalse(cdm.isPermissionTransferUserConsented(association.id))
+        }
+
         val resultCode = requestPermissionTransferUserConsent(association.id, ACTION_CLICK_ALLOW)
 
         assertEquals(expected = RESULT_OK, actual = resultCode)
+        if (Flags.permSyncUserConsent()) {
+            assertTrue(cdm.isPermissionTransferUserConsented(association.id))
+        }
 
         val resultCode2 = requestPermissionTransferUserConsent(
             association.id,
             ACTION_CLICK_DISALLOW
         )
         assertEquals(expected = RESULT_CANCELED, actual = resultCode2)
+        if (Flags.permSyncUserConsent()) {
+            assertFalse(cdm.isPermissionTransferUserConsented(association.id))
+        }
     }
 
     @Test
     fun test_userConsent_disallowThenAllow() {
         val association = associate()
 
+        if (Flags.permSyncUserConsent()) {
+            assertFalse(cdm.isPermissionTransferUserConsented(association.id))
+        }
+
         val resultCode = requestPermissionTransferUserConsent(association.id, ACTION_CLICK_DISALLOW)
 
         assertEquals(expected = RESULT_CANCELED, actual = resultCode)
+        if (Flags.permSyncUserConsent()) {
+            assertFalse(cdm.isPermissionTransferUserConsented(association.id))
+        }
 
         val resultCode2 = requestPermissionTransferUserConsent(association.id, ACTION_CLICK_ALLOW)
         assertEquals(expected = RESULT_OK, actual = resultCode2)
+        if (Flags.permSyncUserConsent()) {
+            assertTrue(cdm.isPermissionTransferUserConsented(association.id))
+        }
     }
 
     /**

@@ -17,15 +17,16 @@ package android.content.cts;
 
 import android.app.SearchManager;
 import android.content.ContentValues;
-import android.content.SearchRecentSuggestionsProvider;
 import android.database.Cursor;
 import android.net.Uri;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 import android.test.IsolatedContext;
 import android.test.RenamingDelegatingContext;
 import android.test.mock.MockContentResolver;
 import android.test.mock.MockContext;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class SearchRecentSuggestionsProviderTest extends AndroidTestCase {
     private final static String AUTHORITY_HEAD = "content://" + MockSRSProvider.AUTHORITY;
     private final static Uri TEST_URI = Uri.parse(AUTHORITY_HEAD  + "/suggestions");

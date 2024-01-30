@@ -28,6 +28,7 @@ import android.sensorprivacy.cts.testapp.utils.Cam
 import android.sensorprivacy.cts.testapp.utils.Mic
 import android.sensorprivacy.cts.testapp.utils.openCam
 import android.sensorprivacy.cts.testapp.utils.openMic
+import android.util.Log
 
 class UseMicCamera : Activity() {
     private var mic: Mic? = null
@@ -37,6 +38,7 @@ class UseMicCamera : Activity() {
     val activitiesToFinish = mutableSetOf<Activity>()
 
     companion object {
+        val TAG = UseMicCamera::class.simpleName
         const val MIC_CAM_ACTIVITY_ACTION =
                 "android.sensorprivacy.cts.usemiccamera.action.USE_MIC_CAM"
         const val FINISH_MIC_CAM_ACTIVITY_ACTION =
@@ -55,36 +57,47 @@ class UseMicCamera : Activity() {
 
     override fun onStart() {
         super.onStart()
-
         val handler = Handler(mainLooper)
         appOpsManager = applicationContext.getSystemService(AppOpsManager::class.java)!!
+        val useMic = intent.getBooleanExtra(USE_MIC_EXTRA, false)
+        val useCam = intent.getBooleanExtra(USE_CAM_EXTRA, false)
+        Log.i(TAG, "onStart: begin (useMic=$useMic, useCam=$useCam)")
 
         registerReceiver(object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
+                Log.i(TAG, "onReceive: closing camera and mic (action='${intent?.action}')")
                 unregisterReceiver(this)
-                mic?.close()
-                cam?.close()
-                appOpsManager.finishOp(AppOpsManager.OPSTR_CAMERA,
-                        Process.myUid(), applicationContext.packageName)
-                appOpsManager.finishOp(AppOpsManager.OPSTR_RECORD_AUDIO,
-                        Process.myUid(), applicationContext.packageName)
+                if (useCam) {
+                    cam?.close()
+                    appOpsManager.finishOp(AppOpsManager.OPSTR_CAMERA,
+                            Process.myUid(), applicationContext.packageName)
+                }
+                if (useMic) {
+                    mic?.close()
+                    appOpsManager.finishOp(AppOpsManager.OPSTR_RECORD_AUDIO,
+                            Process.myUid(), applicationContext.packageName)
+                }
+                Log.i(TAG, "onReceive: closed camera and mic")
                 finishAndRemoveTask()
             }
         }, IntentFilter(FINISH_MIC_CAM_ACTIVITY_ACTION), Context.RECEIVER_EXPORTED)
 
-        val useMic = intent.getBooleanExtra(USE_MIC_EXTRA, false)
-        val useCam = intent.getBooleanExtra(USE_CAM_EXTRA, false)
         if (useMic) {
-            handler.postDelayed({ mic = openMic() }, 5000)
+            handler.postDelayed({
+                Log.i(TAG, "onStart: opening microphone")
+                mic = openMic()
+            }, 5000)
         }
         if (useCam) {
             handler.postDelayed({
+                Log.i(TAG, "onStart: opening camera")
                 cam = openCam(this, intent.getBooleanExtra(RETRY_CAM_EXTRA, false))
             }, 5000)
         }
 
         if (intent.getBooleanExtra(DELAYED_ACTIVITY_EXTRA, false)) {
             handler.postDelayed({
+                Log.i(TAG, "onStart: opening microphone")
                 val intent = Intent(this, BlankActivity::class.java)
                 if (intent.getBooleanExtra(DELAYED_ACTIVITY_NEW_TASK_EXTRA, false)) {
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -92,5 +105,6 @@ class UseMicCamera : Activity() {
                 startActivity(intent)
             }, 2000)
         }
+        Log.i(TAG, "onStart: end")
     }
 }

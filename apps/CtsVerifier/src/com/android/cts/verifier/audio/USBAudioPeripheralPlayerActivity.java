@@ -19,6 +19,8 @@ package com.android.cts.verifier.audio;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.android.cts.verifier.audio.audiolib.DisplayUtils;
+
 // MegaAudio imports
 import org.hyphonate.megaaudio.common.BuilderBase;
 import org.hyphonate.megaaudio.common.StreamBase;
@@ -54,6 +56,8 @@ public abstract class USBAudioPeripheralPlayerActivity extends USBAudioPeriphera
 
         mSampleRate = StreamBase.getSystemSampleRate();
         mNumExchangeFrames = StreamBase.getNumBurstFrames(BuilderBase.TYPE_JAVA);
+
+        DisplayUtils.setKeepScreenOn(this, true);
     }
 
     protected void setupPlayer() {

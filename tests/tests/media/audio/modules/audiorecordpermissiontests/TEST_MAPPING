@@ -1,7 +1,7 @@
 {
   "presubmit": [
     {
-      "name": "AudioRecordPermissionTests",
+      "name": "CtsAudioRecordPermissionTests",
       "options": [
         {
           "exclude-annotation": "androidx.test.filters.FlakyTest"
@@ -11,7 +11,7 @@
   ],
   "postsubmit": [
     {
-      "name": "AudioRecordPermissionTests"
+      "name": "CtsAudioRecordPermissionTests"
     }
   ]
 }

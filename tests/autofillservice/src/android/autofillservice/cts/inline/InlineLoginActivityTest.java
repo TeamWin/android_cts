@@ -411,11 +411,11 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
         mockImeSession.callSetInlineSuggestionsExtras(bundle);
 
         final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
-            .addDataset(new CannedFillResponse.CannedDataset.Builder()
-                .setField(ID_USERNAME, "dude")
-                .setPresentation(createPresentation("The Username"))
-                .setInlinePresentation(createInlinePresentation("The Username"))
-                .build());
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setPresentation(createPresentation("The Username"))
+                        .setInlinePresentation(createInlinePresentation("The Username"))
+                        .build());
         sReplier.addResponse(builder.build());
 
         // Trigger auto-fill.
@@ -607,8 +607,8 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
         Helper.assertActiveViewCountFromInlineSuggestionRenderService(0);
     }
 
-    @Ignore("b/281726966")
     @Test
+    @Ignore("b/281726966")
     public void testAutofill_pccDatasets() throws Exception {
         // Set service.
         enableService();
@@ -641,8 +641,8 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
         sReplier.setIdMode(IdMode.RESOURCE_ID);
     }
 
-    @Ignore("b/281726966")
     @Test
+    @Ignore("b/281726966")
     public void autofillPccDatasetTest_setForAllHints() throws Exception {
         // Set service.
         enableService();

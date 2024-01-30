@@ -45,6 +45,9 @@ public final class BitmapDumper {
     public static void initialize(Instrumentation instrumentation) {
         sInstrumentation = instrumentation;
         sDumpDirectory = instrumentation.getContext().getExternalCacheDir();
+        if (sDumpDirectory == null) {
+            sDumpDirectory = instrumentation.getContext().getCacheDir();
+        }
 
         // Cleanup old tests
         // These are removed on uninstall anyway but just in case...
@@ -97,6 +100,10 @@ public final class BitmapDumper {
         return "/." + file.getAbsolutePath();
     }
 
+    private static String keyForType(String type) {
+        return KEY_PREFIX + type + "_" + System.nanoTime();
+    }
+
     /**
      * Saves two files, one the capture of an ideal drawing, and one the capture of the tested
      * drawing. The third file saved is a bitmap that is returned from the given visualizer's
@@ -126,9 +133,9 @@ public final class BitmapDumper {
         saveBitmap(visualizerBitmap, visualizerFile);
 
         Bundle report = new Bundle();
-        report.putString(KEY_PREFIX + TYPE_IDEAL_RENDERING, bypassContentProvider(idealFile));
-        report.putString(KEY_PREFIX + TYPE_TESTED_RENDERING, bypassContentProvider(testedFile));
-        report.putString(KEY_PREFIX + TYPE_VISUALIZER_RENDERING,
+        report.putString(keyForType(TYPE_IDEAL_RENDERING), bypassContentProvider(idealFile));
+        report.putString(keyForType(TYPE_TESTED_RENDERING), bypassContentProvider(testedFile));
+        report.putString(keyForType(TYPE_VISUALIZER_RENDERING),
                 bypassContentProvider(visualizerFile));
         sInstrumentation.sendStatus(INST_STATUS_IN_PROGRESS, report);
     }
@@ -142,8 +149,9 @@ public final class BitmapDumper {
         saveBitmap(visualizerBitmap, visualizerFile);
 
         Bundle report = new Bundle();
-        report.putString(KEY_PREFIX + TYPE_TESTED_RENDERING, bypassContentProvider(testedFile));
-        report.putString(KEY_PREFIX + TYPE_VISUALIZER_RENDERING,
+        report.putString(keyForType(TYPE_TESTED_RENDERING),
+                bypassContentProvider(testedFile));
+        report.putString(keyForType(TYPE_VISUALIZER_RENDERING),
                 bypassContentProvider(visualizerFile));
         sInstrumentation.sendStatus(INST_STATUS_IN_PROGRESS, report);
     }
@@ -156,7 +164,7 @@ public final class BitmapDumper {
         File capture = getFile(className, testName, TYPE_SINGULAR);
         saveBitmap(bitmap, capture);
         Bundle report = new Bundle();
-        report.putString(KEY_PREFIX + TYPE_SINGULAR, bypassContentProvider(capture));
+        report.putString(keyForType(TYPE_SINGULAR), bypassContentProvider(capture));
         sInstrumentation.sendStatus(INST_STATUS_IN_PROGRESS, report);
     }
 

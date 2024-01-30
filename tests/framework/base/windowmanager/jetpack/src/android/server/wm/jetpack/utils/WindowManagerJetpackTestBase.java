@@ -28,10 +28,8 @@ import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
 import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
 import static android.server.wm.jetpack.utils.TestActivityLauncher.KEY_ACTIVITY_ID;
-
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -39,6 +37,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.app.ActivityTaskManager;
@@ -51,7 +50,7 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.server.wm.NestedShellPermission;
+import android.server.wm.ActivityManagerTestBase;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
@@ -59,16 +58,18 @@ import androidx.annotation.Nullable;
 import androidx.window.extensions.layout.FoldingFeature;
 import androidx.window.sidecar.SidecarDeviceState;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import org.junit.After;
 import org.junit.Before;
 
-import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 
 /** Base class for all tests in the module. */
-public class WindowManagerJetpackTestBase {
+public class WindowManagerJetpackTestBase extends ActivityManagerTestBase {
 
     public static final String EXTRA_EMBED_ACTIVITY = "EmbedActivity";
     public static final String EXTRA_SPLIT_RATIO = "SplitRatio";
@@ -88,13 +89,9 @@ public class WindowManagerJetpackTestBase {
         assertNotNull(mContext);
         mApplication = (Application) mContext.getApplicationContext();
         assertNotNull(mApplication);
+        clearLaunchParams();
         // Register activity lifecycle callbacks to know which activities are resumed
         registerActivityLifecycleCallbacks();
-        // Clear the previous launch bounds / windowing mode, otherwise persisted launch bounds may
-        // prepend startFullScreenActivityNewTask from launching Activities in full-screen.
-        NestedShellPermission.run(() ->
-                mContext.getSystemService(ActivityTaskManager.class).clearLaunchParamsForPackages(
-                        Collections.singletonList("android.server.wm.jetpack")));
     }
 
     @After
@@ -347,6 +344,13 @@ public class WindowManagerJetpackTestBase {
                 && sidecarDeviceStatePosture == SidecarDeviceState.POSTURE_OPENED)
                 || (extensionDeviceState == FoldingFeature.STATE_HALF_OPENED
                 && sidecarDeviceStatePosture == SidecarDeviceState.POSTURE_HALF_OPENED);
+    }
+
+    private void clearLaunchParams() {
+        final ActivityTaskManager atm = mContext.getSystemService(ActivityTaskManager.class);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            atm.clearLaunchParamsForPackages(List.of(mContext.getPackageName()));
+        }, Manifest.permission.MANAGE_ACTIVITY_TASKS);
     }
 
     private void registerActivityLifecycleCallbacks() {

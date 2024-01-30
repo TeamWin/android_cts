@@ -33,14 +33,15 @@ import android.webkit.cts.WebViewOnUiThread;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.MediumTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
+import com.android.compatibility.common.util.WindowUtil;
 
 import com.google.common.util.concurrent.SettableFuture;
 
@@ -55,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 public class EmojiTest {
     private static final long TEST_TIMEOUT_MS = 20000L; // 20s
-    private Context mContext;
+    private EmojiCtsActivity mActivity;
     private EditText mEditText;
 
     @Rule
@@ -64,7 +65,8 @@ public class EmojiTest {
 
     @Before
     public void setup() {
-        mContext = mActivityRule.getActivity();
+        mActivity = mActivityRule.getActivity();
+        WindowUtil.waitForFocus(mActivity);
     }
 
     /**
@@ -113,7 +115,7 @@ public class EmojiTest {
     @UiThreadTest
     @Test
     public void testEmojiGlyph() {
-        CaptureCanvas ccanvas = new CaptureCanvas(mContext);
+        CaptureCanvas ccanvas = new CaptureCanvas(mActivity);
 
         Bitmap bitmapA, bitmapB;  // Emoji displayed Bitmaps to compare
 
@@ -129,17 +131,17 @@ public class EmojiTest {
             assertFalse(baseMessage + bmpDiffMessage, bitmapA.sameAs(bitmapB));
 
             // cannot reuse CaptureTextView as 2nd setText call throws NullPointerException
-            CaptureTextView cviewA = new CaptureTextView(mContext);
+            CaptureTextView cviewA = new CaptureTextView(mActivity);
             bitmapA = cviewA.capture(Character.toChars(sComparedCodePoints[i][0]));
-            CaptureTextView cviewB = new CaptureTextView(mContext);
+            CaptureTextView cviewB = new CaptureTextView(mActivity);
             bitmapB = cviewB.capture(Character.toChars(sComparedCodePoints[i][1]));
 
             bmpDiffMessage = describeBitmap(bitmapA) + "vs" + describeBitmap(bitmapB);
             assertFalse(baseMessage + bmpDiffMessage, bitmapA.sameAs(bitmapB));
 
-            CaptureEditText cedittextA = new CaptureEditText(mContext);
+            CaptureEditText cedittextA = new CaptureEditText(mActivity);
             bitmapA = cedittextA.capture(Character.toChars(sComparedCodePoints[i][0]));
-            CaptureEditText cedittextB = new CaptureEditText(mContext);
+            CaptureEditText cedittextB = new CaptureEditText(mActivity);
             bitmapB = cedittextB.capture(Character.toChars(sComparedCodePoints[i][1]));
 
             bmpDiffMessage = describeBitmap(bitmapA) + "vs" + describeBitmap(bitmapB);
@@ -191,7 +193,7 @@ public class EmojiTest {
         for (int i = 0; i < testedCodePoints.length; i++) {
             origStr = "Test character  ";
             // cannot reuse CaptureTextView as 2nd setText call throws NullPointerException
-            mActivityRule.runOnUiThread(() -> mEditText = new EditText(mContext));
+            mActivityRule.runOnUiThread(() -> mEditText = new EditText(mActivity));
             mEditText.setText(origStr + String.valueOf(Character.toChars(testedCodePoints[i])));
 
             // confirm the emoji is added.

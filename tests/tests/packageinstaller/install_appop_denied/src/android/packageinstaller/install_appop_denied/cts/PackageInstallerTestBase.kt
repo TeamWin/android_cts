@@ -31,12 +31,12 @@ import android.content.pm.PackageInstaller.STATUS_FAILURE_INVALID
 import android.content.pm.PackageInstaller.STATUS_PENDING_USER_ACTION
 import android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL
 import android.content.pm.PackageManager
-import android.support.test.uiautomator.By
 import androidx.test.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
-import android.support.test.uiautomator.UiDevice
-import android.support.test.uiautomator.Until
 import androidx.core.content.FileProvider
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.Until
 import com.android.compatibility.common.util.FutureResultActivity
 import org.junit.After
 import org.junit.Assert

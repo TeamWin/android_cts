@@ -59,6 +59,7 @@ import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.ImageView;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -275,6 +276,7 @@ public class AccessibilityTakeScreenshotTest {
     }
 
     @Test
+    @FlakyTest
     @ApiTest(apis = {"android.accessibilityservice.AccessibilityService#takeScreenshotOfWindow"})
     public void testTakeScreenshotOfWindow_ErrorForSecureWindow() throws Throwable {
         final Activity activity = launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(
@@ -297,7 +299,7 @@ public class AccessibilityTakeScreenshotTest {
 
             final AccessibilityWindowInfo secureWindowInfo =
                     ActivityLaunchUtils.findWindowByTitle(sUiAutomation, secureWindowTitle);
-            assertThat(secureWindowTitle).isNotNull();
+            assertThat(secureWindowInfo).isNotNull();
 
             mService.takeScreenshotOfWindow(secureWindowInfo.getId(),
                     mContext.getMainExecutor(), mCallback);

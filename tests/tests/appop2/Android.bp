@@ -18,6 +18,10 @@ package {
 
 android_test {
     name: "CtsAppOps2TestCases",
+    defaults: [
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
 
     srcs: ["src/**/*.kt"],
 

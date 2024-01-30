@@ -18,6 +18,8 @@
      package="android.content.pm.cts.shortcutmanager"
      android:sharedUserId="android.content.pm.cts.shortcutmanager.packages">
 
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+
     <queries>
         <package android:name="android.content.pm.cts.shortcutmanager.throttling" />
         <package android:name="android.content.pm.cts.shortcutmanager.packages.package4" />
@@ -67,8 +69,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
          android:targetPackage="android.content.pm.cts.shortcutmanager"
          android:label="CTS tests for ShortcutManager">
-        <meta-data android:name="listener"
-             android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
 
 </manifest>

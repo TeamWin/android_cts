@@ -31,9 +31,9 @@ import android.text.TextPaint;
 import android.text.cts.R;
 import android.text.style.DrawableMarginSpan;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -47,7 +47,7 @@ public class DrawableMarginSpanTest {
 
     @Before
     public void setup() {
-        mContext = InstrumentationRegistry.getTargetContext();
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mDrawable = mContext.getDrawable(R.drawable.scenery);
     }
 

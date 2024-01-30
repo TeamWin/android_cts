@@ -50,13 +50,13 @@ import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequ
 import android.autofillservice.cts.testcore.MyAutofillCallback;
 import android.graphics.Rect;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.service.autofill.SaveInfo;
 import android.text.InputType;
 import android.view.ViewGroup;
 import android.view.autofill.AutofillManager;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.uiautomator.UiObject2;
 
 import org.junit.Ignore;

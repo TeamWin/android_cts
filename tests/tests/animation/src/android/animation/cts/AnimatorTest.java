@@ -26,11 +26,11 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.app.Instrumentation;
 import android.os.SystemClock;
-import android.platform.test.annotations.FlakyTest;
 import android.view.animation.AccelerateInterpolator;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;

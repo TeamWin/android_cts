@@ -104,47 +104,72 @@ public class ItsUtils {
 
     public static Size[] getRaw16OutputSizes(CameraCharacteristics ccs)
             throws ItsException {
-        return getOutputSizes(ccs, ImageFormat.RAW_SENSOR);
+        return getOutputSizes(ccs, ImageFormat.RAW_SENSOR, false);
+    }
+
+    public static Size[] getRaw16MaxResulolutionOutputSizes(CameraCharacteristics ccs)
+        throws ItsException {
+        return getOutputSizes(ccs, ImageFormat.RAW_SENSOR, true);
     }
 
     public static Size[] getRaw10OutputSizes(CameraCharacteristics ccs)
-            throws ItsException {
-        return getOutputSizes(ccs, ImageFormat.RAW10);
+        throws ItsException {
+        return getOutputSizes(ccs, ImageFormat.RAW10, false);
+    }
+
+    public static Size[] getRaw10MaxResulolutionOutputSizes(CameraCharacteristics ccs)
+        throws ItsException {
+        return getOutputSizes(ccs, ImageFormat.RAW10, true);
     }
 
     public static Size[] getRaw12OutputSizes(CameraCharacteristics ccs)
             throws ItsException {
-        return getOutputSizes(ccs, ImageFormat.RAW12);
+        return getOutputSizes(ccs, ImageFormat.RAW12, false);
     }
 
     public static Size[] getJpegOutputSizes(CameraCharacteristics ccs)
             throws ItsException {
-        return getOutputSizes(ccs, ImageFormat.JPEG);
+        return getOutputSizes(ccs, ImageFormat.JPEG, false);
     }
 
     public static Size[] getYuvOutputSizes(CameraCharacteristics ccs)
             throws ItsException {
-        return getOutputSizes(ccs, ImageFormat.YUV_420_888);
+        return getOutputSizes(ccs, ImageFormat.YUV_420_888, false);
     }
 
     public static Size[] getY8OutputSizes(CameraCharacteristics ccs)
             throws ItsException {
-        return getOutputSizes(ccs, ImageFormat.Y8);
+        return getOutputSizes(ccs, ImageFormat.Y8, false);
     }
 
     public static Size getMaxOutputSize(CameraCharacteristics ccs, int format)
             throws ItsException {
-        return getMaxSize(getOutputSizes(ccs, format));
+        return getMaxSize(getOutputSizes(ccs, format, false));
     }
 
-    public static Rect getActiveArrayCropRegion(CameraCharacteristics ccs) {
-        return ccs.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+    public static Rect getActiveArrayCropRegion(CameraCharacteristics ccs,
+        boolean isMaximumResolution) {
+        Rect cropRegion = null;
+        if (isMaximumResolution) {
+            cropRegion = ccs.get(
+                CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE_MAXIMUM_RESOLUTION);
+        } else {
+            cropRegion = ccs.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+        }
+        return cropRegion;
     }
 
-    private static Size[] getOutputSizes(CameraCharacteristics ccs, int format)
-            throws ItsException {
-        StreamConfigurationMap configMap = ccs.get(
+    private static Size[] getOutputSizes(CameraCharacteristics ccs, int format,
+        boolean isMaximumResolution) throws ItsException {
+        StreamConfigurationMap configMap = null;
+        if (isMaximumResolution) {
+            configMap = ccs.get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION);
+        } else {
+            configMap = ccs.get(
                 CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        }
+
         if (configMap == null) {
             throw new ItsException("Failed to get stream config");
         }
@@ -153,10 +178,8 @@ public class ItsUtils {
         Size[] allSizes = null;
         if (normalSizes != null && slowSizes != null) {
             allSizes = new Size[normalSizes.length + slowSizes.length];
-            System.arraycopy(normalSizes, 0, allSizes, 0,
-                    normalSizes.length);
-            System.arraycopy(slowSizes, 0, allSizes, normalSizes.length,
-                    slowSizes.length);
+            System.arraycopy(normalSizes, 0, allSizes, 0, normalSizes.length);
+            System.arraycopy(slowSizes, 0, allSizes, normalSizes.length, slowSizes.length);
         } else if (normalSizes != null) {
             allSizes = normalSizes;
         } else if (slowSizes != null) {

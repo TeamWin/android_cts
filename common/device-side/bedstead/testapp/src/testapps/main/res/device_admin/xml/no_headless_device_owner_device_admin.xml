@@ -27,4 +27,6 @@
         <disable-camera />
         <expire-password />
     </uses-policies>
+
+    <support-transfer-ownership></support-transfer-ownership>
 </device-admin>

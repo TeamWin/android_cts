@@ -17,19 +17,39 @@
 package android.database.cts;
 
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.DataSetObserver;
+import android.database.MatrixCursor;
 import android.database.MergeCursor;
 import android.database.StaleDataException;
 import android.database.sqlite.SQLiteDatabase;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.util.Arrays;
 
-public class MergeCursorTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MergeCursorTest {
+    @Rule public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
     private final int NUMBER_1_COLUMN_INDEX = 1;
     private static final String TABLE1_NAME = "test1";
     private static final String TABLE2_NAME = "test2";
@@ -54,25 +74,32 @@ public class MergeCursorTest extends AndroidTestCase {
     private static final int MAX_VALUE = 10;
     private static final int HALF_VALUE = MAX_VALUE / 2;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        setupDatabase();
+    @Before
+    public void setUp() throws Exception {
         mCursors = new Cursor[2];
+
+        if (mRavenwood.isUnderRavenwood()) return;
+        setupDatabase();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         for (int i = 0; i < mCursors.length; i++) {
             if (null != mCursors[i]) {
                 mCursors[i].close();
             }
         }
+
+        if (mRavenwood.isUnderRavenwood()) return;
         mDatabase.close();
         mDatabaseFile.delete();
-        super.tearDown();
     }
 
+    private Context getContext() {
+        return InstrumentationRegistry.getTargetContext();
+    }
+
+    @Test
     public void testConstructor() {
         // If each item of mCursors are null, count will be zero.
         MergeCursor mergeCursor = new MergeCursor(mCursors);
@@ -85,6 +112,7 @@ public class MergeCursorTest extends AndroidTestCase {
         assertEquals(mCursors[0].getCount() + mCursors[1].getCount(), mergeCursor.getCount());
     }
 
+    @Test
     public void testOnMove() {
         createCursors();
         MergeCursor mergeCursor = new MergeCursor(mCursors);
@@ -96,6 +124,8 @@ public class MergeCursorTest extends AndroidTestCase {
         }
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testCursorSwiching() {
         mDatabase.execSQL("CREATE TABLE " + TABLE5_NAME + " (_id INTEGER PRIMARY KEY,"
                 + TABLE3_COLUMNS + ");");
@@ -123,6 +153,8 @@ public class MergeCursorTest extends AndroidTestCase {
         assertTrue(Arrays.equals(tableColumns, mergeCursor.getColumnNames()));
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testGetValues() {
         byte NUMBER_BLOB_UNIT = 99;
         String[] TEST_STRING = new String[] {"Test String1", "Test String2"};
@@ -182,6 +214,7 @@ public class MergeCursorTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testContentObsererOperations() throws IllegalStateException {
         createCursors();
         MergeCursor mergeCursor = new MergeCursor(mCursors);
@@ -219,6 +252,8 @@ public class MergeCursorTest extends AndroidTestCase {
         }
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testDeactivate() throws IllegalStateException {
         createCursors();
         MergeCursor mergeCursor = new MergeCursor(mCursors);
@@ -280,6 +315,8 @@ public class MergeCursorTest extends AndroidTestCase {
         }
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testRequery() {
         final String TEST_VALUE1 = Integer.toString(MAX_VALUE + 1);
         final String TEST_VALUE2 = Integer.toString(MAX_VALUE + 2);
@@ -350,8 +387,40 @@ public class MergeCursorTest extends AndroidTestCase {
         }
     }
 
+    private void addValuesIntoCursor(MatrixCursor cursor, int start, int end) {
+        for (int i = start; i <= end; i++) {
+            cursor.newRow().add("_id", i - start).add("number_1", i);
+        }
+    }
+
     private Cursor getCursor(String tableName, String selection, String[] columnNames) {
-        return mDatabase.query(tableName, columnNames, selection, null, null, null, "number_1");
+        if (mRavenwood.isUnderRavenwood()) {
+            if (selection != null) {
+                throw new UnsupportedOperationException();
+            }
+            switch (tableName) {
+                case TABLE1_NAME: {
+                    if (columnNames == null) {
+                        columnNames = new String[]{"_id","number_1"};
+                    }
+                    final MatrixCursor cursor = new MatrixCursor(columnNames, 0);
+                    addValuesIntoCursor(cursor, DEFAULT_TABLE_VALUE_BEGINS, HALF_VALUE);
+                    return cursor;
+                }
+                case TABLE2_NAME: {
+                    if (columnNames == null) {
+                        columnNames = new String[]{"_id","number_1", "number_2"};
+                    }
+                    final MatrixCursor cursor = new MatrixCursor(columnNames, 0);
+                    addValuesIntoCursor(cursor, HALF_VALUE + 1, MAX_VALUE);
+                    return cursor;
+                }
+                default:
+                    throw new UnsupportedOperationException();
+            }
+        } else {
+            return mDatabase.query(tableName, columnNames, selection, null, null, null, "number_1");
+        }
     }
 
     private void createCursors() {

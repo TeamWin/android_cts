@@ -17,6 +17,7 @@
 package foo.bar.proxy;
 
 import static android.accessibilityservice.cts.utils.MultiProcessUtils.ACCESSIBILITY_SERVICE_STATE;
+import static android.accessibilityservice.cts.utils.MultiProcessUtils.ACCESSIBILITY_STATE;
 import static android.accessibilityservice.cts.utils.MultiProcessUtils.EXTRA_ENABLED;
 import static android.accessibilityservice.cts.utils.MultiProcessUtils.EXTRA_ENABLED_SERVICES;
 import static android.accessibilityservice.cts.utils.MultiProcessUtils.SEPARATE_PROCESS_ACTIVITY_TITLE;
@@ -40,6 +41,9 @@ public class NonProxySeparateAppActivity extends Activity {
         setContentView(R.layout.non_proxy_separate_app_activity);
         setTitle(SEPARATE_PROCESS_ACTIVITY_TITLE);
         final AccessibilityManager a11yManager = getSystemService(AccessibilityManager.class);
+        final AccessibilityManager.AccessibilityStateChangeListener stateChangeListener =
+                enabled -> sendBroadcast(createIntentWithAction(ACCESSIBILITY_STATE)
+                        .putExtra(EXTRA_ENABLED, enabled));
         final AccessibilityManager.AccessibilityServicesStateChangeListener
                 servicesStateChangeListener = manager -> {
                     final List<AccessibilityServiceInfo> enabled =
@@ -57,6 +61,7 @@ public class NonProxySeparateAppActivity extends Activity {
                 enabled -> sendBroadcast(createIntentWithAction(TOUCH_EXPLORATION_STATE)
                         .putExtra(EXTRA_ENABLED, enabled));
 
+        a11yManager.addAccessibilityStateChangeListener(stateChangeListener);
         a11yManager.addAccessibilityServicesStateChangeListener(servicesStateChangeListener);
         a11yManager.addTouchExplorationStateChangeListener(touchExplorationListener);
     }

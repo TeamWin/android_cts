@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2023 The Android Open Source Project
+<!-- Copyright (C) 2021 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -14,9 +14,12 @@
      limitations under the License.
 -->
 <configuration description="Config for CTS Media audio test cases">
+    <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="media" />
     <option name="config-descriptor:metadata" key="parameter" value="instant_app" />
     <option name="config-descriptor:metadata" key="parameter" value="multi_abi" />
+    <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
+    <option name="config-descriptor:metadata" key="parameter" value="run_on_sdk_sandbox" />
     <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
         <option name="force-skip-system-props" value="true" /> <!-- avoid restarting device -->
         <option name="set-test-harness" value="false" />

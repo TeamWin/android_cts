@@ -32,8 +32,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.sdksandbox.webkit.cts"
                      android:label="CTS tests of android.sdksandbox.webkit">
-        <meta-data android:name="listener"
-                   android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
 
 </manifest>

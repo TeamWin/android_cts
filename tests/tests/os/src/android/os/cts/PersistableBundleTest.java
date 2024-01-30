@@ -16,16 +16,22 @@
 
 package android.os.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import android.os.PersistableBundle;
-import android.test.AndroidTestCase;
+
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
-public class PersistableBundleTest extends AndroidTestCase {
+public class PersistableBundleTest {
+    private static final double DELTA_DOUBLE = 0.0d;
 
+    @Test
     public void testWriteToStreamAndReadFromStream() throws IOException {
         PersistableBundle bundle = new PersistableBundle();
         bundle.putBoolean("boolean", true);
@@ -53,7 +59,7 @@ public class PersistableBundleTest extends AndroidTestCase {
         assertEquals(true, restoredBundle.getBoolean("boolean"));
         assertTrue(Arrays.equals(
             new boolean[] {false}, restoredBundle.getBooleanArray("boolean_array")));
-        assertEquals(1.23, restoredBundle.getDouble("double"));
+        assertEquals(1.23, restoredBundle.getDouble("double"), DELTA_DOUBLE);
         assertTrue(Arrays.equals(
             new double[] {2.34, 3.45}, restoredBundle.getDoubleArray("double_array")));
         assertEquals(1, restoredBundle.getInt("int"));

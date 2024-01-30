@@ -169,6 +169,7 @@ public class ScopedStorageTest {
             pollForExternalStorageState();
             getExternalFilesDir().mkdirs();
         }
+        MediaStore.waitForIdle(getContext().getContentResolver());
     }
 
     /**

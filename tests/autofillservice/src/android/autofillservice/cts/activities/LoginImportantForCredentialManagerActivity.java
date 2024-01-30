@@ -26,10 +26,15 @@ public class LoginImportantForCredentialManagerActivity extends LoginActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Explicitly set importantForCredentialManager to true for the password field.
-        // Username field is importantForCrdentialManager=true in xml layout itself.
-        // This way we test importantForCredentialManager from xml as well as dynamically.
-        findViewById(R.id.password).setIsCredential(true);
+        boolean useAutofillHint = getIntent().getExtras().getBoolean("useAutofillHint");
+        // Explicitly set credman to true for the password field.
+        // Username field is set to credman in xml layout itself.
+        // This way we test credman integration from xml as well as dynamically.
+        if (useAutofillHint) {
+            findViewById(R.id.password).setAutofillHints("password", "credential");
+        } else {
+            findViewById(R.id.password).setIsCredential(true);
+        }
     }
 
     @Override

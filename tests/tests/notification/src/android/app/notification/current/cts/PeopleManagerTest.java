@@ -27,6 +27,10 @@ import static android.app.people.ConversationStatus.AVAILABILITY_BUSY;
 
 import static junit.framework.Assert.fail;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import static java.lang.Thread.sleep;
 
 import android.app.Notification;
@@ -37,6 +41,7 @@ import android.app.people.ConversationStatus;
 import android.app.people.PeopleManager;
 import android.app.stubs.R;
 import android.app.stubs.SendBubbleActivity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
@@ -45,12 +50,17 @@ import android.os.Process;
 import android.os.SystemClock;
 import android.permission.PermissionManager;
 import android.permission.cts.PermissionUtils;
-import android.test.AndroidTestCase;
 import android.util.ArraySet;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SystemUtil;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,8 +68,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-
-public class PeopleManagerTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class PeopleManagerTest {
     final String TAG = PeopleManagerTest.class.getSimpleName();
     static final String NOTIFICATION_CHANNEL_ID = "PeopleManagerTest";
     static final String PERSON_CHANNEL_ID = "PersonTest";
@@ -75,11 +85,12 @@ public class PeopleManagerTest extends AndroidTestCase {
     private ShortcutManager mShortcutManager;
     private PeopleManager mPeopleManager;
     private String mId;
+    Context mContext;
 
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         PermissionUtils.grantPermission(mContext.getPackageName(), POST_NOTIFICATIONS);
         // This will leave a set of channels on the device with each test run.
         mId = UUID.randomUUID().toString();
@@ -100,9 +111,8 @@ public class PeopleManagerTest extends AndroidTestCase {
         sleep(500);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @After
+    public void tearDown() throws Exception {
         mNotificationManager.cancelAll();
 
         List<NotificationChannel> channels = mNotificationManager.getNotificationChannels();
@@ -183,6 +193,7 @@ public class PeopleManagerTest extends AndroidTestCase {
         return nb;
     }
 
+    @Test
     public void testIsConversationWithoutPermission() throws Exception {
         try {
             mPeopleManager.isConversation(mContext.getPackageName(), SHARE_SHORTCUT_ID);
@@ -192,6 +203,7 @@ public class PeopleManagerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testIsConversationWithPermission() throws Exception {
         try {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
@@ -209,6 +221,7 @@ public class PeopleManagerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAddOrUpdateStatus_withExpiration() throws Exception {
         long expirationDuration = 1000;
         ConversationStatus cs = new ConversationStatus.Builder("id", ACTIVITY_GAME)
@@ -226,6 +239,7 @@ public class PeopleManagerTest extends AndroidTestCase {
         assertTrue(statuses.isEmpty());
     }
 
+    @Test
     public void testAddOrUpdateStatus_add() throws Exception {
         ConversationStatus cs = new ConversationStatus.Builder("id", ACTIVITY_GAME)
                 .setAvailability(AVAILABILITY_AVAILABLE)
@@ -237,6 +251,7 @@ public class PeopleManagerTest extends AndroidTestCase {
         assertTrue(statuses.contains(cs));
     }
 
+    @Test
     public void testAddOrUpdateStatus_update() throws Exception {
         ConversationStatus.Builder cs = new ConversationStatus.Builder("id", ACTIVITY_GAME)
                 .setAvailability(AVAILABILITY_AVAILABLE);
@@ -252,6 +267,7 @@ public class PeopleManagerTest extends AndroidTestCase {
         assertTrue(statuses.toString(), statuses.contains(cs.build()));
     }
 
+    @Test
     public void testGetStatuses() throws Exception {
         ConversationStatus cs = new ConversationStatus.Builder("id", ACTIVITY_GAME)
                 .setAvailability(AVAILABILITY_BUSY)
@@ -269,6 +285,7 @@ public class PeopleManagerTest extends AndroidTestCase {
         assertTrue(statuses.contains(cs2));
     }
 
+    @Test
     public void testGetStatuses_multipleShortcuts() throws Exception {
         ConversationStatus cs = new ConversationStatus.Builder("id", ACTIVITY_GAME)
                 .setAvailability(AVAILABILITY_BUSY)
@@ -286,6 +303,7 @@ public class PeopleManagerTest extends AndroidTestCase {
         assertTrue(statuses2.contains(cs2));
     }
 
+    @Test
     public void testClearStatuses() throws Exception {
         ConversationStatus cs = new ConversationStatus.Builder("id", ACTIVITY_GAME)
                 .setAvailability(AVAILABILITY_BUSY)
@@ -303,6 +321,7 @@ public class PeopleManagerTest extends AndroidTestCase {
         assertTrue(statuses.isEmpty());
     }
 
+    @Test
     public void testClearStatus() throws Exception {
         ConversationStatus cs = new ConversationStatus.Builder("id", ACTIVITY_GAME)
                 .setAvailability(AVAILABILITY_BUSY)

@@ -16,11 +16,17 @@
 
 package android.nativemedia.aaudio;
 
+import static android.Manifest.permission.CAPTURE_AUDIO_HOTWORD;
+import static android.Manifest.permission.CAPTURE_AUDIO_OUTPUT;
+
+import android.app.UiAutomation;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.os.IBinder;
 import android.os.ServiceManager;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.gtestrunner.GtestRunner;
 import com.android.gtestrunner.TargetLibrary;
@@ -45,5 +51,37 @@ public class AAudioTests {
             }
         }
         return false;
+    }
+
+    static boolean isEchoReferenceSupported() {
+        AudioDeviceInfo[] devices = AudioManager.getDevicesStatic(AudioManager.GET_DEVICES_INPUTS);
+        for (AudioDeviceInfo device : devices) {
+            if (device.getType() == AudioDeviceInfo.TYPE_ECHO_REFERENCE) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static void enableAudioOutputPermission() {
+        // Drop any identity adopted earlier.
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.dropShellPermissionIdentity();
+        // need to retain the identity until the callback is triggered
+        uiAutomation.adoptShellPermissionIdentity(CAPTURE_AUDIO_OUTPUT);
+    }
+
+    static void enableAudioHotwordPermission() {
+        // Drop any identity adopted earlier.
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.dropShellPermissionIdentity();
+        // need to retain the identity until the callback is triggered
+        uiAutomation.adoptShellPermissionIdentity(CAPTURE_AUDIO_HOTWORD);
+    }
+
+    static void disablePermissions() {
+        // Drop any identity adopted earlier.
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.dropShellPermissionIdentity();
     }
 }

@@ -130,3 +130,21 @@ int OboeStream::getLastErrorCallbackResult() {
     return (int) (mAudioStream != nullptr
                     ? (int) mAudioStream->getLastErrorCallbackResult() : StreamBase::ERROR_INVALID_STATE);
 }
+
+int32_t OboeStream::getRoutedDeviceId() {
+    return (int32_t) (mAudioStream != nullptr
+                               ? (int32_t) mAudioStream->getDeviceId()
+                               : ROUTING_DEVICE_NONE);
+}
+
+int32_t OboeStream::getSharingMode() {
+    return (int32_t) (mAudioStream != nullptr
+                               ? (int32_t) mAudioStream->getSharingMode()
+                               : SHARING_MODE_INVALID);
+}
+
+int32_t OboeStream::getChannelCount() {
+    return (int32_t) (mAudioStream != nullptr
+                               ? (int32_t) mAudioStream->getChannelCount()
+                               : -1);
+}

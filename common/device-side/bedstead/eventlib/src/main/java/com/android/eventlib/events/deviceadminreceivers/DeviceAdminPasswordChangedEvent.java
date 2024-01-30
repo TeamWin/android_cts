@@ -58,7 +58,7 @@ public final class DeviceAdminPasswordChangedEvent extends Event {
                 new DeviceAdminReceiverQueryHelper<>(this);
         IntentQueryHelper<DeviceAdminPasswordChangedEventQuery> mIntent =
                 new IntentQueryHelper<>(this);
-        UserHandleQueryHelper<DeviceAdminPasswordChangedEventQuery> mUserHandle =
+        UserHandleQueryHelper<DeviceAdminPasswordChangedEventQuery> mUser =
                 new UserHandleQueryHelper<>(this);
 
         private DeviceAdminPasswordChangedEventQuery(String packageName) {
@@ -85,8 +85,8 @@ public final class DeviceAdminPasswordChangedEvent extends Event {
          * {@link DeviceAdminReceiver#onPasswordChanged(Context, Intent, UserHandle)}.
          */
         @CheckResult
-        public UserHandleQuery<DeviceAdminPasswordChangedEventQuery> whereUserHandle() {
-            return mUserHandle;
+        public UserHandleQuery<DeviceAdminPasswordChangedEventQuery> whereUser() {
+            return mUser;
         }
 
         @Override
@@ -97,7 +97,7 @@ public final class DeviceAdminPasswordChangedEvent extends Event {
             if (!mDeviceAdminReceiver.matches(event.mDeviceAdminReceiver)) {
                 return false;
             }
-            if (!mUserHandle.matches(event.mUserHandle)) {
+            if (!mUser.matches(event.mUserHandle)) {
                 return false;
             }
             return true;
@@ -108,7 +108,7 @@ public final class DeviceAdminPasswordChangedEvent extends Event {
             return toStringBuilder(DeviceAdminPasswordChangedEvent.class, this)
                     .field("intent", mIntent)
                     .field("deviceAdminReceiver", mDeviceAdminReceiver)
-                    .field("userHandle", mUserHandle)
+                    .field("userHandle", mUser)
                     .toString();
         }
     }

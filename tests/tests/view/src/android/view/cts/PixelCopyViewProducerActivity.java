@@ -30,6 +30,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver.OnDrawListener;
+import android.view.Window;
 import android.view.WindowInsets;
 import android.view.cts.util.DisplayUtils;
 import android.widget.FrameLayout;
@@ -68,8 +69,14 @@ public class PixelCopyViewProducerActivity extends Activity implements OnDrawLis
 
         mContent = new ColoredGrid(this);
         setContentView(mContent);
-        View view = this.getWindow().getDecorView();
-        view.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+
+        Window window = getWindow();
+        window.setDecorFitsSystemWindows(false);
+        window.setStatusBarColor(Color.TRANSPARENT);
+        window.setStatusBarContrastEnforced(false);
+        window.setNavigationBarColor(Color.TRANSPARENT);
+        window.setNavigationBarContrastEnforced(false);
+
         mContent.getViewTreeObserver().addOnDrawListener(this);
         mContent.setOnApplyWindowInsetsListener(this);
     }

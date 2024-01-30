@@ -22,7 +22,7 @@ android_test {
     resource_dirs: ["res"],
     srcs: ["src/**/*.java"],
     static_libs: [
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
         "androidx.test.rules",
         "androidx.legacy_legacy-support-v4",
         "cts-install-lib",

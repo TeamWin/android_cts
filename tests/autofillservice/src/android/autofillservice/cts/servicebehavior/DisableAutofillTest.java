@@ -32,13 +32,14 @@ import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.MyAutofillCallback;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillResponse;
 import android.util.Log;
 import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.InstrumentationRegistry;
+
+import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.RetryableException;
 
@@ -209,6 +210,9 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
         Helper.resetApplicationAutofillOptions(sContext);
     }
 
+    @FlakyTest(
+            bugId = 292280852,
+            detail = "Meet July-31-23 trunk stable no flaky SLO. Deflake asap")
     @Presubmit
     @Test
     public void testDisableApp() throws Exception {

@@ -16,19 +16,16 @@
 
 package com.android.cts.webkit;
 
-import android.net.http.SslError;
 import android.os.StrictMode;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
-import android.webkit.SslErrorHandler;
 import android.webkit.WebView;
 import android.webkit.cts.CtsTestServer;
 import android.webkit.cts.SslMode;
 import android.webkit.cts.WebViewSyncLoader;
-import android.webkit.cts.WebViewSyncLoader.WaitForLoadedClient;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 
@@ -69,8 +66,7 @@ public class WebViewDeviceSideStartupTest
             return;
         }
 
-        // Instant app can only have https connection.
-        CtsTestServer server = new CtsTestServer(mActivity, SslMode.NO_CLIENT_AUTH);
+        CtsTestServer server = new CtsTestServer(mActivity, SslMode.INSECURE);
         final String url = server.getCookieUrl("death.html");
 
         Thread background = new Thread(new Runnable() {
@@ -93,13 +89,6 @@ public class WebViewDeviceSideStartupTest
         mActivity.createAndAttachWebView();
         WebView webView = mActivity.getWebView();
         WebViewSyncLoader syncLoader = new WebViewSyncLoader(webView);
-        webView.setWebViewClient(new WaitForLoadedClient(syncLoader) {
-            @Override
-            public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-                // Not intended to verify server certificate, ignore the error.
-                if (error.getPrimaryError() == SslError.SSL_IDMISMATCH) handler.proceed();
-            }
-        });
         syncLoader.loadUrlAndWaitForCompletion(url);
         assertEquals("1|count=41", webView.getTitle()); // outgoing cookie
         CookieManager cookieManager = CookieManager.getInstance();

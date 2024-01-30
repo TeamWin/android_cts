@@ -254,6 +254,14 @@ public class MotionEventTest {
     }
 
     @Test
+    public void testFlagCanceled() {
+        final long eventTime = SystemClock.uptimeMillis();
+        MotionEvent event = MotionEvent.obtain(eventTime, eventTime, MotionEvent.ACTION_CANCEL,
+                        /*x=*/ 0, /*y=*/ 0, 0);
+        assertEquals(MotionEvent.FLAG_CANCELED, event.getFlags() & MotionEvent.FLAG_CANCELED);
+    }
+
+    @Test
     public void testAccessAction() {
         assertEquals(MotionEvent.ACTION_MOVE, mMotionEvent1.getAction());
 
@@ -265,9 +273,12 @@ public class MotionEventTest {
 
         mMotionEvent1.setAction(MotionEvent.ACTION_CANCEL);
         assertEquals(MotionEvent.ACTION_CANCEL, mMotionEvent1.getAction());
+        assertEquals(MotionEvent.FLAG_CANCELED,
+                        mMotionEvent1.getFlags() & MotionEvent.FLAG_CANCELED);
 
         mMotionEvent1.setAction(MotionEvent.ACTION_DOWN);
         assertEquals(MotionEvent.ACTION_DOWN, mMotionEvent1.getAction());
+        assertEquals(0, mMotionEvent1.getFlags() & MotionEvent.FLAG_CANCELED);
     }
 
     @Test

@@ -18,17 +18,13 @@ package com.android.cts.verifier.audio;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.TextView;
 
-import com.android.cts.verifier.audio.peripheralprofile.PeripheralProfile;
-import com.android.cts.verifier.audio.peripheralprofile.ProfileButtonAttributes;
-
-import com.android.cts.verifier.R;  // needed to access resource in CTSVerifier project namespace.
+import com.android.cts.verifier.R; // needed to access resource in CTSVerifier project namespace.
 
 public class USBAudioPeripheralButtonsActivity extends USBAudioPeripheralActivity {
     private static final String TAG = "USBAudioPeripheralButtonsActivity";
@@ -108,10 +104,11 @@ public class USBAudioPeripheralButtonsActivity extends USBAudioPeripheralActivit
 
     private void calculateMatch() {
         if (mIsPeripheralAttached) {
-            boolean match = mHasBtnA && mHasBtnB && mHasBtnC;
-            Log.i(TAG, "match:" + match);
-            getPassButton().setEnabled(match);
+            mHasPassedTest = mHasBtnA && mHasBtnB && mHasBtnC;
+            Log.i(TAG, "match:" + mHasPassedTest);
+            getPassButton().setEnabled(mHasPassedTest);
         } else {
+            mHasPassedTest = false;
             getPassButton().setEnabled(false);
         }
     }

@@ -38,6 +38,7 @@ import android.os.Process
 import android.os.UserHandle
 import android.platform.test.annotations.AppModeFull
 import androidx.test.InstrumentationRegistry
+import androidx.test.filters.FlakyTest
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.PollingCheck
 import com.google.common.truth.Truth.assertThat
@@ -752,6 +753,7 @@ class AppOpsTest {
     }
 
     @Test
+    @FlakyTest
     fun testRestrictedSettingsOpsRead() {
         val onOpChangeWatcher = FakeOnOppChangeListener()
         // Apps without manage appops permission will get security exception if it tries to access

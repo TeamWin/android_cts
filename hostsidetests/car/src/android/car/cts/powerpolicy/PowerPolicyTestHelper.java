@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.android.tradefed.log.LogUtil.CLog;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 public final class PowerPolicyTestHelper {
@@ -51,8 +52,9 @@ public final class PowerPolicyTestHelper {
     }
 
     public void checkCurrentState(int expected) {
-        assertWithMessage(CURRENT_STATE_ASSERT_MSG)
-                .that(expected == mFrameCpms.getCurrentState()).isTrue();
+        String msg = CURRENT_STATE_ASSERT_MSG + "\nmFrameCpms:\n" + mFrameCpms;
+        assertWithMessage(msg)
+                .that(mFrameCpms.getCurrentState()).isEqualTo(expected);
     }
 
     public void checkCurrentPolicy(String expectedPolicyId) {
@@ -94,7 +96,12 @@ public final class PowerPolicyTestHelper {
     }
 
     public void checkTotalRegisteredPolicies(int totalNum) {
-        assertWithMessage(TOTAL_REGISTERED_POLICIES_ASSERT_MSG)
+        ArrayList<PowerPolicyDef> policies = mSystemCpms.getRegisteredPolicies();
+        String assertMsg = "registered policies: \n";
+        for (int i = 0; i < policies.size(); i++) {
+            assertMsg += policies.get(i).toString() + "\n";
+        }
+        assertWithMessage(assertMsg)
                 .that(mSystemCpms.getRegisteredPolicies().size()).isEqualTo(totalNum);
     }
 
@@ -105,12 +112,33 @@ public final class PowerPolicyTestHelper {
                 .containsExactlyElementsIn(expected.getDisables());
     }
 
-    public void checkCurrentPolicyGroupId(String expected) {
+    /**
+     * Check to see if the current power policy group is the expected one
+     *
+     * <p> If {@code useProtoDump} is true, a null expected policy group ID will be treated as an
+     * empty string, since that's what proto parsing turns null policy group IDs into. If it is
+     * false, meaning text dump is used, the expected policy group ID is "null" as a string.
+     *
+     * @param expected power policy group ID that is expected to be the current one
+     * @param useProtoDump whether the method used to parse the policy group information was proto
+     *                     dump or not
+     */
+    public void checkCurrentPolicyGroupId(String expected, boolean useProtoDump) {
         if (expected == null) {
-            expected = "null";
+            // differential treatment of null policy by text and proto parsing
+            if (useProtoDump) {
+                expected = "";
+            } else {
+                expected = "null";
+            }
         }
-        assertWithMessage("checkCurrentPolicyGroupId")
-                .that(expected.equals(mFrameCpms.getCurrentPolicyGroupId())).isTrue();
+        assertWithMessage(/* messageToPrepend = */ "Current policy group ID").that(
+                mFrameCpms.getCurrentPolicyGroupId()).isEqualTo(expected);
+    }
+
+    public void checkPowerPolicyGroups(PowerPolicyGroups expected) {
+        assertWithMessage(/* messageToPrepend = */ "Power policy groups").that(
+                mFrameCpms.getPowerPolicyGroups()).isEqualTo(expected);
     }
 
     public int getNumberOfRegisteredPolicies() {

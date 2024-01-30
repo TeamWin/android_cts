@@ -48,19 +48,13 @@ public class SpeechRecognitionActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mHandler = new Handler(getMainLooper());
         setContentView(R.layout.main);
     }
 
     @Override
     protected void onDestroy() {
-        if (mRecognizerInfos != null) {
-            for (RecognizerInfo recognizerInfo : mRecognizerInfos) {
-                if (recognizerInfo.mRecognizer != null) {
-                    recognizerInfo.mRecognizer.destroy();
-                }
-            }
-            mRecognizerInfos.clear();
-        }
+        destroyAllRecognizers();
         super.onDestroy();
     }
 
@@ -102,6 +96,22 @@ public class SpeechRecognitionActivity extends Activity {
         mHandler.post(mRecognizerInfos.get(index).mRecognizer::destroy);
     }
 
+    /**
+     * Destroy any / all recognizers used by this Activity.
+     */
+    public void destroyAllRecognizers() {
+        mHandler.post(() -> {
+            if (mRecognizerInfos != null) {
+                for (RecognizerInfo recognizerInfo : mRecognizerInfos) {
+                    if (recognizerInfo.mRecognizer != null) {
+                        recognizerInfo.mRecognizer.destroy();
+                    }
+                }
+                mRecognizerInfos.clear();
+            }
+        });
+    }
+
     public void checkRecognitionSupportDefault(Intent intent, RecognitionSupportCallback rsc) {
         checkRecognitionSupport(intent, rsc, /* index */ 0);
     }
@@ -139,7 +149,6 @@ public class SpeechRecognitionActivity extends Activity {
 
     public void init(boolean onDevice, String customRecognizerComponent, int recognizerCount) {
         mRecognizerInfos = new ArrayList<>();
-        mHandler = new Handler(getMainLooper());
 
         for (int i = 0; i < recognizerCount; i++) {
             mHandler.post(() -> {

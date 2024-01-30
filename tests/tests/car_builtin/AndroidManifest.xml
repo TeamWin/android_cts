@@ -46,6 +46,8 @@
         <activity android:name="android.car.cts.builtin.app.ActivityManagerHelperTest$ActivityC"
                   android:taskAffinity="android.car.cts.builtin.amTestTask2" />
 
+        <activity android:name="android.car.cts.builtin.view.SurfaceControlHelperTest$TestActivity" />
+
         <activity android:name="android.car.cts.builtin.view.TouchableInsetsProviderTest$TestActivity"
                   android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
 
@@ -59,8 +61,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.car.cts.builtin"
                      android:label="CTS tests for car builtin api">
-        <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>
 

@@ -56,6 +56,9 @@ public class ApkPackageNameCheck {
     static {
         // TODO: Remove exception when their package have been fixed.
         EXCEPTION_LIST.add("android.app.cts");
+        EXCEPTION_LIST.add("android.content.cts");
+        // TODO(b/290634145): Refactor WM CTS into fully isolated modules
+        EXCEPTION_LIST.add("android.server.wm.cts");
         EXCEPTION_LIST.add("android.systemui.cts");
     }
 

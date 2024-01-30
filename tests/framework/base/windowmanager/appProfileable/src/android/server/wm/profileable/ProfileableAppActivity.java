@@ -27,7 +27,6 @@ import android.server.wm.CommandSession.BasicTestActivity;
 import android.util.Log;
 
 import java.io.File;
-import java.util.concurrent.TimeUnit;
 
 public class ProfileableAppActivity extends BasicTestActivity {
     private static final String TAG = ProfileableAppActivity.class.getSimpleName();
@@ -50,8 +49,12 @@ public class ProfileableAppActivity extends BasicTestActivity {
     @Override
     public void handleCommand(String command, Bundle data) {
         if (COMMAND_WAIT_FOR_PROFILE_OUTPUT.equals(command)) {
-            mTraceFileObserver.waitForComplete();
-            reply(command);
+            // Do not wait on main thread because the message PROFILER_CONTROL to stop the profile
+            // is also scheduled on main thread.
+            new Thread(() -> {
+                mTraceFileObserver.waitForComplete();
+                runOnUiThread(() -> reply(command));
+            }).start();
             return;
         }
 
@@ -67,7 +70,7 @@ public class ProfileableAppActivity extends BasicTestActivity {
          * {@link android.server.wm.CommandSession.ActivitySession.Response#TIMEOUT_MILLIS}.
          * Otherwise the caller who sent {@link COMMAND_WAIT_FOR_PROFILE_OUTPUT} may get exception.
          */
-        private static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(3);
+        private static final long TIMEOUT_MS = 4500L;
         private volatile boolean mDone;
 
         TraceFileObserver() {
@@ -89,7 +92,7 @@ public class ProfileableAppActivity extends BasicTestActivity {
                 final long startTimeMs = SystemClock.elapsedRealtime();
                 try {
                     wait(TIMEOUT_MS);
-                    if (SystemClock.elapsedRealtime() - startTimeMs > TIMEOUT_MS) {
+                    if (SystemClock.elapsedRealtime() - startTimeMs >= TIMEOUT_MS) {
                         Log.e(TAG, "waitForComplete timeout");
                     }
                 } catch (InterruptedException ignored) {}

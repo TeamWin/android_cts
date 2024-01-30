@@ -56,6 +56,7 @@ public class MockModemManager {
     private static Context sContext;
     private static MockModemServiceConnector sServiceConnector;
     private static final long TIMEOUT_IN_MSEC_FOR_SIM_STATUS_CHANGED = 10000;
+    private static final int WAIT_UPDATE_TIMEOUT_MS = 200;  // 0.2sec delay
     private MockModemService mMockModemService;
 
     public static void enforceMockModemDeveloperSetting() throws Exception {
@@ -1032,30 +1033,6 @@ public class MockModemManager {
         mMockModemService.getIRadioVoice((byte) slotId).notifyEmergencyNumberList(numbers);
     }
 
-    private String strArrayToStr(String[] strArr) {
-        StringBuilder sb = new StringBuilder();
-        if (strArr != null && strArr.length > 0) {
-            for (int i = 0; i < strArr.length - 1; i++) {
-                sb.append(strArr[i]);
-                sb.append(", ");
-            }
-            sb.append(strArr[strArr.length - 1]);
-        }
-        return sb.toString();
-    }
-
-    private String intArrayToStr(int[] intArr) {
-        StringBuilder sb = new StringBuilder();
-        if (intArr != null && intArr.length > 0) {
-            for (int i = 0; i < intArr.length - 1; i++) {
-                sb.append(intArr[i]);
-                sb.append(", ");
-            }
-            sb.append(intArr[intArr.length - 1]);
-        }
-        return sb.toString();
-    }
-
     /**
      * Sets the new carrierId and CarrierRestriction status values in IRadioSimImpl.java
      * @param carrierList
@@ -1064,5 +1041,36 @@ public class MockModemManager {
     public void updateCarrierRestrictionInfo(Carrier[] carrierList, int carrierRestrictionStatus) {
         mMockModemService.getIRadioSim().updateCarrierRestrictionStatusInfo(carrierList,
                 carrierRestrictionStatus);
+    }
+
+    /**
+     * Helper method that can be called from the test suite to change the primary IMEi mapping
+     * with respect to sim slot.
+     */
+    public boolean changeImeiMapping() {
+        int modemCount = mMockModemService.getActiveMockModemCount();
+        if (modemCount == 1) {
+            return false;
+        }
+        for (int slotId = 0; slotId < modemCount; slotId++) {
+            mMockModemService.getIRadioModem((byte) slotId).resetAllLatchCountdown();
+            mMockModemService.getIRadioModem((byte) slotId).changeImeiMapping();
+            if (waitForModemLatchCountdown(slotId, WAIT_UPDATE_TIMEOUT_MS)) {
+                Log.e(TAG, "Error in waitForModemLatchCountdown");
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Wait latch for 0.2 sec or latch to countdown.
+     * @param slotId : slotId of the device.
+     * @param waitMs : Wait in milliseconds for the latch-wait timeout.
+     * @return true if latch is success else fail.
+     */
+    public boolean waitForModemLatchCountdown(int slotId, int waitMs) {
+        Log.d(TAG, "waitForVoiceLatchCountdown[" + slotId + "]");
+        return mMockModemService.getIRadioModem((byte) slotId)
+                .waitForLatchCountdown(slotId, waitMs);
     }
 }

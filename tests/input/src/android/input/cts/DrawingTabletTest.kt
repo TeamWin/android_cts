@@ -37,6 +37,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestName
 import org.junit.runner.RunWith
 
 @MediumTest
@@ -46,7 +47,9 @@ class DrawingTabletTest {
     private lateinit var verifier: EventVerifier
 
     @get:Rule
-    val virtualDisplayRule = VirtualDisplayActivityScenarioRule()
+    val testName = TestName()
+    @get:Rule
+    val virtualDisplayRule = VirtualDisplayActivityScenarioRule<CaptureEventActivity>(testName)
 
     @Before
     fun setUp() {
@@ -54,9 +57,9 @@ class DrawingTabletTest {
             UinputTouchDevice(
                 InstrumentationRegistry.getInstrumentation(),
                 virtualDisplayRule.virtualDisplay.display,
-                Size(WIDTH, HEIGHT),
                 R.raw.test_drawing_tablet_register,
                 InputDevice.SOURCE_MOUSE or InputDevice.SOURCE_STYLUS,
+                Size(WIDTH, HEIGHT),
             )
         verifier = EventVerifier(virtualDisplayRule.activity::getInputEvent)
     }
@@ -105,11 +108,14 @@ class DrawingTabletTest {
         transformToExpectedPoint: (Point) -> PointF?
     ) {
         for (i in INJECTION_POINTS.indices) {
+            val pointerId = 0
             drawingTablet.sendBtnTouch(true)
-            drawingTablet.sendDown(0 /*id*/, INJECTION_POINTS[i], UinputTouchDevice.MT_TOOL_PEN)
+            drawingTablet.sendDown(pointerId, INJECTION_POINTS[i], UinputTouchDevice.MT_TOOL_PEN)
+            drawingTablet.sync()
 
             drawingTablet.sendBtnTouch(false)
-            drawingTablet.sendUp(0 /*id*/)
+            drawingTablet.sendUp(pointerId)
+            drawingTablet.sync()
 
             val expected = expectedPoints[i]
             // Ensure the hard-coded expected points and the transformation function agree for the
@@ -119,8 +125,10 @@ class DrawingTabletTest {
             if (expected != null) {
                 val downEvent = verifier.getMotionEvent()
                 assertEquals("action", MotionEvent.ACTION_DOWN, downEvent.actionMasked)
-                assertTrue("source",
-                    downEvent.isFromSource(InputDevice.SOURCE_STYLUS or InputDevice.SOURCE_MOUSE))
+                assertTrue(
+                    "source",
+                    downEvent.isFromSource(InputDevice.SOURCE_STYLUS or InputDevice.SOURCE_MOUSE)
+                )
                 assertEquals("tool type", MotionEvent.TOOL_TYPE_STYLUS, downEvent.getToolType(0))
                 assertEquals("x", expected.x, downEvent.x, EPSILON)
                 assertEquals("y", expected.y, downEvent.y, EPSILON)

@@ -41,6 +41,8 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+
 
 import android.Manifest;
 import android.content.ContentValues;
@@ -48,16 +50,18 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.media.ExifInterface;
 import android.net.Uri;
+import android.scopedstorage.cts.lib.ScopedStorageBaseDeviceTest;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
-import android.system.Os;
 import android.provider.MediaStore;
+import android.system.Os;
 
 import androidx.test.filters.SdkSuppress;
 
 import com.android.cts.install.lib.TestApp;
+import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -78,7 +82,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Device-side test suite to verify redacted URI operations.
+ * We are in process of splitting CtsScopedStorageDeviceOnlyTest module into multiple ones.
+ * This is a temporary test class, and it will be deleted
+ * after all the links to new modules are created.
  */
 @RunWith(Parameterized.class)
 @SdkSuppress(minSdkVersion = 31, codeName = "S")
@@ -93,7 +99,8 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
 
     static final String IMAGE_FILE_NAME = "ScopedStorageDeviceTest_file_" + NONCE + ".jpg";
 
-    static final String FUZZER_HEIC_FILE_NAME = "ScopedStorageDeviceTest_file_fuzzer_" + NONCE + ".heic";
+    static final String FUZZER_HEIC_FILE_NAME =
+            "ScopedStorageDeviceTest_file_fuzzer_" + NONCE + ".heic";
 
     // An app with no permissions
     private static final TestApp APP_B_NO_PERMS = new TestApp("TestAppB",
@@ -469,7 +476,7 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
             assertUriIsUnredacted(img);
 
             try (ParcelFileDescriptor pfd =
-                    getContentResolver().openFileDescriptor(redactedUri, "r")) {
+                         getContentResolver().openFileDescriptor(redactedUri, "r")) {
                 FileDescriptor fd = pfd.getFileDescriptor();
                 ExifInterface redactedExifInf = new ExifInterface(fd);
                 assertUriIsRedacted(redactedExifInf);
@@ -481,6 +488,7 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
 
     @Test
     public void testOpenOnRedactedUri_readFuzzer() throws Exception {
+        assumeTrue(SdkLevel.isAtLeastV());
         final File img = stageFuzzerImageFileWithMetadata(FUZZER_HEIC_FILE_NAME);
         final Uri redactedUri = getRedactedUri(img);
         try {
@@ -549,7 +557,7 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
         assertTrue(fileSize == 4407744);
         for (int index = 0; index < start.length && index < end.length; index++) {
             for (int c = start[index]; c < end[index]; c++) {
-                assertTrue("It should be zero!", data[c] == (byte)0);
+                assertTrue("It should be zero!", data[c] == (byte) 0);
             }
         }
     }

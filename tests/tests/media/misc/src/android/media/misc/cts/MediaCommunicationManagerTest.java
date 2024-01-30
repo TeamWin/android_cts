@@ -107,6 +107,19 @@ public class MediaCommunicationManagerTest {
     }
 
     @Test
+    public void registerSessionCallback_noMediaContentControlPermission_throwsSecurityException()
+            throws Exception {
+        Executor executor = Executors.newSingleThreadExecutor();
+
+        assertNotNull("Missing MediaCommunicationManager", mManager);
+        ManagerSessionCallback managerCallback = new ManagerSessionCallback();
+
+        // Test permission enforced
+        assertThrows(SecurityException.class,
+                () -> mManager.registerSessionCallback(executor, managerCallback));
+    }
+
+    @Test
     public void testManagerSessionCallback() throws Exception {
         // registerSessionCallback requires permission MEDIA_CONTENT_CONTROL
         InstrumentationRegistry.getInstrumentation()

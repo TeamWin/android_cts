@@ -67,6 +67,7 @@ import android.util.Log;
 import android.util.Xml;
 import android.view.WindowManager;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
@@ -244,20 +245,14 @@ public class ContextTest extends AndroidTestCase {
         assertEquals("baz", params.getNextAttributionSource().getAttributionTag());
     }
 
-    public void testAttributionSourceSetNext() throws Exception {
-        final AttributionSource next = new AttributionSource.Builder(2)
+    private AttributionSource buildFakeAttributionSource() {
+        return new AttributionSource.Builder(2)
                 .setPackageName("nextBar")
                 .setAttributionTag("nextBaz")
                 .build();
-        final ContextParams params = new ContextParams.Builder()
-                .setAttributionTag("foo")
-                .setNextAttributionSource(new AttributionSource.Builder(1)
-                        .setPackageName("bar")
-                        .setAttributionTag("baz")
-                        .setNext(next)
-                        .build())
-                .build();
+    }
 
+    private void validateContextParams(ContextParams params) throws Exception {
         // Setting a 'next' should not affect prev.
         assertEquals("foo", params.getAttributionTag());
         assertEquals(1, params.getNextAttributionSource().getUid());
@@ -269,6 +264,34 @@ public class ContextTest extends AndroidTestCase {
         assertEquals(2, check.getUid());
         assertEquals("nextBar", check.getPackageName());
         assertEquals("nextBaz", check.getAttributionTag());
+    }
+
+    @ApiTest(apis = {"android.content.AttributionSource.Builder#setNext"})
+    public void testAttributionSourceSetNext() throws Exception {
+        final AttributionSource next = buildFakeAttributionSource();
+        final ContextParams params = new ContextParams.Builder()
+                .setAttributionTag("foo")
+                .setNextAttributionSource(new AttributionSource.Builder(1)
+                        .setPackageName("bar")
+                        .setAttributionTag("baz")
+                        .setNext(next)
+                        .build())
+                .build();
+        validateContextParams(params);
+    }
+
+    @ApiTest(apis = {"android.content.AttributionSource.Builder#setNextAttributionSource"})
+    public void testAttributionSourceSetNextAttributionSource() throws Exception {
+        final AttributionSource next = buildFakeAttributionSource();
+        final ContextParams params = new ContextParams.Builder()
+                .setAttributionTag("foo")
+                .setNextAttributionSource(new AttributionSource.Builder(1)
+                        .setPackageName("bar")
+                        .setAttributionTag("baz")
+                        .setNextAttributionSource(next)
+                        .build())
+                .build();
+        validateContextParams(params);
     }
 
     public void testContextParams_Inherit() throws Exception {

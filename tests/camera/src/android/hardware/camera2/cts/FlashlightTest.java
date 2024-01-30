@@ -66,7 +66,7 @@ public class FlashlightTest extends Camera2AndroidTestCase {
         // flash tests.
         mFlashCameraIdList = new ArrayList<String>();
         mNoFlashCameraIdList = new ArrayList<String>();
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             StaticMetadata info =
                     new StaticMetadata(mCameraManager.getCameraCharacteristics(id),
                                        CheckLevel.ASSERT, /*collector*/ null);
@@ -290,7 +290,7 @@ public class FlashlightTest extends Camera2AndroidTestCase {
             return;
 
         for (String id : mFlashCameraIdList) {
-            for (String idToOpen : mCameraIdsUnderTest) {
+            for (String idToOpen : getCameraIdsUnderTest()) {
                 resetTorchModeStatus(id);
 
                 CameraManager.TorchCallback torchListener =
@@ -365,12 +365,13 @@ public class FlashlightTest extends Camera2AndroidTestCase {
     public void testTorchModeExceptions() throws Exception {
         // cameraIdsToTestTorch = all available camera ID + non-existing camera id +
         //                        non-existing numeric camera id + null
-        String[] cameraIdsToTestTorch = new String[mCameraIdsUnderTest.length + 3];
-        System.arraycopy(mCameraIdsUnderTest, 0, cameraIdsToTestTorch, 0, mCameraIdsUnderTest.length);
-        cameraIdsToTestTorch[mCameraIdsUnderTest.length] = generateNonexistingCameraId();
-        cameraIdsToTestTorch[mCameraIdsUnderTest.length + 1] = generateNonexistingNumericCameraId();
+        String[] cameraIdsUnderTest = getCameraIdsUnderTest();
+        String[] cameraIdsToTestTorch = new String[cameraIdsUnderTest.length + 3];
+        System.arraycopy(cameraIdsUnderTest, 0, cameraIdsToTestTorch, 0, cameraIdsUnderTest.length);
+        cameraIdsToTestTorch[cameraIdsUnderTest.length] = generateNonexistingCameraId();
+        cameraIdsToTestTorch[cameraIdsUnderTest.length + 1] = generateNonexistingNumericCameraId();
 
-        for (String idToOpen : mCameraIdsUnderTest) {
+        for (String idToOpen : cameraIdsUnderTest) {
             openDevice(idToOpen);
             try {
                 for (String id : cameraIdsToTestTorch) {
@@ -424,10 +425,11 @@ public class FlashlightTest extends Camera2AndroidTestCase {
         mCameraManager.unregisterTorchCallback(torchListener);
     }
 
-    private String generateNonexistingCameraId() {
+    private String generateNonexistingCameraId() throws Exception {
         String nonExisting = "none_existing_camera";
-        for (String id : mCameraIdsUnderTest) {
-            if (Arrays.asList(mCameraIdsUnderTest).contains(nonExisting)) {
+        String[] cameraIdsUnderTest = getCameraIdsUnderTest();
+        for (String id : cameraIdsUnderTest) {
+            if (Arrays.asList(cameraIdsUnderTest).contains(nonExisting)) {
                 nonExisting += id;
             } else {
                 break;
@@ -438,8 +440,8 @@ public class FlashlightTest extends Camera2AndroidTestCase {
 
     // return a non-existing and non-negative numeric camera id.
     private String generateNonexistingNumericCameraId() throws Exception {
-        // We don't rely on mCameraIdsUnderTest to generate a non existing camera id since
-        // mCameraIdsUnderTest doesn't give us an accurate reflection of which camera ids actually
+        // We don't rely on getCameraIdsUnderTest() to generate a non existing camera id since
+        // it doesn't give us an accurate reflection of which camera ids actually
         // exist. It just tells us the ones we're testing right now.
         String[] allCameraIds = mCameraManager.getCameraIdListNoLazy();
         int[] numericCameraIds = new int[allCameraIds.length];

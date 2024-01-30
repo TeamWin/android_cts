@@ -25,6 +25,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.InstrumentationTestCase;
 import android.test.UiThreadTest;
 
@@ -33,6 +34,7 @@ import android.test.UiThreadTest;
  *
  * @see DummyProvider
  */
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class AsyncQueryHandlerTest extends InstrumentationTestCase {
     private static final long TEST_TIME_OUT = DummyProvider.MOCK_OPERATION_SLEEP_TIME + 5000;
 

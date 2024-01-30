@@ -101,9 +101,16 @@ public:
      */
     bool has24BitHardwareSupport();
 
+    /**
+     * Gets the hardware format.
+     */
+    int getHardwareFormat();
+
     aaudio_result_t getError() {
         return mInputError ? mInputError : mOutputError;
     }
+
+    double measureTimestampLatencyMillis();
 
     AAudioStream      *mInputStream = nullptr;
     AAudioStream      *mOutputStream = nullptr;
@@ -143,9 +150,13 @@ private:
     bool               mIsDone = false;
     bool               mIsLowLatencyStream = false;
     bool               mHas24BitHardwareSupport = false;
+    int32_t            mHardwareFormat = 0;
 
     int32_t            mOutputDeviceId = 0;
     int32_t            mInputDeviceId = 0;
+
+    std::atomic<bool> mWriteReadDeltaValid{false};
+    std::atomic<int64_t> mWriteReadDelta{0};
 
     static constexpr int kLogPeriodMillis         = 1000;
     static constexpr int kNumInputChannels        = 1;

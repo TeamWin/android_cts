@@ -22,9 +22,9 @@ import static org.junit.Assert.fail;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
 
 import org.junit.Before;
 import org.junit.Test;

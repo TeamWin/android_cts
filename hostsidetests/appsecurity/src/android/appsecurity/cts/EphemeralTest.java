@@ -22,7 +22,6 @@ import static org.junit.Assume.assumeFalse;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
-import android.platform.test.annotations.Presubmit;
 
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -40,7 +39,6 @@ import java.util.Map;
 /**
  * Tests for ephemeral packages.
  */
-@Presubmit
 @RunWith(DeviceJUnit4ClassRunner.class)
 @AppModeFull(reason = "Already handles instant installs when needed")
 public class EphemeralTest extends BaseAppSecurityTest {

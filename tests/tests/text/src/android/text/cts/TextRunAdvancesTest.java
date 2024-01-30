@@ -24,9 +24,9 @@ import android.content.res.AssetManager;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,7 +36,8 @@ import org.junit.runner.RunWith;
 public class TextRunAdvancesTest {
     private static Paint getPaint() {
         Paint paint = new Paint();
-        AssetManager am = InstrumentationRegistry.getTargetContext().getAssets();
+        AssetManager am = InstrumentationRegistry.getInstrumentation()
+                .getTargetContext().getAssets();
         Typeface typeface = Typeface.createFromAsset(am, "fonts/textrunadvances.ttf");
         paint.setTypeface(typeface);
         paint.setTextSize(10f);  // Make 1em = 10px

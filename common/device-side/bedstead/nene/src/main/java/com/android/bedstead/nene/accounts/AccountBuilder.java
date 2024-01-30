@@ -25,6 +25,7 @@ import com.android.bedstead.nene.utils.Poll;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -102,7 +103,7 @@ public final class AccountBuilder {
      * Add features to the account.
      */
     public AccountBuilder addFeatures(String... feature) {
-        mFeatures.addAll(Set.of(feature));
+        mFeatures.addAll(new HashSet<>(Arrays.asList(feature)));
         return this;
     }
 

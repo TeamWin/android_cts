@@ -40,7 +40,5 @@
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
          android:targetPackage="com.android.cts.testime">
-        <meta-data android:name="listener"
-             android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
 </manifest>

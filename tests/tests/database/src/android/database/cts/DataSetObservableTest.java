@@ -16,12 +16,21 @@
 
 package android.database.cts;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.database.DataSetObservable;
 import android.database.DataSetObserver;
-import android.test.AndroidTestCase;
 
-public class DataSetObservableTest extends AndroidTestCase {
+import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class DataSetObservableTest {
+
+    @Test
     public void testNotifyMethods() {
         DataSetObservable dataSetObservalbe = new DataSetObservable();
         MockDataSetObserver dataSetObserver1 = new MockDataSetObserver();

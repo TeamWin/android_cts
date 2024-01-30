@@ -19,11 +19,11 @@ import android.app.AppOpsManager.MODE_ALLOWED
 import android.content.Intent
 import android.platform.test.annotations.AppModeFull
 import android.provider.Settings
-import android.support.test.uiautomator.By
-import android.support.test.uiautomator.BySelector
-import android.support.test.uiautomator.Until
 import androidx.test.filters.MediumTest
 import androidx.test.runner.AndroidJUnit4
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.BySelector
+import androidx.test.uiautomator.Until
 import com.android.compatibility.common.util.AppOpsUtils
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.assertNotNull

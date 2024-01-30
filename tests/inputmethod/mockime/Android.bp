@@ -24,14 +24,18 @@ java_test_helper_library {
     //       1) common, 2) common + IME-only, and 3) common + client-only.
     //       Currently, both MockIme APK and test APKs that use MockIme contain
     //       all the Java classes, which is inefficient.
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.kt",
+    ],
     libs: ["junit"],
     static_libs: [
         "androidx.annotation_annotation",
         "androidx.autofill_autofill",
         "compatibility-device-util-axt",
-        "cts_window_jetpack_utils",
+        "cts_window_extensions_jetpack_util",
         "cts_window-extensions",
+        "cts_window-extensions-core",
     ],
 }
 
@@ -41,8 +45,7 @@ android_test_helper_app {
     optimize: {
         enabled: false,
     },
-    dxflags: ["--multi-dex"],
-    sdk_version: "test_current",
+    sdk_version: "current",
     min_sdk_version: "21",
     // tag this module as a cts test artifact
     test_suites: [

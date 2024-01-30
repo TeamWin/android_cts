@@ -149,7 +149,7 @@ public class LaunchRunner {
         for (int i = 0; i < launches.size(); i++) {
             Persistence.TestCase testCase = this.runAndSerialize(launches.get(i), startContext,
                     Integer.toString(i));
-            IntentTests.writeToDocumentsStorage(testCase, i + 1, name);
+            IoUtils.writeToDocumentsStorage(testCase, i + 1, name);
             // Cleanup all the activities of this testCase before going to the next
             // to preserve isolation across test cases.
             mTestBase.cleanUp(testCase.getSetup().componentsInCase());

@@ -103,3 +103,10 @@ android.content.pm.PackageManager.DexModuleRegisterCallback
 android.security.KeyChainAliasCallback
 android.app.Activity
 android.telephony.SmsManager
+android.app.WallpaperManager.OnColorsChangedListener
+android.telephony.TelephonyManager
+android.telephony.CellLocation
+android.telephony.PhoneStateListener
+android.telephony.TelephonyManager.UssdResponseCallback
+android.telephony.TelephonyManager.CarrierPrivilegesCallback
+android.telephony.TelephonyCallback

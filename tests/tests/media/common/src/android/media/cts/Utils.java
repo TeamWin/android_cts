@@ -82,13 +82,24 @@ public class Utils {
 
     private static void setAppOps(String packageName, String operation,
             Instrumentation instrumentation, boolean enable) {
+        UiAutomation uiAutomation = instrumentation.getUiAutomation();
         StringBuilder cmd = new StringBuilder();
         cmd.append("appops set ");
         cmd.append(packageName);
         cmd.append(" ");
         cmd.append(operation);
         cmd.append(enable ? " allow" : " deny");
-        instrumentation.getUiAutomation().executeShellCommand(cmd.toString());
+        try (InputStream inputStream =
+                new ParcelFileDescriptor.AutoCloseInputStream(
+                        uiAutomation.executeShellCommand(cmd.toString()))) {
+            String result = convertStreamToString(inputStream);
+            if (!result.isEmpty()) {
+                Log.e(TAG, result);
+                return;
+            }
+        } catch (IOException e) {
+            Log.w(TAG, "Failure closing ParcelFileDescriptor");
+        }
 
         StringBuilder query = new StringBuilder();
         query.append("appops get ");
@@ -98,12 +109,14 @@ public class Utils {
         String queryStr = query.toString();
 
         String expectedResult = enable ? "allow" : "deny";
-        String result = "";
-        while(!result.contains(expectedResult)) {
-            ParcelFileDescriptor pfd = instrumentation.getUiAutomation().executeShellCommand(
-                                                            queryStr);
-            InputStream inputStream = new FileInputStream(pfd.getFileDescriptor());
-            result = convertStreamToString(inputStream);
+        try (InputStream inputStream =
+                new ParcelFileDescriptor.AutoCloseInputStream(
+                        uiAutomation.executeShellCommand(queryStr.toString()))) {
+            if (!convertStreamToString(inputStream).contains(expectedResult)) {
+                Log.w(TAG, "setAppOps did not return " + expectedResult);
+            }
+        } catch (IOException e) {
+            Log.w(TAG, "Failure closing ParcelFileDescriptor");
         }
     }
 

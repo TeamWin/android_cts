@@ -25,8 +25,8 @@ import android.text.TextPaint;
 import android.text.style.ClickableSpan;
 import android.view.View;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

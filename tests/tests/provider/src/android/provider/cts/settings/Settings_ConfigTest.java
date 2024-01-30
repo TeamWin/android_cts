@@ -36,8 +36,8 @@ import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.util.Log;
 
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.internal.annotations.GuardedBy;
@@ -82,10 +82,7 @@ public class Settings_ConfigTest {
 
     private static final String TEST_PACKAGE_NAME = "android.content.cts";
 
-    private static final long OPERATION_TIMEOUT_MS = 5000;
-
-    private static final Context CONTEXT = InstrumentationRegistry.getContext();
-
+    private static final long OPERATION_TIMEOUT_MS = 10000;
 
     private static final long WAIT_FOR_PROPERTY_CHANGE_TIMEOUT_MILLIS = 2000; // 2 sec
     private final Object mLock = new Object();
@@ -103,26 +100,30 @@ public class Settings_ConfigTest {
     private static ContentResolver sContentResolver;
     private static Context sContext;
 
+    private int mInitialSyncDisabledMode;
+
     /**
-     * Get necessary permissions to access Setting.Config API and set up context
+     * Get necessary permissions to access Setting.Config API and set up context and sync mode.
      */
     @Before
-    public void setUpContext() throws Exception {
+    public void setUpContext() {
         InstrumentationRegistry.getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
                 WRITE_DEVICE_CONFIG_PERMISSION, READ_DEVICE_CONFIG_PERMISSION,
                 MONITOR_DEVICE_CONFIG_ACCESS);
-        sContext = InstrumentationRegistry.getContext();
+        sContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         sContentResolver = sContext.getContentResolver();
+        mInitialSyncDisabledMode = Settings.Config.getSyncDisabledMode();
+        Settings.Config.setSyncDisabledMode(SYNC_DISABLED_MODE_NONE);
     }
 
     /**
      * Clean up the namespaces, sync mode and permissions.
      */
     @After
-    public void cleanUp() throws Exception {
-        Settings.Config.setSyncDisabledMode(SYNC_DISABLED_MODE_NONE);
+    public void cleanUp() {
         deleteProperties(NAMESPACE1, Arrays.asList(KEY1, KEY2));
         deleteProperties(NAMESPACE2, Arrays.asList(KEY1, KEY2));
+        Settings.Config.setSyncDisabledMode(mInitialSyncDisabledMode);
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
     }

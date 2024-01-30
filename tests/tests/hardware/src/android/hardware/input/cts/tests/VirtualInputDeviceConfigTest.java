@@ -18,6 +18,8 @@ package android.hardware.input.cts.tests;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
+
 import android.hardware.input.VirtualDpadConfig;
 import android.hardware.input.VirtualKeyboardConfig;
 import android.hardware.input.VirtualMouseConfig;
@@ -38,6 +40,18 @@ public class VirtualInputDeviceConfigTest {
     private static final int PRODUCT_ID = 1;
     private static final int VENDOR_ID = 1;
     private static final String DEVICE_NAME = "VirtualTestDevice";
+    private static final String DEVICE_NAME_THAT_IS_TOO_LONG =
+            "The way to dusty death. Out, out, brief candle." +
+            "Life’s but a walking shadow, a poor player";
+
+    // Has only 39 characters but is 109 bytes as utf-8
+    private static final String UTF8_DEVICE_NAME_THAT_IS_TOO_LONG =
+            "░▄▄▄▄░\n" +
+            "▀▀▄██►\n" +
+            "▀▀███►\n" +
+            "░▀███►░█►\n" +
+            "▒▄████▀▀";
+
     private static final int DISPLAY_ID = 2;
     private static final int WIDTH = 600;
     private static final int HEIGHT = 800;
@@ -263,4 +277,215 @@ public class VirtualInputDeviceConfigTest {
         assertThat(configFromParcel.getWidth()).isEqualTo(config.getWidth());
         assertThat(configFromParcel.getHeight()).isEqualTo(config.getHeight());
     }
+
+    @Test
+    public void virtualDpadConfig_missingName_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> new VirtualDpadConfig.Builder()
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setAssociatedDisplayId(DISPLAY_ID)
+                        .build());
+    }
+
+    @Test
+    public void virtualDpadConfig_nameLengthExceedsLimit_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualDpadConfig.Builder()
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setAssociatedDisplayId(DISPLAY_ID)
+                        .setInputDeviceName(DEVICE_NAME_THAT_IS_TOO_LONG)
+                        .build());
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualDpadConfig.Builder()
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setAssociatedDisplayId(DISPLAY_ID)
+                        .setInputDeviceName(UTF8_DEVICE_NAME_THAT_IS_TOO_LONG)
+                        .build());
+    }
+
+    @Test
+    public void virtualDpadConfig_missingDisplayId_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualKeyboardConfig.Builder()
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setInputDeviceName(DEVICE_NAME)
+                        .build());
+    }
+
+    @Test
+    public void virtualKeyboardConfig_missingName_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> new VirtualKeyboardConfig.Builder()
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setAssociatedDisplayId(DISPLAY_ID)
+                        .build());
+    }
+
+    @Test
+    public void virtualKeyboardConfig_nameLengthExceedsLimit_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualKeyboardConfig.Builder()
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setAssociatedDisplayId(DISPLAY_ID)
+                        .setInputDeviceName(DEVICE_NAME_THAT_IS_TOO_LONG)
+                        .build());
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualKeyboardConfig.Builder()
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setAssociatedDisplayId(DISPLAY_ID)
+                        .setInputDeviceName(UTF8_DEVICE_NAME_THAT_IS_TOO_LONG)
+                        .build());
+    }
+
+    @Test
+    public void virtualKeyboardConfig_missingDisplayId_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualKeyboardConfig.Builder()
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setInputDeviceName(DEVICE_NAME)
+                        .build());
+    }
+
+    @Test
+    public void virtualMouseConfig_missingName_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> new VirtualMouseConfig.Builder()
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setAssociatedDisplayId(DISPLAY_ID)
+                        .build());
+    }
+
+    @Test
+    public void virtualMouseConfig_nameLengthExceedsLimit_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualMouseConfig.Builder()
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setAssociatedDisplayId(DISPLAY_ID)
+                        .setInputDeviceName(DEVICE_NAME_THAT_IS_TOO_LONG)
+                        .build());
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualMouseConfig.Builder()
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setAssociatedDisplayId(DISPLAY_ID)
+                        .setInputDeviceName(UTF8_DEVICE_NAME_THAT_IS_TOO_LONG)
+                        .build());
+    }
+
+    @Test
+    public void virtualMouseConfig_missingDisplayId_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualMouseConfig.Builder()
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setInputDeviceName(DEVICE_NAME)
+                        .build());
+    }
+
+    @Test
+    public void virtualNavigationTouchpadConfig_missingName_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> new VirtualNavigationTouchpadConfig.Builder(WIDTH, HEIGHT)
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setAssociatedDisplayId(DISPLAY_ID)
+                        .build());
+    }
+
+    @Test
+    public void virtualNavigationTouchpadConfig_nameLengthExceedsLimit_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualNavigationTouchpadConfig.Builder(WIDTH, HEIGHT)
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setAssociatedDisplayId(DISPLAY_ID)
+                        .setInputDeviceName(DEVICE_NAME_THAT_IS_TOO_LONG)
+                        .build());
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualNavigationTouchpadConfig.Builder(WIDTH, HEIGHT)
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setAssociatedDisplayId(DISPLAY_ID)
+                        .setInputDeviceName(UTF8_DEVICE_NAME_THAT_IS_TOO_LONG)
+                        .build());
+    }
+
+    @Test
+    public void virtualNavigationTouchpadConfig_missingDisplayId_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualNavigationTouchpadConfig.Builder(WIDTH, HEIGHT)
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setInputDeviceName(DEVICE_NAME)
+                        .build());
+    }
+
+    @Test
+    public void virtualNavigationTouchpadConfig_invalidDimensions_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualNavigationTouchpadConfig.Builder(WIDTH, 0));
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualNavigationTouchpadConfig.Builder(0, HEIGHT));
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualNavigationTouchpadConfig.Builder(0, 0));
+    }
+
+    @Test
+    public void virtualTouchscreenConfig_missingName_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> new VirtualTouchscreenConfig.Builder(WIDTH, HEIGHT)
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setAssociatedDisplayId(DISPLAY_ID)
+                        .build());
+    }
+
+    @Test
+    public void virtualTouchscreenConfig_nameLengthExceedsLimit_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualTouchscreenConfig.Builder(WIDTH, HEIGHT)
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setAssociatedDisplayId(DISPLAY_ID)
+                        .setInputDeviceName(DEVICE_NAME_THAT_IS_TOO_LONG)
+                        .build());
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualTouchscreenConfig.Builder(WIDTH, HEIGHT)
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setAssociatedDisplayId(DISPLAY_ID)
+                        .setInputDeviceName(UTF8_DEVICE_NAME_THAT_IS_TOO_LONG)
+                        .build());
+    }
+
+    @Test
+    public void virtualTouchscreenConfig_missingDisplayId_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualTouchscreenConfig.Builder(WIDTH, HEIGHT)
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setInputDeviceName(DEVICE_NAME)
+                        .build());
+    }
+
+    @Test
+    public void virtualTouchscreenConfig_invalidDimensions_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualTouchscreenConfig.Builder(WIDTH, 0));
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualTouchscreenConfig.Builder(0, HEIGHT));
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualTouchscreenConfig.Builder(0, 0));
+    }
+
 }

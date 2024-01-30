@@ -16,6 +16,15 @@
 
 package android.appsecurity.cts;
 
+import static android.appsecurity.cts.Utils.ABI_TO_APK;
+import static android.appsecurity.cts.Utils.APK;
+import static android.appsecurity.cts.Utils.APK_hdpi;
+import static android.appsecurity.cts.Utils.APK_mdpi;
+import static android.appsecurity.cts.Utils.APK_xhdpi;
+import static android.appsecurity.cts.Utils.APK_xxhdpi;
+import static android.appsecurity.cts.Utils.CLASS;
+import static android.appsecurity.cts.Utils.PKG;
+
 import static org.junit.Assert.assertNotNull;
 
 import android.platform.test.annotations.AppModeFull;
@@ -68,28 +77,10 @@ public class SplitTests extends BaseAppSecurityTest {
     static final String APK_INVALID_REQUIRED_SPLIT_TYPE_BASE =
             "CtsInvalidRequiredSplitTypeSplitApp.apk";
 
-    static final String PKG = "com.android.cts.splitapp";
-    static final String CLASS = PKG + ".SplitAppTest";
-
-    static final String APK = "CtsSplitApp.apk";
-
-    static final String APK_mdpi = "CtsSplitApp_mdpi-v4.apk";
-    static final String APK_hdpi = "CtsSplitApp_hdpi-v4.apk";
-    static final String APK_xhdpi = "CtsSplitApp_xhdpi-v4.apk";
-    static final String APK_xxhdpi = "CtsSplitApp_xxhdpi-v4.apk";
-
     private static final String APK_v7 = "CtsSplitApp_v7.apk";
     private static final String APK_v23 = "CtsSplitApp_v23.apk";
     private static final String APK_fr = "CtsSplitApp_fr.apk";
     private static final String APK_de = "CtsSplitApp_de.apk";
-
-    private static final String APK_x86 = "CtsSplitApp_x86.apk";
-    private static final String APK_x86_64 = "CtsSplitApp_x86_64.apk";
-    private static final String APK_armeabi_v7a = "CtsSplitApp_armeabi-v7a.apk";
-    private static final String APK_armeabi = "CtsSplitApp_armeabi.apk";
-    private static final String APK_arm64_v8a = "CtsSplitApp_arm64-v8a.apk";
-    private static final String APK_mips64 = "CtsSplitApp_mips64.apk";
-    private static final String APK_mips = "CtsSplitApp_mips.apk";
 
     private static final String APK_NUMBER_PROVIDER_A = "CtsSplitApp_number_provider_a.apk";
     private static final String APK_NUMBER_PROVIDER_B = "CtsSplitApp_number_provider_b.apk";
@@ -118,18 +109,9 @@ public class SplitTests extends BaseAppSecurityTest {
     // instant app mode.
     static final String APK_INSTANT = "CtsSplitInstantApp.apk";
 
-    static final HashMap<String, String> ABI_TO_APK = new HashMap<>();
     static final HashMap<String, String> ABI_TO_REVISION_APK = new HashMap<>();
 
     static {
-        ABI_TO_APK.put("x86", APK_x86);
-        ABI_TO_APK.put("x86_64", APK_x86_64);
-        ABI_TO_APK.put("armeabi-v7a", APK_armeabi_v7a);
-        ABI_TO_APK.put("armeabi", APK_armeabi);
-        ABI_TO_APK.put("arm64-v8a", APK_arm64_v8a);
-        ABI_TO_APK.put("mips64", APK_mips64);
-        ABI_TO_APK.put("mips", APK_mips);
-
         ABI_TO_REVISION_APK.put("x86", "CtsSplitApp_revision12_x86.apk");
         ABI_TO_REVISION_APK.put("x86_64", "CtsSplitApp_revision12_x86_64.apk");
         ABI_TO_REVISION_APK.put("armeabi-v7a", "CtsSplitApp_revision12_armeabi-v7a.apk");

@@ -59,6 +59,12 @@ public class StubMediaRoute2ProviderService extends MediaRoute2ProviderService {
     public static final String ROUTE_ID_SPECIAL_FEATURE = "route_special_feature";
     public static final String ROUTE_NAME_SPECIAL_FEATURE = "Special Feature Route";
 
+    public static final String ROUTE_ID6_REJECT_SET_VOLUME = "route_id6_reject_set_volume";
+    public static final String ROUTE_NAME_6 = "Sample Route 6 - Reject Set Route Volume";
+
+    public static final String ROUTE_ID7_STATIC_GROUP = "route_id7_static_group";
+    public static final String ROUTE_NAME7 = "Sample Route 7 - Static Group";
+
     public static final int INITIAL_VOLUME = 30;
     public static final int VOLUME_MAX = 100;
     public static final int SESSION_VOLUME_MAX = 50;
@@ -74,6 +80,8 @@ public class StubMediaRoute2ProviderService extends MediaRoute2ProviderService {
 
     public static final List<String> FEATURES_ALL = new ArrayList();
     public static final List<String> FEATURES_SPECIAL = new ArrayList();
+    public static final List<String> STATIC_GROUP_SELECTED_ROUTES_IDS = new ArrayList<>();
+    public static final List<String> FEATURE_SPECIAL_ROUTE_IDS = new ArrayList<>();
 
     static {
         FEATURES_ALL.add(FEATURE_SAMPLE);
@@ -81,6 +89,12 @@ public class StubMediaRoute2ProviderService extends MediaRoute2ProviderService {
         FEATURES_ALL.add(FEATURE_LIVE_AUDIO);
 
         FEATURES_SPECIAL.add(FEATURE_SPECIAL);
+
+        STATIC_GROUP_SELECTED_ROUTES_IDS.add(ROUTE_ID7_STATIC_GROUP);
+        STATIC_GROUP_SELECTED_ROUTES_IDS.add(ROUTE_ID1);
+
+        FEATURE_SPECIAL_ROUTE_IDS.add(ROUTE_ID_SPECIAL_FEATURE);
+        FEATURE_SPECIAL_ROUTE_IDS.add(ROUTE_ID7_STATIC_GROUP);
     }
 
     Map<String, MediaRoute2Info> mRoutes = new HashMap<>();
@@ -110,6 +124,20 @@ public class StubMediaRoute2ProviderService extends MediaRoute2ProviderService {
                 ROUTE_ID5_TO_TRANSFER_TO, ROUTE_NAME5)
                 .addFeature(FEATURE_SAMPLE)
                 .build();
+        MediaRoute2Info route6 = new MediaRoute2Info.Builder(
+                ROUTE_ID6_REJECT_SET_VOLUME, ROUTE_NAME_6)
+                .setVolumeHandling(PLAYBACK_VOLUME_VARIABLE)
+                .setVolume(INITIAL_VOLUME)
+                .setVolumeMax(VOLUME_MAX)
+                .addFeature(FEATURE_SAMPLE)
+                .build();
+        MediaRoute2Info route7 =
+                new MediaRoute2Info.Builder(ROUTE_ID7_STATIC_GROUP, ROUTE_NAME7)
+                        .setVolumeHandling(PLAYBACK_VOLUME_VARIABLE)
+                        .setVolume(INITIAL_VOLUME)
+                        .setVolumeMax(VOLUME_MAX)
+                        .addFeature(FEATURE_SPECIAL)
+                        .build();
         MediaRoute2Info routeSpecial =
                 new MediaRoute2Info.Builder(ROUTE_ID_SPECIAL_FEATURE, ROUTE_NAME_SPECIAL_FEATURE)
                         .addFeature(FEATURE_SAMPLE)
@@ -133,6 +161,8 @@ public class StubMediaRoute2ProviderService extends MediaRoute2ProviderService {
         mRoutes.put(route3.getId(), route3);
         mRoutes.put(route4.getId(), route4);
         mRoutes.put(route5.getId(), route5);
+        mRoutes.put(route6.getId(), route6);
+        mRoutes.put(route7.getId(), route7);
         mRoutes.put(routeSpecial.getId(), routeSpecial);
         mRoutes.put(fixedVolumeRoute.getId(), fixedVolumeRoute);
         mRoutes.put(variableVolumeRoute.getId(), variableVolumeRoute);
@@ -186,6 +216,12 @@ public class StubMediaRoute2ProviderService extends MediaRoute2ProviderService {
         if (route == null) {
             return;
         }
+
+        if (TextUtils.equals(route.getOriginalId(), ROUTE_ID6_REJECT_SET_VOLUME)) {
+            notifyRequestFailed(requestId, REASON_REJECTED);
+            return;
+        }
+
         volume = Math.max(0, Math.min(volume, route.getVolumeMax()));
         mRoutes.put(routeId, new MediaRoute2Info.Builder(route)
                 .setVolume(volume)
@@ -230,17 +266,33 @@ public class StubMediaRoute2ProviderService extends MediaRoute2ProviderService {
                 .build());
         mRouteIdToSessionId.put(routeId, sessionId);
 
-        RoutingSessionInfo sessionInfo = new RoutingSessionInfo.Builder(sessionId, packageName)
-                .addSelectedRoute(routeId)
-                .addSelectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
-                .addTransferableRoute(ROUTE_ID5_TO_TRANSFER_TO)
-                .setVolumeHandling(PLAYBACK_VOLUME_VARIABLE)
-                .setVolumeMax(SESSION_VOLUME_MAX)
-                .setVolume(SESSION_VOLUME_INITIAL)
-                // Set control hints with given sessionHints
-                .setControlHints(sessionHints)
-                .build();
-        notifySessionCreated(requestId, sessionInfo);
+        RoutingSessionInfo.Builder sessionInfoBuilder =
+                new RoutingSessionInfo.Builder(sessionId, packageName)
+                        .addSelectedRoute(routeId)
+                        .addSelectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
+                        .addTransferableRoute(ROUTE_ID5_TO_TRANSFER_TO)
+                        .setVolumeHandling(PLAYBACK_VOLUME_VARIABLE)
+                        .setVolumeMax(SESSION_VOLUME_MAX)
+                        .setVolume(SESSION_VOLUME_INITIAL)
+                        // Set control hints with given sessionHints
+                        .setControlHints(sessionHints);
+
+        if (TextUtils.equals(routeId, ROUTE_ID7_STATIC_GROUP)) {
+            // Add group member routes.
+            sessionInfoBuilder.addSelectedRoute(ROUTE_ID1);
+            sessionInfoBuilder.addDeselectableRoute(ROUTE_ID1);
+
+            // Set client package name for group member routes.
+            mRoutes.put(
+                    ROUTE_ID1,
+                    new MediaRoute2Info.Builder(mRoutes.get(ROUTE_ID1))
+                            .setClientPackageName(packageName)
+                            .build());
+
+            mRouteIdToSessionId.put(ROUTE_ID1, sessionId);
+        }
+
+        notifySessionCreated(requestId, sessionInfoBuilder.build());
         publishRoutes();
     }
 

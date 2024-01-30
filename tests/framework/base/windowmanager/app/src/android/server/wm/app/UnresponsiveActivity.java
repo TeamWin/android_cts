@@ -16,14 +16,12 @@
 
 package android.server.wm.app;
 
-import static android.server.wm.app.Components.UnresponsiveActivity.EXTRA_DELAY_UI_THREAD_MS;
 import static android.server.wm.app.Components.UnresponsiveActivity.EXTRA_ON_CREATE_DELAY_MS;
 import static android.server.wm.app.Components.UnresponsiveActivity.EXTRA_ON_KEYDOWN_DELAY_MS;
 import static android.server.wm.app.Components.UnresponsiveActivity.EXTRA_ON_MOTIONEVENT_DELAY_MS;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.SystemClock;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -35,17 +33,6 @@ public class UnresponsiveActivity extends Activity {
         super.onCreate(savedInstanceState);
         final int delay = getIntent().getIntExtra(EXTRA_ON_CREATE_DELAY_MS, 0);
         SystemClock.sleep(delay);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        final int delay = getIntent().getIntExtra(EXTRA_DELAY_UI_THREAD_MS, 0);
-        final Handler handler = new Handler();
-        handler.post(() -> {
-            SystemClock.sleep(delay);
-        });
-
     }
 
     @Override

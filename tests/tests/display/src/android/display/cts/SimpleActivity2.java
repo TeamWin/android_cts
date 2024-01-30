@@ -19,6 +19,6 @@ package android.display.cts;
 import android.app.Activity;
 
 /**
- * An activity doing nothing
+ * Another activity doing nothing
  */
 public final class SimpleActivity2 extends Activity { }

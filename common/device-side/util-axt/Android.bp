@@ -35,8 +35,11 @@ java_defaults {
         "ub-uiautomator",
         "androidx.annotation_annotation",
         "androidx.test.uiautomator_uiautomator",
+        "error_prone_annotations",
         "truth",
         "modules-utils-build_system",
+        "android.os.flags-aconfig-java",
+        "flag-junit",
     ],
 
     libs: [

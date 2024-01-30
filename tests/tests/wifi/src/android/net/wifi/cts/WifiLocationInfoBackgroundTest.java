@@ -26,6 +26,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Build;
@@ -33,11 +34,13 @@ import android.os.PowerManager;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
 import androidx.test.filters.SdkSuppress;
-import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
+import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
@@ -53,8 +56,10 @@ import org.junit.runner.RunWith;
 import java.util.List;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
-@SmallTest
+@LargeTest
 @RunWith(AndroidJUnit4.class)
+@ApiTest(apis = {"Manifest.permission#ACCESS_BACKGROUND_LOCATION"})
+@NonMainlineTest
 public class WifiLocationInfoBackgroundTest extends WifiJUnit4TestBase{
     private static final String TAG = "WifiLocationInfoTest";
 
@@ -93,6 +98,10 @@ public class WifiLocationInfoBackgroundTest extends WifiJUnit4TestBase{
         if (!WifiFeature.isWifiSupported(sContext)) {
             return;
         }
+        // TODO(b/290671748): re-enable the test when we havea solution on wear devices
+        if (isWearDevice()) {
+            return;
+        }
         sShouldRunTest = true;
 
         sWifiManager = sContext.getSystemService(WifiManager.class);
@@ -127,6 +136,10 @@ public class WifiLocationInfoBackgroundTest extends WifiJUnit4TestBase{
         sPower = sContext.getSystemService(PowerManager.class);
         sLock = sPower.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
         turnScreenOff();
+    }
+
+    private static boolean isWearDevice() {
+        return sContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 
     @Before

@@ -16,6 +16,7 @@
 
 package android.accessibilityservice.cts;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
@@ -24,6 +25,7 @@ import static org.junit.Assert.assertThrows;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
+import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.os.Parcel;
 import android.platform.test.annotations.AsbSecurityTest;
@@ -36,11 +38,13 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.CddTest;
 import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
-import com.google.common.base.Strings;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * Class for testing {@link AccessibilityServiceInfo}.
@@ -143,6 +147,39 @@ public class AccessibilityServiceInfoTest extends StsExtraBusinessLogicTestCase 
     }
 
     @Test
+    @AsbSecurityTest(cveBugId = {277072324})
+    public void testSetServiceInfo_throwsForLargeServiceInfo_calledUsingReflection()
+            throws Exception {
+        try {
+            final InstrumentedAccessibilityService service =
+                    InstrumentedAccessibilityService.enableService(
+                            InstrumentedAccessibilityService.class);
+            final AccessibilityServiceInfo info = service.getServiceInfo();
+            setLargePackageNames(info);
+
+            // NOTE: Using reflection requires setting the HIDDEN_API_POLICY global setting.
+            // This is done in AndroidTest.xml for this test because it must be set before
+            // the test process is started.
+            final Field connectionIdField = AccessibilityService.class.getDeclaredField(
+                    "mConnectionId");
+            connectionIdField.setAccessible(true); // Allow the test to read this private field.
+            final Method getConnection =
+                    Class.forName("android.view.accessibility.AccessibilityInteractionClient")
+                            .getDeclaredMethod("getConnection", int.class);
+            final Object connection = getConnection.invoke(null, connectionIdField.get(service));
+            final Method setServiceInfo =
+                    Class.forName("android.accessibilityservice.IAccessibilityServiceConnection")
+                            .getDeclaredMethod("setServiceInfo", AccessibilityServiceInfo.class);
+
+            InvocationTargetException exception = assertThrows(
+                    InvocationTargetException.class, () -> setServiceInfo.invoke(connection, info));
+            assertThat(exception).hasCauseThat().isInstanceOf(IllegalStateException.class);
+        } finally {
+            InstrumentedAccessibilityService.disableAllServices();
+        }
+    }
+
+    @Test
     @AsbSecurityTest(cveBugId = {261589597})
     public void testSetServiceInfo_throwsForLargeServiceInfo() {
         try {
@@ -150,7 +187,7 @@ public class AccessibilityServiceInfoTest extends StsExtraBusinessLogicTestCase 
                     InstrumentedAccessibilityService.enableService(
                             InstrumentedAccessibilityService.class);
             final AccessibilityServiceInfo info = service.getServiceInfo();
-            info.packageNames = new String[]{Strings.repeat("A", 1024 * 507)};
+            setLargePackageNames(info);
 
             assertThrows(IllegalStateException.class, () -> service.setServiceInfo(info));
         } finally {
@@ -210,5 +247,13 @@ public class AccessibilityServiceInfoTest extends StsExtraBusinessLogicTestCase 
                 receivedInfo.getNonInteractiveUiTimeoutMillis());
         assertEquals("isAccessibilityTool not marshalled properly",
                 sentInfo.isAccessibilityTool(), receivedInfo.isAccessibilityTool());
+    }
+
+    private static void setLargePackageNames(AccessibilityServiceInfo info) {
+        // android_util_Binder.cpp says that very large transactions (above 200*1024 bytes)
+        // will fail with TransactionTooLargeException, but the accessibility framework uses the
+        // more aggressive suggested individual parcel size limit of IBinder.java's
+        // MAX_IPC_SIZE (64*1024 bytes).
+        info.packageNames = new String[]{"A".repeat(1024 * 32)};
     }
 }

@@ -23,12 +23,12 @@ java_library {
     sdk_version: "test_current",
     libs: ["junit"],
     static_libs: [
-            "androidx.legacy_legacy-support-v4",
-            "compatibility-device-util-axt",
-            "ctstestrunner-axt",
-            "androidx.test.rules",
-            "ub-uiautomator",
-            "testng", // TODO: remove once Android migrates to JUnit 4.13, which has assertThrows
-            "DpmWrapper",
+        "androidx.legacy_legacy-support-v4",
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+        "androidx.test.rules",
+        "androidx.test.uiautomator_uiautomator",
+        "testng", // TODO: remove once Android migrates to JUnit 4.13, which has assertThrows
+        "DpmWrapper",
     ],
 }

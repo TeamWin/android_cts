@@ -21,6 +21,7 @@ import static android.view.Display.INVALID_DISPLAY;
 
 import android.app.ActivityOptions;
 import android.content.Context;
+import android.os.Build;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
@@ -31,7 +32,6 @@ import android.view.MotionEvent;
 import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 
-import com.android.modules.utils.build.SdkLevel;
 
 import java.util.Objects;
 import java.util.function.Function;
@@ -71,7 +71,7 @@ public final class UserHelper {
         mUser = Objects.requireNonNull(context).getUser();
         UserManager userManager = context.getSystemService(UserManager.class);
 
-        if (!SdkLevel.isAtLeastU()) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             mVisibleBackgroundUsersSupported = false;
             if (DEBUG) {
                 Log.d(TAG, "Pre-UDC constructor (mUser=" + mUser + "): setting "

@@ -18,17 +18,29 @@ package android.attributionsource.cts
 
 import android.app.Activity
 import android.app.Instrumentation.ActivityResult
+import android.content.AttributionSource
 import android.content.Context
 import android.content.Intent
+import android.os.Process
+import android.permission.flags.Flags
+import android.platform.test.annotations.RequiresFlagsDisabled
+import android.platform.test.annotations.RequiresFlagsEnabled
+import android.platform.test.flag.junit.DeviceFlagsValueProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import com.android.compatibility.common.util.ApiTest
+import kotlin.test.assertFailsWith
 import org.junit.Assert.assertEquals
+import org.junit.Rule
 import org.junit.Test
 
 class AttributionSourceTest {
+    @get:Rule
+    public val mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
+
     @Test
     @Throws(Exception::class)
-    public fun testRemoteProcessActivityPidCheck() {
+    fun testRemoteProcessActivityPidCheck() {
         val context: Context = ApplicationProvider.getApplicationContext()
 
         val activityIntent = Intent(context, AttributionSourceActivity::class.java)
@@ -44,23 +56,62 @@ class AttributionSourceTest {
                 AttributionSourceActivity.RESULT_SECURITY_EXCEPTION, thread.getResultCode())
     }
 
-    companion object {
-        private final val TAG: String = "AttributionSourceTest"
+    @Test
+    @ApiTest(apis = ["android.content.AttributionSource.Builder#setNextAttributionSource"])
+    @Throws(Exception::class)
+    @RequiresFlagsEnabled(Flags.FLAG_SET_NEXT_ATTRIBUTION_SOURCE)
+    fun testSetNextAttributionSourceNonNull() {
+        val context: Context = ApplicationProvider.getApplicationContext()
+        val thisAttributionSource = context.getAttributionSource()
+        val builder = AttributionSource.Builder(Process.myUid())
+        builder.setNextAttributionSource(thisAttributionSource)
+        builder.build()
+    }
 
-        public final val ATTRIBUTION_SOURCE_KEY: String = "attributionSource"
+    @Test
+    @ApiTest(apis = ["android.content.AttributionSource.Builder#setNextAttributionSource"])
+    @Throws(Exception::class)
+    @RequiresFlagsEnabled(Flags.FLAG_ATTRIBUTION_SOURCE_CONSTRUCTOR)
+    fun testSetNextAttributionSourceWithNull() {
+        assertFailsWith(Exception::class, "setNextAttributionSource should throw on null") {
+            val nullBuilder = AttributionSource.Builder(Process.myUid())
+            AttributionSourceJavaWrapper.setNullNextAttributionSource(nullBuilder)
+        }
+    }
+
+    @Test
+    @ApiTest(apis = ["android.content.AttributionSource#getDeviceId"])
+    fun testDefaultDeviceId() {
+        val attributionSource = AttributionSource.Builder(Process.myUid()).build()
+        assertEquals(Context.DEVICE_ID_DEFAULT, attributionSource.deviceId)
+    }
+
+    @Test
+    @ApiTest(apis = ["android.content.AttributionSource#getDeviceId"])
+    fun testVirtualDeviceId() {
+        // random integer
+        val deviceId = 100
+        val attributionSource = AttributionSource.Builder(Process.myUid())
+            .setDeviceId(deviceId)
+            .build()
+        assertEquals(deviceId, attributionSource.deviceId)
+    }
+
+    companion object {
+        const val ATTRIBUTION_SOURCE_KEY = "attributionSource"
 
         private class LaunchActivityThread(activityIntent: Intent) : Thread() {
             private val mActivityIntent = activityIntent
             private var mResultCode: Int = Activity.RESULT_OK
 
-            public override fun run() {
+            override fun run() {
                 val scenario: ActivityScenario<AttributionSourceActivity> =
                         ActivityScenario.launchActivityForResult(mActivityIntent)
                 val result: ActivityResult = scenario.getResult()
                 mResultCode = result.getResultCode()
             }
 
-            public fun getResultCode(): Int {
+            fun getResultCode(): Int {
                 return mResultCode
             }
         }

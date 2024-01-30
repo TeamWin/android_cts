@@ -20,6 +20,7 @@ import static android.os.cts.batterysaving.common.Values.getRandomInt;
 
 import static com.android.compatibility.common.util.AmUtils.runKill;
 import static com.android.compatibility.common.util.AmUtils.runMakeUidIdle;
+import static com.android.compatibility.common.util.BatteryUtils.assumeBatterySaverFeature;
 import static com.android.compatibility.common.util.BatteryUtils.enableBatterySaver;
 import static com.android.compatibility.common.util.BatteryUtils.runDumpsysBatteryUnplug;
 
@@ -187,6 +188,8 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
 
     @Test
     public void testAllowWhileIdleThrottled() throws Exception {
+        assumeBatterySaverFeature();
+
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
 
@@ -261,6 +264,8 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
 
     @Test
     public void testAlarmsThrottled() throws Exception {
+        assumeBatterySaverFeature();
+
         final String targetPackage = APP_25_PACKAGE;
 
         runDumpsysBatteryUnplug();

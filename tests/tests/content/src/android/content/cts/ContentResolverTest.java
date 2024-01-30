@@ -42,6 +42,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -69,6 +70,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ContentResolverTest extends AndroidTestCase {
     private static final String TAG = "ContentResolverTest";
 

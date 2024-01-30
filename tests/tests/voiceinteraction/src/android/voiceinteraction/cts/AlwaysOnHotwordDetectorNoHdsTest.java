@@ -39,7 +39,6 @@ import android.app.AppOpsManager;
 import android.content.Context;
 import android.hardware.soundtrigger.SoundTrigger;
 import android.media.soundtrigger.SoundTriggerInstrumentation.RecognitionSession;
-import android.os.Build;
 import android.os.Process;
 import android.os.SystemClock;
 import android.os.SystemProperties;
@@ -53,9 +52,6 @@ import android.voiceinteraction.cts.testcore.VoiceInteractionServiceOverrideEnro
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
-import com.android.compatibility.common.util.CddTest;
-import com.android.compatibility.common.util.CtsDownstreamingTest;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
@@ -64,10 +60,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
 import org.junit.runner.RunWith;
-import org.junit.runners.model.Statement;
 
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -105,54 +98,13 @@ public class AlwaysOnHotwordDetectorNoHdsTest {
                 }
             };
 
-    public static final class RequiredApiLevelRule implements TestRule {
-        private final int mRequiredApiLevel;
-        private final boolean mIsRequiredApiLevel;
-
-        RequiredApiLevelRule(int requiredApiLevel) {
-            mRequiredApiLevel = requiredApiLevel;
-            mIsRequiredApiLevel = isRequiredApiLevel(mRequiredApiLevel);
-        }
-
-        @Override
-        public Statement apply(Statement base, Description description) {
-            return new Statement() {
-                @Override
-                public void evaluate() throws Throwable {
-                    if (!mIsRequiredApiLevel) {
-                        Log.d(TAG, "skipping "
-                                + description.getClassName() + "#" + description.getMethodName()
-                                + " because it requires API level " + mRequiredApiLevel);
-                        assumeTrue("Device is not API level'" + mRequiredApiLevel,
-                                mIsRequiredApiLevel);
-                        return;
-                    }
-                    base.evaluate();
-                }
-            };
-        }
-
-        @Override
-        public String toString() {
-            return "RequiredApiLevelRule[" + mRequiredApiLevel + ", " + mIsRequiredApiLevel + "]";
-        }
-
-        static boolean isRequiredApiLevel(int requiredApiLevel) {
-            return ApiLevelUtil.isAtLeast(requiredApiLevel);
-        }
-    }
-
     // For destroying in teardown
     private AlwaysOnHotwordDetector mAlwaysOnHotwordDetector = null;
 
-    @Rule(order = 1)
-    public RequiredApiLevelRule REQUIRES_API_RULE = new RequiredApiLevelRule(
-            Build.VERSION_CODES.UPSIDE_DOWN_CAKE);
-
-    @Rule(order = 2)
+    @Rule
     public RequiredFeatureRule REQUIRES_MIC_RULE = new RequiredFeatureRule(FEATURE_MICROPHONE);
 
-    @Rule(order = 3)
+    @Rule
     public VoiceInteractionServiceOverrideEnrollmentRule mEnrollOverrideRule =
             new VoiceInteractionServiceOverrideEnrollmentRule(getService());
 
@@ -211,9 +163,7 @@ public class AlwaysOnHotwordDetectorNoHdsTest {
         getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 
-    @CddTest(requirements = {"9.8.2/H-4-1"})
     @Test
-    @CtsDownstreamingTest
     public void testStartRecognition_success() throws Exception {
         createAndEnrollAlwaysOnHotwordDetector();
         // Grab permissions for more than a single call since we get callbacks
@@ -222,9 +172,7 @@ public class AlwaysOnHotwordDetectorNoHdsTest {
         startAndTriggerRecognition();
     }
 
-    @CddTest(requirements = {"9.8.2/H-4-1"})
     @Test
-    @CtsDownstreamingTest
     public void ifExemptionEnabled_startRecognition_noRecordOpsNoted() throws Exception {
         assumeFalse(SYSPROP_HOTWORD_DETECTION_SERVICE_REQUIRED);
         createAndEnrollAlwaysOnHotwordDetector();
@@ -238,9 +186,7 @@ public class AlwaysOnHotwordDetectorNoHdsTest {
         assertThat(mOpNoted.get()).isFalse();
     }
 
-    @CddTest(requirements = {"9.8.2/H-4-1"})
     @Test
-    @CtsDownstreamingTest
     public void ifExemptionDisabled_startRecognition_RecordOpsNoted() throws Exception {
         assumeTrue(SYSPROP_HOTWORD_DETECTION_SERVICE_REQUIRED);
         createAndEnrollAlwaysOnHotwordDetector();
@@ -295,7 +241,7 @@ public class AlwaysOnHotwordDetectorNoHdsTest {
         // Create alwaysOnHotwordDetector
         getService()
                 .createAlwaysOnHotwordDetectorNoHotwordDetectionService(
-                        /* useExecutor= */ true, /* runOnMainThread= */ true);
+                        /* useExecutor= */ true, /* mainThread= */ true);
         try {
             // Bad naming, this waits for AOHD creation
             getService().waitSandboxedDetectionServiceInitializedCalledOrException();

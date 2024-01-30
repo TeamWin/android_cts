@@ -16,14 +16,35 @@
 
 package android.os.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 
-public class MessageTest extends AndroidTestCase {
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class MessageTest {
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule.Builder()
+            .setProvideMainThread(true).build();
+
     public static final int SLEEP_TIME = 300;
     public static final int WHAT = 1;
     public static final int ARG1 = 1;
@@ -34,11 +55,7 @@ public class MessageTest extends AndroidTestCase {
     private Message mMessage;
     private boolean mMessageHandlerCalled;
 
-    private Handler mHandler = new Handler(Looper.getMainLooper()) {
-        public void handleMessage(Message msg) {
-            mMessageHandlerCalled = true;
-        }
-    };
+    private Handler mHandler;
 
     private Runnable mRunnable = new Runnable() {
         public void run() {
@@ -47,16 +64,22 @@ public class MessageTest extends AndroidTestCase {
 
     final Object OBJ = new Object();
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         mMessage = new Message();
+        mHandler = new Handler(Looper.getMainLooper()) {
+            public void handleMessage(Message msg) {
+                mMessageHandlerCalled = true;
+            }
+        };
     }
 
+    @Test
     public void testConstructor() {
         new Message();
     }
 
+    @Test
     public void testAccessMessageProperties() {
         assertEquals(0, mMessage.getWhen());
         mMessage.setTarget(mHandler);
@@ -77,6 +100,7 @@ public class MessageTest extends AndroidTestCase {
         assertEquals(0, mMessage.describeContents());
     }
 
+    @Test
     public void testObtain() {
         Message message = Message.obtain();
         assertNotNull(message);
@@ -90,6 +114,7 @@ public class MessageTest extends AndroidTestCase {
         assertNull(message.peekData());
     }
 
+    @Test
     public void testObtain2() {
         Message message = Message.obtain(mHandler, WHAT, ARG1, ARG2, OBJ);
         Message expected = Message.obtain(message);
@@ -101,23 +126,27 @@ public class MessageTest extends AndroidTestCase {
         assertEquals(message.obj, expected.obj);
     }
 
+    @Test
     public void testObtain3() {
         Message expected = Message.obtain(mHandler);
         assertEquals(mHandler, expected.getTarget());
     }
 
+    @Test
     public void testObtain4() {
         Message expected = Message.obtain(mHandler, mRunnable);
         assertEquals(mHandler, expected.getTarget());
         assertEquals(mRunnable, expected.getCallback());
     }
 
+    @Test
     public void testObtain5() {
         Message expected = Message.obtain(mHandler, WHAT);
         assertEquals(mHandler, expected.getTarget());
         assertEquals(WHAT, expected.what);
     }
 
+    @Test
     public void testObtain6() {
         Message expected = Message.obtain(mHandler, WHAT, OBJ);
         assertEquals(mHandler, expected.getTarget());
@@ -125,6 +154,7 @@ public class MessageTest extends AndroidTestCase {
         assertEquals(OBJ, expected.obj);
     }
 
+    @Test
     public void testObtain7() {
         Message expected = Message.obtain(mHandler, WHAT, ARG1, ARG2);
         assertEquals(mHandler, expected.getTarget());
@@ -133,6 +163,7 @@ public class MessageTest extends AndroidTestCase {
         assertEquals(ARG2, expected.arg2);
     }
 
+    @Test
     public void testObtain8() {
         Message expected = Message.obtain(mHandler, WHAT, ARG1, ARG2, OBJ);
         assertEquals(mHandler, expected.getTarget());
@@ -142,10 +173,12 @@ public class MessageTest extends AndroidTestCase {
         assertEquals(OBJ, expected.obj);
     }
 
+    @Test
     public void testToString() {
         assertNotNull(mMessage.toString());
     }
 
+    @Test
     public void testPeekData() {
         Bundle expected = new Bundle();
         assertNull(mMessage.peekData());
@@ -154,6 +187,7 @@ public class MessageTest extends AndroidTestCase {
         assertEquals(expected, mMessage.peekData());
     }
 
+    @Test
     public void testCopyFrom() {
         Message message = Message.obtain(mHandler, WHAT, ARG1, ARG2, OBJ);
         Bundle bundle = new Bundle();
@@ -169,6 +203,7 @@ public class MessageTest extends AndroidTestCase {
         assertTrue(mMessage.isAsynchronous());
     }
 
+    @Test
     public void testRecycle() {
         Message message = Message.obtain(mHandler, WHAT, ARG1, ARG2, OBJ);
         message.recycle();
@@ -182,6 +217,8 @@ public class MessageTest extends AndroidTestCase {
         assertNull(message.peekData());
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = android.os.Messenger.class)
     public void testWriteToParcel() {
         Message message = Message.obtain(mHandler, WHAT, ARG1, ARG2);
         Bundle bundle = new Bundle();
@@ -206,6 +243,7 @@ public class MessageTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testSendToTarget() {
         try {
             mMessage.sendToTarget();
@@ -221,6 +259,7 @@ public class MessageTest extends AndroidTestCase {
         assertTrue(mMessageHandlerCalled);
     }
 
+    @Test
     public void testAsynchronous() {
         Message message = Message.obtain();
         assertFalse(message.isAsynchronous());
@@ -232,6 +271,7 @@ public class MessageTest extends AndroidTestCase {
         assertFalse(message.isAsynchronous());
     }
 
+    @Test
     public void testRecycleThrowsIfMessageAlreadyRecycled() {
         Message message = Message.obtain();
         message.recycle();
@@ -244,6 +284,7 @@ public class MessageTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testSendMessageThrowsIfMessageAlreadyRecycled() {
         Message message = Message.obtain();
         message.recycle();
@@ -256,6 +297,7 @@ public class MessageTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testRecycleThrowsIfMessageIsBeingDelivered() {
         final Exception[] caught = new Exception[1];
         Handler handler = new Handler(mHandler.getLooper()) {
@@ -276,6 +318,7 @@ public class MessageTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testSendMessageThrowsIfMessageIsBeingDelivered() {
         final Exception[] caught = new Exception[1];
         Handler handler = new Handler(mHandler.getLooper()) {

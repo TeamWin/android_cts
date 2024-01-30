@@ -39,7 +39,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.app.cts.broadcasts.BroadcastReceipt;
 import com.android.app.cts.broadcasts.ICommandReceiver;
 import com.android.compatibility.common.util.AmUtils;
-import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
 import com.android.compatibility.common.util.ThrowingSupplier;
@@ -131,13 +130,6 @@ abstract class BaseBroadcastTest {
     }
 
     protected boolean isAppFreezerEnabled() throws Exception {
-        // TODO (269312428): Remove this check once isAppFreezerEnabled() is updated to take
-        // care of this.
-        if (!PropertyUtil.isVendorApiLevelNewerThan(30)) {
-            // Android R vendor partition contains those outdated cgroup configuration and freeze
-            // operations will fail.
-            return false;
-        }
         final ActivityManager am = mContext.getSystemService(ActivityManager.class);
         return am.getService().isAppFreezerEnabled();
     }

@@ -28,6 +28,7 @@ import android.media.AudioProfile;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.audio.cts.R;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
@@ -49,6 +50,7 @@ import java.util.Random;
 // sample rate based on the AudioTimestamps.
 
 @NonMainlineTest
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     private static final String TAG = "AudioTrackSurroundTest";
 
@@ -363,13 +365,13 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
             // Create a track and prime it.
             mTrack = createAudioTrack(mSampleRate, mEncoding, mChannelConfig);
             try {
-                assertEquals(TEST_NAME + ": track created" + getPcmWarning(),
+                assertEquals(TEST_NAME + ": track created " + getPcmWarning(),
                         AudioTrack.STATE_INITIALIZED,
                         mTrack.getState());
 
                 int bytesWritten = 0;
                 mOffset = primeBuffer(); // prime the buffer
-                assertTrue(TEST_NAME + ": priming offset = " + mOffset + getPcmWarning(),
+                assertTrue(TEST_NAME + ": priming offset = " + mOffset + ", " + getPcmWarning(),
                     mOffset > 0);
                 bytesWritten += mOffset;
 
@@ -389,13 +391,14 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
                 // Did we underrun? Allow 0 or 1 because there is sometimes
                 // an underrun on startup.
                 int underrunCount1 = mTrack.getUnderrunCount();
-                assertTrue(TEST_NAME + ": too many underruns, got underrunCount1" + getPcmWarning(),
+                assertTrue(TEST_NAME + ": too many underruns, got " + underrunCount1
+                        + ", " + getPcmWarning(),
                         underrunCount1 < 2);
 
                 // Estimate the sample rate and compare it with expected.
                 double estimatedRate = mTimestampAnalyzer.estimateSampleRate();
                 Log.d(TAG, "measured sample rate = " + estimatedRate);
-                assertEquals(TEST_NAME + ": measured sample rate" + getPcmWarning(),
+                assertEquals(TEST_NAME + ": measured sample rate " + getPcmWarning(),
                         mSampleRate, estimatedRate, mSampleRate * MAX_RATE_TOLERANCE_FRACTION);
 
                 // Check for jitter or retrograde motion in each timestamp.

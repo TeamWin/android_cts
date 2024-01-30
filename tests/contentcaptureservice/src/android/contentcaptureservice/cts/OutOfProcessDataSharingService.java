@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.app.Service;
 import android.content.Intent;
 import android.content.LocusId;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
@@ -40,6 +41,7 @@ import java.util.concurrent.Executors;
 public class OutOfProcessDataSharingService extends Service {
     private static final Executor sExecutor = Executors.newCachedThreadPool();
     private static final Random sRandom = new Random();
+    private final Handler mHandler = new Handler();
 
     boolean mSessionFinished = false;
     boolean mSessionSucceeded = false;
@@ -66,8 +68,12 @@ public class OutOfProcessDataSharingService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        setupKillingStage(intent);
-        shareData();
+        // We need to make sure we don't call killProcess before we get a chance to return
+        // START_NOT_STICKY, as that will cause the OS to restart us and cause race conditions.
+        mHandler.post(() -> {
+            setupKillingStage(intent);
+            shareData();
+        });
         return START_NOT_STICKY;
     }
 

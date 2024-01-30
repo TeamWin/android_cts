@@ -218,19 +218,6 @@ public class AccountManagerCrossUserTest {
                 /* handler= */ null);
     }
 
-    @Test
-    public void testAccountManager_startAddAccountSessionForCurrentUser() throws Exception {
-        AccountManager accountManager = mContext.getSystemService(AccountManager.class);
-        accountManager.startAddAccountSession(
-                MockAuthenticator.ACCOUNT_TYPE,
-                AUTH_TOKEN_TYPE,
-                REQUIRED_FEATURES,
-                /* options= */ null,
-                /* activity= */ null,
-                /* callback= */ null,
-                /* handler= */ null);
-    }
-
     private void assertPermissionRevoked(String permission) throws Exception {
         assertThat(mContext.getPackageManager().checkPermission(permission,
                 mContext.getPackageName())).isEqualTo(PackageManager.PERMISSION_DENIED);

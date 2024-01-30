@@ -20,6 +20,7 @@ import static android.telephony.PreciseDisconnectCause.TEMPORARY_FAILURE;
 import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_TWN_CHT;
 import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_TWN_FET;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWER;
 
 import static org.junit.Assert.assertEquals;
@@ -47,6 +48,7 @@ import android.os.SystemProperties;
 import android.telecom.PhoneAccount;
 import android.telecom.TelecomManager;
 import android.telephony.AccessNetworkConstants;
+import android.telephony.CarrierRestrictionRules;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.ServiceState;
 import android.telephony.SubscriptionManager;
@@ -954,6 +956,7 @@ public class TelephonyManagerTestOnMockModem {
     /**
      * Test for primaryImei will return the IMEI that is set through mockModem
      */
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     @Test
     public void testGetPrimaryImei() {
         assumeTrue(sTelephonyManager.getActiveModemCount() > 0);
@@ -961,5 +964,47 @@ public class TelephonyManagerTestOnMockModem {
                 (tm) -> tm.getPrimaryImei());
         assertNotNull(primaryImei);
         assertEquals(MockModemConfigInterface.DEFAULT_PHONE1_IMEI, primaryImei);
+    }
+
+    /**
+     * Verify the change of PrimaryImei with respect to sim slot.
+     */
+    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @Test
+    public void onImeiMappingChanged() {
+        // As first step verify the primary Imei against the default allocation
+        assumeTrue(sTelephonyManager.getActiveModemCount() > 1);
+        String primaryImei = ShellIdentityUtils.invokeMethodWithShellPermissions(sTelephonyManager,
+                (tm) -> tm.getPrimaryImei());
+        assertNotNull(primaryImei);
+        assertEquals(MockModemConfigInterface.DEFAULT_PHONE1_IMEI, primaryImei);
+        String slot0Imei = ShellIdentityUtils.invokeMethodWithShellPermissions(sTelephonyManager,
+                (tm) -> tm.getImei(0));
+        assertEquals(slot0Imei, primaryImei);
+
+        // Second step is change the PrimaryImei to slot2 and verify the same.
+        if (sMockModemManager.changeImeiMapping()) {
+            Log.d(TAG, "Verifying primary IMEI after change in IMEI mapping");
+            primaryImei = ShellIdentityUtils.invokeMethodWithShellPermissions(sTelephonyManager,
+                    (tm) -> tm.getPrimaryImei());
+            assertNotNull(primaryImei);
+            assertEquals(MockModemConfigInterface.DEFAULT_PHONE1_IMEI, primaryImei);
+            String slot1Imei = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    sTelephonyManager,
+                    (tm) -> tm.getImei(1));
+            assertEquals(slot1Imei, primaryImei);
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @Test
+    public void getAllowedCarriers_ReadPhoneState_Restricted() throws Exception {
+        sMockModemManager.updateCarrierRestrictionInfo(getCarrierList(false),
+                CarrierRestrictions.CarrierRestrictionStatus.RESTRICTED);
+        CarrierRestrictionRules rules =runWithShellPermissionIdentity(() -> {
+            return sTelephonyManager.getCarrierRestrictionRules();
+        }, android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
+        assertEquals(TelephonyManager.CARRIER_RESTRICTION_STATUS_RESTRICTED,
+                rules.getCarrierRestrictionStatus());
     }
 }

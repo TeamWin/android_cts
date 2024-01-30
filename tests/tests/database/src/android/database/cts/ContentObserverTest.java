@@ -16,19 +16,35 @@
 
 package android.database.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.test.InstrumentationTestCase;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
+
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-public class ContentObserverTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class ContentObserverTest {
+    @Rule public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
     private static final Uri CONTENT_URI = Uri.parse("content://uri");
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = HandlerThread.class)
     public void testContentObserver() throws InterruptedException {
         // Test constructor with null handler, dispatchChange will directly invoke onChange.
         MyContentObserver contentObserver;
@@ -71,6 +87,8 @@ public class ContentObserverTest extends InstrumentationTestCase {
         looper.quit();
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = HandlerThread.class)
     public void testContentObserverWithUri() throws InterruptedException {
         // Test constructor with null handler, dispatchChange will directly invoke onChange.
         MyContentObserverWithUri contentObserver;
@@ -117,6 +135,7 @@ public class ContentObserverTest extends InstrumentationTestCase {
         looper.quit();
     }
 
+    @Test
     public void testDeliverSelfNotifications() {
         MyContentObserver contentObserver = new MyContentObserver(null);
         assertFalse(contentObserver.deliverSelfNotifications());
@@ -125,6 +144,7 @@ public class ContentObserverTest extends InstrumentationTestCase {
     /**
      * Verify that all incoming dispatch methods invoke all outgoing callbacks.
      */
+    @Test
     public void testDispatchChange_Completeness() {
         final MyContentObserver observer = new MyContentObserver(null);
 

@@ -34,6 +34,7 @@ import android.graphics.Typeface;
 import android.graphics.text.LineBreakConfig;
 import android.os.LocaleList;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.text.TextUtils;
 import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.CursorAnchorInfo.Builder;
@@ -56,6 +57,7 @@ import java.util.List;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class CursorAnchorInfoTest {
     private static final float EPSILON = 0.0000001f;
 

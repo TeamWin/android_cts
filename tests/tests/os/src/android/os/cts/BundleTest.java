@@ -16,34 +16,37 @@
 
 package android.os.cts;
 
+import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import android.content.ContentResolver;
-import android.content.Context;
+import static java.util.Collections.singletonList;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
-
-import androidx.annotation.Nullable;
-import androidx.test.runner.AndroidJUnit4;
-
-
-import androidx.test.InstrumentationRegistry;
-
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
-import android.util.Log;
 import android.util.SparseArray;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -53,28 +56,13 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import static java.util.Collections.singletonList;
-
-@RunWith(AndroidJUnit4.class)
 public class BundleTest {
+    @Rule public RavenwoodRule mRavenwood = new RavenwoodRule();
+
     private static final boolean BOOLEANKEYVALUE = false;
     private static final int INTKEYVALUE = 20;
     private static final String INTKEY = "intkey";
@@ -84,17 +72,16 @@ public class BundleTest {
     private static final String KEY1 = "key1";
     private static final String KEY2 = "key2";
 
-    private Spannable mSpannable;
     private Bundle mBundle;
-    private Context mContext;
-    private ContentResolver mResolver;
+    private Spannable mSpannable;
 
     @Before
     public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mResolver = mContext.getContentResolver();
         mBundle = new Bundle();
         mBundle.setClassLoader(getClass().getClassLoader());
+    }
+
+    private void initSpannable() {
         mSpannable = new SpannableString("foo bar");
         mSpannable.setSpan(new ForegroundColorSpan(0x123456), 0, 3, 0);
     }
@@ -307,7 +294,9 @@ public class BundleTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = SpannableString.class)
     public void testGetCharSequence() {
+        initSpannable();
         final CharSequence cS = "Bruce Lee";
 
         assertNull(mBundle.getCharSequence(KEY1));
@@ -322,7 +311,9 @@ public class BundleTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = SpannableString.class)
     public void testGetCharSequenceArray() {
+        initSpannable();
         assertNull(mBundle.getCharSequenceArray(KEY1));
         mBundle.putCharSequenceArray(KEY1, new CharSequence[] {
                 "one", "two", "three", mSpannable
@@ -343,7 +334,9 @@ public class BundleTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = SpannableString.class)
     public void testGetCharSequenceArrayList() {
+        initSpannable();
         assertNull(mBundle.getCharSequenceArrayList(KEY1));
         final ArrayList<CharSequence> list = new ArrayList<CharSequence>();
         list.add("one");
@@ -810,21 +803,21 @@ public class BundleTest {
         assertNull(mBundle.getSparseParcelableArray(KEY1));
         final SparseArray<Parcelable> sparseArray = new SparseArray<Parcelable>();
         final Bundle bundle = new Bundle();
-        final Intent intent = new Intent();
+        final CustomParcelable custom = new CustomParcelable(42, "example");
         sparseArray.put(1006, bundle);
-        sparseArray.put(1007, intent);
+        sparseArray.put(1007, custom);
         mBundle.putSparseParcelableArray(KEY1, sparseArray);
         SparseArray<Parcelable> ret = mBundle.getSparseParcelableArray(KEY1);
         assertEquals(2, ret.size());
         assertNull(ret.get(1008));
         assertTrue(bundle.equals(ret.get(1006)));
-        assertTrue(intent.equals(ret.get(1007)));
+        assertTrue(custom.equals(ret.get(1007)));
         roundtrip();
         ret = mBundle.getSparseParcelableArray(KEY1);
         assertEquals(2, ret.size());
         assertNull(ret.get(1008));
         assertBundleEquals(bundle, (Bundle) ret.get(1006));
-        assertIntentEquals(intent, (Intent) ret.get(1007));
+        assertEquals(custom, (CustomParcelable) ret.get(1007));
     }
 
     @Test
@@ -884,13 +877,14 @@ public class BundleTest {
     public void testGetSparseParcelableArrayTypeSafe_withMixedTypes_returnsObject() {
         final SparseArray<Parcelable> original = new SparseArray<>();
         original.put(42, new CustomParcelable(42, "don't panic"));
-        original.put(1961, new Intent("action"));
+        original.put(1961, new ComposedParcelable(21, new CustomParcelable(21, "off we go")));
         mBundle.putSparseParcelableArray(KEY1, original);
         roundtrip();
         final SparseArray<Parcelable> received = mBundle.getSparseParcelableArray(KEY1, Parcelable.class);
         assertEquals(original.size(), received.size());
         assertEquals(original.get(42), received.get(42));
-        assertIntentEquals((Intent) original.get(1961), (Intent) received.get(1961));
+        assertEquals((ComposedParcelable) original.get(1961),
+                (ComposedParcelable) received.get(1961));
     }
 
     @Test
@@ -965,6 +959,7 @@ public class BundleTest {
     // return 0 if no fd and return 1 if has fd for the tested Bundle
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testDescribeContents() {
         assertTrue((mBundle.describeContents()
                 & Parcelable.CONTENTS_FILE_DESCRIPTOR) == 0);
@@ -997,6 +992,7 @@ public class BundleTest {
     // case 3: The tested Bundle should has FileDescriptor
     //  if put a Parcelable object, which is created with a FileDescriptor, into it.
     @Test
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptors_withParcelFdItem() {
         assertFalse(mBundle.hasFileDescriptors());
 
@@ -1037,6 +1033,7 @@ public class BundleTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptors_withParcelable() throws Exception {
         assertTrue(mBundle.isEmpty());
         assertFalse(mBundle.hasFileDescriptors());
@@ -1049,6 +1046,7 @@ public class BundleTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptors_withStringArray() throws Exception {
         assertTrue(mBundle.isEmpty());
         assertFalse(mBundle.hasFileDescriptors());
@@ -1058,6 +1056,7 @@ public class BundleTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptors_withSparseArray() throws Exception {
         assertTrue(mBundle.isEmpty());
         assertFalse(mBundle.hasFileDescriptors());
@@ -1078,6 +1077,7 @@ public class BundleTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptors_withParcelableArray() throws Exception {
         assertTrue(mBundle.isEmpty());
         assertFalse(mBundle.hasFileDescriptors());
@@ -1092,6 +1092,7 @@ public class BundleTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptorsOnNullValuedCollection() {
         assertFalse(mBundle.hasFileDescriptors());
 
@@ -1114,6 +1115,7 @@ public class BundleTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptors_withNestedContainers() throws IOException {
         // Purposely omitting generic types here, this is still "valid" app code after all.
         ArrayList nested = new ArrayList(
@@ -1130,6 +1132,7 @@ public class BundleTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptors_withOriginalParcelContainingFdButNotItems() throws IOException {
         mBundle.putParcelable("fd", ParcelFileDescriptor.dup(FileDescriptor.in));
         mBundle.putParcelable("parcelable", new CustomParcelable(13, "Tiramisu"));
@@ -1145,6 +1148,7 @@ public class BundleTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = ParcelFileDescriptor.class)
     public void testHasFileDescriptors_withOriginalParcelAndItemsContainingFd() throws IOException {
         mBundle.putParcelable("fd", ParcelFileDescriptor.dup(FileDescriptor.in));
         mBundle.putParcelable("parcelable", new CustomParcelable(13, "Tiramisu"));
@@ -1268,10 +1272,6 @@ public class BundleTest {
         }
     }
 
-    private void assertIntentEquals(Intent expected, Intent observed) {
-        assertEquals(expected.toUri(0), observed.toUri(0));
-    }
-
     private void assertSpannableEquals(Spannable expected, CharSequence observed) {
         final Spannable observedSpan = (Spannable) observed;
         assertEquals(expected.toString(), observed.toString());
@@ -1285,6 +1285,7 @@ public class BundleTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood
     public void testHasFileDescriptor() throws Exception {
         final ParcelFileDescriptor[] pipe = ParcelFileDescriptor.createPipe();
         try {
@@ -1528,7 +1529,7 @@ public class BundleTest {
         assertThat(CustomSerializable.sDeserialized).isTrue();
     }
 
-    private static class CustomSerializable implements Serializable {
+    public static class CustomSerializable implements Serializable {
         public static boolean sDeserialized = false;
 
         private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -1537,10 +1538,10 @@ public class BundleTest {
         }
     }
 
-    private static class AnotherSerializable implements Serializable {
+    public static class AnotherSerializable implements Serializable {
     }
 
-    private static class CustomParcelable implements Parcelable {
+    public static class CustomParcelable implements Parcelable {
         public static boolean sDeserialized = false;
 
         public final int integer;
@@ -1611,7 +1612,7 @@ public class BundleTest {
         };
     }
 
-    private static class ComposedParcelable implements Parcelable {
+    public static class ComposedParcelable implements Parcelable {
         public final int integer;
         public final Parcelable parcelable;
 

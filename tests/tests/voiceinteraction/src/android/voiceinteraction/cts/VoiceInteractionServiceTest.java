@@ -74,7 +74,7 @@ import java.util.concurrent.TimeoutException;
  */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "No real use case for instant mode")
-public class VoiceInteractionServiceTest {
+public class VoiceInteractionServiceTest extends AbstractHdsTestCase {
 
     private static final String TAG = "VoiceInteractionServiceTest";
     private static final String KEY_SHOW_SESSION_TEST = "showSessionTest";
@@ -84,11 +84,11 @@ public class VoiceInteractionServiceTest {
             "android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService";
     protected final Context mContext = getInstrumentation().getTargetContext();
 
-    private CtsBasicVoiceInteractionService mService;
-
     @Rule
     public VoiceInteractionServiceConnectedRule mConnectedRule =
             new VoiceInteractionServiceConnectedRule(mContext, getTestVoiceInteractionService());
+
+    private CtsBasicVoiceInteractionService mService;
 
     public String getTestVoiceInteractionService() {
         Log.d(TAG, "getTestVoiceInteractionService()");
@@ -100,8 +100,12 @@ public class VoiceInteractionServiceTest {
         // VoiceInteractionServiceConnectedRule handles the service connected, we should be
         // able to get service
         mService = (CtsBasicVoiceInteractionService) BaseVoiceInteractionService.getService();
+
         // Check we can get the service, we need service object to call the service provided method
         Objects.requireNonNull(mService);
+
+        // Set whether voice activation permission enabled.
+        mService.setVoiceActivationPermissionEnabled(mVoiceActivationPermissionEnabled);
     }
 
     @After

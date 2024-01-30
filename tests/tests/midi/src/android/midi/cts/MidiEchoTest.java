@@ -16,7 +16,10 @@
 
 package android.midi.cts;
 
-import android.content.Context;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import android.app.Application;
 import android.content.pm.PackageManager;
 import android.media.midi.MidiDevice;
 import android.media.midi.MidiDeviceInfo;
@@ -27,21 +30,37 @@ import android.media.midi.MidiManager;
 import android.media.midi.MidiOutputPort;
 import android.media.midi.MidiReceiver;
 import android.os.Bundle;
-import android.test.AndroidTestCase;
+import android.os.Handler;
+import android.os.Looper;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 
+import androidx.test.core.app.ApplicationProvider;
+
+import android.media.midi.Flags;
 import com.android.midi.CTSMidiEchoTestService;
+import com.android.midi.CTSMidiUmpEchoTestService;
 import com.android.midi.MidiEchoTestService;
+import com.android.midi.MidiUmpEchoTestService;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Random;
+import java.util.concurrent.Executor;
 
 /**
  * Test MIDI using a virtual MIDI device that echos input to output.
  */
-public class MidiEchoTest extends AndroidTestCase {
+@RunWith(JUnit4.class)
+public class MidiEchoTest {
     private static final String TAG = "MidiEchoTest";
     private static final boolean DEBUG = false;
 
@@ -65,6 +84,8 @@ public class MidiEchoTest extends AndroidTestCase {
     // can be sent internally by MidiInputPort in a
     // SOCK_SEQPACKET datagram.
     private static final int MAX_PACKET_DATA_SIZE = 1024 - 9;
+
+    private final Application mContext = ApplicationProvider.getApplicationContext();
 
     // Store device and ports related to the Echo service.
     static class MidiTestContext {
@@ -90,7 +111,7 @@ public class MidiEchoTest extends AndroidTestCase {
 
     // Listens for an asynchronous device open and notifies waiting foreground
     // test.
-    class MyTestOpenCallback implements MidiManager.OnDeviceOpenedListener {
+    static class MyTestOpenCallback implements MidiManager.OnDeviceOpenedListener {
         MidiDevice mDevice;
 
         @Override
@@ -112,7 +133,7 @@ public class MidiEchoTest extends AndroidTestCase {
     }
 
     // Store received messages in an array.
-    class MyLoggingReceiver extends MidiReceiver {
+    static class MyLoggingReceiver extends MidiReceiver {
         ArrayList<MidiMessage> messages = new ArrayList<MidiMessage>();
         int mByteCount;
 
@@ -139,14 +160,14 @@ public class MidiEchoTest extends AndroidTestCase {
         /**
          * Wait until count messages have arrived. This is a cumulative total.
          *
-         * @param count
-         * @param timeoutMs
-         * @throws InterruptedException
+         * @param count number of messages to wait for
+         * @param timeoutMs timeout in milliseconds
+         * @throws InterruptedException if the wait is interrupted
          */
         public synchronized void waitForMessages(int count, int timeoutMs)
                 throws InterruptedException {
-            long endTimeMs = System.currentTimeMillis() + timeoutMs + 1;
-            long timeToWait = timeoutMs + 1;
+            long endTimeMs = System.currentTimeMillis() + timeoutMs + 1L;
+            long timeToWait = timeoutMs + 1L;
             while ((getMessageCount() < count)
                     && (timeToWait > 0)) {
                 wait(timeToWait);
@@ -157,9 +178,9 @@ public class MidiEchoTest extends AndroidTestCase {
         /**
          * Wait until count bytes have arrived. This is a cumulative total.
          *
-         * @param count
-         * @param timeoutMs
-         * @throws InterruptedException
+         * @param count number of bytes to wait for
+         * @param timeoutMs timeout in milliseconds
+         * @throws InterruptedException if the wait is interrupted
          */
         public synchronized void waitForBytes(int count, int timeoutMs)
                 throws InterruptedException {
@@ -173,22 +194,15 @@ public class MidiEchoTest extends AndroidTestCase {
         }
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-    }
-
-    protected MidiTestContext setUpEchoServer() throws Exception {
+    protected MidiTestContext setUpLegacyEchoServer() throws Exception {
         if (DEBUG) {
             Log.i(TAG, "setUpEchoServer()");
         }
-        MidiManager midiManager = (MidiManager) mContext.getSystemService(
-                Context.MIDI_SERVICE);
+        MidiManager midiManager = mContext.getSystemService(MidiManager.class);
 
         MidiDeviceInfo echoInfo = CTSMidiEchoTestService.findEchoDevice(mContext);
 
@@ -232,12 +246,67 @@ public class MidiEchoTest extends AndroidTestCase {
         return mc;
     }
 
+    protected MidiTestContext setUpUmpEchoServer() throws Exception {
+        if (DEBUG) {
+            Log.i(TAG, "setUpEchoServer()");
+        }
+        MidiManager midiManager = mContext.getSystemService(MidiManager.class);
+        MidiDeviceInfo echoInfo = CTSMidiUmpEchoTestService.findEchoDevice(mContext);
+
+        // Open device.
+        MyTestOpenCallback callback = new MyTestOpenCallback();
+        midiManager.openDevice(echoInfo, callback, null);
+        MidiDevice echoDevice = callback.waitForOpen(TIMEOUT_OPEN_MSEC);
+        assertTrue("could not open "
+                + CTSMidiUmpEchoTestService.getEchoServerName(), echoDevice != null);
+
+        // Query echo service directly to see if it is getting status updates.
+        MidiUmpEchoTestService echoService = CTSMidiUmpEchoTestService.getInstance();
+        assertEquals("virtual device status, input port before open", false,
+                echoService.inputOpened);
+        assertEquals("virtual device status, output port before open", 0,
+                echoService.outputOpenCount);
+
+        // Open input port.
+        MidiInputPort echoInputPort = echoDevice.openInputPort(0);
+        assertTrue("could not open input port", echoInputPort != null);
+        assertEquals("input port number", 0, echoInputPort.getPortNumber());
+        assertEquals("virtual device status, input port after open", true,
+                echoService.inputOpened);
+        assertEquals("virtual device status, output port before open", 0,
+                echoService.outputOpenCount);
+
+        // Open output port.
+        MidiOutputPort echoOutputPort = echoDevice.openOutputPort(0);
+        assertTrue("could not open output port", echoOutputPort != null);
+        assertEquals("output port number", 0, echoOutputPort.getPortNumber());
+        assertEquals("virtual device status, input port after open", true,
+                echoService.inputOpened);
+        assertEquals("virtual device status, output port after open", 1,
+                echoService.outputOpenCount);
+
+        MidiTestContext mc = new MidiTestContext();
+        mc.echoInfo = echoInfo;
+        mc.echoDevice = echoDevice;
+        mc.echoInputPort = echoInputPort;
+        mc.echoOutputPort = echoOutputPort;
+        return mc;
+    }
+
+    protected MidiTestContext setUpEchoServer(boolean useUmp) throws Exception {
+        if (useUmp) {
+            return setUpUmpEchoServer();
+        } else {
+            return setUpLegacyEchoServer();
+        }
+    }
+
     /**
      * Close ports and check device status.
      *
-     * @param mc
+     * @param mc MidiTestContext to tear down
      */
-    protected void tearDownEchoServer(MidiTestContext mc) throws IOException {
+    protected void tearDownLegacyEchoServer(MidiTestContext mc) throws IOException {
         // Query echo service directly to see if it is getting status updates.
         MidiEchoTestService echoService = CTSMidiEchoTestService.getInstance();
         assertEquals("virtual device status, input port before close", true,
@@ -268,11 +337,56 @@ public class MidiEchoTest extends AndroidTestCase {
     }
 
     /**
-     * @param mc
-     * @param echoInfo
+     * Close ports and check device status.
+     *
+     * @param mc MidiTestContext to tear down
+     */
+    protected void tearDownUmpEchoServer(MidiTestContext mc) throws IOException {
+        // Query echo service directly to see if it is getting status updates.
+        MidiUmpEchoTestService echoService = CTSMidiUmpEchoTestService.getInstance();
+        assertEquals("virtual device status, input port before close", true,
+                echoService.inputOpened);
+        assertEquals("virtual device status, output port before close", 1,
+                echoService.outputOpenCount);
+
+        // Close output port.
+        mc.echoOutputPort.close();
+        assertEquals("virtual device status, input port before close", true,
+                echoService.inputOpened);
+        assertEquals("virtual device status, output port after close", 0,
+                echoService.outputOpenCount);
+        mc.echoOutputPort.close();
+        mc.echoOutputPort.close(); // should be safe to close twice
+
+        // Close input port.
+        mc.echoInputPort.close();
+        assertEquals("virtual device status, input port after close", false,
+                echoService.inputOpened);
+        assertEquals("virtual device status, output port after close", 0,
+                echoService.outputOpenCount);
+        mc.echoInputPort.close();
+        mc.echoInputPort.close(); // should be safe to close twice
+
+        mc.echoDevice.close();
+        mc.echoDevice.close(); // should be safe to close twice
+    }
+
+    protected void tearDownEchoServer(MidiTestContext mc, boolean useUmp)
+            throws IOException {
+        if (useUmp) {
+            tearDownUmpEchoServer(mc);
+        } else {
+            tearDownLegacyEchoServer(mc);
+        }
+    }
+
+    /**
+     * @param mc MidiTestContext to tear down
+     * @param echoInfo device info of the echo device
+     * @param useUmp whether to use UMP or legacy
      */
     protected void checkEchoDeviceInfo(MidiTestContext mc,
-            MidiDeviceInfo echoInfo) {
+            MidiDeviceInfo echoInfo, boolean useUmp) {
         assertEquals("echo input port count wrong", 1,
                 echoInfo.getInputPortCount());
         assertEquals("echo output port count wrong", 1,
@@ -290,13 +404,20 @@ public class MidiEchoTest extends AndroidTestCase {
         for (PortInfo portInfo : ports) {
             if (portInfo.getType() == PortInfo.TYPE_INPUT) {
                 foundInput = true;
-                assertEquals("input port name", "input", portInfo.getName());
-
+                if (useUmp) {
+                    assertEquals("input port name", "port", portInfo.getName());
+                } else {
+                    assertEquals("input port name", "input", portInfo.getName());
+                }
                 assertEquals("info port number", portInfo.getPortNumber(),
                         mc.echoInputPort.getPortNumber());
             } else if (portInfo.getType() == PortInfo.TYPE_OUTPUT) {
                 foundOutput = true;
-                assertEquals("output port name", "output", portInfo.getName());
+                if (useUmp) {
+                    assertEquals("input port name", "port", portInfo.getName());
+                } else {
+                    assertEquals("input port name", "output", portInfo.getName());
+                }
                 assertEquals("info port number", portInfo.getPortNumber(),
                         mc.echoOutputPort.getPortNumber());
             }
@@ -306,22 +427,26 @@ public class MidiEchoTest extends AndroidTestCase {
 
         assertEquals("MIDI device type", MidiDeviceInfo.TYPE_VIRTUAL,
                 echoInfo.getType());
-        assertEquals("MIDI default protocol", MidiDeviceInfo.PROTOCOL_UNKNOWN,
-                echoInfo.getDefaultProtocol());
+        if (useUmp) {
+            assertEquals("MIDI default protocol", MidiDeviceInfo.PROTOCOL_UMP_MIDI_2_0,
+                    echoInfo.getDefaultProtocol());
+        } else {
+            assertEquals("MIDI default protocol", MidiDeviceInfo.PROTOCOL_UNKNOWN,
+                    echoInfo.getDefaultProtocol());
+        }
     }
 
-    // Is the MidiManager supported?
-    public void testMidiManager() throws Exception {
+    @Test
+    public void testMidiManagerLegacy() throws Exception {
         PackageManager pm = mContext.getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
             return; // Not supported so don't test it.
         }
 
-        MidiManager midiManager = (MidiManager) mContext.getSystemService(
-                Context.MIDI_SERVICE);
+        MidiManager midiManager = mContext.getSystemService(MidiManager.class);
         assertTrue("MidiManager not supported.", midiManager != null);
 
-        // There should be at least one device for the Echo server.
+        // There should be at least a device for the Echo server.
         MidiDeviceInfo[] infos = midiManager.getDevices();
         assertTrue("device list was null", infos != null);
         assertTrue("device list was empty", infos.length >= 1);
@@ -330,62 +455,151 @@ public class MidiEchoTest extends AndroidTestCase {
                 MidiManager.TRANSPORT_MIDI_BYTE_STREAM);
         assertTrue("Legacy Device list was null.", legacyDeviceInfos != null);
         assertTrue("Legacy Device list was empty", legacyDeviceInfos.size() >= 1);
-        Collection<MidiDeviceInfo> universalDeviceInfos = midiManager.getDevicesForTransport(
-                MidiManager.TRANSPORT_UNIVERSAL_MIDI_PACKETS);
-        assertTrue("Universal Device list was null.", universalDeviceInfos != null);
     }
 
-    public void testDeviceInfo() throws Exception {
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
+    public void testMidiManagerUmp() throws Exception {
         PackageManager pm = mContext.getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
             return; // Not supported so don't test it.
         }
 
-        MidiTestContext mc = setUpEchoServer();
-        checkEchoDeviceInfo(mc, mc.echoInfo);
-        checkEchoDeviceInfo(mc, mc.echoDevice.getInfo());
+        MidiManager midiManager = mContext.getSystemService(MidiManager.class);
+        assertTrue("MidiManager not supported.", midiManager != null);
+
+        Collection<MidiDeviceInfo> universalDeviceInfos = midiManager.getDevicesForTransport(
+                MidiManager.TRANSPORT_UNIVERSAL_MIDI_PACKETS);
+        assertTrue("Universal Device list was null.", universalDeviceInfos != null);
+        assertTrue("Universal Device list was empty", universalDeviceInfos.size() >= 1);
+    }
+
+    @Test
+    @RequiresFlagsDisabled(Flags.FLAG_VIRTUAL_UMP)
+    public void testMidiManagerUmpDisabled() throws Exception {
+        PackageManager pm = mContext.getPackageManager();
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
+            return; // Not supported so don't test it.
+        }
+
+        MidiManager midiManager = mContext.getSystemService(MidiManager.class);
+        assertTrue("MidiManager not supported.", midiManager != null);
+
+        Collection<MidiDeviceInfo> universalDeviceInfos = midiManager.getDevicesForTransport(
+                MidiManager.TRANSPORT_UNIVERSAL_MIDI_PACKETS);
+        assertTrue("Universal Device list was null.", universalDeviceInfos != null);
+        assertTrue("Universal Device list was not empty", universalDeviceInfos.size() == 0);
+    }
+
+    @Test
+    public void testDeviceInfoLegacy() throws Exception {
+        PackageManager pm = mContext.getPackageManager();
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
+            return; // Not supported so don't test it.
+        }
+
+        MidiTestContext mc = setUpEchoServer(false);
+        checkEchoDeviceInfo(mc, mc.echoInfo, false);
+        checkEchoDeviceInfo(mc, mc.echoDevice.getInfo(), false);
         assertTrue("device info equal",
                 mc.echoInfo.equals(mc.echoDevice.getInfo()));
-        tearDownEchoServer(mc);
+        tearDownEchoServer(mc, false);
     }
 
-    public void testEchoSmallMessage() throws Exception {
-        checkEchoVariableMessage(3);
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
+    public void testDeviceInfoUmp() throws Exception {
+        PackageManager pm = mContext.getPackageManager();
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
+            return; // Not supported so don't test it.
+        }
+
+        MidiTestContext mc = setUpEchoServer(true);
+        checkEchoDeviceInfo(mc, mc.echoInfo, true);
+        checkEchoDeviceInfo(mc, mc.echoDevice.getInfo(), true);
+        assertTrue("device info equal",
+                mc.echoInfo.equals(mc.echoDevice.getInfo()));
+        tearDownEchoServer(mc, true);
     }
 
-    public void testEchoLargeMessage() throws Exception {
-        checkEchoVariableMessage(MAX_PACKET_DATA_SIZE);
+    @Test
+    public void testEchoSmallMessageLegacy() throws Exception {
+        checkEchoVariableMessage(3, false);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
+    public void testEchoSmallMessageUmp() throws Exception {
+        checkEchoVariableMessage(8, true);
+    }
+
+    @Test
+    public void testEchoLargeMessageLegacy() throws Exception {
+        checkEchoVariableMessage(MAX_PACKET_DATA_SIZE, false);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
+    public void testEchoLargeMessageUmp() throws Exception {
+        checkEchoVariableMessage(MAX_PACKET_DATA_SIZE, true);
     }
 
     // This message will not fit in the internal buffer in MidiInputPort.
     // But it is still a legal size according to the API for
     // MidiReceiver.send(). It may be received in multiple packets.
-    public void testEchoOversizeMessage() throws Exception {
-        checkEchoVariableMessage(MAX_PACKET_DATA_SIZE + 20);
+    @Test
+    public void testEchoOversizeMessageLegacy() throws Exception {
+        checkEchoVariableMessage(MAX_PACKET_DATA_SIZE + 20, false);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
+    public void testEchoOversizeMessageUmp() throws Exception {
+        checkEchoVariableMessage(MAX_PACKET_DATA_SIZE + 20, true);
     }
 
     // Send a variable sized message. The actual
     // size will be a multiple of 3 because it sends NoteOns.
-    public void checkEchoVariableMessage(int messageSize) throws Exception {
+    public void checkEchoVariableMessage(int messageSize, boolean useUmp) throws Exception {
         PackageManager pm = mContext.getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
             return; // Not supported so don't test it.
         }
 
-        MidiTestContext mc = setUpEchoServer();
+        MidiTestContext mc = setUpEchoServer(useUmp);
 
         MyLoggingReceiver receiver = new MyLoggingReceiver();
         mc.echoOutputPort.connect(receiver);
 
+        final int legacyNoteSize = 3;
+        final int umpNoteSize = 8;
+        int noteSize;
+        if (useUmp) {
+            noteSize = umpNoteSize;
+        } else {
+            noteSize = legacyNoteSize;
+        }
+
         // Send an integral number of notes
-        int numNotes = messageSize / 3;
-        int noteSize = numNotes * 3;
-        final byte[] buffer = new byte[noteSize];
+        int numNotes = messageSize / noteSize;
+        int bufferSize = numNotes * noteSize;
+        final byte[] buffer = new byte[bufferSize];
         int index = 0;
         for (int i = 0; i < numNotes; i++) {
+            if (useUmp) {
+                buffer[index++] = (byte) (0x40 + 0x03);       // MIDI 2.0 Message Type + Group 3
+                buffer[index++] = (byte) (0x90 + (i & 0x0F)); // Note On
+                buffer[index++] = (byte) 0x32;                // Pitch
+                buffer[index++] = (byte) 0x01;                // Attribute Type
+                buffer[index++] = (byte) 0x52;                // Velocity first byte
+                buffer[index++] = (byte) 0x31;                // Velocity second byte
+                buffer[index++] = (byte) 0x12;                // Attribute Data first byte
+                buffer[index++] = (byte) 0x34;                // Attribute Data second byte
+            } else {
                 buffer[index++] = (byte) (0x90 + (i & 0x0F)); // NoteOn
                 buffer[index++] = (byte) 0x47; // Pitch
                 buffer[index++] = (byte) 0x52; // Velocity
+            }
         };
         long timestamp = 0x0123765489ABFEDCL;
 
@@ -425,16 +639,27 @@ public class MidiEchoTest extends AndroidTestCase {
         }
 
         mc.echoOutputPort.disconnect(receiver);
-        tearDownEchoServer(mc);
+        tearDownEchoServer(mc, useUmp);
     }
 
-    public void testEchoLatency() throws Exception {
+    @Test
+    public void testEchoLatencyLegacy() throws Exception {
+        testEchoLatency(false);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
+    public void testEchoLatencyUmp() throws Exception {
+        testEchoLatency(true);
+    }
+
+    public void testEchoLatency(boolean useUmp) throws Exception {
         PackageManager pm = mContext.getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
             return; // Not supported so don't test it.
         }
 
-        MidiTestContext mc = setUpEchoServer();
+        MidiTestContext mc = setUpEchoServer(useUmp);
         MyLoggingReceiver receiver = new MyLoggingReceiver();
         mc.echoOutputPort.connect(receiver);
 
@@ -470,16 +695,27 @@ public class MidiEchoTest extends AndroidTestCase {
         }
 
         mc.echoOutputPort.disconnect(receiver);
-        tearDownEchoServer(mc);
+        tearDownEchoServer(mc, useUmp);
     }
 
-    public void testEchoMultipleMessages() throws Exception {
+    @Test
+    public void testEchoMultipleMessagesLegacy() throws Exception {
+        testEchoMultipleMessages(false);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
+    public void testEchoMultipleMessagesUmp() throws Exception {
+        testEchoMultipleMessages(true);
+    }
+
+    public void testEchoMultipleMessages(boolean useUmp) throws Exception {
         PackageManager pm = mContext.getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
             return; // Not supported so don't test it.
         }
 
-        MidiTestContext mc = setUpEchoServer();
+        MidiTestContext mc = setUpEchoServer(useUmp);
 
         MyLoggingReceiver receiver = new MyLoggingReceiver();
         mc.echoOutputPort.connect(receiver);
@@ -487,7 +723,6 @@ public class MidiEchoTest extends AndroidTestCase {
         final byte[] buffer = new byte[2048];
 
         final int numMessages = 100;
-        Random random = new Random(1972941337);
         int bytesSent = 0;
         byte value = 0;
 
@@ -543,26 +778,47 @@ public class MidiEchoTest extends AndroidTestCase {
         }
 
         mc.echoOutputPort.disconnect(receiver);
-        tearDownEchoServer(mc);
+        tearDownEchoServer(mc, useUmp);
     }
 
     // What happens if the app does bad things.
-    public void testEchoBadBehavior() throws Exception {
+    @Test
+    public void testEchoBadBehaviorLegacy() throws Exception {
         PackageManager pm = mContext.getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
             return; // Not supported so don't test it.
         }
-        MidiTestContext mc = setUpEchoServer();
+        MidiTestContext mc = setUpEchoServer(false);
 
         // This should fail because it is already open.
         MidiInputPort echoInputPort2 = mc.echoDevice.openInputPort(0);
         assertTrue("input port opened twice", echoInputPort2 == null);
 
-        tearDownEchoServer(mc);
+        tearDownEchoServer(mc, false);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
+    public void testEchoBadBehaviorUmp() throws Exception {
+        PackageManager pm = mContext.getPackageManager();
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
+            return; // Not supported so don't test it.
+        }
+        MidiTestContext mc = setUpEchoServer(true);
+
+        // This should fail because it is already open.
+        MidiInputPort echoInputPort2 = mc.echoDevice.openInputPort(0);
+        assertTrue("input port opened twice", echoInputPort2 == null);
+
+        // This should fail because it is already open.
+        MidiOutputPort echoOutputPort2 = mc.echoDevice.openOutputPort(0);
+        assertTrue("output port opened twice", echoOutputPort2 == null);
+
+        tearDownEchoServer(mc, true);
     }
 
     // Store history of status changes.
-    private class MyDeviceCallback extends MidiManager.DeviceCallback {
+    private static class MyDeviceCallback extends MidiManager.DeviceCallback {
         private volatile MidiDeviceStatus mStatus;
         private MidiDeviceInfo mInfo;
 
@@ -599,27 +855,55 @@ public class MidiEchoTest extends AndroidTestCase {
         }
     }
 
+    @Test
+    public void testDeviceCallbackLegacy() throws Exception {
+        testDeviceCallback(false);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
+    public void testDeviceCallbackUmp() throws Exception {
+        testDeviceCallback(true);
+    }
+
     // Test callback for onDeviceStatusChanged().
-    public void testDeviceCallback() throws Exception {
+    public void testDeviceCallback(boolean useUmp) throws Exception {
 
         PackageManager pm = mContext.getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
             return; // Not supported so don't test it.
         }
-        MidiManager midiManager = (MidiManager) mContext.getSystemService(
-                Context.MIDI_SERVICE);
+        MidiManager midiManager = mContext.getSystemService(MidiManager.class);
 
-        MidiDeviceInfo echoInfo = CTSMidiEchoTestService.findEchoDevice(mContext);
+        MidiDeviceInfo echoInfo;
+        if (useUmp) {
+            echoInfo = CTSMidiUmpEchoTestService.findEchoDevice(mContext);
+        } else {
+            echoInfo = CTSMidiEchoTestService.findEchoDevice(mContext);
+        }
 
         // Open device.
         MyTestOpenCallback callback = new MyTestOpenCallback();
         midiManager.openDevice(echoInfo, callback, null);
         MidiDevice echoDevice = callback.waitForOpen(TIMEOUT_OPEN_MSEC);
-        assertTrue("could not open " + CTSMidiEchoTestService.getEchoServerName(), echoDevice != null);
+        if (useUmp) {
+            assertTrue("could not open " + CTSMidiUmpEchoTestService.getEchoServerName(),
+                    echoDevice != null);
+        } else {
+            assertTrue("could not open " + CTSMidiEchoTestService.getEchoServerName(),
+                    echoDevice != null);
+        }
         MyDeviceCallback deviceCallback = new MyDeviceCallback(echoInfo);
         try {
-
-            midiManager.registerDeviceCallback(deviceCallback, null);
+            final Handler handler = new Handler(Looper.getMainLooper());
+            final Executor executor = handler::post;
+            if (useUmp) {
+                midiManager.registerDeviceCallback(MidiManager.TRANSPORT_UNIVERSAL_MIDI_PACKETS,
+                        executor, deviceCallback);
+            } else {
+                midiManager.registerDeviceCallback(MidiManager.TRANSPORT_MIDI_BYTE_STREAM,
+                        executor, deviceCallback);
+            }
 
             MidiDeviceStatus status = deviceCallback.waitForStatus(TIMEOUT_STATUS_MSEC);
             // The DeviceStatus callback is supposed to be "sticky".

@@ -28,6 +28,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.inputmethodservice.InputMethodService;
 import android.os.StrictMode;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.widget.EditText;
@@ -52,6 +53,7 @@ import java.util.concurrent.TimeUnit;
 /** Tests for verifying {@link StrictMode} violations on {@link InputMethodService} APIs. */
 @LargeTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class InputMethodServiceStrictModeTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long EXPECTED_TIMEOUT = TimeUnit.SECONDS.toMillis(2);

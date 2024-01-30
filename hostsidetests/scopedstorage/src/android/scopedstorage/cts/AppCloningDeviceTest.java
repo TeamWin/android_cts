@@ -18,6 +18,7 @@ package android.scopedstorage.cts;
 
 import static android.scopedstorage.cts.lib.TestUtils.canOpenFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.createFileAs;
+import static android.scopedstorage.cts.lib.TestUtils.fileExistsAs;
 import static android.scopedstorage.cts.lib.TestUtils.listAs;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -50,9 +51,24 @@ public class AppCloningDeviceTest {
         String dirPath = String.format(EXTERNAL_STORAGE_DCIM_PATH,
                 Integer.parseInt(getCurrentUserId()));
         final File dir = new File(dirPath);
-        assertThat(dir.exists()).isTrue();
+        //TODO: After b/285880821 is fixed, we can re-add the DCIM directory presence check.
+        //assertThat(dir.exists()).isTrue();
         final File file = new File(dir, getFileToBeCreatedName());
         assertThat(createFileAs(APP_B_NO_PERMS, file.getPath())).isTrue();
+        assertThat(canOpenFileAs(APP_B_NO_PERMS, file, true)).isTrue();
+        assertThat(listAs(APP_B_NO_PERMS, dir.getPath())).contains(file.getName());
+    }
+
+    @Test
+    public void testInsertFilesInDirectoryViaMediaProviderWithPathSpecified() throws Exception {
+        String dirPath = String.format(EXTERNAL_STORAGE_DCIM_PATH,
+                Integer.parseInt(getUserIdForPath()));
+        final File dir = new File(dirPath);
+        //TODO: After b/285880821 is fixed, we can re-add the DCIM directory presence check.
+        //assertThat(dir.exists()).isTrue();
+        final File file = new File(dir, getFileToBeCreatedName());
+        assertThat(createFileAs(APP_B_NO_PERMS, file.getPath())).isTrue();
+        assertThat(fileExistsAs(APP_B_NO_PERMS, file)).isTrue();
         assertThat(canOpenFileAs(APP_B_NO_PERMS, file, true)).isTrue();
         assertThat(listAs(APP_B_NO_PERMS, dir.getPath())).contains(file.getName());
     }
@@ -73,6 +89,10 @@ public class AppCloningDeviceTest {
         final Bundle testArguments = InstrumentationRegistry.getArguments();
         String testArgumentValue = testArguments.getString(testArgumentKey, EMPTY_STRING);
         return testArgumentValue;
+    }
+
+    private String getUserIdForPath() {
+        return getTestArgumentValueForGivenKey("userIdForPath");
     }
 
     private String getCurrentUserId() {

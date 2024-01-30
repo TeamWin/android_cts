@@ -23,7 +23,7 @@ import android.content.BroadcastReceiver;
  *
  * <p>This is used instead of {@link BroadcastReceiver} so that it can be easily serialized.
  */
-public class BroadcastReceiverInfo extends ClassInfo {
+public class BroadcastReceiverInfo extends ReceiverInfo {
 
     public BroadcastReceiverInfo(BroadcastReceiver broadcastReceiver) {
         this(broadcastReceiver.getClass());

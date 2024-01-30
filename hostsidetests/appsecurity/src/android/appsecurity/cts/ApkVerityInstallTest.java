@@ -24,6 +24,10 @@ import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.host.HostFlagsValueProvider;
+import android.security.Flags;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -34,6 +38,7 @@ import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -44,6 +49,7 @@ import junitparams.Parameters;
 @Presubmit
 @RunWith(DeviceParameterizedRunner.class)
 @AppModeFull
+@RequiresFlagsDisabled(Flags.FLAG_DEPRECATE_FSV_SIG)
 @Ignore("b/303068306")
 public final class ApkVerityInstallTest extends BaseAppSecurityTest {
 
@@ -89,13 +95,17 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         };
     }
 
-    private int mLaunchApiLevel;
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            HostFlagsValueProvider.createCheckFlagsRule(this::getDevice);
+
     @Before
     public void setUp() throws DeviceNotAvailableException {
         ITestDevice device = getDevice();
         String apkVerityMode = device.getProperty("ro.apk_verity.mode");
-        mLaunchApiLevel = device.getLaunchApiLevel();
-        assumeTrue(mLaunchApiLevel >= 30 || APK_VERITY_STANDARD_MODE.equals(apkVerityMode));
+        // Force opt-in, or on a supported device by requirement
+        assumeTrue(APK_VERITY_STANDARD_MODE.equals(apkVerityMode)
+                || device.getLaunchApiLevel() >= 30 /* R */);
         assumeSecurityModelCompat();
     }
 
@@ -147,6 +157,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
     @CddTest(requirement = "9.10/C-0-3,C-0-5")
     @Test
     @Parameters(method = "installSingle")
+    @Ignore("b/301117615#comment5")
     public void testInstallBaseWithDm(boolean incremental) throws Exception {
         assumePreconditions(incremental);
         new InstallMultiple(incremental)
@@ -161,6 +172,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
     @CddTest(requirement = "9.10/C-0-3,C-0-5")
     @Test
     @Parameters(method = "installSingle")
+    @Ignore("b/301117615#comment5")
     public void testInstallEverything(boolean incremental) throws Exception {
         assumePreconditions(incremental);
         new InstallMultiple(incremental)
@@ -285,6 +297,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
     @CddTest(requirement = "9.10/C-0-3,C-0-5")
     @Test
     @Parameters(method = "installSingle")
+    @Ignore("b/301117615#comment5")
     public void testInstallBaseWithFsvSigAndSplitWithout(boolean incremental) throws Exception {
         assumePreconditions(incremental);
         new InstallMultiple(incremental)
@@ -301,6 +314,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
     @CddTest(requirement = "9.10/C-0-3,C-0-5")
     @Test
     @Parameters(method = "installSingle")
+    @Ignore("b/301117615#comment5")
     public void testInstallDmWithFsvSig(boolean incremental) throws Exception {
         assumePreconditions(incremental);
         new InstallMultiple(incremental)
@@ -317,6 +331,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
     @CddTest(requirement = "9.10/C-0-3,C-0-5")
     @Test
     @Parameters(method = "installSingle")
+    @Ignore("b/301117615#comment5")
     public void testInstallDmWithMissingFsvSig(boolean incremental) throws Exception {
         assumePreconditions(incremental);
         InstallMultiple installer = new InstallMultiple(incremental)
@@ -332,6 +347,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
     @CddTest(requirement = "9.10/C-0-3,C-0-5")
     @Test
     @Parameters(method = "installSingle")
+    @Ignore("b/301117615#comment5")
     public void testInstallSplitWithFsvSigAndBaseWithout(boolean incremental) throws Exception {
         assumePreconditions(incremental);
         InstallMultiple installer = new InstallMultiple(incremental)

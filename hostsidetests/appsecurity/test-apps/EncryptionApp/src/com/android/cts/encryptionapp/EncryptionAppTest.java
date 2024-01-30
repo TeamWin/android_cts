@@ -43,10 +43,11 @@ import android.os.strictmode.CredentialProtectedWhileLockedViolation;
 import android.os.strictmode.ImplicitDirectBootViolation;
 import android.os.strictmode.Violation;
 import android.provider.Settings;
-import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 import android.view.KeyEvent;
+
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.TestUtils;
 
@@ -116,6 +117,11 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         mDevice.executeShellCommand("locksettings set-disabled false");
         String output = mDevice.executeShellCommand("locksettings set-pin 1234");
         assertTrue("set-pin failed. Output: " + output, output.contains("1234"));
+
+        // Clear all other requests for lskf from the system.
+        String clearOutput = mDevice.executeShellCommand("cmd recovery clear-lskf android");
+        assertTrue("clear-lskf failed for package android. Output: " + clearOutput,
+                clearOutput.contains("success"));
     }
 
     public void testTearDown() throws Exception {

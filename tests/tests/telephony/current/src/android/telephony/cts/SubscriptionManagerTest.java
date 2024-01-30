@@ -53,6 +53,9 @@ import android.os.Looper;
 import android.os.ParcelUuid;
 import android.os.PersistableBundle;
 import android.os.Process;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
@@ -73,12 +76,14 @@ import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestThread;
+import com.android.internal.telephony.flags.Flags;
 import com.android.internal.util.ArrayUtils;
 
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -91,6 +96,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -100,7 +106,6 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 
 public class SubscriptionManagerTest {
     private static final String TAG = "SubscriptionManagerTest";
@@ -121,6 +126,9 @@ public class SubscriptionManagerTest {
     // time to wait for subscription plans to expire
     private static final int SUBSCRIPTION_PLAN_EXPIRY_MS = 50;
     private static final int SUBSCRIPTION_PLAN_CLEAR_WAIT_MS = 5000;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private int mSubId;
     private int mDefaultVoiceSubId;
@@ -340,6 +348,25 @@ public class SubscriptionManagerTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_WORK_PROFILE_API_SPLIT)
+    public void testForAllProfilesSubscriptionManager() {
+        SubscriptionManager allProfileSm = InstrumentationRegistry.getContext()
+                .getSystemService(SubscriptionManager.class).createForAllUserProfiles();
+
+        List<SubscriptionInfo> specificProfilesubList = ShellIdentityUtils
+                .invokeMethodWithShellPermissions(mSm,
+                        SubscriptionManager::getActiveSubscriptionInfoList);
+        // Assert when there is no sim card present or detected
+        assertNotNull("Active subscriber required", specificProfilesubList);
+
+        List<SubscriptionInfo> allProfileSubList = ShellIdentityUtils
+                .invokeMethodWithShellPermissions(allProfileSm,
+                        SubscriptionManager::getActiveSubscriptionInfoList);
+
+        assertTrue(allProfileSubList.size() >= specificProfilesubList.size());
+    }
+
+    @Test
     public void testSubscriptionPlans() throws Exception {
         // Make ourselves the owner
         setSubPlanOwner(mSubId, mPackageName);
@@ -462,15 +489,33 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSetDefaultVoiceSubId() {
+        // Only make sense to set default sub if the device supports more than 1 modem.
+        final TelephonyManager tm = InstrumentationRegistry.getContext()
+                .getSystemService(TelephonyManager.class).createForSubscriptionId(mSubId);
+        assumeTrue(tm.getSupportedModemCount() > 1);
+
         int oldSubId = SubscriptionManager.getDefaultVoiceSubscriptionId();
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity();
+
+        final String uniqueId = "00:01:02:03:04:05";
+        final String displayName = "device_name";
         try {
+            // Insert a second SIM
+            mSm.addSubscriptionInfoRecord(uniqueId, displayName, 1,
+                    SubscriptionManager.SUBSCRIPTION_TYPE_REMOTE_SIM);
+            mSm.getActiveSubscriptionInfoForIcc(uniqueId);
+
             mSm.setDefaultVoiceSubscriptionId(SubscriptionManager.INVALID_SUBSCRIPTION_ID);
             assertEquals(SubscriptionManager.INVALID_SUBSCRIPTION_ID,
                     SubscriptionManager.getDefaultVoiceSubscriptionId());
             mSm.setDefaultVoiceSubscriptionId(oldSubId);
             assertEquals(oldSubId, SubscriptionManager.getDefaultVoiceSubscriptionId());
+
+            // Remove the second SIM
+            mSm.removeSubscriptionInfoRecord(uniqueId,
+                    SubscriptionManager.SUBSCRIPTION_TYPE_REMOTE_SIM);
+            assertNull(mSm.getActiveSubscriptionInfoForIcc(uniqueId));
         } finally {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
@@ -1289,6 +1334,43 @@ public class SubscriptionManagerTest {
         }
     }
 
+    @Test
+    public void testCreateSubscriptionChangedListenerWithoutLooper() throws Throwable {
+        CompletableFuture<Throwable> futureResult = new CompletableFuture<>();
+
+        Thread t = new Thread(() -> {
+            SubscriptionManager.OnSubscriptionsChangedListener oscl =
+                    new SubscriptionManager.OnSubscriptionsChangedListener();
+            try {
+                mSm.addOnSubscriptionsChangedListener((r) -> {}, oscl);
+                mSm.removeOnSubscriptionsChangedListener(oscl);
+                futureResult.complete(null);
+            } catch (Exception e) {
+                futureResult.complete(e);
+                try {
+                    mSm.removeOnSubscriptionsChangedListener(oscl);
+                } catch (Exception likely) {
+                    // nothing to do
+                }
+            }
+
+            try {
+                mSm.addOnSubscriptionsChangedListener(oscl);
+                futureResult.complete(
+                        new Exception("Looper wasn't required as expected"));
+            } catch (Exception expected) {
+                futureResult.complete(null);
+            } finally {
+                mSm.removeOnSubscriptionsChangedListener(oscl);
+            }
+        });
+
+        t.start();
+        t.join(5000 /*millis*/);
+
+        if (futureResult.get() != null) throw futureResult.get();
+    }
+
     private String getSubscriptionIso(int subId) {
         SubscriptionInfo info = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
                 (sm) -> sm.getActiveSubscriptionInfo(subId));
@@ -1369,6 +1451,28 @@ public class SubscriptionManagerTest {
         } finally {
             overrideCarrierConfig(null, mSubId);
         }
+    }
+
+    @Test
+    public void testIsNtn_enableFlag() throws Exception {
+        if (!Flags.oemEnabledSatelliteFlag()) {
+            return;
+        }
+
+        SubscriptionInfo info = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getActiveSubscriptionInfo(mSubId));
+        assertThat(info.isOnlyNonTerrestrialNetwork()).isNotNull();
+    }
+
+    @Test
+    public void testIsNtn_disableFlag() throws Exception {
+        if (Flags.oemEnabledSatelliteFlag()) {
+            return;
+        }
+
+        SubscriptionInfo info = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getActiveSubscriptionInfo(mSubId));
+        assertThat(info.isOnlyNonTerrestrialNetwork()).isFalse();
     }
 
     @Nullable

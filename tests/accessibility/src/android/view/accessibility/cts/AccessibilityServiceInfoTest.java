@@ -28,6 +28,9 @@ import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.content.pm.PackageManager;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 
@@ -43,56 +46,63 @@ import org.junit.runner.RunWith;
 import java.util.List;
 
 /**
- * Tests whether accessibility service infos are properly reported. Logically,
- * this test belongs to cts/test/test/accessibilityservice but the tests there
- * are using the new UiAutomation API which disables all currently active
- * accessibility service and the fake service used for implementing the UI
- * automation is not reported through the APIs.
+ * Tests whether accessibility service infos are properly reported. Logically, this test belongs to
+ * cts/test/test/accessibilityservice but the tests there are using the new UiAutomation API which
+ * disables all currently active accessibility service and the fake service used for implementing
+ * the UI automation is not reported through the APIs.
  */
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityServiceInfoTest {
-    private static final int FLAGS_MASK = AccessibilityServiceInfo.DEFAULT
-            | AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS
-            | AccessibilityServiceInfo.FLAG_REQUEST_ENHANCED_WEB_ACCESSIBILITY
-            | AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
-            | AccessibilityServiceInfo.FLAG_ENABLE_ACCESSIBILITY_VOLUME
-            | AccessibilityServiceInfo.FLAG_REQUEST_ACCESSIBILITY_BUTTON
-            | AccessibilityServiceInfo.FLAG_REQUEST_FINGERPRINT_GESTURES
-            | AccessibilityServiceInfo.FLAG_SERVICE_HANDLES_DOUBLE_TAP
-            | AccessibilityServiceInfo.FLAG_REQUEST_MULTI_FINGER_GESTURES
-            | AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE
-            | AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS
-            | AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
-            | AccessibilityServiceInfo.FLAG_REQUEST_SHORTCUT_WARNING_DIALOG_SPOKEN_FEEDBACK;
+    private static final int FLAGS_MASK =
+            AccessibilityServiceInfo.DEFAULT
+                    | AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS
+                    | AccessibilityServiceInfo.FLAG_REQUEST_ENHANCED_WEB_ACCESSIBILITY
+                    | AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
+                    | AccessibilityServiceInfo.FLAG_ENABLE_ACCESSIBILITY_VOLUME
+                    | AccessibilityServiceInfo.FLAG_REQUEST_ACCESSIBILITY_BUTTON
+                    | AccessibilityServiceInfo.FLAG_REQUEST_FINGERPRINT_GESTURES
+                    | AccessibilityServiceInfo.FLAG_SERVICE_HANDLES_DOUBLE_TAP
+                    | AccessibilityServiceInfo.FLAG_REQUEST_MULTI_FINGER_GESTURES
+                    | AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE
+                    | AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS
+                    | AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
+                    | AccessibilityServiceInfo.FLAG_REQUEST_SHORTCUT_WARNING_DIALOG_SPOKEN_FEEDBACK;
 
     private AccessibilityManager mAccessibilityManager;
     private PackageManager mPackageManager;
 
     private final InstrumentedAccessibilityServiceTestRule<SpeakingAccessibilityService>
-            mSpeakingAccessibilityServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
-            SpeakingAccessibilityService.class);
+            mSpeakingAccessibilityServiceRule =
+                    new InstrumentedAccessibilityServiceTestRule<>(
+                            SpeakingAccessibilityService.class);
 
     private final InstrumentedAccessibilityServiceTestRule<VibratingAccessibilityService>
-            mVibratingAccessibilityServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
-            VibratingAccessibilityService.class);
+            mVibratingAccessibilityServiceRule =
+                    new InstrumentedAccessibilityServiceTestRule<>(
+                            VibratingAccessibilityService.class);
 
     private final InstrumentedAccessibilityServiceTestRule<SpeakingAndVibratingAccessibilityService>
             mSpeakingAndVibratingAccessibilityServiceRule =
-            new InstrumentedAccessibilityServiceTestRule<>(
-                    SpeakingAndVibratingAccessibilityService.class, /* enableService= */ false);
+                    new InstrumentedAccessibilityServiceTestRule<>(
+                            SpeakingAndVibratingAccessibilityService.class,
+                            /* enableService= */ false);
 
     private final InstrumentedAccessibilityServiceTestRule<AccessibilityButtonService>
-            mA11yButtonServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
-            AccessibilityButtonService.class, /* enableService= */ false);
+            mA11yButtonServiceRule =
+                    new InstrumentedAccessibilityServiceTestRule<>(
+                            AccessibilityButtonService.class, /* enableService= */ false);
+
+    private CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Rule
-    public final RuleChain mRuleChain = RuleChain
-            .outerRule(mVibratingAccessibilityServiceRule)
-            .around(mSpeakingAccessibilityServiceRule)
-            .around(mSpeakingAndVibratingAccessibilityServiceRule)
-            .around(mA11yButtonServiceRule)
-            // Inner rule capture failure and dump data before finishing a11y service
-            .around(new AccessibilityDumpOnFailureRule());
+    public final RuleChain mRuleChain =
+            RuleChain.outerRule(mVibratingAccessibilityServiceRule)
+                    .around(mSpeakingAccessibilityServiceRule)
+                    .around(mSpeakingAndVibratingAccessibilityServiceRule)
+                    .around(mA11yButtonServiceRule)
+                    // Inner rule capture failure and dump data before finishing a11y service
+                    .around(new AccessibilityDumpOnFailureRule())
+                    .around(mCheckFlagsRule);
 
     @Before
     public void setUp() throws Exception {
@@ -149,5 +159,26 @@ public class AccessibilityServiceInfoTest {
         assertEquals(/* expected= */ 1000,
                 speakingService.getNonInteractiveUiTimeoutMillis());
         assertTrue(speakingService.isAccessibilityTool());
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.view.accessibility.Flags.FLAG_MOTION_EVENT_OBSERVING)
+    public void testSetMotionEvents_shouldZeroObservedMotionEvents() {
+        AccessibilityServiceInfo info = new AccessibilityServiceInfo();
+        info.setMotionEventSources(0x10);
+        info.setObservedMotionEventSources(0x10);
+        assertEquals(0x10, info.getMotionEventSources());
+        assertEquals(0x10, info.getObservedMotionEventSources());
+        info.setMotionEventSources(0x20);
+        assertEquals(0x20, info.getMotionEventSources());
+        assertEquals(0, info.getObservedMotionEventSources());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @RequiresFlagsEnabled(android.view.accessibility.Flags.FLAG_MOTION_EVENT_OBSERVING)
+    public void testObservedMotionEventsWithoutFirstListening_shouldThrowException() {
+        AccessibilityServiceInfo info = new AccessibilityServiceInfo();
+        info.setMotionEventSources(0);
+        info.setObservedMotionEventSources(1);
     }
 }

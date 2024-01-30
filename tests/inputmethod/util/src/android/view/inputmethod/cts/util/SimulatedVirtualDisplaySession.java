@@ -20,7 +20,7 @@ import static android.hardware.display.DisplayManager.DISPLAY_CATEGORY_PRESENTAT
 import static android.provider.Settings.Global.OVERLAY_DISPLAY_DEVICES;
 import static android.view.Display.FLAG_TRUSTED;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow;
 
 import android.content.Context;
 import android.hardware.display.DisplayManager;
@@ -89,11 +89,11 @@ public final class SimulatedVirtualDisplaySession implements AutoCloseable {
     }
 
     private static void putGlobalSetting(String key, String value) {
-        runShellCommand("settings put global " + key + " " + value);
+        runShellCommandOrThrow("settings put global " + key + " " + value);
     }
 
     private static void deleteGlobalSetting(String key) {
-        runShellCommand("settings delete global " + key);
+        runShellCommandOrThrow("settings delete global " + key);
     }
 
     public int getDisplayId() {

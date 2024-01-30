@@ -48,6 +48,7 @@ public class NoRestartActivity extends Activity {
         intent.putExtra("CREATE_COUNT", mCreateCount);
         intent.putExtra("NEW_INTENT_COUNT", mNewIntentCount);
         intent.putExtra("RESOURCE_CONTENT", getResourceInFeature());
+        intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         sendBroadcast(intent);
     }
 

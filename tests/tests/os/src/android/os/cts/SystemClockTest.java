@@ -16,11 +16,23 @@
 
 package android.os.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.os.SystemClock;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 
-public class SystemClockTest extends AndroidTestCase {
+import org.junit.Rule;
+import org.junit.Test;
 
+public class SystemClockTest {
+    @Rule public RavenwoodRule mRavenwood = new RavenwoodRule();
+
+    @Test
+    @IgnoreUnderRavenwood(reason = "Requires kernel support")
     public void testCurrentThreadTimeMillis() throws InterruptedException {
 
         long start = SystemClock.currentThreadTimeMillis();
@@ -30,6 +42,7 @@ public class SystemClockTest extends AndroidTestCase {
 
     }
 
+    @Test
     public void testElapsedRealtime() throws InterruptedException {
 
         long start = SystemClock.elapsedRealtime();
@@ -39,6 +52,8 @@ public class SystemClockTest extends AndroidTestCase {
 
     }
 
+    @Test
+    @IgnoreUnderRavenwood(reason = "Requires kernel support")
     public void testSetCurrentTimeMillis() {
 
         long start = SystemClock.currentThreadTimeMillis();
@@ -48,30 +63,53 @@ public class SystemClockTest extends AndroidTestCase {
 
     }
 
-    public void testSleep() {
-
+    @Test
+    @IgnoreUnderRavenwood(reason = "Requires kernel support")
+    public void testSleep_currentThreadTimeMillis() {
         long start = SystemClock.currentThreadTimeMillis();
         SystemClock.sleep(100);
         long end = SystemClock.currentThreadTimeMillis();
         assertFalse(end - 100 >= start);
-
-        start = SystemClock.elapsedRealtime();
-        SystemClock.sleep(100);
-        end = SystemClock.elapsedRealtime();
-        assertTrue(end - 100 >= start);
-
-        start = SystemClock.uptimeMillis();
-        SystemClock.sleep(100);
-        end = SystemClock.uptimeMillis();
-        assertTrue(end - 100 >= start);
-
     }
 
-    public void testUptimeMillis() throws InterruptedException {
+    @Test
+    public void testSleep_elapsedRealtime() {
+        long start = SystemClock.elapsedRealtime();
+        SystemClock.sleep(100);
+        long end = SystemClock.elapsedRealtime();
+        assertTrue(end - 100 >= start);
+    }
 
+    @Test
+    public void testSleep_uptimeMillis() {
+        long start = SystemClock.uptimeMillis();
+        SystemClock.sleep(100);
+        long end = SystemClock.uptimeMillis();
+        assertTrue(end - 100 >= start);
+    }
+
+    @Test
+    public void testUptimeMillis() throws InterruptedException {
         long start = SystemClock.uptimeMillis();
         Thread.sleep(100);
         long end = SystemClock.uptimeMillis();
         assertTrue(end - 100 >= start);
+    }
+
+    @Test
+    public void testElapsedVsUptime() throws InterruptedException {
+        // Elapsed also counts time in deep sleep, so it should always be more than uptime
+        assertThat(SystemClock.uptimeMillis()).isAtMost(SystemClock.elapsedRealtime());
+    }
+
+    @Test
+    public void testElapsedRealtime_Valid() {
+        assertThat(SystemClock.elapsedRealtime()).isGreaterThan(0L);
+        assertThat(SystemClock.elapsedRealtimeNanos()).isGreaterThan(0L);
+    }
+
+    @Test
+    public void testUptime_Valid() {
+        assertThat(SystemClock.uptimeMillis()).isGreaterThan(0L);
     }
 }

@@ -39,6 +39,7 @@ import static android.scopedstorage.cts.lib.TestUtils.IS_URI_REDACTED_VIA_FILE_D
 import static android.scopedstorage.cts.lib.TestUtils.OPEN_FILE_FOR_READ_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.OPEN_FILE_FOR_WRITE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.QUERY_MAX_ROW_ID;
+import static android.scopedstorage.cts.lib.TestUtils.QUERY_MEDIA_BY_URI_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.QUERY_MIN_ROW_ID;
 import static android.scopedstorage.cts.lib.TestUtils.QUERY_OWNER_PACKAGE_NAMES;
 import static android.scopedstorage.cts.lib.TestUtils.QUERY_TYPE;
@@ -48,6 +49,7 @@ import static android.scopedstorage.cts.lib.TestUtils.READDIR_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.RENAME_FILE_PARAMS_SEPARATOR;
 import static android.scopedstorage.cts.lib.TestUtils.RENAME_FILE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.SETATTR_QUERY;
+import static android.scopedstorage.cts.lib.TestUtils.UPDATE_MEDIA_BY_URI_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.canOpen;
 import static android.scopedstorage.cts.lib.TestUtils.deleteRecursively;
 import static android.scopedstorage.cts.lib.TestUtils.getFileRowIdFromDatabase;
@@ -130,6 +132,12 @@ public class ScopedStorageTestHelper extends Activity {
                     break;
                 case DELETE_MEDIA_BY_URI_QUERY:
                     returnIntent = deleteMediaByUri(queryType);
+                    break;
+                case UPDATE_MEDIA_BY_URI_QUERY:
+                    returnIntent = updateMediaByUri(queryType);
+                    break;
+                case QUERY_MEDIA_BY_URI_QUERY:
+                    returnIntent = queryMediaByUri(queryType);
                     break;
                 case EXIF_METADATA_QUERY:
                     returnIntent = sendMetadata(queryType);
@@ -237,6 +245,51 @@ public class ScopedStorageTestHelper extends Activity {
         try {
             int rowsDeleted = getContentResolver().delete(uri, null);
             intent.putExtra(queryType, rowsDeleted);
+        } catch (Exception e) {
+            intent.putExtra(INTENT_EXCEPTION, e);
+        }
+
+        return intent;
+    }
+
+    private Intent updateMediaByUri(String queryType) {
+        final Intent intent = new Intent(queryType);
+        final Uri uri = getIntent().getParcelableExtra(INTENT_EXTRA_URI);
+        final Bundle attributes = getIntent().getBundleExtra(INTENT_EXTRA_ARGS);
+
+        final ContentValues values = new ContentValues();
+        for (String key : attributes.keySet()) {
+            values.put(key, attributes.getString(key));
+        }
+
+        try {
+            getContentResolver().update(uri, values, null, null);
+            intent.putExtra(queryType, true);
+        } catch (Exception e) {
+            intent.putExtra(INTENT_EXCEPTION, e);
+        }
+
+        return intent;
+    }
+
+    private Intent queryMediaByUri(String queryType) {
+        final Intent intent = new Intent(queryType);
+        final Uri uri = getIntent().getParcelableExtra(INTENT_EXTRA_URI);
+        final Bundle projection = getIntent().getBundleExtra(INTENT_EXTRA_ARGS);
+
+        try (Cursor c = getContentResolver()
+                .query(uri, projection.keySet().toArray(new String[0]), null, null)) {
+            final Bundle result = new Bundle();
+            if (c.getCount() == 1) {
+                c.moveToFirst();
+                for (String column : projection.keySet()) {
+                    result.putString(column, c.getString(c.getColumnIndex(column)));
+                }
+            } else {
+                Log.d(TAG, String.format("Uri in QUERY_MEDIA_BY_URI_QUERY query points "
+                        + "to %d media files", c.getCount()));
+            }
+            intent.putExtra(queryType, result);
         } catch (Exception e) {
             intent.putExtra(INTENT_EXCEPTION, e);
         }

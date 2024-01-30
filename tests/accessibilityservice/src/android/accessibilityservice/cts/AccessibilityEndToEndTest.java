@@ -28,10 +28,16 @@ import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWin
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.getActivityTitle;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
+import static android.accessibilityservice.cts.utils.AsyncUtils.await;
+import static android.accessibilityservice.cts.utils.GestureUtils.click;
+import static android.accessibilityservice.cts.utils.GestureUtils.dispatchGesture;
 import static android.accessibilityservice.cts.utils.RunOnMainUtils.getOnMain;
+import static android.view.MotionEvent.ACTION_DOWN;
+import static android.view.MotionEvent.ACTION_UP;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS;
+import static android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SCROLL_AMOUNT_FLOAT;
 import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_HIDE_TOOLTIP;
 import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_IN_DIRECTION;
 import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_TOOLTIP;
@@ -57,8 +63,11 @@ import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibility.cts.common.ShellCommandBuilder;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.GestureDescription;
+import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.accessibilityservice.MagnificationConfig;
 import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity;
+import android.accessibilityservice.cts.utils.EventCapturingMotionEventListener;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Instrumentation;
@@ -77,15 +86,19 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.Region;
+import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
@@ -104,6 +117,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
@@ -167,6 +181,9 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
     private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
 
+    private CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule(sUiAutomation);
+
     private final InstrumentedAccessibilityServiceTestRule<
             StubMotionInterceptingAccessibilityService>
             mMotionInterceptingServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
@@ -176,7 +193,8 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
     public final RuleChain mRuleChain = RuleChain
             .outerRule(mActivityRule)
             .around(mMotionInterceptingServiceRule)
-            .around(mDumpOnFailureRule);
+            .around(mDumpOnFailureRule)
+            .around(mCheckFlagsRule);
 
     @BeforeClass
     public static void oneTimeSetup() throws Exception {
@@ -776,6 +794,65 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
 
     @MediumTest
     @Test
+    @ApiTest(apis = {
+            "android.view.accessibility.AccessibilityNodeInfo#ACTION_ARGUMENT_SCROLL_AMOUNT_FLOAT"})
+    public void testActionArgumentScrollAmountFloat() throws Exception {
+        class MyView extends View {
+            MyView(Context context) {
+                super(context);
+            }
+
+            @Override
+            public boolean performAccessibilityAction(int action, Bundle args) {
+                final float scrollAmount = args.getFloat(ACTION_ARGUMENT_SCROLL_AMOUNT_FLOAT, -1F);
+                return scrollAmount < 0 ? false : true;
+            }
+        }
+        Bundle bundle = new Bundle();
+        bundle.putFloat(ACTION_ARGUMENT_SCROLL_AMOUNT_FLOAT, -1);
+        MyView myView = new MyView(getContext());
+        assertThat(myView.performAccessibilityAction(
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD.getId(),
+                bundle)).isFalse();
+        bundle.putFloat(ACTION_ARGUMENT_SCROLL_AMOUNT_FLOAT, 1);
+        assertThat(myView.performAccessibilityAction(
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD.getId(),
+                bundle)).isTrue();
+    }
+
+    @MediumTest
+    @Test
+    public void testCollectionInfoRetained() throws Exception {
+        final AccessibilityNodeInfo sentInfo = new AccessibilityNodeInfo(new View(getContext()));
+        AccessibilityNodeInfo.CollectionInfo sentCi =
+                new AccessibilityNodeInfo.CollectionInfo.Builder()
+                        .setRowCount(1)
+                        .setColumnCount(2)
+                        .setHierarchical(true)
+                        .setSelectionMode(
+                                AccessibilityNodeInfo.CollectionInfo.SELECTION_MODE_MULTIPLE)
+                        .setItemCount(10)
+                        .setImportantForAccessibilityItemCount(3)
+                        .build();
+        sentInfo.setCollectionInfo(sentCi);
+        final Parcel parcel = Parcel.obtain();
+        sentInfo.writeToParcelNoRecycle(parcel, 0);
+        parcel.setDataPosition(0);
+        AccessibilityNodeInfo receivedInfo = AccessibilityNodeInfo.CREATOR.createFromParcel(parcel);
+        AccessibilityNodeInfo.CollectionInfo receivedCi = receivedInfo.getCollectionInfo();
+
+        assertThat(receivedCi.getRowCount()).isEqualTo(sentCi.getRowCount());
+        assertThat(receivedCi.getColumnCount()).isEqualTo(sentCi.getColumnCount());
+        assertThat(receivedCi.isHierarchical()).isEqualTo(sentCi.isHierarchical());
+        assertThat(receivedCi.getSelectionMode()).isEqualTo(sentCi.getSelectionMode());
+        assertThat(receivedCi.getItemCount()).isEqualTo(sentCi.getItemCount());
+        assertThat(receivedCi.getImportantForAccessibilityItemCount()).isEqualTo(
+                sentCi.getImportantForAccessibilityItemCount());
+        parcel.recycle();
+    }
+
+    @MediumTest
+    @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo#getActionList"})
     public void testTooltipTextActionsReportedToAccessibility() throws Exception {
         final AccessibilityNodeInfo buttonNode = sUiAutomation.getRootInActiveWindow()
@@ -865,6 +942,117 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
         assertThat(labelForNode).isNotNull();
         // Labeled node should indicate that it is labeled by the other one
         assertThat(labelForNode.getLabeledBy()).isEqualTo(editNode);
+    }
+
+    @MediumTest
+    @Test
+    @ApiTest(apis = {"android.view.View#setContextClickable"})
+    public void testIsImportantForAccessibility_isContextClickable_isImportant() throws
+            TimeoutException {
+        sInstrumentation.runOnMainSync(() -> mActivity.findViewById(R.id.autoImportantLinearLayout)
+                .setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO));
+
+        final String autoImportantLinearLayoutName = mActivity.getResources().getResourceName(
+                R.id.autoImportantLinearLayout);
+        final AccessibilityNodeInfo autoImportantLinearLayoutNode =
+                sUiAutomation.getRootInActiveWindow().findAccessibilityNodeInfosByViewId(
+                        autoImportantLinearLayoutName).get(0);
+
+        assertThat(autoImportantLinearLayoutNode.isContextClickable()).isFalse();
+        assertThat(autoImportantLinearLayoutNode.isImportantForAccessibility()).isFalse();
+
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(() ->
+                        mActivity.findViewById(R.id.autoImportantLinearLayout)
+                                .setContextClickable(true)),
+                // Setting clickable sends an event of subtype CONTENT_CHANGE_TYPE_UNDEFINED.
+                filterForEventType(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED),
+                DEFAULT_TIMEOUT_MS);
+
+        autoImportantLinearLayoutNode.refresh();
+        assertThat(autoImportantLinearLayoutNode.isContextClickable()).isTrue();
+        assertThat(autoImportantLinearLayoutNode.isImportantForAccessibility()).isTrue();
+    }
+
+    @MediumTest
+    @Test
+    @ApiTest(apis = {"android.view.View#setAccessibilityHeading"})
+    public void testIsImportantForAccessibility_isHeading_isImportant() throws
+            TimeoutException {
+        sInstrumentation.runOnMainSync(() -> mActivity.findViewById(R.id.autoImportantLinearLayout)
+                .setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO));
+
+        final String autoImportantLinearLayoutName = mActivity.getResources().getResourceName(
+                R.id.autoImportantLinearLayout);
+        final AccessibilityNodeInfo autoImportantLinearLayoutNode =
+                sUiAutomation.getRootInActiveWindow().findAccessibilityNodeInfosByViewId(
+                        autoImportantLinearLayoutName).get(0);
+
+        assertThat(autoImportantLinearLayoutNode.isHeading()).isFalse();
+        assertThat(autoImportantLinearLayoutNode.isImportantForAccessibility()).isFalse();
+
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(() ->
+                        mActivity.findViewById(R.id.autoImportantLinearLayout)
+                                .setAccessibilityHeading(true)),
+                // Setting a heading sends an event of subtype CONTENT_CHANGE_TYPE_UNDEFINED.
+                filterForEventType(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED),
+                DEFAULT_TIMEOUT_MS);
+
+        autoImportantLinearLayoutNode.refresh();
+        assertThat(autoImportantLinearLayoutNode.isHeading()).isTrue();
+        assertThat(autoImportantLinearLayoutNode.isImportantForAccessibility()).isTrue();
+    }
+
+    @MediumTest
+
+    @Test
+    @ApiTest(apis = {"android.view.View#setScreenReaderFocusable"})
+    public void testIsImportantForAccessibility_isScreenReaderFocusable_isImportant() throws
+            TimeoutException {
+        sInstrumentation.runOnMainSync(() -> mActivity.findViewById(R.id.autoImportantLinearLayout)
+                .setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO));
+
+        final String autoImportantLinearLayoutName = mActivity.getResources().getResourceName(
+                R.id.autoImportantLinearLayout);
+        final AccessibilityNodeInfo autoImportantLinearLayoutNode =
+                sUiAutomation.getRootInActiveWindow().findAccessibilityNodeInfosByViewId(
+                        autoImportantLinearLayoutName).get(0);
+
+        assertThat(autoImportantLinearLayoutNode.isScreenReaderFocusable()).isFalse();
+        assertThat(autoImportantLinearLayoutNode.isImportantForAccessibility()).isFalse();
+
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(() ->
+                        mActivity.findViewById(R.id.autoImportantLinearLayout)
+                                .setScreenReaderFocusable(true)),
+                // Setting focusable sends an event of subtype CONTENT_CHANGE_TYPE_UNDEFINED.
+                filterForEventType(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED),
+                DEFAULT_TIMEOUT_MS);
+
+        autoImportantLinearLayoutNode.refresh();
+        assertThat(autoImportantLinearLayoutNode.isScreenReaderFocusable()).isTrue();
+        assertThat(autoImportantLinearLayoutNode.isImportantForAccessibility()).isTrue();
+    }
+
+    @MediumTest
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo"
+            + "#isImportantForAccessibility"})
+    public void testDelegate_ImportantForAccessibility() throws Exception {
+        final View delegateView = mActivity.findViewById(R.id.autoImportantLinearLayout);
+        sInstrumentation.runOnMainSync(() ->
+                delegateView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO));
+
+        final AccessibilityNodeInfo autoImportantLinearLayoutNode =
+                sUiAutomation.getRootInActiveWindow().findAccessibilityNodeInfosByViewId(
+                        mActivity.getResources().getResourceName(
+                                R.id.autoImportantLinearLayout)).get(0);
+
+        assertThat(autoImportantLinearLayoutNode.isImportantForAccessibility()).isFalse();
+
+        sInstrumentation.runOnMainSync(() -> delegateView.setAccessibilityDelegate(
+                new View.AccessibilityDelegate()));
+
+        autoImportantLinearLayoutNode.refresh();
+        assertThat(autoImportantLinearLayoutNode.isImportantForAccessibility()).isTrue();
     }
 
     @MediumTest
@@ -1016,7 +1204,6 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
     @Test
     @ApiTest(apis = {"android.view.View#onHoverEvent",
             "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
-    @FlakyTest
     public void testTouchDelegateCoverParentWithEbt_HoverChildAndBack_FocusTargetAgain()
             throws Throwable {
         mActivity.waitForEnterAnimationComplete();
@@ -1707,6 +1894,43 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
         }
     }
 
+    @AsbSecurityTest(cveBugId = {282016107})
+    @AppModeFull
+    @Test
+    public void testInstallAppWithLargeServiceVolume_displaysServicesSuccessfully()
+            throws Throwable {
+
+        // The apk used for this test deliberately includes a large amount of junk services,
+        // so we're installing/uninstalling it as part of the test instead of leaving it in.
+        final String apkPath =
+                "/data/local/tmp/cts/content/CtsAccessibilityLargeServiceVolumeApp.apk";
+        final String packageName = "foo.bar.multipleservices";
+        final int installedServiceCount = 16; // 16 unique services present in manifest.
+        AccessibilityManager manager = mActivity.getSystemService(AccessibilityManager.class);
+
+        try {
+            assertThat(ShellUtils.runShellCommand(
+                    "pm install " + apkPath)).startsWith("Success");
+            TestUtils.waitUntil(
+                    "Installed services have not appeared on the list.",
+                    TIMEOUT_SERVICE_ENABLE / 1000,
+                    () -> {
+                        List<AccessibilityServiceInfo> installedServices =
+                                manager.getInstalledAccessibilityServiceList();
+                        int count = 0;
+                        for (int i = 0; i < installedServices.size(); i++) {
+                            if (installedServices.get(i).getId().contains("JunkService")) {
+                                count++;
+                            }
+                        }
+                        return count == installedServiceCount;
+                    }
+            );
+        } finally {
+            ShellUtils.runShellCommand("pm uninstall " + packageName);
+        }
+    }
+
     @Test
     @ApiTest(apis = {
             "android.view.accessibility.AccessibilityNodeInfo#setContainerTitle"})
@@ -1721,6 +1945,7 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
     }
 
     @Test
+    @FlakyTest
     @ApiTest(apis = {"android.accessibilityservice.AccessibilityService#onMotionEvent"})
     public void testOnMotionEvent_interceptsEventFromRequestedSource_SetAndUnset() {
         final int requestedSource = InputDevice.SOURCE_JOYSTICK;
@@ -1826,6 +2051,71 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
         } finally {
             touchExplorationService.disableSelfAndRemove();
         }
+    }
+
+    /** Test the case where we want to intercept but not consume motion events. */
+    @Test
+    @FlakyTest
+    @ApiTest(apis = {"android.accessibilityservice.AccessibilityService#onMotionEvent"})
+    @RequiresFlagsEnabled(android.view.accessibility.Flags.FLAG_MOTION_EVENT_OBSERVING)
+    public void testOnMotionEvent_interceptsEventFromRequestedSource_observesMotionEvents() {
+        sUiAutomation.adoptShellPermissionIdentity(
+                android.Manifest.permission.ACCESSIBILITY_MOTION_EVENT_OBSERVING);
+        final int requestedSource = InputDevice.SOURCE_TOUCHSCREEN;
+        final StubMotionInterceptingAccessibilityService service =
+                mMotionInterceptingServiceRule.enableService();
+        service.setMotionEventSources(requestedSource);
+        service.setObservedMotionEventSources(requestedSource);
+        assertThat(service.getServiceInfo().getMotionEventSources()).isEqualTo(requestedSource);
+        assertThat(service.getServiceInfo().getObservedMotionEventSources())
+                .isEqualTo(requestedSource);
+        final Object waitObject = new Object();
+        final AtomicInteger eventCount = new AtomicInteger(0);
+        service.setOnMotionEventListener(
+                motionEvent -> {
+                    synchronized (waitObject) {
+                        if (motionEvent.getSource() == requestedSource) {
+                            eventCount.incrementAndGet();
+                        }
+                        waitObject.notifyAll();
+                    }
+                });
+
+        // Simulate a tap on the center of the button.
+        final Button button = (Button) mActivity.findViewById(R.id.button);
+        final EventCapturingMotionEventListener listener = new EventCapturingMotionEventListener();
+        button.setOnTouchListener(listener);
+        int[] buttonLocation = new int[2];
+        final int midX = button.getWidth() / 2;
+        final int midY = button.getHeight() / 2;
+        button.getLocationOnScreen(buttonLocation);
+        PointF tapLocation = new PointF(buttonLocation[0] + midX, buttonLocation[1] + midY);
+        dispatch(service, click(tapLocation));
+
+        // We should find 2 events.
+        TestUtils.waitOn(
+                waitObject,
+                () -> eventCount.get() == 2,
+                TIMEOUT_FOR_MOTION_EVENT_INTERCEPTION_MS,
+                "Service did not receive MotionEvent");
+
+        // The view should still have seen two events.
+        listener.assertPropagated(ACTION_DOWN, ACTION_UP);
+        // Stop listening to events for this source, then inject 1 more event to the input filter.
+        service.setMotionEventSources(0 /* no sources */);
+        assertThat(service.getServiceInfo().getMotionEventSources()).isEqualTo(0);
+        dispatch(service, click(tapLocation));
+        // Assert we only received the original 2.
+        try {
+            TestUtils.waitOn(
+                    waitObject,
+                    () -> eventCount.get() == 3,
+                    TIMEOUT_FOR_MOTION_EVENT_INTERCEPTION_MS,
+                    "(expected)");
+        } catch (AssertionError e) {
+            // expected
+        }
+        assertThat(eventCount.get()).isEqualTo(2);
     }
 
     private MotionEvent createMotionEvent(int source) {
@@ -2066,6 +2356,22 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
             final View tooltipView = viewWithTooltip.getTooltipView();
             return (tooltipView != null) && (tooltipView.getParent() != null);
         });
+    }
+
+    private void dispatch(
+            InstrumentedAccessibilityService service,
+            StrokeDescription firstStroke,
+            StrokeDescription... rest) {
+        GestureDescription.Builder builder =
+                new GestureDescription.Builder().addStroke(firstStroke);
+        for (StrokeDescription stroke : rest) {
+            builder.addStroke(stroke);
+        }
+        dispatch(service, builder.build());
+    }
+
+    private void dispatch(InstrumentedAccessibilityService service, GestureDescription gesture) {
+        await(dispatchGesture(service, gesture));
     }
 
     private static int getCurrentUser() {

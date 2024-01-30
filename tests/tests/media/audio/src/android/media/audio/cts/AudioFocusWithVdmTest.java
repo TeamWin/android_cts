@@ -32,6 +32,8 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.util.concurrent.Uninterruptibles.tryAcquireUninterruptibly;
 
+import static org.junit.Assume.assumeNotNull;
+
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceParams;
 import android.content.Context;
@@ -48,6 +50,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.internal.annotations.GuardedBy;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -79,6 +82,15 @@ public class AudioFocusWithVdmTest {
     @Rule
     public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
 
+    private VirtualDeviceManager mVirtualDeviceManager;
+
+    @Before
+    public void setUp() {
+        Context context = getApplicationContext();
+        mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
+        assumeNotNull(mVirtualDeviceManager);
+    }
+
 
     /**
      * The test below tests the following scenario:
@@ -93,8 +105,7 @@ public class AudioFocusWithVdmTest {
     @Test
     public void testAudioFocusRequestOnVdmContextWithCustomDevicePolicy() {
         Context defaultContext = getApplicationContext();
-        VirtualDeviceManager vdm = defaultContext.getSystemService(VirtualDeviceManager.class);
-        try (VirtualDeviceManager.VirtualDevice vd = vdm.createVirtualDevice(
+        try (VirtualDeviceManager.VirtualDevice vd = mVirtualDeviceManager.createVirtualDevice(
                 mFakeAssociationRule.getAssociationInfo().getId(),
                 VIRTUAL_DEVICE_PARAMS_CUSTOM_POLICY);
              PlaybackHelperForTest defaultDevicePlayback = new PlaybackHelperForTest(
@@ -127,8 +138,7 @@ public class AudioFocusWithVdmTest {
     @Test
     public void testAudioFocusRequestOnVdmContextWithDefaultDevicePolicy() {
         Context defaultContext = getApplicationContext();
-        VirtualDeviceManager vdm = defaultContext.getSystemService(VirtualDeviceManager.class);
-        try (VirtualDeviceManager.VirtualDevice vd = vdm.createVirtualDevice(
+        try (VirtualDeviceManager.VirtualDevice vd = mVirtualDeviceManager.createVirtualDevice(
                 mFakeAssociationRule.getAssociationInfo().getId(),
                 VIRTUAL_DEVICE_PARAMS_DEFAULT);
              PlaybackHelperForTest defaultDevicePlayback = new PlaybackHelperForTest(
@@ -143,7 +153,7 @@ public class AudioFocusWithVdmTest {
 
             int vdmFocusRequestResult = vdmDevicePlayback.requestFocus();
             assertThat(vdmFocusRequestResult).isEqualTo(AUDIOFOCUS_REQUEST_GRANTED);
-            // Since the vdm is configured with default device polic
+            // Since the mVirtualDeviceManager is configured with default device polic
             assertThat(defaultDevicePlayback.getLastFocusChange().isPresent()).isTrue();
             assertThat(defaultDevicePlayback.getLastFocusChange().get()).isEqualTo(AUDIOFOCUS_LOSS);
             assertThat(vdmDevicePlayback.getLastFocusChange().isEmpty()).isTrue();

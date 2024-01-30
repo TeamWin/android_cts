@@ -4,11 +4,11 @@
 # should be approved by test owners.
 
 # Ordered by escalation priority
-# Android Partner Eng Approvers
+# Android Partner Eng Approvers for Dr. No
 samgarg@google.com
-rossyeh@google.com
-robinjacob@google.com
-mariay@google.com
+rossyeh@google.com #{LAST_RESORT_SUGGESTION}
+robinjacob@google.com #{LAST_RESORT_SUGGESTION}
+mariay@google.com #{LAST_RESORT_SUGGESTION}
 
 # Android EngProd Approvers
 wenshan@google.com

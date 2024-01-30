@@ -171,6 +171,18 @@ Java_org_hyphonate_megaaudio_recorder_OboeRecorder_getRoutedDeviceIdN(
     return ((OboeRecorder*)native_recorder)->getRoutedDeviceId();
 }
 
+JNIEXPORT jint JNICALL
+Java_org_hyphonate_megaaudio_recorder_OboeRecorder_getSharingModeN(
+        JNIEnv *env, jobject thiz, jlong native_recorder) {
+    return ((OboeRecorder*)native_recorder)->getSharingMode();
+}
+
+JNIEXPORT jint JNICALL
+Java_org_hyphonate_megaaudio_recorder_OboeRecorder_getChannelCountN(
+        JNIEnv *env, jobject thiz, jlong native_recorder) {
+    return ((OboeRecorder*)native_recorder)->getChannelCount();
+}
+
 JNIEXPORT jint JNICALL Java_org_hyphonate_megaaudio_recorder_OboeRecorder_getStreamStateN(
         JNIEnv *env, jobject thiz, jlong native_recorder) {
     return (int)((OboeRecorder*)(native_recorder))->getState();

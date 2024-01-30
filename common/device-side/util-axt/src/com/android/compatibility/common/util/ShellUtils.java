@@ -17,11 +17,17 @@
 package com.android.compatibility.common.util;
 
 import android.text.TextUtils;
+import android.util.AndroidRuntimeException;
 import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Provides Shell-based utilities such as running a command.
@@ -31,6 +37,43 @@ public final class ShellUtils {
     private static final String TAG = "ShellHelper";
 
     private static final UserHelper sUserHelper = new UserHelper();
+
+    /**
+     * Runs a Shell command with a timeout, returning a trimmed response.
+     */
+    @NonNull
+    public static String runShellCommandWithTimeout(@NonNull String command, long timeoutInSecond)
+            throws TimeoutException {
+        AtomicReference<Exception> exception = new AtomicReference<>(null);
+        AtomicReference<String> result = new AtomicReference<>(null);
+
+        CountDownLatch latch = new CountDownLatch(1);
+
+        new Thread(() -> {
+            try {
+                result.set(runShellCommand(command));
+            } catch (Exception e) {
+                exception.set(e);
+            } finally {
+                latch.countDown();
+            }
+        }).start();
+
+        try {
+            if (!latch.await(timeoutInSecond, TimeUnit.SECONDS)) {
+                throw new TimeoutException("Command: '" + command + "' could not run in "
+                        + timeoutInSecond + " seconds");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        if (exception.get() != null) {
+            throw new AndroidRuntimeException(exception.get());
+        }
+
+        return result.get();
+    }
 
     /**
      * Runs a Shell command, returning a trimmed response.

@@ -20,7 +20,7 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static com.android.compatibility.common.util.SystemUtil.eventually;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
-import static com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject;
+import static com.android.compatibility.common.util.UiAutomatorUtils2.waitFindObject;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -36,10 +36,10 @@ import android.content.IntentFilter;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.server.wm.WindowManagerStateHelper;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.AppOpsUtils;
 

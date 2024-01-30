@@ -16,10 +16,7 @@
 
 package android.inputmethodservice.cts.hostside;
 
-import static org.junit.Assume.assumeTrue;
-
 import android.inputmethodservice.cts.common.test.DeviceTestConstants;
-import android.inputmethodservice.cts.common.test.ShellCommandUtils;
 import android.inputmethodservice.cts.common.test.TestInfo;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
@@ -28,8 +25,6 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -38,18 +33,6 @@ import org.junit.runner.RunWith;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class ShellCommandFromAppTest extends BaseHostJUnit4Test {
-
-    /**
-     * {@code true} if {@link #tearDown()} needs to be fully executed.
-     *
-     * <p>When {@link #setUp()} is interrupted by {@link org.junit.AssumptionViolatedException}
-     * before the actual setup tasks are executed, all the corresponding cleanup tasks should also
-     * be skipped.</p>
-     *
-     * <p>Once JUnit 5 becomes available in Android, we can remove this by moving the assumption
-     * checks into a non-static {@link org.junit.BeforeClass} method.</p>
-     */
-    private boolean mNeedsTearDown = false;
 
     /**
      * Run device test with disabling hidden API check.
@@ -69,27 +52,6 @@ public class ShellCommandFromAppTest extends BaseHostJUnit4Test {
                 .setDisableHiddenApiCheck(false)
                 .setTestClassName(testInfo.testClass)
                 .setTestMethodName(testInfo.testMethod));
-    }
-
-    /**
-     * Set up test case.
-     */
-    @Before
-    public void setUp() throws Exception {
-        // Skip whole tests when DUT has no android.software.input_methods feature.
-        assumeTrue(hasDeviceFeature(ShellCommandUtils.FEATURE_INPUT_METHODS));
-        mNeedsTearDown = true;
-    }
-
-    /**
-     * Tear down test case.
-     */
-    @After
-    public void tearDown() throws Exception {
-        if (!mNeedsTearDown) {
-            return;
-        }
-        // Tear down logic must be placed here.
     }
 
     /**

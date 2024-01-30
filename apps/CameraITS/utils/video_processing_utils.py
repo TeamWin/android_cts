@@ -16,13 +16,17 @@
 # Each item in this list corresponds to quality levels defined per
 # CamcorderProfile. For Video ITS, we will currently test below qualities
 # only if supported by the camera device.
+
+
 import logging
 import os.path
 import re
 import subprocess
 import error_util
+import image_processing_utils
 
 
+AREA_720P_VIDEO = 1280*720
 HR_TO_SEC = 3600
 MIN_TO_SEC = 60
 
@@ -49,9 +53,8 @@ LOW_RESOLUTION_SIZES = (
 
 LOWEST_RES_TESTED_AREA = 640*360
 
-
 VIDEO_QUALITY_SIZE = {
-    # '480P', '1080P', HIGH' and 'LOW' are not included as they are DUT-dependent
+    # '480P', '1080P', HIGH' & 'LOW' are not included as they are DUT-dependent
     '2160P': '3840x2160',
     '720P': '1280x720',
     'VGA': '640x480',
@@ -59,6 +62,43 @@ VIDEO_QUALITY_SIZE = {
     'QVGA': '320x240',
     'QCIF': '176x144',
 }
+
+
+def get_720p_or_above_size(supported_preview_sizes):
+  """Returns the smallest size above or equal to 720p in preview and video.
+
+  If the largest preview size is under 720P, returns the largest value.
+
+  Args:
+    supported_preview_sizes: list; preview sizes.
+      e.g. ['1920x960', '1600x1200', '1920x1080']
+  Returns:
+    smallest size >= 720p video format
+  """
+
+  size_to_area = lambda s: int(s.split('x')[0])*int(s.split('x')[1])
+  smallest_area = float('inf')
+  smallest_720p_or_above_size = ''
+  largest_supported_preview_size = ''
+  largest_area = 0
+  for size in supported_preview_sizes:
+    area = size_to_area(size)
+    if smallest_area > area >= AREA_720P_VIDEO:
+      smallest_area = area
+      smallest_720p_or_above_size = size
+    else:
+      if area > largest_area:
+        largest_area = area
+        largest_supported_preview_size = size
+
+  if largest_area > AREA_720P_VIDEO:
+    logging.debug('Smallest 720p or above size: %s',
+                  smallest_720p_or_above_size)
+    return smallest_720p_or_above_size
+  else:
+    logging.debug('Largest supported preview size: %s',
+                  largest_supported_preview_size)
+    return largest_supported_preview_size
 
 
 def get_lowest_preview_video_size(
@@ -221,7 +261,7 @@ def extract_all_frames_from_video(log_path, video_file_name, img_format):
       f'{os.path.join(log_path, ffmpeg_image_name)}_%03d.{img_format}')
   cmd = [
       'ffmpeg', '-i', os.path.join(log_path, video_file_name),
-      '-vsync', 'vfr', # force ffmpeg to use video fps instead of inferred fps
+      '-vsync', 'vfr',  # force ffmpeg to use video fps instead of inferred fps
       ffmpeg_image_file_names, '-loglevel', 'quiet'
   ]
   _ = subprocess.call(cmd,
@@ -236,6 +276,31 @@ def extract_all_frames_from_video(log_path, video_file_name, img_format):
     raise AssertionError('No frames extracted. Check source video.')
 
   return file_list
+
+
+def extract_last_key_frame_from_recording(log_path, file_name):
+  """Extract last key frame from recordings.
+
+  Args:
+    log_path: str; file location
+    file_name: str file name for saved video
+
+  Returns:
+    numpy image of last key frame
+  """
+  key_frame_files = extract_key_frames_from_video(log_path, file_name)
+  logging.debug('key_frame_files: %s', key_frame_files)
+
+  # Get the last_key_frame file to process.
+  last_key_frame_file = get_key_frame_to_process(key_frame_files)
+  logging.debug('last_key_frame: %s', last_key_frame_file)
+
+  # Convert last_key_frame to numpy array
+  np_image = image_processing_utils.convert_image_to_numpy_array(
+      os.path.join(log_path, last_key_frame_file))
+  logging.debug('last key frame image shape: %s', np_image.shape)
+
+  return np_image
 
 
 def get_average_frame_rate(video_file_name_with_path):

@@ -18,23 +18,36 @@ package android.jobscheduler.cts;
 
 import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED;
+import static android.text.format.DateUtils.HOUR_IN_MILLIS;
 
+import android.app.job.Flags;
 import android.app.job.JobInfo;
 import android.content.ClipData;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.PersistableBundle;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
+import android.util.Log;
+
+import com.android.compatibility.common.util.SystemUtil;
+
+import java.lang.reflect.Method;
+import java.util.Set;
 
 /**
  * Tests related to creating and reading JobInfo objects.
  */
 public class JobInfoTest extends BaseJobSchedulerTest {
     private static final int JOB_ID = JobInfoTest.class.hashCode();
+    private static final String TAG = JobInfoTest.class.getSimpleName();
 
     @Override
     public void tearDown() throws Exception {
@@ -78,6 +91,49 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         mJobScheduler.schedule(ji);
     }
 
+    public void testBias() throws Exception {
+        JobInfo.Builder builder = new JobInfo.Builder(JOB_ID, kJobServiceComponent);
+
+        Method setBiasMethod = JobInfo.Builder.class.getDeclaredMethod("setBias", int.class);
+        setBiasMethod.setAccessible(true);
+        setBiasMethod.invoke(builder, 40);
+
+        JobInfo ji = builder.build();
+        // Confirm JobScheduler rejects the JobInfo object.
+        final PackageManager pm = getContext().getPackageManager();
+        ApplicationInfo applicationInfo = pm.getApplicationInfo(MY_PACKAGE, 0);
+        if (applicationInfo == null) {
+            fail("Couldn't get ApplicationInfo");
+        }
+        if (isAconfigFlagEnabled(
+                "com.android.server.job.throw_on_unsupported_bias_usage")) {
+            // TODO(309023462): create separate tests for target SDK gated changes
+            boolean targetSdkIsAfterU =
+                    applicationInfo.targetSdkVersion > Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
+            if (targetSdkIsAfterU) {
+                assertScheduleFailsWithException(
+                        "Successfully scheduled a job with a modified bias",
+                        ji, SecurityException.class);
+            } else {
+                mJobScheduler.schedule(ji);
+
+                assertEquals("Bias wasn't changed to default",
+                        0, getBias(mJobScheduler.getPendingJob(JOB_ID)));
+            }
+        } else {
+            mJobScheduler.schedule(ji);
+
+            assertEquals("Bias wasn't changed to default",
+                    0, getBias(mJobScheduler.getPendingJob(JOB_ID)));
+        }
+    }
+
+    private int getBias(JobInfo job) throws Exception {
+        Method getBiasMethod = JobInfo.class.getDeclaredMethod("getBias");
+        getBiasMethod.setAccessible(true);
+        return (Integer) getBiasMethod.invoke(job);
+    }
+
     public void testCharging() {
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setRequiresCharging(true)
@@ -111,6 +167,80 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         assertEquals(0, ji.getClipGrantFlags());
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
+    }
+
+    // TODO(315035390): migrate to JUnit4
+    @RequiresFlagsEnabled(Flags.FLAG_JOB_DEBUG_INFO_APIS) // Doesn't work for JUnit3
+    public void testDebugTags() {
+        if (!isAconfigFlagEnabled(Flags.FLAG_JOB_DEBUG_INFO_APIS)) {
+            return;
+        }
+        // Confirm defaults
+        JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent).build();
+        assertEquals(0, ji.getDebugTags().size());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .addDebugTag("a")
+                .addDebugTag("b")
+                .addDebugTag("c")
+                .build();
+        assertEquals(Set.of("a", "b", "c"), ji.getDebugTags());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .addDebugTag("a")
+                .addDebugTag("b")
+                .addDebugTag("c")
+                .removeDebugTag("b")
+                .build();
+        assertEquals(Set.of("a", "c"), ji.getDebugTags());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        // Tag is at the character limit
+        final String maxLengthDebugTag =
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+                        + "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-";
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .addDebugTag(maxLengthDebugTag)
+                .build();
+        assertEquals(Set.of(maxLengthDebugTag), ji.getDebugTags());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        try {
+            new JobInfo.Builder(JOB_ID, kJobServiceComponent).addDebugTag(null).build();
+            fail("Successfully built a JobInfo with a null debug tag");
+        } catch (Exception e) {
+            // Success
+        }
+        try {
+            new JobInfo.Builder(JOB_ID, kJobServiceComponent).addDebugTag("").build();
+            fail("Successfully built a JobInfo with an empty debug tag");
+        } catch (Exception e) {
+            // Success
+        }
+        try {
+            new JobInfo.Builder(JOB_ID, kJobServiceComponent).addDebugTag("        ").build();
+            fail("Successfully built a JobInfo with a whitespace-only debug tag");
+        } catch (Exception e) {
+            // Success
+        }
+        try {
+            new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                    .setTraceTag(maxLengthDebugTag + "x").build();
+            fail("Successfully built a JobInfo with a long debug tag");
+        } catch (Exception e) {
+            // Success
+        }
+        JobInfo.Builder jiBuilder = new JobInfo.Builder(JOB_ID, kJobServiceComponent);
+        for (int i = 0; i < 33; ++i) {
+            jiBuilder.addDebugTag(Integer.toString(i));
+        }
+        assertBuildFails("Successfully built a JobInfo with too many debug tags", jiBuilder);
     }
 
     public void testDeviceIdle() {
@@ -222,7 +352,7 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         assertBuildFails(failureMessage,
                 new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                         .setExpedited(true)
-                        .setOverrideDeadline(200));
+                        .setOverrideDeadline(24 * HOUR_IN_MILLIS));
         assertBuildFails(failureMessage,
                 new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                         .setExpedited(true)
@@ -353,10 +483,79 @@ public class JobInfoTest extends BaseJobSchedulerTest {
 
     public void testOverrideDeadline() {
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                .setOverrideDeadline(7357)
+                .setOverrideDeadline(HOUR_IN_MILLIS)
                 .build();
         // ...why are the set/get methods named differently?? >.>
-        assertEquals(7357, ji.getMaxExecutionDelayMillis());
+        assertEquals(HOUR_IN_MILLIS, ji.getMaxExecutionDelayMillis());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+    }
+
+    public void testOverrideDeadline_minimumTimeWindows() throws Exception {
+        JobInfo.Builder jiBuilderHighBad = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setPriority(JobInfo.PRIORITY_HIGH)
+                .setMinimumLatency(HOUR_IN_MILLIS)
+                .setOverrideDeadline(2 * HOUR_IN_MILLIS - 1);
+        JobInfo.Builder jiBuilderHighGood = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setPriority(JobInfo.PRIORITY_HIGH)
+                .setMinimumLatency(HOUR_IN_MILLIS)
+                .setOverrideDeadline(2 * HOUR_IN_MILLIS);
+        JobInfo.Builder jiBuilderDefaultBad = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setPriority(JobInfo.PRIORITY_DEFAULT)
+                .setMinimumLatency(HOUR_IN_MILLIS)
+                .setOverrideDeadline(2 * HOUR_IN_MILLIS - 1);
+        JobInfo.Builder jiBuilderDefaultGood = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setPriority(JobInfo.PRIORITY_DEFAULT)
+                .setMinimumLatency(HOUR_IN_MILLIS)
+                .setOverrideDeadline(2 * HOUR_IN_MILLIS);
+        JobInfo.Builder jiBuilderLowBad = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setPriority(JobInfo.PRIORITY_LOW)
+                .setMinimumLatency(HOUR_IN_MILLIS)
+                .setOverrideDeadline(7 * HOUR_IN_MILLIS - 1);
+        JobInfo.Builder jiBuilderLowGood = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setPriority(JobInfo.PRIORITY_LOW)
+                .setMinimumLatency(HOUR_IN_MILLIS)
+                .setOverrideDeadline(7 * HOUR_IN_MILLIS);
+        JobInfo.Builder jiBuilderMinBad = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setPriority(JobInfo.PRIORITY_MIN)
+                .setMinimumLatency(HOUR_IN_MILLIS)
+                .setOverrideDeadline(13 * HOUR_IN_MILLIS - 1);
+        JobInfo.Builder jiBuilderMinGood = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setPriority(JobInfo.PRIORITY_MIN)
+                .setMinimumLatency(HOUR_IN_MILLIS)
+                .setOverrideDeadline(13 * HOUR_IN_MILLIS);
+
+        final PackageManager pm = getContext().getPackageManager();
+        ApplicationInfo applicationInfo = pm.getApplicationInfo(MY_PACKAGE, 0);
+        if (applicationInfo == null) {
+            fail("Couldn't get ApplicationInfo");
+        }
+        // TODO(309023462): create separate tests for target SDK gated changes
+        boolean targetSdkIsAfterU =
+                applicationInfo.targetSdkVersion > Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
+        if (targetSdkIsAfterU && isAconfigFlagEnabled(
+                "android.app.job.enforce_minimum_time_windows")) {
+            // Confirm JobScheduler rejects the bad JobInfo objects.
+            assertBuildFails("Successfully scheduled a high pri job with a short deadline",
+                    jiBuilderHighBad);
+            assertBuildFails("Successfully scheduled a def pri job with a short deadline",
+                    jiBuilderDefaultBad);
+            assertBuildFails("Successfully scheduled a low pri job with a short deadline",
+                    jiBuilderLowBad);
+            assertBuildFails("Successfully scheduled a min pri job with a short deadline",
+                    jiBuilderMinBad);
+        } else {
+            // Confirm JobScheduler accepts the JobInfo objects.
+            mJobScheduler.schedule(jiBuilderHighBad.build());
+            mJobScheduler.schedule(jiBuilderDefaultBad.build());
+            mJobScheduler.schedule(jiBuilderLowBad.build());
+            mJobScheduler.schedule(jiBuilderMinBad.build());
+        }
+        // Confirm JobScheduler accepts the good JobInfo objects.
+        mJobScheduler.schedule(jiBuilderHighGood.build());
+        mJobScheduler.schedule(jiBuilderDefaultGood.build());
+        mJobScheduler.schedule(jiBuilderLowGood.build());
+        mJobScheduler.schedule(jiBuilderMinGood.build());
     }
 
     public void testPeriodic() {
@@ -436,7 +635,7 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         assertBuildFails("Modern prefetch jobs can't have a deadline",
                 new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                         .setMinimumLatency(60_000L)
-                        .setOverrideDeadline(600_000L)
+                        .setOverrideDeadline(24 * HOUR_IN_MILLIS)
                         .setPrefetch(true));
     }
 
@@ -619,6 +818,62 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         mJobScheduler.schedule(ji);
     }
 
+    // TODO(315035390): migrate to JUnit4
+    @RequiresFlagsEnabled(Flags.FLAG_JOB_DEBUG_INFO_APIS) // Doesn't work for JUnit3
+    public void testTraceTag() {
+        if (!isAconfigFlagEnabled(Flags.FLAG_JOB_DEBUG_INFO_APIS)) {
+            return;
+        }
+        // Confirm defaults
+        JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent).build();
+        assertNull(ji.getTraceTag());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent).setTraceTag("tracing").build();
+        assertEquals("tracing", ji.getTraceTag());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        // Tag is at the character limit
+        final String maxLengthTraceTag =
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+                        + "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-";
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setTraceTag(maxLengthTraceTag)
+                .build();
+        assertEquals(maxLengthTraceTag, ji.getTraceTag());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setTraceTag(null)
+                .build();
+        assertNull(null, ji.getTraceTag());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        try {
+            new JobInfo.Builder(JOB_ID, kJobServiceComponent).setTraceTag("").build();
+            fail("Successfully built a JobInfo with an empty trace tag");
+        } catch (Exception e) {
+            // Success
+        }
+        try {
+            new JobInfo.Builder(JOB_ID, kJobServiceComponent).setTraceTag("        ").build();
+            fail("Successfully built a JobInfo with a whitespace-only trace tag");
+        } catch (Exception e) {
+            // Success
+        }
+        try {
+            new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                    .setTraceTag(maxLengthTraceTag + "x").build();
+            fail("Successfully built a JobInfo with a long trace tag");
+        } catch (Exception e) {
+            // Success
+        }
+    }
+
     public void testTransientExtras() {
         final Bundle b = new Bundle();
         b.putBoolean("random_bool", true);
@@ -736,7 +991,7 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                         .setUserInitiated(true)
                         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                        .setOverrideDeadline(200));
+                        .setOverrideDeadline(24 * HOUR_IN_MILLIS));
         assertBuildFails(failureMessage,
                 new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                         .setUserInitiated(true)
@@ -794,5 +1049,29 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         } catch (IllegalArgumentException e) {
             // Expected
         }
+    }
+
+    private void assertScheduleFailsWithException(
+            String message, JobInfo jobInfo, Class<? extends Exception> expectedExceptionClass) {
+        try {
+            mJobScheduler.schedule(jobInfo);
+            fail(message);
+        } catch (Exception e) {
+            if (expectedExceptionClass.isInstance(e)) {
+                // Expected
+            } else {
+                fail("Scheduling failed with wrong exception class."
+                        + " Got " + e.getClass().getSimpleName()
+                        + ", wanted " + expectedExceptionClass.getSimpleName());
+            }
+        }
+    }
+
+    private boolean isAconfigFlagEnabled(String fullFlagName) {
+        final String ogValue = SystemUtil.runShellCommand(
+                "cmd jobscheduler get-aconfig-flag-state " + fullFlagName).trim();
+        final boolean enabled = Boolean.parseBoolean(ogValue);
+        Log.d(TAG, fullFlagName + "=" + ogValue  + " ... enabled=" + enabled);
+        return enabled;
     }
 }

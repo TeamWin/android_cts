@@ -16,6 +16,9 @@
 
 package android.content.pm.cts;
 
+import static android.Manifest.permission.INSTALL_PACKAGES;
+import static android.Manifest.permission.USE_INSTALLER_V2;
+import static android.Manifest.permission.USE_SYSTEM_DATA_LOADERS;
 import static android.content.pm.Checksum.TYPE_PARTIAL_MERKLE_ROOT_1M_SHA256;
 import static android.content.pm.Checksum.TYPE_PARTIAL_MERKLE_ROOT_1M_SHA512;
 import static android.content.pm.Checksum.TYPE_WHOLE_MD5;
@@ -23,14 +26,18 @@ import static android.content.pm.Checksum.TYPE_WHOLE_MERKLE_ROOT_4K_SHA256;
 import static android.content.pm.Checksum.TYPE_WHOLE_SHA1;
 import static android.content.pm.Checksum.TYPE_WHOLE_SHA256;
 import static android.content.pm.Checksum.TYPE_WHOLE_SHA512;
+import static android.content.pm.Flags.FLAG_ARCHIVING;
 import static android.content.pm.PackageInstaller.LOCATION_DATA_APP;
 import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
 import static android.content.pm.PackageManager.TRUST_ALL;
 import static android.content.pm.PackageManager.TRUST_NONE;
+import static android.security.Flags.FLAG_DEPRECATE_FSV_SIG;
 
-import static org.junit.Assert.assertFalse;
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertThrows;
@@ -59,6 +66,10 @@ import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.ExceptionUtils;
 
 import androidx.annotation.NonNull;
@@ -66,17 +77,16 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CpuFeatures;
+import com.android.compatibility.common.util.FileUtils;
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.internal.util.HexDump;
 import com.android.server.pm.ApkChecksums;
 import com.android.server.pm.PackageManagerShellCommandDataLoader;
 import com.android.server.pm.PackageManagerShellCommandDataLoader.Metadata;
 
-import com.android.compatibility.common.util.CpuFeatures;
-
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -88,11 +98,13 @@ import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -191,28 +203,19 @@ public class ChecksumsTest {
     @Rule
     public AbandonAllPackageSessionsRule mAbandonSessionsRule = new AbandonAllPackageSessionsRule();
 
-    @Before
-    public void onBefore() throws Exception {
-        uninstallPackageSilently(V4_PACKAGE_NAME);
-        assertFalse(isAppInstalled(V4_PACKAGE_NAME));
-        uninstallPackageSilently(FIXED_PACKAGE_NAME);
-        assertFalse(isAppInstalled(FIXED_PACKAGE_NAME));
-        uninstallPackageSilently(FIXED_FSVERITY_PACKAGE_NAME);
-        assertFalse(isAppInstalled(FIXED_FSVERITY_PACKAGE_NAME));
-    }
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
-    @After
-    public void onAfter() throws Exception {
+    @AfterClass
+    public static void onAfterClass() throws Exception {
         uninstallPackageSilently(V4_PACKAGE_NAME);
-        assertFalse(isAppInstalled(V4_PACKAGE_NAME));
         uninstallPackageSilently(FIXED_PACKAGE_NAME);
-        assertFalse(isAppInstalled(FIXED_PACKAGE_NAME));
         uninstallPackageSilently(FIXED_FSVERITY_PACKAGE_NAME);
-        assertFalse(isAppInstalled(FIXED_FSVERITY_PACKAGE_NAME));
     }
 
     @Test
     public void testNameNotFound() throws Exception {
+        uninstallPackageSilently(V4_PACKAGE_NAME);
         LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
         assertThrows(PackageManager.NameNotFoundException.class,
@@ -250,6 +253,7 @@ public class ChecksumsTest {
 
     @Test
     public void testSplitsDefaultChecksums() throws Exception {
+        uninstallPackageSilently(V4_PACKAGE_NAME);
         installSplits(new String[]{TEST_V4_APK, TEST_V4_SPLIT0, TEST_V4_SPLIT1, TEST_V4_SPLIT2,
                 TEST_V4_SPLIT3, TEST_V4_SPLIT4});
         assertTrue(isAppInstalled(V4_PACKAGE_NAME));
@@ -277,6 +281,7 @@ public class ChecksumsTest {
 
     @Test
     public void testFixedDefaultChecksums() throws Exception {
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
         installPackage(TEST_FIXED_APK);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
@@ -294,6 +299,7 @@ public class ChecksumsTest {
 
     @Test
     public void testFixedV1DefaultChecksums() throws Exception {
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
         installPackage(TEST_FIXED_APK_V1);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
@@ -307,6 +313,7 @@ public class ChecksumsTest {
 
     @Test
     public void testFixedSha512DefaultChecksums() throws Exception {
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
         installPackage(TEST_FIXED_APK_SHA512);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
@@ -326,8 +333,10 @@ public class ChecksumsTest {
 
     @LargeTest
     @Test
+    @RequiresFlagsDisabled(FLAG_DEPRECATE_FSV_SIG)
     public void testFixedFSVerityDefaultChecksums() throws Exception {
-        Assume.assumeTrue(isApkVerityEnabled());
+        assumeTrue(isApkVerityEnabled());
+        uninstallPackageSilently(FIXED_FSVERITY_PACKAGE_NAME);
         installApkWithFSVerity(TEST_FIXED_APK_FSVERITY, TEST_FIXED_APK_FSVERITY_FSVSIG);
         assertTrue(isAppInstalled(FIXED_FSVERITY_PACKAGE_NAME));
 
@@ -356,11 +365,11 @@ public class ChecksumsTest {
 
     @LargeTest
     @Test
+    @RequiresFlagsDisabled(FLAG_DEPRECATE_FSV_SIG)
     public void testFixedFSVerityDefaultChecksumsIncremental() throws Exception {
-        if (!checkIncrementalDeliveryFeature()) {
-            return;
-        }
+        assumeTrue(checkIncrementalDeliveryFeature());
 
+        uninstallPackageSilently(FIXED_FSVERITY_PACKAGE_NAME);
         installFilesIncrementally(
                 new String[]{TEST_FIXED_APK_FSVERITY, TEST_FIXED_APK_FSVERITY_FSVSIG});
         assertTrue(isAppInstalled(FIXED_FSVERITY_PACKAGE_NAME));
@@ -385,6 +394,7 @@ public class ChecksumsTest {
 
     @Test
     public void testFixedVerityDefaultChecksums() throws Exception {
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
         installPackage(TEST_FIXED_APK_VERITY);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
@@ -397,9 +407,35 @@ public class ChecksumsTest {
         assertEquals(checksums.length, 0, Arrays.toString(checksums));
     }
 
+    @Test
+    @RequiresFlagsEnabled(FLAG_ARCHIVING)
+    public void testArchivedDefaultChecksums() throws Exception {
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
+        installPackage(TEST_FIXED_APK);
+        assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
+
+        byte[] archivedPackage = SystemUtil.runShellCommandByteOutput(
+                getUiAutomation(),
+                "pm get-archived-package-metadata " + FIXED_PACKAGE_NAME);
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
+
+        // Install as archived.
+        Assert.assertEquals("Success\n", executeShellCommand(
+                String.format("pm install-archived -r -i %s -t -S %s",
+                        getContext().getPackageName(), archivedPackage.length), archivedPackage));
+        assertTrue(isPackagePresent(FIXED_PACKAGE_NAME));
+
+        LocalListener receiver = new LocalListener();
+        PackageManager pm = getPackageManager();
+        assertThrows(PackageManager.NameNotFoundException.class, () ->
+                pm.requestChecksums(
+                        FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver));
+    }
+
     @LargeTest
     @Test
     public void testFixedAllChecksums() throws Exception {
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
         installPackage(TEST_FIXED_APK);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
@@ -435,6 +471,7 @@ public class ChecksumsTest {
     @LargeTest
     @Test
     public void testFixedV1AllChecksums() throws Exception {
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
         installPackage(TEST_FIXED_APK_V1);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
@@ -464,9 +501,9 @@ public class ChecksumsTest {
 
     @Test
     public void testDefaultIncrementalChecksums() throws Exception {
-        if (!checkIncrementalDeliveryFeature()) {
-            return;
-        }
+        assumeTrue(checkIncrementalDeliveryFeature());
+        uninstallPackageSilently(V4_PACKAGE_NAME);
+
         installPackageIncrementally(TEST_V4_APK);
         assertTrue(isAppInstalled(V4_PACKAGE_NAME));
 
@@ -481,9 +518,9 @@ public class ChecksumsTest {
 
     @Test
     public void testFixedDefaultIncrementalChecksums() throws Exception {
-        if (!checkIncrementalDeliveryFeature()) {
-            return;
-        }
+        assumeTrue(checkIncrementalDeliveryFeature());
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
+
         installPackageIncrementally(TEST_FIXED_APK);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
@@ -501,9 +538,9 @@ public class ChecksumsTest {
     @LargeTest
     @Test
     public void testFixedAllIncrementalChecksums() throws Exception {
-        if (!checkIncrementalDeliveryFeature()) {
-            return;
-        }
+        assumeTrue(checkIncrementalDeliveryFeature());
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
+
         installPackageIncrementally(TEST_FIXED_APK);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
@@ -539,6 +576,7 @@ public class ChecksumsTest {
 
     @Test
     public void testInstallerChecksumsTrustNone() throws Exception {
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
         installApkWithChecksums(TEST_FIXED_APK_DIGESTS);
 
         LocalListener receiver = new LocalListener();
@@ -555,6 +593,7 @@ public class ChecksumsTest {
 
     @Test
     public void testInstallerWrongChecksumsTrustAll() throws Exception {
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
         installApkWithChecksums(TEST_FIXED_APK_WRONG_DIGESTS);
 
         LocalListener receiver = new LocalListener();
@@ -571,7 +610,8 @@ public class ChecksumsTest {
 
     @Test
     public void testInstallerSignedChecksumsInvalidSignature() throws Exception {
-        getUiAutomation().adoptShellPermissionIdentity();
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
+        adoptShellPermissionIdentity();
         try {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
@@ -580,20 +620,73 @@ public class ChecksumsTest {
             final int sessionId = installer.createSession(params);
             Session session = installer.openSession(sessionId);
             writeFileToSession(session, "file", TEST_FIXED_APK);
+
+            assertThrows(IllegalArgumentException.class, () -> session.setChecksums("file",
+                    Arrays.asList(TEST_FIXED_APK_DIGESTS), hexStringToBytes("1eec9e86")));
+        } finally {
+            dropShellPermissionIdentity();
+        }
+    }
+
+    private static byte[] createRandomArray(int size) {
+        byte[] array = new byte[size];
+        (new SecureRandom()).nextBytes(array);
+        return array;
+    }
+
+    @Test
+    public void testInstallerSignedChecksumsSignatureTooBig() throws Exception {
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
+        adoptShellPermissionIdentity();
+        try {
+            final PackageInstaller installer = getPackageInstaller();
+            final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+            params.installFlags |= PackageManager.INSTALL_REPLACE_EXISTING;
+
+            final int sessionId = installer.createSession(params);
+            Session session = installer.openSession(sessionId);
+            writeFileToSession(session, "file", TEST_FIXED_APK);
+
             try {
-                session.setChecksums("file", Arrays.asList(TEST_FIXED_APK_DIGESTS),
-                        hexStringToBytes("1eec9e86"));
+                session.setChecksums("file",
+                        Arrays.asList(TEST_FIXED_APK_DIGESTS), createRandomArray(50000));
                 Assert.fail("setChecksums should throw exception.");
             } catch (IllegalArgumentException e) {
-                // expected
+                assertThat(e.getMessage()).contains("Invalid signature");
             }
         } finally {
-            getUiAutomation().dropShellPermissionIdentity();
+            dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testInstallerSignedChecksumsInvalidChecksum() throws Exception {
+        final Checksum[] invalidChecksums = new Checksum[]{new Checksum(
+                TYPE_PARTIAL_MERKLE_ROOT_1M_SHA256, hexStringToBytes(
+                "6b866e8a54a3e358dfc20007960fb96123845f6c6d6c45f5fddf8"
+                        + "8150d71677f4c3081a58921c88651f7376118aca312cf764"
+                        + "b391cdfb8a18c6710f9f27916a0a0"))};
+
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
+        adoptShellPermissionIdentity();
+        try {
+            final PackageInstaller installer = getPackageInstaller();
+            final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+            params.installFlags |= PackageManager.INSTALL_REPLACE_EXISTING;
+
+            final int sessionId = installer.createSession(params);
+            Session session = installer.openSession(sessionId);
+            writeFileToSession(session, "file", TEST_FIXED_APK);
+            assertThrows(IllegalArgumentException.class, () -> session.setChecksums("file",
+                    Arrays.asList(invalidChecksums), NO_SIGNATURE));
+        } finally {
+            dropShellPermissionIdentity();
         }
     }
 
     @Test
     public void testInstallerSignedChecksumsTrustNone() throws Exception {
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
         final byte[] signature = readSignature();
 
         CommitIntentReceiver.checkSuccess(
@@ -614,6 +707,7 @@ public class ChecksumsTest {
 
     @Test
     public void testInstallerSignedChecksumsTrustAll() throws Exception {
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
         final byte[] signature = readSignature();
         final Certificate certificate = readCertificate();
 
@@ -648,6 +742,7 @@ public class ChecksumsTest {
 
     @Test
     public void testInstallerChecksumsTrustAll() throws Exception {
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
         installApkWithChecksums(TEST_FIXED_APK_DIGESTS);
 
         final Certificate installerCertificate = getInstallerCertificate();
@@ -679,6 +774,7 @@ public class ChecksumsTest {
 
     @Test
     public void testInstallerChecksumsTrustInstaller() throws Exception {
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
         installApkWithChecksums(TEST_FIXED_APK_DIGESTS);
 
         // Using the installer's certificate(s).
@@ -713,6 +809,7 @@ public class ChecksumsTest {
     @LargeTest
     @Test
     public void testInstallerFileChecksumsDuringInstall() throws Exception {
+        uninstallPackageSilently(V4_PACKAGE_NAME);
         Checksum[] digestsBase = new Checksum[]{new Checksum(TYPE_WHOLE_SHA256, hexStringToBytes(
                 "ed8c7ae1220fe16d558e00cfc37256e6f7088ab90eb04c1bfcb39922a8a5248e")),
                 new Checksum(TYPE_WHOLE_MD5, hexStringToBytes("dd93e23bb8cdab0382fdca0d21a4f1cb"))};
@@ -722,7 +819,7 @@ public class ChecksumsTest {
 
         final Certificate installerCertificate = getInstallerCertificate();
 
-        getUiAutomation().adoptShellPermissionIdentity();
+        adoptShellPermissionIdentity();
         PackageInstaller installer = null;
         int sessionId = -1;
         try {
@@ -799,12 +896,13 @@ public class ChecksumsTest {
             }
         } finally {
             installer.abandonSession(sessionId);
-            getUiAutomation().dropShellPermissionIdentity();
+            dropShellPermissionIdentity();
         }
     }
 
     @Test
     public void testInstallerChecksumsTrustWrongInstaller() throws Exception {
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
         installApkWithChecksums(TEST_FIXED_APK_DIGESTS);
 
         // Using certificates from a security app, not the installer (us).
@@ -827,6 +925,7 @@ public class ChecksumsTest {
 
     @Test
     public void testInstallerChecksumsTrustAllWrongName() throws Exception {
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
         // NB: "Invalid checksum name(s):" is used in Play to report checksum related failures.
         // Please consult with them before changing.
         CommitIntentReceiver.checkFailure(
@@ -837,6 +936,8 @@ public class ChecksumsTest {
 
     @Test
     public void testInstallerChecksumsUpdate() throws Exception {
+        uninstallPackageSilently(V4_PACKAGE_NAME);
+
         Checksum[] digestsBase = new Checksum[]{new Checksum(TYPE_WHOLE_SHA256, hexStringToBytes(
                 "ed8c7ae1220fe16d558e00cfc37256e6f7088ab90eb04c1bfcb39922a8a5248e")),
                 new Checksum(TYPE_WHOLE_MD5, hexStringToBytes("dd93e23bb8cdab0382fdca0d21a4f1cb"))};
@@ -850,7 +951,7 @@ public class ChecksumsTest {
         final Certificate installerCertificate = getInstallerCertificate();
 
         // Original package checksums: base + split0.
-        getUiAutomation().adoptShellPermissionIdentity();
+        adoptShellPermissionIdentity();
         try {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
@@ -868,7 +969,7 @@ public class ChecksumsTest {
             session.commit(receiver.getIntentSender());
             CommitIntentReceiver.checkSuccess(receiver.getResult());
         } finally {
-            getUiAutomation().dropShellPermissionIdentity();
+            dropShellPermissionIdentity();
         }
 
         {
@@ -915,7 +1016,7 @@ public class ChecksumsTest {
         }
 
         // Update the package with one split+checksums and another split without checksums.
-        getUiAutomation().adoptShellPermissionIdentity();
+        adoptShellPermissionIdentity();
         try {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_INHERIT_EXISTING);
@@ -934,7 +1035,7 @@ public class ChecksumsTest {
             session.commit(receiver.getIntentSender());
             CommitIntentReceiver.checkSuccess(receiver.getResult());
         } finally {
-            getUiAutomation().dropShellPermissionIdentity();
+            dropShellPermissionIdentity();
         }
 
         {
@@ -1005,6 +1106,7 @@ public class ChecksumsTest {
 
     @Test
     public void testInstallerSignedChecksumsUpdate() throws Exception {
+        uninstallPackageSilently(V4_PACKAGE_NAME);
         Checksum[] digestsBase = new Checksum[]{new Checksum(TYPE_WHOLE_SHA256, hexStringToBytes(
                 "ed8c7ae1220fe16d558e00cfc37256e6f7088ab90eb04c1bfcb39922a8a5248e")),
                 new Checksum(TYPE_WHOLE_MD5, hexStringToBytes("dd93e23bb8cdab0382fdca0d21a4f1cb"))};
@@ -1033,7 +1135,7 @@ public class ChecksumsTest {
         final Certificate certificate = readCertificate();
 
         // Original package checksums: base + split0.
-        getUiAutomation().adoptShellPermissionIdentity();
+        adoptShellPermissionIdentity();
         try {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
@@ -1051,7 +1153,7 @@ public class ChecksumsTest {
             session.commit(receiver.getIntentSender());
             CommitIntentReceiver.checkSuccess(receiver.getResult());
         } finally {
-            getUiAutomation().dropShellPermissionIdentity();
+            dropShellPermissionIdentity();
         }
 
         {
@@ -1098,7 +1200,7 @@ public class ChecksumsTest {
         }
 
         // Update the package with one split+checksums and another split without checksums.
-        getUiAutomation().adoptShellPermissionIdentity();
+        adoptShellPermissionIdentity();
         try {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_INHERIT_EXISTING);
@@ -1117,7 +1219,7 @@ public class ChecksumsTest {
             session.commit(receiver.getIntentSender());
             CommitIntentReceiver.checkSuccess(receiver.getResult());
         } finally {
-            getUiAutomation().dropShellPermissionIdentity();
+            dropShellPermissionIdentity();
         }
 
         {
@@ -1188,12 +1290,11 @@ public class ChecksumsTest {
 
     @Test
     public void testInstallerChecksumsIncremental() throws Exception {
-        if (!checkIncrementalDeliveryFeature()) {
-            return;
-        }
+        assumeTrue(checkIncrementalDeliveryFeature());
 
         final Certificate installerCertificate = getInstallerCertificate();
 
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
         installPackageIncrementally(TEST_FIXED_APK);
 
         PackageManager pm = getPackageManager();
@@ -1226,10 +1327,9 @@ public class ChecksumsTest {
 
     @Test
     public void testInstallerSignedChecksumsIncremental() throws Exception {
-        if (!checkIncrementalDeliveryFeature()) {
-            return;
-        }
+        assumeTrue(checkIncrementalDeliveryFeature());
 
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
         installPackageIncrementally(TEST_FIXED_APK);
 
         PackageInfo packageInfo = getPackageManager().getPackageInfo(FIXED_PACKAGE_NAME,
@@ -1266,10 +1366,9 @@ public class ChecksumsTest {
 
     @Test
     public void testInstallerChecksumsIncrementalTrustNone() throws Exception {
-        if (!checkIncrementalDeliveryFeature()) {
-            return;
-        }
+        assumeTrue(checkIncrementalDeliveryFeature());
 
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
         installPackageIncrementally(TEST_FIXED_APK);
 
         PackageInfo packageInfo = getPackageManager().getPackageInfo(FIXED_PACKAGE_NAME,
@@ -1294,7 +1393,8 @@ public class ChecksumsTest {
 
     @Test
     public void testInstallerChecksumsDuplicate() throws Exception {
-        getUiAutomation().adoptShellPermissionIdentity();
+        uninstallPackageSilently(FIXED_PACKAGE_NAME);
+        adoptShellPermissionIdentity();
         try {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
@@ -1310,7 +1410,7 @@ public class ChecksumsTest {
                 // expected
             }
         } finally {
-            getUiAutomation().dropShellPermissionIdentity();
+            dropShellPermissionIdentity();
         }
     }
 
@@ -1346,7 +1446,7 @@ public class ChecksumsTest {
 
     private Intent installApkWithChecksums(String apk, String apkName,
             String checksumsName, Checksum[] checksums, byte[] signature) throws Exception {
-        getUiAutomation().adoptShellPermissionIdentity();
+        adoptShellPermissionIdentity();
         try {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
@@ -1360,12 +1460,12 @@ public class ChecksumsTest {
             session.commit(receiver.getIntentSender());
             return receiver.getResult();
         } finally {
-            getUiAutomation().dropShellPermissionIdentity();
+            dropShellPermissionIdentity();
         }
     }
 
     private void installApkWithFSVerity(String apk, String fsv) throws Exception {
-        getUiAutomation().adoptShellPermissionIdentity();
+        adoptShellPermissionIdentity();
         try {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
@@ -1379,7 +1479,7 @@ public class ChecksumsTest {
             session.commit(receiver.getIntentSender());
             CommitIntentReceiver.checkSuccess(receiver.getResult());
         } finally {
-            getUiAutomation().dropShellPermissionIdentity();
+            dropShellPermissionIdentity();
         }
     }
     private void installApkWithChecksumsIncrementally(final String inPath) throws Exception {
@@ -1389,7 +1489,7 @@ public class ChecksumsTest {
 
     private void installApkWithChecksumsIncrementally(final String inPath, final String apk,
             final Checksum[] checksums, final byte[] signature) throws Exception {
-        getUiAutomation().adoptShellPermissionIdentity();
+        adoptShellPermissionIdentity();
         try {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
@@ -1412,7 +1512,7 @@ public class ChecksumsTest {
             session.commit(receiver.getIntentSender());
             CommitIntentReceiver.checkSuccess(receiver.getResult());
         } finally {
-            getUiAutomation().dropShellPermissionIdentity();
+            dropShellPermissionIdentity();
         }
     }
 
@@ -1441,6 +1541,20 @@ public class ChecksumsTest {
         final ParcelFileDescriptor stdout = getUiAutomation().executeShellCommand(command);
         try (InputStream inputStream = new ParcelFileDescriptor.AutoCloseInputStream(stdout)) {
             return readFullStream(inputStream);
+        }
+    }
+
+    private String executeShellCommand(String command, byte[] input) throws IOException {
+        final ParcelFileDescriptor[] pfds =
+                getUiAutomation().executeShellCommandRw(command);
+        ParcelFileDescriptor stdout = pfds[0];
+        ParcelFileDescriptor stdin = pfds[1];
+        try (FileOutputStream outputStream = new ParcelFileDescriptor.AutoCloseOutputStream(
+                stdin)) {
+            outputStream.write(input);
+        }
+        try (InputStream inputStream = new ParcelFileDescriptor.AutoCloseInputStream(stdout)) {
+            return new String(FileUtils.readInputStreamFully(inputStream));
         }
     }
 
@@ -1492,12 +1606,22 @@ public class ChecksumsTest {
         }
     }
 
-    private String uninstallPackageSilently(String packageName) throws IOException {
+    private static String uninstallPackageSilently(String packageName) throws IOException {
         return executeShellCommand("pm uninstall " + packageName);
     }
 
-    private boolean isAppInstalled(String packageName) throws IOException {
-        final String commandResult = executeShellCommand("pm list packages");
+    private static boolean isAppInstalled(String packageName) throws IOException {
+        return isPackagePresent(packageName, /*matchAllPackages=*/false);
+    }
+
+    private static boolean isPackagePresent(String packageName) throws IOException {
+        return isPackagePresent(packageName, /*matchAllPackages=*/true);
+    }
+
+    private static boolean isPackagePresent(String packageName, boolean matchAllPackages)
+            throws IOException {
+        final String commandResult =
+                executeShellCommand("pm list packages" + (matchAllPackages ? " -a" : ""));
         final int prefixLength = "package:".length();
         return Arrays.stream(commandResult.split("\\r?\\n"))
                 .anyMatch(line -> line.substring(prefixLength).equals(packageName));
@@ -1582,11 +1706,26 @@ public class ChecksumsTest {
         }
     }
 
+    private void adoptShellPermissionIdentity() {
+        // For non-shell/non-root/non-system uids, USE_SYSTEM_DATA_LOADERS means
+        // "install-related test adapted shell identity".
+        getUiAutomation().adoptShellPermissionIdentity(INSTALL_PACKAGES, USE_SYSTEM_DATA_LOADERS,
+                USE_INSTALLER_V2);
+    }
+
+    private void dropShellPermissionIdentity() {
+        getUiAutomation().dropShellPermissionIdentity();
+    }
+
     private static class LocalListener implements PackageManager.OnChecksumsReadyListener {
         private final LinkedBlockingQueue<ApkChecksum[]> mResult = new LinkedBlockingQueue<>();
 
         @Override
         public void onChecksumsReady(@NonNull List<ApkChecksum> checksumsList) {
+            if (checksumsList == null) {
+                mResult.offer(null);
+                return;
+            }
             ApkChecksum[] checksums = checksumsList.toArray(new ApkChecksum[checksumsList.size()]);
             Arrays.sort(checksums, (ApkChecksum lhs, ApkChecksum rhs) ->  {
                 final String lhsSplit = lhs.getSplitName();

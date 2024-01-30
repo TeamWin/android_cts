@@ -36,6 +36,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.os.SystemClock;
+import android.server.wm.LockScreenSession;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -101,7 +102,7 @@ public class UserAuthTest {
         private LockScreenSession mLockCredential;
 
         public DeviceLockSession() throws Exception {
-            mLockCredential = new LockScreenSession();
+            mLockCredential = new LockScreenSession(mInstrumentation, mWmState);
             mLockCredential.setLockCredential();
         }
 

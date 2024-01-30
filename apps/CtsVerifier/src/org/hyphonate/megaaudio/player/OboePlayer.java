@@ -33,10 +33,10 @@ public class OboePlayer extends Player {
         super(sourceProvider);
 
         mPlayerSubtype = playerSubtype;
-        NativeAudioSource nativeAudioSource = mSourceProvider.getNativeSource();
-        if (nativeAudioSource != null) {
-            mAudioSource = nativeAudioSource;
-            mNativePlayer = allocNativePlayer(nativeAudioSource.getNativeObject(), mPlayerSubtype);
+        mAudioSource = mSourceProvider.getNativeSource();
+        if (mAudioSource != null) {
+            mNativePlayer = allocNativePlayer(
+                    ((NativeAudioSource) mAudioSource).getNativeObject(), mPlayerSubtype);
         } else {
             // No native source provided, so wrap a Java source in a native provider wrapper
             mAudioSource = mSourceProvider.getJavaSource();
@@ -54,6 +54,16 @@ public class OboePlayer extends Player {
     @Override
     public int getRoutedDeviceId() {
         return getRoutedDeviceIdN(mNativePlayer);
+    }
+
+    @Override
+    public int getSharingMode() {
+        return getSharingModeN(mNativePlayer);
+    }
+
+    @Override
+    public int getChannelCount() {
+        return getChannelCountN(mNativePlayer);
     }
 
     private int setupStream(PlayerBuilder builder) {
@@ -134,6 +144,10 @@ public class OboePlayer extends Player {
     private native int getBufferFrameCountN(long mNativePlayer);
 
     private native int getRoutedDeviceIdN(long nativePlayer);
+
+    private native int getSharingModeN(long nativePlayer);
+
+    private native int getChannelCountN(long nativePlayer);
 
     private native boolean getTimestampN(long nativePlayer, AudioTimestamp timestamp);
 

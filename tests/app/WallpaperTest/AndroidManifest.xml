@@ -72,6 +72,13 @@
         </service>
 
         <activity android:name=".WallpaperTestActivity"
+                  android:theme="@style/Theme.Transparent"
+                  android:keepScreenOn="true"
+                  android:showWhenLocked="true"
+                  android:turnScreenOn="true">
+        </activity>
+
+        <activity android:name=".WallpaperOverlayTestActivity"
                   android:theme="@style/Theme.Transparent">
         </activity>
 

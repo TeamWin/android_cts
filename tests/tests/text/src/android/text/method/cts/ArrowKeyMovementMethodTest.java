@@ -41,13 +41,14 @@ import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -74,6 +75,7 @@ public class ArrowKeyMovementMethodTest {
     private static final int SPACE_IN_2ND_LINE = THREE_LINES_TEXT.indexOf(' ', START_OF_2ND_LINE);
 
     private Instrumentation mInstrumentation;
+    private Activity mActivity;
     private TextView mTextView;
     private ArrowKeyMovementMethod mArrowKeyMovementMethod;
     private Editable mEditable;
@@ -85,6 +87,9 @@ public class ArrowKeyMovementMethodTest {
     @Before
     public void setup() throws Throwable {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
+        WindowUtil.waitForFocus(mActivity);
+
         mMetaListener = new MyMetaKeyKeyListener();
         mArrowKeyMovementMethod = new ArrowKeyMovementMethod();
 

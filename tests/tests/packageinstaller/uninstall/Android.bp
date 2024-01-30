@@ -20,11 +20,13 @@ android_test {
     name: "CtsPackageUninstallTestCases",
     defaults: ["cts_defaults"],
     static_libs: [
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "platform-test-annotations",
         "cts-wm-util",
+        "cts-install-lib",
+        "android.content.pm.flags-aconfig-java",
     ],
     resource_dirs: ["res"],
     srcs: ["src/**/*.java"],
@@ -38,6 +40,7 @@ android_test {
     data: [
         ":CtsEmptyTestApp",
         ":CtsSelfUninstallingTestApp",
+        ":CtsArchiveTestApp",
     ],
     per_testcase_directory: true,
 }

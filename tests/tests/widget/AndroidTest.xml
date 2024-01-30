@@ -35,16 +35,6 @@
         <option name="test-file-name" value="CtsWidgetTestCases.apk" />
     </target_preparer>
 
-    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
-        <option name="cleanup-apks" value="true" />
-        <!--
-            MockIME always needs to be installed as a full package, even when CTS is running
-            for instant apps.
-        -->
-        <option name="force-install-mode" value="FULL"/>
-        <option name="test-file-name" value="CtsMockInputMethod.apk" />
-    </target_preparer>
-
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <!--
             To fail-fast in case test-ime setup somehow failed.  Consider increasing the
@@ -62,7 +52,6 @@
         -->
         <option name="run-command" value="sleep 1" />
         <option name="test-user-token" value="%TEST_USER%"/>
-        <option name="run-command" value="am compat enable ALLOW_TEST_API_ACCESS com.android.cts.mockime"/>
         <option name="run-command" value="ime enable --user %TEST_USER% com.android.cts.testime/.TestIme" />
         <option name="run-command" value="ime set --user %TEST_USER% com.android.cts.testime/.TestIme" />
         <option name="teardown-command" value="ime reset --user %TEST_USER%" />
@@ -73,6 +62,7 @@
         <option name="runtime-hint" value="11m55s" />
         <option name="hidden-api-checks" value="false" />
         <option name="instrumentation-arg" key="thisisignored" value="thisisignored --no-window-animation" />
+        <option name="runner" value="android.widget.cts.runner.WidgetRunner" />
     </test>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="input keyevent KEYCODE_WAKEUP" />

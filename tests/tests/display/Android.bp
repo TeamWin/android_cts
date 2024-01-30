@@ -27,10 +27,13 @@ android_test {
     },
     srcs: ["src/**/*.java"],
     static_libs: [
+        "android.hardware.flags-aconfig-java",
         "androidx.test.core",
         "androidx.test.rules",
         "compatibility-device-util-axt",
+        "flag-junit",
         "CtsSurfaceValidatorLib",
+        "android.companion.virtual.flags-aconfig-java",
     ],
     libs: ["android.test.base"],
     // Tag this module as a cts test artifact

@@ -26,6 +26,8 @@ import android.platform.test.annotations.Presubmit;
 import android.security.keystore.KeyProperties;
 import android.util.Log;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Test;
 
 import java.security.InvalidAlgorithmParameterException;
@@ -37,6 +39,11 @@ import java.security.InvalidAlgorithmParameterException;
 public class BiometricCryptoTests extends BiometricTestBase {
     private static final String TAG = "BiometricTests/Crypto";
 
+    @ApiTest(apis = {
+            "android.security.keystore."
+                    + "KeyGenParameterSpec.Builder#setUserAuthenticationRequired",
+            "android.security.keystore."
+                    + "KeyGenParameterSpec.Builder#setUserAuthenticationParameters"})
     @Test
     public void testGenerateKeyWithoutDeviceCredential_throwsException() {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
@@ -46,6 +53,11 @@ public class BiometricCryptoTests extends BiometricTestBase {
                         false /* useStrongBox */));
     }
 
+    @ApiTest(apis = {
+            "android.security.keystore."
+                + "KeyGenParameterSpec.Builder#setUserAuthenticationRequired",
+            "android.security.keystore."
+                + "KeyGenParameterSpec.Builder#setUserAuthenticationParameters"})
     @Test
     public void testGenerateKeyWithoutBiometricEnrolled_throwsInvalidAlgorithmParameterException()
             throws Exception {
@@ -59,6 +71,13 @@ public class BiometricCryptoTests extends BiometricTestBase {
         }
     }
 
+    @ApiTest(apis = {
+            "android.security.keystore."
+                    + "KeyGenParameterSpec.Builder#setUserAuthenticationRequired",
+            "android.security.keystore."
+                    + "KeyGenParameterSpec.Builder#setUserAuthenticationParameters",
+            "android.security.keystore."
+                    + "KeyGenParameterSpec.Builder#setUserAuthenticationValidityDurationSeconds"})
     @Test
     public void testGenerateKeyWhenCredentialAndBiometricEnrolled() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());

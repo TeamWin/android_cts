@@ -36,6 +36,7 @@
         <option name="exclude-annotation" value="com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile" />
         <option name="exclude-annotation" value="com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser" />
         <option name="exclude-annotation" value="com.android.bedstead.harrier.annotations.RequireRunOnCloneProfile" />
+        <option name="exclude-annotation" value="com.android.bedstead.harrier.annotations.RequireRunOnPrivateProfile" />
         <!-- TODO(b/236106868): This should filter -->
         <option name="include-annotation" value="com.android.interactive.annotations.Interactive" />
         <option name="hidden-api-checks" value="false" />

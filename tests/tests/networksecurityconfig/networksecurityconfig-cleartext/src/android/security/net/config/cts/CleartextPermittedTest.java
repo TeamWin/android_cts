@@ -16,16 +16,21 @@
 
 package android.security.net.config.cts;
 
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import javax.net.ssl.X509TrustManager;
+import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
 public class CleartextPermittedTest extends BaseTestCase {
+
+    @Test
     public void testDefaultDenied() throws Exception {
         TestUtils.assertCleartextConnectionFails("example.com", 80);
         TestUtils.assertTlsConnectionSucceeds("example.com", 443);
     }
 
+    @Test
     public void testCleartextAllowed() throws Exception {
         TestUtils.assertCleartextConnectionSucceeds("android.com", 80);
         TestUtils.assertTlsConnectionSucceeds("android.com", 443);
@@ -34,6 +39,7 @@ public class CleartextPermittedTest extends BaseTestCase {
         TestUtils.assertTlsConnectionSucceeds("www.android.com", 443);
     }
 
+    @Test
     public void testNestedCleartextDenied() throws Exception {
         // developer.android.com is explicitly denied.
         TestUtils.assertCleartextConnectionFails("developer.android.com", 80);

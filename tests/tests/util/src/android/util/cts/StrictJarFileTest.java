@@ -22,6 +22,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
@@ -32,6 +34,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -48,9 +51,13 @@ import java.util.zip.ZipEntry;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@IgnoreUnderRavenwood(blockedBy = StrictJarFile.class)
 public class StrictJarFileTest {
     // A well formed jar file with 6 entries.
     private static final String JAR_1 = "hyts_patch.jar";
+
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule();
 
     private File mResourcesFile;
 

@@ -180,4 +180,5 @@ I think so, so how about double this string, like copy and paste! </string>
         <item quantity="one">one more</item>
         <item quantity="other"><xliff:g id="number">%d</xliff:g> more</item>
     </plurals>
+    <string name="linebreakconfig_span_test">a<nobreak>b</nobreak><nohyphen>c</nohyphen><lineBreakConfig style="strict">d</lineBreakConfig></string>
 </resources>
