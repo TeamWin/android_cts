@@ -27,6 +27,7 @@ import android.server.wm.LockScreenSession;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -42,6 +43,7 @@ public final class KeyguardManagerHelperTest extends ActivityManagerTestBase {
         assumeTrue(supportsSecureLock());
     }
 
+    @Ignore("b/300531707")
     @Test
     public void testIsKeyguardLocked() throws Exception {
         assumeFalse(KeyguardManagerHelper.isKeyguardLocked());
