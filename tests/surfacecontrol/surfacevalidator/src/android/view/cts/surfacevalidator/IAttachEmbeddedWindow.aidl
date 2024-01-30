@@ -28,7 +28,8 @@ interface IAttachEmbeddedWindow {
     void relayout(in LayoutParams lp);
     void sendCrash();
     String attachEmbeddedSurfaceControl(in SurfaceControl sc, int displayId,
-            in InputTransferToken hostToken, int width, int height,
-            in IMotionEventReceiver motionEventReceiver);
+            in InputTransferToken hostToken, int width, int height, boolean transferTouchToHost,
+            in @nullable IMotionEventReceiver motionEventReceiver);
+    InputTransferToken getEmbeddedInputTransferToken();
     void tearDownEmbeddedSurfaceControl();
 }
