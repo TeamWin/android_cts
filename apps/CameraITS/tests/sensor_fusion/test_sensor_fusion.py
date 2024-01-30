@@ -377,13 +377,13 @@ class SensorFusionTest(its_base_test.ItsBaseTest):
 
     # Validity check on gyro/camera timestamps
     cam_times = _get_cam_times(
-        events['cam'][_START_FRAME:len(events['cam'])], fps)
+        events['cam'][_START_FRAME:], fps)
     gyro_times = [e['time'] for e in events['gyro']]
     self._assert_gyro_encompasses_camera(cam_times, gyro_times)
 
     # Compute cam rotation displacement(rads) between pairs of adjacent frames.
     cam_rots = sensor_fusion_utils.get_cam_rotations(
-        frames[_START_FRAME:len(frames)], events['facing'], img_h,
+        frames[_START_FRAME:], events['facing'], img_h,
         name_with_log_path, _START_FRAME)
     logging.debug('cam_rots: %s', str(cam_rots))
     gyro_rots = sensor_fusion_utils.get_gyro_rotations(
@@ -429,7 +429,7 @@ class SensorFusionTest(its_base_test.ItsBaseTest):
       raise AssertionError('Offset too large. Measured (ms): '
                            f'{offset_ms:.3f}, TOL: {_OFFSET_MS_THRESH_MAX}.')
 
-    else: # remove frames if PASS
+    else:  # remove frames if PASS
       temp_files = []
       try:
         temp_files = os.listdir(self.log_path)
