@@ -27,6 +27,7 @@ import android.app.prediction.AppTarget;
 import android.app.prediction.AppTargetEvent;
 import android.app.prediction.AppTargetId;
 import android.os.Binder;
+import android.os.Bundle;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Reports calls from the CTS prediction service back to the tests.
@@ -56,9 +58,11 @@ public class ServiceReporter extends Binder {
     private CountDownLatch mStopPredictionUpdatesLatch = new CountDownLatch(1);
     private CountDownLatch mPredictionUpdateLatch = new CountDownLatch(1);
     private CountDownLatch mDestroyLatch = new CountDownLatch(1);
+    private CountDownLatch mRequestServiceFeaturesLatch = new CountDownLatch(1);
 
     private PredictionsProvider mPredictionsProvider;
     private SortedPredictionsProvider mSortedPredictionsProvider;
+    private Supplier<Bundle> mServiceFeaturesProvider;
 
     void setPredictionsProvider(PredictionsProvider cb) {
         mPredictionsProvider = cb;
@@ -74,6 +78,14 @@ public class ServiceReporter extends Binder {
 
     SortedPredictionsProvider getSortedPredictionsProvider() {
         return mSortedPredictionsProvider;
+    }
+
+    void setServiceFeaturesProvider(Supplier<Bundle> cb) {
+        mServiceFeaturesProvider = cb;
+    }
+
+    Supplier<Bundle> getServiceFeaturesProvider() {
+        return mServiceFeaturesProvider;
     }
 
     void assertActiveSession(AppPredictionSessionId sessionId) {
@@ -200,6 +212,13 @@ public class ServiceReporter extends Binder {
         }
     }
 
+    void onRequestServiceFeatures(AppPredictionSessionId sessionId,
+            Consumer<Bundle> callback) {
+        assertTrue(mSessions.containsKey(sessionId));
+        assertNotNull(callback);
+        mRequestServiceFeaturesLatch.countDown();
+    }
+
     public class Event {
         final AppTarget target;
         final int launchLocation;
@@ -275,6 +294,37 @@ public class ServiceReporter extends Binder {
             try {
                 boolean result = mReceivedLatch.await(500, TimeUnit.MILLISECONDS);
                 assertEquals(targets, mTargets);
+                return result;
+            } catch (InterruptedException e) {
+                return false;
+            }
+        }
+    }
+
+    public static class RequestServiceFeaturesVerifier implements Consumer<Bundle> {
+
+        private CountDownLatch mReceivedLatch;
+        private Bundle mBundle;
+
+        @Override
+        public void accept(Bundle bundle) {
+            mBundle = bundle;
+            mReceivedLatch.countDown();
+        }
+
+        /**
+         * @param requestCb Callback called when the request is setup
+         */
+        boolean requestAndWaitForTargets(Bundle bundle, Runnable requestCb) {
+            mReceivedLatch = new CountDownLatch(1);
+            requestCb.run();
+            return awaitTargets(bundle);
+        }
+
+        boolean awaitTargets(Bundle bundle) {
+            try {
+                boolean result = mReceivedLatch.await(500, TimeUnit.MILLISECONDS);
+                assertEquals(bundle, mBundle);
                 return result;
             } catch (InterruptedException e) {
                 return false;

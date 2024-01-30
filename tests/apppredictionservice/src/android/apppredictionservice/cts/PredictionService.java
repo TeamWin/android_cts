@@ -15,17 +15,14 @@
  */
 package android.apppredictionservice.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
+import android.app.prediction.AppPredictionContext;
 import android.app.prediction.AppPredictionSessionId;
+import android.app.prediction.AppTarget;
 import android.app.prediction.AppTargetEvent;
 import android.app.prediction.AppTargetId;
+import android.os.Bundle;
 import android.os.CancellationSignal;
-import android.app.prediction.AppPredictionContext;
 import android.service.appprediction.AppPredictionService;
-import android.app.prediction.AppTarget;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -76,6 +73,13 @@ public class PredictionService extends AppPredictionService {
     @Override
     public void onDestroyPredictionSession(AppPredictionSessionId sessionId) {
         mReporter.onDestroyPredictionSession(sessionId);
+    }
+
+    @Override
+    public void onRequestServiceFeatures(AppPredictionSessionId sessionId,
+            Consumer<Bundle> callback) {
+        mReporter.onRequestServiceFeatures(sessionId, callback);
+        callback.accept(mReporter.getServiceFeaturesProvider().get());
     }
 
     @Override
