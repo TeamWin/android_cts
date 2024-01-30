@@ -36,7 +36,7 @@ public class StartNextMatchingActivity extends Activity {
         moveTaskToBack(true);
         new Handler().postDelayed(() -> {
             startNextMatchingActivity(getIntent());
-        }, 500);
+        }, 5000);
     }
 }
 
