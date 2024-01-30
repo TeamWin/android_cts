@@ -50,6 +50,7 @@ import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDiscoveryConfig;
+import android.net.wifi.p2p.WifiP2pExtListenParams;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pGroupList;
 import android.net.wifi.p2p.WifiP2pInfo;
@@ -813,6 +814,38 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         resetResponse(MY_RESPONSE);
         ShellIdentityUtils.invokeWithShellPermissions(() -> {
             sWifiP2pManager.startListening(sWifiP2pChannel, sActionListener);
+            assertTrue(waitForServiceResponse(MY_RESPONSE));
+            assertTrue(MY_RESPONSE.success);
+        });
+
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.stopListening(sWifiP2pChannel, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertTrue(MY_RESPONSE.success);
+    }
+
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#setWifiP2pChannels",
+            "android.net.wifi.p2p.WifiP2pManager#startListening",
+            "android.net.wifi.p2p.WifiP2pManager#stopListening"})
+    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    @Test
+    public void testP2pListeningWithParameters() {
+        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+            sWifiP2pManager.setWifiP2pChannels(sWifiP2pChannel, 6, 11, sActionListener);
+            assertTrue(waitForServiceResponse(MY_RESPONSE));
+            assertTrue(MY_RESPONSE.success);
+        });
+
+        List<OuiKeyedData> vendorData = createTestOuiKeyedDataList(5);
+        WifiP2pExtListenParams extListenParams =
+                new WifiP2pExtListenParams.Builder().setVendorData(vendorData).build();
+        assertTrue(vendorData.equals(extListenParams.getVendorData()));
+
+        resetResponse(MY_RESPONSE);
+        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+            sWifiP2pManager.startListening(sWifiP2pChannel, extListenParams, sActionListener);
             assertTrue(waitForServiceResponse(MY_RESPONSE));
             assertTrue(MY_RESPONSE.success);
         });
