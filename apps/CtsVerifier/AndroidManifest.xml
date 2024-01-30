@@ -4257,10 +4257,13 @@
             android:targetActivity=".TestListActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.SEARCH" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
+            <meta-data android:name="android.app.searchable"
+                   android:resource="@xml/searchable"/>
         </activity-alias>
 
         <!-- remove comment from the next activity to see the sample test surfacing in the app -->

@@ -44,6 +44,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -187,7 +188,13 @@ public class ManifestTestListAdapter extends TestListAdapter {
             }
         }
 
-        return mDisplayModesTests.getOrDefault(sCurrentDisplayMode.toString(), new ArrayList<>());
+        if (mTestFilter != null) {
+            // Filter test rows dynamically when the filter is specified.
+            return getRowsWithDisplayMode(sCurrentDisplayMode.toString());
+        } else {
+            return mDisplayModesTests.getOrDefault(
+                    sCurrentDisplayMode.toString(), new ArrayList<>());
+        }
     }
 
     /**
@@ -444,7 +451,7 @@ public class ManifestTestListAdapter extends TestListAdapter {
         return true;
     }
 
-    private boolean matchAllConfigs(String[] configs) {
+    private boolean matchAllConfigs(Context context, String[] configs) {
         if (configs != null) {
             for (String config : configs) {
                 switch (config) {
@@ -471,7 +478,7 @@ public class ManifestTestListAdapter extends TestListAdapter {
                         }
                         break;
                     case CONFIG_HAS_RECENTS:
-                        if (!getSystemResourceFlag("config_hasRecents")) {
+                        if (!getSystemResourceFlag(context, "config_hasRecents")) {
                             return false;
                         }
                         break;
@@ -494,7 +501,7 @@ public class ManifestTestListAdapter extends TestListAdapter {
                         }
                         break;
                     case CONFIG_QUICK_SETTINGS_SUPPORTED:
-                        if (!getSystemResourceFlag("config_quickSettingsSupported")) {
+                        if (!getSystemResourceFlag(context, "config_quickSettingsSupported")) {
                             return false;
                         }
                         break;
@@ -503,7 +510,7 @@ public class ManifestTestListAdapter extends TestListAdapter {
                     case CONFIG_HAS_CAMERA_TOGGLE:
                         return isHardwareToggleSupported(SensorPrivacyManager.Sensors.CAMERA);
                     case CONFIG_CHANGEABLE_VOLUME:
-                        return !getSystemResourceFlag("config_useFixedVolume");
+                        return !getSystemResourceFlag(context, "config_useFixedVolume");
                     default:
                         break;
                 }
@@ -533,8 +540,19 @@ public class ManifestTestListAdapter extends TestListAdapter {
         }
     }
 
-    private boolean getSystemResourceFlag(String key) {
-        final Resources systemRes = mContext.getResources().getSystem();
+    /** Checks whether the title of the test matches the test filter. */
+    private boolean macthTestFilter(String testTitle) {
+        if (mTestFilter == null) {
+            return true;
+        }
+        return testTitle != null
+                && testTitle
+                        .toLowerCase(Locale.getDefault())
+                        .contains(mTestFilter.toLowerCase(Locale.getDefault()));
+    }
+
+    private static boolean getSystemResourceFlag(Context context, String key) {
+        final Resources systemRes = context.getResources().getSystem();
         final int id = systemRes.getIdentifier(key, "bool", "android");
         if (id == Resources.ID_NULL) {
             // The flag being queried should exist in
@@ -574,8 +592,9 @@ public class ManifestTestListAdapter extends TestListAdapter {
             if (!hasAnyFeature(test.excludedFeatures)
                     && hasAllFeatures(test.requiredFeatures)
                     && hasAllActions(test.requiredActions)
-                    && matchAllConfigs(test.requiredConfigs)
-                    && matchDisplayMode(test.displayMode, mode)) {
+                    && matchAllConfigs(mContext, test.requiredConfigs)
+                    && matchDisplayMode(test.displayMode, mode)
+                    && macthTestFilter(test.title)) {
                 if (test.applicableFeatures == null || hasAnyFeature(test.applicableFeatures)) {
                     // Add suffix in test name if the test is in the folded mode.
                     test.testName = setTestNameSuffix(mode, test.testName);
