@@ -1891,26 +1891,19 @@ public final class ActivityManagerTest {
                         }
                         others.add(name);
                     }
-                    runWithShellPermissionIdentity(() -> {
-                        final List<ActivityManager.RunningAppProcessInfo> procs = mActivityManager
-                                .getRunningAppProcesses();
-                        for (ActivityManager.RunningAppProcessInfo info: procs) {
-                            if (info.importance
-                                    >= ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE) {
-                                if (others.contains(info.processName)) {
-                                    mActivityManager.killBackgroundProcesses(info.pkgList[0]);
-                                }
-                            }
-                        }
-                    });
+                    killBackgroundProcesses(others::contains);
                 }
             } while (true);
 
             // Remove all other processes
             for (int i = lru.size() - 1; i >= 0; i--) {
-                if (lru.get(i).indexOf(pkgName) == -1) {
+                if (lru.get(i).indexOf(prefix) == -1) {
                     lru.remove(i);
                 }
+            }
+            {
+                final List<String> localLru = lru;
+                killBackgroundProcesses(process -> !localLru.contains(process));
             }
 
             latchHolder[0] = new CountDownLatch(lru.size());
@@ -1947,6 +1940,21 @@ public final class ActivityManagerTest {
 
             });
         }
+    }
+
+    private void killBackgroundProcesses(Predicate<String> predicate) {
+        runWithShellPermissionIdentity(() -> {
+            final List<ActivityManager.RunningAppProcessInfo> procs = mActivityManager
+                    .getRunningAppProcesses();
+            for (ActivityManager.RunningAppProcessInfo info: procs) {
+                if (info.importance
+                        >= ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE) {
+                    if (predicate.test(info.processName)) {
+                        mActivityManager.killBackgroundProcesses(info.pkgList[0]);
+                    }
+                }
+            }
+        });
     }
 
     @Test
