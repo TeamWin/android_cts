@@ -21,7 +21,16 @@
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.RESOLUTION_TEST"/>
+            </intent-filter>
+            <intent-filter>
                 <action android:name="android.intent.action.SELECTORTEST"/>
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name="android.content.pm.cts.TestPmActivityWithDefault"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.RESOLUTION_TEST"/>
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
