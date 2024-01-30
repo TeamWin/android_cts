@@ -20,8 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import android.util.PrintStreamPrinter;
 
-import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.MediumTest;
+import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
@@ -38,15 +37,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 
-@MediumTest
+@SmallTest
 @RunWith(AndroidJUnit4.class)
 public class PrintStreamPrinterTest {
     private File mFile;
 
     @Before
     public void setup() throws IOException {
-        mFile = new File(InstrumentationRegistry.getTargetContext().getFilesDir(),
-                "PrintStreamPrinter.log");
+        mFile = File.createTempFile("PrintStreamPrinterTest", "log");
         if (!mFile.exists()) {
             mFile.createNewFile();
         }

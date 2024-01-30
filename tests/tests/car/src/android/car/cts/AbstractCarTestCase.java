@@ -23,7 +23,6 @@ import android.car.Car;
 import android.car.FuelType;
 import android.car.PortLocationType;
 import android.car.test.AbstractExpectableTestCase;
-import android.car.test.ApiCheckerRule;
 import android.car.test.PermissionsCheckerRule;
 import android.content.ComponentName;
 import android.content.Context;
@@ -31,7 +30,8 @@ import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
-import android.util.Log;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -70,15 +70,12 @@ abstract class AbstractCarTestCase extends AbstractExpectableTestCase {
                     PortLocationType.FRONT_RIGHT, PortLocationType.REAR_RIGHT,
                     PortLocationType.REAR_LEFT, PortLocationType.FRONT, PortLocationType.REAR);
 
-    // TODO(b/242350638): temporary hack to allow subclasses to disable checks - should be removed
-    // when not needed anymore
-    private final ApiCheckerRule.Builder mApiCheckerRuleBuilder = new ApiCheckerRule.Builder();
+    // CheckFlagsRule rule needs to before PermissionsCheckerRule.
+    @Rule(order = 0)
+    public final CheckFlagsRule checkFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
-    @Rule
-    public final PermissionsCheckerRule mPermissionsCheckerRule = new PermissionsCheckerRule();
-
-    @Rule
-    public final ApiCheckerRule mApiCheckerRule;
+    @Rule(order = 1)
+    public final PermissionsCheckerRule permissionsCheckerRule = new PermissionsCheckerRule();
 
     protected final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
@@ -86,20 +83,6 @@ abstract class AbstractCarTestCase extends AbstractExpectableTestCase {
             new DefaultServiceConnectionListener();
 
     private Car mCar;
-
-    // TODO(b/242350638): temporary hack to allow subclasses to disable checks - should be removed
-    // when not needed anymore
-    protected AbstractCarTestCase() {
-        configApiCheckerRule(mApiCheckerRuleBuilder);
-        mApiCheckerRule = mApiCheckerRuleBuilder.build();
-    }
-
-    // TODO(b/242350638): temporary hack to allow subclasses to disable checks - should be removed
-    // when not needed anymore
-    protected void configApiCheckerRule(ApiCheckerRule.Builder builder) {
-        Log.v(TAG, "Good News, Everyone! Class " + getClass()
-                + " doesn't override configApiCheckerRule()");
-    }
 
     protected void assertMainThread() {
         assertWithMessage("Looper.getMainLooper().isCurrentThread()")

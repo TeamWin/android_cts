@@ -507,6 +507,38 @@ public class VisualQueryDetectionServiceBasicTest {
             visualQueryDetector.destroy();
             // Drop identity adopted.
             getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+            mService.removeTestFiles();
+        }
+    }
+
+    @Test
+    public void testVisualQueryDetectionService_openFilNotExist_failure() throws Throwable {
+        VisualQueryDetector visualQueryDetector = createVisualQueryDetector();
+        runWithShellPermissionIdentity(() -> {
+            PersistableBundle options = Helper.createFakePersistableBundleData();
+            options.putInt(MainVisualQueryDetectionService.KEY_VQDS_TEST_SCENARIO,
+                    MainVisualQueryDetectionService.SCENARIO_READ_FILE_FILE_NOT_EXIST);
+            visualQueryDetector.updateState(options, Helper.createFakeSharedMemoryData());
+        });
+        try {
+            // leverage isolated detection callback APIs to verify file contents
+            adoptShellPermissionIdentityForVisualQueryDetection();
+
+            mService.initQueryFinishRejectLatch(1);
+            visualQueryDetector.startRecognition();
+
+            // wait onStartDetection() called and verify the result
+            mService.waitOnQueryFinishedRejectCalled();
+
+            // verify results
+            ArrayList<String> streamedQueries = mService.getStreamedQueriesResult();
+            assertThat(streamedQueries.get(0)).isEqualTo(
+                    MainVisualQueryDetectionService.MSG_FILE_NOT_FOUND);
+            assertThat(streamedQueries.size()).isEqualTo(1);
+        } finally {
+            visualQueryDetector.destroy();
+            // Drop identity adopted.
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
         }
     }
 
@@ -540,6 +572,7 @@ public class VisualQueryDetectionServiceBasicTest {
             visualQueryDetector.destroy();
             // Drop identity adopted.
             getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+            mService.removeTestFiles();
         }
     }
 
@@ -577,6 +610,7 @@ public class VisualQueryDetectionServiceBasicTest {
             // Drop identity adopted.
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
+            mService.removeTestFiles();
         }
     }
 

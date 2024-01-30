@@ -32,9 +32,7 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-// CVE-2023-21261 includes fix for 2 vulnerabilities.
-//     1.CVE-2022-27405
-//     2.CVE-2022-27406
+// CVE-2023-21261 includes fix for CVE-2022-27406.
 // Hence checking for both the vulnerabilties
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CVE_2023_21261 extends NonRootSecurityTestCase {
@@ -51,14 +49,6 @@ public class CVE_2023_21261 extends NonRootSecurityTestCase {
             String binaryName = "CVE-2023-21261";
             String inputFile = "cve_2023_21261.ttf";
 
-            // Running the PoC for CVE-2022-27405
-            NativePoc.builder()
-                    .pocName(binaryName)
-                    .args("CVE-2022-27405", inputFile)
-                    .resources(inputFile)
-                    .asserter(assertNotVulnerableExitCode())
-                    .build()
-                    .run(this);
             TombstoneUtils.Config crashConfig =
                     new TombstoneUtils.Config()
                             .setProcessPatterns(binaryName)

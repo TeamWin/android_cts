@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.biometrics;
 
+import static org.junit.Assert.assertEquals;
+
 import android.content.pm.PackageManager;
 import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricManager.Authenticators;
@@ -342,7 +344,10 @@ public abstract class AbstractUserAuthenticationTest extends PassFailButtons.Act
                     Exception exception = null;
                     boolean keyUsed;
                     try {
-                        if (!requiresCryptoObject) {
+                        if (requiresCryptoObject) {
+                            assertEquals(crypto.getOperationHandle(),
+                                    result.getCryptoObject().getOperationHandle());
+                        } else {
                             initializeKeystoreOperation(keyName);
                         }
 

@@ -17,23 +17,23 @@
 package android.dropboxmanager.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.DropBoxManager;
 import android.os.SystemClock;
-import android.platform.test.annotations.AppModeFull;
-import android.provider.Settings;
-import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.AmUtils;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -43,13 +43,8 @@ import org.junit.runner.RunWith;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import com.android.compatibility.common.util.AmUtils;
-import com.android.compatibility.common.util.SystemUtil;
-import com.android.internal.annotations.GuardedBy;
 
 /**
  * Tests DropBox entry management
@@ -60,6 +55,7 @@ public class DropBoxTests {
     private static final String ENABLED_TAG = "DropBoxTestsEnabledTag";
     private static final String LOW_PRIORITY_TAG = "DropBoxTestsLowPriorityTag";
     private static final String ANOTHER_LOW_PRIORITY_TAG = "AnotherDropBoxTestsLowPriorityTag";
+    private static final String GET_ENTRY_TAG = "DropBoxTestGetEntryTag";
     private static final long BROADCAST_RATE_LIMIT = 1000L;
     private static final long BROADCAST_DELAY_ALLOWED_ERROR = 200L;
 
@@ -74,6 +70,7 @@ public class DropBoxTests {
     private CountDownLatch mEnabledTagLatch = new CountDownLatch(0);
     private CountDownLatch mLowPriorityTagLatch = new CountDownLatch(0);
     private CountDownLatch mAnotherLowPriorityTagLatch = new CountDownLatch(0);
+    private CountDownLatch mTestPermissionLatch = new CountDownLatch(0);
 
     private ArrayList<DropBoxEntryAddedData> mEnabledBuffer;
     private ArrayList<DropBoxEntryAddedData> mLowPriorityBuffer;
@@ -103,6 +100,8 @@ public class DropBoxTests {
             } else if (ANOTHER_LOW_PRIORITY_TAG.equals(data.tag)) {
                 mAnotherLowPriorityBuffer.add(data);
                 mAnotherLowPriorityTagLatch.countDown();
+            } else if (GET_ENTRY_TAG.equals(data.tag)) {
+                mTestPermissionLatch.countDown();
             }
         }
     };
@@ -332,6 +331,18 @@ public class DropBoxTests {
             assertEquals("Enabled tag broadcasts should not be dropped", 0,
                     enabledData.droppedCount);
         }
+    }
+
+    @Test
+    public void testReadDropBoxPermission() throws Exception {
+        mTestPermissionLatch = new CountDownLatch(1);
+
+        final long currTime = System.currentTimeMillis();
+        mDropBoxManager.addText(GET_ENTRY_TAG, "0");
+
+        assertTrue(mTestPermissionLatch.await(BROADCAST_RATE_LIMIT * 3 / 2,
+                TimeUnit.MILLISECONDS));
+        assertNotNull(mDropBoxManager.getNextEntry(GET_ENTRY_TAG, currTime));
     }
 
     private void setTagLowPriority(String tag) throws IOException {

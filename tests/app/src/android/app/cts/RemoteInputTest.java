@@ -17,6 +17,8 @@
 package android.app.cts;
 
 import android.app.RemoteInput;
+import android.content.ClipData;
+import android.content.ClipDescription;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -201,6 +203,28 @@ public class RemoteInputTest extends AndroidTestCase {
         assertEquals(RemoteInput.SOURCE_CHOICE, RemoteInput.getResultsSource(intent));
     }
 
+    public void testGetResultsFromIntent_missingClipData() {
+        final Intent intent = new Intent();
+
+        assertNull(RemoteInput.getResultsFromIntent(intent));
+    }
+
+    public void testGetResultsFromIntent_missingResultsDataExtra() {
+        final Intent clipDataIntent = new Intent();
+        final Intent intent = newIntentWithClipDataIntent(clipDataIntent);
+
+        assertNull(RemoteInput.getResultsFromIntent(intent));
+    }
+
+    public void testGetResultsFromIntent_validIntent() {
+        final Bundle resultsData = new Bundle();
+        final Intent clipDataIntent = new Intent();
+        clipDataIntent.putExtra(RemoteInput.EXTRA_RESULTS_DATA, resultsData);
+        final Intent intent = newIntentWithClipDataIntent(clipDataIntent);
+
+        assertEquals(resultsData, RemoteInput.getResultsFromIntent(intent));
+    }
+
     private static void addTextResultsToIntent(RemoteInput input, Intent intent,
             CharSequence charSequence) {
         Bundle textResults = new Bundle();
@@ -258,5 +282,19 @@ public class RemoteInputTest extends AndroidTestCase {
             .setAllowDataType(MIME_TYPE, true)
             .build();
     }
+
+    private static Intent newIntentWithClipDataIntent(Intent clipDataIntent) {
+        final ClipDescription description = new ClipDescription(
+                RemoteInput.RESULTS_CLIP_LABEL,
+                new String[]{ClipDescription.MIMETYPE_TEXT_INTENT});
+
+        final ClipData clipData = new ClipData(description, new ClipData.Item(clipDataIntent));
+
+        final Intent intent = new Intent();
+        intent.setClipData(clipData);
+
+        return intent;
+    }
+
 }
 

@@ -39,7 +39,6 @@ import android.graphics.Bitmap;
 import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.view.FrameStats;
 import android.view.KeyEvent;
@@ -49,6 +48,9 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.ListView;
+
+import static com.android.compatibility.common.util.TestUtils.waitOn;
+
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
@@ -65,6 +67,7 @@ import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Tests for the UiAutomation APIs.
@@ -75,6 +78,8 @@ public final class UiAutomationTest {
     private static final long IDLE_QUIET_TIME_MS = 1000;
     private static final long IDLE_WAIT_TIME_MS = 10 * 1000;
     private static final long TIMEOUT_FOR_SERVICE_ENABLE_MS = 10 * 1000;
+    private static final long TIMEOUT_FOR_LISTENER_NOTIFIED_MS = 5000;
+
 
     // Used to enable/disable accessibility services
     private static final String COMPONENT_NAME_SEPARATOR = ":";
@@ -245,7 +250,6 @@ public final class UiAutomationTest {
         }
     }
 
-    @Presubmit
     @Test
     public void testWindowAnimationFrameStatsDoesNotCrash() {
         mUiAutomation = getInstrumentation().getUiAutomation();
@@ -257,7 +261,6 @@ public final class UiAutomationTest {
         assertThat(stats.getFrameCount()).isEqualTo(0);
     }
 
-    @Presubmit
     @Test
     public void testUsingUiAutomationAfterDestroy_shouldThrowException() {
         mUiAutomation = getInstrumentation().getUiAutomation();
@@ -373,6 +376,61 @@ public final class UiAutomationTest {
             mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.BATTERY_STATS);
         } finally {
             mUiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    @AppModeFull
+    @Test
+    public void testOnA11yStateChanged_dontUseAccessibilityFlag_notifiesAppA11yIsOff() {
+        enableAccessibilityWithAutomationIfNeeded();
+        final AccessibilityManager manager =
+                (AccessibilityManager) getInstrumentation().getContext().getSystemService(
+                        Context.ACCESSIBILITY_SERVICE);
+        final AtomicBoolean enabled = new AtomicBoolean(true);
+        final Object waitLockForA11yOff = new Object();
+        final AccessibilityManager.AccessibilityStateChangeListener listener =
+                b -> {
+                    synchronized (waitLockForA11yOff) {
+                        enabled.set(b);
+                        waitLockForA11yOff.notifyAll();
+                    }
+                };
+        manager.addAccessibilityStateChangeListener(listener);
+        try {
+            getInstrumentation().getUiAutomation(UiAutomation.FLAG_DONT_USE_ACCESSIBILITY);
+            waitOn(waitLockForA11yOff, () -> !enabled.get(), TIMEOUT_FOR_LISTENER_NOTIFIED_MS,
+                    "Accessibility is turned off.");
+        } finally {
+            manager.removeAccessibilityStateChangeListener(listener);
+        }
+    }
+
+    @AppModeFull
+    @Test
+    public void testOnA11yStateChanged_removeDontUseAccessibilityFlag_turnsA11yBackOn() {
+        enableAccessibilityWithAutomationIfNeeded();
+        final AccessibilityManager manager =
+                (AccessibilityManager) getInstrumentation().getContext().getSystemService(
+                        Context.ACCESSIBILITY_SERVICE);
+        final AtomicBoolean enabled = new AtomicBoolean(true);
+        final Object waitLockForA11yChange = new Object();
+        final AccessibilityManager.AccessibilityStateChangeListener listener =
+                b -> {
+                    synchronized (waitLockForA11yChange) {
+                        enabled.set(b);
+                        waitLockForA11yChange.notifyAll();
+                    }
+                };
+        manager.addAccessibilityStateChangeListener(listener);
+        try {
+            getInstrumentation().getUiAutomation(UiAutomation.FLAG_DONT_USE_ACCESSIBILITY);
+            waitOn(waitLockForA11yChange, () -> !enabled.get(), TIMEOUT_FOR_LISTENER_NOTIFIED_MS,
+                    "Accessibility is turned off.");
+            getInstrumentation().getUiAutomation(0);
+            waitOn(waitLockForA11yChange, () -> enabled.get(), TIMEOUT_FOR_LISTENER_NOTIFIED_MS,
+                    "Accessibility is turned back on.");
+        } finally {
+            manager.removeAccessibilityStateChangeListener(listener);
         }
     }
 
@@ -526,5 +584,35 @@ public final class UiAutomationTest {
                 getInstrumentation(), mUiAutomation, mActivityRule);
         return ActivityLaunchUtils.findWindowByTitle(mUiAutomation,
                 ActivityLaunchUtils.getActivityTitle(getInstrumentation(), mActivity)).getId();
+    }
+
+    /**
+     * Ensure that AccessibilityManager has accessibility enabled. If it isn't, enable it by
+     * creating a UiAutomation instance.
+     */
+    private void enableAccessibilityWithAutomationIfNeeded() {
+        final AccessibilityManager manager =
+                (AccessibilityManager) getInstrumentation().getContext().getSystemService(
+                        Context.ACCESSIBILITY_SERVICE);
+        if (manager.isEnabled()) {
+            return;
+        }
+        final AtomicBoolean enabled = new AtomicBoolean(false);
+        final Object waitLockForA11yOn = new Object();
+        final AccessibilityManager.AccessibilityStateChangeListener listener =
+                b -> {
+                    synchronized (waitLockForA11yOn) {
+                        enabled.set(b);
+                        waitLockForA11yOn.notifyAll();
+                    }
+                };
+        manager.addAccessibilityStateChangeListener(listener);
+        try {
+            getInstrumentation().getUiAutomation(0);
+            waitOn(waitLockForA11yOn, () -> enabled.get(), TIMEOUT_FOR_LISTENER_NOTIFIED_MS,
+                    "Accessibility is turned on since a UiAutomation instance exists.");
+        } finally {
+            manager.removeAccessibilityStateChangeListener(listener);
+        }
     }
 }

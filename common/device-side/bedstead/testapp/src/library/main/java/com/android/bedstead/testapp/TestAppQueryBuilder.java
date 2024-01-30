@@ -19,6 +19,7 @@ package com.android.bedstead.testapp;
 import com.android.queryable.Queryable;
 import com.android.queryable.annotations.Query;
 import com.android.queryable.info.ActivityInfo;
+import com.android.queryable.info.ReceiverInfo;
 import com.android.queryable.info.ServiceInfo;
 import com.android.queryable.queries.BooleanQuery;
 import com.android.queryable.queries.BooleanQueryHelper;
@@ -53,6 +54,7 @@ public final class TestAppQueryBuilder implements Queryable {
             new SetQueryHelper<>(this);
     BooleanQueryHelper<TestAppQueryBuilder> mIsDeviceAdmin = new BooleanQueryHelper<>(this);
     StringQueryHelper<TestAppQueryBuilder> mSharedUserId = new StringQueryHelper<>(this);
+    SetQueryHelper<TestAppQueryBuilder, ReceiverInfo> mReceivers = new SetQueryHelper<>(this);
     private boolean mAllowInternalBedsteadTestApps = false;
 
     /**
@@ -88,6 +90,7 @@ public final class TestAppQueryBuilder implements Queryable {
         queryBuilder = queryBuilder.whereMinSdkVersion().matchesAnnotation(query.minSdkVersion());
         queryBuilder = queryBuilder.whereMaxSdkVersion().matchesAnnotation(query.maxSdkVersion());
         queryBuilder = queryBuilder.wherePackageName().matchesAnnotation(query.packageName());
+        queryBuilder = queryBuilder.whereIsDeviceAdmin().matchesAnnotation(query.isDeviceAdmin());
         return queryBuilder;
     }
 
@@ -184,6 +187,13 @@ public final class TestAppQueryBuilder implements Queryable {
      */
     public SetQuery<TestAppQueryBuilder, ServiceInfo> whereServices() {
         return mServices;
+    }
+
+    /**
+     * Query for a {@link TestApp} by its receivers.
+     */
+    public SetQuery<TestAppQueryBuilder, ReceiverInfo> whereReceivers() {
+        return mReceivers;
     }
 
     /**
@@ -296,6 +306,10 @@ public final class TestAppQueryBuilder implements Queryable {
             return false;
         }
 
+        if (!SetQueryHelper.matches(mReceivers, details.mReceivers)) {
+            return false;
+        }
+
         // TODO(b/198419895): Actually query for the correct receiver + metadata
         boolean isDeviceAdmin = details.mApp.getPackageName().contains(
                 "DeviceAdminTestApp");
@@ -352,7 +366,8 @@ public final class TestAppQueryBuilder implements Queryable {
         return query(mPackageName.toAnnotation(),
                 mTargetSdkVersion.toAnnotation(),
                 mMinSdkVersion.toAnnotation(),
-                mMaxSdkVersion.toAnnotation());
+                mMaxSdkVersion.toAnnotation(),
+                mIsDeviceAdmin.toAnnotation());
     }
 
     @AutoAnnotation
@@ -360,8 +375,9 @@ public final class TestAppQueryBuilder implements Queryable {
             com.android.queryable.annotations.StringQuery packageName,
             com.android.queryable.annotations.IntegerQuery targetSdkVersion,
             com.android.queryable.annotations.IntegerQuery minSdkVersion,
-            com.android.queryable.annotations.IntegerQuery maxSdkVersion) {
+            com.android.queryable.annotations.IntegerQuery maxSdkVersion,
+            com.android.queryable.annotations.BooleanQuery isDeviceAdmin) {
         return new AutoAnnotation_TestAppQueryBuilder_query(
-                packageName, targetSdkVersion, minSdkVersion, maxSdkVersion);
+                packageName, targetSdkVersion, minSdkVersion, maxSdkVersion, isDeviceAdmin);
     }
 }

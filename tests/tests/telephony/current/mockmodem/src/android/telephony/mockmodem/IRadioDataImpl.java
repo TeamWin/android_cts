@@ -75,6 +75,10 @@ public class IRadioDataImpl extends IRadioData.Stub {
                 mSubId, mHandler, EVENT_NETWORK_STATUS_CHANGED, null);
     }
 
+    public MockDataService getMockDataServiceInstance() {
+        return mMockDataService;
+    }
+
     // Implementation of IRadioData functions
     @Override
     public void setResponseFunctions(

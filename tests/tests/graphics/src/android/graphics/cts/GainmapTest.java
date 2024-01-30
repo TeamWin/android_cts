@@ -328,6 +328,30 @@ public class GainmapTest {
     }
 
     @Test
+    public void testCopyInfo() {
+        Gainmap original = new Gainmap(Bitmap.createBitmap(10, 10, Bitmap.Config.ALPHA_8));
+        original.setDisplayRatioForFullHdr(5f);
+        original.setMinDisplayRatioForHdrTransition(3f);
+        original.setGamma(1.1f, 1.2f, 1.3f);
+        original.setRatioMin(2.1f, 2.2f, 2.3f);
+        original.setRatioMax(3.1f, 3.2f, 3.3f);
+        original.setEpsilonSdr(0.1f, 0.2f, 0.3f);
+        original.setEpsilonHdr(0.01f, 0.02f, 0.03f);
+
+        Gainmap copy = new Gainmap(original, Bitmap.createBitmap(5, 5, Bitmap.Config.ALPHA_8));
+        assertEquals(5f, copy.getDisplayRatioForFullHdr(), EPSILON);
+        assertEquals(3f, copy.getMinDisplayRatioForHdrTransition(), EPSILON);
+        assertAre(1.1f, 1.2f, 1.3f, copy.getGamma());
+        assertAre(2.1f, 2.2f, 2.3f, copy.getRatioMin());
+        assertAre(3.1f, 3.2f, 3.3f, copy.getRatioMax());
+        assertAre(0.1f, 0.2f, 0.3f, copy.getEpsilonSdr());
+        assertAre(0.01f, 0.02f, 0.03f, copy.getEpsilonHdr());
+
+        assertEquals(10, original.getGainmapContents().getWidth());
+        assertEquals(5, copy.getGainmapContents().getWidth());
+    }
+
+    @Test
     public void testWriteToParcel() throws Exception {
         Bitmap bitmap = ImageDecoder.decodeBitmap(
                 ImageDecoder.createSource(sContext.getResources(), R.raw.gainmap),

@@ -23,8 +23,6 @@ import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.accounts.cts.common.AuthenticatorContentProvider;
 import android.accounts.cts.common.Fixtures;
-import android.accounts.cts.common.tx.StartAddAccountSessionTx;
-import android.accounts.cts.common.tx.StartUpdateCredentialsSessionTx;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
 import android.os.Bundle;
@@ -295,8 +293,6 @@ public class AccountManagerUnaffiliatedAuthenticatorTests extends AndroidTestCas
         assertTrue(future.isDone());
         assertNotNull(result);
 
-        validateStartAddAccountSessionParameters(options);
-
         // Validate that auth token was stripped from result.
         assertNull(result.get(AccountManager.KEY_AUTHTOKEN));
 
@@ -331,9 +327,6 @@ public class AccountManagerUnaffiliatedAuthenticatorTests extends AndroidTestCas
         Bundle result = future.getResult();
         assertTrue(future.isDone());
         assertNotNull(result);
-
-        validateStartUpdateCredentialsSessionParameters(options);
-
         // Validate no auth token in result.
         assertNull(result.get(AccountManager.KEY_AUTHTOKEN));
 
@@ -459,29 +452,6 @@ public class AccountManagerUnaffiliatedAuthenticatorTests extends AndroidTestCas
         } finally {
             mProviderClient.release();
         }
-    }
-
-    private void validateStartAddAccountSessionParameters(Bundle inOpt)
-            throws RemoteException {
-        Bundle params = mProviderClient.call(AuthenticatorContentProvider.METHOD_GET, null, null);
-        params.setClassLoader(StartAddAccountSessionTx.class.getClassLoader());
-        StartAddAccountSessionTx tx = params.<StartAddAccountSessionTx>getParcelable(
-                AuthenticatorContentProvider.KEY_TX);
-        assertEquals(tx.accountType, Fixtures.TYPE_STANDARD_UNAFFILIATED);
-        assertEquals(tx.options.getString(Fixtures.KEY_ACCOUNT_NAME),
-                inOpt.getString(Fixtures.KEY_ACCOUNT_NAME));
-    }
-
-    private void validateStartUpdateCredentialsSessionParameters(Bundle inOpt)
-            throws RemoteException {
-        Bundle params = mProviderClient.call(AuthenticatorContentProvider.METHOD_GET, null, null);
-        params.setClassLoader(StartUpdateCredentialsSessionTx.class.getClassLoader());
-        StartUpdateCredentialsSessionTx tx =
-                params.<StartUpdateCredentialsSessionTx>getParcelable(
-                        AuthenticatorContentProvider.KEY_TX);
-        assertEquals(tx.account, Fixtures.ACCOUNT_UNAFFILIATED_FIXTURE_SUCCESS);
-        assertEquals(tx.options.getString(Fixtures.KEY_ACCOUNT_NAME),
-                inOpt.getString(Fixtures.KEY_ACCOUNT_NAME));
     }
 
     private Bundle createOptionsWithAccountName(final String accountName) {

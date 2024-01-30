@@ -155,7 +155,7 @@ public final class StringQueryHelper<E extends Queryable>
         if (mNotEqualsValues.contains(value)) {
             return false;
         }
-        if (mStartsWithValue != null && !value.startsWith(mStartsWithValue)) {
+        if (mStartsWithValue != null && (value == null || !value.startsWith(mStartsWithValue))) {
             return false;
         }
 

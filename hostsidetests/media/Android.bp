@@ -44,12 +44,16 @@ java_test_host {
     data: [
         ":CtsAudioHostTestApp",
         ":CtsMediaMetricsHostTestApp",
-        ":CtsMediaRouterHostSideTestHelperApp",
+        ":CtsMediaRouterHostSideTestBluetoothPermissionsApp",
+        ":CtsMediaRouterHostSideTestModifyAudioRoutingApp",
+        ":CtsMediaRouterHostSideTestMediaRoutingControlApp",
         ":CtsMediaRouterHostSideTestProviderApp1",
         ":CtsMediaRouterHostSideTestProviderApp2",
         ":CtsMediaRouterHostSideTestProviderApp3",
         ":CtsMediaRouterHostSideTestProviderSelfScanOnlyApp",
         ":CtsMediaSessionHostTestApp",
         ":CtsMediaSessionTestHelper",
+        ":CtsProxyMediaRouterSecondaryUserTestHelperApp",
+        ":CtsProxyMediaRouterTestHelperApp",
     ],
 }

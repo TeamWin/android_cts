@@ -25,6 +25,9 @@ import android.app.LocaleConfig;
 import android.app.LocaleManager;
 import android.content.Context;
 import android.os.LocaleList;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.server.wm.ActivityManagerTestBase;
 
 import androidx.test.InstrumentationRegistry;
@@ -34,6 +37,7 @@ import com.android.compatibility.common.util.ShellUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -50,6 +54,8 @@ import java.util.stream.Collectors;
 
 @RunWith(AndroidJUnit4.class)
 public class LocaleConfigTest extends ActivityManagerTestBase {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
     private static final String APK_PATH = "/data/local/tmp/cts/localeconfig/";
     private static final String APK_WITHOUT_LOCALECONFIG = APK_PATH + "ApkWithoutLocaleConfig.apk";
     private static final String TEST_PACKAGE = "com.android.cts.localeconfig";
@@ -90,6 +96,19 @@ public class LocaleConfigTest extends ActivityManagerTestBase {
                                 ","))).stream().sorted().collect(Collectors.toList()));
 
         assertEquals(LocaleConfig.STATUS_SUCCESS, localeConfig.getStatus());
+    }
+
+    /**
+     * Tests that when a default locale is specified is gets returned correctly
+     * @throws Exception
+     */
+    @Test
+    @RequiresFlagsEnabled(android.content.res.Flags.FLAG_DEFAULT_LOCALE)
+    public void testGetDefaultLocale() throws Exception {
+        Context appContext = mContext.createPackageContext(TEST_PACKAGE, 0);
+        LocaleConfig localeConfig = new LocaleConfig(appContext);
+
+        assertEquals("en-US", localeConfig.getDefaultLocale().toLanguageTag());
     }
 
     /**

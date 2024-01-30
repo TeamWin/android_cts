@@ -26,6 +26,7 @@ import static junit.framework.TestCase.fail;
 
 import static java.lang.Thread.sleep;
 
+import android.Manifest;
 import android.app.AutomaticZenRule;
 import android.app.Instrumentation;
 import android.app.NotificationManager;
@@ -44,6 +45,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AmUtils;
+import com.android.compatibility.common.util.SystemUtil;
 
 import junit.framework.Assert;
 
@@ -80,7 +82,10 @@ public class ConditionProviderServiceTest {
         SecondaryConditionProviderService.requestRebind(SecondaryConditionProviderService.getId());
         mNm = (NotificationManager) mContext.getSystemService(
                 Context.NOTIFICATION_SERVICE);
-        mNm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mNm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL),
+                Manifest.permission.STATUS_BAR_SERVICE);
     }
 
     @After

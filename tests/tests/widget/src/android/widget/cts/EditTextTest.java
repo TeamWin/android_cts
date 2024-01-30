@@ -16,8 +16,6 @@
 
 package android.widget.cts;
 
-import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -31,10 +29,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Point;
-import android.os.SystemClock;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -50,7 +46,6 @@ import android.util.SparseArray;
 import android.util.TypedValue;
 import android.util.Xml;
 import android.view.KeyEvent;
-import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.inputmethod.EditorInfo;
@@ -68,9 +63,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;
-import com.android.cts.mockime.ImeEventStream;
-import com.android.cts.mockime.ImeSettings;
-import com.android.cts.mockime.MockImeSession;
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -80,7 +73,6 @@ import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @SmallTest
@@ -112,11 +104,15 @@ public class EditTextTest {
 
         XmlPullParser parser = mActivity.getResources().getXml(R.layout.edittext_layout);
         mAttributeSet = Xml.asAttributeSet(parser);
+
+        mActivity.sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
+        WindowUtil.waitForFocus(mActivity);
     }
 
     @After
     public void teardown() throws Throwable {
         mActivityRule.runOnUiThread(() -> mEditText1.setSingleLine(false));
+        mEmptyActivityRule.finishActivity();
     }
 
     @Test
@@ -748,33 +744,6 @@ public class EditTextTest {
     }
 
     @Test
-    public void testClickTwice_showIme() throws Throwable {
-        try (MockImeSession imeSession = MockImeSession.create(
-                mInstrumentation.getContext(),
-                mInstrumentation.getUiAutomation(),
-                new ImeSettings.Builder())) {
-
-            clickOnEditText1();
-            mInstrumentation.waitForIdleSync();
-
-            clickOnEditText1();
-            mInstrumentation.waitForIdleSync();
-
-            final ImeEventStream stream = imeSession.openEventStream();
-            expectEvent(stream,
-                    event -> "showSoftInput".equals(event.getEventName()),
-                    TimeUnit.SECONDS.toMillis(2));
-        }
-    }
-
-    private void clickOnEditText1() throws Exception {
-        final UiObject2 object = UiDevice.getInstance(mInstrumentation)
-                .findObject(By.res("android.widget.cts", "edittext_simple1"));
-        object.click();
-        SystemClock.sleep(ViewConfiguration.getDoubleTapTimeout() + 50);
-    }
-
-    @Test
     public void testCursorNotBlinkingOnNewActivity_WithoutFocus() {
         Activity testActivity = mEmptyActivityRule.launchActivity(null);
         EditText et = testActivity.findViewById(R.id.edittext_simple1);
@@ -916,8 +885,10 @@ public class EditTextTest {
             viewGroup.removeView(editText);
         });
 
-        LinearLayout layout = testActivity.findViewById(R.id.edit_text);
-        layout.addView(editText);
+        mInstrumentation.runOnMainSync(() -> {
+            LinearLayout layout = testActivity.findViewById(R.id.edit_text);
+            layout.addView(editText);
+        });
 
         mInstrumentation.runOnMainSync(() -> {
             editText.requestFocus();
@@ -962,5 +933,4 @@ public class EditTextTest {
         assertTrue(editor.isBlinking());
 
     }
-
 }

@@ -37,5 +37,8 @@ public interface PersistableBundleKeyQuery<E extends Queryable> extends Queryabl
     StringQuery<E> stringValue();
 
     @CheckResult
+    BooleanQuery<E> booleanValue();
+
+    @CheckResult
     PersistableBundleQuery<E> persistableBundleValue();
 }

@@ -29,6 +29,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CddTest;
@@ -46,6 +47,7 @@ import java.util.stream.IntStream;
 import javax.annotation.concurrent.GuardedBy;
 
 @NonMainlineTest
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class AudioTrackOffloadTest extends CtsAndroidTestCase {
     private static final String TAG = "AudioTrackOffloadTest";
 

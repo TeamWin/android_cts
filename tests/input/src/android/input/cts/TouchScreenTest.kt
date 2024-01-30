@@ -30,6 +30,7 @@ import android.view.InputDevice
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.cts.input.DebugInputRule
 import com.android.cts.input.UinputTouchDevice
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -37,6 +38,7 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestName
 import org.junit.runner.RunWith
 
 @MediumTest
@@ -47,16 +49,20 @@ class TouchScreenTest {
     private lateinit var verifier: EventVerifier
 
     @get:Rule
-    val virtualDisplayRule = VirtualDisplayActivityScenarioRule()
+    val debugInputRule = DebugInputRule()
+    @get:Rule
+    val testName = TestName()
+    @get:Rule
+    val virtualDisplayRule = VirtualDisplayActivityScenarioRule<CaptureEventActivity>(testName)
 
     @Before
     fun setUp() {
         touchScreen = UinputTouchDevice(
                 instrumentation,
                 virtualDisplayRule.virtualDisplay.display,
-                Size(WIDTH, HEIGHT),
                 R.raw.test_touchscreen_register,
                 InputDevice.SOURCE_TOUCHSCREEN,
+                Size(WIDTH, HEIGHT),
         )
         verifier = EventVerifier(virtualDisplayRule.activity::getInputEvent)
     }
@@ -72,111 +78,139 @@ class TouchScreenTest {
     fun testHostUsiVersionIsNull() {
         assertNull(
             instrumentation.targetContext.getSystemService(InputManager::class.java)
-                .getHostUsiVersion(virtualDisplayRule.virtualDisplay.display))
+                .getHostUsiVersion(virtualDisplayRule.virtualDisplay.display)
+        )
     }
 
+    @DebugInputRule.DebugInput(bug = 288321659)
     @Test
     fun testSingleTouch() {
         val pointer = Point(100, 100)
+        val pointerId = 0
 
         // ACTION_DOWN
         touchScreen.sendBtnTouch(true)
-        touchScreen.sendDown(0 /*id*/, pointer)
+        touchScreen.sendDown(pointerId, pointer)
+        touchScreen.sync()
         verifier.assertReceivedDown()
 
         // ACTION_MOVE
         pointer.offset(1, 1)
-        touchScreen.sendMove(0 /*id*/, pointer)
+        touchScreen.sendMove(pointerId, pointer)
+        touchScreen.sync()
         verifier.assertReceivedMove()
 
         // ACTION_UP
         touchScreen.sendBtnTouch(false)
-        touchScreen.sendUp(0 /*id*/)
+        touchScreen.sendUp(pointerId)
+        touchScreen.sync()
         verifier.assertReceivedUp()
     }
 
+    @DebugInputRule.DebugInput(bug = 288321659)
     @Test
     fun testMultiTouch() {
-        val pointer1 = Point(100, 100)
-        val pointer2 = Point(150, 150)
+        val pointer0 = Point(100, 100)
+        val pointer1 = Point(150, 150)
+        val pointerId0 = 0
+        val pointerId1 = 1
 
         // ACTION_DOWN
         touchScreen.sendBtnTouch(true)
-        touchScreen.sendDown(0 /*id*/, pointer1)
+        touchScreen.sendDown(pointerId0, pointer0)
+        touchScreen.sync()
         verifier.assertReceivedDown()
 
         // ACTION_POINTER_DOWN
-        touchScreen.sendDown(1 /*id*/, pointer2)
-        verifier.assertReceivedPointerDown(1)
+        touchScreen.sendDown(pointerId1, pointer1)
+        touchScreen.sync()
+        verifier.assertReceivedPointerDown(pointerId1)
 
         // ACTION_MOVE
-        pointer2.offset(1, 1)
-        touchScreen.sendMove(1 /*id*/, pointer2)
+        pointer1.offset(1, 1)
+        touchScreen.sendMove(pointerId1, pointer1)
+        touchScreen.sync()
         verifier.assertReceivedMove()
 
         // ACTION_POINTER_UP
-        touchScreen.sendUp(0 /*id*/)
-        verifier.assertReceivedPointerUp(0)
+        touchScreen.sendUp(pointerId0)
+        touchScreen.sync()
+        verifier.assertReceivedPointerUp(pointerId0)
 
         // ACTION_UP
         touchScreen.sendBtnTouch(false)
-        touchScreen.sendUp(1 /*id*/)
+        touchScreen.sendUp(pointerId1)
+        touchScreen.sync()
         verifier.assertReceivedUp()
     }
 
+    @DebugInputRule.DebugInput(bug = 288321659)
     @Test
     fun testDeviceCancel() {
         val pointer = Point(100, 100)
+        val pointerId = 0
 
         // ACTION_DOWN
         touchScreen.sendBtnTouch(true)
-        touchScreen.sendDown(0 /*id*/, pointer)
+        touchScreen.sendDown(pointerId, pointer)
+        touchScreen.sync()
         verifier.assertReceivedDown()
 
         // ACTION_MOVE
         pointer.offset(1, 1)
-        touchScreen.sendMove(0 /*id*/, pointer)
+        touchScreen.sendMove(pointerId, pointer)
+        touchScreen.sync()
         verifier.assertReceivedMove()
 
         // ACTION_CANCEL
-        touchScreen.sendToolType(0 /*id*/, UinputTouchDevice.MT_TOOL_PALM)
+        touchScreen.sendToolType(pointerId, UinputTouchDevice.MT_TOOL_PALM)
+        touchScreen.sync()
         verifier.assertReceivedCancel()
 
         // No event
         touchScreen.sendBtnTouch(false)
-        touchScreen.sendUp(0 /*id*/)
+        touchScreen.sendUp(pointerId)
+        touchScreen.sync()
         virtualDisplayRule.activity.assertNoEvents()
     }
 
     /**
      * Check that pointer cancel is received by the activity via uinput device.
      */
+    @DebugInputRule.DebugInput(bug = 288321659)
     @Test
     fun testDevicePointerCancel() {
-        val pointer1 = Point(100, 100)
-        val pointer2 = Point(150, 150)
+        val pointer0 = Point(100, 100)
+        val pointer1 = Point(150, 150)
+        val pointerId0 = 0
+        val pointerId1 = 1
 
         // ACTION_DOWN
         touchScreen.sendBtnTouch(true)
-        touchScreen.sendDown(0 /*id*/, pointer1)
+        touchScreen.sendDown(pointerId0, pointer0)
+        touchScreen.sync()
         verifier.assertReceivedDown()
 
         // ACTION_MOVE
-        pointer1.offset(1, 1)
-        touchScreen.sendMove(0 /*id*/, pointer1)
+        pointer0.offset(1, 1)
+        touchScreen.sendMove(pointerId0, pointer0)
+        touchScreen.sync()
         verifier.assertReceivedMove()
 
         // ACTION_POINTER_DOWN(1)
-        touchScreen.sendDown(1 /*id*/, pointer2)
-        verifier.assertReceivedPointerDown(1)
+        touchScreen.sendDown(pointerId1, pointer1)
+        touchScreen.sync()
+        verifier.assertReceivedPointerDown(pointerId1)
 
         // ACTION_POINTER_UP(1) with cancel flag
-        touchScreen.sendToolType(1 /*id*/, UinputTouchDevice.MT_TOOL_PALM)
-        verifier.assertReceivedPointerCancel(1)
+        touchScreen.sendToolType(pointerId1, UinputTouchDevice.MT_TOOL_PALM)
+        touchScreen.sync()
+        verifier.assertReceivedPointerCancel(pointerId1)
 
         // ACTION_UP
         touchScreen.sendBtnTouch(false)
-        touchScreen.sendUp(0 /*id*/)
+        touchScreen.sendUp(pointerId0)
+        touchScreen.sync()
         verifier.assertReceivedUp()
     }
 
@@ -239,20 +273,24 @@ class TouchScreenTest {
     @Test
     fun testEventTime() {
         val pointer = Point(100, 100)
+        val pointerId = 0
 
        // ACTION_DOWN
         touchScreen.sendBtnTouch(true)
-        touchScreen.sendDown(0 /*id*/, pointer)
+        touchScreen.sendDown(pointerId, pointer)
+        touchScreen.sync()
         verifyEventTime()
 
         // ACTION_MOVE
         pointer.offset(1, 1)
-        touchScreen.sendMove(0 /*id*/, pointer)
+        touchScreen.sendMove(pointerId, pointer)
+        touchScreen.sync()
         verifyEventTime()
 
         // ACTION_UP
         touchScreen.sendBtnTouch(false)
-        touchScreen.sendUp(0 /*id*/)
+        touchScreen.sendUp(pointerId)
+        touchScreen.sync()
         verifyEventTime()
     }
 
@@ -265,13 +303,16 @@ class TouchScreenTest {
     // given four points by tapping on the corners in order and asserting the location of the
     // received events match the provided values.
     private fun verifyTapsOnFourCorners(expectedPoints: Array<PointF>) {
+        val pointerId = 0
         for (i in 0 until 4) {
             touchScreen.sendBtnTouch(true)
-            touchScreen.sendDown(0 /*id*/, CORNERS[i])
+            touchScreen.sendDown(pointerId, CORNERS[i])
+            touchScreen.sync()
             verifier.assertReceivedDown(expectedPoints[i])
 
             touchScreen.sendBtnTouch(false)
-            touchScreen.sendUp(0 /*id*/)
+            touchScreen.sendUp(pointerId)
+            touchScreen.sync()
             verifier.assertReceivedUp()
         }
     }

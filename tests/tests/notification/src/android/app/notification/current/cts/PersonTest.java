@@ -16,18 +16,30 @@
 
 package android.app.notification.current.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import android.app.Person;
 import android.app.stubs.R;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
 
-public class PersonTest extends AndroidTestCase {
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class PersonTest {
     private static final CharSequence TEST_NAME = "Test Name";
     private static final String TEST_URI = Uri.fromParts("a", "b", "c").toString();
     private static final String TEST_KEY = "test key";
 
+    @Test
     public void testPerson_builder() {
         Icon testIcon = createIcon();
         Person person =
@@ -48,6 +60,7 @@ public class PersonTest extends AndroidTestCase {
         assertTrue(person.isImportant());
     }
 
+    @Test
     public void testPerson_builder_defaults() {
         Person person = new Person.Builder().build();
         assertFalse(person.isBot());
@@ -58,6 +71,7 @@ public class PersonTest extends AndroidTestCase {
         assertNull(person.getUri());
     }
 
+    @Test
     public void testToBuilder() {
         Icon testIcon = createIcon();
         Person original =
@@ -79,6 +93,7 @@ public class PersonTest extends AndroidTestCase {
         assertTrue(result.isImportant());
     }
 
+    @Test
     public void testPerson_parcelable() {
         Person person = new Person.Builder()
                 .setBot(true)
@@ -102,6 +117,7 @@ public class PersonTest extends AndroidTestCase {
         assertEquals(person.getUri(), result.getUri());
     }
 
+    @Test
     public void testEquals() {
         Icon testIcon = createIcon();
         Person.Builder builder = new Person.Builder()
@@ -118,6 +134,7 @@ public class PersonTest extends AndroidTestCase {
         assertEquals(personA, personB);
     }
 
+    @Test
     public void testEquals_noIcon() {
         Person.Builder builder = new Person.Builder()
                 .setName(TEST_NAME)
@@ -132,6 +149,7 @@ public class PersonTest extends AndroidTestCase {
         assertEquals(personA, personB);
     }
 
+    @Test
     public void testEquals_different() {
         Icon testIcon = createIcon();
         Person.Builder builder = new Person.Builder()
@@ -148,6 +166,7 @@ public class PersonTest extends AndroidTestCase {
         assertFalse(personA.equals(personB));
     }
 
+    @Test
     public void testDescribeContents() {
         Person person = new Person.Builder().build();
 
@@ -157,6 +176,7 @@ public class PersonTest extends AndroidTestCase {
 
     /** Creates and returns an {@link Icon} for testing. */
     private Icon createIcon() {
-        return Icon.createWithResource(getContext(), R.drawable.icon_blue);
+        return Icon.createWithResource(InstrumentationRegistry.getInstrumentation().getContext(),
+                R.drawable.icon_blue);
     }
 }

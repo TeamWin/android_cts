@@ -18,6 +18,10 @@ package {
 
 android_test_helper_app {
     name: "CtsAppWithReceiverAttribution",
+    defaults: [
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
 
     srcs: ["src/**/*.java"],
 
@@ -25,5 +29,5 @@ android_test_helper_app {
         "cts",
         "general-tests",
         "mts",
-    ]
+    ],
 }

@@ -16,34 +16,44 @@
 
 package com.android.bedstead.nene.resources;
 
+import android.content.res.Resources;
 
-public class ResourcesWrapper {
+/**
+ * Wrapper for {@code android.content.res.Resources}.
+ */
+class ResourcesWrapper {
 
-    private final android.content.res.Resources mResources;
+    private final Resources sResources;
 
-    ResourcesWrapper(android.content.res.Resources resources) {
-        mResources = resources;
+    public ResourcesWrapper(Resources resources) {
+        sResources = resources;
     }
 
     /**
-     * Get resource identifier
+     * Get resource identifier.
+     * <p>
+     * See {@link android.content.res.Resources#getIdentifier(String, String, String)}.
      */
     public int getIdentifier(String configName, String defType, String defPackage) {
-        return mResources.getIdentifier(configName, defType, defPackage);
+        return sResources.getIdentifier(configName, defType, defPackage);
     }
 
     /**
-     * Get string resource through identifier
+     * Get string resource through identifier.
+     * <p>
+     * See {@link android.content.res.Resources#getString(int)}.
      */
     public String getString(int id) {
-        return mResources.getString(id);
+        return sResources.getString(id);
     }
 
     /**
-     * Get string resource.
+     * Get string resource through identifier.
+     * <p>
+     * See {@link android.content.res.Resources#getIdentifier(String, String, String)},
+     * {@link android.content.res.Resources#getString(int)}.
      */
     public String getString(String configName, String defType, String defPackage) {
-        return getString(getIdentifier(configName, defType, defPackage));
+        return sResources.getString(getIdentifier(configName, defType, defPackage));
     }
-
 }

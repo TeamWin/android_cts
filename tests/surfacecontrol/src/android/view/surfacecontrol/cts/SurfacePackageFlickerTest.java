@@ -17,11 +17,9 @@ package android.view.surfacecontrol.cts;
 
 import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
 import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
-import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.Rect;
 import android.os.Binder;
 import android.view.Gravity;
 import android.view.SurfaceControlViewHost;
@@ -57,7 +55,6 @@ public class SurfacePackageFlickerTest {
     @Before
     public void setup() {
         mActivityRule.getScenario().onActivity(activity -> mActivity = activity);
-        mActivity.setLogicalDisplaySize(getLogicalDisplaySize());
     }
 
     class SurfacePackageTestCase implements ISurfaceValidatorTestCase {
@@ -130,16 +127,6 @@ public class SurfacePackageFlickerTest {
         @Override
         public PixelChecker getChecker() {
             return mPixelChecker;
-        }
-
-        @Override
-        public Rect getBoundsToCheck(FrameLayout parent) {
-            View boundsView = mParent;
-            Rect boundsToCheck = new Rect(0, 0, boundsView.getWidth(), boundsView.getHeight());
-            int[] topLeft = new int[2];
-            boundsView.getLocationOnScreen(topLeft);
-            boundsToCheck.offset(topLeft[0], topLeft[1]);
-            return boundsToCheck;
         }
     }
 

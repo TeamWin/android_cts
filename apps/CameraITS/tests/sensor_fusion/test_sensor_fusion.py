@@ -14,6 +14,7 @@
 """Verify image and inertial sensor events are well synchronized."""
 
 
+import fnmatch
 import json
 import logging
 import math
@@ -38,10 +39,7 @@ import sensor_fusion_utils
 _CAM_FRAME_RANGE_MAX = 9.0  # Seconds: max allowed camera frame range.
 _GYRO_SAMP_RATE_MIN = 100.0  # Samples/second: min gyro sample rate.
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
-_ARDUINO_ANGLES = (0, 90)
 _ARDUINO_INIT_WAIT_TIME = 3.0  # Seconds to wait for Arduino comm
-_ARDUINO_MOVE_TIME = 2
-_ARDUINO_SERVO_SPEED = 20
 _NUM_ROTATIONS = 10
 _START_FRAME = 1
 _FRAME_DELTA_TOL = 1.5  # 50% margin over nominal FPS of captures
@@ -111,9 +109,9 @@ def _collect_data(cam, fps, w, h, test_length, rot_rig, chart_dist,
           rot_rig['cntl'],
           rot_rig['ch'],
           _NUM_ROTATIONS,
-          _ARDUINO_ANGLES,
-          _ARDUINO_SERVO_SPEED,
-          _ARDUINO_MOVE_TIME,
+          sensor_fusion_utils.ARDUINO_ANGLES_SENSOR_FUSION,
+          sensor_fusion_utils.ARDUINO_SERVO_SPEED_SENSOR_FUSION,
+          sensor_fusion_utils.ARDUINO_MOVE_TIME_SENSOR_FUSION,
           serial_port,
       ),
   )
@@ -428,6 +426,21 @@ class SensorFusionTest(its_base_test.ItsBaseTest):
     if abs(offset_ms) > _OFFSET_MS_THRESH_MAX:
       raise AssertionError('Offset too large. Measured (ms): '
                            f'{offset_ms:.3f}, TOL: {_OFFSET_MS_THRESH_MAX}.')
+
+    else: # remove frames if PASS
+      temp_files = []
+      try:
+        temp_files = os.listdir(self.log_path)
+      except FileNotFoundError:
+        logging.debug('/tmp directory: %s not found', self.log_path)
+      for file in temp_files:
+        if fnmatch.fnmatch(file, f'{_NAME}_frame*.png'):
+          file_to_remove = os.path.join(self.log_path, file)
+          try:
+            os.remove(file_to_remove)
+          except FileNotFoundError:
+            logging.debug('File not found: %s', str(file))
+      logging.debug('Test passes, frame images have been removed')
 
 if __name__ == '__main__':
   test_runner.main()

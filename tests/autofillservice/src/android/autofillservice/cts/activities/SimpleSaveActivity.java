@@ -72,6 +72,12 @@ public class SimpleSaveActivity extends AbstractAutoFillActivity {
         mCommit.setOnClickListener((v) -> onCommit());
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume()");
+    }
+
     private void onCommit() {
         if (mClearFieldsOnSubmit) {
             resetFields();
@@ -151,12 +157,11 @@ public class SimpleSaveActivity extends AbstractAutoFillActivity {
         private final OneTimeTextWatcher mPasswordWatcher;
 
         private FillExpectation(String input, String password) {
-            mInputWatcher = input == null
-                    ? null
-                    : new OneTimeTextWatcher("input", mInput, input);
-            mPasswordWatcher = password == null
-                    ? null
-                    : new OneTimeTextWatcher("password", mPassword, password);
+            mInputWatcher = input == null ? null : new OneTimeTextWatcher("input", mInput, input);
+            mPasswordWatcher =
+                    password == null
+                            ? null
+                            : new OneTimeTextWatcher("password", mPassword, password);
         }
 
         public void assertTextChange() throws Exception {

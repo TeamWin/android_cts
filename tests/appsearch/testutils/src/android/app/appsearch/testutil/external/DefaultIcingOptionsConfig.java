@@ -71,4 +71,29 @@ public class DefaultIcingOptionsConfig implements IcingOptionsConfig {
     public int getMaxPageBytesLimit() {
         return DEFAULT_MAX_PAGE_BYTES_LIMIT;
     }
+
+    @Override
+    public int getIntegerIndexBucketSplitThreshold() {
+        return DEFAULT_INTEGER_INDEX_BUCKET_SPLIT_THRESHOLD;
+    }
+
+    @Override
+    public boolean getLiteIndexSortAtIndexing() {
+        return DEFAULT_LITE_INDEX_SORT_AT_INDEXING;
+    }
+
+    @Override
+    public int getLiteIndexSortSize() {
+        return DEFAULT_LITE_INDEX_SORT_SIZE;
+    }
+
+    @Override
+    public boolean getUseNewQualifiedIdJoinIndex() {
+        return DEFAULT_USE_NEW_QUALIFIED_ID_JOIN_INDEX;
+    }
+
+    @Override
+    public boolean getBuildPropertyExistenceMetadataHits() {
+        return DEFAULT_BUILD_PROPERTY_EXISTENCE_METADATA_HITS;
+    }
 }

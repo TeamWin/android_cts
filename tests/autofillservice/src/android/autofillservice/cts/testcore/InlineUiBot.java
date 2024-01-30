@@ -23,11 +23,13 @@ import static android.autofillservice.cts.testcore.Timeouts.UI_TIMEOUT;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.os.SystemClock;
 import android.util.Log;
 
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.BySelector;
 import androidx.test.uiautomator.Direction;
+import androidx.test.uiautomator.StaleObjectException;
 import androidx.test.uiautomator.UiObject2;
 
 import com.android.compatibility.common.util.RequiredFeatureRule;
@@ -85,7 +87,20 @@ public final class InlineUiBot extends UiBot {
 
     @Override
     public void selectDataset(String name) throws Exception {
-        selectSuggestion(name);
+        int retryCount = 0;
+        while (retryCount < MAX_UIOBJECT_RETRY_COUNT) {
+            try {
+                selectSuggestion(name);
+                break;
+            } catch (AssertionError ex) {
+                retryCount++;
+                if (retryCount >= MAX_UIOBJECT_RETRY_COUNT) {
+                    throw ex;
+                } else {
+                    SystemClock.sleep(100);
+                }
+            }
+        }
     }
 
     @Override
@@ -100,8 +115,26 @@ public final class InlineUiBot extends UiBot {
 
     @Override
     public UiObject2 assertDatasets(String... names) throws Exception {
-        final UiObject2 picker = findSuggestionStrip();
-        return assertDatasets(picker, names);
+        UiObject2 picker = null;
+        int retryCount = 0;
+        while (retryCount < MAX_UIOBJECT_RETRY_COUNT) {
+            try {
+                picker = findSuggestionStrip();
+                return assertDatasets(picker, names);
+            } catch (StaleObjectException ex) {
+                retryCount++;
+                if (retryCount >= MAX_UIOBJECT_RETRY_COUNT) {
+                    throw ex;
+                } else {
+                    SystemClock.sleep(100);
+                }
+            }
+        }
+
+        // Unreachable, either:
+        // 1. returns assertDatasets(picker, names)
+        // 2. StaleObjectException is thrown above
+        return picker;
     }
 
     @Override

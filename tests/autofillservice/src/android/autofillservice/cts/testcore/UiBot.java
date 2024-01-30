@@ -165,7 +165,7 @@ public class UiBot {
 
     private static final boolean DUMP_ON_ERROR = true;
 
-    private static final int MAX_UIOBJECT_RETRY_COUNT = 3;
+    protected static final int MAX_UIOBJECT_RETRY_COUNT = 3;
 
     /**
      * Pass to {@link #setScreenOrientation(int)} to change the display to portrait mode.
@@ -514,8 +514,12 @@ public class UiBot {
      * Selects a view by id.
      */
     public UiObject2 selectByRelativeId(String id) throws Exception {
-        Log.v(TAG, "selectByRelativeId(): " + id);
-        UiObject2 object = waitForObject(By.res(mPackageName, id));
+        return selectByRelativeId(mPackageName, id);
+    }
+
+    public UiObject2 selectByRelativeId(String packageName, String id) throws Exception {
+        Log.v(TAG, "selectByRelativeId(): " + packageName + ":/" + id);
+        UiObject2 object = waitForObject(By.res(packageName, id));
         object.click();
         return object;
     }

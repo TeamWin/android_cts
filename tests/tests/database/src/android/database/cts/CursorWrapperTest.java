@@ -16,6 +16,12 @@
 
 package android.database.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.database.CharArrayBuffer;
@@ -23,16 +29,28 @@ import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.CursorWrapper;
 import android.database.DataSetObserver;
+import android.database.MatrixCursor;
 import android.database.StaleDataException;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Handler;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.util.Arrays;
 
-public class CursorWrapperTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class CursorWrapperTest {
+    @Rule public final RavenwoodRule mRavenwood = new RavenwoodRule();
 
     private static final String FIRST_NUMBER = "123";
     private static final String SECOND_NUMBER = "5555";
@@ -51,18 +69,18 @@ public class CursorWrapperTest extends AndroidTestCase {
 
     private static final int CURRENT_DATABASE_VERSION = 42;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
+        if (mRavenwood.isUnderRavenwood()) return;
+
         setupDatabase();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        closeDatabase();
-        super.tearDown();
+    private Context getContext() {
+        return InstrumentationRegistry.getTargetContext();
     }
 
+    @Test
     public void testConstrucotorAndClose() {
         CursorWrapper cursorWrapper = new CursorWrapper(getCursor());
 
@@ -75,14 +93,23 @@ public class CursorWrapperTest extends AndroidTestCase {
         assertTrue(cursorWrapper.requery());
         cursorWrapper.close();
         assertTrue(cursorWrapper.isClosed());
-        assertFalse(cursorWrapper.requery());
+        if (!mRavenwood.isUnderRavenwood()) {
+            assertFalse(cursorWrapper.requery());
+        }
     }
 
     private Cursor getCursor() {
-        Cursor cursor = mDatabase.query("test1", NUMBER_PROJECTION, null, null, null, null, null);
-        return cursor;
+        if (mRavenwood.isUnderRavenwood()) {
+            final MatrixCursor cursor = new MatrixCursor(NUMBER_PROJECTION, 0);
+            cursor.newRow().add("_id", "1").add("number", FIRST_NUMBER);
+            cursor.newRow().add("_id", "2").add("number", SECOND_NUMBER);
+            return cursor;
+        } else {
+            return mDatabase.query("test1", NUMBER_PROJECTION, null, null, null, null, null);
+        }
     }
 
+    @Test
     public void testGetWrappedCursor() {
         final Cursor expected = getCursor();
         CursorWrapper cursorWrapper = new CursorWrapper(expected);
@@ -90,6 +117,8 @@ public class CursorWrapperTest extends AndroidTestCase {
         assertSame(expected, cursorWrapper.getWrappedCursor());
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testGetCount() {
         CursorWrapper cursorWrapper = new CursorWrapper(getCursor());
         int defaultCount = cursorWrapper.getCount();
@@ -124,6 +153,7 @@ public class CursorWrapperTest extends AndroidTestCase {
         rebuildDatabase();
     }
 
+    @Test
     public void testDeactivate() throws IllegalStateException {
         CursorWrapper cursorWrapper = new CursorWrapper(getCursor());
         MockObserver observer = new MockObserver();
@@ -150,11 +180,13 @@ public class CursorWrapperTest extends AndroidTestCase {
         cursorWrapper.deactivate();
         // deactivate method can invoke invalidate() method, can be observed by DataSetObserver.
         assertTrue(observer.hasInvalidated());
-        // After deactivating, the cursor can not provide values from database record.
-        try {
-            cursorWrapper.getInt(1);
-            fail("After deactivating, cursor cannot execute getting value operations.");
-        } catch (StaleDataException e) {
+        if (!mRavenwood.isUnderRavenwood()) {
+            // After deactivating, the cursor can not provide values from database record.
+            try {
+                cursorWrapper.getInt(1);
+                fail("After deactivating, cursor cannot execute getting value operations.");
+            } catch (StaleDataException e) {
+            }
         }
 
         // Can't register a same observer twice before unregister it.
@@ -180,6 +212,7 @@ public class CursorWrapperTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGettingColumnInfos() {
         CursorWrapper cursorWrapper = new CursorWrapper(getCursor());
 
@@ -210,6 +243,7 @@ public class CursorWrapperTest extends AndroidTestCase {
         cursorWrapper.close();
     }
 
+    @Test
     public void testPositioning() {
         CursorWrapper cursorWrapper = new CursorWrapper(getCursor());
 
@@ -287,6 +321,8 @@ public class CursorWrapperTest extends AndroidTestCase {
         cursorWrapper.close();
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = SQLiteDatabase.class)
     public void testGettingValues() {
         final byte NUMBER_BLOB_UNIT = 99;
         final String STRING_TEXT = "Test String";
@@ -363,12 +399,14 @@ public class CursorWrapperTest extends AndroidTestCase {
         mDatabase.execSQL("DROP TABLE test2");
     }
 
+    @Test
     public void testGetExtras() {
         CursorWrapper cursor = new CursorWrapper(getCursor());
         Bundle bundle = cursor.getExtras();
         assertSame(Bundle.EMPTY, bundle);
     }
 
+    @Test
     public void testCopyStringToBuffer() {
         CharArrayBuffer charArrayBuffer = new CharArrayBuffer(1000);
         Cursor cursor = getCursor();
@@ -395,6 +433,7 @@ public class CursorWrapperTest extends AndroidTestCase {
         cursorWrapper.close();
     }
 
+    @Test
     public void testRespond() {
         Bundle b = new Bundle();
         CursorWrapper cursorWrapper = new CursorWrapper(getCursor());
@@ -403,12 +442,14 @@ public class CursorWrapperTest extends AndroidTestCase {
         cursorWrapper.close();
     }
 
+    @Test
     public void testGetWantsAllOnMoveCalls() {
         CursorWrapper cursorWrapper = new CursorWrapper(getCursor());
         assertFalse(cursorWrapper.getWantsAllOnMoveCalls());
         cursorWrapper.close();
     }
 
+    @Test
     public void testContentObserverOperations() throws IllegalStateException {
         CursorWrapper cursorWrapper = new CursorWrapper(getCursor());
         MockContentObserver observer = new MockContentObserver(null);
@@ -444,6 +485,7 @@ public class CursorWrapperTest extends AndroidTestCase {
         cursorWrapper.close();
     }
 
+    @Test
     public void testSetExtras() {
         Cursor cursor = getCursor();
         CursorWrapper cursorWrapper = new CursorWrapper(cursor);

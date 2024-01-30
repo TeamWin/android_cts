@@ -25,13 +25,13 @@ import android.content.pm.PackageInstaller.EXTRA_STATUS
 import android.content.pm.PackageInstaller.STATUS_FAILURE_INVALID
 import android.os.Build
 import android.platform.test.annotations.AppModeFull
-import android.support.test.uiautomator.By
-import android.support.test.uiautomator.UiDevice
-import android.support.test.uiautomator.Until
 import androidx.core.content.FileProvider
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.MediumTest
 import androidx.test.runner.AndroidJUnit4
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.Until
 import java.io.File
 import java.lang.IllegalArgumentException
 import org.junit.After
@@ -145,7 +145,7 @@ class NoPermissionTests {
     fun noPermissionsTestIntent() {
         launchPackageInstallerViaIntent()
 
-        if (pm.getPackageInfo(packageName, 0).applicationInfo.targetSdkVersion
+        if (pm.getPackageInfo(packageName, 0).applicationInfo!!.targetSdkVersion
                 >= Build.VERSION_CODES.O) {
             assertInstallFailed("Package Installer UI should not appear")
         } else {
@@ -157,7 +157,7 @@ class NoPermissionTests {
     fun noPermissionsTestSession() {
         launchPackageInstallerViaSession()
 
-        if (pm.getPackageInfo(packageName, 0).applicationInfo.targetSdkVersion
+        if (pm.getPackageInfo(packageName, 0).applicationInfo!!.targetSdkVersion
                 >= Build.VERSION_CODES.O) {
             assertInstallFailed("Package Installer UI should not appear")
         } else {

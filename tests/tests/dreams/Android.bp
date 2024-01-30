@@ -40,5 +40,6 @@ android_test {
     ],
     data: [
         ":CtsDreamOverlayTestApp",
+        ":CtsDeviceServicesTestApp",
     ],
 }

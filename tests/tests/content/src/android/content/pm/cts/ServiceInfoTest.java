@@ -16,20 +16,50 @@
 
 package android.content.pm.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.pm.PackageManager;
-import android.content.pm.ServiceInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.ServiceInfo;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
+import android.util.StringBuilderPrinter;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
 @AppModeFull // TODO(Instant) Figure out which APIs should work.
-public class ServiceInfoTest extends AndroidTestCase {
+public class ServiceInfoTest {
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
     private static final String PACKAGE_NAME = "android.content.cts";
     private static final String SERVICE_NAME = "android.content.pm.cts.TestPmService";
 
+    private Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
+
+    @Test
+    public void testSimple() {
+        ServiceInfo info = new ServiceInfo();
+        new ServiceInfo(info);
+        assertNotNull(info.toString());
+        info.dump(new StringBuilderPrinter(new StringBuilder()), "");
+    }
+
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testServiceInfo() throws NameNotFoundException {
         PackageManager pm = getContext().getPackageManager();
         ComponentName componentName = new ComponentName(PACKAGE_NAME, SERVICE_NAME);

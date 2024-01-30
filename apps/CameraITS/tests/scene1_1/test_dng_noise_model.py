@@ -114,8 +114,8 @@ class DngNoiseModelTest(its_base_test.ItsBaseTest):
           # Use a very small patch to ensure gross uniformity (i.e. so
           # non-uniform lighting or vignetting doesn't affect the variance
           # calculation)
-          black_level = image_processing_utils.get_black_level(
-              i, props, cap['metadata'])
+          black_level = image_processing_utils.get_black_levels(
+              props, cap['metadata'])[i]
           level_range = white_level - black_level
           plane = image_processing_utils.get_image_patch(
               planes[i], _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)

@@ -8,6 +8,15 @@
         },
         {
             "name": "CtsScopedStorageDeviceOnlyTest[com.google.android.mediaprovider.apex]"
+        },
+        {
+            "name": "CtsScopedStorageBypassDatabaseOperationsTest[com.google.android.mediaprovider.apex]"
+        },
+        {
+            "name": "CtsScopedStorageGeneralTest[com.google.android.mediaprovider.apex]"
+        },
+        {
+            "name": "CtsScopedStorageRedactUriTest[com.google.android.mediaprovider.apex]"
         }
     ],
     "presubmit": [
@@ -19,6 +28,15 @@
         },
         {
             "name": "CtsScopedStorageDeviceOnlyTest"
+        },
+        {
+            "name": "CtsScopedStorageBypassDatabaseOperationsTest"
+        },
+        {
+            "name": "CtsScopedStorageGeneralTest"
+        },
+        {
+            "name": "CtsScopedStorageRedactUriTest"
         }
     ],
     "presubmit-large": [

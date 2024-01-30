@@ -19,6 +19,7 @@ package com.android.cts.appcloningtestapp;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.provider.MediaStore;
@@ -32,7 +33,7 @@ public class MediaStoreWriteOperation {
     private static final String TAG = "MediaStoreWriteOperation";
 
     // Write an image to primary external storage using MediaStore API
-    public static boolean createImageFileToMediaStore(Context context, String displayName,
+    public static Uri createImageFileToMediaStoreReturnUri(Context context, String displayName,
             Bitmap bitmap, Uri imageCollection) {
 
         // Publish a new image
@@ -46,9 +47,11 @@ public class MediaStoreWriteOperation {
         // Add a specific media item
         ContentResolver resolver = context.getContentResolver();
 
+        Uri newImageUri = null;
+
         try {
             // Keeps a handle to the new image's URI in case we need to modify it later
-            Uri newImageUri = resolver.insert(imageCollection, newImageDetails);
+            newImageUri = resolver.insert(imageCollection, newImageDetails);
 
             if (newImageUri == null) {
                 throw new IOException("Couldn't create MediaStore entry");
@@ -62,10 +65,31 @@ public class MediaStoreWriteOperation {
 
             outputStream.flush();
             outputStream.close();
-            return true;
         } catch (IOException exception) {
             exception.printStackTrace();
-            return false;
         }
+        return newImageUri;
+    }
+
+    public static boolean createImageFileToMediaStore(Context context, String displayName,
+            Bitmap bitmap, Uri imageCollection) {
+        Uri newImageUri =
+                createImageFileToMediaStoreReturnUri(context, displayName, bitmap, imageCollection);
+        if (newImageUri != null) {
+            String[] projection = new String[]{
+                    MediaStore.Images.Media.DISPLAY_NAME,
+            };
+            String sortOrder = MediaStore.Images.Media.DISPLAY_NAME + " ASC";
+            Cursor cursor = context.getContentResolver().query(newImageUri, projection,
+                        null, null, sortOrder);
+            int displayNameColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media
+                    .DISPLAY_NAME);
+            if (cursor.moveToNext()) {
+                // Get values of columns for a given image.
+                String displayNameActual = cursor.getString(displayNameColumn);
+                return displayNameActual.contains(displayName);
+            }
+        }
+        return false;
     }
 }

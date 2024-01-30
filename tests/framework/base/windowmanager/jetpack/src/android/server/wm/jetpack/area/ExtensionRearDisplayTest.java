@@ -18,11 +18,8 @@ package android.server.wm.jetpack.area;
 
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
-
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import static com.android.compatibility.common.util.PollingCheck.waitFor;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -39,7 +36,7 @@ import android.hardware.devicestate.DeviceStateRequest;
 import android.os.PowerManager;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.DeviceStateUtils;
-import android.server.wm.jetpack.utils.ExtensionUtil;
+import android.server.wm.jetpack.extensions.util.ExtensionsUtil;
 import android.server.wm.jetpack.utils.TestRearDisplayActivity;
 import android.server.wm.jetpack.utils.WindowExtensionTestRule;
 import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
@@ -49,6 +46,7 @@ import android.view.WindowMetrics;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
 import androidx.window.extensions.area.WindowAreaComponent;
 import androidx.window.extensions.area.WindowAreaComponent.WindowAreaSessionState;
@@ -265,6 +263,20 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
     }
 
     /**
+     * Tests that attempting to end a rear display session that isn't active, operates as a no-op
+     * instead of throwing an {@link Exception}.
+     */
+    @ApiTest(apis = {
+            "androidx.window.extensions.area.WindowAreaComponent#endRearDisplaySession"})
+    @Test
+    public void testEndRearDisplaySession_noActiveSession() {
+        assumeTrue(mWindowAreaStatus != WindowAreaComponent.STATUS_ACTIVE);
+        assumeTrue(mCurrentDeviceState != mRearDisplayState);
+
+        mWindowAreaComponent.endRearDisplaySession();
+    }
+
+    /**
      * Tests that the {@link DisplayMetrics} returned by
      * {@link WindowAreaComponent#getRearDisplayMetrics} is non-null and matches the expected
      * metrics pertaining to the rear display address.
@@ -272,8 +284,9 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
     @ApiTest(apis = {
             "androidx.window.extensions.area.WindowAreaComponent#getRearDisplayMetrics"})
     @Test
+    @FlakyTest(bugId = 295869141)
     public void testGetRearDisplayMetrics() throws Throwable {
-        ExtensionUtil.assumeVendorApiLevelAtLeast(3 /* vendorApiLevel */);
+        ExtensionsUtil.assumeVendorApiLevelAtLeast(3 /* vendorApiLevel */);
         assumeTrue(mRearDisplayAddress != INVALID_DISPLAY_ADDRESS);
 
         DisplayMetrics originalMetrics = mWindowAreaComponent.getRearDisplayMetrics();
@@ -315,8 +328,9 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
     @ApiTest(apis = {
             "androidx.window.extensions.area.WindowAreaComponent#getRearDisplayMetrics"})
     @Test
+    @FlakyTest(bugId = 295869141)
     public void testGetRearDisplayMetrics_afterRotation() throws Throwable {
-        ExtensionUtil.assumeVendorApiLevelAtLeast(3 /* vendorApiLevel */);
+        ExtensionsUtil.assumeVendorApiLevelAtLeast(3 /* vendorApiLevel */);
         assumeTrue(mRearDisplayAddress != INVALID_DISPLAY_ADDRESS);
         DisplayMetrics originalMetricsApi = mWindowAreaComponent.getRearDisplayMetrics();
         assertNotNull(originalMetricsApi);
@@ -370,7 +384,7 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
             "androidx.window.extensions.area.WindowAreaComponent#getRearDisplayMetrics"})
     @Test
     public void testGetRearDisplayMetrics_invalidRearDisplayAddress() {
-        ExtensionUtil.assumeVendorApiLevelAtLeast(3 /* vendorApiLevel */);
+        ExtensionsUtil.assumeVendorApiLevelAtLeast(3 /* vendorApiLevel */);
         assumeTrue(mRearDisplayAddress == INVALID_DISPLAY_ADDRESS);
         DisplayMetrics expectedDisplayMetrics = new DisplayMetrics();
         DisplayMetrics actualDisplayMetrics = mWindowAreaComponent.getRearDisplayMetrics();
@@ -430,10 +444,6 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
             pressWakeupButton();
             pressUnlockButton();
         }
-    }
-
-    private boolean isKeyguardLocked() {
-        return mKeyguardManager != null && mKeyguardManager.isKeyguardLocked();
     }
 
     private void waitAndAssert(PollingCheck.PollingCheckCondition condition) {

@@ -24,7 +24,6 @@ import com.android.tradefed.result.CollectingTestListener;
 import com.android.tradefed.result.TestRunResult;
 
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -76,17 +75,8 @@ public class BaseMultiUserTest extends BaseMediaHostSideTest {
                 "0",
                 USER_ALL);
 
-        mExistingUsers = new ArrayList<>();
+        mExistingUsers = getDevice().listUsers();
         Integer primaryUserId = getDevice().getPrimaryUserId();
-        if (primaryUserId != null) {
-            mExistingUsers.add(primaryUserId);
-        }
-        Integer mainUserId = getDevice().getMainUserId();
-        if (mainUserId != null) {
-            mExistingUsers.add(mainUserId);
-        }
-        mExistingUsers.add(USER_SYSTEM);
-
         executeShellCommand("am switch-user " + primaryUserId);
         executeShellCommand("wm dismiss-keyguard");
     }

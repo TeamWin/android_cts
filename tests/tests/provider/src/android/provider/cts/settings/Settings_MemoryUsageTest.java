@@ -21,12 +21,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.testng.Assert.expectThrows;
 
 import android.content.ContentResolver;
+import android.content.Context;
 import android.os.Process;
 import android.os.SystemClock;
 import android.provider.Settings;
 
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.google.common.base.Strings;
 
@@ -45,13 +46,14 @@ public class Settings_MemoryUsageTest {
 
     @Before
     public void setUp() throws Exception {
-        final String packageName = InstrumentationRegistry.getTargetContext().getPackageName();
+        final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        final String packageName = context.getPackageName();
         InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
                 "appops set --user " + sUserId + " " + packageName
                         + " android:write_settings allow");
         // Wait a beat to persist the change
         SystemClock.sleep(500);
-        mContentResolver = InstrumentationRegistry.getTargetContext().getContentResolver();
+        mContentResolver = context.getContentResolver();
         assertNotNull(mContentResolver);
         mOldSettingValue = Settings.System.getString(mContentResolver, STRING_SETTING);
     }

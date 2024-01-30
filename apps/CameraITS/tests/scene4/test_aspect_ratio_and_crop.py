@@ -219,6 +219,8 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       fls_physical = props['android.lens.info.availableFocalLengths']
       logging.debug('physical available focal lengths: %s', str(fls_physical))
+      logging.debug('minimum focus distance (diopters): %.2f',
+                    props['android.lens.info.minimumFocusDistance'])
       name_with_log_path = os.path.join(self.log_path, _NAME)
       if self.hidden_physical_id:
         logging.debug('Testing camera: %s.%s',

@@ -198,10 +198,7 @@ class HdrExtensionTest(its_base_test.ItsBaseTest):
           arduino_serial_port, self.lighting_ch, 'OFF')
 
       # Check that tablet is connected and turn it off to validate lighting
-      if self.tablet:
-        lighting_control_utils.turn_off_device(self.tablet)
-      else:
-        raise AssertionError('Test must be run with tablet.')
+      self.turn_off_tablet()
 
       # Validate lighting
       cam.do_3a(do_af=False)

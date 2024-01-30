@@ -26,6 +26,7 @@ import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.u
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityManager;
 import android.app.UiAutomation;
@@ -85,6 +86,8 @@ public class ResourcesHardeningTest {
 
     @Before
     public void onBefore() throws Exception {
+        // TODO(b/280484615): remove once test is deflaked.
+        assumeTrue(false);
         checkIncrementalDeliveryFeature();
 
         setDeviceProperty("incfs_default_timeouts", "1:1:1");

@@ -21,12 +21,14 @@ java_test_host {
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
     libs: [
+        "compatibility-host-util",
         "cts-tradefed",
         "tradefed",
         "host-libprotobuf-java-full",
     ],
     static_libs: [
         "cts-statsd-atom-host-test-utils",
+        "cts-host-utils",
     ],
     // Tag this module as a cts test artifact
     test_suites: [

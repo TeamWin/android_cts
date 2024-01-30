@@ -15,11 +15,20 @@
  */
 package android.database.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 
 import android.database.CharArrayBuffer;
-import android.test.AndroidTestCase;
 
-public class CharArrayBufferTest extends AndroidTestCase {
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class CharArrayBufferTest {
+    @Test
     public void testCharArrayBuffer() {
         CharArrayBuffer charArrayBuffer;
 

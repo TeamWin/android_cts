@@ -31,6 +31,7 @@ android_test {
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
     static_libs: [
+        "android.view.accessibility.flags-aconfig-java",
         "ctstestrunner-axt",
         "hamcrest-library",
         "CtsAccessibilityCommon",

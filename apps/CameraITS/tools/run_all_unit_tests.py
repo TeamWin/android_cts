@@ -44,9 +44,9 @@ class RunAllUnitTests(unittest.TestCase):
     """Ensures _ALL_SCENES list matches scene folders in test directory."""
     self._scene_folders_exist(run_all_tests._ALL_SCENES)
 
-  def test_auto_scenes(self):
-    """Ensures _AUTO_SCENES list matches scene folders in test directory."""
-    self._scene_folders_exist(run_all_tests._AUTO_SCENES)
+  def test_tablet_scenes(self):
+    """Ensures _TABLET_SCENES list matches scene folders in test directory."""
+    self._scene_folders_exist(run_all_tests._TABLET_SCENES)
 
   def test_scene_req(self):
     """Ensures _SCENE_REQ scenes match scene folders in test directory."""

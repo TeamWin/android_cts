@@ -24,7 +24,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.car.Car;
-import android.car.test.ApiCheckerRule.Builder;
 import android.content.Context;
 import android.os.Build;
 import android.os.Process;
@@ -78,13 +77,6 @@ public final class CarWatchdogDaemonTest extends AbstractCarTestCase {
             VALUE_PERCENT_REGEX_PAIR);
 
     private File testDir;
-
-    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
-    @Override
-    protected void configApiCheckerRule(Builder builder) {
-        Log.w(TAG, "Disabling API requirements check");
-        builder.disableAnnotationsCheck();
-    }
 
     @Before
     public void setUp() throws IOException {

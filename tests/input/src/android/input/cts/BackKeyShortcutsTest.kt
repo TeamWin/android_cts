@@ -55,6 +55,7 @@ private fun injectKeyUp(device: UinputDevice, scanCode: Int) {
 class BackKeyShortcutsTest {
 
     companion object {
+        // Linux keycodes defined in the "linux/input-event-codes.h" header.
         const val KEY_LEFTMETA = 125
         const val KEY_ESC = 1
         const val KEY_BACKSPACE = 14
@@ -94,12 +95,12 @@ class BackKeyShortcutsTest {
     @Test
     fun testBackKeyMetaShortcuts() {
         UinputDevice.create(
-                instrumentation, R.raw.test_keyboard_register,
-                InputDevice.SOURCE_KEYBOARD
+            instrumentation, R.raw.test_keyboard_register,
+            InputDevice.SOURCE_KEYBOARD
         ).use { keyboardDevice ->
             activity.assertNoEvents()
 
-            for (scanCode in intArrayOf(KEY_BACKSPACE, KEY_LEFT)) {
+            for (scanCode in intArrayOf(KEY_ESC, KEY_BACKSPACE, KEY_LEFT)) {
                 injectKeyDown(keyboardDevice, KEY_LEFTMETA)
                 injectKeyDown(keyboardDevice, scanCode)
                 injectKeyUp(keyboardDevice, scanCode)

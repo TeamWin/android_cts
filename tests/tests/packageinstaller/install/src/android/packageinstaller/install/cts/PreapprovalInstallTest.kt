@@ -18,7 +18,6 @@ package android.packageinstaller.install.cts
 
 import android.Manifest
 import android.app.PendingIntent
-import android.app.compat.CompatChanges
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -27,22 +26,21 @@ import android.content.pm.PackageInstaller
 import android.icu.util.ULocale
 import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig
-import android.support.test.uiautomator.By
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
+import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
 import com.android.compatibility.common.util.FutureResultActivity
+import com.google.common.truth.Truth.assertThat
 import java.io.File
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.regex.Pattern
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.After
-import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Assume
-import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -62,7 +60,6 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
         const val TEST_INSTALLER_APK_NAME = "CtsEmptyInstallerApp.apk"
         const val TEST_INSTALLER_APK_PACKAGE_NAME = "android.packageinstaller.emptyinstaller.cts"
         const val PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE = "is_preapproval_available"
-        const val CHANGE_ID_PRE_APPROVAL_WITH_UPDATE_OWNERSHIP_FIX = 293644536L
     }
 
     private val apkFile_pl = File(context.filesDir, TEST_APK_NAME_PL)
@@ -112,8 +109,8 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
 
         // request should have succeeded
         val result = getInstallSessionResult()
-        assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
-        assertEquals(true, result.preapproval)
+        assertThat(result.status).isEqualTo(PackageInstaller.STATUS_SUCCESS)
+        assertThat(result.preapproval).isTrue()
     }
 
     /**
@@ -122,12 +119,6 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
      */
     @Test
     fun requestUserPreapprovalWithUpdateOwnership_userAgree_statusSuccess() {
-        // If the build includes the fix, the feature is disabled. Otherwise, it is enabled.
-        assumeFalse(
-            "The rom doesn't include the fix for b/293644536",
-            CompatChanges.isChangeEnabled(CHANGE_ID_PRE_APPROVAL_WITH_UPDATE_OWNERSHIP_FIX)
-        )
-
         // Get the value of updateOwnership property to restore it finally
         var isUpdateOwnershipEnforcementAvailable: String? =
             getDeviceProperty(PROPERTY_IS_UPDATE_OWNERSHIP_ENFORCEMENT_AVAILABLE)
@@ -135,9 +126,13 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
 
         // Install the test installer to request update ownership
         installPackage(TEST_INSTALLER_APK_NAME)
+        assertInstalled(TEST_INSTALLER_APK_PACKAGE_NAME)
+
         // Install the test app and enable update ownership enforcement with the test installer
         installTestPackage("--update-ownership -i $TEST_INSTALLER_APK_PACKAGE_NAME")
         assertInstalled()
+        assertThat(pm.getInstallSourceInfo(TEST_APK_PACKAGE_NAME).updateOwnerPackageName)
+            .isEqualTo(TEST_INSTALLER_APK_PACKAGE_NAME)
 
         var isStatusPendingUserActionCalled = false
         var installResult = LinkedBlockingQueue<SessionResult>()
@@ -162,16 +157,15 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
 
                 if (status == PackageInstaller.STATUS_SUCCESS) {
                     // Make sure the PendingUserAction is called before success
-                    assertEquals(true, isStatusPendingUserActionCalled)
+                    assertThat(isStatusPendingUserActionCalled).isTrue()
                 } else if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
                     isStatusPendingUserActionCalled = true
                     val activityIntent =
                         intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)
-                    assertEquals(
-                        PackageInstaller.ACTION_CONFIRM_PRE_APPROVAL,
-                        activityIntent!!.action
+                    assertThat(activityIntent!!.action).isEqualTo(
+                        PackageInstaller.ACTION_CONFIRM_PRE_APPROVAL
                     )
-                    assertEquals(activityIntent.extras!!.keySet().size, 1)
+                    assertThat(activityIntent.extras!!.keySet().size).isEqualTo(1)
                     activityIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or
                             Intent.FLAG_ACTIVITY_NEW_TASK)
                     installDialogStarter.activity.startActivityForResult(activityIntent)
@@ -212,23 +206,23 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
 
             // The system should have asked us to launch the installer with pre-approval true
             var result = getInstallSessionResult(installResult)
-            assertEquals(PackageInstaller.STATUS_PENDING_USER_ACTION, result.status)
-            assertEquals(true, result.preapproval)
+            assertThat(result.status).isEqualTo(PackageInstaller.STATUS_PENDING_USER_ACTION)
+            assertThat(result.preapproval).isTrue()
 
             // Click the "Update anyway" button on the update ownership dialog
             clickInstallerUIButton(
                 By.text(
-                    Pattern.compile(
-                        "UPDATE ANYWAY",
-                        Pattern.CASE_INSENSITIVE
-                    )
+                     Pattern.compile(
+                         "UPDATE ANYWAY",
+                         Pattern.CASE_INSENSITIVE
+                     )
                 )
             )
 
             // request should have succeeded
             result = getInstallSessionResult(installResult)
-            assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
-            assertEquals(true, result.preapproval)
+            assertThat(result.status).isEqualTo(PackageInstaller.STATUS_SUCCESS)
+            assertThat(result.preapproval).isTrue()
         } finally {
             context.unregisterReceiver(receiver)
             uninstallPackage(TEST_INSTALLER_APK_PACKAGE_NAME)
@@ -252,8 +246,8 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
 
         // request should have been aborted
         val result = getInstallSessionResult()
-        assertEquals(PackageInstaller.STATUS_FAILURE_ABORTED, result.status)
-        assertEquals(true, result.preapproval)
+        assertThat(result.status).isEqualTo(PackageInstaller.STATUS_FAILURE_ABORTED)
+        assertThat(result.preapproval).isTrue()
     }
 
     /**
@@ -331,7 +325,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
             clickInstallerUIButton(INSTALL_BUTTON_ID)
 
             val result = getInstallSessionResult()
-            assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
+            assertThat(result.status).isEqualTo(PackageInstaller.STATUS_SUCCESS)
             assertInstalled()
         } finally {
             context.unregisterReceiver(dummyReceiver)
@@ -355,7 +349,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
         startInstallationViaPreapprovalSession(session)
         // No need to click installer UI here.
         val result = getInstallSessionResult()
-        assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
+        assertThat(result.status).isEqualTo(PackageInstaller.STATUS_SUCCESS)
         assertInstalled()
     }
 
@@ -378,7 +372,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
         startInstallationViaPreapprovalSession(session)
         // No need to click installer UI here.
         val result = getInstallSessionResult()
-        assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
+        assertThat(result.status).isEqualTo(PackageInstaller.STATUS_SUCCESS)
         assertInstalled()
     }
 
@@ -402,7 +396,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
         startInstallationViaPreapprovalSession(session)
         // No need to click installer UI here.
         val result = getInstallSessionResult()
-        assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
+        assertThat(result.status).isEqualTo(PackageInstaller.STATUS_SUCCESS)
     }
 
     /**
@@ -426,7 +420,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
         startInstallationViaPreapprovalSession(session)
         // No need to click installer UI here.
         val result = getInstallSessionResult()
-        assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
+        assertThat(result.status).isEqualTo(PackageInstaller.STATUS_SUCCESS)
     }
 
     /**
@@ -448,7 +442,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
         startInstallationViaPreapprovalSession(session)
         // No need to click installer UI here.
         val result = getInstallSessionResult()
-        assertEquals(PackageInstaller.STATUS_FAILURE, result.status)
+        assertThat(result.status).isEqualTo(PackageInstaller.STATUS_FAILURE)
         assertNotInstalled()
     }
 
@@ -482,8 +476,8 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
 
         // request should have succeeded
         val result = getInstallSessionResult()
-        assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
-        assertEquals(true, result.preapproval)
+        assertThat(result.status).isEqualTo(PackageInstaller.STATUS_SUCCESS)
+        assertThat(result.preapproval).isTrue()
     }
 
     /**
@@ -510,7 +504,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
         startInstallationViaPreapprovalSession(session)
         // No need to click installer UI here.
         val result = getInstallSessionResult()
-        assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
+        assertThat(result.status).isEqualTo(PackageInstaller.STATUS_SUCCESS)
         assertInstalled()
     }
 
@@ -529,7 +523,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
                     false /* expectedPrompt */)
 
             val result = getInstallSessionResult()
-            assertEquals(PackageInstaller.STATUS_FAILURE_BLOCKED, result.status)
+            assertThat(result.status).isEqualTo(PackageInstaller.STATUS_FAILURE_BLOCKED)
         } finally {
             setDeviceProperty(PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE, config)
         }
@@ -558,12 +552,12 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
             // Since requestUserPreapproval isn't allowed, the installers should be able to use
             // typical install flow instead.
             var result = getInstallSessionResult()
-            assertEquals(PackageInstaller.STATUS_PENDING_USER_ACTION, result.status)
+            assertThat(result.status).isEqualTo(PackageInstaller.STATUS_PENDING_USER_ACTION)
 
             clickInstallerUIButton(INSTALL_BUTTON_ID)
 
             result = getInstallSessionResult()
-            assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
+            assertThat(result.status).isEqualTo(PackageInstaller.STATUS_SUCCESS)
             assertInstalled()
         } finally {
             setDeviceProperty(PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE, config)

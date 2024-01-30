@@ -17,6 +17,7 @@
 package android.display.cts;
 
 import static android.content.pm.PackageManager.FEATURE_LEANBACK;
+import static android.hardware.flags.Flags.FLAG_OVERLAYPROPERTIES_CLASS_API;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -45,6 +46,7 @@ import android.graphics.Color;
 import android.graphics.ColorSpace;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
+import android.hardware.OverlayProperties;
 import android.hardware.display.DeviceProductInfo;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.DisplayManager.DisplayListener;
@@ -52,10 +54,16 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemProperties;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.Settings;
+import android.server.wm.WakeUpAndUnlockRule;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -105,8 +113,12 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class DisplayTest extends TestBase {
     private static final String TAG = "DisplayTest";
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     // The CTS package brings up an overlay display on the target device (see AndroidTest.xml).
     // The overlay display parameters must match the ones defined there which are
@@ -200,20 +212,24 @@ public class DisplayTest extends TestBase {
                     false /* initialTouchMode */,
                     false /* launchActivity */);
 
+    @Rule(order = 0)
+    public WakeUpAndUnlockRule mWakeUpAndUnlockRule = new WakeUpAndUnlockRule();
+
     /**
      * This rule adopts the Shell process permissions, needed because OVERRIDE_DISPLAY_MODE_REQUESTS
      * and ACCESS_SURFACE_FLINGER are privileged permission.
      */
-    @Rule(order = 0)
+    @Rule(order = 1)
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
             InstrumentationRegistry.getInstrumentation().getUiAutomation(),
             Manifest.permission.OVERRIDE_DISPLAY_MODE_REQUESTS,
             Manifest.permission.ACCESS_SURFACE_FLINGER,
             Manifest.permission.WRITE_SECURE_SETTINGS,
             Manifest.permission.HDMI_CEC,
-            Manifest.permission.MODIFY_REFRESH_RATE_SWITCHING_TYPE);
+            Manifest.permission.MODIFY_REFRESH_RATE_SWITCHING_TYPE,
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
 
-    @Rule(order = 1)
+    @Rule(order = 2)
     public StateKeeperRule<DisplayStateManager.DisplayState>
             mDisplayManagerStateKeeper =
             new StateKeeperRule<>(new DisplayStateManager(
@@ -223,7 +239,6 @@ public class DisplayTest extends TestBase {
     public void setUp() throws Exception {
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
 
-        launchScreenOnActivity();
         mContext = getInstrumentation().getTargetContext();
         assertTrue("Physical display is expected.", DisplayUtil.isDisplayConnected(mContext)
                 || MediaUtils.onCuttlefish());
@@ -238,11 +253,11 @@ public class DisplayTest extends TestBase {
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws InterruptedException {
         if (mDisplayManager != null) {
             mDisplayManager.overrideHdrTypes(DEFAULT_DISPLAY, new int[]{});
         }
-        mUiAutomation.executeShellCommand("settings delete global overlay_display_devices");
+        removeSecondaryDisplays();
     }
 
     private void enableAppOps() {
@@ -312,7 +327,32 @@ public class DisplayTest extends TestBase {
                 "settings put global overlay_display_devices 181x161/214|182x162/214");
 
         // Wait for the secondary display to become available
-        assertTrue(signal.await(5, TimeUnit.SECONDS));
+        assertTrue(signal.await(20, TimeUnit.SECONDS));
+    }
+
+    private void removeSecondaryDisplays() throws InterruptedException {
+        final CountDownLatch signal = new CountDownLatch(1);
+        Handler handler = new Handler(Looper.getMainLooper());
+        mDisplayManager.registerDisplayListener(new DisplayListener() {
+            @Override
+            public void onDisplayAdded(int displayId) {}
+
+            @Override
+            public void onDisplayRemoved(int displayId) {
+                if (getSecondaryDisplay(mDisplayManager.getDisplays()) == null) {
+                    signal.countDown();
+                }
+            }
+
+            @Override
+            public void onDisplayChanged(int displayId) {}
+        }, handler);
+
+        // Remove secondary displays
+        mUiAutomation.executeShellCommand("settings delete global overlay_display_devices");
+
+        // Wait for the change to go through
+        signal.await(20, TimeUnit.SECONDS);
     }
 
     /**
@@ -973,6 +1013,32 @@ public class DisplayTest extends TestBase {
         } else {
             assertNull(colorSpace);
         }
+    }
+
+    private void testGetOverlaySupportInternal(OverlayProperties overlayProperties) {
+        assertNotNull(overlayProperties);
+        Parcel parcel = Parcel.obtain();
+        assertEquals(0, overlayProperties.describeContents());
+        overlayProperties.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        OverlayProperties dest = OverlayProperties.CREATOR.createFromParcel(parcel);
+        assertEquals(overlayProperties.isMixedColorSpacesSupported(),
+                     dest.isMixedColorSpacesSupported());
+        parcel.recycle();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_OVERLAYPROPERTIES_CLASS_API)
+    public void testGetOverlaySupportForPrimary() {
+        testGetOverlaySupportInternal(mDefaultDisplay.getOverlaySupport());
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_OVERLAYPROPERTIES_CLASS_API)
+    public void testGetOverlaySupportForSecondary() {
+        Display secondaryDisplay = getSecondaryDisplay(mDisplayManager.getDisplays());
+        testGetOverlaySupportInternal(secondaryDisplay.getOverlaySupport());
+        assertTrue(secondaryDisplay.getOverlaySupport().isMixedColorSpacesSupported());
     }
 
     @Test

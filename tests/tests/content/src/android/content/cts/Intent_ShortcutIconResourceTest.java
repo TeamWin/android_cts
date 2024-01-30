@@ -20,11 +20,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.Intent.ShortcutIconResource;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 
 /**
  * Test {@link ShortcutIconResource}.
  */
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class Intent_ShortcutIconResourceTest extends AndroidTestCase {
 
     ShortcutIconResource mShortcutIconResource;

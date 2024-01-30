@@ -15,20 +15,26 @@
  */
 package android.util.cts;
 
-
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 import android.util.TimingLogger;
 
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @LargeTest
 @RunWith(AndroidJUnit4.class)
+@IgnoreUnderRavenwood(blockedBy = TimingLogger.class)
 public class TimingLoggerTest {
     private static final String LOG_TAG = "TimingLoggerTest";
     private static final int SLEEPING_MSEC = 100;
+
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule();
 
     @Test
     public void testTimingLogger() {

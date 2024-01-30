@@ -13,6 +13,7 @@
 # limitations under the License.
 """Verify video is stable during phone movement."""
 
+import fnmatch
 import logging
 import math
 import os
@@ -25,22 +26,15 @@ import its_base_test
 import camera_properties_utils
 import image_processing_utils
 import its_session_utils
-import opencv_processing_utils
 import sensor_fusion_utils
 import video_processing_utils
 
-_ARDUINO_ANGLES = (10, 25)  # degrees
-_ARDUINO_MOVE_TIME = 0.30  # seconds
-_ARDUINO_SERVO_SPEED = 10
 _ASPECT_RATIO_16_9 = 16/9  # determine if video fmt > 16:9
 _IMG_FORMAT = 'png'
 _MIN_PHONE_MOVEMENT_ANGLE = 5  # degrees
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NUM_ROTATIONS = 24
-_RADS_TO_DEGS = 180/math.pi
-_SEC_TO_NSEC = 1E9
 _START_FRAME = 30  # give 3A 1s to warm up
-_TABLET_SERVO_SPEED = 20
 _VIDEO_DELAY_TIME = 5.5  # seconds
 _VIDEO_DURATION = 5.5  # seconds
 _VIDEO_QUALITIES_TESTED = ('CIF:3', '480P:4', '720P:5', '1080P:6', 'QVGA:7',
@@ -80,14 +74,22 @@ def _collect_data(cam, tablet_device, video_profile, video_quality, rot_rig):
     sensor_fusion_utils.establish_serial_comm(serial_port)
   # Start camera vibration
   if tablet_device:
-    servo_speed = _TABLET_SERVO_SPEED
+    servo_speed = sensor_fusion_utils.ARDUINO_SERVO_SPEED_STABILIZATION_TABLET
   else:
-    servo_speed = _ARDUINO_SERVO_SPEED
+    servo_speed = sensor_fusion_utils.ARDUINO_SERVO_SPEED_STABILIZATION
 
   p = threading.Thread(
       target=sensor_fusion_utils.rotation_rig,
-      args=(rot_rig['cntl'], rot_rig['ch'], _NUM_ROTATIONS,
-            _ARDUINO_ANGLES, servo_speed, _ARDUINO_MOVE_TIME, serial_port))
+      args=(
+          rot_rig['cntl'],
+          rot_rig['ch'],
+          _NUM_ROTATIONS,
+          sensor_fusion_utils.ARDUINO_ANGLES_STABILIZATION,
+          servo_speed,
+          sensor_fusion_utils.ARDUINO_MOVE_TIME_STABILIZATION,
+          serial_port,
+      ),
+  )
   p.start()
 
   cam.start_sensor_events()
@@ -136,9 +138,6 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
       camera_properties_utils.skip_unless(
           vendor_api_level >= its_session_utils.ANDROID13_API_LEVEL and
           _VIDEO_STABILIZATION_MODE in supported_stabilization_modes)
-
-      # Calculate camera FoV and convert from string to float
-      camera_fov = float(cam.calc_camera_fov(props))
 
       # Log ffmpeg version being used
       video_processing_utils.log_ffmpeg_version()
@@ -254,6 +253,22 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
               f"Max gyro angle: {max_angles['gyro']:.3f}, "
               f"ratio: {max_angles['cam']/max_angles['gyro']:.3f} "
               f'THRESH: {video_stabilization_factor}.')
+        else:  # remove frames if PASS
+          temp_files = []
+          try:
+            temp_files = os.listdir(log_path)
+          except FileNotFoundError:
+            logging.debug('/tmp directory: %s not found', log_path)
+          for file in temp_files:
+            if fnmatch.fnmatch(
+                file, f'*_{video_quality}_*_stabilized_frame_*.png'):
+              file_to_remove = os.path.join(log_path, file)
+              try:
+                os.remove(file_to_remove)
+              except FileNotFoundError:
+                logging.debug('File not found: %s', str(file))
+          logging.debug('Quality %s passes, frame images have been removed',
+                        video_quality)
       if test_failures:
         raise AssertionError(test_failures)
 

@@ -20,11 +20,13 @@ import static org.testng.Assert.assertThrows;
 
 import android.media.AudioFormat;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.compatibility.common.util.NonMainlineTest;
 
 @NonMainlineTest
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class AudioFormatTest extends CtsAndroidTestCase {
 
     // -----------------------------------------------------------------

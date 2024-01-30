@@ -90,8 +90,8 @@ public class MultiResolutionReprocessCaptureTest extends Camera2AndroidTestCase 
     private SimpleImageWriterListener mImageWriterListener;
 
     @Test
-    public void testMultiResolutionReprocessCharacteristics() {
-        for (String id : mCameraIdsUnderTest) {
+    public void testMultiResolutionReprocessCharacteristics() throws Exception {
+        for (String id : getCameraIdsUnderTest()) {
             if (VERBOSE) {
                 Log.v(TAG, "Testing multi-resolution reprocess characteristics for Camera " + id);
             }
@@ -221,7 +221,7 @@ public class MultiResolutionReprocessCaptureTest extends Camera2AndroidTestCase 
      */
     @Test
     public void testMultiResolutionYuvToYuvReprocessing() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             testMultiResolutionReprocessing(id, ImageFormat.YUV_420_888, ImageFormat.YUV_420_888);
         }
     }
@@ -231,7 +231,7 @@ public class MultiResolutionReprocessCaptureTest extends Camera2AndroidTestCase 
      */
     @Test
     public void testMultiResolutionYuvToJpegReprocessing() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             testMultiResolutionReprocessing(id, ImageFormat.YUV_420_888, ImageFormat.JPEG);
         }
     }
@@ -241,7 +241,7 @@ public class MultiResolutionReprocessCaptureTest extends Camera2AndroidTestCase 
      */
     @Test
     public void testMultiResolutionOpaqueToYuvReprocessing() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             // Opaque -> YUV_420_888 must be supported.
             testMultiResolutionReprocessing(id, ImageFormat.PRIVATE, ImageFormat.YUV_420_888);
         }
@@ -252,7 +252,7 @@ public class MultiResolutionReprocessCaptureTest extends Camera2AndroidTestCase 
      */
     @Test
     public void testMultiResolutionOpaqueToJpegReprocessing() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             // OPAQUE -> JPEG must be supported.
             testMultiResolutionReprocessing(id, ImageFormat.PRIVATE, ImageFormat.JPEG);
         }
@@ -264,7 +264,7 @@ public class MultiResolutionReprocessCaptureTest extends Camera2AndroidTestCase 
      */
     @Test
     public void testMultiResolutionMandatoryStreamCombinationTest() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             StaticMetadata info = mAllStaticInfo.get(id);
             CameraCharacteristics c = info.getCharacteristics();
             MandatoryStreamCombination[] combinations = c.get(

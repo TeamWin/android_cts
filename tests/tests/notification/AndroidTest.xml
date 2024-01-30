@@ -30,6 +30,15 @@
         <option name="test-file-name" value="NotificationTrampoline.apk" />
         <option name="test-file-name" value="NotificationTrampolineApi30.apk" />
         <option name="test-file-name" value="NotificationTrampolineApi32.apk" />
+        <option name="test-file-name" value="NotificationPressure00.apk" />
+        <option name="test-file-name" value="NotificationPressure01.apk" />
+        <option name="test-file-name" value="NotificationPressure02.apk" />
+        <option name="test-file-name" value="NotificationPressure03.apk" />
+        <option name="test-file-name" value="NotificationPressure04.apk" />
+        <option name="test-file-name" value="NotificationPressure05.apk" />
+        <option name="test-file-name" value="NotificationPressure06.apk" />
+        <option name="test-file-name" value="NotificationPressure07.apk" />
+
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="settings put global device_provisioned 1" />

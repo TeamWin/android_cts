@@ -160,6 +160,7 @@ public class MockAccountAuthenticator extends AbstractAccountAuthenticator {
     public Bundle addAccount(AccountAuthenticatorResponse response, String accountType,
             String authTokenType, String[] requiredFeatures, Bundle options)
             throws NetworkErrorException {
+        Log.i(TAG, "MockAuth - addAccount");
         this.mResponse = response;
         this.mAccountType = accountType;
         this.mAuthTokenType = authTokenType;
@@ -225,7 +226,7 @@ public class MockAccountAuthenticator extends AbstractAccountAuthenticator {
             Account account,
             String authTokenType,
             Bundle options) throws NetworkErrorException {
-        Log.w(TAG, "MockAuth - getAuthToken@" + System.currentTimeMillis());
+        Log.i(TAG, "MockAuth - getAuthToken@" + System.currentTimeMillis());
         mIsRecentlyCalled.set(true);
         this.mResponse = response;
         this.mAccount = account;
@@ -266,7 +267,7 @@ public class MockAccountAuthenticator extends AbstractAccountAuthenticator {
     @Override
     public Bundle hasFeatures(AccountAuthenticatorResponse response, Account account,
             String[] features) throws NetworkErrorException {
-
+        Log.i(TAG, "MockAuth - hasFeatures");
         this.mResponse = response;
         this.mAccount = account;
         this.mFeatures = features;
@@ -291,6 +292,7 @@ public class MockAccountAuthenticator extends AbstractAccountAuthenticator {
     @Override
     public Bundle getAccountRemovalAllowed(AccountAuthenticatorResponse response,
             Account account) throws NetworkErrorException {
+        Log.i(TAG, "MockAuth - getAccountRemovalAllowed");
         final Bundle result = new Bundle();
         if (ACCOUNT_NAME_FOR_NEW_REMOVE_API.equals(account.name)) {
             Intent intent = AccountRemovalDummyActivity.createIntent(mContext);
@@ -390,6 +392,7 @@ public class MockAccountAuthenticator extends AbstractAccountAuthenticator {
             Account account,
             String authTokenType,
             Bundle options) throws NetworkErrorException {
+        Log.i(TAG, "MockAuth - startUpdateCredentialsSession");
         mResponse = response;
         mAccount = account;
         mAuthTokenType = authTokenType;

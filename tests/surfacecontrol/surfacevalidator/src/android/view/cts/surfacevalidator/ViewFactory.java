@@ -20,4 +20,7 @@ import android.view.View;
 
 public interface ViewFactory {
     View createView(Context context);
+    default boolean waitForReady() {
+        return true;
+    }
 }

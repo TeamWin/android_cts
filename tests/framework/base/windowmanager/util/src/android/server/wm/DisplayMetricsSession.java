@@ -38,15 +38,15 @@ public class DisplayMetricsSession implements AutoCloseable {
                 mDisplayId);
     }
 
-    ReportedDisplayMetrics getInitialDisplayMetrics() {
+    public ReportedDisplayMetrics getInitialDisplayMetrics() {
         return mInitialDisplayMetrics;
     }
 
-    ReportedDisplayMetrics getDisplayMetrics() {
+    public ReportedDisplayMetrics getDisplayMetrics() {
         return ReportedDisplayMetrics.getDisplayMetrics(mDisplayId);
     }
 
-    void changeAspectRatio(double aspectRatio, int orientation) {
+    public void changeAspectRatio(double aspectRatio, int orientation) {
         final Size originalSize = mInitialDisplayMetrics.physicalSize;
         final int smaller = Math.min(originalSize.getWidth(), originalSize.getHeight());
         final int larger = (int) (smaller * aspectRatio);
@@ -82,7 +82,7 @@ public class DisplayMetricsSession implements AutoCloseable {
         overrideDisplayMetrics(overrideSize, overrideDensity);
     }
 
-    void overrideDisplayMetrics(final Size size, final int density) {
+    public void overrideDisplayMetrics(final Size size, final int density) {
         mInitialDisplayMetrics.setDisplayMetrics(size, density);
     }
 

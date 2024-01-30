@@ -34,9 +34,9 @@ import android.text.style.SuggestionSpan;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,8 +55,8 @@ public class SuggestionSpanTest {
         final Configuration overrideConfig = new Configuration();
         final Locale locale = Locale.forLanguageTag("az-Arab");
         overrideConfig.setLocales(new LocaleList(locale));
-        final Context context = InstrumentationRegistry.getTargetContext().
-                createConfigurationContext(overrideConfig);
+        final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext()
+                        .createConfigurationContext(overrideConfig);
 
         final SuggestionSpan span = new SuggestionSpan(context, suggestions,
                 SuggestionSpan.FLAG_AUTO_CORRECTION);

@@ -29,9 +29,9 @@ import android.graphics.drawable.Drawable;
 import android.text.cts.R;
 import android.text.style.DynamicDrawableSpan;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -134,7 +134,8 @@ public class DynamicDrawableSpanTest {
 
         protected MyDynamicDrawableSpan(int verticalAlignment) {
             super(verticalAlignment);
-            mDrawable = InstrumentationRegistry.getTargetContext().getDrawable(R.drawable.scenery);
+            mDrawable = InstrumentationRegistry.getInstrumentation()
+                    .getTargetContext().getDrawable(R.drawable.scenery);
             mDrawable.setBounds(0, 0, DRAWABLE_SIZE, DRAWABLE_SIZE);
         }
 

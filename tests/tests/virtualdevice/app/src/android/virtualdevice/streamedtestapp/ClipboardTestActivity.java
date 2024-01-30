@@ -16,125 +16,63 @@
 
 package android.virtualdevice.streamedtestapp;
 
-import static android.virtualdevice.cts.common.ClipboardTestConstants.ACTION_GET_CLIP;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.ACTION_SET_AND_GET_CLIP;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.ACTION_SET_CLIP;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.ACTION_WAIT_FOR_CLIP;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_FINISH_AFTER_SENDING_RESULT;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_GET_CLIP_DATA;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_HAS_CLIP;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_NOT_FOCUSABLE;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_RESULT_RECEIVER;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_SET_CLIP_DATA;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_WAIT_FOR_FOCUS;
-import static android.virtualdevice.cts.common.ClipboardTestConstants.RESULT_CODE_CLIP_LISTENER_READY;
+import static android.content.Intent.EXTRA_RESULT_RECEIVER;
+import static android.virtualdevice.cts.common.StreamedAppConstants.ACTION_READ;
+import static android.virtualdevice.cts.common.StreamedAppConstants.ACTION_WRITE;
+import static android.virtualdevice.cts.common.StreamedAppConstants.EXTRA_CLIP_DATA;
+import static android.virtualdevice.cts.common.StreamedAppConstants.EXTRA_DEVICE_ID;
+import static android.virtualdevice.cts.common.StreamedAppConstants.EXTRA_HAS_CLIP_DATA;
 
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.ResultReceiver;
-import android.view.WindowManager;
+import android.os.RemoteCallback;
 
-import androidx.annotation.Nullable;
-
+/**
+ * Activity used for testing clipboard access on different devices. It needs to be in a separate
+ * apk because the virtual device owner always has access to its clipboard.
+ */
 public class ClipboardTestActivity extends Activity {
-
-    private static final String TAG = "ClipboardTestActivity";
-
-    ClipboardManager mClipboard;
-
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mClipboard = getSystemService(ClipboardManager.class);
-    }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Intent intent = getIntent();
-        if (intent.getBooleanExtra(EXTRA_NOT_FOCUSABLE, false)) {
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
-        }
-        boolean waitForFocus = intent.getBooleanExtra(EXTRA_WAIT_FOR_FOCUS, true);
-        if (!waitForFocus || hasWindowFocus()) {
+        if (hasWindowFocus()) {
             processAction();
         }
     }
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
-        if (hasFocus && !isFinishing()) {
+        if (hasFocus) {
             processAction();
         }
     }
 
-    void processAction() {
+    private void processAction() {
+        int deviceId = getIntent().getIntExtra(EXTRA_DEVICE_ID, getDeviceId());
+        ClipboardManager clipboardManager =
+                createDeviceContext(deviceId).getSystemService(ClipboardManager.class);
+
         String action = getIntent().getAction();
-        if (ACTION_GET_CLIP.equals(action)) {
-            doGet();
-        } else if (ACTION_SET_CLIP.equals(action)) {
-            doSet();
-        } else if (ACTION_SET_AND_GET_CLIP.equals(action)) {
-            doSetAndGet();
-        } else if (ACTION_WAIT_FOR_CLIP.equals(action)) {
-            doWaitForClipboardWrite();
+        Bundle result = null;
+        if (ACTION_READ.equals(action)) {
+            result = new Bundle();
+            result.putBoolean(EXTRA_HAS_CLIP_DATA, clipboardManager.hasPrimaryClip());
+            result.putParcelable(EXTRA_CLIP_DATA, clipboardManager.getPrimaryClip());
+        } else if (ACTION_WRITE.equals(action)) {
+            Intent intent = getIntent();
+            ClipData clip = intent.getParcelableExtra(EXTRA_CLIP_DATA, ClipData.class);
+            clipboardManager.setPrimaryClip(clip);
         }
-    }
 
-    void doGet() {
-        Bundle result = new Bundle();
-        result.putBoolean(EXTRA_HAS_CLIP, mClipboard.hasPrimaryClip());
-        result.putParcelable(EXTRA_GET_CLIP_DATA, mClipboard.getPrimaryClip());
-        sendResultAndMaybeFinish(result);
-    }
-
-    void doSet() {
-        Intent intent = getIntent();
-        ClipData clip = intent.getParcelableExtra(EXTRA_SET_CLIP_DATA, ClipData.class);
-        mClipboard.setPrimaryClip(clip);
-        sendResultAndMaybeFinish(null);
-    }
-
-    void doSetAndGet() {
-        Intent intent = getIntent();
-        ClipData clip = intent.getParcelableExtra(EXTRA_SET_CLIP_DATA, ClipData.class);
-        mClipboard.setPrimaryClip(clip);
-
-        Bundle result = new Bundle();
-        result.putBoolean(EXTRA_HAS_CLIP, mClipboard.hasPrimaryClip());
-        result.putParcelable(EXTRA_GET_CLIP_DATA, mClipboard.getPrimaryClip());
-        sendResultAndMaybeFinish(result);
-    }
-
-    void doWaitForClipboardWrite() {
-        mClipboard.addPrimaryClipChangedListener(() -> {
-            if (isFinishing()) {
-                // Avoid calling sendResultAndMaybeFinish again if this listener is called a
-                // second time before we've completely torn down the activity.
-                return;
-            }
-            Bundle result = new Bundle();
-            result.putBoolean(EXTRA_HAS_CLIP, mClipboard.hasPrimaryClip());
-            result.putParcelable(EXTRA_GET_CLIP_DATA, mClipboard.getPrimaryClip());
-            sendResultAndMaybeFinish(result);
-        });
-        ResultReceiver resultReceiver =
-                getIntent().getParcelableExtra(EXTRA_RESULT_RECEIVER, ResultReceiver.class);
+        RemoteCallback resultReceiver =
+                getIntent().getParcelableExtra(EXTRA_RESULT_RECEIVER, RemoteCallback.class);
         if (resultReceiver != null) {
-            resultReceiver.send(RESULT_CODE_CLIP_LISTENER_READY, null);
+            resultReceiver.sendResult(result);
         }
-    }
-    void sendResultAndMaybeFinish(Bundle result) {
-        ResultReceiver resultReceiver =
-                getIntent().getParcelableExtra(EXTRA_RESULT_RECEIVER, ResultReceiver.class);
-        if (resultReceiver != null) {
-            resultReceiver.send(Activity.RESULT_OK, result);
-        }
-        if (getIntent().getBooleanExtra(EXTRA_FINISH_AFTER_SENDING_RESULT, true)) {
-            finish();
-        }
+        finish();
     }
 }

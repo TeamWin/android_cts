@@ -16,15 +16,20 @@
 
 package android.hardware.input.cts.tests;
 
+import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
+import static android.Manifest.permission.INJECT_EVENTS;
 import static android.view.Display.DEFAULT_DISPLAY;
+
+import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 
 import android.hardware.display.VirtualDisplay;
 import android.hardware.input.VirtualDpad;
-import android.hardware.input.VirtualDpadConfig;
 import android.hardware.input.VirtualKeyEvent;
-import android.view.InputDevice;
+import android.hardware.input.cts.virtualcreators.VirtualDisplayCreator;
+import android.hardware.input.cts.virtualcreators.VirtualInputDeviceCreator;
+import android.hardware.input.cts.virtualcreators.VirtualInputEventCreator;
 import android.view.KeyEvent;
 
 import androidx.test.filters.SmallTest;
@@ -45,17 +50,6 @@ public class VirtualDpadTest extends VirtualDeviceTestCase {
     @Override
     void onSetUpVirtualInputDevice() {
         mVirtualDpad = createVirtualDpad(mVirtualDisplay.getDisplay().getDisplayId());
-    }
-
-    VirtualDpad createVirtualDpad(int displayId) {
-        final VirtualDpadConfig dpadConfig =
-                new VirtualDpadConfig.Builder()
-                        .setVendorId(VENDOR_ID)
-                        .setProductId(PRODUCT_ID)
-                        .setInputDeviceName(DEVICE_NAME)
-                        .setAssociatedDisplayId(displayId)
-                        .build();
-        return mVirtualDevice.createVirtualDpad(dpadConfig);
     }
 
     @Override
@@ -88,55 +82,14 @@ public class VirtualDpadTest extends VirtualDeviceTestCase {
                         .setAction(VirtualKeyEvent.ACTION_UP)
                         .build());
         verifyEvents(
-                Arrays.asList(
-                        new KeyEvent(
-                                /* downTime= */ 0,
-                                /* eventTime= */ 0,
-                                KeyEvent.ACTION_DOWN,
-                                KeyEvent.KEYCODE_DPAD_UP,
-                                /* repeat= */ 0,
-                                /* metaState= */ 0,
-                                /* deviceId= */ 0,
-                                /* scancode= */ 0,
-                                /* flags= */ 0,
-                                /* source= */ InputDevice.SOURCE_KEYBOARD
-                                        | InputDevice.SOURCE_DPAD),
-                        new KeyEvent(
-                                /* downTime= */ 0,
-                                /* eventTime= */ 0,
-                                KeyEvent.ACTION_UP,
-                                KeyEvent.KEYCODE_DPAD_UP,
-                                /* repeat= */ 0,
-                                /* metaState= */ 0,
-                                /* deviceId= */ 0,
-                                /* scancode= */ 0,
-                                /* flags= */ 0,
-                                /* source= */ InputDevice.SOURCE_KEYBOARD
-                                        | InputDevice.SOURCE_DPAD),
-                        new KeyEvent(
-                                /* downTime= */ 0,
-                                /* eventTime= */ 0,
-                                KeyEvent.ACTION_DOWN,
-                                KeyEvent.KEYCODE_DPAD_CENTER,
-                                /* repeat= */ 0,
-                                /* metaState= */ 0,
-                                /* deviceId= */ 0,
-                                /* scancode= */ 0,
-                                /* flags= */ 0,
-                                /* source= */ InputDevice.SOURCE_KEYBOARD
-                                        | InputDevice.SOURCE_DPAD),
-                        new KeyEvent(
-                                /* downTime= */ 0,
-                                /* eventTime= */ 0,
-                                KeyEvent.ACTION_UP,
-                                KeyEvent.KEYCODE_DPAD_CENTER,
-                                /* repeat= */ 0,
-                                /* metaState= */ 0,
-                                /* deviceId= */ 0,
-                                /* scancode= */ 0,
-                                /* flags= */ 0,
-                                /* source= */ InputDevice.SOURCE_KEYBOARD
-                                        | InputDevice.SOURCE_DPAD)));
+                Arrays.asList(VirtualInputEventCreator.createDpadEvent(KeyEvent.ACTION_DOWN,
+                                KeyEvent.KEYCODE_DPAD_UP),
+                        VirtualInputEventCreator.createDpadEvent(KeyEvent.ACTION_UP,
+                                KeyEvent.KEYCODE_DPAD_UP),
+                        VirtualInputEventCreator.createDpadEvent(KeyEvent.ACTION_DOWN,
+                                KeyEvent.KEYCODE_DPAD_CENTER),
+                        VirtualInputEventCreator.createDpadEvent(KeyEvent.ACTION_UP,
+                                KeyEvent.KEYCODE_DPAD_CENTER)));
     }
 
     @Test
@@ -164,15 +117,56 @@ public class VirtualDpadTest extends VirtualDeviceTestCase {
     }
 
     @Test
+    public void close_multipleCallsSucceed() {
+        mVirtualDpad.close();
+        mVirtualDpad.close();
+        mVirtualDpad.close();
+    }
+
+    @Test
+    public void createVirtualDpad_nullArguments_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.createVirtualDpad(null));
+    }
+
+    @Test
+    public void createVirtualDpad_duplicateName_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> createVirtualDpad(mVirtualDisplay.getDisplay().getDisplayId()));
+    }
+
+    @Test
     public void createVirtualDpad_defaultDisplay_throwsException() {
         assertThrows(SecurityException.class, () -> createVirtualDpad(DEFAULT_DISPLAY));
     }
 
     @Test
     public void createVirtualDpad_unownedDisplay_throwsException() {
-        VirtualDisplay unownedDisplay = createUnownedVirtualDisplay();
+        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
         assertThrows(SecurityException.class,
                 () -> createVirtualDpad(unownedDisplay.getDisplay().getDisplayId()));
         unownedDisplay.release();
+    }
+
+    @Test
+    public void createVirtualDpad_defaultDisplay_injectEvents_succeeds() {
+        mVirtualDpad.close();
+        runWithPermission(
+                () -> assertThat(createVirtualDpad(DEFAULT_DISPLAY)).isNotNull(),
+                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
+    }
+
+    @Test
+    public void createVirtualDpad_unownedVirtualDisplay_injectEvents_succeeds() {
+        mVirtualDpad.close();
+        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
+        runWithPermission(
+                () -> assertThat(createVirtualDpad(unownedDisplay.getDisplay().getDisplayId()))
+                        .isNotNull(),
+                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
+    }
+
+    private VirtualDpad createVirtualDpad(int displayId) {
+        return VirtualInputDeviceCreator.createDpad(mVirtualDevice, DEVICE_NAME, displayId);
     }
 }

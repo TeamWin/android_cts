@@ -39,6 +39,7 @@ import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.uiautomator.UiObject2;
 
 import org.junit.Test;
@@ -70,6 +71,15 @@ public class InlineFillEventHistoryTest extends FillEventHistoryCommonTestCase {
     @Override
     public TestRule getMainTestRule() {
         return InlineUiBot.annotateRule(super.getMainTestRule());
+    }
+
+    @FlakyTest(
+            bugId = 292152886,
+            detail = "Meet July-31-23 trunk stable no flaky SLO. Deflake asap")
+    @Override
+    @Test
+    public void testAuthenticationSelected() throws Exception {
+        super.testAuthenticationSelected();
     }
 
     @Test

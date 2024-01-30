@@ -16,10 +16,9 @@
 
 package android.server.wm.jetpack.utils;
 
-import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
-import static android.server.wm.jetpack.utils.ExtensionUtil.getExtensionWindowAreaComponent;
-import static android.server.wm.jetpack.utils.ExtensionUtil.getExtensionWindowLayoutComponent;
-
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.assumeExtensionSupportedDevice;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.getExtensionWindowAreaComponent;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.getExtensionWindowLayoutComponent;
 import static org.junit.Assume.assumeNotNull;
 
 import androidx.window.extensions.area.WindowAreaComponent;

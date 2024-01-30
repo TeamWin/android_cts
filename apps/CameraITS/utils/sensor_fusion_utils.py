@@ -35,12 +35,19 @@ import image_processing_utils
 
 # Constants for Rotation Rig
 ARDUINO_ANGLE_MAX = 180.0  # degrees
+ARDUINO_ANGLES_SENSOR_FUSION = (0, 90)  # degrees
+ARDUINO_ANGLES_STABILIZATION = (10, 25)  # degrees
 ARDUINO_BAUDRATE = 9600
 ARDUINO_CMD_LENGTH = 3
 ARDUINO_CMD_TIME = 2.0 * ARDUINO_CMD_LENGTH / ARDUINO_BAUDRATE  # round trip
+ARDUINO_MOVE_TIME_SENSOR_FUSION = 2  # seconds
+ARDUINO_MOVE_TIME_STABILIZATION = 0.3  # seconds
 ARDUINO_PID = 0x0043
 ARDUINO_SERVO_SPEED_MAX = 255
 ARDUINO_SERVO_SPEED_MIN = 1
+ARDUINO_SERVO_SPEED_SENSOR_FUSION = 20
+ARDUINO_SERVO_SPEED_STABILIZATION = 10
+ARDUINO_SERVO_SPEED_STABILIZATION_TABLET = 20
 ARDUINO_SPEED_START_BYTE = 253
 ARDUINO_START_BYTE = 255
 ARDUINO_START_NUM_TRYS = 5
@@ -559,12 +566,15 @@ def get_cam_rotations(frames, facing, h, file_name_stem,
   rot_per_frame_max = max(abs(rotations))
   logging.debug('Max rotation in frame: %.2f degrees',
                 rot_per_frame_max*_RADS_TO_DEGS)
-  if rot_per_frame_max < _ROTATION_PER_FRAME_MIN and not stabilized_video:
-    logging.debug('Checking camera rotations on video.')
-    raise AssertionError(f'Device not moved enough: {rot_per_frame_max:.3f} '
-                         f'movement. THRESH: {_ROTATION_PER_FRAME_MIN} rads.')
-  else:
+  if stabilized_video:
     logging.debug('Skipped camera rotation check due to stabilized video.')
+  else:
+    if rot_per_frame_max < _ROTATION_PER_FRAME_MIN:
+      raise AssertionError(f'Device not moved enough: {rot_per_frame_max:.3f} '
+                           f'movement. THRESH: {_ROTATION_PER_FRAME_MIN} rads.')
+    else:
+      logging.debug('Device movement exceeds %.2f degrees',
+                    _ROTATION_PER_FRAME_MIN*_RADS_TO_DEGS)
   return rotations
 
 
@@ -731,13 +741,14 @@ def plot_gyro_events(gyro_events, plot_name, log_path):
   pylab.title(f'{plot_name}(mean of {_NUM_GYRO_PTS_TO_AVG} pts)')
   pylab.plot(times, x, 'r', label='x')
   pylab.plot(times, y, 'g', label='y')
-  pylab.ylim([np.amin(z), np.amax(z)])
+  pylab.ylim([np.amin(z)/4, np.amax(z)/4])  # zoom in 4x from z axis
   pylab.ylabel('gyro x,y movement (rads/s)')
   pylab.legend()
 
   # z on separate axes
   pylab.subplot(2, 1, 2)
   pylab.plot(times, z, 'b', label='z')
+  pylab.ylim([np.amin(z), np.amax(z)])
   pylab.xlabel('time (seconds)')
   pylab.ylabel('gyro z movement (rads/s)')
   pylab.legend()

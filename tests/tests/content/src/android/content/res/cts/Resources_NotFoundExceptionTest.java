@@ -16,10 +16,12 @@
 
 package android.content.res.cts;
 
-import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
+import android.platform.test.annotations.AppModeSdkSandbox;
+
 import junit.framework.TestCase;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class Resources_NotFoundExceptionTest extends TestCase {
 
     public void testNotFoundException() {

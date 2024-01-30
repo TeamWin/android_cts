@@ -7,7 +7,7 @@
     "pid": 0xabcd,
     "bus": "usb",
     "configuration":[
-        {"type": 100, "data": [1]},  // UI_SET_EVBIT : EV_KEY
-        {"type": 101, "data": [304]}   // UI_SET_KEYBIT : KEY_GAMEPAD
+        {"type": "UI_SET_EVBIT", "data": ["EV_KEY"]},
+        {"type": "UI_SET_KEYBIT", "data": ["BTN_GAMEPAD"]}
     ]
 }

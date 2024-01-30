@@ -18,49 +18,55 @@ package android.compat.hiddenapi.cts;
 import com.android.tradefed.util.RunUtil;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.cts.host.utils.DisableDeviceConfigSyncRule;
 import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
 
+import com.android.compatibility.common.util.NonApiTest;
 import com.android.internal.os.StatsdConfigProto.StatsdConfig;
 import com.android.os.AtomsProto.Atom;
 import com.android.os.AtomsProto.HiddenApiUsed;
 import com.android.os.StatsLog.EventMetricData;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.List;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-
-public class HostsideStatsdAtomTests extends DeviceTestCase implements IBuildReceiver {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class HostsideStatsdAtomTests extends BaseHostJUnit4Test implements IBuildReceiver {
     private static final String TEST_PKG = "android.compat.hiddenapi.cts";
     private static final String TEST_APK = "CtsHiddenApiApp.apk";
 
     private IBuildInfo mCtsBuild;
 
-    @Override
-    protected void setUp() throws Exception {
-        // Test package installed by HostsideNetworkTestCase
-        super.setUp();
+    @Rule(order = 0)
+    public DisableDeviceConfigSyncRule mDisableDeviceConfigSync =
+            new DisableDeviceConfigSyncRule(this);
+
+    @Before
+    public void setUp() throws Exception {
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
-        // Test package uninstalled by HostsideNetworkTestCase
-        super.tearDown();
     }
 
     @Override
@@ -68,7 +74,10 @@ public class HostsideStatsdAtomTests extends DeviceTestCase implements IBuildRec
         mCtsBuild = buildInfo;
     }
 
-    public void testHiddenApiUsed() throws Exception {
+    @NonApiTest(exemptionReasons = {}, justification = "Testing hidden API access logging, which "
+            + "is not a CDD requirement")
+    @Test
+    public void hiddenApiUsed() throws Exception {
         String oldRate = getDevice().executeShellCommand(
                 "device_config get app_compat hidden_api_access_statslog_sampling_rate").trim();
 

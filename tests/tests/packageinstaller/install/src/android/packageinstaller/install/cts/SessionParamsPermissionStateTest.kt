@@ -256,7 +256,7 @@ class SessionParamsPermissionStateTest : PackageInstallerTestBase() {
     }
 
     private fun assertPermission(packageInfo: PackageInfo, name: String, granted: Boolean?) {
-        val permissionIndex = packageInfo.requestedPermissions.indexOfFirst { it == name }
+        val permissionIndex = packageInfo.requestedPermissions!!.indexOfFirst { it == name }
 
         if (granted == null) {
             assertThat(permissionIndex).isEqualTo(-1)

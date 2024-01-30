@@ -89,6 +89,7 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
         val data = createAppMetadata()
         val (sessionId, session) = createSession(0, false, null)
         setAppMetadata(session, data)
+        assertThat(session.getNames()).isEmpty()
         commitSession(session, false)
         val result = getInstallSessionResult()
         assertThat(result.status).isEqualTo(PackageInstaller.STATUS_FAILURE_INVALID)
@@ -134,8 +135,10 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
         val data = createAppMetadata()
         installTestApp(data)
 
-        val appInfo = pm.getApplicationInfo(TEST_APK_PACKAGE_NAME,
-            PackageManager.ApplicationInfoFlags.of(0))
+        val appInfo = pm.getApplicationInfo(
+            TEST_APK_PACKAGE_NAME,
+            PackageManager.ApplicationInfoFlags.of(0)
+        )
         val file = File(File(appInfo.publicSourceDir).getParentFile(), "app.metadata")
         PersistableBundle.readFromStream(file.inputStream())
     }
@@ -146,6 +149,7 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
         if (data != null) {
             setAppMetadata(session, data)
             assertAppMetadata(data.getString(TEST_FIELD), session.getAppMetadata())
+            assertThat(session.getNames()).hasLength(1)
         }
         commitSession(session)
 

@@ -32,24 +32,27 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.os.Process;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 
 /**
- * CTS for {@link android.os.Process}.
+ * CTS for {@link Process}.
  *
  * We have more test in cts/tests/process/ too.
  */
-@RunWith(JUnit4.class)
+@RunWith(AndroidJUnit4.class)
 public class ProcessTest {
+    @Rule public RavenwoodRule mRavenwood = new RavenwoodRule();
 
     public static final int THREAD_PRIORITY_HIGHEST = -20;
     private static final String NONE_EXISITENT_NAME = "abcdefcg";
@@ -72,6 +75,7 @@ public class ProcessTest {
 
     @Before
     public void setUp() throws Exception {
+        if (mRavenwood.isUnderRavenwood()) return;
         mContext = InstrumentationRegistry.getContext();
         mSync = new Object();
         mSecondaryConnection = new ServiceConnection() {
@@ -115,6 +119,7 @@ public class ProcessTest {
 
     @After
     public void tearDown() throws Exception {
+        if (mRavenwood.isUnderRavenwood()) return;
         if (mIntent != null) {
             mContext.stopService(mIntent);
         }
@@ -124,6 +129,7 @@ public class ProcessTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(reason = "Requires kernel support")
     public void testMiscMethods() {
         /*
          * Test setThreadPriority(int) and setThreadPriority(int, int)
@@ -186,6 +192,7 @@ public class ProcessTest {
      * and any additional processes created by that app be able to kill each other's processes.
      */
     @Test
+    @IgnoreUnderRavenwood(reason = "Requires kernel support")
     public void testKillProcess() throws Exception {
         long time = 0;
         int servicePid = 0;
@@ -220,6 +227,7 @@ public class ProcessTest {
      * Send a signal to the given process.
      */
     @Test
+    @IgnoreUnderRavenwood(reason = "Requires kernel support")
     public void testSendSignal() throws Exception {
         int servicePid = 0;
         try {
@@ -260,6 +268,7 @@ public class ProcessTest {
      * Tests that the reserved UID is not taken by an actual package.
      */
     @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testReservedVirtualUid() {
         PackageManager pm = mContext.getPackageManager();
         final String name = pm.getNameForUid(Process.SDK_SANDBOX_VIRTUAL_UID);
@@ -286,5 +295,20 @@ public class ProcessTest {
         assertFalse(Process.isIsolatedUid(SANDBOX_SDK_UID));
         // App uid is not an isolated process uid
         assertFalse(Process.isIsolatedUid(APP_UID));
+    }
+
+    @Test
+    public void testApplicationUids() {
+        assertTrue(Process.isApplicationUid(Process.FIRST_APPLICATION_UID));
+        assertTrue(Process.isApplicationUid(Process.LAST_APPLICATION_UID));
+        assertFalse(Process.isApplicationUid(Process.ROOT_UID));
+        assertFalse(Process.isApplicationUid(Process.PHONE_UID));
+        assertFalse(Process.isApplicationUid(Process.INVALID_UID));
+    }
+
+    @Test
+    public void testIs64Bit() {
+        // We're not concerned with the answer, just that it works
+        Process.is64Bit();
     }
 }

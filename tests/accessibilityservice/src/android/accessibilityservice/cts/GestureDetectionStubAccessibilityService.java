@@ -1,25 +1,25 @@
-/**
+/*
  * Copyright (C) 2019 The Android Open Source Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
- * except in compliance with the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the
- * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing permissions and
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package android.accessibilityservice.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibilityservice.AccessibilityGestureEvent;
-import android.view.Display;
 import android.view.accessibility.AccessibilityEvent;
 
 import java.util.ArrayList;
@@ -77,7 +77,7 @@ public class GestureDetectionStubAccessibilityService extends InstrumentedAccess
     /** Waits for {@link #onGesture(AccessibilityGestureEvent)} to collect next gesture. */
     public void waitUntilGestureInfo() {
         synchronized (mCollectedGestureEvents) {
-            //Assume the size of mCollectedGestures is changed before mCollectedGestureEvents.
+            // Assume the size of mCollectedGestures is changed before mCollectedGestureEvents.
             if (mCollectedGestureEvents.size() > 0) {
                 return;
             }
@@ -154,44 +154,12 @@ public class GestureDetectionStubAccessibilityService extends InstrumentedAccess
     public void assertGestureReceived(int gestureId, int displayId) {
         // Wait for gesture recognizer, and check recognized gesture.
         waitUntilGestureInfo();
-        if (displayId == Display.DEFAULT_DISPLAY) {
-            String expected = AccessibilityGestureEvent.gestureIdToString(gestureId);
-            if (getGesturesSize() == 0) {
-                fail("No gesture received when expecting " + expected);
-            } else if (getGesturesSize() > 1) {
-                List<String> received = new ArrayList<>();
-                for (int i = 0; i < getGesturesSize(); ++i) {
-                    received.add(AccessibilityGestureEvent.gestureIdToString(getGesture(i)));
-                }
-                fail("Expected " + expected + " but received " + received);
-            } else {
-                String received = AccessibilityGestureEvent.gestureIdToString(getGesture(0));
-                assertEquals(expected, received);
-            }
-        }
-        String expected = AccessibilityGestureEvent.gestureIdToString(gestureId);
-        if (getGestureInfoSize() == 0) {
-            fail("No gesture received when expecting " + expected);
-        } else if (getGestureInfoSize() > 1) {
-            List<String> received = new ArrayList<>();
-            for (int i = 0; i < getGesturesSize(); ++i) {
-                received.add(
-                        AccessibilityGestureEvent.gestureIdToString(
-                                getGestureInfo(i).getGestureId()));
-            }
-            fail("Expected " + expected + " but received " + received);
-        }
-        AccessibilityGestureEvent expectedGestureEvent =
-                new AccessibilityGestureEvent(gestureId, displayId);
-        AccessibilityGestureEvent actualGestureEvent = getGestureInfo(0);
-        if (!expectedGestureEvent.toString().equals(actualGestureEvent.toString())) {
-            fail(
-                    "Unexpected gesture received, "
-                            + "Received "
-                            + actualGestureEvent
-                            + ", Expected "
-                            + expectedGestureEvent);
-        }
+        AccessibilityGestureEvent expected = new AccessibilityGestureEvent(gestureId, displayId);
+        assertWithMessage("Expected " + expected.toString())
+                .that(getGestureInfoSize())
+                .isEqualTo(1);
+        AccessibilityGestureEvent received = getGestureInfo(0);
+        assertThat(expected.toString()).isEqualTo(received.toString());
         clearGestures();
     }
 
@@ -207,24 +175,6 @@ public class GestureDetectionStubAccessibilityService extends InstrumentedAccess
         for (int i = 0; i < getEventsSize(); ++i) {
             received.add(AccessibilityEvent.eventTypeToString(getEvent(i)));
         }
-
-        if (events.length != getEventsSize()) {
-            String message =
-                    String.format(
-                            "Received %d events when expecting %d. Received %s, expected %s",
-                            received.size(),
-                            expected.size(),
-                            received.toString(),
-                            expected.toString());
-            fail(message);
-        }
-        else if (!expected.equals(received)) {
-            String message =
-                    String.format(
-                            "Received %s, expected %s",
-                            received.toString(),
-                            expected.toString());
-            fail(message);
-        }
+        assertThat(expected).isEqualTo(received);
     }
 }

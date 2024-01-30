@@ -37,6 +37,7 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -63,6 +64,7 @@ import java.util.concurrent.TimeUnit;
  * Tests that applications can receive display events correctly.
  */
 @RunWith(Parameterized.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class DisplayEventTest {
     private static final String TAG = "DisplayEventTest";
 
@@ -355,7 +357,11 @@ public class DisplayEventTest {
         intent.putExtra(TEST_MESSENGER, mMessenger);
         intent.putExtra(TEST_DISPLAYS, mDisplayCount);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mContext.startActivity(intent);
+                },
+                android.Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
         waitLatch(mLatchActivityLaunch);
     }
 
@@ -366,7 +372,11 @@ public class DisplayEventTest {
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setClassName(TEST_PACKAGE, TEST_ACTIVITY);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        mContext.startActivity(intent);
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mContext.startActivity(intent);
+                },
+                android.Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
     }
 
     /**
@@ -377,14 +387,17 @@ public class DisplayEventTest {
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setClass(mContext, SimpleActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        mInstrumentation.startActivitySync(intent);
 
         // Launch another activity to bring the test activity into cached mode
         Intent intent2 = new Intent(Intent.ACTION_MAIN);
         intent2.setClass(mContext, SimpleActivity2.class);
         intent2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mInstrumentation.startActivitySync(intent2);
-
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mInstrumentation.startActivitySync(intent);
+                    mInstrumentation.startActivitySync(intent2);
+                },
+                android.Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
         waitLatch(mLatchActivityCached);
     }
 

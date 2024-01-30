@@ -250,6 +250,7 @@ public class ChildlessActivityTest
             child.setImportantForContentCapture(View.IMPORTANT_FOR_CONTENT_CAPTURE_NO);
 
             rootView.addView(child);
+            childRef.set(child);
         });
 
         final ChildlessActivity activity = launchActivity();

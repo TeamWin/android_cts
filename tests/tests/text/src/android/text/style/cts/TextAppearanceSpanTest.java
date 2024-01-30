@@ -36,9 +36,9 @@ import android.text.TextPaint;
 import android.text.style.TextAppearanceSpan;
 import android.widget.TextView;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -52,7 +52,7 @@ public class TextAppearanceSpanTest {
 
     @Before
     public void setup() {
-        mContext = InstrumentationRegistry.getTargetContext();
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         int[][] states = new int[][] { new int[0], new int[0] };
         int[] colors = new int[] { Color.rgb(0, 0, 255), Color.BLACK };

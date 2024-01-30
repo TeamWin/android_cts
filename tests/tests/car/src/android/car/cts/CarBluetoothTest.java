@@ -23,8 +23,6 @@ import static org.junit.Assert.fail;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
-import android.car.annotation.ApiRequirements;
-import android.car.test.ApiCheckerRule.Builder;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -35,7 +33,7 @@ import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
 import android.util.SparseArray;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
@@ -306,13 +304,6 @@ public final class CarBluetoothTest extends AbstractCarTestCase {
         }
     }
 
-    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
-    @Override
-    protected void configApiCheckerRule(Builder builder) {
-        Log.w(TAG, "Disabling API requirements check");
-        builder.disableAnnotationsCheck();
-    }
-
     @Before
     public void setUp() throws Exception {
         if (DBG) {
@@ -364,8 +355,6 @@ public final class CarBluetoothTest extends AbstractCarTestCase {
     // configured timeout. If all required profiles connect, the test passes.
     @Test
     @CddTest(requirements = {"7.4.3/A-0-2"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     public void testRequiredBluetoothProfilesExist() throws Exception {
         if (DBG) {
             Log.d(TAG, "Begin testRequiredBluetoothProfilesExist()");

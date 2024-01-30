@@ -31,9 +31,9 @@ import android.text.TextUtils;
 import android.text.style.MetricAffectingSpan;
 import android.util.Log;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -70,7 +70,7 @@ public class StaticLayoutLineBreakingTest {
         // U+005F (_): 0em
         // U+FFFD (invalid surrogate will be replaced to this): 7em
         // U+10331 (\uD800\uDF31): 10em
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         sTextPaint.setTypeface(Typeface.createFromAsset(context.getAssets(),
                   "fonts/StaticLayoutLineBreakingTestFont.ttf"));
         sTextPaint.setTextSize(1.0f);  // Make 1em == 1px.

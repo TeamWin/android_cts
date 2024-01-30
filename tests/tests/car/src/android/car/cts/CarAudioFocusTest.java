@@ -31,7 +31,6 @@ import static org.junit.Assume.assumeTrue;
 
 import android.car.Car;
 import android.car.media.CarAudioManager;
-import android.car.test.ApiCheckerRule.Builder;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
@@ -108,13 +107,6 @@ public final class CarAudioFocusTest extends AbstractCarTestCase {
 
     private AudioManager mAudioManager;
     private CarAudioManager mCarAudioManager;
-
-    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
-    @Override
-    protected void configApiCheckerRule(Builder builder) {
-        Log.w(TAG, "Disabling API requirements check");
-        builder.disableAnnotationsCheck();
-    }
 
     @Before
     public void setUp() throws Exception {

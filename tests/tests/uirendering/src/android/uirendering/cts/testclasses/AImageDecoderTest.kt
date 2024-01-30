@@ -130,7 +130,7 @@ class AImageDecoderTest {
 
     // Create a Bitmap with the same size and colorspace as bitmap.
     private fun makeEmptyBitmap(bitmap: Bitmap) = Bitmap.createBitmap(bitmap.width, bitmap.height,
-                bitmap.config, true, bitmap.colorSpace!!)
+                bitmap.config!!, true, bitmap.colorSpace!!)
 
     private fun setCrop(decoder: Long, rect: Rect): Int = with(rect) {
         nSetCrop(decoder, left, top, right, bottom)
@@ -921,7 +921,7 @@ class AImageDecoderTest {
         val storedFrame = bitmap
         for (i in 1..2) {
             assertEquals(nAdvanceFrame(decoder), ANDROID_IMAGE_DECODER_SUCCESS)
-            val frame = storedFrame.copy(storedFrame.config, true)
+            val frame = storedFrame.copy(storedFrame.config!!, true)
             nDecode(decoder, frame, ANDROID_IMAGE_DECODER_SUCCESS)
             assertTrue(verifiers[i].verify(frame))
             frame.recycle()

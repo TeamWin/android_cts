@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.inputmethod.CompletionInfo;
 
 import androidx.test.filters.SmallTest;
@@ -30,6 +31,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class CompletionInfoTest {
     private static final int ID = 1;
     private static final int POSITION = 1;

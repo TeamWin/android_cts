@@ -214,7 +214,7 @@ public class MidiNativeTestActivity extends MidiTestActivityBase {
                     Log.i(TAG, "---- onDeviceOpened()");
                 }
                 mNativeMidiManager.startTest(NativeMidiTestModule.this, device,
-                        mDeviceType == TESTID_BTLOOPBACK);
+                        true/*throttleData*/);
             }
         }
     } /* class NativeMidiTestModule */

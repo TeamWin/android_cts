@@ -17,11 +17,11 @@ package com.android.cts.delegate;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
-import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.bedstead.dpmwrapper.IpcBroadcastReceiver;
 import com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory;

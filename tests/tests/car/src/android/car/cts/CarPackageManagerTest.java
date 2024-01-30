@@ -16,6 +16,8 @@
 
 package android.car.cts;
 
+import static android.Manifest.permission.QUERY_ALL_PACKAGES;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
@@ -23,16 +25,23 @@ import static org.junit.Assert.fail;
 import android.app.PendingIntent;
 import android.car.Car;
 import android.car.content.pm.CarPackageManager;
-import android.car.test.ApiCheckerRule.Builder;
+import android.car.feature.Flags;
+import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.test.suitebuilder.annotation.SmallTest;
-import android.util.Log;
 
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -46,13 +55,6 @@ public final class CarPackageManagerTest extends AbstractCarTestCase {
 
     /** Name of the meta-data attribute for the automotive application XML resource */
     private static final String METADATA_ATTRIBUTE = "android.car.application";
-
-    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
-    @Override
-    protected void configApiCheckerRule(Builder builder) {
-        Log.w(TAG, "Disabling API requirements check");
-        builder.disableAnnotationsCheck();
-    }
 
     @Before
     public void setUp() throws Exception {
@@ -99,6 +101,22 @@ public final class CarPackageManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @ApiTest(
+            apis = {
+                    "android.car.content.pm.CarPackageManager#isActivityBackedBySafeActivity"
+            })
+    public void testIsActivityBackedBySafeActivity_carNotMoving_nonDoActivity_returnsTrue() {
+        ComponentName nonDoActivityComponent = ComponentName.createRelative(mContext,
+                ".drivingstate.NonDistractionOptimizedActivity");
+
+        InstrumentationRegistry.getInstrumentation().startActivitySync(
+                Intent.makeMainActivity(nonDoActivityComponent)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), /* option */ null);
+
+        assertThat(mCarPm.isActivityBackedBySafeActivity(nonDoActivityComponent)).isTrue();
+    }
+
+    @Test
     public void testIsServiceDistractionOptimized() {
         assertThat(mCarPm.isServiceDistractionOptimized("com.android.car",
                 "anything.anything")).isTrue();
@@ -134,6 +152,16 @@ public final class CarPackageManagerTest extends AbstractCarTestCase {
         assertThat(mCarPm.isPendingIntentDistractionOptimized(
                 createIntent("com.android.car", ".NonDistractionOptimizedActivityForTesting")))
                         .isFalse();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.content.pm.CarPackageManager#requiresDisplayCompat"})
+    @RequiresFlagsEnabled(Flags.FLAG_DISPLAY_COMPATIBILITY)
+    @Ignore("b/303074481") // Can't read flags when using `sdk_version: "test_current",`
+    @EnsureHasPermission({Car.PERMISSION_QUERY_DISPLAY_COMPATIBILITY, QUERY_ALL_PACKAGES})
+    public void testApplicationRequiresDisplayCompat() throws NameNotFoundException {
+        assertThat(mCarPm.requiresDisplayCompat("android.car.cts.apps.displaycompat"))
+                .isTrue();
     }
 
     private PendingIntent createIntent(String packageName, String relativeClassName) {

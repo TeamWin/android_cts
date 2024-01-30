@@ -43,6 +43,8 @@ public final class PolicyEngineUtils {
 
     public static final List<Boolean> TRUE_MORE_RESTRICTIVE = List.of(true, false);
 
+    public static final List<Boolean> FALSE_MORE_RESTRICTIVE = List.of(false, true);
+
     public static String FINANCED_DEVICE_CONTROLLER_ROLE =
             "android.app.role.SYSTEM_FINANCED_DEVICE_CONTROLLER";
 
@@ -51,7 +53,7 @@ public final class PolicyEngineUtils {
                 MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
             DevicePolicyManager dpm = TestApis.context().instrumentedContext().getSystemService(
                     DevicePolicyManager.class);
-             DevicePolicyState state = dpm.getDevicePolicyState();
+            DevicePolicyState state = dpm.getDevicePolicyState();
             if (state.getPoliciesForUser(user).get(policyKey) != null) {
                 return (PolicyState<Boolean>) state.getPoliciesForUser(user).get(policyKey);
             } else {

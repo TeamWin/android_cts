@@ -23,8 +23,10 @@ import static org.junit.Assert.assertThrows;
 import android.content.Context;
 import android.content.cts.R;
 import android.content.om.FabricatedOverlay;
+import android.content.res.AssetFileDescriptor;
 import android.graphics.Color;
 import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.TypedValue;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -36,6 +38,7 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 @RunWith(AndroidJUnit4.class)
 public class FabricatedOverlayTest {
     private Context mContext;
@@ -220,7 +223,23 @@ public class FabricatedOverlayTest {
                 NullPointerException.class,
                 () ->
                         overlay.setResourceValue(
-                                "layout/demo", null /* value */, null /* configuration */));
+                                "layout/demo",
+                                (ParcelFileDescriptor) null /* value */,
+                                null /* configuration */));
+    }
+
+    @Test
+    public void setResourceValue_forAssetFileDescriptor_withNull_shouldFail() {
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
+
+        assertThrows(
+                NullPointerException.class,
+                () ->
+                        overlay.setResourceValue(
+                                "layout/demo",
+                                (AssetFileDescriptor) null /* value */,
+                                null /* configuration */));
     }
 
     @Test
@@ -229,6 +248,8 @@ public class FabricatedOverlayTest {
                 new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
         final ParcelFileDescriptor parcelFileDescriptor =
                 mContext.getResources().openRawResourceFd(R.raw.text).getParcelFileDescriptor();
+        AssetFileDescriptor assetFileDescriptor = new AssetFileDescriptor(
+                parcelFileDescriptor, 0, parcelFileDescriptor.getStatSize());
 
         overlay.setResourceValue("color/demo1", TypedValue.TYPE_INT_COLOR_ARGB4, Color.WHITE,
                 null /* configuration */);
@@ -239,6 +260,7 @@ public class FabricatedOverlayTest {
         overlay.setResourceValue("string/demo2", TypedValue.TYPE_STRING, "black",
                 null /* configuration */);
         overlay.setResourceValue("raw/demo", parcelFileDescriptor, null /* configuration */);
+        overlay.setResourceValue("raw/demo2", assetFileDescriptor, null /* configuration */);
     }
 
     @Test

@@ -41,7 +41,6 @@ import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
 
-import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.PollingCheck;
 
@@ -296,11 +295,10 @@ public class BugreportManagerTest extends BaseCarrierApiTest {
         assertExceptionThrownForMode(-1, IllegalArgumentException.class);
     }
 
-    @ApiTest(apis = {"android.os.BugreportParams#getMode"})
     @Test
     public void startBugreport_invalidMode() throws Exception {
-        // Current max is BUGREPORT_MODE_ONBOARDING (7) as defined by the AIDL.
-        assertExceptionThrownForMode(8, IllegalArgumentException.class);
+        assertExceptionThrownForMode(BugreportParams.BUGREPORT_MODE_MAX_VALUE + 1,
+                IllegalArgumentException.class);
     }
 
     /* Implementatiion of {@link BugreportCallback} that offers wrappers around execution result */

@@ -21,9 +21,11 @@ import android.content.ComponentName
 import android.content.pm.PackageManager.FEATURE_AUTOMOTIVE
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import kotlin.test.assertFailsWith
+import com.android.compatibility.common.util.FeatureUtil
+import org.junit.Assume.assumeFalse
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.test.assertFailsWith
 
 /**
  * Test RequestNotificationsTest api.
@@ -35,6 +37,11 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class RequestNotificationsTest : UiAutomationTestBase(null, null) {
     private val isAuto: Boolean by lazy { pm.hasSystemFeature(FEATURE_AUTOMOTIVE) }
+
+    override fun setUp() {
+        super.setUp()
+        assumeFalse(FeatureUtil.isWatch())
+    }
 
     @Test
     fun test_requestNotifications() {

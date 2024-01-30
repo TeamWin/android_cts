@@ -110,6 +110,7 @@ import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillContext;
 import android.service.autofill.SaveInfo;
@@ -387,6 +388,9 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.assertDatasets("THE DUDE");
     }
 
+    @FlakyTest(
+            bugId = 292280793,
+            detail = "Meet July-31-23 trunk stable no flaky SLO. Deflake asap")
     @Presubmit
     @Test
     public void testAutoFillOneDataset() throws Exception {
@@ -405,6 +409,9 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         autofillOneDatasetTest(BorderType.FOOTER_ONLY);
     }
 
+    @FlakyTest(
+            bugId = 292285138,
+            detail = "Meet July-31-23 trunk stable no flaky SLO. Deflake asap")
     @Presubmit
     @Test
     public void testAutoFillOneDataset_withHeaderAndFooter() throws Exception {
@@ -822,6 +829,9 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mActivity.assertAutoFilled();
     }
 
+    @FlakyTest(
+            bugId = 292285136,
+            detail = "Meet July-31-23 trunk stable no flaky SLO. Deflake asap")
     @Presubmit
     @Test
     public void testAutoFillWhenViewHasChildAccessibilityNodes() throws Exception {
@@ -1494,6 +1504,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
     }
 
     @Test
+    @AsbSecurityTest(cveBugId = 281533566)
     public void remoteViews_doesNotSpillAcrossUsers() throws Exception {
         // Set service.
         enableService();

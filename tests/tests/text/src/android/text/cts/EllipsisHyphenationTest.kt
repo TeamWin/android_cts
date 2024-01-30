@@ -23,18 +23,18 @@ import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.text.TextUtils
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.runner.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
-import org.mockito.Mockito.`when`
 import org.mockito.Mockito.any
 import org.mockito.Mockito.anyFloat
 import org.mockito.Mockito.anyInt
+import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
 
 @MediumTest
@@ -71,8 +71,16 @@ class EllipsisHyphenationTest {
 
         val startHyphenEdits = mutableListOf<Int>()
         val endHyphenEdits = mutableListOf<Int>()
-        `when`(mockCanvas.drawText(any<CharSequence>(), anyInt(), anyInt(), anyFloat(), anyFloat(),
-            any())).thenAnswer { input ->
+        `when`(
+            mockCanvas.drawText(
+                any<CharSequence>(),
+                anyInt(),
+                anyInt(),
+                anyFloat(),
+                anyFloat(),
+                any()
+            )
+        ).thenAnswer { input ->
                 val paint = input.getArgument<Paint>(5)
                 startHyphenEdits.add(paint.startHyphenEdit)
                 endHyphenEdits.add(paint.endHyphenEdit)
@@ -96,8 +104,10 @@ class EllipsisHyphenationTest {
         //
         // Because of the 2nd line truncation, the end hyphen should be no edit.
         assertThat(startHyphenEdits).isEqualTo(
-            listOf(Paint.START_HYPHEN_EDIT_NO_EDIT, Paint.START_HYPHEN_EDIT_NO_EDIT))
+            listOf(Paint.START_HYPHEN_EDIT_NO_EDIT, Paint.START_HYPHEN_EDIT_NO_EDIT)
+        )
         assertThat(endHyphenEdits).isEqualTo(
-            listOf(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, Paint.END_HYPHEN_EDIT_NO_EDIT))
+            listOf(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, Paint.END_HYPHEN_EDIT_NO_EDIT)
+        )
     }
 }

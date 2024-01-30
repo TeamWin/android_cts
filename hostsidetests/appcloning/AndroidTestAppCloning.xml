@@ -25,6 +25,10 @@
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsAppCloningHostTest.jar" />
     </test>
+    <option
+        name="config-descriptor:metadata"
+        key="mainline-param"
+        value="com.google.android.mediaprovider.apex" />
 
     <object type="module_controller" class="com.android.tradefed.testtype.suite.module.MainlineTestModuleController">
         <option name="mainline-module-package-name" value="com.google.android.mediaprovider" />

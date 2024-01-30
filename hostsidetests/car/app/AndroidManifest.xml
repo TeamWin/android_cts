@@ -19,6 +19,7 @@
     package="android.car.cts.app">
 
     <uses-permission android:name="android.car.permission.CAR_POWER"/>
+    <uses-permission android:name="android.car.permission.CONTROL_SHUTDOWN_PROCESS"/>
     <uses-permission android:name="android.car.permission.READ_CAR_POWER_POLICY"/>
     <uses-permission android:name="android.permission.READ_LOGS"/>
     <uses-permission android:name="android.permission.STORAGE_INTERNAL"/>
@@ -48,5 +49,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service android:name="android.car.cts.app.CarPowerTestService" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </service>
     </application>
 </manifest>

@@ -19,11 +19,13 @@ package android.media.audio.cts;
 import android.media.AudioFormat;
 import android.media.AudioProfile;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 
 import java.util.Arrays;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class AudioProfileTest extends CtsAndroidTestCase {
     // -----------------------------------------------------------------
     // AUDIOPROFILE TESTS:

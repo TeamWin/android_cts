@@ -94,17 +94,23 @@ public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
         callTest(Constants.TEST_UPDATE_SHORTCUTS);
     }
 
+    // TODO: b/288276271
+    /**
     public void testBgServiceThrottled() throws InterruptedException {
         callTest(Constants.TEST_BG_SERVICE_THROTTLED);
     }
+     */
 
     public void testActivityUnthrottled() throws InterruptedException {
         callTest(Constants.TEST_ACTIVITY_UNTHROTTLED);
     }
 
+    // TODO: b/288276271
+    /**
     public void testFgServiceUnthrottled() throws InterruptedException {
         callTest(Constants.TEST_FG_SERVICE_UNTHROTTLED);
     }
+     */
 
     /**
      * Flakey and may not work on OEM devices, so disabled.

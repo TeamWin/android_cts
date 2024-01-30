@@ -20,18 +20,20 @@ import static android.util.TimeUtils.isTimeBetween;
 import static com.google.common.truth.Truth.assertThat;
 
 import static junit.framework.TestCase.assertFalse;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 import android.util.TimeUtils;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.google.common.truth.Truth;
-
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -43,7 +45,11 @@ import java.util.TimeZone;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@IgnoreUnderRavenwood(blockedBy = TimeUtils.class)
 public class TimeUtilsTest {
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
     @Test
     public void testUnitedStates() throws Exception {
         String[] mainstream = new String[] {

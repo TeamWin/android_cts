@@ -16,24 +16,48 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsUtilTestCases",
-    defaults: ["cts_defaults"],
-    // Tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
-        "mts-statsd",
+java_defaults {
+    name: "CtsUtilTestCasesDefaults",
+    libs: [
+        "android.test.runner",
     ],
-    libs: ["android.test.runner"],
     static_libs: [
         "androidx.annotation_annotation",
         "androidx.test.rules",
         "ctstestrunner-axt",
         "cts-install-lib",
         "core-test-rules", // for libcore.dalvik.system.CloseGuardSupport
+        "ravenwood-junit",
     ],
-    srcs: ["src/**/*.java"],
     platform_apis: true,
     min_sdk_version: "30",
+}
+
+android_test {
+    name: "CtsUtilTestCases",
+    defaults: [
+        "cts_defaults",
+        "CtsUtilTestCasesDefaults",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+        "mts-statsd",
+    ],
+    srcs: [
+        "src/**/*.java",
+    ],
+}
+
+android_ravenwood_test {
+    name: "CtsUtilTestCasesRavenwood",
+    defaults: [
+        "cts_defaults",
+        "CtsUtilTestCasesDefaults",
+    ],
+    srcs: [
+        "src/**/*.java",
+        ":CtsUtilTestCases{.aapt.srcjar}",
+    ],
+    auto_gen_config: true,
 }

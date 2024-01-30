@@ -33,6 +33,7 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.content.res.TypedArray;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.DisplayMetrics;
 
 import androidx.test.InstrumentationRegistry;
@@ -46,6 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 @RunWith(AndroidJUnit4.class)
 public class ConfigTest {
     private static final String TEST_PACKAGE = "android.content.cts";
@@ -505,24 +507,24 @@ public class ConfigTest {
         config.setProperty(Properties.GRAMMATICAL_GENDER,
                 Configuration.GRAMMATICAL_GENDER_FEMININE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple feminine");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple feminine");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag feminine"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.GRAMMATICAL_GENDER,
                 Configuration.GRAMMATICAL_GENDER_MASCULINE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple masculine");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple masculine");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag masculine"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.GRAMMATICAL_GENDER,
                 Configuration.GRAMMATICAL_GENDER_NEUTRAL);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple neuter");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple neuter");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag neuter"});
     }
 
@@ -1052,8 +1054,8 @@ public class ConfigTest {
         config.setProperty(Properties.GRAMMATICAL_GENDER,
                 Configuration.GRAMMATICAL_GENDER_FEMININE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple feminine");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple feminine");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag feminine"});
 
         config.setProperty(Properties.LANGUAGE, "xx");

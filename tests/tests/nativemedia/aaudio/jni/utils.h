@@ -119,7 +119,8 @@ class InputStreamBuilderHelper : public StreamBuilderHelper {
     InputStreamBuilderHelper(
             aaudio_sharing_mode_t requestedSharingMode,
             aaudio_performance_mode_t requestedPerfMode,
-            aaudio_format_t requestedFormat = AAUDIO_FORMAT_PCM_FLOAT);
+            aaudio_format_t requestedFormat = AAUDIO_FORMAT_PCM_FLOAT,
+            int32_t requestedSampleRate = 48000);
 };
 
 class OutputStreamBuilderHelper : public StreamBuilderHelper {
@@ -127,7 +128,8 @@ class OutputStreamBuilderHelper : public StreamBuilderHelper {
     OutputStreamBuilderHelper(
             aaudio_sharing_mode_t requestedSharingMode,
             aaudio_performance_mode_t requestedPerfMode,
-            aaudio_format_t requestedFormat = AAUDIO_FORMAT_PCM_I16);
+            aaudio_format_t requestedFormat = AAUDIO_FORMAT_PCM_I16,
+            int32_t requestSampleRate = 48000);
     void initBuilder();
 
   private:
@@ -254,5 +256,13 @@ private:
 };
 
 bool isIEC61937Supported();
+
+bool isEchoReferenceSupported();
+
+void enableAudioOutputPermission();
+
+void enableAudioHotwordPermission();
+
+void disablePermissions();
 
 #endif  // CTS_MEDIA_TEST_AAUDIO_UTILS_H

@@ -16,26 +16,36 @@
 
 package android.text.style.cts;
 
+import static com.android.text.flags.Flags.FLAG_DEPRECATE_UI_FONTS;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.os.Parcel;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.text.style.UnderlineSpan;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class UnderlineSpanTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
+
     @Test
     public void testConstructor() {
         new UnderlineSpan();
@@ -190,6 +200,7 @@ public class UnderlineSpanTest {
     // not declared entirely correctly, and since it may affect metrics it should also extend
     // MetricAffectingSpan, but we need to keep it behaving correctly for backward compatibility.
     @Test
+    @RequiresFlagsDisabled(FLAG_DEPRECATE_UI_FONTS)
     public void testAffectsWidth_ElegantSubclass() {
         // Roboto kerns between "P" and "."
         final SpannableString text = new SpannableString("P.");

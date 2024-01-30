@@ -281,6 +281,7 @@ public class DatabaseUtilsTest extends AndroidTestCase {
         assertEquals(1, cursor.getCount());
         cursor.moveToFirst();
         assertEquals("Mike", cursor.getString(1));
+        db.close();
         getContext().deleteDatabase(dbName);
     }
 

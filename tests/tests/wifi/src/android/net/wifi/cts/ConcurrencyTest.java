@@ -64,6 +64,7 @@ import android.os.WorkSource;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -77,6 +78,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -89,6 +91,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+@RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 public class ConcurrencyTest extends WifiJUnit4TestBase {
     private static Context sContext;
@@ -251,7 +254,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
             return;
         }
         sShouldRunTest = true;
-        sWifiManager =  sContext.getSystemService(WifiManager.class);
+        sWifiManager = (WifiManager) sContext.getSystemService(Context.WIFI_SERVICE);
         assertThat(sWifiManager).isNotNull();
 
         // turn on verbose logging for tests
@@ -429,7 +432,8 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
             PollingCheck.check("Wifi not enabled", DURATION, () -> sWifiManager.isWifiEnabled());
             ShellIdentityUtils.invokeWithShellPermissions(
                     () -> sWifiManager.startScan(new WorkSource(myUid())));
-            ConnectivityManager cm = sContext.getSystemService(ConnectivityManager.class);
+            ConnectivityManager cm =
+                    (ConnectivityManager) sContext.getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkRequest request = new NetworkRequest.Builder()
                     .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
                     .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
@@ -476,7 +480,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
 
         assertThat(sWifiManager.isWifiEnabled()).isTrue();
 
-        sWifiP2pManager = sContext.getSystemService(WifiP2pManager.class);
+        sWifiP2pManager = (WifiP2pManager) sContext.getSystemService(Context.WIFI_P2P_SERVICE);
         sWifiP2pChannel = sWifiP2pManager.initialize(
                 sContext, sContext.getMainLooper(), null);
 

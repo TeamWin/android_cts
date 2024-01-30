@@ -16,4 +16,5 @@
 -->
 
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
-      android:description="@string/stub_motion_intercepting_accessibility_service_description" />
+      android:description="@string/stub_motion_intercepting_accessibility_service_description"
+       android:canPerformGestures="true" />

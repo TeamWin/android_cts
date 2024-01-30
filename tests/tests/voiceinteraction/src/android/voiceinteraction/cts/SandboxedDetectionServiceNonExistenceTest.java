@@ -28,6 +28,7 @@ import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
 import android.voiceinteraction.cts.services.CtsMainVoiceInteractionService;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -38,7 +39,7 @@ import java.util.Objects;
  * or VisualQueryDetectionService.
  */
 @AppModeFull(reason = "No real ue case for instant mode hotword detection service")
-public final class SandboxedDetectionServiceNonExistenceTest {
+public final class SandboxedDetectionServiceNonExistenceTest extends AbstractHdsTestCase {
     private static final String TAG = "SandboxedDetectionServiceNonExistenceTest";
     private static final String SERVICE_COMPONENT =
             "android.voiceinteraction.cts.services.CtsMainVoiceInteractionService";
@@ -48,6 +49,20 @@ public final class SandboxedDetectionServiceNonExistenceTest {
             new VoiceInteractionServiceConnectedRule(getInstrumentation().getTargetContext(),
                     getTestVoiceInteractionService());
 
+    private CtsMainVoiceInteractionService mService;
+
+    @Before
+    public void setup() {
+        // VoiceInteractionServiceConnectedRule handles the service connected, we should be
+        // able to get service
+        mService = (CtsMainVoiceInteractionService) BaseVoiceInteractionService.getService();
+
+        // Check we can get the service, we need service object to call the service provided method
+        Objects.requireNonNull(mService);
+
+        // Set whether voice activation permission enabled.
+        mService.setVoiceActivationPermissionEnabled(mVoiceActivationPermissionEnabled);
+    }
 
     public String getTestVoiceInteractionService() {
         Log.d(TAG, "getTestVoiceInteractionService()");

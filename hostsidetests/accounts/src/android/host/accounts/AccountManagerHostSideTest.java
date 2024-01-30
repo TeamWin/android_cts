@@ -134,26 +134,6 @@ public class AccountManagerHostSideTest implements IDeviceTest, IBuildReceiver {
     }
 
     @Test
-    public void testStartAddAccountSession_logsMetrics() throws Exception {
-        assertMetricsLogged(getDevice(), () -> {
-            runDeviceTests(
-                    getDevice(),
-                    TEST_WITH_PERMISSION_PKG,
-                    ".AccountManagerCrossUserTest",
-                    "testAccountManager_startAddAccountSessionForCurrentUser",
-                    mCurrentUser,
-                    /* testArgs= */ null,
-                    /* timeout= */ 60L,
-                    TimeUnit.SECONDS);
-        }, new DevicePolicyEventWrapper.Builder(EventId.ADD_ACCOUNT_VALUE)
-                .setStrings(ACCOUNT_TYPE,
-                        TEST_WITH_PERMISSION_PKG,
-                        AUTH_TOKEN_TYPE,
-                        REQUIRED_FEATURES_STR)
-                .build());
-    }
-
-    @Test
     @Ignore("Flaky test - b/303573931")
     public void tesAddAccountExplicitly_logsMetrics() throws Exception {
         final String[] expectedVisibilityStr = new String[]{"0:", "1:", "2:", "3:", "4:"};

@@ -19,12 +19,16 @@ package android.telephony.ims.cts;
 import static android.telephony.ims.RegistrationManager.SUGGESTED_ACTION_NONE;
 import static android.telephony.ims.RegistrationManager.SUGGESTED_ACTION_TRIGGER_PLMN_BLOCK;
 import static android.telephony.ims.RegistrationManager.SUGGESTED_ACTION_TRIGGER_PLMN_BLOCK_WITH_TIMEOUT;
+import static android.telephony.ims.RegistrationManager.SUGGESTED_ACTION_TRIGGER_RAT_BLOCK;
+import static android.telephony.ims.RegistrationManager.SUGGESTED_ACTION_TRIGGER_CLEAR_RAT_BLOCK;
 import static android.telephony.ims.stub.ImsRegistrationImplBase.REGISTRATION_TECH_LTE;
 import static android.telephony.ims.stub.ImsRegistrationImplBase.REGISTRATION_TECH_NONE;
+
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -42,6 +46,9 @@ import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Build;
 import android.os.PersistableBundle;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telecom.PhoneAccount;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.CarrierConfigManager;
@@ -87,6 +94,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.internal.telephony.flags.Flags;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -94,6 +102,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -113,6 +122,9 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(AndroidJUnit4.class)
 public class ImsServiceTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private static ImsServiceConnector sServiceConnector;
 
@@ -5295,6 +5307,29 @@ public class ImsServiceTest {
 
         triggerFrameworkConnectToCarrierImsService();
 
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        if (imsManager == null) {
+            fail("Cannot find IMS service");
+        }
+
+        LinkedBlockingQueue<Integer> stateQueue = new LinkedBlockingQueue<>();
+        ImsStateCallback stateCallback = buildImsStateCallback(stateQueue);
+
+        ImsMmTelManager mmTelManager = null;
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            automan.adoptShellPermissionIdentity();
+            mmTelManager = imsManager.getImsMmTelManager(sTestSub);
+            mmTelManager.registerImsStateCallback(getContext().getMainExecutor(), stateCallback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        // expects FEATURE_MMTEL STATE_READY
+        assertEquals(FEATURE_STATE_READY, waitForIntResult(stateQueue));
+
+        mmTelManager.unregisterImsStateCallback(stateCallback);
+
         // Start de-registered
         ImsReasonInfo reasonInfo = new ImsReasonInfo(ImsReasonInfo.CODE_LOCAL_NETWORK_NO_SERVICE,
                 ImsReasonInfo.CODE_UNSPECIFIED, "");
@@ -5310,11 +5345,8 @@ public class ImsServiceTest {
             }
         };
 
-        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             automan.adoptShellPermissionIdentity();
-            ImsManager imsManager = getContext().getSystemService(ImsManager.class);
-            ImsMmTelManager mmTelManager = imsManager.getImsMmTelManager(sTestSub);
             mmTelManager.registerImsRegistrationCallback(getContext().getMainExecutor(), callback);
         } finally {
             automan.dropShellPermissionIdentity();
@@ -5333,6 +5365,13 @@ public class ImsServiceTest {
         receivedInfo = waitForResult(mDeregQueue);
         assertNotNull(receivedInfo);
         assertEquals(reasonInfo, receivedInfo);
+
+        try {
+            automan.adoptShellPermissionIdentity();
+            mmTelManager.unregisterImsRegistrationCallback(callback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
     }
 
     @Ignore("RegistrationManager.RegistrationCallback#onUnregistered(ImsReasonInfo,int,int)"
@@ -5394,6 +5433,74 @@ public class ImsServiceTest {
 
         suggestedAction = waitForResult(mDeregQueue);
         assertEquals(SUGGESTED_ACTION_TRIGGER_PLMN_BLOCK_WITH_TIMEOUT, suggestedAction);
+
+        // without extra
+        sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(reasonInfo);
+
+        suggestedAction = waitForResult(mDeregQueue);
+        assertEquals(SUGGESTED_ACTION_NONE, suggestedAction);
+    }
+
+    @Ignore("RegistrationManager.RegistrationCallback#onUnregistered(ImsReasonInfo,int,int)"
+            + " is hidden. Internal use only.")
+    @Test
+    @RequiresFlagsEnabled(
+            Flags.FLAG_ADD_RAT_RELATED_SUGGESTED_ACTION_TO_IMS_REGISTRATION)
+    public void testMmTelManagerRegistrationBlockWithRatSuggestedAction() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        assumeTrue(sSupportsImsHal);
+
+        triggerFrameworkConnectToCarrierImsService();
+
+        ImsReasonInfo reasonInfo = new ImsReasonInfo(ImsReasonInfo.CODE_REGISTRATION_ERROR,
+                ImsReasonInfo.CODE_UNSPECIFIED, "");
+
+        // Start de-registered
+        sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(
+                reasonInfo, SUGGESTED_ACTION_NONE, REGISTRATION_TECH_NONE);
+
+        LinkedBlockingQueue<Integer> mDeregQueue =
+                new LinkedBlockingQueue<>();
+        RegistrationManager.RegistrationCallback callback =
+                new RegistrationManager.RegistrationCallback() {
+                    @Override
+                    public void onUnregistered(ImsReasonInfo info, int suggestedAction,
+                            int imsRadioTech) {
+                        mDeregQueue.offer(suggestedAction);
+                    }
+                };
+
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            automan.adoptShellPermissionIdentity();
+            ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+            ImsMmTelManager mmTelManager = imsManager.getImsMmTelManager(sTestSub);
+            mmTelManager.registerImsRegistrationCallback(getContext().getMainExecutor(), callback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        int suggestedAction = waitForResult(mDeregQueue);
+        assertNotEquals(SUGGESTED_ACTION_TRIGGER_RAT_BLOCK, suggestedAction);
+        assertNotEquals(SUGGESTED_ACTION_TRIGGER_CLEAR_RAT_BLOCK, suggestedAction);
+
+        sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(
+                reasonInfo, SUGGESTED_ACTION_TRIGGER_RAT_BLOCK,
+                REGISTRATION_TECH_LTE);
+
+        suggestedAction = waitForResult(mDeregQueue);
+        assertEquals(SUGGESTED_ACTION_TRIGGER_RAT_BLOCK, suggestedAction);
+
+        // rat block clear
+        sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(
+                reasonInfo, SUGGESTED_ACTION_TRIGGER_CLEAR_RAT_BLOCK,
+                REGISTRATION_TECH_LTE);
+
+        suggestedAction = waitForResult(mDeregQueue);
+        assertEquals(SUGGESTED_ACTION_TRIGGER_CLEAR_RAT_BLOCK, suggestedAction);
 
         // without extra
         sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(reasonInfo);
@@ -5600,6 +5707,118 @@ public class ImsServiceTest {
         }
 
         overrideCarrierConfig(null);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(
+            Flags.FLAG_CLEAR_CACHED_IMS_PHONE_NUMBER_WHEN_DEVICE_LOST_IMS_REGISTRATION)
+    public void testClearImsPhoneNumberWithImsAssociatedUri() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        // Bind TestImsService
+        triggerFrameworkConnectToCarrierImsService();
+
+        ImsReasonInfo reasonInfo = new ImsReasonInfo(ImsReasonInfo.CODE_REGISTRATION_ERROR,
+                ImsReasonInfo.CODE_UNSPECIFIED, "");
+
+        // IMS is deregistered to set initial state
+        sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(
+                reasonInfo, RegistrationManager.SUGGESTED_ACTION_NONE, REGISTRATION_TECH_NONE);
+
+        // To check when framework completes its operation
+        LinkedBlockingQueue<Integer> mSubscriberQueue = new LinkedBlockingQueue<>(1);
+        LinkedBlockingQueue<Integer> mUnregiQueue = new LinkedBlockingQueue<>(1);
+        RegistrationManager.RegistrationCallback callback =
+                new RegistrationManager.RegistrationCallback() {
+                    @Override
+                    public void onUnregistered(ImsReasonInfo info, int suggestedAction,
+                            int imsRadioTech) {
+                        if (imsRadioTech != REGISTRATION_TECH_NONE) {
+                            mUnregiQueue.offer(imsRadioTech);
+                        }
+                    }
+
+                    @Override
+                    public void onSubscriberAssociatedUriChanged(@Nullable Uri[] uris) {
+                        mSubscriberQueue.offer(uris.length);
+                    }
+                };
+
+        // Register callback
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            automan.adoptShellPermissionIdentity();
+            android.telephony.ims.ImsManager imsManager = getContext().getSystemService(
+                    android.telephony.ims.ImsManager.class);
+            ImsMmTelManager mmTelManager = imsManager.getImsMmTelManager(sTestSub);
+            mmTelManager.registerImsRegistrationCallback(getContext().getMainExecutor(), callback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        // Trigger IMS registration
+        sServiceConnector.getCarrierService().getImsRegistration().onRegistered(
+                IMS_REGI_TECH_LTE);
+
+        // Trigger the associated URI has changed.
+        Uri[] associatedUris = new Uri[] {
+                Uri.parse("sip:+447539447777@ims.x.com"),
+                Uri.parse("tel:+447539446666")
+        };
+        sServiceConnector.getCarrierService().getImsRegistration()
+                .onSubscriberAssociatedUriChanged(associatedUris);
+
+        assertNotEquals(Integer.MAX_VALUE,
+                waitForIntResult(mSubscriberQueue, ImsUtils.TEST_TIMEOUT_MS));
+
+        // Wait a second for the onSubscriberAssociatedUriChanged indication to be processed on the
+        // main telephony thread. Although telephony extracts and stores phone number, accessing to
+        // phone number is through the SubscriptionManager. Before calling the
+        // SubscriptionManager#getPhoneNumber, a guard time is required for telephony.
+        // Currently no better way of knowing that telephony has processed this command.
+        Thread.sleep(TEST_OPERATION_TIME_MS);
+
+        SubscriptionManager sm = (SubscriptionManager) getContext()
+                .getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+        try {
+            automan.adoptShellPermissionIdentity();
+
+            String phoneNumber = sm.getPhoneNumber(sTestSub,
+                    SubscriptionManager.PHONE_NUMBER_SOURCE_IMS);
+
+            // Verify Ims phone number
+            assertEquals("+447539447777", phoneNumber);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        // Trigger IMS de-registration
+        sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(
+                reasonInfo, RegistrationManager.SUGGESTED_ACTION_NONE, REGISTRATION_TECH_LTE);
+
+        assertNotEquals(Integer.MAX_VALUE,
+                waitForIntResult(mUnregiQueue, ImsUtils.TEST_TIMEOUT_MS));
+
+        // Wait a second for the onDeregistered indication to be processed on the
+        // main telephony thread. Although telephony clear phone number, accessing to
+        // phone number is through the SubscriptionManager. Before calling the
+        // SubscriptionManager#getPhoneNumber, a guard time is required for telephony.
+        // Currently no better way of knowing that telephony has processed this command.
+        Thread.sleep(TEST_OPERATION_TIME_MS);
+
+        try {
+            automan.adoptShellPermissionIdentity();
+
+            String phoneNumber = sm.getPhoneNumber(sTestSub,
+                    SubscriptionManager.PHONE_NUMBER_SOURCE_IMS);
+
+            // verify Ims phone number
+            assertEquals("", phoneNumber);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
     }
 
     private void verifyIntKey(ProvisioningManager pm,

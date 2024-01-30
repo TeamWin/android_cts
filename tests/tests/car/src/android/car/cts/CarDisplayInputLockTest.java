@@ -31,7 +31,6 @@ import android.app.ActivityOptions;
 import android.app.Instrumentation;
 import android.car.Car;
 import android.car.CarOccupantZoneManager;
-import android.car.annotation.ApiRequirements;
 import android.car.settings.CarSettings;
 import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.content.ContentResolver;
@@ -51,8 +50,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.InstrumentationRegistry;
 import androidx.test.core.app.ActivityScenario;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
@@ -102,8 +101,6 @@ public class CarDisplayInputLockTest extends AbstractCarTestCase {
     }
 
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     @Test
     public void testDisplayInputLockForEachPassengerDisplay() throws Exception {
         Display[] displays = getPassengerMainDisplays();
@@ -126,8 +123,6 @@ public class CarDisplayInputLockTest extends AbstractCarTestCase {
     }
 
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     @Test
     public void testDisplayInputLockForTwoPassengerDisplaysAtOnce() throws Exception {
         Display[] displays = getPassengerMainDisplays();
@@ -163,8 +158,6 @@ public class CarDisplayInputLockTest extends AbstractCarTestCase {
     }
 
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     @Test
     @EnsureHasPermission(Car.ACCESS_PRIVATE_DISPLAY_ID)
     public void testPassengerDisplayInputLockDoesNotAffectDriverDisplay() throws Exception {

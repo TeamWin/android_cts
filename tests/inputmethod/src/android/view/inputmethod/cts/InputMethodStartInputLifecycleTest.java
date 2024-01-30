@@ -43,6 +43,7 @@ import android.os.IBinder;
 import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.Selection;
@@ -89,6 +90,7 @@ import java.util.function.Predicate;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
     @Rule
     public final DisableScreenDozeRule mDisableScreenDozeRule = new DisableScreenDozeRule();
@@ -160,8 +162,7 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
                 // Expected only onFinishInput and the EditText is inactive for input method.
                 expectEvent(stream, onFinishInputMatcher(), TIMEOUT);
                 notExpectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
-                assertFalse(TestUtils.getOnMainSync(() -> imm.isActive(editText)));
-                assertFalse(TestUtils.getOnMainSync(() -> imm.isAcceptingText()));
+                assertFalse(TestUtils.getOnMainSync(() -> imm.hasActiveInputConnection(editText)));
             } else {
                 expectEvent(stream, onFinishInputMatcher(), TIMEOUT);
             }
@@ -183,8 +184,7 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
                 // Expected only onStartInput and the EditText is active for input method.
                 notExpectEvent(stream, onFinishInputMatcher(), TIMEOUT);
             }
-            assertTrue(TestUtils.getOnMainSync(
-                    () -> imm.isActive(editText) && imm.isAcceptingText()));
+            assertTrue(TestUtils.getOnMainSync(() -> imm.hasActiveInputConnection(editText)));
             final ImeCommand commit1 = imeSession.callCommitText("Hello!", 1);
             expectCommand(stream, commit1, TIMEOUT);
             TestUtils.waitOnMainUntil(() -> TextUtils.equals(editText.getText(), "Hello!"), TIMEOUT,
@@ -241,8 +241,7 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
             // Verify the input connection of the EditText is still active and can accept text.
             final InputMethodManager imm = editText.getContext().getSystemService(
                     InputMethodManager.class);
-            assertTrue(TestUtils.getOnMainSync(() -> imm.isActive(editText)));
-            assertTrue(TestUtils.getOnMainSync(() -> imm.isAcceptingText()));
+            assertTrue(TestUtils.getOnMainSync(() -> imm.hasActiveInputConnection(editText)));
         }
     }
 
@@ -345,8 +344,11 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
                 return false;
             }
         });
+    }
 
-        // Of course IMM#invalidateInput() should just work for ICs that support
+    @Test
+    public void testInvalidateInputOnInputConnectionWithBatchEdit() throws Exception {
+        // IMM#invalidateInput() should just work for ICs that support
         // {begin,end}BatchEdit().
         expectNativeInvalidateInput((view, editable) -> new TestInputConnection(view, editable) {
             private int mBatchEditCount = 0;
@@ -364,7 +366,10 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
                 return mBatchEditCount > 0;
             }
         });
+    }
 
+    @Test
+    public void testInvalidateInputFallback() throws Exception {
         // If IC#takeSnapshot() returns false, then fall back to IMM#restartInput()
         expectFallbackInvalidateInput((view, editable) -> new TestInputConnection(view, editable) {
             @Override
@@ -380,7 +385,10 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
                 return null;
             }
         });
+    }
 
+    @Test
+    public void testInvalidateInputOnInputConnectionWithBrokenBatchEdit() throws Exception {
         // Bug 209958658 should not prevent the system from using the native invalidateInput().
         expectNativeInvalidateInput((view, editable) -> new TestInputConnection(view, editable) {
             private int mBatchEditCount = 0;
@@ -400,7 +408,10 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
                 return true;
             }
         });
+    }
 
+    @Test
+    public void testInvalidateInputFallbackOnInputConnectionWithBrokenBatchEdit() throws Exception {
         // Even if IC#endBatchEdit() never returns false, the system should be able to fall back
         // to IMM#restartInput().  This is a regression test for Bug 208941904.
         expectFallbackInvalidateInput((view, editable) -> new TestInputConnection(view, editable) {

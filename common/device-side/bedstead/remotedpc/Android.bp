@@ -7,6 +7,7 @@ android_library {
     sdk_version: "test_current",
     srcs: [
         "src/main/java/**/*.java",
+        "src/main/java/**/*.kt",
     ],
     static_libs: [
         "Nene",
@@ -20,6 +21,7 @@ android_test {
     name: "RemoteDPCTest",
     srcs: [
         "src/test/java/**/*.java",
+        "src/test/java/**/*.kt",
     ],
     test_suites: [
         "general-tests",

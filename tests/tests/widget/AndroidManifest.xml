@@ -735,11 +735,9 @@
 
     </application>
 
-    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-         android:targetPackage="android.widget.cts"
-         android:label="CTS tests of android.widget">
-        <meta-data android:name="listener"
-             android:value="com.android.cts.runner.CtsTestRunListener"/>
+    <instrumentation android:name="android.widget.cts.runner.WidgetRunner"
+                     android:targetPackage="android.widget.cts"
+                     android:label="CTS tests of android.widget">
     </instrumentation>
 
 </manifest>

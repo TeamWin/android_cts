@@ -26,6 +26,9 @@ android_test {
         "ctstestrunner-axt",
         "ub-uiautomator",
         "junit",
+        "flag-junit",
+        "android.database.sqlite-aconfig-java",
+        "ravenwood-junit",
     ],
     libs: [
         "android.test.runner",
@@ -43,4 +46,29 @@ android_test {
         ":CtsProviderApp",
     ],
     per_testcase_directory: true,
+}
+
+android_ravenwood_test {
+    name: "CtsDatabaseTestCasesRavenwood",
+    defaults: ["cts_defaults"],
+    static_libs: [
+        "androidx.annotation_annotation",
+        "androidx.test.rules",
+    ],
+    srcs: [
+        "src/android/database/cts/AbstractCursorTest.java",
+        "src/android/database/cts/CharArrayBufferTest.java",
+        "src/android/database/cts/ContentObserverTest.java",
+        "src/android/database/cts/ContentObservableTest.java",
+        "src/android/database/cts/CursorIndexOutOfBoundsExceptionTest.java",
+        "src/android/database/cts/CursorJoinerTest.java",
+        "src/android/database/cts/CursorWrapperTest.java",
+        "src/android/database/cts/DataSetObservableTest.java",
+        "src/android/database/cts/DataSetObserverTest.java",
+        "src/android/database/cts/MatrixCursorTest.java",
+        "src/android/database/cts/MatrixCursor_RowBuilderTest.java",
+        "src/android/database/cts/MergeCursorTest.java",
+        "src/android/database/cts/ObservableTest.java",
+    ],
+    auto_gen_config: true,
 }

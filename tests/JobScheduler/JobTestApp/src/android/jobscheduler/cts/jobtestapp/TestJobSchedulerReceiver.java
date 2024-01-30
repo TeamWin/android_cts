@@ -41,14 +41,19 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
     static final String PACKAGE_NAME = "android.jobscheduler.cts.jobtestapp";
     private static final String NOTIFICATION_CHANNEL_ID = TAG + "_channel";
 
+    public static final long NO_DEADLINE = -1L;
+
     public static final String ACTION_JOB_SCHEDULE_RESULT =
             PACKAGE_NAME + ".action.SCHEDULE_RESULT";
     public static final String EXTRA_SCHEDULE_RESULT = PACKAGE_NAME + ".extra.SCHEDULE_RESULT";
 
     public static final String EXTRA_JOB_ID_KEY = PACKAGE_NAME + ".extra.JOB_ID";
     public static final String EXTRA_ALLOW_IN_IDLE = PACKAGE_NAME + ".extra.ALLOW_IN_IDLE";
+    public static final String EXTRA_DEADLINE = PACKAGE_NAME + ".extra.DEADLINE";
     public static final String EXTRA_REQUIRED_NETWORK_TYPE =
             PACKAGE_NAME + ".extra.REQUIRED_NETWORK_TYPE";
+    public static final String EXTRA_REQUIRES_STORAGE_NOT_LOW =
+            PACKAGE_NAME + ".extra.REQUIRES_STORAGE_NOT_LOW";
     public static final String EXTRA_AS_EXPEDITED = PACKAGE_NAME + ".extra.AS_EXPEDITED";
     public static final String EXTRA_AS_USER_INITIATED = PACKAGE_NAME + ".extra.AS_USER_INITIATED";
     public static final String EXTRA_REQUEST_JOB_UID_STATE =
@@ -87,6 +92,9 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
                 final int networkType =
                         intent.getIntExtra(EXTRA_REQUIRED_NETWORK_TYPE, JobInfo.NETWORK_TYPE_NONE);
                 final boolean expedited = intent.getBooleanExtra(EXTRA_AS_EXPEDITED, false);
+                final boolean storageNotLow =
+                        intent.getBooleanExtra(EXTRA_REQUIRES_STORAGE_NOT_LOW, false);
+                final long deadline = intent.getLongExtra(EXTRA_DEADLINE, NO_DEADLINE);
                 final boolean userInitiated =
                         intent.getBooleanExtra(EXTRA_AS_USER_INITIATED, false);
                 final int backoffPolicy = userInitiated ? JobInfo.BACKOFF_POLICY_EXPONENTIAL
@@ -109,7 +117,11 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
                         .setImportantWhileForeground(allowInIdle)
                         .setExpedited(expedited)
                         .setUserInitiated(userInitiated)
-                        .setRequiredNetworkType(networkType);
+                        .setRequiredNetworkType(networkType)
+                        .setRequiresStorageNotLow(storageNotLow);
+                if (deadline != NO_DEADLINE) {
+                    jobBuilder.setOverrideDeadline(deadline);
+                }
                 final int result = jobScheduler.schedule(jobBuilder.build());
                 if (result != JobScheduler.RESULT_SUCCESS) {
                     Log.e(TAG, "Could not schedule job " + jobId);

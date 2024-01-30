@@ -50,7 +50,7 @@ public class CloudProviderSecondary extends CloudMediaProvider {
         final QueryExtras queryExtras = new QueryExtras(extras);
 
         return mMediaGenerator.getMedia(queryExtras.generation, queryExtras.albumId,
-                queryExtras.mimeType, queryExtras.sizeBytes);
+                queryExtras.mimeType, queryExtras.sizeBytes, queryExtras.pageSize);
     }
 
     @Override

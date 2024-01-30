@@ -17,6 +17,7 @@ package android.autofillservice.cts.activities;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.app.ActivityOptions;
 import android.app.PendingIntent;
 import android.autofillservice.cts.R;
 import android.autofillservice.cts.testcore.UiBot;
@@ -122,7 +123,9 @@ public class WelcomeActivity extends AbstractAutoFillActivity {
                 .putExtra(EXTRA_MESSAGE, message)
                 .setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
         sPendingIntent = PendingIntent.getActivity(context, sPendingIntentId, intent,
-                PendingIntent.FLAG_IMMUTABLE);
+                PendingIntent.FLAG_IMMUTABLE,
+                ActivityOptions.makeBasic().setPendingIntentCreatorBackgroundActivityStartMode(
+                        ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED).toBundle());
         return sPendingIntent.getIntentSender();
     }
 }

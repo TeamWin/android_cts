@@ -18,10 +18,8 @@ package android.util.cts;
 
 import static org.junit.Assert.assertEquals;
 
-import android.content.Context;
 import android.util.PrintWriterPrinter;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -46,9 +44,7 @@ public class PrintWriterPrinterTest {
 
     @Before
     public void setup() throws IOException {
-        File dbDir = InstrumentationRegistry.getTargetContext().getDir("tests",
-                Context.MODE_PRIVATE);
-        mFile = new File(dbDir,"print.log");
+        mFile = File.createTempFile("PrintWriterPrinterTest", "log");
         if (!mFile.exists()) {
             mFile.createNewFile();
         }

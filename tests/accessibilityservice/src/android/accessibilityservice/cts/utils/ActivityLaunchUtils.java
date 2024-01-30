@@ -52,7 +52,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
-import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 
 /**
@@ -67,6 +66,9 @@ public class ActivityLaunchUtils {
             "am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS";
     public static final String INPUT_KEYEVENT_KEYCODE_BACK =
             "input keyevent KEYCODE_BACK";
+
+    // Precision when asserting the launched activity bounds equals the reported a11y window bounds.
+    private static final int BOUNDS_PRECISION_PX = 1;
 
     // Using a static variable so it can be used in lambdas. Not preserving state in it.
     private static Activity mTempActivity;
@@ -95,7 +97,7 @@ public class ActivityLaunchUtils {
         options.setLaunchDisplayId(displayId);
         final Intent intent = new Intent(instrumentation.getTargetContext(), clazz);
         // Add clear task because this activity may on other display.
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
 
         ActivityLauncher activityLauncher = new ActivityLauncher() {
             @Override
@@ -143,17 +145,21 @@ public class ActivityLaunchUtils {
         serviceInfo.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
         uiAutomation.setServiceInfo(serviceInfo);
         try {
-            executeAndWaitOn(
-                    uiAutomation,
+            execShellCommand(uiAutomation, AM_START_HOME_ACTIVITY_COMMAND);
+            execShellCommand(uiAutomation, AM_BROADCAST_CLOSE_SYSTEM_DIALOG_COMMAND);
+            execShellCommand(uiAutomation, INPUT_KEYEVENT_KEYCODE_BACK);
+            TestUtils.waitUntil("Home screen is showing",
+                    (int) DEFAULT_TIMEOUT_MS / 1000,
                     () -> {
-                        execShellCommand(uiAutomation, AM_START_HOME_ACTIVITY_COMMAND);
+                        if (isHomeScreenShowing(context, uiAutomation)) {
+                            return true;
+                        }
+                        // Attempt to close any newly-appeared system dialogs which can prevent the
+                        // home screen activity from becoming visible, active, and focused.
                         execShellCommand(uiAutomation, AM_BROADCAST_CLOSE_SYSTEM_DIALOG_COMMAND);
-                        execShellCommand(uiAutomation, INPUT_KEYEVENT_KEYCODE_BACK);
-                    },
-                    () -> isHomeScreenShowing(context, uiAutomation),
-                    DEFAULT_TIMEOUT_MS,
-                    "home screen");
-        } catch (AssertionError error) {
+                        return false;
+                    });
+        } catch (Exception error) {
             Log.e(LOG_TAG, "Timed out looking for home screen. Dumping window list");
             final List<AccessibilityWindowInfo> windows = uiAutomation.getWindows();
             if (windows == null) {
@@ -184,9 +190,18 @@ public class ActivityLaunchUtils {
         final List<ResolveInfo> resolveInfos = packageManager.queryIntentActivities(
                 new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),
                 PackageManager.MATCH_DEFAULT_ONLY);
+        final boolean isAuto = packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
 
-        // Look for a window with a package name that matches the default home screen
+        // Look for an active focused window with a package name that matches
+        // the default home screen.
         for (AccessibilityWindowInfo window : windows) {
+            if (!isAuto) {
+                // Auto does not set its home screen app as active+focused, so only non-auto
+                // devices enforce that the home screen is active+focused.
+                if (!window.isActive() || !window.isFocused()) {
+                    continue;
+                }
+            }
             final AccessibilityNodeInfo root = window.getRoot();
             if (root != null) {
                 final CharSequence packageName = root.getPackageName();
@@ -231,34 +246,10 @@ public class ActivityLaunchUtils {
                             InputDevice.SOURCE_KEYBOARD), true /* sync */);
             try {
                 Thread.sleep(50);
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+            }
         } while (SystemClock.uptimeMillis() < deadlineUptimeMillis);
         fail("Unable to wake up screen");
-    }
-
-    /**
-     * Executes a command and waits for a specified condition up to a given wait timeout. It checks
-     * condition result each time when events delivered, and throws exception if the condition
-     * result is not {@code true} within the given timeout.
-     */
-    private static void executeAndWaitOn(UiAutomation uiAutomation, Runnable command,
-            BooleanSupplier condition, long timeoutMillis, String conditionName) {
-        final Object waitObject = new Object();
-        final long executionStartTimeMillis = SystemClock.uptimeMillis();
-        try {
-            uiAutomation.setOnAccessibilityEventListener((event) -> {
-                if (event.getEventTime() < executionStartTimeMillis) {
-                    return;
-                }
-                synchronized (waitObject) {
-                    waitObject.notifyAll();
-                }
-            });
-            command.run();
-            TestUtils.waitOn(waitObject, condition, timeoutMillis, conditionName);
-        } finally {
-            uiAutomation.setOnAccessibilityEventListener(null);
-        }
     }
 
     private static <T extends Activity> T launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(
@@ -293,13 +284,15 @@ public class ActivityLaunchUtils {
                     (event) -> {
                         final AccessibilityWindowInfo window =
                                 findWindowByTitleAndDisplay(uiAutomation, activityTitle, displayId);
-                        if (window == null) return false;
-                        if (window.getRoot() == null) return false;
-                        if (displayId == Display.DEFAULT_DISPLAY
-                                && (!window.isActive() || !window.isFocused())) {
-                            // The window should get activated and focused.
-                            // Launching activity in non-default display in CTS is usually in a
-                            // virtual display, which doesn't get focused on launch.
+                        if (window == null || window.getRoot() == null
+                                // Ignore the active & focused check for virtual displays,
+                                // which don't get focused on launch.
+                                || (displayId == Display.DEFAULT_DISPLAY
+                                    && (!window.isActive() || !window.isFocused()))) {
+                            // Attempt to close any system dialogs which can prevent the launched
+                            // activity from becoming visible, active, and focused.
+                            execShellCommand(uiAutomation,
+                                    AM_BROADCAST_CLOSE_SYSTEM_DIALOG_COMMAND);
                             return false;
                         }
 
@@ -309,11 +302,12 @@ public class ActivityLaunchUtils {
                         // Stores the related information including event, location and window
                         // as a timeout exception record.
                         timeoutExceptionRecords.append(String.format("{Received event: %s \n"
-                                + "Window location: %s \nA11y window: %s}\n",
+                                        + "Window location: %s \nA11y window: %s}\n",
                                 event, Arrays.toString(location), window));
 
                         return (!bounds.isEmpty())
-                                && (bounds.left == location[0]) && (bounds.top == location[1]);
+                                && Math.abs(bounds.left - location[0]) <= BOUNDS_PRECISION_PX
+                                && Math.abs(bounds.top - location[1]) <= BOUNDS_PRECISION_PX;
                     }, DEFAULT_TIMEOUT_MS);
             assertNotNull(awaitedEvent);
         } catch (TimeoutException timeout) {

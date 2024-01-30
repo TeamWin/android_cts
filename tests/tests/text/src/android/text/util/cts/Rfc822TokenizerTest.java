@@ -22,8 +22,8 @@ import static org.junit.Assert.fail;
 import android.text.util.Rfc822Token;
 import android.text.util.Rfc822Tokenizer;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

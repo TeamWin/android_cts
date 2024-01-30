@@ -38,9 +38,11 @@ android_test {
     static_libs: [
         "androidx.test.core",
         "androidx.test.ext.junit",
+        "com.android.hardware.input-aconfig-java",
         "compatibility-device-util-axt",
         "cts-input-lib",
         "cts-wm-util",
+        "flag-junit",
         "kotlin-test",
     ],
     sdk_version: "test_current",

@@ -5,6 +5,8 @@
 /bin
 .idea/*
 .idea/
+.project
+.vscode/
 gen/
 *.iml
 *.class

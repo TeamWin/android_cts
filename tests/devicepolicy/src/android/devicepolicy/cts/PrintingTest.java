@@ -98,7 +98,6 @@ public final class PrintingTest {
 
     @PolicyDoesNotApplyTest(policy = DisallowPrinting.class)
     @Postsubmit(reason = "new test")
-    @Ignore("b/280417921 re-enable and deflake")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_PRINTING")
     public void addUserRestriction_disallowPrinting_isNotSet() {
         sDeviceState.dpc().devicePolicyManager().addUserRestriction(

@@ -43,6 +43,7 @@ import android.util.Xml;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.AbsListView;
 import android.widget.ExpandableListAdapter;
@@ -201,12 +202,27 @@ public class ExpandableListViewTest {
         mExpandableListView.onInitializeAccessibilityNodeInfoForItem(group, 0, expandedGroupInfo);
         assertTrue(expandedGroupInfo.getActionList().contains(
                 AccessibilityNodeInfo.AccessibilityAction.ACTION_COLLAPSE));
+        assertTrue(expandedGroupInfo.getActionList().contains(
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK));
+        assertTrue(expandedGroupInfo.isClickable());
 
         assertTrue(mExpandableListView.collapseGroup(0));
         AccessibilityNodeInfo collapseGroupInfo = new AccessibilityNodeInfo();
         mExpandableListView.onInitializeAccessibilityNodeInfoForItem(group, 0, collapseGroupInfo);
         assertTrue(collapseGroupInfo.getActionList().contains(
                 AccessibilityNodeInfo.AccessibilityAction.ACTION_EXPAND));
+        assertTrue(collapseGroupInfo.getActionList().contains(
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK));
+        assertTrue(collapseGroupInfo.isClickable());
+    }
+
+    @UiThreadTest
+    @ApiTest(apis = {"android.widget.ExpandableListView#performItemClick"})
+    @Test
+    public void testSendClickAccessibilityEvent() {
+        View mockView = mock(View.class);
+        mExpandableListView.performItemClick(mockView, 100, 99);
+        verify(mockView).sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_CLICKED);
     }
 
     @UiThreadTest

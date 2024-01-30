@@ -27,6 +27,10 @@ import static org.junit.Assert.fail;
 import android.os.Bundle;
 import android.os.LocaleList;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.test.MoreAsserts;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
@@ -34,6 +38,7 @@ import android.util.StringBuilderPrinter;
 import android.view.MotionEvent;
 import android.view.inputmethod.DeleteGesture;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.Flags;
 import android.view.inputmethod.HandwritingGesture;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InsertGesture;
@@ -46,6 +51,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -59,7 +65,12 @@ import java.util.stream.Stream;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class EditorInfoTest {
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
     private static final int TEST_TEXT_LENGTH = 2048;
     /** A text with 1 million chars! This is way too long. */
     private static final int OVER_SIZED_TEXT_LENGTH = 1 * 1024 * 1024;
@@ -182,6 +193,25 @@ public class EditorInfoTest {
         assertEquals(gestures.size(), 2);
         assertTrue(gestures.contains(SelectGesture.class));
         assertTrue(gestures.contains(DeleteGesture.class));
+    }
+
+    /**
+     * Test {@link EditorInfo#isStylusHandwritingEnabled()}.
+     */
+    @ApiTest(apis = {"android.view.inputmethod.EditorInfo#setStylusHandwritingEnabled",
+            "android.view.inputmethod.EditorInfo#isStylusHandwritingEnabled"})
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_EDITORINFO_HANDWRITING_ENABLED)
+    public void testStylusHandwritingEnabled() {
+        EditorInfo info = new EditorInfo();
+        info.setStylusHandwritingEnabled(true);
+        assertTrue(info.isStylusHandwritingEnabled());
+        Parcel p = Parcel.obtain();
+        info.writeToParcel(p, 0 /* flags */);
+        p.setDataPosition(0);
+        EditorInfo targetInfo = EditorInfo.CREATOR.createFromParcel(p);
+        p.recycle();
+        assertEquals(info.isStylusHandwritingEnabled(), targetInfo.isStylusHandwritingEnabled());
     }
 
     @Test

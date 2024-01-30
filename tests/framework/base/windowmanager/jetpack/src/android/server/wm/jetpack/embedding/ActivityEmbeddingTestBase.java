@@ -16,16 +16,14 @@
 
 package android.server.wm.jetpack.embedding;
 
-import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
-import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
-
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.assumeExtensionSupportedDevice;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.getWindowExtensions;
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityTaskManager;
-import android.server.wm.ActivityManagerTestBase.ReportedDisplayMetrics;
 import android.server.wm.UiDeviceUtils;
-import android.server.wm.jetpack.utils.TestValueCountConsumer;
+import android.server.wm.jetpack.extensions.util.TestValueCountConsumer;
 import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
 import android.view.Display;
 
@@ -37,6 +35,7 @@ import androidx.window.extensions.embedding.SplitInfo;
 import org.junit.After;
 import org.junit.Before;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -54,7 +53,7 @@ public class ActivityEmbeddingTestBase extends WindowManagerJetpackTestBase {
     @Before
     public void setUp() {
         super.setUp();
-        assumeTrue(supportsMultiWindow());
+        assumeTrue(applicationSupportsMultiWindow());
         assumeExtensionSupportedDevice();
         WindowExtensions windowExtensions = getWindowExtensions();
         assumeNotNull(windowExtensions);
@@ -63,18 +62,22 @@ public class ActivityEmbeddingTestBase extends WindowManagerJetpackTestBase {
         mSplitInfoConsumer = new TestValueCountConsumer<>();
         mActivityEmbeddingComponent.setSplitInfoCallback(mSplitInfoConsumer);
 
-
         UiDeviceUtils.pressWakeupButton();
         UiDeviceUtils.pressUnlockButton();
     }
 
     /** Checks whether the device supports the multi-window feature or not. */
-    private static boolean supportsMultiWindow() {
+    private static boolean applicationSupportsMultiWindow() {
         return ActivityTaskManager.supportsMultiWindow(ApplicationProvider.getApplicationContext());
     }
 
+    @Override
     @After
-    public void cleanUp() {
+    public void tearDown() {
+        super.tearDown();
         mReportedDisplayMetrics.restoreDisplayMetrics();
+        if (mActivityEmbeddingComponent != null) {
+            mActivityEmbeddingComponent.setEmbeddingRules(Collections.emptySet());
+        }
     }
 }

@@ -17,7 +17,7 @@ from pathlib import Path
 import subprocess
 import queue
 from src.library.main.proto.testapp_protos_pb2 import TestAppIndex, AndroidApp, UsesSdk,\
-    Permission, Activity, IntentFilter, Service, Metadata
+    Permission, Activity, IntentFilter, Service, Metadata, Receiver
 
 ELEMENT = "E"
 ATTRIBUTE = "A"
@@ -146,6 +146,7 @@ def parse(manifest_content, file_name):
     parse_activities(application_element, android_app)
     parse_services(application_element, android_app)
     parse_metadata(application_element, android_app)
+    parse_receiver(application_element, android_app)
 
     return android_app
 
@@ -217,9 +218,24 @@ def parse_metadata(application_element, android_app):
     for meta_data_element in find_elements(application_element.children, "meta-data"):
         metadata = Metadata()
         metadata.name = meta_data_element.attributes["name"]
-        # This forces every value into a string
-        metadata.value = meta_data_element.attributes["value"]
+
+        if "value" in meta_data_element.attributes:
+            # This forces every value into a string
+            metadata.value = meta_data_element.attributes["value"]
+
         android_app.metadata.append(metadata)
+
+def parse_receiver(application_element, android_app):
+    for receiver_element in find_elements(application_element.children, "receiver"):
+        parse_metadata(receiver_element, android_app)
+
+        receiver = Receiver()
+        receiver.name = receiver_element.attributes["name"]
+        receiver.permission = receiver_element.attributes.get("permission", "")
+        receiver.exported = receiver_element.attributes.get("exported", "false") == "true"
+        parse_metadata(receiver_element, receiver)
+        parse_intent_filters(receiver_element, receiver)
+        android_app.receivers.append(receiver)
 
 def find_single_element(element_collection, element_name):
     for e in element_collection:

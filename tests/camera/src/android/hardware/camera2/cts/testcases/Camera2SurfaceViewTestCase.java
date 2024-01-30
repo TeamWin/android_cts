@@ -141,14 +141,15 @@ public class Camera2SurfaceViewTestCase extends Camera2ParameterizedTestCase {
 
         mAllStaticInfo = new HashMap<String, StaticMetadata>();
         List<String> hiddenPhysicalIds = new ArrayList<>();
-        for (String cameraId : mCameraIdsUnderTest) {
+        String[] cameraIdsUnderTest = getCameraIdsUnderTest();
+        for (String cameraId : cameraIdsUnderTest) {
             CameraCharacteristics props = mCameraManager.getCameraCharacteristics(cameraId);
             StaticMetadata staticMetadata = new StaticMetadata(props,
                     CheckLevel.ASSERT, /*collector*/null);
             mAllStaticInfo.put(cameraId, staticMetadata);
 
             for (String physicalId : props.getPhysicalCameraIds()) {
-                if (!Arrays.asList(mCameraIdsUnderTest).contains(physicalId) &&
+                if (!Arrays.asList(cameraIdsUnderTest).contains(physicalId) &&
                         !hiddenPhysicalIds.contains(physicalId)) {
                     hiddenPhysicalIds.add(physicalId);
                     props = mCameraManager.getCameraCharacteristics(physicalId);

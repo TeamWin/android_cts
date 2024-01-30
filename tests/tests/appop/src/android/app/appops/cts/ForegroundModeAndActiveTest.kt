@@ -41,17 +41,18 @@ import android.provider.Settings
 import android.provider.Settings.Global.APP_OPS_CONSTANTS
 import android.support.test.uiautomator.UiDevice
 import android.util.Log
+import androidx.test.filters.FlakyTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.google.common.truth.Truth.assertThat
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit.MILLISECONDS
+import java.util.concurrent.TimeoutException
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit.MILLISECONDS
-import java.util.concurrent.TimeoutException
 
 private const val TEST_SERVICE_PKG = "android.app.appops.cts.appthatcanbeforcedintoforegroundstates"
 private const val TIMEOUT_MILLIS = 45000L
@@ -186,6 +187,7 @@ class ForegroundModeAndActiveTest {
     }
 
     @Test
+    @FlakyTest
     fun modeIsAllowedWhenForeground() {
         makeTop()
         eventually {
@@ -194,6 +196,7 @@ class ForegroundModeAndActiveTest {
     }
 
     @Test
+    @FlakyTest
     fun modeBecomesIgnoredAfterEnteringBackground() {
         makeTop()
         assertThat(testPkgAppOpMode).isEqualTo(MODE_ALLOWED)
@@ -219,6 +222,7 @@ class ForegroundModeAndActiveTest {
     }
 
     @Test
+    @FlakyTest
     fun modeChangeCallbackWhenEnteringBackground() {
         makeTop()
 

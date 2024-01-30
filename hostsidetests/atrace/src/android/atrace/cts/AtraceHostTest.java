@@ -255,7 +255,7 @@ public class AtraceHostTest extends AtraceHostTestBase {
                 requiredSections.remove("Choreographer#doFrame");
             }
             // Quick hack to handle names being appended to draw
-            if (slice.getName().contains("draw")) {
+            if (slice.getName().startsWith("draw")) {
                 requiredSections.remove("draw");
             }
             return Unit.INSTANCE;

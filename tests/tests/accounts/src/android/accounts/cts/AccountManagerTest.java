@@ -36,12 +36,13 @@ import android.os.StrictMode;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.test.ActivityInstrumentationTestCase2;
+import android.util.Log;
 
 import java.io.IOException;
-import java.lang.Math;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -153,6 +154,19 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
         getMockAuthenticator(mContext);
 
         am = AccountManager.get(mContext);
+
+        // Authenticators must be installed at this point.
+        List<AuthenticatorDescription> authenticatorTypes =
+                Arrays.asList(am.getAuthenticatorTypes());
+        List<String> authenticatorNames = new ArrayList<>();
+        for (AuthenticatorDescription description : authenticatorTypes) {
+            Log.i("AccountManagerTest", "supported authenticatorType=" + description.type
+                    + ", packageName=" + description.packageName);
+            authenticatorNames.add(description.type);
+
+        }
+        assertTrue(authenticatorNames.contains("android.accounts.cts.account.type"));
+        assertTrue(authenticatorNames.contains("android.accounts.cts.custom.account.type"));
     }
 
     @Override
@@ -324,7 +338,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 callback,
                 handler);
 
-        Bundle resultBundle = futureBundle.getResult();
+        Bundle resultBundle = futureBundle.getResult(30, TimeUnit.SECONDS);
         assertTrue(futureBundle.isDone());
         assertNotNull(resultBundle);
 
@@ -335,7 +349,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
             throws OperationCanceledException, AuthenticatorException, IOException {
         AccountManagerFuture<Account> futureAccount = am.renameAccount(
                 account, newName, null /* callback */, null /* handler */);
-        Account renamedAccount = futureAccount.getResult();
+        Account renamedAccount = futureAccount.getResult(30, TimeUnit.SECONDS);
         assertTrue(futureAccount.isDone());
         assertNotNull(renamedAccount);
         return renamedAccount;
@@ -347,7 +361,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
         AccountManagerFuture<Boolean> futureBoolean = am.removeAccount(account,
                 callback,
                 null /* handler */);
-        Boolean resultBoolean = futureBoolean.getResult();
+        Boolean resultBoolean = futureBoolean.getResult(30, TimeUnit.SECONDS);
         assertTrue(futureBoolean.isDone());
 
         return resultBoolean;
@@ -361,7 +375,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 activity,
                 callback,
                 null /* handler */);
-        Bundle resultBundle = futureBundle.getResult();
+        Bundle resultBundle = futureBundle.getResult(30, TimeUnit.SECONDS);
         assertTrue(futureBundle.isDone());
 
         return resultBundle;
@@ -375,7 +389,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 activity,
                 callback,
                 null /* handler */);
-        Bundle resultBundle = futureBundle.getResult();
+        Bundle resultBundle = futureBundle.getResult(30, TimeUnit.SECONDS);
         assertTrue(futureBundle.isDone());
 
         return resultBundle;
@@ -402,7 +416,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 null /* no handler */
         );
 
-        Bundle resultBundle = futureBundle.getResult();
+        Bundle resultBundle = futureBundle.getResult(30, TimeUnit.SECONDS);
 
         assertTrue(futureBundle.isDone());
         assertNotNull(resultBundle);
@@ -506,7 +520,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                     null,
                     null);
 
-            futureBundle.getResult();
+            futureBundle.getResult(30, TimeUnit.SECONDS);
             fail();
         } catch (AuthenticatorException expectedException) {
             return;
@@ -523,7 +537,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
             public void run(AccountManagerFuture<Bundle> bundleFuture) {
                 Bundle resultBundle = null;
                 try {
-                    resultBundle = bundleFuture.getResult();
+                    resultBundle = bundleFuture.getResult(30, TimeUnit.SECONDS);
                 } catch (OperationCanceledException e) {
                     fail("should not throw an OperationCanceledException");
                 } catch (IOException e) {
@@ -1043,7 +1057,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
         AccountManagerFuture<Account[]> futureAccounts = am.getAccountsByTypeAndFeatures(
                 ACCOUNT_TYPE, REQUIRED_FEATURES, null, null);
 
-        Account[] accounts = futureAccounts.getResult();
+        Account[] accounts = futureAccounts.getResult(30, TimeUnit.SECONDS);
 
         assertNotNull(accounts);
         assertEquals(1, accounts.length);
@@ -1053,7 +1067,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 new String[] { NON_EXISTING_FEATURE },
                 null /* callback*/,
                 null /* handler */);
-        accounts = futureAccounts.getResult();
+        accounts = futureAccounts.getResult(30, TimeUnit.SECONDS);
 
         assertNotNull(accounts);
         assertEquals(0, accounts.length);
@@ -1080,7 +1094,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
             @Override
             public void run(AccountManagerFuture<Account[]> accountsFuture) {
                 try {
-                    Account[] accounts = accountsFuture.getResult();
+                    Account[] accounts = accountsFuture.getResult(30, TimeUnit.SECONDS);
                     assertNotNull(accounts);
                     assertEquals(1, accounts.length);
                     assertEquals(true, isAccountPresent(accounts, ACCOUNT));
@@ -1102,7 +1116,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 callback1,
                 handler);
 
-        Account[] accounts = futureAccounts.getResult();
+        Account[] accounts = futureAccounts.getResult(30, TimeUnit.SECONDS);
 
         assertNotNull(accounts);
         assertEquals(1, accounts.length);
@@ -1121,7 +1135,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
             @Override
             public void run(AccountManagerFuture<Account[]> accountsFuture) {
                 try {
-                    Account[] accounts = accountsFuture.getResult();
+                    Account[] accounts = accountsFuture.getResult(30, TimeUnit.SECONDS);
                     assertNotNull(accounts);
                     assertEquals(0, accounts.length);
                 } catch (OperationCanceledException e) {
@@ -1143,7 +1157,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 callback2,
                 handler);
 
-        accounts = futureAccounts.getResult();
+        accounts = futureAccounts.getResult(30, TimeUnit.SECONDS);
         assertNotNull(accounts);
         assertEquals(0, accounts.length);
 
@@ -1248,7 +1262,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 null /* no handler */
         );
 
-        Bundle resultBundle = futureBundle.getResult();
+        Bundle resultBundle = futureBundle.getResult(30, TimeUnit.SECONDS);
 
         assertTrue(futureBundle.isDone());
         assertNotNull(resultBundle);
@@ -1276,7 +1290,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                         null /* no callback */,
                         null /* no handler */
                 );
-                Bundle actual = futureBundle.getResult();
+                Bundle actual = futureBundle.getResult(30, TimeUnit.SECONDS);
                 assertTrue(futureBundle.isDone());
                 assertNotNull(actual);
                 return actual;
@@ -1307,7 +1321,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 null /* no handler */
         );
 
-        Bundle resultBundle = futureBundle.getResult();
+        Bundle resultBundle = futureBundle.getResult(30, TimeUnit.SECONDS);
 
         assertTrue(futureBundle.isDone());
         assertNotNull(resultBundle);
@@ -1341,7 +1355,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                         null /* no callback */,
                         null /* no handler */
                 );
-                Bundle actual = futureBundle.getResult();
+                Bundle actual = futureBundle.getResult(30, TimeUnit.SECONDS);
                 assertTrue(futureBundle.isDone());
                 assertNotNull(actual);
                 return actual;
@@ -1378,7 +1392,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                     public void run(AccountManagerFuture<Bundle> bundleFuture) {
                         Bundle resultBundle = null;
                         try {
-                            resultBundle = bundleFuture.getResult();
+                            resultBundle = bundleFuture.getResult(30, TimeUnit.SECONDS);
                             actualRef.set(resultBundle);
                         } catch (OperationCanceledException e) {
                             fail("should not throw an OperationCanceledException");
@@ -1438,7 +1452,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                     public void run(AccountManagerFuture<Bundle> bundleFuture) {
                         Bundle resultBundle = null;
                         try {
-                            resultBundle = bundleFuture.getResult();
+                            resultBundle = bundleFuture.getResult(30, TimeUnit.SECONDS);
                             actualRef.set(resultBundle);
                         } catch (OperationCanceledException e) {
                             fail("should not throw an OperationCanceledException");
@@ -1500,7 +1514,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
 
                 Bundle resultBundle = null;
                 try {
-                    resultBundle = bundleFuture.getResult();
+                    resultBundle = bundleFuture.getResult(30, TimeUnit.SECONDS);
 
                     // Assert returned result
                     validateAccountAndAuthTokenResult(resultBundle);
@@ -1525,7 +1539,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 handler
         );
 
-        Bundle resultBundle = futureBundle.getResult();
+        Bundle resultBundle = futureBundle.getResult(30, TimeUnit.SECONDS);
 
         assertTrue(futureBundle.isDone());
         assertNotNull(resultBundle);
@@ -1561,7 +1575,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
 
                 Bundle resultBundle = null;
                 try {
-                    resultBundle = bundleFuture.getResult();
+                    resultBundle = bundleFuture.getResult(30, TimeUnit.SECONDS);
                     // Assert returned result
                     validateAccountAndAuthTokenResult(resultBundle);
                 } catch (OperationCanceledException e) {
@@ -1585,7 +1599,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 handler
         );
 
-        Bundle resultBundle = futureBundle.getResult();
+        Bundle resultBundle = futureBundle.getResult(30, TimeUnit.SECONDS);
 
         assertTrue(futureBundle.isDone());
         assertNotNull(resultBundle);
@@ -1683,7 +1697,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 null /* callback*/,
                 null /* handler */);
 
-        futureBundle.getResult();
+        futureBundle.getResult(30, TimeUnit.SECONDS);
 
         // Assert returned result
         validateCredentials();
@@ -1714,7 +1728,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 null /* callback */,
                 null /* handler */);
 
-        futureBundle.getResult();
+        futureBundle.getResult(30, TimeUnit.SECONDS);
     }
 
     /**
@@ -1735,7 +1749,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 OPTIONS_BUNDLE, /* options */
                 null, /* activity */
                 null /* callback */,
-                null /* handler */).getResult();
+                null /* handler */).getResult(30, TimeUnit.SECONDS);
         long confirmedCredTime = result.getLong(
                 AccountManager.KEY_LAST_AUTHENTICATED_TIME, -1);
         assertTrue(confirmedCredTime > accountAddTime);
@@ -1758,7 +1772,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 OPTIONS_BUNDLE,
                 mActivity,
                 null /* callback */,
-                null /* handler */).getResult();
+                null /* handler */).getResult(30, TimeUnit.SECONDS);
         long updateCredTime = getLastAuthenticatedTime(ACCOUNT);
         assertTrue(updateCredTime > accountAddTime);
     }
@@ -1794,7 +1808,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
 
                 Bundle resultBundle = null;
                 try {
-                    resultBundle = bundleFuture.getResult();
+                    resultBundle = bundleFuture.getResult(30, TimeUnit.SECONDS);
 
                     // Assert returned result
                     validateCredentials();
@@ -1840,7 +1854,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 null /* callback*/,
                 null /* handler */);
 
-        Bundle result = futureBundle.getResult();
+        Bundle result = futureBundle.getResult(30, TimeUnit.SECONDS);
 
         validateAccountAndNoAuthTokenResult(result);
 
@@ -1871,7 +1885,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
 
                 Bundle resultBundle = null;
                 try {
-                    resultBundle = bundleFuture.getResult();
+                    resultBundle = bundleFuture.getResult(30, TimeUnit.SECONDS);
 
                     // Assert returned result
                     validateCredentials();
@@ -1897,7 +1911,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 callback,
                 handler);
 
-        futureBundle.getResult();
+        futureBundle.getResult(30, TimeUnit.SECONDS);
 
         // Wait with timeout for the callback to do its work
         try {
@@ -1918,7 +1932,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 null /* callback */,
                 null /* handler*/);
 
-        Bundle result = futureBundle.getResult();
+        Bundle result = futureBundle.getResult(30, TimeUnit.SECONDS);
 
         validateAccountAndNoAuthTokenResult(result);
 
@@ -2144,37 +2158,37 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 new String[]{FEATURE_1},
                 null /* callback */,
                 handler);
-        assertTrue(booleanFuture.getResult());
+        assertTrue(booleanFuture.getResult(30, TimeUnit.SECONDS));
 
         booleanFuture = am.hasFeatures(ACCOUNT,
                 new String[]{FEATURE_2},
                 null /* callback */,
                 handler);
-        assertTrue(booleanFuture.getResult());
+        assertTrue(booleanFuture.getResult(30, TimeUnit.SECONDS));
 
         booleanFuture = am.hasFeatures(ACCOUNT,
                 new String[]{FEATURE_1, FEATURE_2},
                 null /* callback */,
                 handler);
-        assertTrue(booleanFuture.getResult());
+        assertTrue(booleanFuture.getResult(30, TimeUnit.SECONDS));
 
         booleanFuture = am.hasFeatures(ACCOUNT,
                 new String[]{NON_EXISTING_FEATURE},
                 null /* callback */,
                 handler);
-        assertFalse(booleanFuture.getResult());
+        assertFalse(booleanFuture.getResult(30, TimeUnit.SECONDS));
 
         booleanFuture = am.hasFeatures(ACCOUNT,
                 new String[]{NON_EXISTING_FEATURE, FEATURE_1},
                 null /* callback */,
                 handler);
-        assertFalse(booleanFuture.getResult());
+        assertFalse(booleanFuture.getResult(30, TimeUnit.SECONDS));
 
         booleanFuture = am.hasFeatures(ACCOUNT,
                 new String[]{NON_EXISTING_FEATURE, FEATURE_1, FEATURE_2},
                 null /* callback */,
                 handler);
-        assertFalse(booleanFuture.getResult());
+        assertFalse(booleanFuture.getResult(30, TimeUnit.SECONDS));
     }
 
     private AccountManagerCallback<Boolean> getAssertTrueCallback(final CountDownLatch latch) {
@@ -2183,7 +2197,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
             public void run(AccountManagerFuture<Boolean> booleanFuture) {
                 try {
                     // Assert returned result should be TRUE
-                    assertTrue(booleanFuture.getResult());
+                    assertTrue(booleanFuture.getResult(30, TimeUnit.SECONDS));
                 } catch (Exception e) {
                     fail("Exception: " + e);
                 } finally {
@@ -2199,7 +2213,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
             public void run(AccountManagerFuture<Boolean> booleanFuture) {
                 try {
                     // Assert returned result should be FALSE
-                    assertFalse(booleanFuture.getResult());
+                    assertFalse(booleanFuture.getResult(30, TimeUnit.SECONDS));
                 } catch (Exception e) {
                     fail("Exception: " + e);
                 } finally {
@@ -2285,7 +2299,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 options,// OPTIONS_BUNDLE,
                 null, /* activity */
                 null /* callback */,
-                null /* handler */).getResult();
+                null /* handler */).getResult(30, TimeUnit.SECONDS);
         return result.getLong(
                 AccountManager.KEY_LAST_AUTHENTICATED_TIME, -1);
     }
@@ -2725,7 +2739,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
             @Override
             public void run(AccountManagerFuture<Bundle> bundleFuture) {
                 try {
-                    bundleFuture.getResult();
+                    bundleFuture.getResult(30, TimeUnit.SECONDS);
                     fail("should have thrown an AuthenticatorException");
                 } catch (OperationCanceledException e) {
                     fail("should not throw an OperationCanceledException");
@@ -3122,7 +3136,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
             @Override
             public void run(AccountManagerFuture<Bundle> bundleFuture) {
                 try {
-                    bundleFuture.getResult();
+                    bundleFuture.getResult(30, TimeUnit.SECONDS);
                     fail("should have thrown an AuthenticatorException");
                 } catch (OperationCanceledException e) {
                     fail("should not throw an OperationCanceledException");
@@ -3169,7 +3183,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 callback,
                 handler);
 
-        Bundle resultBundle = futureBundle.getResult();
+        Bundle resultBundle = futureBundle.getResult(30, TimeUnit.SECONDS);
         assertTrue(futureBundle.isDone());
         assertNotNull(resultBundle);
 
@@ -3195,7 +3209,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 callback,
                 handler);
 
-        Bundle resultBundle = futureBundle.getResult();
+        Bundle resultBundle = futureBundle.getResult(30, TimeUnit.SECONDS);
         assertTrue(futureBundle.isDone());
         assertNotNull(resultBundle);
 
@@ -3289,7 +3303,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
 
     private Bundle getResultExpectNoException(AccountManagerFuture<Bundle> bundleFuture) {
         try {
-            return bundleFuture.getResult();
+            return bundleFuture.getResult(30, TimeUnit.SECONDS);
         } catch (OperationCanceledException e) {
             fail("should not throw an OperationCanceledException");
         } catch (IOException e) {
@@ -4074,7 +4088,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
             @Override
             public void run(AccountManagerFuture<Bundle> bundleFuture) {
                 try {
-                    bundleFuture.getResult();
+                    bundleFuture.getResult(30, TimeUnit.SECONDS);
                     fail("should have thrown an AuthenticatorException");
                 } catch (OperationCanceledException e) {
                     fail("should not throw an OperationCanceledException");
@@ -4108,7 +4122,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                 callback,
                 handler);
 
-        Bundle resultBundle = futureBundle.getResult();
+        Bundle resultBundle = futureBundle.getResult(30, TimeUnit.SECONDS);
         assertTrue(futureBundle.isDone());
         assertNotNull(resultBundle);
 
@@ -4250,7 +4264,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
             public void run(AccountManagerFuture<Boolean> booleanFuture) {
                 Boolean result = false;
                 try {
-                    result = booleanFuture.getResult();
+                    result = booleanFuture.getResult(30, TimeUnit.SECONDS);
                 } catch (OperationCanceledException e) {
                     fail("should not throw an OperationCanceledException");
                 } catch (IOException e) {
@@ -4291,7 +4305,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
             @Override
             public void run(AccountManagerFuture<Boolean> booleanFuture) {
                 try {
-                    booleanFuture.getResult();
+                    booleanFuture.getResult(30, TimeUnit.SECONDS);
                     // AuthenticatorException should be thrown when authenticator
                     // returns AccountManager.ERROR_CODE_INVALID_RESPONSE.
                     fail("should have thrown an AuthenticatorException");
@@ -4334,7 +4348,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
 
         Boolean result = false;
         if (callback == null) {
-            result = booleanFuture.getResult();
+            result = booleanFuture.getResult(30, TimeUnit.SECONDS);
             assertTrue(booleanFuture.isDone());
         }
 

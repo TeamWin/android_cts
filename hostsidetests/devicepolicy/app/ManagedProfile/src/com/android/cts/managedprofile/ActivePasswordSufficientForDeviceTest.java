@@ -22,21 +22,22 @@ import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_NONE;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_ALPHANUMERIC;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_NUMERIC;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED;
-import static android.os.UserHandle.USER_SYSTEM;
 
-import static org.junit.Assert.fail;
 import static org.testng.Assert.assertThrows;
 
 import android.os.Process;
 import android.os.UserHandle;
+import android.os.UserManager;
 
 import com.android.compatibility.common.util.SystemUtil;
 
 public class ActivePasswordSufficientForDeviceTest extends BaseManagedProfileTest {
+    int mParentUserId;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        mParentUserId = getParentUserId();
         mDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT,
                 PASSWORD_QUALITY_UNSPECIFIED);
         mDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_NONE);
@@ -65,7 +66,7 @@ public class ActivePasswordSufficientForDeviceTest extends BaseManagedProfileTes
     }
 
     public void testActivePsswordSufficientForDevice_UnifiedPassword_BothPolicies() {
-        changeUserCredential("1234", null, USER_SYSTEM);
+        changeUserCredential("1234", null, mParentUserId);
         try {
             mDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT,
                     PASSWORD_QUALITY_ALPHANUMERIC);
@@ -78,15 +79,26 @@ public class ActivePasswordSufficientForDeviceTest extends BaseManagedProfileTes
             mDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT,
                     PASSWORD_QUALITY_UNSPECIFIED);
             mParentDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_NONE);
-            changeUserCredential(null, "1234", USER_SYSTEM);
+            changeUserCredential(null, "1234", mParentUserId);
         }
+    }
+
+    private int getParentUserId() {
+        var myUserId = Process.myUserHandle().getIdentifier();
+        var profiles = UserManager.get(mContext).getUserProfiles();
+        var otherProfileIds = profiles.stream()
+                .mapToInt(UserHandle::getIdentifier)
+                .filter(userId -> userId != myUserId)
+                .toArray();
+        assertEquals("zero or multiple profiles, cannot find parent", 1, otherProfileIds.length);
+        return otherProfileIds[0];
     }
 
     //TODO: reinstate test once LockSettingsShellCommand allows setting password for profiles
     // that have unified challenge b/176230819
     private void toTestActivePsswordSufficientForDevice_SeparatePassword_BothPolicies() {
         final int myUserId = UserHandle.getUserId(Process.myUid());
-        changeUserCredential("1234", null, USER_SYSTEM);
+        changeUserCredential("1234", null, mParentUserId);
         changeUserCredential("asdf12", "1234", myUserId); // This currently fails
         try {
             mDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_LOW);
@@ -98,7 +110,7 @@ public class ActivePasswordSufficientForDeviceTest extends BaseManagedProfileTes
         } finally {
             mDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_NONE);
             mParentDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_NONE);
-            changeUserCredential(null, "1234", USER_SYSTEM);
+            changeUserCredential(null, "1234", mParentUserId);
         }
     }
 

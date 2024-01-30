@@ -44,9 +44,9 @@ import android.os.RemoteException;
 import android.os.SystemClock;
 import android.provider.Settings;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -63,12 +63,12 @@ import java.util.concurrent.TimeUnit;
 public class SettingsTest {
 
     private static final int sUserId = Process.myUserHandle().getIdentifier();
-
+    private static final String sPackageName =
+            InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageName();
     @BeforeClass
     public static void setUp() throws Exception {
-        final String packageName = InstrumentationRegistry.getTargetContext().getPackageName();
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .executeShellCommand("appops set --user " + sUserId + " " + packageName
+                .executeShellCommand("appops set --user " + sUserId + " " + sPackageName
                         + " android:write_settings allow");
 
         // Wait a beat to persist the change
@@ -77,9 +77,8 @@ public class SettingsTest {
 
     @AfterClass
     public static void tearDown() throws Exception {
-        final String packageName = InstrumentationRegistry.getTargetContext().getPackageName();
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .executeShellCommand("appops set --user " + sUserId + " " + packageName
+                .executeShellCommand("appops set --user " + sUserId + " " + sPackageName
                         + " android:write_settings default");
     }
 
@@ -358,18 +357,17 @@ public class SettingsTest {
     @Test
     public void testCheckWriteSettingsOperation() throws Exception {
         final int myUid = Binder.getCallingUid();
-        final String callingPackage = InstrumentationRegistry.getTargetContext().getPackageName();
         // Verify write settings permission.
-        Settings.checkAndNoteWriteSettingsOperation(getContext(), myUid, callingPackage,
+        Settings.checkAndNoteWriteSettingsOperation(getContext(), myUid, sPackageName,
                 true /* throwException */);
 
         // Verify SecurityException throw if uid do not match callingPackage.
         final int otherUid = myUid + 1;
         try {
-            Settings.checkAndNoteWriteSettingsOperation(getContext(), otherUid, callingPackage,
+            Settings.checkAndNoteWriteSettingsOperation(getContext(), otherUid, sPackageName,
                     true /* throwException */);
             fail("Expect SecurityException because uid " + otherUid + " do not belong to "
-                    + callingPackage);
+                    + sPackageName);
         } catch (SecurityException se) { }
 
         // Verify SecurityException throw if calling package do not have WRITE_SETTINGS permission.
@@ -399,6 +397,6 @@ public class SettingsTest {
     }
 
     private Context getContext() {
-        return InstrumentationRegistry.getTargetContext();
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 }

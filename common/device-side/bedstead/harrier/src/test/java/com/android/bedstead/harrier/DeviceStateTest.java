@@ -16,8 +16,6 @@
 
 package com.android.bedstead.harrier;
 
-import com.android.bedstead.harrier.annotations.EnsureDefaultContentSuggestionsServiceEnabled;
-import com.android.bedstead.harrier.annotations.EnsureDefaultContentSuggestionsServiceDisabled;
 import static android.Manifest.permission.INTERACT_ACROSS_PROFILES;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.app.AppOpsManager.OPSTR_FINE_LOCATION;
@@ -38,7 +36,6 @@ import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_BLUETOOTH;
-import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_TIME;
 import static com.android.bedstead.nene.permissions.CommonPermissions.READ_CONTACTS;
 import static com.android.bedstead.nene.types.OptionalBoolean.FALSE;
 import static com.android.bedstead.nene.types.OptionalBoolean.TRUE;
@@ -64,6 +61,8 @@ import android.view.contentcapture.ContentCaptureManager;
 import com.android.bedstead.harrier.annotations.EnsureBluetoothDisabled;
 import com.android.bedstead.harrier.annotations.EnsureBluetoothEnabled;
 import com.android.bedstead.harrier.annotations.EnsureCanAddUser;
+import com.android.bedstead.harrier.annotations.EnsureDefaultContentSuggestionsServiceDisabled;
+import com.android.bedstead.harrier.annotations.EnsureDefaultContentSuggestionsServiceEnabled;
 import com.android.bedstead.harrier.annotations.EnsureDemoMode;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveAppOp;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
@@ -81,17 +80,21 @@ import com.android.bedstead.harrier.annotations.EnsureHasCloneProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAccounts;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoCloneProfile;
+import com.android.bedstead.harrier.annotations.EnsureHasNoPrivateProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.EnsureHasPrivateProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfileKt;
 import com.android.bedstead.harrier.annotations.EnsureNotDemoMode;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
+import com.android.bedstead.harrier.annotations.EnsurePropertySet;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
 import com.android.bedstead.harrier.annotations.EnsureSecureSettingSet;
 import com.android.bedstead.harrier.annotations.EnsureTestAppDoesNotHavePermission;
@@ -100,7 +103,11 @@ import com.android.bedstead.harrier.annotations.EnsureTestAppHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
 import com.android.bedstead.harrier.annotations.EnsureWifiDisabled;
 import com.android.bedstead.harrier.annotations.EnsureWifiEnabled;
+import com.android.bedstead.harrier.annotations.EnsureWillNotTakeQuickBugReports;
+import com.android.bedstead.harrier.annotations.EnsureWillTakeQuickBugReports;
+import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.OtherUser;
+import com.android.bedstead.harrier.annotations.RequireAdbOverWifi;
 import com.android.bedstead.harrier.annotations.RequireAospBuild;
 import com.android.bedstead.harrier.annotations.RequireCnGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
@@ -110,6 +117,7 @@ import com.android.bedstead.harrier.annotations.RequireFeatureFlagNotEnabled;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagValue;
 import com.android.bedstead.harrier.annotations.RequireGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireHasDefaultBrowser;
+import com.android.bedstead.harrier.annotations.RequireHasMainUser;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireInstantApp;
 import com.android.bedstead.harrier.annotations.RequireLowRamDevice;
@@ -126,6 +134,7 @@ import com.android.bedstead.harrier.annotations.RequireRunNotOnVisibleBackground
 import com.android.bedstead.harrier.annotations.RequireRunOnCloneProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnPrivateProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
@@ -145,11 +154,14 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwne
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwnerKt;
 import com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest;
 import com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexistenceTest;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnBackgroundDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnCloneProfileAlongsideManagedProfileUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnPrivateProfileAlongsideManagedProfileUsingParentInstance;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnPrivateProfileAlongsideOrganizationOwnedProfileUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnFinancedDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnOrganizationOwnedProfileOwner;
@@ -222,6 +234,7 @@ public class DeviceStateTest {
 
     private static final long TIMEOUT = 4000000;
     private static final String CLONE_PROFILE_TYPE_NAME = "android.os.usertype.profile.CLONE";
+    private static final String PRIVATE_PROFILE_TYPE_NAME = "android.os.usertype.profile.PRIVATE";
 
     private static final String USER_RESTRICTION = UserManager.DISALLOW_AUTOFILL;
     private static final String SECOND_USER_RESTRICTION = UserManager.DISALLOW_AIRPLANE_MODE;
@@ -390,6 +403,68 @@ public class DeviceStateTest {
     public void includeRunOnCloneProfileAlongsideOrgOwnedProfileOwnerUsingParentInstance_runsOnCloneProfile() {
         assertThat(TestApis.users().instrumented().type().name())
                 .isEqualTo(CLONE_PROFILE_TYPE_NAME);
+
+        UserReference dpcUser = sDeviceState.dpc().user();
+        assertThat(dpcUser.type().name()).isEqualTo(MANAGED_PROFILE_TYPE_NAME);
+        assertThat(TestApis.devicePolicy().getProfileOwner(dpcUser).isOrganizationOwned()).isTrue();
+        assertThat(sDeviceState.dpc().isParentInstance()).isTrue();
+    }
+
+    @Test
+    @EnsureHasPrivateProfile
+    public void privateProfile_privateProfileProvided_returnsPrivateProfile() {
+        assertThat(sDeviceState.privateProfile()).isNotNull();
+    }
+
+    @Test
+    @EnsureHasPrivateProfile
+    public void ensureHasPrivateProfileAnnotation_privateProfileExists() {
+        assertThat(TestApis.users().findProfileOfType(
+                TestApis.users().supportedType(PRIVATE_PROFILE_TYPE_NAME),
+                TestApis.users().instrumented())
+        ).isNotNull();
+    }
+
+    @Test
+    @EnsureHasNoPrivateProfile
+    public void ensureHasNoPrivateProfileAnnotation_privateProfileDoesNotExists() {
+        assertThat(TestApis.users().findProfileOfType(
+                TestApis.users().supportedType(PRIVATE_PROFILE_TYPE_NAME),
+                TestApis.users().instrumented())
+        ).isNull();
+    }
+
+    @Test
+    @RequireRunOnPrivateProfile
+    public void privateProfile_runningOnPrivateProfile_returnsCurrentProfile() {
+        assertThat(sDeviceState.privateProfile()).isEqualTo(TestApis.users().instrumented());
+    }
+
+    @Test
+    @RequireRunOnPrivateProfile
+    public void requireRunOnPrivateProfileAnnotation_isRunningOnPrivateProfile() {
+        assertThat(TestApis.users().instrumented().type().name())
+                .isEqualTo(PRIVATE_PROFILE_TYPE_NAME);
+    }
+
+    @Test
+    @IncludeRunOnPrivateProfileAlongsideManagedProfileUsingParentInstance
+    public void includeRunOnPrivateProfileAlongsideProfileOwnerUsingParentInstance_runsOnPrivateProfile() {
+        assertThat(TestApis.users().instrumented().type().name())
+                .isEqualTo(PRIVATE_PROFILE_TYPE_NAME);
+
+        UserReference dpcUser = sDeviceState.dpc().user();
+        assertThat(dpcUser.type().name()).isEqualTo(MANAGED_PROFILE_TYPE_NAME);
+        assertThat(TestApis.devicePolicy().getProfileOwner(dpcUser).isOrganizationOwned())
+                .isFalse();
+        assertThat(sDeviceState.dpc().isParentInstance()).isTrue();
+    }
+
+    @Test
+    @IncludeRunOnPrivateProfileAlongsideOrganizationOwnedProfileUsingParentInstance
+    public void includeRunOnPrivateProfileAlongsideOrgOwnedProfileOwnerUsingParentInstance_runsOnPrivateProfile() {
+        assertThat(TestApis.users().instrumented().type().name())
+                .isEqualTo(PRIVATE_PROFILE_TYPE_NAME);
 
         UserReference dpcUser = sDeviceState.dpc().user();
         assertThat(dpcUser.type().name()).isEqualTo(MANAGED_PROFILE_TYPE_NAME);
@@ -1007,6 +1082,13 @@ public class DeviceStateTest {
     }
 
     @Test
+    @RequireHasMainUser(reason = "Test")
+    public void requireHasMainUser_hasMainUser() {
+        assertThat(TestApis.users().main()).isNotNull();
+    }
+
+
+    @Test
     @RequireLowRamDevice(reason = "Test")
     public void requireLowRamDeviceAnnotation_isLowRamDevice() {
         assertThat(TestApis.context().instrumentedContext().getSystemService(ActivityManager.class)
@@ -1555,9 +1637,9 @@ public class DeviceStateTest {
         assertThat(sDeviceState.dpc().testApp().targetSdkVersion()).isEqualTo(28);
     }
 
-    @EnsureHasProfileOwner(key = EnsureHasProfileOwner.DEFAULT_KEY, isPrimary = true)
+    @EnsureHasProfileOwner(key = EnsureHasProfileOwnerKt.DEFAULT_KEY, isPrimary = true)
     @AdditionalQueryParameters(
-            forTestApp = EnsureHasProfileOwner.DEFAULT_KEY,
+            forTestApp = EnsureHasProfileOwnerKt.DEFAULT_KEY,
             query = @Query(targetSdkVersion = @IntegerQuery(isEqualTo = 28))
     )
     @Test
@@ -1565,9 +1647,9 @@ public class DeviceStateTest {
         assertThat(sDeviceState.dpc().testApp().targetSdkVersion()).isEqualTo(28);
     }
 
-    @EnsureHasWorkProfile(dpcKey = EnsureHasWorkProfile.DEFAULT_KEY, dpcIsPrimary = true)
+    @EnsureHasWorkProfile(dpcKey = EnsureHasWorkProfileKt.DEFAULT_KEY, dpcIsPrimary = true)
     @AdditionalQueryParameters(
-            forTestApp = EnsureHasWorkProfile.DEFAULT_KEY,
+            forTestApp = EnsureHasWorkProfileKt.DEFAULT_KEY,
             query = @Query(targetSdkVersion = @IntegerQuery(isEqualTo = 28))
     )
     @Test
@@ -1640,9 +1722,33 @@ public class DeviceStateTest {
         assertThat(TestApis.content().suggestions().defaultServiceEnabled(sDeviceState.additionalUser())).isTrue();
     }
 
+    @RequireAdbOverWifi(failureMode = FailureMode.SKIP)
+    @Test
+    public void requireAdbOverWifiAnnotation_enablesAdbOverWifi() {
+        assertThat(TestApis.adb().isEnabledOverWifi()).isTrue();
+    }
+
     @Test
     @RequireHasDefaultBrowser
     public void requireHasDefaultBrowser_onDifferentUser_defaultContentSuggestionsServiceIsEnabled() {
         assertThat(TestApis.roles().getRoleHolders(RoleManager.ROLE_BROWSER)).isNotEmpty();
+    }
+
+    @Test
+    @EnsurePropertySet(key = "key", value = "value")
+    public void ensurePropertySetAnnotation_propertyIsSet() {
+        assertThat(TestApis.properties().get("key")).isEqualTo("value");
+    }
+
+    @Test
+    @EnsureWillTakeQuickBugReports
+    public void ensureWillTakeQuickBugReportsAnnotation_willTakeQuickBugReports() {
+        assertThat(TestApis.bugReports().willTakeQuickBugReports()).isTrue();
+    }
+
+    @Test
+    @EnsureWillNotTakeQuickBugReports
+    public void ensureWillNotTakeQuickBugReportsAnnotation_willNotTakeQuickBugReports() {
+        assertThat(TestApis.bugReports().willTakeQuickBugReports()).isFalse();
     }
 }

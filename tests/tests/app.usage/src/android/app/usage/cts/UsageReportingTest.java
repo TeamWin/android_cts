@@ -25,6 +25,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.platform.test.annotations.AppModeFull;
 import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.LockScreenSession;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.uiautomator.UiDevice;
@@ -314,7 +315,8 @@ public class UsageReportingTest extends ActivityManagerTestBase {
         assertAppOrTokenUsed(mFullToken0, true);
 
         // Send the device to keyguard to get onStop called for the token reporting activities.
-        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+        try (LockScreenSession lockScreenSession =
+                    new LockScreenSession(mInstrumentation, mWmState)) {
             lockScreenSession.gotoKeyguard();
             Thread.sleep(1000);
             assertAppOrTokenUsed(mFullToken0, false);
@@ -349,7 +351,8 @@ public class UsageReportingTest extends ActivityManagerTestBase {
         assertAppOrTokenUsed(mFullToken0, true);
 
         // Send the device to keyguard to get onStop called for the token reporting activities.
-        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+        try (LockScreenSession lockScreenSession =
+                    new LockScreenSession(mInstrumentation, mWmState)) {
             lockScreenSession.gotoKeyguard();
             Thread.sleep(1000);
             assertAppOrTokenUsed(mFullToken0, false);

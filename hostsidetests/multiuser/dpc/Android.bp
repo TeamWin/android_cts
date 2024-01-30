@@ -20,10 +20,5 @@ android_test_helper_app {
     name: "CtsMultiuserDpc",
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
-    // tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
-    ],
     sdk_version: "current",
 }

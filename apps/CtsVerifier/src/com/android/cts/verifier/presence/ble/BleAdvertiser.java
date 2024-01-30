@@ -21,6 +21,9 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.le.AdvertiseCallback;
 import android.bluetooth.le.AdvertiseData;
 import android.bluetooth.le.AdvertiseSettings;
+import android.bluetooth.le.AdvertisingSet;
+import android.bluetooth.le.AdvertisingSetCallback;
+import android.bluetooth.le.AdvertisingSetParameters;
 import android.bluetooth.le.BluetoothLeAdvertiser;
 import android.util.Log;
 
@@ -40,6 +43,7 @@ public class BleAdvertiser {
     private final BluetoothLeAdvertiser advertiser =
             BluetoothAdapter.getDefaultAdapter().getBluetoothLeAdvertiser();
     private boolean isAdvertising;
+    private boolean mIsExtendedAdvertisement;
 
     private final AdvertiseSettings settings =
             new AdvertiseSettings.Builder()
@@ -65,9 +69,27 @@ public class BleAdvertiser {
                 }
             };
 
+    private final AdvertisingSetCallback mAdvertisingSetCallback =
+            new AdvertisingSetCallback() {
+                @Override
+                public void onAdvertisingSetStarted(AdvertisingSet advertisingSet, int txPower,
+                        int status) {
+                    super.onAdvertisingSetStarted(advertisingSet, txPower, status);
+                    Log.i(TAG, "onAdvertisingSetStarted");
+                    mIsExtendedAdvertisement = true;
+                }
+
+                @Override
+                public void onAdvertisingSetStopped(AdvertisingSet advertisingSet) {
+                    super.onAdvertisingSetStopped(advertisingSet);
+                    Log.i(TAG, "onAdvertisingSetStopped");
+                    mIsExtendedAdvertisement = false;
+                }
+            };
+
     public BleAdvertiser() {}
 
-    public void startAdvertising(byte[] payload) {
+    public void startAdvertising(byte[] payload, boolean isExtendedAdvertisement, int txPower) {
         if (isAdvertising) {
             stopAdvertising();
         }
@@ -79,21 +101,23 @@ public class BleAdvertiser {
                 freeBytesForPayload,
                 payload.length);
 
-        advertiser.startAdvertising(
-                settings,
-                new AdvertiseData.Builder()
-                        // UUID (16 bytes) + service data overhead (2 bytes) + service data +
-                        // device name
-                        // overhead (2 bytes) = 20 bytes + service data bytes
-                        // This leaves 10 bytes or fewer, depending on the service data, for the
-                        // device name
-                        // since we only have 31 bytes available in AdvertiseData. To prevent BLE
-                        // advertising
-                        // from failing, don't set the device name.
-                        .setIncludeDeviceName(false)
-                        .addServiceData(Const.PARCEL_UUID, payload)
-                        .build(),
-                advertisingCallback);
+        AdvertiseData data = new AdvertiseData.Builder()
+                // UUID (16 bytes) + service data overhead (2 bytes) + service data +
+                // device name
+                // overhead (2 bytes) = 20 bytes + service data bytes
+                // This leaves 10 bytes or fewer, depending on the service data, for the
+                // device name
+                // since we only have 31 bytes available in AdvertiseData. To prevent BLE
+                // advertising
+                // from failing, don't set the device name.
+                .setIncludeDeviceName(false)
+                .addServiceData(Const.PARCEL_UUID, payload)
+                .build();
+        if (isExtendedAdvertisement) {
+            advertiser.startAdvertisingSet(buildAdvertisingSetParameters(txPower), data, /*scanResponse= */ null, /*periodicParameters= */ null, /*periodicData= */ null, mAdvertisingSetCallback);
+        } else {
+            advertiser.startAdvertising(settings, data, advertisingCallback);
+        }
 
         Log.i(TAG, "startAdvertising: %s" + Arrays.toString(payload));
 
@@ -102,7 +126,11 @@ public class BleAdvertiser {
 
     public void stopAdvertising() {
         Log.i(TAG, "stopAdvertising");
-        advertiser.stopAdvertising(advertisingCallback);
+        if (mIsExtendedAdvertisement) {
+            advertiser.stopAdvertisingSet(mAdvertisingSetCallback);
+        } else {
+            advertiser.stopAdvertising(advertisingCallback);
+        }
         isAdvertising = false;
     }
 
@@ -114,5 +142,14 @@ public class BleAdvertiser {
     private static int getFreeBytesForPayload() {
         int bytesForServiceData = OVERHEAD_BYTES + 1; // + 1 for txOffset
         return AVAILABLE_BYTES - PARCEL_UUID_BYTES - bytesForServiceData;
+    }
+
+    private static AdvertisingSetParameters buildAdvertisingSetParameters(int txPower) {
+        return new AdvertisingSetParameters.Builder()
+                .setConnectable(true)
+                .setInterval(AdvertisingSetParameters.INTERVAL_LOW)
+                .setTxPowerLevel(txPower)
+                .setIncludeTxPower(true)
+                .build();
     }
 }

@@ -17,6 +17,7 @@
 package android.media.router.cts;
 
 import static android.media.cts.MediaRouterTestConstants.DEVICE_SIDE_TEST_CLASS;
+import static android.media.cts.MediaRouterTestConstants.DEVICE_SIDE_TEST_CLASS_WITH_MODIFY_AUDIO_ROUTING;
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_1_APK;
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_1_PACKAGE;
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_2_APK;
@@ -24,8 +25,11 @@ import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_2
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_3_APK;
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_3_PACKAGE;
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_SELF_SCAN_ONLY_APK;
+import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_SELF_SCAN_ONLY_PACKAGE;
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_TEST_APK;
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_TEST_PACKAGE;
+import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_TEST_WITH_MODIFY_AUDIO_ROUTING_APK;
+import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_TEST_WITH_MODIFY_AUDIO_ROUTING_PACKAGE;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -39,9 +43,13 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.AfterClassWithInfo;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
 
+import com.google.common.truth.Expect;
+
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -51,6 +59,8 @@ import java.io.FileNotFoundException;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
 
+    @ClassRule public static final Expect expect = Expect.create();
+
     @BeforeClassWithInfo
     public static void installApps(TestInformation testInfo)
             throws DeviceNotAvailableException, FileNotFoundException {
@@ -59,16 +69,39 @@ public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
         installTestApp(testInfo, MEDIA_ROUTER_PROVIDER_3_APK);
         installTestApp(testInfo, MEDIA_ROUTER_PROVIDER_SELF_SCAN_ONLY_APK);
         installTestApp(testInfo, MEDIA_ROUTER_TEST_APK);
+        installTestApp(testInfo, MEDIA_ROUTER_TEST_WITH_MODIFY_AUDIO_ROUTING_APK);
     }
 
-    @BeforeClassWithInfo
+    @AfterClassWithInfo
     public static void uninstallApps(TestInformation testInfo) throws DeviceNotAvailableException {
         ITestDevice device = testInfo.getDevice();
-        device.uninstallPackage(MEDIA_ROUTER_PROVIDER_1_PACKAGE);
-        device.uninstallPackage(MEDIA_ROUTER_PROVIDER_2_PACKAGE);
-        device.uninstallPackage(MEDIA_ROUTER_PROVIDER_3_PACKAGE);
-        device.uninstallPackage(MEDIA_ROUTER_PROVIDER_SELF_SCAN_ONLY_APK);
-        device.uninstallPackage(MEDIA_ROUTER_TEST_PACKAGE);
+        expect.that(device.uninstallPackage(MEDIA_ROUTER_PROVIDER_1_PACKAGE)).isNull();
+        expect.that(device.uninstallPackage(MEDIA_ROUTER_PROVIDER_2_PACKAGE)).isNull();
+        expect.that(device.uninstallPackage(MEDIA_ROUTER_PROVIDER_3_PACKAGE)).isNull();
+        expect.that(device.uninstallPackage(MEDIA_ROUTER_PROVIDER_SELF_SCAN_ONLY_PACKAGE)).isNull();
+        expect.that(device.uninstallPackage(MEDIA_ROUTER_TEST_PACKAGE)).isNull();
+        expect.that(device.uninstallPackage(MEDIA_ROUTER_TEST_WITH_MODIFY_AUDIO_ROUTING_PACKAGE))
+                .isNull();
+    }
+
+    @Test
+    @AppModeFull
+    @RequiresDevice
+    public void getSystemController_withModifyAudioRouting_returnsDeviceRoute() throws Exception {
+        runDeviceTests(
+                MEDIA_ROUTER_TEST_WITH_MODIFY_AUDIO_ROUTING_PACKAGE,
+                DEVICE_SIDE_TEST_CLASS_WITH_MODIFY_AUDIO_ROUTING,
+                "getSystemController_withModifyAudioRouting_returnsDeviceRoute");
+    }
+
+    @Test
+    @AppModeFull
+    @RequiresDevice
+    public void getRoutes_withModifyAudioRouting_returnsDeviceRoute() throws Exception {
+        runDeviceTests(
+                MEDIA_ROUTER_TEST_WITH_MODIFY_AUDIO_ROUTING_PACKAGE,
+                DEVICE_SIDE_TEST_CLASS_WITH_MODIFY_AUDIO_ROUTING,
+                "getRoutes_withModifyAudioRouting_returnsDeviceRoute");
     }
 
     @ApiTest(apis = {"android.media.RouteDiscoveryPreference, android.media.MediaRouter2"})
@@ -152,7 +185,7 @@ public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
     @AppModeFull
     @RequiresDevice
     @Test
-    public void getRoutes_dependingOnPermissions_returnsExpectedSystemRoutes() throws Exception {
+    public void getRoutes_returnsExpectedSystemRoutes_dependingOnPermissions() throws Exception {
         // Bluetooth permissions must be manually granted.
         setPermissionEnabled(
                 MEDIA_ROUTER_TEST_PACKAGE,
@@ -163,7 +196,13 @@ public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
                 "android.permission.BLUETOOTH_CONNECT",
                 /* enabled= */ true);
         runDeviceTests(
-                MEDIA_ROUTER_TEST_PACKAGE, DEVICE_SIDE_TEST_CLASS, "getRoutes_returnDeviceRoute");
+                MEDIA_ROUTER_TEST_PACKAGE,
+                DEVICE_SIDE_TEST_CLASS,
+                "getRoutes_withBTPermissions_returnsDeviceRoute");
+        runDeviceTests(
+                MEDIA_ROUTER_TEST_PACKAGE,
+                DEVICE_SIDE_TEST_CLASS,
+                "getSystemController_withBTPermissions_returnsDeviceRoute");
         setPermissionEnabled(
                 MEDIA_ROUTER_TEST_PACKAGE,
                 "android.permission.BLUETOOTH_SCAN",
@@ -175,7 +214,47 @@ public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
         runDeviceTests(
                 MEDIA_ROUTER_TEST_PACKAGE,
                 DEVICE_SIDE_TEST_CLASS,
-                "getRoutes_returnsDefaultDevice");
+                "getRoutes_withoutBTPermissions_returnsDefaultRoute");
+    }
+
+    @AppModeFull
+    @RequiresDevice
+    @Test
+    public void getSystemController_withBTPermissions_returnsDeviceRoute() throws Exception {
+        // Bluetooth permissions must be manually granted.
+        setPermissionEnabled(
+                MEDIA_ROUTER_TEST_PACKAGE,
+                "android.permission.BLUETOOTH_SCAN",
+                /* enabled= */ true);
+        setPermissionEnabled(
+                MEDIA_ROUTER_TEST_PACKAGE,
+                "android.permission.BLUETOOTH_CONNECT",
+                /* enabled= */ true);
+        try {
+            runDeviceTests(
+                    MEDIA_ROUTER_TEST_PACKAGE,
+                    DEVICE_SIDE_TEST_CLASS,
+                    "getSystemController_withBTPermissions_returnsDeviceRoute");
+        } finally {
+            setPermissionEnabled(
+                    MEDIA_ROUTER_TEST_PACKAGE,
+                    "android.permission.BLUETOOTH_SCAN",
+                    /* enabled= */ false);
+            setPermissionEnabled(
+                    MEDIA_ROUTER_TEST_PACKAGE,
+                    "android.permission.BLUETOOTH_CONNECT",
+                    /* enabled= */ false);
+        }
+    }
+
+    @AppModeFull
+    @RequiresDevice
+    @Test
+    public void getSystemController_withoutBTPermissions_returnsDefaultRoute() throws Exception {
+        runDeviceTests(
+                MEDIA_ROUTER_TEST_PACKAGE,
+                DEVICE_SIDE_TEST_CLASS,
+                "getSystemController_withoutBTPermissions_returnsDefaultRoute");
     }
 
     @ApiTest(apis = {"android.media.MediaRouter2"})
@@ -192,7 +271,14 @@ public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
     private void setPermissionEnabled(String packageName, String permission, boolean enabled)
             throws DeviceNotAvailableException {
         String action = enabled ? "grant" : "revoke";
-        getDevice().executeShellCommand("pm %s %s %s".formatted(action, packageName, permission));
+        String result =
+                getDevice()
+                        .executeShellCommand(
+                                "pm %s %s %s".formatted(action, packageName, permission));
+        if (!result.isEmpty()) {
+            assertWithMessage("Setting permission %s failed: %s".formatted(permission, result))
+                    .fail();
+        }
     }
 
     private static void installTestApp(TestInformation testInfo, String apkName)

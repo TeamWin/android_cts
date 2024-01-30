@@ -24,11 +24,11 @@ import android.app.admin.SecurityLog.SecurityEvent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Process;
-import android.support.test.uiautomator.UiDevice;
 import android.test.MoreAsserts;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.bedstead.dpmwrapper.DeviceOwnerHelper;
 

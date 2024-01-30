@@ -16,21 +16,27 @@
 
 package android.car.cts.powerpolicy;
 
+import com.android.car.power.CarPowerDumpProto;
+import com.android.car.power.CarPowerDumpProto.PolicyReaderProto;
+import com.android.car.power.CarPowerDumpProto.PowerComponentHandlerProto;
+import com.android.car.power.CarPowerDumpProto.PowerComponentHandlerProto.PowerComponentToState;
+import com.android.car.power.CarPowerDumpProto.SilentModeHandlerProto;
 import com.android.tradefed.log.LogUtil.CLog;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class CpmsFrameworkLayerStateInfo {
     private static final int STRING_BUILDER_BUF_SIZE = 1024;
-
     public static final String COMMAND = "dumpsys car_service --services"
             + " CarPowerManagementService";
+    public static final String COMMAND_PROTO = COMMAND + " --proto";
     public static final String CURRENT_STATE_HDR = "mCurrentState:";
     public static final String CURRENT_POLICY_ID_HDR = "mCurrentPowerPolicyId:";
     public static final String PENDING_POLICY_ID_HDR = "mPendingPowerPolicyId:";
@@ -51,10 +57,10 @@ public final class CpmsFrameworkLayerStateInfo {
             "VISUAL_INTERACTION", "TRUSTED_DEVICE_DETECTION", "LOCATION", "MICROPHONE", "CPU"};
     private static final HashSet COMPONENT_SET = new HashSet(Arrays.asList(COMPONENT_LIST));
 
-    private final ArrayList<String> mEnables;
-    private final ArrayList<String> mDisables;
-    private final ArrayList<String> mControlledEnables;
-    private final ArrayList<String> mControlledDisables;
+    private final List<String> mEnables;
+    private final List<String> mDisables;
+    private final List<String> mControlledEnables;
+    private final List<String> mControlledDisables;
     private final String[] mChangedComponents;
     private final PowerPolicyGroups mPowerPolicyGroups;
     private final String mCurrentPolicyId;
@@ -68,9 +74,9 @@ public final class CpmsFrameworkLayerStateInfo {
 
     private CpmsFrameworkLayerStateInfo(String currentPolicyId, String pendingPolicyId,
             String currentPolicyGroupId, int numberPolicyListeners, String[] changedComponents,
-            ArrayList<String> enables, ArrayList<String> disables, PowerPolicyGroups policyGroups,
-            ArrayList<String> controlledEnables, ArrayList<String> controlledDisables,
-            boolean monitoringHw, boolean silentModeByHw, boolean forcedSilentMode,
+            List<String> enables, List<String> disables, PowerPolicyGroups policyGroups,
+            List<String> controlledEnables, List<String> controlledDisables, boolean monitoringHw,
+            boolean silentModeByHw, boolean forcedSilentMode,
             int currentState) {
         mEnables = enables;
         mDisables = disables;
@@ -143,9 +149,11 @@ public final class CpmsFrameworkLayerStateInfo {
         sb.append("silentmode=").append(mMonitoringHw).append(',');
         sb.append(mSilentModeByHw).append(',').append(mForcedSilentMode).append(' ');
         sb.append("enables=").append(String.join(",", mEnables)).append(' ');
-        sb.append("disables=").append(String.join(",", mDisables));
-        sb.append("controlledEnables=").append(String.join(",", mControlledEnables)).append(' ');
-        sb.append("controlledDisables=").append(String.join(",", mControlledDisables));
+        sb.append("disables=").append(String.join(",", mDisables)).append(' ');
+        sb.append("controlledEnables=").append(String.join(",", mControlledEnables))
+                .append(' ');
+        sb.append("controlledDisables=").append(String.join(",", mControlledDisables))
+                .append(' ');
         sb.append("changedComponents=").append(String.join(",", mChangedComponents));
         return sb.toString();
     }
@@ -163,12 +171,12 @@ public final class CpmsFrameworkLayerStateInfo {
                 && mEnables.equals(that.mEnables)
                 && mDisables.equals(that.mDisables)
                 && mPowerPolicyGroups.equals(that.mPowerPolicyGroups)
-                && mControlledEnables.equals(that.mControlledEnables)
                 && mControlledDisables.equals(that.mControlledDisables)
                 && Arrays.equals(mChangedComponents, that.mChangedComponents)
                 && Objects.equals(mCurrentPolicyId, that.mCurrentPolicyId)
                 && Objects.equals(mPendingPolicyId, that.mPendingPolicyId)
-                && Objects.equals(mCurrentPolicyGroupId, that.mCurrentPolicyGroupId);
+                && Objects.equals(mCurrentPolicyGroupId, that.mCurrentPolicyGroupId)
+                && mControlledEnables.equals(that.mControlledEnables);
     }
 
     @Override
@@ -179,15 +187,22 @@ public final class CpmsFrameworkLayerStateInfo {
                 mSilentModeByHw, mForcedSilentMode, mNumberPolicyListeners);
     }
 
-    public static CpmsFrameworkLayerStateInfo parse(String cmdOutput) throws Exception {
+    /**
+     * Parse text dump output
+     * @param cmdOutput Text dump output
+     * @return CpmsFrameworkLayerStateInfo representing the information contained within the dump.
+     * @throws IllegalArgumentException if the text dump is incorrectly formatted
+     */
+    public static CpmsFrameworkLayerStateInfo parse(String cmdOutput)
+            throws IllegalArgumentException {
         int currentState = -1;
         String currentPolicyId = null;
         String pendingPolicyId = null;
         String currentPolicyGroupId = null;
-        ArrayList<String> enables = null;
-        ArrayList<String> disables = null;
-        ArrayList<String> controlledEnables = null;
-        ArrayList<String> controlledDisables = null;
+        List<String> enables = null;
+        List<String> disables = null;
+        List<String> controlledEnables = null;
+        List<String> controlledDisables = null;
         String[] changedComponents = null;
         PowerPolicyGroups policyGroups = null;
         boolean monitoringHw = false;
@@ -214,7 +229,7 @@ public final class CpmsFrameworkLayerStateInfo {
                     currentPolicyGroupId = parser.getStringData(CURRENT_POLICY_GROUP_ID_HDR);
                     break;
                 case POWER_POLICY_GROUPS_HDR:
-                    ArrayList<String> groupList = parser.getStringArray(POWER_POLICY_GROUPS_HDR,
+                    List<String> groupList = parser.getStringArray(POWER_POLICY_GROUPS_HDR,
                             PREEMPTIVE_POWER_POLICY_HDR);
                     policyGroups = PowerPolicyGroups.parse(groupList);
                     break;
@@ -270,37 +285,37 @@ public final class CpmsFrameworkLayerStateInfo {
 
     private static final class StateInfoParser {
         private static final String[] HEADERS = {
-            CURRENT_STATE_HDR,
-            CURRENT_POLICY_ID_HDR,
-            PENDING_POLICY_ID_HDR,
-            CURRENT_POLICY_GROUP_ID_HDR,
-            NUMBER_POLICY_LISTENERS_HDR,
-            COMPONENT_STATE_HDR,
-            COMPONENT_CONTROLLED_HDR,
-            POWER_POLICY_GROUPS_HDR,
-            COMPONENT_CHANGED_HDR,
-            MONITORING_HW_HDR,
-            SILENT_MODE_BY_HW_HDR,
-            FORCED_SILENT_MODE_HDR
+                CURRENT_STATE_HDR,
+                CURRENT_POLICY_ID_HDR,
+                PENDING_POLICY_ID_HDR,
+                CURRENT_POLICY_GROUP_ID_HDR,
+                NUMBER_POLICY_LISTENERS_HDR,
+                COMPONENT_STATE_HDR,
+                COMPONENT_CONTROLLED_HDR,
+                POWER_POLICY_GROUPS_HDR,
+                COMPONENT_CHANGED_HDR,
+                MONITORING_HW_HDR,
+                SILENT_MODE_BY_HW_HDR,
+                FORCED_SILENT_MODE_HDR
         };
         private final String[] mLines;
-        private ArrayList<String> mEnables;
-        private ArrayList<String> mDisables;
+        private List<String> mEnables;
+        private List<String> mDisables;
         private int mIdx = 0;
 
         private StateInfoParser(String[] lines) {
             mLines = lines;
         }
 
-        private ArrayList<String> getEnables() {
+        private List<String> getEnables() {
             return mEnables;
         }
 
-        private ArrayList<String> getDisables() {
+        private List<String> getDisables() {
             return mDisables;
         }
 
-        private int getIntData(String header) throws Exception {
+        private int getIntData(String header) {
             int val = 0;
             switch (header) {
                 case CURRENT_STATE_HDR:
@@ -331,15 +346,14 @@ public final class CpmsFrameworkLayerStateInfo {
             return val;
         }
 
-        private ArrayList<String> getStringArray(String startHdr, String endHdr)
-                throws Exception {
+        private List<String> getStringArray(String startHdr, String endHdr) {
             if (!mLines[mIdx].contains(startHdr)) {
                 String errMsg = String.format("expected start header %s at line %d : %s",
                         startHdr, mIdx, mLines[mIdx]);
                 throw new IllegalArgumentException(errMsg);
             }
 
-            ArrayList<String> strArray = new ArrayList<String>();
+            ArrayList<String> strArray = new ArrayList<>();
             while (++mIdx < mLines.length && !mLines[mIdx].contains(endHdr)) {
                 strArray.add(mLines[mIdx]);
             }
@@ -351,10 +365,9 @@ public final class CpmsFrameworkLayerStateInfo {
             return strArray;
         }
 
-        private void parseComponentStates(String startHdr, String endHdr,
-                boolean hasStateInfo) throws Exception {
-            mEnables = new ArrayList<String>();
-            mDisables = new ArrayList<String>();
+        private void parseComponentStates(String startHdr, String endHdr, boolean hasStateInfo) {
+            mEnables = new ArrayList<>();
+            mDisables = new ArrayList<>();
             while (mIdx < (mLines.length - 1) && !mLines[++mIdx].contains(endHdr)) {
                 String stateStr = mLines[mIdx].trim();
                 String[] vals = stateStr.split(":\\s");
@@ -383,7 +396,7 @@ public final class CpmsFrameworkLayerStateInfo {
                     } else {
                         String errMsg =
                                 String.format("wrong state value at %d with (%s, %s) in: %s",
-                                mIdx, vals[0], vals[1], stateStr);
+                                        mIdx, vals[0], vals[1], stateStr);
                         CLog.e(errMsg);
                         throw new IllegalArgumentException(errMsg);
                     }
@@ -437,5 +450,63 @@ public final class CpmsFrameworkLayerStateInfo {
 
             return header;
         }
+    }
+
+    private static boolean powerComponentIsValid(String component) {
+        if (!COMPONENT_SET.contains(component)) {
+            CLog.e("invalid component " + component);
+            return false;
+        }
+        return true;
+    }
+
+    public static CpmsFrameworkLayerStateInfo parseProto(CarPowerDumpProto proto) throws Exception {
+        int currentState = proto.getCurrentState().getCarPowerManagerState();
+        String currentPolicyId = proto.getCurrentPowerPolicyId();
+        String pendingPolicyId = proto.getPendingPowerPolicyId();
+        String currentPolicyGroupId = proto.getCurrentPowerPolicyGroupId();
+        PowerComponentHandlerProto componentHandlerProto = proto.getPowerComponentHandler();
+        List<String> enables = new ArrayList<>();
+        List<String> disables = new ArrayList<>();
+
+        int numComponents = componentHandlerProto.getPowerComponentStateMappingsCount();
+        for (int i = 0; i < numComponents; i++) {
+            PowerComponentToState componentStateMapping =
+                    componentHandlerProto.getPowerComponentStateMappings(i);
+            String powerComponent = componentStateMapping.getPowerComponent();
+            if (powerComponentIsValid(powerComponent)) {
+                if (componentStateMapping.getState()) {
+                    enables.add(powerComponent);
+                } else {
+                    disables.add(powerComponent);
+                }
+            }
+        }
+        Collections.sort(enables);
+        Collections.sort(disables);
+        List<String> controlledDisables = new ArrayList<>();
+
+        int numComponentsOffByPolicy = componentHandlerProto.getComponentsOffByPolicyCount();
+        for (int i = 0; i < numComponentsOffByPolicy; i++) {
+            String powerComponent = componentHandlerProto.getComponentsOffByPolicy(i);
+            controlledDisables.add(powerComponent);
+        }
+
+        Collections.sort(controlledDisables);
+        String[] changedComponents =
+                componentHandlerProto.getLastModifiedComponents().split(",\\s");
+        PolicyReaderProto policyReaderProto = proto.getPolicyReader();
+        CLog.i("policy reader proto exists: " + proto.hasPolicyReader());
+        PowerPolicyGroups policyGroups = PowerPolicyGroups.parseProto(policyReaderProto);
+        SilentModeHandlerProto silentModeProto = proto.getSilentModeHandler();
+        boolean monitoringHw = silentModeProto.getIsMonitoringHwStateSignal();
+        boolean silentModeByHw = silentModeProto.getSilentModeByHwState();
+        boolean forcedSilentMode = silentModeProto.getForcedSilentMode();
+        int numberPolicyListeners = proto.getPowerPolicyListeners();
+
+        return new CpmsFrameworkLayerStateInfo(currentPolicyId, pendingPolicyId,
+                currentPolicyGroupId, numberPolicyListeners, changedComponents, enables,
+                disables, policyGroups, /* controlledEnables= */ new ArrayList<>(),
+                controlledDisables, monitoringHw, silentModeByHw, forcedSilentMode, currentState);
     }
 }

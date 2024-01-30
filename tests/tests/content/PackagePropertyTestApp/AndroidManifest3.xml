@@ -16,7 +16,7 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.android.cts.packagepropertyapp1" >
+        package="com.android.cts.packagepropertyapp3" >
     <application>
       <uses-library android:name="android.test.runner" />
         <activity android:name="com.android.cts.packagepropertyapp.MyActivity"

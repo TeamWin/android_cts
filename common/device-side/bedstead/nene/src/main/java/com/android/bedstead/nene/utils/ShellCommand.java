@@ -72,9 +72,18 @@ public final class ShellCommand {
         private boolean mAllowEmptyOutput = false;
         @Nullable
         private Function<String, Boolean> mOutputSuccessChecker = null;
+        private boolean mShouldRunAsRoot = false;
 
         private Builder(String command) {
             commandBuilder = new StringBuilder(command);
+        }
+
+        /**
+         * Run command as root by adding {@code su root} as prefix.
+         */
+        public Builder asRoot(boolean shouldRunAsRoot) {
+            mShouldRunAsRoot = shouldRunAsRoot;
+            return this;
         }
 
         /**
@@ -106,7 +115,6 @@ public final class ShellCommand {
             mTimeout = timeout;
             return this;
         }
-
 
         /**
          * If {@code false} an error will be thrown if the command has no output.
@@ -143,6 +151,10 @@ public final class ShellCommand {
          * Build the full command including all options and operands.
          */
         public String build() {
+            if (mShouldRunAsRoot) {
+                return commandBuilder.insert(0, "su root ").toString();
+            }
+
             return commandBuilder.toString();
         }
 

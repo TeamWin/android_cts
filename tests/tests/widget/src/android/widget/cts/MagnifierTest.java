@@ -46,9 +46,9 @@ import android.widget.LinearLayout.LayoutParams;
 import android.widget.Magnifier;
 import android.widget.ScrollView;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.SmallTest;
-import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -730,14 +730,14 @@ public class MagnifierTest {
         WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, () -> {
             mActivity.setContentView(R.layout.magnifier_activity_centered_surfaceview_layout);
         }, false /* forceLayout */);
-        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, () -> {
+        mActivityRule.runOnUiThread(() -> {
             // Draw something in the SurfaceView for the Magnifier to copy.
             final View view = mActivity.findViewById(R.id.magnifier_centered_view);
             final SurfaceHolder surfaceHolder = ((SurfaceView) view).getHolder();
             final Canvas canvas = surfaceHolder.lockHardwareCanvas();
             canvas.drawColor(Color.BLUE);
             surfaceHolder.unlockCanvasAndPost(canvas);
-        }, false /* forceLayout */);
+        });
         final View view = mActivity.findViewById(R.id.magnifier_centered_view);
         final Magnifier.Builder builder = new Magnifier.Builder(view)
                 .setSize(100, 100)

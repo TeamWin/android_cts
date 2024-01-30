@@ -37,6 +37,7 @@ import android.graphics.drawable.ColorStateListDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.LocaleList;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -55,6 +56,7 @@ import java.io.InputStream;
 import java.util.Locale;
 import java.util.stream.IntStream;
 
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ResourcesTest extends AndroidTestCase {
     private static final String STRING = "string";
     private static final String SIMPLE = "simple";

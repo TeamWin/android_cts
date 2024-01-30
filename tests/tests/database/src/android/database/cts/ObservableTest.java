@@ -16,10 +16,18 @@
 
 package android.database.cts;
 
-import android.database.Observable;
-import android.test.AndroidTestCase;
+import static org.junit.Assert.fail;
 
-public class ObservableTest extends AndroidTestCase {
+import android.database.Observable;
+
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class ObservableTest {
+    @Test
     public void testRegisterUnRegisterObserver() {
         MockObservable observable = new MockObservable();
 
@@ -67,6 +75,7 @@ public class ObservableTest extends AndroidTestCase {
         observable.registerObserver(observer);
     }
 
+    @Test
     public void testUnregisterAll() {
         MockObservable observable = new MockObservable();
         Object observer1 = new Object();

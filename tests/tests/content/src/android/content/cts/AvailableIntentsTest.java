@@ -544,6 +544,19 @@ public class AvailableIntentsTest extends AndroidTestCase {
         assertCanBeHandled(intent);
     }
 
+    public void testRequestSetCredentialManagerServiceIntent() {
+        if (!isHandheld()) {
+            return;
+        }
+
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_CREDENTIALS)) {
+            Intent intent = new Intent(Settings.ACTION_CREDENTIAL_PROVIDER)
+                        .setData(Uri.parse("package:android.content.cts"));
+            assertCanBeHandled(intent);
+        }
+    }
+
     public void testNotificationPolicyDetailIntent() {
         if (!isHandheld()) {
             return;

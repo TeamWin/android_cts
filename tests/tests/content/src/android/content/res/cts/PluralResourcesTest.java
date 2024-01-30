@@ -16,17 +16,19 @@
 
 package android.content.res.cts;
 
-import java.util.Locale;
-
-import junit.framework.Assert;
+import android.content.cts.R;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
 
-import android.content.cts.R;
+import junit.framework.Assert;
 
+import java.util.Locale;
+
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class PluralResourcesTest extends AndroidTestCase {
     public static boolean DEBUG = false;
     private static final String TAG = "PluralResourcesTest";

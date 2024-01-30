@@ -75,11 +75,13 @@ class YuvJpegCaptureSamenessTest(its_base_test.ItsBaseTest):
       display_size = cam.get_display_size()
       max_camcorder_profile_size = cam.get_max_camcorder_profile_size(
           self.camera_id)
-      size_bound = min([_MAX_IMG_SIZE, display_size, max_camcorder_profile_size],
+      size_bound = min([_MAX_IMG_SIZE, display_size,
+                        max_camcorder_profile_size],
                        key=lambda t: int(t[0])*int(t[1]))
 
-      logging.debug('display_size %s, max_camcorder_profile_size %s, size_bound %s',
-                    display_size, max_camcorder_profile_size, size_bound)
+      logging.debug('display_size %s, max_camcorder_profile_size %s, '
+                    'size_bound %s', display_size, max_camcorder_profile_size,
+                    size_bound)
       w, h = capture_request_utils.get_available_output_sizes(
           'yuv', props, max_size=size_bound)[0]
 
@@ -128,7 +130,8 @@ class YuvJpegCaptureSamenessTest(its_base_test.ItsBaseTest):
             rgb_yuv_use_case, f'{file_stem}_yuv_{use_case_name}.jpg')
         rms_diff = image_processing_utils.compute_image_rms_difference_3d(
             rgb_yuv, rgb_yuv_use_case)
-        msg = f'RMS diff for single {use_case_name} use case & still capture YUV: {rms_diff:.4f}'
+        msg = (f'RMS diff for single {use_case_name} use case & still capture '
+               f'YUV: {rms_diff:.4f}')
         logging.debug('%s', msg)
         if rms_diff >= _THRESHOLD_MAX_RMS_DIFF_USE_CASE:
           logging.error(msg + f', TOL: {_THRESHOLD_MAX_RMS_DIFF_USE_CASE}')

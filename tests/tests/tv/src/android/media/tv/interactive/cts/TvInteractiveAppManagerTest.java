@@ -173,7 +173,9 @@ public class TvInteractiveAppManagerTest {
         });
         mInstrumentation.waitForIdleSync();
         mActivity = null;
-        mActivityScenario.close();
+        if (mActivityScenario != null) {
+            mActivityScenario.close();
+        }
     }
 
     @Test

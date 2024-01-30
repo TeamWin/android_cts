@@ -4,7 +4,7 @@
       "name": "CtsOsTestCases",
       "options": [
         {
-          "exclude-annotation": "android.platform.test.annotations.LargeTest"
+          "exclude-annotation": "androidx.test.filters.LargeTest"
         },
         {
           "exclude-filter": "android.os.cts.BuildTest#testSdkInt"
@@ -20,7 +20,7 @@
       "name": "CtsOsTestCases",
       "options": [
         {
-          "exclude-annotation": "android.platform.test.annotations.LargeTest"
+          "exclude-annotation": "androidx.test.filters.LargeTest"
         },
         {
           "exclude-annotation": "android.platform.test.annotations.RestrictedBuildTest"
@@ -114,6 +114,12 @@
           "exclude-filter": "android.os.cts.VibratorTest"
         }
       ]
+    }
+  ],
+  "ravenwood-presubmit": [
+    {
+      "name": "CtsOsTestCasesRavenwood",
+      "host": true
     }
   ]
 }

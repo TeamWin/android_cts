@@ -17,7 +17,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="android.dropboxmanager.cts" >
 
-    <uses-permission android:name="android.permission.READ_LOGS"/>
+    <uses-permission android:name="android.permission.READ_DROPBOX_DATA"/>
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
 
     <application android:label="Cts Drop Box Manager Test">
         <uses-library android:name="android.test.runner"/>

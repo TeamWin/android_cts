@@ -38,6 +38,7 @@ import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
+import android.annotation.Nullable;
 import android.app.AppOpsManager;
 import android.app.PendingIntent;
 import android.app.UiAutomation;
@@ -139,6 +140,8 @@ public class SmsManagerTest {
     private boolean mDeliveryReportSupported;
     private static boolean mReceivedDataSms;
     private static String mReceivedText;
+    @Nullable
+    private String mOriginalDefaultSmsApp;
     private static boolean sHasShellPermissionIdentity = false;
     private static long sMessageId = 0L;
 
@@ -196,6 +199,7 @@ public class SmsManagerTest {
         mContext.registerReceiver(mSmsRetrieverReceiver, smsRetrieverIntentFilter,
                 Context.RECEIVER_EXPORTED_UNAUDITED);
 
+        mOriginalDefaultSmsApp = DefaultSmsAppHelper.getDefaultSmsApp(getContext());
         DefaultSmsAppHelper.stopBeingDefaultSmsApp();
     }
 
@@ -227,6 +231,9 @@ public class SmsManagerTest {
         }
         if (mSmsRetrieverReceiver != null) {
             mContext.unregisterReceiver(mSmsRetrieverReceiver);
+        }
+        if (!TextUtils.isEmpty(mOriginalDefaultSmsApp)) {
+            assertTrue(DefaultSmsAppHelper.setDefaultSmsApp(getContext(), mOriginalDefaultSmsApp));
         }
     }
 

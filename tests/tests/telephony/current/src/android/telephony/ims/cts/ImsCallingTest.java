@@ -28,42 +28,55 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.PersistableBundle;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telecom.Call;
 import android.telecom.PhoneAccount;
 import android.telecom.TelecomManager;
+import android.telecom.VideoProfile;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.CallState;
+import android.telephony.CarrierConfigManager;
 import android.telephony.PreciseCallState;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.InCallServiceStateValidator;
+import android.telephony.emergency.EmergencyNumber;
 import android.telephony.ims.ImsCallProfile;
 import android.telephony.ims.ImsCallSessionListener;
 import android.telephony.ims.ImsStreamMediaProfile;
 import android.telephony.ims.MediaQualityStatus;
 import android.telephony.ims.feature.MmTelFeature;
+import android.telephony.ims.stub.ImsRegistrationImplBase;
+import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.internal.telephony.flags.Flags;
 
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-
+import java.util.stream.Collectors;
 /** CTS tests for ImsCall . */
 @RunWith(AndroidJUnit4.class)
 public class ImsCallingTest extends ImsCallingBase {
@@ -81,12 +94,17 @@ public class ImsCallingTest extends ImsCallingBase {
 
     // the timeout to wait result in milliseconds
     private static final int WAIT_UPDATE_TIMEOUT_MS = 3000;
+    private static final long WAIT_FOR_STATE_CHANGE_TIMEOUT_MS = 10000;
 
     private static TelephonyManager sTelephonyManager;
 
     static {
         initializeLatches();
     }
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @BeforeClass
     public static void beforeAllTests() throws Exception {
@@ -172,6 +190,8 @@ public class ImsCallingTest extends ImsCallingBase {
             sIsBound = false;
             imsService.waitForExecutorFinish();
         }
+
+        tearDownEmergencyCalling();
     }
 
     @Test
@@ -988,6 +1008,7 @@ public class ImsCallingTest extends ImsCallingBase {
         waitForUnboundService();
     }
 
+    @RequiresFlagsEnabled(Flags.FLAG_CONFERENCE_HOLD_UNHOLD_CHANGED_TO_SEND_MESSAGE)
     @Test
     public void testCallJoinExistingConferenceCallAfterCallSwap() throws Exception {
         if (!ImsUtils.shouldTestImsCall()) {
@@ -1038,6 +1059,7 @@ public class ImsCallingTest extends ImsCallingBase {
         waitForUnboundService();
     }
 
+    @RequiresFlagsEnabled(Flags.FLAG_CONFERENCE_HOLD_UNHOLD_CHANGED_TO_SEND_MESSAGE)
     @Test
     public void testCallJoinExistingConferenceCallAfterCallSwapFail() throws Exception {
         if (!ImsUtils.shouldTestImsCall()) {
@@ -1129,9 +1151,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
         sServiceConnector.getCarrierService().getMmTelFeature()
                 .setCallAudioHandler(MmTelFeature.AUDIO_HANDLER_ANDROID);
-        sServiceConnector.getCarrierService().getMmTelFeature()
-                .getTerminalBasedCallWaitingLatch().await(WAIT_UPDATE_TIMEOUT_MS,
-                        TimeUnit.MILLISECONDS);
+        TimeUnit.MILLISECONDS.sleep(WAIT_UPDATE_TIMEOUT_MS);
 
         assertNotEquals(AudioManager.MODE_NORMAL, mAudioManager.getMode());
         assertEquals(AudioManager.MODE_IN_COMMUNICATION, mAudioManager.getMode());
@@ -1154,9 +1174,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
         sServiceConnector.getCarrierService().getMmTelFeature()
                 .setCallAudioHandler(MmTelFeature.AUDIO_HANDLER_BASEBAND);
-        sServiceConnector.getCarrierService().getMmTelFeature()
-                .getTerminalBasedCallWaitingLatch().await(WAIT_UPDATE_TIMEOUT_MS,
-                        TimeUnit.MILLISECONDS);
+        TimeUnit.MILLISECONDS.sleep(WAIT_UPDATE_TIMEOUT_MS);
 
         assertNotEquals(AudioManager.MODE_NORMAL, mAudioManager.getMode());
         assertEquals(AudioManager.MODE_IN_CALL, mAudioManager.getMode());
@@ -1334,6 +1352,147 @@ public class ImsCallingTest extends ImsCallingBase {
         waitForUnboundService();
     }
 
+    @Test
+    public void testOutGoingEmergencyCall() throws Exception {
+        if (!ImsUtils.shouldTestImsCall()) {
+            return;
+        }
+
+        boolean supportDomainSelection =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(sTelephonyManager,
+                        (tm) -> tm.isDomainSelectionSupported());
+
+        if (supportDomainSelection) {
+            return;
+        }
+
+        LinkedBlockingQueue<List<CallState>> queue = new LinkedBlockingQueue<>();
+        ImsCallingTest.TestTelephonyCallbackForCallStateChange testCb =
+                new ImsCallingTest.TestTelephonyCallbackForCallStateChange(queue);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                sTelephonyManager, (tm) -> tm.registerTelephonyCallback(Runnable::run, testCb));
+
+        testCb.setTestEmergencyNumber(TEST_EMERGENCY_NUMBER);
+        setupForEmergencyCalling(TEST_EMERGENCY_NUMBER);
+        assertTrue(testCb.waitForTestEmergencyNumberConfigured());
+
+        bindImsService();
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+
+        // Place outgoing emergency call
+        TelecomManager telecomManager = (TelecomManager) InstrumentationRegistry
+                .getInstrumentation().getContext().getSystemService(Context.TELECOM_SERVICE);
+        telecomManager.placeCall(TEST_EMERGENCY_URI, new Bundle());
+
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+        Call call = getCall(mCurrentCallId);
+        waitForCallSessionToNotBe(null);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
+
+        assertTrue(testCb.waitForOutgoingEmergencyCall(TEST_EMERGENCY_NUMBER));
+        assertTrue(testCb.waitForCallActive());
+
+        TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService().getMmTelFeature()
+                .getImsCallsession();
+        isCallActive(call, callSession);
+
+        call.disconnect();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(call, callSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        waitForUnboundService();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(
+            Flags.FLAG_TERMINATE_ACTIVE_VIDEO_CALL_WHEN_ACCEPTING_SECOND_VIDEO_CALL_AS_AUDIO_ONLY)
+    public void testMultipleVideoCallAcceptTerminate() throws Exception {
+        if (!ImsUtils.shouldTestImsCall()) {
+            return;
+        }
+
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.KEY_DROP_VIDEO_CALL_WHEN_ANSWERING_AUDIO_CALL_BOOL,
+                true);
+        bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_WFC_IMS_AVAILABLE_BOOL, true);
+        overrideCarrierConfig(bundle);
+
+        MmTelFeature.MmTelCapabilities capabilities =
+                new MmTelFeature.MmTelCapabilities(
+                        MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_VOICE
+                                | MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_VIDEO);
+
+        bindImsServiceForCapabilities(ImsRegistrationImplBase.REGISTRATION_TECH_IWLAN,
+                capabilities);
+
+        ImsStreamMediaProfile mediaProfile = new ImsStreamMediaProfile(
+                ImsStreamMediaProfile.AUDIO_QUALITY_AMR,
+                ImsStreamMediaProfile.DIRECTION_SEND_RECEIVE,
+                ImsStreamMediaProfile.VIDEO_QUALITY_QVGA_PORTRAIT,
+                ImsStreamMediaProfile.DIRECTION_SEND_RECEIVE,
+                ImsStreamMediaProfile.RTT_MODE_DISABLED);
+        sServiceConnector.getCarrierService().getMmTelFeature()
+                .setImsStreamProfileForVt(mediaProfile);
+
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+
+        TelecomManager telecomManager = (TelecomManager) InstrumentationRegistry
+                .getInstrumentation().getContext().getSystemService(Context.TELECOM_SERVICE);
+
+        final Uri imsUri = Uri.fromParts(PhoneAccount.SCHEME_TEL, String.valueOf(++sCounter), null);
+        Bundle extras = new Bundle();
+        extras.putInt(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE,
+                VideoProfile.STATE_BIDIRECTIONAL);
+        extras.putInt(TelecomManager.EXTRA_CALL_NETWORK_TYPE, TelephonyManager.NETWORK_TYPE_IWLAN);
+
+        // MO Call
+        telecomManager.placeCall(imsUri, extras);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+
+        Call moCall = getCall(mCurrentCallId);
+        waitForCallSessionToNotBe(null);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
+
+        TestImsCallSessionImpl moCallSession = sServiceConnector.getCarrierService()
+                .getMmTelFeature().getImsCallsession();
+
+        isCallActive(moCall, moCallSession);
+
+        // MT Call
+        extras.putBoolean("android.telephony.ims.feature.extra.IS_USSD", false);
+        extras.putBoolean("android.telephony.ims.feature.extra.IS_UNKNOWN_CALL", false);
+        extras.putString("android:imsCallID", String.valueOf(++sCounter));
+        extras.putLong("android:phone_id", 123456);
+        sServiceConnector.getCarrierService().getMmTelFeature().onIncomingVtCallReceived(extras);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+        waitForCallSessionToNotBe(null);
+        TestImsCallSessionImpl mtCallSession =
+                sServiceConnector.getCarrierService().getMmTelFeature().getImsCallsession();
+
+        Call mtCall = null;
+        if (mCurrentCallId != null) {
+            mtCall = getCall(mCurrentCallId);
+            if (mtCall.getDetails().getState() == Call.STATE_RINGING) {
+                mtCall.answer(VideoProfile.STATE_AUDIO_ONLY);
+            }
+        }
+
+        // MO call should be terminated
+        isCallDisconnected(moCall, moCallSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+
+        isCallActive(mtCall, mtCallSession);
+        mtCall.disconnect();
+
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(mtCall, mtCallSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+
+        waitForUnboundService();
+    }
+
     private class TestTelephonyCallback extends TelephonyCallback
             implements TelephonyCallback.MediaQualityStatusChangedListener {
         LinkedBlockingQueue<MediaQualityStatus> mTestMediaQualityStatusQueue;
@@ -1346,15 +1505,122 @@ public class ImsCallingTest extends ImsCallingBase {
         }
     }
 
-    private class TestTelephonyCallbackForCallStateChange extends TelephonyCallback
-            implements TelephonyCallback.CallAttributesListener {
+    private class TestTelephonyCallbackForCallStateChange extends TelephonyCallback implements
+            TelephonyCallback.CallAttributesListener,
+            TelephonyCallback.PreciseCallStateListener,
+            TelephonyCallback.OutgoingEmergencyCallListener,
+            TelephonyCallback.EmergencyNumberListListener {
         LinkedBlockingQueue<List<CallState>> mTestCallStateListeQueue;
+        private EmergencyNumber mLastOutgoingEmergencyNumber;
+        private String mTestEmergencyNumber;
+        private Semaphore mOutgoingEmergencyCallSemaphore = new Semaphore(0);
+        private Semaphore mActiveCallStateSemaphore = new Semaphore(0);
+        private Semaphore mTestEmergencyNumberSemaphore = new Semaphore(0);
         TestTelephonyCallbackForCallStateChange(LinkedBlockingQueue<List<CallState>> queue) {
             mTestCallStateListeQueue = queue;
         }
         @Override
         public void onCallStatesChanged(@NonNull List<CallState> states) {
             mTestCallStateListeQueue.offer(states);
+        }
+
+        @Override
+        public void onPreciseCallStateChanged(@NonNull PreciseCallState callState) {
+            Log.i(LOG_TAG, "onPreciseCallStateChanged: state=" + callState);
+            if (callState.getForegroundCallState() == PreciseCallState.PRECISE_CALL_STATE_ACTIVE) {
+                mActiveCallStateSemaphore.release();
+            }
+        }
+
+        @Override
+        public void onOutgoingEmergencyCall(EmergencyNumber emergencyNumber, int subscriptionId) {
+            Log.i(LOG_TAG, "onOutgoingEmergencyCall: emergencyNumber=" + emergencyNumber);
+            mLastOutgoingEmergencyNumber = emergencyNumber;
+            mOutgoingEmergencyCallSemaphore.release();
+        }
+
+        @Override
+        public void onEmergencyNumberListChanged(@NonNull Map<Integer,
+                        List<EmergencyNumber>> emergencyNumberList) {
+            if (!TextUtils.isEmpty(mTestEmergencyNumber)) {
+                for (List<EmergencyNumber> emergencyNumbers : emergencyNumberList.values()) {
+                    Log.i(LOG_TAG, "onEmergencyNumberListChanged: emergencyNumbers="
+                            + emergencyNumbers.stream().map(Object::toString).collect(
+                                    Collectors.joining(", ")));
+                    for (EmergencyNumber emergencyNumber : emergencyNumbers) {
+                        if (TextUtils.equals(mTestEmergencyNumber, emergencyNumber.getNumber())) {
+                            mTestEmergencyNumberSemaphore.release();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        public boolean waitForCallActive() {
+            try {
+                if (!mActiveCallStateSemaphore.tryAcquire(
+                        WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                    Log.e(LOG_TAG, "Timed out to receive active call state");
+                    return false;
+                }
+            } catch (InterruptedException ex) {
+                Log.e(LOG_TAG, "waitForCallActive: ex=" + ex);
+                return false;
+            }
+            return true;
+        }
+
+        public boolean waitForOutgoingEmergencyCall(String expectedNumber) {
+            try {
+                if (!mOutgoingEmergencyCallSemaphore.tryAcquire(
+                        WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                    Log.e(LOG_TAG, "Timed out to receive OutgoingEmergencyCall");
+                    return false;
+                }
+            } catch (InterruptedException ex) {
+                Log.e(LOG_TAG, "waitForOutgoingEmergencyCall: ex=" + ex);
+                return false;
+            }
+
+            // At this point we can only be sure that we got AN update, but not necessarily the one
+            // we are looking for; wait until we see the state we want before verifying further.
+            waitUntilConditionIsTrueOrTimeout(
+                    new Condition() {
+                        @Override
+                        public Object expected() {
+                            return true;
+                        }
+
+                        @Override
+                        public Object actual() {
+                            return mLastOutgoingEmergencyNumber != null
+                                    && mLastOutgoingEmergencyNumber.getNumber().equals(
+                                            expectedNumber);
+                        }
+                    },
+                    WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                    "Expected emergency number: " + expectedNumber);
+            return TextUtils.equals(expectedNumber, mLastOutgoingEmergencyNumber.getNumber());
+        }
+
+        public void setTestEmergencyNumber(String testEmergencyNumber) {
+            mTestEmergencyNumber = testEmergencyNumber;
+        }
+
+        public boolean waitForTestEmergencyNumberConfigured() {
+            try {
+                if (!mTestEmergencyNumberSemaphore.tryAcquire(
+                        WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                    Log.e(LOG_TAG, "Timed out to receive expected test emergency number "
+                            + "configured");
+                    return false;
+                }
+            } catch (InterruptedException ex) {
+                Log.e(LOG_TAG, "waitForTestEmergencyNumberConfigured: ex=" + ex);
+                return false;
+            }
+            return true;
         }
     }
 
@@ -1596,7 +1862,8 @@ public class ImsCallingTest extends ImsCallingBase {
     private void resetCallSessionObjects() {
         mCall1 = mCall2 = mCall3 = mConferenceCall = null;
         mCallSession1 = mCallSession2 = mCallSession3 = mConfCallSession = null;
-        if (sServiceConnector.getCarrierService().getMmTelFeature() == null) {
+        if (sServiceConnector.getCarrierService() == null
+                || sServiceConnector.getCarrierService().getMmTelFeature() == null) {
             return;
         }
         ConferenceHelper confHelper = sServiceConnector.getCarrierService().getMmTelFeature()

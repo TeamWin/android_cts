@@ -15,6 +15,8 @@
  */
 package android.jobscheduler.cts;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.Manifest.permission.OVERRIDE_COMPAT_CHANGE_CONFIG_ON_RELEASE_BUILD;
 import static android.app.ActivityManager.getCapabilitiesSummary;
 import static android.app.ActivityManager.procStateToString;
 import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.ACTION_JOB_SCHEDULE_RESULT;
@@ -33,6 +35,7 @@ import static org.junit.Assert.fail;
 
 import android.app.ActivityManager;
 import android.app.AppOpsManager;
+import android.app.compat.CompatChanges;
 import android.app.job.JobParameters;
 import android.app.job.JobScheduler;
 import android.content.BroadcastReceiver;
@@ -54,13 +57,17 @@ import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.CallbackAsserter;
 import com.android.compatibility.common.util.SystemUtil;
 
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Common functions to interact with the test app.
  */
 class TestAppInterface implements AutoCloseable {
     private static final String TAG = TestAppInterface.class.getSimpleName();
+
+    public static final long ENFORCE_MINIMUM_TIME_WINDOWS = 311402873L;
 
     static final String TEST_APP_PACKAGE = "android.jobscheduler.cts.jobtestapp";
     private static final String TEST_APP_ACTIVITY = TEST_APP_PACKAGE + ".TestActivity";
@@ -103,6 +110,11 @@ class TestAppInterface implements AutoCloseable {
         stopFgs();
         mContext.unregisterReceiver(mReceiver);
         AppOpsUtils.reset(TEST_APP_PACKAGE);
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> CompatChanges.removePackageOverrides(
+                        TestAppInterface.TEST_APP_PACKAGE,
+                        Set.of(ENFORCE_MINIMUM_TIME_WINDOWS)),
+                OVERRIDE_COMPAT_CHANGE_CONFIG_ON_RELEASE_BUILD, INTERACT_ACROSS_USERS_FULL);
         SystemUtil.runShellCommand("am compat reset-all " + TEST_APP_PACKAGE);
         mTestJobStates.clear();
         forceStopApp(); // Clean up as much internal/temporary system state as possible
@@ -132,7 +144,7 @@ class TestAppInterface implements AutoCloseable {
     }
 
     private Intent generateScheduleJobIntent(Map<String, Boolean> booleanExtras,
-            Map<String, Integer> intExtras) {
+            Map<String, Integer> intExtras, Map<String, Long> longExtras) {
         final Intent scheduleJobIntent = new Intent(TestJobSchedulerReceiver.ACTION_SCHEDULE_JOB);
         scheduleJobIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         if (!intExtras.containsKey(TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY)) {
@@ -140,13 +152,20 @@ class TestAppInterface implements AutoCloseable {
         }
         booleanExtras.forEach(scheduleJobIntent::putExtra);
         intExtras.forEach(scheduleJobIntent::putExtra);
+        longExtras.forEach(scheduleJobIntent::putExtra);
         scheduleJobIntent.setComponent(new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER));
         return scheduleJobIntent;
     }
 
     void scheduleJob(Map<String, Boolean> booleanExtras, Map<String, Integer> intExtras)
             throws Exception {
-        final Intent scheduleJobIntent = generateScheduleJobIntent(booleanExtras, intExtras);
+        scheduleJob(booleanExtras, intExtras, Collections.emptyMap());
+    }
+
+    void scheduleJob(Map<String, Boolean> booleanExtras, Map<String, Integer> intExtras,
+            Map<String, Long> longExtras) throws Exception {
+        final Intent scheduleJobIntent =
+                generateScheduleJobIntent(booleanExtras, intExtras, longExtras);
 
         final CallbackAsserter resultBroadcastAsserter = CallbackAsserter.forBroadcast(
                 new IntentFilter(TestJobSchedulerReceiver.ACTION_JOB_SCHEDULE_RESULT));
@@ -157,7 +176,8 @@ class TestAppInterface implements AutoCloseable {
 
     void postUiInitiatingNotification(Map<String, Boolean> booleanExtras,
             Map<String, Integer> intExtras) throws Exception {
-        final Intent intent = generateScheduleJobIntent(booleanExtras, intExtras);
+        final Intent intent =
+                generateScheduleJobIntent(booleanExtras, intExtras, Collections.emptyMap());
         intent.setAction(TestJobSchedulerReceiver.ACTION_POST_UI_INITIATING_NOTIFICATION);
 
         final CallbackAsserter resultBroadcastAsserter = CallbackAsserter.forBroadcast(

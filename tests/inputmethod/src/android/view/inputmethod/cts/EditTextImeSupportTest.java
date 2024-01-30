@@ -19,6 +19,7 @@ package android.view.inputmethod.cts;
 import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -32,10 +33,12 @@ import static org.junit.Assert.fail;
 
 import android.graphics.Color;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
+import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.SurroundingText;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
@@ -66,6 +69,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class EditTextImeSupportTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
 
@@ -318,5 +322,82 @@ public class EditTextImeSupportTest extends EndToEndImeTestBase {
 
         // Extra invocations of endBatchEdit() continue to return false.
         assertThat(editableInputConnection.endBatchEdit()).isFalse();
+    }
+
+    /**
+     * Verifies that IME receives a hide request when an active {@link EditText} becomes
+     * disabled.
+     */
+    @Test
+    public void testHideSoftInputWhenDisabled() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final AtomicReference<EditText> editTextRef = new AtomicReference<>();
+            TestActivity.startSync(activity-> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                final EditText editText = new EditText(activity);
+                editText.setPrivateImeOptions(marker);
+                editText.requestFocus();
+                editTextRef.set(editText);
+
+                layout.addView(editText);
+                return layout;
+            });
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+
+            final var editText = editTextRef.get();
+            runOnMainSync(() -> editText.getContext().getSystemService(InputMethodManager.class)
+                    .showSoftInput(editText, 0));
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+
+            runOnMainSync(() -> editText.setEnabled(false));
+            expectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()), TIMEOUT);
+        }
+    }
+
+    /**
+     * Verifies that IME receives a hide request when an active {@link EditText} receives
+     * {@link EditorInfo#IME_ACTION_DONE}.
+     */
+    @Test
+    public void testHideSoftInputByActionDone() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final AtomicReference<EditText> editTextRef = new AtomicReference<>();
+            TestActivity.startSync(activity-> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                final EditText editText = new EditText(activity);
+                editText.setPrivateImeOptions(marker);
+                editText.requestFocus();
+                editTextRef.set(editText);
+
+                layout.addView(editText);
+                return layout;
+            });
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+
+            final var editText = editTextRef.get();
+            runOnMainSync(() -> editText.getContext().getSystemService(InputMethodManager.class)
+                    .showSoftInput(editText, 0));
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+
+            expectCommand(stream, imeSession.callPerformEditorAction(EditorInfo.IME_ACTION_DONE),
+                    TIMEOUT);
+            expectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()), TIMEOUT);
+        }
     }
 }

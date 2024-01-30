@@ -4,7 +4,7 @@
       "name": "CtsProviderTestCases",
       "options": [
         {
-          "exclude-annotation": "android.platform.test.annotations.LargeTest"
+          "exclude-annotation": "androidx.test.filters.LargeTest"
         }
       ]
     }

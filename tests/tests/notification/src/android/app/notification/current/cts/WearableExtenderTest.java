@@ -15,6 +15,9 @@
  */
 package android.app.notification.current.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import android.app.Notification;
 import android.app.Notification.Action;
 import android.app.Notification.WearableExtender;
@@ -26,19 +29,28 @@ import android.graphics.Bitmap.Config;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
 import android.view.Gravity;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class WearableExtenderTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class WearableExtenderTest {
 
     private Context mContext;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mContext = getContext();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 
+    @Test
     public void testWearableExtender() {
         final String bridgeTag = "bridge_tag";
         final String dismissalId = "dismissal_id";
@@ -70,7 +82,6 @@ public class WearableExtenderTest extends AndroidTestCase {
                 .setDismissalId(dismissalId)
                 .setContentAction(contentActionIndex)
                 // deprecated methods follow
-                .setBackground(background)
                 .setGravity(gravity)
                 .setContentIcon(icon)
                 .setContentIconGravity(gravity)
@@ -93,7 +104,6 @@ public class WearableExtenderTest extends AndroidTestCase {
         assertEquals(dismissalId, extender.getDismissalId());
         assertEquals(contentActionIndex, extender.getContentAction());
         // deprecated methods follow
-        assertEquals(background, extender.getBackground());
         assertEquals(gravity, extender.getGravity());
         assertEquals(icon, extender.getContentIcon());
         assertEquals(gravity, extender.getContentIconGravity());
@@ -109,6 +119,7 @@ public class WearableExtenderTest extends AndroidTestCase {
         assertEquals(page2, extender.getPages().get(0));
     }
 
+    @Test
     public void testWearableExtenderActions() {
         Notification.Action a = newActionBuilder().build();
         Notification.Action b = newActionBuilder().build();
@@ -126,6 +137,7 @@ public class WearableExtenderTest extends AndroidTestCase {
         assertEquals(b, extender.getActions().get(extender.getContentAction()));
     }
 
+    @Test
     public void testWearableExtender_clearActions() {
         WearableExtender extender = new WearableExtender()
                 .addAction(newActionBuilder().build());
@@ -135,6 +147,7 @@ public class WearableExtenderTest extends AndroidTestCase {
         assertEquals(0, extender.getActions().size());
     }
 
+    @Test
     public void testWearableExtender_clone() {
         final String bridgeTag = "bridge_tag";
         final String dismissalId = "dismissal_id";
@@ -162,6 +175,7 @@ public class WearableExtenderTest extends AndroidTestCase {
         assertEquals(1, clone.getActions().size());
     }
 
+    @Test
     public void testWearableExtender_extend() {
         final String title = "test_title";
         final String bridgeTag = "bridge_tag";
@@ -191,6 +205,7 @@ public class WearableExtenderTest extends AndroidTestCase {
         assertEquals(1, result.getActions().size());
     }
 
+    @Test
     public void testWriteToParcel() {
         final String bridgeTag = "bridge_tag";
         final String dismissalId = "dismissal_id";
@@ -227,7 +242,6 @@ public class WearableExtenderTest extends AndroidTestCase {
                         .addAction(action)
                         .setContentAction(contentActionIndex)
                         // deprecated methods follow
-                        .setBackground(background)
                         .setGravity(gravity)
                         .setContentIcon(icon)
                         .setContentIconGravity(gravity)
@@ -256,7 +270,6 @@ public class WearableExtenderTest extends AndroidTestCase {
         assertEquals(contentActionIndex, extender.getContentAction());
         assertEquals(1, extender.getActions().size());
         // deprecated methods follow
-        assertNotNull(extender.getBackground());
         assertEquals(gravity, extender.getGravity());
         assertEquals(icon, extender.getContentIcon());
         assertEquals(gravity, extender.getContentIconGravity());
@@ -277,11 +290,13 @@ public class WearableExtenderTest extends AndroidTestCase {
 
     /** Notification.Action.WearableExtender functions */
 
+    @Test
     public void testActionWearableExtender_constructor() {
         // should not throw exception
         Action.WearableExtender extender = new Action.WearableExtender();
     }
 
+    @Test
     public void testActionWearableExtender_constructor_copy() {
         Action.WearableExtender extender = new Action.WearableExtender();
 
@@ -305,6 +320,7 @@ public class WearableExtenderTest extends AndroidTestCase {
         assertEquals("has correct cancel label", "cancel", copiedExtender.getCancelLabel());
     }
 
+    @Test
     public void testActionWearableExtender_clone() {
         Action.WearableExtender extender = new Action.WearableExtender();
 
@@ -321,11 +337,15 @@ public class WearableExtenderTest extends AndroidTestCase {
         assertEquals("available offline set via flags", false, copiedExtender.isAvailableOffline());
 
         // deprecated getters
-        assertEquals("has correct progress label", "inProgress", copiedExtender.getInProgressLabel());
-        assertEquals("has correct confirm label", "confirm", copiedExtender.getConfirmLabel());
-        assertEquals("has correct cancel label", "cancel", copiedExtender.getCancelLabel());
+        assertEquals("has correct progress label", "inProgress",
+                copiedExtender.getInProgressLabel().toString());
+        assertEquals("has correct confirm label", "confirm",
+                copiedExtender.getConfirmLabel().toString());
+        assertEquals("has correct cancel label", "cancel",
+                copiedExtender.getCancelLabel().toString());
     }
 
+    @Test
     public void testActionWearableExtender_setAvailableOffline() {
         Action.WearableExtender extender = new Action.WearableExtender();
 
@@ -336,6 +356,7 @@ public class WearableExtenderTest extends AndroidTestCase {
         assertEquals("not available offline", false, extender.isAvailableOffline());
     }
 
+    @Test
     public void testActionWearableExtender_setHintLaunchesActivity() {
         Action.WearableExtender extender = new Action.WearableExtender();
 
@@ -346,6 +367,7 @@ public class WearableExtenderTest extends AndroidTestCase {
         assertEquals("action will launch activity", true, extender.getHintLaunchesActivity());
     }
 
+    @Test
     public void testActionWearableExtender_setHintDisplayActionInline() {
         Action.WearableExtender extender = new Action.WearableExtender();
 
@@ -357,6 +379,7 @@ public class WearableExtenderTest extends AndroidTestCase {
     }
 
     // deprecated
+    @Test
     public void testActionWearableExtender_setInProgressLabel() {
         Action.WearableExtender extender = new Action.WearableExtender();
 
@@ -366,20 +389,22 @@ public class WearableExtenderTest extends AndroidTestCase {
     }
 
     // deprecated
+    @Test
     public void testActionWearableExtender_setCancelLabel() {
         Action.WearableExtender extender = new Action.WearableExtender();
 
         extender.setCancelLabel("cancelled");
 
-        assertEquals("has cancel label", "cancelled", extender.getCancelLabel());
+        assertEquals("has cancel label", "cancelled", extender.getCancelLabel().toString());
     }
 
     // deprecated
+    @Test
     public void testActionWearableExtender_setConfirmLabel() {
         Action.WearableExtender extender = new Action.WearableExtender();
 
         extender.setConfirmLabel("confirmed");
 
-        assertEquals("has confirm label", "confirmed", extender.getConfirmLabel());
+        assertEquals("has confirm label", "confirmed", extender.getConfirmLabel().toString());
     }
 }

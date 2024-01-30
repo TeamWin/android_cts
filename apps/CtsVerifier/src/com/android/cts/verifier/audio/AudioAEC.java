@@ -50,17 +50,27 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
     private static final int TEST_COUNT = 1;
     private static final float MAX_VAL = (float)(1 << 15);
 
+    private static final int RESULT_CODE_OK = 0;
+    private static final int RESULT_CODE_FAILED = 1; // test ran but results were out of range
+    private static final int RESULT_CODE_NOT_RUN = 2;
+    private static final int RESULT_CODE_AEC_CREATION_EXCEPTION = 3;
+    private static final int RESULT_CODE_AEC_NULL = 4;
+    private static final int RESULT_CODE_AEC_DISABLED = 5; // not enabled by default
+
     private int mCurrentTest = TEST_NONE;
     private LinearLayout mLinearLayout;
     private Button mButtonTest;
     private ProgressBar mProgress;
     private TextView mResultText;
-    private boolean mTestAECPassed;
     private SoundPlayerObject mSPlayer;
     private SoundRecorderObject mSRecorder;
     private AcousticEchoCanceler mAec;
 
+    // These 4 values are written to the report log.
     private boolean mDeviceHasAEC = AcousticEchoCanceler.isAvailable();
+    private int mResultCode = RESULT_CODE_OK;
+    private double mMaxAec;
+    private double mMaxNoAec;
 
     private final int mBlockSizeSamples = 4096;
     private final int mSamplingRate = 48000;
@@ -276,8 +286,11 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
             public void run() {
                 super.run();
 
+                mResultCode = RESULT_CODE_NOT_RUN;
+                mMaxAec = 0.0;
+                mMaxNoAec = 0.0;
+
                 StringBuilder sb = new StringBuilder(); //test results strings
-                mTestAECPassed = false;
                 sendMessage(AudioTestRunner.TEST_MESSAGE,
                         "Testing Recording with AEC");
 
@@ -330,7 +343,7 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
                 } catch (Exception e) {
                     mSRecorder.stopRecording();
                     String msg = "Could not create AEC Effect. " + e.toString();
-                    storeTestResults(mDeviceHasAEC, 0, 0, msg);
+                    mResultCode = RESULT_CODE_AEC_CREATION_EXCEPTION;
                     am.setSpeakerphoneOn(originalSpeakerPhone);
                     am.setMode(originalMode);
                     sendMessage(AudioTestRunner.TEST_ENDED_ERROR, msg);
@@ -340,7 +353,7 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
                 if (mAec == null) {
                     mSRecorder.stopRecording();
                     String msg = "Could not create AEC Effect (AEC Null)";
-                    storeTestResults(mDeviceHasAEC, 0, 0, msg);
+                    mResultCode = RESULT_CODE_AEC_NULL;
                     am.setSpeakerphoneOn(originalSpeakerPhone);
                     am.setMode(originalMode);
                     sendMessage(AudioTestRunner.TEST_ENDED_ERROR, msg);
@@ -350,7 +363,7 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
                 if (!mAec.getEnabled()) {
                     String msg = "AEC is not enabled by default.";
                     mSRecorder.stopRecording();
-                    storeTestResults(mDeviceHasAEC, 0, 0, msg);
+                    mResultCode = RESULT_CODE_AEC_DISABLED;
                     am.setSpeakerphoneOn(originalSpeakerPhone);
                     am.setMode(originalMode);
                     sendMessage(AudioTestRunner.TEST_ENDED_ERROR, msg);
@@ -447,15 +460,16 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
                     testPassed = false;
                 }
 
-                mTestAECPassed = testPassed;
+                mMaxAec = maxAEC;
+                mMaxNoAec = maxNoAEC;
 
-                if (mTestAECPassed) {
+                if (testPassed) {
                     sb.append("All Tests Passed");
+                    mResultCode = RESULT_CODE_OK;
                 } else {
-                        sb.append("Test failed. Please fix issues and try again");
+                    sb.append("Test failed. Please fix issues and try again");
+                    mResultCode = RESULT_CODE_FAILED;
                 }
-
-                storeTestResults(mDeviceHasAEC, maxAEC, maxNoAEC, sb.toString());
 
                 //compute results.
                 sendMessage(AudioTestRunner.TEST_ENDED_OK, "\n" + sb.toString());
@@ -464,36 +478,15 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
         mTestThread.start();
     }
 
+    // These must match the definitions in the AECActivity protobuffer at:
+    // google3/wireless/android/partner/adl/proto/testmetrics/ctsv_audio_metrics.proto
     private static final String SECTION_AEC = "aec_activity";
-    private static final String KEY_AEC_SUPPORTED = "aec_supported";
-    private static final String KEY_AEC_MAX_WITH = "max_with_aec";
-    private static final String KEY_AEC_MAX_WITHOUT = "max_without_aec";
-    private static final String KEY_AEC_RESULT = "result_string";
-
-    private void storeTestResults(boolean aecSupported, double maxAEC, double maxNoAEC,
-                                  String msg) {
-
-        CtsVerifierReportLog reportLog = getReportLog();
-        reportLog.addValue(KEY_AEC_SUPPORTED,
-                aecSupported,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        reportLog.addValue(KEY_AEC_MAX_WITH,
-                maxAEC,
-                ResultType.LOWER_BETTER,
-                ResultUnit.SCORE);
-
-        reportLog.addValue(KEY_AEC_MAX_WITHOUT,
-                maxNoAEC,
-                ResultType.HIGHER_BETTER,
-                ResultUnit.SCORE);
-
-        reportLog.addValue(KEY_AEC_RESULT,
-                msg,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-    }
+    private static final String KEY_AEC_MANDATORY = "aec_mandatory"; // bool, 1
+    private static final String KEY_AEC_MAX_WITH = "max_with_aec"; // float, 2
+    private static final String KEY_AEC_MAX_WITHOUT = "max_without_aec"; // float, 3
+    private static final String KEY_AEC_RESULT = "result"; // bool, 4
+    private static final String KEY_AEC_SUPPORTED = "aec_supported"; // bool 5
+    private static final String KEY_AEC_RESULT_CODE = "result_code"; // int, 6
 
     //
     // PassFailButtons
@@ -505,18 +498,50 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
 
     @Override
     public void recordTestResults() {
+        CtsVerifierReportLog reportLog = getReportLog();
+
+        reportLog.addValue(KEY_AEC_MANDATORY,
+                mDeviceHasAEC, // AEC was never mandatory. But this can simplify our queries.
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
+
+        reportLog.addValue(KEY_AEC_MAX_WITH,
+                mMaxAec,
+                ResultType.LOWER_BETTER,
+                ResultUnit.SCORE);
+
+        reportLog.addValue(KEY_AEC_MAX_WITHOUT,
+                mMaxNoAec,
+                ResultType.HIGHER_BETTER,
+                ResultUnit.SCORE);
+
+        reportLog.addValue(KEY_AEC_RESULT,
+                (mResultCode == RESULT_CODE_OK), // true if passed
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
+
+        reportLog.addValue(KEY_AEC_SUPPORTED,
+                mDeviceHasAEC,
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
+
+        reportLog.addValue(KEY_AEC_RESULT_CODE,
+                mResultCode,
+                ResultType.LOWER_BETTER,
+                ResultUnit.NONE);
+
         getReportLog().submit();
     }
 
     // TestMessageHandler
     private AudioTestRunner.AudioTestRunnerMessageHandler mMessageHandler =
             new AudioTestRunner.AudioTestRunnerMessageHandler() {
+
         @Override
         public void testStarted(int testId, String str) {
             super.testStarted(testId, str);
             Log.v(TAG, "Test Started! " + testId + " str:"+str);
             showView(mProgress, true);
-            mTestAECPassed = false;
             getPassButton().setEnabled(false);
             mResultText.setText("test in progress..");
         }
@@ -531,12 +556,12 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
         @Override
         public void testEndedOk(int testId, String str) {
             super.testEndedOk(testId, str);
-            Log.v(TAG, "Test EndedOk. " + testId + " str:"+str);
+            Log.v(TAG, "Test EndedOk. " + testId + " str:" + str);
             showView(mProgress, false);
             mResultText.setText("test completed. " + str);
             if (!isReportLogOkToPass()) {
                 mResultText.setText(getResources().getString(R.string.audio_general_reportlogtest));
-            } else if (mTestAECPassed) {
+            } else if (mResultCode == RESULT_CODE_OK) {
                 getPassButton().setEnabled(true);
             }
         }

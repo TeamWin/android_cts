@@ -56,6 +56,7 @@ android_test {
         "android.test.base",
     ],
     static_libs: [
+        "CtsVirtualDeviceCommonLib",
         "androidx.annotation_annotation",
         "androidx.test.ext.junit",
         "compatibility-device-util-axt",
@@ -70,6 +71,7 @@ android_test {
         "junit-params",
         "flag-junit",
         "android.hardware.biometrics.flags-aconfig-java",
+        "android.companion.virtual.flags-aconfig-java",
     ],
     jni_libs: [
         "libctshardware_jni",

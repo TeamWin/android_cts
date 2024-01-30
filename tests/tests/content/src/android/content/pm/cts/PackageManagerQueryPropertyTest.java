@@ -65,7 +65,8 @@ public class PackageManagerQueryPropertyTest {
                 .getInstrumentation()
                 .getUiAutomation()
                 .adoptShellPermissionIdentity(
-                        Manifest.permission.INSTALL_PACKAGES, Manifest.permission.DELETE_PACKAGES);
+                        Manifest.permission.INSTALL_PACKAGES, Manifest.permission.DELETE_PACKAGES,
+                        Manifest.permission.USE_SYSTEM_DATA_LOADERS);
     }
 
     private static void dropShellPermissions() {

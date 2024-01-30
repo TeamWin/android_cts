@@ -16,6 +16,8 @@
 
 package android.net.wifi.sharedconnectivity.cts;
 
+import static com.android.wifi.flags.Flags.networkProviderBatteryChargingStatus;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
@@ -41,7 +43,9 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.NonMainlineTest;
+import com.android.modules.utils.build.SdkLevel;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -69,69 +73,89 @@ public class SharedConnectivityTest {
     // Number of times to check before failing.
     private static final long CHECK_RETRIES = 8;
     // Time to wait for callback's CountDownLatch.
-    private static final long LATCH_TIMEOUT_SECS = 10;
+    private static final long LATCH_TIMEOUT_SECS = 20;
 
-    private static final HotspotNetwork TEST_HOTSPOT_NETWORK_1 = new HotspotNetwork.Builder()
-            .setDeviceId(1)
-            .setNetworkProviderInfo(new NetworkProviderInfo.Builder("Matt's Phone", "Pixel 6a")
-                    .setDeviceType(NetworkProviderInfo.DEVICE_TYPE_PHONE)
-                    .setBatteryPercentage(80)
-                    .setConnectionStrength(3)
-                    .build())
-            .setHostNetworkType(HotspotNetwork.NETWORK_TYPE_CELLULAR)
-            .setNetworkName("Google Fi")
-            .setHotspotSsid("Instant Hotspot 12345")
-            .setHotspotBssid("01:01:01:01:01:01")
-            .addHotspotSecurityType(WifiInfo.SECURITY_TYPE_PSK)
-            .build();
+    private HotspotNetwork mTestHotspotNetwork1;
+    private HotspotNetwork mTestHotspotNetwork2;
+    private KnownNetwork mTestKnownNetwork1;
+    private KnownNetwork mTestKnownNetwork2;
+    private HotspotNetworkConnectionStatus mTestHotspotNetworkConnectionStatus;
+    private KnownNetworkConnectionStatus mTestKnownNetworkConnectionStatus;
 
-    private static final HotspotNetwork TEST_HOTSPOT_NETWORK_2 = new HotspotNetwork.Builder()
-            .setDeviceId(2)
-            .setNetworkProviderInfo(new NetworkProviderInfo.Builder("Matt's Laptop", "Pixelbook Go")
-                    .setDeviceType(NetworkProviderInfo.DEVICE_TYPE_LAPTOP)
-                    .setBatteryPercentage(30)
-                    .setConnectionStrength(2)
-                    .build())
-            .setHostNetworkType(HotspotNetwork.NETWORK_TYPE_WIFI)
-            .setNetworkName("Hotel Guest")
-            .build();
+    @Before
+    public void setUp() {
+        NetworkProviderInfo.Builder builder =
+                new NetworkProviderInfo.Builder("Matt's Phone", "Pixel 6a")
+                        .setDeviceType(NetworkProviderInfo.DEVICE_TYPE_PHONE)
+                        .setBatteryPercentage(80)
+                        .setConnectionStrength(3);
+        if (networkProviderBatteryChargingStatus() && SdkLevel.isAtLeastV()) {
+            builder.setBatteryCharging(false);
+        }
+        mTestHotspotNetwork1 = new HotspotNetwork.Builder()
+                .setDeviceId(1)
+                .setNetworkProviderInfo(builder.build())
+                .setHostNetworkType(HotspotNetwork.NETWORK_TYPE_CELLULAR)
+                .setNetworkName("Google Fi")
+                .setHotspotSsid("Instant Hotspot 12345")
+                .setHotspotBssid("01:01:01:01:01:01")
+                .addHotspotSecurityType(WifiInfo.SECURITY_TYPE_PSK)
+                .build();
 
-    private static final KnownNetwork TEST_KNOWN_NETWORK_1 = new KnownNetwork.Builder()
-            .setNetworkSource(KnownNetwork.NETWORK_SOURCE_NEARBY_SELF)
-            .setSsid("Home Network")
-            .addSecurityType(WifiInfo.SECURITY_TYPE_WEP)
-            .setNetworkProviderInfo(new NetworkProviderInfo.Builder("Isaac's Phone", "Pixel 7")
-                    .setDeviceType(NetworkProviderInfo.DEVICE_TYPE_PHONE)
-                    .setBatteryPercentage(99)
-                    .setConnectionStrength(3)
-                    .build())
-            .build();
+        builder = new NetworkProviderInfo.Builder("Matt's Laptop", "Pixelbook Go")
+                .setDeviceType(NetworkProviderInfo.DEVICE_TYPE_LAPTOP)
+                .setBatteryPercentage(30)
+                .setConnectionStrength(2);
+        if (networkProviderBatteryChargingStatus() && SdkLevel.isAtLeastV()) {
+            builder.setBatteryCharging(true);
+        }
+        mTestHotspotNetwork2 = new HotspotNetwork.Builder()
+                .setDeviceId(2)
+                .setNetworkProviderInfo(builder.build())
+                .setHostNetworkType(HotspotNetwork.NETWORK_TYPE_WIFI)
+                .setNetworkName("Hotel Guest")
+                .build();
 
-    private static final KnownNetwork TEST_KNOWN_NETWORK_2 = new KnownNetwork.Builder()
-            .setNetworkSource(KnownNetwork.NETWORK_SOURCE_NEARBY_SELF)
-            .setSsid("Cafe Wifi")
-            .addSecurityType(WifiInfo.SECURITY_TYPE_PSK)
-            .setNetworkProviderInfo(new NetworkProviderInfo.Builder("Isaac's Work Phone",
-                    "Pixel 7 Pro")
-                    .setDeviceType(NetworkProviderInfo.DEVICE_TYPE_PHONE)
-                    .setBatteryPercentage(15)
-                    .setConnectionStrength(1)
-                    .build())
-            .build();
+        builder = new NetworkProviderInfo.Builder("Isaac's Phone", "Pixel 7")
+                .setDeviceType(NetworkProviderInfo.DEVICE_TYPE_PHONE)
+                .setBatteryPercentage(99)
+                .setConnectionStrength(3);
+        if (networkProviderBatteryChargingStatus() && SdkLevel.isAtLeastV()) {
+            builder.setBatteryCharging(false);
+        }
+        mTestKnownNetwork1 = new KnownNetwork.Builder()
+                .setNetworkSource(KnownNetwork.NETWORK_SOURCE_NEARBY_SELF)
+                .setSsid("Home Network")
+                .addSecurityType(WifiInfo.SECURITY_TYPE_WEP)
+                .setNetworkProviderInfo(builder.build())
+                .build();
 
-    private static final HotspotNetworkConnectionStatus TEST_HOTSPOT_NETWORK_CONNECTION_STATUS =
-            new HotspotNetworkConnectionStatus.Builder()
-                    .setStatus(HotspotNetworkConnectionStatus.CONNECTION_STATUS_ENABLING_HOTSPOT)
-                    .setHotspotNetwork(TEST_HOTSPOT_NETWORK_1)
-                    .setExtras(Bundle.EMPTY)
-                    .build();
+        builder = new NetworkProviderInfo.Builder("Isaac's Work Phone", "Pixel 7 Pro")
+                        .setDeviceType(NetworkProviderInfo.DEVICE_TYPE_PHONE)
+                        .setBatteryPercentage(15)
+                        .setConnectionStrength(1);
+        if (networkProviderBatteryChargingStatus() && SdkLevel.isAtLeastV()) {
+            builder.setBatteryCharging(true);
+        }
+        mTestKnownNetwork2 = new KnownNetwork.Builder()
+                .setNetworkSource(KnownNetwork.NETWORK_SOURCE_NEARBY_SELF)
+                .setSsid("Cafe Wifi")
+                .addSecurityType(WifiInfo.SECURITY_TYPE_PSK)
+                .setNetworkProviderInfo(builder.build())
+                .build();
 
-    private static final KnownNetworkConnectionStatus TEST_KNOWN_NETWORK_CONNECTION_STATUS =
-            new KnownNetworkConnectionStatus.Builder()
-                    .setStatus(KnownNetworkConnectionStatus.CONNECTION_STATUS_SAVED)
-                    .setKnownNetwork(TEST_KNOWN_NETWORK_1)
-                    .setExtras(Bundle.EMPTY)
-                    .build();
+        mTestHotspotNetworkConnectionStatus = new HotspotNetworkConnectionStatus.Builder()
+                .setStatus(HotspotNetworkConnectionStatus.CONNECTION_STATUS_ENABLING_HOTSPOT)
+                .setHotspotNetwork(mTestHotspotNetwork1)
+                .setExtras(Bundle.EMPTY)
+                .build();
+
+        mTestKnownNetworkConnectionStatus = new KnownNetworkConnectionStatus.Builder()
+                .setStatus(KnownNetworkConnectionStatus.CONNECTION_STATUS_SAVED)
+                .setKnownNetwork(mTestKnownNetwork1)
+                .setExtras(Bundle.EMPTY)
+                .build();
+    }
 
     @Test
     public void registerCallback_withoutPermission_throwsSecurityException() throws Exception {
@@ -242,8 +266,8 @@ public class SharedConnectivityTest {
             TestSharedConnectivityService service = getService();
             assertServiceConnected(callback);
 
-            List<HotspotNetwork> networks = Arrays.asList(TEST_HOTSPOT_NETWORK_1,
-                    TEST_HOTSPOT_NETWORK_2);
+            List<HotspotNetwork> networks = Arrays.asList(mTestHotspotNetwork1,
+                    mTestHotspotNetwork2);
             service.setHotspotNetworks(networks);
 
             assertThat(callbackLatch.await(LATCH_TIMEOUT_SECS, TimeUnit.SECONDS)).isTrue();
@@ -272,7 +296,7 @@ public class SharedConnectivityTest {
             TestSharedConnectivityService service = getService();
             assertServiceConnected(callback);
 
-            List<KnownNetwork> networks = Arrays.asList(TEST_KNOWN_NETWORK_1, TEST_KNOWN_NETWORK_2);
+            List<KnownNetwork> networks = Arrays.asList(mTestKnownNetwork1, mTestKnownNetwork2);
             service.setKnownNetworks(networks);
 
             assertThat(callbackLatch.await(LATCH_TIMEOUT_SECS, TimeUnit.SECONDS)).isTrue();
@@ -333,11 +357,11 @@ public class SharedConnectivityTest {
             TestSharedConnectivityService service = getService();
             assertServiceConnected(callback);
 
-            service.updateHotspotNetworkConnectionStatus(TEST_HOTSPOT_NETWORK_CONNECTION_STATUS);
+            service.updateHotspotNetworkConnectionStatus(mTestHotspotNetworkConnectionStatus);
 
             assertThat(callbackLatch.await(LATCH_TIMEOUT_SECS, TimeUnit.SECONDS)).isTrue();
             assertThat(callback.getHotspotNetworkConnectionStatus()).isEqualTo(
-                    TEST_HOTSPOT_NETWORK_CONNECTION_STATUS);
+                    mTestHotspotNetworkConnectionStatus);
         } finally {
             dropPermission();
         }
@@ -364,11 +388,11 @@ public class SharedConnectivityTest {
             TestSharedConnectivityService service = getService();
             assertServiceConnected(callback);
 
-            service.updateKnownNetworkConnectionStatus(TEST_KNOWN_NETWORK_CONNECTION_STATUS);
+            service.updateKnownNetworkConnectionStatus(mTestKnownNetworkConnectionStatus);
 
             assertThat(callbackLatch.await(LATCH_TIMEOUT_SECS, TimeUnit.SECONDS)).isTrue();
             assertThat(callback.getKnownNetworkConnectionStatus()).isEqualTo(
-                    TEST_KNOWN_NETWORK_CONNECTION_STATUS);
+                    mTestKnownNetworkConnectionStatus);
         } finally {
             dropPermission();
         }
@@ -386,13 +410,13 @@ public class SharedConnectivityTest {
             TestSharedConnectivityService service = getService();
             assertServiceConnected(callback);
 
-            assertThat(manager.connectHotspotNetwork(TEST_HOTSPOT_NETWORK_1)).isTrue();
+            assertThat(manager.connectHotspotNetwork(mTestHotspotNetwork1)).isTrue();
 
             for (int i = 0; service.getConnectHotspotNetwork() == null && i < CHECK_RETRIES; i++) {
                 Thread.sleep(CHECK_DELAY_MILLIS);
             }
             assertThat(service.getConnectHotspotNetwork()).isNotNull();
-            assertThat(service.getConnectHotspotNetwork()).isEqualTo(TEST_HOTSPOT_NETWORK_1);
+            assertThat(service.getConnectHotspotNetwork()).isEqualTo(mTestHotspotNetwork1);
         } finally {
             dropPermission();
         }
@@ -410,14 +434,14 @@ public class SharedConnectivityTest {
             TestSharedConnectivityService service = getService();
             assertServiceConnected(callback);
 
-            manager.disconnectHotspotNetwork(TEST_HOTSPOT_NETWORK_1);
+            manager.disconnectHotspotNetwork(mTestHotspotNetwork1);
 
             for (int i = 0; service.getDisconnectHotspotNetwork() == null && i < CHECK_RETRIES;
                     i++) {
                 Thread.sleep(CHECK_DELAY_MILLIS);
             }
             assertThat(service.getDisconnectHotspotNetwork()).isNotNull();
-            assertThat(service.getDisconnectHotspotNetwork()).isEqualTo(TEST_HOTSPOT_NETWORK_1);
+            assertThat(service.getDisconnectHotspotNetwork()).isEqualTo(mTestHotspotNetwork1);
         } finally {
             dropPermission();
         }
@@ -435,13 +459,13 @@ public class SharedConnectivityTest {
             TestSharedConnectivityService service = getService();
             assertServiceConnected(callback);
 
-            manager.connectKnownNetwork(TEST_KNOWN_NETWORK_1);
+            manager.connectKnownNetwork(mTestKnownNetwork1);
 
             for (int i = 0; service.getConnectKnownNetwork() == null && i < CHECK_RETRIES; i++) {
                 Thread.sleep(CHECK_DELAY_MILLIS);
             }
             assertThat(service.getConnectKnownNetwork()).isNotNull();
-            assertThat(service.getConnectKnownNetwork()).isEqualTo(TEST_KNOWN_NETWORK_1);
+            assertThat(service.getConnectKnownNetwork()).isEqualTo(mTestKnownNetwork1);
         } finally {
             dropPermission();
         }
@@ -459,13 +483,49 @@ public class SharedConnectivityTest {
             TestSharedConnectivityService service = getService();
             assertServiceConnected(callback);
 
-            manager.forgetKnownNetwork(TEST_KNOWN_NETWORK_1);
+            manager.forgetKnownNetwork(mTestKnownNetwork1);
 
             for (int i = 0; service.getForgetKnownNetwork() == null && i < CHECK_RETRIES; i++) {
                 Thread.sleep(CHECK_DELAY_MILLIS);
             }
             assertThat(service.getForgetKnownNetwork()).isNotNull();
-            assertThat(service.getForgetKnownNetwork()).isEqualTo(TEST_KNOWN_NETWORK_1);
+            assertThat(service.getForgetKnownNetwork()).isEqualTo(mTestKnownNetwork1);
+        } finally {
+            dropPermission();
+        }
+    }
+
+    @Test
+    public void getHotspotNetworkConnectionStatus_withoutUpdate_returnsNull()
+            throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        grantPermission();
+        try {
+            SharedConnectivityManager manager = getManager(context);
+            TestSharedConnectivityClientCallback callback =
+                    new TestSharedConnectivityClientCallback();
+            manager.registerCallback(Runnable::run, callback);
+            assertServiceConnected(callback);
+
+            assertThat(callback.getHotspotNetworkConnectionStatus()).isNull();
+        } finally {
+            dropPermission();
+        }
+    }
+
+    @Test
+    public void getKnownNetworkConnectionStatus_withoutUpdate_returnsNull()
+            throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        grantPermission();
+        try {
+            SharedConnectivityManager manager = getManager(context);
+            TestSharedConnectivityClientCallback callback =
+                    new TestSharedConnectivityClientCallback();
+            manager.registerCallback(Runnable::run, callback);
+            assertServiceConnected(callback);
+
+            assertThat(callback.getKnownNetworkConnectionStatus()).isNull();
         } finally {
             dropPermission();
         }

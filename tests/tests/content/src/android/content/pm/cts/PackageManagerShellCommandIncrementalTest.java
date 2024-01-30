@@ -47,6 +47,7 @@ import android.util.ArrayMap;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -108,7 +109,7 @@ public class PackageManagerShellCommandIncrementalTest {
     private static final String TEST_APK = "HelloWorld5.apk";
     private static final String TEST_APK_IDSIG = "HelloWorld5.apk.idsig";
     private static final String TEST_APK_PROFILEABLE = "HelloWorld5Profileable.apk";
-    private static final String TEST_APK_SHELL = "HelloWorldShell.apk";
+    private static final String TEST_APK_SYSTEM = "HelloWorldSystem.apk";
     private static final String TEST_APK_SPLIT0 = "HelloWorld5_mdpi-v4.apk";
     private static final String TEST_APK_SPLIT0_IDSIG = "HelloWorld5_mdpi-v4.apk.idsig";
     private static final String TEST_APK_SPLIT1 = "HelloWorld5_hdpi-v4.apk";
@@ -138,7 +139,6 @@ public class PackageManagerShellCommandIncrementalTest {
     public AbandonAllPackageSessionsRule mAbandonSessionsRule = new AbandonAllPackageSessionsRule();
 
     private IncrementalInstallSession mSession = null;
-    private String mPackageVerifier = null;
 
     private static UiAutomation getUiAutomation() {
         return InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -155,19 +155,21 @@ public class PackageManagerShellCommandIncrementalTest {
     @Before
     public void onBefore() throws Exception {
         checkIncrementalDeliveryFeature();
-        cleanup();
-
-        // Disable the package verifier to avoid the dialog when installing an app.
-        mPackageVerifier = executeShellCommand("settings get global verifier_verify_adb_installs");
-        executeShellCommand("settings put global verifier_verify_adb_installs 0");
+        uninstallPackageSilently(TEST_APP_PACKAGE);
     }
 
     @After
     public void onAfter() throws Exception {
-        cleanup();
-
-        // Reset the package verifier setting to its original value.
-        executeShellCommand("settings put global verifier_verify_adb_installs " + mPackageVerifier);
+        uninstallPackageSilently(TEST_APP_PACKAGE);
+        setDeviceProperty("incfs_default_timeouts", null);
+        setDeviceProperty("known_digesters_list", null);
+        setSystemProperty("debug.incremental.enforce_readlogs_max_interval_for_system_dataloaders",
+                "0");
+        setSystemProperty("debug.incremental.readlogs_max_interval_sec", "10000");
+        setSystemProperty("debug.incremental.always_enable_read_timeouts_for_system_dataloaders",
+                "1");
+        IoUtils.closeQuietly(mSession);
+        mSession = null;
     }
 
     static void checkIncrementalDeliveryFeature() {
@@ -220,8 +222,24 @@ public class PackageManagerShellCommandIncrementalTest {
                         f -> Arrays.stream(validValues).anyMatch(f::equals)));
     }
 
+    @Test
+    public void testBug270117845Fixed() throws Exception {
+        // first ensure the IncFS is up and running, e.g. if it's a module
+        installPackage(TEST_APK);
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+
+        // the bug is fixed when the specific marker feature is present
+        final String[] validValues = {"bugfix_inode_eviction"};
+        final String features = executeShellCommand("ls /sys/fs/incremental-fs/features/");
+        assertTrue(
+                "Missing required IncFS features [" + TextUtils.join(",", validValues) + "]",
+                Arrays.stream(features.split("\\s+")).anyMatch(
+                        f -> Arrays.stream(validValues).anyMatch(f::equals)));
+    }
+
     @LargeTest
     @Test
+    @FlakyTest
     public void testSpaceAllocatedForPackage() throws Exception {
         final String apk = createApkPath(TEST_APK);
         final String idsig = createApkPath(TEST_APK_IDSIG);
@@ -305,7 +323,7 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @Test
     public void testSystemInstallWithIdSig() throws Exception {
-        final String baseName = TEST_APK_SHELL;
+        final String baseName = TEST_APK_SYSTEM;
         final File file = new File(createApkPath(baseName));
         assertThat(executeShellCommand("pm install-incremental -t -g " + file.getPath()))
                 .startsWith("Failure [INSTALL_FAILED_SESSION_INVALID");
@@ -351,6 +369,7 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @LargeTest
     @Test
+    @FlakyTest // This test is flaky by design
     public void testInstallWithMissingBlocks() throws Exception {
         setDeviceProperty("incfs_default_timeouts", "0:0:0");
         setDeviceProperty("known_digesters_list", CTS_PACKAGE_NAME);
@@ -1121,7 +1140,7 @@ public class PackageManagerShellCommandIncrementalTest {
         });
         readFromProcess.start();
 
-        for (int i = 0; i < installIterations; ++i) {
+        for (int i = 0; i < installIterations && !result.isDone(); ++i) {
             installer.call();
             assertTrue(isAppInstalled(TEST_APP_PACKAGE));
             Thread.currentThread().sleep(beforeReadDelayMs);
@@ -1174,7 +1193,7 @@ public class PackageManagerShellCommandIncrementalTest {
     }
 
     static String parsePackageDump(String packageName, String prefix) throws IOException {
-        final String commandResult = executeShellCommand("pm dump " + packageName);
+        final String commandResult = executeShellCommand("pm dump-package " + packageName);
         final int prefixLength = prefix.length();
         Optional<String> maybeSplits = Arrays.stream(commandResult.split("\\r?\\n"))
                 .filter(line -> line.startsWith(prefix)).findFirst();
@@ -1330,21 +1349,6 @@ public class PackageManagerShellCommandIncrementalTest {
         if (expected > 0) {
             assertEquals(expected, total);
         }
-    }
-
-    private void cleanup() throws Exception {
-        uninstallPackageSilently(TEST_APP_PACKAGE);
-        assertFalse(isAppInstalled(TEST_APP_PACKAGE));
-        assertEquals(null, getSplits(TEST_APP_PACKAGE));
-        setDeviceProperty("incfs_default_timeouts", null);
-        setDeviceProperty("known_digesters_list", null);
-        setSystemProperty("debug.incremental.enforce_readlogs_max_interval_for_system_dataloaders",
-                "0");
-        setSystemProperty("debug.incremental.readlogs_max_interval_sec", "10000");
-        setSystemProperty("debug.incremental.always_enable_read_timeouts_for_system_dataloaders",
-                "1");
-        IoUtils.closeQuietly(mSession);
-        mSession = null;
     }
 
     static void setDeviceProperty(String name, String value) {

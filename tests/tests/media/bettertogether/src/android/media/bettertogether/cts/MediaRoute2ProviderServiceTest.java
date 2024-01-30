@@ -43,9 +43,9 @@ import android.media.RoutingSessionInfo;
 import android.media.bettertogether.cts.StubMediaRoute2ProviderService.Proxy;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.LargeTest;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;

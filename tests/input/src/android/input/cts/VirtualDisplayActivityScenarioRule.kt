@@ -17,6 +17,7 @@
 package android.input.cts
 
 import android.Manifest
+import android.app.Activity
 import android.app.ActivityOptions
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -34,16 +35,20 @@ import com.android.compatibility.common.util.SystemUtil
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
 import org.junit.rules.ExternalResource
+import org.junit.rules.TestName
 
 /**
- * A test rule that sets up a virtual display, and launches the [CaptureEventActivity] on that
- * display.
+ * A test rule that sets up a virtual display, and launches the specified activity on that display.
  */
-class VirtualDisplayActivityScenarioRule : ExternalResource() {
-
+class VirtualDisplayActivityScenarioRule<A : Activity>(
+    val testName: TestName,
+    val type: Class<A>
+) : ExternalResource() {
     companion object {
+        const val TAG = "VirtualDisplayActivityScenarioRule"
         const val VIRTUAL_DISPLAY_NAME = "CtsTouchScreenTestVirtualDisplay"
         const val WIDTH = 480
         const val HEIGHT = 800
@@ -58,17 +63,23 @@ class VirtualDisplayActivityScenarioRule : ExternalResource() {
 
         /** See [DisplayManager.VIRTUAL_DISPLAY_FLAG_ROTATES_WITH_CONTENT].  */
         const val VIRTUAL_DISPLAY_FLAG_ROTATES_WITH_CONTENT = 1 shl 7
+        inline operator fun <reified A : Activity> invoke(
+            testName: TestName
+        ): VirtualDisplayActivityScenarioRule<A> = VirtualDisplayActivityScenarioRule(
+            testName,
+            A::class.java
+        )
     }
 
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private lateinit var reader: ImageReader
 
     lateinit var virtualDisplay: VirtualDisplay
-    lateinit var activity: CaptureEventActivity
+    lateinit var activity: A
     val displayId: Int get() = virtualDisplay.display.displayId
 
     /**
-     * Before the test starts, set up the virtual display and start the [CtsEventActivity] on that
+     * Before the test starts, set up the virtual display and start the activity A on that
      * display.
      */
     override fun before() {
@@ -79,10 +90,11 @@ class VirtualDisplayActivityScenarioRule : ExternalResource() {
             ActivityOptions.makeBasic().setLaunchDisplayId(displayId)
                 .toBundle()
         val intent = Intent(Intent.ACTION_VIEW)
-            .setClass(instrumentation.targetContext, CaptureEventActivity::class.java)
+            .setClass(instrumentation.targetContext, type)
             .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         SystemUtil.runWithShellPermissionIdentity({
-            activity = instrumentation.startActivitySync(intent, bundle) as CaptureEventActivity
+            @Suppress("UNCHECKED_CAST")
+            activity = instrumentation.startActivitySync(intent, bundle) as A
         }, Manifest.permission.INTERNAL_SYSTEM_WINDOW)
         waitUntilActivityReadyForInput()
     }
@@ -115,7 +127,8 @@ class VirtualDisplayActivityScenarioRule : ExternalResource() {
             runnable()
         } finally {
             SystemUtil.runShellCommandOrThrow(
-                "wm user-rotation -d $displayId $initialUserRotation")
+                "wm user-rotation -d $displayId $initialUserRotation"
+            )
         }
     }
 
@@ -157,7 +170,12 @@ class VirtualDisplayActivityScenarioRule : ExternalResource() {
         WindowManagerStateHelper().waitForAppTransitionIdleOnDisplay(displayId)
         instrumentation.uiAutomation.syncInputTransactions()
         instrumentation.waitForIdleSync()
-        assertTrue("Window did not become visible",
-            CtsWindowInfoUtils.waitForWindowOnTop(activity.window!!))
+        if (!CtsWindowInfoUtils.waitForWindowOnTop(activity.window!!)) {
+            CtsWindowInfoUtils.dumpWindowsOnScreen(
+                TAG,
+                "test: ${testName.methodName}, virtualDisplayId=$displayId"
+            )
+            fail("Window did not become visible")
+        }
     }
 }

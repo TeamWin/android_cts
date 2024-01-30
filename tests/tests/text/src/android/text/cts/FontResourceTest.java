@@ -26,9 +26,9 @@ import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.TextView;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,7 +42,7 @@ public class FontResourceTest {
     private static final String RESOURCE_PACKAGE = "android.text.cts.resources";
 
     private int getLayoutId() {
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         int resID = 0;
         try {
             resID = context.createPackageContext(RESOURCE_PACKAGE, 0)
@@ -77,7 +77,7 @@ public class FontResourceTest {
 
     @Test
     public void testRemoteResource() throws Exception {
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         Context freeContext = context.createPackageContext(
                 RESOURCE_PACKAGE, Context.CONTEXT_IGNORE_SECURITY);

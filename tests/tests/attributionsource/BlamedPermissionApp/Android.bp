@@ -20,8 +20,11 @@ package {
 
 android_test_helper_app {
     name: "CtsBlamedPermissionApp",
+    defaults: [
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
     srcs: [
         "src/**/*.kt",
     ],
 }
-

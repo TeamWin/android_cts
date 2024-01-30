@@ -31,6 +31,7 @@ import android.media.AudioManager;
 import android.media.IVolumeController;
 import android.media.SoundPool;
 import android.os.RemoteException;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
@@ -39,6 +40,7 @@ import com.android.compatibility.common.util.NonMainlineTest;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @NonMainlineTest
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class SoundDoseHelperTest extends CtsAndroidTestCase {
     private static final String TAG = "SoundDoseHelperTest";
 
@@ -105,7 +107,6 @@ public class SoundDoseHelperTest extends CtsAndroidTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        Log.e("SoundDoseHelperTest", "Calling setUp");
         mContext = getContext();
         getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
                 Manifest.permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED,
@@ -115,7 +116,6 @@ public class SoundDoseHelperTest extends CtsAndroidTestCase {
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
-        Log.e("SoundDoseHelperTest", "Calling tearDownUp");
         getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 
@@ -166,6 +166,7 @@ public class SoundDoseHelperTest extends CtsAndroidTestCase {
 
         am.forceComputeCsdOnAllDevices(/* computeCsdOnAllDevices= */true);
         am.forceUseFrameworkMel(/* useFrameworkMel= */true);
+        am.setCsd(-1.f);  // reset csd timeouts
         am.setRs2Value(MIN_RS2_VALUE);  // lower the RS2 as much as possible
 
         IVolumeController sysUiVolumeController = null;
@@ -190,6 +191,8 @@ public class SoundDoseHelperTest extends CtsAndroidTestCase {
                 am.setVolumeController(sysUiVolumeController);
             }
             am.setRs2Value(DEFAULT_RS2_VALUE);  // restore RS2 to default
+            am.forceComputeCsdOnAllDevices(/* computeCsdOnAllDevices= */false);
+            am.forceUseFrameworkMel(/* useFrameworkMel= */false);
         }
     }
 

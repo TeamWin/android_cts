@@ -24,12 +24,12 @@
         <uses-library android:name="android.test.runner" />
 
         <activity
-            android:name="android.server.wm.DecorInsetTestsBase$TestActivity"
+            android:name="android.server.wm.insets.DecorInsetTestsBase$TestActivity"
             android:label="DecorInsetTestsBase.TestActivity"
             android:exported="true" />
 
         <activity
-            android:name="android.server.wm.ForceRelayoutTestBase$TestActivity"
+            android:name="android.server.wm.activity.ForceRelayoutTestBase$TestActivity"
             android:exported="true" />
     </application>
 

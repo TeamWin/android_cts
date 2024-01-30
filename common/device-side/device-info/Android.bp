@@ -27,7 +27,7 @@ java_library {
     static_libs: [
         "androidx.test.rules",
         "compatibility-device-util-axt",
-        "cts_window_jetpack_utils",
+        "cts_window_extensions_jetpack_util",
         "junit",
         "android-key-attestation",
         "Nene",

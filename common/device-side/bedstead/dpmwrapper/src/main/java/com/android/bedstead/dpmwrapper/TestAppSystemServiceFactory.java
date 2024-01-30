@@ -176,6 +176,7 @@ public final class TestAppSystemServiceFactory {
 
         @SuppressWarnings("unchecked")
         T manager = null;
+        boolean managerCanBeNull = false;
 
         if (serviceClass.equals(DevicePolicyManager.class)) {
             wrappedClass = DevicePolicyManager.class;
@@ -189,6 +190,7 @@ public final class TestAppSystemServiceFactory {
                     (ServiceManagerWrapper<T>) new WifiManagerWrapper();
             wrapper = safeCastWrapper;
             wrappedClass = WifiManager.class;
+            managerCanBeNull = true;
         } else if (serviceClass.equals(HardwarePropertiesManager.class)) {
             @SuppressWarnings("unchecked")
             ServiceManagerWrapper<T> safeCastWrapper =
@@ -218,6 +220,10 @@ public final class TestAppSystemServiceFactory {
         }
 
         if (manager == null) {
+            if (managerCanBeNull) {
+                Log.i(TAG, "Manager of" + serviceClass + "is null");
+                return null;
+            }
             fail("Could not get a manager of type " + serviceClass);
         }
 

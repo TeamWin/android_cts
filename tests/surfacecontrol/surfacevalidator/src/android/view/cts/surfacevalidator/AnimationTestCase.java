@@ -56,4 +56,9 @@ public class AnimationTestCase implements ISurfaceValidatorTestCase {
         mAnimator.cancel();
         mParent.removeAllViews();
     }
+
+    @Override
+    public boolean waitForReady() {
+        return mViewFactory.waitForReady();
+    }
 }

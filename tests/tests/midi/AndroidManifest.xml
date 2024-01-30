@@ -35,13 +35,21 @@
             <meta-data android:name="android.media.midi.MidiDeviceService"
                  android:resource="@xml/echo_device_info"/>
         </service>
+
+        <service android:name="com.android.midi.CTSMidiUmpEchoTestService"
+             android:permission="android.permission.BIND_MIDI_DEVICE_SERVICE"
+             android:exported="true">
+            <intent-filter>
+                 <action android:name="android.media.midi.MidiUmpDeviceService"/>
+            </intent-filter>
+            <property android:name="android.media.midi.MidiUmpDeviceService"
+                 android:resource="@xml/ump_echo_device_info"/>
+        </service>
     </application>
 
     <!--  self-instrumenting test package. -->
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
          android:label="CTS MIDI tests"
          android:targetPackage="android.midi.cts">
-        <meta-data android:name="listener"
-             android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
 </manifest>

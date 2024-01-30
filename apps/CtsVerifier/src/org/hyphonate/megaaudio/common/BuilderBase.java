@@ -80,6 +80,8 @@ public abstract class BuilderBase {
     // Sharing Mode Constants
     public static final int SHARING_MODE_EXCLUSIVE = 0; // AAUDIO_SHARING_MODE_EXCLUSIVE
     public static final int SHARING_MODE_SHARED = 1;    // AAUDIO_SHARING_MODE_SHARED
+    public static final int SHARING_MODE_NOTSUPPORTED = -1;    // A return value only
+
     /**
      * The sharing mode for the created stream. It can be any one of the constants above.
      */

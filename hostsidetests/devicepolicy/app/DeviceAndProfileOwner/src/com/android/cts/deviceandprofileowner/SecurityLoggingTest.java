@@ -84,12 +84,12 @@ import android.os.UserManager;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
-import android.support.test.uiautomator.UiDevice;
 import android.text.TextUtils;
 import android.util.DebugUtils;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;

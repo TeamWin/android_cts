@@ -79,13 +79,9 @@ import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.ShellCommandHelper.executeShellCommandAndGetStdout;
 import static android.server.wm.StateLogger.log;
 import static android.server.wm.StateLogger.logE;
-import static android.server.wm.UiDeviceUtils.pressBackButton;
-import static android.server.wm.UiDeviceUtils.pressEnterButton;
-import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.UiDeviceUtils.pressSleepButton;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
-import static android.server.wm.UiDeviceUtils.waitForDeviceIdle;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.BROADCAST_RECEIVER_ACTIVITY;
@@ -133,12 +129,10 @@ import static org.junit.Assume.assumeTrue;
 
 import static java.lang.Integer.toHexString;
 
-import android.accessibilityservice.AccessibilityService;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.ActivityTaskManager;
-import android.app.DreamManager;
 import android.app.Instrumentation;
 import android.app.KeyguardManager;
 import android.app.WallpaperManager;
@@ -156,7 +150,6 @@ import android.graphics.Rect;
 import android.hardware.display.AmbientDisplayConfiguration;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
-import android.os.PowerManager;
 import android.os.Process;
 import android.os.RemoteCallback;
 import android.os.SystemClock;
@@ -189,6 +182,7 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 
 import com.android.compatibility.common.util.AppOpsUtils;
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.GestureNavSwitchHelper;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -267,7 +261,6 @@ public abstract class ActivityManagerTestBase {
 
     private static Boolean sHasHomeScreen = null;
     private static Boolean sSupportsSystemDecorsOnSecondaryDisplays = null;
-    private static Boolean sSupportsInsecureLockScreen = null;
     private static Boolean sIsAssistantOnTop = null;
     private static Boolean sIsTablet = null;
     private static Boolean sDismissDreamOnActivityStart = null;
@@ -364,9 +357,9 @@ public abstract class ActivityManagerTestBase {
                 extras);
     }
 
-    protected static String getAmStartCmdWithDismissKeyguard(
+    protected static String getAmStartCmdWithDismissKeyguardIfInsecure(
             final ComponentName activityName) {
-        return "am start --dismiss-keyguard -n " + getActivityName(activityName);
+        return "am start --dismiss-keyguard-if-insecure -n " + getActivityName(activityName);
     }
 
     protected static String getAmStartCmdWithNoUserAction(final ComponentName activityName,
@@ -432,12 +425,12 @@ public abstract class ActivityManagerTestBase {
                     .setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         }
 
-        void doAction(String broadcastAction) {
+        public void doAction(String broadcastAction) {
             mContext.sendBroadcast(createIntentWithAction(broadcastAction));
         }
 
-        void doActionWithRemoteCallback(String broadcastAction,
-                String callbackName, RemoteCallback callback) {
+        public void doActionWithRemoteCallback(
+                String broadcastAction, String callbackName, RemoteCallback callback) {
             try {
                 // We need also a RemoteCallback to ensure the callback passed in is properly set
                 // in the Activity before moving forward.
@@ -453,39 +446,39 @@ public abstract class ActivityManagerTestBase {
             }
         }
 
-        void finishBroadcastReceiverActivity() {
+        public void finishBroadcastReceiverActivity() {
             mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
                     .putExtra(EXTRA_FINISH_BROADCAST, true));
         }
 
-        void launchActivityNewTask(String launchComponent) {
+        public void launchActivityNewTask(String launchComponent) {
             mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
                     .putExtra(KEY_LAUNCH_ACTIVITY, true)
                     .putExtra(KEY_NEW_TASK, true)
                     .putExtra(KEY_TARGET_COMPONENT, launchComponent));
         }
 
-        void moveTopTaskToBack() {
+        public void moveTopTaskToBack() {
             mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
                     .putExtra(EXTRA_MOVE_BROADCAST_TO_BACK, true));
         }
 
-        void requestOrientation(int orientation) {
+        public void requestOrientation(int orientation) {
             mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
                     .putExtra(EXTRA_BROADCAST_ORIENTATION, orientation));
         }
 
-        void dismissKeyguardByFlag() {
+        public void dismissKeyguardByFlag() {
             mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
                     .putExtra(EXTRA_DISMISS_KEYGUARD, true));
         }
 
-        void dismissKeyguardByMethod() {
+        public void dismissKeyguardByMethod() {
             mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
                     .putExtra(EXTRA_DISMISS_KEYGUARD_METHOD, true));
         }
 
-        void enterPipAndWait() {
+        public void enterPipAndWait() {
             try {
                 final CompletableFuture<Boolean> future = new CompletableFuture<>();
                 final RemoteCallback remoteCallback = new RemoteCallback(
@@ -498,28 +491,28 @@ public abstract class ActivityManagerTestBase {
             }
         }
 
-        void expandPip() {
+        public void expandPip() {
             mContext.sendBroadcast(createIntentWithAction(ACTION_EXPAND_PIP));
         }
 
-        void expandPipWithAspectRatio(String extraNum, String extraDenom) {
+        public void expandPipWithAspectRatio(String extraNum, String extraDenom) {
             mContext.sendBroadcast(createIntentWithAction(ACTION_EXPAND_PIP)
                     .putExtra(EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR, extraNum)
                     .putExtra(EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR, extraDenom));
         }
 
-        void sendPipStateUpdate(RemoteCallback callback, boolean stashed) {
+        public void sendPipStateUpdate(RemoteCallback callback, boolean stashed) {
             mContext.sendBroadcast(createIntentWithAction(ACTION_UPDATE_PIP_STATE)
                     .putExtra(EXTRA_SET_PIP_CALLBACK, callback)
                     .putExtra(EXTRA_SET_PIP_STASHED, stashed));
         }
 
-        void requestOrientationForPip(int orientation) {
+        public void requestOrientationForPip(int orientation) {
             mContext.sendBroadcast(createIntentWithAction(ACTION_SET_REQUESTED_ORIENTATION)
                     .putExtra(EXTRA_PIP_ORIENTATION, String.valueOf(orientation)));
         }
 
-        void changeAspectRatio(int numerator, int denominator) {
+        public void changeAspectRatio(int numerator, int denominator) {
             mContext.sendBroadcast(createIntentWithAction(ACTION_CHANGE_ASPECT_RATIO)
                     .putExtra(EXTRA_SET_ASPECT_RATIO_NUMERATOR, Integer.toString(numerator))
                     .putExtra(EXTRA_SET_ASPECT_RATIO_DENOMINATOR, Integer.toString(denominator)));
@@ -534,6 +527,10 @@ public abstract class ActivityManagerTestBase {
         boolean mFinishAfterClose;
         private static final int ACTIVITY_LAUNCH_TIMEOUT = 10000;
         private static final int WAIT_SLICE = 50;
+
+        public void setFinishAfterClose(boolean value) {
+            mFinishAfterClose = value;
+        }
 
         /**
          * Launches an {@link Activity} on a target display synchronously.
@@ -551,7 +548,7 @@ public abstract class ActivityManagerTestBase {
          * @param displayId ID of the target display
          * @param windowingMode Windowing mode at launch
          */
-        void launchTestActivityOnDisplaySync(
+        public void launchTestActivityOnDisplaySync(
                 Class<T> activityClass, int displayId, int windowingMode) {
             final Intent intent = new Intent(mContext, activityClass)
                     .addFlags(FLAG_ACTIVITY_NEW_TASK);
@@ -567,8 +564,8 @@ public abstract class ActivityManagerTestBase {
          * @param intent Intent to launch an activity
          * @param displayId ID for the target display
          */
-        void launchTestActivityOnDisplaySync(@Nullable String className, Intent intent,
-                int displayId) {
+        public void launchTestActivityOnDisplaySync(
+                @Nullable String className, Intent intent, int displayId) {
             launchTestActivityOnDisplaySync(className, intent, displayId, WINDOWING_MODE_UNDEFINED);
         }
 
@@ -581,7 +578,7 @@ public abstract class ActivityManagerTestBase {
          * @param displayId ID for the target display
          * @param windowingMode Windowing mode at launch
          */
-        void launchTestActivityOnDisplaySync(
+        public void launchTestActivityOnDisplaySync(
                 @Nullable String className, Intent intent, int displayId, int windowingMode) {
             runWithShellPermission(
                     () -> {
@@ -600,7 +597,7 @@ public abstract class ActivityManagerTestBase {
          * @param activityClass The {@link Activity} class to be launched
          * @param displayId ID of the target display
          */
-        void launchTestActivityOnDisplay(Class<T> activityClass, int displayId) {
+        public void launchTestActivityOnDisplay(Class<T> activityClass, int displayId) {
             final Intent intent = new Intent(mContext, activityClass)
                     .addFlags(FLAG_ACTIVITY_NEW_TASK);
             final String className = intent.getComponent().getClassName();
@@ -644,20 +641,20 @@ public abstract class ActivityManagerTestBase {
             return mTestActivity;
         }
 
-        void finishCurrentActivityNoWait() {
+        public void finishCurrentActivityNoWait() {
             if (mTestActivity != null) {
                 mTestActivity.finishAndRemoveTask();
                 mTestActivity = null;
             }
         }
 
-        void runOnMainSyncAndWait(Runnable runnable) {
+        public void runOnMainSyncAndWait(Runnable runnable) {
             mInstrumentation.runOnMainSync(runnable);
             mInstrumentation.waitForIdleSync();
         }
 
-        void runOnMainAndAssertWithTimeout(@NonNull BooleanSupplier condition, long timeoutMs,
-                String message) {
+        public void runOnMainAndAssertWithTimeout(
+                @NonNull BooleanSupplier condition, long timeoutMs, String message) {
             final AtomicBoolean result = new AtomicBoolean();
             final long expiredTime = System.currentTimeMillis() + timeoutMs;
             while (!result.get()) {
@@ -685,25 +682,12 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    public static void wakeUpAndUnlock(Context context) {
-        final KeyguardManager keyguardManager = context.getSystemService(KeyguardManager.class);
-        final PowerManager powerManager = context.getSystemService(PowerManager.class);
-        final DreamManager dreamManager = context.getSystemService(DreamManager.class);
-        if (keyguardManager == null || powerManager == null) {
-            return;
-        }
-
-        if (keyguardManager.isKeyguardLocked() || !powerManager.isInteractive()
-                || (dreamManager != null
-                && SystemUtil.runWithShellPermissionIdentity(dreamManager::isDreaming))) {
-            pressWakeupButton();
-            pressUnlockButton();
-        }
-    }
-
     @Before
     public void setUp() throws Exception {
-        wakeUpAndUnlock(mContext);
+        UiDeviceUtils.wakeUpAndUnlock(mContext);
+        if (isKeyguardLocked()) {
+            unlockUnexpectedLockedKeyguard();
+        }
 
         launchHomeActivityNoWait();
         // TODO(b/242933292): Consider removing all the tasks belonging to android.server.wm
@@ -738,7 +722,7 @@ public abstract class ActivityManagerTestBase {
         // activities but home are cleaned up from the root task at the end of each test. Am force
         // stop shell commands might be asynchronous and could interrupt the task cleanup
         // process if executed first.
-        wakeUpAndUnlock(mContext);
+        UiDeviceUtils.wakeUpAndUnlock(mContext);
         launchHomeActivityNoWait();
         removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         stopTestPackage(TEST_PACKAGE);
@@ -757,6 +741,20 @@ public abstract class ActivityManagerTestBase {
             mPostAssertionRule.addError(
                     new IllegalStateException("Shell transition left unfinished!"));
         }
+    }
+
+    /** This should only be called if keyguard is still locked unexpectedly. */
+    private void unlockUnexpectedLockedKeyguard() {
+        logE("Try to recover unexpected locked keyguard");
+        // To clear the credential immediately, the screen need to be turned on.
+        pressWakeupButton();
+        if (supportsSecureLock()) {
+            removeLockCredential();
+        }
+        // Off/on to refresh the keyguard state.
+        pressSleepButton();
+        pressWakeupButton();
+        pressUnlockButton();
     }
 
     /**
@@ -798,13 +796,18 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    protected ComponentName getDefaultSecondaryHomeComponent() {
-        assumeTrue(supportsMultiDisplay());
+    protected Intent createHomeIntent(String category) {
         int resId = Resources.getSystem().getIdentifier(
                 "config_secondaryHomePackage", "string", "android");
         final Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.addCategory(Intent.CATEGORY_SECONDARY_HOME);
+        intent.addCategory(category);
         intent.setPackage(mContext.getResources().getString(resId));
+        return intent;
+    }
+
+    protected ComponentName getDefaultSecondaryHomeComponent() {
+        assumeTrue(supportsMultiDisplay());
+        final Intent intent = createHomeIntent(Intent.CATEGORY_SECONDARY_HOME);
         final ResolveInfo resolveInfo =
                 mContext.getPackageManager().resolveActivity(intent, MATCH_DEFAULT_ONLY);
         assertNotNull("Should have default secondary home activity", resolveInfo);
@@ -879,7 +882,7 @@ public abstract class ActivityManagerTestBase {
      * Do a back gesture and trigger a back event from it.
      * Attempt to simulate human behavior, so don't wait for animations.
      */
-    void triggerBackEventByGesture(int displayId) {
+    protected void triggerBackEventByGesture(int displayId) {
         mTouchHelper.triggerBackEventByGesture(
                 displayId, true /* sync */, false /* waitForAnimations */);
     }
@@ -917,8 +920,9 @@ public abstract class ActivityManagerTestBase {
         mWmState.waitForValidState(activityName);
     }
 
-    protected void launchActivityWithDismissKeyguard(final ComponentName activityName) {
-        executeShellCommand(getAmStartCmdWithDismissKeyguard(activityName));
+    protected void launchActivityWithDismissKeyguardIfInsecure(
+            final ComponentName activityName) {
+        executeShellCommand(getAmStartCmdWithDismissKeyguardIfInsecure(activityName));
         mWmState.waitForValidState(activityName);
     }
 
@@ -938,7 +942,7 @@ public abstract class ActivityManagerTestBase {
         getInstrumentation().waitForIdleSync();
     }
 
-    static void waitForOrFail(String message, BooleanSupplier condition) {
+    public static void waitForOrFail(String message, BooleanSupplier condition) {
         Condition.waitFor(new Condition<>(message, condition)
                 .setRetryIntervalMs(500)
                 .setRetryLimit(20)
@@ -968,8 +972,8 @@ public abstract class ActivityManagerTestBase {
         return null;
     }
 
-    protected int getDisplayWindowingModeByActivity(ComponentName activity) {
-        return mWmState.getDisplay(mWmState.getDisplayByActivity(activity)).getWindowingMode();
+    protected int getDefaultWindowingModeByActivity(ComponentName activity) {
+        return mWmState.getTaskDisplayArea(activity).getWindowingMode();
     }
 
     public static void closeSystemDialogs() {
@@ -980,7 +984,7 @@ public abstract class ActivityManagerTestBase {
      * Launches the home activity directly. If there is no specific reason to simulate a home key
      * (which will trigger stop-app-switches), it is the recommended method to go home.
      */
-    protected static void launchHomeActivityNoWait() {
+    public static void launchHomeActivityNoWait() {
         // dismiss all system dialogs before launch home.
         closeSystemDialogs();
         executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
@@ -1210,15 +1214,13 @@ public abstract class ActivityManagerTestBase {
 
     /** Whether or not the device supports pin/pattern/password lock. */
     protected boolean supportsSecureLock() {
-        return hasDeviceFeature(FEATURE_SECURE_LOCK_SCREEN);
+        return FeatureUtil.hasSystemFeature(FEATURE_SECURE_LOCK_SCREEN);
     }
 
     /** Whether or not the device supports "swipe" lock. */
     protected boolean supportsInsecureLock() {
-        return !hasDeviceFeature(FEATURE_LEANBACK)
-                && !hasDeviceFeature(FEATURE_WATCH)
-                && !hasDeviceFeature(FEATURE_EMBEDDED)
-                && !hasDeviceFeature(FEATURE_AUTOMOTIVE)
+        return !FeatureUtil.hasAnySystemFeature(
+                FEATURE_LEANBACK, FEATURE_WATCH, FEATURE_EMBEDDED, FEATURE_AUTOMOTIVE)
                 && getSupportsInsecureLockScreen();
     }
 
@@ -1320,8 +1322,8 @@ public abstract class ActivityManagerTestBase {
      * @param message the error message
      */
     public void waitAndAssertResumedActivity(ComponentName activityName, String message) {
-        mWmState.waitForValidState(activityName);
         mWmState.waitForActivityState(activityName, STATE_RESUMED);
+        mWmState.waitForValidState(activityName);
         mWmState.assertValidity();
         assertTrue(message, mWmState.hasActivityState(activityName, STATE_RESUMED));
         mWmState.assertVisibility(activityName, true /* visible */);
@@ -1383,8 +1385,14 @@ public abstract class ActivityManagerTestBase {
 
     protected boolean supportsMultiWindow() {
         Display defaultDisplay = mDm.getDisplay(DEFAULT_DISPLAY);
-        return ActivityTaskManager.supportsSplitScreenMultiWindow(
-                mContext.createDisplayContext(defaultDisplay));
+        return supportsMultiWindow(mContext.createDisplayContext(defaultDisplay));
+    }
+
+    /**
+     * Returns true if the Context supports multi-window-mode
+     */
+    protected final boolean supportsMultiWindow(Context context) {
+        return ActivityTaskManager.supportsSplitScreenMultiWindow(context);
     }
 
     /** Returns true if the default display supports split screen multi-window. */
@@ -1416,16 +1424,15 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected boolean getSupportsInsecureLockScreen() {
-        if (sSupportsInsecureLockScreen == null) {
-            try {
-                sSupportsInsecureLockScreen = mContext.getResources().getBoolean(
-                        Resources.getSystem().getIdentifier(
-                                "config_supportsInsecureLockScreen", "bool", "android"));
-            } catch (Resources.NotFoundException e) {
-                sSupportsInsecureLockScreen = true;
-            }
+        boolean insecure;
+        try {
+            insecure = mContext.getResources().getBoolean(
+                    Resources.getSystem().getIdentifier(
+                            "config_supportsInsecureLockScreen", "bool", "android"));
+        } catch (Resources.NotFoundException e) {
+            insecure = true;
         }
-        return sSupportsInsecureLockScreen;
+        return insecure;
     }
 
     protected boolean isAssistantOnTopOfDream() {
@@ -1540,7 +1547,18 @@ public abstract class ActivityManagerTestBase {
 
     /** @see ObjectTracker#manage(AutoCloseable) */
     protected LockScreenSession createManagedLockScreenSession() {
-        return mObjectTracker.manage(new LockScreenSession());
+        return mObjectTracker.manage(new LockScreenSession(mInstrumentation, mWmState));
+    }
+
+    /** @see ObjectTracker#manage(AutoCloseable) */
+    protected LockScreenSession createManagedLockScreenSessionAndClearActivitiesOnClose() {
+        return mObjectTracker.manage(new LockScreenSession(mInstrumentation, mWmState) {
+            @Override
+            public void close() {
+                removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
+                super.close();
+            }
+        });
     }
 
     /** @see ObjectTracker#manage(AutoCloseable) */
@@ -1584,7 +1602,7 @@ public abstract class ActivityManagerTestBase {
     /**
      * Test @Rule class that disables Immersive mode confirmation dialog.
      */
-    protected static class DisableImmersiveModeConfirmationRule implements TestRule {
+    public static class DisableImmersiveModeConfirmationRule implements TestRule {
         @Override
         public Statement apply(Statement base, Description description) {
             return new Statement() {
@@ -1609,7 +1627,7 @@ public abstract class ActivityManagerTestBase {
     protected class DisableScreenDozeRule implements TestRule {
         AmbientDisplayConfiguration mConfig;
 
-        DisableScreenDozeRule() {
+        public DisableScreenDozeRule() {
             mConfig = new AmbientDisplayConfiguration(mContext);
         }
 
@@ -1637,7 +1655,7 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    ComponentName getDefaultHomeComponent() {
+    public ComponentName getDefaultHomeComponent() {
         final Intent intent = new Intent(ACTION_MAIN);
         intent.addCategory(CATEGORY_HOME);
         intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
@@ -1688,201 +1706,6 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    public class LockScreenSession implements AutoCloseable {
-        private static final boolean DEBUG = false;
-
-        private final boolean mIsLockDisabled;
-        private boolean mLockCredentialSet;
-        private boolean mRemoveActivitiesOnClose;
-        private AmbientDisplayConfiguration mAmbientDisplayConfiguration;
-
-        public static final int FLAG_REMOVE_ACTIVITIES_ON_CLOSE = 1;
-
-        public LockScreenSession() {
-            this(0 /* flags */);
-        }
-
-        public LockScreenSession(int flags) {
-            mIsLockDisabled = isLockDisabled();
-            // Enable lock screen (swipe) by default.
-            setLockDisabled(false);
-            if ((flags & FLAG_REMOVE_ACTIVITIES_ON_CLOSE) != 0) {
-                mRemoveActivitiesOnClose = true;
-            }
-            mAmbientDisplayConfiguration = new AmbientDisplayConfiguration(mContext);
-
-            // On devices that don't support any insecure locks but supports a secure lock, let's
-            // enable a secure lock.
-            if (!supportsInsecureLock() && supportsSecureLock()) {
-                setLockCredential();
-            }
-        }
-
-        public LockScreenSession setLockCredential() {
-            if (mLockCredentialSet) {
-                // "set-pin" command isn't idempotent. We need to provide the old credential in
-                // order to change it to a new one. However we never use a different credential in
-                // CTS so we don't need to do anything if the credential is already set.
-                return this;
-            }
-            mLockCredentialSet = true;
-            runCommandAndPrintOutput("locksettings set-pin " + LOCK_CREDENTIAL);
-            return this;
-        }
-
-        public LockScreenSession enterAndConfirmLockCredential() {
-            // Ensure focus will switch to default display. Meanwhile we cannot tap on center area,
-            // which may tap on input credential area.
-            touchAndCancelOnDisplayCenterSync(DEFAULT_DISPLAY);
-
-            waitForDeviceIdle(3000);
-            SystemUtil.runWithShellPermissionIdentity(() ->
-                    mInstrumentation.sendStringSync(LOCK_CREDENTIAL));
-            pressEnterButton();
-            return this;
-        }
-
-        LockScreenSession disableLockScreen() {
-            // Lock credentials need to be cleared before disabling the lock.
-            if (mLockCredentialSet) {
-                removeLockCredential();
-                mLockCredentialSet = false;
-            }
-            setLockDisabled(true);
-            return this;
-        }
-
-        public LockScreenSession sleepDevice() {
-            pressSleepButton();
-            // Not all device variants lock when we go to sleep, so we need to explicitly lock the
-            // device. Note that pressSleepButton() above is redundant because the action also
-            // puts the device to sleep, but kept around for clarity.
-            if (isWatch()) {
-                mInstrumentation.getUiAutomation().performGlobalAction(
-                        AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN);
-            }
-            if (mAmbientDisplayConfiguration.alwaysOnEnabled(
-                    android.os.Process.myUserHandle().getIdentifier())) {
-                mWmState.waitForAodShowing();
-            } else {
-                Condition.waitFor("display to turn off", () -> !isDisplayOn(DEFAULT_DISPLAY));
-            }
-            if(!isLockDisabled()) {
-                mWmState.waitFor(state -> state.getKeyguardControllerState().keyguardShowing,
-                        "Keyguard showing");
-            }
-            return this;
-        }
-
-        LockScreenSession wakeUpDevice() {
-            pressWakeupButton();
-            return this;
-        }
-
-        public LockScreenSession unlockDevice() {
-            // Make sure the unlock button event is send to the default display.
-            touchAndCancelOnDisplayCenterSync(DEFAULT_DISPLAY);
-
-            pressUnlockButton();
-            return this;
-        }
-
-        public LockScreenSession gotoKeyguard(ComponentName... showWhenLockedActivities) {
-            if (DEBUG && isLockDisabled()) {
-                logE("LockScreenSession.gotoKeyguard() is called without lock enabled.");
-            }
-            sleepDevice();
-            wakeUpDevice();
-            if (showWhenLockedActivities.length == 0) {
-                mWmState.waitForKeyguardShowingAndNotOccluded();
-            } else {
-                mWmState.waitForValidState(showWhenLockedActivities);
-            }
-            return this;
-        }
-
-        @Override
-        public void close() {
-            if (mRemoveActivitiesOnClose) {
-                removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
-            }
-
-            final boolean wasCredentialSet = mLockCredentialSet;
-            boolean wasDeviceLocked = false;
-            if (mLockCredentialSet) {
-                wasDeviceLocked = mKm != null && mKm.isDeviceLocked();
-                removeLockCredential();
-                mLockCredentialSet = false;
-            }
-            setLockDisabled(mIsLockDisabled);
-
-            // Dismiss active keyguard after credential is cleared, so keyguard doesn't ask for
-            // the stale credential.
-            // TODO (b/112015010) If keyguard is occluded, credential cannot be removed as expected.
-            // LockScreenSession#close is always called before stopping all test activities,
-            // which could cause the keyguard to stay occluded after wakeup.
-            // If Keyguard is occluded, pressing the back key can hide the ShowWhenLocked activity.
-            wakeUpDevice();
-            pressBackButton();
-
-            // If the credential wasn't set, the steps for restoring can be simpler.
-            if (!wasCredentialSet) {
-                mWmState.computeState();
-                if (WindowManagerStateHelper.isKeyguardShowingAndNotOccluded(mWmState)) {
-                    // Keyguard is showing and not occluded so only need to unlock.
-                    unlockDevice();
-                    return;
-                }
-
-                final ComponentName home = mWmState.getHomeActivityName();
-                if (home != null && mWmState.hasActivityState(home, STATE_RESUMED)) {
-                    // Home is resumed so nothing to do (e.g. after finishing show-when-locked app).
-                    return;
-                }
-            }
-
-            // If device is unlocked, there might have ShowWhenLocked activity runs on,
-            // use home key to clear all activity at foreground.
-            pressHomeButton();
-            if (wasDeviceLocked) {
-                // The removal of credential needs an extra cycle to take effect.
-                sleepDevice();
-                wakeUpDevice();
-            }
-            if (isKeyguardLocked()) {
-                unlockDevice();
-            }
-        }
-
-        /**
-         * Returns whether the lock screen is disabled.
-         *
-         * @return true if the lock screen is disabled, false otherwise.
-         */
-        private boolean isLockDisabled() {
-            final String isLockDisabled = runCommandAndPrintOutput(
-                    "locksettings get-disabled " + oldIfNeeded()).trim();
-            return !"null".equals(isLockDisabled) && Boolean.parseBoolean(isLockDisabled);
-        }
-
-        /**
-         * Disable the lock screen.
-         *
-         * @param lockDisabled true if should disable, false otherwise.
-         */
-        protected void setLockDisabled(boolean lockDisabled) {
-            runCommandAndPrintOutput("locksettings set-disabled " + lockDisabled);
-        }
-
-        @NonNull
-        private String oldIfNeeded() {
-            if (mLockCredentialSet) {
-                return " --old " + LOCK_CREDENTIAL + " ";
-            }
-            return "";
-        }
-    }
-
     /** Helper class to set and restore appop mode "android:system_alert_window". */
     protected static class SystemAlertWindowAppOpSession implements AutoCloseable {
         private final String mPackageName;
@@ -1922,11 +1745,11 @@ public abstract class ActivityManagerTestBase {
             mConfig = new AmbientDisplayConfiguration(mContext);
         }
 
-        boolean isAodAvailable() {
+        public boolean isAodAvailable() {
             return mConfig.alwaysOnAvailable();
         }
 
-        void setAodEnabled(boolean enabled) {
+        public void setAodEnabled(boolean enabled) {
             set(enabled ? 1 : 0);
         }
     }
@@ -2142,12 +1965,12 @@ public abstract class ActivityManagerTestBase {
         return mContext.getPackageManager().hasSystemFeature(FEATURE_INPUT_METHODS);
     }
 
-    static class CountSpec<T> {
+    public static class CountSpec<T> {
         static final int DONT_CARE = Integer.MIN_VALUE;
-        static final int EQUALS = 1;
-        static final int GREATER_THAN = 2;
+        public static final int EQUALS = 1;
+        public static final int GREATER_THAN = 2;
         static final int LESS_THAN = 3;
-        static final int GREATER_THAN_OR_EQUALS = 4;
+        public static final int GREATER_THAN_OR_EQUALS = 4;
 
         final T mEvent;
         final int mRule;
@@ -2203,7 +2026,7 @@ public abstract class ActivityManagerTestBase {
         return new CountSpec<>(event, rule, count, message);
     }
 
-    static <T> CountSpec<T> countSpec(T event, int rule, int count) {
+    public static <T> CountSpec<T> countSpec(T event, int rule, int count) {
         return new CountSpec<>(event, rule, count, null /* message */);
     }
 
@@ -2222,15 +2045,21 @@ public abstract class ActivityManagerTestBase {
                         configChangeCount));
     }
 
-    static void assertLifecycleCounts(ComponentName activityName,
-            int createCount, int startCount, int resumeCount, int pauseCount, int stopCount,
-            int destroyCount, int configChangeCount) {
+    public static void assertLifecycleCounts(
+            ComponentName activityName,
+            int createCount,
+            int startCount,
+            int resumeCount,
+            int pauseCount,
+            int stopCount,
+            int destroyCount,
+            int configChangeCount) {
         assertLifecycleCounts(activityName, "Assert lifecycle of " + getLogTag(activityName),
                 createCount, startCount, resumeCount, pauseCount, stopCount,
                 destroyCount, configChangeCount);
     }
 
-    static void assertSingleLaunch(ComponentName activityName) {
+    public static void assertSingleLaunch(ComponentName activityName) {
         assertLifecycleCounts(activityName,
                 "activity create, start, and resume",
                 1 /* createCount */, 1 /* startCount */, 1 /* resumeCount */,
@@ -2238,7 +2067,7 @@ public abstract class ActivityManagerTestBase {
                 CountSpec.DONT_CARE /* configChangeCount */);
     }
 
-    static void assertSingleLaunchAndStop(ComponentName activityName) {
+    public static void assertSingleLaunchAndStop(ComponentName activityName) {
         assertLifecycleCounts(activityName,
                 "activity create, start, resume, pause, and stop",
                 1 /* createCount */, 1 /* startCount */, 1 /* resumeCount */,
@@ -2246,7 +2075,7 @@ public abstract class ActivityManagerTestBase {
                 CountSpec.DONT_CARE /* configChangeCount */);
     }
 
-    static void assertSingleStartAndStop(ComponentName activityName) {
+    public static void assertSingleStartAndStop(ComponentName activityName) {
         assertLifecycleCounts(activityName,
                 "activity start, resume, pause, and stop",
                 0 /* createCount */, 1 /* startCount */, 1 /* resumeCount */,
@@ -2254,7 +2083,7 @@ public abstract class ActivityManagerTestBase {
                 CountSpec.DONT_CARE /* configChangeCount */);
     }
 
-    static void assertSingleStart(ComponentName activityName) {
+    protected static void assertSingleStart(ComponentName activityName) {
         assertLifecycleCounts(activityName,
                 "activity start and resume",
                 0 /* createCount */, 1 /* startCount */, 1 /* resumeCount */,
@@ -2275,8 +2104,8 @@ public abstract class ActivityManagerTestBase {
     }
 
     /** Assert the activity is either relaunched or received configuration changed. */
-    static List<ActivityCallback> assertActivityLifecycle(ActivitySession activitySession,
-            boolean relaunched) {
+    public static List<ActivityCallback> assertActivityLifecycle(
+            ActivitySession activitySession, boolean relaunched) {
         final String name = activitySession.getName().flattenToShortString();
         final List<ActivityCallback> callbackHistory = activitySession.takeCallbackHistory();
         String failedReason = checkActivityIsRelaunchedOrConfigurationChanged(
@@ -2306,8 +2135,8 @@ public abstract class ActivityManagerTestBase {
                                 name + " must have received configuration changed."));
     }
 
-    static void assertRelaunchOrConfigChanged(ComponentName activityName, int numRelaunch,
-            int numConfigChange) {
+    public static void assertRelaunchOrConfigChanged(
+            ComponentName activityName, int numRelaunch, int numConfigChange) {
         new ActivityLifecycleCounts(activityName).assertCountWithRetry("relaunch or config changed",
                 countSpec(ActivityCallback.ON_DESTROY, CountSpec.EQUALS, numRelaunch),
                 countSpec(ActivityCallback.ON_CREATE, CountSpec.EQUALS, numRelaunch),
@@ -2315,14 +2144,14 @@ public abstract class ActivityManagerTestBase {
                         numConfigChange));
     }
 
-    static void assertActivityDestroyed(ComponentName activityName) {
+    public static void assertActivityDestroyed(ComponentName activityName) {
         new ActivityLifecycleCounts(activityName).assertCountWithRetry("activity destroyed",
                 countSpec(ActivityCallback.ON_DESTROY, CountSpec.EQUALS, 1),
                 countSpec(ActivityCallback.ON_CREATE, CountSpec.EQUALS, 0),
                 countSpec(ActivityCallback.ON_CONFIGURATION_CHANGED, CountSpec.EQUALS, 0));
     }
 
-    static void assertSecurityExceptionFromActivityLauncher() {
+    public static void assertSecurityExceptionFromActivityLauncher() {
         waitForOrFail("SecurityException from " + ActivityLauncher.TAG,
                 ActivityLauncher::hasCaughtSecurityException);
     }
@@ -2332,7 +2161,7 @@ public abstract class ActivityManagerTestBase {
             Pattern.compile("mUiModeLocked=(true|false)");
 
     @NonNull
-    SizeInfo getLastReportedSizesForActivity(ComponentName activityName) {
+    public SizeInfo getLastReportedSizesForActivity(ComponentName activityName) {
         return Condition.waitForResult("sizes of " + activityName + " to be reported",
                 condition -> condition.setResultSupplier(() -> {
                     final ConfigInfo info = TestJournalContainer.get(activityName).lastConfigInfo;
@@ -2342,7 +2171,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     /** Check if a device has display cutout. */
-    boolean hasDisplayCutout() {
+    public boolean hasDisplayCutout() {
         // Launch an activity to report cutout state
         separateTestJournal();
         launchActivity(BROADCAST_RECEIVER_ACTIVITY);
@@ -2376,32 +2205,32 @@ public abstract class ActivityManagerTestBase {
     }
 
     /** Waits for at least one onMultiWindowModeChanged event. */
-    ActivityLifecycleCounts waitForOnMultiWindowModeChanged(ComponentName activityName) {
+    public ActivityLifecycleCounts waitForOnMultiWindowModeChanged(ComponentName activityName) {
         final ActivityLifecycleCounts counts = new ActivityLifecycleCounts(activityName);
         Condition.waitFor(counts.countWithRetry("waitForOnMultiWindowModeChanged", countSpec(
                 ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED, CountSpec.GREATER_THAN, 0)));
         return counts;
     }
 
-    WindowState getPackageWindowState(String packageName) {
+    protected WindowState getPackageWindowState(String packageName) {
         final WindowManagerState.WindowState window =
                 mWmState.getWindowByPackageName(packageName, TYPE_BASE_APPLICATION);
         assertNotNull(window);
         return window;
     }
 
-    static class ActivityLifecycleCounts {
+    public static class ActivityLifecycleCounts {
         private final int[] mCounts = new int[ActivityCallback.SIZE];
         private final int[] mFirstIndexes = new int[ActivityCallback.SIZE];
         private final int[] mLastIndexes = new int[ActivityCallback.SIZE];
         private ComponentName mActivityName;
 
-        ActivityLifecycleCounts(ComponentName componentName) {
+        public ActivityLifecycleCounts(ComponentName componentName) {
             mActivityName = componentName;
             updateCount(TestJournalContainer.get(componentName).callbacks);
         }
 
-        ActivityLifecycleCounts(List<ActivityCallback> callbacks) {
+        public ActivityLifecycleCounts(List<ActivityCallback> callbacks) {
             updateCount(callbacks);
         }
 
@@ -2422,21 +2251,21 @@ public abstract class ActivityManagerTestBase {
             });
         }
 
-        int getCount(ActivityCallback callback) {
+        public int getCount(ActivityCallback callback) {
             return mCounts[callback.ordinal()];
         }
 
-        int getFirstIndex(ActivityCallback callback) {
+        public int getFirstIndex(ActivityCallback callback) {
             return mFirstIndexes[callback.ordinal()];
         }
 
-        int getLastIndex(ActivityCallback callback) {
+        public int getLastIndex(ActivityCallback callback) {
             return mLastIndexes[callback.ordinal()];
         }
 
         @SafeVarargs
-        final Condition<String> countWithRetry(String message,
-                CountSpec<ActivityCallback>... countSpecs) {
+        public final Condition<String> countWithRetry(
+                String message, CountSpec<ActivityCallback>... countSpecs) {
             if (mActivityName == null) {
                 throw new IllegalStateException(
                         "It is meaningless to retry without specified activity");
@@ -2452,7 +2281,8 @@ public abstract class ActivityManagerTestBase {
         }
 
         @SafeVarargs
-        final void assertCountWithRetry(String message, CountSpec<ActivityCallback>... countSpecs) {
+        public final void assertCountWithRetry(
+                String message, CountSpec<ActivityCallback>... countSpecs) {
             if (mActivityName == null) {
                 throw new IllegalStateException(
                         "It is meaningless to retry without specified activity");
@@ -2877,15 +2707,7 @@ public abstract class ActivityManagerTestBase {
                 // Try to recover the bad state of device to avoid subsequent test failures.
                 if (isKeyguardLocked()) {
                     mLastError.addSuppressed(new IllegalStateException("Keyguard is locked"));
-                    // To clear the credential immediately, the screen need to be turned on.
-                    pressWakeupButton();
-                    if (supportsSecureLock()) {
-                        removeLockCredential();
-                    }
-                    // Off/on to refresh the keyguard state.
-                    pressSleepButton();
-                    pressWakeupButton();
-                    pressUnlockButton();
+                    unlockUnexpectedLockedKeyguard();
                 }
                 final String overlayDisplaySettings = Settings.Global.getString(
                         mContext.getContentResolver(), Settings.Global.OVERLAY_DISPLAY_DEVICES);
@@ -2949,6 +2771,24 @@ public abstract class ActivityManagerTestBase {
         final Integer overrideDensity;
 
         final int mDisplayId;
+
+        @NonNull
+        public Size getPhysicalSize() {
+            return physicalSize;
+        }
+
+        public int getPhysicalDensity() {
+            return physicalDensity;
+        }
+
+        @Nullable
+        public Size getOverrideSize() {
+            return overrideSize;
+        }
+
+        public Integer getOverrideDensity() {
+            return overrideDensity;
+        }
 
         /** Get physical and override display metrics from WM for specified display. */
         public static ReportedDisplayMetrics getDisplayMetrics(int displayId) {
@@ -3042,11 +2882,11 @@ public abstract class ActivityManagerTestBase {
         @Nullable
         private CommandSession.ActivitySessionClient mSession;
 
-        ActivitySessionCloseable(final ComponentName activityName) {
+        public ActivitySessionCloseable(final ComponentName activityName) {
             this(activityName, WINDOWING_MODE_FULLSCREEN);
         }
 
-        ActivitySessionCloseable(final ComponentName activityName, final int windowingMode) {
+        public ActivitySessionCloseable(final ComponentName activityName, final int windowingMode) {
             this(activityName, windowingMode, /* forceCommandActivity */ false);
         }
 
@@ -3061,7 +2901,9 @@ public abstract class ActivityManagerTestBase {
          *              argument can be used to ensure that this activity is managed as
          *              {@link CommandSession.BasicTestActivity}.
          */
-        ActivitySessionCloseable(final ComponentName activityName, final int windowingMode,
+        public ActivitySessionCloseable(
+                final ComponentName activityName,
+                final int windowingMode,
                 final boolean forceCommandActivity) {
             mActivityName = activityName;
 
@@ -3112,7 +2954,7 @@ public abstract class ActivityManagerTestBase {
             }
         }
 
-        WindowManagerState.Activity getActivityState() {
+        public WindowManagerState.Activity getActivityState() {
             return getActivityWaitState(mActivityName);
         }
 
@@ -3120,7 +2962,7 @@ public abstract class ActivityManagerTestBase {
          * Not null only for {@link CommandSession.BasicTestActivity} activities.
          */
         @Nullable
-        CommandSession.ActivitySession getActivitySession() {
+        public CommandSession.ActivitySession getActivitySession() {
             return mActivity;
         }
     }
@@ -3129,17 +2971,18 @@ public abstract class ActivityManagerTestBase {
      * Same as ActivitySessionCloseable, but with forceCommandActivity = true
      */
     public class BaseActivitySessionCloseable extends ActivitySessionCloseable {
-        BaseActivitySessionCloseable(ComponentName activityName) {
+        public BaseActivitySessionCloseable(ComponentName activityName) {
             this(activityName, WINDOWING_MODE_FULLSCREEN);
         }
 
-        BaseActivitySessionCloseable(final ComponentName activityName, final int windowingMode) {
-            super(activityName, windowingMode, /* forceCommandActivity */true);
+        public BaseActivitySessionCloseable(
+                final ComponentName activityName, final int windowingMode) {
+            super(activityName, windowingMode, /* forceCommandActivity */ true);
         }
 
         @Override
         @NonNull
-        CommandSession.ActivitySession getActivitySession() {
+        public CommandSession.ActivitySession getActivitySession() {
             assertNotNull(mActivity);
             return mActivity;
         }
@@ -3152,7 +2995,8 @@ public abstract class ActivityManagerTestBase {
         private final ActivitySessionCloseable mPrimarySession;
         private final ActivitySessionCloseable mSecondarySession;
 
-        SplitScreenActivitiesCloseable(final ComponentName primaryActivityName,
+        public SplitScreenActivitiesCloseable(
+                final ComponentName primaryActivityName,
                 final ComponentName secondaryActivityName) {
             this(primaryActivityName, WINDOWING_MODE_FULLSCREEN,
                     /* forcePrimaryCommandActivity */ false,
@@ -3160,7 +3004,8 @@ public abstract class ActivityManagerTestBase {
                     /* forceSecondaryCommandActivity */ false);
         }
 
-        SplitScreenActivitiesCloseable(final ComponentName primaryActivityName,
+        public SplitScreenActivitiesCloseable(
+                final ComponentName primaryActivityName,
                 final int primaryWindowingMode,
                 final boolean forcePrimaryCommandActivity,
                 final ComponentName secondaryActivityName,
@@ -3184,14 +3029,13 @@ public abstract class ActivityManagerTestBase {
             mSecondarySession.close();
         }
 
-        ActivitySessionCloseable getPrimaryActivity() {
+        public ActivitySessionCloseable getPrimaryActivity() {
             return mPrimarySession;
         }
 
-        ActivitySessionCloseable getSecondaryActivity() {
+        public ActivitySessionCloseable getSecondaryActivity() {
             return mSecondarySession;
         }
-
     }
 
     /**
@@ -3208,9 +3052,9 @@ public abstract class ActivityManagerTestBase {
          * @param requestedOrientation values are Configuration#Orientation
          *          either {@link ORIENTATION_PORTRAIT} or {@link ORIENTATION_LANDSCAPE}
          */
-        DeviceOrientationCloseable(int requestedOrientation) {
+        public DeviceOrientationCloseable(int requestedOrientation) {
             // Need to use window to get the size of the screen taking orientation into account.
-            // mWmState.getDisplay(DEFAULT_DISPLAY).mFullConfiguration.orientation
+            // mWmState.getDisplay(DEFAULT_DISPLAY).getFullConfiguration().orientation
             // can not be used because returned orientation can be {@link ORIENTATION_UNDEFINED}
             final Size windowSize = asSize(mWm.getMaximumWindowMetrics().getBounds());
 
@@ -3254,11 +3098,11 @@ public abstract class ActivityManagerTestBase {
         private final int mDisplayId;
         private final WindowManagerState.DisplayContent mOriginalDC;
 
-        DisplayMetricsWaitCloseable() {
+        public DisplayMetricsWaitCloseable() {
             this(DEFAULT_DISPLAY);
         }
 
-        DisplayMetricsWaitCloseable(int displayId) {
+        public DisplayMetricsWaitCloseable(int displayId) {
             super(displayId);
             mDisplayId = displayId;
             mOriginalDC = mWmState.getDisplay(displayId);
@@ -3281,11 +3125,11 @@ public abstract class ActivityManagerTestBase {
         private final String mChangeName;
         private final String mPackageName;
 
-        CompatChangeCloseable(final Long changeId, String packageName) {
+        public CompatChangeCloseable(final Long changeId, String packageName) {
             this(changeId.toString(), packageName);
         }
 
-        CompatChangeCloseable(final String changeName, String packageName) {
+        public CompatChangeCloseable(final String changeName, String packageName) {
             this.mChangeName = changeName;
             this.mPackageName = packageName;
 
@@ -3480,7 +3324,7 @@ public abstract class ActivityManagerTestBase {
     /**
      * Checks whether the device has automotive split-screen multitasking feature enabled
      */
-    boolean hasAutomotiveSplitscreenMultitaskingFeature() {
+    protected boolean hasAutomotiveSplitscreenMultitaskingFeature() {
         return mContext.getPackageManager()
                 .hasSystemFeature(/* PackageManager.FEATURE_CAR_SPLITSCREEN_MULTITASKING */
                         "android.software.car.splitscreen_multitasking") && isCar();

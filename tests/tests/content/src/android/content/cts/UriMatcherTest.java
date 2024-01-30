@@ -16,11 +16,22 @@
 
 package android.content.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import android.content.UriMatcher;
 import android.net.Uri;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.AppModeSdkSandbox;
 
-public class UriMatcherTest extends AndroidTestCase {
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
+public class UriMatcherTest {
     UriMatcher mUriMatcher;
 
     private static final String sAuthority = "ctstest";
@@ -39,16 +50,17 @@ public class UriMatcherTest extends AndroidTestCase {
     private Uri uri3 = Uri.parse("content://" + sAuthority + "/" + sPath3);
     private Uri uri4 = Uri.parse("content://" + sAuthority + "/" + sPath4);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         mUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
     }
 
+    @Test
     public void testConstructor() {
         new UriMatcher(UriMatcher.NO_MATCH);
     }
 
+    @Test
     public void testMatch() {
         mUriMatcher.addURI(sAuthority, sPath1, sCode1);
         mUriMatcher.addURI(sAuthority, sPath2, sCode2);
@@ -65,6 +77,7 @@ public class UriMatcherTest extends AndroidTestCase {
         assertEquals(-1, mUriMatcher.match(unknown));
     }
 
+    @Test
     public void testMatchFailure() {
         try {
             mUriMatcher.match(null);
@@ -74,6 +87,7 @@ public class UriMatcherTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAddURI() {
         assertEquals(-1, mUriMatcher.match(uri1));
         assertEquals(-1, mUriMatcher.match(uri2));
@@ -91,6 +105,7 @@ public class UriMatcherTest extends AndroidTestCase {
         assertEquals(sCode4, mUriMatcher.match(uri4));
     }
 
+    @Test
     public void testAddURIFailure() {
         try {
             mUriMatcher.addURI(null, null, -1);

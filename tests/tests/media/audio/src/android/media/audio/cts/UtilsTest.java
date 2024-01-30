@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import android.media.Utils;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.platform.test.annotations.AppModeSdkSandbox;
 
 import androidx.test.runner.AndroidJUnit4;
 
@@ -36,6 +37,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 @NonMainlineTest
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 @RunWith(AndroidJUnit4.class)
 public class UtilsTest {
     @Test

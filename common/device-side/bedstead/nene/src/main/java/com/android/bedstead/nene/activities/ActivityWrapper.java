@@ -27,7 +27,7 @@ class ActivityWrapper extends RemoteActivityImpl implements NeneActivity {
     }
 
     @Override
-    public UserHandle getUser() {
+    public UserHandle user() {
         // Assuming if we have an Activity it's on the instrumented user
         return android.os.Process.myUserHandle();
     }

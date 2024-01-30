@@ -54,6 +54,7 @@ import android.content.pm.PackageManager
 import android.content.pm.PackageManager.FEATURE_BLUETOOTH
 import android.content.pm.PackageManager.FEATURE_BLUETOOTH_LE
 import android.content.pm.PackageManager.FEATURE_TELEPHONY
+import android.content.pm.PackageManager.FEATURE_WIFI
 import android.content.pm.PackageManager.GET_ATTRIBUTIONS_LONG
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
@@ -81,6 +82,7 @@ import android.telephony.SmsManager
 import android.telephony.TelephonyManager
 import android.util.Log
 import android.util.Size
+import androidx.test.filters.FlakyTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil.waitForBroadcasts
 import com.google.common.truth.Truth.assertThat
@@ -441,6 +443,9 @@ class AppOpsLoggingTest {
      */
     @Test
     fun getWifiScanResults() {
+        assumeTrue("Device does not support WiFi feature",
+                context.packageManager.hasSystemFeature(FEATURE_WIFI))
+
         val wifiManager = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
             .getSystemService(WifiManager::class.java)!!
 
@@ -839,6 +844,7 @@ class AppOpsLoggingTest {
      * Realistic end-to-end test for opening camera
      */
     @Test
+    @FlakyTest
     fun openCameraWithAttribution() {
         openCamera(context.createAttributionContext(TEST_ATTRIBUTION_TAG))
     }

@@ -72,7 +72,7 @@ import java.util.Map;
  *    adb shell mkdir /storage/emulated/0/Documents/relinquishTaskIdentity/
  *    adb push cts/tests/framework/base/windowmanager/intent_tests/relinquishTaskIdentity/test-0.json /storage/emulated/0/Documents/relinquishTaskIdentity/
  * 3. Run the test
- *    atest CtsWindowManagerDeviceTestCases:IntentGenerationTests#verifySingle
+ *    atest CtsWindowManagerDeviceActivity:IntentGenerationTests#verifySingle
  * </p>
  */
 public class IntentGenerationTests extends IntentTestBase {

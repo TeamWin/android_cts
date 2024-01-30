@@ -42,8 +42,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
          android:targetPackage="android.accessibilityservice.cts.testsdk29"
          android:label="Tests for the accessibility Sdk 29 APIs.">
-        <meta-data android:name="listener"
-             android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
 
 </manifest>

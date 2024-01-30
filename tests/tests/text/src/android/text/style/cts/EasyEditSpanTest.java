@@ -21,9 +21,9 @@ import android.content.Intent;
 import android.os.Parcel;
 import android.text.style.EasyEditSpan;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,7 +35,7 @@ public class EasyEditSpanTest {
     public void testConstructor() {
         new EasyEditSpan();
         new EasyEditSpan(PendingIntent.getActivity(
-                InstrumentationRegistry.getTargetContext(), 0, new Intent(),
+                InstrumentationRegistry.getInstrumentation().getTargetContext(), 0, new Intent(),
                 PendingIntent.FLAG_IMMUTABLE));
 
         Parcel p = Parcel.obtain();

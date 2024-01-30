@@ -29,6 +29,8 @@ import android.os.RemoteException;
 public class SimpleActivity extends Activity {
     private IBinder mCallback;
 
+    public static final String ACTION_ACTIVITY_STARTED =
+            "android.app.stubs.action.ACTIVITY_STARTED";
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
@@ -43,6 +45,9 @@ public class SimpleActivity extends Activity {
     @Override
     public void onStart() {
         super.onStart();
+
+        Intent intent = new Intent(ACTION_ACTIVITY_STARTED);
+        sendBroadcast(intent);
     }
 
     @Override

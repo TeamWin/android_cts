@@ -18,19 +18,25 @@ package {
 
 android_test {
     name: "CtsCarTestCases",
-    defaults: ["cts_defaults"],
+    defaults: [
+        "cts_defaults",
+        "car-framework-aconfig-libraries",
+    ],
     static_libs: [
         "android.car.test.utils",
         "android.car.testapi",
         "androidx.test.core",
         "androidx.test.rules",
         "android-support-v4",
+        "car-integration-test-utils-lib",
         "compatibility-device-util-axt",
         "truth",
         "ctstestrunner-axt",
         "libprotobuf-java-lite",
         "framework-annotations-lib",
         "hamcrest-library",
+        "platform-test-annotations",
+        "flag-junit",
     ],
     libs: [
         "android.test.base",
@@ -40,6 +46,7 @@ android_test {
         "src/**/*.java",
         ":cartelemetryservice-proto-srcs",
         ":rotary-service-proto-source",
+        ":car-service-dump-proto-srcs",
     ],
     // Tag this module as a cts test artifact
     test_suites: [
@@ -53,4 +60,7 @@ android_test {
     target_sdk_version: "34",
     per_testcase_directory: true,
     certificate: ":cts-testkey1",
+    data: [
+        ":CtsCarDisplayCompatApp",
+    ],
 }

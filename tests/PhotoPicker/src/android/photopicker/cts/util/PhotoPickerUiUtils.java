@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.text.format.DateUtils;
 
+import androidx.annotation.NonNull;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject;
 import androidx.test.uiautomator.UiScrollable;
@@ -34,7 +35,7 @@ import java.util.List;
 public class PhotoPickerUiUtils {
     public static final long SHORT_TIMEOUT = 5 * DateUtils.SECOND_IN_MILLIS;
 
-    public static final long TIMEOUT = 30 * DateUtils.SECOND_IN_MILLIS;
+    private static final long TIMEOUT = 30 * DateUtils.SECOND_IN_MILLIS;
 
     public static final String REGEX_PACKAGE_NAME =
             "com(.google)?.android.providers.media(.module)?";
@@ -142,6 +143,16 @@ public class PhotoPickerUiUtils {
                 .isTrue();
     }
 
+    /**
+     * Verify if the app label of the {@code sTargetPackageName} is visible on the UI.
+     */
+    public static void verifySettingsCloudProviderOptionIsVisible(@NonNull String cmpLabel) {
+        assertWithMessage("Timed out waiting for cloud provider option on settings activity")
+                .that(new UiObject(new UiSelector().textContains(cmpLabel))
+                        .waitForExists(TIMEOUT))
+                .isTrue();
+    }
+
     public static void verifySettingsFragmentContainerExists() {
         assertWithMessage("Timed out waiting for settings fragment container to appear")
                 .that(new UiObject(new UiSelector()
@@ -169,28 +180,5 @@ public class PhotoPickerUiUtils {
     public static void clickAndWait(UiDevice uiDevice, UiObject uiObject) throws Exception {
         uiObject.click();
         uiDevice.waitForIdle();
-    }
-
-    public static String getBannerPrimaryText() throws Exception {
-        final UiObject bannerPrimaryText = findBannerPrimaryText();
-        assertWithMessage("Timed out waiting for the banner to appear")
-                .that(bannerPrimaryText.waitForExists(TIMEOUT))
-                .isTrue();
-        return bannerPrimaryText.getText();
-    }
-
-    public static UiObject findBannerPrimaryText() {
-        return new UiObject(new UiSelector().resourceIdMatches(
-                REGEX_PACKAGE_NAME + ":id/banner_primary_text"));
-    }
-
-    public static UiObject findBannerDismissButton() {
-        return new UiObject(new UiSelector().resourceIdMatches(
-                REGEX_PACKAGE_NAME + ":id/dismiss_button"));
-    }
-
-    public static UiObject findBannerActionButton() {
-        return new UiObject(new UiSelector().resourceIdMatches(
-                REGEX_PACKAGE_NAME + ":id/action_button"));
     }
 }

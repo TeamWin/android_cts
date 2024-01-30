@@ -28,12 +28,14 @@ import android.media.AudioDeviceVolumeManager;
 import android.media.AudioManager;
 import android.media.VolumeInfo;
 import android.media.audio.cts.AudioTestUtil.SleepAssertIntEquals;
+import android.platform.test.annotations.AppModeSdkSandbox;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.compatibility.common.util.NonMainlineTest;
 
 @NonMainlineTest
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class AudioDeviceVolumeManagerTest extends CtsAndroidTestCase {
 
     private static final String TAG = "AudioDeviceVolumeManagerTest";

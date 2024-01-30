@@ -15,6 +15,8 @@
  */
 package android.jobscheduler.cts;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.Manifest.permission.OVERRIDE_COMPAT_CHANGE_CONFIG_ON_RELEASE_BUILD;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED;
 import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
@@ -22,13 +24,15 @@ import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
 import static org.junit.Assert.assertNotEquals;
 
 import android.annotation.TargetApi;
+import android.app.ActivityManager;
+import android.app.compat.CompatChanges;
+import android.app.compat.PackageOverride;
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
 import android.net.ConnectivityManager;
-import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.wifi.WifiManager;
@@ -64,8 +68,6 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
     /** Whether the device running these tests supports WiFi. */
     private boolean mHasWifi;
-    /** Whether the device running these tests supports telephony. */
-    private boolean mHasTelephony;
 
     private JobInfo.Builder mBuilder;
 
@@ -81,12 +83,8 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
         PackageManager packageManager = mContext.getPackageManager();
         mHasWifi = packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI);
-        mHasTelephony = packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
         mBuilder = new JobInfo.Builder(CONNECTIVITY_JOB_ID, kJobServiceComponent);
 
-        if (mHasWifi) {
-            mNetworkingHelper.ensureSavedWifiNetwork();
-        }
         setDataSaverEnabled(false);
         mNetworkingHelper.setAllNetworksEnabled(true);
     }
@@ -625,17 +623,27 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         if (!hasEthernetConnection()) {
             // Deadline passed with no network satisfied.
             mNetworkingHelper.setAllNetworksEnabled(false);
-            ji = mBuilder
-                    .setRequiredNetwork(nr)
-                    .setOverrideDeadline(0)
-                    .build();
 
-            kTestEnvironment.setExpectedExecutions(1);
-            mJobScheduler.schedule(ji);
-            runSatisfiedJob(CONNECTIVITY_JOB_ID);
-            assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
-
-            params = kTestEnvironment.getLastStartJobParameters();
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> CompatChanges.putPackageOverrides(
+                            TestAppInterface.TEST_APP_PACKAGE,
+                            Map.of(TestAppInterface.ENFORCE_MINIMUM_TIME_WINDOWS,
+                                    new PackageOverride.Builder().setEnabled(false).build())
+                    ),
+                    OVERRIDE_COMPAT_CHANGE_CONFIG_ON_RELEASE_BUILD, INTERACT_ACROSS_USERS_FULL);
+            mTestAppInterface = new TestAppInterface(mContext, CONNECTIVITY_JOB_ID);
+            mTestAppInterface.scheduleJob(
+                    Collections.emptyMap(),
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE,
+                            JobInfo.NETWORK_TYPE_ANY
+                    ),
+                    Map.of(TestJobSchedulerReceiver.EXTRA_DEADLINE, 0L)
+            );
+            mTestAppInterface.runSatisfiedJob();
+            assertTrue("Job didn't fire immediately",
+                    mTestAppInterface.awaitJobStart(DEFAULT_TIMEOUT_MILLIS));
+            params = mTestAppInterface.getLastParams();
             assertNull(params.getNetwork());
         }
 
@@ -649,6 +657,26 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
         params = kTestEnvironment.getLastStartJobParameters();
         assertNull(params.getNetwork());
+    }
+
+    public void testJobUidState() throws Exception {
+        // Turn screen off so any lingering activity close processing from previous tests
+        // don't affect this one.
+        toggleScreenOn(false);
+        mTestAppInterface = new TestAppInterface(mContext, CONNECTIVITY_JOB_ID);
+        mTestAppInterface.scheduleJob(
+                Map.of(TestJobSchedulerReceiver.EXTRA_REQUEST_JOB_UID_STATE, true),
+                Map.of(
+                        TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE,
+                        JobInfo.NETWORK_TYPE_ANY
+                )
+        );
+        mTestAppInterface.forceRunJob();
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_TIMEOUT_MILLIS));
+        mTestAppInterface.assertJobUidState(ActivityManager.PROCESS_STATE_TRANSIENT_BACKGROUND,
+                0, // Regular jobs should not have any privileged network capabilities
+                250 /* ProcessList.PERCEPTIBLE_LOW_APP_ADJ */);
     }
 
     // --------------------------------------------------------------------------------------------
@@ -984,21 +1012,8 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      * mobile data.
      * @return True if this device will support a mobile data connection.
      */
-    private boolean checkDeviceSupportsMobileData() {
-        if (!mHasTelephony) {
-            Log.d(TAG, "Skipping test that requires telephony features, not supported by this" +
-                    " device");
-            return false;
-        }
-        Network[] networks = mCm.getAllNetworks();
-        for (Network network : networks) {
-            if (mCm.getNetworkCapabilities(network)
-                    .hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
-                return true;
-            }
-        }
-        Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-        return false;
+    private boolean checkDeviceSupportsMobileData() throws Exception {
+        return mNetworkingHelper.hasCellularNetwork();
     }
 
     private boolean hasEthernetConnection() {
@@ -1028,7 +1043,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      * best effort - there are no public APIs to force connecting to cell data. We disable WiFi
      * and wait for a broadcast that we're connected to cell.
      * We will not call into this function if the device doesn't support telephony.
-     * @see #mHasTelephony
+     * @see NetworkingHelper#hasCellularNetwork
      * @see #checkDeviceSupportsMobileData()
      */
     private void disconnectWifiToConnectToMobile() throws Exception {

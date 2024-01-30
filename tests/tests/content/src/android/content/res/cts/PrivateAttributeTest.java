@@ -18,13 +18,14 @@ package android.content.res.cts;
 
 import android.content.res.Resources;
 import android.os.Build;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
-import android.util.TypedValue;
 
 /**
  * Tests that private attributes are correctly placed in a separate type to
  * prevent future releases from stomping over private attributes with new public ones.
  */
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class PrivateAttributeTest extends AndroidTestCase {
 
     private static final int sLastPublicAttr = 0x010c001a;

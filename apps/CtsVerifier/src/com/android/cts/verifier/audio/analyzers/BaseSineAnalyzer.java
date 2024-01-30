@@ -321,7 +321,7 @@ public class BaseSineAnalyzer implements SignalAnalyzer {
 
     @Override
     public void analyzeBuffer(float[] audioData, int numChannels, int numFrames) {
-        int offset = 0;
+        int offset = mInputChannel;
         for (int frameIndex = 0; frameIndex < numFrames; frameIndex++) {
             // processOutputFrame(audioData, offset, numChannels);
             processInputFrame(audioData, offset);

@@ -29,6 +29,8 @@ import android.os.BatteryManager;
 import android.os.SystemClock;
 import android.util.Log;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.ShellIdentityUtils;
@@ -105,6 +107,7 @@ public class ActionChargingTest extends BatterySavingTestBase {
     }
 
     @Test
+    @FlakyTest
     public void testActionChargingDeferred_withGlobalSetting() throws Exception {
         // Change the default
         setChargingDelay(CHARGING_DELAY_MILLIS);

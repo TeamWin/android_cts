@@ -58,6 +58,7 @@ import androidx.annotation.Nullable;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
+import androidx.test.uiautomator.Until;
 
 import com.android.server.biometrics.nano.BiometricServiceStateProto;
 
@@ -92,7 +93,8 @@ abstract class BiometricTestBase extends ActivityManagerTestBase implements Test
     protected static final String DESCRIPTION_VIEW = "description";
 
     protected static final String VIEW_ID_PASSWORD_FIELD = "lockPassword";
-
+    protected static final String KEY_ENTER = "key_enter";
+    private static final int VIEW_WAIT_TIME_MS = 10000;
     @NonNull protected Instrumentation mInstrumentation;
     @NonNull protected BiometricManager mBiometricManager;
     @NonNull protected List<SensorProperties> mSensorProperties;
@@ -137,6 +139,19 @@ abstract class BiometricTestBase extends ActivityManagerTestBase implements Test
         return mDevice.findObject(By.res(mBiometricManager.getUiPackage(), id));
     }
 
+    @Nullable
+    protected UiObject2 waitForView(String id) {
+        Log.d(TAG, "Waiting for view " + id);
+        return mDevice.wait(Until.findObject(By.res(mBiometricManager.getUiPackage(), id)),
+                VIEW_WAIT_TIME_MS);
+    }
+
+    protected void waitAndPressButton(String id) {
+        final UiObject2 button = waitForView(id);
+        assertNotNull(button);
+        Log.d(TAG, "Waiting & clicking button: " + id);
+        button.click();
+    }
     protected void findAndPressButton(String id) {
         final UiObject2 button = findView(id);
         assertNotNull(button);
@@ -198,7 +213,7 @@ abstract class BiometricTestBase extends ActivityManagerTestBase implements Test
         BiometricServiceState state = getCurrentState();
         Log.d(TAG, "State after acceptAuthentication: " + state);
         if (state.mState == STATE_AUTH_PENDING_CONFIRM) {
-            findAndPressButton(BUTTON_ID_CONFIRM);
+            waitAndPressButton(BUTTON_ID_CONFIRM);
             mInstrumentation.waitForIdleSync();
             waitForState(STATE_AUTH_IDLE);
         } else {
@@ -226,7 +241,13 @@ abstract class BiometricTestBase extends ActivityManagerTestBase implements Test
         Log.d(TAG, "Focusing, entering, submitting credential");
         passwordField.click();
         passwordField.setText(LOCK_CREDENTIAL);
-        mDevice.pressEnter();
+        if (mInstrumentation.getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUTOMOTIVE)) {
+            final UiObject2 enterButton = findView(KEY_ENTER);
+            enterButton.click();
+        } else {
+            mDevice.pressEnter();
+        }
         waitForState(STATE_AUTH_IDLE);
 
         state = getCurrentState();

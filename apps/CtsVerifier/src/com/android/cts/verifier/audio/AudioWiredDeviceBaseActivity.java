@@ -16,10 +16,14 @@
 
 package com.android.cts.verifier.audio;
 
-import android.util.Log;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
@@ -35,11 +39,20 @@ abstract class AudioWiredDeviceBaseActivity extends PassFailButtons.Activity {
     private Button mSupportsBtn;
     private Button mDoesntSupportBtn;
 
+    Button mStartBtn;
+    Button mStopBtn;
+
     protected boolean mSupportsWiredPeripheral = true;
     protected String mConnectedPeripheralName;
 
-    protected abstract void enableTestButtons(boolean enabled);
+    protected void enableTestButtons(boolean enabled) {
+        mStartBtn.setEnabled(enabled);
+        mStopBtn.setEnabled(!enabled);
+    }
+
     protected abstract void calculatePass();
+
+    private BroadcastReceiver mPluginReceiver = new PluginBroadcastReceiver();
 
     // ReportLog schema
     private static final String KEY_WIRED_PORT_SUPPORTED = "wired_port_supported";
@@ -50,20 +63,58 @@ abstract class AudioWiredDeviceBaseActivity extends PassFailButtons.Activity {
     AudioWiredDeviceBaseActivity() {
     }
 
-    private void recordWiredPortFound(boolean found) {
-        getReportLog().addValue(
-                "User Reported Wired Port",
-                found ? 1.0 : 0,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
+    void connectProcessUI() {
+        mStartBtn = (Button) findViewById(R.id.audio_routingnotification_startBtn);
+        mStartBtn.setOnClickListener(mBtnClickListener);
+        mStopBtn = (Button) findViewById(R.id.audio_routingnotification_stopBtn);
+        mStopBtn.setOnClickListener(mBtnClickListener);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        IntentFilter filter = new IntentFilter(Intent.ACTION_HEADSET_PLUG);
+        this.registerReceiver(mPluginReceiver, filter);
+    }
+
+    @Override
+    public void onPause() {
+        // maybe this stuff in onStop()?
+        this.unregisterReceiver(mPluginReceiver);
+        super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        stopAudio();
+        super.onStop();
+    }
+
+    //
+    // UI Helpers
+    //
+    void hideHasWiredUI() {
+        TextView tv = (TextView) findViewById(R.id.audio_wired_port_exists);
+        tv.setText(getResources().getString(
+                R.string.audio_disconnect_port_detected));
+        mSupportsBtn.setVisibility(View.GONE);
+        mDoesntSupportBtn.setVisibility(View.GONE);
     }
 
     protected void setup() {
         // The "Honor" system buttons
         (mSupportsBtn =
-                (Button) findViewById(R.id.audio_wired_no)).setOnClickListener(mBtnClickListener);
-        (mDoesntSupportBtn =
                 (Button) findViewById(R.id.audio_wired_yes)).setOnClickListener(mBtnClickListener);
+        (mDoesntSupportBtn =
+                (Button) findViewById(R.id.audio_wired_no)).setOnClickListener(mBtnClickListener);
+    }
+
+    void startAudio() {
+        // NOP by default
+    }
+
+    void stopAudio() {
+        // NOP by default
     }
 
     private class OnBtnClickListener implements OnClickListener {
@@ -71,17 +122,32 @@ abstract class AudioWiredDeviceBaseActivity extends PassFailButtons.Activity {
         public void onClick(View v) {
             int id = v.getId();
             if (id == R.id.audio_wired_no) {
-                Log.i(TAG, "User denies wired device existence");
                 mSupportsWiredPeripheral = false;
+                mSupportsBtn.setEnabled(false);
+                enableTestButtons(mSupportsWiredPeripheral);
+                calculatePass();
             } else if (id == R.id.audio_wired_yes) {
-                Log.i(TAG, "User confirms wired device existence");
                 mSupportsWiredPeripheral = true;
+                mDoesntSupportBtn.setEnabled(false);
+                enableTestButtons(mSupportsWiredPeripheral);
+                calculatePass();
+            } else if (v.getId() == R.id.audio_routingnotification_startBtn) {
+                startAudio();
+            } else if (v.getId() == R.id.audio_routingnotification_stopBtn) {
+                stopAudio();
             }
+        }
+    }
 
-            Log.i(TAG, "Wired Device Support:" + mSupportsWiredPeripheral);
+    /**
+     * Receive a broadcast Intent when a headset is plugged in or unplugged.
+     */
+    public class PluginBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            mSupportsWiredPeripheral = true;
+            hideHasWiredUI();
             enableTestButtons(mSupportsWiredPeripheral);
-            recordWiredPortFound(mSupportsWiredPeripheral);
-            calculatePass();
         }
     }
 
@@ -100,6 +166,8 @@ abstract class AudioWiredDeviceBaseActivity extends PassFailButtons.Activity {
 
     @Override
     public void recordTestResults() {
+        super.recordTestResults();
+
         // Subclasses should submit after adding their data
         CtsVerifierReportLog reportLog = getReportLog();
         reportLog.addValue(

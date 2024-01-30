@@ -16,23 +16,59 @@
 
 package android.content.pm.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 import android.util.Printer;
+import android.util.StringBuilderPrinter;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
 @AppModeFull // TODO(Instant) Figure out which APIs should work.
-public class ResolveInfoTest extends AndroidTestCase {
+public class ResolveInfoTest {
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
     private static final String PACKAGE_NAME = "android.content.cts";
     private static final String MAIN_ACTION_NAME = "android.intent.action.MAIN";
     private static final String ACTIVITY_NAME = "android.content.pm.cts.TestPmActivity";
     private static final String SERVICE_NAME = "android.content.pm.cts.activity.PMTEST_SERVICE";
 
+    private Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
+
+    @Test
+    public void testSimple() {
+        ResolveInfo info = new ResolveInfo();
+        info.activityInfo = new ActivityInfo();
+        info.activityInfo.packageName = "com.example";
+        info.activityInfo.name = "com.example.Example";
+        new ResolveInfo(info);
+        assertNotNull(info.toString());
+        info.dump(new StringBuilderPrinter(new StringBuilder()), "");
+    }
+
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public final void testResolveInfo() {
         // Test constructor
         new ResolveInfo();
@@ -50,6 +86,28 @@ public class ResolveInfoTest extends AndroidTestCase {
         assertEquals(0, resolveInfo.describeContents());
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
+    public final void testLoadLabel_noNonLocalizedLabelAndNullPM_throwsNPE() {
+        final ResolveInfo resolveInfo = new ResolveInfo();
+        resolveInfo.activityInfo = new ActivityInfo();
+
+        assertThrows("Should throw NullPointerException", NullPointerException.class,
+                () -> resolveInfo.loadLabel(null));
+    }
+
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
+    public final void testLoadLabel_hasNonLocalizedLabelAndNullPM_correctResult() {
+        final ResolveInfo resolveInfo = new ResolveInfo();
+        final String expectedResult = "none";
+        resolveInfo.nonLocalizedLabel = expectedResult;
+
+        assertEquals(expectedResult, resolveInfo.loadLabel(null));
+    }
+
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public final void testDump() {
         PackageManager pm = getContext().getPackageManager();
         Intent intent = new Intent(SERVICE_NAME);

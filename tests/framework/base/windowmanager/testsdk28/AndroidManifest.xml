@@ -24,7 +24,7 @@
         <uses-library android:name="android.test.runner" />
 
         <activity
-            android:name="android.server.wm.AspectRatioSdk28Tests$Sdk28MinAspectRatioActivity"
+            android:name="android.server.wm.window.AspectRatioSdk28Tests$Sdk28MinAspectRatioActivity"
             android:label="Sdk28MinAspectRatioActivity"
             android:exported="true"
             android:resizeableActivity="false" />

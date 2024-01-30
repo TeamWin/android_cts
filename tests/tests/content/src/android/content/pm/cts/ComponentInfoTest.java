@@ -16,7 +16,14 @@
 
 package android.content.pm.cts;
 
-import android.content.cts.R;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ComponentInfo;
 import android.content.pm.PackageManager;
@@ -25,20 +32,46 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.AppModeSdkSandbox;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 import android.util.Printer;
 import android.util.StringBuilderPrinter;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
 import com.android.compatibility.common.util.WidgetTestUtils;
 
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test {@link ComponentInfo}.
  */
-public class ComponentInfoTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
+public class ComponentInfoTest {
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
     private final String PACKAGE_NAME = "android.content.cts";
     private ComponentInfo mComponentInfo;
 
+    private Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
+
+    @Test
+    public void testSimple() {
+        ComponentInfo info = new ComponentInfo();
+        new ComponentInfo(info);
+        assertNotNull(info.toString());
+    }
+
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testConstructor() {
         Parcel p = Parcel.obtain();
         ComponentInfo componentInfo = new ComponentInfo();
@@ -75,11 +108,13 @@ public class ComponentInfoTest extends AndroidTestCase {
         return bitmap;
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testLoadIcon() {
         mComponentInfo = new ComponentInfo();
         mComponentInfo.applicationInfo = new ApplicationInfo();
 
-        PackageManager pm = mContext.getPackageManager();
+        PackageManager pm = getContext().getPackageManager();
         assertNotNull(pm);
 
         Drawable defaultIcon = pm.getDefaultActivityIcon();
@@ -103,6 +138,7 @@ public class ComponentInfoTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testDumpBack() {
         MyComponentInfo ci = new MyComponentInfo();
 
@@ -132,18 +168,23 @@ public class ComponentInfoTest extends AndroidTestCase {
         }
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = android.content.res.Resources.class)
     public void testGetIconResource() {
         mComponentInfo = new ComponentInfo();
         mComponentInfo.applicationInfo = new ApplicationInfo();
         assertEquals(0, mComponentInfo.getIconResource());
 
-        mComponentInfo.icon = R.drawable.red;
+        final int resRed = getContext().getResources()
+                .getIdentifier("red", "drawable", getContext().getPackageName());
+        mComponentInfo.icon = resRed;
         assertEquals(mComponentInfo.icon, mComponentInfo.getIconResource());
 
         mComponentInfo.icon = 0;
         assertEquals(mComponentInfo.applicationInfo.icon, mComponentInfo.getIconResource());
     }
 
+    @Test
     public void testIsEnabled() {
         mComponentInfo = new ComponentInfo();
         mComponentInfo.applicationInfo = new ApplicationInfo();
@@ -157,6 +198,7 @@ public class ComponentInfoTest extends AndroidTestCase {
         assertFalse(mComponentInfo.isEnabled());
     }
 
+    @Test
     public void testDumpFront() {
         MyComponentInfo ci = new MyComponentInfo();
 
@@ -187,11 +229,13 @@ public class ComponentInfoTest extends AndroidTestCase {
         }
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testLoadLabel() throws NameNotFoundException {
         mComponentInfo = new ComponentInfo();
         mComponentInfo.applicationInfo = new ApplicationInfo();
 
-        final PackageManager pm = mContext.getPackageManager();
+        final PackageManager pm = getContext().getPackageManager();
 
         assertNotNull(mComponentInfo);
         mComponentInfo.packageName = PACKAGE_NAME;
@@ -204,12 +248,14 @@ public class ComponentInfoTest extends AndroidTestCase {
         assertEquals("name", mComponentInfo.loadLabel(pm));
 
         mComponentInfo.applicationInfo =
-                mContext.getPackageManager().getApplicationInfo(PACKAGE_NAME,
+                getContext().getPackageManager().getApplicationInfo(PACKAGE_NAME,
                         PackageManager.ApplicationInfoFlags.of(0));
 
         mComponentInfo.nonLocalizedLabel = null;
-        mComponentInfo.labelRes = R.string.hello_android;
-        assertEquals(mContext.getString(mComponentInfo.labelRes), mComponentInfo.loadLabel(pm));
+        final int resHelloAndroid = getContext().getResources()
+                .getIdentifier("hello_android", "string", getContext().getPackageName());
+        mComponentInfo.labelRes = resHelloAndroid;
+        assertEquals(getContext().getString(mComponentInfo.labelRes), mComponentInfo.loadLabel(pm));
 
         try {
             mComponentInfo.loadLabel(null);
@@ -219,6 +265,8 @@ public class ComponentInfoTest extends AndroidTestCase {
         }
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testWriteToParcel() {
         Parcel p = Parcel.obtain();
         mComponentInfo = new ComponentInfo();

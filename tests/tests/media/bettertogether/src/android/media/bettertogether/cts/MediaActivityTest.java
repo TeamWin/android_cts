@@ -156,7 +156,9 @@ public class MediaActivityTest {
         }
 
         try {
-            mActivityScenario.close();
+            if (mActivityScenario != null) {
+                mActivityScenario.close();
+            }
         } catch (IllegalStateException e) {
         }
 

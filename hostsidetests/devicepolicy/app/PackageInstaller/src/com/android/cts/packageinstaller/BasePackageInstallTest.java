@@ -26,8 +26,9 @@ import android.content.IntentSender;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
-import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
+
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.cts.packageinstaller.ClearDeviceOwnerTest.BasicAdminReceiver;
 

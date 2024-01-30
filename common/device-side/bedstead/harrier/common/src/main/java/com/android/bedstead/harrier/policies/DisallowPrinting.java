@@ -32,7 +32,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  * Policy related to setting {@code DISALLOW_PRINTING}
  */
 @EnterprisePolicy(
-        dpc = {APPLIED_BY_PROFILE_OWNER | APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER | APPLIES_TO_PARENT},
+        dpc = {APPLIED_BY_PROFILE_OWNER | APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER},
         permissions = @EnterprisePolicy.Permission(
                 appliedWith = MANAGE_DEVICE_POLICY_PRINTING, appliesTo = APPLIES_TO_OWN_USER))
 public final class DisallowPrinting {

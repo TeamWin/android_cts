@@ -54,6 +54,7 @@ import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.PermittedInputMethods;
 import com.android.bedstead.harrier.policies.PermittedSystemInputMethods;
+import com.android.bedstead.harrier.policies.ScreenCaptureDisabled;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.inputmethods.InputMethod;
 import com.android.bedstead.nene.packages.Package;

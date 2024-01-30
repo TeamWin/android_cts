@@ -26,21 +26,28 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import android.content.Context;
+import android.os.Flags;
 import android.os.PowerManager;
 import android.os.PowerManager.OnThermalStatusChangedListener;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.ThermalUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -54,6 +61,9 @@ public class PowerManager_ThermalTest {
     private OnThermalStatusChangedListener mListener1;
     @Mock
     private OnThermalStatusChangedListener mListener2;
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setUp() throws Exception {
@@ -155,5 +165,51 @@ public class PowerManager_ThermalTest {
             headroom = mPowerManager.getThermalHeadroom(5);
         }
         assertTrue("Abusive calls get rate limited", Float.isNaN(headroom));
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.PowerManager#getThermalHeadroomThresholds"})
+    @RequiresFlagsEnabled(Flags.FLAG_ALLOW_THERMAL_HEADROOM_THRESHOLDS)
+    public void testGetThermalHeadroomThresholds() throws Exception {
+        float headroom = mPowerManager.getThermalHeadroom(0);
+        // If the device doesn't support thermal headroom, return early
+        if (Float.isNaN(headroom)) {
+            return;
+        }
+        Map<Integer, Float> thresholds = mPowerManager.getThermalHeadroomThresholds();
+        assertTrue("Thermal headroom thresholds should contain SEVERE status",
+                thresholds.containsKey(PowerManager.THERMAL_STATUS_SEVERE));
+        float severeThreshold = thresholds.get(PowerManager.THERMAL_STATUS_SEVERE);
+        assertEquals(1f, severeThreshold, .01f);
+        float lastHeadroom = Float.NaN;
+        int lastStatus = PowerManager.THERMAL_STATUS_NONE;
+        int[] allStatus =
+                new int[]{PowerManager.THERMAL_STATUS_LIGHT,
+                        PowerManager.THERMAL_STATUS_MODERATE,
+                        PowerManager.THERMAL_STATUS_SEVERE,
+                        PowerManager.THERMAL_STATUS_CRITICAL,
+                        PowerManager.THERMAL_STATUS_EMERGENCY,
+                        PowerManager.THERMAL_STATUS_SHUTDOWN};
+        for (int status : allStatus) {
+            if (thresholds.containsKey(status)) {
+                assertFalse(Float.isNaN(thresholds.get(status)));
+                headroom = thresholds.get(status);
+                if (headroom >= 0) {
+                    if (lastStatus == PowerManager.THERMAL_STATUS_NONE) {
+                        lastStatus = status;
+                        lastHeadroom = headroom;
+                    } else {
+                        assertTrue("Thermal headroom threshold for status " + status
+                                + " is " + headroom + " which should not be smaller than "
+                                + "a lower status " + lastStatus + " which is "
+                                + lastHeadroom, headroom >= lastHeadroom);
+                    }
+                } else {
+                    fail("Expected non-negative headroom threshold but got " + headroom
+                            + " for status "
+                            + status);
+                }
+            }
+        }
     }
 }

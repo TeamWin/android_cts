@@ -19,10 +19,11 @@ package android.view.inputmethod.cts;
 import static android.content.Intent.ACTION_CLOSE_SYSTEM_DIALOGS;
 import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.content.pm.PackageManager.FEATURE_INPUT_METHODS;
+import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.isInputMethodPickerShown;
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -39,6 +40,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Debug;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.SecurityTest;
 import android.text.TextUtils;
 import android.view.View;
@@ -79,6 +81,7 @@ import java.util.stream.Collectors;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class InputMethodManagerTest {
     private static final String MOCK_IME_ID = "com.android.cts.mockime/.MockIme";
     private static final String MOCK_IME_LABEL = "Mock IME";
@@ -101,7 +104,7 @@ public class InputMethodManagerTest {
     @After
     public void resetImes() {
         if (mNeedsImeReset) {
-            runShellCommand("ime reset");
+            runShellCommandOrThrow("ime reset");
             mNeedsImeReset = false;
         }
     }
@@ -164,15 +167,16 @@ public class InputMethodManagerTest {
 
             return layout;
         });
-        waitOnMainUntil(() -> mImManager.isActive(), TIMEOUT);
-        assertTrue(mImManager.isAcceptingText());
-        assertTrue(mImManager.isActive(focusedEditTextRef.get()));
-        assertFalse(mImManager.isActive(nonFocusedEditTextRef.get()));
+        final View focusedEditText = focusedEditTextRef.get();
+        waitOnMainUntil(() -> mImManager.hasActiveInputConnection(focusedEditText), TIMEOUT);
+        assertTrue(getOnMainSync(() -> mImManager.isActive(focusedEditText)));
+        assertFalse(getOnMainSync(() -> mImManager.isActive(nonFocusedEditTextRef.get())));
     }
 
     @Test
     public void testIsAcceptingText() throws Throwable {
         final AtomicReference<EditText> focusedFakeEditTextRef = new AtomicReference<>();
+        final CountDownLatch latch = new CountDownLatch(1);
         TestActivity.startSync(activity -> {
             final LinearLayout layout = new LinearLayout(activity);
             layout.setOrientation(LinearLayout.VERTICAL);
@@ -181,6 +185,7 @@ public class InputMethodManagerTest {
                 @Override
                 public InputConnection onCreateInputConnection(EditorInfo info) {
                     super.onCreateInputConnection(info);
+                    latch.countDown();
                     return null;
                 }
             };
@@ -189,11 +194,10 @@ public class InputMethodManagerTest {
             focusedFakeEditText.requestFocus();
             return layout;
         });
-        waitOnMainUntil(() -> mImManager.isActive(), TIMEOUT);
-        assertTrue(mImManager.isActive(focusedFakeEditTextRef.get()));
+        assertTrue(latch.await(TIMEOUT, TimeUnit.MICROSECONDS));
         assertFalse("InputMethodManager#isAcceptingText() must return false "
                 + "if target View returns null from onCreateInputConnection().",
-                mImManager.isAcceptingText());
+                getOnMainSync(() -> mImManager.isAcceptingText()));
     }
 
     @Test
@@ -313,9 +317,8 @@ public class InputMethodManagerTest {
                 return viewRef[0];
             });
             // wait until editText becomes active
-            PollingCheck.waitFor(
-                    () -> testActivity.getSystemService(InputMethodManager.class).isActive(
-                            viewRef[0]));
+            final InputMethodManager imm = testActivity.getSystemService(InputMethodManager.class);
+            PollingCheck.waitFor(() -> imm.hasActiveInputConnection(viewRef[0]));
 
             Cleaner.create().register(viewRef[0], receivedSignalCleaned::countDown);
             viewRef[0] = null;
@@ -343,7 +346,7 @@ public class InputMethodManagerTest {
 
     private void enableImes(String... ids) {
         for (String id : ids) {
-            runShellCommand("ime enable " + id);
+            runShellCommandOrThrow("ime enable " + id);
         }
         mNeedsImeReset = true;
     }

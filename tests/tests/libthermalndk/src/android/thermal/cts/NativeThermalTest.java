@@ -16,24 +16,25 @@
 
 package android.thermal.cts;
 
-import android.content.Context;
+import static org.junit.Assert.fail;
+
 import android.os.PowerManager;
 import android.support.test.uiautomator.UiDevice;
+
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+
 import com.android.compatibility.common.util.CddTest;
+
 import com.google.common.base.Strings;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.runner.RunWith;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
-import java.io.IOException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-
-import static org.junit.Assert.fail;
 
 /**
  * Tests native thermal API for get current thermal status, register and unregister
@@ -49,6 +50,7 @@ public class NativeThermalTest {
     private native String nativeTestThermalStatusRegisterNullListener();
     private native String nativeTestThermalStatusListenerDoubleRegistration();
     private native String nativeTestGetThermalHeadroom();
+    private native String nativeTestGetThermalHeadroomThresholds();
 
     @Before
     public void setUp() throws Exception {
@@ -63,14 +65,12 @@ public class NativeThermalTest {
     /**
      * Helper function to set override status
      */
-    public void setOverrideStatus (int level)  throws Exception {
+    public void setOverrideStatus(int level) throws Exception {
         mUiDevice.executeShellCommand("cmd thermalservice override-status " + level);
     }
 
     /**
      * Confirm that we can get thermal status.
-     *
-     * @throws Exception
      */
     @Test
     public void testGetCurrentThermalStatus() throws Exception {
@@ -85,8 +85,6 @@ public class NativeThermalTest {
 
     /**
      * Confirm that we can register thermal status listener and get callback.
-     *
-     * @throws Exception
      */
     @Test
     public void testRegisterThermalStatusListener() throws Exception {
@@ -98,8 +96,6 @@ public class NativeThermalTest {
 
     /**
      * Confirm that register null thermal status listener fails with error.
-     *
-     * @throws Exception
      */
     @Test
     public void testThermalStatusRegisterNullListener() throws Exception {
@@ -111,8 +107,6 @@ public class NativeThermalTest {
 
     /**
      * Confirm that double register and unregister same listener fails with error.
-     *
-     * @throws Exception
      */
     @Test
     public void testThermalStatusListenerDoubleRegistration() throws Exception {
@@ -124,13 +118,22 @@ public class NativeThermalTest {
 
     /**
      * Test that getThermalHeadroom works
-     *
-     * @throws Exception
      */
-    @CddTest(requirement="7.3.6")
+    @CddTest(requirement = "7.3.6")
     @Test
     public void testGetThermalHeadroom() throws Exception {
         final String failureMessage = nativeTestGetThermalHeadroom();
+        if (!Strings.isNullOrEmpty(failureMessage)) {
+            fail(failureMessage);
+        }
+    }
+
+    /**
+     * Test that getThermalHeadroomThresholds works
+     */
+    @Test
+    public void testGetThermalHeadroomThresholds() throws Exception {
+        final String failureMessage = nativeTestGetThermalHeadroomThresholds();
         if (!Strings.isNullOrEmpty(failureMessage)) {
             fail(failureMessage);
         }

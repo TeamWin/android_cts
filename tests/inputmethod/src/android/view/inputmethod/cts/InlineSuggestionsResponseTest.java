@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.inputmethod.InlineSuggestion;
 import android.view.inputmethod.InlineSuggestionsResponse;
 
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class InlineSuggestionsResponseTest {
 
     @Test

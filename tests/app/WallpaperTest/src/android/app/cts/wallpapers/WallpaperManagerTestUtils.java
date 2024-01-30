@@ -21,13 +21,21 @@ import static android.app.WallpaperManager.FLAG_SYSTEM;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.WallpaperColors;
 import android.app.WallpaperManager;
 import android.content.ComponentName;
+import android.os.Handler;
 import android.util.Log;
+
+import androidx.annotation.Nullable;
+
+import com.android.compatibility.common.util.ThrowingRunnable;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 public class WallpaperManagerTestUtils {
@@ -45,6 +53,70 @@ public class WallpaperManagerTestUtils {
     public static final ComponentName TEST_LIVE_WALLPAPER_AMBIENT_COMPONENT = new ComponentName(
             TestLiveWallpaperSupportingAmbientMode.class.getPackageName(),
             TestLiveWallpaperSupportingAmbientMode.class.getName());
+
+    /**
+     * Runs the given runnable and waits until request number of engine events are triggered.
+     *
+     * @param timeout              Amount of time to wait.
+     * @param unit                 Unit for the timeout.
+     * @param onCreateCount        Number of times Engine::onCreate is expected to be called.
+     * @param onDestroyCount       Number of times Engine::onDestroy is expected to be called.
+     * @param surfaceCreationCount Number of times Engine::onSurfaceChanged is expected to be
+     *                             called.
+     * @param runnable             The action to perform that will trigger engine events.
+     * @return True if all events were received, false if there was a timeout waiting for any of
+     * the events.
+     */
+    public static boolean runAndAwaitChanges(long timeout, TimeUnit unit,
+            int onCreateCount, int onDestroyCount, int surfaceCreationCount,
+            ThrowingRunnable runnable) {
+        TestWallpaperService.EngineCallbackCountdown callback =
+                new TestWallpaperService.EngineCallbackCountdown(onCreateCount, onDestroyCount,
+                        surfaceCreationCount);
+        TestWallpaperService.Companion.addCallback(callback);
+        boolean result;
+        try {
+            runnable.run();
+            result = callback.awaitEvents(timeout, unit);
+        } catch (Exception e) {
+            throw new RuntimeException("Caught exception", e);
+        } finally {
+            TestWallpaperService.Companion.removeCallback(callback);
+        }
+
+        return result;
+    }
+
+    /**
+     * Runs the given runnable and waits until request number of color change events are triggered.
+     * @param timeout          Amount of time to wait.
+     * @param unit             Unit for the timeout.
+     * @param whichColors      Flags for which we expect a color change callback.
+     * @param wallpaperManager Instance of WallpaperManager that will register the color listener.
+     * @param handler          Handler that will receive the color callbacks.
+     * @param runnable         The action to perform that will trigger engine events.
+     * @return True if all events were received, false if there was a timeout waiting for any of
+     * the events.
+     *
+     * @see #runAndAwaitChanges(long, TimeUnit, int, int, int, ThrowingRunnable)
+     */
+    public static boolean runAndAwaitColorChanges(long timeout, TimeUnit unit,
+            int whichColors, WallpaperManager wallpaperManager, Handler handler,
+            ThrowingRunnable runnable) {
+        assertThat(whichColors).isIn(List.of(FLAG_LOCK, FLAG_SYSTEM, FLAG_LOCK | FLAG_SYSTEM));
+        ColorChangeWaiter callback = new ColorChangeWaiter(whichColors);
+        wallpaperManager.addOnColorsChangedListener(callback, handler);
+        boolean result;
+        try {
+            runnable.run();
+            result = callback.waitForChanges(timeout, unit);
+        } catch (Exception e) {
+            throw new RuntimeException("Caught exception", e);
+        } finally {
+            wallpaperManager.removeOnColorsChangedListener(callback);
+        }
+        return result;
+    }
 
     /**
      * enumeration of all wallpapers used for test purposes: 3 static, 3 live wallpapers:   <br>
@@ -102,7 +174,7 @@ public class WallpaperManagerTestUtils {
     }
 
     public static class WallpaperChange {
-        TestWallpaper mWallpaper;
+        final TestWallpaper mWallpaper;
         int mDestination;
         public WallpaperChange(
                 TestWallpaper wallpaper, int destination) {
@@ -115,7 +187,16 @@ public class WallpaperManagerTestUtils {
      * Class representing a state in which our WallpaperManager may be during our tests.
      * A state is fully represented by the wallpaper that are present on home and lock screen.
      */
-    public static class WallpaperState {
+    public enum WallpaperState {
+        LIVE_SAME_SINGLE(TestWallpaper.LIVE1, TestWallpaper.LIVE1, true),
+        LIVE_SAME_MULTI(TestWallpaper.LIVE1, TestWallpaper.LIVE1, false),
+        LIVE_DIFF_MULTI(TestWallpaper.LIVE1, TestWallpaper.LIVE2, false),
+        LIVE_STATIC_MULTI(TestWallpaper.LIVE1, TestWallpaper.STATIC1, false),
+        STATIC_SAME_SINGLE(TestWallpaper.STATIC1, TestWallpaper.STATIC1, true),
+        STATIC_SAME_MULTI(TestWallpaper.STATIC1, TestWallpaper.STATIC1, false),
+        STATIC_DIFF_MULTI(TestWallpaper.STATIC1, TestWallpaper.STATIC2, false),
+        STATIC_LIVE_MULTI(TestWallpaper.STATIC1, TestWallpaper.LIVE1, false);
+
         private final TestWallpaper mHomeWallpaper;
         private final TestWallpaper mLockWallpaper;
 
@@ -126,11 +207,13 @@ public class WallpaperManagerTestUtils {
          */
         private final boolean mSingleEngine;
 
-        public WallpaperState(
+        WallpaperState(
                 TestWallpaper homeWallpaper, TestWallpaper lockWallpaper, boolean singleEngine) {
             mHomeWallpaper = homeWallpaper;
             mLockWallpaper = lockWallpaper;
             assertThat(!singleEngine || (homeWallpaper == lockWallpaper)).isTrue();
+            assertThat(homeWallpaper).isNotNull();
+            assertThat(lockWallpaper).isNotNull();
             mSingleEngine = singleEngine;
         }
 
@@ -283,19 +366,20 @@ public class WallpaperManagerTestUtils {
      * Uses the provided wallpaperManager instance to perform a {@link WallpaperChange}.
      */
     public static void performChange(
-            WallpaperManager wallpaperManager, WallpaperChange change) throws IOException {
+            WallpaperManager wallpaperManager, WallpaperChange change)
+            throws IOException {
         if (change.mWallpaper.isStatic()) {
             wallpaperManager.setResource(
                     change.mWallpaper.getBitmapResourceId(), change.mDestination);
         } else {
-            wallpaperManager.setWallpaperComponentWithFlags(
-                    change.mWallpaper.getComponentName(), change.mDestination);
-        }
-        try {
-            // Allow time for callbacks
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Log.e(TAG, "wallpaper wait interrupted", e);
+            // Up to one surface is expected to be created when switching wallpapers. It's possible
+            // that this operation ends up being a no-op, in that case the wait will time out.
+            final int expectedSurfaceCreations = 1;
+            runAndAwaitChanges(500, TimeUnit.MILLISECONDS, 0, 0, expectedSurfaceCreations,
+                    () -> {
+                        wallpaperManager.setWallpaperComponentWithFlags(
+                                change.mWallpaper.getComponentName(), change.mDestination);
+                    });
         }
     }
 
@@ -304,41 +388,45 @@ public class WallpaperManagerTestUtils {
      *   - put the home wallpaper on lock and home screens <br>
      *   - put the lock wallpaper on lock screen, if it is different from the home screen wallpaper
      */
-    public static void goToState(WallpaperManager wallpaperManager, WallpaperState state)
+    public static void goToState(
+            WallpaperManager wallpaperManager, WallpaperState state)
             throws IOException {
         WallpaperChange change1 = new WallpaperChange(
-                state.mHomeWallpaper, FLAG_SYSTEM | FLAG_LOCK);
+                state.mHomeWallpaper, FLAG_SYSTEM | (state.mSingleEngine ? FLAG_LOCK : 0));
         performChange(wallpaperManager, change1);
 
         WallpaperChange change2 = new WallpaperChange(state.mLockWallpaper, FLAG_LOCK);
         if (!state.mSingleEngine) performChange(wallpaperManager, change2);
     }
 
-    /**
-     * Return a list of all logically different states
-     * Two states are logically different if at least one of this statement: <br>
-     *   - home screen is live <br>
-     *   - lock screen is live <br>
-     *   - home screen and lock screen are the same wallpaper <br>
-     *   - home screen and lock screen share the same engine <br>
-     *  is different between the two states.
-     */
-    public static List<WallpaperState> allPossibleStates() {
-        return List.of(
-                new WallpaperState(TestWallpaper.LIVE1, TestWallpaper.LIVE1, true),
-                new WallpaperState(TestWallpaper.LIVE1, TestWallpaper.LIVE1, false),
-                new WallpaperState(TestWallpaper.LIVE1, TestWallpaper.LIVE2, false),
-                new WallpaperState(TestWallpaper.LIVE1, TestWallpaper.STATIC1, false),
-                new WallpaperState(TestWallpaper.STATIC1, TestWallpaper.STATIC1, true),
-                new WallpaperState(TestWallpaper.STATIC1, TestWallpaper.STATIC1, false),
-                new WallpaperState(TestWallpaper.STATIC1, TestWallpaper.STATIC2, false),
-                new WallpaperState(TestWallpaper.STATIC1, TestWallpaper.LIVE1, false)
-        );
+    static class ColorChangeWaiter implements WallpaperManager.OnColorsChangedListener {
+        private CountDownLatch mHomeCountDownLatch;
+        private CountDownLatch mLockCountDownLatch;
+        ColorChangeWaiter(int which) {
+            int expectedHomeEvents = ((which & FLAG_SYSTEM) != 0) ? 1 : 0;
+            int expectedLockEvents = ((which & FLAG_LOCK) != 0) ? 1 : 0;
+            mHomeCountDownLatch = new CountDownLatch(expectedHomeEvents);
+            mLockCountDownLatch = new CountDownLatch(expectedLockEvents);
+        }
+
+        @Override
+        public void onColorsChanged(@Nullable WallpaperColors colors, int which) {
+            if ((which & FLAG_SYSTEM) != 0) {
+                mHomeCountDownLatch.countDown();
+            }
+            if ((which & FLAG_LOCK) != 0) {
+                mLockCountDownLatch.countDown();
+            }
+            Log.d(TAG, "color state count down: " + which + " - " + colors);
+        }
+
+        public boolean waitForChanges(long timeout, TimeUnit unit) {
+            try {
+                return mHomeCountDownLatch.await(timeout, unit)
+                        && mLockCountDownLatch.await(timeout, unit);
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Wallpaper colors wait interrupted");
+            }
+        }
     }
-
-    public static final WallpaperState TWO_DIFFERENT_LIVE_WALLPAPERS = new WallpaperState(
-            TestWallpaper.LIVE1, TestWallpaper.LIVE3, false);
-
-    public static final WallpaperState TWO_SAME_LIVE_WALLPAPERS = new WallpaperState(
-            TestWallpaper.LIVE2, TestWallpaper.LIVE2, true);
 }

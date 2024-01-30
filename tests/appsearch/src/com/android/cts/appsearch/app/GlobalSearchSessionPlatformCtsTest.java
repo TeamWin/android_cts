@@ -26,6 +26,9 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.appsearch.AppSearchBatchResult;
 import android.app.appsearch.AppSearchManager;
+import android.app.appsearch.AppSearchSchema;
+import android.app.appsearch.AppSearchSchema.PropertyConfig;
+import android.app.appsearch.AppSearchSchema.StringPropertyConfig;
 import android.app.appsearch.AppSearchSessionShim;
 import android.app.appsearch.GenericDocument;
 import android.app.appsearch.GetByDocumentIdRequest;
@@ -85,7 +88,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @AppModeFull(reason = "Can't bind to helper apps from instant mode")
 public class GlobalSearchSessionPlatformCtsTest {
 
-    private static final long TIMEOUT_BIND_SERVICE_SEC = 2;
+    private static final long TIMEOUT_BIND_SERVICE_SEC = 10;
 
     private static final String TAG = "GlobalSearchSessionPlatformCtsTest";
 
@@ -717,6 +720,78 @@ public class GlobalSearchSessionPlatformCtsTest {
                                 .build());
         List<SearchResult> page = searchResults.getNextPageAsync().get();
         assertThat(page).isEmpty();
+    }
+
+    @Test
+    public void testGlobalSearch_withJoin_packageFiltering() throws Exception {
+        // This test ensures that we can place documents in separate packages, then join them
+        // together while specifying package filters.
+        indexGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "ida");
+
+        // In pkg B, we report an action on the document in pkg A. When we retrieve the pkg A
+        // document using a joinspec, the action in pkg B should be joined.
+        String qualifiedId =
+                DocumentIdUtil.createQualifiedId(
+                        PKG_A, DB_NAME, NAMESPACE_NAME, "ida");
+
+        indexActionDocument(PKG_B, DB_NAME, NAMESPACE_NAME, "actionId1", qualifiedId,
+                /*globallySearchable*/true);
+
+        AppSearchSchema actionSchema =
+                new AppSearchSchema.Builder("PlayAction")
+                        .addProperty(
+                                new StringPropertyConfig.Builder("songId")
+                                        .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                                        .setJoinableValueType(StringPropertyConfig
+                                                .JOINABLE_VALUE_TYPE_QUALIFIED_ID)
+                                        .build())
+                        .build();
+        mDb.setSchemaAsync(new SetSchemaRequest.Builder().addSchemas(actionSchema).build()).get();
+
+        GenericDocument join =
+                new GenericDocument.Builder<>(NAMESPACE_NAME, "actionId2", "PlayAction")
+                        .setPropertyString("songId", qualifiedId)
+                        .build();
+
+        // In the test package, index an action on that document
+        checkIsBatchResultSuccess(mDb.putAsync(
+                new PutDocumentsRequest.Builder().addGenericDocuments(join).build()));
+
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext)
+                                    .get();
+
+                    SearchSpec nestedSearchSpec = new SearchSpec.Builder()
+                            .addFilterPackageNames(PKG_B)
+                            .build();
+                    JoinSpec js = new JoinSpec.Builder("songId")
+                            .setNestedSearch("", nestedSearchSpec)
+                            .build();
+
+                    SearchResultsShim searchResults =
+                            mGlobalSearchSession.search(
+                                    /*queryExpression=*/ "",
+                                    new SearchSpec.Builder()
+                                            .addFilterPackageNames(PKG_A)
+                                            .addFilterSchemas(AppSearchEmail.SCHEMA_TYPE)
+                                            .setJoinSpec(js)
+                                            .build());
+
+                    List<SearchResult> page = searchResults.getNextPageAsync().get();
+                    assertThat(page).hasSize(1);
+
+                    SearchResult searchResult = page.get(0);
+
+                    assertThat(searchResult.getGenericDocument().getId()).isEqualTo("ida");
+
+                    assertThat(searchResult.getJoinedResults()).hasSize(1);
+                    SearchResult joined = page.get(0).getJoinedResults().get(0);
+                    assertThat(joined.getGenericDocument().getId()).isEqualTo("actionId1");
+                },
+                READ_GLOBAL_APP_SEARCH_DATA);
     }
 
     @Test
@@ -1398,11 +1473,15 @@ public class GlobalSearchSessionPlatformCtsTest {
             if (mCommandReceiver == null) {
                 mCommandReceiver = ICommandReceiver.Stub.asInterface(getService());
             }
+            if (mCommandReceiver == null) {
+                Log.e(TAG, "Cannot bind to a service in " + TIMEOUT_BIND_SERVICE_SEC + " second.");
+            }
             return mCommandReceiver;
         }
 
         public void unbind() {
             mCommandReceiver = null;
+            Log.i(TAG, "Service got unbinded.");
             mContext.unbindService(this);
         }
     }

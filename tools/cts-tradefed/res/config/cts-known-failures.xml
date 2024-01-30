@@ -140,10 +140,6 @@
     <option name="compatibility:exclude-filter" value="CtsNativeMediaAAudioTestCases android.nativemedia.aaudio.AAudioTests#AAudioTestMMap_testBasicMmapOutput" />
     <option name="compatibility:exclude-filter" value="CtsNativeMediaAAudioTestCases[instant] android.nativemedia.aaudio.AAudioTests#AAudioTestMMap_testBasicMmapOutput" />
 
-    <!-- b/134654621 -->
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.AppConfigurationTests#testTaskCloseRestoreFreeOrientation" />
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.AppConfigurationTests#testAppOrientationRequestConfigClears" />
-
     <!-- b/62976713 -->
     <option name="compatibility:exclude-filter" value="arm64-v8a CtsMediaBitstreamsTestCases" />
     <option name="compatibility:exclude-filter" value="x86_64 CtsMediaBitstreamsTestCases" />
@@ -210,13 +206,6 @@
     <!-- b/126548816 -->
     <option name="compatibility:exclude-filter" value="CtsRcsTestCases" />
 
-    <!-- b/112688380 -->
-    <option name="compatibility:exclude-filter" value="CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerAppConfigurationTests#testAppOrientationRequestConfigClears" />
-    <option name="compatibility:exclude-filter" value="CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerAppConfigurationTests#testTaskCloseRestoreFreeOrientation" />
-    <!-- b/112688380, b/139936670 -->
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.AppConfigurationTests#testAppOrientationRequestConfigClears" />
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.AppConfigurationTests#testTaskCloseRestoreFreeOrientation" />
-
     <!-- b/167931576 -->
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.ActivityVisibilityTests#testTurnScreenOnAttrNoLockScreen" />
 
@@ -241,7 +230,7 @@
     <option name="compatibility:exclude-filter" value="CtsPrintTestCases[instant]" />
 
     <!-- b/194146521 -->
-    <option name="compatibility:exclude-filter" value="CtsPermission3TestCases android.permission3.cts.PermissionTest23#testNoResidualPermissionsOnUninstall" />
+    <option name="compatibility:exclude-filter" value="CtsPermissionUiTestCases android.permissionui.cts.PermissionTest23#testNoResidualPermissionsOnUninstall" />
 
     <!-- b/198992105 -->
     <option name="compatibility:exclude-filter" value="CtsStatsdAtomHostTestCases android.cts.statsdatom.permissionstate.DangerousPermissionStateTests#testDangerousPermissionState" />
@@ -300,59 +289,4 @@
     <!-- b/284406623 -->
     <option name="compatibility:exclude-filter" value="CtsUwbMultiDeviceTestCase_FiraRangingTests" />
     <option name="compatibility:exclude-filter" value="CtsUwbMultiDeviceTestCase_RangingMeasurementTests" />
-
-    <!-- b/296988493 -->
-    <option name="compatibility:exclude-filter" value="CtsFrameRateOverrideTestCases com.android.cts.graphics.framerateoverride.FrameRateOverrideHostTest" />
-    <option name="compatibility:exclude-filter" value="CtsFrameRateOverrideTestCases[instant] com.android.cts.graphics.framerateoverride.FrameRateOverrideHostTest" />
-
-    <!-- b/303631162 -->
-    <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.ims.cts.ImsCallingTest#testCallJoinExistingConferenceCallAfterCallSwap" />
-    <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.ims.cts.ImsCallingTest#testCallJoinExistingConferenceCallAfterCallSwapFail" />
-
-    <!-- b/294251187 -->
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.SurfaceControlViewHostTests#testFocusWithTouch" />
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.SurfaceControlViewHostTests#testPopupWindowPosition" />
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.SurfaceControlViewHostTests#testFocusWithTouchCrossProcess" />
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.SurfaceControlViewHostTests#testChildWindowFocusable" />
-
-    <!-- b/305161422 -->
-    <option name="compatibility:exclude-filter" value="CtsAdServicesEndToEndTests com.android.adservices.tests.cts.topics.TopicsManagerTest#testTopicsManager_runOnDeviceClassifier" />
-    <option name="compatibility:exclude-filter" value="CtsAdServicesEndToEndTests com.android.adservices.tests.cts.topics.TopicsManagerTest#testTopicsManager_runDefaultClassifier_usingGetMethodToCreateManager" />
-    <option name="compatibility:exclude-filter" value="CtsAdServicesEndToEndTests com.android.adservices.tests.cts.topics.TopicsManagerTest#testTopicsManager_runOnDeviceClassifier_usingGetMethodToCreateManager" />
-    <option name="compatibility:exclude-filter" value="CtsAdServicesEndToEndTests com.android.adservices.tests.cts.topics.TopicsManagerTest#testTopicsManager_runDefaultClassifier" />
-
-    <!-- b/305161175 -->
-    <option name="compatibility:exclude-filter" value="CtsAdServicesMddTests com.android.adservices.tests.cts.topics.TopicsManagerMddTest#testTopicsManager_downloadModelViaMdd_runPrecomputedClassifier" />
-
-    <!-- b/294253316 -->
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.WindowUntrustedTouchTest#testWhenOneCustomToastWindowAndOneSawWindowBelowThreshold_blocksTouch" />
-
-    <!-- b/307489638 -->
-    <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.satellite.cts.SatelliteManagerTestOnMockService" />
-
-    <!-- b/312075535 -->
-    <option name="compatibility:exclude-filter" value="CtsAdServicesTopicsAppUpdateTests com.android.adservices.tests.cts.topics.appupdate.AppUpdateTest#testAppUpdate" />
-
-    <!-- b/305609163 -->
-    <option name="compatibility:exclude-filter" value="CtsSandboxedTopicsManagerTests com.android.tests.sandbox.topics.SandboxedTopicsManagerTest#loadSdkAndRunTopicsApi" />
-
-    <!-- b/310063797 -->
-    <option name="compatibility:exclude-filter" value="CtsAdServicesPermissionsNoPermEndToEndTests com.android.adservices.tests.permissions.PermissionsNoPermTest#testPermissionNotRequested_fledgeRemoveCustomAudienceRemoteInfoOverride" />
-    <option name="compatibility:exclude-filter" value="CtsAdServicesPermissionsNoPermEndToEndTests com.android.adservices.tests.permissions.PermissionsNoPermTest#testPermissionNotRequested_fledgeResetAllAdSelectionConfigRemoteOverrides" />
-    <option name="compatibility:exclude-filter" value="CtsAdServicesPermissionsNoPermEndToEndTests com.android.adservices.tests.permissions.PermissionsNoPermTest#testPermissionNotRequested_fledgeRemoveAdSelectionConfigRemoteInfo" />
-    <option name="compatibility:exclude-filter" value="CtsAdServicesPermissionsNoPermEndToEndTests com.android.adservices.tests.permissions.PermissionsNoPermTest#testPermissionNotRequested_fledgeOverrideCustomAudienceRemoteInfo" />
-    <option name="compatibility:exclude-filter" value="CtsAdServicesPermissionsNoPermEndToEndTests com.android.adservices.tests.permissions.PermissionsNoPermTest#testPermissionNotRequested_fledgeResetAllCustomAudienceOverrides" />
-    <option name="compatibility:exclude-filter" value="CtsAdServicesPermissionsNoPermEndToEndTests com.android.adservices.tests.permissions.PermissionsNoPermTest#testPermissionNotRequested_fledgeOverrideAdSelectionConfigRemoteInfo" />
-
-    <!-- b/301216478 -->
-    <option name="compatibility:exclude-filter" value="CtsSandboxedFledgeManagerTests com.android.tests.sandbox.fledge.SandboxedFledgeManagerTest#loadSdkAndRunFledgeFlow" />
-
-    <!-- b/320761239 -->
-    <option name="compatibility:exclude-filter" value="CtsAppOpsTestCases android.app.appops.cts.AttributionTest#cannotUseTooManyAttributions" />
-    <option name="compatibility:exclude-filter" value="CtsAppOpsTestCases android.app.appops.cts.AppOpEventCollectionTest#noteFromTwoProxiesAndVerifyProxyInfo" />
-    <option name="compatibility:exclude-filter" value="CtsAppOpsTestCases android.app.appops.cts.AppOpEventCollectionTest#startStopTrustedProxyVerifyRunningAndTime" />
-    <option name="compatibility:exclude-filter" value="CtsAppOpsTestCases android.app.appops.cts.AppOpEventCollectionTest#startStopTrustedAndUntrustedProxyVerifyProxyInfo" />
-
-    <!-- b/318756444 -->
-    <option name="compatibility:exclude-filter" value="CtsSettingsTestCases android.settings.cts.SettingsMultiPaneDeepLinkTest#deepLinkHomeActivity_splitNotSupported_deepLinkHomeDisabled" />
 </configuration>

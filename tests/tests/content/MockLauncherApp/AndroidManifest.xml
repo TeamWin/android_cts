@@ -16,7 +16,11 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="android.content.cts.mocklauncherapp">
-    <application android:resetEnabledSettingsOnAppDataCleared="true">
+    <application
+        android:resetEnabledSettingsOnAppDataCleared="true"
+        android:label="Mock Launcher"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round">
         <uses-library android:name="android.test.runner"/>
 
         <activity android:name="android.content.cts.mocklauncherapp.Launcher"
@@ -24,8 +28,10 @@
                   android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
                 <category android:name="android.intent.category.HOME"/>
                 <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
 

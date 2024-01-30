@@ -59,11 +59,19 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
         String output = sDevice.executeShellCommand(
                 "pm create-user --profileOf 0 --user-type android.os.usertype.profile.CLONE "
                         + "testUser");
+        failIfCloneUserIsAlreadyPresentOnDevice(output);
         sCloneUserId = output.substring(output.lastIndexOf(' ') + 1).replaceAll("[^0-9]",
                 "");
         assertThat(sCloneUserId).isNotEmpty();
 
         startUserAndWait(sCloneUserId);
+    }
+
+    private static void failIfCloneUserIsAlreadyPresentOnDevice(String output) {
+        if (output.contains("Cannot add more profiles")) {
+            fail("A clone user-profile is already present on device. "
+                    + "Please remove and re-run the test");
+        }
     }
 
     protected static void startUserAndWait(String userId) throws DeviceNotAvailableException {
@@ -117,12 +125,14 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
         assumeFalse("Device uses sdcardfs", usesSdcardFs());
 
         createAndStartCloneUser();
+        waitForBroadcastIdle();
     }
 
     public static void baseHostTeardown() throws Exception {
         if (!isAppCloningSupportedOnDevice()) return;
 
         removeUser(sCloneUserId);
+        waitForBroadcastIdle();
     }
 
     public static boolean isAppCloningSupportedOnDevice() throws Exception {

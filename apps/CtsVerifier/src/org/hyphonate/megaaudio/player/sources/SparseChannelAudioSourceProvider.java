@@ -17,16 +17,15 @@ package org.hyphonate.megaaudio.player.sources;
 
 import org.hyphonate.megaaudio.player.AudioSource;
 import org.hyphonate.megaaudio.player.AudioSourceProvider;
-import org.hyphonate.megaaudio.player.NativeAudioSource;
 
 /**
  * An AudioSourceProvider for SparseChannelAudioSources
  */
-public class SparseChannelAudioSourceProvider implements AudioSourceProvider {
+public class SparseChannelAudioSourceProvider extends AudioSourceProvider {
     public static final int CHANNELMASK_LEFT = 0x01;
     public static final int CHANNELMASK_RIGHT = 0x02;
 
-    int mChannelsMask;
+    private int mChannelsMask;
     public SparseChannelAudioSourceProvider(int mask) {
         super();
 
@@ -35,15 +34,17 @@ public class SparseChannelAudioSourceProvider implements AudioSourceProvider {
 
     @Override
     public AudioSource getJavaSource() {
-        return new SparseChannelAudioSource(mChannelsMask);
+        return mActiveSource = mJavaSource != null
+                ? mJavaSource
+                : (mJavaSource = new SparseChannelAudioSource(mChannelsMask));
     }
 
     @Override
-    public NativeAudioSource getNativeSource() {
+    public AudioSource getNativeSource() {
         // NOTE: until a native version of the SparseChannelAudioSource is implemented, returning
         // null from here will default back to the Java SparseChannelAudioSource.
         // return new NativeAudioSource(allocNativeSource());
-        return null;
+        return mActiveSource = null;
     }
 
     // private native long allocNativeSource();

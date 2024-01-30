@@ -104,7 +104,6 @@ public final class DeviceAdminInfoTest {
     @EnsureHasDeviceOwner // We need something with a DeviceAdminReceiver
     @Test
     @ApiTest(apis = "android.app.admin.DeviceAdminInfo#supportsTransferOwnership")
-    @Ignore // TODO(279011496): Specify that the Device Owner must have the metadata relating to the below
     public void supportsTransferOwnership_deviceAdminSupportsTransferOwnership_returnsTrue() throws Exception {
         DeviceAdminInfo info = createDeviceAdminInfo();
 
@@ -115,6 +114,7 @@ public final class DeviceAdminInfoTest {
     // TODO(279011496): Specify that the Device Owner must have the metadata relating to the below
     @Test
     @ApiTest(apis = "android.app.admin.DeviceAdminInfo#supportsTransferOwnership")
+    @Ignore // TODO(279011496): Specify that the Device Owner must have the metadata relating to the below
     public void supportsTransferOwnership_deviceAdminDoesNotSupportTransferOwnership_returnsFalse() throws Exception {
         DeviceAdminInfo info = createDeviceAdminInfo();
 

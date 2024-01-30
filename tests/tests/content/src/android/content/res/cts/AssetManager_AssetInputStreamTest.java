@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.res.AssetManager;
+import android.platform.test.annotations.AppModeSdkSandbox;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -33,6 +34,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 @SmallTest
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class AssetManager_AssetInputStreamTest {
     private static final byte[] EXPECTED_BYTES = "OneTwoThreeFourFiveSixSevenEightNineTen".getBytes(
             StandardCharsets.UTF_8);

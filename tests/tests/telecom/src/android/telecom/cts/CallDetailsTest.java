@@ -52,6 +52,7 @@ import android.telephony.TelephonyManager;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.FileUtils;
+import com.android.server.telecom.flags.Flags;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -487,6 +488,17 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         assertThat(mCall.getDetails().getCallProperties(), instanceOf(Integer.class));
 
         assertEquals(CALL_PROPERTIES, mCall.getDetails().getCallProperties());
+    }
+
+    /**
+     * Tests whether the getId() getter returns the correct object.
+     */
+    public void testCallId() {
+        if (!mShouldTestTelecom || !Flags.callDetailsIdChanges()) {
+            return;
+        }
+
+        assertThat(mCall.getDetails().getId(), instanceOf(String.class));
     }
 
     /**

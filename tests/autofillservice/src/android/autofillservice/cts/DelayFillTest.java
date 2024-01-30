@@ -31,9 +31,10 @@ import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.Helper;
 import android.content.Intent;
 import android.os.SystemClock;
-import android.platform.test.annotations.FlakyTest;
 import android.service.autofill.FillResponse;
 import android.util.Log;
+
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Test;
 

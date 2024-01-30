@@ -48,6 +48,9 @@
         <option name="test-file-name" value="LocationAccessingApp.apk"/>
         <option name="test-file-name" value="LocationAccessingAppSdk28.apk"/>
         <option name="test-file-name" value="TestExternalImsServiceApp.apk"/>
+        <option name="test-file-name" value="MockSatelliteGatewayServiceApp.apk"/>
+        <option name="test-file-name" value="MockSatelliteServiceApp.apk"/>
+        <option name="test-file-name" value="MockPointingUiApp.apk"/>
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.telephony.cts" />
@@ -62,6 +65,9 @@
         <option name="run-command" value="pm disable com.android.dialer/com.android.voicemail.impl.OmtpService" />
         <option name="teardown-command" value="pm enable com.android.dialer/com.android.voicemail.impl.StatusCheckJobService" />
         <option name="teardown-command" value="pm enable com.android.dialer/com.android.voicemail.impl.OmtpService" />
+        <!-- Disable PARIS to prevent unexpected APN insertions -->
+        <option name="run-command" value="pm disable com.google.android.carrier" />
+        <option name="teardown-command" value="pm enable com.google.android.carrier" />
         <option name="run-command" value="setprop persist.radio.allow_mock_modem true" />
         <option name="teardown-command" value="setprop persist.radio.allow_mock_modem false" />
         <option name="run-command" value="device_config set_sync_disabled_for_tests persistent" />

@@ -50,6 +50,7 @@ import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.exceptions.PollValueFailedException;
+import com.android.bedstead.nene.permissions.CommonPermissions;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.ShellCommand;
@@ -139,6 +140,21 @@ public final class UserReference implements AutoCloseable {
     }
 
     /**
+     * {@code true} if this is the main user.
+     */
+    @Experimental
+    public boolean isMain() {
+        if (!Versions.meetsMinimumSdkVersionRequirement(U)) {
+            return isSystem();
+        }
+
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(CommonPermissions.CREATE_USERS)) {
+            return mUserManager.isMainUser();
+        }
+    }
+
+    /**
      * Get a {@link UserHandle} for the {@link #id()}.
      */
     public UserHandle userHandle() {
@@ -151,37 +167,55 @@ public final class UserReference implements AutoCloseable {
      * <p>If the user does not exist then nothing will happen. If the removal fails for any other
      * reason, a {@link NeneException} will be thrown.
      */
-    public void remove() {
+    public UserReference remove() {
+        Log.i(LOG_TAG, "Trying to remove user " + mId);
         if (!exists()) {
-            return;
-        }
-
-        ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner(this);
-        if (profileOwner != null && profileOwner.isOrganizationOwned()) {
-            profileOwner.remove();
-        }
-
-        if (TestApis.users().instrumented().equals(this)) {
-            throw new NeneException("Cannot remove instrumented user");
+            Log.i(LOG_TAG, "User " + mId + " does not exist or removed already.");
+            return this;
         }
 
         try {
-            // Expected success string is "Success: removed user"
-            ShellCommand.builder("pm remove-user")
-                    .addOperand(mId)
-                    .validate(ShellCommandUtils::startsWithSuccess)
-                    .execute();
+            ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner(this);
+            if (profileOwner != null && profileOwner.isOrganizationOwned()) {
+                profileOwner.remove();
+            }
 
-            Poll.forValue("User exists", this::exists)
-                    .toBeEqualTo(false)
-                    // TODO(b/203630556): Reduce timeout once we have a faster way of removing users
-                    .timeout(Duration.ofMinutes(1))
-                    .errorOnFail()
-                    .await();
-        } catch (AdbException e) {
-            throw new NeneException("Could not remove user " + this + ". Logcat: "
-                    + TestApis.logcat().dump((l) -> l.contains("UserManagerService")), e);
+            if (TestApis.users().instrumented().equals(this)) {
+                throw new NeneException("Cannot remove instrumented user");
+            }
+
+            try {
+                // Expected success string is "Success: removed user"
+                ShellCommand.builder("pm remove-user")
+                        .addOperand("-w") // Wait for remove-user to complete
+                        .withTimeout(Duration.ofMinutes(1))
+                        .addOperand(mId)
+                        .validate(ShellCommandUtils::startsWithSuccess)
+                        .execute();
+            } catch (AdbException e) {
+                throw new NeneException("Could not remove user " + this + ". Logcat: "
+                        + TestApis.logcat().dump((l) -> l.contains("UserManagerService")), e);
+            }
+            if (exists()) {
+                // This should never happen
+                throw new NeneException("Failed to remove user " + this);
+            }
+        } catch (NeneException e) {
+            // (b/286380557): Flaky behavior when SafetyCenter tries to remove the user: the user
+            // is seen to be removed even though SafetyCenter throws an exception.
+            boolean userExists = exists();
+            Log.i(LOG_TAG,
+                    "Does user " + id() + " still exist after trying to remove: "
+                            + userExists);
+
+            if (userExists) {
+                // A reliable exception, the user was not removed.
+                throw e;
+            }
         }
+        
+        Log.i(LOG_TAG, "Removed user " + mId);
+        return this;
     }
 
     /**
@@ -315,6 +349,10 @@ public final class UserReference implements AutoCloseable {
                     .await();
         } catch (AdbException e) {
             throw new NeneException("Could not stop user " + this, e);
+        }
+        if (isRunning()) {
+            // This should never happen
+            throw new NeneException("Failed to stop user " + this);
         }
 
         return this;
@@ -929,7 +967,12 @@ public final class UserReference implements AutoCloseable {
         return user;
     }
 
+    /**
+     * Note: This method should not be run on < S.
+     */
     private UserInfo userInfo() {
+        Versions.requireMinimumVersion(S);
+
         return users().filter(ui -> ui.id == id()).findFirst()
                 .orElseThrow(() -> new NeneException("User does not exist " + this));
     }
@@ -967,6 +1010,10 @@ public final class UserReference implements AutoCloseable {
      * Get the reason this user cannot be switched to. Null if none.
      */
     public String getSwitchToUserError() {
+        if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
+            return null;
+        }
+
         if (TestApis.users().isHeadlessSystemUserMode() && equals(TestApis.users().system())) {
             return "Cannot switch to system user on HSUM devices";
         }

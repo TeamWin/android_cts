@@ -54,8 +54,11 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
     private PhoneCapability mPhoneCapability = new PhoneCapability();
     private SimSlotStatus[] mSimSlotStatus;
 
+    MockCentralizedNetworkAgent mMockCentralizedNetworkAgent;
+
     public IRadioConfigImpl(
-            MockModemService service, MockModemConfigInterface configInterface, int instanceId) {
+            MockModemService service, MockModemConfigInterface configInterface,
+            MockCentralizedNetworkAgent centralizedNetworkAgent, int instanceId) {
         mTag = TAG + "-" + instanceId;
         Log.d(mTag, "Instantiated");
 
@@ -66,6 +69,7 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
         mCacheUpdateMutex = new Object();
         mHandler = new IRadioConfigHandler();
         mSubId = instanceId;
+        mMockCentralizedNetworkAgent = centralizedNetworkAgent;
 
         // Register events
         mMockModemConfigInterface.registerForNumOfLiveModemChanged(
@@ -212,8 +216,9 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
         Log.d(mTag, "setPreferredDataModem");
         // TODO: cache value
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
+            mMockCentralizedNetworkAgent.setPreferredDataPhone((int) modemId);
             mRadioConfigResponse.setPreferredDataModemResponse(rsp);
         } catch (RemoteException ex) {
             Log.e(mTag, "Failed to invoke setPreferredDataModemResponse from AIDL. Exception" + ex);

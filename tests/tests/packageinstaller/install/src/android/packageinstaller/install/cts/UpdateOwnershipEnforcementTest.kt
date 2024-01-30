@@ -17,12 +17,13 @@
 package android.packageinstaller.install.cts
 
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageInstaller
 import android.platform.test.annotations.AppModeFull
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
-import org.junit.After
-import java.io.File
+import com.google.common.truth.Truth.assertThat
+import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.fail
@@ -185,6 +186,40 @@ class UpdateOwnershipEnforcementTest : UpdateOwnershipEnforcementTestBase() {
         } finally {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity()
+        }
+    }
+
+    /**
+     * Checks that an installer needs user action to update a package when
+     * it's not the update owner even if it has granted INSTALL_PACKAGES permission.
+     * This test simulates sideloading an APK when an installed app has an update owner set.
+     * Installing an app via intent results in 2 "User Action Required" dialogs:
+     *      # First one to confirm app installation.
+     *      # Second to confirm ownership update.
+     *  Ownership update is checked after install session is committed by Pia. As a result, the
+     *  system server sends another STATUS_PENDING_USER_ACTION to the user.
+     */
+    @Test
+    fun updateOwnershipEnforcement_updateViaIntentByNonOwner_hasUserAction() {
+        // Install the test app and enable update ownership enforcement with another package
+        installTestPackage("--update-ownership -i $TEST_INSTALLER_APK_PACKAGE_NAME")
+
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.INSTALL_PACKAGES)
+            val result = startInstallationViaIntent()
+            // Since it is simulating a side load, a user confirmation will be required to
+            // install the app
+            clickInstallerUIButton(INSTALL_BUTTON_ID)
+
+            // The second dialog will be shown to confirm update ownership
+            clickInstallerUIButton(INSTALL_BUTTON_ID)
+
+            assertThat(result.get(TIMEOUT, TimeUnit.MILLISECONDS)).isEqualTo(Activity.RESULT_OK)
+            assertInstalled()
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity()
         }
     }
 

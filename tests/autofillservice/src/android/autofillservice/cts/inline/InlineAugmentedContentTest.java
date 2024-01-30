@@ -42,6 +42,8 @@ import android.view.autofill.AutofillValue;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import androidx.test.filters.FlakyTest;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -87,6 +89,9 @@ public class InlineAugmentedContentTest
         sReplier.addResponse(NO_RESPONSE);
     }
 
+    @FlakyTest(
+            bugId = 292285491,
+            detail = "Meet July-31-23 trunk stable no flaky SLO. Deflake asap")
     @Test
     public void testFillContent_text() throws Exception {
         final String suggestion = "Sample Text";

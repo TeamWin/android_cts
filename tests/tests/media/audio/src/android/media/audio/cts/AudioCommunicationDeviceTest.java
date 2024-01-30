@@ -22,6 +22,7 @@ import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Log;
 
 import androidx.test.filters.SdkSuppress;
@@ -32,7 +33,7 @@ import com.android.internal.annotations.GuardedBy;
 import java.util.List;
 import java.util.concurrent.Executors;
 
-
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 @SdkSuppress(minSdkVersion = 31, codeName = "S")
 public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
     private final static String TAG = "AudioCommunicationDeviceTest";
@@ -206,6 +207,15 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
                 fail("setCommunicationDevice should fail for device: " + device.getType());
             } catch (Exception e) {
             }
+        }
+    }
+
+    public void testNoSourceInCommunicationDevices() {
+        if (!isValidPlatform("testNoSourceInCommunicationDevices")) return;
+
+        List<AudioDeviceInfo> devices = mAudioManager.getAvailableCommunicationDevices();
+        for (AudioDeviceInfo device : devices) {
+            assertFalse(device.isSource());
         }
     }
 

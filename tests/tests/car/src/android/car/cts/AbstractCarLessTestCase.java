@@ -16,10 +16,6 @@
 package android.car.cts;
 
 import android.car.test.AbstractExpectableTestCase;
-import android.car.test.ApiCheckerRule;
-import android.util.Log;
-
-import org.junit.Rule;
 
 /**
  * Base class for tests that don't need to connect to a {@link android.car.Car} object.
@@ -30,25 +26,4 @@ import org.junit.Rule;
 abstract class AbstractCarLessTestCase extends AbstractExpectableTestCase {
 
     private static final String TAG = AbstractCarLessTestCase.class.getSimpleName();
-
-    // TODO(b/242350638): temporary hack to allow subclasses to disable checks - should be removed
-    // when not needed anymore
-    private final ApiCheckerRule.Builder mApiCheckerRuleBuilder = new ApiCheckerRule.Builder();
-
-    @Rule
-    public final ApiCheckerRule mApiCheckerRule;
-
-    // TODO(b/242350638): temporary hack to allow subclasses to disable checks - should be removed
-    // when not needed anymore
-    protected AbstractCarLessTestCase() {
-        configApiCheckerRule(mApiCheckerRuleBuilder);
-        mApiCheckerRule = mApiCheckerRuleBuilder.build();
-    }
-
-    // TODO(b/242350638): temporary hack to allow subclasses to disable checks - should be removed
-    // when not needed anymore
-    protected void configApiCheckerRule(ApiCheckerRule.Builder builder) {
-        Log.v(TAG, "Good News, Everyone! Class " + getClass()
-                + " doesn't override configApiCheckerRule()");
-    }
 }

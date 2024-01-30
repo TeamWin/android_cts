@@ -32,8 +32,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
             android:targetPackage="android.acceleration.cts"
             android:label="Tests for the Hardware Acceleration APIs." >
-        <meta-data android:name="listener"
-                android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 
 </manifest>

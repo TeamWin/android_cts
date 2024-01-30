@@ -41,6 +41,7 @@ import android.os.CancellationSignal;
 import android.os.ICancellationSignal;
 import android.os.OperationCanceledException;
 import android.os.RemoteException;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 import android.test.mock.MockContentResolver;
 
@@ -55,6 +56,7 @@ import java.util.concurrent.TimeUnit;
  * Simple delegation test for {@link ContentProviderClient}, checking the right methods are called.
  * Actual {@link ContentProvider} functionality is tested in {@link ContentProviderTest}.
  */
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ContentProviderClientTest extends AndroidTestCase {
 
     private static final Answer ANSWER_SLEEP = invocation -> {

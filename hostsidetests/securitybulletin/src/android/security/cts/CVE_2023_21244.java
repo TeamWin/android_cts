@@ -29,6 +29,8 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.HashMap;
+
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CVE_2023_21244 extends NonRootSecurityTestCase {
 
@@ -54,7 +56,24 @@ public class CVE_2023_21244 extends NonRootSecurityTestCase {
                             SystemUtil.withSetting(device, "global", "hidden_api_policy", "1")) {
                 // Run the test "testCVE_2023_21244"
                 final String testPkg = "android.security.cts.CVE_2023_21244";
-                runDeviceTests(testPkg, testPkg + ".DeviceTest", "testCVE_2023_21244");
+                final long timeout = 10 * 60 * 1000L;   // DEFAULT_TEST_TIMEOUT_MS
+
+                // Pass 'isHiddenApiCheckDisabled' as 'true' in runDeviceTests() to prevent
+                // 'NoSuchMethodError' in case 'hidden_api_policy' setting is ineffective. All other
+                // arguments are set to their default values.
+                runDeviceTests(
+                        device,
+                        null /* runner */,
+                        testPkg,
+                        testPkg + ".DeviceTest",
+                        "testCVE_2023_21244",
+                        null /* userId */,
+                        timeout /* testTimeoutMs */,
+                        timeout /* maxTimeToOutputMs */,
+                        0L /* maxInstrumentationTimeoutMs */,
+                        true /* checkResults */,
+                        true /* isHiddenApiCheckDisabled */,
+                        new HashMap<>());
             }
         } catch (Exception e) {
             assumeNoException(e);

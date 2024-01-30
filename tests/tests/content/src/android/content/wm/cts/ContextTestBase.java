@@ -27,7 +27,6 @@ import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.cts.ContextTest;
 import android.content.cts.MockActivity;
 import android.content.cts.MockService;
 import android.graphics.PixelFormat;
@@ -77,7 +76,7 @@ public class ContextTestBase {
         ImageReader reader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888,
                 2 /* maxImages */);
         VirtualDisplay virtualDisplay = displayManager.createVirtualDisplay(
-                ContextTest.class.getName(), width, height, density, reader.getSurface(),
+                ContextTestBase.class.getName(), width, height, density, reader.getSurface(),
                 VIRTUAL_DISPLAY_FLAG_PUBLIC | VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY);
         return virtualDisplay;
     }

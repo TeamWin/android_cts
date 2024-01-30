@@ -41,9 +41,14 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.UiDevice;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
+import org.junit.AssumptionViolatedException;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
+import org.junit.runners.model.Statement;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -78,9 +83,6 @@ public class BasePackageInstallTest {
     protected Intent mCallbackIntent;
     protected ComponentName mDeviceOwner;
 
-    protected boolean mHasFeature;
-    protected boolean mAmIDeviceOwner;
-
     protected Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
     protected UiAutomation mUiAutomation = mInstrumentation.getUiAutomation();
     protected final Object mPackageInstallerTimeoutLock = new Object();
@@ -104,6 +106,23 @@ public class BasePackageInstallTest {
         }
     };
 
+    @Rule
+    public RequiredFeatureRule mAdminFeatureRule = new RequiredFeatureRule(
+            PackageManager.FEATURE_DEVICE_ADMIN);
+
+    @Rule
+    public TestRule mDeviceOwnerRule = (base, description) -> new Statement() {
+        @Override
+        public void evaluate() throws Throwable {
+            try {
+                addDeviceOwner();
+                base.evaluate();
+            } finally {
+                removeDeviceOwner();
+            }
+        }
+    };
+
     @Before
     public void setUp() throws Exception {
         mContext = mInstrumentation.getContext();
@@ -113,24 +132,19 @@ public class BasePackageInstallTest {
         mPackageInstaller = mPackageManager.getPackageInstaller();
         assertNotNull(mPackageInstaller);
 
-        mHasFeature = mPackageManager.hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN);
-
-        if (mHasFeature) {
-            forceUninstall();
-            // check that app is not already installed
-            assertFalse(isPackageInstalled(TEST_APP_PKG));
-        }
+        forceUninstall();
+        // check that app is not already installed
+        assertFalse(isPackageInstalled(TEST_APP_PKG));
     }
 
-    @Before
-    public void addDeviceOwner() {
-        mDeviceOwner = new ComponentName(mContext, BasicAdminReceiver.class);
+    private void addDeviceOwner() {
+        mDeviceOwner = new ComponentName(mInstrumentation.getContext(), BasicAdminReceiver.class);
         try {
             TestApis.devicePolicy().setDeviceOwner(mDeviceOwner);
-            mAmIDeviceOwner = true;
         } catch (Exception e) {
-            mAmIDeviceOwner = false;
             Log.e(TAG, e.getMessage());
+            throw new AssumptionViolatedException(
+                    "Could not set BasicAdminReceiver.class as device owner");
         }
     }
 
@@ -151,8 +165,7 @@ public class BasePackageInstallTest {
         forceUninstall();
     }
 
-    @After
-    public void removeDeviceOwner() {
+    private void removeDeviceOwner() {
         try {
             TestApis.devicePolicy().getDeviceOwner().remove();
         } catch (NullPointerException e) {

@@ -32,7 +32,6 @@
         <activity android:name="android.text.cts.EmojiCtsActivity"
              android:label="AvailableIntentsActivity"
              android:screenOrientation="nosensor"
-             android:windowSoftInputMode="stateAlwaysHidden"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -42,13 +41,11 @@
 
         <activity android:name="android.text.method.cts.KeyListenerCtsActivity"
              android:label="KeyListenerCtsActivity"
-             android:screenOrientation="nosensor"
-             android:windowSoftInputMode="stateAlwaysHidden"/>
+             android:screenOrientation="nosensor"/>
 
         <activity android:name="android.text.method.cts.CtsActivity"
              android:label="CtsActivity"
              android:screenOrientation="nosensor"
-             android:windowSoftInputMode="stateAlwaysHidden"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -82,15 +79,21 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.text.cts.MockActivity"/>
+        <activity android:name="android.text.cts.MockActivity"
+                android:screenOrientation="nosensor"
+                android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
+            </intent-filter>
+        </activity>
+
 
     </application>
 
     <instrumentation android:name="android.text.cts.runner.CtsTextRunner"
          android:targetPackage="android.text.cts"
          android:label="CTS tests of android.text">
-        <meta-data android:name="listener"
-             android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
 
 </manifest>

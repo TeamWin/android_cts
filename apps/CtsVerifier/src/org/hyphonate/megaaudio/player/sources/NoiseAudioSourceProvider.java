@@ -22,15 +22,19 @@ import org.hyphonate.megaaudio.player.NativeAudioSource;
 /**
  * An AudioSourceProvider for a noise source
  */
-public class NoiseAudioSourceProvider implements AudioSourceProvider {
+public class NoiseAudioSourceProvider extends AudioSourceProvider {
     @Override
     public AudioSource getJavaSource() {
-        return new NoiseAudioSource();
+        return mActiveSource = mJavaSource != null
+                ? mJavaSource
+                : (mJavaSource = new NoiseAudioSource());
     }
 
     @Override
-    public NativeAudioSource getNativeSource() {
-        return new NativeAudioSource(allocNativeSource());
+    public AudioSource getNativeSource() {
+        return mActiveSource = mNativeSource != null
+                ? mNativeSource
+                : (mNativeSource = new NativeAudioSource(allocNativeSource()));
     }
 
     private native long allocNativeSource();

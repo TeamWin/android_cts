@@ -31,6 +31,7 @@ import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
@@ -40,6 +41,7 @@ import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -73,26 +75,9 @@ public class AudioDescriptorActivity extends PassFailButtons.Activity {
     private static final SortedMap<AudioHalVersionInfo, HalFormats> ALL_HAL_FORMATS =
             new TreeMap<>(Collections.reverseOrder());
 
-    static {
-        // Formats defined by audio HAL v7.0 can be found at
-        // hardware/interfaces/audio/7.0/config/audio_policy_configuration.xsd
-        ALL_HAL_FORMATS.put(
-                AudioHalVersionInfo.HIDL_7_0,
-                new HalFormats(
-                        Map.of(
-                                2, "AC-3",
-                                4, "MP3",
-                                6, "AAC-LC",
-                                11, "DTS-HD",
-                                12, "Dolby TrueHD"),
-                        Map.of(
-                                7, "DRA",
-                                // put(11, "MPEG-H"); MPEG-H is defined by Android but its
-                                // capability can only be reported by short audio descriptor.
-                                12, "AC-4")));
-    }
-
     private AudioManager mAudioManager;
+
+    private Button mRunTestBtn;
 
     private boolean mClaimsHDMI;
     private AudioDeviceInfo mHDMIDeviceInfo;
@@ -119,6 +104,14 @@ public class AudioDescriptorActivity extends PassFailButtons.Activity {
         mAudioManager = getSystemService(AudioManager.class);
         mAudioManager.registerAudioDeviceCallback(new TestAudioDeviceCallback(), null);
 
+        mRunTestBtn = (Button) findViewById(R.id.audioDescriptorRunTestBtn);
+        mRunTestBtn.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                runTest();
+            }
+        });
+
         mClaimsHDMICheckBox = (CheckBox) findViewById(R.id.audioDescriptorHasHDMICheckBox);
         mClaimsHDMICheckBox.setOnClickListener(mClickListener);
         mHDMISupportLbl = (TextView) findViewById(R.id.audioDescriptorHDMISupportLbl);
@@ -126,8 +119,7 @@ public class AudioDescriptorActivity extends PassFailButtons.Activity {
 
         setInfoResources(R.string.audio_descriptor_test, R.string.audio_descriptor_test_info, -1);
         setPassFailButtonClickListeners();
-        detectHalVersion();
-        displayTestResult();
+        clearTestResult();
     }
 
     @Override
@@ -207,12 +199,15 @@ public class AudioDescriptorActivity extends PassFailButtons.Activity {
 
         if (mHDMIDeviceInfo != null) {
             mClaimsHDMICheckBox.setChecked(true);
+            mClaimsHDMI = true;
         }
-    }
-
-    protected void onDeviceConnectionChanged() {
-        detectHDMIDevice();
-        displayTestResult();
+        if (mClaimsHDMI) {
+            mHDMISupportLbl.setText(
+                    mHDMIDeviceInfo == null ? R.string.audio_descriptor_hdmi_pending
+                                            : R.string.audio_descriptor_hdmi_connected);
+        } else {
+            mHDMISupportLbl.setText(R.string.audio_descriptor_hdmi_NA);
+        }
     }
 
     private class OnBtnClickListener implements OnClickListener {
@@ -237,10 +232,9 @@ public class AudioDescriptorActivity extends PassFailButtons.Activity {
                     mClaimsHDMI = true;
                 } else {
                     mClaimsHDMI = false;
-                    mHDMISupportLbl.setText(R.string.audio_proaudio_NA);
                 }
                 detectHDMIDevice();
-                displayTestResult();
+                clearTestResult();
             }
         }
     }
@@ -350,6 +344,61 @@ public class AudioDescriptorActivity extends PassFailButtons.Activity {
         return null;
     }
 
+    private void runTest() {
+        if (!canGetHalVersion()) {
+            showNonSdkAccessibilityWarningDialog(this);
+            return;
+        }
+
+        // Fill all hal formats only when the hidden APIs are available.
+        fillAllHalFormats();
+
+        detectHDMIDevice();
+        if (mClaimsHDMI && mHDMIDeviceInfo == null) {
+            // Do not run the test if the HDMI is claimed but not connected.
+            mTestStatusLbl.setText(R.string.audio_descriptor_hdmi_claimed_but_not_connected);
+            return;
+        }
+        detectHalVersion();
+        displayTestResult();
+    }
+
+    private void clearTestResult() {
+        getPassButton().setEnabled(false);
+        mTestStatusLbl.setText("");
+    }
+
+    private boolean canGetHalVersion() {
+        Method method = null;
+        try {
+            method = AudioManager.class.getMethod("getHalVersion");
+        } catch (Exception e) {
+            // Ignore error here
+            return false;
+        }
+        return method != null;
+    }
+
+    private static void fillAllHalFormats() {
+        // Formats defined by audio HAL v7.0 can be found at
+        // hardware/interfaces/audio/7.0/config/audio_policy_configuration.xsd
+        ALL_HAL_FORMATS.clear();
+        ALL_HAL_FORMATS.put(
+                AudioHalVersionInfo.HIDL_7_0,
+                new HalFormats(
+                        Map.of(
+                                2, "AC-3",
+                                4, "MP3",
+                                6, "AAC-LC",
+                                11, "DTS-HD",
+                                12, "Dolby TrueHD"),
+                        Map.of(
+                                7, "DRA",
+                                // put(11, "MPEG-H"); MPEG-H is defined by Android but its
+                                // capability can only be reported by short audio descriptor.
+                                12, "AC-4")));
+    }
+
     static class HalFormats {
         private final Map<Integer, String> mFormatCodes;
         private final Map<Integer, String> mExtendedFormatCodes;
@@ -371,11 +420,11 @@ public class AudioDescriptorActivity extends PassFailButtons.Activity {
 
     private class TestAudioDeviceCallback extends AudioDeviceCallback {
         public void onAudioDevicesAdded(AudioDeviceInfo[] addedDevices) {
-            onDeviceConnectionChanged();
+            detectHDMIDevice();
         }
 
         public void onAudioDevicesRemoved(AudioDeviceInfo[] removedDevices) {
-            onDeviceConnectionChanged();
+            detectHDMIDevice();
         }
     }
 }

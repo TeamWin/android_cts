@@ -22,23 +22,22 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.graphics.Point;
-import android.hardware.input.InputManager;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 import android.view.WindowManager;
+import android.view.cts.util.InputDeviceUtils;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Set;
 
 /**
  * Test {@link ViewConfiguration}.
@@ -46,6 +45,8 @@ import org.junit.runner.RunWith;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class ViewConfigurationTest {
+    private static Set<Integer> SUPPORTED_AXES_FOR_SCROLL_HAPTICS = Set.of(MotionEvent.AXIS_SCROLL);
+
     @Test
     public void testStaticValues() {
         ViewConfiguration.getScrollBarSize();
@@ -143,18 +144,10 @@ public class ViewConfigurationTest {
     @Test
     public void testFlingThresholds_forInvalidInputDeviceIds() {
         Context context = InstrumentationRegistry.getTargetContext();
-        InputManager inputManager = context.getSystemService(InputManager.class);
-
         ViewConfiguration contextBasedVc = ViewConfiguration.get(context);
         ViewConfiguration contextLessVc = new ViewConfiguration();
         for (ViewConfiguration vc : new ViewConfiguration[] {contextBasedVc, contextLessVc}) {
-            // "50" randomly chosen to cover some array of integers.
-            for (int deviceId = -50; deviceId < 50; deviceId++) {
-                InputDevice device = inputManager.getInputDevice(deviceId);
-                if (device != null) {
-                    continue; // Test only invalid device IDs. Continue...
-                }
-
+            InputDeviceUtils.runOnInvalidDeviceIds((deviceId) -> {
                 // Test with some source-axis combinations. Any source-axis combination should
                 // provide the no-fling thresholds, since the device ID is known to be invalid.
                 verifyNoFlingThresholds(
@@ -163,34 +156,32 @@ public class ViewConfigurationTest {
                         vc, deviceId, InputDevice.SOURCE_TOUCHSCREEN, MotionEvent.AXIS_Y);
                 verifyNoFlingThresholds(
                         vc, deviceId, InputDevice.SOURCE_ROTARY_ENCODER, MotionEvent.AXIS_SCROLL);
-            }
+            });
         }
     }
 
     @Test
     public void testFlingThresholds_forAllAvailableDevices() {
         Context context = InstrumentationRegistry.getTargetContext();
-        InputManager inputManager = context.getSystemService(InputManager.class);
-        int[] deviceIds = context.getSystemService(InputManager.class).getInputDeviceIds();
-
         ViewConfiguration contextBasedVc = ViewConfiguration.get(context);
         ViewConfiguration contextLessVc = new ViewConfiguration();
         for (ViewConfiguration vc : new ViewConfiguration[] {contextBasedVc, contextLessVc}) {
-            for (int deviceId : deviceIds) {
-                InputDevice device = inputManager.getInputDevice(deviceId);
-                for (InputDevice.MotionRange motionRange : device.getMotionRanges()) {
-                    int axis = motionRange.getAxis();
-                    int source = motionRange.getSource();
+            InputDeviceUtils.runOnEveryInputDeviceMotionRange(deviceIdAndMotionRange -> {
+                int deviceId = deviceIdAndMotionRange.first;
+                InputDevice.MotionRange motionRange = deviceIdAndMotionRange.second;
 
-                    int minVel = vc.getScaledMinimumFlingVelocity(deviceId, axis, source);
-                    int maxVel = vc.getScaledMaximumFlingVelocity(deviceId, axis, source);
+                int axis = motionRange.getAxis();
+                int source = motionRange.getSource();
 
-                    // These min/max thresholds are thresholds for a valid InputDevice ID, on a
-                    // source and axis applicable to the InputDevice represented by the ID. Check
-                    // that the provided thresholds are within the valid bounds.
-                    verifyFlingThresholdRange(minVel, maxVel);
-                }
+                int minVel = vc.getScaledMinimumFlingVelocity(deviceId, axis, source);
+                int maxVel = vc.getScaledMaximumFlingVelocity(deviceId, axis, source);
 
+                // These min/max thresholds are thresholds for a valid InputDevice ID, on a
+                // source and axis applicable to the InputDevice represented by the ID. Check
+                // that the provided thresholds are within the valid bounds.
+                verifyFlingThresholdRange(minVel, maxVel);
+            });
+            InputDeviceUtils.runOnEveryValidDeviceId((deviceId) -> {
                 // Test with source-axis combinations that we know are not valid. Since the
                 // source-axis combinations will be invalid, we expect the no-fling thresholds,
                 // despite the fact that we're using a valid InputDevice ID.
@@ -198,7 +189,7 @@ public class ViewConfigurationTest {
                         vc, deviceId, InputDevice.SOURCE_ROTARY_ENCODER, MotionEvent.AXIS_X);
                 verifyNoFlingThresholds(
                         vc, deviceId, InputDevice.SOURCE_TOUCHSCREEN, MotionEvent.AXIS_WHEEL);
-            }
+            });
         }
     }
 

@@ -20,6 +20,7 @@ import android.app.ActivityManager;
 import android.content.ContentResolver;
 import android.os.RemoteCallback;
 import android.os.UserHandle;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
 
 /**
@@ -27,6 +28,7 @@ import android.test.AndroidTestCase;
  *
  * see @{@link MockBuggyProvider}
  */
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class BuggyProviderTest extends AndroidTestCase {
 
     public void testGetTypeDoesntCrashSystem() {

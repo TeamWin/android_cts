@@ -218,17 +218,19 @@ void StreamBuilderHelper::streamCommand(
 InputStreamBuilderHelper::InputStreamBuilderHelper(
         aaudio_sharing_mode_t requestedSharingMode,
         aaudio_performance_mode_t requestedPerfMode,
-        aaudio_format_t requestedFormat)
+        aaudio_format_t requestedFormat,
+        int32_t requestedSampleRate)
         : StreamBuilderHelper{AAUDIO_DIRECTION_INPUT,
-            48000, 1, requestedFormat, requestedSharingMode, requestedPerfMode} {}
+            requestedSampleRate, 1, requestedFormat, requestedSharingMode, requestedPerfMode} {}
 
 
 OutputStreamBuilderHelper::OutputStreamBuilderHelper(
         aaudio_sharing_mode_t requestedSharingMode,
         aaudio_performance_mode_t requestedPerfMode,
-        aaudio_format_t requestedFormat)
+        aaudio_format_t requestedFormat,
+        int32_t requestedSampleRate)
         : StreamBuilderHelper{AAUDIO_DIRECTION_OUTPUT,
-            48000, 2, requestedFormat, requestedSharingMode, requestedPerfMode} {}
+            requestedSampleRate, 2, requestedFormat, requestedSharingMode, requestedPerfMode} {}
 
 void OutputStreamBuilderHelper::initBuilder() {
     StreamBuilderHelper::initBuilder();
@@ -357,6 +359,22 @@ JNIEnv* getJNIEnv() {
 CALL_JAVA_STATIC_METHOD(jobject, Object)
 CALL_JAVA_STATIC_METHOD(jboolean, Boolean)
 
+void callJavaStaticVoidFunction(
+        JNIEnv* env, const char* className,
+        const char* funcName, const char* signature, ...) {
+    if (env == nullptr) {
+        env = getJNIEnv();
+    }
+    jclass cl = env->FindClass(className);
+    EXPECT_NE(nullptr, cl);
+    jmethodID mid = env->GetStaticMethodID(cl, funcName, signature);
+    EXPECT_NE(nullptr, mid);
+    va_list args;
+    va_start(args, signature);
+    env->CallStaticVoidMethod(cl, mid, args);
+    va_end(args);
+}
+
 } // namespace
 
 SpAIBinder AudioServerCrashMonitor::getAudioFlinger() {
@@ -396,3 +414,24 @@ bool isIEC61937Supported() {
             nullptr, "android/nativemedia/aaudio/AAudioTests", "isIEC61937Supported", "()Z");
 }
 
+bool isEchoReferenceSupported() {
+    return (bool) callJavaStaticBooleanFunction(
+            nullptr, "android/nativemedia/aaudio/AAudioTests", "isEchoReferenceSupported", "()Z");
+}
+
+void enableAudioOutputPermission() {
+    callJavaStaticVoidFunction(
+            nullptr, "android/nativemedia/aaudio/AAudioTests", "enableAudioOutputPermission",
+            "()V");
+}
+
+void enableAudioHotwordPermission() {
+    callJavaStaticVoidFunction(
+            nullptr, "android/nativemedia/aaudio/AAudioTests", "enableAudioHotwordPermission",
+            "()V");
+}
+
+void disablePermissions() {
+    callJavaStaticVoidFunction(
+            nullptr, "android/nativemedia/aaudio/AAudioTests", "disablePermissions", "()V");
+}

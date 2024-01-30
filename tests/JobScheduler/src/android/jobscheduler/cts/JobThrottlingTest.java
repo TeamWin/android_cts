@@ -149,7 +149,8 @@ public class JobThrottlingTest {
         mDeviceConfigStateHelper.set(
                 new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_JOB_SCHEDULER)
                         .setInt("min_ready_non_active_jobs_count", 0)
-                        .setBoolean("fc_enable_flexibility", false).build());
+                        // Disable flex behavior.
+                        .setInt("fc_applied_constraints", 0).build());
         mActivityManagerDeviceConfigStateHelper =
                 new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ACTIVITY_MANAGER);
         mTareDeviceConfigStateHelper = new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_TARE);
@@ -436,6 +437,7 @@ public class JobThrottlingTest {
         try (TestNotificationListener.NotificationHelper notificationHelper =
                      new TestNotificationListener.NotificationHelper(
                              mContext, TestAppInterface.TEST_APP_PACKAGE)) {
+            mNetworkingHelper.setAllNetworksEnabled(true);
             mTestAppInterface.postUiInitiatingNotification(
                     Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
                     Map.of(TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY));
@@ -645,7 +647,6 @@ public class JobThrottlingTest {
         assumeTrue("device doesn't have battery", BatteryUtils.hasBattery());
         assumeFalse("not testable, since ethernet is connected", hasEthernetConnection());
         assumeTrue(mNetworkingHelper.hasWifiFeature());
-        mNetworkingHelper.ensureSavedWifiNetwork();
 
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
@@ -1074,7 +1075,6 @@ public class JobThrottlingTest {
 
         assumeTrue(BatteryUtils.hasBattery());
         assumeTrue(mNetworkingHelper.hasWifiFeature());
-        mNetworkingHelper.ensureSavedWifiNetwork();
 
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare_mode", "0");
@@ -1464,11 +1464,19 @@ public class JobThrottlingTest {
      * Set the screen state.
      */
     private void setScreenState(boolean on) throws Exception {
+        setScreenState(mUiDevice, on);
+    }
+
+    static void setScreenState(UiDevice uiDevice, boolean on) throws Exception {
+        PowerManager powerManager =
+                InstrumentationRegistry.getContext().getSystemService(PowerManager.class);
         if (on) {
-            mUiDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
-            mUiDevice.executeShellCommand("wm dismiss-keyguard");
+            uiDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            uiDevice.executeShellCommand("wm dismiss-keyguard");
+            waitUntil("Device not interactive", () -> powerManager.isInteractive());
         } else {
-            mUiDevice.executeShellCommand("input keyevent KEYCODE_SLEEP");
+            uiDevice.executeShellCommand("input keyevent KEYCODE_SLEEP");
+            waitUntil("Device still interactive", () -> !powerManager.isInteractive());
         }
         // Wait a little bit to make sure the screen state has changed.
         Thread.sleep(4_000);

@@ -25,16 +25,20 @@ import android.view.InputDevice;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
+
+import com.google.errorprone.annotations.InlineMe;
 
 import java.lang.reflect.Field;
 import java.util.Objects;
 
 /**
- * Utility class to send KeyEvents bypassing the IME. The code is similar to functions in
- * {@link Instrumentation} and {@link android.test.InstrumentationTestCase} classes. It uses
- * {@link InputMethodManager#dispatchKeyEventFromInputMethod(View, KeyEvent)} to send the events.
- * After sending the events waits for idle.
+ * Utility class to send KeyEvents.
+ *
+ * <p>Keep in mind that the injected key events will also be dispatched into the currently selected
+ * IME. To make your test deterministic, the test must be running with
+ * {@code com.android.cts.testime}, {@code com.android.cts.mockime}, or any other instrumented test
+ * IME that is owned and maintained by CTS that gives you a strong guarantee on how the IME responds
+ * to such a key event (usually your expectation for the IME is to do nothing).</p>
  */
 public final class CtsKeyEventUtil {
 
@@ -52,11 +56,23 @@ public final class CtsKeyEventUtil {
      * Sends the key events corresponding to the text to the app being instrumented.
      *
      * @param instrumentation the instrumentation used to run the test.
-     * @param targetView View to find the ViewRootImpl and dispatch.
+     * @param targetView Ignored.
+     * @param text The text to be sent. Null value returns immediately.
+     * @deprecated Use {@link #sendString(Instrumentation, String)} instead.
+     */
+    @Deprecated
+    @InlineMe(replacement = "this.sendString(instrumentation, text)")
+    public void sendString(Instrumentation instrumentation, View targetView, String text) {
+        sendString(instrumentation, text);
+    }
+
+    /**
+     * Sends the key events corresponding to the text to the app being instrumented.
+     *
+     * @param instrumentation the instrumentation used to run the test.
      * @param text The text to be sent. Null value returns immediately.
      */
-    public void sendString(final Instrumentation instrumentation, final View targetView,
-            final String text) {
+    public void sendString(Instrumentation instrumentation, String text) {
         if (text == null) {
             return;
         }
@@ -70,7 +86,7 @@ public final class CtsKeyEventUtil {
                 // time stamp and the system rejects too old events. Hence, it is
                 // possible for an event to become stale before it is injected if it
                 // takes too long to inject the preceding ones.
-                sendKey(instrumentation, targetView, KeyEvent.changeTimeRepeat(
+                sendKey(instrumentation, KeyEvent.changeTimeRepeat(
                         events[i], SystemClock.uptimeMillis(), 0 /* newRepeat */));
             }
         }
@@ -81,16 +97,29 @@ public final class CtsKeyEventUtil {
      * sendKeys(view, KEYCODE_DPAD_LEFT, KEYCODE_DPAD_CENTER).
      *
      * @param instrumentation the instrumentation used to run the test.
-     * @param targetView View to find the ViewRootImpl and dispatch.
+     * @param targetView Ignored.
+     * @param keys The series of key codes.
+     * @deprecated Use {@link #sendKeys(Instrumentation, int...)} instead.
+     */
+    @Deprecated
+    @InlineMe(replacement = "this.sendKeys(instrumentation, keys)")
+    public void sendKeys(Instrumentation instrumentation, View targetView, int...keys) {
+        sendKeys(instrumentation, keys);
+    }
+
+    /**
+     * Sends a series of key events through instrumentation. For instance:
+     * sendKeys(view, KEYCODE_DPAD_LEFT, KEYCODE_DPAD_CENTER).
+     *
+     * @param instrumentation the instrumentation used to run the test.
      * @param keys The series of key codes.
      */
-    public void sendKeys(final Instrumentation instrumentation, final View targetView,
-            final int...keys) {
+    public void sendKeys(Instrumentation instrumentation, int...keys) {
         final int count = keys.length;
 
         for (int i = 0; i < count; i++) {
             try {
-                sendKeyDownUp(instrumentation, targetView, keys[i]);
+                sendKeyDownUp(instrumentation, keys[i]);
             } catch (SecurityException e) {
                 // Ignore security exceptions that are now thrown
                 // when trying to send to another app, to retain
@@ -107,11 +136,24 @@ public final class CtsKeyEventUtil {
      * sendKeys(view, "2*DPAD_LEFT").
      *
      * @param instrumentation the instrumentation used to run the test.
-     * @param targetView View to find the ViewRootImpl and dispatch.
+     * @param targetView Ignored.
      * @param keysSequence The sequence of keys.
      */
-    public void sendKeys(final Instrumentation instrumentation, final View targetView,
-            final String keysSequence) {
+    public void sendKeys(Instrumentation instrumentation, View targetView, String keysSequence) {
+        sendKeys(instrumentation, keysSequence);
+    }
+
+    /**
+     * Sends a series of key events through instrumentation. The sequence of keys is a string
+     * containing the key names as specified in KeyEvent, without the KEYCODE_ prefix. For
+     * instance: sendKeys(view, "DPAD_LEFT A B C DPAD_CENTER"). Each key can be repeated by using
+     * the N* prefix. For instance, to send two KEYCODE_DPAD_LEFT, use the following:
+     * sendKeys(view, "2*DPAD_LEFT").
+     *
+     * @param instrumentation the instrumentation used to run the test.
+     * @param keysSequence The sequence of keys.
+     */
+    public void sendKeys(Instrumentation instrumentation, String keysSequence) {
         final String[] keys = keysSequence.split(" ");
         final int count = keys.length;
 
@@ -136,7 +178,7 @@ public final class CtsKeyEventUtil {
                     final Field keyCodeField = KeyEvent.class.getField("KEYCODE_" + key);
                     final int keyCode = keyCodeField.getInt(null);
                     try {
-                        sendKeyDownUp(instrumentation, targetView, keyCode);
+                        sendKeyDownUp(instrumentation, keyCode);
                     } catch (SecurityException e) {
                         // Ignore security exceptions that are now thrown
                         // when trying to send to another app, to retain
@@ -157,30 +199,52 @@ public final class CtsKeyEventUtil {
      * Sends an up and down key events.
      *
      * @param instrumentation the instrumentation used to run the test.
-     * @param targetView View to find the ViewRootImpl and dispatch.
+     * @param targetView Ignored.
+     * @param key The integer keycode for the event to be sent.
+     * @deprecated Use {@link #sendKeyDownUp(Instrumentation, int)} instead.
+     */
+    @Deprecated
+    @InlineMe(replacement = "this.sendKeyDownUp(instrumentation, key)")
+    public void sendKeyDownUp(Instrumentation instrumentation, View targetView, int key) {
+        sendKeyDownUp(instrumentation, key);
+    }
+
+    /**
+     * Sends an up and down key events.
+     *
+     * @param instrumentation the instrumentation used to run the test.
      * @param key The integer keycode for the event to be sent.
      */
-    public void sendKeyDownUp(final Instrumentation instrumentation, final View targetView,
-            final int key) {
-        sendKey(instrumentation, targetView, new KeyEvent(KeyEvent.ACTION_DOWN, key),
-                false /* waitForIdle */);
-        sendKey(instrumentation, targetView, new KeyEvent(KeyEvent.ACTION_UP, key));
+    public void sendKeyDownUp(Instrumentation instrumentation, int key) {
+        sendKey(instrumentation, new KeyEvent(KeyEvent.ACTION_DOWN, key), false /* waitForIdle */);
+        sendKey(instrumentation, new KeyEvent(KeyEvent.ACTION_UP, key));
     }
 
     /**
      * Sends a key event.
      *
      * @param instrumentation the instrumentation used to run the test.
-     * @param targetView View to find the ViewRootImpl and dispatch.
-     * @param event KeyEvent to be send.
+     * @param targetView Ignored.
+     * @param event KeyEvent to be sent.
+     * @deprecated Use {@link #sendKey(Instrumentation, KeyEvent)} instead.
      */
-    public void sendKey(final Instrumentation instrumentation, final View targetView,
-            final KeyEvent event) {
-        sendKey(instrumentation, targetView, event, true /* waitForIdle */);
+    @Deprecated
+    @InlineMe(replacement = "this.sendKey(instrumentation, event)")
+    public void sendKey(Instrumentation instrumentation, View targetView, KeyEvent event) {
+        sendKey(instrumentation, event);
     }
 
-    private void sendKey(final Instrumentation instrumentation, final View targetView,
-            final KeyEvent event, boolean waitForIdle) {
+    /**
+     * Sends a key event.
+     *
+     * @param instrumentation the instrumentation used to run the test.
+     * @param event KeyEvent to be sent.
+     */
+    public void sendKey(Instrumentation instrumentation, KeyEvent event) {
+        sendKey(instrumentation, event, true /* waitForIdle */);
+    }
+
+    private void sendKey(Instrumentation instrumentation, KeyEvent event, boolean waitForIdle) {
         validateNotAppThread();
 
         mUserHelper.injectDisplayIdIfNeeded(event);
@@ -208,8 +272,7 @@ public final class CtsKeyEventUtil {
         final KeyEvent newEvent = new KeyEvent(downTime, eventTime, action, code, repeatCount,
                 metaState, deviceId, scanCode, flags, source);
 
-        InputMethodManager imm = targetView.getContext().getSystemService(InputMethodManager.class);
-        imm.dispatchKeyEventFromInputMethod(imm.isActive() ? null : targetView, newEvent);
+        instrumentation.sendKeySync(newEvent);
         if (waitForIdle) {
             instrumentation.waitForIdleSync();
         }
@@ -220,31 +283,47 @@ public final class CtsKeyEventUtil {
      * waits for idle sync. Useful for sending combinations like shift + tab.
      *
      * @param instrumentation the instrumentation used to run the test.
-     * @param targetView View to find the ViewRootImpl and dispatch.
+     * @param targetView Ignored.
+     * @param keyCodeToSend The integer keycode for the event to be sent.
+     * @param modifierKeyCodeToHold The integer keycode of the modifier to be held.
+     * @deprecated Use {@link #sendKeyWhileHoldingModifier(Instrumentation, int, int)} instead.
+     */
+    @Deprecated
+    @InlineMe(replacement = "this.sendKeyWhileHoldingModifier(instrumentation, keyCodeToSend, "
+            + "modifierKeyCodeToHold)")
+    public void sendKeyWhileHoldingModifier(Instrumentation instrumentation, View targetView,
+            int keyCodeToSend, int modifierKeyCodeToHold) {
+        sendKeyWhileHoldingModifier(instrumentation, keyCodeToSend, modifierKeyCodeToHold);
+    }
+
+    /**
+     * Sends a key event while holding another modifier key down, then releases both keys and
+     * waits for idle sync. Useful for sending combinations like shift + tab.
+     *
+     * @param instrumentation the instrumentation used to run the test.
      * @param keyCodeToSend The integer keycode for the event to be sent.
      * @param modifierKeyCodeToHold The integer keycode of the modifier to be held.
      */
-    public void sendKeyWhileHoldingModifier(final Instrumentation instrumentation,
-            final View targetView, final int keyCodeToSend,
-            final int modifierKeyCodeToHold) {
+    public void sendKeyWhileHoldingModifier(Instrumentation instrumentation, int keyCodeToSend,
+            int modifierKeyCodeToHold) {
         final int metaState = getMetaStateForModifierKeyCode(modifierKeyCodeToHold);
         final long downTime = SystemClock.uptimeMillis();
 
         final KeyEvent holdKeyDown = new KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN,
                 modifierKeyCodeToHold, 0 /* repeat */);
-        sendKey(instrumentation ,targetView, holdKeyDown);
+        sendKey(instrumentation, holdKeyDown);
 
         final KeyEvent keyDown = new KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN,
                 keyCodeToSend, 0 /* repeat */, metaState);
-        sendKey(instrumentation, targetView, keyDown);
+        sendKey(instrumentation, keyDown);
 
         final KeyEvent keyUp = new KeyEvent(downTime, downTime, KeyEvent.ACTION_UP,
                 keyCodeToSend, 0 /* repeat */, metaState);
-        sendKey(instrumentation, targetView, keyUp);
+        sendKey(instrumentation, keyUp);
 
         final KeyEvent holdKeyUp = new KeyEvent(downTime, downTime, KeyEvent.ACTION_UP,
                 modifierKeyCodeToHold, 0 /* repeat */);
-        sendKey(instrumentation, targetView, holdKeyUp);
+        sendKey(instrumentation, holdKeyUp);
 
         instrumentation.waitForIdleSync();
     }

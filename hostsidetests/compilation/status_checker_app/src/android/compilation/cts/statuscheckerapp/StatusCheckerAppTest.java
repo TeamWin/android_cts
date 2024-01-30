@@ -21,6 +21,7 @@ import static dalvik.system.DexFile.OptimizationInfo;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -85,7 +86,8 @@ public class StatusCheckerAppTest {
 
     private String createAndLoadSecondaryDex(String secondaryDexFilename,
             BiFunction<String, ClassLoader, ClassLoader> classLoaderCtor) throws Exception {
-        File secondaryDexFile = Paths.get(getDataDir(), secondaryDexFilename).toFile();
+        File secondaryDexFile =
+                Paths.get(getApplicationInfo().dataDir, secondaryDexFilename).toFile();
         if (secondaryDexFile.exists()) {
             secondaryDexFile.delete();
         }
@@ -95,14 +97,14 @@ public class StatusCheckerAppTest {
         return secondaryDexFile.getAbsolutePath();
     }
 
-    private String getDataDir() {
+    private ApplicationInfo getApplicationInfo() {
         Context context = ApplicationProvider.getApplicationContext();
-        return context.getApplicationInfo().dataDir;
+        return context.getApplicationInfo();
     }
 
     @Test
     public void testSecondaryDexReporting() throws Exception {
-        String dataDir = getDataDir();
+        String dataDir = getApplicationInfo().dataDir;
         var reporter =
                 (BaseDexClassLoader.Reporter) BaseDexClassLoader.class.getMethod("getReporter")
                         .invoke(null);
@@ -128,9 +130,8 @@ public class StatusCheckerAppTest {
 
     @Test
     public void testGetDexFileOutputPaths() throws Exception {
-        Context context = ApplicationProvider.getApplicationContext();
         String[] paths = DexFile.getDexFileOutputPaths(
-                context.getApplicationInfo().sourceDir, VMRuntime.getRuntime().vmInstructionSet());
+                getApplicationInfo().sourceDir, VMRuntime.getRuntime().vmInstructionSet());
 
         // We can't be too specific because the paths are ART-internal and are subject to change.
         assertThat(paths)

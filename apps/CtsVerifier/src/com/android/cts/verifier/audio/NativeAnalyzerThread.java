@@ -37,8 +37,10 @@ public class NativeAnalyzerThread {
     private volatile double mLatencyMillis = 0.0;
     private volatile double mConfidence = 0.0;
     private volatile int mSampleRate = 0;
+    private volatile double mTimestampLatencyMillis = 0.0;
     private volatile boolean mIsLowLatencyStream = false;
     private volatile boolean mHas24BitHardwareSupport = false;
+    private volatile int mHardwareFormat = 0; // AAUDIO_FORMAT_UNSPECIFIED
 
     private int mInputPreset = 0;
 
@@ -87,8 +89,11 @@ public class NativeAnalyzerThread {
     private native double getConfidence(long audioContext);
     private native boolean isLowlatency(long audioContext);
     private native boolean has24BitHardwareSupport(long audioContext);
+    private native int getHardwareFormat(long audioContext);
 
     private native int getSampleRate(long audio_context);
+
+    private native double measureTimestampLatencyMillis(long audioContext);
 
     public double getLatencyMillis() {
         return mLatencyMillis;
@@ -107,6 +112,14 @@ public class NativeAnalyzerThread {
      */
     public boolean has24BitHardwareSupport() {
         return mHas24BitHardwareSupport;
+    }
+
+    public int getHardwareFormat() {
+        return mHardwareFormat;
+    }
+
+    public double getTimestampLatencyMillis() {
+        return mTimestampLatencyMillis;
     }
 
     public synchronized void startTest(int inputDeviceId, int outputDeviceId) {
@@ -141,6 +154,7 @@ public class NativeAnalyzerThread {
         mLatencyMillis = 0.0;
         mConfidence = 0.0;
         mSampleRate = 0;
+        mTimestampLatencyMillis = 0.0;
 
         boolean analysisComplete = false;
 
@@ -162,6 +176,7 @@ public class NativeAnalyzerThread {
             }
             mIsLowLatencyStream = isLowlatency(audioContext);
             mHas24BitHardwareSupport = has24BitHardwareSupport(audioContext);
+            mHardwareFormat = getHardwareFormat(audioContext);
 
             final long timeoutMillis = mSecondsToRun * 1000;
             final long startedAtMillis = System.currentTimeMillis();
@@ -173,6 +188,7 @@ public class NativeAnalyzerThread {
                     sendMessage(NATIVE_AUDIO_THREAD_MESSAGE_REC_ERROR);
                     break;
                 } else if (isRecordingComplete(audioContext)) {
+                    mTimestampLatencyMillis = measureTimestampLatencyMillis(audioContext);
                     stopAudio(audioContext);
 
                     // Analyze the recording and measure latency.

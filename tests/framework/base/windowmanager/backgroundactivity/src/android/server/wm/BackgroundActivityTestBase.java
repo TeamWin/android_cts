@@ -21,6 +21,7 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.backgroundactivity.common.CommonComponents.COMMON_FOREGROUND_ACTIVITY_EXTRAS;
+import static android.server.wm.backgroundactivity.common.CommonComponents.TEST_SERVICE;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
@@ -29,23 +30,31 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
+import android.app.PendingIntent;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.os.UserManager;
 import android.server.wm.WindowManagerState.Task;
+import android.server.wm.backgroundactivity.appa.Components;
+import android.server.wm.backgroundactivity.common.ITestService;
 import android.util.Log;
 
 import androidx.annotation.CallSuper;
 
 import com.android.compatibility.common.util.AppOpsUtils;
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 
 import org.junit.After;
 import org.junit.Before;
 
+import java.time.Duration;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -54,36 +63,53 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
     private static final String TAG = BackgroundActivityTestBase.class.getSimpleName();
 
     static final String APP_A_PACKAGE = "android.server.wm.backgroundactivity.appa";
-    static final android.server.wm.backgroundactivity.appa.Components APP_A =
-            android.server.wm.backgroundactivity.appa.Components.get(APP_A_PACKAGE);
-    static final android.server.wm.backgroundactivity.appa.Components APP_A_33 =
-            android.server.wm.backgroundactivity.appa.Components.get(APP_A_PACKAGE + "33");
+    static final Components APP_A = Components.get(APP_A_PACKAGE);
+    static final Components APP_A_33 = Components.get(APP_A_PACKAGE + "33");
 
     static final String APP_B_PACKAGE = "android.server.wm.backgroundactivity.appb";
-    static final android.server.wm.backgroundactivity.appb.Components APP_B =
-            android.server.wm.backgroundactivity.appb.Components.get(APP_B_PACKAGE);
-    static final android.server.wm.backgroundactivity.appb.Components APP_B_33 =
-            android.server.wm.backgroundactivity.appb.Components.get(APP_B_PACKAGE + "33");
+    static final Components APP_B = Components.get(APP_B_PACKAGE);
+    static final Components APP_B_33 = Components.get(APP_B_PACKAGE + "33");
 
-    static final List<android.server.wm.backgroundactivity.appa.Components> ALL_A =
-            List.of(APP_A, APP_A_33);
-    static final List<android.server.wm.backgroundactivity.appb.Components> ALL_B =
-            List.of(APP_B, APP_B_33);
+    static final String APP_C_PACKAGE = "android.server.wm.backgroundactivity.appc";
+    static final Components APP_C = Components.get(APP_C_PACKAGE);
+    static final Components APP_C_33 = Components.get(APP_C_PACKAGE + "33");
+
+    static final List<Components> ALL_APPS =
+            List.of(APP_A, APP_A_33, APP_B, APP_B_33, APP_C, APP_C_33);
 
     static final String SHELL_PACKAGE = "com.android.shell";
-    static final int ACTIVITY_FOCUS_TIMEOUT_MS = 3000;
+    // This can be long as the activity should start
+    static final Duration ACTIVITY_FOCUS_TIMEOUT = Duration.ofSeconds(10);
+    // Here we don't expect the activity to start, so we always have to wait. Keep this short.
+    static final Duration ACTIVITY_NOT_FOCUS_TIMEOUT = Duration.ofSeconds(3);
 
     // TODO(b/258792202): Cleanup with feature flag
     static final String NAMESPACE_WINDOW_MANAGER = "window_manager";
+    static final String ASM_RESTRICTIONS_ENABLED =
+            "ActivitySecurity__asm_restrictions_enabled";
+    private static final int TEST_SERVICE_SETUP_TIMEOUT_MS = 2000;
+    final DeviceConfigStateHelper mDeviceConfig =
+            new DeviceConfigStateHelper(NAMESPACE_WINDOW_MANAGER);
 
-    ServiceConnection mBalServiceConnection;
+    private final Map<ComponentName, FutureConnection<ITestService>> mServiceConnections =
+            new HashMap<>();
+
+    @Before
+    public void enableFeatureFlags() {
+        mDeviceConfig.set(ASM_RESTRICTIONS_ENABLED, "1");
+    }
+
+    @After
+    public void disableFeatureFlags() throws Exception {
+        mDeviceConfig.close();
+    }
 
     @Override
     @Before
     @CallSuper
     public void setUp() throws Exception {
-        // disable SAW appopp for AppA (it's granted automatically when installed in CTS)
-        for (android.server.wm.backgroundactivity.appa.Components components : ALL_A) {
+        // disable SAW appopp (it's granted automatically when installed in CTS)
+        for (Components components : ALL_APPS) {
             AppOpsUtils.setOpMode(components.APP_PACKAGE_NAME, "android:system_alert_window",
                     MODE_ERRORED);
             assertEquals(AppOpsUtils.getOpMode(components.APP_PACKAGE_NAME,
@@ -93,16 +119,11 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
 
         super.setUp();
 
-        for (android.server.wm.backgroundactivity.appa.Components appA : ALL_A) {
-            assertNull(mWmState.getTaskByActivity(appA.BACKGROUND_ACTIVITY));
-            assertNull(mWmState.getTaskByActivity(appA.FOREGROUND_ACTIVITY));
+        for (Components app : ALL_APPS) {
+            assertNull(mWmState.getTaskByActivity(app.BACKGROUND_ACTIVITY));
+            assertNull(mWmState.getTaskByActivity(app.FOREGROUND_ACTIVITY));
             runShellCommand("cmd deviceidle tempwhitelist -d 100000 "
-                    + appA.APP_PACKAGE_NAME);
-        }
-        for (android.server.wm.backgroundactivity.appb.Components appB : ALL_B) {
-            assertNull(mWmState.getTaskByActivity(appB.FOREGROUND_ACTIVITY));
-            runShellCommand("cmd deviceidle tempwhitelist -d 100000 "
-                    + appB.APP_PACKAGE_NAME);
+                    + app.APP_PACKAGE_NAME);
         }
     }
 
@@ -110,31 +131,24 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
     public void tearDown() throws Exception {
         // We do this before anything else, because having an active device owner can prevent us
         // from being able to force stop apps. (b/142061276)
-        for (android.server.wm.backgroundactivity.appa.Components appA : ALL_A) {
+        for (Components app : ALL_APPS) {
             runWithShellPermissionIdentity(() -> {
                 runShellCommand("dpm remove-active-admin --user 0 "
-                        + appA.SIMPLE_ADMIN_RECEIVER.flattenToString());
+                        + app.SIMPLE_ADMIN_RECEIVER.flattenToString());
                 if (UserManager.isHeadlessSystemUserMode()) {
                     // Must also remove the PO from current user
                     runShellCommand("dpm remove-active-admin --user cur "
-                            + appA.SIMPLE_ADMIN_RECEIVER.flattenToString());
+                            + app.SIMPLE_ADMIN_RECEIVER.flattenToString());
                 }
             });
-            stopTestPackage(appA.APP_PACKAGE_NAME);
-            AppOpsUtils.reset(appA.APP_PACKAGE_NAME);
+            stopTestPackage(app.APP_PACKAGE_NAME);
+            AppOpsUtils.reset(app.APP_PACKAGE_NAME);
 
-        }
-        for (android.server.wm.backgroundactivity.appb.Components appB : ALL_B) {
-            stopTestPackage(appB.APP_PACKAGE_NAME);
         }
         AppOpsUtils.reset(SHELL_PACKAGE);
-        if (mBalServiceConnection != null) {
-            mContext.unbindService(mBalServiceConnection);
+        for (FutureConnection<ITestService> fc : mServiceConnections.values()) {
+            mContext.unbindService(fc);
         }
-    }
-
-    boolean waitForActivityFocused(ComponentName componentName) {
-        return waitForActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName);
     }
 
     void assertPinnedStackDoesNotExist() {
@@ -188,10 +202,10 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
         return activities.stream().map(a -> a.getName()).collect(Collectors.toList());
     }
 
-    Intent getLaunchActivitiesBroadcast(android.server.wm.backgroundactivity.appa.Components appA,
+    Intent getLaunchActivitiesBroadcast(Components app,
             ComponentName... componentNames) {
         Intent broadcastIntent = new Intent(
-                appA.FOREGROUND_ACTIVITY_ACTIONS.LAUNCH_BACKGROUND_ACTIVITIES);
+                app.FOREGROUND_ACTIVITY_ACTIONS.LAUNCH_BACKGROUND_ACTIVITIES);
         Intent[] intents = Stream.of(componentNames)
                 .map(c -> {
                     Intent intent = new Intent();
@@ -199,7 +213,25 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
                     return intent;
                 })
                 .toArray(Intent[]::new);
-        broadcastIntent.putExtra(appA.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_INTENTS, intents);
+        broadcastIntent.putExtra(app.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_INTENTS, intents);
+        return broadcastIntent;
+    }
+
+    Intent getLaunchActivitiesBroadcast(Components app,
+            PendingIntent... pendingIntents) {
+        Intent broadcastIntent = new Intent(
+                app.FOREGROUND_ACTIVITY_ACTIONS.LAUNCH_BACKGROUND_ACTIVITIES);
+        broadcastIntent.putExtra(app.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_PENDING_INTENTS,
+                pendingIntents);
+        return broadcastIntent;
+    }
+
+    Intent getLaunchAndFinishActivitiesBroadcast(Components app, PendingIntent... pendingIntents) {
+        Intent broadcastIntent = new Intent(
+                app.FOREGROUND_ACTIVITY_ACTIONS.LAUNCH_BACKGROUND_ACTIVITIES);
+        broadcastIntent.putExtra(app.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_PENDING_INTENTS,
+                pendingIntents);
+        broadcastIntent.putExtra(app.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_FOR_RESULT_AND_FINISH, true);
         return broadcastIntent;
     }
 
@@ -207,65 +239,45 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
         private Intent mBroadcastIntent = new Intent();
         private Intent mLaunchIntent = new Intent();
 
-        ActivityStartVerifier setupTaskWithForegroundActivity(
-                android.server.wm.backgroundactivity.appa.Components appA) {
-            setupTaskWithForegroundActivity(appA, -1);
+        ActivityStartVerifier setupTaskWithForegroundActivity(Components app) {
+            setupTaskWithForegroundActivity(app, -1);
             return this;
         }
 
-        ActivityStartVerifier setupTaskWithForegroundActivity(
-                android.server.wm.backgroundactivity.appa.Components appA, int id) {
+        ActivityStartVerifier setupTaskWithForegroundActivity(Components app, int id) {
             Intent intent = new Intent();
-            intent.setComponent(appA.FOREGROUND_ACTIVITY);
+            intent.setComponent(app.FOREGROUND_ACTIVITY);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             intent.putExtra(COMMON_FOREGROUND_ACTIVITY_EXTRAS.ACTIVITY_ID, id);
             mContext.startActivity(intent);
-            mWmState.waitForValidState(appA.FOREGROUND_ACTIVITY);
+            mWmState.waitForValidState(app.FOREGROUND_ACTIVITY);
             return this;
         }
 
-        ActivityStartVerifier setupTaskWithEmbeddingActivity(
-                android.server.wm.backgroundactivity.appa.Components appA) {
+        ActivityStartVerifier setupTaskWithEmbeddingActivity(Components app) {
             Intent intent = new Intent();
-            intent.setComponent(appA.FOREGROUND_EMBEDDING_ACTIVITY);
+            intent.setComponent(app.FOREGROUND_EMBEDDING_ACTIVITY);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             mContext.startActivity(intent);
-            mWmState.waitForValidState(appA.FOREGROUND_EMBEDDING_ACTIVITY);
+            mWmState.waitForValidState(app.FOREGROUND_EMBEDDING_ACTIVITY);
             return this;
         }
 
-        ActivityStartVerifier startFromForegroundActivity(
-                android.server.wm.backgroundactivity.appa.Components appA) {
+        ActivityStartVerifier startFromForegroundActivity(Components app) {
             mBroadcastIntent.setAction(
-                    appA.FOREGROUND_ACTIVITY_ACTIONS.LAUNCH_BACKGROUND_ACTIVITIES);
+                    app.FOREGROUND_ACTIVITY_ACTIONS.LAUNCH_BACKGROUND_ACTIVITIES);
             return this;
         }
 
-        ActivityStartVerifier startFromForegroundActivity(
-                android.server.wm.backgroundactivity.appb.Components appB) {
-            mBroadcastIntent.setAction(
-                    appB.FOREGROUND_ACTIVITY_ACTIONS.LAUNCH_BACKGROUND_ACTIVITIES);
-            return this;
-        }
-
-        ActivityStartVerifier startFromForegroundActivity(
-                android.server.wm.backgroundactivity.appa.Components appA, int id) {
-            startFromForegroundActivity(appA);
+        ActivityStartVerifier startFromForegroundActivity(Components app, int id) {
+            startFromForegroundActivity(app);
             mBroadcastIntent.putExtra(COMMON_FOREGROUND_ACTIVITY_EXTRAS.ACTIVITY_ID, id);
             return this;
         }
 
-        ActivityStartVerifier startFromForegroundActivity(
-                android.server.wm.backgroundactivity.appb.Components appB, int id) {
-            startFromForegroundActivity(appB);
-            mBroadcastIntent.putExtra(COMMON_FOREGROUND_ACTIVITY_EXTRAS.ACTIVITY_ID, id);
-            return this;
-        }
-
-        ActivityStartVerifier startFromEmbeddingActivity(
-                android.server.wm.backgroundactivity.appa.Components appA) {
+        ActivityStartVerifier startFromEmbeddingActivity(Components app) {
             mBroadcastIntent.setAction(
-                    appA.FOREGROUND_EMBEDDING_ACTIVITY_ACTIONS.LAUNCH_EMBEDDED_ACTIVITY);
+                    app.FOREGROUND_EMBEDDING_ACTIVITY_ACTIONS.LAUNCH_EMBEDDED_ACTIVITY);
             return this;
         }
 
@@ -297,9 +309,11 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
 
             ComponentName launchedComponent = mLaunchIntent.getComponent();
             mWmState.waitForValidState(launchedComponent);
-            boolean result = waitForActivityFocused(launchedComponent);
-            assertEquals("Activity: " + launchedComponent.flattenToShortString() + " launch ",
-                    succeeds, result);
+            if (succeeds) {
+                assertActivityFocused(launchedComponent);
+            } else {
+                assertActivityNotFocused(launchedComponent);
+            }
 
             // Reset intents to remove any added flags
             reset();
@@ -360,47 +374,70 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
 
 
     protected void assertActivityFocused(ComponentName componentName) {
-        assertActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName);
+        assertActivityFocused(ACTIVITY_FOCUS_TIMEOUT, componentName);
     }
 
     protected void assertActivityNotFocused(ComponentName componentName) {
-        assertActivityNotFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName);
+        assertActivityNotFocused(ACTIVITY_NOT_FOCUS_TIMEOUT, componentName);
     }
 
     protected void assertActivityFocused(ComponentName componentName, String message) {
-        assertActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName, message);
+        assertActivityFocused(ACTIVITY_FOCUS_TIMEOUT, componentName, message);
     }
 
     protected void assertActivityNotFocused(ComponentName componentName, String message) {
-        assertActivityNotFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName, message);
+        assertActivityNotFocused(ACTIVITY_NOT_FOCUS_TIMEOUT, componentName, message);
     }
 
     /** Asserts the activity is focused before timeout. */
-    protected void assertActivityFocused(int timeoutMs, ComponentName componentName) {
-        assertActivityFocused(timeoutMs, componentName,
-                "activity should be focused within " + timeoutMs + "ms");
+    protected void assertActivityFocused(Duration timeout, ComponentName componentName) {
+        assertActivityFocused(timeout, componentName,
+                "activity should be focused within " + timeout);
     }
 
     /** Asserts the activity is not focused until timeout. */
-    protected void assertActivityNotFocused(int timeoutMs, ComponentName componentName) {
-        assertActivityNotFocused(timeoutMs, componentName,
-                "activity should not be focused within " + timeoutMs + "ms");
+    protected void assertActivityNotFocused(Duration timeout, ComponentName componentName) {
+        assertActivityNotFocused(timeout, componentName,
+                "activity should not be focused within " + timeout);
+    }
+
+    private void waitForActivityResumed(Duration timeout, ComponentName componentName) {
+        waitForActivityResumed((int) timeout.toMillis(), componentName);
     }
 
     /** Asserts the activity is focused before timeout. */
-    protected void assertActivityFocused(int timeoutMs, ComponentName componentName,
+    protected void assertActivityFocused(Duration timeout, ComponentName componentName,
             String message) {
-        waitForActivityResumed(timeoutMs, componentName);
+        waitForActivityResumed(timeout, componentName);
         assertWithMessage(message).that(mWmState.getFocusedActivity()).isEqualTo(
                 getActivityName(componentName));
     }
 
     /** Asserts the activity is not focused until timeout. */
-    protected void assertActivityNotFocused(int timeoutMs, ComponentName componentName,
+    protected void assertActivityNotFocused(Duration timeout, ComponentName componentName,
             String message) {
-        waitForActivityResumed(timeoutMs, componentName);
+        waitForActivityResumed(timeout, componentName);
         assertWithMessage(message).that(mWmState.getFocusedActivity())
                 .isNotEqualTo(getActivityName(componentName));
+    }
+
+    protected TestServiceClient getTestService(Components c) throws Exception {
+        return getTestService(new ComponentName(c.APP_PACKAGE_NAME, TEST_SERVICE));
+    }
+
+    private TestServiceClient getTestService(ComponentName componentName) throws Exception {
+        FutureConnection<ITestService> futureConnection = mServiceConnections.get(componentName);
+        if (futureConnection == null) {
+            // need to setup new test service connection for the component
+            Intent bindIntent = new Intent();
+            bindIntent.setComponent(componentName);
+            futureConnection = new FutureConnection<>(ITestService.Stub::asInterface);
+            mServiceConnections.put(componentName, futureConnection);
+            boolean success = mContext.bindService(bindIntent, futureConnection,
+                    Context.BIND_AUTO_CREATE);
+            assertTrue("Failed to setup " + componentName.toString(), success);
+        }
+        return new TestServiceClient(futureConnection.get(TEST_SERVICE_SETUP_TIMEOUT_MS));
     }
 
 }

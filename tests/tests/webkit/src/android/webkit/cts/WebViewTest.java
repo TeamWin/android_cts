@@ -798,48 +798,47 @@ public class WebViewTest extends SharedWebViewTest {
         final TestJavaScriptInterface obj = new TestJavaScriptInterface();
 
         final WebView childWebView = mOnUiThread.createWebView();
-
         try {
-          WebViewOnUiThread childOnUiThread = new WebViewOnUiThread(childWebView);
-          childOnUiThread.getSettings().setJavaScriptEnabled(true);
-          childOnUiThread.addJavascriptInterface(obj, "interface");
+            WebViewOnUiThread childOnUiThread = new WebViewOnUiThread(childWebView);
+            childOnUiThread.getSettings().setJavaScriptEnabled(true);
+            childOnUiThread.addJavascriptInterface(obj, "interface");
 
-          final SettableFuture<Void> onCreateWindowFuture = SettableFuture.create();
-          mOnUiThread.setWebChromeClient(
-                  new WebViewSyncLoader.WaitForProgressClient(mOnUiThread) {
-                      @Override
-                      public boolean onCreateWindow(
-                              WebView view,
-                              boolean isDialog,
-                              boolean isUserGesture,
-                              Message resultMsg) {
-                          getTestEnvironment().addContentView(
-                                  childWebView,
-                                  new ViewGroup.LayoutParams(
-                                          ViewGroup.LayoutParams.FILL_PARENT,
-                                          ViewGroup.LayoutParams.WRAP_CONTENT));
-                          WebView.WebViewTransport transport =
-                                  (WebView.WebViewTransport) resultMsg.obj;
-                          transport.setWebView(childWebView);
-                          resultMsg.sendToTarget();
-                          onCreateWindowFuture.set(null);
-                          return true;
-                      }
-                  });
+            final SettableFuture<Void> onCreateWindowFuture = SettableFuture.create();
+            mOnUiThread.setWebChromeClient(
+                    new WebViewSyncLoader.WaitForProgressClient(mOnUiThread) {
+                        @Override
+                        public boolean onCreateWindow(
+                                WebView view,
+                                boolean isDialog,
+                                boolean isUserGesture,
+                                Message resultMsg) {
+                            getTestEnvironment().addContentView(
+                                    childWebView,
+                                    new ViewGroup.LayoutParams(
+                                            ViewGroup.LayoutParams.FILL_PARENT,
+                                            ViewGroup.LayoutParams.WRAP_CONTENT));
+                            WebView.WebViewTransport transport =
+                                    (WebView.WebViewTransport) resultMsg.obj;
+                            transport.setWebView(childWebView);
+                            resultMsg.sendToTarget();
+                            onCreateWindowFuture.set(null);
+                            return true;
+                        }
+                    });
 
-          mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
-          mOnUiThread.loadUrlAndWaitForCompletion(
-                  mWebServer.getAssetUrl(TestHtmlConstants.POPUP_URL));
-          WebkitUtils.waitForFuture(onCreateWindowFuture);
+            mWebServer = getTestEnvironment().getSetupWebServer(SslMode.INSECURE);
+            mOnUiThread.loadUrlAndWaitForCompletion(
+                    mWebServer.getAssetUrl(TestHtmlConstants.POPUP_URL));
+            WebkitUtils.waitForFuture(onCreateWindowFuture);
 
-          childOnUiThread.loadUrlAndWaitForCompletion("about:blank");
+            childOnUiThread.loadUrlAndWaitForCompletion("about:blank");
 
-          assertEquals("true", childOnUiThread.evaluateJavascriptSync("'interface' in window"));
+            assertEquals("true", childOnUiThread.evaluateJavascriptSync("'interface' in window"));
 
-          assertEquals(
-                  "The injected object should be functional",
-                  "42",
-                  childOnUiThread.evaluateJavascriptSync("interface.test()"));
+            assertEquals(
+                    "The injected object should be functional",
+                    "42",
+                    childOnUiThread.evaluateJavascriptSync("interface.test()"));
         } finally {
             WebkitUtils.onMainThreadSync(() -> {
                 ViewParent parent = childWebView.getParent();

@@ -32,9 +32,9 @@ import android.provider.Settings;
 import android.text.format.DateFormat;
 
 import androidx.annotation.Nullable;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.UserSettings;
 import com.android.compatibility.common.util.UserSettings.Namespace;
@@ -80,7 +80,7 @@ public class DateFormatTest {
 
     @Before
     public void setup() throws Exception {
-        mContext = InstrumentationRegistry.getTargetContext();
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mDefaultTimeFormat = getTimeFormat();
         mDefaultLocale = Locale.getDefault();
 

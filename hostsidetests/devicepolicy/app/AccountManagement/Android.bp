@@ -30,12 +30,13 @@ android_test_helper_app {
     static_libs: [
         "androidx.legacy_legacy-support-v4",
         "ctstestrunner-axt",
-        "ub-uiautomator",
+        "androidx.test.uiautomator_uiautomator",
         "androidx.test.rules",
     ],
 
     libs: [
         "android.test.base",
-        "android.test.runner",],
+        "android.test.runner",
+    ],
     sdk_version: "test_current",
 }

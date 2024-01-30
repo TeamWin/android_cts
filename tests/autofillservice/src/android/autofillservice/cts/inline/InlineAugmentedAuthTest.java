@@ -68,6 +68,9 @@ public class InlineAugmentedAuthTest
         return InlineUiBot.annotateRule(super.getMainTestRule());
     }
 
+    @FlakyTest(
+            bugId = 292281375,
+            detail = "Meet July-31-23 trunk stable no flaky SLO. Deflake asap")
     @Test
     public void testDatasetAuth_resultOk_validDataset() throws Exception {
         // Set services

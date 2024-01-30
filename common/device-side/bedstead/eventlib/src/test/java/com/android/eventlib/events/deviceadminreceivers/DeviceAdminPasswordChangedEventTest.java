@@ -156,7 +156,7 @@ public final class DeviceAdminPasswordChangedEventTest {
 
         EventLogs<DeviceAdminPasswordChangedEvent> eventLogs =
                 DeviceAdminPasswordChangedEvent.queryPackage(sContext.getPackageName())
-                        .whereUserHandle().isEqualTo(USER_HANDLE);
+                        .whereUser().isEqualTo(USER_HANDLE);
 
         assertThat(eventLogs.poll().userHandle()).isEqualTo(USER_HANDLE);
     }
@@ -172,7 +172,7 @@ public final class DeviceAdminPasswordChangedEventTest {
 
         EventLogs<DeviceAdminPasswordChangedEvent> eventLogs =
                 DeviceAdminPasswordChangedEvent.queryPackage(sContext.getPackageName())
-                        .whereUserHandle().isEqualTo(USER_HANDLE);
+                        .whereUser().isEqualTo(USER_HANDLE);
 
         assertThat(eventLogs.poll().userHandle()).isEqualTo(USER_HANDLE);
     }

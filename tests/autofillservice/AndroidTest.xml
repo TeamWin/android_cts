@@ -46,7 +46,6 @@
 
   <!--  TODO: preparer below should be enabled only when running as cts-instant -->
   <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-    <option name="run-command" value="am compat enable ALLOW_TEST_API_ACCESS com.android.cts.mockime"/>
     <option name="run-command" value="cmd autofill set bind-instant-service-allowed true" />
     <option name="teardown-command" value="cmd autofill set bind-instant-service-allowed false" />
 
@@ -58,6 +57,15 @@
   <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
     <option name="teardown-command" value="rm -rf /data/local/tmp/cts/autofill" />
   </target_preparer>
+
+  <!--  Disable GPP -->
+  <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
+      <option name="force-skip-system-props" value="true" />
+      <option name="set-global-setting" key="verifier_engprod" value="1" />
+      <option name="set-global-setting" key="verifier_verify_adb_installs" value="0" />
+      <option name="restore-settings" value="true" />
+  </target_preparer>
+
 
   <test class="com.android.tradefed.testtype.AndroidJUnitTest">
     <option name="package" value="android.autofillservice.cts" />

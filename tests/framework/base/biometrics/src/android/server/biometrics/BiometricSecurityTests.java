@@ -35,6 +35,8 @@ import android.server.wm.TestJournalProvider.TestJournal;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.util.Log;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -74,6 +76,13 @@ public class BiometricSecurityTests extends BiometricTestBase {
      * Note that since BiometricPrompt does not support Convenience biometrics, currently we don't
      * have a way to test cases where the requested strength is BIOMETRIC_CONVENIENCE.
      */
+    @ApiTest(apis = {
+            "android.hardware.biometrics."
+                    + "BiometricManager#canAuthenticate",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.Builder#setAllowedAuthenticators",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt#authenticate"})
     @Test
     public void testBiometricStrength_StrongSensor() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
@@ -112,6 +121,13 @@ public class BiometricSecurityTests extends BiometricTestBase {
      * Note that since BiometricPrompt does not support Convenience biometrics, currently we don't
      * have a way to test cases where the requested strength is BIOMETRIC_CONVENIENCE.
      */
+    @ApiTest(apis = {
+            "android.hardware.biometrics."
+                    + "BiometricManager#canAuthenticate",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.Builder#setAllowedAuthenticators",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt#authenticate"})
     @Test
     public void testBiometricStrength_WeakSensor() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
@@ -144,6 +160,13 @@ public class BiometricSecurityTests extends BiometricTestBase {
      * Note that since BiometricPrompt does not support Convenience biometrics, currently we don't
      * have a way to test cases where the requested strength is BIOMETRIC_CONVENIENCE.
      */
+    @ApiTest(apis = {
+            "android.hardware.biometrics."
+                    + "BiometricManager#canAuthenticate",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt.Builder#setAllowedAuthenticators",
+            "android.hardware.biometrics."
+                    + "BiometricPrompt#authenticate"})
     @Test
     public void testBiometricStrength_ConvenienceSensor() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());

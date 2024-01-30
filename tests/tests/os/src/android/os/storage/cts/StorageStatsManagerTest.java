@@ -32,6 +32,7 @@ import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.storage.CrateInfo;
 import android.os.storage.StorageManager;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.text.TextUtils;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -40,7 +41,6 @@ import androidx.test.runner.AndroidJUnit4;
 import com.google.common.truth.Correspondence;
 
 import org.junit.After;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -57,6 +57,7 @@ import java.util.Collection;
 import java.util.UUID;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class StorageStatsManagerTest {
     private static final String CRATES_ROOT = "crates";
     private final static boolean ENABLE_STORAGE_CRATES =

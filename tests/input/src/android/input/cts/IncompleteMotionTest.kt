@@ -35,6 +35,7 @@ import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.PollingCheck
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 import org.junit.Before
@@ -43,6 +44,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 private const val OVERLAY_ACTIVITY_FOCUSED = "android.input.cts.action.OVERLAY_ACTIVITY_FOCUSED"
+private val ACTIVITY_FOCUS_LOST_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(10)
 
 private fun getViewCenterOnScreen(v: View): Pair<Float, Float> {
     val location = IntArray(2)
@@ -142,7 +144,13 @@ class IncompleteMotionTest {
             }
             sendMoveAndFocus.join()
         }
-        PollingCheck.waitFor { !activity.hasWindowFocus() }
+        // The default PollingCheck is 3 seconds, but this one is monitoring multiple operations
+        // that will take 1 second at the fastest; if the system is running tasks in the background,
+        // this would potentially cause timeouts at this point.
+        PollingCheck.waitFor(
+            ACTIVITY_FOCUS_LOST_TIMEOUT_MILLIS,
+            { !activity.hasWindowFocus() }
+        )
         // If the platform implementation has a bug, it would consume both MOVE and FOCUS events,
         // but will only call 'finish' for the focus event.
         // The MOVE event would not be propagated to the app, because the Choreographer

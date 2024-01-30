@@ -49,239 +49,218 @@ import java.util.concurrent.CountDownLatch;
  */
 public class CtsConnectionService extends ConnectionService {
     private static String LOG_TAG = "CtsConnectionService";
-    // This is the connection service implemented by the test
-    private static ConnectionService sConnectionService;
-    // This is the connection service registered with Telecom
+    // This is the connection service implementation set locally during test setup. Telecom calls
+    // these overwritten methods.
+    private static ConnectionService sConnectionServiceTestImpl;
+    // Represents the connection from the test ConnectionService to telecom. Only valid once telecom
+    // has successfully bound.
     private static ConnectionService sTelecomConnectionService;
-    private static boolean sIsBound = false;
-    private static CountDownLatch sServiceUnBoundLatch = new CountDownLatch(1);
+    private static CountDownLatch sTelecomUnboundLatch;
+    // Lock managing the setup and usage of sConnectionServiceTestImpl.
+    private static final Object sTestImplLock = new Object();
+    // Lock managing the setup and usage of sTelecomConnectionService/sTelecomUnboundLatch.
+    private static final Object sTelecomCSLock = new Object();
 
     @Override
     public void onBindClient(Intent intent) {
-        sTelecomConnectionService = this;
         Log.i("TelecomCTS", "CS bound");
-        sIsBound = true;
+        onTelecomConnected(this);
     }
 
-    private static Object sLock = new Object();
-
+    /**
+     * Call when a test is being setup to prepare this instance for testing.
+     * @param connectionService The ConnectionService impl to use to proxy commands to from telecom.
+     * @throws Exception There was an illegal state that caused the setup to fail.
+     */
     public static void setUp(ConnectionService connectionService) throws Exception {
-        synchronized(sLock) {
-            if (sConnectionService != null) {
-                // Clean up so following tests don't fail too, hiding the original culprit in noise
-                sConnectionService = null;
-                throw new Exception("Mock ConnectionService exists.  Failed to call setUp(), "
-                        + "or previous test failed to call tearDown().");
-            }
-            sConnectionService = connectionService;
-        }
+        setTestImpl(connectionService);
     }
 
+    /**
+     * Call when a test is complete to tear down.
+     */
     public static void tearDown() {
-        synchronized(sLock) {
-            sConnectionService = null;
-            sTelecomConnectionService = null;
-        }
+        clearTestImpl();
     }
 
     @Override
     public Connection onCreateOutgoingConnection(PhoneAccountHandle connectionManagerPhoneAccount,
             ConnectionRequest request) {
-        synchronized(sLock) {
-            if (sConnectionService != null) {
-                return sConnectionService.onCreateOutgoingConnection(
-                        connectionManagerPhoneAccount, request);
-            } else {
-                Log.e(LOG_TAG,
-                        "Tried to create outgoing connection when sConnectionService null!");
-                return null;
-            }
+        ConnectionService testImpl = getTestImpl();
+        if (testImpl != null) {
+            return testImpl.onCreateOutgoingConnection(connectionManagerPhoneAccount, request);
+        } else {
+            Log.e(LOG_TAG,
+                    "Tried to create outgoing connection when sConnectionService null!");
+            return null;
         }
     }
 
     @Override
     public Connection onCreateIncomingConnection(PhoneAccountHandle connectionManagerPhoneAccount,
             ConnectionRequest request) {
-        synchronized(sLock) {
-            if (sConnectionService != null) {
-                return sConnectionService.onCreateIncomingConnection(
-                        connectionManagerPhoneAccount, request);
-            } else {
-                Log.e(LOG_TAG,
-                        "Tried to create incoming connection when sConnectionService null!");
-                return null;
-            }
+        ConnectionService testImpl = getTestImpl();
+        if (testImpl != null) {
+            return testImpl.onCreateIncomingConnection(connectionManagerPhoneAccount, request);
+        } else {
+            Log.e(LOG_TAG,
+                    "Tried to create incoming connection when sConnectionService null!");
+            return null;
         }
     }
 
     @Override
     public void onCreateIncomingConnectionFailed(PhoneAccountHandle connectionManagerPhoneAccount,
             ConnectionRequest request) {
-        if (sConnectionService != null) {
-            sConnectionService.onCreateIncomingConnectionFailed(connectionManagerPhoneAccount,
-                    request);
+        ConnectionService testImpl = getTestImpl();
+        if (testImpl != null) {
+            testImpl.onCreateIncomingConnectionFailed(connectionManagerPhoneAccount, request);
         } else {
-            Log.e(LOG_TAG,
-                    "onCreateIncomingConnectionFailed called when sConnectionService null!");
+            Log.e(LOG_TAG, "onCreateIncomingConnectionFailed called when "
+                    + "sConnectionService null!");
         }
     }
 
     @Override
     public Conference onCreateOutgoingConference(PhoneAccountHandle connectionManagerPhoneAccount,
             ConnectionRequest request) {
-        synchronized (sLock) {
-            if (sConnectionService != null) {
-                return sConnectionService.onCreateOutgoingConference(connectionManagerPhoneAccount,
-                        request);
-            } else {
-                Log.e(LOG_TAG,
-                        "onCreateOutgoingConference called when sConnectionService null!");
-                return null;
-            }
+        ConnectionService testImpl = getTestImpl();
+        if (testImpl != null) {
+            return testImpl.onCreateOutgoingConference(connectionManagerPhoneAccount, request);
+        } else {
+            Log.e(LOG_TAG,
+                    "onCreateOutgoingConference called when sConnectionService null!");
+            return null;
         }
     }
 
     @Override
     public void onCreateOutgoingConferenceFailed(PhoneAccountHandle connectionManagerPhoneAccount,
             ConnectionRequest request) {
-        synchronized (sLock) {
-            if (sConnectionService != null) {
-                sConnectionService.onCreateOutgoingConferenceFailed(connectionManagerPhoneAccount,
-                        request);
-            } else {
-                Log.e(LOG_TAG,
-                        "onCreateOutgoingConferenceFailed called when sConnectionService null!");
-            }
+        ConnectionService testImpl = getTestImpl();
+        if (testImpl != null) {
+            testImpl.onCreateOutgoingConferenceFailed(connectionManagerPhoneAccount, request);
+        } else {
+            Log.e(LOG_TAG,
+                    "onCreateOutgoingConferenceFailed called when sConnectionService null!");
         }
     }
 
     @Override
     public Conference onCreateIncomingConference(PhoneAccountHandle connectionManagerPhoneAccount,
             ConnectionRequest request) {
-        synchronized (sLock) {
-            if (sConnectionService != null) {
-                return sConnectionService.onCreateIncomingConference(connectionManagerPhoneAccount,
-                        request);
-            } else {
-                Log.e(LOG_TAG,
-                        "onCreateIncomingConference called when sConnectionService null!");
-                return null;
-            }
+        ConnectionService testImpl = getTestImpl();
+        if (testImpl != null) {
+            return testImpl.onCreateIncomingConference(connectionManagerPhoneAccount, request);
+        } else {
+            Log.e(LOG_TAG,
+                    "onCreateIncomingConference called when sConnectionService null!");
+            return null;
         }
     }
 
     @Override
     public void onCreateIncomingConferenceFailed(PhoneAccountHandle connectionManagerPhoneAccount,
             ConnectionRequest request) {
-        synchronized (sLock) {
-            if (sConnectionService != null) {
-                sConnectionService.onCreateIncomingConferenceFailed(connectionManagerPhoneAccount,
-                        request);
-            } else {
-                Log.e(LOG_TAG,
-                        "onCreateIncomingConferenceFailed called when sConnectionService null!");
-            }
+        ConnectionService testImpl = getTestImpl();
+        if (testImpl != null) {
+            testImpl.onCreateIncomingConferenceFailed(connectionManagerPhoneAccount, request);
+        } else {
+            Log.e(LOG_TAG,
+                    "onCreateIncomingConferenceFailed called when sConnectionService null!");
         }
     }
 
     @Override
     public void onConference(Connection connection1, Connection connection2) {
-        synchronized(sLock) {
-            if (sConnectionService != null) {
-                sConnectionService.onConference(connection1, connection2);
-            } else {
-                Log.e(LOG_TAG,
-                        "onConference called when sConnectionService null!");
-            }
+        ConnectionService testImpl = getTestImpl();
+        if (testImpl != null) {
+            testImpl.onConference(connection1, connection2);
+        } else {
+            Log.e(LOG_TAG,
+                    "onConference called when sConnectionService null!");
         }
     }
 
     @Override
     public void onRemoteExistingConnectionAdded(RemoteConnection connection) {
-        synchronized(sLock) {
-            if (sConnectionService != null) {
-                sConnectionService.onRemoteExistingConnectionAdded(connection);
-            } else {
-                Log.e(LOG_TAG,
-                        "onRemoteExistingConnectionAdded called when sConnectionService null!");
-            }
+        ConnectionService testImpl = getTestImpl();
+        if (testImpl != null) {
+            testImpl.onRemoteExistingConnectionAdded(connection);
+        } else {
+            Log.e(LOG_TAG,
+                    "onRemoteExistingConnectionAdded called when sConnectionService null!");
         }
     }
 
     public static void addConferenceToTelecom(Conference conference) {
-        synchronized(sLock) {
-            if (sTelecomConnectionService != null) {
-                sTelecomConnectionService.addConference(conference);
-            } else {
-                Log.e(LOG_TAG, "addConferenceToTelecom called when"
-                        + " sTelecomConnectionService null!");
-            }
+        ConnectionService telecomConn = getTelecomConnection();
+        if (telecomConn != null) {
+            telecomConn.addConference(conference);
+        } else {
+            Log.e(LOG_TAG, "addConferenceToTelecom called when"
+                    + " sTelecomConnectionService null!");
         }
     }
 
     public static void addExistingConnectionToTelecom(
             PhoneAccountHandle phoneAccountHandle, Connection connection) {
-        synchronized(sLock) {
-            if (sTelecomConnectionService != null) {
-                sTelecomConnectionService.addExistingConnection(phoneAccountHandle, connection);
-            } else {
-                Log.e(LOG_TAG, "addExistingConnectionToTelecom called when"
-                        + " sTelecomConnectionService null!");
-            }
+        ConnectionService telecomConn = getTelecomConnection();
+        if (telecomConn != null) {
+            telecomConn.addExistingConnection(phoneAccountHandle, connection);
+        } else {
+            Log.e(LOG_TAG, "addExistingConnectionToTelecom called when"
+                    + " sTelecomConnectionService null!");
         }
     }
 
     public static Collection<Connection> getAllConnectionsFromTelecom() {
-        synchronized(sLock) {
-            if (sTelecomConnectionService == null) {
-                return Collections.EMPTY_LIST;
-            }
-            return sTelecomConnectionService.getAllConnections();
+        ConnectionService telecomConn = getTelecomConnection();
+        if (telecomConn == null) {
+            return Collections.emptyList();
         }
+        return telecomConn.getAllConnections();
     }
 
     public static RemoteConnection createRemoteOutgoingConnectionToTelecom(
             PhoneAccountHandle connectionManagerPhoneAccount,
             ConnectionRequest request) {
-        synchronized(sLock) {
-            if (sTelecomConnectionService != null) {
-                return sTelecomConnectionService.createRemoteOutgoingConnection(
-                        connectionManagerPhoneAccount, request);
-            } else {
-                Log.e(LOG_TAG, "createRemoteOutgoingConnectionToTelecom called when"
-                        + " sTelecomConnectionService null!");
-                return null;
-            }
+        ConnectionService telecomConn = getTelecomConnection();
+        if (telecomConn != null) {
+            return telecomConn.createRemoteOutgoingConnection(
+                    connectionManagerPhoneAccount, request);
+        } else {
+            Log.e(LOG_TAG, "createRemoteOutgoingConnectionToTelecom called when"
+                    + " sTelecomConnectionService null!");
+            return null;
         }
     }
 
     public static RemoteConnection createRemoteIncomingConnectionToTelecom(
             PhoneAccountHandle connectionManagerPhoneAccount,
             ConnectionRequest request) {
-        synchronized(sLock) {
-            if (sTelecomConnectionService != null) {
-                return sTelecomConnectionService.createRemoteIncomingConnection(
-                        connectionManagerPhoneAccount, request);
-            } else {
-                Log.e(LOG_TAG, "createRemoteIncomingConnectionToTelecom called when"
-                        + " sTelecomConnectionService null!");
-                return null;
-            }
+        ConnectionService telecomConn = getTelecomConnection();
+        if (telecomConn != null) {
+            return telecomConn.createRemoteIncomingConnection(
+                    connectionManagerPhoneAccount, request);
+        } else {
+            Log.e(LOG_TAG, "createRemoteIncomingConnectionToTelecom called when"
+                    + " sTelecomConnectionService null!");
+            return null;
         }
     }
 
     public static RemoteConference createRemoteIncomingConferenceToTelecom(
             PhoneAccountHandle connectionManagerPhoneAccount,
             ConnectionRequest request) {
-        synchronized (sLock) {
-            if (sTelecomConnectionService != null) {
-                return sTelecomConnectionService.createRemoteIncomingConference(
-                        connectionManagerPhoneAccount, request);
-            } else {
-                Log.e(LOG_TAG, "createRemoteIncomingConferenceToTelecom called when"
-                        + " sTelecomConnectionService null!");
-                return null;
-            }
+        ConnectionService telecomConn = getTelecomConnection();
+        if (telecomConn != null) {
+            return telecomConn.createRemoteIncomingConference(
+                    connectionManagerPhoneAccount, request);
+        } else {
+            Log.e(LOG_TAG, "createRemoteIncomingConferenceToTelecom called when"
+                    + " sTelecomConnectionService null!");
+            return null;
         }
     }
 
@@ -289,75 +268,151 @@ public class CtsConnectionService extends ConnectionService {
     public static RemoteConference createRemoteOutgoingConferenceToTelecom(
             PhoneAccountHandle connectionManagerPhoneAccount,
             ConnectionRequest request) {
-        synchronized (sLock) {
-            if (sTelecomConnectionService != null) {
-                return sTelecomConnectionService.createRemoteOutgoingConference(
-                        connectionManagerPhoneAccount, request);
-            } else {
-                Log.e(LOG_TAG, "createRemoteOutgoingConferenceToTelecom called when"
-                        + " sTelecomConnectionService null!");
-                return null;
-            }
+        ConnectionService telecomConn = getTelecomConnection();
+        if (telecomConn != null) {
+            return telecomConn.createRemoteOutgoingConference(
+                    connectionManagerPhoneAccount, request);
+        } else {
+            Log.e(LOG_TAG, "createRemoteOutgoingConferenceToTelecom called when"
+                    + " sTelecomConnectionService null!");
+            return null;
         }
     }
 
     @Override
     public void onRemoteConferenceAdded(RemoteConference conference) {
-        synchronized(sLock) {
-            if (sConnectionService != null) {
-                sConnectionService.onRemoteConferenceAdded(conference);
-            } else {
-                Log.e(LOG_TAG,
-                        "onRemoteConferenceAdded called when sConnectionService null!");
-            }
+        ConnectionService telecomConn = getTestImpl();
+        if (telecomConn != null) {
+            telecomConn.onRemoteConferenceAdded(conference);
+        } else {
+            Log.e(LOG_TAG, "onRemoteConferenceAdded called when sConnectionService null!");
         }
     }
 
     @Override
     public void onConnectionServiceFocusGained() {
-        synchronized (sLock) {
-            if (sConnectionService != null) {
-                sConnectionService.onConnectionServiceFocusGained();
-            } else {
-                Log.e(LOG_TAG,
-                        "onConnectionServiceFocusGained called when sConnectionService null!");
-            }
+        ConnectionService telecomConn = getTestImpl();
+        if (telecomConn != null) {
+            telecomConn.onConnectionServiceFocusGained();
+        } else {
+            Log.e(LOG_TAG, "onConnectionServiceFocusGained called when sConnectionService null!");
         }
     }
 
     @Override
     public void onConnectionServiceFocusLost() {
-        synchronized (sLock) {
-            if (sConnectionService != null) {
-                sConnectionService.onConnectionServiceFocusLost();
-            } else {
-                Log.e(LOG_TAG,
-                        "onConnectionServiceFocusLost called when sConnectionService null!");
-            }
+        ConnectionService telecomConn = getTestImpl();
+        if (telecomConn != null) {
+            telecomConn.onConnectionServiceFocusLost();
+        } else {
+            Log.e(LOG_TAG, "onConnectionServiceFocusLost called when sConnectionService null!");
         }
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
-        synchronized (sLock) {
-            Log.i(LOG_TAG, "Service has been unbound");
-            sIsBound = false;
-            sServiceUnBoundLatch.countDown();
-            sConnectionService = null;
-            sTelecomConnectionService = null;
-            return super.onUnbind(intent);
-        }
+        Log.i(LOG_TAG, "Service has been unbound");
+        onTelecomDisconnected();
+        return super.onUnbind(intent);
     }
 
     public static boolean isServiceRegisteredToTelecom() {
-        return sTelecomConnectionService != null;
+        return getTelecomConnection() != null;
     }
 
-    public static boolean isBound() {
-        return sIsBound;
-    }
-
+    /**
+     * @return Wait up to 5 seconds for the ConnectionService to be unbound from telecom. Return
+     * true if unbinding occurred successfully, false if it did not.
+     */
     public static boolean waitForUnBinding() {
-        return TestUtils.waitForLatchCountDown(sServiceUnBoundLatch);
+        CountDownLatch latch = getUnboundLatch();
+        return TestUtils.waitForLatchCountDown(latch);
+    }
+
+    /**
+     * Setup the static connection to the ConnectionService that is handling commands to Telecom
+     * through ConnectionService.
+     */
+    private static void onTelecomConnected(ConnectionService service) {
+        synchronized (sTelecomCSLock) {
+            sTelecomConnectionService = service;
+            if (sTelecomUnboundLatch != null && sTelecomUnboundLatch.getCount() > 0) {
+                Log.w(LOG_TAG, "Unexpected: Unbound latch has not counted down from previous "
+                        + "usage");
+            }
+            sTelecomUnboundLatch = new CountDownLatch(1);
+        }
+    }
+
+    /**
+     * Teardown a previously connected ConnectionService when Telecom unbinds.
+     */
+    private static void onTelecomDisconnected() {
+        synchronized (sTelecomCSLock) {
+            if (sTelecomUnboundLatch != null) {
+                sTelecomUnboundLatch.countDown();
+            } else {
+                Log.w(LOG_TAG, "Unexpected: null unbind latch, onBindClient never called.");
+            }
+            sTelecomConnectionService = null;
+        }
+    }
+
+    /**
+     * @return The ConnectionService that Telecom is connected through right now. This
+     * ConnectionService must only be used to communicate back to Telecom. This must be called to
+     * get the ConnectionService instance in order to keep synchronization across threads.
+     */
+    private static ConnectionService getTelecomConnection() {
+        synchronized (sTelecomCSLock) {
+            return sTelecomConnectionService;
+        }
+    }
+
+    /**
+     * @return The CountDownLatch tracking when the ConnectionService will be unbound by Telecom.
+     */
+    private static CountDownLatch getUnboundLatch() {
+        synchronized (sTelecomCSLock) {
+            return sTelecomUnboundLatch;
+        }
+    }
+
+    /**
+     * @return The ConnectionService that the test impl has provided to implement stub methods.
+     * This must be called to get the ConnectionService instance in order to keep synchronization
+     * across threads.
+     */
+    private static ConnectionService getTestImpl() {
+        synchronized (sTestImplLock) {
+            return sConnectionServiceTestImpl;
+        }
+    }
+
+    /**
+     * Clear the ConnectionService when the test is tearing down.
+     */
+    private static void clearTestImpl() {
+        synchronized (sTestImplLock) {
+            sConnectionServiceTestImpl = null;
+        }
+    }
+
+    /**
+     * Sets the Implementation of ConnectionService stub methods for this test. Must be called
+     * before using any ConnectionService based tests.
+     * @param impl The ConnectionService instance that implements ConnectionService stub methods
+     * @throws Exception Invalid state occurred
+     */
+    private static void setTestImpl(ConnectionService impl) throws Exception {
+        synchronized (sTestImplLock) {
+            if (sConnectionServiceTestImpl != null) {
+                // Clean up so following tests don't fail too, hiding the original culprit in noise
+                sConnectionServiceTestImpl = null;
+                throw new Exception("Mock ConnectionService exists.  Failed to call setUp(), "
+                        + "or previous test failed to call tearDown().");
+            }
+            sConnectionServiceTestImpl = impl;
+        }
     }
 }

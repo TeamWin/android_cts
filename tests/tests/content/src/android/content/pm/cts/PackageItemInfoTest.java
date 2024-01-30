@@ -16,10 +16,11 @@
 
 package android.content.pm.cts;
 
-import android.content.cts.R;
-
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageItemInfo;
 import android.content.pm.PackageManager;
@@ -27,22 +28,44 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.XmlResourceParser;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 import android.util.Printer;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
 @AppModeFull // TODO(Instant) Figure out which APIs should work.
-public class PackageItemInfoTest extends AndroidTestCase {
+public class PackageItemInfoTest {
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
     private static final String PACKAGE_NAME = "android.content.cts";
     private static final String ACTIVITY_NAME = "android.content.pm.cts.TestPmActivity";
     private static final String METADATA_NAME = "android.content.pm.cts.xmltest";
-    private PackageManager mPackageManager;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mPackageManager = getContext().getPackageManager();
+    private Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 
+    private PackageManager getPackageManager() {
+        return getContext().getPackageManager();
+    }
+
+    @Test
+    public void testSimple() {
+        PackageItemInfo info = new PackageItemInfo();
+        new PackageItemInfo(info);
+        assertNotNull(info.toString());
+    }
+
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testLoadMethods() throws NameNotFoundException {
         // Test constructors
         ActivityInfo activityInfo = (ActivityInfo) getTestItemInfo();
@@ -50,15 +73,16 @@ public class PackageItemInfoTest extends AndroidTestCase {
         PackageItemInfo pkgItemInfo = new PackageItemInfo(activityInfo);
         checkInfoSame(activityInfo, pkgItemInfo);
         // Test loadLabel
-        assertEquals(ACTIVITY_NAME, pkgItemInfo.loadLabel(mPackageManager));
+        assertEquals(ACTIVITY_NAME, pkgItemInfo.loadLabel(getPackageManager()));
         // Test loadIcon
-        assertNotNull(pkgItemInfo.loadIcon(mPackageManager));
+        assertNotNull(pkgItemInfo.loadIcon(getPackageManager()));
 
         // Test loadXmlMetaData
-        XmlResourceParser parser = pkgItemInfo.loadXmlMetaData(mPackageManager, METADATA_NAME);
+        XmlResourceParser parser = pkgItemInfo.loadXmlMetaData(getPackageManager(), METADATA_NAME);
         assertNotNull(parser);
     }
 
+    @Test
     public void testDump() {
         MockPackageItemInfo pkgItemInfo = new MockPackageItemInfo();
         MockPrinter printer = new MockPrinter();
@@ -70,6 +94,8 @@ public class PackageItemInfoTest extends AndroidTestCase {
         pkgItemInfo.dumpFront(printer, prefix);
     }
 
+    @Test
+    @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testWriteToParcel() throws NameNotFoundException {
         ActivityInfo activityInfo = (ActivityInfo) getTestItemInfo();
         PackageItemInfo expectedInfo = new PackageItemInfo(activityInfo);
@@ -90,13 +116,15 @@ public class PackageItemInfoTest extends AndroidTestCase {
         assertEquals(expected.nonLocalizedLabel, actual.nonLocalizedLabel);
         assertEquals(expected.icon, actual.icon);
         assertEquals(expected.metaData.size(), actual.metaData.size());
-        assertEquals(R.xml.pm_test, actual.metaData.getInt(METADATA_NAME));
+        final int resPmTest = getContext().getResources()
+                .getIdentifier("pm_test", "xml", getContext().getPackageName());
+        assertEquals(resPmTest, actual.metaData.getInt(METADATA_NAME));
     }
 
     private PackageItemInfo getTestItemInfo() throws NameNotFoundException {
         ComponentName componentName = new ComponentName(PACKAGE_NAME, ACTIVITY_NAME);
         ActivityInfo activityInfo =
-            mPackageManager.getActivityInfo(componentName, PackageManager.GET_META_DATA);
+                getPackageManager().getActivityInfo(componentName, PackageManager.GET_META_DATA);
         return activityInfo;
     }
 

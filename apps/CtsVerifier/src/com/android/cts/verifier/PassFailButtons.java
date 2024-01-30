@@ -311,6 +311,15 @@ public class PassFailButtons {
         public void recordTestResults() {
             // default - NOP
         }
+
+        protected static void showNonSdkAccessibilityWarningDialog(
+                final android.app.Activity activity) {
+            Bundle args = new Bundle();
+            args.putInt(INFO_DIALOG_TITLE_ID, R.string.nonsdk_interfaces_warning_title);
+            args.putInt(INFO_DIALOG_MESSAGE_ID, R.string.nonsdk_interfaces_warning_body);
+            args.putInt(INFO_DIALOG_VIEW_ID, -1);
+            activity.showDialog(REPORTLOG_DIALOG_ID, args);
+        }
     }   /* class PassFailButtons.Activity */
 
     public static class ListActivity extends android.app.ListActivity implements PassFailActivity {

@@ -43,6 +43,7 @@ import javax.annotation.Nullable;
 public final class ConfigUtils {
     public static final long CONFIG_ID = "cts_config".hashCode(); // evaluates to -1572883457
     public static final String CONFIG_ID_STRING = String.valueOf(CONFIG_ID);
+    public static final String SHELL_UID_STRING = "2000";
 
     // Attribution chains are the first field in atoms.
     private static final int ATTRIBUTION_CHAIN_FIELD_NUMBER = 1;
@@ -278,7 +279,8 @@ public final class ConfigUtils {
 
             // Send config to statsd
             device.executeShellCommand(
-                    String.join(" ", "cat", remotePath, "|", UPDATE_CONFIG_CMD, CONFIG_ID_STRING));
+                    String.join(" ", "cat", remotePath, "|", UPDATE_CONFIG_CMD, SHELL_UID_STRING,
+                            CONFIG_ID_STRING));
 
             // Remove config from temporary location
             device.executeShellCommand("rm " + remotePath);
@@ -294,7 +296,8 @@ public final class ConfigUtils {
      * Removes any pre-existing CTS configs from statsd.
      */
     public static void removeConfig(ITestDevice device) throws Exception {
-        device.executeShellCommand(String.join(" ", REMOVE_CONFIG_CMD, CONFIG_ID_STRING));
+        device.executeShellCommand(String.join(" ", REMOVE_CONFIG_CMD, SHELL_UID_STRING,
+                    CONFIG_ID_STRING));
     }
 
     public static void uploadConfigForPushedAtomWithUid(ITestDevice device, String pkgName,

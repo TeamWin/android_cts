@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2015 The Android Open Source Project
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2015 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -15,66 +14,69 @@
 -->
 
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/scrollView"
-        style="@style/RootLayoutPadding">
+    android:id="@+id/scrollView"
+    style="@style/RootLayoutPadding"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-    <include layout="@layout/audio_wired_query_layout" />
+        <include layout="@layout/audio_wired_query_layout" />
 
-    <TextView
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:scrollbars="vertical"
-      android:gravity="bottom"
-      android:id="@+id/info_text"
-      android:text="@string/audio_output_routingnotification_instructions" />
+        <TextView
+            android:id="@+id/info_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:gravity="bottom"
+            android:scrollbars="vertical"
+            android:text="@string/audio_output_routingnotification_instructions" />
 
-  <LinearLayout
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:orientation="vertical"
-      android:id="@+id/audioTrackRoutingLayout">
-      <TextView
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-              android:text="@string/audio_routingnotification_playHeader"/>
+        <LinearLayout
+            android:id="@+id/audioTrackRoutingLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-      <TextView
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:id="@+id/audio_routingnotification_audioTrack_change"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/audio_routingnotification_playHeader" />
 
-      <TextView
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:textSize="20sp"
-          android:id="@+id/audio_routingnotification_testresult"/>
+            <TextView
+                android:id="@+id/audio_routingnotification_audioTrack_change"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
 
-      <LinearLayout
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:orientation="horizontal">
-          <Button
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:id="@+id/audio_routingnotification_playBtn"
-              android:text="@string/audio_general_play"/>
+            <TextView
+                android:id="@+id/audio_routingnotification_testresult"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="20sp" />
 
-          <Button
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:id="@+id/audio_routingnotification_playStopBtn"
-              android:text="@string/audio_general_stop"/>
-      </LinearLayout>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/audio_routingnotification_startBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/audio_general_play" />
+
+                <Button
+                    android:id="@+id/audio_routingnotification_stopBtn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/audio_general_stop" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <include layout="@layout/pass_fail_buttons" />
+
     </LinearLayout>
-
-  <include layout="@layout/pass_fail_buttons" />
-
-</LinearLayout>
 </ScrollView>

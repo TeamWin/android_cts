@@ -28,6 +28,7 @@ import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController.OnControllableInsetsChangedListener;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
@@ -58,6 +59,7 @@ import java.util.concurrent.TimeUnit;
  * Test suite to ensure IME stats get tracked and logged correctly.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class InputMethodStatsTest extends EndToEndImeTestBase {
 
     private static final String TAG = "InputMethodStatsTest";

@@ -41,7 +41,7 @@ final class SafeWaitObject {
         synchronized (this) {
             while (!stopWaiting.getAsBoolean()) {
                 final long timeToWait = deadline - System.currentTimeMillis();
-                if (timeToWait < 0) {
+                if (timeToWait <= 0) {
                     return false;
                 }
                 try {
@@ -49,6 +49,27 @@ final class SafeWaitObject {
                 } catch (InterruptedException e) {
                     Log.v("SafeWaitObject", "waiting interrupted, resuming");
                 }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Blocks the current thread until stopWaiting returns true
+     * @param timeoutMs the maximum amount of time to block for
+     * @param periodMs the period between two checking attempts
+     * @param stopWaiting Predicate which returns false if the waiting should be continued
+     * @return false if the predicate stopWaiting still evaluates to false after the timeout
+     *          expired, otherwise true.
+     */
+    public static boolean checkConditionFor(long timeoutMs, long periodMs,
+            BooleanSupplier stopWaiting) {
+        final long deadline = System.currentTimeMillis() + timeoutMs;
+        while (!stopWaiting.getAsBoolean() && (System.currentTimeMillis() < deadline)) {
+            try {
+                Thread.sleep(periodMs);
+            } catch (InterruptedException e) {
+                Log.v("SafeWaitObject", "sleeping interrupted, resuming");
             }
         }
         return true;
