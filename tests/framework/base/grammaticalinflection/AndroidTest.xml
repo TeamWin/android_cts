@@ -29,9 +29,9 @@
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command"
-                value="device_config put grammatical_gender android.app.system_terms_of_address_enabled true"/>
+                value="device_config put globalintl android.app.system_terms_of_address_enabled true"/>
         <option name="teardown-command"
-                value="device_config put grammatical_gender android.app.system_terms_of_address_enabled false"/>
+                value="device_config put globalintl android.app.system_terms_of_address_enabled false"/>
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">
