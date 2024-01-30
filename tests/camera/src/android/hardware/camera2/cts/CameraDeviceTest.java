@@ -48,6 +48,9 @@ import android.os.Build;
 import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 import android.util.Range;
 import android.view.Surface;
@@ -56,6 +59,7 @@ import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
 import com.android.ex.camera2.exceptions.TimeoutRuntimeException;
 import com.android.ex.camera2.utils.StateWaiter;
+import com.android.internal.camera.flags.Flags;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,9 +73,10 @@ import java.util.HashMap;
 import java.util.Set;
 import android.util.Size;
 
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.runners.Parameterized;
 import org.junit.runner.RunWith;
-import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 
 import java.util.concurrent.Executor;
@@ -119,6 +124,10 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         sLegacySkipTemplates.add(CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG);
         sLegacySkipTemplates.add(CameraDevice.TEMPLATE_MANUAL);
     }
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Override
     public void setUp() throws Exception {
@@ -1129,6 +1138,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
      * Verifies that valid session characteristic keys can be fetched for a particular camera.
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_FEATURE_COMBINATION_QUERY)
     public void testSessionCharacteristicsKeys() throws Exception {
         String[] cameraIdsUnderTest = getCameraIdsUnderTest();
         for (int i = 0; i < cameraIdsUnderTest.length; i++) {
@@ -1156,6 +1166,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
      * Verify if valid session characteristics can be fetched for a particular camera.
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_FEATURE_COMBINATION_QUERY)
     public void testSessionCharacteristics() throws Exception {
         String[] cameraIdsUnderTest = getCameraIdsUnderTest();
         for (int i = 0; i < cameraIdsUnderTest.length; i++) {
