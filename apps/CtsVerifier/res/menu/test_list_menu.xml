@@ -13,4 +13,10 @@
           android:icon="@android:drawable/ic_menu_save"
           android:title="@string/export"
           android:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/search_test"
+        android:title="@string/search_title"
+        android:actionViewClass="android.widget.SearchView"
+        android:showAsAction="collapseActionView|ifRoom"
+        android:imeOptions="actionSearch" />
 </menu>

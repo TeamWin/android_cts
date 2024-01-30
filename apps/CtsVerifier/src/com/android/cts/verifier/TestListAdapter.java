@@ -98,6 +98,9 @@ public abstract class TestListAdapter extends BaseAdapter {
      */
     protected Map<String, List<TestListItem>> mDisplayModesTests = new HashMap<>();
 
+    /** A keyword to help filter out test cases by the test name. */
+    protected String mTestFilter;
+
     /** {@link ListView} row that is either a test category header or a test. */
     public static class TestListItem {
 
@@ -192,7 +195,7 @@ public abstract class TestListAdapter extends BaseAdapter {
 
         /**
          * Creates a new test item with given display mode, the required, excluded, applicable
-         * features and required configureations and actions.
+         * features and required configurations and actions.
          */
         public static TestListItem newTest(
                 String title,
@@ -218,7 +221,7 @@ public abstract class TestListAdapter extends BaseAdapter {
 
         /**
          * Creates a new test item with given required, excluded, applicable features and required
-         * configureations.
+         * configurations.
          */
         public static TestListItem newTest(
                 String title,
@@ -390,6 +393,10 @@ public abstract class TestListAdapter extends BaseAdapter {
                         histories,
                         mScreenshotsMetadata.get(name))
                 .execute();
+    }
+
+    void setTestFilter(String testFilter) {
+        mTestFilter = testFilter;
     }
 
     class RefreshTestResultsTask extends AsyncTask<Void, Void, RefreshResult> {
