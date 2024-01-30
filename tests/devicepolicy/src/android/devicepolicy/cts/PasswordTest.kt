@@ -15,6 +15,7 @@
  */
 package android.devicepolicy.cts
 
+
 import android.app.admin.DevicePolicyManager
 import android.content.pm.PackageManager
 import android.os.Build
@@ -28,29 +29,30 @@ import com.android.bedstead.harrier.annotations.Postsubmit
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature
 import com.android.bedstead.harrier.annotations.RequireFeature
 import com.android.bedstead.harrier.annotations.RequireTargetSdkVersion
+import com.android.bedstead.harrier.annotations.enterprise.AdditionalQueryParameters
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest
-import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest
 import com.android.bedstead.harrier.policies.DeprecatedResetPassword
 import com.android.bedstead.harrier.policies.FailedPasswordAttempts
 import com.android.bedstead.harrier.policies.PasswordExpirationTimeout
+import com.android.bedstead.harrier.policies.PasswordQuality
 import com.android.bedstead.harrier.policies.PasswordSufficiency
 import com.android.bedstead.harrier.policies.StrongAuthTimeout
 import com.android.bedstead.nene.TestApis
+import com.android.bedstead.nene.utils.Assert.assertThrows
 import com.android.compatibility.common.util.ApiTest
-import com.android.eventlib.truth.EventLogsSubject.assertThat
-import com.android.interactive.annotations.Interactive
+import com.android.queryable.annotations.IntegerQuery
+import com.android.queryable.annotations.Query
 import com.google.common.truth.Truth
 import com.google.common.truth.Truth.assertThat
 import org.junit.ClassRule
 import org.junit.Ignore
 import org.junit.Rule
-import org.junit.Test
 import org.junit.runner.RunWith
 import org.testng.Assert
-import org.testng.Assert.assertThrows
+import com.android.bedstead.nene.utils.Versions.R
 
 @RunWith(BedsteadJUnit4::class)
 class PasswordTest {
@@ -256,9 +258,974 @@ class PasswordTest {
             .isActivePasswordSufficient).isTrue()
     }
 
+//     setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isLessThan = R))
+    )
+    fun setPasswordQuality_setPasswordMinimumSymbols_resetWithLowerQuality_targetBeforeR_preservesValues() {
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+        val initialPasswordMinimumSymbols = deviceState.dpc().devicePolicyManager()
+            .getPasswordMinimumSymbols(deviceState.dpc().componentName())
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_COMPLEX
+            )
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumSymbols(
+                deviceState.dpc().componentName(),
+                TEST_VALUE
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_SOMETHING
+            )
+
+            assertThat(deviceState.dpc().devicePolicyManager()
+                    .getPasswordMinimumSymbols(deviceState.dpc().componentName()))
+                    .isEqualTo(TEST_VALUE)
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumSymbols(
+                deviceState.dpc().componentName(),
+                initialPasswordMinimumSymbols
+            )
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isLessThan = R))
+    )
+    fun setPasswordQuality_setPasswordMinimumLength_resetWithLowerQuality_targetBeforeR_preservesValues() {
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+        val initialPasswordMinimumLength = deviceState.dpc().devicePolicyManager()
+            .getPasswordMinimumLength(deviceState.dpc().componentName())
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_COMPLEX
+            )
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumLength(
+                deviceState.dpc().componentName(),
+                TEST_VALUE
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_SOMETHING
+            )
+
+            assertThat(deviceState.dpc().devicePolicyManager()
+                    .getPasswordMinimumLength(deviceState.dpc().componentName()))
+                    .isEqualTo(TEST_VALUE)
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumLength(
+                deviceState.dpc().componentName(),
+                initialPasswordMinimumLength
+            )
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isLessThan = R))
+    )
+    fun setPasswordQuality_setPasswordMinimumNumeric_resetWithLowerQuality_targetBeforeR_preservesValues() {
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+        val initialPasswordMinimumNumeric = deviceState.dpc().devicePolicyManager()
+            .getPasswordMinimumNumeric(deviceState.dpc().componentName())
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_COMPLEX
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumNumeric(
+                deviceState.dpc().componentName(),
+                TEST_VALUE
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_SOMETHING
+            )
+
+            assertThat(deviceState.dpc().devicePolicyManager()
+                    .getPasswordMinimumNumeric(deviceState.dpc().componentName()))
+                    .isEqualTo(TEST_VALUE)
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumNumeric(
+                deviceState.dpc().componentName(),
+                initialPasswordMinimumNumeric
+            )
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isLessThan = R))
+    )
+    fun setPasswordQuality_setPasswordMinimumLetters_resetWithLowerQuality_targetBeforeR_preservesValues() {
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+        val initialPasswordMinimumLetters = deviceState.dpc().devicePolicyManager()
+            .getPasswordMinimumLetters(deviceState.dpc().componentName())
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_COMPLEX
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumLetters(
+                deviceState.dpc().componentName(),
+                TEST_VALUE
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_SOMETHING
+            )
+
+            assertThat(deviceState.dpc().devicePolicyManager()
+                    .getPasswordMinimumLetters(deviceState.dpc().componentName()))
+                    .isEqualTo(TEST_VALUE)
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumLetters(
+                deviceState.dpc().componentName(),
+                initialPasswordMinimumLetters
+            )
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isLessThan = R))
+    )
+    fun setPasswordQuality_setPasswordMinimumUpperCase_resetWithLowerQuality_targetBeforeR_preservesValues() {
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+        val initialPasswordMinimumUpperCase = deviceState.dpc().devicePolicyManager()
+            .getPasswordMinimumUpperCase(deviceState.dpc().componentName())
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_COMPLEX
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumUpperCase(
+                deviceState.dpc().componentName(),
+                TEST_VALUE
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_SOMETHING
+            )
+
+            assertThat(deviceState.dpc().devicePolicyManager()
+                    .getPasswordMinimumUpperCase(deviceState.dpc().componentName()))
+                    .isEqualTo(TEST_VALUE)
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumUpperCase(
+                deviceState.dpc().componentName(),
+                initialPasswordMinimumUpperCase
+            )
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isLessThan = R))
+    )
+    fun setPasswordQuality_setPasswordMinimumLowerCase_resetWithLowerQuality_targetBeforeR_preservesValues() {
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+        val initialPasswordMinimumLowerCase = deviceState.dpc().devicePolicyManager()
+            .getPasswordMinimumLowerCase(deviceState.dpc().componentName())
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_COMPLEX
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumLowerCase(
+                deviceState.dpc().componentName(),
+                TEST_VALUE
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_SOMETHING
+            )
+
+            assertThat(deviceState.dpc().devicePolicyManager()
+                    .getPasswordMinimumLowerCase(deviceState.dpc().componentName()))
+                    .isEqualTo(TEST_VALUE)
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumLowerCase(
+                deviceState.dpc().componentName(),
+                initialPasswordMinimumLowerCase
+            )
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isLessThan = R))
+    )
+    fun setPasswordQuality_setPasswordMinimumNonLetter_resetWithLowerQuality_targetBeforeR_preservesValues() {
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+        val initialPasswordMinimumNonLetter = deviceState.dpc().devicePolicyManager()
+            .getPasswordMinimumNonLetter(deviceState.dpc().componentName())
+
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_COMPLEX
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumNonLetter(
+                deviceState.dpc().componentName(),
+                TEST_VALUE
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_SOMETHING
+            )
+
+            assertThat(deviceState.dpc().devicePolicyManager()
+                    .getPasswordMinimumNonLetter(deviceState.dpc().componentName()))
+                    .isEqualTo(TEST_VALUE)
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumNonLetter(
+                deviceState.dpc().componentName(),
+                initialPasswordMinimumNonLetter
+            )
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isGreaterThan = R))
+    )
+    fun setPasswordNumericQuality_setPasswordMinimumSymbols_targetAfterR_throwsException() {
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_NUMERIC
+            )
+            Assert.assertThrows(
+                IllegalStateException::class.java
+            ) {
+                deviceState.dpc().devicePolicyManager().setPasswordMinimumSymbols(
+                    deviceState.dpc().componentName(),
+                    TEST_VALUE
+                )
+            }
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isGreaterThan = R))
+    )
+    fun setPasswordLowQuality_setPasswordMinimumLength_targetAfterR_throwsException() {
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_SOMETHING
+            )
+            Assert.assertThrows(
+                IllegalStateException::class.java
+            ) {
+                deviceState.dpc().devicePolicyManager().setPasswordMinimumLength(
+                    deviceState.dpc().componentName(),
+                    TEST_VALUE
+                )
+            }
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isGreaterThan = R))
+    )
+    fun setPasswordNumericQuality_setPasswordMinimumLength_targetAfterR_doesNotThrowException() {
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+        val initialPasswordMinimumLength = deviceState.dpc().devicePolicyManager()
+            .getPasswordMinimumLength(deviceState.dpc().componentName())
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_NUMERIC
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumLength(
+                deviceState.dpc().componentName(),
+                TEST_VALUE
+            )
+
+            assertThat(deviceState.dpc().devicePolicyManager()
+                    .getPasswordMinimumLength(deviceState.dpc().componentName()))
+                    .isEqualTo(TEST_VALUE)
+
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumLength(
+                deviceState.dpc().componentName(),
+                initialPasswordMinimumLength
+            )
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isGreaterThan = R))
+    )
+    fun setPasswordNumericQuality_setPasswordMinimumNumeric_targetAfterR_throwsException() {
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_NUMERIC
+            )
+            Assert.assertThrows(
+                IllegalStateException::class.java
+            ) {
+                deviceState.dpc().devicePolicyManager().setPasswordMinimumNumeric(
+                    deviceState.dpc().componentName(),
+                    TEST_VALUE
+                )
+            }
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isGreaterThan = R))
+    )
+    fun setPasswordNumericQuality_setPasswordMinimumLetters_targetAfterR_throwsException() {
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_NUMERIC
+            )
+            Assert.assertThrows(
+                IllegalStateException::class.java
+            ) {
+                deviceState.dpc().devicePolicyManager().setPasswordMinimumLetters(
+                    deviceState.dpc().componentName(),
+                    TEST_VALUE
+                )
+            }
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isGreaterThan = R))
+    )
+    fun setPasswordNumericQuality_setPasswordMinimumUpperCase_targetAfterR_throwsException() {
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_NUMERIC
+            )
+            Assert.assertThrows(
+                IllegalStateException::class.java
+            ) {
+                deviceState.dpc().devicePolicyManager().setPasswordMinimumUpperCase(
+                    deviceState.dpc().componentName(),
+                    TEST_VALUE
+                )
+            }
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isGreaterThan = R))
+    )
+    fun setPasswordNumericQuality_setPasswordMinimumLowerCase_targetAfterR_throwsException() {
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_NUMERIC
+            )
+            Assert.assertThrows(
+                IllegalStateException::class.java
+            ) {
+                deviceState.dpc().devicePolicyManager().setPasswordMinimumLowerCase(
+                    deviceState.dpc().componentName(),
+                    TEST_VALUE
+                )
+            }
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isGreaterThan = R))
+    )
+    fun setPasswordNumericQuality_setPasswordMinimumNonLetter_targetAfterR_throwsException() {
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_NUMERIC
+            )
+            Assert.assertThrows(
+                IllegalStateException::class.java
+            ) {
+                deviceState.dpc().devicePolicyManager().setPasswordMinimumNonLetter(
+                    deviceState.dpc().componentName(),
+                    TEST_VALUE
+                )
+            }
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isGreaterThan = R))
+    )
+    fun setPasswordHighQuality_setPasswordMinimumLength_setPasswordNumericQuality_targetAfterR_preservesValue() {
+
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_COMPLEX
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumLength(
+                deviceState.dpc().componentName(),
+                TEST_VALUE
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_NUMERIC
+            )
+
+            assertThat(deviceState.dpc().devicePolicyManager()
+                    .getPasswordMinimumLength(deviceState.dpc().componentName()))
+                    .isEqualTo(TEST_VALUE)
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isGreaterThan = R))
+    )
+    fun setPasswordHighQuality_setPasswordMinimumLength_setPasswordLowQuality_targetAfterR_resetsValue() {
+
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName())
+
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_COMPLEX
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumLength(
+                deviceState.dpc().componentName(),
+                TEST_VALUE
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_SOMETHING
+            )
+
+            assertThat(deviceState.dpc().devicePolicyManager()
+                    .getPasswordMinimumLength(deviceState.dpc().componentName()))
+                    .isEqualTo(DEFAULT_LENGTH)
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isGreaterThan = R))
+    )
+    fun setPasswordHighQuality_setPasswordMinimumNumeric_setPasswordNumericQuality_targetAfterR_resetsValue() {
+
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName())
+
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_COMPLEX
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumNumeric(
+                deviceState.dpc().componentName(),
+                TEST_VALUE
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_NUMERIC
+            )
+
+            assertThat(deviceState.dpc().devicePolicyManager()
+                    .getPasswordMinimumNumeric(deviceState.dpc().componentName()))
+                    .isEqualTo(DEFAULT_NUMERIC)
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isGreaterThan = R))
+    )
+    fun setPasswordHighQuality_setPasswordMinimumLetters_setPasswordNumericQuality_targetAfterR_resetsValue() {
+
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_COMPLEX
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumLetters(
+                deviceState.dpc().componentName(),
+                TEST_VALUE
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_NUMERIC
+            )
+
+            assertThat(deviceState.dpc().devicePolicyManager()
+                    .getPasswordMinimumLetters(deviceState.dpc().componentName()))
+                    .isEqualTo(DEFAULT_LETTERS)
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isGreaterThan = R))
+    )
+    fun setPasswordHighQuality_setPasswordMinimumUpperCase_setPasswordNumericQuality_targetAfterR_resetsValue() {
+
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_COMPLEX
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumUpperCase(
+                deviceState.dpc().componentName(),
+                TEST_VALUE
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_NUMERIC
+            )
+
+            assertThat(deviceState.dpc().devicePolicyManager()
+                    .getPasswordMinimumUpperCase(deviceState.dpc().componentName()))
+                    .isEqualTo(DEFAULT_UPPERCASE)
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isGreaterThan = R))
+    )
+    fun setPasswordHighQuality_setPasswordMinimumLowerCase_setPasswordNumericQuality_targetAfterR_resetsValue() {
+
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_COMPLEX
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumLowerCase(
+                deviceState.dpc().componentName(),
+                TEST_VALUE
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_NUMERIC
+            )
+
+            assertThat(deviceState.dpc().devicePolicyManager()
+                    .getPasswordMinimumLowerCase(deviceState.dpc().componentName()))
+                    .isEqualTo(DEFAULT_LOWERCASE)
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isGreaterThan = R))
+    )
+    fun setPasswordHighQuality_setPasswordMinimumNonLetter_setPasswordNumericQuality_targetAfterR_resetsValue() {
+
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_COMPLEX
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumNonLetter(
+                deviceState.dpc().componentName(),
+                TEST_VALUE
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_NUMERIC
+            )
+
+            assertThat(deviceState.dpc().devicePolicyManager()
+                    .getPasswordMinimumNonLetter(deviceState.dpc().componentName()))
+                    .isEqualTo(DEFAULT_NON_LETTER)
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
+    // setPasswordQuality is unsupported on automotive
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @PolicyAppliesTest(
+        policy = [PasswordQuality::class]
+    )
+    @Postsubmit(reason = "New test")
+    @AdditionalQueryParameters(
+        forTestApp = "dpc",
+        query = Query(targetSdkVersion = IntegerQuery(isGreaterThan = R))
+    )
+    fun setPasswordHighQuality_setPasswordMinimumSymbols_setPasswordNumericQuality_targetAfterR_resetsValue() {
+
+        val initialPasswordQuality = deviceState.dpc().devicePolicyManager().getPasswordQuality(
+            deviceState.dpc().componentName()
+        )
+
+        try {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_COMPLEX
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumSymbols(
+                deviceState.dpc().componentName(),
+                TEST_VALUE
+            )
+
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                DevicePolicyManager.PASSWORD_QUALITY_NUMERIC
+            )
+
+            assertThat(deviceState.dpc().devicePolicyManager()
+                    .getPasswordMinimumSymbols(deviceState.dpc().componentName()))
+                    .isEqualTo(DEFAULT_SYMBOLS)
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                initialPasswordQuality
+            )
+        }
+    }
+
     companion object {
         private const val TIMEOUT: Long = 51234
         private const val PASSWORD_MEDIUM_COMPLEXITY = "abc12"
+        private const val TEST_VALUE: Int = 5
+        private const val DEFAULT_LENGTH = 0
+        private const val DEFAULT_NUMERIC = 1
+        private const val DEFAULT_LETTERS = 1
+        private const val DEFAULT_UPPERCASE = 0
+        private const val DEFAULT_LOWERCASE = 0
+        private const val DEFAULT_NON_LETTER = 0
+        private const val DEFAULT_SYMBOLS = 1
 
         @JvmField
         @ClassRule
