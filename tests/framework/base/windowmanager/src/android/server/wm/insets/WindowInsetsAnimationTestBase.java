@@ -41,6 +41,7 @@ import android.os.SystemClock;
 import android.server.wm.WindowManagerTestBase;
 import android.server.wm.insets.WindowInsetsAnimationTestBase.AnimCallback.AnimationStep;
 import android.util.ArraySet;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsAnimation;
@@ -329,6 +330,8 @@ public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
 
             @Override
             public WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
+                Log.d("TestActivity", "onApplyWindowInsets insets=" + insets);
+
                 /**
                  * Do not update mLastWindowInsets and save the latest WindowInsets to
                  *  mLastPendingWindowInsets.
