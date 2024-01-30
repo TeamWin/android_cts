@@ -37,6 +37,7 @@ android_test {
         "permission-test-util-lib",
         "CtsAppTestStubsShared",
         "android.content.pm.flags-aconfig-java",
+        "android.multiuser.flags-aconfig-java",
         "flag-junit",
         "com.android.media.flags.bettertogether-aconfig-java",
         "android.app.flags-aconfig-java",
