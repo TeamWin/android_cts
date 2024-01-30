@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package {
+    default_team: "trendy_team_framework_android_packages",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
@@ -21,13 +21,16 @@ android_test_helper_app {
     name: "CtsPackageManagerMultiUserTestApp",
     defaults: ["cts_defaults"],
     sdk_version: "current",
-    srcs: ["src/**/*.java",],
+    srcs: ["src/**/*.java"],
     test_suites: [
         "cts",
         "vts",
         "vts10",
         "general-tests",
     ],
-    static_libs: ["androidx.test.rules", "cts-install-lib"],
+    static_libs: [
+        "androidx.test.rules",
+        "cts-install-lib",
+    ],
     compile_multilib: "both",
 }

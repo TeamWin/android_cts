@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package {
+    default_team: "trendy_team_framework_android_packages",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
@@ -41,7 +42,7 @@ java_test_host {
 
 genrule {
     name: "CtsPackageManagerParsingHostTestGen",
-    defaults: [ "CtsPackageManagerParsingApkGenerator" ],
-    srcs: [ "src/**/*.kt" ],
-    out: [ "GeneratedApks.zip" ],
+    defaults: ["CtsPackageManagerParsingApkGenerator"],
+    srcs: ["src/**/*.kt"],
+    out: ["GeneratedApks.zip"],
 }

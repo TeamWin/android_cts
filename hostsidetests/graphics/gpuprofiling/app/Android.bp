@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package {
+    default_team: "trendy_team_android_gpu",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
@@ -21,7 +22,10 @@ cc_test {
     srcs: [
         "android_graphics_cts_GpuCounters.cpp",
     ],
-    test_suites: ["cts", "general-tests"],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
     compile_multilib: "both",
     multilib: {
         lib32: {
@@ -71,7 +75,10 @@ android_test_helper_app {
     srcs: ["src/**/*.java"],
     sdk_version: "current",
     // tag this module as a cts test artifact
-    test_suites: ["cts", "general-tests"],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
     compile_multilib: "both",
     jni_libs: [
         "libctsgraphicsgpuprofiling_jni",

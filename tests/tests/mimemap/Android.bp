@@ -15,6 +15,7 @@
 // Verifies the default MIME mapping as exposed by
 // @CorePlatformApi libcore.content.type.MimeMap.getDefault()
 package {
+    default_team: "trendy_team_java_core_libraries",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
