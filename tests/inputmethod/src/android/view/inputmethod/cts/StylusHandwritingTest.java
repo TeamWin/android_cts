@@ -40,6 +40,7 @@ import static org.mockito.Mockito.mock;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -59,6 +60,7 @@ import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Pair;
 import android.view.InputDevice;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -1108,6 +1110,37 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     MotionEvent.TOOL_TYPE_STYLUS, unFocusedMarker), TIMEOUT);
 
             TestUtils.injectStylusUpEvent(unfocusedEditText, endX, endY);
+        }
+    }
+
+    /**
+     * Inject KeyEvent and Stylus tap verify toolType is detected with
+     * {@link InputMethodService#onUpdateEditorToolType(int)} lifecycle method.
+     */
+    @Test
+    public void testOnViewClicked_withKeyEvent() throws Exception {
+        assumeTrue("skipping test when flag useHandwritingListenerForTooltype is disabled",
+                Flags.useHandwritingListenerForTooltype());
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        try (MockImeSession imeSession = MockImeSession.create(
+                instrumentation.getContext(), instrumentation.getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final String marker2 = getTestMarker();
+            final Pair<EditText, EditText> pair = launchTestActivityNoEditorFocus(marker, marker2);
+            final EditText firstEditText = pair.first;
+
+            // Send any KeyEvent when editor isn't focused.
+            instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_0);
+
+            // KeyEvents are identified as unknown tooltype.
+            int toolType = MotionEvent.TOOL_TYPE_UNKNOWN;
+            expectEvent(
+                    stream,
+                    onUpdateEditorToolTypeMatcher(toolType),
+                    TIMEOUT);
         }
     }
 
@@ -2191,8 +2224,18 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                 ViewConfiguration.get(context).getScaledHandwritingSlop());
     }
 
+    private Pair<EditText, EditText> launchTestActivityNoEditorFocus(@NonNull String focusedMarker,
+            @NonNull String nonFocusedMarker) {
+        return launchTestActivity(focusedMarker, nonFocusedMarker, false /* isEditorFocused */);
+    }
+
     private Pair<EditText, EditText> launchTestActivity(@NonNull String focusedMarker,
             @NonNull String nonFocusedMarker) {
+        return launchTestActivity(focusedMarker, nonFocusedMarker, true /* isEditorFocused */);
+    }
+
+    private Pair<EditText, EditText> launchTestActivity(@NonNull String focusedMarker,
+            @NonNull String nonFocusedMarker, boolean isEditorFocused) {
         final AtomicReference<EditText> focusedEditTextRef = new AtomicReference<>();
         final AtomicReference<EditText> nonFocusedEditTextRef = new AtomicReference<>();
         TestActivity.startSync(activity -> {
@@ -2204,7 +2247,9 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             final EditText focusedEditText = new EditText(activity);
             focusedEditText.setHint("focused editText");
             focusedEditText.setPrivateImeOptions(focusedMarker);
-            focusedEditText.requestFocus();
+            if (isEditorFocused) {
+                focusedEditText.requestFocus();
+            }
             focusedEditText.setAutoHandwritingEnabled(true);
             focusedEditText.setHandwritingBoundsOffsets(
                     HANDWRITING_BOUNDS_OFFSET_PX,
