@@ -50,9 +50,7 @@ import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Background task to generate a report and save it to external storage.
- */
+/** Background task to generate a report and save it to external storage. */
 public class ReportExporter extends AsyncTask<Void, Void, String> {
     private static final String TAG = ReportExporter.class.getSimpleName();
     private static final boolean DEBUG = true;
@@ -65,7 +63,10 @@ public class ReportExporter extends AsyncTask<Void, Void, String> {
     private static final String LOG_URL = null;
     private static final String REFERENCE_URL = null;
     private static final String SUITE_NAME_METADATA_KEY = "SuiteName";
-    private static final String SUITE_PLAN = "verifier";
+    // Default CTS-V suite_plan shown in test_result.xml.
+    private static final String DEFAULT_SUITE_PLAN = "verifier";
+    // CTS Verifier System suite_plan shown in test_result.xml.
+    private static final String SYSTEM_SUITE_PLAN = "verifier-system";
     private static final String SUITE_BUILD = "0";
     private static final String ZIP_EXTENSION = ".zip";
     private final long START_MS = System.currentTimeMillis();
@@ -88,9 +89,10 @@ public class ReportExporter extends AsyncTask<Void, Void, String> {
         }
 
         File reportLogFolder =
-                new File(Environment.getExternalStorageDirectory().getAbsolutePath()
-                        + File.separator
-                        + LOGS_DIRECTORY);
+                new File(
+                        Environment.getExternalStorageDirectory().getAbsolutePath()
+                                + File.separator
+                                + LOGS_DIRECTORY);
 
         copyFilesRecursively(reportLogFolder, tempDir);
     }
@@ -104,10 +106,7 @@ public class ReportExporter extends AsyncTask<Void, Void, String> {
 
         for (File file : files) {
             Path src = Paths.get(file.getAbsolutePath());
-            Path dest = Paths.get(
-                    destFolder.getAbsolutePath()
-                            + File.separator
-                            + file.getName());
+            Path dest = Paths.get(destFolder.getAbsolutePath() + File.separator + file.getName());
             try {
                 Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException ex) {
@@ -118,7 +117,6 @@ public class ReportExporter extends AsyncTask<Void, Void, String> {
             }
         }
     }
-
 
     @Override
     protected String doInBackground(Void... params) {
@@ -148,15 +146,24 @@ public class ReportExporter extends AsyncTask<Void, Void, String> {
         copyReportFiles(tempDir);
 
         // create a File object for a report ZIP file
-        File reportZipFile = new File(
-                verifierReportsDir, getReportName(suiteName) + ZIP_EXTENSION);
+        File reportZipFile = new File(verifierReportsDir, getReportName(suiteName) + ZIP_EXTENSION);
 
         try {
             // Serialize the report
             String versionName = Version.getVersionName(mContext);
-            ResultHandler.writeResults(suiteName, versionName, SUITE_PLAN, SUITE_BUILD,
-                    result, tempDir, START_MS, END_MS, REFERENCE_URL, LOG_URL,
-                    COMMAND_LINE_ARGS, null);
+            ResultHandler.writeResults(
+                    suiteName,
+                    versionName,
+                    TestListActivity.getIsSystemEnabled() ? SYSTEM_SUITE_PLAN : DEFAULT_SUITE_PLAN,
+                    SUITE_BUILD,
+                    result,
+                    tempDir,
+                    START_MS,
+                    END_MS,
+                    REFERENCE_URL,
+                    LOG_URL,
+                    COMMAND_LINE_ARGS,
+                    null);
 
             // Serialize the screenshots metadata if at least one exists
             if (containsScreenshotMetadata(result)) {
@@ -200,8 +207,8 @@ public class ReportExporter extends AsyncTask<Void, Void, String> {
             Log.d(TAG, "---- saveReportOnInternalStorage(" + reportZipFile.getAbsolutePath() + ")");
         }
         try {
-            ParcelFileDescriptor pfd = ParcelFileDescriptor.open(
-                    reportZipFile, ParcelFileDescriptor.MODE_READ_ONLY);
+            ParcelFileDescriptor pfd =
+                    ParcelFileDescriptor.open(reportZipFile, ParcelFileDescriptor.MODE_READ_ONLY);
             InputStream is = new ParcelFileDescriptor.AutoCloseInputStream(pfd);
 
             File verifierDir = mContext.getDir(REPORT_DIRECTORY, Context.MODE_PRIVATE);
@@ -223,8 +230,7 @@ public class ReportExporter extends AsyncTask<Void, Void, String> {
         for (String resultFileName : ResultHandler.RESULT_RESOURCES) {
             InputStream rawStream = null;
             try {
-                rawStream = mContext.getAssets().open(
-                        String.format("report/%s", resultFileName));
+                rawStream = mContext.getAssets().open(String.format("report/%s", resultFileName));
             } catch (IOException e) {
                 LOG.log(Level.WARNING, "Failed to load " + resultFileName + " from assets.");
             }
@@ -242,7 +248,8 @@ public class ReportExporter extends AsyncTask<Void, Void, String> {
     private String getReportName(String suiteName) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd_HH.mm.ss", Locale.ENGLISH);
         String date = dateFormat.format(new Date());
-        return String.format("%s-%s-%s-%s-%s-%s",
+        return String.format(
+                "%s-%s-%s-%s-%s-%s",
                 date, suiteName, Build.MANUFACTURER, Build.PRODUCT, Build.DEVICE, Build.ID);
     }
 

@@ -158,6 +158,28 @@ public class ManifestTestListAdapter extends TestListAdapter {
      */
     private static final String MULTIPLE_DISPLAY_MODE = "multi_display_mode";
 
+    /** The config to represent that a test is only needed to run in the folded display mode. */
+    private static final String FOLDED_DISPLAY_MODE = "folded_display_mode";
+
+    /**
+     * The config to represent that a test is marked as pass when it passes either in folded mode or
+     * in unfolded mode.
+     */
+    private static final String EITHER_MODE = "either_mode";
+
+    /**
+     * The user is not a {@link UserManager#isProfile() profile} and is running in the background,
+     * but {@link UserManager#isUserVisible() visible} in a display.
+     */
+    private static final String USER_TYPE_VISIBLE_BG_USER = "visible_background_non-profile_user";
+
+    /** The name of the camera ITS test of a {@link TestListItem}. */
+    private static final String CAMERA_ITS_TEST =
+            "com.android.cts.verifier.camera.its.ItsTestActivity";
+
+    /** The name of the camera ITS test (folded mode) of a {@link TestListItem}. */
+    private static final String CAMERA_ITS_TEST_FOLDED = CAMERA_ITS_TEST + "[folded]";
+
     private final HashSet<String> mDisabledTests;
 
     private Context mContext;
@@ -188,8 +210,9 @@ public class ManifestTestListAdapter extends TestListAdapter {
             }
         }
 
-        if (mTestFilter != null) {
-            // Filter test rows dynamically when the filter is specified.
+        if (mTestFilter != null || TestListActivity.getIsSystemEnabled()) {
+            // Filter test rows dynamically when the filter is specified or verifier-system plan is
+            // enabled.
             return getRowsWithDisplayMode(sCurrentDisplayMode.toString());
         } else {
             return mDisplayModesTests.getOrDefault(
@@ -551,6 +574,20 @@ public class ManifestTestListAdapter extends TestListAdapter {
                         .contains(mTestFilter.toLowerCase(Locale.getDefault()));
     }
 
+    /**
+     * Checks whether the test matches the current status of verifier-system plan.
+     *
+     * <p>When verifier-system plan is disabled, all CTS-V tests are shown.
+     *
+     * <p>When verifier-system plan is enabled, specific tests are filtered out, e.g., camera ITS.
+     */
+    private static boolean matchSystemPlanStatus(String testName) {
+        if (testName == null || !TestListActivity.getIsSystemEnabled()) {
+            return true;
+        }
+        return !testName.equals(CAMERA_ITS_TEST) && !testName.equals(CAMERA_ITS_TEST_FOLDED);
+    }
+
     private static boolean getSystemResourceFlag(Context context, String key) {
         final Resources systemRes = context.getResources().getSystem();
         final int id = systemRes.getIdentifier(key, "bool", "android");
@@ -594,7 +631,8 @@ public class ManifestTestListAdapter extends TestListAdapter {
                     && hasAllActions(test.requiredActions)
                     && matchAllConfigs(mContext, test.requiredConfigs)
                     && matchDisplayMode(test.displayMode, mode)
-                    && macthTestFilter(test.title)) {
+                    && macthTestFilter(test.title)
+                    && matchSystemPlanStatus(test.testName)) {
                 if (test.applicableFeatures == null || hasAnyFeature(test.applicableFeatures)) {
                     // Add suffix in test name if the test is in the folded mode.
                     test.testName = setTestNameSuffix(mode, test.testName);
