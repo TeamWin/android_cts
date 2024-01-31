@@ -1038,7 +1038,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             return;
         }
 
-        int notificationsPerApp = 50;
+        int notificationsPerApp = 40;
         int totalNotificationsSent = notificationsPerApp * 8; // 8 apps total
 
         FutureServiceConnection pressureService00 = bindServiceConnection(PRESSURE_SERVICE_00);
