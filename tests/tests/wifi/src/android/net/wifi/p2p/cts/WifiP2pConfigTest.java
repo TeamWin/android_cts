@@ -166,8 +166,8 @@ public class WifiP2pConfigTest extends AndroidTestCase {
         List<OuiKeyedData> vendorData = Arrays.asList(vendorDataElement);
         WifiP2pConfig config = new WifiP2pConfig.Builder()
                 .setDeviceAddress(MacAddress.fromString(TEST_DEVICE_ADDRESS))
-                .setVendorData(vendorData)
                 .build();
+        config.setVendorData(vendorData);
         assertTrue(vendorData.equals(config.getVendorData()));
     }
 

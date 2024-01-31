@@ -1123,8 +1123,8 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         List<OuiKeyedData> vendorData = Arrays.asList(vendorDataElement);
         WifiP2pConfig config = new WifiP2pConfig.Builder()
                 .setDeviceAddress(MacAddress.fromString("aa:bb:cc:dd:ee:ff"))
-                .setVendorData(vendorData)
                 .build();
+        config.setVendorData(vendorData);
         sWifiP2pManager.connect(sWifiP2pChannel, config, sActionListener);
         assertTrue(waitForServiceResponse(MY_RESPONSE));
         assertFalse(MY_RESPONSE.success);
@@ -1346,5 +1346,19 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         assertEquals(scanType, config.getScanType());
         assertEquals(frequencyMhz, config.getFrequencyMhz());
         assertTrue(vendorData.equals(config.getVendorData()));
+    }
+
+    /**
+     * Tests that we can properly set/get vendor data in {@link WifiP2pDevice}.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    @Test
+    public void testWifiP2pDeviceWithVendorData() {
+        WifiP2pDevice device = new WifiP2pDevice();
+        List<OuiKeyedData> vendorData = createTestOuiKeyedDataList(5);
+        device.setVendorData(vendorData);
+        assertEquals(vendorData, device.getVendorData());
     }
 }
