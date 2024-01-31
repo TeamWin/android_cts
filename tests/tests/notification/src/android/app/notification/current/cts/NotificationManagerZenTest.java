@@ -215,7 +215,9 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
 
             // Also get and cache the default policy for comparison later.
-            mDefaultPolicy = mNotificationManager.getDefaultZenPolicy();
+            if (Flags.modesApi()) {
+                mDefaultPolicy = mNotificationManager.getDefaultZenPolicy();
+            }
         });
     }
 
