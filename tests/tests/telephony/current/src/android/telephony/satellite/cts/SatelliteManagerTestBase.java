@@ -904,7 +904,6 @@ public class SatelliteManagerTestBase {
         return errorCode;
     }
 
-
     protected static void requestSatelliteEnabledForDemoMode(boolean enabled) {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
         sSatelliteManager.requestEnabled(

@@ -3164,6 +3164,11 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertTrue(frameworkCapabilities.equals(pairResult.first));
         assertNull(pairResult.second);
 
+        /* Initialize Radio technology */
+        supportedRadioTechnologies =
+                new int[]{android.telephony.satellite.stub.NTRadioTechnology.PROPRIETARY};
+        capabilities.supportedRadioTechnologies = supportedRadioTechnologies;
+        sendOnSatelliteCapabilitiesChanged(capabilities);
         /* unregister non-terrestrial network signal strength changed event callback */
         sSatelliteManager.unregisterForCapabilitiesChanged(
                 satelliteCapabilitiesCallbackTest);
