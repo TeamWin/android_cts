@@ -83,7 +83,13 @@ if [ ! -f "${JAVA_BINARY}" ]; then
 fi
 
 checkPath ${JAVA_BINARY}
-checkJavaVersion ${JAVA_BINARY}
+
+# Java version on Mac not within our control, so let it be best effort
+if [ ${OS} != "darwin-x86" ]; then
+    checkJavaVersion ${JAVA_BINARY}
+else
+    echo "Mac is not a fully supported OS, so Java version support will be best effort"
+fi
 
 JAR_DIR=${CTS_ROOT}/android-cts/tools
 
