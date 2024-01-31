@@ -18,7 +18,7 @@
 #include <jni.h>
 #include <sys/types.h>
 #include <unistd.h>
-
+#include <sstream>
 #include <vector>
 
 #include <android/performance_hint.h>
@@ -53,6 +53,22 @@ private:
 static SessionWrapper createSession(APerformanceHintManager* manager) {
     int32_t pid = getpid();
     return SessionWrapper(APerformanceHint_createSession(manager, &pid, 1u, DEFAULT_TARGET_NS));
+}
+
+struct WorkDurationCreator {
+    int64_t workPeriodStart;
+    int64_t totalDuration;
+    int64_t cpuDuration;
+    int64_t gpuDuration;
+};
+
+static AWorkDuration * createWorkDuration(WorkDurationCreator creator) {
+    AWorkDuration* out = AWorkDuration_create();
+    AWorkDuration_setWorkPeriodStartTimestampNanos(out, creator.workPeriodStart);
+    AWorkDuration_setActualTotalDurationNanos(out, creator.totalDuration);
+    AWorkDuration_setActualCpuDurationNanos(out, creator.cpuDuration);
+    AWorkDuration_setActualGpuDurationNanos(out, creator.gpuDuration);
+    return out;
 }
 
 static jstring nativeTestCreateHintSession(JNIEnv *env, jobject) {
@@ -206,36 +222,54 @@ static jstring nativeTestReportActualWorkDuration2(JNIEnv* env, jobject) {
     SessionWrapper wrapper = createSession(manager);
     if (wrapper.session() == nullptr) return nullptr;
 
-    AWorkDuration* workDuration1 = AWorkDuration_create();
-    AWorkDuration_setWorkPeriodStartTimestampNanos(workDuration1, 1000);
-    AWorkDuration_setActualTotalDurationNanos(workDuration1, 14);
-    AWorkDuration_setActualCpuDurationNanos(workDuration1, 11);
-    AWorkDuration_setActualGpuDurationNanos(workDuration1, 8);
+    std::vector<WorkDurationCreator> testCases = {
+        {
+            .workPeriodStart = 1000,
+            .totalDuration = 14,
+            .cpuDuration = 11,
+            .gpuDuration = 8
+        },
+        {
+            .workPeriodStart = 1016,
+            .totalDuration = 14,
+            .cpuDuration = 12,
+            .gpuDuration = 4
+        },
+        {
+            .workPeriodStart = 1016,
+            .totalDuration = 14,
+            .cpuDuration = 12,
+            .gpuDuration = 4
+        },
+        {
+            .workPeriodStart = 900,
+            .totalDuration = 20,
+            .cpuDuration = 20,
+            .gpuDuration = 0
+        },
+        {
+            .workPeriodStart = 800,
+            .totalDuration = 20,
+            .cpuDuration = 0,
+            .gpuDuration = 20
+        }
+    };
 
-    int result = APerformanceHint_reportActualWorkDuration2(wrapper.session(), workDuration1);
-    if (result != 0) {
-        return toJString(env,
-                         "APerformanceHint_reportActualWorkDuration2("
-                         "{workPeriodStartTimestampNanos = 1000, actualTotalDurationNanos = 14, "
-                         "actualCpuDurationNanos = 11, actualGpuDurationNanos = 8}) did not "
-                         "return 0");
+    for (auto && testCase : testCases) {
+        AWorkDuration * testObj = createWorkDuration(testCase);
+        int result = APerformanceHint_reportActualWorkDuration2(wrapper.session(), testObj);
+        if (result != 0) {
+            std::stringstream stream;
+            stream << "APerformanceHint_reportActualWorkDuration2({"
+            << "workPeriodStartTimestampNanos = " << testCase.workPeriodStart << ", "
+            << "actualTotalDurationNanos = " << testCase.totalDuration << ", "
+            << "actualCpuDurationNanos = " << testCase.cpuDuration << ", "
+            << "actualGpuDurationNanos = " << testCase.gpuDuration << "}) did not return 0";
+            AWorkDuration_release(testObj);
+            return toJString(env, stream.str().c_str());
+        }
+        AWorkDuration_release(testObj);
     }
-    AWorkDuration_release(workDuration1);
-
-    AWorkDuration* workDuration2 = AWorkDuration_create();
-    AWorkDuration_setWorkPeriodStartTimestampNanos(workDuration2, 1016);
-    AWorkDuration_setActualTotalDurationNanos(workDuration2, 14);
-    AWorkDuration_setActualCpuDurationNanos(workDuration2, 12);
-    AWorkDuration_setActualGpuDurationNanos(workDuration2, 4);
-    result = APerformanceHint_reportActualWorkDuration2(wrapper.session(), workDuration2);
-    if (result != 0) {
-        return toJString(env,
-                         "APerformanceHint_reportActualWorkDuration2("
-                         "{workPeriodStartTimestampNanos = 1016, actualTotalDurationNanos = 14, "
-                         "actualCpuDurationNanos = 12, actualGpuDurationNanos = 4}) did not "
-                         "return 0");
-    }
-    AWorkDuration_release(workDuration2);
 
     return nullptr;
 }
@@ -246,67 +280,55 @@ static jstring nativeTestReportActualWorkDuration2WithIllegalArgument(JNIEnv* en
     SessionWrapper wrapper = createSession(manager);
     if (wrapper.session() == nullptr) return nullptr;
 
-    AWorkDuration* workDuration0 = AWorkDuration_create();
-    AWorkDuration_setWorkPeriodStartTimestampNanos(workDuration0, -1);
-    AWorkDuration_setActualTotalDurationNanos(workDuration0, 14);
-    AWorkDuration_setActualCpuDurationNanos(workDuration0, 11);
-    AWorkDuration_setActualGpuDurationNanos(workDuration0, 8);
 
-    int result = APerformanceHint_reportActualWorkDuration2(wrapper.session(), workDuration0);
-    if (result != EINVAL) {
-        return toJString(env,
-                         "APerformanceHint_reportActualWorkDuration2("
-                         "{workPeriodStartTimestampNanos = -1, actualTotalDurationNanos = 14, "
-                         "actualCpuDurationNanos = 11, actualGpuDurationNanos = 8}) did not "
-                         "return EINVAL");
+    std::vector<WorkDurationCreator> testCases = {
+        {
+            .workPeriodStart = -1,
+            .totalDuration = 14,
+            .cpuDuration = 11,
+            .gpuDuration = 8
+        },
+        {
+            .workPeriodStart = 1000,
+            .totalDuration = -1,
+            .cpuDuration = 11,
+            .gpuDuration = 8
+        },
+        {
+            .workPeriodStart = 1000,
+            .totalDuration = 14,
+            .cpuDuration = -1,
+            .gpuDuration = 8
+        },
+        {
+            .workPeriodStart = 1000,
+            .totalDuration = 14,
+            .cpuDuration = 11,
+            .gpuDuration = -1
+        },
+        {
+            .workPeriodStart = 1000,
+            .totalDuration = 14,
+            .cpuDuration = 0,
+            .gpuDuration = 0
+        }
+    };
+
+    for (auto && testCase : testCases) {
+        AWorkDuration * testObj = createWorkDuration(testCase);
+        int result = APerformanceHint_reportActualWorkDuration2(wrapper.session(), testObj);
+        if (result != EINVAL) {
+            std::stringstream stream;
+            stream << "APerformanceHint_reportActualWorkDuration2({"
+            << "workPeriodStartTimestampNanos = " << testCase.workPeriodStart << ", "
+            << "actualTotalDurationNanos = " << testCase.totalDuration << ", "
+            << "actualCpuDurationNanos = " << testCase.cpuDuration << ", "
+            << "actualGpuDurationNanos = " << testCase.gpuDuration << "}) did not return EINVAL";
+            AWorkDuration_release(testObj);
+            return toJString(env, stream.str().c_str());
+        }
+        AWorkDuration_release(testObj);
     }
-    AWorkDuration_release(workDuration0);
-
-    AWorkDuration* workDuration1 = AWorkDuration_create();
-    AWorkDuration_setWorkPeriodStartTimestampNanos(workDuration1, 1000);
-    AWorkDuration_setActualTotalDurationNanos(workDuration1, -1);
-    AWorkDuration_setActualCpuDurationNanos(workDuration1, 11);
-    AWorkDuration_setActualGpuDurationNanos(workDuration1, 8);
-
-    result = APerformanceHint_reportActualWorkDuration2(wrapper.session(), workDuration1);
-    if (result != EINVAL) {
-        return toJString(env,
-                         "APerformanceHint_reportActualWorkDuration2("
-                         "{workPeriodStartTimestampNanos = 1000, actualTotalDurationNanos = -1, "
-                         "actualCpuDurationNanos = 11, actualGpuDurationNanos = 8}) did not "
-                         "return EINVAL");
-    }
-    AWorkDuration_release(workDuration1);
-
-    AWorkDuration* workDuration2 = AWorkDuration_create();
-    AWorkDuration_setWorkPeriodStartTimestampNanos(workDuration2, 1000);
-    AWorkDuration_setActualTotalDurationNanos(workDuration2, 14);
-    AWorkDuration_setActualCpuDurationNanos(workDuration2, -1);
-    AWorkDuration_setActualGpuDurationNanos(workDuration2, 8);
-    result = APerformanceHint_reportActualWorkDuration2(wrapper.session(), workDuration2);
-    if (result != EINVAL) {
-        return toJString(env,
-                         "APerformanceHint_reportActualWorkDuration2("
-                         "{workPeriodStartTimestampNanos = 1000, actualTotalDurationNanos = 14, "
-                         "actualCpuDurationNanos = -1, actualGpuDurationNanos = 8}) did not "
-                         "return EINVAL");
-    }
-    AWorkDuration_release(workDuration2);
-
-    AWorkDuration* workDuration3 = AWorkDuration_create();
-    AWorkDuration_setWorkPeriodStartTimestampNanos(workDuration3, 1000);
-    AWorkDuration_setActualTotalDurationNanos(workDuration3, 14);
-    AWorkDuration_setActualCpuDurationNanos(workDuration3, 11);
-    AWorkDuration_setActualGpuDurationNanos(workDuration3, -1);
-    result = APerformanceHint_reportActualWorkDuration2(wrapper.session(), workDuration3);
-    if (result != EINVAL) {
-        return toJString(env,
-                         "APerformanceHint_reportActualWorkDuration2("
-                         "{workPeriodStartTimestampNanos = 1000, actualTotalDurationNanos = 14, "
-                         "actualCpuDurationNanos = 11, actualGpuDurationNanos = -1}) did not "
-                         "return EINVAL");
-    }
-    AWorkDuration_release(workDuration3);
 
     return nullptr;
 }
