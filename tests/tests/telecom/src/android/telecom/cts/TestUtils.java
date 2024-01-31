@@ -958,6 +958,26 @@ public class TestUtils {
     }
 
     /**
+     * Generates a List PhoneAccountHandles, where each PhoneAccountHandle has the specified
+     * package name and class name, but a random account ID.
+     * @param seed The seed to use to generate the Random PhoneAccountHandles
+     * @param count The number of PhoneAccountHandles to generate
+     * @param packageName The PackageName associated with each PhoneAccountHandle
+     * @param className The class Name associated with each PhoneAccountHandle
+     * @return The resulting List of PhoneAccountHandles with random IDs.
+     */
+    public static ArrayList<PhoneAccountHandle> generateRandomPhoneAccountHandles(long seed,
+            int count, String packageName, String className) {
+        Random random = new Random(seed);
+        ArrayList<PhoneAccountHandle> accounts = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            accounts.add(createPhoneAccountHandle(random, packageName, className,
+                    Process.myUserHandle().getIdentifier()));
+        }
+        return accounts;
+    }
+
+    /**
      * Generates random phone accounts.
      * @param seed random seed to use for random UUIDs; passed in for determinism.
      * @param count How many phone accounts to use.
@@ -965,26 +985,32 @@ public class TestUtils {
      */
     public static ArrayList<PhoneAccount> generateRandomPhoneAccounts(long seed, int count,
             String packageName, String component) {
-        Random random = new Random(seed);
         ArrayList<PhoneAccount> accounts = new ArrayList<>();
-        for (int ix = 0; ix < count; ix++) {
-            PhoneAccountHandle handle = new PhoneAccountHandle(
-                    new ComponentName(packageName, component), getRandomUuid(random).toString());
-            PhoneAccount acct = new PhoneAccount.Builder(handle, "TelecommTests")
-                    .setAddress(Uri.parse("sip:test@test.com"))
-                    .setSubscriptionAddress(Uri.parse("sip:test@test.com"))
-                    .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED
-                            | PhoneAccount.CAPABILITY_SUPPORTS_VIDEO_CALLING
-                            | PhoneAccount.CAPABILITY_VIDEO_CALLING)
-                    .setHighlightColor(Color.BLUE)
-                    .setShortDescription(TestUtils.SELF_MANAGED_ACCOUNT_LABEL)
-                    .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
-                    .addSupportedUriScheme(PhoneAccount.SCHEME_SIP)
-                    .setExtras(TestUtils.SELF_MANAGED_ACCOUNT_1_EXTRAS)
-                    .build();
+        ArrayList<PhoneAccountHandle> handles = generateRandomPhoneAccountHandles(seed, count,
+                packageName, component);
+        for (PhoneAccountHandle handle : handles) {
+            PhoneAccount acct = buildSelfManagedPhoneAccount(handle, "TelecommTests").build();
             accounts.add(acct);
         }
         return accounts;
+    }
+
+    /**
+     * @return A self-managed PhoneAccount that uses SIP scheme
+     */
+    public static PhoneAccount.Builder buildSelfManagedPhoneAccount(PhoneAccountHandle handle,
+            String label) {
+        return new PhoneAccount.Builder(handle, label)
+                .setAddress(Uri.parse("sip:test@test.com"))
+                .setSubscriptionAddress(Uri.parse("sip:test@test.com"))
+                .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED
+                        | PhoneAccount.CAPABILITY_SUPPORTS_VIDEO_CALLING
+                        | PhoneAccount.CAPABILITY_VIDEO_CALLING)
+                .setHighlightColor(Color.BLUE)
+                .setShortDescription(TestUtils.SELF_MANAGED_ACCOUNT_LABEL)
+                .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
+                .addSupportedUriScheme(PhoneAccount.SCHEME_SIP)
+                .setExtras(TestUtils.SELF_MANAGED_ACCOUNT_1_EXTRAS);
     }
 
     /**
@@ -1004,15 +1030,14 @@ public class TestUtils {
 
     /**
      * Creates a PhoneAccountHandle based on the input parameters
-     * @param seed random seed to use for random UUIDs; passed in for determinism.
+     * @param random random seed to use for random UUIDs; passed in for determinism.
      * @param packageName the package name of the handle
      * @param component the component name of the handle
      * @param userId the user id of the handle
      * @return The PhoneAccountHandle
      */
-    public static PhoneAccountHandle createPhoneAccountHandle(long seed,
+    public static PhoneAccountHandle createPhoneAccountHandle(Random random,
             String packageName, String component, int userId) {
-        Random random = new Random(seed);
         return new PhoneAccountHandle(new ComponentName(packageName, component),
                 getRandomUuid(random).toString(), UserHandle.of(userId));
     }
