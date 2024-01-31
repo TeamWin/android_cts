@@ -968,15 +968,6 @@ public class MediaStorageTest {
         }
     }
 
-    private static void scrollIntoView(UiSelector selector) {
-        UiScrollable uiScrollable = new UiScrollable(new UiSelector().scrollable(true));
-        try {
-            uiScrollable.scrollIntoView(selector);
-        } catch (UiObjectNotFoundException e) {
-            // Scrolling can fail if the UI is not scrollable
-        }
-    }
-
     private static Uri createDownload() throws IOException {
         final String content = "<html><body>Content</body></html>";
         final String displayName = "cts" + System.nanoTime();
