@@ -23,6 +23,7 @@ import android.hardware.radio.RadioResponseInfo;
 import android.hardware.radio.network.BarringInfo;
 import android.hardware.radio.network.BarringTypeSpecificInfo;
 import android.hardware.radio.network.CellIdentity;
+import android.hardware.radio.network.Domain;
 import android.hardware.radio.network.EmergencyRegResult;
 import android.hardware.radio.network.IRadioNetwork;
 import android.hardware.radio.network.IRadioNetworkIndication;
@@ -62,7 +63,6 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
 
     // ***** Cache of modem attributes/status
     private int mNetworkTypeBitmap;
-    private int mReasonForDenial;
     private boolean mNetworkSelectionMode;
     private boolean mNullCipherAndIntegrityEnabled;
 
@@ -163,27 +163,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     }
 
     private void updateNetworkStatus() {
-
-        if (mRadioState != MockModemConfigInterface.RADIO_STATE_ON) {
-            // Update to OOS state
-            mServiceState.updateServiceState(RegState.NOT_REG_MT_NOT_SEARCHING_OP);
-        } else if (!mSimReady) {
-            // Update to Searching state
-            mServiceState.updateServiceState(RegState.NOT_REG_MT_SEARCHING_OP);
-        } else if (mServiceState.isHomeCellExisted() && mServiceState.getIsHomeCamping()) {
-            // Update to Home state
-            mServiceState.updateServiceState(RegState.REG_HOME);
-        } else if (mServiceState.isRoamingCellExisted() && mServiceState.getIsRoamingCamping()) {
-            // Update to Roaming state
-            mServiceState.updateServiceState(RegState.REG_ROAMING);
-        } else {
-            // Update to Searching state
-            mServiceState.updateServiceState(RegState.NOT_REG_MT_SEARCHING_OP);
-        }
-
-        unsolNetworkStateChanged();
-        unsolCurrentSignalStrength();
-        unsolCellInfoList();
+        updateNetworkStatus(Domain.CS | Domain.PS);
     }
 
     private void updateNetworkStatus(int domainBitmask) {
@@ -199,6 +179,8 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         } else if (mServiceState.isRoamingCellExisted() && mServiceState.getIsRoamingCamping()) {
             // Update to Roaming state
             mServiceState.updateServiceState(RegState.REG_ROAMING, domainBitmask);
+        } else if (mServiceState.getRegFailCause() != 0) {
+            mServiceState.updateServiceState(RegState.REG_DENIED, domainBitmask);
         } else {
             // Update to Searching state
             mServiceState.updateServiceState(RegState.NOT_REG_MT_SEARCHING_OP, domainBitmask);
@@ -240,17 +222,23 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
 
     public boolean changeNetworkService(int carrierId, boolean registration) {
         Log.d(mTag, "changeNetworkService: carrier id(" + carrierId + "): " + registration);
-
-        synchronized (mCacheUpdateMutex) {
-            // TODO: compare carrierId and sim to decide home or roming
-            mServiceState.setServiceStatus(false, registration);
-            updateNetworkStatus();
-        }
-
-        return true;
+        return changeNetworkService(carrierId, registration, Domain.CS | Domain.PS);
     }
 
-    public boolean changeNetworkService(int carrierId, boolean registration, int domainBitmask) {
+    /** Change Network Service */
+    public boolean changeNetworkService(
+            int carrierId,
+            boolean registration,
+            int domainBitmask) {
+        return changeNetworkService(carrierId, registration, domainBitmask, 0 /* regFailCause */);
+    }
+
+    /** Change Network Service */
+    public boolean changeNetworkService(
+            int carrierId,
+            boolean registration,
+            int domainBitmask,
+            int regFailCause) {
         Log.d(
                 mTag,
                 "changeNetworkService: carrier id("
@@ -262,6 +250,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
 
         synchronized (mCacheUpdateMutex) {
             // TODO: compare carrierId and sim to decide home or roming
+            mServiceState.setRegFailCause(regFailCause);
             mServiceState.setServiceStatus(false, registration);
             updateNetworkStatus(domainBitmask);
         }
@@ -443,7 +432,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
                 new android.hardware.radio.network.RegStateResult();
 
         dataRegResponse.cellIdentity = new android.hardware.radio.network.CellIdentity();
-        dataRegResponse.reasonForDenial = mReasonForDenial;
+        dataRegResponse.reasonForDenial = mServiceState.getRegFailCause();
 
         synchronized (mCacheUpdateMutex) {
             dataRegResponse.regState =
@@ -580,7 +569,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
                 new android.hardware.radio.network.RegStateResult();
 
         voiceRegResponse.cellIdentity = new android.hardware.radio.network.CellIdentity();
-        voiceRegResponse.reasonForDenial = mReasonForDenial;
+        voiceRegResponse.reasonForDenial = mServiceState.getRegFailCause();
 
         synchronized (mCacheUpdateMutex) {
             voiceRegResponse.regState =

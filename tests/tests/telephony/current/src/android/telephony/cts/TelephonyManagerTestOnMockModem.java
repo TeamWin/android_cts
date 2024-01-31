@@ -49,10 +49,10 @@ import android.os.SystemProperties;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
-import android.telephony.CarrierInfo;
 import android.telecom.PhoneAccount;
 import android.telecom.TelecomManager;
 import android.telephony.AccessNetworkConstants;
+import android.telephony.CarrierInfo;
 import android.telephony.CarrierRestrictionRules;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.ServiceState;
@@ -116,6 +116,7 @@ public class TelephonyManagerTestOnMockModem {
     private static CallStateListener sCallStateCallback;
     private int mServiceState;
     private int mExpectedRegState;
+    private int mExpectedRegFailCause;
     private int mPreciseCallDisconnectCause;
     private int mCallState;
     private final Object mServiceStateChangeLock = new Object();
@@ -331,9 +332,7 @@ public class TelephonyManagerTestOnMockModem {
         return (phoneId < subsLength) ? allSubs[phoneId] : -1;
     }
 
-    private int getRegState(int domain, int subId) {
-        int reg;
-
+    private NetworkRegistrationInfo getNri(int domain, int subId) {
         InstrumentationRegistry.getInstrumentation()
                 .getUiAutomation()
                 .adoptShellPermissionIdentity("android.permission.READ_PHONE_STATE");
@@ -344,11 +343,22 @@ public class TelephonyManagerTestOnMockModem {
         NetworkRegistrationInfo nri =
                 ss.getNetworkRegistrationInfo(domain, AccessNetworkConstants.TRANSPORT_TYPE_WWAN);
         assertNotNull(nri);
+        return nri;
+    }
+
+    private int getRegState(int domain, int subId) {
+        int reg;
+
+        NetworkRegistrationInfo nri = getNri(domain, subId);
 
         reg = nri.getRegistrationState();
         Log.d(TAG, "SS: " + nri.registrationStateToString(reg));
 
         return reg;
+    }
+
+    private int getRegFailCause(int domain, int subId) {
+        return getNri(domain, subId).getRejectCause();
     }
 
     private void waitForCondition(BooleanSupplier condition, Object lock, long maxWaitMillis)
@@ -486,6 +496,80 @@ public class TelephonyManagerTestOnMockModem {
                 }
             }
         }
+    }
+
+    @Test
+    public void testRegistrationFailed() throws Throwable {
+        Log.d(TAG, "TelephonyManagerTestOnMockModem#testRegistrationFailed");
+
+        assumeTrue(isSimHotSwapCapable());
+
+        int slotId = 0;
+        int subId;
+
+        // Insert a SIM
+        sMockModemManager.insertSimCard(slotId, MOCK_SIM_PROFILE_ID_TWN_CHT);
+
+        TimeUnit.SECONDS.sleep(2);
+        subId = getActiveSubId(slotId);
+        assertTrue(subId > 0);
+
+        // Register service state change callback
+        synchronized (mServiceStateChangeLock) {
+            mServiceState = ServiceState.STATE_IN_SERVICE;
+            mExpectedRegState = ServiceState.STATE_OUT_OF_SERVICE;
+            mExpectedRegFailCause = (int) (Math.random() * (double) 256);
+        }
+
+        sServiceStateChangeCallbackHandler.post(
+                () -> {
+                    sServiceStateCallback = new ServiceStateListener();
+                    ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                            sTelephonyManager,
+                            (tm) ->
+                                    tm.registerTelephonyCallback(
+                                            mServiceStateChangeExecutor, sServiceStateCallback));
+                });
+
+        sMockModemManager.changeNetworkService(
+                slotId, MOCK_SIM_PROFILE_ID_TWN_CHT, false);
+
+        // Expect: Searching
+        synchronized (mServiceStateChangeLock) {
+            if (mServiceState != ServiceState.STATE_OUT_OF_SERVICE) {
+                Log.d(TAG, "Wait for service state change to searching");
+                waitForCondition(
+                        () -> (ServiceState.STATE_OUT_OF_SERVICE == mServiceState),
+                        mServiceStateChangeLock,
+                        WAIT_TIME_MS);
+            }
+        }
+        assertEquals(
+                getRegState(NetworkRegistrationInfo.DOMAIN_CS, subId),
+                NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_SEARCHING);
+
+
+        // Expect: Registration Failed
+        synchronized (mServiceStateChangeLock) {
+            Log.d(TAG, "Wait for service state change to denied");
+            sMockModemManager.changeNetworkService(
+                    slotId, MOCK_SIM_PROFILE_ID_TWN_CHT, false, Domain.CS, mExpectedRegFailCause);
+            mServiceStateChangeLock.wait(WAIT_TIME_MS);
+        }
+
+        assertEquals(
+                getRegState(NetworkRegistrationInfo.DOMAIN_CS, subId),
+                NetworkRegistrationInfo.REGISTRATION_STATE_DENIED);
+        assertEquals(
+                getRegFailCause(NetworkRegistrationInfo.DOMAIN_CS, subId),
+                mExpectedRegFailCause);
+
+        // Unregister service state change callback
+        sTelephonyManager.unregisterTelephonyCallback(sServiceStateCallback);
+        sServiceStateCallback = null;
+
+        // Remove the SIM
+        sMockModemManager.removeSimCard(slotId);
     }
 
     private class CallDisconnectCauseListener extends TelephonyCallback
