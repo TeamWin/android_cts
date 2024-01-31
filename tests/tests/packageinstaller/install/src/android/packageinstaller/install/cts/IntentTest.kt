@@ -25,11 +25,12 @@ import androidx.test.runner.AndroidJUnit4
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Until
 import com.android.bedstead.harrier.annotations.RequireAdbRoot
-import com.android.bedstead.nene.userrestrictions.CommonUserRestrictions
+import com.android.bedstead.nene.TestApis
+import com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_INSTALL_APPS
 import java.util.concurrent.TimeUnit
 import org.junit.After
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -177,7 +178,7 @@ class IntentTest : PackageInstallerTestBase() {
     @RequireAdbRoot
     fun disallowInstallApps_installFails() {
         try {
-            setUserRestriction(CommonUserRestrictions.DISALLOW_INSTALL_APPS, true)
+            TestApis.devicePolicy().userRestrictions().set(DISALLOW_INSTALL_APPS, true)
 
             val installation = startInstallationViaIntent()
 
@@ -191,7 +192,7 @@ class IntentTest : PackageInstallerTestBase() {
             assertEquals(RESULT_CANCELED, installation.get(TIMEOUT, TimeUnit.MILLISECONDS))
 
         } finally {
-            setUserRestriction(CommonUserRestrictions.DISALLOW_INSTALL_APPS, false)
+            TestApis.devicePolicy().userRestrictions().set(DISALLOW_INSTALL_APPS, false)
         }
     }
 
