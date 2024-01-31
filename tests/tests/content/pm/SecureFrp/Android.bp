@@ -13,13 +13,14 @@
 // limitations under the License.
 
 package {
+    default_team: "trendy_team_framework_android_packages",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
 android_test {
     name: "CtsSecureFrpInstallTestCases",
 
-    srcs:  ["src/**/*.java"],
+    srcs: ["src/**/*.java"],
 
     static_libs: [
         "androidx.test.rules",

@@ -13,12 +13,13 @@
 // limitations under the License.
 
 package {
+    default_team: "trendy_team_framework_android_packages",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
 java_library_host {
     name: "CtsPackageManagerParsingAnnotationProcessorApi",
-    srcs: [ "api/src/**/*.kt" ],
+    srcs: ["api/src/**/*.kt"],
     defaults: ["cts_defaults"],
     libs: [
         "compatibility-host-util",
@@ -34,12 +35,12 @@ java_library_host {
 
 filegroup {
     name: "CtsPackageManagerApkGeneratorSrc",
-    srcs: [ "ApkGenerator.py" ],
+    srcs: ["ApkGenerator.py"],
 }
 
 filegroup {
     name: "CtsPackageManagerApkGeneratorJks",
-    srcs: [ "ApkGenerator.jks" ],
+    srcs: ["ApkGenerator.jks"],
 }
 
 genrule_defaults {
@@ -55,7 +56,7 @@ genrule_defaults {
         "soong_zip",
     ],
     cmd: "python3 $(location :CtsPackageManagerApkGeneratorSrc) \"$(location aapt2)\" " +
-            "\"$(location :framework-res)\" \"$(location apksigner)\" " +
-            "\"$(location :CtsPackageManagerApkGeneratorJks)\" " +
-            "\"$(genDir)\" $(in) && $(location soong_zip) -o $(out) -L 0 -C $(genDir)/out -D $(genDir)/out"
+        "\"$(location :framework-res)\" \"$(location apksigner)\" " +
+        "\"$(location :CtsPackageManagerApkGeneratorJks)\" " +
+        "\"$(genDir)\" $(in) && $(location soong_zip) -o $(out) -L 0 -C $(genDir)/out -D $(genDir)/out",
 }
