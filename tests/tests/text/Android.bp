@@ -72,7 +72,6 @@ android_ravenwood_test {
     static_libs: [
         "androidx.annotation_annotation",
         "androidx.test.rules",
-        "mockito_ravenwood",
     ],
     srcs: [
         "src/android/text/cts/TextUtilsTest.java",
