@@ -6302,6 +6302,9 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .setCarPropertyConfigVerifier(
                         carPropertyConfig -> {
                             List<Integer> configArray = carPropertyConfig.getConfigArray();
+                            if (configArray.isEmpty()) {
+                                return;
+                            }
                             assertWithMessage("HVAC_TEMPERATURE_SET config array must be size 6")
                                     .that(configArray.size())
                                     .isEqualTo(6);

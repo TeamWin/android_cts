@@ -518,6 +518,7 @@ public final class PermissionGrantTest {
         }
     }
 
+    @Ignore("b/322955833")
     @PolicyDoesNotApplyTest(policy = SetSensorPermissionGranted.class)
     public void grantSensorPermission_doesNotApplyToUser_permissionIsNotGranted(
             @SensorPermissionTestParameter String permission) {

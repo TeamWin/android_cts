@@ -22,30 +22,24 @@ import static android.mediav2.common.cts.CodecTestBase.ComponentClass.HARDWARE;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.mediav2.common.cts.EncoderConfigParams;
-import android.mediav2.common.cts.RawResource;
 import android.os.Bundle;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -71,9 +65,7 @@ import java.util.List;
  */
 @RunWith(Parameterized.class)
 public class VideoEncoderAdaptiveBitRateTest extends VideoEncoderValidationTestBase {
-    private static final String LOG_TAG = VideoEncoderAdaptiveBitRateTest.class.getSimpleName();
     private static final List<Object[]> exhaustiveArgsList = new ArrayList<>();
-    private static final HashMap<String, RawResource> RES_YUV_MAP = new HashMap<>();
     private static final int SEGMENT_DURATION = 3;
     private static final int[] SEGMENT_BITRATES_FULLHD =
             new int[]{5000000, 8000000, 12000000, 8000000, 5000000};
@@ -96,51 +88,33 @@ public class VideoEncoderAdaptiveBitRateTest extends VideoEncoderValidationTestB
                 .build();
     }
 
-    private static void addParams(int width, int height, int[] segmentBitRates,
-            CompressedResource res) {
+    private static void addParams(int width, int height, int[] segmentBitRates) {
         final String[] mediaTypes = new String[]{MediaFormat.MIMETYPE_VIDEO_AVC,
                 MediaFormat.MIMETYPE_VIDEO_HEVC, MediaFormat.MIMETYPE_VIDEO_AV1};
         final int[] bitRateModes = new int[]{BITRATE_MODE_CBR, BITRATE_MODE_VBR};
         for (String mediaType : mediaTypes) {
             for (int bitRateMode : bitRateModes) {
-                // mediaType, cfg, segment bitrates, res, test label
+                // mediaType, cfg, segment bitrates, test label
                 String label = String.format("%dx%d_%s", width, height,
                         bitRateModeToString(bitRateMode));
                 exhaustiveArgsList.add(new Object[]{mediaType, getVideoEncoderCfgParams(mediaType,
-                        width, height, segmentBitRates[0], bitRateMode), segmentBitRates, res,
-                        label});
+                        width, height, segmentBitRates[0], bitRateMode), segmentBitRates, label});
             }
         }
     }
 
-    @Parameterized.Parameters(name = "{index}_{0}_{1}_{5}")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{4}")
     public static Collection<Object[]> input() {
-        addParams(1920, 1080, SEGMENT_BITRATES_FULLHD, BIRTHDAY_FULLHD_LANDSCAPE);
-        addParams(1080, 1920, SEGMENT_BITRATES_FULLHD, SELFIEGROUP_FULLHD_PORTRAIT);
-        addParams(1280, 720, SEGMENT_BITRATES_HD, BIRTHDAY_FULLHD_LANDSCAPE);
+        addParams(1920, 1080, SEGMENT_BITRATES_FULLHD);
+        addParams(1080, 1920, SEGMENT_BITRATES_FULLHD);
+        addParams(1280, 720, SEGMENT_BITRATES_HD);
         return prepareParamList(exhaustiveArgsList, true, false, true, false, HARDWARE);
     }
 
-    @BeforeClass
-    public static void decodeResourcesToYuv() {
-        ArrayList<CompressedResource> resources = new ArrayList<>();
-        for (Object[] arg : exhaustiveArgsList) {
-            resources.add((CompressedResource) arg[3]);
-        }
-        decodeStreamsToYuv(resources, RES_YUV_MAP, LOG_TAG);
-    }
-
-    @AfterClass
-    public static void cleanUpResources() {
-        for (RawResource res : RES_YUV_MAP.values()) {
-            new File(res.mFileName).delete();
-        }
-    }
-
     public VideoEncoderAdaptiveBitRateTest(String encoder, String mediaType,
-            EncoderConfigParams cfg, int[] segmentBitRates, CompressedResource res,
+            EncoderConfigParams cfg, int[] segmentBitRates,
             @SuppressWarnings("unused") String testLabel, String allTestParams) {
-        super(encoder, mediaType, cfg, res, allTestParams);
+        super(encoder, mediaType, cfg, allTestParams);
         mSegmentBitRates = segmentBitRates;
         mSegmentSizes = new float[segmentBitRates.length];
     }
@@ -190,7 +164,7 @@ public class VideoEncoderAdaptiveBitRateTest extends VideoEncoderValidationTestB
         }
     }
 
-    @CddTest(requirements = "5.2/C-2-1")
+    @CddTest(requirements = {"5.2/C-2-1"})
     @ApiTest(apis = "android.media.MediaCodec#PARAMETER_KEY_VIDEO_BITRATE")
     @Test
     public void testAdaptiveBitRate() throws IOException, InterruptedException,
@@ -206,11 +180,8 @@ public class VideoEncoderAdaptiveBitRateTest extends VideoEncoderValidationTestB
         assumeTrue("Encoder: " + mCodecName + " doesn't support format: " + format,
                 areFormatsSupported(mCodecName, mMediaType, formats));
 
-        RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
-        assumeNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
-                + mTestEnv + DIAGNOSTICS, res);
         int limit = mSegmentBitRates.length * SEGMENT_DURATION * mEncCfgParams[0].mFrameRate;
-        encodeToMemory(mCodecName, mEncCfgParams[0], res, limit, true, false);
+        encodeToMemory(mCodecName, mEncCfgParams[0], limit, true, false);
         assertEquals("encoder did not encode the requested number of frames \n" + mTestConfig
                 + mTestEnv, mOutputCount, limit);
         passFailCriteria(0, 1);

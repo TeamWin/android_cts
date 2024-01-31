@@ -16,9 +16,6 @@
 
 package android.net.wifi.cts;
 
-import static android.net.wifi.WifiConfiguration.DHCP_HOSTNAME_SETTING_DO_NOT_SEND;
-import static android.net.wifi.WifiConfiguration.DHCP_HOSTNAME_SETTING_SEND;
-import static android.net.wifi.WifiConfiguration.DHCP_HOSTNAME_SETTING_AUTO;
 import static android.net.wifi.WifiConfiguration.RANDOMIZATION_AUTO;
 import static android.net.wifi.WifiConfiguration.RANDOMIZATION_NONE;
 import static android.net.wifi.WifiConfiguration.RANDOMIZATION_NON_PERSISTENT;
@@ -173,18 +170,14 @@ public class WifiConfigurationTest extends WifiJUnit3TestBase {
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
-    public void testSetGetDhcpHostnameSetting() throws Exception {
+    public void testSetGetSendDhcpHostnameEnabled() throws Exception {
         WifiConfiguration configuration = new WifiConfiguration();
-        assertEquals(DHCP_HOSTNAME_SETTING_AUTO, configuration.getDhcpHostnameSetting());
 
-        configuration.setDhcpHostnameSetting(DHCP_HOSTNAME_SETTING_SEND);
-        assertEquals(DHCP_HOSTNAME_SETTING_SEND, configuration.getDhcpHostnameSetting());
+        configuration.setSendDhcpHostnameEnabled(false);
+        assertFalse(configuration.isSendDhcpHostnameEnabled());
 
-        configuration.setDhcpHostnameSetting(DHCP_HOSTNAME_SETTING_DO_NOT_SEND);
-        assertEquals(DHCP_HOSTNAME_SETTING_DO_NOT_SEND, configuration.getDhcpHostnameSetting());
-
-        configuration.setDhcpHostnameSetting(DHCP_HOSTNAME_SETTING_AUTO);
-        assertEquals(DHCP_HOSTNAME_SETTING_AUTO, configuration.getDhcpHostnameSetting());
+        configuration.setSendDhcpHostnameEnabled(true);
+        assertTrue(configuration.isSendDhcpHostnameEnabled());
     }
 
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)

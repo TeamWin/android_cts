@@ -27,6 +27,9 @@ import static android.net.wifi.WifiConfiguration.INVALID_NETWORK_ID;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_SOFTAP;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_WIFI_AWARE;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_WIFI_DIRECT;
+import static android.net.wifi.WifiManager.SEND_DHCP_HOSTNAME_RESTRICTION_ALL;
+import static android.net.wifi.WifiManager.SEND_DHCP_HOSTNAME_RESTRICTION_NONE;
+import static android.net.wifi.WifiManager.SEND_DHCP_HOSTNAME_RESTRICTION_OPEN;
 import static android.net.wifi.WifiScanner.WIFI_BAND_24_GHZ;
 import static android.os.Process.myUid;
 
@@ -6841,5 +6844,60 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
         assertEquals(msduLifetimeMillis, qosCharacteristics.getMsduLifetimeMillis());
         assertEquals(deliveryRatio, qosCharacteristics.getDeliveryRatio());
         assertEquals(countExponent, qosCharacteristics.getCountExponent());
+    }
+
+    private int querySendDhcpHostnameRestrictionSynchronous() throws Exception {
+        Mutable<Integer> queriedRestriction =
+                new Mutable<>(SEND_DHCP_HOSTNAME_RESTRICTION_NONE);
+        Mutable<Boolean> isQuerySucceeded = new Mutable<>(false);
+        sWifiManager.querySendDhcpHostnameRestriction(mExecutor, (value) -> {
+            synchronized (mLock) {
+                queriedRestriction.value = value;
+                isQuerySucceeded.value = true;
+                mLock.notify();
+            }
+        });
+        synchronized (mLock) {
+            long now = System.currentTimeMillis();
+            long deadline = now + TEST_WAIT_DURATION_MS;
+            while (!isQuerySucceeded.value && now < deadline) {
+                mLock.wait(deadline - now);
+                now = System.currentTimeMillis();
+            }
+        }
+        assertTrue(isQuerySucceeded.value);
+        return queriedRestriction.value;
+    }
+
+    /**
+     * Tests {@link WifiManager#setSendDhcpHostnameRestriction(int)} and
+     * {@link WifiManager#querySendDhcpHostnameRestriction(Executor, Consumer)}.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    @Test
+    public void testSetAndQuerySendDhcpHostnameRestriction() throws Exception {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        int previousRestriction = SEND_DHCP_HOSTNAME_RESTRICTION_NONE;
+        boolean isRestoreRequired = false;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            previousRestriction = querySendDhcpHostnameRestrictionSynchronous();
+
+            sWifiManager.setSendDhcpHostnameRestriction(SEND_DHCP_HOSTNAME_RESTRICTION_OPEN);
+            isRestoreRequired = true;
+            assertEquals(querySendDhcpHostnameRestrictionSynchronous(),
+                    SEND_DHCP_HOSTNAME_RESTRICTION_OPEN);
+
+            sWifiManager.setSendDhcpHostnameRestriction(SEND_DHCP_HOSTNAME_RESTRICTION_ALL);
+            assertEquals(querySendDhcpHostnameRestrictionSynchronous(),
+                    SEND_DHCP_HOSTNAME_RESTRICTION_ALL);
+        } finally {
+            if (isRestoreRequired) {
+                sWifiManager.setSendDhcpHostnameRestriction(previousRestriction);
+            }
+            uiAutomation.dropShellPermissionIdentity();
+        }
     }
 }

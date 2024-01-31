@@ -657,6 +657,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
+    @SuppressWarnings("MissingFail") // TODO(b/320664730) expect Exception after V release
     public void testPI_appAIsFgDenyCreatorPrivilege_appBTryOverrideCreatorPrivilege_isBlocked()
             throws Exception {
         // Start AppB foreground activity
@@ -671,9 +672,17 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         // cannot be set from the sender side.
         TestServiceClient serviceA = getTestService(APP_A);
         PendingIntent pi =
-                serviceA.generatePendingIntent(APP_B.BACKGROUND_ACTIVITY, CREATE_OPTIONS_DENY_BAL);
+                serviceA.generatePendingIntent(APP_B.BACKGROUND_ACTIVITY,
+                        CREATE_OPTIONS_DENY_BAL);
         TestServiceClient serviceB = getTestService(APP_B);
-        serviceB.sendPendingIntent(pi, CREATE_OPTIONS_ALLOW_BAL);
+        try {
+            serviceB.sendPendingIntent(pi, CREATE_OPTIONS_ALLOW_BAL);
+        } catch (IllegalArgumentException e) {
+            assertThat(e).hasMessageThat()
+                    .contains("pendingIntentCreatorBackgroundActivityStartMode");
+            // If sending the PendingIntent failed because we detected a mismatch in the bundle,
+            // the result should be the same as suppressing the start (just earlier).
+        }
         assertActivityNotFocused(APP_B.FOREGROUND_ACTIVITY);
     }
 
@@ -773,6 +782,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
+    @SuppressWarnings("MissingFail") // TODO(b/320664730) expect Exception after V release
     public void testPendingIntentBroadcastActivity_appBIsForegroundAndTryPassBalOnIntent_isBlocked()
             throws Exception {
         // Start AppB foreground activity
@@ -785,16 +795,22 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         // behalf of the sender by adding the BAL option to the Intent's extras, which should have
         // no effect.
         TestServiceClient serviceA = getTestService(APP_A);
-        PendingIntent pi =
-                serviceA.generatePendingIntent(APP_A.BACKGROUND_ACTIVITY, SEND_OPTIONS_ALLOW_BAL);
-        TestServiceClient serviceB = getTestService(APP_B);
-        sendPendingIntent(pi, serviceB);
-
+        try {
+            PendingIntent pi = serviceA.generatePendingIntent(APP_A.BACKGROUND_ACTIVITY,
+                            SEND_OPTIONS_ALLOW_BAL);
+            TestServiceClient serviceB = getTestService(APP_B);
+            sendPendingIntent(pi, serviceB);
+        } catch (IllegalArgumentException e) {
+            assertThat(e).hasMessageThat().contains("pendingIntentBackgroundActivityStartMode");
+            // If generating the PendingIntent failed because we detected a mismatch in the bundle,
+            // the result should be the same as suppressing the start (just earlier).
+        }
         assertActivityNotFocused(APP_A.BACKGROUND_ACTIVITY);
         assertTaskStackHasComponents(APP_B.FOREGROUND_ACTIVITY, APP_B.FOREGROUND_ACTIVITY);
     }
 
     @Test
+    @SuppressWarnings("MissingFail") // TODO(b/320664730) expect Exception after V release
     public void testPendingIntentBroadcastActivity_appBIsFgAndTryPassBalOnIntentWithNullBundleOnPendingIntent_isBlocked()
             throws Exception {
         // Start AppB foreground activity
@@ -804,10 +820,16 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
         // activity in App A
         TestServiceClient serviceA = getTestService(APP_A);
-        PendingIntent pi =
-                serviceA.generatePendingIntent(APP_A.BACKGROUND_ACTIVITY, SEND_OPTIONS_ALLOW_BAL);
-        TestServiceClient serviceB = getTestService(APP_B);
-        serviceB.sendPendingIntent(pi, null);
+        try {
+            PendingIntent pi = serviceA.generatePendingIntent(APP_A.BACKGROUND_ACTIVITY,
+                    SEND_OPTIONS_ALLOW_BAL);
+            TestServiceClient serviceB = getTestService(APP_B);
+            serviceB.sendPendingIntent(pi, null);
+        } catch (IllegalArgumentException e) {
+            assertThat(e).hasMessageThat().contains("pendingIntentBackgroundActivityStartMode");
+            // If generating the PendingIntent failed because we detected a mismatch in the bundle,
+            // the result should be the same as suppressing the start (just earlier).
+        }
 
         assertActivityNotFocused(APP_A.BACKGROUND_ACTIVITY);
         assertTaskStackHasComponents(APP_B.FOREGROUND_ACTIVITY, APP_B.FOREGROUND_ACTIVITY);

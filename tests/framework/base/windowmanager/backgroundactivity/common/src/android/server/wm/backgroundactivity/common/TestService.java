@@ -78,6 +78,8 @@ public class TestService extends Service {
                 StorageManager stm = getSystemService(StorageManager.class);
                 PendingIntent pi = stm.getManageSpaceActivityIntent(getPackageName(), 0);
                 pi.send();
+            } catch (IllegalArgumentException e) {
+                throw e;
             } catch (Exception e) {
                 Log.e(TAG, "startManageSpaceActivity failed", e);
                 throw new IllegalStateException("Unable to send PendingIntent");
@@ -96,6 +98,8 @@ public class TestService extends Service {
         public void sendPendingIntent(PendingIntent pendingIntent, Bundle sendOptions) {
             try {
                 pendingIntent.send(sendOptions);
+            } catch (IllegalArgumentException e) {
+                throw e;
             } catch (Exception e) {
                 Log.e(TAG, "sendPendingIntent failed", e);
                 throw new AssertionError(e);
@@ -109,6 +113,8 @@ public class TestService extends Service {
                 sLatestForegroundActivity.startIntentSenderForResult(
                         pendingIntent.getIntentSender(), /*requestCode*/1, /*fillinIntent*/
                         null, /*flagsMask*/0, /*flagsValue*/0, /*extraFlags*/0);
+            } catch (IllegalArgumentException e) {
+                throw e;
             } catch (Exception e) {
                 Log.e(TAG, "sendPendingIntentForResult failed", e);
                 throw new AssertionError(e);
@@ -122,6 +128,8 @@ public class TestService extends Service {
                 sLatestForegroundActivity.startIntentSender(
                         pendingIntent.getIntentSender(), /*fillinIntent*/
                         null, /*flagsMask*/0, /*flagsValue*/0, /*extraFlags*/0);
+            } catch (IllegalArgumentException e) {
+                throw e;
             } catch (Exception e) {
                 Log.e(TAG, "sendPendingIntent failed", e);
                 throw new AssertionError(e);
@@ -132,6 +140,8 @@ public class TestService extends Service {
         public void startActivityIntent(Intent intent) {
             try {
                 startActivity(intent);
+            } catch (IllegalArgumentException e) {
+                throw e;
             } catch (Exception e) {
                 Log.e(TAG, "startActivityIntent failed", e);
                 throw new AssertionError(e);

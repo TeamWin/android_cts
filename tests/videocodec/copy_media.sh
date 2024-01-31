@@ -17,7 +17,7 @@
 ## script to install cts video test files manually
 
 adbOptions=" "
-resLabel=CtsVideoCodecTestCases-2.0
+resLabel=CtsVideoCodecTestCases-2.1
 srcDir="/tmp/$resLabel"
 tgtDir="/sdcard/test"
 usage="Usage: $0 [-h] [-s serial]"

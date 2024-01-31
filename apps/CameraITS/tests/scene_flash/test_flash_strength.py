@@ -197,7 +197,7 @@ class FlashStrengthTest(its_base_test.ItsBaseTest):
       failure_messages = []
       # list with no flash (baseline), linear strength steps, max strength
       flash_strengths = [max_flash_strength*i/_STRENGTH_STEPS for i in
-                          range(_STRENGTH_STEPS)]
+                         range(_STRENGTH_STEPS)]
       flash_strengths.append(max_flash_strength)
       logging.debug('Testing flash strengths: %s', flash_strengths)
       # loop through ae modes to be tested

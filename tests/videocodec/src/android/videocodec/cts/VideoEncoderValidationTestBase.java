@@ -18,6 +18,11 @@ package android.videocodec.cts;
 
 import static android.media.MediaFormat.PICTURE_TYPE_I;
 import static android.media.MediaFormat.PICTURE_TYPE_UNKNOWN;
+import static android.videocodec.cts.VideoEncoderInput.BIRTHDAY_FULLHD_LANDSCAPE;
+import static android.videocodec.cts.VideoEncoderInput.RES_YUV_MAP;
+import static android.videocodec.cts.VideoEncoderInput.RIVER_HD_LANDSCAPE;
+import static android.videocodec.cts.VideoEncoderInput.SELFIEGROUP_FULLHD_PORTRAIT;
+import static android.videocodec.cts.VideoEncoderInput.getRawResource;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -33,9 +38,10 @@ import android.mediav2.common.cts.EncoderConfigParams;
 import android.mediav2.common.cts.RawResource;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
-
 import com.android.compatibility.common.util.Preconditions;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +49,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.TreeMap;
 
@@ -51,12 +58,10 @@ import java.util.TreeMap;
  */
 public class VideoEncoderValidationTestBase extends CodecEncoderTestBase {
     private static final String LOG_TAG = VideoEncoderValidationTestBase.class.getSimpleName();
-    private static final String MEDIA_DIR = WorkDir.getMediaDirString();
 
     protected static final boolean ENABLE_LOGS = false;
     protected static final StringBuilder DIAGNOSTICS = new StringBuilder();
 
-    protected final CompressedResource mCRes;
     protected BitStreamUtils.ParserBase mParser;
 
     final TreeMap<Long, Integer> mPtsPicTypeMap = new TreeMap<>();
@@ -65,32 +70,6 @@ public class VideoEncoderValidationTestBase extends CodecEncoderTestBase {
     long mFileReadOffset;
     long mFileLength;
 
-    public static class CompressedResource {
-        final String mMediaType;
-        final String mResFile;
-
-        CompressedResource(String mediaType, String resFile) {
-            mMediaType = mediaType;
-            mResFile = resFile;
-        }
-
-        @NonNull
-        @Override
-        public String toString() {
-            return "CompressedResource{" + "res file ='" + mResFile + '\'' + '}';
-        }
-
-        public String uniqueLabel() {
-            return mMediaType + mResFile;
-        }
-    }
-
-    public static final CompressedResource BIRTHDAY_FULLHD_LANDSCAPE =
-            new CompressedResource(MediaFormat.MIMETYPE_VIDEO_AVC, MEDIA_DIR
-                    + "AVICON-MOBILE-BirthdayHalfway-SI17-CRUW03-L-420-8bit-SDR-1080p-30fps.mp4");
-    public static final CompressedResource SELFIEGROUP_FULLHD_PORTRAIT =
-            new CompressedResource(MediaFormat.MIMETYPE_VIDEO_AVC, MEDIA_DIR
-                    + "AVICON-MOBILE-SelfieGroupGarden-SF15-CF01-P-420-8bit-SDR-1080p-30fps.mp4");
 
     static void logAllFilesInCacheDir(boolean isStartOfTest) {
         if (isStartOfTest) DIAGNOSTICS.setLength(0);
@@ -107,34 +86,57 @@ public class VideoEncoderValidationTestBase extends CodecEncoderTestBase {
         }
     }
 
-    static void decodeStreamsToYuv(ArrayList<CompressedResource> resources,
+    static void decodeStreamsToYuv(List<VideoEncoderInput.CompressedResource> resources,
             HashMap<String, RawResource> streamYuvMap, String prefix) {
         decodeStreamsToYuv(resources, streamYuvMap, Integer.MAX_VALUE, prefix);
     }
 
-    static void decodeStreamsToYuv(ArrayList<CompressedResource> resources,
+    static void decodeStreamsToYuv(List<VideoEncoderInput.CompressedResource> resources,
             HashMap<String, RawResource> streamYuvMap, int frameLimit, String prefix) {
         logAllFilesInCacheDir(true);
-        for (CompressedResource res : resources) {
-            if (!(streamYuvMap.containsKey(res.uniqueLabel()))) {
-                try {
-                    DecodeStreamToYuv yuv = new DecodeStreamToYuv(res.mMediaType, res.mResFile,
-                            frameLimit, prefix);
-                    streamYuvMap.put(res.uniqueLabel(), yuv.getDecodedYuv());
-                } catch (Exception e) {
-                    streamYuvMap.put(res.uniqueLabel(), null);
-                    DIAGNOSTICS.append(String.format("\nWhile decoding the resource : %s,"
-                            + " encountered exception :  %s was thrown", res, e));
-                    logAllFilesInCacheDir(false);
-                }
+        for (VideoEncoderInput.CompressedResource res : resources) {
+            decodeStreamsToYuv(res, streamYuvMap, frameLimit, prefix);
+        }
+        if (streamYuvMap.values().stream().allMatch(Objects::isNull)) {
+            decodeStreamsToYuv(RIVER_HD_LANDSCAPE, streamYuvMap, frameLimit, prefix);
+        }
+    }
+
+    static void decodeStreamsToYuv(VideoEncoderInput.CompressedResource res,
+            HashMap<String, RawResource> streamYuvMap, int frameLimit, String prefix) {
+        if (!(streamYuvMap.containsKey(res.uniqueLabel()))) {
+            try {
+                DecodeStreamToYuv yuv = new DecodeStreamToYuv(res.mMediaType, res.mResFile,
+                        frameLimit, prefix);
+                streamYuvMap.put(res.uniqueLabel(), yuv.getDecodedYuv());
+            } catch (Exception e) {
+                streamYuvMap.put(res.uniqueLabel(), null);
+                DIAGNOSTICS.append(String.format("\nWhile decoding the resource : %s,"
+                        + " encountered exception :  %s was thrown", res, e));
+                logAllFilesInCacheDir(false);
             }
         }
     }
 
+    @BeforeClass
+    public static void decodeResourcesToYuv() {
+        ArrayList<VideoEncoderInput.CompressedResource> resources = new ArrayList<>();
+        resources.add(BIRTHDAY_FULLHD_LANDSCAPE);
+        resources.add(SELFIEGROUP_FULLHD_PORTRAIT);
+        decodeStreamsToYuv(resources, RES_YUV_MAP, LOG_TAG);
+    }
+
+    @AfterClass
+    public static void cleanUpResources() {
+        for (RawResource res : RES_YUV_MAP.values()) {
+            new File(res.mFileName).delete();
+        }
+        RES_YUV_MAP.clear();
+    }
+
     VideoEncoderValidationTestBase(String encoder, String mediaType,
-            EncoderConfigParams encCfgParams, CompressedResource res, String allTestParams) {
+            EncoderConfigParams encCfgParams, String allTestParams) {
         super(encoder, mediaType, new EncoderConfigParams[]{encCfgParams}, allTestParams);
-        mCRes = res;
     }
 
     protected void setUpSource(String inpPath) throws IOException {
@@ -148,6 +150,14 @@ public class VideoEncoderValidationTestBase extends CodecEncoderTestBase {
     protected void resetContext(boolean isAsync, boolean signalEOSWithLastFrame) {
         super.resetContext(isAsync, signalEOSWithLastFrame);
         mPtsPicTypeMap.clear();
+    }
+
+    protected void encodeToMemory(String encoder, EncoderConfigParams cfg, int frameLimit,
+            boolean saveToMem, boolean muxOutput) throws IOException, InterruptedException {
+        RawResource res = getRawResource(cfg);
+        assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0]
+                + mTestConfig + mTestEnv + DIAGNOSTICS, res);
+        super.encodeToMemory(encoder, cfg, res, frameLimit, saveToMem, muxOutput);
     }
 
     protected void enqueueInput(int bufferIndex) {

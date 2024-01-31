@@ -21,29 +21,23 @@ import static android.media.MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR;
 import static android.mediav2.common.cts.CodecTestBase.ComponentClass.HARDWARE;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeNotNull;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.mediav2.common.cts.EncoderConfigParams;
-import android.mediav2.common.cts.RawResource;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 
-import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -66,32 +60,13 @@ import java.util.Queue;
  */
 @RunWith(Parameterized.class)
 public class VideoEncoderTargetBitrateTest extends VideoEncoderValidationTestBase {
-    private static final String LOG_TAG = VideoEncoderTargetBitrateTest.class.getSimpleName();
     private static final int KEY_FRAME_INTERVAL = 1;
     private static final int FRAME_LIMIT = 300;
     private static final List<Object[]> exhaustiveArgsList = new ArrayList<>();
-    private static final HashMap<String, RawResource> RES_YUV_MAP = new HashMap<>();
-
     private final float mThreshold;
     private final Queue<Integer> mBufferSize = new LinkedList<>();
     private int mTotalOvershoots = 0;
     private final StringBuilder mMsg = new StringBuilder();
-
-    @BeforeClass
-    public static void decodeResourcesToYuv() {
-        ArrayList<CompressedResource> resources = new ArrayList<>();
-        for (Object[] arg : exhaustiveArgsList) {
-            resources.add((CompressedResource) arg[2]);
-        }
-        decodeStreamsToYuv(resources, RES_YUV_MAP, LOG_TAG);
-    }
-
-    @AfterClass
-    public static void cleanUpResources() {
-        for (RawResource res : RES_YUV_MAP.values()) {
-            new File(res.mFileName).delete();
-        }
-    }
 
     private static EncoderConfigParams getVideoEncoderCfgParams(String mediaType, int width,
             int height, int bitRate, int bitRateMode, int maxBFrames) {
@@ -105,7 +80,7 @@ public class VideoEncoderTargetBitrateTest extends VideoEncoderValidationTestBas
                 .build();
     }
 
-    private static void addParams(int width, int height, CompressedResource res) {
+    private static void addParams(int width, int height) {
         final String[] mediaTypes = new String[]{MediaFormat.MIMETYPE_VIDEO_AVC,
                 MediaFormat.MIMETYPE_VIDEO_HEVC, MediaFormat.MIMETYPE_VIDEO_AV1};
         final int[] bitRates = new int[]{5000000, 8000000, 10000000};
@@ -120,29 +95,29 @@ public class VideoEncoderTargetBitrateTest extends VideoEncoderValidationTestBas
                         continue;
                     }
                     for (int bitRateMode : bitRateModes) {
-                        // mediaType, cfg, resource file, test label
+                        // mediaType, cfg, test label
                         String label = String.format("%dkbps_%dx%d_maxb-%d_%s", bitRate / 1000,
                                 width, height, maxBFrames, bitRateModeToString(bitRateMode));
                         exhaustiveArgsList.add(new Object[]{mediaType,
                                 getVideoEncoderCfgParams(mediaType, width, height, bitRate,
-                                        bitRateMode, maxBFrames), res, label});
+                                        bitRateMode, maxBFrames), label});
                     }
                 }
             }
         }
     }
 
-    @Parameterized.Parameters(name = "{index}_{0}_{1}_{4}")
+    @Parameterized.Parameters(name = "{index}_{0}_{1}_{3}")
     public static Collection<Object[]> input() {
-        addParams(1920, 1080, BIRTHDAY_FULLHD_LANDSCAPE);
-        addParams(1080, 1920, SELFIEGROUP_FULLHD_PORTRAIT);
+        addParams(1920, 1080);
+        addParams(1080, 1920);
         return prepareParamList(exhaustiveArgsList, true, false, true, false, HARDWARE);
     }
 
     public VideoEncoderTargetBitrateTest(String encoder, String mediaType,
-            EncoderConfigParams cfgParams, CompressedResource res,
-            @SuppressWarnings("unused") String testLabel, String allTestParams) {
-        super(encoder, mediaType, cfgParams, res, allTestParams);
+            EncoderConfigParams cfgParams, @SuppressWarnings("unused") String testLabel,
+            String allTestParams) {
+        super(encoder, mediaType, cfgParams, allTestParams);
         float sf = 1.f;
         if (cfgParams.mBitRateMode == BITRATE_MODE_VBR) {
             sf = 2.f;
@@ -181,10 +156,7 @@ public class VideoEncoderTargetBitrateTest extends VideoEncoderValidationTestBas
         formats.add(format);
         Assume.assumeTrue("Encoder: " + mCodecName + " doesn't support format: " + format,
                 areFormatsSupported(mCodecName, mMediaType, formats));
-        RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
-        assumeNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
-                + mTestEnv + DIAGNOSTICS, res);
-        encodeToMemory(mCodecName, mEncCfgParams[0], res, FRAME_LIMIT, true, false);
+        encodeToMemory(mCodecName, mEncCfgParams[0], FRAME_LIMIT, true, false);
         assertEquals("encoder did not encode the requested number of frames \n"
                 + mTestConfig + mTestEnv, FRAME_LIMIT, mOutputCount);
         Assume.assumeTrue(mMsg.toString() + mTestConfig + mTestEnv, mTotalOvershoots == 0);
