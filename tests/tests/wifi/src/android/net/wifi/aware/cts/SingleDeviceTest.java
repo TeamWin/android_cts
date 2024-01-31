@@ -40,6 +40,7 @@ import android.net.ConnectivityManager;
 import android.net.MacAddress;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
+import android.net.wifi.OuiKeyedData;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiScanner;
 import android.net.wifi.aware.AttachCallback;
@@ -67,6 +68,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Parcel;
+import android.os.PersistableBundle;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.filters.SdkSuppress;
@@ -75,6 +77,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.wifi.flags.Flags;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -867,8 +870,17 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         }
 
         // 2. update-publish
-        publishConfig = new PublishConfig.Builder().setServiceName(
-                serviceName).setServiceSpecificInfo("extras".getBytes()).build();
+        PublishConfig.Builder configBuilder = new PublishConfig.Builder()
+                .setServiceName(serviceName)
+                .setServiceSpecificInfo("extras".getBytes());
+        List<OuiKeyedData> vendorData = generateOuiKeyedDataList(5);
+        if (isVendorDataSupported()) {
+            configBuilder.setVendorData(vendorData);
+        }
+        publishConfig = configBuilder.build();
+        if (isVendorDataSupported()) {
+            assertEquals(vendorData, publishConfig.getVendorData());
+        }
         discoverySession.updatePublish(publishConfig);
         assertTrue("Publish update", discoveryCb.waitForCallback(
                 DiscoverySessionCallbackTest.ON_SESSION_CONFIG_UPDATED));
@@ -1179,6 +1191,27 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         });
     }
 
+    private boolean isVendorDataSupported() {
+        return Flags.vendorParcelableParameters()
+                && (ApiLevelUtil.codenameEquals("VanillaIceCream")
+                || ApiLevelUtil.isAtLeast(Build.VERSION_CODES.VANILLA_ICE_CREAM));
+    }
+
+    private static OuiKeyedData generateOuiKeyedData(int oui) {
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putString("stringKey", "stringValue");
+        bundle.putInt("intKey", 789);
+        return new OuiKeyedData.Builder(oui, bundle).build();
+    }
+
+    private static List<OuiKeyedData> generateOuiKeyedDataList(int size) {
+        List<OuiKeyedData> dataList = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            dataList.add(generateOuiKeyedData(i + 1));
+        }
+        return dataList;
+    }
+
     /**
      * Validate a successful subscribe discovery session lifetime: subscribe, update subscribe,
      * destroy.
@@ -1227,7 +1260,16 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         if (rttSupported) {
             builder.setMinDistanceMm(MIN_DISTANCE_MM);
         }
+
+        List<OuiKeyedData> vendorData = generateOuiKeyedDataList(5);
+        if (isVendorDataSupported()) {
+            builder.setVendorData(vendorData);
+        }
+
         subscribeConfig = builder.build();
+        if (isVendorDataSupported()) {
+            assertEquals(vendorData, subscribeConfig.getVendorData());
+        }
 
         discoverySession.updateSubscribe(subscribeConfig);
         assertTrue("Subscribe update", discoveryCb.waitForCallback(
