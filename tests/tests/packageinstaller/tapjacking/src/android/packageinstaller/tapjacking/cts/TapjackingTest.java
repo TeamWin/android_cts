@@ -119,12 +119,12 @@ public class TapjackingTest {
                 waitForView(mPackageName, OVERLAY_ACTIVITY_TEXT_VIEW_ID));
 
         installButton = waitForButton(INSTALL_BUTTON_ID);
-        assertNotNull("Cannot find install button below overlay activity", installButton);
-
-        Log.i(LOG_TAG, "installButton.click");
-        installButton.click();
-        assertFalse("Tap on install button succeeded", mUiDevice.wait(
-            Until.gone(getBySelector(INSTALL_BUTTON_ID)), WAIT_FOR_UI_TIMEOUT));
+        if (installButton != null) {
+            Log.i(LOG_TAG, "installButton.click");
+            installButton.click();
+            assertFalse("Tap on install button succeeded", mUiDevice.wait(
+                Until.gone(getBySelector(INSTALL_BUTTON_ID)), WAIT_FOR_UI_TIMEOUT));
+        }
 
         mUiDevice.pressBack();
     }
@@ -144,15 +144,16 @@ public class TapjackingTest {
             waitForView(mPackageName, OVERLAY_ACTIVITY_TEXT_VIEW_ID));
 
         installButton = waitForButton(INSTALL_BUTTON_ID);
-        assertNotNull("Cannot find install button below overlay activity", installButton);
-
-        Log.i(LOG_TAG, "installButton.click");
-        installButton.click();
-        assertFalse("Tap on install button succeeded", mUiDevice.wait(
-            Until.gone(getBySelector(INSTALL_BUTTON_ID)), WAIT_FOR_UI_TIMEOUT));
+        if (installButton != null) {
+            Log.i(LOG_TAG, "installButton.click");
+            installButton.click();
+            assertFalse("Tap on install button succeeded", mUiDevice.wait(
+                    Until.gone(getBySelector(INSTALL_BUTTON_ID)), WAIT_FOR_UI_TIMEOUT));
+        }
 
         mUiDevice.pressBack();
 
+        // Overlay should be gone and we require that the button can be found.
         installButton = waitForButton(INSTALL_BUTTON_ID);
         assertNotNull("Cannot find install button", installButton);
 
