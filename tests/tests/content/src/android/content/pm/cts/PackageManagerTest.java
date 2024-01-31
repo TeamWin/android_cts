@@ -3062,6 +3062,10 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         assertEquals(applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED, 0);
         // Check archive state.
         assertTrue(applicationInfo.isArchived);
+        // Not pending restore.
+        String pendingRestore = parsePackageDump(HELLO_WORLD_PACKAGE_NAME,
+                "    pendingRestore=");
+        assertThat(pendingRestore).isNull();
 
         byte[] archivedPackage = SystemUtil.runShellCommandByteOutput(
                 mInstrumentation.getUiAutomation(),
@@ -3079,7 +3083,6 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         assertEquals(applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED, 0);
         // Check archive state once again.
         assertTrue(applicationInfo.isArchived);
-
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
 
         // Try to install archived without installer.
@@ -3107,6 +3110,10 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
                 String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
                         archivedPackage.length), archivedPackage));
         assertTrue(isPackagePresent(HELLO_WORLD_PACKAGE_NAME));
+        // Pending restore.
+        String pendingRestore = parsePackageDump(HELLO_WORLD_PACKAGE_NAME,
+                "    pendingRestore=");
+        assertThat(pendingRestore).isEqualTo("true");
         assertDataAppExists(HELLO_WORLD_PACKAGE_NAME);
         // Wrong signature.
         assertThat(SystemUtil.runShellCommand(
@@ -3121,9 +3128,17 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         assertEquals("Success\n", SystemUtil.runShellCommand(
                 "pm install -t -g " + HELLO_WORLD_UPDATED_APK));
         assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        // Not pending restore.
+        pendingRestore = parsePackageDump(HELLO_WORLD_PACKAGE_NAME,
+                "    pendingRestore=");
+        assertThat(pendingRestore).isNull();
         // Uninstall, keep data.
         assertEquals("Success\n",
                 SystemUtil.runShellCommand("pm uninstall -k " + HELLO_WORLD_PACKAGE_NAME));
+        // Not pending restore.
+        pendingRestore = parsePackageDump(HELLO_WORLD_PACKAGE_NAME,
+                "    pendingRestore=");
+        assertThat(pendingRestore).isNull();
         // Full uninstall.
         assertEquals("Success\n",
                 SystemUtil.runShellCommand("pm uninstall " + HELLO_WORLD_PACKAGE_NAME));
@@ -3150,6 +3165,9 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
                 "    privatePkgFlags=[");
         assertThat(privatePkgFlags).doesNotContain("PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE");
         assertThat(privatePkgFlags).doesNotContain("PRIVATE_FLAG_HAS_FRAGILE_USER_DATA");
+        String pendingRestore = parsePackageDump(HELLO_WORLD_PACKAGE_NAME,
+                "    pendingRestore=");
+        assertThat(pendingRestore).isEqualTo("true");
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
 
         installPackage(HELLO_WORLD_FLAGS_APK);
@@ -3169,6 +3187,9 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
                 "    privatePkgFlags=[");
         assertThat(privatePkgFlags).contains("PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE");
         assertThat(privatePkgFlags).contains("PRIVATE_FLAG_HAS_FRAGILE_USER_DATA");
+        pendingRestore = parsePackageDump(HELLO_WORLD_PACKAGE_NAME,
+                "    pendingRestore=");
+        assertThat(pendingRestore).isEqualTo("true");
         assertDataAppExists(HELLO_WORLD_PACKAGE_NAME);
     }
 
