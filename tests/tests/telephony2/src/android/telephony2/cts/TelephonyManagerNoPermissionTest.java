@@ -17,6 +17,7 @@
 package android.telephony2.cts;
 
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeNotNull;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -93,9 +94,10 @@ public class TelephonyManagerNoPermissionTest {
 
     @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
     @Test
-    public void getAllowedCarriers_SecurityException() throws Exception {
+    public void getCarrierRestrictionRules_SecurityException() {
         try {
-            mTelephonyManager.getCarrierRestrictionRules().getCarrierRestrictionStatus();
+            assumeNotNull(mTelephonyManager.getCarrierRestrictionRules());
+            mTelephonyManager.getCarrierRestrictionRules();
             fail();
         } catch (SecurityException se) {
             // expected
