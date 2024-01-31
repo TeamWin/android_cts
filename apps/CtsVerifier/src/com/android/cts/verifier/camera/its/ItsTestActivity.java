@@ -102,7 +102,7 @@ public class ItsTestActivity extends DialogTestListActivity {
     private static final Pattern PERF_METRICS_IMU_DRIFT_PATTERN =
             Pattern.compile("test_imu_drift_sampl_rate:(\\d+(\\.\\d+)?)");
 
-    private static final String REPORT_LOG_NAME = "CtsCameraITSTestCases";
+    private static final String REPORT_LOG_NAME = "CtsCameraItsTestCases";
 
     private final ResultReceiver mResultsReceiver = new ResultReceiver();
     private boolean mReceiverRegistered = false;
