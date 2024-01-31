@@ -21,9 +21,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.Manifest;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.KeyEvent;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -31,6 +33,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
@@ -45,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 
 @LargeTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class KeyEventInjectionTest implements KeyEvent.Callback {
     private static final String TAG = "KeyEventInjectionTest";
 
@@ -56,7 +60,12 @@ public class KeyEventInjectionTest implements KeyEvent.Callback {
     private final BlockingQueue<KeyEvent> mEvents = new LinkedBlockingQueue<>();
     private final BlockingQueue<KeyEvent> mLongPressEvents = new LinkedBlockingQueue<>();
 
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public ActivityTestRule<KeyEventInjectionActivity> mActivityRule =
             new ActivityTestRule<>(KeyEventInjectionActivity.class);
 

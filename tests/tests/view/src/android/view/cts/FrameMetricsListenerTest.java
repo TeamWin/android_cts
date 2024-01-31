@@ -19,6 +19,7 @@ package android.view.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.Manifest;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -26,6 +27,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.FrameMetrics;
 import android.view.Window;
 import android.widget.ScrollView;
@@ -35,6 +37,7 @@ import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
@@ -49,12 +52,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class FrameMetricsListenerTest {
     private Instrumentation mInstrumentation;
     private Activity mActivity;
     private float mPreviousDurationScale;
 
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            androidx.test.platform.app.InstrumentationRegistry
+                    .getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public ActivityTestRule<MockActivity> mActivityRule =
             new ActivityTestRule<>(MockActivity.class);
 

@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.KeyEvent;
 import android.view.KeyboardShortcutInfo;
 
@@ -33,6 +34,7 @@ import org.junit.runner.RunWith;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class KeyboardShortcutInfoTest {
     private static final CharSequence TEST_LABEL = "Test Label";
     private static final char TEST_BASE_CHARACTER = 't';

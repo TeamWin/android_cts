@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
 import android.graphics.Rect;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -35,6 +36,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ActionModeCallback2Test {
     private static final int VIEW_WIDTH = 123;
     private static final int VIEW_HEIGHT = 456;

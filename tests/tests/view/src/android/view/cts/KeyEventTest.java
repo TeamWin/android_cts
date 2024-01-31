@@ -33,6 +33,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.text.method.MetaKeyKeyListener;
 import android.view.InputDevice;
 import android.view.KeyCharacterMap;
@@ -54,6 +55,7 @@ import org.mockito.invocation.InvocationOnMock;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class KeyEventTest {
     private KeyEvent mKeyEvent;
     private long mDownTime;

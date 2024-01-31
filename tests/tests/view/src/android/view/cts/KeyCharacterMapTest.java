@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.text.TextUtils;
 import android.view.KeyCharacterMap;
 import android.view.KeyCharacterMap.KeyData;
@@ -36,6 +37,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class KeyCharacterMapTest {
 
     private KeyCharacterMap mKeyCharacterMap;

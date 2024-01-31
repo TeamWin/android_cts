@@ -231,7 +231,8 @@
         <activity android:name="android.view.cts.GestureDetectorCtsActivity"
              android:label="GestureDetectorCtsActivity"
              android:screenOrientation="locked"
-             android:theme="@android:style/Theme.NoTitleBar.Fullscreen"/>
+             android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+             android:exported="true"/>
 
         <activity android:name="android.view.cts.ScaleGestureDetectorCtsActivity"
              android:label="ScaleGestureDetectorCtsActivity"
@@ -239,27 +240,32 @@
              android:theme="@android:style/Theme.NoTitleBar.Fullscreen"/>
 
         <activity android:name="android.view.cts.DisplayRefreshRateCtsActivity"
-             android:label="DisplayRefreshRateCtsActivity"/>
+             android:label="DisplayRefreshRateCtsActivity"
+             android:exported="true"/>
 
         <activity android:name="android.view.cts.MockActivity"
              android:label="MockActivity"
-             android:screenOrientation="locked">
+             android:screenOrientation="locked"
+             android:exported="true">
             <meta-data android:name="android.view.merge"
                  android:resource="@xml/merge"/>
         </activity>
 
         <activity android:name="android.view.cts.MenuTestActivity"
              android:screenOrientation="locked"
-             android:label="MenuTestActivity"/>
+             android:label="MenuTestActivity"
+             android:exported="true"/>
 
         <activity android:name="android.view.cts.MenuItemCtsActivity"
              android:theme="@android:style/Theme.Material.Light.NoActionBar"
              android:screenOrientation="locked"
-             android:label="MenuItemCtsActivity"/>
+             android:label="MenuItemCtsActivity"
+             android:exported="true"/>
 
         <activity android:name="android.view.cts.ActionModeCtsActivity"
              android:screenOrientation="locked"
-             android:label="ActionModeCtsActivity">
+             android:label="ActionModeCtsActivity"
+             android:exported="true">
         </activity>
 
         <activity android:name="android.view.cts.ViewOverlayCtsActivity"

@@ -18,6 +18,7 @@ package android.view.cts;
 
 import static android.view.cts.MotionEventUtils.withProperties;
 
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.MotionEvent;
 
 import androidx.test.filters.SmallTest;
@@ -32,6 +33,7 @@ import org.junit.runner.RunWith;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class MotionEvent_PointerPropertiesTest {
     private MotionEventUtils.PointerPropertiesBuilder mBuilder;
     private MotionEvent.PointerProperties mPointerProperties;

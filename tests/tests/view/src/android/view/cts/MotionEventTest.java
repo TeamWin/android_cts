@@ -29,6 +29,7 @@ import android.graphics.Matrix;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.text.TextUtils;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -54,6 +55,7 @@ import java.util.Set;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class MotionEventTest {
     private MotionEvent mMotionEvent1;
     private MotionEvent mMotionEvent2;
