@@ -34,6 +34,7 @@ import android.app.GameState;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 
@@ -91,6 +92,8 @@ public class GameManagerTest {
     private static final String PROPERTY_RO_SURFACEFLINGER_GAME_DEFAULT_FRAME_RATE =
             "ro.surface_flinger.game_default_frame_rate_override";
 
+    private static final String PROPERTY_RO_VENDOR_API_LEVEL = "ro.vendor.api_level";
+
     private static final int TEST_LABEL = 1;
     private static final int TEST_QUALITY = 2;
 
@@ -138,12 +141,20 @@ public class GameManagerTest {
         assumeFalse(pm.hasSystemFeature(PackageManager.FEATURE_EMBEDDED));
     }
 
+    protected void assumeAndroidApiLevel(int androidApiLevel) {
+        final int apiLevel =
+                Integer.parseInt(runShellCommand("getprop " + PROPERTY_RO_VENDOR_API_LEVEL));
+        assumeTrue(apiLevel >= androidApiLevel);
+    }
+
     @Test
     public void testIsGameDefaultFrameRatePropSet() throws NumberFormatException {
         // Verify that "ro.surface_flinger.game_default_frame_rate_override"
         // is set with a positive integer.
 
+        // This test only aims for mobile devices after Android T
         assumeMobileDeviceFormFactor();
+        assumeAndroidApiLevel(Build.VERSION_CODES.TIRAMISU);
         Integer gameDefaultFrameRate = Integer.valueOf(runShellCommand("getprop "
                 + PROPERTY_RO_SURFACEFLINGER_GAME_DEFAULT_FRAME_RATE));
         assertNotNull(gameDefaultFrameRate);
