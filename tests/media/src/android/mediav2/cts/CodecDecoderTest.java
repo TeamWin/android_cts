@@ -400,7 +400,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                     queueEOS();
                     waitForAllOutputs();
                     validateMetrics(mCodecName, format);
-                    mCodec.stop();
+                    endCodecSession(mCodec);
                     if (loopCounter != 0 && !ref.equals(test)) {
                         fail("Decoder output is not consistent across runs \n" + mTestConfig
                                 + mTestEnv + test.getErrMsg());
@@ -529,7 +529,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
-                mCodec.stop();
+                endCodecSession(mCodec);
                 if (isMediaTypeOutputUnAffectedBySeek(mMediaType) && (!ref.equals(test))) {
                     fail("Decoder output is not consistent across runs \n" + mTestConfig + mTestEnv
                             + test.getErrMsg());
@@ -659,7 +659,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
-                mCodec.stop();
+                endCodecSession(mCodec);
                 if (!ref.equals(test)) {
                     fail("Decoder output is not consistent across runs \n" + mTestConfig + mTestEnv
                             + test.getErrMsg());
@@ -676,7 +676,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
-                mCodec.stop();
+                endCodecSession(mCodec);
                 if (!ref.equals(test)) {
                     fail("Decoder output is not consistent across runs \n" + mTestConfig + mTestEnv
                             + test.getErrMsg());
@@ -703,7 +703,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 queueEOS();
                 waitForAllOutputs();
                 validateMetrics(mCodecName, newFormat);
-                mCodec.stop();
+                endCodecSession(mCodec);
                 if (!configRef.equals(configTest)) {
                     fail("Decoder output is not consistent across runs \n" + mTestConfig + mTestEnv
                             + configTest.getErrMsg());
@@ -742,7 +742,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 mCodec.start();
                 queueEOS();
                 waitForAllOutputs();
-                mCodec.stop();
+                endCodecSession(mCodec);
                 if (loopCounter != 0 && !ref.equals(test)) {
                     fail("Decoder output is not consistent across runs \n" + mTestConfig + mTestEnv
                             + test.getErrMsg());
@@ -829,7 +829,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                         queueEOS();
                         waitForAllOutputs();
                         validateMetrics(mCodecName);
-                        mCodec.stop();
+                        endCodecSession(mCodec);
                         if (loopCounter != 0 && !ref.equals(test)) {
                             fail("Decoder output is not consistent across runs \n" + mTestConfig
                                     + mTestEnv + test.getErrMsg());
@@ -905,7 +905,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 doWork(buffer, list);
                 queueEOS();
                 waitForAllOutputs();
-                mCodec.stop();
+                endCodecSession(mCodec);
                 if (!ref.equals(test)) {
                     fail("Decoder output of a compressed stream segmented at frame/access unit "
                             + "boundaries is different from a compressed stream segmented at "
@@ -944,8 +944,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         queueEOS();
         waitForAllOutputs();
         MediaFormat outputFormat = mCodec.getOutputFormat();
-        mCodec.stop();
-        mCodec.reset();
+        endCodecSession(mCodec);
         mCodec.release();
 
         assertTrue("Output format from decoder does not contain KEY_COLOR_FORMAT \n" + mTestConfig
