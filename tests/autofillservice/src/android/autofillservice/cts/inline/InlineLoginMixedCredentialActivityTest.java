@@ -38,6 +38,7 @@ import android.content.pm.PackageManager;
 import android.credentials.CredentialManager;
 import android.credentials.CredentialProviderInfo;
 import android.os.Build;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
@@ -66,6 +67,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@AppModeFull(reason = "Permission and providers are not available on instant mode.")
 public class InlineLoginMixedCredentialActivityTest
         extends AbstractMixedCredentialLoginActivityTestCase {
 
