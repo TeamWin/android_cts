@@ -5974,7 +5974,9 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .setCarPropertyConfigVerifier(
                         carPropertyConfig -> {
                             // HVAC_TEMPERATURE_VALUE_SUGGESTION's access must be read+write.
-                            assertThat(carPropertyConfig.getAccess()).isEqualTo(
+                            assertThat((Flags.areaIdConfigAccess()
+                                    ? carPropertyConfig.getAreaIdConfig(0).getAccess()
+                                    : carPropertyConfig.getAccess())).isEqualTo(
                                     CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE);
                         })
                 .setCarPropertyValueVerifier(
@@ -7234,33 +7236,26 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     List<CarPropertyConfig> configs =
                             mCarPropertyManager.getPropertyList(mPropertyIds);
                     for (CarPropertyConfig cfg : configs) {
-                        if (cfg.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ) {
-                            int[] areaIds = getAreaIdsHelper(cfg);
-                            int propId = cfg.getPropertyId();
-                            // no guarantee if we can get values, just call and check if it throws
-                            // exception.
-                            if (cfg.getPropertyType() == Boolean.class) {
-                                for (int areaId : areaIds) {
-                                    mCarPropertyManager.getBooleanProperty(propId, areaId);
-                                }
-                            } else if (cfg.getPropertyType() == Integer.class) {
-                                for (int areaId : areaIds) {
-                                    mCarPropertyManager.getIntProperty(propId, areaId);
-                                }
-                            } else if (cfg.getPropertyType() == Float.class) {
-                                for (int areaId : areaIds) {
-                                    mCarPropertyManager.getFloatProperty(propId, areaId);
-                                }
-                            } else if (cfg.getPropertyType() == Integer[].class) {
-                                for (int areId : areaIds) {
-                                    mCarPropertyManager.getIntArrayProperty(propId, areId);
-                                }
-                            } else {
-                                for (int areaId : areaIds) {
-                                    mCarPropertyManager.getProperty(
-                                            cfg.getPropertyType(), propId, areaId);
+                        int propId = cfg.getPropertyId();
+                        List<AreaIdConfig<?>> areaIdConfigs = cfg.getAreaIdConfigs();
+                        List<AreaIdConfig<?>> filteredAreaIdConfigs = new ArrayList<>();
+                        if (Flags.areaIdConfigAccess()) {
+                            for (AreaIdConfig<?> areaIdConfig : areaIdConfigs) {
+                                if (areaIdConfig.getAccess()
+                                        == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ
+                                        || areaIdConfig.getAccess()
+                                        == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
+                                    filteredAreaIdConfigs.add(areaIdConfig);
                                 }
                             }
+                        } else {
+                            filteredAreaIdConfigs = areaIdConfigs;
+                        }
+                        // no guarantee if we can get values, just call and check if it throws
+                        // exception.
+                        for (AreaIdConfig<?> areaIdConfig : filteredAreaIdConfigs) {
+                            mCarPropertyManager.getProperty(cfg.getPropertyType(), propId,
+                                    areaIdConfig.getAreaId());
                         }
                     }
                 });
@@ -7289,15 +7284,23 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     continue;
                 }
                 CarPropertyConfig cfg = verifier.getCarPropertyConfig();
-                if (cfg.getAccess() != CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ
-                        && cfg.getAccess()
-                                != CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
+                if (!Flags.areaIdConfigAccess() && cfg.getAccess()
+                        != CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ && cfg.getAccess()
+                        != CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
                     continue;
                 }
 
-                int[] areaIds = cfg.getAreaIds();
+                List<? extends AreaIdConfig<?>> areaIdConfigs = cfg.getAreaIdConfigs();
                 int propId = cfg.getPropertyId();
-                for (int areaId : areaIds) {
+                for (AreaIdConfig<?> areaIdConfig : areaIdConfigs) {
+                    if (Flags.areaIdConfigAccess() && areaIdConfig.getAccess()
+                            != CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ
+                            && areaIdConfig.getAccess()
+                            != CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
+                        continue;
+                    }
+
+                    int areaId = areaIdConfig.getAreaId();
                     CarPropertyManager.GetPropertyRequest gpr =
                             mCarPropertyManager.generateGetPropertyRequest(propId, areaId);
                     getPropertyRequests.add(gpr);
@@ -7500,10 +7503,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 () -> {
                     List<CarPropertyConfig> allConfigs = mCarPropertyManager.getPropertyList();
                     for (CarPropertyConfig cfg : allConfigs) {
-                        if (cfg.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_NONE
-                                || cfg.getAccess()
-                                        == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE
-                                || cfg.getPropertyType() != Integer[].class) {
+                        if (cfg.getPropertyType() != Integer[].class
+                                || (!Flags.areaIdConfigAccess() && (cfg.getAccess()
+                                == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_NONE || cfg.getAccess()
+                                == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE))) {
                             // skip the test if the property is not readable or not an int array
                             // type property.
                             continue;
@@ -7524,10 +7527,18 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                 verifyEnumsRange(EXPECTED_PORT_LOCATIONS, evPortLocations);
                                 break;
                             default:
-                                int[] areaIds = getAreaIdsHelper(cfg);
-                                for (int areaId : areaIds) {
+                                List<? extends AreaIdConfig<?>> areaIdConfigs =
+                                        cfg.getAreaIdConfigs();
+                                for (AreaIdConfig<?> areaIdConfig : areaIdConfigs) {
+                                    if (Flags.areaIdConfigAccess() && (areaIdConfig.getAccess()
+                                            == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_NONE
+                                            || areaIdConfig.getAccess()
+                                            == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE)) {
+                                        // skip the test if the property is not readable
+                                        continue;
+                                    }
                                     mCarPropertyManager.getIntArrayProperty(
-                                            cfg.getPropertyId(), areaId);
+                                            cfg.getPropertyId(), areaIdConfig.getAreaId());
                                 }
                         }
                     }
@@ -8919,14 +8930,19 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     continue;
                 }
                 CarPropertyConfig cfg = verifier.getCarPropertyConfig();
-                if (cfg.getAccess()
-                                != CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
+                if (!Flags.areaIdConfigAccess() && cfg.getAccess()
+                        != CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
                     continue;
                 }
 
-                int[] areaIds = cfg.getAreaIds();
+                List<? extends AreaIdConfig<?>> areaIdConfigs = cfg.getAreaIdConfigs();
                 int propId = cfg.getPropertyId();
-                for (int areaId : areaIds) {
+                for (AreaIdConfig<?> areaIdConfig : areaIdConfigs) {
+                    if (Flags.areaIdConfigAccess() && areaIdConfig.getAccess()
+                            != CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
+                        continue;
+                    }
+                    int areaId = areaIdConfig.getAreaId();
                     CarPropertyManager.SetPropertyRequest<?> spr;
                     spr = this.addSetPropertyRequest(setPropertyRequests, propId, areaId, verifier,
                             cfg.getPropertyType());
