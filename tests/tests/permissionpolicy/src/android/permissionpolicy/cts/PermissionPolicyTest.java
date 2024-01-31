@@ -17,6 +17,7 @@
 package android.permissionpolicy.cts;
 
 import static android.content.pm.PermissionInfo.FLAG_INSTALLED;
+import static android.content.pm.PermissionInfo.PROTECTION_FLAG_INSTALLER;
 import static android.content.pm.PermissionInfo.PROTECTION_FLAG_MODULE;
 import static android.content.pm.PermissionInfo.PROTECTION_FLAG_PRIVILEGED;
 import static android.content.pm.PermissionInfo.PROTECTION_FLAG_ROLE;
@@ -120,6 +121,41 @@ public class PermissionPolicyTest {
             "android.permission.USE_COMPANION_TRANSPORTS";
     private static final String USE_REMOTE_AUTH = "android.permission.USE_REMOTE_AUTH";
     private static final String WRITE_FLAGS = "android.permission.WRITE_FLAGS";
+    private static final String BIND_TV_AD_SERVICE = "android.permission.BIND_TV_AD_SERVICE";
+    private static final String RECEIVE_SENSITIVE_NOTIFICATIONS =
+            "android.permission.RECEIVE_SENSITIVE_NOTIFICATIONS";
+    private static final String BIND_DOMAIN_SELECTION_SERVICE =
+            "android.permission.BIND_DOMAIN_SELECTION_SERVICE";
+    private static final String MANAGE_DEVICE_POLICY_THREAD_NETWORK =
+            "android.permission.MANAGE_DEVICE_POLICY_THREAD_NETWORK";
+    private static final String FOREGROUND_SERVICE_MEDIA_PROCESSING =
+            "android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING";
+    private static final String RUN_BACKUP_JOBS = "android.permission.RUN_BACKUP_JOBS";
+    private static final String EMERGENCY_INSTALL_PACKAGES =
+            "android.permission.EMERGENCY_INSTALL_PACKAGES";
+    private static final String ACCESS_LAST_KNOWN_CELL_ID =
+            "android.permission.ACCESS_LAST_KNOWN_CELL_ID";
+    private static final String GET_BACKGROUND_INSTALLED_PACKAGES =
+            "android.permission.GET_BACKGROUND_INSTALLED_PACKAGES";
+    private static final String MANAGE_ENHANCED_CONFIRMATION_STATES =
+            "android.permission.MANAGE_ENHANCED_CONFIRMATION_STATES";
+    private static final String USE_BACKGROUND_FACE_AUTHENTICATION =
+            "android.permission.USE_BACKGROUND_FACE_AUTHENTICATION";
+    private static final String REQUEST_OBSERVE_DEVICE_UUID_PRESENCE =
+            "android.permission.REQUEST_OBSERVE_DEVICE_UUID_PRESENCE";
+    private static final String READ_SYSTEM_GRAMMATICAL_GENDER =
+            "android.permission.READ_SYSTEM_GRAMMATICAL_GENDER";
+    private static final String SET_BIOMETRIC_DIALOG_LOGO =
+            "android.permission.SET_BIOMETRIC_DIALOG_LOGO";
+    private static final String MONITOR_STICKY_MODIFIER_STATE =
+            "android.permission.MONITOR_STICKY_MODIFIER_STATE";
+    private static final String INTERACT_ACROSS_USERS_FULL =
+            "android.permission.INTERACT_ACROSS_USERS_FULL";
+    private static final String BIND_NFC_SERVICE = "android.permission.BIND_NFC_SERVICE";
+    private static final String SUBSCRIBE_TO_KEYGUARD_LOCKED_STATE =
+            "android.permission.SUBSCRIBE_TO_KEYGUARD_LOCKED_STATE";
+    private static final String MANAGE_ROLE_HOLDERS = "android.permission.MANAGE_ROLE_HOLDERS";
+    private static final String OBSERVE_ROLE_HOLDERS = "android.permission.OBSERVE_ROLE_HOLDERS";
 
     private static final Date HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE = parseDate("2017-11-01");
     private static final Date MANAGE_COMPANION_DEVICES_PATCH_DATE = parseDate("2020-07-01");
@@ -142,7 +178,7 @@ public class PermissionPolicyTest {
     private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-    /** Permissions added in U QPR 2. */
+    /** Permissions added since the FRC of U. */
     private static final ArraySet<String> permissionsAddedInUqpr2 = new ArraySet<>(
             new String[]{ACCESS_SMARTSPACE, ACCESSIBILITY_MOTION_EVENT_OBSERVING,
                     ALWAYS_UPDATE_WALLPAPER, CAMERA_HEADLESS_SYSTEM_USER,
@@ -154,11 +190,17 @@ public class PermissionPolicyTest {
                     REPORT_USAGE_STATS, RESET_HOTWORD_TRAINING_DATA_EGRESS_COUNT,
                     START_ACTIVITIES_FROM_SDK_SANDBOX, SHOW_CUSTOMIZED_RESOLVER, SYNC_FLAGS,
                     THREAD_NETWORK_PRIVILEGED, USE_COMPANION_TRANSPORTS, USE_REMOTE_AUTH,
-                    QUARANTINE_APPS, WRITE_FLAGS});
+                    QUARANTINE_APPS, WRITE_FLAGS, BIND_TV_AD_SERVICE,
+                    RECEIVE_SENSITIVE_NOTIFICATIONS, BIND_DOMAIN_SELECTION_SERVICE,
+                    MANAGE_DEVICE_POLICY_THREAD_NETWORK, FOREGROUND_SERVICE_MEDIA_PROCESSING,
+                    RUN_BACKUP_JOBS, EMERGENCY_INSTALL_PACKAGES, ACCESS_LAST_KNOWN_CELL_ID,
+                    GET_BACKGROUND_INSTALLED_PACKAGES, MANAGE_ENHANCED_CONFIRMATION_STATES,
+                    USE_BACKGROUND_FACE_AUTHENTICATION, REQUEST_OBSERVE_DEVICE_UUID_PRESENCE,
+                    READ_SYSTEM_GRAMMATICAL_GENDER, SET_BIOMETRIC_DIALOG_LOGO,
+                    MONITOR_STICKY_MODIFIER_STATE});
 
     /**
-     * Map of permissions to their protection flags in U and U QPR 1, for permissions that had their
-     * protection flags expanded in U QPR 2.
+     * Map of permissions to their protection flags in the FRC for U which have changed since.
      */
     private static final Map<String, Integer> permissionsToLegacyProtection = new HashMap<>() {
         {
@@ -168,6 +210,12 @@ public class PermissionPolicyTest {
             put(OBSERVE_APP_USAGE, PROTECTION_FLAG_PRIVILEGED);
             put(STATUS_BAR_SERVICE, 0x0);
             put(SUSPEND_APPS, PROTECTION_FLAG_ROLE);
+            put(INTERACT_ACROSS_USERS_FULL, PROTECTION_FLAG_INSTALLER | PROTECTION_FLAG_ROLE);
+            put(BIND_NFC_SERVICE, 0X0);
+            put(SUBSCRIBE_TO_KEYGUARD_LOCKED_STATE, PROTECTION_FLAG_ROLE);
+            put(MANAGE_ROLE_HOLDERS, PROTECTION_FLAG_INSTALLER);
+            put(OBSERVE_ROLE_HOLDERS, PROTECTION_FLAG_INSTALLER);
+            put(USE_COMPANION_TRANSPORTS, PROTECTION_FLAG_MODULE);
         }
     };
 
@@ -258,8 +306,8 @@ public class PermissionPolicyTest {
             PermissionInfo declaredPermission = declaredPermissionsMap.get(expectedPermissionName);
             if (declaredPermission == null) {
                 // If expected permission is not found, it is possible that this build doesn't yet
-                // contain certain new permissions added in U QPR 2, in which case we skip the
-                // check.
+                // contain certain new permissions added after the FRC for U, in which case we skip
+                // the check.
                 if (permissionsAddedInUqpr2.contains(expectedPermissionName)) {
                     continue;
                 } else {
