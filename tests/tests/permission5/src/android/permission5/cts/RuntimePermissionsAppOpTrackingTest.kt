@@ -992,7 +992,18 @@ class RuntimePermissionsAppOpTrackingTest {
                 }
                 assertThat(opProxyInfo!!.uid).isEqualTo(attributionSource.uid)
                 assertThat(opProxyInfo.packageName).isEqualTo(attributionSource.packageName)
-                assertThat(opProxyInfo.attributionTag).isEqualTo(attributionSource.attributionTag)
+
+                /* Fix made to b/304983146 treats the attribution coming from shell as
+                 invalid because it will not exist in shell package. Hence this change
+                 is to validate them as null instead of actual values
+                */
+                if (attributionSource.packageName == SHELL_PACKAGE_NAME) {
+                    assertThat(opProxyInfo.attributionTag).isNull()
+                } else {
+                    assertThat(opProxyInfo.attributionTag)
+                        .isEqualTo(attributionSource.attributionTag)
+                }
+
             }
         }
 
