@@ -187,17 +187,6 @@ public final class ShellCommandUtils {
         return "input keyevent KEYCODE_SYM";
     }
 
-    /**
-     * Command to enable app-compat change for a package .
-     *
-     * @param compatChange name of the app-compat change.
-     * @param packageName name of the package to enable the change for.
-     * @return the command to be passed to shell command.
-     */
-    public static String enableCompatChange(String compatChange, String packageName) {
-        return "am compat enable " + compatChange + " " + packageName;
-    }
-
     /** Command to wait until all broadcast queues have passed barrier. */
     public static String waitForBroadcastBarrier() {
         return "am wait-for-broadcast-barrier";
