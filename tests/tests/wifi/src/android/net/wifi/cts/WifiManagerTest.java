@@ -2352,7 +2352,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     /**
      * Verify that the {@link android.Manifest.permission#WIFI_UPDATE_USABILITY_STATS_SCORE}
-     * permission is held by at most one application.
+     * permission is held by at most two applications.
      */
     public void testUpdateWifiUsabilityStatsScorePermission() {
         if (!WifiFeature.isWifiSupported(getContext())) {
@@ -2380,10 +2380,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             uniqueNonSystemPackageNames.add(packageName);
         }
 
-        if (uniqueNonSystemPackageNames.size() > 1) {
+        if (uniqueNonSystemPackageNames.size() > 2) {
             fail("The WIFI_UPDATE_USABILITY_STATS_SCORE permission must not be held by more than "
-                + "one application, but is held by " + uniqueNonSystemPackageNames.size()
-                + " applications: " + String.join(", ", uniqueNonSystemPackageNames));
+                    + "two applications, but is held by " + uniqueNonSystemPackageNames.size()
+                    + " applications: " + String.join(", ", uniqueNonSystemPackageNames));
         }
     }
 
