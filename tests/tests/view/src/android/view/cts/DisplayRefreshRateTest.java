@@ -87,7 +87,8 @@ public class DisplayRefreshRateTest {
         private CountDownLatch mCountDownLatch = new CountDownLatch(1);
 
         void waitForModeToChange(int modeId) throws InterruptedException {
-            while (modeId != mDisplay.getMode().getModeId()) {
+            while (modeId != mDisplay.getMode().getModeId()
+                && mDisplay.getMode().getRefreshRate() != mDisplay.getRefreshRate()) {
                 mCountDownLatch.await(5, TimeUnit.SECONDS);
             }
         }
@@ -167,9 +168,9 @@ public class DisplayRefreshRateTest {
     @Test
     public void testRefreshRate() {
         boolean fpsOk = false;
-        float claimedFps = mDisplay.getRefreshRate();
 
         for (int i = 0; i < 3; i++) {
+            float claimedFps = mDisplay.getRefreshRate();
             float achievedFps = mFpsResult.waitResult();
             Log.d(TAG, "claimed " + claimedFps + " fps, " +
                        "achieved " + achievedFps + " fps");
