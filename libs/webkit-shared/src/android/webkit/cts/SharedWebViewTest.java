@@ -34,7 +34,7 @@ public abstract class SharedWebViewTest {
         mEnvironment = sharedWebViewTestEnvironment;
     }
 
-    protected SharedWebViewTestEnvironment getTestEnvironment() {
+    public SharedWebViewTestEnvironment getTestEnvironment() {
         if (mEnvironment == null) {
             mEnvironment = createTestEnvironment();
         }
