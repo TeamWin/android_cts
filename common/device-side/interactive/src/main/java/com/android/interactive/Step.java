@@ -79,6 +79,7 @@ public abstract class Step<E> {
     private static final Automator sAutomator = new Automator(AUTOMATION_FILE);
 
     private View mInstructionView;
+    private Button mCollapseButton;
 
     private static final WindowManager sWindowManager =
             TestApis.context().instrumentedContext().getSystemService(WindowManager.class);
@@ -273,6 +274,28 @@ public abstract class Step<E> {
 
         GridLayout layout = mInstructionView.findViewById(R.id.buttons);
         layout.addView(btn);
+    }
+
+    /**
+     * Adds a small button that allows users to collapse the instructions.
+     */
+    protected void addCollapseInstructionsButton() {
+        mCollapseButton = new Button(TestApis.context().instrumentedContext());
+        mCollapseButton.setText("\u21F1");
+        mCollapseButton.setOnClickListener(v -> collapse());
+        GridLayout layout = mInstructionView.findViewById(R.id.buttons);
+        layout.addView(mCollapseButton);
+    }
+
+    private void collapse() {
+        TextView instructionsTextView = mInstructionView.findViewById(R.id.text);
+        if (instructionsTextView.getVisibility() != View.GONE) {
+            instructionsTextView.setVisibility(View.GONE);
+            mCollapseButton.setText("\u21F2");
+        } else {
+            instructionsTextView.setVisibility(View.VISIBLE);
+            mCollapseButton.setText("\u21F1");
+        }
     }
 
     /**
