@@ -17,11 +17,13 @@
 package android.graphics.text.cts
 
 import android.graphics.text.LineBreakConfig
+import androidx.test.filters.SmallTest
 import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner
 import junit.framework.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 
+@SmallTest
 @RunWith(AndroidJUnit4ClassRunner::class)
 class LineBreakConfigTest {
 

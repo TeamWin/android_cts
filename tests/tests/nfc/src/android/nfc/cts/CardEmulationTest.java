@@ -12,7 +12,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.content.res.Resources;
 import android.database.ContentObserver;
 import android.net.Uri;
 import android.nfc.Constants;
@@ -36,6 +35,7 @@ import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -614,25 +614,6 @@ public class CardEmulationTest {
         return componentName;
     }
 
-    static ComponentName getDefaultPaymentService(Context context) {
-
-        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(context);
-        CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
-        CharSequence desc = cardEmulation.getDescriptionForPreferredPaymentService();
-        Resources resources = context.getResources();
-        if (desc == null) {
-            return null;
-        } else if (desc.toString().equals(resources.getString(R.string.CtsPaymentService))) {
-            return new ComponentName(context, CtsMyHostApduService.class);
-        } else if (desc.toString().equals(resources.getString(R.string.CtsCustomPaymentService))) {
-            return new ComponentName(context, CustomHostApduService.class);
-        } else if (desc.toString().equals(
-                resources.getString(R.string.CtsBackgroundPaymentService))) {
-            return new ComponentName(context, BackgroundHostApduService.class);
-        }
-        return null;
-    }
-
     ComponentName setDefaultPaymentService(ComponentName serviceName) {
         return setDefaultPaymentService(serviceName, mContext);
     }
@@ -657,7 +638,7 @@ public class CardEmulationTest {
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
                     .getUiAutomation().adoptShellPermissionIdentity();
 
-            ComponentName originalValue = getDefaultPaymentService(context);
+            ComponentName originalValue = CardEmulation.getPreferredPaymentService(context);
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(context);
             CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
             SettingsObserver settingsObserver =
@@ -666,9 +647,8 @@ public class CardEmulationTest {
                     Settings.Secure.getUriFor(
                             Constants.SETTINGS_SECURE_NFC_PAYMENT_DEFAULT_COMPONENT),
                     true, settingsObserver, UserHandle.ALL);
-            Settings.Secure.putString(context.getContentResolver(),
-                    "nfc_payment_default_component", serviceName == null ? null :
-                            serviceName.flattenToString());
+            Assume.assumeTrue(cardEmulation.setDefaultServiceForCategory(serviceName,
+                    CardEmulation.CATEGORY_PAYMENT));
             int count = 0;
             while (!settingsObserver.mSeenChange
                     && !cardEmulation.isDefaultServiceForCategory(serviceName,
@@ -682,6 +662,9 @@ public class CardEmulationTest {
                 }
             }
             Assert.assertTrue(count < 10);
+            Assume.assumeTrue(serviceName == null
+                    ? null == CardEmulation.getPreferredPaymentService(context)
+                    : serviceName.equals(cardEmulation.getPreferredPaymentService(context)));
             return originalValue;
         } finally {
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()

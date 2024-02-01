@@ -33,6 +33,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.content.res.Resources.Theme;
 import android.content.res.XmlResourceParser;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.util.Xml;
@@ -61,6 +62,7 @@ import java.util.List;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class LayoutInflaterTest {
     private LayoutInflater mLayoutInflater;
 
@@ -511,8 +513,8 @@ public class LayoutInflaterTest {
     private XmlResourceParser getParser() {
         XmlResourceParser parser = null;
         ActivityInfo ai = null;
-        ComponentName mComponentName = new ComponentName(mContext,
-                MockActivity.class);
+        ComponentName mComponentName = new ComponentName("android.view.cts",
+                "android.view.cts.MockActivity");
         try {
             ai = mContext.getPackageManager().getActivityInfo(mComponentName,
                     PackageManager.GET_META_DATA);

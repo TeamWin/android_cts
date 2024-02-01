@@ -323,8 +323,8 @@ public class NfcAdapterTest {
     public void testSetReaderMode() {
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
         // Verify the API does not crash or throw any exceptions.
-        adapter.setReaderMode(true);
-        adapter.setReaderMode(false);
+        adapter.setReaderModePollingEnabled(true);
+        adapter.setReaderModePollingEnabled(false);
     }
 
     @Test

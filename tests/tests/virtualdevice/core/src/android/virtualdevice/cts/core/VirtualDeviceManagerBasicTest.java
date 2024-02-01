@@ -20,6 +20,7 @@ import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAULT;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_ACTIVITY;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_AUDIO;
+import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_CAMERA;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_CLIPBOARD;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_RECENTS;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_SENSORS;
@@ -44,6 +45,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.companion.AssociationInfo;
+import android.companion.AssociationRequest;
 import android.companion.CompanionDeviceManager;
 import android.companion.virtual.VirtualDevice;
 import android.companion.virtual.VirtualDeviceManager;
@@ -163,6 +165,48 @@ public class VirtualDeviceManagerBasicTest {
 
         assertThat(virtualDeviceDisplayName.toString())
                 .isEqualTo(persistentDeviceDisplayName.toString());
+    }
+
+    @RequiresFlagsEnabled({Flags.FLAG_PERSISTENT_DEVICE_ID_API, Flags.FLAG_VDM_PUBLIC_APIS})
+    @Test
+    public void getAllPersistentDeviceIds_empty() {
+        mRule.dropCompanionDeviceAssociation();
+        assertDeviceClosed(mVirtualDevice.getDeviceId());
+        assertThat(mVirtualDeviceManager.getAllPersistentDeviceIds()).isEmpty();
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_PERSISTENT_DEVICE_ID_API)
+    @Test
+    public void getAllPersistentDeviceIds_validVirtualDevice() {
+        assertThat(mVirtualDeviceManager.getAllPersistentDeviceIds()).containsExactly(
+                mVirtualDevice.getPersistentDeviceId());
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_PERSISTENT_DEVICE_ID_API)
+    @Test
+    public void getAllPersistentDeviceIds_includesClosedVirtualDevice() {
+        mVirtualDevice.close();
+
+        final String fakeAddress = "00:00:00:00:10:10";
+        SystemUtil.runShellCommand(String.format("cmd companiondevice associate %d %s %s %s",
+                Process.myUserHandle().getIdentifier(), mContext.getPackageName(), fakeAddress,
+                AssociationRequest.DEVICE_PROFILE_APP_STREAMING));
+        CompanionDeviceManager cdm = mContext.getSystemService(CompanionDeviceManager.class);
+        List<AssociationInfo> associations = cdm.getMyAssociations();
+        final AssociationInfo associationInfo = associations.stream()
+                .filter(a -> fakeAddress.equals(a.getDeviceMacAddressAsString()))
+                .findAny().orElse(null);
+        assertThat(associationInfo).isNotNull();
+        try {
+            VirtualDeviceManager.VirtualDevice secondVirtualDevice =
+                    mVirtualDeviceManager.createVirtualDevice(
+                            associationInfo.getId(), mRule.DEFAULT_VIRTUAL_DEVICE_PARAMS);
+            assertThat(mVirtualDeviceManager.getAllPersistentDeviceIds()).containsExactly(
+                    mVirtualDevice.getPersistentDeviceId(),
+                    secondVirtualDevice.getPersistentDeviceId());
+        } finally {
+            cdm.disassociate(associationInfo.getId());
+        }
     }
 
     @Test
@@ -332,6 +376,8 @@ public class VirtualDeviceManagerBasicTest {
         assertThat(device.getDisplayIds()).asList().containsExactly(
                 firstDisplayId, secondDisplayId);
         assertThat(device.hasCustomSensorSupport()).isFalse();
+        assertThat(device.hasCustomAudioInputSupport()).isFalse();
+        assertThat(device.hasCustomCameraSupport()).isFalse();
 
         firstDisplay.release();
         mRule.assertDisplayDoesNotExist(firstDisplayId);
@@ -357,6 +403,30 @@ public class VirtualDeviceManagerBasicTest {
         VirtualDevice device = mVirtualDeviceManager.getVirtualDevice(virtualDevice.getDeviceId());
         assertThat(device).isNotNull();
         assertThat(device.hasCustomSensorSupport()).isTrue();
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_VDM_PUBLIC_APIS)
+    @Test
+    public void getVirtualDevice_hasCustomAudioInputSupport() {
+        VirtualDeviceManager.VirtualDevice virtualDevice = mRule.createManagedVirtualDevice(
+                new VirtualDeviceParams.Builder()
+                        .setDevicePolicy(POLICY_TYPE_AUDIO, DEVICE_POLICY_CUSTOM)
+                        .build());
+        VirtualDevice device = mVirtualDeviceManager.getVirtualDevice(virtualDevice.getDeviceId());
+        assertThat(device).isNotNull();
+        assertThat(device.hasCustomAudioInputSupport()).isTrue();
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_VDM_PUBLIC_APIS)
+    @Test
+    public void getVirtualDevice_hasCustomCameraSupport() {
+        VirtualDeviceManager.VirtualDevice virtualDevice = mRule.createManagedVirtualDevice(
+                new VirtualDeviceParams.Builder()
+                        .setDevicePolicy(POLICY_TYPE_CAMERA, DEVICE_POLICY_CUSTOM)
+                        .build());
+        VirtualDevice device = mVirtualDeviceManager.getVirtualDevice(virtualDevice.getDeviceId());
+        assertThat(device).isNotNull();
+        assertThat(device.hasCustomCameraSupport()).isTrue();
     }
 
     /**
@@ -390,20 +460,12 @@ public class VirtualDeviceManagerBasicTest {
         assertThat(device.getPersistentDeviceId())
                 .isEqualTo(mVirtualDevice.getPersistentDeviceId());
         assertThat(device.getName()).isNull();
-        if (Flags.vdmPublicApis()) {
-            assertThat(device.getDisplayIds()).isEmpty();
-            assertThat(device.hasCustomSensorSupport()).isFalse();
-        }
 
         VirtualDevice anotherDevice = virtualDevices.get(1);
         assertThat(anotherDevice.getDeviceId()).isEqualTo(namedVirtualDevice.getDeviceId());
         assertThat(anotherDevice.getPersistentDeviceId())
                 .isEqualTo(namedVirtualDevice.getPersistentDeviceId());
         assertThat(anotherDevice.getName()).isEqualTo(VIRTUAL_DEVICE_NAME);
-        if (Flags.vdmPublicApis()) {
-            assertThat(anotherDevice.getDisplayIds()).isEmpty();
-            assertThat(anotherDevice.hasCustomSensorSupport()).isFalse();
-        }
 
         // The persistent IDs must be the same as the underlying association is the same.
         assertThat(device.getPersistentDeviceId()).isEqualTo(anotherDevice.getPersistentDeviceId());

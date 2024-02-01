@@ -83,6 +83,7 @@ import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.media.MicrophoneInfo;
+import android.media.audio.Flags;
 import android.media.audiopolicy.AudioProductStrategy;
 import android.media.audiopolicy.AudioVolumeGroup;
 import android.media.cts.Utils;
@@ -91,6 +92,7 @@ import android.os.SystemClock;
 import android.os.Vibrator;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeSdkSandbox;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.provider.Settings;
 import android.provider.Settings.System;
 import android.util.Log;
@@ -2264,6 +2266,34 @@ public class AudioManagerTest {
             assertEquals(channelMasks, channelMasksFromProfile);
             assertEquals(channelIndexMasks, channelIndexMasksFromProfile);
             assertEquals(sampleRates, sampleRatesFromProfile);
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(value = Flags.FLAG_SUPPORTED_DEVICE_TYPES_API)
+    public void testGetSupportedDeviceTypes() {
+        Set<Integer> deviceTypesOutputs =
+                mAudioManager.getSupportedDeviceTypes(AudioManager.GET_DEVICES_OUTPUTS);
+        assertNotEquals(deviceTypesOutputs, null);
+
+        if (AudioTestUtil.hasAudioOutput(mContext)) {
+            assertNotEquals(deviceTypesOutputs.size(), 0);
+        } else {
+            assertEquals(deviceTypesOutputs.size(), 0);
+        }
+
+        Set<Integer> deviceTypesInputs =
+                mAudioManager.getSupportedDeviceTypes(AudioManager.GET_DEVICES_INPUTS);
+        assertNotEquals(deviceTypesInputs, null);
+
+        if (AudioTestUtil.hasAudioInput(mContext)) {
+            assertNotEquals(deviceTypesInputs.size(), 0);
+        } else {
+            // We can't really check this.
+            // We are not sure of the equivalence of has "microphone" and "never support audio
+            // inputs". For instance an android device could support input devices like HDMI IN
+            // but not have a microphone.
+            // assertEquals(deviceTypesInputs.size(), 0);
         }
     }
 

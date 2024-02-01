@@ -26,6 +26,7 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.Resources.Theme;
 import android.content.res.TypedArray;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.ContextThemeWrapper;
 
 import androidx.test.InstrumentationRegistry;
@@ -38,6 +39,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ContextThemeWrapperTest {
     private static final int SYSTEM_DEFAULT_THEME = 0;
 

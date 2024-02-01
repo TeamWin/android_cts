@@ -124,9 +124,8 @@ class PreviewMinFrameRateTest(its_base_test.ItsBaseTest):
       if not math.isclose(
           preview_frame_rate, ae_target_fps_range[0], abs_tol=_FPS_ATOL):
         errors.append(
-            f'Preview frame rate was {preview_frame_rate}, '
-            f'expected to be {ae_target_fps_range[0]}, '
-            f'ATOL: {_FPS_ATOL}.'
+            f'Preview frame rate was {preview_frame_rate:.3f}. '
+            f'Expected to be {ae_target_fps_range[0]}, ATOL: {_FPS_ATOL}.'
         )
       frame_deltas = np.array(video_processing_utils.get_frame_deltas(
           preview_file_name_with_path))
@@ -136,7 +135,7 @@ class PreviewMinFrameRateTest(its_base_test.ItsBaseTest):
                     frame_delta_avg, frame_delta_var)
       if frame_delta_var > _MAX_VAR_FRAME_DELTA:
         errors.append(
-            f'Preview frame delta variance {frame_delta_var} too large, '
+            f'Preview frame delta variance {frame_delta_var:.3f} too large, '
             f'maximum allowed: {_MAX_VAR_FRAME_DELTA}.'
         )
       if errors:

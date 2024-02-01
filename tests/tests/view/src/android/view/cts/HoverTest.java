@@ -28,8 +28,10 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,6 +41,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.CtsMouseUtil.ActionMatcher;
 import com.android.compatibility.common.util.CtsMouseUtil.PositionMatcher;
 
@@ -53,6 +56,7 @@ import org.mockito.InOrder;
  */
 @LargeTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class HoverTest {
     private static final String LOG_TAG = "HoverTest";
 
@@ -74,7 +78,13 @@ public class HoverTest {
     private View mLayer4Left;
     private View mLayer4Right;
 
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            androidx.test.platform.app.InstrumentationRegistry
+                    .getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public ActivityTestRule<HoverCtsActivity> mActivityRule =
             new ActivityTestRule<>(HoverCtsActivity.class);
 

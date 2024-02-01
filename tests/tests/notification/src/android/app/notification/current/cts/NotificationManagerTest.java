@@ -103,6 +103,7 @@ import androidx.test.uiautomator.UiDevice;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingSupplier;
+import com.android.modules.utils.build.SdkLevel;
 import com.android.test.notificationlistener.INLSControlService;
 import com.android.test.notificationlistener.INotificationUriAccessService;
 
@@ -1029,6 +1030,11 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     @RequiresDevice
     @Test
     public void testRankingUpdateSentWithPressure() throws Exception {
+        // Test should only be run for build in V
+        if (!SdkLevel.isAtLeastV()) {
+            return;
+        }
+
         if (onCuttlefish()) {
             return;
         }
@@ -1038,7 +1044,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             return;
         }
 
-        int notificationsPerApp = 50;
+        int notificationsPerApp = 40;
         int totalNotificationsSent = notificationsPerApp * 8; // 8 apps total
 
         FutureServiceConnection pressureService00 = bindServiceConnection(PRESSURE_SERVICE_00);

@@ -295,7 +295,9 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
                     REVOKE_RUNTIME_PERMISSIONS);
         }
 
-        mUiAutomation.dropShellPermissionIdentity();
+        if (mUiAutomation != null) {
+            mUiAutomation.dropShellPermissionIdentity();
+        }
     }
 
     private static void assertLessThan(long left, long right) {

@@ -36,6 +36,7 @@ import android.text.cts.R
 import android.text.style.LineBreakConfigSpan
 import android.text.style.LocaleSpan
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.filters.SmallTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import java.util.Locale
@@ -45,6 +46,7 @@ import org.junit.runner.RunWith
 
 private const val TEST_STRING = "hello, world."
 
+@SmallTest
 @RunWith(AndroidJUnit4::class)
 class LineBreakConfigSpanTest {
 

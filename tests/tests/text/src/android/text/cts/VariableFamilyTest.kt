@@ -23,6 +23,7 @@ import android.graphics.fonts.FontFamily
 import android.graphics.fonts.FontStyle
 import android.graphics.text.PositionedGlyphs
 import android.graphics.text.TextRunShaper
+import androidx.test.filters.SmallTest
 import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner
 import androidx.test.platform.app.InstrumentationRegistry
 import junit.framework.Assert.assertEquals
@@ -33,6 +34,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
+@SmallTest
 @RunWith(AndroidJUnit4ClassRunner::class)
 class VariableFamilyTest {
 
@@ -59,9 +61,11 @@ class VariableFamilyTest {
 
     @Test
     fun testVariableFamily_twoFonts_upright() {
-        val family = requireNotNull(FontFamily.Builder(wghtUprightFont)
+        val family = requireNotNull(
+            FontFamily.Builder(wghtUprightFont)
                 .addFont(wghtItalicFont)
-                .buildVariableFamily())
+                .buildVariableFamily()
+        )
 
         val glyphs = shape("a", family, FontStyle(100, FontStyle.FONT_SLANT_UPRIGHT))
         assertEquals(1, glyphs.glyphCount())
@@ -74,9 +78,11 @@ class VariableFamilyTest {
 
     @Test
     fun testVariableFamily_twoFonts_italic() {
-        val family = requireNotNull(FontFamily.Builder(wghtUprightFont)
+        val family = requireNotNull(
+            FontFamily.Builder(wghtUprightFont)
                 .addFont(wghtItalicFont)
-                .buildVariableFamily())
+                .buildVariableFamily()
+        )
 
         val glyphs = shape("a", family, FontStyle(200, FontStyle.FONT_SLANT_ITALIC))
         assertEquals(1, glyphs.glyphCount())
@@ -151,10 +157,12 @@ class VariableFamilyTest {
 
     @Test
     fun testVariableFamily_not_variableFamily_three_or_more_fonts() {
-        assertNull(FontFamily.Builder(nonVarFont)
+        assertNull(
+            FontFamily.Builder(nonVarFont)
                 .addFont(wghtItalFont)
                 .addFont(Font.Builder(nonVarFont).setWeight(550).build())
-                .buildVariableFamily())
+                .buildVariableFamily()
+        )
     }
 
     private fun shape(str: String, family: FontFamily, style: FontStyle) =

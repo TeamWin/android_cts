@@ -22,14 +22,11 @@
 // so as to support multiple instances... maybe.
 
 // JNI Stuff
-static float* sAudioBuffer;
-
 extern "C" {
+
 JNIEXPORT void JNICALL
 Java_org_hyphonate_megaaudio_recorder_NativeAudioSink_initN(JNIEnv * env , jobject thiz,
         jlong native_sink_ptr , jint num_frames, jint num_chans ) {
-    sAudioBuffer = new float[num_frames * num_chans];
-
     // this is in the wrong place, or rather we need an init() method of AudioSink to call.
     AudioSink* sink = (AudioSink*)native_sink_ptr;
     sink->init(num_frames, num_chans);

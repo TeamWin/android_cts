@@ -692,6 +692,16 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_NOT_CONNECTED, callback.modemState);
         assertTrue(isSatelliteEnabled());
 
+        // Move to CONNECTED state
+        callback.clearModemStates();
+        sMockSatelliteServiceManager.sendOnSatelliteModemStateChanged(
+                SatelliteManager.SATELLITE_MODEM_STATE_CONNECTED);
+        assertTrue(callback.waitUntilResult(1));
+        assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_CONNECTED, callback.modemState);
+
+        // Verify state transitions: CONNECTED -> TRANSFERRING -> CONNECTED
+        verifyNbIotStateTransitionsWithReceivingOnConnected(callback);
+
         sSatelliteManager.unregisterForModemStateChanged(callback);
         assertTrue(sMockSatelliteServiceManager.setSatelliteListeningTimeoutDuration(
                 DatagramController.DATAGRAM_WAIT_FOR_CONNECTED_STATE_TIMEOUT));
@@ -1052,6 +1062,58 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                         0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         sSatelliteManager.unregisterForIncomingDatagram(satelliteDatagramCallback);
+    }
+
+    private void verifyNbIotStateTransitionsWithReceivingOnConnected(
+            @NonNull SatelliteModemStateCallbackTest callback) {
+        assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_CONNECTED, callback.modemState);
+
+        SatelliteTransmissionUpdateCallbackTest transmissionUpdateCallback =
+                startTransmissionUpdates();
+
+        SatelliteDatagramCallbackTest satelliteDatagramCallback =
+                new SatelliteDatagramCallbackTest();
+        sSatelliteManager.registerForIncomingDatagram(
+                getContext().getMainExecutor(), satelliteDatagramCallback);
+
+        String receivedText = "This is a test datagram message from satellite";
+        android.telephony.satellite.stub.SatelliteDatagram receivedDatagram =
+                new android.telephony.satellite.stub.SatelliteDatagram();
+        receivedDatagram.data = receivedText.getBytes();
+
+        // Verify state transitions: CONNECTED -> TRANSFERRING -> CONNECTED
+        callback.clearModemStates();
+        transmissionUpdateCallback.clearReceiveDatagramStateChanges();
+        sMockSatelliteServiceManager.sendOnSatelliteDatagramReceived(receivedDatagram, 0);
+
+        assertTrue(satelliteDatagramCallback.waitUntilResult(1));
+        assertArrayEquals(satelliteDatagramCallback.mDatagram.getSatelliteDatagram(),
+                receivedText.getBytes());
+
+        int expectedNumberOfEvents = 2;
+        assertTrue(callback.waitUntilResult(expectedNumberOfEvents));
+        assertEquals(expectedNumberOfEvents, callback.getTotalCountOfModemStates());
+        assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_DATAGRAM_TRANSFERRING,
+                callback.getModemState(0));
+        assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_CONNECTED,
+                callback.getModemState(1));
+
+        // Expected datagram transfer state transitions: IDLE -> RECEIVE_SUCCESS -> IDLE
+        assertTrue(transmissionUpdateCallback
+                .waitUntilOnReceiveDatagramStateChanged(2));
+        assertThat(transmissionUpdateCallback.getNumOfReceiveDatagramStateChanges())
+                .isEqualTo(2);
+        assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(0)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVE_SUCCESS,
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
+        assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(1)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
+
+        sSatelliteManager.unregisterForIncomingDatagram(satelliteDatagramCallback);
+        stopTransmissionUpdates(transmissionUpdateCallback);
     }
 
     @Test
@@ -3164,6 +3226,11 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertTrue(frameworkCapabilities.equals(pairResult.first));
         assertNull(pairResult.second);
 
+        /* Initialize Radio technology */
+        supportedRadioTechnologies =
+                new int[]{android.telephony.satellite.stub.NTRadioTechnology.PROPRIETARY};
+        capabilities.supportedRadioTechnologies = supportedRadioTechnologies;
+        sendOnSatelliteCapabilitiesChanged(capabilities);
         /* unregister non-terrestrial network signal strength changed event callback */
         sSatelliteManager.unregisterForCapabilitiesChanged(
                 satelliteCapabilitiesCallbackTest);

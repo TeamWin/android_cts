@@ -19,6 +19,7 @@ package android.media.audio.cts;
 import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.AudioRecordingConfiguration;
@@ -37,6 +38,17 @@ class AudioTestUtil {
     public static final AudioAttributes DEFAULT_ATTRIBUTES =
             AudioProductStrategy.getDefaultAttributes();
     public static final AudioAttributes INVALID_ATTRIBUTES = new AudioAttributes.Builder().build();
+
+    // Basic Device Attributes
+    public static boolean hasAudioOutput(Context context) {
+        return context.getPackageManager().hasSystemFeature(
+            PackageManager.FEATURE_AUDIO_OUTPUT);
+    }
+
+    public static boolean hasAudioInput(Context context) {
+        return context.getPackageManager().hasSystemFeature(
+            PackageManager.FEATURE_MICROPHONE);
+    }
 
     public static int resetVolumeIndex(int indexMin, int indexMax) {
         return (indexMax + indexMin) / 2;

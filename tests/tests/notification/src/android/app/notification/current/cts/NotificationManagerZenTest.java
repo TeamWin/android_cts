@@ -215,7 +215,9 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
 
             // Also get and cache the default policy for comparison later.
-            mDefaultPolicy = mNotificationManager.getDefaultZenPolicy();
+            if (Flags.modesApi()) {
+                mDefaultPolicy = mNotificationManager.getDefaultZenPolicy();
+            }
         });
     }
 
@@ -234,7 +236,9 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         // Restore to the previous DND state.
         runAsSystemUi(() -> {
             mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
-            mNotificationManager.setNotificationPolicy(mOriginalPolicy);
+            if (mOriginalPolicy != null) {
+                mNotificationManager.setNotificationPolicy(mOriginalPolicy);
+            }
         });
 
         final ArrayList<ContentProviderOperation> operationList = new ArrayList<>();
@@ -262,8 +266,12 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
         deleteAllAutomaticZenRules();
 
-        mListener.resetData();
-        mNotificationHelper.disableListener(STUB_PACKAGE_NAME);
+        if (mListener != null) {
+            // setUp asserts mListener isn't null, but tearDown will still run after that assertion
+            // failure.
+            mListener.resetData();
+            mNotificationHelper.disableListener(STUB_PACKAGE_NAME);
+        }
 
         deleteChannels();
     }

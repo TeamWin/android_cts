@@ -31,22 +31,24 @@ import android.app.AppOpsManager.OPSTR_READ_CALENDAR
 import android.app.AppOpsManager.OPSTR_RECORD_AUDIO
 import android.app.AppOpsManager.OPSTR_WIFI_SCAN
 import android.app.AppOpsManager.OPSTR_WRITE_CALENDAR
+import android.app.AppOpsManager.OP_FLAG_SELF
 import android.app.AppOpsManager.OnOpChangedListener
+import android.app.AppOpsManager.OnOpNotedListener
+import android.companion.virtual.VirtualDeviceManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Process
 import android.os.UserHandle
+import android.permission.flags.Flags
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.RequiresFlagsEnabled
+import android.platform.test.flag.junit.DeviceFlagsValueProvider
+import android.util.Log
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.FlakyTest
 import androidx.test.runner.AndroidJUnit4
-import com.android.compatibility.common.util.PollingCheck
-import com.google.common.truth.Truth.assertThat
-import java.util.HashMap
-import java.util.HashSet
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executor
-import java.util.concurrent.LinkedBlockingDeque
+import com.google.common.base.Objects
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import org.junit.Assert
 import org.junit.Assert.assertEquals
@@ -57,28 +59,26 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.timeout
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.verifyZeroInteractions
 
 @RunWith(AndroidJUnit4::class)
 class AppOpsTest {
-    // Notifying OnOpChangedListener callbacks is an async operation, so we define a timeout.
-    private val TIMEOUT_MS = 10000L
-
     private lateinit var mAppOps: AppOpsManager
     private lateinit var mContext: Context
     private lateinit var mOpPackageName: String
     private val mMyUid = Process.myUid()
-    private val SHELL_PACKAGE_NAME = "com.android.shell"
+
+    @get:Rule val mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
 
     companion object {
         // These permissions and opStrs must map to the same op codes.
         val permissionToOpStr = HashMap<String, String>()
+        private val TIMEOUT_MS = 10000L
+        private val SHELL_PACKAGE_NAME = "com.android.shell"
+        private val TEST_ATTRIBUTION = "testAttribution"
+        private val LOG_TAG = AppOpsTest::class.java.simpleName
 
         init {
             permissionToOpStr[permission.ACCESS_COARSE_LOCATION] =
@@ -143,17 +143,6 @@ class AppOpsTest {
 
         val USER_SHELL_UID = UserHandle.getUid(Process.myUserHandle().identifier,
                 UserHandle.getAppId(Process.SHELL_UID))
-    }
-
-    internal class FakeOnOppChangeListener : OnOpChangedListener {
-        var onOpChangeCallbackCount: Int = 0
-        var onOpChangeCallbackOp: String = ""
-        var onOpChangeCallbackPackageName: String = ""
-        override fun onOpChanged(op: String, packageName: String) {
-            onOpChangeCallbackCount += 1
-            onOpChangeCallbackOp = op
-            onOpChangeCallbackPackageName = packageName
-        }
     }
 
     @Before
@@ -251,53 +240,70 @@ class AppOpsTest {
     @Test
     @AppModeFull(reason = "Instant app cannot query for the shell package")
     fun overlappingActiveAttributionOps() {
+        val activeChangedQueue = LinkedBlockingQueue<Boolean>()
         runWithShellPermissionIdentity {
-            val gotActive = CompletableFuture<Unit>()
-            val gotInActive = CompletableFuture<Unit>()
-
             val activeWatcher =
-                AppOpsManager.OnOpActiveChangedListener { _, _, packageName, active ->
-                    if (packageName == SHELL_PACKAGE_NAME) {
-                        if (active) {
-                            assertFalse(gotActive.isDone)
-                            gotActive.complete(Unit)
-                        } else {
-                            assertFalse(gotInActive.isDone)
-                            gotInActive.complete(Unit)
+                object: AppOpsManager.OnOpActiveChangedListener {
+                    override fun onOpActiveChanged(op: String,
+                        uid: Int,
+                        packageName: String,
+                        active: Boolean) {
+                        if (packageName == SHELL_PACKAGE_NAME) {
+                            activeChangedQueue.put(active)
                         }
                     }
                 }
 
-            mAppOps.startWatchingActive(arrayOf(OPSTR_WRITE_CALENDAR), Executor { it.run() },
+            mAppOps.startWatchingActive(arrayOf(OPSTR_WRITE_CALENDAR), { it.run() },
                 activeWatcher)
             try {
                 mAppOps.startOp(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName, "firstAttribution",
                         null)
+
                 assertTrue(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, USER_SHELL_UID,
                         SHELL_PACKAGE_NAME))
-                gotActive.get(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                var activeState = activeChangedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                assertNotNull("Did not receive onOpChanged callback within $TIMEOUT_MS ms",
+                    activeState)
+                assertTrue(activeState!!)
 
                 mAppOps.startOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName,
                     "secondAttribution", null)
+
                 assertTrue(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, USER_SHELL_UID,
                         SHELL_PACKAGE_NAME))
-                assertFalse(gotInActive.isDone)
+                var exception = try {
+                    assertNotNull("Unexpected onOpChanged callback received",
+                        activeChangedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
+                    null
+                } catch (e: AssertionError) {
+                    e
+                }
+                assertNotNull(exception)
 
                 mAppOps.finishOp(OPSTR_WRITE_CALENDAR, USER_SHELL_UID, SHELL_PACKAGE_NAME,
                     "firstAttribution")
 
-                // Allow some time for premature "watchingActive" callbacks to arrive
-                Thread.sleep(500)
-
                 assertTrue(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, USER_SHELL_UID,
                         SHELL_PACKAGE_NAME))
-                assertFalse(gotInActive.isDone)
+                exception = try {
+                    assertNotNull("Unexpected onOpChanged callback received",
+                        activeChangedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
+                    null
+                } catch (e: AssertionError) {
+                    e
+                }
+                assertNotNull(exception)
 
                 mAppOps.finishOp(OPSTR_WRITE_CALENDAR, USER_SHELL_UID, SHELL_PACKAGE_NAME,
                     "secondAttribution")
+
                 assertFalse(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, USER_SHELL_UID,
                         SHELL_PACKAGE_NAME))
-                gotInActive.get(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                activeState = activeChangedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                assertNotNull("Did not receive onOpChanged callback within $TIMEOUT_MS ms",
+                    activeState)
+                assertFalse(activeState!!)
             } finally {
                 mAppOps.stopWatchingActive(activeWatcher)
             }
@@ -308,39 +314,107 @@ class AppOpsTest {
     @AppModeFull(reason = "Instant app cannot query for the shell package")
     fun startOpTwiceAndVerifyChangeListener() {
         runWithShellPermissionIdentity {
-            val receivedActiveState = LinkedBlockingDeque<Boolean>()
+            val activeChangedQueue = LinkedBlockingQueue<Boolean>()
             val activeWatcher =
-                    AppOpsManager.OnOpActiveChangedListener { _, uid, packageName, active ->
-                        if (packageName == SHELL_PACKAGE_NAME &&
-                                uid == USER_SHELL_UID) {
-                            receivedActiveState.push(active)
+                    object: AppOpsManager.OnOpActiveChangedListener {
+                        override fun onOpActiveChanged(op: String,
+                            uid: Int,
+                            packageName: String,
+                            active: Boolean) {
+                            if (packageName == SHELL_PACKAGE_NAME && uid == USER_SHELL_UID) {
+                                activeChangedQueue.put(active)
+                            }
                         }
                     }
-
-            mAppOps.startWatchingActive(arrayOf(OPSTR_WIFI_SCAN), Executor { it.run() },
+            mAppOps.startWatchingActive(arrayOf(OPSTR_WIFI_SCAN), { it.run() },
                     activeWatcher)
             try {
                 mAppOps.startOp(OPSTR_WIFI_SCAN, mMyUid, mOpPackageName, null, null)
-                var activeState = receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)
-                assertNotNull("Did not receive active state callback within $TIMEOUT_MS ms",
+
+                var activeState = activeChangedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                assertNotNull("Did not receive onOpChanged callback within $TIMEOUT_MS ms",
                     activeState)
                 assertTrue(activeState!!)
 
                 mAppOps.finishOp(OPSTR_WIFI_SCAN, USER_SHELL_UID, SHELL_PACKAGE_NAME, null)
-                activeState = receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)
-                assertNotNull("Did not receive active state callback within $TIMEOUT_MS ms",
+
+                activeState = activeChangedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                assertNotNull("Did not receive onOpChanged callback within $TIMEOUT_MS ms",
                     activeState)
                 assertFalse(activeState!!)
 
                 mAppOps.startOp(OPSTR_WIFI_SCAN, mMyUid, mOpPackageName, null, null)
-                activeState = receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)
-                assertNotNull("Did not receive active state callback within $TIMEOUT_MS ms",
+                activeState = activeChangedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                assertNotNull("Did not receive onOpChanged callback within $TIMEOUT_MS ms",
                     activeState)
                 assertTrue(activeState!!)
 
                 mAppOps.finishOp(OPSTR_WIFI_SCAN, USER_SHELL_UID, SHELL_PACKAGE_NAME, null)
-                activeState = receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)
-                assertNotNull("Did not receive active state callback within $TIMEOUT_MS ms",
+
+                activeState = activeChangedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                assertNotNull("Did not receive onOpChanged callback within $TIMEOUT_MS ms",
+                    activeState)
+                assertFalse(activeState!!)
+            } finally {
+                mAppOps.stopWatchingActive(activeWatcher)
+            }
+        }
+    }
+
+    @Test
+    @AppModeFull(reason = "Instant app cannot query for the shell package")
+    @RequiresFlagsEnabled(Flags.FLAG_DEVICE_AWARE_PERMISSION_APIS_ENABLED)
+    fun startOpTwiceAndVerifyDeviceAttributedChangeListener() {
+        runWithShellPermissionIdentity {
+            val activeChangedQueue = LinkedBlockingQueue<Boolean>()
+            val activeWatcher =
+                    object: AppOpsManager.OnOpActiveChangedListener {
+                        override fun onOpActiveChanged(op: String,
+                            uid: Int,
+                            packageName: String,
+                            active: Boolean) {}
+
+                        override fun onOpActiveChanged(op: String,
+                            uid: Int,
+                            packageName: String,
+                            attributionTag: String?,
+                            virtualDeviceId: Int,
+                            active: Boolean,
+                            attributionFlags: Int,
+                            attributionChainId: Int) {
+                            if (packageName == SHELL_PACKAGE_NAME && uid == USER_SHELL_UID
+                                && virtualDeviceId == Context.DEVICE_ID_DEFAULT) {
+                                activeChangedQueue.put(active)
+                            }
+                        }
+                    }
+            mAppOps.startWatchingActive(arrayOf(OPSTR_WIFI_SCAN), { it.run() },
+                    activeWatcher)
+            try {
+                mAppOps.startOp(OPSTR_WIFI_SCAN, mMyUid, mOpPackageName, null, null)
+
+                var activeState = activeChangedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                assertNotNull("Did not receive onOpChanged callback within $TIMEOUT_MS ms",
+                    activeState)
+                assertTrue(activeState!!)
+
+                mAppOps.finishOp(OPSTR_WIFI_SCAN, USER_SHELL_UID, SHELL_PACKAGE_NAME, null)
+
+                activeState = activeChangedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                assertNotNull("Did not receive onOpChanged callback within $TIMEOUT_MS ms",
+                    activeState)
+                assertFalse(activeState!!)
+
+                mAppOps.startOp(OPSTR_WIFI_SCAN, mMyUid, mOpPackageName, null, null)
+                activeState = activeChangedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                assertNotNull("Did not receive onOpChanged callback within $TIMEOUT_MS ms",
+                    activeState)
+                assertTrue(activeState!!)
+
+                mAppOps.finishOp(OPSTR_WIFI_SCAN, USER_SHELL_UID, SHELL_PACKAGE_NAME, null)
+
+                activeState = activeChangedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                assertNotNull("Did not receive onOpChanged callback within $TIMEOUT_MS ms",
                     activeState)
                 assertFalse(activeState!!)
             } finally {
@@ -430,158 +504,392 @@ class AppOpsTest {
     }
 
     @Test
-    fun testWatchingMode() {
-        val onOpChangeWatcher = FakeOnOppChangeListener()
+    fun testWatchingMode_receivesCallback() {
+        val changedQueue = LinkedBlockingQueue<Int>()
+        val onOpChangeWatcher = object: OnOpChangedListener {
+            private var onOpChangedCount = 0
+            override fun onOpChanged(op: String?, packageName: String?) {
+                if (Objects.equal(op, OPSTR_WRITE_CALENDAR)
+                    && Objects.equal(packageName, mOpPackageName)) {
+                    changedQueue.put(onOpChangedCount++)
+                    return
+                }
+                Log.w(LOG_TAG,
+                    "Received unexpected onOpChanged callback for op $op packageName $packageName")
+            }
+        }
+
         try {
             setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
 
             mAppOps.startWatchingMode(OPSTR_WRITE_CALENDAR, mOpPackageName, onOpChangeWatcher)
 
-            // Make a change to the app op's mode.
-            var beforeChange = onOpChangeWatcher.onOpChangeCallbackCount
             setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
-            PollingCheck.check("OpChange callback not received", TIMEOUT_MS) {
-                beforeChange != onOpChangeWatcher.onOpChangeCallbackCount
-            }
-            assertThat(onOpChangeWatcher.onOpChangeCallbackCount).isEqualTo(beforeChange + 1)
-            assertThat(onOpChangeWatcher.onOpChangeCallbackOp).isEqualTo(OPSTR_WRITE_CALENDAR)
-            assertThat(onOpChangeWatcher.onOpChangeCallbackPackageName).isEqualTo(mOpPackageName)
 
-            // Make another change to the app op's mode.
-            beforeChange = onOpChangeWatcher.onOpChangeCallbackCount
-            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
-            PollingCheck.check("OpChange callback not received", TIMEOUT_MS) {
-                beforeChange != onOpChangeWatcher.onOpChangeCallbackCount
-            }
-            assertThat(onOpChangeWatcher.onOpChangeCallbackCount).isEqualTo(beforeChange + 1)
-            assertThat(onOpChangeWatcher.onOpChangeCallbackOp).isEqualTo(OPSTR_WRITE_CALENDAR)
-            assertThat(onOpChangeWatcher.onOpChangeCallbackPackageName).isEqualTo(mOpPackageName)
+            assertEquals("onOpChanged callback count unexpected",
+                changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS),
+                0)
 
-            // Set mode to the same value as before - expect no call to the listener.
-            beforeChange = onOpChangeWatcher.onOpChangeCallbackCount
             setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
-            // Adding a short sleep to ensure we do not miss the callback, if it does come.
-            Thread.sleep(2000)
-            assertThat(onOpChangeWatcher.onOpChangeCallbackCount).isEqualTo(beforeChange)
+
+            assertEquals("onOpChanged callback count unexpected",
+                changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS),
+                1)
+
+            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
+
+            var exception = try {
+                assertNotNull(changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
+                null
+            } catch (e: AssertionError) {
+                e
+            }
+            assertNotNull(exception)
 
             mAppOps.stopWatchingMode(onOpChangeWatcher)
 
-            // Make a change to the app op's mode. Since we already stopped watching the mode, the
-            // listener shouldn't be called.
-            beforeChange = onOpChangeWatcher.onOpChangeCallbackCount
             setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
-            // Adding a short sleep to ensure we do not miss the callback, if it does come.
-            Thread.sleep(2000)
-            assertThat(onOpChangeWatcher.onOpChangeCallbackCount).isEqualTo(beforeChange)
+
+            exception = try {
+                assertNotNull(changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
+                null
+            } catch (e: AssertionError) {
+                e
+            }
+            assertNotNull("Unexpected onOpChanged callback received", exception)
         } finally {
-            // Clean up registered watcher.
+            mAppOps.stopWatchingMode(onOpChangeWatcher)
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_DEVICE_AWARE_PERMISSION_APIS_ENABLED)
+    fun testWatchingMode_receivesDeviceAttributedCallback() {
+        val changedQueue = LinkedBlockingQueue<Int>()
+        val onOpChangeWatcher = object: OnOpChangedListener{
+            private var onOpChangedCount = 0
+            override fun onOpChanged(op: String?, packageName: String?) {}
+
+            override fun onOpChanged(op: String,
+                packageName: String,
+                userId: Int,
+                persistentDeviceId: String) {
+                if (Objects.equal(op, OPSTR_WRITE_CALENDAR)
+                    && Objects.equal(packageName, mOpPackageName)
+                    && Objects.equal(persistentDeviceId,
+                        VirtualDeviceManager.PERSISTENT_DEVICE_ID_DEFAULT)) {
+                    changedQueue.put(onOpChangedCount++)
+                    return
+                }
+                Log.w(LOG_TAG,
+                    "Received unexpected onOpChanged callback for op $op packageName $packageName")
+            }
+        }
+        try {
+            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
+
+            mAppOps.startWatchingMode(OPSTR_WRITE_CALENDAR, mOpPackageName, onOpChangeWatcher)
+
+            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
+
+            assertEquals("onOpChanged callback count unexpected",
+                changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS),
+                0)
+
+            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
+
+            assertEquals("onOpChanged callback count unexpected",
+                changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS),
+                1)
+
+            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
+
+            var exception = try {
+                assertNotNull(changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
+                null
+            } catch (e: AssertionError) {
+                e
+            }
+            assertNotNull(exception)
+
+            mAppOps.stopWatchingMode(onOpChangeWatcher)
+
+            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
+
+            exception = try {
+                assertNotNull(changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
+                null
+            } catch (e: AssertionError) {
+                e
+            }
+            assertNotNull("Unexpected onOpChanged callback received", exception)
+        } finally {
             mAppOps.stopWatchingMode(onOpChangeWatcher)
         }
     }
 
     @Test
     fun startWatchingNoted_withoutExecutor_whenOpNoted_receivesCallback() {
-        val watcher = mock(AppOpsManager.OnOpNotedListener::class.java)
+        val notedQueue = LinkedBlockingQueue<Int>()
+        val notedWatcher = object: OnOpNotedListener{
+            var opNotedCount = 0
+            override fun onOpNoted(op: String,
+                uid: Int,
+                packageName: String,
+                attributionTag: String?,
+                flags: Int,
+                result: Int) {
+                if (Objects.equal(op, OPSTR_WRITE_CALENDAR)
+                    && uid == mMyUid && Objects.equal(packageName, mOpPackageName)
+                    && attributionTag == null
+                    && flags == OP_FLAG_SELF && result == MODE_ALLOWED) {
+                    notedQueue.put(opNotedCount++)
+                }
+            }
+        }
         try {
-            mAppOps.startWatchingNoted(arrayOf(OPSTR_WRITE_CALENDAR), watcher)
+            mAppOps.startWatchingNoted(arrayOf(OPSTR_WRITE_CALENDAR), notedWatcher)
 
             mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
-                    mMyUid, mOpPackageName,
-                    "testAttribution",
-                    /* message = */ null)
-
-            verify(watcher, timeout(TIMEOUT_MS))
-                    .onOpNoted(
-                            OPSTR_WRITE_CALENDAR,
-                            mMyUid,
-                            mOpPackageName,
-                            "testAttribution",
-                            AppOpsManager.OP_FLAG_SELF,
-                            MODE_ALLOWED)
-
-            Mockito.reset(watcher)
-
-            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
-                    mMyUid,
-                    mOpPackageName,
+                mMyUid, mOpPackageName,
                     /* attributionTag = */ null,
-                    /* message = */ null)
+                /* message = */ null)
 
-            verify(watcher, timeout(TIMEOUT_MS))
-                    .onOpNoted(
-                            OPSTR_WRITE_CALENDAR,
-                            mMyUid,
-                            mOpPackageName,
-                            /* attributionTag = */ null,
-                            AppOpsManager.OP_FLAG_SELF,
-                            MODE_ALLOWED)
-
-            mAppOps.stopWatchingNoted(watcher)
-            Mockito.reset(watcher)
+            assertEquals("onOpNoted callback count unexpected",
+                notedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS),
+                0)
 
             mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
-                    mMyUid,
-                    mOpPackageName,
-                    "testAttribution",
-                    /* message = */ null)
+                mMyUid,
+                mOpPackageName,
+                    /* attributionTag = */ null,
+                /* message = */ null)
 
-            verifyZeroInteractions(watcher)
+            assertEquals("onOpNoted callback count unexpected",
+                notedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS),
+                1)
+
+            mAppOps.stopWatchingNoted(notedWatcher)
+
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
+                mMyUid,
+                mOpPackageName,
+                    /* attributionTag = */ null,
+                /* message = */ null)
+
+            val exception = try {
+                assertNotNull(notedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
+                null
+            } catch (e: AssertionError) {
+                e
+            }
+            assertNotNull("Unexpected onOpNoted callback received", exception)
         } finally {
-            mAppOps.stopWatchingNoted(watcher)
+            mAppOps.stopWatchingNoted(notedWatcher)
         }
     }
 
     @Test
     fun startWatchingNoted_withExecutor_whenOpNoted_receivesCallback() {
-        val watcher = mock(AppOpsManager.OnOpNotedListener::class.java)
+        val notedQueue = LinkedBlockingQueue<Int>()
+        val notedWatcher = object: OnOpNotedListener{
+            var opNotedCount = 0
+            override fun onOpNoted(op: String,
+                uid: Int,
+                packageName: String,
+                attributionTag: String?,
+                flags: Int,
+                result: Int) {
+                if (Objects.equal(op, OPSTR_WRITE_CALENDAR)
+                    && uid == mMyUid && Objects.equal(packageName, mOpPackageName)
+                    && Objects.equal(attributionTag, TEST_ATTRIBUTION)
+                    && flags == OP_FLAG_SELF && result == MODE_ALLOWED) {
+                    notedQueue.put(opNotedCount++)
+                }
+            }
+        }
         try {
-            mAppOps.startWatchingNoted(arrayOf(OPSTR_WRITE_CALENDAR), { it.run() }, watcher)
-
-            mAppOps.noteOp(
-                    OPSTR_WRITE_CALENDAR,
-                    mMyUid,
-                    mOpPackageName,
-                    "testAttribution",
-                    /* message = */ null)
-
-            verify(watcher, timeout(TIMEOUT_MS))
-                    .onOpNoted(
-                            OPSTR_WRITE_CALENDAR,
-                            mMyUid,
-                            mOpPackageName,
-                            "testAttribution",
-                            AppOpsManager.OP_FLAG_SELF,
-                            MODE_ALLOWED)
-
-            Mockito.reset(watcher)
+            mAppOps.startWatchingNoted(arrayOf(OPSTR_WRITE_CALENDAR), { it.run() }, notedWatcher)
 
             mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
-                    mMyUid,
-                    mOpPackageName,
-                    /* attributionTag = */ null,
-                    /* message = */ null)
+                mMyUid, mOpPackageName,
+                TEST_ATTRIBUTION,
+                /* message = */ null)
 
-            verify(watcher, timeout(TIMEOUT_MS))
-                    .onOpNoted(
-                            OPSTR_WRITE_CALENDAR,
-                            mMyUid,
-                            mOpPackageName,
-                            /* attributionTag = */ null,
-                            AppOpsManager.OP_FLAG_SELF,
-                            MODE_ALLOWED)
-
-            mAppOps.stopWatchingNoted(watcher)
-            Mockito.reset(watcher)
+            assertEquals("onOpNoted callback count unexpected",
+                notedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS),
+                0)
 
             mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
-                    mMyUid,
-                    mOpPackageName,
-                    "testAttribution",
-                    /* message = */ null)
+                mMyUid,
+                mOpPackageName,
+                TEST_ATTRIBUTION,
+                /* message = */ null)
 
-            verifyZeroInteractions(watcher)
+            assertEquals("onOpNoted callback count unexpected",
+                notedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS),
+                1)
+
+            mAppOps.stopWatchingNoted(notedWatcher)
+
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
+                mMyUid,
+                mOpPackageName,
+                TEST_ATTRIBUTION,
+                /* message = */ null)
+
+            val exception = try {
+                assertNotNull(notedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
+                null
+            } catch (e: AssertionError) {
+                e
+            }
+            assertNotNull("Unexpected onOpNoted callback received", exception)
         } finally {
-            mAppOps.stopWatchingNoted(watcher)
+            mAppOps.stopWatchingNoted(notedWatcher)
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_DEVICE_AWARE_PERMISSION_APIS_ENABLED)
+    fun startWatchingNoted_withoutExecutor_whenOpNoted_receivesDeviceAttributedCallback() {
+        val notedQueue = LinkedBlockingQueue<Int>()
+        val notedWatcher = object: OnOpNotedListener{
+            var opNotedCount = 0
+            override fun onOpNoted(op: String,
+                uid: Int,
+                packageName: String,
+                attributionTag: String?,
+                flags: Int,
+                result: Int) {}
+
+            override fun onOpNoted(op: String,
+                uid: Int,
+                packageName: String,
+                attributionTag: String?,
+                virtualDeviceId: Int,
+                flags: Int,
+                result: Int) {
+                if (Objects.equal(op, OPSTR_WRITE_CALENDAR)
+                    && uid == mMyUid && Objects.equal(packageName, mOpPackageName)
+                    && Objects.equal(attributionTag, TEST_ATTRIBUTION)
+                    && virtualDeviceId == Context.DEVICE_ID_DEFAULT
+                    && flags == OP_FLAG_SELF && result == MODE_ALLOWED) {
+                    notedQueue.put(opNotedCount++)
+                }
+            }
+        }
+
+        try {
+            mAppOps.startWatchingNoted(arrayOf(OPSTR_WRITE_CALENDAR), notedWatcher)
+
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
+                mMyUid, mOpPackageName,
+                TEST_ATTRIBUTION,
+                /* message = */ null)
+
+            assertEquals("onOpNoted callback count unexpected",
+                notedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS),
+                0)
+
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
+                mMyUid,
+                mOpPackageName,
+                TEST_ATTRIBUTION,
+                /* message = */ null)
+
+            assertEquals("onOpNoted callback count unexpected",
+                notedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS),
+                1)
+
+            mAppOps.stopWatchingNoted(notedWatcher)
+
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
+                mMyUid,
+                mOpPackageName,
+                TEST_ATTRIBUTION,
+                /* message = */ null)
+
+            val exception = try {
+                assertNotNull(notedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
+                null
+            } catch (e: AssertionError) {
+                e
+            }
+            assertNotNull("Unexpected onOpNoted callback received", exception)
+        } finally {
+            mAppOps.stopWatchingNoted(notedWatcher)
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_DEVICE_AWARE_PERMISSION_APIS_ENABLED)
+    fun startWatchingNoted_withExecutor_whenOpNoted_receivesDeviceAttributedCallback() {
+        val notedQueue = LinkedBlockingQueue<Int>()
+        val notedWatcher = object: OnOpNotedListener{
+            var opNotedCount = 0
+            override fun onOpNoted(op: String,
+                uid: Int,
+                packageName: String,
+                attributionTag: String?,
+                flags: Int,
+                result: Int) {}
+
+            override fun onOpNoted(op: String,
+                uid: Int,
+                packageName: String,
+                attributionTag: String?,
+                virtualDeviceId: Int,
+                flags: Int,
+                result: Int) {
+                if (Objects.equal(op, OPSTR_WRITE_CALENDAR)
+                    && uid == mMyUid && Objects.equal(packageName, mOpPackageName)
+                    && attributionTag == null
+                    && virtualDeviceId == Context.DEVICE_ID_DEFAULT
+                    && flags == OP_FLAG_SELF && result == MODE_ALLOWED) {
+                    notedQueue.put(opNotedCount++)
+                }
+            }
+        }
+        try {
+            mAppOps.startWatchingNoted(arrayOf(OPSTR_WRITE_CALENDAR), { it.run() }, notedWatcher)
+
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
+                mMyUid, mOpPackageName,
+                /* attributionTag = */ null,
+                /* message = */ null)
+
+            assertEquals("onOpNoted callback count unexpected",
+                notedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS),
+                0)
+
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
+                mMyUid,
+                mOpPackageName,
+                /* attributionTag = */ null,
+                /* message = */ null)
+
+            assertEquals("onOpNoted callback count unexpected",
+                notedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS),
+                1)
+
+            mAppOps.stopWatchingNoted(notedWatcher)
+
+            mAppOps.noteOp(OPSTR_WRITE_CALENDAR,
+                mMyUid,
+                mOpPackageName,
+                /* attributionTag = */ null,
+                /* message = */ null)
+
+            val exception = try {
+                assertNotNull(notedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
+                null
+            } catch (e: AssertionError) {
+                e
+            }
+            assertNotNull("Unexpected onOpNoted callback received", exception)
+        } finally {
+            mAppOps.stopWatchingNoted(notedWatcher)
         }
     }
 
@@ -755,7 +1063,17 @@ class AppOpsTest {
     @Test
     @FlakyTest
     fun testRestrictedSettingsOpsRead() {
-        val onOpChangeWatcher = FakeOnOppChangeListener()
+        val changedQueue = LinkedBlockingQueue<Int>()
+        val onOpChangeWatcher = object: OnOpChangedListener{
+            var opChangedCount = 0
+            override fun onOpChanged(op: String?, packageName: String?) {
+                if (Objects.equal(op, OPSTR_ACCESS_RESTRICTED_SETTINGS)
+                    && Objects.equal(packageName, mOpPackageName)) {
+                    changedQueue.put(opChangedCount++)
+                }
+            }
+        }
+
         // Apps without manage appops permission will get security exception if it tries to access
         // restricted settings ops.
         Assert.assertThrows(SecurityException::class.java) {
@@ -776,12 +1094,14 @@ class AppOpsTest {
             mAppOps.startWatchingMode(OPSTR_ACCESS_RESTRICTED_SETTINGS, mOpPackageName,
                     onOpChangeWatcher)
 
-            // Make a change to the app op's mode.
-            var beforeChange = onOpChangeWatcher.onOpChangeCallbackCount
-            setOpMode(mOpPackageName, OPSTR_ACCESS_RESTRICTED_SETTINGS, MODE_ALLOWED)
-            // Adding a short sleep to ensure we do not miss the callback, if it does come.
-            Thread.sleep(2000)
-            assertThat(onOpChangeWatcher.onOpChangeCallbackCount).isEqualTo(beforeChange)
+            val exception = try {
+                assertNotNull("Unexpected onOpChanged callback received",
+                    changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
+                null
+            } catch (e: AssertionError) {
+                e
+            }
+            assertNotNull(exception)
         } finally {
             // Clean up registered watcher.
             mAppOps.stopWatchingMode(onOpChangeWatcher)
@@ -795,17 +1115,11 @@ class AppOpsTest {
                 mAppOps.startWatchingMode(OPSTR_ACCESS_RESTRICTED_SETTINGS, mOpPackageName,
                         onOpChangeWatcher)
 
-                // Make a change to the app op's mode.
-                var beforeChange = onOpChangeWatcher.onOpChangeCallbackCount
                 setOpMode(mOpPackageName, OPSTR_ACCESS_RESTRICTED_SETTINGS, MODE_ALLOWED)
-                PollingCheck.check("OpChange callback not received", TIMEOUT_MS) {
-                    beforeChange != onOpChangeWatcher.onOpChangeCallbackCount
-                }
-                assertThat(onOpChangeWatcher.onOpChangeCallbackCount).isEqualTo(beforeChange + 1)
-                assertThat(onOpChangeWatcher.onOpChangeCallbackOp)
-                        .isEqualTo(OPSTR_ACCESS_RESTRICTED_SETTINGS)
-                assertThat(onOpChangeWatcher.onOpChangeCallbackPackageName)
-                        .isEqualTo(mOpPackageName)
+
+                assertEquals("onOpChanged callback count unexpected",
+                    changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS),
+                    0)
             } finally {
                 // Clean up registered watcher.
                 mAppOps.stopWatchingMode(onOpChangeWatcher)

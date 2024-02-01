@@ -192,81 +192,78 @@ class PreviewAspectRatioAndCropTest(its_base_test.ItsBaseTest):
           cam, req, props, raw_bool, name_with_log_path)
 
       run_crop_test = full_or_better and raw_avlb
+
+      # Check if we support testing this preview size
       for preview_size in supported_preview_sizes:
-        quality = preview_size.split(':')[0]
+        logging.debug('Testing preview recording for size: %s', preview_size)
+        # recording preview
+        preview_rec_obj = _collect_data(cam, preview_size)
 
-        # Check if we support testing this quality
-        if quality in video_processing_utils.ITS_SUPPORTED_QUALITIES:
-          logging.debug('Testing preview recording for quality: %s', quality)
-          # recording preview
-          preview_rec_obj = _collect_data(cam, preview_size)
+        # Grab the recording from DUT
+        self.dut.adb.pull([preview_rec_obj['recordedOutputPath'], log_path])
+        preview_file_name = (
+            preview_rec_obj['recordedOutputPath'].split('/')[-1])
+        logging.debug('preview_file_name: %s', preview_file_name)
+        preview_size = preview_rec_obj['videoSize']
+        width = int(preview_size.split('x')[0])
+        height = int(preview_size.split('x')[-1])
 
-          # Grab the recording from DUT
-          self.dut.adb.pull([preview_rec_obj['recordedOutputPath'], log_path])
-          preview_file_name = (preview_rec_obj['recordedOutputPath']
-                               .split('/')[-1])
-          logging.debug('preview_file_name: %s', preview_file_name)
-          preview_size = preview_rec_obj['videoSize']
-          width = int(preview_size.split('x')[0])
-          height = int(preview_size.split('x')[-1])
+        # Extract last key frame as numpy image
+        last_key_frame = (
+            video_processing_utils.extract_last_key_frame_from_recording(
+                self.log_path, preview_file_name)
+        )
 
-          # Extract last key frame as numpy image
-          last_key_frame = (
-              video_processing_utils.extract_last_key_frame_from_recording(
-                  self.log_path, preview_file_name)
-          )
+        # Check FoV
+        ref_img_name = (f'{name_with_log_path}_{preview_size}_circle.png')
+        circle = opencv_processing_utils.find_circle(
+            last_key_frame, ref_img_name, image_fov_utils.CIRCLE_MIN_AREA,
+            image_fov_utils.CIRCLE_COLOR)
 
-          # Check FoV
-          ref_img_name = (f'{name_with_log_path}_{quality}'
-                          f'_w{width}_h{height}_circle.png')
-          circle = opencv_processing_utils.find_circle(
-              last_key_frame, ref_img_name, image_fov_utils.CIRCLE_MIN_AREA,
-              image_fov_utils.CIRCLE_COLOR)
+        if debug:
+          opencv_processing_utils.append_circle_center_to_img(
+              circle, last_key_frame, ref_img_name)
 
-          if debug:
-            opencv_processing_utils.append_circle_center_to_img(
-                circle, last_key_frame, ref_img_name)
+        max_img_value = _MAX_8BIT_IMGS
 
-          max_img_value = _MAX_8BIT_IMGS
+        # Check pass/fail for fov coverage for all fmts in AR_CHECKED
+        img_name_stem = f'{name_with_log_path}_{preview_size}'
+        fov_chk_msg = image_fov_utils.check_fov(
+            circle, ref_fov, width, height)
+        if fov_chk_msg:
+          img_name = f'{img_name_stem}_fov.png'
+          fov_chk_preview_msg = f'Preview Size: {preview_size} {fov_chk_msg}'
+          failed_fov.append(fov_chk_preview_msg)
+          image_processing_utils.write_image(
+              last_key_frame/max_img_value, img_name, True)
 
-          # Check pass/fail for fov coverage for all fmts in AR_CHECKED
-          img_name_stem = f'{name_with_log_path}_{quality}_w{width}_h{height}'
-          fov_chk_msg = image_fov_utils.check_fov(
-              circle, ref_fov, width, height)
-          if fov_chk_msg:
-            img_name = f'{img_name_stem}_fov.png'
-            fov_chk_quality_msg = f'Quality: {quality} {fov_chk_msg}'
-            failed_fov.append(fov_chk_quality_msg)
-            image_processing_utils.write_image(
-                last_key_frame/max_img_value, img_name, True)
+        # Check pass/fail for aspect ratio
+        ar_chk_msg = image_fov_utils.check_ar(
+            circle, aspect_ratio_gt, width, height,
+            f'{preview_size}')
+        if ar_chk_msg:
+          img_name = f'{img_name_stem}_ar.png'
+          failed_ar.append(ar_chk_msg)
+          image_processing_utils.write_image(
+              last_key_frame/max_img_value, img_name, True)
 
-          # Check pass/fail for aspect ratio
-          ar_chk_msg = image_fov_utils.check_ar(
-              circle, aspect_ratio_gt, width, height,
-              f'{quality}')
-          if ar_chk_msg:
-            img_name = f'{img_name_stem}_ar.png'
-            failed_ar.append(ar_chk_msg)
-            image_processing_utils.write_image(
-                last_key_frame/max_img_value, img_name, True)
-
-          # Check pass/fail for crop
-          if run_crop_test:
-            # Normalize the circle size to 1/4 of the image size, so that
-            # circle size won't affect the crop test result
-            crop_thresh_factor = ((min(ref_fov['w'], ref_fov['h']) / 4.0) /
-                                  max(ref_fov['circle_w'],
-                                      ref_fov['circle_h']))
-            crop_chk_msg = image_fov_utils.check_crop(
-                circle, cc_ct_gt, width, height,
-                f'{quality}', crop_thresh_factor)
-            if crop_chk_msg:
-              crop_img_name = f'{img_name_stem}_crop.png'
-              failed_crop.append(crop_chk_msg)
-              image_processing_utils.write_image(last_key_frame/max_img_value,
-                                                 crop_img_name, True)
-          else:
-            logging.debug('Crop test skipped')
+        # Check pass/fail for crop
+        if run_crop_test:
+          # Normalize the circle size to 1/4 of the image size, so that
+          # circle size won't affect the crop test result
+          crop_thresh_factor = ((min(ref_fov['w'], ref_fov['h']) / 4.0) /
+                                max(ref_fov['circle_w'],
+                                    ref_fov['circle_h']))
+          crop_chk_msg = image_fov_utils.check_crop(
+              circle, cc_ct_gt, width, height,
+              f'{preview_size}', crop_thresh_factor)
+          if crop_chk_msg:
+            crop_img_name = f'{img_name_stem}_crop.png'
+            failed_crop.append(crop_chk_msg)
+            image_processing_utils.write_image(last_key_frame/max_img_value,
+                                               crop_img_name, True)
+        else:
+          logging.debug('Crop test skipped')
 
     # Print any failed test results
     _print_failed_test_results(failed_ar, failed_fov, failed_crop)
