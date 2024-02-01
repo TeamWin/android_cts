@@ -125,6 +125,7 @@ java_defaults {
         ":CtsBackLegacyApp",
         ":CtsDragAndDropTargetAppSdk23",
         ":CtsDeviceAlertWindowTestAppSdk25",
+        ":CtsWindowManagerExternalApp",
     ],
     per_testcase_directory: true,
 }
