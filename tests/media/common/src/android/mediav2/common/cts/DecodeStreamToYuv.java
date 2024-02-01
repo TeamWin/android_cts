@@ -108,7 +108,7 @@ public class DecodeStreamToYuv extends CodecDecoderTestBase {
                 .build();
     }
 
-    static MediaFormat getFormatInStream(String mediaType, String file) throws IOException {
+    public static MediaFormat getFormatInStream(String mediaType, String file) throws IOException {
         File tmp = new File(file);
         if (!tmp.exists()) {
             throw new FileNotFoundException("Test Setup Error, missing file: " + file);
