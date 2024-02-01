@@ -409,7 +409,7 @@ public class AttachedSurfaceControlTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_GET_HOST_TOKEN_API)
+    @RequiresFlagsEnabled(Flags.FLAG_SURFACE_CONTROL_INPUT_RECEIVER)
     public void testGetHostToken() throws Throwable {
         try (ActivityScenario<TestActivity> scenario =
                      ActivityScenario.launch(TestActivity.class)) {
@@ -431,7 +431,7 @@ public class AttachedSurfaceControlTest {
 
             final AttachedSurfaceControl attachedSurfaceControl =
                     scvhSurfaceView[0].getRootSurfaceControl();
-            assertThat(attachedSurfaceControl.getHostToken())
+            assertThat(attachedSurfaceControl.getInputTransferToken())
                     .isNotEqualTo(null);
         }
     }

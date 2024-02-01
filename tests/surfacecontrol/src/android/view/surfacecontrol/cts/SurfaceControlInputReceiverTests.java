@@ -47,6 +47,7 @@ import android.view.Surface;
 import android.view.SurfaceControl;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.view.WindowManager;
 import android.view.cts.surfacevalidator.EmbeddedSCVHService;
 import android.view.cts.surfacevalidator.IAttachEmbeddedWindow;
 import android.view.cts.surfacevalidator.IMotionEventReceiver;
@@ -80,13 +81,15 @@ public class SurfaceControlInputReceiverTests {
 
     private TestActivity mActivity;
 
+    private WindowManager mWm;
+
     @Before
     public void setUp() throws InterruptedException {
         mActivityRule.getScenario().onActivity(a -> mActivity = a);
+        mWm = mActivity.getWindowManager();
     }
 
-    @RequiresFlagsEnabled({Flags.FLAG_GET_HOST_TOKEN_API,
-            Flags.FLAG_SURFACE_CONTROL_INPUT_RECEIVER})
+    @RequiresFlagsEnabled(Flags.FLAG_SURFACE_CONTROL_INPUT_RECEIVER)
     @Test
     public void testLocalSurfaceControlReceivesInput() throws InterruptedException {
         SurfaceControl sc = new SurfaceControl.Builder()
@@ -114,9 +117,9 @@ public class SurfaceControlInputReceiverTests {
 
         try {
             final LinkedBlockingQueue<MotionEvent> motionEvents = new LinkedBlockingQueue<>();
-            mActivity.getWindowManager().registerBatchedSurfaceControlInputReceiver(
+            mWm.registerBatchedSurfaceControlInputReceiver(
                     mActivity.getDisplayId(),
-                    mActivity.getWindow().getRootSurfaceControl().getHostToken(), sc,
+                    mActivity.getWindow().getRootSurfaceControl().getInputTransferToken(), sc,
                     choreographer[0], event -> {
                         if (event instanceof MotionEvent) {
                             try {
@@ -128,8 +131,7 @@ public class SurfaceControlInputReceiverTests {
                         return false;
                     });
 
-            IBinder clientToken = mActivity.getWindowManager()
-                    .getSurfaceControlInputClientToken(sc);
+            IBinder clientToken = mWm.getSurfaceControlInputClientToken(sc);
             assertAndDumpWindowState(TAG,
                     "Failed to wait for SurfaceControl with Input to be on top",
                     waitForWindowOnTop(WAIT_TIME_S, TimeUnit.SECONDS, () -> clientToken));
@@ -142,14 +144,11 @@ public class SurfaceControlInputReceiverTests {
             assertMotionEvent(motionEvent, tappedCoords);
 
         } finally {
-            mActivity.runOnUiThread(() -> {
-                mActivity.getWindowManager().unregisterSurfaceControlInputReceiver(sc);
-            });
+            mActivity.runOnUiThread(() -> mWm.unregisterSurfaceControlInputReceiver(sc));
         }
     }
 
-    @RequiresFlagsEnabled({Flags.FLAG_GET_HOST_TOKEN_API,
-            Flags.FLAG_SURFACE_CONTROL_INPUT_RECEIVER})
+    @RequiresFlagsEnabled(Flags.FLAG_SURFACE_CONTROL_INPUT_RECEIVER)
     @Test
     public void testRemoteSurfaceControlReceivesInput()
             throws InterruptedException, RemoteException {
@@ -189,7 +188,7 @@ public class SurfaceControlInputReceiverTests {
         try {
             String embeddedName = attachEmbeddedWindow[0].attachEmbeddedSurfaceControl(sc,
                     mActivity.getDisplayId(),
-                    mActivity.getWindow().getRootSurfaceControl().getHostToken(),
+                    mActivity.getWindow().getRootSurfaceControl().getInputTransferToken(),
                     sBounds.width(),
                     sBounds.height(), new IMotionEventReceiver.Stub() {
                         @Override
@@ -233,8 +232,7 @@ public class SurfaceControlInputReceiverTests {
         }
     }
 
-    @RequiresFlagsEnabled({Flags.FLAG_GET_HOST_TOKEN_API,
-            Flags.FLAG_SURFACE_CONTROL_INPUT_RECEIVER})
+    @RequiresFlagsEnabled(Flags.FLAG_SURFACE_CONTROL_INPUT_RECEIVER)
     @Test
     public void testNonBatchedSurfaceControlReceivesInput() throws InterruptedException {
         SurfaceControl sc = new SurfaceControl.Builder()
@@ -260,9 +258,9 @@ public class SurfaceControlInputReceiverTests {
 
         try {
             final LinkedBlockingQueue<MotionEvent> motionEvents = new LinkedBlockingQueue<>();
-            mActivity.getWindowManager().registerUnbatchedSurfaceControlInputReceiver(
+            mWm.registerUnbatchedSurfaceControlInputReceiver(
                     mActivity.getDisplayId(),
-                    mActivity.getWindow().getRootSurfaceControl().getHostToken(), sc,
+                    mActivity.getWindow().getRootSurfaceControl().getInputTransferToken(), sc,
                     mActivity.getMainLooper(), event -> {
                         if (event instanceof MotionEvent) {
                             try {
@@ -274,8 +272,7 @@ public class SurfaceControlInputReceiverTests {
                         return false;
                     });
 
-            IBinder clientToken = mActivity.getWindowManager()
-                    .getSurfaceControlInputClientToken(sc);
+            IBinder clientToken = mWm.getSurfaceControlInputClientToken(sc);
             assertAndDumpWindowState(TAG,
                     "Failed to wait for SurfaceControl with Input to be on top",
                     waitForWindowOnTop(WAIT_TIME_S, TimeUnit.SECONDS,
@@ -288,9 +285,8 @@ public class SurfaceControlInputReceiverTests {
             assertAndDumpWindowState(TAG, "Failed to receive input", motionEvent != null);
             assertMotionEvent(motionEvent, tappedCoords);
         } finally {
-            mActivity.runOnUiThread(() -> {
-                mActivity.getWindowManager().unregisterSurfaceControlInputReceiver(sc);
-            });
+            mActivity.runOnUiThread(
+                    () -> mActivity.getWindowManager().unregisterSurfaceControlInputReceiver(sc));
         }
     }
 
