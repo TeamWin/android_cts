@@ -419,6 +419,9 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             assertEquals(expected.getAudioAttributes(), actual.getAudioAttributes());
         }
         assertTrue(Arrays.equals(expected.getVibrationPattern(), actual.getVibrationPattern()));
+        if (android.app.Flags.notificationChannelVibrationEffectApi()) {
+            assertEquals(expected.getVibrationEffect(), actual.getVibrationEffect());
+        }
         assertEquals(expected.getGroup(), actual.getGroup());
         assertEquals(expected.getConversationId(), actual.getConversationId());
         assertEquals(expected.getParentChannelId(), actual.getParentChannelId());
