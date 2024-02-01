@@ -26,7 +26,7 @@ import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.ScrollFeedbackProvider;
-import android.view.cts.util.InputDeviceUtils;
+import android.view.cts.util.InputDeviceIterators;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
@@ -69,10 +69,8 @@ public class ScrollFeedbackProviderTest {
     @Test
     @RequiresFlagsEnabled(FLAG_SCROLL_FEEDBACK_API)
     public void testApisDontCrash_allExistingInputSourceAndAxesCombinations() {
-        InputDeviceUtils.runOnEveryInputDeviceMotionRange(deviceIdAndMotionRange -> {
-            InputDevice.MotionRange motionRange = deviceIdAndMotionRange.second;
-            runScrollScenarios(
-                    deviceIdAndMotionRange.first, motionRange.getSource(), motionRange.getAxis());
+        InputDeviceIterators.iteratorOverEveryInputDeviceMotionRange((deviceId, motionRange) -> {
+            runScrollScenarios(deviceId, motionRange.getSource(), motionRange.getAxis());
 
         });
     }
@@ -80,7 +78,7 @@ public class ScrollFeedbackProviderTest {
     @Test
     @RequiresFlagsEnabled(FLAG_SCROLL_FEEDBACK_API)
     public void testApisDontCrash_invalidDeviceIds() {
-        InputDeviceUtils.runOnInvalidDeviceIds((deviceId) -> {
+        InputDeviceIterators.iteratorOverInvalidDeviceIds((deviceId) -> {
             runScrollScenarios(
                     deviceId, InputDevice.SOURCE_ROTARY_ENCODER, MotionEvent.AXIS_SCROLL);
         });
@@ -89,7 +87,7 @@ public class ScrollFeedbackProviderTest {
     @Test
     @RequiresFlagsEnabled(FLAG_SCROLL_FEEDBACK_API)
     public void testApisDontCrash_invalidInputSourceAndAxesCombinations() {
-        InputDeviceUtils.runOnEveryValidDeviceId((deviceId) -> {
+        InputDeviceIterators.iteratorOverEveryValidDeviceId((deviceId) -> {
             runScrollScenarios(deviceId, InputDevice.SOURCE_ROTARY_ENCODER, MotionEvent.AXIS_X);
         });
     }
