@@ -1,5 +1,6 @@
 package android.companion.cts.core
 
+import android.annotation.CallSuper
 import android.app.role.RoleManager.ROLE_ASSISTANT
 import android.app.role.RoleManager.ROLE_BROWSER
 import android.app.role.RoleManager.ROLE_CALL_REDIRECTION
@@ -18,12 +19,14 @@ import android.companion.cts.common.SIMPLE_EXECUTOR
 import android.companion.cts.common.assertEmpty
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import org.junit.Test
-import org.junit.runner.RunWith
+import com.android.compatibility.common.util.FeatureUtil
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import org.junit.Assume.assumeFalse
+import org.junit.Test
+import org.junit.runner.RunWith
 
 /**
  * Test CDM device profiles.
@@ -38,6 +41,14 @@ import kotlin.test.assertNotNull
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 @RunWith(AndroidJUnit4::class)
 class DeviceProfilesTest : CoreTestBase() {
+
+    @CallSuper
+    override fun setUp() {
+        super.setUp()
+
+        assumeFalse(FeatureUtil.isWatch())
+    }
+
     /** Test that all supported device profiles require a permission. */
     @Test
     fun test_supportedProfiles() {

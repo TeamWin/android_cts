@@ -28,6 +28,7 @@ import android.content.Intent
 import android.os.OutcomeReceiver
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.compatibility.common.util.FeatureUtil
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.PipedInputStream
@@ -45,6 +46,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import libcore.util.EmptyArray
+import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -68,6 +70,8 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
     @CallSuper
     override fun setUp() {
         super.setUp()
+
+        assumeFalse(FeatureUtil.isWatch())
 
         // Assume Permission Transfer is enabled, otherwise skip the test.
         try {
