@@ -2912,6 +2912,10 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
     @Test
     public void testMediaStyle_setNoClearFlag() {
+        // Test should only be run for build in V
+        if (!SdkLevel.isAtLeastV()) {
+            return;
+        }
         if (!CompatChanges.isChangeEnabled(ENFORCE_NO_CLEAR_FLAG_ON_MEDIA_NOTIFICATION)) {
             Log.d(TAG, "Skipping testMediaStyle_setNoClearFlag(), SDK_INT="
                     + Build.VERSION.SDK_INT);
@@ -2934,6 +2938,10 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
     @Test
     public void testCustomMediaStyle_setNoClearFlag() {
+        // Test should only be run for build in V
+        if (!SdkLevel.isAtLeastV()) {
+            return;
+        }
         if (!CompatChanges.isChangeEnabled(ENFORCE_NO_CLEAR_FLAG_ON_MEDIA_NOTIFICATION)) {
             Log.d(TAG, "Skipping testCustomMediaStyle_setNoClearFlag(), SDK_INT="
                     + Build.VERSION.SDK_INT);
