@@ -29,9 +29,12 @@ import static org.junit.Assert.fail;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.platform.test.annotations.AppModeSdkSandbox;
+import android.support.test.uiautomator.UiDevice;
+import android.view.MotionEvent;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController.OnControllableInsetsChangedListener;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.MetricsRecorder;
 import android.view.inputmethod.cts.util.TestActivity;
@@ -39,6 +42,7 @@ import android.view.inputmethod.cts.util.TestUtils;
 import android.view.inputmethod.nano.ImeProtoEnums;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -65,6 +69,9 @@ import java.util.concurrent.TimeUnit;
 public class InputMethodStatsTest extends EndToEndImeTestBase {
 
     private static final String TAG = "InputMethodStatsTest";
+
+    private static final int EDIT_TEXT_ID = 1;
+    private static final int TEXT_VIEW_ID = 2;
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(20);
 
@@ -117,8 +124,15 @@ public class InputMethodStatsTest extends EndToEndImeTestBase {
         layout.setOrientation(LinearLayout.VERTICAL);
 
         final var editText = new EditText(activity);
+        editText.setId(EDIT_TEXT_ID);
         editText.setText("Editable");
+
+        final var textView = new TextView(activity);
+        textView.setId(TEXT_VIEW_ID);
+        textView.setText("Not Editable");
+
         layout.addView(editText);
+        layout.addView(textView);
         editText.requestFocus();
         activity.getWindow().setSoftInputMode(mode);
         return layout;
@@ -171,7 +185,7 @@ public class InputMethodStatsTest extends EndToEndImeTestBase {
     @Test
     public void testClientShowImeRequestFinished() throws Throwable {
         verifyLogging(true /* show */, ImeProtoEnums.ORIGIN_CLIENT_SHOW_SOFT_INPUT,
-                (imeSession, activity) -> {
+                false /* fromUser */, (imeSession, activity) -> {
                     awaitControl(WindowInsets.Type.ime(), activity);
                     expectImeInvisible(TIMEOUT);
 
@@ -190,7 +204,7 @@ public class InputMethodStatsTest extends EndToEndImeTestBase {
     @Test
     public void testClientHideImeRequestFinished() throws Exception {
         verifyLogging(false /* show */, ImeProtoEnums.ORIGIN_CLIENT_HIDE_SOFT_INPUT,
-                (imeSession, activity) -> {
+                false /* fromUser */, (imeSession, activity) -> {
                     TestUtils.runOnMainSync(() -> activity.getWindow()
                             .getDecorView()
                             .getWindowInsetsController()
@@ -206,7 +220,7 @@ public class InputMethodStatsTest extends EndToEndImeTestBase {
     @Test
     public void testServerShowImeRequestFinished() throws Exception {
         verifyLogging(true /* show */, ImeProtoEnums.ORIGIN_SERVER_START_INPUT,
-                (imeSession, activity) -> {
+                false /* fromUser */, (imeSession, activity) -> {
                     createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
                     expectImeVisible(TIMEOUT);
                 });
@@ -218,11 +232,125 @@ public class InputMethodStatsTest extends EndToEndImeTestBase {
     @Test
     public void testServerHideImeRequestFinished() throws Exception {
         verifyLogging(false /* show */, ImeProtoEnums.ORIGIN_SERVER_HIDE_INPUT,
-                (imeSession, activity) -> {
+                false /* fromUser */, (imeSession, activity) -> {
                     // TODO: this is not actually an IME hide request from the server,
                     //  but in the current configuration it is tracked like one.
                     //  Will likely change in the future.
                     imeSession.callRequestHideSelf(0 /* flags */);
+
+                    expectImeInvisible(TIMEOUT);
+                });
+    }
+
+    /**
+     * Test the logging for a user interaction show IME request using InputMethodManager.
+     */
+    @Test
+    public void testFromUser_withImm_showImeRequestFinished() throws Exception {
+        verifyLogging(true /* show */, ImeProtoEnums.ORIGIN_CLIENT_SHOW_SOFT_INPUT,
+                true /* fromUser */, (imeSession, activity) -> {
+                    final EditText editText = activity.requireViewById(EDIT_TEXT_ID);
+                    editText.setShowSoftInputOnFocus(false);
+                    // onClickListener is run later, so ViewRootImpl#isHandlingPointeEvent will
+                    // be false. onTouchListener runs immediately, so the value will be true.
+                    editText.setOnTouchListener((v, ev) -> {
+                        // Three motion events are sent, only react to one of them.
+                        if (ev.getAction() != MotionEvent.ACTION_DOWN) {
+                            return false;
+                        }
+                        editText.getContext().getSystemService(InputMethodManager.class)
+                                .showSoftInput(editText, 0 /* flags */);
+                        return true;
+                    });
+                    mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, null, editText);
+
+                    expectImeVisible(TIMEOUT);
+                });
+    }
+
+    /**
+     * Test the logging for a user interaction hide IME request using InputMethodManager.
+     */
+    @Test
+    public void testFromUser_withImm_hideImeRequestFinished() throws Exception {
+        verifyLogging(false /* show */, ImeProtoEnums.ORIGIN_CLIENT_HIDE_SOFT_INPUT,
+                true /* formUser */, (imeSession, activity) -> {
+                    final TextView textView = activity.requireViewById(TEXT_VIEW_ID);
+                    // onClickListener is run later, so ViewRootImpl#isHandlingPointeEvent will
+                    // be false. onTouchListener runs immediately, so the value will be true.
+                    textView.setOnTouchListener((v, ev) -> {
+                        // Three motion events are sent, only react to one of them.
+                        if (ev.getActionMasked() != MotionEvent.ACTION_DOWN) {
+                            return false;
+                        }
+                        textView.getContext().getSystemService(InputMethodManager.class)
+                                .hideSoftInputFromWindow(textView.getWindowToken(), 0 /* flags */);
+                        return true;
+                    });
+                    mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, null, textView);
+
+                    expectImeInvisible(TIMEOUT);
+                });
+    }
+
+    /**
+     * Test the logging for a user interaction show IME request using WindowInsetsController.
+     */
+    @Test
+    public void testFromUser_withWic_showImeRequestFinished() throws Exception {
+        verifyLogging(true /* show */, ImeProtoEnums.ORIGIN_CLIENT_SHOW_SOFT_INPUT,
+                true /* fromUser */, (imeSession, activity) -> {
+                    final EditText editText = activity.requireViewById(EDIT_TEXT_ID);
+                    editText.setShowSoftInputOnFocus(false);
+                    // onClickListener is run later, so ViewRootImpl#isHandlingPointeEvent will
+                    // be false. onTouchListener runs immediately, so the value will be true.
+                    editText.setOnTouchListener((v, ev) -> {
+                        // Three motion events are sent, only react to one of them.
+                        if (ev.getActionMasked() != MotionEvent.ACTION_DOWN) {
+                            return false;
+                        }
+                        activity.getWindow().getInsetsController().show(WindowInsets.Type.ime());
+                        return true;
+                    });
+                    mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, null, editText);
+
+                    expectImeVisible(TIMEOUT);
+                });
+    }
+
+    /**
+     * Test the logging for a user interaction hide IME request using WindowInsetsController.
+     */
+    @Test
+    public void testFromUser_withWic_hideImeRequestFinished() throws Exception {
+        verifyLogging(false /* show */, ImeProtoEnums.ORIGIN_CLIENT_HIDE_SOFT_INPUT,
+                true /* fromUser */, (imeSession, activity) -> {
+                    final TextView textView = activity.requireViewById(TEXT_VIEW_ID);
+                    // onClickListener is run later, so ViewRootImpl#isHandlingPointeEvent will
+                    // be false. onTouchListener runs immediately, so the value will be true.
+                    textView.setOnTouchListener((v, ev) -> {
+                        // Three motion events are sent, only react to one of them.
+                        if (ev.getActionMasked() != MotionEvent.ACTION_DOWN) {
+                            return false;
+                        }
+                        activity.getWindow().getInsetsController().hide(WindowInsets.Type.ime());
+                        return true;
+                    });
+                    mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, null, textView);
+
+                    expectImeInvisible(TIMEOUT);
+                });
+    }
+
+    /**
+     * Test the logging for a user interaction hide IME request using back button press.
+     */
+    @Test
+    public void testFromUser_withBackPress_hideImeRequestFinished() throws Exception {
+        verifyLogging(false /* show */, ImeProtoEnums.ORIGIN_SERVER_HIDE_INPUT,
+                true /* fromUser */, (imeSession, activity) -> {
+                    UiDevice.getInstance(mInstrumentation)
+                            .pressBack();
 
                     expectImeInvisible(TIMEOUT);
                 });
@@ -234,9 +362,11 @@ public class InputMethodStatsTest extends EndToEndImeTestBase {
      * @param show     whether this is testing a show request (starts with IME hidden),
      *                 or hide request (starts with IME shown).
      * @param origin   the expected IME request origin.
+     * @param fromUser whether this request is expected to be created from user interaction.
      * @param runnable the runnable with the test code to execute.
      */
-    private void verifyLogging(boolean show, int origin, TestRunnable runnable) throws Exception {
+    private void verifyLogging(boolean show, int origin, boolean fromUser,
+            TestRunnable runnable) throws Exception {
         // Create mockImeSession to decouple from real IMEs,
         // and enable calling expectImeVisible and expectImeInvisible.
         try (var imeSession = MockImeSession.create(
@@ -305,6 +435,12 @@ public class InputMethodStatsTest extends EndToEndImeTestBase {
                     assertWithMessage("Ime Request origin")
                             .that(imeRequestFinished.origin)
                             .isEqualTo(origin);
+                    if (fromUser) {
+                        // Assert only when fromUser was expected to be true.
+                        assertWithMessage("Ime Request fromUser")
+                                .that(imeRequestFinished.fromUser)
+                                .isEqualTo(true);
+                    }
                 }
 
                 // Must have at least one successful request received.
