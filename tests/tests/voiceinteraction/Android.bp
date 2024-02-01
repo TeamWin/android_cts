@@ -31,6 +31,10 @@ android_test {
         "flag-junit",
         "android.service.voice.flags-aconfig-java",
         "android.permission.flags-aconfig-java",
+        "Harrier",
+        "Nene",
+        "ActivityContext",
+        "TestApp",
     ],
     aidl: {
         local_include_dirs: [
