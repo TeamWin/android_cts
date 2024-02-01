@@ -343,7 +343,7 @@ public class NfcAdapterTest {
         try {
             originalDefault = setDefaultPaymentService(CtsMyHostApduService.class);
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-            boolean result = adapter.allowTransaction();
+            boolean result = adapter.setTransactionAllowed(true);
             Assert.assertTrue(result);
         } finally {
             setDefaultPaymentService(originalDefault);
@@ -358,7 +358,7 @@ public class NfcAdapterTest {
         try {
             originalDefault = setDefaultPaymentService(CtsMyHostApduService.class);
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-            boolean result = adapter.disallowTransaction();
+            boolean result = adapter.setTransactionAllowed(false);
             Assert.assertTrue(result);
         } finally {
             setDefaultPaymentService(originalDefault);
@@ -374,7 +374,7 @@ public class NfcAdapterTest {
                     .getUiAutomation().adoptShellPermissionIdentity(MANAGE_DEFAULT_APPLICATIONS);
             assumeTrue(setDefaultWalletRoleHolder(mContext));
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-            boolean result = adapter.allowTransaction();
+            boolean result = adapter.setTransactionAllowed(true);
             Assert.assertTrue(result);
         } finally {
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
@@ -391,7 +391,7 @@ public class NfcAdapterTest {
                     .getUiAutomation().adoptShellPermissionIdentity(MANAGE_DEFAULT_APPLICATIONS);
             assumeTrue(setDefaultWalletRoleHolder(mContext));
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-            boolean result = adapter.disallowTransaction();
+            boolean result = adapter.setTransactionAllowed(false);
             Assert.assertTrue(result);
         } finally {
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
