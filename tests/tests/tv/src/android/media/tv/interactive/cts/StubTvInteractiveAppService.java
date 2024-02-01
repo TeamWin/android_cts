@@ -37,6 +37,8 @@ import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
 
+import androidx.annotation.NonNull;
+
 import java.util.List;
 
 /**
@@ -107,6 +109,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public int mRecordingConnectionFailedCount;
         public int mRecordingDisconnected;
         public int mRecordingErrorCount;
+        public int mSendSelectedTrackInfoCount;
 
         public Integer mKeyDownCode;
         public Integer mKeyUpCode;
@@ -136,6 +139,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public List<TvRecordingInfo> mTvRecordingInfoList;
         public Rect mCurrentVideoBounds;
         public Integer mRecordingError;
+        public List<TvTrackInfo> mSelectedTrackInfoList;
 
         StubSessionImpl(Context context) {
             super(context);
@@ -175,6 +179,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mRecordingConnectionFailedCount = 0;
             mRecordingDisconnected = 0;
             mRecordingErrorCount = 0;
+            mSendSelectedTrackInfoCount = 0;
 
             mKeyDownCode = null;
             mKeyUpCode = null;
@@ -204,6 +209,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mTvRecordingInfoList = null;
             mCurrentVideoBounds = null;
             mRecordingError = null;
+            mSelectedTrackInfoList = null;
         }
 
         @Override
@@ -645,6 +651,13 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mRecordingErrorCount++;
             mRecordingId = recordingId;
             mRecordingError = err;
+        }
+
+        @Override
+        public void onSelectedTrackInfo(@NonNull List<TvTrackInfo> trackInfoList) {
+            super.onSelectedTrackInfo(trackInfoList);
+            mSelectedTrackInfoList = trackInfoList;
+            mSendSelectedTrackInfoCount++;
         }
     }
 }
