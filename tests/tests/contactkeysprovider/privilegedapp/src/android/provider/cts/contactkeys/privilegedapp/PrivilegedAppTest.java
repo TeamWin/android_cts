@@ -75,13 +75,13 @@ public class PrivilegedAppTest {
             mContactKeysManager.updateContactKeyRemoteVerificationState(
                     LOOKUP_KEY, DEVICE_ID,
                     ACCOUNT_ID, HELPER_APP_PACKAGE,
-                    ContactKeysManager.VERIFIED);
+                    ContactKeysManager.VERIFICATION_STATE_VERIFIED);
         }, UPDATE_VERIFICATION_STATE_PERMISSION);
 
         contactKeys = mContactKeysManager.getAllContactKeys(LOOKUP_KEY);
         assertThat(contactKeys.size()).isEqualTo(1);
         assertThat(contactKeys.get(0).getRemoteVerificationState())
-                .isEqualTo(ContactKeysManager.VERIFIED);
+                .isEqualTo(ContactKeysManager.VERIFICATION_STATE_VERIFIED);
     }
 
     @Test
@@ -93,13 +93,13 @@ public class PrivilegedAppTest {
             mContactKeysManager.updateContactKeyLocalVerificationState(
                     LOOKUP_KEY, DEVICE_ID,
                     ACCOUNT_ID, HELPER_APP_PACKAGE,
-                    ContactKeysManager.VERIFIED);
+                    ContactKeysManager.VERIFICATION_STATE_VERIFIED);
         }, UPDATE_VERIFICATION_STATE_PERMISSION);
 
         contactKeys = mContactKeysManager.getAllContactKeys(LOOKUP_KEY);
         assertThat(contactKeys.size()).isEqualTo(1);
         assertThat(contactKeys.get(0).getLocalVerificationState())
-                .isEqualTo(ContactKeysManager.VERIFIED);
+                .isEqualTo(ContactKeysManager.VERIFICATION_STATE_VERIFIED);
     }
 
     @Test
@@ -110,12 +110,12 @@ public class PrivilegedAppTest {
         SystemUtil.runWithShellPermissionIdentity(() -> {
             mContactKeysManager.updateSelfKeyRemoteVerificationState(
                     DEVICE_ID, ACCOUNT_ID,
-                    HELPER_APP_PACKAGE, ContactKeysManager.VERIFIED);
+                    HELPER_APP_PACKAGE, ContactKeysManager.VERIFICATION_STATE_VERIFIED);
         }, UPDATE_VERIFICATION_STATE_PERMISSION);
 
         selfKeys = mContactKeysManager.getAllSelfKeys();
         assertThat(selfKeys.size()).isEqualTo(1);
         assertThat(selfKeys.get(0).getRemoteVerificationState())
-                .isEqualTo(ContactKeysManager.VERIFIED);
+                .isEqualTo(ContactKeysManager.VERIFICATION_STATE_VERIFIED);
     }
 }

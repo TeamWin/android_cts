@@ -103,9 +103,9 @@ public class ContactKeysManagerTest {
         assertThat(contactKey.getAccountId()).isEqualTo(ACCOUNT_ID);
         assertThat(contactKey.getKeyValue()).isEqualTo(KEY_VALUE);
         assertThat(contactKey.getLocalVerificationState())
-                .isEqualTo(ContactKeysManager.UNVERIFIED);
+                .isEqualTo(ContactKeysManager.VERIFICATION_STATE_UNVERIFIED);
         assertThat(contactKey.getRemoteVerificationState())
-                .isEqualTo(ContactKeysManager.UNVERIFIED);
+                .isEqualTo(ContactKeysManager.VERIFICATION_STATE_UNVERIFIED);
         assertThat(contactKey.getOwnerPackageName()).isEqualTo(OWNER_PACKAGE_NAME);
         assertThat(contactKey.getDisplayName()).isEqualTo(null);
         assertThat(contactKey.getEmailAddress()).isEqualTo(null);
@@ -116,8 +116,8 @@ public class ContactKeysManagerTest {
     public void testUpdateOrInsertContactKey_updatesExistingEntry() {
         mContactKeysManager.updateOrInsertContactKey(LOOKUP_KEY, DEVICE_ID, ACCOUNT_ID,
                 KEY_VALUE);
-        int localVerificationState = ContactKeysManager.VERIFIED;
-        int remoteVerificationState = ContactKeysManager.VERIFIED;
+        int localVerificationState = ContactKeysManager.VERIFICATION_STATE_VERIFIED;
+        int remoteVerificationState = ContactKeysManager.VERIFICATION_STATE_VERIFIED;
         mContactKeysManager.updateContactKeyLocalVerificationState(LOOKUP_KEY, DEVICE_ID,
                 ACCOUNT_ID, localVerificationState);
         mContactKeysManager.updateContactKeyRemoteVerificationState(LOOKUP_KEY, DEVICE_ID,
@@ -199,9 +199,9 @@ public class ContactKeysManagerTest {
         assertThat(actualKey.getTimeUpdated()).isEqualTo(STRIPPED_TIME_UPDATED);
         assertThat(actualKey.getKeyValue()).isNull();
         assertThat(actualKey.getLocalVerificationState()).isEqualTo(
-                ContactKeysManager.UNVERIFIED);
+                ContactKeysManager.VERIFICATION_STATE_UNVERIFIED);
         assertThat(actualKey.getRemoteVerificationState()).isEqualTo(
-                ContactKeysManager.UNVERIFIED);
+                ContactKeysManager.VERIFICATION_STATE_UNVERIFIED);
     }
 
     @Test
@@ -220,9 +220,9 @@ public class ContactKeysManagerTest {
         assertThat(contactKey.getTimeUpdated()).isEqualTo(STRIPPED_TIME_UPDATED);
         assertThat(contactKey.getKeyValue()).isNull();
         assertThat(contactKey.getLocalVerificationState()).isEqualTo(
-                ContactKeysManager.UNVERIFIED);
+                ContactKeysManager.VERIFICATION_STATE_UNVERIFIED);
         assertThat(contactKey.getRemoteVerificationState()).isEqualTo(
-                ContactKeysManager.UNVERIFIED);
+                ContactKeysManager.VERIFICATION_STATE_UNVERIFIED);
         stopHelperApp();
     }
 
@@ -240,12 +240,12 @@ public class ContactKeysManagerTest {
                 KEY_VALUE);
 
         mContactKeysManager.updateContactKeyLocalVerificationState(LOOKUP_KEY, DEVICE_ID,
-                ACCOUNT_ID, ContactKeysManager.VERIFIED);
+                ACCOUNT_ID, ContactKeysManager.VERIFICATION_STATE_VERIFIED);
 
         ContactKey updatedContactKey =
                 mContactKeysManager.getContactKey(LOOKUP_KEY, DEVICE_ID, ACCOUNT_ID);
         assertThat(updatedContactKey.getLocalVerificationState())
-                .isEqualTo(ContactKeysManager.VERIFIED);
+                .isEqualTo(ContactKeysManager.VERIFICATION_STATE_VERIFIED);
     }
 
 
@@ -272,7 +272,7 @@ public class ContactKeysManagerTest {
                 () ->mContactKeysManager.updateContactKeyLocalVerificationState(
                         HELPER_APP_LOOKUP_KEY, HELPER_APP_DEVICE_ID,
                         HELPER_APP_ACCOUNT_ID, HELPER_APP_PACKAGE,
-                        ContactKeysManager.VERIFIED));
+                        ContactKeysManager.VERIFICATION_STATE_VERIFIED));
 
         assertThat(e).hasMessageThat().contains("The caller must have the "
                 + "android.permission.WRITE_VERIFICATION_STATE_E2EE_CONTACT_KEYS permission");
@@ -289,7 +289,7 @@ public class ContactKeysManagerTest {
                 () ->mContactKeysManager.updateContactKeyRemoteVerificationState(
                         HELPER_APP_LOOKUP_KEY, HELPER_APP_DEVICE_ID,
                         HELPER_APP_ACCOUNT_ID, HELPER_APP_PACKAGE,
-                        ContactKeysManager.VERIFIED));
+                        ContactKeysManager.VERIFICATION_STATE_VERIFIED));
 
         assertThat(e).hasMessageThat().contains("The caller must have the "
                 + "android.permission.WRITE_VERIFICATION_STATE_E2EE_CONTACT_KEYS permission");
@@ -302,12 +302,12 @@ public class ContactKeysManagerTest {
                 KEY_VALUE);
 
         mContactKeysManager.updateContactKeyRemoteVerificationState(LOOKUP_KEY, DEVICE_ID,
-                ACCOUNT_ID, ContactKeysManager.VERIFIED);
+                ACCOUNT_ID, ContactKeysManager.VERIFICATION_STATE_VERIFIED);
 
         ContactKey updatedContactKey =
                 mContactKeysManager.getContactKey(LOOKUP_KEY, DEVICE_ID, ACCOUNT_ID);
         assertThat(updatedContactKey.getRemoteVerificationState())
-                .isEqualTo(ContactKeysManager.VERIFIED);
+                .isEqualTo(ContactKeysManager.VERIFICATION_STATE_VERIFIED);
     }
 
     @Test
@@ -387,12 +387,12 @@ public class ContactKeysManagerTest {
         mContactKeysManager.updateOrInsertSelfKey(DEVICE_ID, ACCOUNT_ID, KEY_VALUE);
 
         mContactKeysManager.updateSelfKeyRemoteVerificationState(DEVICE_ID,
-                ACCOUNT_ID, ContactKeysManager.VERIFIED);
+                ACCOUNT_ID, ContactKeysManager.VERIFICATION_STATE_VERIFIED);
 
         SelfKey updatedSelfKey = mContactKeysManager.getSelfKey(DEVICE_ID,
                 ACCOUNT_ID);
         assertThat(updatedSelfKey.getRemoteVerificationState())
-                .isEqualTo(ContactKeysManager.VERIFIED);
+                .isEqualTo(ContactKeysManager.VERIFICATION_STATE_VERIFIED);
     }
 
     @Test
@@ -404,7 +404,7 @@ public class ContactKeysManagerTest {
         SecurityException e = assertThrows(SecurityException.class,
                 () ->mContactKeysManager.updateSelfKeyRemoteVerificationState(
                         HELPER_APP_DEVICE_ID, HELPER_APP_ACCOUNT_ID,
-                        HELPER_APP_PACKAGE, ContactKeysManager.VERIFIED));
+                        HELPER_APP_PACKAGE, ContactKeysManager.VERIFICATION_STATE_VERIFIED));
         assertThat(e).hasMessageThat().contains("The caller must have the "
                 + "android.permission.WRITE_VERIFICATION_STATE_E2EE_CONTACT_KEYS permission");
 
@@ -466,7 +466,7 @@ public class ContactKeysManagerTest {
         assertThat(actualKey.getTimeUpdated()).isEqualTo(STRIPPED_TIME_UPDATED);
         assertThat(actualKey.getKeyValue()).isNull();
         assertThat(actualKey.getRemoteVerificationState()).isEqualTo(
-                ContactKeysManager.UNVERIFIED);
+                ContactKeysManager.VERIFICATION_STATE_UNVERIFIED);
     }
 
     @Test
@@ -485,7 +485,7 @@ public class ContactKeysManagerTest {
         assertThat(selfKey.getTimeUpdated()).isEqualTo(STRIPPED_TIME_UPDATED);
         assertThat(selfKey.getKeyValue()).isNull();
         assertThat(selfKey.getRemoteVerificationState()).isEqualTo(
-                ContactKeysManager.UNVERIFIED);
+                ContactKeysManager.VERIFICATION_STATE_UNVERIFIED);
         stopHelperApp();
     }
 
