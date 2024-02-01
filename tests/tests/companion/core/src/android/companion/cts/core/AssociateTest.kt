@@ -24,8 +24,10 @@ import android.companion.cts.common.RecordingCallback.OnAssociationPending
 import android.companion.cts.common.SIMPLE_EXECUTOR
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.compatibility.common.util.FeatureUtil
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import org.junit.Assume.assumeFalse
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -42,6 +44,8 @@ class AssociateTest : CoreTestBase() {
 
     @Test
     fun test_associate() {
+        assumeFalse(FeatureUtil.isWatch())
+
         val request: AssociationRequest = AssociationRequest.Builder()
                 .build()
         val callback = RecordingCallback()
