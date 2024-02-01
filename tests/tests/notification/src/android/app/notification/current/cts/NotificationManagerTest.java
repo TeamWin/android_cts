@@ -111,6 +111,7 @@ import com.google.common.base.Preconditions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
@@ -1025,6 +1026,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
      * 50 seconds. Tests will time out after approximately 60 seconds, so binding needs to happen
      * in under 10 seconds.
      */
+    @Ignore("b/322645812, b/322839106: test causing OOMs on lower-memory devices")
     @LargeTest
     @RequiresDevice
     @Test
