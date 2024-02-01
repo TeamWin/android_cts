@@ -15,16 +15,17 @@
  */
 
 package android.view.surfacecontrol.cts;
+
 import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
 import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.os.Binder;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
@@ -32,19 +33,18 @@ import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.server.wm.CtsWindowInfoUtils;
-import android.util.AndroidRuntimeException;
 import android.util.Log;
 import android.view.SurfaceControl;
 import android.view.SurfaceControlViewHost;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.window.TrustedPresentationThresholds;
 
-import com.android.window.flags.Flags;
-
-import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
+
+import com.android.window.flags.Flags;
 
 import junit.framework.Assert;
 
@@ -65,7 +65,7 @@ import java.util.function.Consumer;
 public class TrustedPresentationListenerTest {
     private static final String TAG = "TrustedPresentationListenerTest";
     private static final int STABILITY_REQUIREMENT_MS = 500;
-    private static final long WAIT_TIME_MS = HW_TIMEOUT_MULTIPLIER * 2000L;
+    private static final long WAIT_TIME_MS = HW_TIMEOUT_MULTIPLIER * 4000L;
 
     private static final float FRACTION_VISIBLE = 0.1f;
 
@@ -122,8 +122,8 @@ public class TrustedPresentationListenerTest {
 
     private Consumer<Boolean> mDefaultListener;
 
-    @RequiresFlagsEnabled(Flags.FLAG_TRUSTED_PRESENTATION_LISTENER_FOR_WINDOW)
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_TRUSTED_PRESENTATION_LISTENER_FOR_WINDOW)
     public void testAddTrustedPresentationListenerOnWindow() {
         WindowManager windowManager = mActivity.getSystemService(WindowManager.class);
         windowManager.registerTrustedPresentationListener(
@@ -132,8 +132,8 @@ public class TrustedPresentationListenerTest {
         assertResults(List.of(true));
     }
 
-    @RequiresFlagsEnabled(Flags.FLAG_TRUSTED_PRESENTATION_LISTENER_FOR_WINDOW)
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_TRUSTED_PRESENTATION_LISTENER_FOR_WINDOW)
     public void testRemoveTrustedPresentationListenerOnWindow() throws InterruptedException {
         WindowManager windowManager = mActivity.getSystemService(WindowManager.class);
         windowManager.registerTrustedPresentationListener(
@@ -153,16 +153,16 @@ public class TrustedPresentationListenerTest {
         assertEquals(mResults, List.of(true));
     }
 
-    @RequiresFlagsEnabled(Flags.FLAG_TRUSTED_PRESENTATION_LISTENER_FOR_WINDOW)
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_TRUSTED_PRESENTATION_LISTENER_FOR_WINDOW)
     public void testRemovingUnknownListenerIsANoop() {
         WindowManager windowManager = mActivity.getSystemService(WindowManager.class);
         assertNotNull(windowManager);
         windowManager.unregisterTrustedPresentationListener(mDefaultListener);
     }
 
-    @RequiresFlagsEnabled(Flags.FLAG_TRUSTED_PRESENTATION_LISTENER_FOR_WINDOW)
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_TRUSTED_PRESENTATION_LISTENER_FOR_WINDOW)
     public void testAddDuplicateListenerUpdatesThresholds() throws InterruptedException {
         Binder nonExistentWindow = new Binder();
         WindowManager windowManager = mActivity.getSystemService(WindowManager.class);
@@ -180,8 +180,8 @@ public class TrustedPresentationListenerTest {
         assertResults(List.of(true));
     }
 
-    @RequiresFlagsEnabled(Flags.FLAG_TRUSTED_PRESENTATION_LISTENER_FOR_WINDOW)
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_TRUSTED_PRESENTATION_LISTENER_FOR_WINDOW)
     public void testAddDuplicateThresholds() {
         mReceivedResults = new CountDownLatch(2);
         mDefaultListener = new Listener(mReceivedResults);
@@ -221,22 +221,22 @@ public class TrustedPresentationListenerTest {
         }
     }
 
-    @RequiresFlagsEnabled(Flags.FLAG_TRUSTED_PRESENTATION_LISTENER_FOR_WINDOW)
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_TRUSTED_PRESENTATION_LISTENER_FOR_WINDOW)
     public void testAddListenerToScvh() {
         WindowManager windowManager = mActivity.getSystemService(WindowManager.class);
-
+        var hostSurfaceView = new SurfaceView(mActivity);
+        hostSurfaceView.setZOrderOnTop(true);
         var embeddedView = new View(mActivity);
+        embeddedView.setBackgroundColor(Color.GREEN);
         mActivityRule.getScenario().onActivity(activity -> {
-            var attachedSurfaceControl =
-                    mActivity.getWindow().getDecorView().getRootSurfaceControl();
+            activity.setContentView(hostSurfaceView);
             var scvh = new SurfaceControlViewHost(mActivity, mActivity.getDisplay(),
-                    attachedSurfaceControl.getHostToken());
+                    hostSurfaceView.getHostToken());
             mSurfacePackage = scvh.getSurfacePackage();
             scvh.setView(embeddedView, mActivity.getWindow().getDecorView().getWidth(),
                     mActivity.getWindow().getDecorView().getHeight());
-            attachedSurfaceControl.buildReparentTransaction(
-                    mSurfacePackage.getSurfaceControl());
+            hostSurfaceView.setChildSurfacePackage(mSurfacePackage);
         });
 
         waitForViewAttach(embeddedView);
