@@ -1048,6 +1048,9 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         Condition condition =
                 new Condition(rule.getConditionId(), "summary", Condition.STATE_TRUE);
         mNotificationManager.setAutomaticZenRuleState(id, condition);
+        // TODO: b/323398944 - Shouldn't be necessary, but the test is flaky without it.
+        runAsSystemUi(
+                () -> mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY));
 
         // delay for streams to get into correct mute states
         Thread.sleep(1000);
@@ -1083,6 +1086,9 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         Condition condition =
                 new Condition(rule.getConditionId(), "summary", Condition.STATE_TRUE);
         mNotificationManager.setAutomaticZenRuleState(id, condition);
+        // TODO: b/323398944 - Shouldn't be necessary, but the test is flaky without it.
+        runAsSystemUi(
+                () -> mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY));
 
         // delay for streams to get into correct mute states
         Thread.sleep(1000);
