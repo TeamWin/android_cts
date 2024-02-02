@@ -121,13 +121,22 @@ public class GameFrameRateCtsActivity extends Activity {
     private static class PreconditionViolatedException extends RuntimeException { }
 
     private static class FrameRateTimeoutException extends RuntimeException {
-        FrameRateTimeoutException(float appRequestedFrameRate, float deviceRefreshRate) {
+        FrameRateTimeoutException(FrameRateRange appRequestedFrameRate, float deviceRefreshRate) {
             this.appRequestedFrameRate = appRequestedFrameRate;
             this.deviceRefreshRate = deviceRefreshRate;
         }
 
-        public float appRequestedFrameRate;
+        public FrameRateRange appRequestedFrameRate;
         public float deviceRefreshRate;
+    }
+
+    private static class FrameRateRange {
+        FrameRateRange(float min, float max) {
+            this.min = min;
+            this.max = max;
+        }
+        public float min;
+        public float max;
     }
 
     public void postBufferToSurface(int color) {
@@ -188,6 +197,12 @@ public class GameFrameRateCtsActivity extends Activity {
 
     private static boolean frameRatesMatchesOverride(float frameRate1, float frameRate2) {
         return Math.abs(frameRate1 - frameRate2) <= FPS_TOLERANCE_FOR_FRAME_RATE_OVERRIDE;
+    }
+
+    private static boolean frameRatesMatchesOverride(
+            float fps, FrameRateRange expectedFrameRateRange) {
+        return (fps + FPS_TOLERANCE_FOR_FRAME_RATE_OVERRIDE >= expectedFrameRateRange.min)
+                && (fps - FPS_TOLERANCE_FOR_FRAME_RATE_OVERRIDE <= expectedFrameRateRange.max);
     }
 
     // Waits until our SurfaceHolder has a surface and the activity is resumed.
@@ -265,14 +280,15 @@ public class GameFrameRateCtsActivity extends Activity {
         return true;
     }
 
-    private void waitForRefreshRateChange(float expectedRefreshRate) throws InterruptedException {
+    private void waitForRefreshRateChange(FrameRateRange expectedRefreshRate)
+            throws InterruptedException {
         Log.i(TAG, "Waiting for the refresh rate to change");
         long nowNanos = System.nanoTime();
         long gracePeriodEndTimeNanos =
                 nowNanos + FRAME_RATE_SWITCH_GRACE_PERIOD_NANOSECONDS;
         while (true) {
             // Wait until we switch to the expected refresh rate
-            while (!frameRatesEqual(mReportedDisplayRefreshRate, expectedRefreshRate)
+            while (!frameRatesMatchesOverride(mReportedDisplayRefreshRate, expectedRefreshRate)
                     && !waitForEvents(gracePeriodEndTimeNanos)) {
                 // Empty
             }
@@ -299,14 +315,40 @@ public class GameFrameRateCtsActivity extends Activity {
         }
     }
 
+    // Returns a range of frame rate that is accepted to
+    // make this test more flexible for VRR devices.
+    // For example, a frame rate of 80 is valid for a 120 Hz VRR display,
+    // but only 60 is available when 80 is requested on non-VRR display.
+    // Here we return the range of the requested override +- the gap between the closest divisor.
+    private FrameRateRange getExpectedFrameRate(float refreshRate, int frameRateOverride) {
+        float divisorOverrideGap = Float.MAX_VALUE;
+        FrameRateRange expectedFrameRateRange = new FrameRateRange(0.f, 0.f);
+        final float refreshRateRounded = Math.round(refreshRate);
+        for (int divisor = 1; refreshRateRounded / divisor >= 30; ++divisor) {
+            float frameRate = refreshRateRounded / divisor;
+            if (frameRate > frameRateOverride) {
+                continue;
+            }
+            if (Math.abs(frameRateOverride - frameRate) <= divisorOverrideGap) {
+                divisorOverrideGap = Math.abs(frameRateOverride - frameRate);
+            }
+        }
+        expectedFrameRateRange.min = frameRateOverride - divisorOverrideGap;
+        expectedFrameRateRange.max = frameRateOverride + divisorOverrideGap;
+        Log.i(TAG, String.format("getExpectedFrameRate expectedFrameRate %.2f %.2f",
+                expectedFrameRateRange.min, expectedFrameRateRange.max));
+        return expectedFrameRateRange;
+    }
+
     interface FrameRateObserver {
-        void observe(float initialRefreshRate, float expectedFrameRate, String condition)
+        void observe(float initialRefreshRate, FrameRateRange expectedFrameRate, String condition)
                 throws InterruptedException;
     }
 
     class BackpressureFrameRateObserver implements FrameRateObserver {
         @Override
-        public void observe(float initialRefreshRate, float expectedFrameRate, String condition) {
+        public void observe(float initialRefreshRate,
+                FrameRateRange expectedFrameRate, String condition) {
             long startTime = System.nanoTime();
             int totalBuffers = 0;
             float fps = 0;
@@ -329,8 +371,8 @@ public class GameFrameRateCtsActivity extends Activity {
             assertTrue(String.format(
                             "%s: backpressure observed refresh rate doesn't match the current"
                                     + "refresh rate. "
-                                    + "expected: %.2f observed: %.2f",
-                            condition, expectedFrameRate, fps),
+                                    + "expected: (%.2f, %.2f) observed: %.2f",
+                            condition, expectedFrameRate.min, expectedFrameRate.max, fps),
                     frameRatesMatchesOverride(fps, expectedFrameRate));
         }
     }
@@ -343,10 +385,10 @@ public class GameFrameRateCtsActivity extends Activity {
             Looper mLooper;
             int mTotalCallbacks = 0;
             long mEndTime;
-            float mExpectedRefreshRate;
+            FrameRateRange mExpectedRefreshRate;
             String mCondition;
 
-            ChoreographerThread(float expectedRefreshRate, String condition)
+            ChoreographerThread(FrameRateRange expectedRefreshRate, String condition)
                     throws InterruptedException {
                 mExpectedRefreshRate = expectedRefreshRate;
                 mCondition = condition;
@@ -370,7 +412,7 @@ public class GameFrameRateCtsActivity extends Activity {
                 if (mEndTime - mStartTime <= FRAME_RATE_MIN_WAIT_TIME_NANOSECONDS) {
                     mChoreographer.postFrameCallback(this);
                     return;
-                } else if (frameRatesMatchesOverride(mExpectedRefreshRate, getFps())
+                } else if (frameRatesMatchesOverride(getFps(), mExpectedRefreshRate)
                         || mEndTime - mStartTime > FRAME_RATE_MAX_WAIT_TIME_NANOSECONDS) {
                     mLooper.quitSafely();
                     return;
@@ -386,9 +428,12 @@ public class GameFrameRateCtsActivity extends Activity {
                                 fps));
                 assertTrue(String.format(
                                 "%s: choreographer observed refresh rate doesn't match the current "
-                                        + "refresh rate. expected: %.2f observed: %.2f",
-                                mCondition, mExpectedRefreshRate, fps),
-                        frameRatesMatchesOverride(mExpectedRefreshRate, fps));
+                                        + "refresh rate. expected: (%.2f, %.2f) observed: %.2f",
+                                mCondition,
+                                mExpectedRefreshRate.min,
+                                mExpectedRefreshRate.max,
+                                fps),
+                        frameRatesMatchesOverride(fps, mExpectedRefreshRate));
             }
 
             private float getFps() {
@@ -397,8 +442,8 @@ public class GameFrameRateCtsActivity extends Activity {
         }
 
         @Override
-        public void observe(float initialRefreshRate, float expectedFrameRate, String condition)
-                throws InterruptedException {
+        public void observe(float initialRefreshRate, FrameRateRange expectedFrameRate,
+                String condition) throws InterruptedException {
             ChoreographerThread thread = new ChoreographerThread(expectedFrameRate, condition);
             thread.start();
             thread.join();
@@ -408,20 +453,23 @@ public class GameFrameRateCtsActivity extends Activity {
 
     class DisplayGetRefreshRateFrameRateObserver implements FrameRateObserver {
         @Override
-        public void observe(float initialRefreshRate, float expectedFrameRate, String condition) {
+        public void observe(float initialRefreshRate,
+                FrameRateRange expectedFrameRate, String condition) {
             Log.i(TAG,
                     String.format("%s: Display.getRefreshRate() returned refresh rate %.2f",
                             condition, mReportedDisplayRefreshRate));
             assertTrue(String.format("%s: Display.getRefreshRate() doesn't match the "
-                                    + "current refresh. expected: %.2f observed: %.2f", condition,
-                            expectedFrameRate, mReportedDisplayRefreshRate),
+                                    + "current refresh. expected: (%.2f, %.2f) observed: %.2f",
+                            condition,  expectedFrameRate.min,
+                            expectedFrameRate.max, mReportedDisplayRefreshRate),
                     frameRatesMatchesOverride(mReportedDisplayRefreshRate, expectedFrameRate));
         }
     }
     class DisplayModeGetRefreshRateFrameRateObserver implements FrameRateObserver {
 
         @Override
-        public void observe(float initialRefreshRate, float expectedFrameRate, String condition) {
+        public void observe(float initialRefreshRate,
+                FrameRateRange expectedFrameRate, String condition) {
             Log.i(TAG,
                     String.format(
                             "%s: Display.getMode().getRefreshRate() returned refresh rate %.2f",
@@ -434,8 +482,8 @@ public class GameFrameRateCtsActivity extends Activity {
     }
 
     interface TestScenario {
-        void test(FrameRateObserver frameRateObserver,
-                float initialRefreshRate) throws InterruptedException, IOException;
+        void test(FrameRateObserver frameRateObserver, float initialRefreshRate,
+                int[] frameRateOverrides) throws InterruptedException, IOException;
     }
 
     class GameModeTest implements TestScenario {
@@ -444,40 +492,42 @@ public class GameFrameRateCtsActivity extends Activity {
             mUiDevice = uiDevice;
         }
         @Override
-        public void test(FrameRateObserver frameRateObserver,
-                float initialRefreshRate) throws InterruptedException, IOException {
+        public void test(FrameRateObserver frameRateObserver, float initialRefreshRate,
+                int[] frameRateOverrides) throws InterruptedException, IOException {
             Log.i(TAG, "Starting testGameModeFrameRateOverride");
 
-            int initialRefreshRateInt = (int) initialRefreshRate;
-            for (int divisor = 1; initialRefreshRateInt / divisor >= 30; ++divisor) {
-                int overrideFrameRate = initialRefreshRateInt / divisor;
-                if (initialRefreshRateInt % divisor != 0) {
-                    // skip if the overriding frame rate is not a divisor of initial refresh rate
-                    Log.i(TAG, String.format("Skipping Frame rate %d as it is not a divisor of"
-                            + " refresh rate of %d", overrideFrameRate, initialRefreshRateInt));
-                    continue;
-                }
+            for (int frameRateOverride : frameRateOverrides) {
+
                 Log.i(TAG, String.format("Setting Frame Rate to %d using Game Mode",
-                        overrideFrameRate));
+                        frameRateOverride));
 
                 mUiDevice.executeShellCommand(String.format("cmd game set --mode 2 --fps %d %s",
-                        overrideFrameRate, getPackageName()));
-                waitForRefreshRateChange(overrideFrameRate);
-                frameRateObserver.observe(initialRefreshRate, overrideFrameRate,
-                        String.format("Game Mode Override(%d)", overrideFrameRate));
+                        frameRateOverride, getPackageName()));
+
+                // Given that the frame rate we attempt to override is not always the divisor of
+                // the current refresh rate, get the expected frame rate, which is the closest
+                // divisor of the refresh rate here.
+                FrameRateRange expectedFrameRate =
+                        getExpectedFrameRate(initialRefreshRate, frameRateOverride);
+
+                waitForRefreshRateChange(expectedFrameRate);
+                frameRateObserver.observe(initialRefreshRate, expectedFrameRate,
+                        String.format("Game Mode Override(%d), expectedFrameRate(%.2f %.2f)",
+                                frameRateOverride, expectedFrameRate.min, expectedFrameRate.max));
             }
 
-            Log.i(TAG, "Resetting Frame Rate setting");
+
             mUiDevice.executeShellCommand(String.format("cmd game reset %s", getPackageName()));
-            waitForRefreshRateChange(initialRefreshRate);
-            frameRateObserver.observe(initialRefreshRate, initialRefreshRate, "Reset");
+
         }
     }
 
     // The activity being intermittently paused/resumed has been observed to
     // cause test failures in practice, so we run the test with retry logic.
     public void testFrameRateOverride(TestScenario frameRateOverrideBehavior,
-            FrameRateObserver frameRateObserver, float initialRefreshRate)
+            FrameRateObserver frameRateObserver,
+            float initialRefreshRate,
+            int[] frameRateOverrides)
             throws InterruptedException, IOException {
         synchronized (mLock) {
             Log.i(TAG, "testFrameRateOverride started with initial refresh rate "
@@ -489,7 +539,7 @@ public class GameFrameRateCtsActivity extends Activity {
                     waitForPreconditions();
                     try {
                         frameRateOverrideBehavior.test(frameRateObserver,
-                                initialRefreshRate);
+                                initialRefreshRate, frameRateOverrides);
                         testPassed = true;
                     } catch (PreconditionViolatedException exc) {
                         // The logic below will retry if we're below max attempts.
@@ -497,13 +547,15 @@ public class GameFrameRateCtsActivity extends Activity {
                         // Sometimes we get a test timeout failure before we get the
                         // notification that the activity was paused, and it was the pause that
                         // caused the timeout failure. Wait for a bit to see if we get notified
-                        // of a precondition violation, and if so, retry the test. Otherwise
+                        // of a precondition violation, and if so, retry the test. Otherwise,
                         // fail.
                         assertTrue(
                                 String.format(
                                         "Timed out waiting for a stable and compatible frame"
-                                                + " rate. requested=%.2f received=%.2f.",
-                                        exc.appRequestedFrameRate, exc.deviceRefreshRate),
+                                                + " rate. requested=(%.2f, %.2f) received=%.2f.",
+                                        exc.appRequestedFrameRate.min,
+                                        exc.appRequestedFrameRate.max,
+                                        exc.deviceRefreshRate),
                                 waitForPreconditionViolation());
                     }
 

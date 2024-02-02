@@ -55,6 +55,8 @@ public final class GameFrameRateTest {
     // See b/170503758 for more details
     private static final long DISPLAY_MODE_RETURNS_PHYSICAL_REFRESH_RATE_CHANGEID = 170503758;
 
+    private static final String TEST_PKG = "android.gameframerate.cts";
+
     // The tolerance within which we consider refresh rates are equal
     private static final float REFRESH_RATE_TOLERANCE = 0.01f;
 
@@ -62,6 +64,9 @@ public final class GameFrameRateTest {
     private DisplayManager mDisplayManager;
     private UiDevice mUiDevice;
     private final Handler mHandler = new Handler(Looper.getMainLooper());
+
+    private static final int[] refreshRateDivisorsToTest =
+            {120, 110, 100, 90, 80, 70, 60, 50, 40, 30};
 
 
     @Rule
@@ -74,6 +79,8 @@ public final class GameFrameRateTest {
                 androidx.test.platform.app.InstrumentationRegistry.getInstrumentation());
         mUiDevice.wakeUp();
         mUiDevice.executeShellCommand("wm dismiss-keyguard");
+        mUiDevice.executeShellCommand("device_config put game_overlay"
+                                      + TEST_PKG + " mode=2:mode=3");
 
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(
@@ -94,7 +101,8 @@ public final class GameFrameRateTest {
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
+        mUiDevice.executeShellCommand("device_config delete game_overlay " + TEST_PKG);
         mDisplayManager.setRefreshRateSwitchingType(mInitialMatchContentFrameRate);
         mDisplayManager.setShouldAlwaysRespectAppRequestedMode(false);
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
@@ -160,13 +168,16 @@ public final class GameFrameRateTest {
     private void testGameModeFrameRateOverride(FrameRateObserver frameRateObserver)
             throws InterruptedException, IOException {
         GameFrameRateCtsActivity activity = mActivityRule.getActivity();
-        for (Display.Mode mode : getModesToTest()) {
+        List<Display.Mode> modesToTest = getModesToTest();
+
+        for (Display.Mode mode : modesToTest) {
             setMode(mode);
             activity.testFrameRateOverride(
                     activity.new GameModeTest(mUiDevice),
-                    frameRateObserver, mode.getRefreshRate());
+                    frameRateObserver, mode.getRefreshRate(), refreshRateDivisorsToTest);
             Log.i(TAG, "\n");
         }
+
         Log.i(TAG, "\n");
     }
 
