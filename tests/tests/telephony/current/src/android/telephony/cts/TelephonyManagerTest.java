@@ -6943,31 +6943,31 @@ public class TelephonyManagerTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.telephony.TelephonyManager#EmergencyCallDiagnosticParams"})
+    @ApiTest(apis = {"android.telephony.TelephonyManager#EmergencyCallDiagnosticData"})
     @RequiresFlagsEnabled(
             com.android.server.telecom.flags.Flags.FLAG_TELECOM_RESOLVE_HIDDEN_DEPENDENCIES)
-    public void testEmergencyCallDiagnosticParams() {
+    public void testEmergencyCallDiagnosticData() {
         long startTime = SystemClock.elapsedRealtime();
-        TelephonyManager.EmergencyCallDiagnosticParams.Builder callDiagnosticBuilder =
-                new TelephonyManager.EmergencyCallDiagnosticParams.Builder();
-        TelephonyManager.EmergencyCallDiagnosticParams params = callDiagnosticBuilder
-                .setTelecomDumpSysCollectionEnabled(true)
-                .setTelephonyDumpSysCollectionEnabled(true)
+        TelephonyManager.EmergencyCallDiagnosticData.Builder callDiagnosticBuilder =
+                new TelephonyManager.EmergencyCallDiagnosticData.Builder();
+        TelephonyManager.EmergencyCallDiagnosticData data = callDiagnosticBuilder
+                .setTelecomDumpsysCollectionEnabled(true)
+                .setTelephonyDumpsysCollectionEnabled(true)
                 .setLogcatCollectionStartTimeMillis(startTime)
                 .build();
-        assertTrue(params.isTelecomDumpSysCollectionEnabled());
-        assertTrue(params.isTelephonyDumpSysCollectionEnabled());
-        assertTrue(params.isLogcatCollectionEnabled());
-        assertEquals(startTime, params.getLogcatCollectionStartTimeMillis());
+        assertTrue(data.isTelecomDumpsysCollectionEnabled());
+        assertTrue(data.isTelephonyDumpsysCollectionEnabled());
+        assertTrue(data.isLogcatCollectionEnabled());
+        assertEquals(startTime, data.getLogcatCollectionStartTimeMillis());
 
-        params = callDiagnosticBuilder
-                .setTelecomDumpSysCollectionEnabled(false)
-                .setTelephonyDumpSysCollectionEnabled(false)
+        data = callDiagnosticBuilder
+                .setTelecomDumpsysCollectionEnabled(false)
+                .setTelephonyDumpsysCollectionEnabled(false)
                 .setLogcatCollectionStartTimeMillis(-1L)
                 .build();
-        assertFalse(params.isTelecomDumpSysCollectionEnabled());
-        assertFalse(params.isTelephonyDumpSysCollectionEnabled());
-        assertFalse(params.isLogcatCollectionEnabled());
+        assertFalse(data.isTelecomDumpsysCollectionEnabled());
+        assertFalse(data.isTelephonyDumpsysCollectionEnabled());
+        assertFalse(data.isLogcatCollectionEnabled());
     }
 
     @Test
@@ -6988,8 +6988,8 @@ public class TelephonyManagerTest {
             }
         }, mDropBoxIntentFilter);
 
-        TelephonyManager.EmergencyCallDiagnosticParams.Builder callDiagnosticBuilder =
-                new TelephonyManager.EmergencyCallDiagnosticParams.Builder();
+        TelephonyManager.EmergencyCallDiagnosticData.Builder callDiagnosticBuilder =
+                new TelephonyManager.EmergencyCallDiagnosticData.Builder();
         persistCallDiagnostics(callDiagnosticBuilder, true /* setTelecomDump */,
                 false /* setTelephonyDump */, false /* setLogcatDump */);
         String telecomDumpOutput = TestUtils.executeShellCommand(getInstrumentation(),
@@ -7014,19 +7014,19 @@ public class TelephonyManagerTest {
     }
 
     private void persistCallDiagnostics(
-            TelephonyManager.EmergencyCallDiagnosticParams.Builder callDiagnosticBuilder,
+            TelephonyManager.EmergencyCallDiagnosticData.Builder callDiagnosticBuilder,
             boolean setTelecomDump, boolean setTelephonyDump, boolean setLogcatDump)
             throws InterruptedException {
-        TelephonyManager.EmergencyCallDiagnosticParams params = callDiagnosticBuilder
-                .setTelecomDumpSysCollectionEnabled(setTelecomDump)
-                .setTelephonyDumpSysCollectionEnabled(setTelephonyDump)
+        TelephonyManager.EmergencyCallDiagnosticData data = callDiagnosticBuilder
+                .setTelecomDumpsysCollectionEnabled(setTelecomDump)
+                .setTelephonyDumpsysCollectionEnabled(setTelephonyDump)
                 .setLogcatCollectionStartTimeMillis(
                         setLogcatDump ? SystemClock.elapsedRealtime() : -1L)
                 .build();
 
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    (tm) -> tm.persistEmergencyCallDiagnosticData(DROPBOX_TAG, params),
+                    (tm) -> tm.persistEmergencyCallDiagnosticData(DROPBOX_TAG, data),
                     permission.DUMP);
         } catch (SecurityException e) {
             e.printStackTrace();
