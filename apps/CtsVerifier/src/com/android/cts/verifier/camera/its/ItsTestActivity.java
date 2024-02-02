@@ -100,7 +100,7 @@ public class ItsTestActivity extends DialogTestListActivity {
     private static final Pattern PERF_METRICS_YUV_PLUS_RAW_PATTERN =
             Pattern.compile("test_yuv_plus_raw_rms_diff:(\\d+(\\.\\d+)?)");
     private static final Pattern PERF_METRICS_IMU_DRIFT_PATTERN =
-            Pattern.compile("test_imu_drift_sampl_rate:(\\d+(\\.\\d+)?)");
+            Pattern.compile("test_imu_drift_.*");
 
     private static final String REPORT_LOG_NAME = "CtsCameraITSTestCases";
 
@@ -523,8 +523,16 @@ public class ItsTestActivity extends DialogTestListActivity {
 
                 if (imuDriftMetricsMatches) {
                     Log.i(TAG, "imu drift matches");
-                    float samplRate = Float.parseFloat(imuDriftMetricsMatcher.group(1));
-                    obj.put("imu_drift_sampling_rate", samplRate);
+                    // remove "test_" from the result
+                    String result = perfMetricsResult.replaceFirst("^test_","");
+                    String resultKey = result.split(":")[0].strip();
+                    if (resultKey.contains("seconds") || resultKey.contains("hz")) {
+                        float value = Float.parseFloat(result.split(":")[1].strip());
+                        obj.put(resultKey, value);
+                    } else {
+                        String value = result.split(":")[1].strip();
+                        obj.put(resultKey, value);
+                    }
                 }
             } catch (org.json.JSONException e) {
                 Log.e(TAG, "Error when serializing the metrics into a JSONObject" , e);
