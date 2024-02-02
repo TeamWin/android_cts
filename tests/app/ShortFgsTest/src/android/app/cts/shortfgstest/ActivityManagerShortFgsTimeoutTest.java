@@ -24,6 +24,7 @@ import android.util.Log;
 import com.android.compatibility.common.util.ShellUtils;
 
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -44,6 +45,16 @@ import java.util.regex.Pattern;
  */
 @Presubmit
 public class ActivityManagerShortFgsTimeoutTest {
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        Log.d(TAG, "setUpClass() started");
+
+        ShellUtils.runShellCommand(
+                "cmd device_config reset trusted_defaults activity_manager");
+
+        Log.d(TAG, "setUpClass() done");
+    }
+
     /**
      * Extract `short_fgs_*` settings from `dumpsys activity settings` and return them
      * as a map.
