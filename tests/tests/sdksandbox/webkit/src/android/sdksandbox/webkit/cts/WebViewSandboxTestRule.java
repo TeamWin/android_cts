@@ -54,8 +54,21 @@ public class WebViewSandboxTestRule extends SdkSandboxScenarioRule {
 
     @Override
     public Statement apply(final Statement base, final Description description) {
+        // If WebView is not available, simply skip loading the SDK and then throw an assumption
+        // failure for each test run attempt.
+        // We can't throw the assumptions in the apply because WebViewSandboxTestRule can be used as
+        // a class rule.
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return base;
+        }
+
+        return super.apply(base, description);
+    }
+
+    @Override
+    public void assertSdkTestRunPasses(String testMethodName, Bundle params) throws Throwable {
         // This will prevent shared webview tests from running if a WebView provider does not exist.
         Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
-        return super.apply(base, description);
+        super.assertSdkTestRunPasses(testMethodName, params);
     }
 }
