@@ -5,6 +5,12 @@ package {
 cc_test {
     name: "CtsBionicTestCases",
 
+    defaults: ["cts_bionic_defaults"],
+}
+
+cc_defaults {
+    name: "cts_bionic_defaults",
+
     defaults: ["bionic_unit_tests_data"],
 
     compile_multilib: "both",
