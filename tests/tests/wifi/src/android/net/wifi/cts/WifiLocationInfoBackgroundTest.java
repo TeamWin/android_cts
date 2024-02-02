@@ -32,6 +32,7 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.PowerManager;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresDevice;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
@@ -60,6 +61,7 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 @ApiTest(apis = {"Manifest.permission#ACCESS_BACKGROUND_LOCATION"})
 @NonMainlineTest
+@RequiresDevice
 public class WifiLocationInfoBackgroundTest extends WifiJUnit4TestBase{
     private static final String TAG = "WifiLocationInfoTest";
 
@@ -136,10 +138,7 @@ public class WifiLocationInfoBackgroundTest extends WifiJUnit4TestBase{
                 "Wifi not connected",
                 WIFI_CONNECT_TIMEOUT_MILLIS,
                 () -> sWifiManager.getConnectionInfo().getNetworkId() != -1);
-        if (!sLock.isHeld()) {
-            sLock.acquire();
-        }
-        lockScreen();
+        turnScreenOff();
     }
 
     private static boolean isWearDevice() {
@@ -166,27 +165,26 @@ public class WifiLocationInfoBackgroundTest extends WifiJUnit4TestBase{
     public static void tearDownClass() throws Exception {
         if (!sShouldRunTest) return;
         if (!sWifiManager.isWifiEnabled()) setWifiEnabled(true);
-        if (sLock.isHeld()) {
-            sLock.release();
-        }
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> sWifiManager.setScanThrottleEnabled(sWasScanThrottleEnabled));
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> sWifiManager.setVerboseLoggingEnabled(sWasVerboseLoggingEnabled));
-        unlockScreen();
+        turnScreenOn();
     }
 
     private static void setWifiEnabled(boolean enable) throws Exception {
         ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.setWifiEnabled(enable));
     }
 
-    private static void lockScreen() throws Exception {
-        SystemUtil.runShellCommand("input keyevent KEYCODE_SLEEP");
+    private static void turnScreenOn() throws Exception {
+        if (sLock.isHeld()) sLock.release();
         SystemUtil.runShellCommand("input keyevent KEYCODE_WAKEUP");
+        SystemUtil.runShellCommand("wm dismiss-keyguard");
     }
 
-    private static void unlockScreen() throws Exception {
-        SystemUtil.runShellCommand("wm dismiss-keyguard");
+    private static void turnScreenOff() throws Exception {
+        if (!sLock.isHeld()) sLock.acquire();
+        SystemUtil.runShellCommand("input keyevent KEYCODE_SLEEP");
     }
 
     private static void installApp(String apk) throws InterruptedException {
