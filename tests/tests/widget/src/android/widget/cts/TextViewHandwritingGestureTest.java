@@ -37,6 +37,8 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.CancellationSignal;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.Layout;
@@ -110,6 +112,10 @@ public class TextViewHandwritingGestureTest {
     @Rule
     public ActivityTestRule<TextViewCtsActivity> mActivityRule =
             new ActivityTestRule<>(TextViewCtsActivity.class);
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
 
     @Before
     public void setup() {
