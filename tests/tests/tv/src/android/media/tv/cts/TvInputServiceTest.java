@@ -39,6 +39,7 @@ import android.media.tv.TvTrackInfo;
 import android.media.tv.TvView;
 import android.media.tv.cts.TvInputServiceTest.CountingTvInputService.CountingRecordingSession;
 import android.media.tv.cts.TvInputServiceTest.CountingTvInputService.CountingSession;
+import android.media.tv.interactive.TvInteractiveAppService;
 import android.media.tv.interactive.TvInteractiveAppServiceInfo;
 import android.net.Uri;
 import android.os.Bundle;
@@ -791,6 +792,33 @@ public class TvInputServiceTest {
     }
 
     @Test
+    public void verifyCommandResume() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetPassedValues();
+
+        onTvView(TvView::resumePlayback);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT, () -> session.mResumePlaybackCount > 0);
+
+        assertThat(session.mResumePlaybackCount).isEqualTo(1);
+    }
+
+    @Test
+    public void verifyCommandStopPlayback() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetPassedValues();
+
+        onTvView(tvView -> tvView
+                .stopPlayback(TvInteractiveAppService.COMMAND_PARAMETER_VALUE_STOP_MODE_FREEZE));
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT, () -> session.mStopPlaybackCount > 0);
+
+        assertThat(session.mStopPlaybackCount).isEqualTo(1);
+        assertThat(session.mPlaybackCommandMode)
+                .isEqualTo(TvInteractiveAppService.COMMAND_PARAMETER_VALUE_STOP_MODE_FREEZE);
+    }
+
+    @Test
     public void verifyCommandSetTimeShiftPositionCallback() {
         tune(CHANNEL_0);
 
@@ -1385,6 +1413,8 @@ public class TvInputServiceTest {
             public volatile int mTimeShiftSetPlaybackParamsCount;
             public volatile int mTimeShiftPlayCount;
             public volatile int mTimeShiftSetModeCount;
+            public volatile int mResumePlaybackCount;
+            public volatile int mStopPlaybackCount;
             public volatile long mTimeShiftGetCurrentPositionCount;
             public volatile long mTimeShiftGetStartPositionCount;
             public volatile int mAppPrivateCommandCount;
@@ -1425,6 +1455,7 @@ public class TvInputServiceTest {
             public volatile Integer mAudioPresentationId;
             public volatile Integer mAudioProgramId;
             public volatile Integer mTimeShiftMode;
+            public volatile Integer mPlaybackCommandMode;
 
             CountingSession(Context context, @Nullable String sessionId) {
 
@@ -1456,6 +1487,8 @@ public class TvInputServiceTest {
                 mTimeShiftSetModeCount = 0;
                 mTimeShiftGetCurrentPositionCount = 0;
                 mTimeShiftGetStartPositionCount = 0;
+                mResumePlaybackCount = 0;
+                mStopPlaybackCount = 0;
                 mAppPrivateCommandCount = 0;
                 mSetInteractiveAppNotificationEnabledCount = 0;
                 mTvMessageCount = 0;
@@ -1496,6 +1529,7 @@ public class TvInputServiceTest {
                 mAudioPresentationId = null;
                 mAudioProgramId = null;
                 mTimeShiftMode = null;
+                mPlaybackCommandMode = null;
             }
 
             @Override
@@ -1724,6 +1758,17 @@ public class TvInputServiceTest {
             @Override
             public void notifyAvailableSpeeds(float[] speeds) {
                 super.notifyAvailableSpeeds(speeds);
+            }
+
+            @Override
+            public void onResumePlayback() {
+                mResumePlaybackCount++;
+            }
+
+            @Override
+            public void onStopPlayback(int mode) {
+                mStopPlaybackCount++;
+                mPlaybackCommandMode = mode;
             }
         }
 
