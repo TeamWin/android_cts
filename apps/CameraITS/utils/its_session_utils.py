@@ -852,6 +852,8 @@ class ItsSession(object):
 
     ie. ['640x480', '800x600', '1280x720', '1440x1080', '1920x1080']
 
+    Note: resolutions are sorted by width x height in ascending order
+
     Args:
       camera_id: int; device id
     Returns:

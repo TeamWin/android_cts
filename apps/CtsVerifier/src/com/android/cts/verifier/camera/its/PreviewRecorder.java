@@ -219,6 +219,8 @@ class PreviewRecorder implements AutoCloseable {
                     return;
                 }
                 try {
+                    Logt.i(TAG, "Recorded frame# " + mNumFrames + " timestamp = "
+                            + surfaceTexture.getTimestamp());
                     copyFrameToRecorder();
                     mNumFrames++;
                 } catch (ItsException e) {

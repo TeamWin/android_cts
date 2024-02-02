@@ -178,6 +178,9 @@ public class ItsService extends Service implements SensorEventListener {
     // Time to sleep after a preview recording with dynamic zoom.
     private static final long PREVIEW_RECORDING_FINAL_SLEEP_MS = 200;
 
+    // Time to sleep for AutoFocus to converge
+    private static final long PREVIEW_AUTOFOCUS_SLEEP_MS = 400;
+
     private static final int MAX_CONCURRENT_READER_BUFFERS = 10;
 
     // Supports at most RAW+YUV+JPEG, one surface each, plus optional background stream
@@ -2846,12 +2849,20 @@ public class ItsService extends Service implements SensorEventListener {
                     ? CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION
                     : CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF;
             BlockingSessionCallback sessionListener = new BlockingSessionCallback();
+
+            // if zoomRatio is not defined, then use zoomStart, zoomEnd, stepSize
+            double zoomStartVal = (Double.isNaN(zoomRatio)) ? zoomStart : zoomRatio;
+
             configureAndCreateCaptureSession(CameraDevice.TEMPLATE_PREVIEW,
                     pr.getCameraSurface(), stabilizationMode, DynamicRangeProfiles.STANDARD,
-                    sessionListener, zoomRatio, aeTargetFpsMin, aeTargetFpsMax,
+                    sessionListener, zoomStartVal, aeTargetFpsMin, aeTargetFpsMax,
                     recordingResultListener);
+
             pr.startRecording();
-            for (double z = zoomStart; z < zoomEnd; z += stepSize) {
+
+            // wait for autofocus
+            Thread.sleep((long) PREVIEW_AUTOFOCUS_SLEEP_MS);
+            for (double z = zoomStart; z <= zoomEnd; z += stepSize) {
                 Logt.i(TAG, String.format(
                         Locale.getDefault(),
                         "zoomRatio set to %.4f during preview recording.", z));
@@ -4111,6 +4122,13 @@ public class ItsService extends Service implements SensorEventListener {
                 Logt.i(TAG, buildLogString(result));
 
                 RecordingResult partialResult = new RecordingResult();
+                Logt.i(TAG, "TotalCaptureResult # " + mRecordingCaptureResults.size()
+                        + " timestamp = " + result.get(CaptureResult.SENSOR_TIMESTAMP)
+                        + " z = " + result.get(CaptureResult.CONTROL_ZOOM_RATIO)
+                        + " fl = " + result.get(CaptureResult.LENS_FOCAL_LENGTH)
+                        + " phyid = "
+                        + result.get(CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID));
+
                 partialResult.addKeys(result, RecordingResult.PREVIEW_RESULT_TRACKED_KEYS);
                 mRecordingCaptureResults.add(partialResult);
             } catch (ItsException e) {
