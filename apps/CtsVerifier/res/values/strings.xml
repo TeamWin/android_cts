@@ -7218,6 +7218,19 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="audio_get_preferred_mixer_attributes_should_be_null">Preferred mixer attributes is not null after calling AudioManager#clearPreferredMixerAttributes.</string>
     <string name="audio_no_callback_for_preferred_mixer_attributes_changed">Callback is not called when preferred mixer attributes changed.</string>
 
+    <!-- Strings for Sharesheet tests -->
+    <string name="category_sharesheet">Sharesheet</string>
+    <string name="sharesheet_album_test">Sharesheet Album Label Test</string>
+    <string name="sharesheet_album_test_info">This test verifies that the system sharesheet responds to the \"album\" hint if provided by the app.</string>
+    <string name="share_label">Share</string>
+    <string name="no_title_message">No title on sharesheet, test passed.</string>
+    <string name="sharesheet_album_test_step_1">Press the \"Share\" button below to show the system sharesheet.
+        When it\'s shown, look for a headline at the top saying something like \"Sharing text\".
+        \n\nThen close the sharesheet and you\'ll be asked whether you saw a headline like that.</string>
+    <string name="sharesheet_album_test_step_2">Did you see a title in the UI like \"Sharing Text\"?\n\nIf not sure, press Share again.</string>
+    <string name="sharesheet_album_test_step_3">Now press the \"Share\" button again and see if the headline says something like \"Sharing album\" instead.
+        \n\nIf the sharesheet indicates that it\'s an album being shared, pass the test, otherwise fail.</string>
+
     <!-- Strings for CaptureContentForNotes test -->
     <string name="ccfn_tests">Capture Content For Notes Tests</string>
     <string name="ccfn_tests_info">

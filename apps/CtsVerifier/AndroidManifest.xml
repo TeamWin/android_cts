@@ -7073,6 +7073,26 @@
             <meta-data android:name="display_mode" android:value="single_display_mode" />
         </activity>
 
+        <!-- Components for Sharesheet tests -->
+        <activity
+            android:name=".sharesheet.SharesheetAlbumActivity"
+            android:exported="true"
+            android:label="@string/sharesheet_album_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/category_sharesheet" />
+            <meta-data
+                android:name="ApiTest"
+                android:value="android.content.Intent#EXTRA_CHOOSER_CONTENT_TYPE_HINT
+                    |android.content.Intent#CHOOSER_CONTENT_TYPE_ALBUM" />
+            <meta-data android:name="display_mode" android:value="single_display_mode" />
+        </activity>
+
         <!-- Components used for CTS Verifying Capture Content For Notes APIs. -->
         <activity
             android:name=".capturecontentfornotes.CaptureContentForNotesVerifierActivity"
