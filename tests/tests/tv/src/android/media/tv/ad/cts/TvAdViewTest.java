@@ -24,7 +24,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.tv.TvView;
 import android.media.tv.ad.TvAdView;
+import android.media.tv.flags.Flags;
 import android.os.ConditionVariable;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.tv.cts.R;
@@ -38,6 +40,7 @@ import com.android.compatibility.common.util.RequiredFeatureRule;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
@@ -88,6 +91,18 @@ public class TvAdViewTest {
         if (mActivityScenario != null) {
             mActivityScenario.close();
         }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_AD_SERVICE_FW)
+    public void testConstructor() throws Throwable {
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                new TvAdView(mActivity);
+                new TvAdView(mActivity, null);
+                new TvAdView(mActivity, null, 0);
+            }
+        });
     }
 
     private TvAdView findTvAdViewById(int id) {
