@@ -25,6 +25,7 @@ import static android.telephony.CarrierConfigManager.KEY_CARRIER_VOLTE_PROVISION
 import static android.telephony.CarrierConfigManager.KEY_CELLULAR_SERVICE_CAPABILITIES_INT_ARRAY;
 import static android.telephony.CarrierConfigManager.KEY_FORCE_HOME_NETWORK_BOOL;
 import static android.telephony.CarrierConfigManager.KEY_SATELLITE_CONNECTION_HYSTERESIS_SEC_INT;
+import static android.telephony.CarrierConfigManager.KEY_OVERRIDE_WFC_ROAMING_MODE_WHILE_USING_NTN_BOOL;
 import static android.telephony.ServiceState.STATE_IN_SERVICE;
 
 import static androidx.test.InstrumentationRegistry.getContext;
@@ -231,6 +232,9 @@ public class CarrierConfigManagerTest {
                     config.getInt(
                             KEY_SATELLITE_CONNECTION_HYSTERESIS_SEC_INT),
                     300);
+            assertTrue("KEY_OVERRIDE_WFC_ROAMING_MODE_WHILE_USING_NTN_BOOL "
+                            + "doesn't match static default.",
+                    config.getBoolean(KEY_OVERRIDE_WFC_ROAMING_MODE_WHILE_USING_NTN_BOOL));
 
             assertArrayEquals("KEY_CAPABILITIES_EXEMPT_FROM_SINGLE_DC_CHECK_INT_ARRAY"
                             + " doesn't match static default.",
