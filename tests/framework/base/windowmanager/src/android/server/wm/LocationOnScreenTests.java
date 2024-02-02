@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.server.wm.CtsWindowInfoUtils.waitForStableWindowGeometry;
 import static android.server.wm.LocationOnScreenTests.TestActivity.COLOR_TOLERANCE;
 import static android.server.wm.LocationOnScreenTests.TestActivity.EXTRA_LAYOUT_PARAMS;
 import static android.server.wm.LocationOnScreenTests.TestActivity.TEST_COLOR_1;
@@ -27,6 +28,8 @@ import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_M
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
+import static junit.framework.Assert.assertTrue;
 
 import static org.hamcrest.Matchers.is;
 
@@ -48,7 +51,6 @@ import android.view.Window;
 import android.view.WindowManager.LayoutParams;
 import android.widget.FrameLayout;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
 
@@ -63,6 +65,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 @SmallTest
@@ -81,11 +84,13 @@ public class LocationOnScreenTests {
     private Context mContext;
 
     @Before
-    public void setUp() {
+    public void setUp() throws InterruptedException {
         mContext = getInstrumentation().getContext();
         mLayoutParams = new LayoutParams(MATCH_PARENT, MATCH_PARENT, LayoutParams.TYPE_APPLICATION,
                 LayoutParams.FLAG_LAYOUT_IN_SCREEN | LayoutParams.FLAG_LAYOUT_INSET_DECOR,
                 PixelFormat.TRANSLUCENT);
+        assertTrue("Failed to reach stable window geometry",
+                waitForStableWindowGeometry(5, TimeUnit.SECONDS));
     }
 
     @Test
