@@ -16,17 +16,22 @@
 package android.packageinstaller.install.cts
 
 import android.app.UiAutomation
+import android.content.pm.Flags
 import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.NameNotFoundException
 import android.os.PersistableBundle
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.RequiresFlagsEnabled
+import android.platform.test.flag.junit.CheckFlagsRule
+import android.platform.test.flag.junit.DeviceFlagsValueProvider
 import androidx.test.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import java.io.File
 import java.io.FileNotFoundException
 import org.junit.Assert.assertEquals
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -38,6 +43,64 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
 
     private val uiAutomation: UiAutomation =
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
+
+    @JvmField
+    @Rule
+    val mCheckFlagsRule: CheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
+
+    @RequiresFlagsEnabled(Flags.FLAG_ASL_IN_APK_APP_METADATA_SOURCE)
+    @Test(expected = SecurityException::class)
+    fun getAppMetadataSourceWithNoPermission() {
+        installTestApp(createAppMetadata())
+
+        pm.getAppMetadataSource(TEST_APK_PACKAGE_NAME)
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_ASL_IN_APK_APP_METADATA_SOURCE)
+    @Test(expected = NameNotFoundException::class)
+    fun getAppMetadataSourceApNotInstall() {
+        uiAutomation.adoptShellPermissionIdentity()
+        try {
+            pm.getAppMetadataSource(TEST_APK_PACKAGE_NAME)
+        } catch (e: Exception) {
+            throw e
+        } finally {
+            uiAutomation.dropShellPermissionIdentity()
+        }
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_ASL_IN_APK_APP_METADATA_SOURCE)
+    @Test
+    fun getAppMetadataSourceUnknown() {
+        installTestApp(null)
+
+        uiAutomation.adoptShellPermissionIdentity(android.Manifest.permission.GET_APP_METADATA)
+        try {
+            val source = pm.getAppMetadataSource(TEST_APK_PACKAGE_NAME)
+            assertThat(source).isEqualTo(PackageManager.APP_METADATA_SOURCE_UNKNOWN)
+        } catch (e: Exception) {
+            throw e
+        } finally {
+            uiAutomation.dropShellPermissionIdentity()
+        }
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_ASL_IN_APK_APP_METADATA_SOURCE)
+    @Test
+    fun getAppMetadataSourceViaSessionWithAppMetadata() {
+        val data = createAppMetadata()
+        installTestApp(data)
+
+        uiAutomation.adoptShellPermissionIdentity()
+        try {
+            val source = pm.getAppMetadataSource(TEST_APK_PACKAGE_NAME)
+            assertThat(source).isEqualTo(PackageManager.APP_METADATA_SOURCE_INSTALLER)
+        } catch (e: Exception) {
+            throw e
+        } finally {
+            uiAutomation.dropShellPermissionIdentity()
+        }
+    }
 
     @Test
     fun installViaSession() {

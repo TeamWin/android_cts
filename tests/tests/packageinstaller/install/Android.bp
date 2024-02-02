@@ -39,6 +39,7 @@ android_test {
         "kotlin-test",
         "Nene",
         "Harrier",
+        "android.content.pm.flags-aconfig-java",
     ],
 
     test_suites: [
