@@ -18,6 +18,7 @@ package android.view.cts;
 
 import static org.junit.Assert.assertEquals;
 
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.SoundEffectConstants;
 import android.view.View;
 
@@ -29,6 +30,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class SoundEffectConstantsTest {
     @Test
     public void testGetContantForFocusDirection() {

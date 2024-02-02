@@ -19,6 +19,7 @@ package android.view.cts;
 import static org.junit.Assert.assertTrue;
 
 import android.hardware.Camera;
+import android.platform.test.annotations.AppModeNonSdkSandbox;
 
 import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
@@ -31,6 +32,7 @@ import org.junit.runner.RunWith;
 
 @LargeTest
 @RunWith(AndroidJUnit4.class)
+@AppModeNonSdkSandbox(reason = "SDK sandbox does not have permission to use camera.")
 public class TextureViewCameraTest {
     private static final long WAIT_TIMEOUT_IN_SECS = 30;
 

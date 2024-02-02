@@ -18,6 +18,7 @@ package android.view.cts;
 
 import android.content.Context;
 import android.hardware.SensorManager;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.OrientationListener;
 
 import androidx.test.InstrumentationRegistry;
@@ -33,6 +34,7 @@ import org.junit.runner.RunWith;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class OrientationListenerTest {
     private Context mContext;
 
