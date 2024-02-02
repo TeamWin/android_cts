@@ -39,6 +39,7 @@ android_test {
         "kotlin-test",
         "Nene",
         "Harrier",
+        "android.content.pm.flags-aconfig-java",
     ],
 
     test_suites: [
@@ -56,4 +57,5 @@ android_test {
         ":HelloWorldUsingSdk1",
     ],
     per_testcase_directory: true,
+    platform_apis: true,
 }
