@@ -167,15 +167,7 @@ class VirtualDisplayActivityScenarioRule<A : Activity>(
         // If we requested an orientation change, just waiting for the window to be visible is not
         // sufficient. We should first wait for the transitions to stop, and the for app's UI thread
         // to process them before making sure the window is visible.
-        WindowManagerStateHelper().waitForAppTransitionIdleOnDisplay(displayId)
-        instrumentation.uiAutomation.syncInputTransactions()
-        instrumentation.waitForIdleSync()
-        if (!CtsWindowInfoUtils.waitForWindowOnTop(activity.window!!)) {
-            CtsWindowInfoUtils.dumpWindowsOnScreen(
-                TAG,
-                "test: ${testName.methodName}, virtualDisplayId=$displayId"
-            )
-            fail("Window did not become visible")
-        }
+        WindowManagerStateHelper().waitUntilActivityReadyForInputInjection(activity,
+            TAG, "test: ${testName.methodName}, virtualDisplayId=$displayId")
     }
 }
