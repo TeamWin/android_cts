@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
 import android.content.pm.PackageManager;
+import android.media.midi.Flags;
 import android.media.midi.MidiDevice;
 import android.media.midi.MidiDeviceInfo;
 import android.media.midi.MidiDeviceInfo.PortInfo;
@@ -29,6 +30,7 @@ import android.media.midi.MidiInputPort;
 import android.media.midi.MidiManager;
 import android.media.midi.MidiOutputPort;
 import android.media.midi.MidiReceiver;
+import android.media.midi.MidiUmpDeviceService;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -40,7 +42,6 @@ import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
 
-import android.media.midi.Flags;
 import com.android.midi.CTSMidiEchoTestService;
 import com.android.midi.CTSMidiUmpEchoTestService;
 import com.android.midi.MidiEchoTestService;
@@ -54,6 +55,7 @@ import org.junit.runners.JUnit4;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.Executor;
 
 /**
@@ -79,6 +81,9 @@ public class MidiEchoTest {
     // On a fast device in 2016, the test fails if timeout is 0 but works if it is 1.
     // So this timeout value is very generous.
     private static final int TIMEOUT_STATUS_MSEC = 500; // arbitrary
+
+    // Time to sleep to allow callbacks to propagate
+    private static final int TIMEOUT_CLOSE_MSEC = 50; // arbitrary
 
     // This is defined in MidiPortImpl.java as the maximum payload that
     // can be sent internally by MidiInputPort in a
@@ -815,6 +820,48 @@ public class MidiEchoTest {
         assertTrue("output port opened twice", echoOutputPort2 == null);
 
         tearDownEchoServer(mc, true);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
+    public void testMidiUmpDeviceServiceApis() throws Exception {
+        PackageManager pm = mContext.getPackageManager();
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
+            return; // Not supported so don't test it.
+        }
+        MidiTestContext mc = setUpEchoServer(true);
+
+        MidiUmpEchoTestService umpTestService = CTSMidiUmpEchoTestService.getInstance();
+        assertTrue("invalid ump test service", umpTestService != null);
+        MidiUmpDeviceService umpService = (MidiUmpDeviceService) umpTestService;
+        MidiDeviceInfo deviceInfo = umpService.getDeviceInfo();
+        assertTrue("null device info", deviceInfo != null);
+        List<MidiReceiver> outputReceivers = umpService.getOutputPortReceivers();
+        assertTrue("null output receiver list", outputReceivers != null);
+        assertTrue("empty output receiver list", outputReceivers.size() > 0);
+        List<MidiReceiver> inputReceivers = umpService.onGetInputPortReceivers();
+        assertTrue("null input receiver list", inputReceivers != null);
+        assertTrue("empty input receiver list", inputReceivers.size() > 0);
+
+        int initialStatusChangeCount = umpTestService.statusChangeCount;
+        int initialServiceCloseCount = umpTestService.serviceCloseCount;
+        tearDownEchoServer(mc, true);
+        umpTestService.waitForClose(TIMEOUT_CLOSE_MSEC);
+        assertTrue("device status count did not increase",
+                umpTestService.statusChangeCount > initialStatusChangeCount);
+        assertTrue("service close count did not increase",
+                umpTestService.serviceCloseCount > initialServiceCloseCount);
+
+        initialStatusChangeCount = umpTestService.statusChangeCount;
+        umpService.onDeviceStatusChanged(null);
+        assertEquals("device status count did not increment", umpTestService.statusChangeCount,
+                initialStatusChangeCount + 1);
+        assertTrue("input not closed", !umpTestService.inputOpened);
+        assertEquals("output not closed", umpTestService.outputOpenCount, 0);
+        initialServiceCloseCount = umpTestService.serviceCloseCount;
+        umpService.onClose();
+        assertEquals("service close count did not increment", umpTestService.serviceCloseCount,
+                initialServiceCloseCount + 1);
     }
 
     // Store history of status changes.
