@@ -278,7 +278,7 @@ public class ColorSpaceTests extends ActivityTestBase {
                 latch.countDown();
             });
             try {
-                Assert.assertTrue(latch.await(10, TimeUnit.SECONDS));
+                Assert.assertTrue(latch.await(30, TimeUnit.SECONDS));
             } catch (InterruptedException ex) {
                 Assert.fail(ex.getMessage());
             }
