@@ -255,7 +255,7 @@ public class VirtualCameraTest {
         mVirtualCamera = mVirtualDevice.createVirtualCamera(config);
 
         CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(
-                mVirtualCamera.getId());
+                mVirtualCamera.getId(), /* overrideToPortrait= */ false);
         int orientationAngleDegrees = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
         assertThat(orientationAngleDegrees).isEqualTo(sensorOrientation);
     }

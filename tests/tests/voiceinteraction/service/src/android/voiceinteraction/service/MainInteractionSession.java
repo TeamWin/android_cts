@@ -20,17 +20,25 @@ import android.app.VoiceInteractor;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.LauncherApps;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.service.voice.VoiceInteractionSession;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainInteractionSession extends VoiceInteractionSession {
     static final String TAG = "MainInteractionSession";
+    public static final String ACTION_SESSION_STARTED = "session_started";
+    public static final String ACTION_SCREENSHOT_RECEIVED = "screenshot_received";
+    public static final String ACTION_ASSIST_DATA_RECEIVED = "assist_data_received";
+    public static final String EXTRA_RECEIVED = "received";
 
     Intent mStartIntent;
     List<MyTask> mUsedTasks = new ArrayList<MyTask>();
@@ -42,15 +50,12 @@ public class MainInteractionSession extends VoiceInteractionSession {
     @Override
     public void onCreate() {
         super.onCreate();
-        Intent sessionStarted = new Intent();
-        sessionStarted.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+
+        Bundle extras = new Bundle();
         if (!getContext().getSystemService(LauncherApps.class).hasShortcutHostPermission()) {
-            sessionStarted.putExtra("error", "Does not have shortcut permission");
+            extras.putString("error", "Does not have shortcut permission");
         }
-        sessionStarted.setClassName("android.voiceinteraction.cts",
-                "android.voiceinteraction.cts.VoiceInteractionTestReceiver");
-        Log.i(TAG, "onCreate(): broadcast intent=" + sessionStarted);
-        getContext().sendBroadcast(sessionStarted);
+        notifyTestReceiver(ACTION_SESSION_STARTED, extras);
     }
 
     @Override
@@ -230,6 +235,36 @@ public class MainInteractionSession extends VoiceInteractionSession {
                     Utils.toBundleString(extras));
             newTask().execute(asyncTaskArg.setTestType(Utils.TestCaseType.PICKOPTION_REQUEST_TEST));
         }
+    }
+
+    @Override
+    public void onHandleScreenshot(@Nullable Bitmap screenshot) {
+        super.onHandleScreenshot(screenshot);
+        Log.d(TAG, "onHandleScreenshot: " + screenshot);
+
+        Bundle extras = new Bundle();
+        extras.putBoolean(EXTRA_RECEIVED,  screenshot != null);
+        notifyTestReceiver(ACTION_SCREENSHOT_RECEIVED, extras);
+    }
+
+    @Override
+    public void onHandleAssist(@NonNull AssistState state) {
+        super.onHandleAssist(state);
+        Log.d(TAG, "onHandleAssist: " + state);
+
+        Bundle extras = new Bundle();
+        extras.putBoolean(EXTRA_RECEIVED,  state.getAssistStructure() != null);
+        notifyTestReceiver(ACTION_ASSIST_DATA_RECEIVED, extras);
+    }
+
+    private void notifyTestReceiver(String action, Bundle extras) {
+        Intent intent = new Intent(action);
+        intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        intent.putExtras(extras);
+        intent.setClassName("android.voiceinteraction.cts",
+                "android.voiceinteraction.cts.VoiceInteractionTestReceiver");
+        Log.i(TAG, "notifyTestReceiver: broadcast intent=" + intent);
+        getContext().sendBroadcast(intent);
     }
 
     public static final boolean isTestTypeCancel(Bundle extras) {

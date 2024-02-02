@@ -72,6 +72,8 @@ public class MockNetworkService {
     private int mCsRegState = RegState.NOT_REG_MT_NOT_SEARCHING_OP;
     private int mPsRegState = RegState.NOT_REG_MT_NOT_SEARCHING_OP;
 
+    private int mRegFailCause = 0;
+
     private Context mContext;
 
     private String mSimPlmn;
@@ -550,70 +552,44 @@ public class MockNetworkService {
         return (mRoamingCarrierId != MOCK_CARRIER_NO_SERVICE);
     }
 
+    public void setRegFailCause(int regFailCause) {
+        mRegFailCause = regFailCause;
+    }
+
+    public int getRegFailCause() {
+        return mRegFailCause;
+    }
+
+    /** updateServiceState */
     public void updateServiceState(int reg) {
-        Log.d(TAG, "Cell ID: updateServiceState " + reg);
-        switch (reg) {
-            case RegState.NOT_REG_MT_SEARCHING_OP:
-                mCsRegState = RegState.NOT_REG_MT_SEARCHING_OP;
-                mPsRegState = RegState.NOT_REG_MT_SEARCHING_OP;
-                break;
-            case RegState.REG_HOME:
-                mCsRegState = RegState.REG_HOME;
-                mPsRegState = RegState.REG_HOME;
-                break;
-            case RegState.REG_ROAMING:
-                mCsRegState = RegState.REG_ROAMING;
-                mPsRegState = RegState.REG_ROAMING;
-                break;
-            case RegState.NOT_REG_MT_NOT_SEARCHING_OP:
-            default:
-                mCsRegState = RegState.NOT_REG_MT_NOT_SEARCHING_OP;
-                mPsRegState = RegState.NOT_REG_MT_NOT_SEARCHING_OP;
-                break;
-        }
-
-        // TODO: mCsRegState and mPsReState may be changed by the registration denied reason set by
-        // TestCase
-
-        updateCellRegistration();
+        updateServiceState(reg, Domain.CS | Domain.PS);
     }
 
     public void updateServiceState(int reg, int domainBitmask) {
         Log.d(TAG, "Cell ID: updateServiceState " + reg + " with domainBitmask = " + domainBitmask);
+
+        /* a little range check here */
         switch (reg) {
             case RegState.NOT_REG_MT_SEARCHING_OP:
-                if ((domainBitmask & Domain.CS) != 0) {
-                    mCsRegState = RegState.NOT_REG_MT_SEARCHING_OP;
-                }
-                if ((domainBitmask & Domain.PS) != 0) {
-                    mPsRegState = RegState.NOT_REG_MT_SEARCHING_OP;
-                }
-                break;
+                /* fallthrough */
             case RegState.REG_HOME:
-                if ((domainBitmask & Domain.CS) != 0) {
-                    mCsRegState = RegState.REG_HOME;
-                }
-                if ((domainBitmask & Domain.PS) != 0) {
-                    mPsRegState = RegState.REG_HOME;
-                }
-                break;
+                /* fallthrough */
             case RegState.REG_ROAMING:
-                if ((domainBitmask & Domain.CS) != 0) {
-                    mCsRegState = RegState.REG_ROAMING;
-                }
-                if ((domainBitmask & Domain.PS) != 0) {
-                    mPsRegState = RegState.REG_ROAMING;
-                }
-                break;
+                /* fallthrough */
             case RegState.NOT_REG_MT_NOT_SEARCHING_OP:
-            default:
-                if ((domainBitmask & Domain.CS) != 0) {
-                    mCsRegState = RegState.NOT_REG_MT_NOT_SEARCHING_OP;
-                }
-                if ((domainBitmask & Domain.PS) != 0) {
-                    mPsRegState = RegState.NOT_REG_MT_NOT_SEARCHING_OP;
-                }
+                /* fallthrough */
+            case RegState.REG_DENIED:
                 break;
+            default:
+                reg = RegState.NOT_REG_MT_NOT_SEARCHING_OP;
+                break;
+        }
+
+        if ((domainBitmask & Domain.CS) != 0) {
+            mCsRegState = reg;
+        }
+        if ((domainBitmask & Domain.PS) != 0) {
+            mPsRegState = reg;
         }
 
         updateCellRegistration();

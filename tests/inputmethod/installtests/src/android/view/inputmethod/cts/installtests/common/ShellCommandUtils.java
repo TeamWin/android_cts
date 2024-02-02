@@ -28,11 +28,6 @@ public final class ShellCommandUtils {
     private static final String SETTING_DEFAULT_IME = "secure default_input_method";
 
     /** Command to get ID of current IME. */
-    public static String removeUser(int userId) {
-        return "cmd package remove-user " + userId;
-    }
-
-    /** Command to get ID of current IME. */
     public static String getCurrentIme(int userId) {
         return String.format("settings --user %d get %s", userId, SETTING_DEFAULT_IME);
     }
@@ -65,54 +60,6 @@ public final class ShellCommandUtils {
     /** Command to reset currently selected/enabled IMEs to the default ones for all the users. */
     public static String resetImesForAllUsers() {
         return "ime reset --user all";
-    }
-
-    public static String installPackageAsUser(String apkPath, int userId) {
-        return "pm install -r --user " + userId + " " + apkPath;
-    }
-
-    public static String installExistingPackageAsUser(String packageName, int userId,
-            boolean instant) {
-        return "pm install-existing --wait --user " + userId + (instant ? " --instant "
-                : " --full ") + packageName;
-    }
-
-    public static String uninstallPackage(String packageName) {
-        return "pm uninstall " + packageName;
-    }
-
-    /**
-     * Command to uninstall {@code packageName} only for {@code userId}.
-     *
-     * @param packageName package name of the package to be uninstalled.
-     * @param userId      user ID to specify the user.
-     */
-    public static String uninstallPackage(String packageName, int userId) {
-        return "pm uninstall --user " + userId + " " + packageName;
-    }
-
-    /**
-     * Command to get the last user ID that is specified to
-     * InputMethodManagerService.Lifecycle#onUserSwitching().
-     *
-     * @return the command to be passed to shell command.
-     */
-    public static String getLastSwitchUserId() {
-        return "cmd input_method get-last-switch-user-id";
-    }
-
-    /**
-     * Command to start the user
-     *
-     * @return the command to be passed to shell command.
-     */
-    public static String startUser(int userId) {
-        return "am start-user -w " + userId;
-    }
-
-    /** Command to switch the user */
-    public static String switchToUserId(int userId) {
-        return "am switch-user -w " + userId;
     }
 
     /** Command to turn on the display (if it's sleeping). */

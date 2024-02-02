@@ -35,10 +35,13 @@
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="am start-foreground-service android.provider.cts.invisibleapp/.InvisibleService" />
         <option name="teardown-command" value="am stop-service android.provider.cts.invisibleapp" />
+        <option name="teardown-command" value="pm uninstall android.provider.cts.visibleapp" />
+        <option name="teardown-command" value="pm uninstall android.provider.cts.invisibleapp" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="runner" value="androidx.test.runner.AndroidJUnitRunner" />
         <option name="package" value="android.provider.cts.contactkeys" />
     </test>
+
 </configuration>

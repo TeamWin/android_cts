@@ -420,7 +420,26 @@ public class MockModemManager {
      * @return boolean true if the operation is successful, otherwise false.
      */
     public boolean changeNetworkService(
-            int slotId, int carrierId, boolean registration, int domainBitmask) throws Exception {
+            int slotId, int carrierId,
+            boolean registration, int domainBitmask) throws Exception {
+        return changeNetworkService(
+                slotId, carrierId, registration, domainBitmask, 0 /* regFailCause */);
+    }
+
+    /**
+     * Make the modem is in service or not for CS or PS registration
+     *
+     * @param slotId which SIM slot is under the carrierId network.
+     * @param carrierId which carrier network is used.
+     * @param registration boolean true if the modem is in service, otherwise false.
+     * @param domainBitmask int specify domains (CS only, PS only, or both).
+     * @param regFailCause int reason code for registration failure.
+     * @return boolean true if the operation is successful, otherwise false.
+     */
+    public boolean changeNetworkService(
+            int slotId, int carrierId,
+            boolean registration, int domainBitmask,
+            int regFailCause) throws Exception {
         Log.d(
                 TAG,
                 "changeNetworkService["
@@ -430,13 +449,16 @@ public class MockModemManager {
                         + ") "
                         + registration
                         + " with domainBitmask = "
-                        + domainBitmask);
+                        + domainBitmask
+                        + " with failCause = "
+                        + regFailCause);
 
         boolean result;
         result =
                 mMockModemService
                         .getIRadioNetwork((byte) slotId)
-                        .changeNetworkService(carrierId, registration, domainBitmask);
+                        .changeNetworkService(
+                                carrierId, registration, domainBitmask, regFailCause);
 
         waitForTelephonyFrameworkDone(1);
         return result;

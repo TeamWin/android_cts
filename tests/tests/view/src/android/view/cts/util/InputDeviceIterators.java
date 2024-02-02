@@ -16,15 +16,15 @@
 
 package android.view.cts.util;
 
-import android.util.Pair;
 import android.view.InputDevice;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-/** Utils for tests involving {@link InputDevice}s. */
-public class InputDeviceUtils {
+/** Static iterators over {@link InputDevice}s. */
+public class InputDeviceIterators {
     /** Allows running a logic on some invalid InputDevice IDs. */
-    public static void runOnInvalidDeviceIds(Consumer<Integer> invalidDeviceIdConsumer) {
+    public static void iteratorOverInvalidDeviceIds(Consumer<Integer> invalidDeviceIdConsumer) {
         // "50" randomly chosen to cover some array of integers.
         for (int deviceId = -50; deviceId < 50; deviceId++) {
             InputDevice device = InputDevice.getDevice(deviceId);
@@ -37,21 +37,21 @@ public class InputDeviceUtils {
 
     /**
      * Allows running a logic on every motion range across every InputDevice.
-     * The motion range is provided to the consumer as a pair of the InputDevice ID corresponding to
-     * the motion range and the range itself.
+     * The motion range is provided to the consumer along with the InputDevice ID corresponding to
+     * the motion range.
      */
-    public static void runOnEveryInputDeviceMotionRange(
-            Consumer<Pair<Integer, InputDevice.MotionRange>> motionRangeConsumer) {
-        runOnEveryValidDeviceId((deviceId) -> {
+    public static void iteratorOverEveryInputDeviceMotionRange(
+            BiConsumer<Integer, InputDevice.MotionRange> motionRangeConsumer) {
+        iteratorOverEveryValidDeviceId((deviceId) -> {
             InputDevice device = InputDevice.getDevice(deviceId);
             for (InputDevice.MotionRange motionRange : device.getMotionRanges()) {
-                 motionRangeConsumer.accept(Pair.create(deviceId, motionRange));
+                motionRangeConsumer.accept(deviceId, motionRange);
             }
         });
     }
 
     /** Allows running a logic on every valid input device ID. */
-    public static void runOnEveryValidDeviceId(Consumer<Integer> deviceIdConsumer) {
+    public static void iteratorOverEveryValidDeviceId(Consumer<Integer> deviceIdConsumer) {
         for (int deviceId : InputDevice.getDeviceIds()) {
             deviceIdConsumer.accept(deviceId);
         }

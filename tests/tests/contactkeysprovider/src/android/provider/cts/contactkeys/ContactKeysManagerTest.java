@@ -18,6 +18,7 @@ package android.provider.cts.contactkeys;
 
 import static android.provider.ContactKeysManager.getMaxKeySizeBytes;
 
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static junit.framework.Assert.assertNotNull;
@@ -65,14 +66,19 @@ public class ContactKeysManagerTest {
     private static final String HELPER_APP_PACKAGE = "android.provider.cts.visibleapp";
     private static final String HELPER_APP_CLASS =
             "android.provider.cts.visibleapp.VisibleService";
+    private static final String HELPER_APP_LOOKUP_KEY = "0r1-423A2E4644502A2E50";
+    private static final String HELPER_APP_DEVICE_ID = "someDeviceId";
+    private static final String HELPER_APP_ACCOUNT_ID = "someAccountId";
 
     private ContactKeysManager mContactKeysManager;
+    private Context mContext;
 
     @Before
     public void setUp() {
+        mContext = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                .getTargetContext();
         mContactKeysManager = (ContactKeysManager)
-                androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-                .getTargetContext().getSystemService(Context.CONTACT_KEYS_SERVICE);
+                mContext.getSystemService(Context.CONTACT_KEYS_SERVICE);
     }
 
     @After
@@ -237,6 +243,7 @@ public class ContactKeysManagerTest {
                 .isEqualTo(ContactKeysManager.VERIFIED);
     }
 
+
     @Test
     public void testUpdateContactKeyLocalVerificationState_illegalState() {
         mContactKeysManager.updateOrInsertContactKey(LOOKUP_KEY, DEVICE_ID, ACCOUNT_ID,
@@ -248,6 +255,40 @@ public class ContactKeysManagerTest {
                         DEVICE_ID, ACCOUNT_ID, illegalVerificationState));
         assertThat(e).hasMessageThat().contains("Verification state value "
                 + illegalVerificationState + " is not supported");
+    }
+
+    @Test
+    public void testUpdateContactKeyLocalVerificationState_securityExceptionThrows() {
+        startHelperApp();
+        List<ContactKey> contactKeys = mContactKeysManager.getAllContactKeys(LOOKUP_KEY);
+        assertThat(contactKeys.size()).isEqualTo(1);
+
+        SecurityException e = assertThrows(SecurityException.class,
+                () ->mContactKeysManager.updateContactKeyLocalVerificationState(
+                        HELPER_APP_LOOKUP_KEY, HELPER_APP_DEVICE_ID,
+                        HELPER_APP_ACCOUNT_ID, HELPER_APP_PACKAGE,
+                        ContactKeysManager.VERIFIED));
+
+        assertThat(e).hasMessageThat().contains("The caller must have the "
+                + "android.permission.WRITE_VERIFICATION_STATE_E2EE_CONTACT_KEYS permission");
+        stopHelperApp();
+    }
+
+    @Test
+    public void testUpdateContactKeyRemoteVerificationState_securityExceptionThrows() {
+        startHelperApp();
+        List<ContactKey> contactKeys = mContactKeysManager.getAllContactKeys(LOOKUP_KEY);
+        assertThat(contactKeys.size()).isEqualTo(1);
+
+        SecurityException e = assertThrows(SecurityException.class,
+                () ->mContactKeysManager.updateContactKeyRemoteVerificationState(
+                        HELPER_APP_LOOKUP_KEY, HELPER_APP_DEVICE_ID,
+                        HELPER_APP_ACCOUNT_ID, HELPER_APP_PACKAGE,
+                        ContactKeysManager.VERIFIED));
+
+        assertThat(e).hasMessageThat().contains("The caller must have the "
+                + "android.permission.WRITE_VERIFICATION_STATE_E2EE_CONTACT_KEYS permission");
+        stopHelperApp();
     }
 
     @Test
@@ -347,6 +388,22 @@ public class ContactKeysManagerTest {
                 ACCOUNT_ID);
         assertThat(updatedSelfKey.getRemoteVerificationState())
                 .isEqualTo(ContactKeysManager.VERIFIED);
+    }
+
+    @Test
+    public void testUpdateSelfKeyRemoteVerificationState_securityExceptionThrows() {
+        startHelperApp();
+        List<SelfKey> selfKeys = mContactKeysManager.getAllSelfKeys();
+        assertThat(selfKeys.size()).isEqualTo(1);
+
+        SecurityException e = assertThrows(SecurityException.class,
+                () ->mContactKeysManager.updateSelfKeyRemoteVerificationState(
+                        HELPER_APP_DEVICE_ID, HELPER_APP_ACCOUNT_ID,
+                        HELPER_APP_PACKAGE, ContactKeysManager.VERIFIED));
+        assertThat(e).hasMessageThat().contains("The caller must have the "
+                + "android.permission.WRITE_VERIFICATION_STATE_E2EE_CONTACT_KEYS permission");
+
+        stopHelperApp();
     }
 
     @Test

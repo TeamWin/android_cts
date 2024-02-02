@@ -21,6 +21,7 @@ import static com.android.compatibility.common.util.SystemUtil.runShellCommandOr
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
@@ -29,9 +30,6 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.InstantAppInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.UserInfo;
-import android.os.NewUserRequest;
-import android.os.Process;
 import android.os.RemoteCallback;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -52,98 +50,73 @@ import android.view.inputmethod.cts.util.MockTestActivityUtil;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.packages.CommonPackages;
+import com.android.bedstead.nene.packages.Package;
+import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
+import java.io.File;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @LargeTest
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public class MultiUserTest {
     private static final String TAG = "MultiUserTest";
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(15);
-    private static final long USER_SWITCH_TIMEOUT = TimeUnit.SECONDS.toMillis(60);
     private static final long IME_COMMAND_TIMEOUT = TimeUnit.SECONDS.toMillis(20);
 
-    /**
-     * A sleep time after calling {@link com.android.tradefed.device.ITestDevice#switchUser(int)} to
-     * see if the flakiness comes from race condition in UserManagerService#removeUser() or not.
-     *
-     * <p>TODO(Bug 122609784): Remove this once we figure out what is the root cause of flakiness.
-     */
-    private static final long WAIT_AFTER_USER_SWITCH = TimeUnit.SECONDS.toMillis(10);
+    @ClassRule
+    @Rule
+    public static final DeviceState sDeviceState = new DeviceState();  // Required by Bedstead.
 
     public ErrorCollector mErrorCollector = new ErrorCollector();
 
     private Context mContext;
     private InputMethodManager mImm;
-    private UserManager mUserManager;
-
     private boolean mNeedsTearDown = false;
-
-    /**
-     * {@code true} if {@link #tearDown()} needs to be fully executed.
-     *
-     * <p>When {@link #setUp()} is interrupted by {@link org.junit.AssumptionViolatedException}
-     * before
-     * the actual setup tasks are executed, all the corresponding cleanup tasks should also be
-     * skipped.
-     *
-     * <p>Once JUnit 5 becomes available in Android, we can remove this by moving the assumption
-     * checks into a non-static {@link org.junit.BeforeClass} method.
-     */
-    private List<Integer> mOriginalUsers;
 
     @Rule
     public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = instrumentation.getContext();
         mImm = mContext.getSystemService(InputMethodManager.class);
-        mUserManager = mContext.getSystemService(UserManager.class);
 
         assumeTrue(mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_INPUT_METHODS));
         assumeTrue(UserManager.supportsMultipleUsers());
 
         mNeedsTearDown = true;
-
-        mOriginalUsers = listUsers();
-        mOriginalUsers.forEach(userId -> uninstallImeAsUser(Ime1Constants.PACKAGE, userId));
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         if (!mNeedsTearDown) {
             return;
         }
-        switchUser(Process.myUserHandle().getIdentifier());
-        // We suspect that the optimization made for Bug 38143512 was a bit unstable.  Let's see
-        // if adding a sleep improves the stability or not.
-        Thread.sleep(WAIT_AFTER_USER_SWITCH);
 
-        final List<Integer> newUsers = listUsers();
-        for (int userId : newUsers) {
-            if (!mOriginalUsers.contains(userId)) {
-                uninstallImeAsUser(Ime1Constants.PACKAGE, userId);
-                uninstallImeAsUser(Ime2Constants.PACKAGE, userId);
-                removeUser(userId);
-            }
-        }
+        TestApis.packages().find(Ime1Constants.PACKAGE).uninstallFromAllUsers();
+        TestApis.packages().find(Ime2Constants.PACKAGE).uninstallFromAllUsers();
 
         runShellCommandOrThrow(ShellCommandUtils.resetImesForAllUsers());
 
@@ -158,17 +131,20 @@ public class MultiUserTest {
      */
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_IMM_USERHANDLE_HOSTSIDETESTS)
+    @EnsureHasSecondaryUser
     public void testSecondaryUser() throws Exception {
-        final int currentUserId = Process.myUserHandle().getIdentifier();
-        final int secondaryUserId = createNewUser();
+        final UserReference currentUser = sDeviceState.initialUser();
+        final UserReference secondaryUser = sDeviceState.secondaryUser();
+        final int currentUserId = currentUser.id();
+        final int secondaryUserId = secondaryUser.id();
 
-        startUser(secondaryUserId);
+        assertTrue(secondaryUser.isRunning());
 
         assertImeNotExistInApiResult(Ime1Constants.IME_ID, secondaryUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(currentUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(secondaryUserId);
 
-        installPackageAsUser(Ime1Constants.APK_PATH, secondaryUserId);
+        TestApis.packages().install(secondaryUser, new File(Ime1Constants.APK_PATH));
 
         assertImeNotExistInApiResult(Ime1Constants.IME_ID, currentUserId);
         assertImeExistsInApiResult(Ime1Constants.IME_ID, secondaryUserId);
@@ -183,7 +159,7 @@ public class MultiUserTest {
         assertImeNotCurrentInputMethodInfo(Ime2Constants.IME_ID, currentUserId);
         assertImeNotCurrentInputMethodInfo(Ime2Constants.IME_ID, secondaryUserId);
 
-        switchUser(secondaryUserId);
+        secondaryUser.switchTo();
 
         assertImeNotExistInApiResult(Ime1Constants.IME_ID, currentUserId);
         assertImeExistsInApiResult(Ime1Constants.IME_ID, secondaryUserId);
@@ -195,13 +171,13 @@ public class MultiUserTest {
         assertImeNotCurrentInputMethodInfo(Ime2Constants.IME_ID, currentUserId);
         assertImeNotCurrentInputMethodInfo(Ime2Constants.IME_ID, secondaryUserId);
 
-        switchUser(currentUserId);
+        currentUser.switchTo();
 
         // For devices that have config_multiuserDelayUserDataLocking set to true, the
         // secondaryUserId will be stopped after switching to the currentUserId. This means that
         // the InputMethodManager can no longer query for the Input Method Services since they have
         // all been stopped.
-        startUser(secondaryUserId /* waitFlag */);
+        secondaryUser.start();
 
         assertImeNotExistInApiResult(Ime1Constants.IME_ID, currentUserId);
         assertImeExistsInApiResult(Ime1Constants.IME_ID, secondaryUserId);
@@ -220,14 +196,15 @@ public class MultiUserTest {
      */
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_IMM_USERHANDLE_HOSTSIDETESTS)
+    @RequireFeature(CommonPackages.FEATURE_MANAGED_USERS)
+    @EnsureHasWorkProfile
     public void testProfileUser() throws Exception {
-        assumeTrue(mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_MANAGED_USERS));
+        final UserReference currentUser = sDeviceState.initialUser();
+        final UserReference profileUser = sDeviceState.workProfile(currentUser);
+        final int currentUserId = currentUser.id();
+        final int profileUserId = profileUser.id();
 
-        final int currentUserId = Process.myUserHandle().getIdentifier();
-        final int profileUserId = createProfile(currentUserId);
-
-        startUser(profileUserId /* waitFlag */);
+        assertTrue(profileUser.isRunning());
 
         assertImeNotExistInApiResult(Ime1Constants.IME_ID, currentUserId);
         assertImeNotExistInApiResult(Ime1Constants.IME_ID, profileUserId);
@@ -237,14 +214,14 @@ public class MultiUserTest {
         runShellCommandOrThrow(ShellCommandUtils.waitForBroadcastBarrier());
 
         // Install IME1 then enable/set it as the current IME for the main user.
-        installPackageAsUser(Ime1Constants.APK_PATH, currentUserId);
-        waitUntilImeIsInShellCommandResult(Ime1Constants.IME_ID, currentUserId);
+        TestApis.packages().install(currentUser, new File(Ime1Constants.APK_PATH));
+        waitUntilImeIsInShellCommandResult(Ime1Constants.IME_ID, currentUser.id());
         runShellCommandOrThrow(ShellCommandUtils.enableIme(Ime1Constants.IME_ID, currentUserId));
         runShellCommandOrThrow(
                 ShellCommandUtils.setCurrentImeSync(Ime1Constants.IME_ID, currentUserId));
 
         // Install IME2 then enable/set it as the current IME for the profile user.
-        installPackageAsUser(Ime2Constants.APK_PATH, profileUserId);
+        TestApis.packages().install(profileUser, new File(Ime2Constants.APK_PATH));
         waitUntilImeIsInShellCommandResult(Ime2Constants.IME_ID, profileUserId);
         runShellCommandOrThrow(ShellCommandUtils.enableIme(Ime2Constants.IME_ID, profileUserId));
         runShellCommandOrThrow(
@@ -272,11 +249,12 @@ public class MultiUserTest {
         // Check isStylusHandwritingAvailable() for profile user.
         assertIsStylusHandwritingAvailable(profileUserId, currentUserId);
 
-        // Install Test App for the profile user and make sure it is available as it is used next
-        installExistingPackageAsUser(MockTestActivityUtil.TEST_ACTIVITY.getPackageName(),
-                profileUserId);
-        assertPackageExistsInApiResult(MockTestActivityUtil.TEST_ACTIVITY.getPackageName(),
-                profileUserId);
+        // Install Test App for the profile user and make sure it is available as it is used next.
+        final Package testActivityPackage =
+                TestApis.packages().find(MockTestActivityUtil.TEST_ACTIVITY.getPackageName());
+        assertTrue(testActivityPackage.exists());
+        testActivityPackage.installExisting(profileUser);
+        assertTrue(testActivityPackage.installedOnUser(profileUser));
 
         // Make sure that IME switches depending on the target user.
         assertConnectingToTheSameUserIme(currentUserId);
@@ -293,19 +271,6 @@ public class MultiUserTest {
         // check getCurrentInputMethodInfoAsUser(userId)
         assertImeInCurrentInputMethodInfo(Ime1Constants.IME_ID, currentUserId);
         assertImeNotCurrentInputMethodInfo(Ime1Constants.IME_ID, profileUserId);
-    }
-
-    private void assertPackageExistsInApiResult(String packageName, int userId) {
-        PackageManager packageManager = mContext.getPackageManager();
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> PollingCheck.check(
-                        "Package " + packageName + " must exist for user " + userId, TIMEOUT,
-                        () -> packageManager.getInstalledPackagesAsUser(
-                                PackageManager.MATCH_INSTANT, userId).stream().anyMatch(
-                                    packageInfo -> TextUtils.equals(packageInfo.packageName,
-                                        packageName))),
-                Manifest.permission.INTERACT_ACROSS_USERS_FULL,
-                Manifest.permission.ACCESS_INSTANT_APPS);
     }
 
     private void assertImeExistsInApiResult(String imeId, int userId) {
@@ -451,91 +416,10 @@ public class MultiUserTest {
                         .split("\n")).contains(imeId));
     }
 
-    private int createNewUser() {
-        return SystemUtil.runWithShellPermissionIdentity(() -> {
-            final NewUserRequest newUserRequest = new NewUserRequest.Builder().setName(
-                    "test_user" + System.currentTimeMillis()).setUserType(
-                    UserManager.USER_TYPE_FULL_SECONDARY).build();
-            final UserHandle newUser = mUserManager.createUser(newUserRequest).getUser();
-            if (newUser == null) {
-                fail("Error while creating a new user");
-            }
-            return newUser.getIdentifier();
-        });
-    }
-
-    private void removeUser(int userId) {
-        final String output = runShellCommandOrThrow(ShellCommandUtils.removeUser(userId));
-        if (output.startsWith("Error")) {
-            fail("Error removing the user #" + userId + ": " + output);
-        }
-    }
-
-    private void startUser(int userId) {
-        Log.i(TAG, "Starting user " + userId);
-        String output = runShellCommandOrThrow(ShellCommandUtils.startUser(userId));
-        if (output.startsWith("Error")) {
-            fail(String.format("Failed to start user %d: %s", userId, output));
-        }
-    }
-
-    private void switchUser(int userId) throws Exception {
-        runShellCommandOrThrow(ShellCommandUtils.switchToUserId(userId));
-
-        // TODO(b/282196632): Implement cmd input_method get-last-switch-user-id in
-        // Android Auto IMMS
-        if (isMultiUserMultiDisplayIme()) {
-            return;
-        }
-
-        PollingCheck.check("Failed to get last SwitchUser ID from InputMethodManagerService.",
-                USER_SWITCH_TIMEOUT, () -> {
-                    String result = runShellCommandOrThrow(ShellCommandUtils.getLastSwitchUserId());
-                    final String[] lines = result.split("\\r?\\n");
-                    if (lines.length < 1) {
-                        throw new IllegalStateException(
-                                "Failed to get last SwitchUser ID from InputMethodManagerService."
-                                        + " result=" + result);
-                    }
-                    final int lastSwitchUserId = Integer.parseInt(lines[0], 10);
-                    return userId == lastSwitchUserId;
-            });
-    }
-
-    private int createProfile(int parentUserId) {
-        return SystemUtil.runWithShellPermissionIdentity(() -> {
-            final UserInfo newUser = mUserManager.createProfileForUser(
-                    "profile_user" + System.currentTimeMillis(),
-                    UserManager.USER_TYPE_PROFILE_MANAGED, 0, parentUserId, new String[]{});
-            if (newUser == null) {
-                fail("Error while creating a new profile");
-            }
-            return newUser.getUserHandle().getIdentifier();
-        });
-    }
-
-    private List<Integer> listUsers() {
-        return SystemUtil.runWithShellPermissionIdentity(() -> mUserManager.getUsers().stream().map(
-                userInfo -> userInfo.getUserHandle().getIdentifier()).toList());
-    }
-
     // TODO(b/282196632): remove this method once b/282196632) is fixed
     private boolean isMultiUserMultiDisplayIme() {
         String result = runShellCommandOrThrow("dumpsys input_method");
         return result.contains("InputMethodManagerServiceProxy");
-    }
-
-    private void installPackageAsUser(String apkPath, int userId) {
-        Log.v(TAG, "Installing apk: " + apkPath + " for user " + userId);
-        runShellCommandOrThrow(ShellCommandUtils.installPackageAsUser(apkPath, userId));
-        runShellCommandOrThrow(ShellCommandUtils.waitForBroadcastBarrier());
-    }
-
-    private void installExistingPackageAsUser(String packageName, int userId) {
-        Log.v(TAG, "Installing existing package: " + packageName + " for user " + userId);
-        runShellCommandOrThrow(ShellCommandUtils.installExistingPackageAsUser(packageName, userId,
-                isInstantApp()));
-        runShellCommandOrThrow(ShellCommandUtils.waitForBroadcastBarrier());
     }
 
     private boolean isInstantApp() {
@@ -554,11 +438,5 @@ public class MultiUserTest {
             }
             return instant;
         }, Manifest.permission.ACCESS_INSTANT_APPS);
-    }
-
-    private static void uninstallImeAsUser(String packageName, int userId) {
-        Log.v(TAG, "Uninstalling package: " + packageName + " for user " + userId);
-        runShellCommandOrThrow(ShellCommandUtils.uninstallPackage(packageName, userId));
-        runShellCommandOrThrow(ShellCommandUtils.resetImes());
     }
 }

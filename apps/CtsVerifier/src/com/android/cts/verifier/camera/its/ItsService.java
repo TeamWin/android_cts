@@ -23,6 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -511,6 +512,24 @@ public class ItsService extends Service implements SensorEventListener {
             while (!mThreadExitFlag && mSocket==null) {
                 Thread.sleep(1);
             }
+
+            if (intent != null && intent.hasExtra(ItsTestActivity.JCA_CAPTURE_PATH_TAG)) {
+                try {
+                    mSocketRunnableObj.sendResponse(ItsTestActivity.JCA_CAPTURE_STATUS_TAG,
+                            Integer.toString(intent.getIntExtra(
+                                    ItsTestActivity.JCA_CAPTURE_STATUS_TAG,
+                                    Activity.RESULT_CANCELED)
+                            )
+                    );
+                    mSocketRunnableObj.sendResponse(
+                            ItsTestActivity.JCA_CAPTURE_PATH_TAG,
+                            intent.getStringExtra(ItsTestActivity.JCA_CAPTURE_PATH_TAG));
+                } catch (ItsException e) {
+                    Logt.e(TAG, "Error sending JCA capture path and status", e);
+                }
+                return START_STICKY;
+            }
+
             if (!mThreadExitFlag){
                 Logt.i(TAG, "ItsService ready");
             } else {

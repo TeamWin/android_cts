@@ -76,6 +76,7 @@
         <option name="test-file-name" value="CtsDeviceServicesTestShareUidAppB.apk" />
         <option name="test-file-name" value="CtsWindowManagerJetpackSecondUidApp.apk" />
         <option name="test-file-name" value="CtsBackLegacyApp.apk" />
+        <option name="test-file-name" value="CtsWindowManagerExternalApp.apk" />
     </target_preparer>
     <!-- Some older apk cannot be installed as instant, so we force them full mode -->
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
