@@ -1,4 +1,3 @@
-//
 // Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,38 +11,39 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test_helper_app {
-    name: "CtsHostsideFrameRateOverrideTestsApp",
-    defaults: ["cts_support_defaults"],
-    platform_apis: true,
+android_test {
+    name: "CtsGameFrameRateTestCases",
+    defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
     libs: [
-        "junit",
+        "android.test.runner",
+        "android.test.base",
     ],
     static_libs: [
         "androidx.annotation_annotation",
-        "androidx.core_core",
+        "androidx.test.core",
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "ctsdeviceutillegacy-axt",
         "ctstestrunner-axt",
+        "ctstestserver",
+        "framework-annotations-lib",
         "junit",
-        "junit-params",
-        "mockito-target-minus-junit4",
-        "SurfaceFlingerProperties",
-        "testng",
         "truth",
+        "SurfaceFlingerProperties",
+        "androidx.core_core",
+        "framework_graphics_flags_java_lib",
     ],
-
-    // Tag this module as a cts test artifact
+    // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
     ],
+    // Enforce public / test api only
+    sdk_version: "test_current",
 }
