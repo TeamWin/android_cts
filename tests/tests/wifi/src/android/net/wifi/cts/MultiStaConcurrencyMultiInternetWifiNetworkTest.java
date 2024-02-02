@@ -31,6 +31,7 @@ import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.TransportInfo;
+import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -204,7 +205,8 @@ public class MultiStaConcurrencyMultiInternetWifiNetworkTest extends WifiJUnit4T
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.getPrivilegedConfiguredNetworks());
         mMatchingNetworksMap =
-                TestHelper.findMatchingSavedNetworksWithBssidByBand(mWifiManager, savedNetworks, 2);
+                TestHelper.findMatchingSavedNetworksWithBssidByBand(mWifiManager, savedNetworks,
+                        ScanResult.UNSPECIFIED, 2);
         assertWithMessage("Need at least 2 saved network bssids in different bands").that(
                 mMatchingNetworksMap.size()).isAtLeast(2);
 
