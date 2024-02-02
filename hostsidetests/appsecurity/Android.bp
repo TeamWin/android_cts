@@ -101,6 +101,7 @@ java_test_host {
         "src/**/ListeningPortsTest.java",
         "src/**/PkgInstallSignatureVerificationTest.java",
         "src/**/StatsdAppSecurityAtomTest.java",
+        "src/**/RoleSecurityTest.java",
     ],
 
     static_libs: [
