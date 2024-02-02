@@ -19,17 +19,22 @@ package android.scopedstorage.cts.device;
 import static android.scopedstorage.cts.device.FileCreationUtils.createContentFromResource;
 import static android.scopedstorage.cts.lib.TestUtils.createFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAsNoThrow;
+import static android.scopedstorage.cts.lib.TestUtils.getContentResolver;
 import static android.scopedstorage.cts.lib.TestUtils.getDcimDir;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
+import android.os.UserHandle;
 import android.provider.MediaStore;
+import android.scopedstorage.cts.lib.TestUtils;
 import android.util.Log;
 
 import com.android.cts.install.lib.TestApp;
@@ -40,6 +45,7 @@ import org.junit.rules.ExternalResource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.List;
 
 public class OtherAppFilesRule extends ExternalResource {
 
@@ -52,11 +58,15 @@ public class OtherAppFilesRule extends ExternalResource {
     private static final String VIDEO_1 = TAG + "_video1_" + NONCE + ".mp4";
     private static final String VIDEO_2 = TAG + "_video2_" + NONCE + ".mp4";
 
+    private static final File sImageFile = new File(getDcimDir(), IMAGE_1);
+    private static final File sImageFile2 = new File(getDcimDir(), IMAGE_2);
+    private static final File sVideoFile1 = new File(getDcimDir(), VIDEO_1);
+    private static final File sVideoFile2 = new File(getDcimDir(), VIDEO_2);
+
+    private static final List<File> otherAppFilesList = List.of(sImageFile, sImageFile2,
+            sVideoFile1, sVideoFile2);
+
     private final ContentResolver mContentResolver;
-    private final File mImageFile1 = new File(getDcimDir(), IMAGE_1);
-    private final File mImageFile2 = new File(getDcimDir(), IMAGE_2);
-    private final File mVideoFile1 = new File(getDcimDir(), VIDEO_1);
-    private final File mVideoFile2 = new File(getDcimDir(), VIDEO_2);
 
     private Uri mImageUri1;
     private Uri mImageUri2;
@@ -72,10 +82,10 @@ public class OtherAppFilesRule extends ExternalResource {
         File buffer = new File(getDcimDir(), "OtherAppFilesRule_buffer_" + NONCE + ".jpg");
         try {
             createContentFromResource(R.raw.img_with_metadata, buffer);
-            mImageUri1 = createFileAsOther(buffer, mImageFile1);
-            mImageUri2 = createFileAsOther(buffer, mImageFile2);
-            mVideoUri1 = createEmptyFileAsOther(mVideoFile1);
-            mVideoUri2 = createEmptyFileAsOther(mVideoFile2);
+            mImageUri1 = createFileAsOther(buffer, sImageFile);
+            mImageUri2 = createFileAsOther(buffer, sImageFile2);
+            mVideoUri1 = createEmptyFileAsOther(sVideoFile1);
+            mVideoUri2 = createEmptyFileAsOther(sVideoFile2);
 
         } finally {
             buffer.delete();
@@ -84,27 +94,30 @@ public class OtherAppFilesRule extends ExternalResource {
 
     @Override
     protected void after() {
-        deleteFileAsNoThrow(APP_D_LEGACY_HAS_RW, mImageFile1.getAbsolutePath());
-        deleteFileAsNoThrow(APP_D_LEGACY_HAS_RW, mImageFile2.getAbsolutePath());
-        deleteFileAsNoThrow(APP_D_LEGACY_HAS_RW, mVideoFile1.getAbsolutePath());
-        deleteFileAsNoThrow(APP_D_LEGACY_HAS_RW, mVideoFile2.getAbsolutePath());
+        deleteFileAsNoThrow(APP_D_LEGACY_HAS_RW, sImageFile.getAbsolutePath());
+        deleteFileAsNoThrow(APP_D_LEGACY_HAS_RW, sImageFile2.getAbsolutePath());
+        deleteFileAsNoThrow(APP_D_LEGACY_HAS_RW, sVideoFile1.getAbsolutePath());
+        deleteFileAsNoThrow(APP_D_LEGACY_HAS_RW, sVideoFile2.getAbsolutePath());
     }
 
-    public File getImageFile1() {
-        return mImageFile1;
+    public static File getImageFile1() {
+        return sImageFile;
     }
 
-    public File getImageFile2() {
-        return mImageFile2;
+    public static File getImageFile2() {
+        return sImageFile2;
     }
 
-
-    public File getVideoFile1() {
-        return mVideoFile1;
+    public static File getVideoFile1() {
+        return sVideoFile1;
     }
 
-    public File getVideoFile2() {
-        return mVideoFile2;
+    public static File getVideoFile2() {
+        return sVideoFile2;
+    }
+
+    public static List<File> getAllFiles() {
+        return otherAppFilesList;
     }
 
     public Uri getImageUri1() {
@@ -161,4 +174,52 @@ public class OtherAppFilesRule extends ExternalResource {
         };
     }
 
+    protected static void modifyReadAccess(File imageFile,
+            String currentPackageName, GrantModifications modification) throws IOException {
+        final String pickerUri1 = buildPhotopickerUriWithStringEscaping(imageFile);
+
+        String adbCommand =
+                "content call "
+                        + " --method " + ((modification == GrantModifications.GRANT)
+                        ? "grant_media_read_for_package" : "revoke_media_read_for_package")
+                        + " --user " + UserHandle.myUserId()
+                        + " --uri content://media/external/file"
+                        + " --extra uri:s:"
+                        + pickerUri1
+                        + " --extra "
+                        + Intent.EXTRA_PACKAGE_NAME
+                        + ":s:"
+                        + currentPackageName;
+        TestUtils.executeShellCommand(adbCommand);
+    }
+
+    private static String buildPhotopickerUriWithStringEscaping(File imageFile) {
+        /*
+        adb shell content call  --method 'grant_media_read_for_package'
+        --uri content://media/external/file
+        --extra uri:s:content\\://media/picker/0/com.android.providers.media
+        .photopicker/media/1000000089
+        --extra android.intent.extra.PACKAGE_NAME:s:android.scopedstorage.cts.device
+         */
+        final Uri originalUri = MediaStore.scanFile(getContentResolver(), imageFile);
+        long fileId = ContentUris.parseId(originalUri);
+
+        // We are forced to build the URI string this way due to various layers of string escaping
+        // we are hitting when using uris in adb shell commands from tests.
+        return "content\\://"
+                + MediaStore.AUTHORITY
+                + Uri.EMPTY
+                .buildUpon()
+                .appendPath("picker") // PickerUriResolver.PICKER_SEGMENT
+                .appendPath(String.valueOf(UserHandle.myUserId()))
+                .appendPath("com.android.providers.media.photopicker") //
+                .appendPath(MediaStore.AUTHORITY)
+                .appendPath(Long.toString(fileId))
+                .build();
+    }
+
+    protected enum GrantModifications {
+        GRANT,
+        REVOKE;
+    }
 }
