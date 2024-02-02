@@ -218,19 +218,9 @@ public class PixelCopyTest {
     }
 
     private PixelCopyGLProducerCtsActivity waitForGlProducerActivity() {
-        CountDownLatch swapFence = new CountDownLatch(2);
-
         PixelCopyGLProducerCtsActivity activity =
                 mGLSurfaceViewActivityRule.launchActivity(null);
-        activity.setSwapFence(swapFence);
-
-        try {
-            while (!swapFence.await(5, TimeUnit.MILLISECONDS)) {
-                activity.getView().requestRender();
-            }
-        } catch (InterruptedException ex) {
-            Assert.fail("Interrupted, error=" + ex.getMessage());
-        }
+        activity.waitForReady();
         return activity;
     }
 
@@ -323,14 +313,17 @@ public class PixelCopyTest {
         PixelCopyGLProducerCtsActivity activity = waitForGlProducerActivity();
         Bitmap bitmap = Bitmap.createBitmap(20, 20, Config.ARGB_8888);
         int result = mCopyHelper.request(activity.getView(), bitmap);
+        assertEquals(result, PixelCopy.SUCCESS);
         // Make sure nothing messed with the bitmap
         assertEquals(20, bitmap.getWidth());
         assertEquals(20, bitmap.getHeight());
         assertEquals(Config.ARGB_8888, bitmap.getConfig());
         assertBitmapQuadColor(bitmap,
                 Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+        bitmap.eraseColor(Color.MAGENTA);
         int generationId = bitmap.getGenerationId();
         result = mCopyHelper.request(activity.getView(), bitmap);
+        assertEquals(result, PixelCopy.SUCCESS);
         // Make sure nothing messed with the bitmap
         assertEquals(20, bitmap.getWidth());
         assertEquals(20, bitmap.getHeight());
@@ -816,34 +809,23 @@ public class PixelCopyTest {
     @Test
     @LargeTest
     public void testNotLeaking() {
-        try {
-            CountDownLatch swapFence = new CountDownLatch(2);
+        PixelCopyGLProducerCtsActivity activity =
+                mGLSurfaceViewActivityRule.launchActivity(null);
+        activity.waitForReady();
 
-            PixelCopyGLProducerCtsActivity activity =
-                    mGLSurfaceViewActivityRule.launchActivity(null);
-            activity.setSwapFence(swapFence);
+        // Test a fullsize copy
+        Bitmap bitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
 
-            while (!swapFence.await(5, TimeUnit.MILLISECONDS)) {
-                activity.getView().requestRender();
-            }
-
-            // Test a fullsize copy
-            Bitmap bitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
-
-            runNotLeakingTest(() -> {
-                int result = mCopyHelper.request(activity.getView(), bitmap);
-                assertEquals("Copy request failed", PixelCopy.SUCCESS, result);
-                // Make sure nothing messed with the bitmap
-                assertEquals(100, bitmap.getWidth());
-                assertEquals(100, bitmap.getHeight());
-                assertEquals(Config.ARGB_8888, bitmap.getConfig());
-                assertBitmapQuadColor(bitmap,
-                        Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
-            });
-
-        } catch (InterruptedException e) {
-            Assert.fail("Interrupted, error=" + e.getMessage());
-        }
+        runNotLeakingTest(() -> {
+            int result = mCopyHelper.request(activity.getView(), bitmap);
+            assertEquals("Copy request failed", PixelCopy.SUCCESS, result);
+            // Make sure nothing messed with the bitmap
+            assertEquals(100, bitmap.getWidth());
+            assertEquals(100, bitmap.getHeight());
+            assertEquals(Config.ARGB_8888, bitmap.getConfig());
+            assertBitmapQuadColor(bitmap,
+                    Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+        });
     }
 
     @Test
