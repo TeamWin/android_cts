@@ -17,11 +17,23 @@
 package android.media.tv.ad.cts;
 
 import android.app.Activity;
+import android.media.tv.TvView;
+import android.media.tv.ad.TvAdView;
 import android.os.Bundle;
+import android.tv.cts.R;
 
 public class TvAdStubActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.tvadview_layout);
+    }
+
+    public TvAdView getAdView() {
+        return findViewById(R.id.tvadview);
+    }
+
+    public TvView getTvView() {
+        return findViewById(R.id.tvad_tvview);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,18 @@
 
 package android.media.tv.ad.cts;
 
-import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertNotNull;
 
 import android.app.Instrumentation;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.media.tv.ad.TvAdManager;
-import android.media.tv.ad.TvAdServiceInfo;
-import android.media.tv.flags.Flags;
+import android.media.tv.TvView;
+import android.media.tv.ad.TvAdView;
 import android.os.ConditionVariable;
-import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.tv.cts.R;
 
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -38,21 +35,16 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
-import junit.framework.AssertionFailedError;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.List;
-
 /**
- * Test {@link android.media.tv.ad.TvAdManager}.
+ * Test {@link android.media.tv.ad.TvAdView}.
  */
 @RunWith(AndroidJUnit4.class)
-public class TvAdManagerTest {
+public class TvAdViewTest {
     private static final long TIME_OUT_MS = 20000L;
 
     @Rule
@@ -66,7 +58,8 @@ public class TvAdManagerTest {
     private Instrumentation mInstrumentation;
     private ActivityScenario<TvAdStubActivity> mActivityScenario;
     private TvAdStubActivity mActivity;
-    private TvAdManager mManager;
+    private TvAdView mTvAdView;
+    private TvView mTvView;
 
     @Before
     public void setUp() throws Throwable {
@@ -85,41 +78,40 @@ public class TvAdManagerTest {
         activityReferenceObtained.block(TIME_OUT_MS);
 
         assertNotNull("Failed to acquire activity reference.", mActivity);
+        mTvAdView = findTvAdViewById(R.id.tvadview);
+        assertNotNull("Failed to find TvAdView.", mTvAdView);
     }
 
     @After
     public void tearDown() throws Throwable {
-        mInstrumentation.waitForIdleSync();
         mActivity = null;
         if (mActivityScenario != null) {
             mActivityScenario.close();
         }
     }
 
-    @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_AD_SERVICE_FW)
-    public void testGetTvAdManager() {
-        mManager = (TvAdManager) mActivity.getSystemService(Context.TV_AD_SERVICE);
-        assertNotNull("Failed to get TvAdManager.", mManager);
+    private TvAdView findTvAdViewById(int id) {
+        return (TvAdView) mActivity.findViewById(id);
     }
 
-    @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_AD_SERVICE_FW)
-    public void testGetTvAdServiceInfoList() throws Exception {
-        mManager = (TvAdManager) mActivity.getSystemService(Context.TV_AD_SERVICE);
-        List<TvAdServiceInfo> list = mManager.getTvAdServiceList();
+    private TvView findTvViewById(int id) {
+        return (TvView) mActivity.findViewById(id);
+    }
 
-        for (TvAdServiceInfo info : list) {
-            if (info.getServiceInfo().name.equals(StubTvAdService.class.getName())) {
-                assertThat(info.getSupportedTypes())
-                        .containsExactly("linear", "static", "overlay", "type4");
-                return;
+    private void runTestOnUiThread(final Runnable r) throws Throwable {
+        final Throwable[] exceptions = new Throwable[1];
+        mInstrumentation.runOnMainSync(new Runnable() {
+            public void run() {
+                try {
+                    r.run();
+                } catch (Throwable throwable) {
+                    exceptions[0] = throwable;
+                }
             }
+        });
+        if (exceptions[0] != null) {
+            throw exceptions[0];
         }
-        throw new AssertionFailedError(
-                "getTvAdServiceList() doesn't contain valid "
-                        + "TvAdServiceInfo: "
-                        + StubTvAdService.class.getName());
     }
-
 }
+

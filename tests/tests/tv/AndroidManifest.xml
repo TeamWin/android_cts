@@ -161,6 +161,16 @@
                  android:resource="@xml/stub_tv_iapp_service"/>
         </service>
 
+        <service android:name="android.media.tv.ad.cts.StubTvAdService"
+                 android:permission="android.permission.BIND_TV_AD_SERVICE"
+                 android:exported="true">
+            <intent-filter>
+                <action android:name="android.media.tv.ad.TvAdService"/>
+            </intent-filter>
+            <meta-data android:name="android.media.tv.ad.service"
+                       android:resource="@xml/stub_tv_ad_service"/>
+        </service>
+
         <activity android:name="android.media.tv.cts.TvViewStubActivity"
              android:exported="true">
             <intent-filter>
