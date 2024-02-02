@@ -288,7 +288,7 @@ android_test {
     per_testcase_directory: true,
     test_config: "AndroidTest_PackageSignatureTest.xml",
     manifest: "AndroidManifest_PackageSignatureTest.xml",
-    min_sdk_version: "31",
+    min_sdk_version: "30",
     sdk_version: "system_34",
     target_sdk_version: "34",
 }
