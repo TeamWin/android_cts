@@ -247,7 +247,10 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Landroid/app/sdksandbox/ISendDataCallback;",
                     "Landroid/app/sdksandbox/ISharedPreferencesSyncCallback;",
                     "Landroid/app/sdksandbox/ISdkToServiceCallback;",
-                    "Landroid/app/sdksandbox/IUnloadSdkCallback;"
+                    "Landroid/app/sdksandbox/IUnloadSdkCallback;",
+                    // b/325060980 : Remove duplication between telephony-common.jar and
+                    // services.jar
+                    "Lcom/android/server/updates/ConfigUpdateInstallReceiver;"
             );
 
     private static final String FEATURE_WEARABLE = "android.hardware.type.watch";
