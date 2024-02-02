@@ -37,11 +37,13 @@ import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothStatusCodes;
 import android.content.Context;
 import android.os.Build;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bluetooth.flags.Flags;
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CddTest;
 
@@ -76,9 +78,11 @@ public class BluetoothLeAudioTest {
     private boolean mGroupNodeAddedCalled;
     private boolean mGroupNodeRemovedCalled;
     private boolean mGroupStatusChangedCalled;
+    private boolean mGroupStreamStatusChangedCalled;
     private BluetoothDevice mTestDevice;
     private int mTestGroupId;
     private int mTestGroupStatus;
+    private int mTestGroupStreamStatus;
 
     private static final BluetoothLeAudioCodecConfig LC3_16KHZ_CONFIG =
             new BluetoothLeAudioCodecConfig.Builder()
@@ -119,6 +123,12 @@ public class BluetoothLeAudioTest {
             mGroupStatusChangedCalled = true;
             assertTrue(groupId == mTestGroupId);
             assertTrue(groupStatus == mTestGroupStatus);
+        }
+        @Override
+        public void onGroupStreamStatusChanged(int groupId, int groupStreamStatus) {
+            mGroupStreamStatusChangedCalled = true;
+            assertTrue(groupId == mTestGroupId);
+            assertTrue(groupStreamStatus == mTestGroupStreamStatus);
         }
     };
 
@@ -325,6 +335,24 @@ public class BluetoothLeAudioTest {
         assertTrue(mGroupNodeAddedCalled);
         assertTrue(mGroupNodeRemovedCalled);
         assertTrue(mGroupStatusChangedCalled);
+    }
+
+    @CddTest(requirements = {"7.4.3/C-2-1"})
+    @RequiresFlagsEnabled(Flags.FLAG_LEAUDIO_CALLBACK_ON_GROUP_STREAM_STATUS)
+    @Test
+    public void streamStatusCallback() {
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeAudio);
+
+        mTestGroupId = 1;
+        mTestDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+        mTestGroupStreamStatus = 1;
+
+        mGroupStreamStatusChangedCalled = false;
+
+        mTestCallback.onGroupStreamStatusChanged(mTestGroupId, mTestGroupStreamStatus);
+
+        assertTrue(mGroupStreamStatusChangedCalled);
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1"})
