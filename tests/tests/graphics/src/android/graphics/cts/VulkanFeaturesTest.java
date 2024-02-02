@@ -450,6 +450,10 @@ public class VulkanFeaturesTest {
     public void testVulkanExposedDeviceExtensions() throws JSONException {
         assumeTrue("Skipping because Vulkan is not supported", mVulkanHardwareVersion != null);
 
+        if (hasOnlyCpuDevice()) {
+            return;
+        }
+
         // Determine the set of device-side extensions that can be exposed
         //   Note this only includes VK_KHR, VK_GOOGLE, VK_ANDROID
         final int deviceDeqpLevel = mVulkanDeqpLevel.version;
