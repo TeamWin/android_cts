@@ -50,7 +50,7 @@ class AudioRecorder {
     }
 
     // public, but don't call directly (called by the OSLES callback)
-    SLresult enqueBuffer();
+    SLresult enqueueBuffer();
 
     int GetNumBufferSamples() {
         return numBufferSamples_;
