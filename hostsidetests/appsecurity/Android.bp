@@ -16,6 +16,17 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
+TEST_SUITES_DEFAULT = [
+    "cts",
+    "general-tests",
+    "mts-documentsui",
+    "mts-mainline-infra",
+    "mts-mediaprovider",
+    "mcts-documentsui",
+    "mcts-mainline-infra",
+    "mcts-mediaprovider",
+]
+
 java_library_host {
     name: "CtsAppSecurityUtils",
     defaults: ["cts_defaults"],
@@ -75,18 +86,7 @@ java_defaults {
 
     per_testcase_directory: true,
 
-    // tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
-        "mts-documentsui",
-        "mts-mainline-infra",
-        "mts-mediaprovider",
-        "mcts-documentsui",
-        "mcts-mainline-infra",
-        "mcts-mediaprovider",
-        "sts",
-    ],
+    test_suites: TEST_SUITES_DEFAULT,
 }
 
 java_test_host {
@@ -106,7 +106,10 @@ java_test_host {
     static_libs: [
         "flag-junit-host",
         "android.security.flags-aconfig-java-host",
+        "sts-host-util",
     ],
+
+    test_suites: TEST_SUITES_DEFAULT + ["sts"],
 
     data: [
         // AppSecurityTests
@@ -215,6 +218,8 @@ java_test_host {
 java_test_host {
     name: "CtsPermissionsHostTestCases",
     defaults: ["appsecurity_cts_defaults"],
+
+    test_suites: TEST_SUITES_DEFAULT + ["sts"],
 
     srcs: [
         "src/**/AccessSerialNumberTest.java",
@@ -399,7 +404,7 @@ java_test_host {
 java_test_host {
     name: "CtsInstantAppsHostTestCases",
     defaults: ["appsecurity_cts_defaults"],
-
+    test_suites: TEST_SUITES_DEFAULT + ["sts"],
     srcs: [
         "src/**/EphemeralTest.java",
         "src/**/InstantAppUserTest.java",
