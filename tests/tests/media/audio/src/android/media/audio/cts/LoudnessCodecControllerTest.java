@@ -340,6 +340,25 @@ public class LoudnessCodecControllerTest {
         }
     }
 
+    @Test
+    @RequiresFlagsEnabled(FLAG_LOUDNESS_CONFIGURATOR_API)
+    public void mediaCodecUpdate_checkParametersOnCodec() throws Exception {
+        mLcc = LoudnessCodecController.create(mSessionId);
+        final MediaCodec mediaCodec = createMediaCodec(/*configure*/true);
+
+        try {
+            mLcc.addMediaCodec(mediaCodec);
+            Thread.sleep(TEST_LOUDNESS_CALLBACK_TIMEOUT.toMillis());
+
+            MediaFormat format = mediaCodec.getOutputFormat();
+            assertNotNull(format);
+            assertTrue(format.getInteger(KEY_AAC_DRC_TARGET_REFERENCE_LEVEL) != 0);
+            assertTrue(format.getInteger(KEY_AAC_DRC_EFFECT_TYPE) != 0);
+        } finally {
+            mediaCodec.release();
+        }
+    }
+
 
     private AudioTrack createAndStartAudioTrack() {
         final int bufferSizeInBytes =

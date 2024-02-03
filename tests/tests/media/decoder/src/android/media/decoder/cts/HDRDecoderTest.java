@@ -288,7 +288,7 @@ public class HDRDecoderTest extends MediaTestBase {
         CountDownLatch latch = new CountDownLatch(1);
         mExtractor.seekTo(0, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
 
-        MediaCodec mDecoder = MediaCodec.createByCodecName(mCodecName);
+        mDecoder = MediaCodec.createByCodecName(mCodecName);
         mDecoder.setCallback(new MediaCodec.Callback() {
             boolean mInputEOS;
             boolean mOutputReceived;

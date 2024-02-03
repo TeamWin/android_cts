@@ -176,6 +176,16 @@
             </intent-filter>
         </service>
 
+        <service android:name="android.telephony.cts.TestDomainSelectionService"
+             android:directBootAware="true"
+             android:persistent="true"
+             android:permission="android.permission.BIND_DOMAIN_SELECTION_SERVICE"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.telephony.DomainSelectionService"/>
+            </intent-filter>
+        </service>
+
         <!-- Activity that allows the user to trigger the UCE APIs -->
         <activity android:name="android.telephony.ims.cts.UceActivity"
             android:exported="false">

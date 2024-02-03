@@ -2,6 +2,8 @@ package android.nfc.cts;
 
 import static android.Manifest.permission.MANAGE_DEFAULT_APPLICATIONS;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -12,6 +14,7 @@ import static org.mockito.Mockito.doNothing;
 
 import android.app.Activity;
 import android.app.PendingIntent;
+import android.app.UiAutomation;
 import android.app.role.RoleManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -45,7 +48,9 @@ import org.mockito.internal.util.reflection.FieldReader;
 import org.mockito.internal.util.reflection.FieldSetter;
 
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -80,9 +85,10 @@ public class NfcAdapterTest {
         if (!supportsHardware()) return;
         // Restore the original service.
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-        Assume.assumeNotNull(adapter);
-        FieldSetter.setField(adapter,
-                adapter.getClass().getDeclaredField("sService"), mSavedService);
+        if (adapter != null) {
+            FieldSetter.setField(adapter,
+                    adapter.getClass().getDeclaredField("sService"), mSavedService);
+        }
     }
 
     @Test
@@ -415,6 +421,66 @@ public class NfcAdapterTest {
         when(mService.isWlcEnabled()).thenReturn(true);
         boolean result = adapter.isWlcEnabled();
         Assert.assertTrue(result);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_NFC_VENDOR_CMD)
+    public void testSendVendorCmd() throws InterruptedException {
+        CountDownLatch rspCountDownLatch = new CountDownLatch(1);
+        CountDownLatch ntfCountDownLatch = new CountDownLatch(1);
+        NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(mContext);
+        Assert.assertNotNull(nfcAdapter);
+        NfcVendorNciCallback cb =
+                new NfcVendorNciCallback(rspCountDownLatch, ntfCountDownLatch);
+        try {
+            nfcAdapter.registerNfcVendorNciCallback(
+                    Executors.newSingleThreadExecutor(), cb);
+
+            // Send random payload with a vendor gid.
+            byte[] payload = new byte[100];
+            new Random().nextBytes(payload);
+            int gid = 0xF;
+            int oid = 0xC;
+            nfcAdapter.sendVendorNciMessage(NfcAdapter.MESSAGE_TYPE_COMMAND, gid, oid, payload);
+
+            // Wait for response.
+            assertThat(rspCountDownLatch.await(1, TimeUnit.SECONDS)).isTrue();
+            assertThat(cb.gid).isEqualTo(gid);
+            assertThat(cb.oid).isEqualTo(oid);
+            assertThat(cb.payload).isNotEmpty();
+        } finally {
+            nfcAdapter.unregisterNfcVendorNciCallback(cb);
+        }
+    }
+
+    private class NfcVendorNciCallback implements NfcAdapter.NfcVendorNciCallback {
+        private final CountDownLatch mRspCountDownLatch;
+        private final CountDownLatch mNtfCountDownLatch;
+
+        public int gid;
+        public int oid;
+        public byte[] payload;
+
+        NfcVendorNciCallback(CountDownLatch rspCountDownLatch, CountDownLatch ntfCountDownLatch) {
+            mRspCountDownLatch = rspCountDownLatch;
+            mNtfCountDownLatch = ntfCountDownLatch;
+        }
+
+        @Override
+        public void onVendorNciResponse(int gid, int oid, byte[] payload) {
+            this.gid = gid;
+            this.oid = oid;
+            this.payload = payload;
+            mRspCountDownLatch.countDown();
+        }
+
+        @Override
+        public void onVendorNciNotification(int gid, int oid, byte[] payload) {
+            this.gid = gid;
+            this.oid = oid;
+            this.payload = payload;
+            mNtfCountDownLatch.countDown();
+        }
     }
 
     private class CtsReaderCallback implements NfcAdapter.ReaderCallback {
