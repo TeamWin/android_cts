@@ -133,6 +133,9 @@ android_test {
     name: "CtsResourcesTestCases",
     defaults: ["cts_content_defaults"],
 
+    static_libs: [
+        "android.content.res.flags-aconfig-java",
+    ],
     srcs: [
         "src/android/content/om/**/*.java",
         "src/android/content/res/**/*.java",

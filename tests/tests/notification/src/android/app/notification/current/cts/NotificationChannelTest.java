@@ -25,21 +25,31 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Flags;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Parcel;
+import android.os.VibrationEffect;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.Settings;
 
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
+
 @RunWith(AndroidJUnit4.class)
 public class NotificationChannelTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Test
     public void testDescribeContents() {
@@ -161,6 +171,56 @@ public class NotificationChannelTest {
 
         channel.setVibrationPattern(null);
         assertEquals(false, channel.shouldVibrate());
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_NOTIFICATION_CHANNEL_VIBRATION_EFFECT_API)
+    public void testVibrationPatternAndEffect() {
+        final long[] pattern = new long[] {1, 7, 1, 7, 3};
+        final VibrationEffect patternEquivalentEffect = VibrationEffect.createWaveform(pattern, -1);
+        final VibrationEffect patternEquivalentRepeatingEffect =
+                VibrationEffect.createWaveform(pattern, 0);
+        final VibrationEffect predefinedEffect =
+                VibrationEffect.createPredefined(VibrationEffect.EFFECT_POP);
+        NotificationChannel channel =
+                new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
+
+        assertNull(channel.getVibrationPattern());
+        assertNull(channel.getVibrationEffect());
+
+        channel.setVibrationPattern(pattern);
+        assertTrue(Arrays.equals(pattern, channel.getVibrationPattern()));
+        assertEquals(patternEquivalentEffect, channel.getVibrationEffect());
+        assertTrue(channel.shouldVibrate());
+
+        channel.setVibrationPattern(new long[]{});
+        assertNull(channel.getVibrationEffect());
+        assertFalse(channel.shouldVibrate());
+
+        channel.setVibrationEffect(patternEquivalentEffect);
+        assertTrue(Arrays.equals(pattern, channel.getVibrationPattern()));
+        assertEquals(patternEquivalentEffect, channel.getVibrationEffect());
+        assertTrue(channel.shouldVibrate());
+
+        channel.setVibrationEffect(patternEquivalentRepeatingEffect);
+        assertNull(channel.getVibrationPattern());
+        assertEquals(patternEquivalentRepeatingEffect, channel.getVibrationEffect());
+        assertTrue(channel.shouldVibrate());
+
+        channel.setVibrationEffect(null);
+        assertNull(channel.getVibrationPattern());
+        assertNull(channel.getVibrationEffect());
+        assertFalse(channel.shouldVibrate());
+
+        channel.setVibrationEffect(predefinedEffect);
+        assertNull(channel.getVibrationPattern());
+        assertEquals(predefinedEffect, channel.getVibrationEffect());
+        assertTrue(channel.shouldVibrate());
+
+        channel.setVibrationPattern(null);
+        assertNull(channel.getVibrationPattern());
+        assertNull(channel.getVibrationEffect());
+        assertFalse(channel.shouldVibrate());
     }
 
     @Test

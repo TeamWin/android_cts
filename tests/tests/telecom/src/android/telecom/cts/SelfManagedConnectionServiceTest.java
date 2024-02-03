@@ -38,6 +38,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.OutcomeReceiver;
+import android.os.UserHandle;
 import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
@@ -54,6 +55,8 @@ import android.telecom.VideoProfile;
 import android.telecom.cts.selfmanagedcstestapp.ICtsSelfManagedConnectionServiceControl;
 import android.telecom.cts.selfmanagedcstestappone.CtsSelfManagedConnectionServiceControlOne;
 import android.util.Log;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
@@ -202,7 +205,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * Tests {@link TelecomManager#getSelfManagedPhoneAccounts()} API to ensure it returns a list of
      * the registered self-managed {@link android.telecom.PhoneAccount}s.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#getSelfManagedPhoneAccounts"})
     public void testTelecomManagerGetSelfManagedPhoneAccounts() {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -225,7 +228,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * It should be possible to register self-managed Connection Services which suppor the TEL, SIP,
      * or other URI schemes.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#registerPhoneAccount",
             "android.telecom.PhoneAccount"})
     public void testRegisterSelfManagedConnectionService() {
@@ -240,7 +243,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
                 TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_3);
     }
 
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#registerPhoneAccount",
             "android.telecom.PhoneAccount"})
     public void testSelfManagedConnectionServiceRegistrationUnmodifiable() {
@@ -276,7 +279,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      *
      * A self-managed {@link android.telecom.PhoneAccount} cannot also be a call provider.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#registerPhoneAccount",
             "android.telecom.PhoneAccount"})
     public void testRegisterCallCapableSelfManagedConnectionService() {
@@ -299,7 +302,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      *
      * A self-managed {@link android.telecom.PhoneAccount} cannot also be a SIM subscription.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#registerPhoneAccount",
             "android.telecom.PhoneAccount"})
     public void testRegisterSimSelfManagedConnectionService() {
@@ -322,7 +325,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      *
      * A self-managed {@link android.telecom.PhoneAccount} cannot also be a connection manager.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#registerPhoneAccount",
             "android.telecom.PhoneAccount"})
     public void testRegisterConnectionManagerSelfManagedConnectionService() {
@@ -359,7 +362,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
     /**
      * Tests ability to add a new self-managed incoming connection.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#addNewIncomingCall"})
     public void testAddSelfManagedIncomingConnection() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -407,7 +410,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * Tests ensures that Telecom disallow to place outgoing self-managed call when the ongoing
      * managed call can not be held.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#placeCall"})
     public void testDisallowOutgoingCallWhileOngoingManagedCallCanNotBeHeld() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -443,7 +446,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * Tests ensures that Telecom update outgoing self-managed call state disconnected when
      * remote side call is rejected.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#placeCall"})
     public void testOutgoingCallRejectedByRemoteParty() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -486,7 +489,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
     /**
      * Tests ensures that Telecom update self-managed call mute state when user sets mute option.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.Connection#onMuteStateChanged"})
     public void testSelfManagedCallMuteAndUnmute() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -528,7 +531,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * Tests ensures that Telecom update outgoing self-managed video call video state to false when
      * remote side call is picked only for audio.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.Connection#onAnswer"})
     public void testVideoCallStateDowngradeToAudio() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -573,7 +576,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * A self-managed {@link ConnectionService} shall be able to place an outgoing call to tel or
      * sip {@link Uri}s without being interrupted by system UX or other Telephony-related logic.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#placeCall"})
     public void testAddSelfManagedOutgoingConnection() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -596,7 +599,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * tests if we don't expect a call to be logged (it would make the CTS mighty slow).
      * @throws Exception
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.PhoneAccount#EXTRA_LOG_SELF_MANAGED_CALLS"})
     public void testSelfManagedCallNotLogged() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -691,7 +694,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      *
      * @throws Exception ;should not hit exception.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.Connection#setAudioModeIsVoip"})
     public void testAudioModeRemainsVoip() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -729,7 +732,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      *
      * @throws Exception ;should not hit exception.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.Connection#setAudioModeIsVoip"})
     public void testSelfManagedAndSimBasedCallSwapping() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -791,7 +794,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      *
      * @throws Exception; should not throw exception
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#acceptRingingCall"})
     public void testAcceptRingingCallOnSingleSelfManagedCall() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -834,7 +837,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      *
      * @throws Exception; should not throw exception
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#acceptRingingCall"})
     public void testAcceptRingingCallOnMultipleSelfManagedCalls() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -885,7 +888,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      *
      * @throws Exception; should not throw exception
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#endCall"})
     public void testEndCallOnSelfManagedCallOnActiveCall() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -922,7 +925,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      *
      * @throws Exception; should not throw exception
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#endCall"})
     public void testEndCallOnSelfManagedCallOnRingingCall() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -961,7 +964,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * Tests ability to change the audio route via the
      * {@link android.telecom.Connection#setAudioRoute(int)} API.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.Connection#setAudioRoute"})
     public void testAudioRoute() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -1018,7 +1021,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * exceed the limit.
      * @throws Exception
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.Connection#addNewIncomingCall"})
     public void testIncomingWhileOngoingWithinLimit() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -1044,7 +1047,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
     /**
      * Tests the self-managed ConnectionService has gained the focus when it become active.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.ConnectionService#onConnectionServiceFocusLost",
             "android.telecom.ConnectionService#onConnectionServiceFocusGained"})
     public void testSelfManagedConnectionServiceGainedFocus() throws Exception {
@@ -1067,7 +1070,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         setDisconnectedAndVerify(connection);
     }
 
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.ConnectionService#onConnectionServiceFocusLost",
             "android.telecom.ConnectionService#onConnectionServiceFocusGained"})
     public void testSelfManagedConnectionServiceLostFocus() throws Exception {
@@ -1100,7 +1103,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
     /**
      * Tests that Telecom will disallow the incoming call while the ringing call is existed.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#addNewIncomingCall"})
     public void testRingCallLimitForOnePhoneAccount() {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -1126,7 +1129,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      *
      * @throws Exception
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#placeCall"})
     public void testCallLimit() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -1164,7 +1167,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * Start a self-managed call and then dial an emergency call and make sure the self-managed
      * call is successfully disconnected.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#placeCall"})
     public void testDisconnectSelfManagedCallForEmergency() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -1207,7 +1210,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * Start a managed emergency call and then ensure that a subsequent self-managed call fails to
      * be created.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     public void testEmergencyCallOngoingNewOutgoingCall() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
             return;
@@ -1235,7 +1238,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * Start a managed emergency call and then ensure that a subsequent self-managed call fails to
      * be created.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     public void testEmergencyCallOngoingIncomingCall() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
             return;
@@ -1265,7 +1268,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * was no PhoneAccount specified, since only the owner of a self-managed ConnectionService can
      * initiate a call to that Service.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#placeCall"})
     public void testPlaceCallToNonRegisteredSelfManagedConnectionService() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -1287,7 +1290,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * Even if the app has CALL_PHONE/MANAGE_OWN_CALLS, the call will be sent as if there
      * was no PhoneAccount specified.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#placeCall"})
     public void testPlaceCallToRegisteredSelfManagedConnectionService() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -1315,7 +1318,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * permission, only MANAGE_OWN_CALLS. If this happens, the call should fail with a
      * SecurityException.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.TelecomManager#placeCall"})
     public void testPlaceIncorrectSelfManagedCallFromRemote() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -1343,7 +1346,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         }
     }
 
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     public void testCallSwapBetweenTwoSelfManagedConnectionServices() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
             return;
@@ -1454,7 +1457,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * Start a self-managed no hold capable call on different app and accept incoming managed call
      * should disconnect self-managed call
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     public void testManagedCallWhileNoHoldCapabilitySelfMaganedCallActive() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
             return;
@@ -1510,7 +1513,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * Tests ability to change the call endpoint via the
      * {@link android.telecom.Connection#requestCallEndpointChange} API.
      */
-    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
     @ApiTest(apis = {"android.telecom.Connection#requestCallEndpointChange"})
     public void testCallEndpoint() throws Exception {
         if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
@@ -1578,6 +1581,48 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
 
         }
         setDisconnectedAndVerify(connection);
+    }
+
+    /**
+     * Verifies that {@link TelecomManager#isInSelfManagedCall} properly reports if a call is
+     * self-managed.
+     */
+    @CddTest(requirements = "7.4.1.2/C-12-1,C-12-2")
+    @ApiTest(apis = {"android.telecom.TelecomManager#isInSelfManagedCall"})
+    public void testIsInSelfManagedCall() throws Exception {
+        if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
+            return;
+        }
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity();
+        // Verify TelecomManager#isInSelfManagedCall for specified user
+        verifyIsInSelfManagedCallCrossUsers(TEST_SELF_MANAGED_HANDLE_1,
+                TEST_SELF_MANAGED_HANDLE_1.getUserHandle(), false);
+
+        // Deliberately pass in different UserHandle to ensure that cross users functionality
+        // works as intended.
+        verifyIsInSelfManagedCallCrossUsers(TEST_SELF_MANAGED_HANDLE_1,
+                UserHandle.of(UserHandle.MIN_SECONDARY_USER_ID), true);
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+    }
+
+    private void verifyIsInSelfManagedCallCrossUsers(PhoneAccountHandle handle,
+            UserHandle userHandle, boolean hasCrossUsers) throws Exception {
+        SelfManagedConnection connection = null;
+
+        try {
+            connection = placeSelfManagedCallAndGetConnection(handle, TEST_ADDRESS_1);
+            assertTrue(mTelecomManager.isInSelfManagedCall(
+                    handle.getComponentName().getPackageName(), userHandle, hasCrossUsers));
+        } finally {
+            if (connection != null) {
+                // Disconnect the call
+                connection.disconnectAndDestroy();
+                TestUtils.waitOnAllHandlers(getInstrumentation());
+                assertIsInCall(false);
+            }
+        }
     }
 
     private void registerSimAccountIfNeeded() {

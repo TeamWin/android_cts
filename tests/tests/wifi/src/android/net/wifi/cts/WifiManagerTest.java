@@ -128,6 +128,7 @@ import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.PropertyUtil;
@@ -6896,6 +6897,66 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
         } finally {
             if (isRestoreRequired) {
                 sWifiManager.setSendDhcpHostnameRestriction(previousRestriction);
+            }
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Tests {@link WifiConfiguration#setWifi7Enabled(boolean)}. Validate default behavior, disable
+     * Wi-Fi 7 and Enable Wi-Fi 7.
+     */
+    @ApiTest(apis = {"android.net.wifi.WifiConfiguration#setWifi7Enabled",
+            "android.net.wifi.WifiConfiguration#isWifi7Enabled"})
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
+    @Test
+    public void testEnableWifi7() throws Exception {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        TestActionListener actionListener = new TestActionListener(mLock);
+        setWifiEnabled(true);
+        WifiConfiguration wifi7Network = null;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            // Make sure device supports Wi-Fi 7
+            assumeTrue(sWifiManager.isWifiStandardSupported(ScanResult.WIFI_STANDARD_11BE));
+
+            List<WifiConfiguration> savedNetworks = sWifiManager.getConfiguredNetworks();
+            wifi7Network = TestHelper.findFirstAvailableSavedNetwork(sWifiManager,
+                    savedNetworks, ScanResult.WIFI_STANDARD_11BE);
+            // TODO: b/322011012
+            assumeTrue("Unable to locate Wi-Fi 7 networks in range.\n", wifi7Network != null);
+
+            // Default behavior: check new connection is Wi-Fi 7
+            sWifiManager.disconnect();
+            waitForDisconnection();
+            assertTrue(wifi7Network.isWifi7Enabled());
+            sWifiManager.connect(wifi7Network.networkId, actionListener);
+            waitForConnection();
+            assertTrue(sWifiManager.getConnectionInfo().getWifiStandard()
+                    == ScanResult.WIFI_STANDARD_11BE);
+
+            // Disable Wi-Fi 7 while connected: check new connection is not Wi-Fi 7
+            wifi7Network.setWifi7Enabled(false);
+            assertFalse(wifi7Network.isWifi7Enabled());
+            sWifiManager.updateNetwork(wifi7Network);
+            waitForConnection();
+            assertTrue(sWifiManager.getConnectionInfo().getWifiStandard()
+                    != ScanResult.WIFI_STANDARD_11BE);
+
+            // Enable Wi-Fi 7: check new connection is Wi-Fi 7
+            sWifiManager.disconnect();
+            waitForDisconnection();
+            wifi7Network.setWifi7Enabled(true);
+            assertTrue(wifi7Network.isWifi7Enabled());
+            sWifiManager.connect(wifi7Network.networkId, actionListener);
+            waitForConnection();
+            assertTrue(sWifiManager.getConnectionInfo().getWifiStandard()
+                    == ScanResult.WIFI_STANDARD_11BE);
+
+        } finally {
+            // Restore
+            if (wifi7Network != null) {
+                wifi7Network.setWifi7Enabled(true);
             }
             uiAutomation.dropShellPermissionIdentity();
         }

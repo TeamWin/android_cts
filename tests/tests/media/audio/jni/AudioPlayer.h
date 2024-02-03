@@ -47,7 +47,7 @@ class AudioPlayer {
 
     // This is public because it needs to be called by the OpenSL ES callback, but it should not
     // be called by anyone else.
-    SLresult enqueBuffer();
+    SLresult enqueueBuffer();
 
     SLPlayItf getPlayerObject() {
         return bqPlayerPlay_;

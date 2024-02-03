@@ -16,6 +16,8 @@
 
 package android.media.tv.ad.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertNotNull;
 
 import android.app.Instrumentation;
@@ -23,7 +25,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.tv.ad.TvAdManager;
+import android.media.tv.ad.TvAdServiceInfo;
+import android.media.tv.flags.Flags;
 import android.os.ConditionVariable;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -31,11 +38,15 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
+import junit.framework.AssertionFailedError;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.List;
 
 /**
  * Test {@link android.media.tv.ad.TvAdManager}.
@@ -43,6 +54,10 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class TvAdManagerTest {
     private static final long TIME_OUT_MS = 20000L;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Rule
     public RequiredFeatureRule featureRule = new RequiredFeatureRule(
@@ -82,9 +97,29 @@ public class TvAdManagerTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_AD_SERVICE_FW)
     public void testGetTvAdManager() {
         mManager = (TvAdManager) mActivity.getSystemService(Context.TV_AD_SERVICE);
         assertNotNull("Failed to get TvAdManager.", mManager);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_AD_SERVICE_FW)
+    public void testGetTvAdServiceInfoList() throws Exception {
+        mManager = (TvAdManager) mActivity.getSystemService(Context.TV_AD_SERVICE);
+        List<TvAdServiceInfo> list = mManager.getTvAdServiceList();
+
+        for (TvAdServiceInfo info : list) {
+            if (info.getServiceInfo().name.equals(StubTvAdService.class.getName())) {
+                assertThat(info.getSupportedTypes())
+                        .containsExactly("linear", "static", "overlay", "type4");
+                return;
+            }
+        }
+        throw new AssertionFailedError(
+                "getTvAdServiceList() doesn't contain valid "
+                        + "TvAdServiceInfo: "
+                        + StubTvAdService.class.getName());
     }
 
 }

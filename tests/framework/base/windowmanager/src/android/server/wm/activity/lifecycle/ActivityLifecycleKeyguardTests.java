@@ -35,6 +35,9 @@ import android.server.wm.LockScreenSession;
 
 import androidx.test.filters.MediumTest;
 
+import com.android.compatibility.common.util.UiAutomatorUtils2;
+
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -48,6 +51,12 @@ import java.util.Collections;
 @Presubmit
 @android.server.wm.annotation.Group3
 public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestBase {
+    @Before
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        UiAutomatorUtils2.getUiDevice().waitForIdle();
+    }
 
     @Test
     public void testSingleLaunch() throws Exception {

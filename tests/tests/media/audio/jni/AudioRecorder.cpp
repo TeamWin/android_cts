@@ -61,7 +61,7 @@ static void RecBufferQueueCallback(SLAndroidSimpleBufferQueueItf /*queueItf*/, v
 {
     AudioRecorder* recorder = (AudioRecorder*)context;
     // __android_log_print(ANDROID_LOG_INFO, TAG, "RecBufferQueueCallback()");
-    recorder->enqueBuffer();
+    recorder->enqueueBuffer();
 }
 
 /*
@@ -213,7 +213,7 @@ void AudioRecorder::Start() {
     // __android_log_print(ANDROID_LOG_INFO, TAG, "Enqueueing buffer");
     //int bufferSizeInBytes = BUFFER_SIZE_IN_FRAMES * numChannels_ * sizeof(float);
 
-    enqueBuffer();
+    enqueueBuffer();
 
     /* ------------------------------------------------------ */
     /* Start recording */
@@ -230,10 +230,10 @@ void AudioRecorder::Stop() {
     result = (*recorderItf_)->SetRecordState(recorderItf_, SL_RECORDSTATE_STOPPED);
 }
 
-SLresult AudioRecorder::enqueBuffer() {
+SLresult AudioRecorder::enqueueBuffer() {
     SLresult result;
     int bufferSizeInBytes = numBufferSamples_ * sizeof(float);
-    // __android_log_print(ANDROID_LOG_INFO, TAG, "Enque %d bytes", bufferSizeInBytes);
+    // __android_log_print(ANDROID_LOG_INFO, TAG, "Enqueue %d bytes", bufferSizeInBytes);
     result = (*recBuffQueueItf_)->Enqueue(recBuffQueueItf_, recBuffer, bufferSizeInBytes);
     assert(SL_RESULT_SUCCESS == result);
 

@@ -21,6 +21,7 @@ import android.media.cujcommon.cts.CujTestBase;
 import android.media.cujcommon.cts.CujTestParam;
 import android.media.cujcommon.cts.PlaybackTestPlayerListener;
 import android.media.cujcommon.cts.SeekTestPlayerListener;
+import android.media.cujcommon.cts.SpeedChangeTestPlayerListener;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.PlatinumTest;
 
@@ -62,6 +63,8 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
       MEDIA_DIR + "ElephantsDream_BigBuckBunny_concat_1080p_avc_30min.mp4";
   private static final String WEBM_ELEPHANTSDREAM_DASH_3MIN_URI_STRING =
       MEDIA_DIR + "ElephantsDream.mpd";
+  private static final String WEBM_TEARSOFSTEEL_640x480_VP9_30S_URI_STRING =
+      MEDIA_DIR + "TearsOfSteel_640x480_vp9_30sec.webm";
 
   CujTestParam mCujTestParam;
 
@@ -102,6 +105,10 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
             .setTimeoutMilliSeconds(210000)
             .setPlayerListener(new AdaptivePlaybackTestPlayerListener(6, 15000)).build(),
             "Vp9_DASH_3min_adaptivePlaybackTest"},
+        {CujTestParam.builder().setMediaUrls(prepareHevc_720p_30secVideoListForSpeedChangeTest())
+            .setTimeoutMilliSeconds(60000)
+            .setPlayerListener(new SpeedChangeTestPlayerListener()).build(),
+            "Hevc_720p_30sec_SpeedChangeTest"},
     }));
     return exhaustiveArgsList;
   }
@@ -152,6 +159,15 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
   public static List<String> prepareVp9_Local_DASH_3minVideoList() {
     List<String> videoInput = Arrays.asList(
         WEBM_ELEPHANTSDREAM_DASH_3MIN_URI_STRING);
+    return videoInput;
+  }
+
+  /**
+   * Prepare Hevc 720p 30sec video list for Speech change test
+   */
+  public static List<String> prepareHevc_720p_30secVideoListForSpeedChangeTest() {
+    List<String> videoInput = Arrays.asList(
+        WEBM_TEARSOFSTEEL_640x480_VP9_30S_URI_STRING);
     return videoInput;
   }
 

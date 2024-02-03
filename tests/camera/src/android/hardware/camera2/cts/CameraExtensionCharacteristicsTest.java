@@ -18,26 +18,36 @@ package android.hardware.camera2.cts;
 import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
+import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraExtensionCharacteristics;
+import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestRule;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.util.ArraySet;
 import android.util.FeatureFlagUtils;
 import android.util.Log;
 import android.util.Range;
 import android.util.Size;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PropertyUtil;
+import com.android.internal.camera.flags.Flags;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -349,5 +359,141 @@ public class CameraExtensionCharacteristicsTest {
                 }
             }
         }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CAMERA_EXTENSIONS_CHARACTERISTICS_GET)
+    public void testExtensionGetRequiredCharacteristics() throws Exception {
+        for (String id : mTestRule.getCameraIdsUnderTest()) {
+            StaticMetadata staticMeta =
+                    new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
+            if (!staticMeta.isColorOutputSupported()) {
+                continue;
+            }
+
+            CameraExtensionCharacteristics chars =
+                    mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
+
+            List<Integer> supportedExtensions = chars.getSupportedExtensions();
+            for (Integer extension : supportedExtensions) {
+                Range<Float> zoomRatioRange = chars.get(extension,
+                        CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE);
+                assertNotNull("Zoom ratio must be present in extensions", zoomRatioRange);
+
+                int[] availableAFModes = chars.get(extension,
+                        CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
+                assertNotNull("Available AF modes must be present in extensions", availableAFModes);
+                if (staticMeta.hasFocuser()) {
+                    assertTrue(Arrays.stream(availableAFModes).boxed().collect(Collectors.toList())
+                            .contains(CameraMetadata.CONTROL_AF_MODE_AUTO));
+                }
+            }
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CAMERA_EXTENSIONS_CHARACTERISTICS_GET)
+    public void testGetRequiredKeys() throws Exception {
+        ArraySet<CameraCharacteristics.Key> requiredKeys = new ArraySet<>();
+        requiredKeys.add(CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE);
+        requiredKeys.add(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
+
+        for (String id : mTestRule.getCameraIdsUnderTest()) {
+            StaticMetadata staticMeta =
+                    new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
+            if (!staticMeta.isColorOutputSupported()) {
+                continue;
+            }
+
+            CameraExtensionCharacteristics chars =
+                    mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
+
+            List<Integer> supportedExtensions = chars.getSupportedExtensions();
+            for (Integer extension : supportedExtensions) {
+                Set<CameraCharacteristics.Key> keys = chars.getKeys(extension);
+                assertNotNull("Available extensions characteristics keys cannot be null", keys);
+                for (CameraCharacteristics.Key key : requiredKeys) {
+                    assertTrue(keys.contains(key));
+                }
+            }
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CAMERA_EXTENSIONS_CHARACTERISTICS_GET)
+    public void testStreamConfigurationMap() throws Exception {
+        for (String id : mTestRule.getCameraIdsUnderTest()) {
+            StaticMetadata staticMeta =
+                    new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
+            if (!staticMeta.isColorOutputSupported()) {
+                continue;
+            }
+
+            Set<Integer> unsupportedCapabilities = new HashSet<>(Arrays.asList(
+                    CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO,
+                    CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT,
+                    CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_OFFLINE_PROCESSING,
+                    CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME,
+                    CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING,
+                    CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_RAW,
+                    CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_REMOSAIC_REPROCESSING,
+                    CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_SECURE_IMAGE_DATA,
+                    CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_SYSTEM_CAMERA,
+                    CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_YUV_REPROCESSING,
+                    CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_ULTRA_HIGH_RESOLUTION_SENSOR
+            ));
+
+            CameraExtensionCharacteristics chars =
+                    mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
+
+            List<Integer> supportedExtensions = chars.getSupportedExtensions();
+            for (Integer extension : supportedExtensions) {
+                int[] availableCapabilities =
+                        chars.get(extension, CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+                if (availableCapabilities == null) {
+                    continue;
+                }
+
+                for (int c : availableCapabilities) {
+                    assertFalse("Capabilitiy is not supported by extensions",
+                            unsupportedCapabilities.contains(c));
+                }
+
+                StreamConfigurationMap map = chars.get(extension,
+                        CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+                if (map == null) {
+                    continue;
+                }
+                for (int format : map.getOutputFormats()) {
+                    if (format == ImageFormat.PRIVATE) {
+                        List<Size> extensionSurfaceTextureSizes =
+                                chars.getExtensionSupportedSizes(extension, SurfaceTexture.class);
+                        List<Size> extensionSurfaceViewSizes =
+                                chars.getExtensionSupportedSizes(extension, SurfaceView.class);
+                        assertStreamConfigurationSizesEqualExtensionSizes(
+                                extensionSurfaceTextureSizes,
+                                map.getOutputSizes(SurfaceTexture.class));
+                        assertStreamConfigurationSizesEqualExtensionSizes(
+                                extensionSurfaceViewSizes,
+                                map.getOutputSizes(SurfaceHolder.class));
+                    } else {
+                        List<Size> extensionSizes =
+                                chars.getExtensionSupportedSizes(extension, format);
+                        assertStreamConfigurationSizesEqualExtensionSizes(extensionSizes,
+                                map.getOutputSizes(format));
+                    }
+                }
+            }
+        }
+    }
+
+    private void assertStreamConfigurationSizesEqualExtensionSizes(List<Size> extensionSizes,
+            Size[] streamConfigSizes) {
+        List<Size> sizes = streamConfigSizes == null
+                ? Collections.emptyList() : Arrays.asList(streamConfigSizes);
+        assertTrue("Stream configuration sizes must match extension supported sizes",
+                extensionSizes.size() == sizes.size()
+                && extensionSizes.containsAll(sizes));
+
     }
 }

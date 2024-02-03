@@ -259,7 +259,7 @@ class ImuDriftTest(its_base_test.ItsBaseTest):
     x_rv, y_rv, z_rv, t_rv = convert_events_to_arrays(
         rv_events, _NSEC_TO_SEC, 1)
     # Rotation Vector sampling rate is SENSOR_DELAY_FASTEST in ItsService.java
-    calc_effective_sampling_rate(t_rv, 'RV')
+    calc_effective_sampling_rate(t_rv, 'rv')
 
     # plot rotation vector data
     plot_rotation_vector_data(x_rv, y_rv, z_rv, t_rv, self.log_path)

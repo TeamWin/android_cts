@@ -85,7 +85,7 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
         @Override
         public void onCallQualityReceived(@NonNull CallQuality callQuality) {
             mCallQuality = callQuality;
-            mReceivedMessageLatch.countDown();
+            mCallQualityReceivedLatch.countDown();
         }
 
         public Call.Details getCallDetails() {

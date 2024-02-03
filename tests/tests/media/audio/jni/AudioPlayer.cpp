@@ -47,7 +47,7 @@ static SLObjectItf outputMixObject = 0;
 static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf /*bq*/, void *context)
 {
     // __android_log_print(ANDROID_LOG_INFO, TAG, "bqPlayerCallback()");
-    ((ndkaudio::AudioPlayer*)context)->enqueBuffer();
+    ((ndkaudio::AudioPlayer*)context)->enqueueBuffer();
 }
 
 static void OpenSLEngine() {
@@ -257,7 +257,7 @@ SLresult AudioPlayer::Start() {
     // __android_log_print(ANDROID_LOG_INFO, TAG, "SetPlayState() result:%s", getSLErrStr(result));
     assert(SL_RESULT_SUCCESS == result);
 
-    enqueBuffer();
+    enqueueBuffer();
 
     return result;
 }
@@ -267,8 +267,8 @@ void AudioPlayer::Stop() {
     playing_ = false;
 }
 
-SLresult AudioPlayer::enqueBuffer() {
-    // __android_log_print(ANDROID_LOG_INFO, TAG, "AudioPlayer::enqueBuffer()");
+SLresult AudioPlayer::enqueueBuffer() {
+    // __android_log_print(ANDROID_LOG_INFO, TAG, "AudioPlayer::enqueueBuffer()");
     if (playing_) {
         //long dataSizeInSamples = source_->getData(time_++, playBuff_,
         //                                          numPlayBuffFrames_,

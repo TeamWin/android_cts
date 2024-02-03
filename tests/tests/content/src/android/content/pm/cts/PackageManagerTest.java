@@ -65,8 +65,10 @@ import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.p
 import static android.os.UserHandle.CURRENT;
 import static android.os.UserHandle.USER_CURRENT;
 import static android.security.Flags.FLAG_ENFORCE_INTENT_FILTER_MATCH;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -164,6 +166,7 @@ import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
 import com.android.internal.security.VerityUtils;
+
 import com.google.common.truth.Expect;
 
 import junit.framework.AssertionFailedError;
@@ -3047,15 +3050,13 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
 
     @Test
     public void testInstallArchivedFromArchived() throws Exception {
-        final int userId = mContext.getUserId();
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
 
         assertEquals("Success\n", SystemUtil.runShellCommand(
                 String.format("pm install -r -i %s -t -g %s", mContext.getPackageName(),
                         HELLO_WORLD_APK)));
         assertThat(SystemUtil.runShellCommand(
-                String.format("pm archive --user %s %s", userId, HELLO_WORLD_PACKAGE_NAME))
-            ).isEqualTo("Success\n");
+                String.format("pm archive %s", HELLO_WORLD_PACKAGE_NAME))).isEqualTo("Success\n");
         // Check "installed" flag.
         var applicationInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
                 PackageManager.PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).applicationInfo;
@@ -3090,6 +3091,53 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
                 String.format("pm install-archived -t -S %s", archivedPackage.length),
                 archivedPackage)).startsWith("Failure [INSTALL_FAILED_SESSION_INVALID: Installer");
     }
+
+    @Test
+    public void testInstallArchivedFromArchivedWithUser() throws Exception {
+        final int userId = mContext.getUserId();
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+
+        assertEquals("Success\n", SystemUtil.runShellCommand(
+                String.format("pm install -r -i %s -t -g %s", mContext.getPackageName(),
+                        HELLO_WORLD_APK)));
+        assertThat(SystemUtil.runShellCommand(
+                String.format("pm archive --user %s %s", userId, HELLO_WORLD_PACKAGE_NAME))
+        ).isEqualTo("Success\n");
+        // Check "installed" flag.
+        var applicationInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
+                PackageManager.PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).applicationInfo;
+        assertEquals(applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED, 0);
+        // Check archive state.
+        assertTrue(applicationInfo.isArchived);
+
+        if (userId != UserHandle.USER_SYSTEM) {
+            applicationInfo = mPackageManager.getPackageInfoAsUser(HELLO_WORLD_PACKAGE_NAME,
+                    PackageManager.PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES),
+                    UserHandle.USER_SYSTEM).applicationInfo;
+            // Installed and not archived for the other user.
+            assertEquals(applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED,
+                    ApplicationInfo.FLAG_INSTALLED);
+            assertFalse(applicationInfo.isArchived);
+        }
+
+        byte[] archivedPackage = SystemUtil.runShellCommandByteOutput(
+                mInstrumentation.getUiAutomation(),
+                "pm get-archived-package-metadata " + HELLO_WORLD_PACKAGE_NAME);
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+
+        // Install archived APK.
+        assertEquals("Success\n", executeShellCommand(
+                String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
+                        archivedPackage.length), archivedPackage));
+        assertTrue(isPackagePresent(HELLO_WORLD_PACKAGE_NAME));
+        // Check "installed" flag once again.
+        applicationInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
+                PackageManager.PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).applicationInfo;
+        assertEquals(applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED, 0);
+        // Check archive state once again.
+        assertTrue(applicationInfo.isArchived);
+    }
+
 
     @Test
     public void testInstallArchivedUpdate() throws Exception {

@@ -39,6 +39,8 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.CtsWindowInfoUtils;
+import android.server.wm.WindowManagerStateHelper;
 import android.server.wm.WindowManagerTestBase;
 import android.server.wm.cts.R;
 import android.util.Size;
@@ -339,6 +341,7 @@ public class DragDropTest extends WindowManagerTestBase {
         assumeFalse(isWatchDevice());
         UiAutomatorUtils.getUiDevice().waitForIdle();
         mActivity = startActivityInWindowingMode(DragDropActivity.class, WINDOWING_MODE_FULLSCREEN);
+        mWmState.waitUntilActivityReadyForInputInjection(mActivity, TAG, "test: " + TAG);
 
         mStartReceived = new CountDownLatch(1);
         mEndReceived = new CountDownLatch(1);

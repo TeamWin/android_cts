@@ -38,6 +38,7 @@ import android.hardware.input.VirtualStylus;
 import android.hardware.input.VirtualStylusMotionEvent;
 import android.hardware.input.VirtualTouchEvent;
 import android.hardware.input.VirtualTouchscreen;
+import android.hardware.input.cts.DefaultPointerSpeedRule;
 import android.hardware.input.cts.virtualcreators.VirtualDeviceCreator;
 import android.hardware.input.cts.virtualcreators.VirtualDisplayCreator;
 import android.hardware.input.cts.virtualcreators.VirtualInputDeviceCreator;
@@ -83,6 +84,8 @@ public class VirtualDeviceMirrorDisplayTest extends InputTestCase {
     public final FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
     @Rule
     public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+    @Rule
+    public final DefaultPointerSpeedRule mDefaultPointerSpeedRule = new DefaultPointerSpeedRule();
 
     private VirtualDevice mVirtualDevice;
     private VirtualDisplay mVirtualDisplay;

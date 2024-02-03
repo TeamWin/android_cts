@@ -905,7 +905,8 @@ def main():
                   one_line)
               if perf_metrics_string_match:
                 perf_test_metrics = one_line
-                break
+                # each test can add multiple metrics
+                results[s][PERFORMANCE_KEY].append(perf_test_metrics)
 
             if 'Test skipped' in content:
               return_string = 'SKIP '
@@ -942,8 +943,6 @@ def main():
             'status': return_string.strip()})
         if test_mpc_req:
           results[s][METRICS_KEY].append(test_mpc_req)
-        if perf_test_metrics:
-          results[s][PERFORMANCE_KEY].append(perf_test_metrics)
         msg_short = f'{return_string} {test}'
         scene_test_summary += msg_short + '\n'
         if (test in _LIGHTING_CONTROL_TESTS and

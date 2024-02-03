@@ -20,8 +20,10 @@ import static junit.framework.TestCase.assertEquals;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.annotation.NonNull;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -33,7 +35,11 @@ import android.os.Looper;
 import android.os.PersistableBundle;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.CarrierConfigManager;
+import android.telephony.Rlog;
+import android.telephony.ServiceState;
 import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyCallback;
+import android.telephony.TelephonyManager;
 import android.telephony.ims.ImsException;
 import android.telephony.ims.ImsManager;
 import android.telephony.ims.ImsMmTelManager;
@@ -44,6 +50,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.internal.telephony.flags.Flags;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -53,10 +60,13 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 public class ImsMmTelManagerTest {
+    private static final String TAG = "ImsMmTelManagerTest";
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
 
     // Copied from CarrierConfigManager, since these keys is inappropriately marked as @hide
     private static final String KEY_CARRIER_VOLTE_OVERRIDE_WFC_PROVISIONING_BOOL =
@@ -67,9 +77,13 @@ public class ImsMmTelManagerTest {
     private static final String KEY_EDITABLE_WFC_ROAMING_MODE_BOOL =
             "editable_wfc_roaming_mode_bool";
 
+    private static final String KEY_OVERRIDE_WFC_ROAMING_MODE_WHILE_USING_NTN_BOOL =
+            "override_wfc_roaming_mode_while_using_ntn_bool";
+
     private static int sTestSub = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
     private static Handler sHandler;
     private static CarrierConfigReceiver sReceiver;
+    private static TelephonyManager sTelephonyManager;
 
     private static class CarrierConfigReceiver extends BroadcastReceiver {
         private CountDownLatch mLatch = new CountDownLatch(1);
@@ -94,7 +108,45 @@ public class ImsMmTelManagerTest {
         }
 
         void waitForCarrierConfigChanged() throws Exception {
-            mLatch.await(5000, TimeUnit.MILLISECONDS);
+            mLatch.await(TIMEOUT, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private static class ServiceStateListenerTest extends TelephonyCallback
+            implements TelephonyCallback.ServiceStateListener {
+
+        private final Semaphore mNonTerrestrialNetworkSemaphore = new Semaphore(0);
+
+        @Override
+        public void onServiceStateChanged(ServiceState serviceState) {
+            logd("onServiceStateChanged: serviceState=" + serviceState);
+
+            try {
+                if (serviceState.isUsingNonTerrestrialNetwork()) {
+                    mNonTerrestrialNetworkSemaphore.release();
+                }
+            } catch (Exception e) {
+                loge("onServiceStateChanged: Got exception=" + e);
+            }
+        }
+
+        public boolean waitForNonTerrestrialNetworkConnection() {
+            try {
+                if (!mNonTerrestrialNetworkSemaphore.tryAcquire(TIMEOUT, TimeUnit.MILLISECONDS)) {
+                    loge("Timeout to connect to non-terrestrial network");
+                    return false;
+                }
+            } catch (Exception e) {
+                loge("ServiceStateListenerTest waitForNonTerrestrialNetworkConnection: "
+                        + "Got exception=" + e);
+                return false;
+            }
+            return true;
+        }
+
+        public void clearServiceStateChanges() {
+            logd("clearServiceStateChanges()");
+            mNonTerrestrialNetworkSemaphore.drainPermits();
         }
     }
 
@@ -117,6 +169,9 @@ public class ImsMmTelManagerTest {
         IntentFilter filter = new IntentFilter(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED);
         // ACTION_CARRIER_CONFIG_CHANGED is sticky, so we will get a callback right away.
         getContext().registerReceiver(sReceiver, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
+
+        sTelephonyManager = InstrumentationRegistry.getInstrumentation().getContext()
+                .getSystemService(TelephonyManager.class);
     }
 
     @AfterClass
@@ -439,6 +494,64 @@ public class ImsMmTelManagerTest {
         overrideCarrierConfig(null);
     }
 
+    @Test
+    public void testVoWiFiRoamingModeSettingUsingNonTerrestrialNetwork() throws Exception {
+        if (!Flags.carrierEnabledSatelliteFlag()) {
+            return;
+        }
+
+        // Get original VoWiFi roaming mode
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(sTestSub);
+        int oldMode = ShellIdentityUtils.invokeMethodWithShellPermissions(mMmTelManager,
+                ImsMmTelManager::getVoWiFiRoamingModeSetting);
+
+        // Register service state listener
+        ServiceStateListenerTest serviceStateListener = new ServiceStateListenerTest();
+        serviceStateListener.clearServiceStateChanges();
+        sTelephonyManager.registerTelephonyCallback(getContext().getMainExecutor(),
+                serviceStateListener);
+
+        // Override carrier config
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(KEY_USE_WFC_HOME_NETWORK_MODE_IN_ROAMING_NETWORK_BOOL, false);
+        bundle.putBoolean(KEY_EDITABLE_WFC_ROAMING_MODE_BOOL, true);
+        bundle.putBoolean(KEY_OVERRIDE_WFC_ROAMING_MODE_WHILE_USING_NTN_BOOL, true);
+        String plmn = sTelephonyManager.getNetworkOperator(sTestSub);
+        PersistableBundle plmnBundle = new PersistableBundle();
+        int[] intArray1 = {3, 5};
+        plmnBundle.putIntArray(plmn, intArray1);
+        bundle.putPersistableBundle(
+                CarrierConfigManager.KEY_CARRIER_SUPPORTED_SATELLITE_SERVICES_PER_PROVIDER_BUNDLE,
+                plmnBundle);
+
+        try {
+            overrideCarrierConfig(bundle);
+            assertTrue(serviceStateListener.waitForNonTerrestrialNetworkConnection());
+
+            // Register Observer
+            Uri callingUri = Uri.withAppendedPath(
+                    SubscriptionManager.WFC_ROAMING_MODE_CONTENT_URI, "" + sTestSub);
+            CountDownLatch contentObservedLatch = new CountDownLatch(1);
+            ContentObserver observer = createObserver(callingUri, contentObservedLatch);
+
+            // Set VoWiFi roaming mode to CELLULAR_PREFERRED
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
+                    (m) -> m.setVoWiFiRoamingModeSetting(
+                            ImsMmTelManager.WIFI_MODE_CELLULAR_PREFERRED));
+            waitForLatch(contentObservedLatch, observer);
+
+            int newModeResult = ShellIdentityUtils.invokeMethodWithShellPermissions(mMmTelManager,
+                    ImsMmTelManager::getVoWiFiRoamingModeSetting);
+            assertEquals(ImsMmTelManager.WIFI_MODE_WIFI_PREFERRED, newModeResult);
+        } finally {
+            // Set back to default
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
+                    (m) -> m.setVoWiFiRoamingModeSetting(oldMode));
+            overrideCarrierConfig(null);
+        }
+    }
+
     /**
      * Test Permissions on various APIs.
      */
@@ -670,5 +783,13 @@ public class ImsMmTelManagerTest {
 
     private static Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
+    protected static void logd(@NonNull String log) {
+        Rlog.d(TAG, log);
+    }
+
+    protected static void loge(@NonNull String log) {
+        Rlog.e(TAG, log);
     }
 }
