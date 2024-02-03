@@ -17,6 +17,7 @@
 package com.android.cts.mockime;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.Instrumentation;
@@ -41,16 +42,17 @@ public final class MockImeSessionCrashTest {
 
     @Test
     public void testRetrieveExitReasonsWhenMockImeSessionCrashes() throws Exception {
-        final var mockImeSession = MockImeSession.create(mContext);
-        assertThat(mockImeSession.retrieveExitReasonIfMockImeCrashed()).isNull();
+        try (var mockImeSession = MockImeSession.create(mContext)) {
+            assertThat(mockImeSession.retrieveExitReasonIfMockImeCrashed()).isNull();
 
-        runShellCommandOrThrow("am force-stop " + MockImeSession.MOCK_IME_PACKAGE_NAME);
-        assertThat(mockImeSession.retrieveExitReasonIfMockImeCrashed()).matches(
-                "MockIme crashed and exited with code: \\d+;"
-                        + " session create time: \\d+;"
-                        + " process exit time: \\d+;"
-                        + " see android.app.ApplicationExitInfo for more info on the exit code "
-                        + "\\(exit Description: \\[FORCE STOP\\] stop com.android.cts.mockime due "
-                        + "to from pid \\d+\\)");
+            runShellCommandOrThrow("am force-stop " + MockImeSession.MOCK_IME_PACKAGE_NAME);
+            assertThat(mockImeSession.retrieveExitReasonIfMockImeCrashed()).matches(
+                    "MockIme crashed and exited with code: \\d+;"
+                            + " session create time: \\d+;"
+                            + " process exit time: \\d+;"
+                            + " see android.app.ApplicationExitInfo for more info on the exit code "
+                            + "\\(exit Description: \\[FORCE STOP\\] stop com.android.cts.mockime "
+                            + "due to from pid \\d+\\)");
+        }
     }
 }
