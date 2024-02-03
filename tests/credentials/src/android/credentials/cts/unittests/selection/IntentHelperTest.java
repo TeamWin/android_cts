@@ -18,9 +18,12 @@ package android.credentials.cts.unittests.selection;
 
 import static android.credentials.flags.Flags.FLAG_CONFIGURABLE_SELECTOR_UI_ENABLED;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.slice.Slice;
+import android.content.Context;
 import android.content.Intent;
 import android.credentials.CreateCredentialRequest;
 import android.credentials.Credential;
@@ -81,6 +84,7 @@ public class IntentHelperTest {
             List.of(AUTHENTICATION_ENTRY);
     private static final Entry REMOTE_ENTRY = new Entry(KEY, SUBKEY, SLICE, MOCK_INTENT);
 
+    private final Context mContext = getInstrumentation().getContext();
 
     @Test
     @RequiresFlagsEnabled(FLAG_CONFIGURABLE_SELECTOR_UI_ENABLED)
@@ -114,7 +118,8 @@ public class IntentHelperTest {
                 TOKEN, createRequest, PACKAGE_NAME,
                 /*hasPermissionToOverrideDefault=*/ false, defaultProviderIds
         );
-        Intent intent = IntentFactory.createCredentialSelectorIntent(requestInfo, new ArrayList<>(),
+        Intent intent = IntentFactory.createCredentialSelectorIntent(
+                mContext, requestInfo, new ArrayList<>(),
                 new ArrayList<>(), new ResultReceiver(null));
 
         RequestInfo requestInfoExtracted = IntentHelper.extractRequestInfo(intent);
@@ -141,7 +146,8 @@ public class IntentHelperTest {
                                 new Bundle()).build()).build();
         RequestInfo requestInfo = RequestInfo.newGetRequestInfo(
                 token, getRequest, "package", /*hasPermissionToOverrideDefault=*/ false);
-        Intent intent = IntentFactory.createCredentialSelectorIntent(requestInfo, new ArrayList<>(),
+        Intent intent = IntentFactory.createCredentialSelectorIntent(
+                mContext, requestInfo, new ArrayList<>(),
                 new ArrayList<>(), new ResultReceiver(null));
 
         RequestInfo requestInfoExtracted = IntentHelper.extractRequestInfo(intent);
