@@ -6161,9 +6161,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     }
 
     private boolean qosR3Supported() {
-        return Flags.qosR3Support()
-                && (ApiLevelUtil.codenameEquals("VanillaIceCream")
-                || ApiLevelUtil.isAtLeast(Build.VERSION_CODES.VANILLA_ICE_CREAM));
+        return SdkLevel.isAtLeastV() && Flags.qosR3Support();
     }
 
     /**
