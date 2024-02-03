@@ -32,7 +32,7 @@ public class TestService extends Service {
 
     private final IBinder mBinder = new IContentUriTestService.Stub() {
         @Override
-        public Uri getContentUri(int pkgAccessType, int modeFlags) {
+        public Uri getContentUriForContext(int pkgAccessType, int modeFlags) {
             // Construct the URI
             Uri baseContentUri = switch (pkgAccessType) {
                 case PKG_ACCESS_TYPE_NONE, PKG_ACCESS_TYPE_GRANT -> TestProvider.CONTENT_URI_BASE;
@@ -46,6 +46,19 @@ public class TestService extends Service {
                 grantUriPermission(RECIPIENT, uri, modeFlags);
             }
             return uri;
+        }
+
+        @Override
+        public Uri[] getContentUrisForManifest() {
+            Uri[] uris = new Uri[URI_COUNT];
+            uris[URI_NO_PERMISSION_ID] = TestProvider.CONTENT_URI_NONE;
+            uris[URI_READ_PERMISSION_ID] = TestProvider.getSubsetContentUri(
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            uris[URI_WRITE_PERMISSION_ID] = TestProvider.getSubsetContentUri(
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            uris[URI_READ_WRITE_PERMISSION_ID] = TestProvider.getSubsetContentUri(
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            return uris;
         }
     };
 }
