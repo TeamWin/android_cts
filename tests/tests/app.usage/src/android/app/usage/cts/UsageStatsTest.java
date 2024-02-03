@@ -2482,12 +2482,15 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     @RequiresFlagsEnabled(Flags.FLAG_FILTER_BASED_EVENT_QUERY_API)
     @Test
     public void testUsageEventsQueryParceling() throws Exception {
+        final String fakePackageName = "android.fake.package.name";
         final long endTime = System.currentTimeMillis();
         final long startTime = endTime - MINUTE_IN_MILLIS;
         Random rnd = new Random();
         UsageEventsQuery.Builder queryBuilder = new UsageEventsQuery.Builder(startTime, endTime);
         queryBuilder.setEventTypes(rnd.nextInt(Event.MAX_EVENT_TYPE + 1),
                 rnd.nextInt(Event.MAX_EVENT_TYPE + 1), rnd.nextInt(Event.MAX_EVENT_TYPE + 1));
+        queryBuilder.setPackageNames(fakePackageName + "2",
+                fakePackageName + "7", fakePackageName + "11");
         UsageEventsQuery query = queryBuilder.build();
         Parcel p = Parcel.obtain();
         p.setDataPosition(0);
@@ -2495,9 +2498,10 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         p.setDataPosition(0);
 
         UsageEventsQuery queryFromParcel = UsageEventsQuery.CREATOR.createFromParcel(p);
-        assertEquals(query.getBeginTimeMillis(), queryFromParcel.getBeginTimeMillis());
-        assertEquals(query.getEndTimeMillis(), queryFromParcel.getEndTimeMillis());
+        assertEquals(queryFromParcel.getBeginTimeMillis(), query.getBeginTimeMillis());
+        assertEquals(queryFromParcel.getEndTimeMillis(), query.getEndTimeMillis());
         assertArrayEquals(query.getEventTypes(), queryFromParcel.getEventTypes());
+        assertEquals(queryFromParcel.getPackageNames(), query.getPackageNames());
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
