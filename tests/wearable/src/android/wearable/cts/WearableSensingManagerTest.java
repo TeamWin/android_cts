@@ -59,24 +59,20 @@ public class WearableSensingManagerTest {
     }
 
     @Test
-    public void noAccessForNoneSystemComponent() {
-        assertEquals(PackageManager.PERMISSION_DENIED, mContext.checkCallingOrSelfPermission(
-                Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE));
-
-        // Cts test runner is a non-system apk.
-        assertThat(mWearableSensingManager).isNull();
-    }
-
-    @Test
     public void noAccessWhenAttemptingprovideDataStream() {
         assertEquals(PackageManager.PERMISSION_DENIED, mContext.checkCallingOrSelfPermission(
                 Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE));
 
-        // Test non system app throws NullPointerException
-        assertThrows("no access to provideDataStream from non system component",
-                NullPointerException.class,
+        // Test non system app throws NullPointerException or SecurityException
+        // Accept both for backward-compatibility, we should accept only SecurityException
+        // starting from Android V
+        RuntimeException ex = assertThrows(
+                "no access to provideDataStream from non system component",
+                RuntimeException.class,
                 () -> mWearableSensingManager.provideDataStream(
                         mPipe[0], EXECUTOR, (result) -> {}));
+        assertThat(ex instanceof SecurityException || ex instanceof NullPointerException)
+                .isTrue();
     }
 
     @Test
@@ -84,10 +80,15 @@ public class WearableSensingManagerTest {
         assertEquals(PackageManager.PERMISSION_DENIED, mContext.checkCallingOrSelfPermission(
                 Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE));
 
-        // Test non system app throws NullPointerException
-        assertThrows("no access to provideData from non system component",
-                NullPointerException.class,
+        // Test non system app throws NullPointerException or SecurityException
+        // Accept both for backward-compatibility, we should accept only SecurityException
+        // starting from Android V
+        RuntimeException ex = assertThrows(
+                "no access to provideData from non system component",
+                RuntimeException.class,
                 () -> mWearableSensingManager.provideData(new PersistableBundle(), null,
                         EXECUTOR, (result) -> {}));
+        assertThat(ex instanceof SecurityException || ex instanceof NullPointerException)
+                .isTrue();
     }
 }
