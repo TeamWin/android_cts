@@ -19,6 +19,8 @@ package android.widget.cts;
 import static android.content.pm.ApplicationInfo.PRIVATE_FLAG_EXT_ENABLE_ON_BACK_INVOKED_CALLBACK;
 
 import static com.android.text.flags.Flags.FLAG_DEPRECATE_UI_FONTS;
+import static com.android.text.flags.Flags.FLAG_INTER_CHARACTER_JUSTIFICATION;
+import static com.android.text.flags.Flags.FLAG_USE_BOUNDS_FOR_WIDTH;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -6980,6 +6982,27 @@ public class TextViewTest {
         assertEquals(Layout.JUSTIFICATION_MODE_NONE, defaultTv.getJustificationMode());
         assertEquals(Layout.JUSTIFICATION_MODE_NONE, noneTv.getJustificationMode());
         assertEquals(Layout.JUSTIFICATION_MODE_INTER_WORD, interWordTv.getJustificationMode());
+    }
+
+    @RequiresFlagsEnabled(FLAG_INTER_CHARACTER_JUSTIFICATION)
+    @Test
+    public void testJustificationByStyle_InterCharacter() {
+        TextView textView = findTextView(R.id.textview_justification_inter_character);
+        assertEquals(Layout.JUSTIFICATION_MODE_INTER_CHARACTER, textView.getJustificationMode());
+    }
+
+    @RequiresFlagsEnabled(FLAG_USE_BOUNDS_FOR_WIDTH)
+    @Test
+    public void testUseBoundsForWidth_ByXml_false() {
+        TextView textView = findTextView(R.id.use_bounds_for_width_false);
+        assertFalse(textView.getUseBoundsForWidth());
+    }
+
+    @RequiresFlagsEnabled(FLAG_USE_BOUNDS_FOR_WIDTH)
+    @Test
+    public void testUseBoundsForWidth_ByXml_true() {
+        TextView textView = findTextView(R.id.use_bounds_for_width_true);
+        assertTrue(textView.getUseBoundsForWidth());
     }
 
     @Test
