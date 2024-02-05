@@ -47,8 +47,8 @@ elif [ "$HOST_ARCH" == "Linux aarch64" ]; then
     OS="linux-arm64"
     # Bundled java is for linux-x86 so use host JDK on linux-arm64
     JAVA_BINARY=java
-elif [ "$HOST_ARCH" == "Darwin x86_64" ]; then
-    OS="darwin-x86"
+elif [[ "$HOST_ARCH" == *"Darwin"* ]]; then
+    OS="darwin"
     # Bundled java is for linux so use host JDK on Darwin
     JAVA_BINARY=java
 else
@@ -85,7 +85,7 @@ fi
 checkPath ${JAVA_BINARY}
 
 # Java version on Mac not within our control, so let it be best effort
-if [ ${OS} != "darwin-x86" ]; then
+if [ ${OS} != "darwin" ]; then
     checkJavaVersion ${JAVA_BINARY}
 else
     echo "Mac is not a fully supported OS, so Java version support will be best effort"
