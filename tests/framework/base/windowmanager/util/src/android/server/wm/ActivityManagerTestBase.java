@@ -24,6 +24,7 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.Intent.ACTION_MAIN;
 import static android.content.Intent.CATEGORY_HOME;
@@ -82,6 +83,7 @@ import static android.server.wm.StateLogger.logE;
 import static android.server.wm.UiDeviceUtils.pressSleepButton;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
+import static android.server.wm.WindowManagerState.STATE_PAUSED;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.BROADCAST_RECEIVER_ACTIVITY;
@@ -1963,6 +1965,38 @@ public abstract class ActivityManagerTestBase {
 
     protected boolean supportsInstallableIme() {
         return mContext.getPackageManager().hasSystemFeature(FEATURE_INPUT_METHODS);
+    }
+
+    /**
+     * Waits until the given activity has entered picture-in-picture mode (allowing for the
+     * subsequent animation to start).
+     */
+    protected void waitForEnterPip(@NonNull ComponentName activityName) {
+        mWmState.waitForWithAmState(wmState -> {
+            Task task = wmState.getTaskByActivity(activityName);
+            return task != null
+                    && task.getActivity(activityName).getWindowingMode() == WINDOWING_MODE_PINNED
+                    && task.isVisible();
+        }, "checking task windowing mode");
+    }
+
+    /**
+     * Waits until the picture-in-picture animation has finished.
+     */
+    protected void waitForEnterPipAnimationComplete(@NonNull ComponentName activityName) {
+        waitForEnterPip(activityName);
+        mWmState.waitForWithAmState(wmState -> {
+            Task task = wmState.getTaskByActivity(activityName);
+            if (task == null) {
+                return false;
+            }
+            WindowManagerState.Activity activity = task.getActivity(activityName);
+            return activity.getWindowingMode() == WINDOWING_MODE_PINNED
+                    && activity.getState().equals(STATE_PAUSED);
+        }, "checking activity windowing mode");
+        if (ENABLE_SHELL_TRANSITIONS) {
+            mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+        }
     }
 
     public static class CountSpec<T> {
