@@ -42,6 +42,7 @@ import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.TelephonyManagerTest.ServiceStateRadioStateListener;
+import android.telephony.satellite.EnableRequestAttributes;
 import android.telephony.satellite.NtnSignalStrength;
 import android.telephony.satellite.NtnSignalStrengthCallback;
 import android.telephony.satellite.PointingInfo;
@@ -862,8 +863,8 @@ public class SatelliteManagerTestBase {
 
     protected static void requestSatelliteEnabled(boolean enabled) {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
-        sSatelliteManager.requestEnabled(
-                enabled, false, getContext().getMainExecutor(), error::offer);
+        sSatelliteManager.requestEnabled(new EnableRequestAttributes.Builder(enabled).build(),
+                getContext().getMainExecutor(), error::offer);
         Integer errorCode;
         try {
             errorCode = error.poll(TIMEOUT, TimeUnit.MILLISECONDS);
@@ -877,8 +878,8 @@ public class SatelliteManagerTestBase {
 
     protected static void requestSatelliteEnabled(boolean enabled, long timeoutMillis) {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
-        sSatelliteManager.requestEnabled(
-                enabled, false, getContext().getMainExecutor(), error::offer);
+        sSatelliteManager.requestEnabled(new EnableRequestAttributes.Builder(enabled).build(),
+                getContext().getMainExecutor(), error::offer);
         Integer errorCode;
         try {
             errorCode = error.poll(timeoutMillis, TimeUnit.MILLISECONDS);
@@ -892,8 +893,8 @@ public class SatelliteManagerTestBase {
 
     protected static int requestSatelliteEnabledWithResult(boolean enabled, long timeoutMillis) {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
-        sSatelliteManager.requestEnabled(
-                enabled, false, getContext().getMainExecutor(), error::offer);
+        sSatelliteManager.requestEnabled(new EnableRequestAttributes.Builder(enabled).build(),
+                getContext().getMainExecutor(), error::offer);
         Integer errorCode = null;
         try {
             errorCode = error.poll(timeoutMillis, TimeUnit.MILLISECONDS);
@@ -907,7 +908,8 @@ public class SatelliteManagerTestBase {
     protected static void requestSatelliteEnabledForDemoMode(boolean enabled) {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
         sSatelliteManager.requestEnabled(
-                enabled, true, getContext().getMainExecutor(), error::offer);
+                new EnableRequestAttributes.Builder(enabled).setDemoMode(true).build(),
+                getContext().getMainExecutor(), error::offer);
         Integer errorCode;
         try {
             errorCode = error.poll(TIMEOUT, TimeUnit.MILLISECONDS);
@@ -923,7 +925,8 @@ public class SatelliteManagerTestBase {
             int expectedError) {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
         sSatelliteManager.requestEnabled(
-                enabled, demoEnabled, getContext().getMainExecutor(), error::offer);
+                new EnableRequestAttributes.Builder(enabled).setDemoMode(demoEnabled).build(),
+                getContext().getMainExecutor(), error::offer);
         Integer errorCode;
         try {
             errorCode = error.poll(TIMEOUT, TimeUnit.MILLISECONDS);
