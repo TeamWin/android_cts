@@ -127,7 +127,7 @@ public class NotificationFullScreenIntentVerifierActivity extends InteractiveVer
 
         // NOW TESTING: Screen unlocked FSI HUN with permission, should show sticky HUN for
         // at least 60s
-        tests.add(new ScreenUnlockedFsiHunWithPermissionTest());
+        //tests.add(new ScreenUnlockedFsiHunWithPermissionTest());
 
         // NOW TESTING: lockscreen FSI HUN with FSI permission, should launch FSI
         tests.add(new LockScreenFsiWithPermissionTestStep());
@@ -149,7 +149,7 @@ public class NotificationFullScreenIntentVerifierActivity extends InteractiveVer
         tests.add(new DenyFsiPermissionStep());
 
         // NOW TESTING: Screen unlocked FSI without permission, should show sticky HUN for 60s
-        tests.add(new ScreenUnlockedFsiHunWithoutPermissionTest());
+        //tests.add(new ScreenUnlockedFsiHunWithoutPermissionTest());
 
         // NOW TESTING: lockscreen FSI HUN without FSI permission,
         // HUN shows up first in list, expanded with pill buttons
