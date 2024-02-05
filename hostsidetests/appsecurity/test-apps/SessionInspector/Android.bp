@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package {
+    default_team: "trendy_team_framework_android_packages",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
@@ -29,6 +30,7 @@ android_test_helper_app {
         "general-tests",
     ],
 }
+
 android_test_helper_app {
     name: "CtsSessionInspectorAppB",
     defaults: ["cts_support_defaults"],

@@ -13,13 +13,17 @@
 // limitations under the License.
 
 package {
+    default_team: "trendy_team_responsible_apis",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
 java_test {
     name: "cts-background-activity-common",
 
-    srcs: ["src/**/*.java", "aidl/**/*.aidl"],
+    srcs: [
+        "src/**/*.java",
+        "aidl/**/*.aidl",
+    ],
 
     static_libs: [
         "androidx.annotation_annotation",

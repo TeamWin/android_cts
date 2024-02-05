@@ -15,6 +15,7 @@
 //
 
 package {
+    default_team: "trendy_team_framework_android_packages",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
@@ -85,7 +86,6 @@ cc_test_library {
         "-DANDROID_SPLIT_APP_NUMBER_PROXY_SO=1",
     ],
 }
-
 
 TARGET_TEST_SUITES = [
     "cts",
