@@ -18,6 +18,7 @@ package android.videoencodingquality.cts;
 
 import android.cts.host.utils.DeviceJUnit4ClassRunnerWithParameters;
 import android.cts.host.utils.DeviceJUnit4Parameterized;
+import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
@@ -74,6 +75,7 @@ import javax.annotation.Nullable;
  * files from the device and analyses for vmaf. These values are compared against reference using
  * Bjontegaard metric.
  **/
+@AppModeFull(reason = "Instant apps cannot access the SD card")
 @RunWith(DeviceJUnit4Parameterized.class)
 @UseParametersRunnerFactory(DeviceJUnit4ClassRunnerWithParameters.RunnerFactory.class)
 @OptionClass(alias = "pc-veq-test")
