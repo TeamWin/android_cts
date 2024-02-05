@@ -361,6 +361,7 @@ public class CardEmulationTest {
             frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_ON));
             frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_A));
             frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_OFF));
+            ensurePreferredService(CustomHostApduService.class);
             notifyPollingLoopAndWait(new ArrayList<Bundle>(frames),
                     CustomHostApduService.class.getName());
         } finally {
@@ -375,7 +376,7 @@ public class CardEmulationTest {
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
         adapter.notifyHceDeactivated();
         Activity activity = createAndResumeActivity();
-        CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
+        final CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
         try {
             Assert.assertTrue(cardEmulation.setPreferredService(activity,
                     new ComponentName(mContext,
@@ -387,12 +388,28 @@ public class CardEmulationTest {
             frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_ON));
             frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_A));
             frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_OFF));
+            ensurePreferredService(CtsMyHostApduService.class);
             notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
         } finally {
             Assert.assertTrue(cardEmulation.unsetPreferredService(activity));
             activity.finish();
             adapter.notifyHceDeactivated();
         }
+    }
+    void ensurePreferredService(Class serviceClass) {
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        final CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
+        int resId = (serviceClass == CtsMyHostApduService.class
+                ? R.string.CtsPaymentService
+                : (serviceClass == CustomHostApduService.class
+                    ? R.string.CtsCustomPaymentService : R.string.CtsBackgroundPaymentService));
+        final String desc = mContext.getResources().getString(resId);
+
+        try {
+            CommonTestUtils.waitUntil("Default service hasn't updated", 3,
+                    () -> desc.equals(
+                            cardEmulation.getDescriptionForPreferredPaymentService()));
+        } catch (InterruptedException ie) { }
     }
 
     @Test
@@ -444,6 +461,7 @@ public class CardEmulationTest {
             ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
             frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
+            ensurePreferredService(CtsMyHostApduService.class);
             notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
         } finally {
             Assert.assertTrue(cardEmulation.unsetPreferredService(activity));
@@ -476,6 +494,7 @@ public class CardEmulationTest {
             ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
             frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
+            ensurePreferredService(CtsMyHostApduService.class);
             notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
         } finally {
             Assert.assertTrue(cardEmulation.unsetPreferredService(activity));
@@ -511,6 +530,7 @@ public class CardEmulationTest {
             ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
             frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
+            ensurePreferredService(CustomHostApduService.class);
             notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
         } finally {
             setDefaultPaymentService(originalDefault);
@@ -552,6 +572,7 @@ public class CardEmulationTest {
             ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
             frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
+            ensurePreferredService(CtsMyHostApduService.class);
             notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
         } finally {
             Assert.assertTrue(cardEmulation.unsetPreferredService(activity));
@@ -577,6 +598,7 @@ public class CardEmulationTest {
             ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
             frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
+            ensurePreferredService(CtsMyHostApduService.class);
             notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
         } finally {
             Assert.assertTrue(cardEmulation.unsetPreferredService(activity));
@@ -600,6 +622,7 @@ public class CardEmulationTest {
             ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
             frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
+            ensurePreferredService(CustomHostApduService.class);
             notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
         } finally {
             setDefaultPaymentService(originalDefault);
