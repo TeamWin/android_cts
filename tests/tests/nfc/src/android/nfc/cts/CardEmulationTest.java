@@ -35,7 +35,6 @@ import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -609,7 +608,7 @@ public class CardEmulationTest {
         ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
         frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
                 HexFormat.of().parseHex(annotationStringHex)));
-        Assume.assumeTrue(adapter.setTransactionAllowed(false));
+        Assert.assertTrue(adapter.setTransactionAllowed(false));
         Assert.assertTrue(adapter.isObserveModeEnabled());
         notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
         Assert.assertFalse(adapter.isObserveModeEnabled());
@@ -671,8 +670,10 @@ public class CardEmulationTest {
                     Settings.Secure.getUriFor(
                             Constants.SETTINGS_SECURE_NFC_PAYMENT_DEFAULT_COMPONENT),
                     true, settingsObserver, UserHandle.ALL);
-            Assume.assumeTrue(cardEmulation.setDefaultServiceForCategory(serviceName,
-                    CardEmulation.CATEGORY_PAYMENT));
+            Settings.Secure.putString(context.getContentResolver(),
+                    Constants.SETTINGS_SECURE_NFC_PAYMENT_DEFAULT_COMPONENT,
+                    serviceName == null ? null
+                    : serviceName.flattenToString());
             int count = 0;
             while (!settingsObserver.mSeenChange
                     && !cardEmulation.isDefaultServiceForCategory(serviceName,
@@ -686,7 +687,7 @@ public class CardEmulationTest {
                 }
             }
             Assert.assertTrue(count < 10);
-            Assume.assumeTrue(serviceName == null
+            Assert.assertTrue(serviceName == null
                     ? null == CardEmulation.getPreferredPaymentService(context)
                     : serviceName.equals(cardEmulation.getPreferredPaymentService(context)));
             return originalValue;
