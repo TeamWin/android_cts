@@ -46,9 +46,6 @@
 
         <activity android:name=".PermissionTestActivity"
             android:exported="true"/>
-
-        <service android:name=".StreamedAppService"
-            android:exported="true" />
     </application>
 
 </manifest>
