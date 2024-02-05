@@ -218,6 +218,19 @@ public class ActionGetContentOnlyTest extends PhotoPickerBaseTest {
         UiAssertionUtils.assertThatShowsPickerUi(intent.getType());
     }
 
+    @Test
+    public void testPickerAccentColorWithGetContent() throws Exception {
+        final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
+        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_ACCENT_COLOR, "#FF5A5F");
+
+        mActivity.startActivityForResult(Intent.createChooser(intent, TAG), REQUEST_CODE);
+        sDevice.waitForIdle();
+
+        // Should open the picker
+        UiAssertionUtils.assertThatShowsPickerUi(intent.getType());
+    }
+
     private void findAndClickMediaIcon() throws Exception {
         final UiSelector appList = new UiSelector().resourceId(sDocumentsUiPackageName
                 + ":id/apps_row");
