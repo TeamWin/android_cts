@@ -242,7 +242,7 @@ class MultiCameraFrameSyncTest(its_base_test.ItsBaseTest):
       raise AssertionError(
           f'Too much difference between cameras! Angle 1: {angle_1:.2f}, 2: '
           f'{angle_2:.2f}, diff: {diff:.3f}, TOL: {angular_diff_thresh}.')
-    else: # remove frames on PASS
+    else:  # remove frames on PASS
       temp_files = []
       try:
         temp_files = os.listdir(self.log_path)
