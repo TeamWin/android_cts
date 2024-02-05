@@ -26,6 +26,8 @@ import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.pdf.PdfRenderer;
 import android.graphics.pdf.PdfRenderer.Page;
+import android.graphics.pdf.PdfRendererPreV;
+import android.graphics.pdf.RenderParams;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RawRes;
@@ -41,17 +43,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 /**
- * Test for the {@link PdfRenderer}
+ * Test for the {@link PdfRenderer} and {@link PdfRendererPreV}
  */
 @RunWith(Parameterized.class)
 public class PdfRendererTransformTest {
+    private final int mWidth;
+    private final int mHeight;
+    private final int mDocRes;
+    @Nullable
+    private final Rect mClipping;
+    @Nullable
+    private final Matrix mTransformation;
+    private final int mRenderMode;
     private Context mContext;
-    private int mWidth;
-    private int mHeight;
-    private int mDocRes;
-    private @Nullable Rect mClipping;
-    private @Nullable Matrix mTransformation;
-    private int mRenderMode;
 
     public PdfRendererTransformTest(int width, int height, @RawRes int docRes,
             @Nullable Rect clipping, @Nullable Matrix transformation, int renderMode) {
@@ -65,13 +69,11 @@ public class PdfRendererTransformTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> getParameters() {
-        int[] widths = new int[] { A4_WIDTH_PTS * 3 / 4, A4_WIDTH_PTS, A4_WIDTH_PTS * 4 / 3
-        };
-        int[] heights = new int[] { A4_HEIGHT_PTS * 3 / 4, A4_HEIGHT_PTS, A4_HEIGHT_PTS * 4 / 3
-        };
-        int[] rotations = new int[] { 0, 15, 90, 180 };
-        int[] translations = new int[] { -A4_HEIGHT_PTS / 2, 0, A4_HEIGHT_PTS / 2 };
-        float[] scales = { -0.5f, 0, 1, 1.5f };
+        int[] widths = new int[]{A4_WIDTH_PTS * 3 / 4, A4_WIDTH_PTS, A4_WIDTH_PTS * 4 / 3};
+        int[] heights = new int[]{A4_HEIGHT_PTS * 3 / 4, A4_HEIGHT_PTS, A4_HEIGHT_PTS * 4 / 3};
+        int[] rotations = new int[]{0, 15, 90, 180};
+        int[] translations = new int[]{-A4_HEIGHT_PTS / 2, 0, A4_HEIGHT_PTS / 2};
+        float[] scales = {-0.5f, 0, 1, 1.5f};
 
         Collection<Object[]> params = new ArrayList<>();
 
@@ -81,8 +83,8 @@ public class PdfRendererTransformTest {
                     for (int translateX : translations) {
                         for (int translateY : translations) {
                             Matrix transformation = new Matrix();
-                            if (rotation != 0 || translateX != 0 || translateY != 0
-                                    || scaleX != 0 || scaleY != 0) {
+                            if (rotation != 0 || translateX != 0 || translateY != 0 || scaleX != 0
+                                    || scaleY != 0) {
                                 if (rotation != 0) {
                                     transformation.postRotate(rotation);
                                 }
@@ -92,17 +94,14 @@ public class PdfRendererTransformTest {
                                 }
 
                                 if (translateX != 0 || translateY != 0) {
-                                    transformation.postTranslate(translateX,
-                                            translateY);
+                                    transformation.postTranslate(translateX, translateY);
                                 }
                             }
 
                             for (int width : widths) {
                                 for (int height : heights) {
-                                    params.add(
-                                            new Object[] { width, height, A4_PORTRAIT, null,
-                                                    transformation, Page.RENDER_MODE_FOR_DISPLAY
-                                            });
+                                    params.add(new Object[]{width, height, A4_PORTRAIT, null,
+                                            transformation, Page.RENDER_MODE_FOR_DISPLAY});
                                 }
                             }
                         }
@@ -124,7 +123,10 @@ public class PdfRendererTransformTest {
     @SmallTest
     @Test
     public void test() throws Exception {
+        renderAndCompare(mWidth, mHeight, mDocRes, mClipping, mTransformation, mRenderMode, -1,
+                false, mContext);
+        // Test's PreV API.
         renderAndCompare(mWidth, mHeight, mDocRes, mClipping, mTransformation, mRenderMode,
-                mContext);
+                RenderParams.FLAG_RENDER_TEXT_ANNOTATIONS, true, mContext);
     }
 }

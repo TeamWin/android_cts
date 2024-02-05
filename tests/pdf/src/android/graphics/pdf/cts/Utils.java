@@ -57,6 +57,8 @@ class Utils {
     private static final Map<Integer, File> sFiles = new ArrayMap<>();
     private static final Map<Integer, Bitmap> sRenderedBitmaps = new ArrayMap<>();
 
+    private static final Map<Integer, Bitmap> sPreVRenderedBitmaps = new ArrayMap<>();
+
     /**
      * Create a {@link PdfRenderer} pointing to a file copied from a resource.
      *
@@ -188,24 +190,44 @@ class Utils {
             sRenderedBitmaps.put(docRes, renderedBm);
         }
 
+        return applyTransformationOnBitmap(renderedBm, bmWidth, bmHeight, clipping, transformation);
+    }
+
+    /**
+     * Apply the transformation and clipping on the given bitmap.
+     * First the bitmap is drawn based on the transformation matrix, and then we draw
+     * the bitmap using {@link Canvas}, do the scaling/translating to fill the destination clipping
+     * provided.
+     *
+     * @param bitmap         Bitmap on which transformation will be applied.
+     * @param bmWidth        The width of the bitmap
+     * @param bmHeight       The height of the bitmap
+     * @param clipping       The clipping for the PDF document
+     * @param transformation The transformation of the PDF
+     * @return The new transformed bitmap.
+     */
+    @NonNull
+    static Bitmap applyTransformationOnBitmap(Bitmap bitmap, int bmWidth, int bmHeight,
+            @Nullable Rect clipping, @Nullable Matrix transformation) {
         if (transformation == null) {
-            // According to PdfRenderer.page#render transformation == null means that the bitmap
-            // should be stretched to clipping (if provided) or otherwise destination size
+            // According to PdfRenderer.page#render and PdfRendererPreV.page#render
+            // transformation == null means that the bitmap should be stretched to clipping (if
+            // provided) or otherwise destination size
             transformation = new Matrix();
 
             if (clipping != null) {
-                transformation.postScale((float) clipping.width() / renderedBm.getWidth(),
-                        (float) clipping.height() / renderedBm.getHeight());
+                transformation.postScale((float) clipping.width() / bitmap.getWidth(),
+                        (float) clipping.height() / bitmap.getHeight());
                 transformation.postTranslate(clipping.left, clipping.top);
             } else {
-                transformation.postScale((float) bmWidth / renderedBm.getWidth(),
-                        (float) bmHeight / renderedBm.getHeight());
+                transformation.postScale((float) bmWidth / bitmap.getWidth(),
+                        (float) bmHeight / bitmap.getHeight());
             }
         }
 
         Bitmap transformedBm = Bitmap.createBitmap(bmWidth, bmHeight, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(transformedBm);
-        canvas.drawBitmap(renderedBm, transformation, null);
+        canvas.drawBitmap(bitmap, transformation, null);
 
         Bitmap clippedBm;
         if (clipping != null) {
@@ -251,9 +273,10 @@ class Utils {
     }
 
     /**
-     * Render the PDF two times. Once with applying the transformation and clipping in the {@link
-     * PdfRenderer}. The other time render the PDF onto a bitmap and then clip and transform that
-     * image. The result should be the same beside some minor aliasing.
+     * Render the PDF two times. Once with applying the transformation and clipping. The other time
+     * render the PDF onto a bitmap and then clip and transform that image. The result should be the
+     * same beside some minor aliasing.
+     * Note: The comparison uses PreV API if the flag value is true.
      *
      * @param width          The width of the resulting bitmap
      * @param height         The height of the resulting bitmap
@@ -261,18 +284,30 @@ class Utils {
      * @param clipping       The clipping to apply
      * @param transformation The transformation to apply
      * @param renderMode     The render mode to use
+     * @param renderFlag     The render flag to use for PreV API
+     * @param isPreV         If true the comparison will happen for the PreV API
      * @param context        The context to use for creating the renderer
      */
     static void renderAndCompare(int width, int height, @RawRes int docRes, @Nullable Rect clipping,
-            @Nullable Matrix transformation, int renderMode, @NonNull Context context)
-            throws IOException {
-        Bitmap a = renderWithTransform(width, height, docRes, clipping, transformation, renderMode,
-                context);
-        Bitmap b = renderAndThenTransform(width, height, docRes, clipping, transformation,
-                renderMode, context);
+            @Nullable Matrix transformation, int renderMode, int renderFlag, boolean isPreV,
+            @NonNull Context context) throws IOException {
+        Bitmap originalBitmap;
+        Bitmap transformedBitmap;
+        if (isPreV) {
+            originalBitmap = renderPreV(width, height, docRes, clipping, transformation, renderMode,
+                    renderFlag, context);
+            transformedBitmap = renderPreVAndThenTransform(width, height, docRes, clipping,
+                    transformation, renderMode, renderFlag, context);
+        } else {
+            originalBitmap = renderWithTransform(width, height, docRes, clipping, transformation,
+                    renderMode, context);
+            transformedBitmap = renderAndThenTransform(width, height, docRes, clipping,
+                    transformation, renderMode, context);
+        }
+
         try {
             // We allow 1% aliasing error
-            float nonMatching = getNonMatching(a, b);
+            float nonMatching = getNonMatching(originalBitmap, transformedBitmap);
 
             if (nonMatching == 0) {
                 Log.d(LOG_TAG, "bitmaps match");
@@ -285,8 +320,8 @@ class Utils {
                 Log.d(LOG_TAG, "bitmaps differ by " + Math.ceil(nonMatching * 10000) / 100 + "%");
             }
         } finally {
-            a.recycle();
-            b.recycle();
+            originalBitmap.recycle();
+            transformedBitmap.recycle();
         }
     }
 
@@ -353,22 +388,24 @@ class Utils {
     /**
      * Render a pdf onto a bitmap.
      *
-     * @param bmWidth    The width of the destination bitmap (tileWidth)
-     * @param bmHeight   The height of the destination bitmap (tileHeight)
-     * @param docRes     The resource to load PDF from
-     * @param destClip   The dest clip to render the bitmap (Coordinates)
-     *                   the x-axis position on the page of the tile (i.e. the bitmap left
-     *                   edge)
-     *                   the y-axis position on the page of the tile (i.e. the bitmap
-     *                   top edge)
-     * @param renderMode The render mode use to render the PDF
-     * @param renderFlag The render flag use to render the PDF
-     * @param context    The context to use for creating the renderer
+     * @param bmWidth        The width of the destination bitmap (tileWidth)
+     * @param bmHeight       The height of the destination bitmap (tileHeight)
+     * @param docRes         The resource to load PDF from
+     * @param destClip       The dest clip to render the bitmap (Coordinates)
+     *                       the x-axis position on the page of the tile (i.e. the bitmap left
+     *                       edge)
+     *                       the y-axis position on the page of the tile (i.e. the bitmap
+     *                       top edge)
+     * @param transformation The transformation to be applied on the bitmap
+     * @param renderMode     The render mode use to render the PDF
+     * @param renderFlag     The render flag use to render the PDF
+     * @param context        The context to use for creating the renderer
      * @return The rendered bitmap
      */
     @NonNull
     static Bitmap renderPreV(int bmWidth, int bmHeight, @RawRes int docRes, @Nullable Rect destClip,
-            int renderMode, int renderFlag, @NonNull Context context) throws IOException {
+            @Nullable Matrix transformation, int renderMode, int renderFlag,
+            @NonNull Context context) throws IOException {
         try (PdfRendererPreV renderer = createPreVRenderer(docRes, context, null)) {
             try (PdfRendererPreV.Page page = renderer.openPage(0)) {
                 Bitmap bm = Bitmap.createBitmap(bmWidth, bmHeight, Bitmap.Config.ARGB_8888);
@@ -377,6 +414,43 @@ class Utils {
                 return bm;
             }
         }
+    }
+
+    /**
+     * Render a pdf onto a bitmap. Render the bitmap onto another bitmap while applying the
+     * transformation. Hence use canvas' translation and clipping methods.
+     *
+     * @param bmWidth        The width of the destination bitmap
+     * @param bmHeight       The height of the destination bitmap
+     * @param docRes         The resource id of the doc
+     * @param clipping       The clipping for the PDF document
+     * @param transformation The transformation of the PDF
+     * @param renderMode     The render mode to use to render the PDF
+     * @param renderFlag     The render flag to use to render the PDF
+     * @param context        The context to use for creating the renderer
+     * @return The rendered bitmap
+     */
+    @NonNull
+    private static Bitmap renderPreVAndThenTransform(int bmWidth, int bmHeight, @RawRes int docRes,
+            @Nullable Rect clipping, @Nullable Matrix transformation, int renderMode,
+            int renderFlag, @NonNull Context context) throws IOException {
+        Bitmap renderedBm;
+
+        renderedBm = sPreVRenderedBitmaps.get(docRes);
+
+        if (renderedBm == null) {
+            try (PdfRendererPreV renderer = Utils.createPreVRenderer(docRes, context, null)) {
+                try (PdfRendererPreV.Page page = renderer.openPage(0)) {
+                    renderedBm = Bitmap.createBitmap(page.getWidth(), page.getHeight(),
+                            Bitmap.Config.ARGB_8888);
+                    page.render(renderedBm, null, null, new RenderParams.Builder(
+                            renderMode).setRenderFlags(renderFlag).build());
+                }
+            }
+            sPreVRenderedBitmaps.put(docRes, renderedBm);
+        }
+
+        return applyTransformationOnBitmap(renderedBm, bmWidth, bmHeight, clipping, transformation);
     }
 
     /**

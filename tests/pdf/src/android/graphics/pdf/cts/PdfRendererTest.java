@@ -21,9 +21,6 @@ import static android.graphics.pdf.cts.Utils.A4_PORTRAIT;
 import static android.graphics.pdf.cts.Utils.A4_WIDTH_PTS;
 import static android.graphics.pdf.cts.Utils.A5_PORTRAIT;
 import static android.graphics.pdf.cts.Utils.createRenderer;
-import static android.graphics.pdf.cts.Utils.getColorProbes;
-import static android.graphics.pdf.cts.Utils.renderAndCompare;
-import static android.graphics.pdf.cts.Utils.renderWithTransform;
 import static android.graphics.pdf.cts.Utils.verifyException;
 
 import static org.junit.Assert.assertEquals;
@@ -31,10 +28,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.Rect;
 import android.graphics.pdf.PdfRenderer;
 import android.graphics.pdf.PdfRenderer.Page;
 import android.graphics.pdf.cts.R;
@@ -202,149 +195,4 @@ public class PdfRendererTest {
             assertFalse(renderer.shouldScaleForPrinting());
         }
     }
-
-    /**
-     * Implementation for {@link #renderNoTransformationAndComparePointsForScreen} and {@link
-     * #renderNoTransformationAndComparePointsForPrint}.
-     *
-     * @param renderMode The render mode to use
-     * @throws Exception If anything was unexpected
-     */
-    private void renderNoTransformationAndComparePoints(int renderMode) throws Exception {
-        Bitmap bm = renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, null,
-                renderMode, mContext);
-        int[] probes = getColorProbes(bm);
-
-        // Compare rendering to expected result. This ensures that all other tests in this class do
-        // not accidentally all compare empty bitmaps.
-        assertEquals(Color.RED, probes[0]);
-        assertEquals(Color.RED, probes[1]);
-        assertEquals(Color.GREEN, probes[2]);
-        assertEquals(Color.GREEN, probes[3]);
-        assertEquals(Color.RED, probes[4]);
-        assertEquals(Color.RED, probes[5]);
-        assertEquals(Color.GREEN, probes[6]);
-        assertEquals(Color.GREEN, probes[7]);
-        assertEquals(Color.BLUE, probes[8]);
-        assertEquals(Color.BLUE, probes[9]);
-        assertEquals(Color.BLACK, probes[10]);
-        assertEquals(Color.BLACK, probes[11]);
-        assertEquals(Color.BLUE, probes[12]);
-        assertEquals(Color.BLUE, probes[13]);
-        assertEquals(Color.BLACK, probes[14]);
-        assertEquals(Color.BLACK, probes[15]);
-    }
-
-    @Test
-    public void renderNoTransformationAndComparePointsForScreen() throws Exception {
-        renderNoTransformationAndComparePoints(Page.RENDER_MODE_FOR_DISPLAY);
-    }
-
-    @Test
-    public void renderNoTransformationAndComparePointsForPrint() throws Exception {
-        renderNoTransformationAndComparePoints(Page.RENDER_MODE_FOR_PRINT);
-    }
-
-    @Test
-    public void renderPerspective() throws Exception {
-        Matrix transform = new Matrix();
-
-        transform.setValues(new float[]{1, 1, 1, 1, 1, 1, 1, 1, 1});
-
-        verifyException(
-                () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, transform,
-                        Page.RENDER_MODE_FOR_DISPLAY, mContext), IllegalArgumentException.class);
-    }
-
-    @Test
-    public void render45degreeRotationTranslationAndScaleAndClip() throws Exception {
-        Matrix transform = new Matrix();
-        // Rotate on top left corner
-        transform.postRotate(45);
-        // Move
-        transform.postTranslate(A4_WIDTH_PTS / 4, A4_HEIGHT_PTS / 4);
-        // Scale to 75%
-        transform.postScale(0.75f, 0.75f);
-        // Clip
-        Rect clip = new Rect(20, 20, A4_WIDTH_PTS - 20, A4_HEIGHT_PTS - 20);
-
-        renderAndCompare(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, clip, transform,
-                Page.RENDER_MODE_FOR_DISPLAY, mContext);
-    }
-
-    @Test
-    public void renderStreched() throws Exception {
-        renderAndCompare(A4_WIDTH_PTS * 4 / 3, A4_HEIGHT_PTS * 3 / 4, A4_PORTRAIT, null, null,
-                Page.RENDER_MODE_FOR_DISPLAY, mContext);
-    }
-
-    @Test
-    public void renderWithClip() throws Exception {
-        Rect clip = new Rect(20, 20, A4_WIDTH_PTS - 50, A4_HEIGHT_PTS - 50);
-        renderAndCompare(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, clip, null,
-                Page.RENDER_MODE_FOR_DISPLAY, mContext);
-    }
-
-    @Test
-    public void renderWithAllClipped() throws Exception {
-        Rect clip = new Rect(A4_WIDTH_PTS / 2, A4_HEIGHT_PTS / 2, A4_WIDTH_PTS / 2,
-                A4_HEIGHT_PTS / 2);
-        renderAndCompare(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, clip, null,
-                Page.RENDER_MODE_FOR_DISPLAY, mContext);
-    }
-
-    @Test
-    public void renderWithBadLowerCornerOfClip() throws Exception {
-        Rect clip = new Rect(0, 0, A4_WIDTH_PTS + 20, A4_HEIGHT_PTS + 20);
-        verifyException(
-                () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, clip, null,
-                        Page.RENDER_MODE_FOR_DISPLAY, mContext), IllegalArgumentException.class);
-    }
-
-    @Test
-    public void renderWithBadUpperCornerOfClip() throws Exception {
-        Rect clip = new Rect(-20, -20, A4_WIDTH_PTS, A4_HEIGHT_PTS);
-        verifyException(
-                () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, clip, null,
-                        Page.RENDER_MODE_FOR_DISPLAY, mContext), IllegalArgumentException.class);
-    }
-
-    @Test
-    public void renderTwoModes() throws Exception {
-        verifyException(
-                () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, null,
-                        Page.RENDER_MODE_FOR_DISPLAY | Page.RENDER_MODE_FOR_PRINT, mContext),
-                IllegalArgumentException.class);
-    }
-
-    @Test
-    public void renderBadMode() throws Exception {
-        verifyException(
-                () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, null,
-                        1 << 30, mContext), IllegalArgumentException.class);
-    }
-
-    @Test
-    public void renderAllModes() throws Exception {
-        verifyException(
-                () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, null, -1,
-                        mContext), IllegalArgumentException.class);
-    }
-
-    @Test
-    public void renderNoMode() throws Exception {
-        verifyException(
-                () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, null, 0,
-                        mContext), IllegalArgumentException.class);
-    }
-
-    @Test
-    public void renderOnNullBitmap() throws Exception {
-        try (PdfRenderer renderer = createRenderer(A4_PORTRAIT, mContext);
-             Page page = renderer.openPage(0)) {
-            verifyException(() -> page.render(null, null, null, Page.RENDER_MODE_FOR_DISPLAY),
-                    NullPointerException.class);
-        }
-    }
-
 }
