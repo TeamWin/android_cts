@@ -45,26 +45,17 @@ public class DeviceTest {
             Instrumentation instrumentation = getInstrumentation();
             Context context = instrumentation.getContext();
 
-            // Checking if the listener service has started.
-            String enabledListeners =
-                    Settings.Secure.getString(
-                            context.getContentResolver(),
-                            Settings.Secure.ENABLED_NOTIFICATION_LISTENERS);
-            String classAndPkgName =
+            // Check if the 'HelperListenerService1' was enabled successfully
+            checkIfListenerServiceIsEnabled(context, "HelperListenerService1");
+
+            // Check if the 'HelperListenerService2' was enabled successfully
+            checkIfListenerServiceIsEnabled(context, "HelperListenerService2");
+
+            // Check if the vulnerable listener service was enabled successfully
+            final String vulnerableListenerService =
                     String.format("%0" + (215 /* serviceClassNameLength */) + "d", 0)
                             .replace("0", "A");
-            ComponentName componentName =
-                    new ComponentName(
-                            context,
-                            Class.forName(
-                                    context.getPackageName()
-                                            + "."
-                                            + classAndPkgName
-                                            + "."
-                                            + classAndPkgName));
-            assume().withMessage("Notification Listener Service not enabled")
-                    .that(enabledListeners.contains(componentName.getPackageName()))
-                    .isTrue();
+            checkIfListenerServiceIsEnabled(context, vulnerableListenerService);
 
             // Fetching settingsPackageName & activityName dynamically
             Intent intent = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
@@ -82,11 +73,11 @@ public class DeviceTest {
             UiDevice uiDevice = UiDevice.getInstance(instrumentation);
             String packageName = context.getPackageName();
             assume().withMessage("Notification_Listener_Setting is not visible")
-                .that(waitForVisibleObject(uiDevice, packageName + ".aaaaaa", 5000L))
-                .isNotNull();
+                    .that(waitForVisibleObject(uiDevice, packageName + ".aaaaaa", 5000L))
+                    .isNotNull();
             assume().withMessage("Notification_Listener_Setting is not visible")
-                .that(waitForVisibleObject(uiDevice, packageName + ".aaaaab", 5000L))
-                .isNotNull();
+                    .that(waitForVisibleObject(uiDevice, packageName + ".aaaaab", 5000L))
+                    .isNotNull();
 
             // Checking for application under 'Device and Notification'.
             // Failing test, when the application is not visible in 'Device and
@@ -103,5 +94,20 @@ public class DeviceTest {
     private UiObject2 waitForVisibleObject(UiDevice uiDevice, String text, long timeout) {
         UiObject2 uiObject = uiDevice.wait(Until.findObject(By.text(text)), timeout);
         return uiObject;
+    }
+
+    private void checkIfListenerServiceIsEnabled(Context context, String listenerServiceName) {
+        // Fetch the component names for which listener service was enabled successfully
+        String enabledListeners =
+                Settings.Secure.getString(
+                        context.getContentResolver(),
+                        Settings.Secure.ENABLED_NOTIFICATION_LISTENERS);
+
+        assume().withMessage(
+                        String.format(
+                                "Notification Listener Service not enabled for %s",
+                                listenerServiceName))
+                .that(enabledListeners.contains(listenerServiceName))
+                .isTrue();
     }
 }
