@@ -47,16 +47,16 @@ public final class LogHelper {
         TimeUnit.SECONDS.sleep(WAIT_TIME);
         String logs = device.executeAdbCommand("logcat", "-v", "brief", "-d", tag + ":I", "*:S");
         // Search for string.
-        String testString = "";
+        StringBuilder testString = new StringBuilder();
         Scanner in = new Scanner(logs);
         while (in.hasNextLine()) {
             String line = in.nextLine();
             if (line.startsWith("I/" + tag)) {
-                testString = line.split(":")[1].trim();
+                testString.append(line.split(":")[1].trim());
             }
         }
         device.executeAdbCommand("logcat", "-c");
-        return testString;
+        return testString.toString();
     }
 
     public static void waitForLog(
