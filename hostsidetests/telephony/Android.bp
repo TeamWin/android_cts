@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package {
+    default_team: "trendy_team_fwk_telephony",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
@@ -20,7 +21,7 @@ java_test_host {
     name: "CtsTelephonyHostCases",
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
-    static_libs:["CompatChangeGatingTestBase"],
+    static_libs: ["CompatChangeGatingTestBase"],
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
