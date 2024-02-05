@@ -16,6 +16,7 @@
 // Reusable Sensor test classes and helpers
 //
 package {
+    default_team: "trendy_team_android_sensors",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
