@@ -594,6 +594,30 @@ public class CardEmulationTest {
         }
     }
 
+
+    @Test
+    @RequiresFlagsEnabled({android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP,
+            Flags.FLAG_NFC_OBSERVE_MODE})
+    public void testAutoTransact() {
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        adapter.notifyHceDeactivated();
+        createAndResumeActivity();
+        String testName = new Object() {
+        }.getClass().getEnclosingMethod().getName();
+        String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
+        android.util.Log.i("PLF", annotationStringHex);
+        ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
+        frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
+                HexFormat.of().parseHex(annotationStringHex)));
+        Assume.assumeTrue(adapter.setTransactionAllowed(false));
+        Assert.assertTrue(adapter.isObserveModeEnabled());
+        notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
+        Assert.assertFalse(adapter.isObserveModeEnabled());
+        adapter.notifyHceDeactivated();
+        Assert.assertTrue(adapter.isObserveModeEnabled());
+        adapter.setTransactionAllowed(true);
+    }
+
     private Bundle createFrame(char type) {
         Bundle frame = new Bundle();
         frame.putChar(HostApduService.POLLING_LOOP_TYPE_KEY, type);
@@ -741,7 +765,6 @@ public class CardEmulationTest {
         sCurrentPollLoopReceiver.test();
         Assert.assertEquals(frames.size(), sCurrentPollLoopReceiver.mFrameIndex);
         sCurrentPollLoopReceiver = null;
-        adapter.notifyHceDeactivated();
     }
 
 
