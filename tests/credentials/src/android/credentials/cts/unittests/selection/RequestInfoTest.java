@@ -59,6 +59,7 @@ public class RequestInfoTest {
     private static final String APP_PACKAGE_NAME = "mock_package";
 
     private static final boolean HAS_PERMISSION_TO_OVERRIDE_DEFAULT = true;
+    private static final boolean IS_SHOW_ALL_OPTIONS_REQUESTED = true;
 
     @Test
     @RequiresFlagsEnabled(FLAG_CONFIGURABLE_SELECTOR_UI_ENABLED)
@@ -71,13 +72,16 @@ public class RequestInfoTest {
                 new CreateCredentialRequest.Builder(type, data, data).build();
         RequestInfo requestInfo = RequestInfo.newCreateRequestInfo(
                 TOKEN, createCredentialRequest, APP_PACKAGE_NAME,
-                HAS_PERMISSION_TO_OVERRIDE_DEFAULT, DEFAULT_PROVIDER_IDS);
+                HAS_PERMISSION_TO_OVERRIDE_DEFAULT, DEFAULT_PROVIDER_IDS,
+                IS_SHOW_ALL_OPTIONS_REQUESTED);
 
         assertThat(requestInfo.getRequestToken()).isEqualTo(new RequestToken(TOKEN));
         assertThat(requestInfo.getType()).isEqualTo(TYPE_CREATE);
         assertThat(requestInfo.getAppPackageName()).isEqualTo(APP_PACKAGE_NAME);
         assertThat(requestInfo.hasPermissionToOverrideDefault())
                 .isEqualTo(HAS_PERMISSION_TO_OVERRIDE_DEFAULT);
+        assertThat(requestInfo.isShowAllOptionsRequested())
+                .isEqualTo(IS_SHOW_ALL_OPTIONS_REQUESTED);
         assertThat(requestInfo.getDefaultProviderIds())
                 .containsExactlyElementsIn(DEFAULT_PROVIDER_IDS);
         assertThat(requestInfo.getGetCredentialRequest()).isNull();
@@ -100,7 +104,8 @@ public class RequestInfoTest {
                         .setCredentialOptions(credentialOptions).build();
 
         RequestInfo requestInfo = RequestInfo.newGetRequestInfo(
-                TOKEN, getCredentialRequest, APP_PACKAGE_NAME, HAS_PERMISSION_TO_OVERRIDE_DEFAULT);
+                TOKEN, getCredentialRequest, APP_PACKAGE_NAME, HAS_PERMISSION_TO_OVERRIDE_DEFAULT,
+                IS_SHOW_ALL_OPTIONS_REQUESTED);
 
         assertThat(requestInfo.getRequestToken()).isEqualTo(new RequestToken(TOKEN));
         assertThat(requestInfo.getType()).isEqualTo(TYPE_GET);
@@ -109,6 +114,8 @@ public class RequestInfoTest {
                 .containsExactlyElementsIn(credentialOptions);
         assertThat(requestInfo.hasPermissionToOverrideDefault())
                 .isEqualTo(HAS_PERMISSION_TO_OVERRIDE_DEFAULT);
+        assertThat(requestInfo.isShowAllOptionsRequested())
+                .isEqualTo(IS_SHOW_ALL_OPTIONS_REQUESTED);
         assertThat(requestInfo.getDefaultProviderIds()).isEmpty();
         assertThat(requestInfo.getCreateCredentialRequest()).isNull();
     }
@@ -128,7 +135,8 @@ public class RequestInfoTest {
                         candidateQueryData).build();
         RequestInfo requestInfo1 = RequestInfo.newCreateRequestInfo(
                 token, createCredentialRequest, "package name",
-                /*hasPermissionToOverrideDefault=*/ false, new ArrayList<>());
+                /*hasPermissionToOverrideDefault=*/ false, new ArrayList<>(),
+                /*isShowAllOptionsRequested=*/ true);
 
         RequestInfo requestInfo2 = TestUtils.cloneParcelable(requestInfo1);
         assertThat(requestInfo2.getRequestToken()).isEqualTo(new RequestToken(token));
@@ -139,6 +147,7 @@ public class RequestInfoTest {
         assertEquals(requestInfo2.getCreateCredentialRequest().getCandidateQueryData(),
                 candidateQueryData);
         assertThat(requestInfo2.hasPermissionToOverrideDefault()).isFalse();
+        assertThat(requestInfo2.isShowAllOptionsRequested()).isTrue();
         assertThat(requestInfo2.getDefaultProviderIds()).isEmpty();
     }
 }
