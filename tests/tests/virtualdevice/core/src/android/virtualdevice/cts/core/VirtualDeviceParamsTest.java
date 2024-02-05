@@ -155,6 +155,22 @@ public class VirtualDeviceParamsTest {
         assertThat(params.getHomeComponent()).isEqualTo(COMPONENT_NAME);
     }
 
+    @RequiresFlagsEnabled(Flags.FLAG_VDM_CUSTOM_IME)
+    @Test
+    public void customIme_parcelable_shouldRecreateSuccessfully() {
+        VirtualDeviceParams originalParams = new VirtualDeviceParams.Builder()
+                .setInputMethodComponent(COMPONENT_NAME)
+                .build();
+
+        Parcel parcel = Parcel.obtain();
+        originalParams.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+
+        VirtualDeviceParams params = VirtualDeviceParams.CREATOR.createFromParcel(parcel);
+        assertThat(params).isEqualTo(originalParams);
+        assertThat(params.getInputMethodComponent()).isEqualTo(COMPONENT_NAME);
+    }
+
     @Test
     public void setAllowedAndBlockedCrossTaskNavigations_shouldThrowException() {
         VirtualDeviceParams.Builder paramsBuilder = new VirtualDeviceParams.Builder();
