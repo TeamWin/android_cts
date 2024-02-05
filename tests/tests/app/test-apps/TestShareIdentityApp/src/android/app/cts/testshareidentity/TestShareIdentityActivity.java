@@ -41,6 +41,14 @@ public class TestShareIdentityActivity extends Activity {
             "android.app.cts", "android.app.cts.ShareIdentityTest$ShareIdentityTestActivity");
 
     /**
+     * Activity within {@link android.app.cts.ShareIdentityTest} that will be launched by
+     * this activity to verify this package's ActivityCaller identity is only shared when expected.
+     */
+    private static final ComponentName ACTIVITY_CALLER_SHARE_IDENTITY_ACTIVITY = new ComponentName(
+            "android.app.cts",
+            "android.app.cts.ShareIdentityTest$ActivityCallerShareIdentityTestActivity");
+
+    /**
      * Receiver within {@link android.app.cts.ShareIdentityTest} that is registered in the
      * manifest to receive broadcasts from this activity to verify the package's identity
      * is only shared when expected.
@@ -139,6 +147,29 @@ public class TestShareIdentityActivity extends Activity {
      */
     private static final int SEND_ORDERED_BROADCAST_MANIFEST_RECEIVER_OPT_OUT_TEST_CASE = 13;
     /**
+     * Test case to verify the launching app's ActivityCaller identity is not shared when the
+     * activity is not launched with {@link android.app.ActivityOptions}.
+     */
+    private static final int DEFAULT_SHARING_TEST_CASE_ACTIVITY_CALLER = 14;
+    /**
+     * Test case to verify the launching app's ActivityCaller identity is shared when the activity
+     * is launched with {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} set to
+     * {@code true}.
+     */
+    private static final int EXPLICIT_OPT_IN_TEST_CASE_ACTIVITY_CALLER = 15;
+    /**
+     * Test case to verify the launching app's ActivityCaller identity is not shared when the
+     * activity is launched with
+     * {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} set to {@code false}.
+     */
+    private static final int EXPLICIT_OPT_OUT_TEST_CASE_ACTIVITY_CALLER = 16;
+    /**
+     * Test case to verify the sharing of an app's ActivityCaller identity is not impacted by
+     * launching an activity with {@link Activity#startActivityForResult(Intent, int)} since this
+     * method does expose the app's identity from {@link Activity#getCallingPackage()}.
+     */
+    private static final int START_ACTIVITY_FOR_RESULT_TEST_CASE_ACTIVITY_CALLER = 17;
+    /**
      * Action for which the runtime receiver registers in the app driving the test.
      */
     private static final String TEST_BROADCAST_RUNTIME_ACTION =
@@ -153,24 +184,25 @@ public class TestShareIdentityActivity extends Activity {
     public void onStart() {
         super.onStart();
         int testId = getIntent().getIntExtra(TEST_ID_KEY, -1);
+        int testCase = getIntent().getIntExtra(TEST_CASE_KEY, -1);
         Intent intent = new Intent();
-        intent.setComponent(SHARE_IDENTITY_ACTIVITY);
+        intent.setComponent(getShareIdentityActivity(testCase));
         intent.putExtra(TEST_ID_KEY, testId);
         Bundle bundle;
-        int testCase = getIntent().getIntExtra(TEST_CASE_KEY, -1);
         switch (testCase) {
-            case DEFAULT_SHARING_TEST_CASE:
+            case DEFAULT_SHARING_TEST_CASE, DEFAULT_SHARING_TEST_CASE_ACTIVITY_CALLER:
                 startActivity(intent);
                 break;
-            case EXPLICIT_OPT_IN_TEST_CASE:
+            case EXPLICIT_OPT_IN_TEST_CASE, EXPLICIT_OPT_IN_TEST_CASE_ACTIVITY_CALLER:
                 bundle = ActivityOptions.makeBasic().setShareIdentityEnabled(true).toBundle();
                 startActivity(intent, bundle);
                 break;
-            case EXPLICIT_OPT_OUT_TEST_CASE:
+            case EXPLICIT_OPT_OUT_TEST_CASE, EXPLICIT_OPT_OUT_TEST_CASE_ACTIVITY_CALLER:
                 bundle = ActivityOptions.makeBasic().setShareIdentityEnabled(false).toBundle();
                 startActivity(intent, bundle);
                 break;
-            case START_ACTIVITY_FOR_RESULT_TEST_CASE:
+            case START_ACTIVITY_FOR_RESULT_TEST_CASE,
+                    START_ACTIVITY_FOR_RESULT_TEST_CASE_ACTIVITY_CALLER:
                 startActivityForResult(intent, 0);
                 break;
             case SEND_BROADCAST_RUNTIME_RECEIVER_OPT_IN_TEST_CASE:
@@ -207,6 +239,17 @@ public class TestShareIdentityActivity extends Activity {
                 Log.e(TAG, "Unexpected test case received: " + testCase);
         }
         finish();
+    }
+
+    private ComponentName getShareIdentityActivity(int testCase) {
+        return switch (testCase) {
+            case DEFAULT_SHARING_TEST_CASE_ACTIVITY_CALLER,
+                    EXPLICIT_OPT_IN_TEST_CASE_ACTIVITY_CALLER,
+                    EXPLICIT_OPT_OUT_TEST_CASE_ACTIVITY_CALLER,
+                    START_ACTIVITY_FOR_RESULT_TEST_CASE_ACTIVITY_CALLER ->
+                    ACTIVITY_CALLER_SHARE_IDENTITY_ACTIVITY;
+            default -> SHARE_IDENTITY_ACTIVITY;
+        };
     }
 
     /**

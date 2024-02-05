@@ -32,6 +32,9 @@
         <activity android:name=".ShareIdentityTest$ShareIdentityTestActivity"
                   android:exported="true" />
 
+        <activity android:name=".ShareIdentityTest$ActivityCallerShareIdentityTestActivity"
+            android:exported="true" />
+
         <receiver android:name=".ShareIdentityTest$ShareIdentityTestReceiver"
                   android:exported="true">
             <intent-filter>
