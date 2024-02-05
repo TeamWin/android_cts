@@ -881,13 +881,15 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                 .setSimulateDisplay(true).createDisplay();
         getLaunchActivityBuilder().setUseInstrumentation()
                 .setTargetActivity(SDK_27_LAUNCHING_ACTIVITY).setNewTask(true)
-                .setDisplayId(DEFAULT_DISPLAY).execute();
+                .setDisplayId(DEFAULT_DISPLAY).setWaitForLaunched(false).execute();
+        // Dismiss DeprecatedTargetSdkVersionDialog to avoid it disturbing tapOnTaskCenter.
+        DeprecatedTargetSdkUtils.waitAndDismissDeprecatedTargetSdkDialog(mWmState);
         waitAndAssertTopResumedActivity(SDK_27_LAUNCHING_ACTIVITY, DEFAULT_DISPLAY,
                 "Activity launched on default display must be resumed and focused");
 
         getLaunchActivityBuilder().setUseInstrumentation()
                 .setTargetActivity(SDK_27_TEST_ACTIVITY).setNewTask(true)
-                .setDisplayId(newDisplay.mId).execute();
+                .setDisplayId(newDisplay.mId).setWaitForLaunched(false).execute();
         // Dismiss DeprecatedTargetSdkVersionDialog to avoid it disturbing tapOnTaskCenter.
         DeprecatedTargetSdkUtils.waitAndDismissDeprecatedTargetSdkDialog(mWmState);
         waitAndAssertTopResumedActivity(SDK_27_TEST_ACTIVITY, newDisplay.mId,
