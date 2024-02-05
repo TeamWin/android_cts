@@ -2480,7 +2480,7 @@
         with Full Screen Intents.</string>
     <string name="fsi_lockscreen_without_permission_instruction">Click the \"I\'m done\" button when you are ready.\n
         After clicking, lock the screen and press the power button as quickly as possible to go to the lock screen.\n
-        Wait for a heads up notification to appear first in the list with a pill button.\n
+        Wait for a heads up notification to appear.\n
         Unlock screen to return to this page after seeing the notification or after 5 seconds.\n
         Fail the test if the notification does not appear as described.
     </string>
@@ -2492,7 +2492,7 @@
     </string>
     <string name="fsi_screen_off_without_permission_instruction">Click the \"I\'m done\" button when you are ready.\n
         After clicking, press the power button as quickly as possible to turn off the screen.\n
-        Wait for a notification to appear on the screen with a pill button.\n
+        Wait for a notification to appear on the screen.\n
         Unlock screen to return to this page after seeing the notification or after 5 seconds.\n
         Fail the test if the notification does not appear as described.
     </string>
