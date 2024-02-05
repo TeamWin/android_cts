@@ -211,14 +211,16 @@ void android_main(struct android_app *pApp) {
     }
     // Do an initial load with the session to let CPU settle
     drawFramesWithTarget(2 * baselineStats.medianWorkDuration, events, pApp, pSource);
+
+    const int64_t lightTarget = 2 * baselineStats.medianWorkDuration;
+
     // Get a light load baseline
-    FrameStats lightBaselineStats = drawFramesWithTarget(2 * baselineStats.medianWorkDuration,
-                                                         events, pApp, pSource, "light_base");
+    FrameStats lightBaselineStats =
+            drawFramesWithTarget(lightTarget, events, pApp, pSource, "light_base");
     // Used to figure out efficiency score on actual runs, based on the slowest config seen
     getRenderer(pApp)->setBaselineMedian(
             std::max(baselineStats.medianWorkDuration, baselineStats.medianWorkDuration));
 
-    const int64_t lightTarget = 2 * lightBaselineStats.medianWorkDuration;
     const int64_t heavyTarget = (3 * lightBaselineStats.medianWorkDuration) / 4;
 
     if (testSet.count("heavy_load") > 0) {
