@@ -29,7 +29,6 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.RemoteConference;
 import android.telecom.RemoteConnection;
 import android.telecom.TelecomManager;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,8 +52,10 @@ public class MockConnectionService extends ConnectionService {
     public static final int EVENT_CONNECTION_SERVICE_FOCUS_LOST = 1;
     public static final int EVENT_CONNECTION_SERVICE_CREATE_CONNECTION = 2;
     public static final int EVENT_CONNECTION_SERVICE_CREATE_CONNECTION_FAILED = 3;
+    public static final int EVENT_CONNECTION_SERVICE_CREATE_CONNECTION_COMPLETE = 4;
+    public static final int EVENT_CONNECTION_SERVICE_CREATE_CONFERENCE_COMPLETE = 5;
     // Update TOTAL_EVENT below with last event.
-    private static final int TOTAL_EVENT = EVENT_CONNECTION_SERVICE_CREATE_CONNECTION_FAILED + 1;
+    private static final int TOTAL_EVENT = EVENT_CONNECTION_SERVICE_CREATE_CONFERENCE_COMPLETE + 1;
 
     private static final int DEFAULT_EVENT_TIMEOUT_MS = 2000;
 
@@ -230,6 +231,16 @@ public class MockConnectionService extends ConnectionService {
         conferences.add(conference);
         connectionRequest = request;
         lock.release(2);
+    }
+
+    @Override
+    public void onCreateConnectionComplete(Connection connection) {
+        mEventLock[EVENT_CONNECTION_SERVICE_CREATE_CONNECTION_COMPLETE].release();
+    }
+
+    @Override
+    public void onCreateConferenceComplete(Conference conference) {
+        mEventLock[EVENT_CONNECTION_SERVICE_CREATE_CONFERENCE_COMPLETE].release();
     }
 
     @Override

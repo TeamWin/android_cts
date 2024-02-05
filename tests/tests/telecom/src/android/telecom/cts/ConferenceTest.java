@@ -36,6 +36,8 @@ import android.telecom.VideoProfile;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.server.telecom.flags.Flags;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -96,6 +98,13 @@ public class ConferenceTest extends BaseTelecomTestWithMockServices {
         if (!mShouldTestTelecom) {
             return;
         }
+        // Part of adding the conference is calling TelecomManager#addConference, so we should have
+        // gotten confirmation of that.
+        if (Flags.telecomResolveHiddenDependencies()) {
+            assertTrue(connectionService.waitForEvent(
+                    MockConnectionService.EVENT_CONNECTION_SERVICE_CREATE_CONFERENCE_COMPLETE));
+        }
+
         final Call conf = mInCallService.getLastConferenceCall();
         assertCallState(conf, Call.STATE_ACTIVE);
 
