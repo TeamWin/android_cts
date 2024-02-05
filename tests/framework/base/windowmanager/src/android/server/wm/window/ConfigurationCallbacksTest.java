@@ -176,6 +176,7 @@ public class ConfigurationCallbacksTest extends WindowManagerTestBase {
      * Should be called before triggering the test system event.
      */
     private void initTrackers() {
+        Log.d(TAG, "initTrackers");
         mDisplayListenerTracker.init();
         mActivityOnConfigurationChangedTracker.init();
         mApplicationOnConfigurationChangedTracker.init();
@@ -422,6 +423,7 @@ public class ConfigurationCallbacksTest extends WindowManagerTestBase {
 
         @Override
         public void onConfigurationChanged(@NonNull Configuration newConfig) {
+            Log.d(TAG, "Application#onConfigurationChanged");
             mTracker.onWindowConfigChanged();
         }
 
@@ -448,6 +450,7 @@ public class ConfigurationCallbacksTest extends WindowManagerTestBase {
         public void onDisplayChanged(int displayId) {
             if (displayId == DEFAULT_DISPLAY) {
                 // Only test against the default display.
+                Log.d(TAG, "DisplayListener#onDisplayChanged");
                 mTracker.onWindowConfigChanged();
             }
         }
@@ -467,6 +470,7 @@ public class ConfigurationCallbacksTest extends WindowManagerTestBase {
         public void onConfigurationChanged(@NonNull Configuration newConfig) {
             super.onConfigurationChanged(newConfig);
             if (mTracker != null) {
+                Log.d(TAG, "Activity#onConfigurationChanged");
                 mTracker.onWindowConfigChanged();
             }
         }
