@@ -1599,6 +1599,11 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         verifyIsInSelfManagedCallCrossUsers(TEST_SELF_MANAGED_HANDLE_1,
                 TEST_SELF_MANAGED_HANDLE_1.getUserHandle(), false);
 
+        // Deliberately pass in different UserHandle different from the calling user to ensure that
+        // the API indicates that there aren't any ongoing calls.
+        verifyIsInSelfManagedCallCrossUsers(TEST_SELF_MANAGED_HANDLE_1,
+                UserHandle.of(UserHandle.MIN_SECONDARY_USER_ID), false);
+
         // Deliberately pass in different UserHandle to ensure that cross users functionality
         // works as intended.
         verifyIsInSelfManagedCallCrossUsers(TEST_SELF_MANAGED_HANDLE_1,
@@ -1611,10 +1616,16 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
             UserHandle userHandle, boolean hasCrossUsers) throws Exception {
         SelfManagedConnection connection = null;
 
+        boolean assertIsInSelfManagedCall = true;
+        if (!handle.getUserHandle().equals(userHandle) && !hasCrossUsers) {
+            assertIsInSelfManagedCall = false;
+        }
+
         try {
             connection = placeSelfManagedCallAndGetConnection(handle, TEST_ADDRESS_1);
-            assertTrue(mTelecomManager.isInSelfManagedCall(
-                    handle.getComponentName().getPackageName(), userHandle, hasCrossUsers));
+            boolean isInSelfManagedCall = mTelecomManager.isInSelfManagedCall(
+                    handle.getComponentName().getPackageName(), userHandle, hasCrossUsers);
+            assertEquals(assertIsInSelfManagedCall, isInSelfManagedCall);
         } finally {
             if (connection != null) {
                 // Disconnect the call
