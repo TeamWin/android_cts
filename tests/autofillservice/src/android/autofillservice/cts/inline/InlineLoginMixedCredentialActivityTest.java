@@ -43,7 +43,9 @@ import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.DeviceConfig;
+import android.provider.Settings;
 import android.text.TextUtils;
+import android.util.ArraySet;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -147,6 +149,29 @@ public class InlineLoginMixedCredentialActivityTest
     public void disablePcc() {
         Log.d(TAG, "@After: disablePcc()");
         disablePccDetectionFeature(sContext);
+    }
+
+    @Test
+    public void testCredmanProxyServiceIsNotPublic() throws Exception {
+        // Set service.
+        enableService();
+
+        // Verify during initial setup.
+        assertThat(readServiceNameList())
+                .asList()
+                .containsExactly("android.autofillservice.cts/.testcore."
+                        + "InstrumentedAutoFillServiceInlineEnabled");
+
+        // Trigger auto-fill.
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+        CtsCredentialProviderService.onReceivedResponse();
+
+        // Verify after credman service is invoked.
+        assertThat(readServiceNameList())
+                .asList()
+                .containsExactly("android.autofillservice.cts/.testcore."
+                        + "InstrumentedAutoFillServiceInlineEnabled");
     }
 
     @Test
@@ -504,6 +529,30 @@ public class InlineLoginMixedCredentialActivityTest
     private Map<String, CredentialProviderInfo> getCredentialProviderServices(int providerFilter) {
         return mCredentialManager.getCredentialProviderServicesForTesting(providerFilter).stream()
                 .collect(Collectors.toMap(c -> c.getComponentName().flattenToString(), c -> c));
+    }
+
+    private String[] readServiceNameList() {
+        return parseColonDelimitedServiceNames(
+                Settings.Secure.getString(
+                        mContext.getContentResolver(), Settings.Secure.AUTOFILL_SERVICE));
+    }
+
+    private String[] parseColonDelimitedServiceNames(String serviceNames) {
+        final Set<String> delimitedServices = new ArraySet<>();
+        if (!TextUtils.isEmpty(serviceNames)) {
+            final TextUtils.SimpleStringSplitter splitter =
+                    new TextUtils.SimpleStringSplitter(':');
+            splitter.setString(serviceNames);
+            while (splitter.hasNext()) {
+                final String str = splitter.next();
+                if (TextUtils.isEmpty(str)) {
+                    continue;
+                }
+                delimitedServices.add(str);
+            }
+        }
+        String[] delimitedServicesArray = new String[delimitedServices.size()];
+        return delimitedServices.toArray(delimitedServicesArray);
     }
 
 }
