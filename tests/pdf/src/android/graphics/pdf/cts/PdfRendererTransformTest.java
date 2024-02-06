@@ -20,6 +20,7 @@ import static android.graphics.pdf.cts.Utils.A4_HEIGHT_PTS;
 import static android.graphics.pdf.cts.Utils.A4_PORTRAIT;
 import static android.graphics.pdf.cts.Utils.A4_WIDTH_PTS;
 import static android.graphics.pdf.cts.Utils.renderAndCompare;
+import static android.graphics.pdf.cts.Utils.renderPreVAndCompare;
 
 import android.content.Context;
 import android.graphics.Matrix;
@@ -123,10 +124,14 @@ public class PdfRendererTransformTest {
     @SmallTest
     @Test
     public void test() throws Exception {
-        renderAndCompare(mWidth, mHeight, mDocRes, mClipping, mTransformation, mRenderMode, -1,
-                false, mContext);
-        // Test's PreV API.
+        renderAndCompare(mWidth, mHeight, mDocRes, mClipping, mTransformation, mRenderMode,
+                RenderParams.FLAG_RENDER_TEXT_ANNOTATIONS, false, mContext);
+
         renderAndCompare(mWidth, mHeight, mDocRes, mClipping, mTransformation, mRenderMode,
                 RenderParams.FLAG_RENDER_TEXT_ANNOTATIONS, true, mContext);
+
+        // Test's PreV API.
+        renderPreVAndCompare(mWidth, mHeight, mDocRes, mClipping, mTransformation, mRenderMode,
+                RenderParams.FLAG_RENDER_TEXT_ANNOTATIONS, mContext);
     }
 }
