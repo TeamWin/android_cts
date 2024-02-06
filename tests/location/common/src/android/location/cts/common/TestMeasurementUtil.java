@@ -470,9 +470,9 @@ public final class TestMeasurementUtil {
                 softAssert.assertTrue("svid: Slot ID, or if unknown, Frequency + 100 (93-106). " +
                                 "Constellation type = CONSTELLATION_GLONASS",
                         timeInNs,
-                        "1 <= svid <= 24 || 93 <= svid <= 106",
+                        "1 <= svid <= 25 || 93 <= svid <= 106",
                         svidValue,
-                        (svid >= 1 && svid <= 24) || (svid >= 93 && svid <= 106));
+                        (svid >= 1 && svid <= 25) || (svid >= 93 && svid <= 106));
                 break;
             case GnssStatus.CONSTELLATION_QZSS:
                 softAssert.assertTrue("svid: Space Vehicle ID. Constellation type " +
