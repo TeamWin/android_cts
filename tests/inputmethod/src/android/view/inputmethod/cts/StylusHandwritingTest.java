@@ -1285,6 +1285,12 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
      * Inject stylus events on top of a handwriting initiation delegate view and verify handwriting
      * is started on the delegator editor and stylus handwriting window is displayed.
      */
+    @ApiTest(apis = {
+            "android.view.inputmethod.InputMethodManager#acceptStylusHandwritingDelegation",
+            "android.view.inputmethod.InputMethodManager#acceptStylusHandwritingDelegationAsync",
+            "android.view.inputmethod.InputMethodManager#prepareStylusHandwritingDelegation",
+            "android.view.View#setHandwritingDelegatorCallback",
+            "android.view.View#setIsHandwritingDelegate"})
     @Test
     public void testHandwriting_delegate() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
@@ -1381,6 +1387,12 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
      * is started on the delegate editor, even though delegate took a little time to
      * acceptStylusHandwriting().
      */
+    @ApiTest(apis = {
+            "android.view.inputmethod.InputMethodManager#acceptStylusHandwritingDelegation",
+            "android.view.inputmethod.InputMethodManager#acceptStylusHandwritingDelegationAsync",
+            "android.view.inputmethod.InputMethodManager#prepareStylusHandwritingDelegation",
+            "android.view.View#setHandwritingDelegatorCallback",
+            "android.view.View#setIsHandwritingDelegate"})
     @Test
     public void testHandwriting_delegateDelayed() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
@@ -1423,6 +1435,12 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
      * Inject stylus events on top of a handwriting initiation delegator view and verify handwriting
      * is not started on the delegate editor after delegate idle-timeout.
      */
+    @ApiTest(apis = {
+            "android.view.inputmethod.InputMethodManager#acceptStylusHandwritingDelegation",
+            "android.view.inputmethod.InputMethodManager#acceptStylusHandwritingDelegationAsync",
+            "android.view.inputmethod.InputMethodManager#prepareStylusHandwritingDelegation",
+            "android.view.View#setHandwritingDelegatorCallback",
+            "android.view.View#setIsHandwritingDelegate"})
     @Test
     public void testHandwriting_delegateAfterTimeout() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
@@ -1525,6 +1543,14 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
      * TODO(b/210039666): support instant apps for this test.
      */
     @AppModeFull(reason = "Launching external activity from this test is not yet supported.")
+    @ApiTest(apis = {
+            "android.view.inputmethod.InputMethodManager#acceptStylusHandwritingDelegation",
+            "android.view.inputmethod.InputMethodManager#acceptStylusHandwritingDelegationAsync",
+            "android.view.inputmethod.InputMethodManager#prepareStylusHandwritingDelegation",
+            "android.view.View#setAllowedHandwritingDelegatePackage",
+            "android.view.View#setAllowedHandwritingDelegatorPackage",
+            "android.view.View#setHandwritingDelegatorCallback",
+            "android.view.View#setIsHandwritingDelegate"})
     @Test
     public void testHandwriting_delegateToDifferentPackage() throws Exception {
         testHandwriting_delegateToDifferentPackage(true /* setAllowedDelegatorPackage */);
@@ -1537,6 +1563,14 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
      * TODO(b/210039666): support instant apps for this test.
      */
     @AppModeFull(reason = "Launching external activity from this test is not yet supported.")
+    @ApiTest(apis = {
+            "android.view.inputmethod.InputMethodManager#acceptStylusHandwritingDelegation",
+            "android.view.inputmethod.InputMethodManager#acceptStylusHandwritingDelegationAsync",
+            "android.view.inputmethod.InputMethodManager#prepareStylusHandwritingDelegation",
+            "android.view.View#setAllowedHandwritingDelegatePackage",
+            "android.view.View#setAllowedHandwritingDelegatorPackage",
+            "android.view.View#setHandwritingDelegatorCallback",
+            "android.view.View#setIsHandwritingDelegate"})
     @Test
     public void testHandwriting_delegateToDifferentPackage_fail() throws Exception {
         testHandwriting_delegateToDifferentPackage(false /* setAllowedDelegatorPackage */);
@@ -1607,6 +1641,15 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
      * TODO(b/210039666): Support instant apps for this test.
      */
     @Test
+    @ApiTest(apis = {
+            "android.view.inputmethod.InputMethodManager#acceptStylusHandwritingDelegation",
+            "android.view.inputmethod.InputMethodManager#acceptStylusHandwritingDelegationAsync",
+            "android.view.inputmethod.InputMethodManager#prepareStylusHandwritingDelegation",
+            "android.view.View#setAllowedHandwritingDelegatePackage",
+            "android.view.View#setAllowedHandwritingDelegatorPackage",
+            "android.view.View#setHandwritingDelegateFlags",
+            "android.view.View#setHandwritingDelegatorCallback",
+            "android.view.View#setIsHandwritingDelegate"})
     @RequiresFlagsEnabled(FLAG_HOME_SCREEN_HANDWRITING_DELEGATOR)
     @AppModeFull(reason = "Launching external activity from this test is not yet supported.")
     public void testHandwriting_delegateFromHomePackage() throws Exception {
@@ -1620,6 +1663,15 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
      * TODO(b/210039666): Support instant apps for this test.
      */
     @Test
+    @ApiTest(apis = {
+            "android.view.inputmethod.InputMethodManager#acceptStylusHandwritingDelegation",
+            "android.view.inputmethod.InputMethodManager#acceptStylusHandwritingDelegationAsync",
+            "android.view.inputmethod.InputMethodManager#prepareStylusHandwritingDelegation",
+            "android.view.View#setAllowedHandwritingDelegatePackage",
+            "android.view.View#setAllowedHandwritingDelegatorPackage",
+            "android.view.View#setHandwritingDelegateFlags",
+            "android.view.View#setHandwritingDelegatorCallback",
+            "android.view.View#setIsHandwritingDelegate"})
     @RequiresFlagsEnabled(FLAG_HOME_SCREEN_HANDWRITING_DELEGATOR)
     @AppModeFull(reason = "Launching external activity from this test is not yet supported.")
     public void testHandwriting_delegateFromHomePackage_fail() throws Exception {
@@ -1704,8 +1756,8 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     @RequiresFlagsEnabled(FLAG_CONNECTIONLESS_HANDWRITING)
     @ApiTest(apis = {
             "android.view.inputmethod.InputMethodManager#startConnectionlessStylusHandwriting",
-            "android.view.inputmethod.InputMethodService#onStartConnectionlessStylusHandwriting",
-            "android.view.inputmethod.InputMethodService#finishConnectionlessStylusHandwriting"})
+            "android.view.inputmethod.InputMethodManager#onStartConnectionlessStylusHandwriting",
+            "android.view.inputmethod.InputMethodManager#finishConnectionlessStylusHandwriting"})
     public void testHandwriting_connectionless_standalone() throws Exception {
         final InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
         try (MockImeSession imeSession = MockImeSession.create(
@@ -1750,8 +1802,8 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     @RequiresFlagsEnabled(FLAG_CONNECTIONLESS_HANDWRITING)
     @ApiTest(apis = {
             "android.view.inputmethod.InputMethodManager#startConnectionlessStylusHandwriting",
-            "android.view.inputmethod.InputMethodService#onStartConnectionlessStylusHandwriting",
-            "android.view.inputmethod.InputMethodService#finishConnectionlessStylusHandwriting"})
+            "android.view.inputmethod.InputMethodManager#onStartConnectionlessStylusHandwriting",
+            "android.view.inputmethod.InputMethodManager#finishConnectionlessStylusHandwriting"})
     public void testHandwriting_connectionless_standalone_error() throws Exception {
         final InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
         try (MockImeSession imeSession = MockImeSession.create(
@@ -1798,7 +1850,8 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     @RequiresFlagsEnabled(FLAG_CONNECTIONLESS_HANDWRITING)
     @ApiTest(apis = {
             "android.view.inputmethod.InputMethodManager#startConnectionlessStylusHandwriting",
-            "android.view.inputmethod.InputMethodService#onStartConnectionlessStylusHandwriting"})
+            "android.view.inputmethod.InputMethodService#onStartConnectionlessStylusHandwriting",
+            "android.view.inputmethod.InputMethodManager#finishConnectionlessStylusHandwriting"})
     public void testHandwriting_connectionless_standalone_unsupported() throws Exception {
         final InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
         try (MockImeSession imeSession = MockImeSession.create(
