@@ -16,10 +16,14 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-     package="com.android.cts.mockime">
+     package="${applicationId}">
 
     <queries>
         <package android:name="com.android.cts.spellcheckingime" />
+    </queries>
+    <queries>
+        <package android:name="com.android.cts.mockime"/>
+        <package android:name="com.android.cts.mockime2"/>
     </queries>
 
     <application android:multiArch="true"
@@ -40,7 +44,7 @@
                  android:resource="@xml/method"/>
         </service>
 
-        <provider android:authorities="com.android.cts.mockime.provider"
+        <provider android:authorities="${applicationId}.provider"
              android:name="com.android.cts.mockime.SettingsProvider"
              android:exported="true"
              android:visibleToInstantApps="true">

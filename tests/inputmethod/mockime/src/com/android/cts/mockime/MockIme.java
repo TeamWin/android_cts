@@ -110,23 +110,10 @@ public final class MockIme extends InputMethodService {
 
     private static final String TAG = "MockIme";
 
-    private static final String PACKAGE_NAME = "com.android.cts.mockime";
     private static final long DELAY_CANCELLATION_SIGNAL_MILLIS = 500;
     private ArrayList<MotionEvent> mEvents;
 
     private View mExtractView;
-
-    static ComponentName getComponentName() {
-        return new ComponentName(PACKAGE_NAME, MockIme.class.getName());
-    }
-
-    static String getImeId() {
-        return getComponentName().flattenToShortString();
-    }
-
-    static String getCommandActionName(@NonNull String eventActionName) {
-        return eventActionName + ".command";
-    }
 
     @Nullable
     private final WindowExtensions mWindowExtensions = getWindowExtensions();
@@ -933,7 +920,9 @@ public final class MockIme extends InputMethodService {
                 textView.setLayoutParams(new LayoutParams(MATCH_PARENT, WRAP_CONTENT));
                 textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
                 textView.setGravity(Gravity.CENTER);
-                textView.setText(getImeId());
+                textView.setText(
+                        new ComponentName(mMockIme.getApplicationContext().getPackageName(),
+                                MockIme.class.getName()).flattenToShortString());
                 textView.setBackgroundColor(
                         mSettings.getBackgroundColor(defaultBackgroundColor));
                 secondaryLayout.addView(textView);
