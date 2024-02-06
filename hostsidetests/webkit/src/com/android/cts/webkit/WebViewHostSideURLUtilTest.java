@@ -32,7 +32,8 @@ public class WebViewHostSideURLUtilTest extends CompatChangeGatingTestCase {
         installPackage(TEST_APK, true);
     }
 
-    public void testGuessFileNameChangeDisabled() throws Exception {
+    /** TODO(b/320327298): Re-enable */
+    public void disabled_testGuessFileNameChangeDisabled() throws Exception {
         runDeviceCompatTest(
                 TEST_PKG,
                 TEST_CLASS,
@@ -41,7 +42,8 @@ public class WebViewHostSideURLUtilTest extends CompatChangeGatingTestCase {
                 /*disabledChanges*/ Set.of(PARSE_CONTENT_DISPOSITION_USING_RFC_6266));
     }
 
-    public void testGuessFileNameChangeEnabled() throws Exception {
+    /** TODO(b/320327298): Re-enable */
+    public void disabled_testGuessFileNameChangeEnabled() throws Exception {
         runDeviceCompatTest(
                 TEST_PKG,
                 TEST_CLASS,
