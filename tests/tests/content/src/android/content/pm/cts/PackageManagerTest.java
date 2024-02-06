@@ -3465,22 +3465,57 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         SigningInfo signingInfo = new SigningInfo(/* schemeVersion= */3, List.of(signature),
                 List.of(publicKey), null);
 
-        ArchivedActivityInfo archivedActivity = new ArchivedActivityInfo("HelloWorldTitle",
-                new ComponentName(HELLO_WORLD_PACKAGE_NAME, ".MainActivity"));
-        archivedActivity.setIcon(new BitmapDrawable(/* res= */null, TEST_ICON));
-        archivedActivity.setMonochromeIcon(new BitmapDrawable(/* res= */null, TEST_ICON_MONO));
+        var wrongLabel = "HelloWorldTitle1";
+        var wrongComponent = new ComponentName(HELLO_WORLD_PACKAGE_NAME, ".MainActivity1");
 
-        ArchivedPackageInfo archivedPackage = new ArchivedPackageInfo(
-                HELLO_WORLD_PACKAGE_NAME,
-                signingInfo,
-                List.of(archivedActivity)
-        );
+        var archivedActivity = new ArchivedActivityInfo(wrongLabel, wrongComponent);
+        assertEquals("HelloWorldTitle1", archivedActivity.getLabel());
+        assertEquals(wrongComponent, archivedActivity.getComponentName());
+
+        var correctLabel = "HelloWorldTitle";
+        var correctComponent = new ComponentName(HELLO_WORLD_PACKAGE_NAME, ".MainActivity");
+        var icon = new BitmapDrawable(/* res= */null, TEST_ICON);
+        var monochromeIcon = new BitmapDrawable(/* res= */null, TEST_ICON_MONO);
+
+        archivedActivity.setLabel(correctLabel);
+        assertEquals(correctLabel, archivedActivity.getLabel());
+        archivedActivity.setComponentName(correctComponent);
+        assertEquals(correctComponent, archivedActivity.getComponentName());
+        archivedActivity.setIcon(icon);
+        assertEquals(icon, archivedActivity.getIcon());
+        archivedActivity.setMonochromeIcon(monochromeIcon);
+        assertEquals(monochromeIcon, archivedActivity.getMonochromeIcon());
+
+        var activities = List.of(archivedActivity);
+
+        var wrongPackageName = PACKAGE_NAME;
+        var wrongSigningInfo = new SigningInfo();
+        var wrongLauncherActivities = new ArrayList<ArchivedActivityInfo>();
+
+        var archivedPackage = new ArchivedPackageInfo(wrongPackageName,
+                wrongSigningInfo, wrongLauncherActivities);
+        assertEquals(wrongPackageName, archivedPackage.getPackageName());
+        assertEquals(wrongSigningInfo, archivedPackage.getSigningInfo());
+        assertEquals(wrongLauncherActivities, archivedPackage.getLauncherActivities());
+
+        archivedPackage.setPackageName(HELLO_WORLD_PACKAGE_NAME);
+        assertEquals(HELLO_WORLD_PACKAGE_NAME, archivedPackage.getPackageName());
+        archivedPackage.setSigningInfo(signingInfo);
+        assertEquals(signingInfo, archivedPackage.getSigningInfo());
+        archivedPackage.setLauncherActivities(activities);
+        assertEquals(activities, archivedPackage.getLauncherActivities());
         archivedPackage.setVersionCode(1);
+        assertEquals(1, archivedPackage.getVersionCode());
         archivedPackage.setVersionCodeMajor(0);
+        assertEquals(0, archivedPackage.getVersionCodeMajor());
         archivedPackage.setTargetSdkVersion(27);
+        assertEquals(27, archivedPackage.getTargetSdkVersion());
         archivedPackage.setDefaultToDeviceProtectedStorage(null);
+        assertNull(archivedPackage.getDefaultToDeviceProtectedStorage());
         archivedPackage.setRequestLegacyExternalStorage("true");
+        assertEquals("true", archivedPackage.getRequestLegacyExternalStorage());
         archivedPackage.setUserDataFragile("true");
+        assertEquals("true", archivedPackage.getUserDataFragile());
 
         // Install archived.
         installArchived(archivedPackage);
