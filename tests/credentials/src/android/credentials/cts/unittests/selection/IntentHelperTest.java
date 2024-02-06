@@ -50,10 +50,13 @@ import android.os.IBinder;
 import android.os.ResultReceiver;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -65,6 +68,10 @@ import java.util.List;
 @AppModeFull(reason = "unit test")
 @RunWith(AndroidJUnit4.class)
 public class IntentHelperTest {
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
     private static final IBinder TOKEN = new Binder();
     private static final String PACKAGE_NAME = "mock_package";
     private static final String KEY = "key";
@@ -97,7 +104,7 @@ public class IntentHelperTest {
                 intent);
 
         assertThat(cancelUiRequestExtracted.getRequestToken()).isEqualTo(new RequestToken(TOKEN));
-        assertThat(cancelUiRequestExtracted.getAppPackageName()).isEqualTo(PACKAGE_NAME);
+        assertThat(cancelUiRequestExtracted.getPackageName()).isEqualTo(PACKAGE_NAME);
         assertThat(cancelUiRequestExtracted.shouldShowCancellationExplanation())
                 .isEqualTo(shouldShowCancellationUi);
     }
@@ -125,7 +132,7 @@ public class IntentHelperTest {
         RequestInfo requestInfoExtracted = IntentHelper.extractRequestInfo(intent);
 
         assertThat(requestInfoExtracted.getRequestToken()).isEqualTo(new RequestToken(TOKEN));
-        assertThat(requestInfo.getAppPackageName()).isEqualTo(PACKAGE_NAME);
+        assertThat(requestInfo.getPackageName()).isEqualTo(PACKAGE_NAME);
         assertThat(requestInfo.getType()).isEqualTo(RequestInfo.TYPE_CREATE);
         assertThat(requestInfo.getDefaultProviderIds()).containsExactlyElementsIn(
                 defaultProviderIds).inOrder();
@@ -153,7 +160,7 @@ public class IntentHelperTest {
         RequestInfo requestInfoExtracted = IntentHelper.extractRequestInfo(intent);
 
         assertThat(requestInfoExtracted.getRequestToken()).isEqualTo(new RequestToken(token));
-        assertThat(requestInfo.getAppPackageName()).isEqualTo("package");
+        assertThat(requestInfo.getPackageName()).isEqualTo("package");
         assertThat(requestInfo.getType()).isEqualTo(RequestInfo.TYPE_GET);
         assertThat(requestInfo.getDefaultProviderIds()).isEmpty();
         assertThat(requestInfo.hasPermissionToOverrideDefault()).isFalse();

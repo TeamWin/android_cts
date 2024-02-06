@@ -20,44 +20,53 @@ import static android.credentials.flags.Flags.FLAG_CONFIGURABLE_SELECTOR_UI_ENAB
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.credentials.selection.FailureResult;
+import android.credentials.selection.RequestToken;
+import android.os.Binder;
+import android.os.IBinder;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SmallTest;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-@Presubmit
+@SmallTest
 @AppModeFull(reason = "unit test")
 @RunWith(AndroidJUnit4.class)
-public class FailureResultTest {
+public class RequestTokenTest {
 
     @Rule
     public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
+    private static final IBinder TOKEN1 = new Binder();
+    private static final IBinder TOKEN2 = new Binder();
+
     @Test
     @RequiresFlagsEnabled(FLAG_CONFIGURABLE_SELECTOR_UI_ENABLED)
-    public void construction_success() {
-        final String expectedErrorMessage = "msg";
-
-        final FailureResult obj = new FailureResult(
-                FailureResult.ERROR_CODE_DIALOG_CANCELED_BY_USER, expectedErrorMessage);
-
-        assertThat(obj.getErrorCode()).isEqualTo(FailureResult.ERROR_CODE_DIALOG_CANCELED_BY_USER);
-        assertThat(obj.getErrorMessage()).isEqualTo(expectedErrorMessage);
+    public void testConstructor() {
+        RequestToken requestToken = new RequestToken(TOKEN1);
     }
 
     @Test
     @RequiresFlagsEnabled(FLAG_CONFIGURABLE_SELECTOR_UI_ENABLED)
-    public void errorCodes() {
-        assertThat(FailureResult.ERROR_CODE_UI_FAILURE).isEqualTo(0);
-        assertThat(FailureResult.ERROR_CODE_DIALOG_CANCELED_BY_USER).isEqualTo(1);
-        assertThat(FailureResult.ERROR_CODE_CANCELED_AND_LAUNCHED_SETTINGS).isEqualTo(2);
+    public void testEquals() {
+        RequestToken requestToken1 = new RequestToken(TOKEN1);
+        RequestToken requestToken2 = new RequestToken(TOKEN1);
+
+        assertThat(requestToken1).isEqualTo(requestToken2);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_CONFIGURABLE_SELECTOR_UI_ENABLED)
+    public void testNotEquals() {
+        RequestToken requestToken1 = new RequestToken(TOKEN1);
+        RequestToken requestToken2 = new RequestToken(TOKEN2);
+
+        assertThat(requestToken1).isNotEqualTo(requestToken2);
     }
 }
