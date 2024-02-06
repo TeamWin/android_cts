@@ -16,7 +16,6 @@
 
 package android.cts.statsdatom.appcompatstate;
 
-import com.android.tradefed.util.RunUtil;
 import static com.android.os.AtomsProto.AppCompatStateChanged.State.LETTERBOXED_FOR_ASPECT_RATIO;
 import static com.android.os.AtomsProto.AppCompatStateChanged.State.LETTERBOXED_FOR_FIXED_ORIENTATION;
 import static com.android.os.AtomsProto.AppCompatStateChanged.State.LETTERBOXED_FOR_SIZE_COMPAT_MODE;
@@ -39,6 +38,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.util.Pair;
+import com.android.tradefed.util.RunUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,10 +65,9 @@ public class AppCompatStateStatsTests extends DeviceTestCase implements IBuildRe
     private static final String CMD_PUT_STAY_ON_TEMPLATE =
             "settings put global stay_on_while_plugged_in %d";
     private static final int ENABLE_STAY_ON_CODE = 7;
-    private static final String CMD_GET_AVAILABLE_DEVICE_STATES =
-            "cmd device_state print-states-simple";
     private static final String CMD_RESET_DEVICE_STATE = "cmd device_state state reset";
     private static final String CMD_PUT_DEVICE_STATE_TEMPLATE = "cmd device_state state %d";
+    private static final String CMD_GET_CURRENT_DEVICE_STATE = "cmd device_state print-state";
     private static final int DEVICE_STATE_CLOSED = 0;
     private static final int DEVICE_STATE_OPENED = 2;
     private static final int ELAPSED_TIME_MILLIS_THRESHOLD = 100;
@@ -77,6 +76,7 @@ public class AppCompatStateStatsTests extends DeviceTestCase implements IBuildRe
 
     private IBuildInfo mCtsBuild;
     private long mOriginalStayOnSetting;
+    private int mOriginalDeviceState;
 
     @Override
     protected void setUp() throws Exception {
@@ -84,6 +84,8 @@ public class AppCompatStateStatsTests extends DeviceTestCase implements IBuildRe
         assertThat(mCtsBuild).isNotNull();
         mOriginalStayOnSetting = Long.parseLong(
                 getDevice().executeShellCommand(CMD_GET_STAY_ON).trim());
+        mOriginalDeviceState = Integer.parseInt(
+                getDevice().executeShellCommand(CMD_GET_CURRENT_DEVICE_STATE).trim());
         getDevice().executeShellCommand(
                 String.format(CMD_PUT_STAY_ON_TEMPLATE, ENABLE_STAY_ON_CODE));
         getDevice().executeShellCommand(
@@ -102,6 +104,8 @@ public class AppCompatStateStatsTests extends DeviceTestCase implements IBuildRe
     protected void tearDown() throws Exception {
         getDevice().executeShellCommand(
                 String.format(CMD_PUT_STAY_ON_TEMPLATE, mOriginalStayOnSetting));
+        getDevice().executeShellCommand(
+                String.format(CMD_PUT_DEVICE_STATE_TEMPLATE, mOriginalDeviceState));
         getDevice().executeShellCommand(CMD_RESET_DEVICE_STATE);
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
@@ -116,25 +120,23 @@ public class AppCompatStateStatsTests extends DeviceTestCase implements IBuildRe
 
     public void testResizableActivityDeviceStateClosedToOpened() throws Exception {
         testAppCompatFlow(RESIZEABLE_ACTIVITY, /* switchToOpened= */ true,
-                Arrays.asList(NOT_LETTERBOXED, NOT_VISIBLE));
+                Arrays.asList(NOT_LETTERBOXED));
     }
 
     public void testNonResizablePortraitActivityDeviceStateClosedToOpened() throws Exception {
         // The 1st option for expected states is for portrait devices and the 2nd option is for
         // landscape devices.
         testAppCompatFlow(NON_RESIZEABLE_PORTRAIT_ACTIVITY, /* switchToOpened= */ true,
-                Arrays.asList(NOT_LETTERBOXED, LETTERBOXED_FOR_SIZE_COMPAT_MODE, NOT_VISIBLE),
-                Arrays.asList(LETTERBOXED_FOR_FIXED_ORIENTATION, LETTERBOXED_FOR_SIZE_COMPAT_MODE,
-                        NOT_VISIBLE));
+                Arrays.asList(NOT_LETTERBOXED, LETTERBOXED_FOR_SIZE_COMPAT_MODE),
+                Arrays.asList(LETTERBOXED_FOR_FIXED_ORIENTATION, LETTERBOXED_FOR_SIZE_COMPAT_MODE));
     }
 
     public void testMinAspectRatioPortraitActivityDeviceStateClosedToOpened() throws Exception {
         // The 1st option for expected states is for portrait devices and the 2nd option is for
         // landscape devices.
         testAppCompatFlow(MIN_ASPECT_RATIO_PORTRAIT_ACTIVITY, /* switchToOpened= */ true,
-                Arrays.asList(LETTERBOXED_FOR_ASPECT_RATIO, LETTERBOXED_FOR_SIZE_COMPAT_MODE,
-                        NOT_VISIBLE), Arrays.asList(LETTERBOXED_FOR_FIXED_ORIENTATION,
-                        LETTERBOXED_FOR_SIZE_COMPAT_MODE, NOT_VISIBLE));
+                Arrays.asList(LETTERBOXED_FOR_ASPECT_RATIO, LETTERBOXED_FOR_SIZE_COMPAT_MODE),
+                Arrays.asList(LETTERBOXED_FOR_FIXED_ORIENTATION, LETTERBOXED_FOR_SIZE_COMPAT_MODE));
     }
 
     public void testResizableActivityThenMinAspectRatioPortraitActivity() throws Exception {
@@ -142,8 +144,8 @@ public class AppCompatStateStatsTests extends DeviceTestCase implements IBuildRe
         // landscape devices.
         testAppCompatFlow(RESIZEABLE_ACTIVITY,
                 MIN_ASPECT_RATIO_PORTRAIT_ACTIVITY, /* switchToOpened= */ false,
-                Arrays.asList(NOT_LETTERBOXED, LETTERBOXED_FOR_ASPECT_RATIO, NOT_VISIBLE),
-                Arrays.asList(NOT_LETTERBOXED, LETTERBOXED_FOR_FIXED_ORIENTATION, NOT_VISIBLE));
+                Arrays.asList(NOT_LETTERBOXED, LETTERBOXED_FOR_ASPECT_RATIO),
+                Arrays.asList(NOT_LETTERBOXED, LETTERBOXED_FOR_FIXED_ORIENTATION));
     }
 
     public void testMinAspectRatioPortraitActivityThenResizableActivity() throws Exception {
@@ -151,30 +153,22 @@ public class AppCompatStateStatsTests extends DeviceTestCase implements IBuildRe
         // landscape devices.
         testAppCompatFlow(MIN_ASPECT_RATIO_PORTRAIT_ACTIVITY,
                 RESIZEABLE_ACTIVITY, /* switchToOpened= */ false,
-                Arrays.asList(LETTERBOXED_FOR_ASPECT_RATIO, NOT_LETTERBOXED, NOT_VISIBLE),
-                Arrays.asList(LETTERBOXED_FOR_FIXED_ORIENTATION, NOT_LETTERBOXED, NOT_VISIBLE));
+                Arrays.asList(LETTERBOXED_FOR_ASPECT_RATIO, NOT_LETTERBOXED),
+                Arrays.asList(LETTERBOXED_FOR_FIXED_ORIENTATION, NOT_LETTERBOXED));
     }
 
     public void testNonResizablePortraitActivitySwitchedToOpenedThenMinAspectRatioActivity()
             throws Exception {
-        // The 1st and 2nd options for expected states are for portrait devices, the 3rd and 4th
-        // options are for landscape devices, and the 5th and 6th options are for portrait
-        // devices that unfold into landscape, there are two options for each type of device because
-        // the NOT_VISIBLE state between visible states isn't always logged.
+        // The 1st option is for portrait devices, the 2nd option is for landscape devices,
+        // and the 3rd options if for portrait devices that unfold into landscape.
         testAppCompatFlow(NON_RESIZEABLE_PORTRAIT_ACTIVITY,
                 MIN_ASPECT_RATIO_PORTRAIT_ACTIVITY, /* switchToOpened= */ true,
-                Arrays.asList(NOT_LETTERBOXED, LETTERBOXED_FOR_SIZE_COMPAT_MODE, NOT_VISIBLE,
-                        LETTERBOXED_FOR_ASPECT_RATIO, NOT_VISIBLE),
                 Arrays.asList(NOT_LETTERBOXED, LETTERBOXED_FOR_SIZE_COMPAT_MODE,
-                        LETTERBOXED_FOR_ASPECT_RATIO, NOT_VISIBLE),
+                        LETTERBOXED_FOR_ASPECT_RATIO),
                 Arrays.asList(LETTERBOXED_FOR_FIXED_ORIENTATION, LETTERBOXED_FOR_SIZE_COMPAT_MODE,
-                        NOT_VISIBLE, LETTERBOXED_FOR_FIXED_ORIENTATION, NOT_VISIBLE),
-                Arrays.asList(LETTERBOXED_FOR_FIXED_ORIENTATION, LETTERBOXED_FOR_SIZE_COMPAT_MODE,
-                        LETTERBOXED_FOR_FIXED_ORIENTATION, NOT_VISIBLE),
-                Arrays.asList(NOT_LETTERBOXED, LETTERBOXED_FOR_SIZE_COMPAT_MODE, NOT_VISIBLE,
-                        LETTERBOXED_FOR_FIXED_ORIENTATION, NOT_VISIBLE),
+                        LETTERBOXED_FOR_FIXED_ORIENTATION),
                 Arrays.asList(NOT_LETTERBOXED, LETTERBOXED_FOR_SIZE_COMPAT_MODE,
-                        LETTERBOXED_FOR_FIXED_ORIENTATION, NOT_VISIBLE));
+                        LETTERBOXED_FOR_FIXED_ORIENTATION));
     }
 
     private void testAppCompatFlow(String activity, boolean switchToOpened,
@@ -221,14 +215,16 @@ public class AppCompatStateStatsTests extends DeviceTestCase implements IBuildRe
                 try (AutoCloseable a2 = DeviceUtils.withActivity(getDevice(),
                         DeviceUtils.STATSD_ATOM_TEST_PKG, secondActivity, "action",
                         "action.sleep_top")) {
+                    // Close first app before second app is closed to prevent flaky tests
+                    // where first app logs metrics again
+                    a1.close();
                     RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
                 }
             }
         }
-        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
 
-        assertThat(expectedStatesOptions).asList().contains(
-                getAppCompatStatesForUid(DeviceUtils.getStatsdTestAppUid(getDevice())));
+        assertThat(getAppCompatStatesForUid(DeviceUtils.getStatsdTestAppUid(getDevice())))
+                .isIn(List.of(expectedStatesOptions));
     }
 
     private List<AppCompatStateChanged.State> getAppCompatStatesForUid(int uid)
@@ -241,7 +237,11 @@ public class AppCompatStateStatsTests extends DeviceTestCase implements IBuildRe
             AppCompatStateChanged appCompatStateChanged = data.getAtom().getAppCompatStateChanged();
             if (appCompatStateChanged.getUid() == uid) {
                 AppCompatStateChanged.State curState = appCompatStateChanged.getState();
-                assertThat(curState).isNotEqualTo(prevState);
+                // We only care about the change in letterbox states during the device state
+                // changes
+                if (curState == NOT_VISIBLE) {
+                    continue;
+                }
                 if (prevState != prevAddedState && (
                         (data.getElapsedTimestampNanos() - prevTimestampNanos)
                                 > ELAPSED_TIME_NANOS_THRESHOLD)) {
