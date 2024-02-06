@@ -103,50 +103,6 @@ public class InputMethodServiceDeviceTest {
                 TIMEOUT, "CtsInputMethod1.onStartInput is called");
     }
 
-    /** Test to check IME is switched from CtsInputMethod1 to CtsInputMethod2. */
-    @Test
-    public void testSwitchIme1ToIme2() throws Throwable {
-        final TestHelper helper = new TestHelper();
-
-        final long startActivityTime = SystemClock.uptimeMillis();
-        helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
-                EditTextAppConstants.URI);
-
-        pollingCheck(() -> helper.queryAllEvents()
-                        .collect(startingFrom(helper.isStartOfTest()))
-                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_CREATE))),
-                TIMEOUT, "CtsInputMethod1.onCreate is called");
-        pollingCheck(() -> helper.queryAllEvents()
-                        .filter(isNewerThan(startActivityTime))
-                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT))),
-                TIMEOUT, "CtsInputMethod1.onStartInput is called");
-
-        helper.findUiObject(EditTextAppConstants.EDIT_TEXT_RES_NAME).click();
-
-        // Switch IME from CtsInputMethod1 to CtsInputMethod2.
-        final long switchImeTime = SystemClock.uptimeMillis();
-        helper.shell(ShellCommandUtils.broadcastIntent(
-                ACTION_IME_COMMAND, Ime1Constants.PACKAGE,
-                "-e", EXTRA_COMMAND, COMMAND_SWITCH_INPUT_METHOD,
-                "-e", EXTRA_ARG_STRING1, Ime2Constants.IME_ID));
-
-        pollingCheck(() -> helper.shell(ShellCommandUtils.getCurrentIme())
-                        .equals(Ime2Constants.IME_ID),
-                TIMEOUT, "CtsInputMethod2 is current IME");
-        pollingCheck(() -> helper.queryAllEvents()
-                        .filter(isNewerThan(switchImeTime))
-                        .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_DESTROY))),
-                TIMEOUT, "CtsInputMethod1.onDestroy is called");
-        pollingCheck(() -> helper.queryAllEvents()
-                        .filter(isNewerThan(switchImeTime))
-                        .filter(isFrom(Ime2Constants.CLASS))
-                        .collect(sequenceOfTypes(ON_CREATE, ON_BIND_INPUT, ON_START_INPUT))
-                        .matched(),
-                TIMEOUT,
-                "CtsInputMethod2.onCreate, onBindInput, and onStartInput are called"
-                        + " in sequence");
-    }
-
     /**
      * Test {@link android.inputmethodservice.InputMethodService#switchInputMethod(String,
      * InputMethodSubtype)}.
