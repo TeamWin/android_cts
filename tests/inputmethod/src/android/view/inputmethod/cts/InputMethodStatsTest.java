@@ -31,6 +31,7 @@ import android.app.Instrumentation;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController.OnControllableInsetsChangedListener;
+import android.view.WindowManager;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.MetricsRecorder;
 import android.view.inputmethod.cts.util.TestActivity;
@@ -39,6 +40,7 @@ import android.view.inputmethod.nano.ImeProtoEnums;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -89,11 +91,28 @@ public class InputMethodStatsTest extends EndToEndImeTestBase {
         mPkgName = "";
     }
 
-    private TestActivity createTestActivity(final int windowFlags) {
-        return TestActivity.startSync(activity -> createLayout(windowFlags, activity));
+    /**
+     * Creates and launches a test activity.
+     *
+     * @param mode the {@link WindowManager.LayoutParams#softInputMode softInputMode} for the
+     *             activity.
+     *
+     * @return the created activity.
+     */
+    private TestActivity createTestActivity(final int mode) {
+        return TestActivity.startSync(activity -> createLayout(mode, activity));
     }
 
-    private LinearLayout createLayout(final int windowFlags, final Activity activity) {
+    /**
+     * Creates a linear layout with one EditText.
+     *
+     * @param mode     the {@link WindowManager.LayoutParams#softInputMode softInputMode} for the
+     *                 activity.
+     * @param activity the activity to create the layout for.
+     *
+     * @return the created layout.
+     */
+    private LinearLayout createLayout(final int mode, final Activity activity) {
         final var layout = new LinearLayout(activity);
         layout.setOrientation(LinearLayout.VERTICAL);
 
@@ -101,7 +120,7 @@ public class InputMethodStatsTest extends EndToEndImeTestBase {
         editText.setText("Editable");
         layout.addView(editText);
         editText.requestFocus();
-        activity.getWindow().setSoftInputMode(windowFlags);
+        activity.getWindow().setSoftInputMode(mode);
         return layout;
     }
 
@@ -109,16 +128,16 @@ public class InputMethodStatsTest extends EndToEndImeTestBase {
      * Waits for the given inset type to be controllable on the given activity's
      * {@link android.view.WindowInsetsController}.
      *
-     * @implNote
-     * This is used to avoid the case where {@link android.view.InsetsController#show(int)}
+     * @param type     the inset type waiting to be controllable.
+     * @param activity the activity whose Window Insets Controller to wait on.
+     *
+     * @implNote This is used to avoid the case where
+     * {@link android.view.InsetsController#show(int)}
      * is called before IME insets control is available, starting a more complex flow which is
      * currently harder to track with the {@link com.android.server.inputmethod.ImeTrackerService}
      * system.
      *
      * TODO(b/263069667): Remove this method when the ImeInsetsSourceConsumer show flow is fixed.
-     *
-     * @param type the inset type waiting to be controllable.
-     * @param activity the activity whose Window Insets Controller to wait on.
      */
     private void awaitControl(final int type, final Activity activity) {
         final var latch = new CountDownLatch(1);
@@ -151,72 +170,18 @@ public class InputMethodStatsTest extends EndToEndImeTestBase {
      */
     @Test
     public void testClientShowImeRequestFinished() throws Throwable {
-        // Create mockImeSession to decouple from real IMEs,
-        // and enable calling expectImeVisible.
-        try (var imeSession = MockImeSession.create(
-                mInstrumentation.getContext(),
-                mInstrumentation.getUiAutomation(),
-                new ImeSettings.Builder())) {
-            // Wait for any outstanding IME requests to finish, to not interfere with test.
-            PollingCheck.waitFor(() -> !imeSession.hasPendingImeVisibilityRequests(),
-                    "Test Setup Failed: There should be no pending IME requests present when the "
-                            + "test starts.");
+        verifyLogging(true /* show */, ImeProtoEnums.ORIGIN_CLIENT_SHOW_SOFT_INPUT,
+                (imeSession, activity) -> {
+                    awaitControl(WindowInsets.Type.ime(), activity);
+                    expectImeInvisible(TIMEOUT);
 
-            MetricsRecorder.uploadConfigForPushedAtomWithUid(mPkgName,
-                    AtomsProto.Atom.IME_REQUEST_FINISHED_FIELD_NUMBER,
-                    false /* useUidAttributionChain */);
+                    TestUtils.runOnMainSync(() -> activity.getWindow()
+                            .getDecorView()
+                            .getWindowInsetsController()
+                            .show(WindowInsets.Type.ime()));
 
-            final var activity = createTestActivity(SOFT_INPUT_STATE_UNCHANGED);
-            awaitControl(WindowInsets.Type.ime(), activity);
-            expectImeInvisible(TIMEOUT);
-
-            TestUtils.runOnMainSync(() -> activity.getWindow()
-                    .getDecorView()
-                    .getWindowInsetsController()
-                    .show(WindowInsets.Type.ime()));
-
-            expectImeVisible(TIMEOUT);
-            // Wait for any outstanding IME requests to finish, to capture all atoms successfully.
-            PollingCheck.waitFor(() -> !imeSession.hasPendingImeVisibilityRequests(),
-                    "Test Error: Pending IME requests took too long, likely timing out.");
-
-            final var data = MetricsRecorder.getEventMetricDataList();
-            assertWithMessage("Number of atoms logged")
-                    .that(data.size())
-                    .isAtLeast(1);
-
-            try {
-                int successfulAtoms = 0;
-                for (int i = 0; i < data.size(); i++) {
-                    final var atom = data.get(i).atom;
-                    assertThat(atom).isNotNull();
-
-                    final var imeRequestFinished = atom.getImeRequestFinished();
-                    assertThat(imeRequestFinished).isNotNull();
-
-                    // Skip cancelled requests.
-                    if (imeRequestFinished.status == ImeProtoEnums.STATUS_CANCEL) continue;
-
-                    successfulAtoms++;
-
-                    assertWithMessage("Ime Request type")
-                            .that(imeRequestFinished.type)
-                            .isEqualTo(ImeProtoEnums.TYPE_SHOW);
-                    assertWithMessage("Ime Request status")
-                            .that(imeRequestFinished.status)
-                            .isEqualTo(ImeProtoEnums.STATUS_SUCCESS);
-                    assertWithMessage("Ime Request origin")
-                            .that(imeRequestFinished.origin)
-                            .isEqualTo(ImeProtoEnums.ORIGIN_CLIENT_SHOW_SOFT_INPUT);
-                }
-
-                assertWithMessage("Number of successful atoms logged")
-                        .that(successfulAtoms)
-                        .isAtLeast(1);
-            } catch (AssertionError e) {
-                throw new AssertionError(e.getMessage() + "\natoms data:\n" + data, e);
-            }
-        }
+                    expectImeVisible(TIMEOUT);
+                });
     }
 
     /**
@@ -224,85 +189,15 @@ public class InputMethodStatsTest extends EndToEndImeTestBase {
      */
     @Test
     public void testClientHideImeRequestFinished() throws Exception {
-        // Create mockImeSession to decouple from real IMEs,
-        // and enable calling expectImeVisible and expectImeInvisible.
-        try (var imeSession = MockImeSession.create(
-                mInstrumentation.getContext(),
-                mInstrumentation.getUiAutomation(),
-                new ImeSettings.Builder())) {
-            // Wait for any outstanding IME requests to finish, to not interfere with test.
-            PollingCheck.waitFor(() -> !imeSession.hasPendingImeVisibilityRequests(),
-                    "Test Setup Failed: There should be no pending IME requests present when the "
-                            + "test starts.");
+        verifyLogging(false /* show */, ImeProtoEnums.ORIGIN_CLIENT_HIDE_SOFT_INPUT,
+                (imeSession, activity) -> {
+                    TestUtils.runOnMainSync(() -> activity.getWindow()
+                            .getDecorView()
+                            .getWindowInsetsController()
+                            .hide(WindowInsets.Type.ime()));
 
-            MetricsRecorder.uploadConfigForPushedAtomWithUid(mPkgName,
-                    AtomsProto.Atom.IME_REQUEST_FINISHED_FIELD_NUMBER,
-                    false /* useUidAttributionChain */);
-
-            final var activity = createTestActivity(SOFT_INPUT_STATE_UNCHANGED);
-            awaitControl(WindowInsets.Type.ime(), activity);
-            expectImeInvisible(TIMEOUT);
-
-            TestUtils.runOnMainSync(() -> activity.getWindow()
-                    .getDecorView()
-                    .getWindowInsetsController()
-                    .show(WindowInsets.Type.ime()));
-
-            expectImeVisible(TIMEOUT);
-            // Wait for any outstanding IME requests to finish, to capture all atoms successfully.
-            PollingCheck.waitFor(() -> !imeSession.hasPendingImeVisibilityRequests(),
-                    "Test Error: Pending IME requests took too long, likely timing out.");
-
-            // Remove logs for the show requests.
-            MetricsRecorder.clearReports();
-
-            TestUtils.runOnMainSync(() -> activity.getWindow()
-                    .getDecorView()
-                    .getWindowInsetsController()
-                    .hide(WindowInsets.Type.ime()));
-
-            expectImeInvisible(TIMEOUT);
-            // Wait for any outstanding IME requests to finish, to capture all atoms successfully.
-            PollingCheck.waitFor(() -> !imeSession.hasPendingImeVisibilityRequests(),
-                    "Test Error: Pending IME requests took too long, likely timing out.");
-
-            final var data = MetricsRecorder.getEventMetricDataList();
-            assertWithMessage("Number of atoms logged")
-                    .that(data.size())
-                    .isAtLeast(1);
-
-            try {
-                int successfulAtoms = 0;
-                for (int i = 0; i < data.size(); i++) {
-                    final var atom = data.get(i).atom;
-                    assertThat(atom).isNotNull();
-
-                    final var imeRequestFinished = atom.getImeRequestFinished();
-                    assertThat(imeRequestFinished).isNotNull();
-
-                    // Skip cancelled requests.
-                    if (imeRequestFinished.status == ImeProtoEnums.STATUS_CANCEL) continue;
-
-                    successfulAtoms++;
-
-                    assertWithMessage("Ime Request type")
-                            .that(imeRequestFinished.type)
-                            .isEqualTo(ImeProtoEnums.TYPE_HIDE);
-                    assertWithMessage("Ime Request status")
-                            .that(imeRequestFinished.status)
-                            .isEqualTo(ImeProtoEnums.STATUS_SUCCESS);
-                    assertWithMessage("Ime Request origin")
-                            .that(imeRequestFinished.origin)
-                            .isEqualTo(ImeProtoEnums.ORIGIN_CLIENT_HIDE_SOFT_INPUT);
-                }
-
-                assertWithMessage("Number of successful atoms logged")
-                        .that(successfulAtoms)
-                        .isAtLeast(1);
-            } catch (AssertionError e) {
-                throw new AssertionError(e.getMessage() + "\natoms data:\n" + data, e);
-            }
-        }
+                    expectImeInvisible(TIMEOUT);
+                });
     }
 
     /**
@@ -310,6 +205,38 @@ public class InputMethodStatsTest extends EndToEndImeTestBase {
      */
     @Test
     public void testServerShowImeRequestFinished() throws Exception {
+        verifyLogging(true /* show */, ImeProtoEnums.ORIGIN_SERVER_START_INPUT,
+                (imeSession, activity) -> {
+                    createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+                    expectImeVisible(TIMEOUT);
+                });
+    }
+
+    /**
+     * Test the logging for a server hide IME request.
+     */
+    @Test
+    public void testServerHideImeRequestFinished() throws Exception {
+        verifyLogging(false /* show */, ImeProtoEnums.ORIGIN_SERVER_HIDE_INPUT,
+                (imeSession, activity) -> {
+                    // TODO: this is not actually an IME hide request from the server,
+                    //  but in the current configuration it is tracked like one.
+                    //  Will likely change in the future.
+                    imeSession.callRequestHideSelf(0 /* flags */);
+
+                    expectImeInvisible(TIMEOUT);
+                });
+    }
+
+    /**
+     * Verifies the logged atom events for the given test runnable and expected values.
+     *
+     * @param show     whether this is testing a show request (starts with IME hidden),
+     *                 or hide request (starts with IME shown).
+     * @param origin   the expected IME request origin.
+     * @param runnable the runnable with the test code to execute.
+     */
+    private void verifyLogging(boolean show, int origin, TestRunnable runnable) throws Exception {
         // Create mockImeSession to decouple from real IMEs,
         // and enable calling expectImeVisible and expectImeInvisible.
         try (var imeSession = MockImeSession.create(
@@ -325,18 +252,36 @@ public class InputMethodStatsTest extends EndToEndImeTestBase {
                     AtomsProto.Atom.IME_REQUEST_FINISHED_FIELD_NUMBER,
                     false /* useUidAttributionChain */);
 
-            createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            final TestActivity activity;
+            if (show) {
+                // Use STATE_UNCHANGED to not trigger any other IME requests.
+                activity = createTestActivity(SOFT_INPUT_STATE_UNCHANGED);
+            } else {
+                // If running a hide test, start with the IME showing already.
+                activity = createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+                expectImeVisible(TIMEOUT);
+                // Wait for any outstanding IME requests to finish, to capture all atoms.
+                PollingCheck.waitFor(() -> !imeSession.hasPendingImeVisibilityRequests(),
+                        "Test Error: Pending IME requests took too long, likely timing out.");
 
-            expectImeVisible(TIMEOUT);
-            // Wait for any outstanding IME requests to finish, to capture all atoms successfully.
+                // Remove logs for the show requests.
+                MetricsRecorder.clearReports();
+            }
+
+            // Run the given test.
+            runnable.run(imeSession, activity);
+
+            // Wait for any outstanding IME requests to finish, to capture all atoms.
             PollingCheck.waitFor(() -> !imeSession.hasPendingImeVisibilityRequests(),
                     "Test Error: Pending IME requests took too long, likely timing out.");
 
+            // Must have at least one atom received.
             final var data = MetricsRecorder.getEventMetricDataList();
             assertWithMessage("Number of atoms logged")
                     .that(data.size())
                     .isAtLeast(1);
 
+            // Check received atom data.
             try {
                 int successfulAtoms = 0;
                 for (int i = 0; i < data.size(); i++) {
@@ -353,15 +298,16 @@ public class InputMethodStatsTest extends EndToEndImeTestBase {
 
                     assertWithMessage("Ime Request type")
                             .that(imeRequestFinished.type)
-                            .isEqualTo(ImeProtoEnums.TYPE_SHOW);
+                            .isEqualTo(show ? ImeProtoEnums.TYPE_SHOW : ImeProtoEnums.TYPE_HIDE);
                     assertWithMessage("Ime Request status")
                             .that(imeRequestFinished.status)
                             .isEqualTo(ImeProtoEnums.STATUS_SUCCESS);
                     assertWithMessage("Ime Request origin")
                             .that(imeRequestFinished.origin)
-                            .isEqualTo(ImeProtoEnums.ORIGIN_SERVER_START_INPUT);
+                            .isEqualTo(origin);
                 }
 
+                // Must have at least one successful request received.
                 assertWithMessage("Number of successful atoms logged")
                         .that(successfulAtoms)
                         .isAtLeast(1);
@@ -371,81 +317,15 @@ public class InputMethodStatsTest extends EndToEndImeTestBase {
         }
     }
 
-    /**
-     * Test the logging for a server hide IME request.
-     */
-    @Test
-    public void testServerHideImeRequestFinished() throws Exception {
-        // Create mockImeSession to decouple from real IMEs,
-        // and enable calling expectImeVisible and expectImeInvisible.
-        try (var imeSession = MockImeSession.create(
-                mInstrumentation.getContext(),
-                mInstrumentation.getUiAutomation(),
-                new ImeSettings.Builder())) {
-            // Wait for any outstanding IME requests to finish, to not interfere with test.
-            PollingCheck.waitFor(() -> !imeSession.hasPendingImeVisibilityRequests(),
-                    "Test Setup Failed: There should be no pending IME requests present when the "
-                            + "test starts.");
+    /** Interface for the test code to be ran. */
+    private interface TestRunnable {
 
-            MetricsRecorder.uploadConfigForPushedAtomWithUid(mPkgName,
-                    AtomsProto.Atom.IME_REQUEST_FINISHED_FIELD_NUMBER,
-                    false /* useUidAttributionChain */);
-
-            createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-            expectImeVisible(TIMEOUT);
-            // Wait for any outstanding IME requests to finish, to capture all atoms successfully.
-            PollingCheck.waitFor(() -> !imeSession.hasPendingImeVisibilityRequests(),
-                    "Test Error: Pending IME requests took too long, likely timing out.");
-
-            // Remove logs for the show requests.
-            MetricsRecorder.clearReports();
-
-            // TODO: this is not actually an IME hide request from the server,
-            //  but in the current configuration it is tracked like one.
-            //  Will likely change in the future.
-            imeSession.callRequestHideSelf(0 /* flags */);
-
-            expectImeInvisible(TIMEOUT);
-            // Wait for any outstanding IME requests to finish, to capture all atoms successfully.
-            PollingCheck.waitFor(() -> !imeSession.hasPendingImeVisibilityRequests(),
-                    "Test Error: Pending IME requests took too long, likely timing out.");
-
-            final var data = MetricsRecorder.getEventMetricDataList();
-            assertWithMessage("Number of atoms logged")
-                    .that(data.size())
-                    .isAtLeast(1);
-
-            try {
-                int successfulAtoms = 0;
-                for (int i = 0; i < data.size(); i++) {
-                    final var atom = data.get(i).atom;
-                    assertThat(atom).isNotNull();
-
-                    final var imeRequestFinished = atom.getImeRequestFinished();
-                    assertThat(imeRequestFinished).isNotNull();
-
-                    // Skip cancelled requests.
-                    if (imeRequestFinished.status == ImeProtoEnums.STATUS_CANCEL) continue;
-
-                    successfulAtoms++;
-
-                    assertWithMessage("Ime Request type")
-                            .that(imeRequestFinished.type)
-                            .isEqualTo(ImeProtoEnums.TYPE_HIDE);
-                    assertWithMessage("Ime Request status")
-                            .that(imeRequestFinished.status)
-                            .isEqualTo(ImeProtoEnums.STATUS_SUCCESS);
-                    assertWithMessage("Ime Request origin")
-                            .that(imeRequestFinished.origin)
-                            .isEqualTo(ImeProtoEnums.ORIGIN_SERVER_HIDE_INPUT);
-                }
-
-                assertWithMessage("Number of successful atoms logged")
-                        .that(successfulAtoms)
-                        .isAtLeast(1);
-            } catch (AssertionError e) {
-                throw new AssertionError(e.getMessage() + "\natoms data:\n" + data, e);
-            }
-        }
+        /**
+         * Execute the given test code given the ime session and activity.
+         *
+         * @param imeSession the initialized mock ime session.
+         * @param activity   the initialized test activity.
+         */
+        void run(@NonNull MockImeSession imeSession, @NonNull TestActivity activity);
     }
 }
