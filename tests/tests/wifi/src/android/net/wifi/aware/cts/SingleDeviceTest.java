@@ -77,6 +77,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.modules.utils.build.SdkLevel;
 import com.android.wifi.flags.Flags;
 
 import java.util.ArrayDeque;
@@ -435,6 +436,9 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         @Override
         public void onServiceDiscovered(ServiceDiscoveryInfo info) {
             super.onServiceDiscovered(info);
+            if (isVendorDataSupported()) {
+                assertNotNull(info.getVendorData());
+            }
             processCallback(ON_SERVICE_DISCOVERED);
         }
 
@@ -1191,10 +1195,8 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         });
     }
 
-    private boolean isVendorDataSupported() {
-        return Flags.vendorParcelableParameters()
-                && (ApiLevelUtil.codenameEquals("VanillaIceCream")
-                || ApiLevelUtil.isAtLeast(Build.VERSION_CODES.VANILLA_ICE_CREAM));
+    private static boolean isVendorDataSupported() {
+        return SdkLevel.isAtLeastV() && Flags.vendorParcelableParameters();
     }
 
     private static OuiKeyedData generateOuiKeyedData(int oui) {
