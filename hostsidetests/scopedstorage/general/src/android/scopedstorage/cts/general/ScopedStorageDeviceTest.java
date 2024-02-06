@@ -1854,13 +1854,17 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             assertCantRenameDirectory(downloadDir, new File(dcimDir, TEST_DIRECTORY_NAME), null);
 
             // Moving media directory to Download directory is allowed.
+            // Allow falling back to a recursive copy, since the rename will fail on ARCVM
+            // due to EXDEV.
             assertCanRenameDirectory(mediaDirectory1, mediaDirectory2, new File[] {videoFile1},
-                    new File[] {videoFile2});
+                    new File[] {videoFile2}, true /* allowCopyFallback */);
 
             // Moving media directory to Movies directory and renaming directory in new path is
             // allowed.
+            // Allow falling back to a recursive copy, since the rename will fail on ARCVM
+            // due to EXDEV.
             assertCanRenameDirectory(mediaDirectory2, mediaDirectory3, new File[] {videoFile2},
-                    new File[] {videoFile3});
+                    new File[] {videoFile3}, true /* allowCopyFallback */);
 
             // Can't rename a mediaDirectory to non empty non Media directory.
             assertCantRenameDirectory(mediaDirectory3, nonMediaDirectory, new File[] {videoFile3});
