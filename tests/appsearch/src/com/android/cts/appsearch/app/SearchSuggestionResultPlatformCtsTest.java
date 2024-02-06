@@ -21,10 +21,16 @@ import static com.google.common.truth.Truth.assertThat;
 import android.app.appsearch.SearchSuggestionResult;
 import android.os.Parcel;
 
+import androidx.test.filters.SmallTest;
+
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Test;
 
+@SmallTest
 public class SearchSuggestionResultPlatformCtsTest {
     @Test
+    @ApiTest(apis = {"android.app.appsearch.SearchSuggestionResult#CREATOR"})
     public void testSerialization() {
         SearchSuggestionResult expectedSearchSuggestionResult =
                 new SearchSuggestionResult.Builder()
