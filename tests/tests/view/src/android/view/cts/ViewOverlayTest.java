@@ -18,10 +18,12 @@ package android.view.cts;
 
 import static org.junit.Assert.assertNotNull;
 
+import android.Manifest;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Pair;
 import android.view.View;
 import android.view.ViewOverlay;
@@ -29,8 +31,11 @@ import android.view.cts.util.DrawingUtils;
 
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.MediumTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -42,11 +47,17 @@ import java.util.List;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ViewOverlayTest {
     private View mViewWithOverlay;
     private ViewOverlay mViewOverlay;
 
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public ActivityTestRule<ViewOverlayCtsActivity> mActivityRule =
             new ActivityTestRule<>(ViewOverlayCtsActivity.class);
 

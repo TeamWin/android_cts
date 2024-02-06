@@ -29,9 +29,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import android.Manifest;
 import android.content.ClipData;
 import android.content.ClipDescription;
 import android.net.Uri;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.ContentInfo;
 import android.view.DragEvent;
 import android.view.OnReceiveContentListener;
@@ -39,7 +41,10 @@ import android.view.View;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
+
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -55,8 +60,14 @@ import java.util.Objects;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ViewReceiveContentTest {
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public ActivityTestRule<ViewTestCtsActivity> mActivityRule = new ActivityTestRule<>(
             ViewTestCtsActivity.class);
 

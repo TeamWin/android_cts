@@ -22,9 +22,11 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.View;
 import android.view.animation.TranslateAnimation;
 import android.view.animation.cts.AnimationTestUtils;
@@ -34,6 +36,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
@@ -46,6 +49,7 @@ import org.junit.runner.RunWith;
  */
 @LargeTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class View_AnimationTest {
 
     private static final int TIME_OUT = 5000;
@@ -56,7 +60,13 @@ public class View_AnimationTest {
 
     private TranslateAnimation mAnimation;
 
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            androidx.test.platform.app.InstrumentationRegistry
+                    .getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public ActivityTestRule<ViewTestCtsActivity> mActivityRule =
             new ActivityTestRule<>(ViewTestCtsActivity.class);
 

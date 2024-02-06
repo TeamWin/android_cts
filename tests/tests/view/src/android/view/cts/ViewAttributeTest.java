@@ -18,9 +18,12 @@ package android.view.cts;
 
 import static org.junit.Assert.assertEquals;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
+import android.os.Process;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -30,6 +33,8 @@ import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.UiDevice;
+
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 
 import org.junit.After;
 import org.junit.Before;
@@ -41,9 +46,16 @@ import java.util.Map;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ViewAttributeTest {
 
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            androidx.test.platform.app.InstrumentationRegistry
+                    .getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public ActivityTestRule<Activity> mActivityRule =
             new ActivityTestRule<>(Activity.class, true, false);
 
@@ -51,14 +63,20 @@ public class ViewAttributeTest {
             "settings delete global debug_view_attributes_application_package";
 
     private static final String ENABLE_SHELL_COMMAND =
-            "settings put global debug_view_attributes_application_package android.view.cts";
+            "settings put global debug_view_attributes_application_package ";
 
     private UiDevice mUiDevice;
 
     @Before
     public void setUp() throws Exception {
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        mUiDevice.executeShellCommand(ENABLE_SHELL_COMMAND);
+        String pkg = "android.view.cts";
+        if (Process.isSdkSandbox()) {
+            // If the test is running in an SDK sandbox mode, get its package instead.
+            pkg = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                    .getContext().getPackageManager().getSdkSandboxPackageName();
+        }
+        mUiDevice.executeShellCommand(ENABLE_SHELL_COMMAND + pkg);
         mActivityRule.launchActivity(null);
     }
 

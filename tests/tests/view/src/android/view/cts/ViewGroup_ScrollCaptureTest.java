@@ -28,6 +28,7 @@ import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.CancellationSignal;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.Presubmit;
 import android.view.ScrollCaptureCallback;
 import android.view.ScrollCaptureSession;
@@ -53,6 +54,7 @@ import java.util.function.Consumer;
 @Presubmit
 @SmallTest
 @RunWith(MockitoJUnitRunner.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ViewGroup_ScrollCaptureTest {
 
     private static class Receiver<T> implements Consumer<T> {
