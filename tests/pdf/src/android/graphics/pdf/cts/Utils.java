@@ -123,7 +123,6 @@ class Utils {
             outputStream.close();
             sFiles.put(docRes, pdfFile);
         }
-
         return Objects.requireNonNull(
                 ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY));
     }
