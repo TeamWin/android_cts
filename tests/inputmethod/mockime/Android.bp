@@ -55,7 +55,34 @@ android_test_helper_app {
         "sts",
     ],
     static_libs: [
-        "androidx.annotation_annotation",
         "CtsMockInputMethodLib",
+    ],
+    manifest: "AndroidManifest_mockime1.xml",
+    additional_manifests: [
+        "AndroidManifest_template.xml",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsMockInputMethod2",
+    defaults: ["cts_defaults"],
+    optimize: {
+        enabled: false,
+    },
+    sdk_version: "current",
+    min_sdk_version: "21",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+        "mts",
+        "sts",
+    ],
+    static_libs: [
+        "CtsMockInputMethodLib",
+    ],
+    manifest: "AndroidManifest_mockime2.xml",
+    additional_manifests: [
+        "AndroidManifest_template.xml",
     ],
 }

@@ -45,7 +45,7 @@ public final class MockImeSessionCrashTest {
         try (var mockImeSession = MockImeSession.create(mContext)) {
             assertThat(mockImeSession.retrieveExitReasonIfMockImeCrashed()).isNull();
 
-            runShellCommandOrThrow("am force-stop " + MockImeSession.MOCK_IME_PACKAGE_NAME);
+            runShellCommandOrThrow("am force-stop " + mockImeSession.getMockImePackageName());
             assertThat(mockImeSession.retrieveExitReasonIfMockImeCrashed()).matches(
                     "MockIme crashed and exited with code: \\d+;"
                             + " session create time: \\d+;"

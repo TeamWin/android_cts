@@ -893,7 +893,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                 TestUtils.waitOnMainUntil(() -> editTextRef.get().getWindowVisibility() != VISIBLE,
                         TIMEOUT);
                 expectEvent(stream, onFinishInputViewMatcher(true), TIMEOUT);
-                if (MockImeSession.isFinishInputNoFallbackConnectionEnabled()) {
+                if (imeSession.isFinishInputNoFallbackConnectionEnabled()) {
                     // When IME enabled the new app compat behavior to finish input without fallback
                     // input connection when device interactive state changed,
                     // we expect onFinishInput happens without any additional fallback input
@@ -921,7 +921,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                 TestUtils.waitOnMainUntil(() -> editTextRef.get().hasWindowFocus()
                         && !editTextRef.get().hasFocus(), TIMEOUT);
                 expectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
-                if (!MockImeSession.isFinishInputNoFallbackConnectionEnabled()) {
+                if (!imeSession.isFinishInputNoFallbackConnectionEnabled()) {
                     expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
                 }
                 expectImeInvisible(TIMEOUT);
