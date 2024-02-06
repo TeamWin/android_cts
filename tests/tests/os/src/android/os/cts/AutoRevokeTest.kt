@@ -35,7 +35,6 @@ import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiObject2
 import android.support.test.uiautomator.UiObjectNotFoundException
 import android.view.accessibility.AccessibilityNodeInfo
-import android.widget.Switch
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnit4
@@ -347,7 +346,8 @@ class AutoRevokeTest {
                 // Setup
                 goToPermissions()
                 click("Calendar")
-                click("Allow")
+                grantPermission()
+                assertPermission(PERMISSION_GRANTED)
                 goBack()
                 goBack()
                 goBack()
@@ -488,6 +488,13 @@ class AutoRevokeTest {
         action: () -> Unit
     ) {
         withAppNoUninstallAssertion(apk, packageName, action)
+    }
+
+    private fun grantPermission(
+        packageName: String = supportedAppPackageName,
+        permission: String = READ_CALENDAR
+    ) {
+        instrumentation.uiAutomation.grantRuntimePermission(packageName, permission)
     }
 
     private fun assertPermission(
