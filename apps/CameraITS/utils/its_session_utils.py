@@ -33,6 +33,7 @@ import capture_request_utils
 import error_util
 import image_processing_utils
 import opencv_processing_utils
+import ui_interaction_utils
 
 ANDROID13_API_LEVEL = 33
 ANDROID14_API_LEVEL = 34
@@ -40,6 +41,9 @@ ANDROID15_API_LEVEL = 35
 CHART_DISTANCE_NO_SCALING = 0
 IMAGE_FORMAT_JPEG = 256
 IMAGE_FORMAT_YUV_420_888 = 35
+ITS_TEST_ACTIVITY = 'com.android.cts.verifier/.camera.its.ItsTestActivity'
+JCA_CAPTURE_PATH_TAG = 'JCA_CAPTURE_PATH'
+JCA_CAPTURE_STATUS_TAG = 'JCA_CAPTURE_STATUS'
 LOAD_SCENE_DELAY_SEC = 3
 SCALING_TO_FILE_ATOL = 0.01
 SINGLE_CAPTURE_NCAP = 1
@@ -53,6 +57,7 @@ TABLET_REQUIREMENTS_URL = 'https://source.android.com/docs/compatibility/cts/cam
 BRIGHTNESS_ERROR_MSG = ('Tablet brightness not set as per '
                         f'{TABLET_REQUIREMENTS_URL} in the config file')
 NOT_YET_MANDATED_MESSAGE = 'Not yet mandated test'
+RESULT_OK_STATUS = '-1'
 
 _VALIDATE_LIGHTING_PATCH_H = 0.05
 _VALIDATE_LIGHTING_PATCH_W = 0.05
@@ -113,6 +118,18 @@ def check_apk_installed(device_id, package_name):
     raise AssertionError(
         f'{package_name} not installed on device {device_id}!'
     )
+
+
+def start_its_test_activity(device_id):
+  """Starts ItsTestActivity, waking the device if necessary.
+
+  Args:
+    device_id: str; ID of the device.
+  """
+  run(f'adb -s {device_id} shell input keyevent KEYCODE_WAKEUP')
+  run(f'adb -s {device_id} shell input keyevent KEYCODE_MENU')
+  run(f'adb -s {device_id} shell am start -n '
+      f'{ITS_TEST_ACTIVITY} --activity-brought-to-front')
 
 
 class ItsSession(object):
@@ -294,19 +311,19 @@ class ItsSession(object):
         if len(s) > 7 and s[6] == '=':
           duration = int(s[7:])
         logging.debug('Rebooting device')
-        _run(f'{self.adb} reboot')
-        _run(f'{self.adb} wait-for-device')
+        run(f'{self.adb} reboot')
+        run(f'{self.adb} wait-for-device')
         time.sleep(duration)
         logging.debug('Reboot complete')
 
     # Flush logcat so following code won't be misled by previous
     # 'ItsService ready' log.
-    _run(f'{self.adb} logcat -c')
+    run(f'{self.adb} logcat -c')
     time.sleep(1)
 
-    _run(f'{self.adb} shell am force-stop --user 0 {self.PACKAGE}')
-    _run(f'{self.adb} shell am start-foreground-service --user 0 '
-         f'-t text/plain -a {self.INTENT_START}')
+    run(f'{self.adb} shell am force-stop --user 0 {self.PACKAGE}')
+    run(f'{self.adb} shell am start-foreground-service --user 0 '
+        f'-t text/plain -a {self.INTENT_START}')
 
     # Wait until the socket is ready to accept a connection.
     proc = subprocess.Popen(
@@ -1256,6 +1273,69 @@ class ItsSession(object):
 
     return ret
 
+  def do_jca_capture(self, dut, log_path, flash, facing):
+    """Take a capture using JCA, modifying capture settings using the UI.
+
+    Selects UI elements to modify settings, and presses the capture button.
+    Reads response from socket containing the capture path, and
+    pulls the image from the DUT.
+
+    This method is included here because an ITS session is needed to retrieve
+    the capture path from the device.
+
+    Args:
+      dut: An Android controller device object.
+      log_path: str; log path to save screenshots.
+      flash: str; constant describing the desired flash mode.
+        Acceptable values: 'OFF' and 'AUTO'.
+      facing: str; constant describing the direction the camera lens faces.
+        Acceptable values: camera_properties_utils.LENS_FACING_{BACK, FRONT}
+    Returns:
+      The host-side path of the capture.
+    """
+    ui_interaction_utils.open_jca_viewfinder(dut, log_path)
+    ui_interaction_utils.switch_jca_camera(dut, log_path, facing)
+    # Bring up settings, switch flash mode, and close settings
+    dut.ui(res=ui_interaction_utils.QUICK_SETTINGS_RESOURCE_ID).click()
+    if flash not in ui_interaction_utils.FLASH_MODE_TO_CLICKS:
+      raise ValueError(f'Flash mode {flash} not supported')
+    for _ in range(ui_interaction_utils.FLASH_MODE_TO_CLICKS[flash]):
+      dut.ui(res=ui_interaction_utils.QUICK_SET_FLASH_RESOURCE_ID).click()
+    dut.take_screenshot(log_path, prefix='flash_mode_set')
+    dut.ui(res=ui_interaction_utils.QUICK_SETTINGS_RESOURCE_ID).click()
+    # Take capture
+    dut.ui(res=ui_interaction_utils.CAPTURE_BUTTON_RESOURCE_ID).click()
+    return self.get_and_pull_jca_capture(dut, log_path)
+
+  def get_and_pull_jca_capture(self, dut, log_path):
+    """Retrieves a capture path from the socket and pulls capture to host.
+
+    Args:
+      dut: An Android controller device object.
+      log_path: str; log path to save screenshots.
+    Returns:
+      The host-side path of the capture.
+    Raises:
+      CameraItsError: If unexpected data is retrieved from the socket.
+    """
+    capture_path, capture_status = None, None
+    while not capture_path or not capture_status:
+      data, _ = self.__read_response_from_socket()
+      if data[_TAG_STR] == JCA_CAPTURE_PATH_TAG:
+        capture_path = data[_STR_VALUE]
+      elif data[_TAG_STR] == JCA_CAPTURE_STATUS_TAG:
+        capture_status = data[_STR_VALUE]
+      else:
+        raise error_util.CameraItsError(
+            f'Invalid response {data[_TAG_STR]} for JCA capture')
+    if capture_status != RESULT_OK_STATUS:
+      logging.error('Capture failed! Expected status %d, received %d',
+                    RESULT_OK_STATUS, capture_status)
+    logging.debug('capture path: %s', capture_path)
+    _, capture_name = os.path.split(capture_path)
+    run(f'adb -s {dut.serial} pull {capture_path} {log_path}')
+    return os.path.join(log_path, capture_name)
+
   def do_capture_with_flash(self,
                             preview_request_start,
                             preview_request_idle,
@@ -2195,7 +2275,7 @@ def parse_camera_ids(ids):
   return id_combos
 
 
-def _run(cmd):
+def run(cmd):
   """Replacement for os.system, with hiding of stdout+stderr messages.
 
   Args:
