@@ -9,7 +9,8 @@ per-file *LowPowerStandby* = file:platform/frameworks/base:/services/core/java/c
 per-file *SecurityStateManager* = file:platform/frameworks/base:/SECURITY_STATE_OWNERS
 
 # Bug component: 826709 = per-file PerformanceHintManagerTest.java
+# Bug component: 826709 = per-file WorkDurationTest.java
 # Bug component: 46788 = per-file PowerManager_ThermalTest.java
 per-file *PerformanceHintManagerTest* = file:/platform/frameworks/base:/ADPF_OWNERS
 per-file *PowerManager_ThermalTest* = xwxw@google.com,lpy@google.com,wvw@google.com
-
+per-file *WorkDurationTest* = file:/platform/frameworks/base:/ADPF_OWNERS
