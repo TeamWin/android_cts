@@ -23,6 +23,7 @@ import static org.junit.Assert.fail;
 import android.content.Context;
 import android.content.res.XmlResourceParser;
 import android.graphics.Rect;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,6 +41,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ViewGroup_MarginLayoutParamsTest {
     private Context mContext;
     private ViewGroup.MarginLayoutParams mMarginLayoutParams;

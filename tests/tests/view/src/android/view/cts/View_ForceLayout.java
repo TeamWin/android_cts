@@ -22,6 +22,7 @@ import static android.view.View.MeasureSpec.makeMeasureSpec;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
@@ -45,6 +46,7 @@ import org.junit.runner.RunWith;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class View_ForceLayout {
     private MockViewGroup mParent;
     private MockView mChild1;

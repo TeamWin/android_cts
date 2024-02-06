@@ -24,12 +24,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.Presubmit;
 import android.util.Pair;
 import android.view.View;
@@ -43,6 +45,7 @@ import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.CtsTouchUtils;
 
 import org.junit.Before;
@@ -55,6 +58,7 @@ import java.util.List;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ViewGroupOverlayTest {
     private Instrumentation mInstrumentation;
     private CtsTouchUtils mCtsTouchUtils;
@@ -63,7 +67,13 @@ public class ViewGroupOverlayTest {
     private ViewGroup mViewGroupWithOverlay;
     private ViewGroupOverlay mViewGroupOverlay;
 
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            androidx.test.platform.app.InstrumentationRegistry
+                    .getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public ActivityTestRule<ViewGroupOverlayCtsActivity> mActivityRule =
             new ActivityTestRule<>(ViewGroupOverlayCtsActivity.class);
 

@@ -19,6 +19,7 @@ package android.view.cts;
 import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.View;
 import android.widget.LinearLayout;
 
@@ -32,6 +33,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ViewGroupChildDrawingOrderTest {
 
     private Context mContext;

@@ -24,11 +24,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.graphics.Point;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.Choreographer;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -39,6 +41,7 @@ import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.WindowUtil;
 
@@ -54,6 +57,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 // Test View.requestUnbufferedDispatch API.
 //
 // In this test, we try to synchronously inject input events to the app, and look at how many events
@@ -76,7 +80,13 @@ public class ViewUnbufferedTest {
     private static final int SAMPLE_COUNT = 20;
     private static final int POS_STEP = 5;
 
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            androidx.test.platform.app.InstrumentationRegistry
+                    .getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public ActivityTestRule<ViewUnbufferedTestActivity> mActivityRule =
             new ActivityTestRule<>(ViewUnbufferedTestActivity.class);
 

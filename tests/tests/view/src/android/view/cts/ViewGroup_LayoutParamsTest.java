@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.cts.util.XmlUtils;
@@ -38,6 +39,7 @@ import java.io.IOException;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ViewGroup_LayoutParamsTest {
     private Context mContext;
 
