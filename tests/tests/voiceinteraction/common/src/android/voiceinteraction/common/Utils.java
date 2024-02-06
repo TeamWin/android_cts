@@ -16,7 +16,6 @@
 package android.voiceinteraction.common;
 
 import static android.service.voice.HotwordAudioStream.KEY_AUDIO_STREAM_COPY_BUFFER_LENGTH_BYTES;
-import static android.voiceinteraction.common.AudioStreamHelper.FAKE_AUDIO_FORMAT;
 
 import android.app.VoiceInteractor.PickOptionRequest.Option;
 import android.content.LocusId;
@@ -30,8 +29,6 @@ import android.os.PersistableBundle;
 import android.os.SystemProperties;
 import android.service.voice.HotwordAudioStream;
 import android.service.voice.HotwordDetectedResult;
-import android.service.voice.HotwordTrainingAudio;
-import android.service.voice.HotwordTrainingData;
 import android.util.Log;
 
 import com.android.compatibility.common.util.PropertyUtil;
@@ -106,15 +103,6 @@ public class Utils {
     // Check the HotwordDetectionService can read audio and the data is not zero
     public static final int EXTRA_HOTWORD_DETECTION_SERVICE_CAN_READ_AUDIO_DATA_IS_NOT_ZERO = 9;
 
-    // Send training data. Specifically, send training data on DSP trigger for always on
-    // detection and when recognition is started for external or software detection.
-    public static final int EXTRA_HOTWORD_DETECTION_SERVICE_SEND_TRAINING_DATA = 10;
-
-    // Send a detection followed by training data. Specifically, send training data and
-    // detection event on DSP trigger for always on detection and when recognition is started for
-    // external or software detection.
-    public static final int EXTRA_HOTWORD_DETECTION_SERVICE_SEND_TRAINING_DATA_AFTER_DETECT = 11;
-
     /** Indicate to start a new activity for testing. */
     public static final int ACTIVITY_NEW = 0;
     /** Indicate to finish an activity for testing. */
@@ -188,12 +176,10 @@ public class Utils {
 
     public static final String DIRECT_ACTIONS_ACTION_ID = "actionId";
     public static final Bundle DIRECT_ACTIONS_ACTION_EXTRAS = new Bundle();
-
     static {
         DIRECT_ACTIONS_ACTION_EXTRAS.putString(DIRECT_ACTION_EXTRA_KEY,
                 DIRECT_ACTION_EXTRA_VALUE);
     }
-
     public static final LocusId DIRECT_ACTIONS_LOCUS_ID = new LocusId("locusId");
 
     public static final String SERVICE_NAME =
@@ -292,18 +278,6 @@ public class Utils {
 
     public static final boolean SYSPROP_VISUAL_QUERY_SERVICE_ENABLED =
             SystemProperties.getBoolean("ro.hotword.visual_query_service_enabled", false);
-
-    private static final HotwordTrainingAudio HOTWORD_TRAINING_AUDIO =
-            new HotwordTrainingAudio.Builder(FAKE_HOTWORD_AUDIO_DATA, FAKE_AUDIO_FORMAT)
-                    .setHotwordOffsetMillis(FAKE_HOTWORD_OFFSET_MILLIS)
-                    .setAudioType(FAKE_HOTWORD_TRAINING_AUDIO_TYPE)
-                    .build();
-
-    public static final HotwordTrainingData HOTWORD_TRAINING_DATA =
-            new HotwordTrainingData.Builder()
-                    .addTrainingAudio(HOTWORD_TRAINING_AUDIO)
-                    .setTimeoutStage(FAKE_HOTWORD_TRAINING_DATA_TIMEOUT_STAGE)
-                    .build();
 
     /**
      * Returns the PersistableBundle data that is used for testing.
