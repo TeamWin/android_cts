@@ -19,9 +19,7 @@ package android.server.wm.window;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
-import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.server.wm.WindowManagerState.STATE_PAUSED;
 import static android.server.wm.WindowMetricsTestHelper.assertMetricsMatchDisplay;
 import static android.server.wm.WindowMetricsTestHelper.maxWindowBoundsSandboxed;
 
@@ -129,33 +127,6 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
         waitForEnterPipAnimationComplete(activity.getComponentName());
 
         assertMetricsValidity(activity);
-    }
-
-    /**
-     * Waits until the picture-in-picture animation has finished.
-     */
-    private void waitForEnterPipAnimationComplete(ComponentName activityName) {
-        waitForEnterPip(activityName);
-        mWmState.waitForWithAmState(wmState -> {
-            WindowManagerState.Task task = wmState.getTaskByActivity(activityName);
-            if (task == null) {
-                return false;
-            }
-            WindowManagerState.Activity activity = task.getActivity(activityName);
-            return activity.getWindowingMode() == WINDOWING_MODE_PINNED
-                    && activity.getState().equals(STATE_PAUSED);
-        }, "checking activity windowing mode");
-    }
-
-    /**
-     * Waits until the given activity has entered picture-in-picture mode (allowing for the
-     * subsequent animation to start).
-     */
-    private void waitForEnterPip(ComponentName activityName) {
-        mWmState.waitForWithAmState(wmState -> {
-            WindowManagerState.Task task = wmState.getTaskByActivity(activityName);
-            return task != null && task.getWindowingMode() == WINDOWING_MODE_PINNED;
-        }, "checking task windowing mode");
     }
 
     @Test

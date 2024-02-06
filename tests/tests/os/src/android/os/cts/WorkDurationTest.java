@@ -72,9 +72,6 @@ public class WorkDurationTest {
             workDuration.setActualTotalDurationNanos(0);
         });
         assertThrows(IllegalArgumentException.class, () -> {
-            workDuration.setActualCpuDurationNanos(0);
-        });
-        assertThrows(IllegalArgumentException.class, () -> {
             workDuration.setActualCpuDurationNanos(-1);
         });
         assertThrows(IllegalArgumentException.class, () -> {

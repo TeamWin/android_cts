@@ -39,6 +39,8 @@ import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
 import android.telephony.TelephonyCallback;
 
+import com.android.server.telecom.flags.Flags;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -108,6 +110,11 @@ public class IncomingCallTest extends BaseTelecomTestWithMockServices {
         setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
         Uri testNumber = createTestNumber();
         addAndVerifyNewIncomingCall(testNumber, null);
+        // Confirm that we got ConnectionService#onCreateConnectionComplete
+        if (Flags.telecomResolveHiddenDependencies()) {
+            assertTrue(connectionService.waitForEvent(
+                    MockConnectionService.EVENT_CONNECTION_SERVICE_CREATE_CONNECTION_COMPLETE));
+        }
         final Connection connection3 = verifyConnectionForIncomingCall();
         Collection<Connection> connections = CtsConnectionService.getAllConnectionsFromTelecom();
         assertEquals(1, connections.size());

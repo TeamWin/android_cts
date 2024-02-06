@@ -1922,38 +1922,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     /**
-     * Waits until the given activity has entered picture-in-picture mode (allowing for the
-     * subsequent animation to start).
-     */
-    private void waitForEnterPip(ComponentName activityName) {
-        mWmState.waitForWithAmState(wmState -> {
-            Task task = wmState.getTaskByActivity(activityName);
-            return task != null
-                    && task.getActivity(activityName).getWindowingMode() == WINDOWING_MODE_PINNED
-                    && task.isVisible();
-        }, "checking task windowing mode");
-    }
-
-    /**
-     * Waits until the picture-in-picture animation has finished.
-     */
-    private void waitForEnterPipAnimationComplete(ComponentName activityName) {
-        waitForEnterPip(activityName);
-        mWmState.waitForWithAmState(wmState -> {
-            Task task = wmState.getTaskByActivity(activityName);
-            if (task == null) {
-                return false;
-            }
-            WindowManagerState.Activity activity = task.getActivity(activityName);
-            return activity.getWindowingMode() == WINDOWING_MODE_PINNED
-                    && activity.getState().equals(STATE_PAUSED);
-        }, "checking activity windowing mode");
-        if (ENABLE_SHELL_TRANSITIONS) {
-            mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
-        }
-    }
-
-    /**
      * Waits until the pinned stack has been removed.
      */
     private void waitForPinnedStackRemoved() {

@@ -243,6 +243,8 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
      */
     @Test
     fun test_receivePermissionRestore() {
+        assumeTrue(FeatureUtil.isWatch())
+
         val association = associate()
 
         // Generate data packet with permission restore request

@@ -31,6 +31,8 @@ android_test {
         "androidx.test.rules",
         "junit",
         "mockito-target-minus-junit4",
+        "android.security.flags-aconfig-java",
+        "flag-junit",
     ],
     srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact

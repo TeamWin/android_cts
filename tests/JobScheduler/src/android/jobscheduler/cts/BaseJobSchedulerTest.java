@@ -124,6 +124,10 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
         super.setUp();
         mDeviceConfigStateHelper =
                 new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_JOB_SCHEDULER);
+        // Disable batching behavior.
+        mDeviceConfigStateHelper.set("min_ready_cpu_only_jobs_count", "0");
+        mDeviceConfigStateHelper.set("min_ready_non_active_jobs_count", "0");
+        mDeviceConfigStateHelper.set("conn_transport_batch_threshold", "");
         // Disable flex behavior.
         mDeviceConfigStateHelper.set("fc_applied_constraints", "0");
         kTestEnvironment.setUp();

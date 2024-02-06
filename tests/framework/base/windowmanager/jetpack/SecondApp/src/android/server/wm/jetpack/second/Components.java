@@ -31,7 +31,14 @@ public class Components extends ComponentsBase {
     public static final ComponentName SECOND_UNTRUSTED_EMBEDDING_ACTIVITY =
             component("SecondActivityAllowsUntrustedEmbedding");
 
+    public static final ComponentName SECOND_UNTRUSTED_EMBEDDING_ACTIVITY_STATE_SHARE =
+            component("SecondActivityAllowsUntrustedEmbeddingStateShare");
+
     public static final String EXTRA_LAUNCH_NON_EMBEDDABLE_ACTIVITY = "launch_non_embeddable";
+
+    public static final String ACTION_ENTER_PIP = "enter_pip";
+
+    public static final String ACTION_EXIT_PIP = "exit_pip";
 
     private static ComponentName component(String className) {
         return component(Components.class, className);

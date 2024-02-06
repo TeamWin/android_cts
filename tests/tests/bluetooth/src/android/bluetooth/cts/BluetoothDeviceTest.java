@@ -45,13 +45,19 @@ import android.bluetooth.OobData;
 import android.content.AttributionSource;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bluetooth.flags.Flags;
+
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -69,6 +75,10 @@ public class BluetoothDeviceTest {
 
     private final String mFakeDeviceAddress = "00:11:22:AA:BB:CC";
     private BluetoothDevice mFakeDevice;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setUp() throws Exception {
@@ -559,5 +569,47 @@ public class BluetoothDeviceTest {
         // Either cancel the bonding process or remove bond
         mFakeDevice.cancelBondProcess();
         mFakeDevice.removeBond();
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_METADATA_API_INACTIVE_AUDIO_DEVICE_UPON_CONNECTION)
+    @Test
+    public void setActiveAudioDevicePolicy_getActiveAudioDevicePolicy() {
+        if (!mHasBluetooth || !mHasCompanionDevice) {
+            // Skip the test if bluetooth or companion device are not present.
+            return;
+        }
+        String deviceAddress = "00:11:22:AA:BB:CC";
+        BluetoothDevice device = mAdapter.getRemoteDevice(deviceAddress);
+
+        // This should throw a SecurityException because no BLUETOOTH_CONNECT permission
+        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_PRIVILEGED);
+        assertThrows(
+                SecurityException.class,
+                () ->
+                        device.setActiveAudioDevicePolicy(
+                                BluetoothDevice
+                                        .ACTIVE_AUDIO_DEVICE_POLICY_ALL_PROFILES_INACTIVE_UPON_CONNECTION));
+        assertThrows(SecurityException.class, () -> device.getActiveAudioDevicePolicy());
+
+        // This should throw a SecurityException because no BLUETOOTH_PRIVILEGED permission
+        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
+        assertThrows(
+                SecurityException.class,
+                () ->
+                        device.setActiveAudioDevicePolicy(
+                                BluetoothDevice
+                                        .ACTIVE_AUDIO_DEVICE_POLICY_ALL_PROFILES_INACTIVE_UPON_CONNECTION));
+        assertThrows(SecurityException.class, () -> device.getActiveAudioDevicePolicy());
+
+        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
+
+        assertEquals(
+                BluetoothDevice.ACTIVE_AUDIO_DEVICE_POLICY_DEFAULT,
+                device.getActiveAudioDevicePolicy());
+        assertEquals(
+                BluetoothStatusCodes.ERROR_DEVICE_NOT_BONDED,
+                device.setActiveAudioDevicePolicy(
+                        BluetoothDevice
+                                .ACTIVE_AUDIO_DEVICE_POLICY_ALL_PROFILES_INACTIVE_UPON_CONNECTION));
     }
 }

@@ -46,13 +46,11 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.KeyguardManager;
-import android.content.ComponentName;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.LockScreenSession;
-import android.server.wm.WaitForValidActivityState;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -476,16 +474,5 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         }
         editor.requestFocus();
         return editor;
-    }
-
-    /**
-     * Waits until the given activity has entered picture-in-picture mode (allowing for the
-     * subsequent animation to start).
-     */
-    private void waitForEnterPip(ComponentName activityName) {
-        mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
-                .setWindowingMode(WINDOWING_MODE_PINNED)
-                .setActivityType(ACTIVITY_TYPE_STANDARD)
-                .build());
     }
 }

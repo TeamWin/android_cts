@@ -223,11 +223,14 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
             # Validate colorspace
             colorspace = video_processing_utils.get_video_colorspace(
                 self.log_path, video_file_name)
-            if hlg10_param and video_processing_utils.COLORSPACE_HDR not in colorspace:
+            if (hlg10_param and
+                video_processing_utils.COLORSPACE_HDR not in colorspace):
               raise AssertionError('colorspace check failed for HDR.')
-            if not hlg10_param and video_processing_utils.COLORSPACE_SDR not in colorspace:
+            if (not hlg10_param and
+                video_processing_utils.COLORSPACE_SDR not in colorspace):
               raise AssertionError('colorspace check failed for SDR.')
-            logging.debug('Colorspace test passed, video colorspace is %s', colorspace)
+            logging.debug('Colorspace test passed, video colorspace is %s',
+                          colorspace)
 
             # Extract last key frame as numpy image
             last_key_frame = (
