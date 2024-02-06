@@ -1465,7 +1465,7 @@ public class SystemMediaRouter2Test {
 
         mAppRouter2.registerControllerCallback(mExecutor, controllerCallback);
 
-        RoutingController controller = mSystemRouter2ForCts.getSystemController();
+        RoutingController controller = mAppRouter2.getSystemController();
         List<MediaRoute2Info> selectedRoutes = controller.getSelectedRoutes();
         assertThat(selectedRoutes).isNotEmpty();
         MediaRoute2Info deviceRoute = selectedRoutes.get(0);
