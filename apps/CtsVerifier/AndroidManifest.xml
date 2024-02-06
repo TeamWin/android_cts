@@ -2421,7 +2421,7 @@
                 <meta-data android:name="ApiTest"
                        android:value="android.nfc.NfcAdapter#disallowTransaction|
                                       android.nfc.NfcAdapter#allowTransaction|
-                                      android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_KEY|
+                                      android.nfc.cardemulation.HostApduService#KEY_POLLING_LOOP_TYPE|
                                       android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_A|
                                       android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_ON|
                                       android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_OFF"/>
@@ -2434,7 +2434,7 @@
                 <meta-data android:name="ApiTest"
                        android:value="android.nfc.NfcAdapter#disallowTransaction|
                                       android.nfc.NfcAdapter#allowTransaction|
-                                      android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_KEY|
+                                      android.nfc.cardemulation.HostApduService#KEY_POLLING_LOOP_TYPE|
                                       android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_B|
                                       android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_ON|
                                       android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_OFF"/>
@@ -2447,7 +2447,7 @@
                 <meta-data android:name="ApiTest"
                        android:value="android.nfc.NfcAdapter#disallowTransaction|
                                       android.nfc.NfcAdapter#allowTransaction|
-                                      android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_KEY|
+                                      android.nfc.cardemulation.HostApduService#KEY_POLLING_LOOP_TYPE|
                                       android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_A|
                                       android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_B|
                                       android.nfc.cardemulation.HostApduService#POLLING_LOOP_TYPE_ON|

@@ -681,15 +681,15 @@ public class CardEmulationTest {
 
     private Bundle createFrame(char type) {
         Bundle frame = new Bundle();
-        frame.putChar(HostApduService.POLLING_LOOP_TYPE_KEY, type);
+        frame.putChar(HostApduService.KEY_POLLING_LOOP_TYPE, type);
         byte gain = 0x08;
-        frame.putByte(HostApduService.POLLING_LOOP_GAIN_KEY, gain);
+        frame.putByte(HostApduService.KEY_POLLING_LOOP_GAIN, gain);
         return frame;
     }
 
     private Bundle createFrameWithData(char type, byte[] data) {
         Bundle frame = createFrame(type);
-        frame.putByteArray(HostApduService.POLLING_LOOP_DATA_KEY, data);
+        frame.putByteArray(HostApduService.KEY_POLLING_LOOP_DATA, data);
         return frame;
     }
 
@@ -789,15 +789,15 @@ public class CardEmulationTest {
             for (Bundle receivedFrame : mReceivedFrames) {
                 if (mFrameIndex < mFrames.size()) {
                     Assert.assertEquals(
-                            mFrames.get(mFrameIndex).getChar(HostApduService.POLLING_LOOP_TYPE_KEY),
-                            receivedFrame.getChar(HostApduService.POLLING_LOOP_TYPE_KEY));
+                            mFrames.get(mFrameIndex).getChar(HostApduService.KEY_POLLING_LOOP_TYPE),
+                            receivedFrame.getChar(HostApduService.KEY_POLLING_LOOP_TYPE));
                     Assert.assertEquals(
-                            mFrames.get(mFrameIndex).getByte(HostApduService.POLLING_LOOP_GAIN_KEY),
-                            receivedFrame.getByte(HostApduService.POLLING_LOOP_GAIN_KEY));
+                            mFrames.get(mFrameIndex).getByte(HostApduService.KEY_POLLING_LOOP_GAIN),
+                            receivedFrame.getByte(HostApduService.KEY_POLLING_LOOP_GAIN));
                     Assert.assertArrayEquals(
                             mFrames.get(mFrameIndex).getByteArray(
-                                    HostApduService.POLLING_LOOP_DATA_KEY),
-                            receivedFrame.getByteArray(HostApduService.POLLING_LOOP_DATA_KEY));
+                                    HostApduService.KEY_POLLING_LOOP_DATA),
+                            receivedFrame.getByteArray(HostApduService.KEY_POLLING_LOOP_DATA));
                 } else {
                     Assert.fail("received more frames than sent: " + receivedFrame);
                 }
