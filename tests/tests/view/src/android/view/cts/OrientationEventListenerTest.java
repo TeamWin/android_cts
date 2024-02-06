@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.OrientationEventListener;
 
 import androidx.test.InstrumentationRegistry;
@@ -36,6 +37,7 @@ import org.junit.runner.RunWith;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class OrientationEventListenerTest {
     private Context mContext;
 

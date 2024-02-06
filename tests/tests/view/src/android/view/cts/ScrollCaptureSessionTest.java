@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.Presubmit;
 import android.view.ScrollCaptureSession;
 import android.view.Surface;
@@ -38,6 +39,7 @@ import org.mockito.Mockito;
 @Presubmit
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ScrollCaptureSessionTest {
 
     private Surface mSurface;
