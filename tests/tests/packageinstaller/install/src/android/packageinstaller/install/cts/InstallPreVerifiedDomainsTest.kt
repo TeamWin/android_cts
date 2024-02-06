@@ -35,6 +35,7 @@ import org.junit.After
 import org.junit.Assert.assertThrows
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.function.ThrowingRunnable
@@ -42,6 +43,7 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 @AppModeFull(reason = "Instant apps do not need pre-verified domains")
+@Ignore("b/324079951")
 class InstallPreVerifiedDomainsTest : PackageInstallerTestBase() {
     companion object {
         private const val PROPERTY_PRE_VERIFIED_DOMAINS_COUNT_LIMIT =
