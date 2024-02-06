@@ -136,6 +136,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
@@ -146,6 +147,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class ItsService extends Service implements SensorEventListener {
     public static final String TAG = ItsService.class.getSimpleName();
@@ -189,6 +191,8 @@ public class ItsService extends Service implements SensorEventListener {
 
     public static final int SERVERPORT = 6000;
 
+    private static final float EPISILON = 0.05f;
+
     public static final String REGION_KEY = "regions";
     public static final String REGION_AE_KEY = "ae";
     public static final String REGION_AWB_KEY = "awb";
@@ -205,6 +209,7 @@ public class ItsService extends Service implements SensorEventListener {
     public static final String ZOOM_RATIO_KEY = "zoomRatio";
     public static final String AUTOFRAMING_KEY = "autoframing";
     public static final String AUDIO_RESTRICTION_MODE_KEY = "mode";
+    public static final String SETTINGS_KEY = "settings";
     public static final int AVAILABILITY_TIMEOUT_MS = 10;
 
     private static final HashMap<Integer, String> CAMCORDER_PROFILE_QUALITIES_MAP;
@@ -225,6 +230,29 @@ public class ItsService extends Service implements SensorEventListener {
         CAMCORDER_PROFILE_QUALITIES_MAP.put(CamcorderProfile.QUALITY_QVGA, "QVGA");
         CAMCORDER_PROFILE_QUALITIES_MAP.put(CamcorderProfile.QUALITY_VGA, "VGA");
     };
+
+    // Queryable stream combinations constants
+    private static final int PRIV = 0;
+    private static final int JPEG = 1;
+    private static final int YUV = 2;
+
+    private static final int PREVIEW = 6;
+    private static final int S720P_4_3 = 7;
+    private static final int S720P_16_9 = 8;
+    private static final int S1080P_4_3 = 9;
+    private static final int S1080P_16_9 = 10;
+    private static final int S1440P_4_3 = 11;
+    private static final int S1440P_16_9 = 12;
+    private static final int MAXIMUM = 13;
+    private static final int MAXIMUM_4_3 = 14;
+    private static final int MAXIMUM_16_9 = 15;
+
+    private static HashMap<Integer, String> sFormatMap = new HashMap<Integer, String>();
+    static {
+        sFormatMap.put(PRIV, "priv");
+        sFormatMap.put(JPEG, "jpeg");
+        sFormatMap.put(YUV, "yuv");
+    }
 
     private CameraManager mCameraManager = null;
     private HandlerThread mCameraThread = null;
@@ -986,7 +1014,8 @@ public class ItsService extends Service implements SensorEventListener {
                 } else if ("getItsVersion".equals(cmdObj.getString("cmdName"))) {
                     mSocketRunnableObj.sendResponse("ItsVersion", ITS_SERVICE_VERSION);
                 } else if ("isStreamCombinationSupported".equals(cmdObj.getString("cmdName"))) {
-                    doCheckStreamCombination(cmdObj);
+                    String cameraId = cmdObj.getString("cameraId");
+                    doCheckStreamCombination(cameraId, cmdObj);
                 } else if ("isCameraPrivacyModeSupported".equals(cmdObj.getString("cmdName"))) {
                     doCheckCameraPrivacyModeSupport();
                 } else if ("isPrimaryCamera".equals(cmdObj.getString("cmdName"))) {
@@ -1009,6 +1038,8 @@ public class ItsService extends Service implements SensorEventListener {
                 } else if ("getSupportedPreviewSizes".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
                     doGetSupportedPreviewSizes(cameraId);
+                } else if ("getQueryableStreamCombinations".equals(cmdObj.getString("cmdName"))) {
+                    doGetQueryableStreamCombinations();
                 } else if ("getSupportedExtensions".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
                     doGetSupportedExtensions(cameraId);
@@ -1038,6 +1069,7 @@ public class ItsService extends Service implements SensorEventListener {
                     double zoomRatio = cmdObj.optDouble("zoomRatio");
                     int aeTargetFpsMin = cmdObj.optInt("aeTargetFpsMin");
                     int aeTargetFpsMax = cmdObj.optInt("aeTargetFpsMax");
+                    boolean hlg10Enabled = cmdObj.getBoolean("hlg10Enabled");
                     JSONArray threeARegionStart = cmdObj.optJSONArray("threeARegionStart");
                     JSONArray threeARegionChange = cmdObj.optJSONArray("threeARegionChange");
                     JSONArray threeARegionEnd = cmdObj.optJSONArray("threeARegionEnd");
@@ -1047,7 +1079,7 @@ public class ItsService extends Service implements SensorEventListener {
                     double stepSize = cmdObj.optDouble("stepSize");
                     double stepDuration = cmdObj.optDouble("stepDuration");
                     doBasicPreviewRecording(cameraId, videoSize, recordingDuration,
-                            stabilize, zoomRatio, aeTargetFpsMin, aeTargetFpsMax,
+                            stabilize, hlg10Enabled, zoomRatio, aeTargetFpsMin, aeTargetFpsMax,
                             threeARegionStart, threeARegionChange, threeARegionEnd,
                             threeARegionDuration, zoomStart, zoomEnd, stepSize, stepDuration);
                 } else if ("isHLG10Supported".equals(cmdObj.getString("cmdName"))) {
@@ -1526,7 +1558,7 @@ public class ItsService extends Service implements SensorEventListener {
         }
     }
 
-    private void doCheckStreamCombination(JSONObject params) throws ItsException {
+    private void doCheckStreamCombination(String cameraId, JSONObject params) throws ItsException {
         try {
             JSONObject obj = new JSONObject();
             JSONArray jsonOutputSpecs = ItsUtils.getOutputSpecs(params);
@@ -1552,7 +1584,27 @@ public class ItsService extends Service implements SensorEventListener {
             SessionConfiguration sessionConfig = new SessionConfiguration(
                 SessionConfiguration.SESSION_REGULAR, outputConfigs,
                 new HandlerExecutor(mCameraHandler), mSessionListener);
-            boolean supported = mCamera.isSessionConfigurationSupported(sessionConfig);
+
+            CaptureRequest.Builder templateReq = null;
+            if (params.has(SETTINGS_KEY)) {
+                CaptureRequest.Builder defaultReq = mCamera.createCaptureRequest(
+                        CameraDevice.TEMPLATE_STILL_CAPTURE);
+                try {
+                    JSONObject settingsObj = params.getJSONObject(SETTINGS_KEY);
+                    templateReq = ItsSerializer.deserialize(defaultReq, settingsObj);
+                } catch (org.json.JSONException e) {
+                    throw new ItsException("JSON error: ", e);
+                }
+            }
+
+            boolean supported = false;
+            if (templateReq == null) {
+                supported = mCamera.isSessionConfigurationSupported(sessionConfig);
+            } else {
+                sessionConfig.setSessionParameters(templateReq.build());
+                supported = mCameraManager.isSessionConfigurationWithParametersSupported(
+                        cameraId, sessionConfig);
+            }
 
             String supportString = supported ? "supportedCombination" : "unsupportedCombination";
             mSocketRunnableObj.sendResponse("streamCombinationSupport", supportString);
@@ -1590,6 +1642,11 @@ public class ItsService extends Service implements SensorEventListener {
     }
 
     private void doGetDisplaySize() throws ItsException {
+        Size displaySize = getDisplaySize();
+        mSocketRunnableObj.sendResponse("displaySize", displaySize.toString());
+    }
+
+    private Size getDisplaySize() throws ItsException {
         WindowManager windowManager = getSystemService(WindowManager.class);
         if (windowManager == null) {
             throw new ItsException("No window manager.");
@@ -1608,7 +1665,7 @@ public class ItsService extends Service implements SensorEventListener {
         }
 
         Size displaySize = new Size(width, height);
-        mSocketRunnableObj.sendResponse("displaySize", displaySize.toString());
+        return displaySize;
     }
 
     private void doGetMaxCamcorderProfileSize(String cameraId) throws ItsException {
@@ -2568,6 +2625,99 @@ public class ItsService extends Service implements SensorEventListener {
         mSocketRunnableObj.sendResponse("supportedPreviewSizes", response);
     }
 
+    private Map<Integer, Size> getStreamSizeMap() throws ItsException {
+        HashMap<Integer, Size> sizeMap = new HashMap<Integer, Size>();
+
+        // PREVIEW
+        Size displaySize = getDisplaySize();
+        sizeMap.put(PREVIEW, displaySize);
+
+        // MAXIMUM
+        StreamConfigurationMap configMap = mCameraCharacteristics.get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        Size[] jpegSizes = configMap.getOutputSizes(ImageFormat.JPEG);
+        if (jpegSizes == null) {
+            mSocketRunnableObj.sendResponse("queryableStreamCombinations", "");
+            return null;
+        }
+        Optional<Size> maxJpegSize =
+                Stream.of(jpegSizes).max(Comparator.comparing(s -> s.getWidth() * s.getHeight()));
+        sizeMap.put(MAXIMUM, maxJpegSize.get());
+
+        // MAXIMUM_4_3
+        Stream<Size> jpeg4x3SizeStream = Stream.of(jpegSizes)
+                .filter(s -> Math.abs(1.0f * s.getWidth() / s.getHeight() - 1.333f) <= EPISILON);
+        Optional<Size> maxJpegSize_4_3 = jpeg4x3SizeStream.max(
+                Comparator.comparing(s -> s.getWidth() * s.getHeight()));
+        sizeMap.put(MAXIMUM_4_3, maxJpegSize_4_3.get());
+
+        // MAXIMUM_16_9
+        Stream<Size> jpeg16x9SizeStream = Stream.of(jpegSizes)
+                .filter(s -> Math.abs(1.0f * s.getWidth() / s.getHeight() - 1.778f) <= EPISILON);
+        Optional<Size> maxJpegSize_16_9 = jpeg16x9SizeStream.max(
+                Comparator.comparing(s -> s.getWidth() * s.getHeight()));
+        sizeMap.put(MAXIMUM_16_9, maxJpegSize_16_9.get());
+
+        // The rest
+        sizeMap.put(S1440P_4_3, new Size(1920, 1440));
+        sizeMap.put(S1440P_16_9, new Size(2560, 1440));
+        sizeMap.put(S1080P_4_3, new Size(1440, 1080));
+        sizeMap.put(S1080P_16_9, new Size(1920, 1080));
+        sizeMap.put(S720P_4_3, new Size(960, 720));
+        sizeMap.put(S720P_16_9, new Size(1280, 720));
+
+        return sizeMap;
+    }
+
+    private void doGetQueryableStreamCombinations() throws ItsException {
+        final int[][] kQueryableCombinations = {
+            {PRIV, PREVIEW,      JPEG, MAXIMUM},
+            {PRIV, S1440P_4_3,   JPEG, MAXIMUM_4_3},
+            {PRIV, S1440P_16_9,  JPEG, MAXIMUM_16_9},
+            {PRIV, S1080P_4_3,   JPEG, MAXIMUM_4_3},
+            {PRIV, S1080P_16_9,  JPEG, MAXIMUM_16_9},
+            {PRIV, S720P_4_3,    JPEG, MAXIMUM_4_3},
+            {PRIV, S720P_16_9,   JPEG, MAXIMUM_16_9},
+            {PRIV, S1440P_4_3,   JPEG, S1440P_4_3},
+            {PRIV, S1440P_16_9,  JPEG, S1440P_16_9},
+            {PRIV, S1080P_4_3,   JPEG, S1080P_4_3},
+            {PRIV, S1080P_16_9,  JPEG, S1080P_16_9},
+            {PRIV, S720P_4_3,    JPEG, S1080P_4_3},
+            {PRIV, S720P_16_9,   JPEG, S1080P_16_9},
+            {PRIV, PREVIEW,      PRIV, PREVIEW},
+            {PRIV, S1440P_4_3,   PRIV, S1440P_4_3},
+            {PRIV, S1440P_16_9,  PRIV, S1440P_16_9},
+            {PRIV, S1080P_4_3,   PRIV, S1080P_4_3},
+            {PRIV, S1080P_16_9,  PRIV, S1080P_16_9},
+            {PRIV, S720P_4_3,    PRIV, S720P_4_3},
+            {PRIV, S720P_16_9,   PRIV, S720P_16_9},
+        };
+
+        Map<Integer, Size> streamSizeMap = getStreamSizeMap();
+
+        StringBuilder responseBuilder = new StringBuilder();
+        for (int i = 0; i < kQueryableCombinations.length; i++) {
+            String oneCombination = "";
+            for (int j = 0; j < kQueryableCombinations[i].length; j += 2) {
+                String format = sFormatMap.get(kQueryableCombinations[i][j]);
+                Size size = streamSizeMap.get(kQueryableCombinations[i][j + 1]);
+                String oneStream = format + ":" + size.toString();
+                if (j > 0) {
+                    oneCombination += "+";
+                }
+                oneCombination += oneStream;
+            }
+
+            if (i > 0) {
+                responseBuilder.append(";");
+            }
+            responseBuilder.append(oneCombination);
+        }
+
+        Log.i(TAG, "queryableStreamCombinations response is " + responseBuilder.toString());
+        mSocketRunnableObj.sendResponse("queryableStreamCombinations", responseBuilder.toString());
+    }
+
     private void doGetSupportedExtensions(String id) throws ItsException {
         try {
             CameraExtensionCharacteristics chars =
@@ -2850,7 +3000,7 @@ public class ItsService extends Service implements SensorEventListener {
      * ImageReader to the MediaRecorder surface which is encoded into a video.
      */
     private void doBasicPreviewRecording(String cameraId, String videoSizeString,
-            int recordingDuration, boolean stabilize, double zoomRatio,
+            int recordingDuration, boolean stabilize, boolean hlg10Enabled, double zoomRatio,
             int aeTargetFpsMin, int aeTargetFpsMax, JSONArray threeARegionStart,
             JSONArray threeARegionChange, JSONArray threeARegionEnd, double threeARegionDuration,
             double zoomStart, double zoomEnd, double stepSize, double stepDuration)
@@ -2867,6 +3017,14 @@ public class ItsService extends Service implements SensorEventListener {
             throw new ItsException("Preview stabilization requested, but not supported by device.");
         }
 
+        int[] caps = mCameraCharacteristics.get(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+        boolean supportHlg10 = (caps != null) && IntStream.of(caps).anyMatch(x -> x ==
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT);
+        if (hlg10Enabled && !supportHlg10) {
+            throw new ItsException("HLG10 requested, but not supported by device.");
+        }
+
         int cameraDeviceId = Integer.parseInt(cameraId);
         Size videoSize = Size.parseSize(videoSizeString);
         int sensorOrientation = mCameraCharacteristics.get(
@@ -2876,10 +3034,15 @@ public class ItsService extends Service implements SensorEventListener {
         int fileFormat = MediaRecorder.OutputFormat.DEFAULT;
 
         String outputFilePath = getOutputMediaFile(cameraDeviceId, videoSize,
-                /* quality= */"preview", fileFormat, stabilize, zoomRatio);
+                /* quality= */"preview", fileFormat, hlg10Enabled, stabilize, zoomRatio,
+                aeTargetFpsMin, aeTargetFpsMax);
         assert outputFilePath != null;
 
-        try (PreviewRecorder pr = new PreviewRecorder(cameraDeviceId, videoSize,
+        // By default aeTargetFpsMax is not set. In that case, default to 30
+        if (aeTargetFpsMax == 0) {
+            aeTargetFpsMax = 30;
+        }
+        try (PreviewRecorder pr = new PreviewRecorder(cameraDeviceId, videoSize, aeTargetFpsMax,
                 sensorOrientation, outputFilePath, mCameraHandler, this)) {
             int stabilizationMode = stabilize
                     ? CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION
@@ -3132,11 +3295,20 @@ public class ItsService extends Service implements SensorEventListener {
     private String getOutputMediaFile(int cameraId, Size videoSize, String quality,
             int fileFormat, boolean stabilized, double zoomRatio) {
         return getOutputMediaFile(cameraId, videoSize, quality, fileFormat,
-                /* hlg10Enabled= */false, stabilized, zoomRatio);
+                /* hlg10Enabled= */false, stabilized, zoomRatio, /* minFps */0,
+                /* maxFps */0);
     }
 
     private String getOutputMediaFile(int cameraId, Size videoSize, String quality,
             int fileFormat, boolean hlg10Enabled, boolean stabilized, double zoomRatio) {
+        return getOutputMediaFile(cameraId, videoSize, quality, fileFormat,
+                hlg10Enabled, stabilized, zoomRatio, /* minFps */0,
+                /* maxFps */0);
+    }
+
+    private String getOutputMediaFile(int cameraId, Size videoSize, String quality,
+            int fileFormat, boolean hlg10Enabled, boolean stabilized, double zoomRatio,
+            int minFps, int maxFps) {
         // If any quality has file format other than 3gp and webm then the
         // recording file will have mp4 as default extension.
         String fileExtension = "";
@@ -3172,6 +3344,10 @@ public class ItsService extends Service implements SensorEventListener {
         if (stabilized) {
             fileName += "_stabilized";
         }
+        if (minFps > 0 && maxFps > 0) {
+            fileName += "_" + minFps + "_" + maxFps;
+        }
+
         File mediaFile = new File(fileName);
         return mediaFile + fileExtension;
     }

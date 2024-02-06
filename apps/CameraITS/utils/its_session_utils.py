@@ -763,7 +763,7 @@ class ItsSession(object):
 
   def do_preview_recording(self, video_size, duration, stabilize,
                            zoom_ratio=None, ae_target_fps_min=None,
-                           ae_target_fps_max=None):
+                           ae_target_fps_max=None, hlg10_enabled=False):
     """Issue a preview request and read back the preview recording object.
 
     The resolution of the preview and its recording will be determined by
@@ -778,6 +778,8 @@ class ItsSession(object):
       zoom_ratio: float; static zoom ratio. None if default zoom
       ae_target_fps_min: int; CONTROL_AE_TARGET_FPS_RANGE min. Set if not None
       ae_target_fps_max: int; CONTROL_AE_TARGET_FPS_RANGE max. Set if not None
+      hlg10_enabled: boolean; True Eanable 10-bit HLG video recording, False
+                              record using the regular SDK profile.
     Returns:
       video_recorded_object: The recorded object returned from ItsService
     """
@@ -786,7 +788,8 @@ class ItsSession(object):
         _CAMERA_ID_STR: self._camera_id,
         'videoSize': video_size,
         'recordingDuration': duration,
-        'stabilize': stabilize
+        'stabilize': stabilize,
+        'hlg10Enabled': hlg10_enabled,
     }
     if zoom_ratio:
       if self.zoom_ratio_within_range(zoom_ratio):
@@ -934,6 +937,74 @@ class ItsSession(object):
     if not data[_STR_VALUE]:
       raise error_util.CameraItsError('No supported preview sizes')
     return data[_STR_VALUE].split(';')
+
+  def get_queryable_stream_combinations(self):
+    """Get all queryable stream combinations for this camera device.
+
+    This function parses the queryable stream combinations string
+    returned from ItsService. The return value includes both the
+    string and the parsed result.
+
+    One example of the queryable stream combination string is:
+
+    'priv:1920x1080+jpeg:4032x2268;priv:1280x720+priv:1280x720'
+
+    which can be parsed to:
+
+    [
+      {
+       "name": "priv:1920x1080+jpeg:4032x2268",
+       "combination": [
+                        {
+                         "format": "priv",
+                         "size": "1920x1080"
+                        }
+                        {
+                         "format": "jpeg",
+                         "size": "4032x2268"
+                        }
+                      ]
+      }
+      {
+       "name": "priv:1280x720+priv:1280x720",
+       "combination": [
+                        {
+                         "format": "priv",
+                         "size": "1280x720"
+                        },
+                        {
+                         "format": "priv",
+                         "size": "1280x720"
+                        }
+                      ]
+      }
+    ]
+
+    Returns:
+      Tuple of:
+      - queryable stream combination string, and
+      - parsed stream combinations
+    """
+    cmd = {
+        _CMD_NAME_STR: 'getQueryableStreamCombinations',
+    }
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
+    self.sock.settimeout(timeout)
+    data, _ = self.__read_response_from_socket()
+    if data[_TAG_STR] != 'queryableStreamCombinations':
+      raise error_util.CameraItsError('Invalid command response')
+    if not data[_STR_VALUE]:
+      raise error_util.CameraItsError('No queryable stream combinations')
+
+    # Parse the stream combination string.
+    combination_str = [c for c in data[_STR_VALUE].split(';')]
+    combinations = [{"name": c,
+                     "combination": [{"format": s.split(':')[0],
+                                      "size": s.split(':')[1]} for s in c.split('+')]}
+                  for c in data[_STR_VALUE].split(';')]
+
+    return data[_STR_VALUE], combinations
 
   def get_supported_extensions(self, camera_id):
     """Get all supported camera extensions for this camera device.
@@ -1905,28 +1976,31 @@ class ItsSession(object):
     logging.debug('Scene to load: %s', file_name)
     return file_name
 
-  def is_stream_combination_supported(self, out_surfaces):
-    """Query whether out_surfaces combination is supported by the camera device.
+  def is_stream_combination_supported(self, out_surfaces, settings=None):
+    """Query whether out_surfaces combination and settings are supported by the camera device.
 
-    This function hooks up to the isSessionConfigurationSupported() camera API
-    to query whether a particular stream combination is supported.
+    This function hooks up to the isSessionConfigurationSupported()/
+    isSessionConfigurationWithSettingsSupported() camera API
+    to query whether a particular stream combination and settings are supported.
 
     Args:
-      out_surfaces: dict; see do_capture() for specifications on out_surfaces
+      out_surfaces: dict; see do_capture() for specifications on out_surfaces.
+      settings: dict; optional capture request settings metadata.
 
     Returns:
       Boolean
     """
     cmd = {}
     cmd[_CMD_NAME_STR] = 'isStreamCombinationSupported'
+    cmd[_CAMERA_ID_STR] = self._camera_id
 
     if not isinstance(out_surfaces, list):
       cmd['outputSurfaces'] = [out_surfaces]
     else:
       cmd['outputSurfaces'] = out_surfaces
-    formats = [c['format'] if 'format' in c else 'yuv'
-               for c in cmd['outputSurfaces']]
-    formats = [s if s != 'jpg' else 'jpeg' for s in formats]
+
+    if settings:
+      cmd['settings'] = settings
 
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 

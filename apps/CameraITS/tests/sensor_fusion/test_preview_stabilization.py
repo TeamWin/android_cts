@@ -15,8 +15,6 @@
 
 import logging
 import os
-import threading
-import time
 
 from mobly import test_runner
 
@@ -29,66 +27,6 @@ import video_processing_utils
 
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _TEST_REQUIRED_MPC = 33
-_VIDEO_DURATION = 5.5  # seconds
-
-
-def _collect_data(cam, tablet_device, preview_size, rot_rig):
-  """Capture a new set of data from the device.
-
-  Captures camera preview frames while the user is moving the device in
-  the prescribed manner.
-
-  Args:
-    cam: camera object
-    tablet_device: boolean; based on config file
-    preview_size: str; preview stream resolution. ex. '1920x1080'
-    rot_rig: dict with 'cntl' and 'ch' defined
-
-  Returns:
-    recording object as described by cam.do_preview_recording
-  """
-
-  logging.debug('Starting sensor event collection')
-  serial_port = None
-  if rot_rig['cntl'].lower() == sensor_fusion_utils.ARDUINO_STRING.lower():
-    # identify port
-    serial_port = sensor_fusion_utils.serial_port_def(
-        sensor_fusion_utils.ARDUINO_STRING)
-    # send test cmd to Arduino until cmd returns properly
-    sensor_fusion_utils.establish_serial_comm(serial_port)
-  # Start camera vibration
-  if tablet_device:
-    servo_speed = sensor_fusion_utils.ARDUINO_SERVO_SPEED_STABILIZATION_TABLET
-  else:
-    servo_speed = sensor_fusion_utils.ARDUINO_SERVO_SPEED_STABILIZATION
-  p = threading.Thread(
-      target=sensor_fusion_utils.rotation_rig,
-      args=(
-          rot_rig['cntl'],
-          rot_rig['ch'],
-          preview_stabilization_utils.NUM_ROTATIONS,
-          sensor_fusion_utils.ARDUINO_ANGLES_STABILIZATION,
-          servo_speed,
-          sensor_fusion_utils.ARDUINO_MOVE_TIME_STABILIZATION,
-          serial_port,
-      ),
-  )
-  p.start()
-
-  cam.start_sensor_events()
-  # Allow time for rig to start moving.
-  time.sleep(preview_stabilization_utils.VIDEO_DELAY_TIME)
-
-  # Record video and return recording object.
-  recording_obj = cam.do_preview_recording(preview_size, _VIDEO_DURATION, True)
-  logging.debug('Recorded output path: %s', recording_obj['recordedOutputPath'])
-  logging.debug('Tested quality: %s', recording_obj['quality'])
-
-  # Wait for vibration to stop
-  p.join()
-
-  return recording_obj
-
 
 class PreviewStabilizationTest(its_base_test.ItsBaseTest):
   """Tests if preview is stabilized.
@@ -166,8 +104,9 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
       stabilization_result = {}
 
       for preview_size in supported_preview_sizes:
-        recording_obj = _collect_data(
-            cam, self.tablet_device, preview_size, rot_rig)
+        recording_obj = preview_stabilization_utils.collect_data(
+            cam, self.tablet_device, preview_size, True,
+            rot_rig)
 
         # Get gyro events
         logging.debug('Reading out inertial sensor events')

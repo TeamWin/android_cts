@@ -17,6 +17,8 @@
 import fnmatch
 import logging
 import os
+import threading
+import time
 
 import image_processing_utils
 import sensor_fusion_utils
@@ -25,11 +27,78 @@ import video_processing_utils
 _ASPECT_RATIO_16_9 = 16/9  # determine if preview fmt > 16:9
 _IMG_FORMAT = 'png'
 _MIN_PHONE_MOVEMENT_ANGLE = 5  # degrees
+_NUM_ROTATIONS = 24
 _PREVIEW_STABILIZATION_FACTOR = 0.7  # 70% of gyro movement allowed
 _START_FRAME = 30  # give 3A some frames to warm up
+_VIDEO_DELAY_TIME = 5.5  # seconds
+_VIDEO_DURATION = 5.5  # seconds
 
-NUM_ROTATIONS = 24
-VIDEO_DELAY_TIME = 5.5  # seconds
+
+def collect_data(cam, tablet_device, preview_size,
+    stabilize, rot_rig, fps_range=None, hlg10=False):
+  """Capture a new set of data from the device.
+
+  Captures camera preview frames while the user is moving the device in
+  the prescribed manner.
+
+  Args:
+    cam: camera object
+    tablet_device: boolean; based on config file
+    preview_size: str; preview stream resolution. ex. '1920x1080'
+    stabilize: boolean; whether preview stabilization is on
+    fps_range: list; target fps range.
+    hlg10: boolean; whether to capture hlg10 output
+    rot_rig: dict with 'cntl' and 'ch' defined
+
+  Returns:
+    recording object; a dictionary containing output path, video size, etc.
+  """
+
+  logging.debug('Starting sensor event collection')
+  serial_port = None
+  if rot_rig['cntl'].lower() == sensor_fusion_utils.ARDUINO_STRING.lower():
+    # identify port
+    serial_port = sensor_fusion_utils.serial_port_def(
+        sensor_fusion_utils.ARDUINO_STRING)
+    # send test cmd to Arduino until cmd returns properly
+    sensor_fusion_utils.establish_serial_comm(serial_port)
+  # Start camera vibration
+  if tablet_device:
+    servo_speed = sensor_fusion_utils.ARDUINO_SERVO_SPEED_STABILIZATION_TABLET
+  else:
+    servo_speed = sensor_fusion_utils.ARDUINO_SERVO_SPEED_STABILIZATION
+  p = threading.Thread(
+      target=sensor_fusion_utils.rotation_rig,
+      args=(
+          rot_rig['cntl'],
+          rot_rig['ch'],
+          _NUM_ROTATIONS,
+          sensor_fusion_utils.ARDUINO_ANGLES_STABILIZATION,
+          servo_speed,
+          sensor_fusion_utils.ARDUINO_MOVE_TIME_STABILIZATION,
+          serial_port,
+      ),
+  )
+  p.start()
+
+  cam.start_sensor_events()
+  # Allow time for rig to start moving
+  time.sleep(_VIDEO_DELAY_TIME)
+
+  # Record video and return recording object
+  min_fps = fps_range[0] if (fps_range is not None) else None
+  max_fps = fps_range[1] if (fps_range is not None) else None
+  recording_obj = cam.do_preview_recording(preview_size, _VIDEO_DURATION, stabilize,
+      ae_target_fps_min=min_fps,
+      ae_target_fps_max=max_fps,
+      hlg10_enabled=hlg10)
+  logging.debug('Recorded output path: %s', recording_obj['recordedOutputPath'])
+  logging.debug('Tested quality: %s', recording_obj['quality'])
+
+  # Wait for vibration to stop
+  p.join()
+
+  return recording_obj
 
 
 def verify_preview_stabilization(recording_obj, gyro_events,
@@ -86,11 +155,9 @@ def verify_preview_stabilization(recording_obj, gyro_events,
 
   # Extract gyro rotations
   sensor_fusion_utils.plot_gyro_events(
-      gyro_events, f'{test_name}_{video_size}', log_path
-  )
+      gyro_events, f'{test_name}_{video_size}', log_path)
   gyro_rots = sensor_fusion_utils.conv_acceleration_to_movement(
-      gyro_events, VIDEO_DELAY_TIME
-  )
+      gyro_events, _VIDEO_DELAY_TIME)
   max_gyro_angle = sensor_fusion_utils.calc_max_rotation_angle(
       gyro_rots, 'Gyro')
   logging.debug(
