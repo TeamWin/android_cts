@@ -34,7 +34,6 @@ import static org.junit.Assert.fail;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.le.ChannelSoundingParams;
 import android.content.Context;
-import android.os.Build;
 import android.os.Parcel;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
@@ -44,8 +43,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bluetooth.flags.Flags;
-import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CddTest;
+import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -67,7 +66,7 @@ public class ChannelSoundingParamsTest {
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        Assume.assumeTrue(ApiLevelUtil.isAtLeast(Build.VERSION_CODES.VANILLA_ICE_CREAM));
+        Assume.assumeTrue(SdkLevel.isAtLeastV());
         Assume.assumeTrue(TestUtils.isBleSupported(mContext));
 
         mAdapter = TestUtils.getBluetoothAdapterOrDie();
