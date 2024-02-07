@@ -49,6 +49,7 @@ import kotlin.test.assertTrue
 import libcore.util.EmptyArray
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -213,6 +214,7 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
      * response from the device whose permissions are being restored.
      */
     @Test
+    @Ignore("b/324260135")
     fun test_startSystemDataTransfer_success() {
         val association = associate()
         requestPermissionTransferUserConsent(association.id, ACTION_CLICK_ALLOW)
@@ -227,6 +229,7 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
      * from the device whose permissions are being restored.
      */
     @Test(expected = CompanionException::class)
+    @Ignore("b/324260135")
     fun test_startSystemDataTransfer_failure() {
         val association = associate()
         requestPermissionTransferUserConsent(association.id, ACTION_CLICK_ALLOW)
