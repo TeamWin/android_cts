@@ -23,6 +23,7 @@ android_test {
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
         "telephony-cts-utils",
+        "telephony_flags_core_java_lib",
     ],
     srcs: [
         "src/**/*.java",
