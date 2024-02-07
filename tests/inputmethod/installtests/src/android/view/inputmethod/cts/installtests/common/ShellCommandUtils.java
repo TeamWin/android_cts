@@ -25,18 +25,6 @@ public final class ShellCommandUtils {
     // This is utility class, can't instantiate.
     private ShellCommandUtils() {
     }
-    private static final String SETTING_DEFAULT_IME = "secure default_input_method";
-
-    /** Command to get ID of current IME. */
-    public static String getCurrentIme(int userId) {
-        return String.format("settings --user %d get %s", userId, SETTING_DEFAULT_IME);
-    }
-
-    /** Command to get ID of current IME. */
-    public static String setStylusHandwritingEnabled(int userId, boolean enabled) {
-        return String.format("settings put --user %d secure stylus_handwriting_enabled %d", userId,
-                enabled ? 1 : 0);
-    }
 
     /** Command to set current IME to {@code imeId} synchronously for the specified {@code user} */
     public static String setCurrentImeSync(String imeId, int userId) {
