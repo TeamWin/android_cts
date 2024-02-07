@@ -39,13 +39,16 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 @RunWith(AndroidJUnit4.class)
 public class MessageTest {
     @Rule
     public final RavenwoodRule mRavenwood = new RavenwoodRule.Builder()
             .setProvideMainThread(true).build();
 
-    public static final int SLEEP_TIME = 300;
     public static final int WHAT = 1;
     public static final int ARG1 = 1;
     public static final int ARG2 = 2;
@@ -53,7 +56,7 @@ public class MessageTest {
     public static final int VALUE = 3;
 
     private Message mMessage;
-    private boolean mMessageHandlerCalled;
+    private CountDownLatch mMessageHandlerCalled;
 
     private Handler mHandler;
 
@@ -67,9 +70,10 @@ public class MessageTest {
     @Before
     public void setUp() throws Exception {
         mMessage = new Message();
+        mMessageHandlerCalled = new CountDownLatch(1);
         mHandler = new Handler(Looper.getMainLooper()) {
             public void handleMessage(Message msg) {
-                mMessageHandlerCalled = true;
+                mMessageHandlerCalled.countDown();
             }
         };
     }
@@ -244,7 +248,7 @@ public class MessageTest {
     }
 
     @Test
-    public void testSendToTarget() {
+    public void testSendToTarget() throws Exception {
         try {
             mMessage.sendToTarget();
             fail("should throw exception");
@@ -253,10 +257,9 @@ public class MessageTest {
         }
 
         Message message = Message.obtain(mHandler);
-        assertFalse(mMessageHandlerCalled);
+        assertFalse(mMessageHandlerCalled.getCount() == 0);
         message.sendToTarget();
-        sleep(SLEEP_TIME);
-        assertTrue(mMessageHandlerCalled);
+        assertTrue(mMessageHandlerCalled.await(1, TimeUnit.SECONDS));
     }
 
     @Test
@@ -298,52 +301,36 @@ public class MessageTest {
     }
 
     @Test
-    public void testRecycleThrowsIfMessageIsBeingDelivered() {
-        final Exception[] caught = new Exception[1];
+    public void testRecycleThrowsIfMessageIsBeingDelivered() throws Exception {
+        final CompletableFuture<IllegalStateException> res = new CompletableFuture<>();
         Handler handler = new Handler(mHandler.getLooper()) {
             @Override
             public void handleMessage(Message msg) {
                 try {
                     msg.recycle();
                 } catch (IllegalStateException ex) {
-                    caught[0] = ex; // expected
+                    res.complete(ex);
                 }
             }
         };
         handler.sendEmptyMessage(WHAT);
-        sleep(SLEEP_TIME);
-
-        if (caught[0] == null) {
-            fail("should throw IllegalStateException");
-        }
+        assertNotNull("should throw IllegalStateException", res.get(1, TimeUnit.SECONDS));
     }
 
     @Test
-    public void testSendMessageThrowsIfMessageIsBeingDelivered() {
-        final Exception[] caught = new Exception[1];
+    public void testSendMessageThrowsIfMessageIsBeingDelivered() throws Exception {
+        final CompletableFuture<IllegalStateException> res = new CompletableFuture<>();
         Handler handler = new Handler(mHandler.getLooper()) {
             @Override
             public void handleMessage(Message msg) {
                 try {
                     mHandler.sendMessage(msg);
                 } catch (IllegalStateException ex) {
-                    caught[0] = ex; // expected
+                    res.complete(ex);
                 }
             }
         };
         handler.sendEmptyMessage(WHAT);
-        sleep(SLEEP_TIME);
-
-        if (caught[0] == null) {
-            fail("should throw IllegalStateException");
-        }
-    }
-
-    private void sleep(long time) {
-        try {
-            Thread.sleep(time);
-        } catch (InterruptedException e) {
-            fail(e.getMessage());
-        }
+        assertNotNull("should throw IllegalStateException", res.get(1, TimeUnit.SECONDS));
     }
 }
