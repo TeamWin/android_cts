@@ -27,6 +27,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.content.Context;
 import android.content.Intent;
@@ -145,6 +146,8 @@ public class MediaProjectionSDK33Test {
     @Test
     public void testCreateVirtualDisplay_reusedResultData_reshowsPermissionDialog()
             throws Exception {
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH));
+
         // Navigate the dialog and retrieve the first projection instance.
         startMediaProjection();
         assertNotNull("MediaProjection should be a non-null object if projection started "
@@ -210,6 +213,8 @@ public class MediaProjectionSDK33Test {
     @Test
     public void testCreateVirtualDisplay_reusedMediaProjection_reshowPermissionDialog()
             throws Exception {
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH));
+
         // Start capture once.
         startMediaProjection();
         mMediaProjection.registerCallback(mCallback, new Handler(Looper.getMainLooper()));
