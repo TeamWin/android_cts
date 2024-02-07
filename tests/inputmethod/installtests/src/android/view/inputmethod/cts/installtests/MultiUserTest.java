@@ -36,6 +36,7 @@ import android.os.UserManager;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.inputmethod.Flags;
@@ -46,6 +47,7 @@ import android.view.inputmethod.cts.installtests.common.Ime1Constants;
 import android.view.inputmethod.cts.installtests.common.Ime2Constants;
 import android.view.inputmethod.cts.installtests.common.ShellCommandUtils;
 import android.view.inputmethod.cts.util.MockTestActivityUtil;
+import android.view.inputmethod.cts.util.SecureSettingsUtils;
 
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -362,17 +364,16 @@ public class MultiUserTest {
     }
 
     private void assertImeSelected(String imeId, int userId) {
-        assertEquals(imeId, runShellCommandOrThrow(ShellCommandUtils.getCurrentIme(userId)).trim());
+        assertEquals(imeId, SecureSettingsUtils.getString(
+                mContext, Settings.Secure.DEFAULT_INPUT_METHOD, userId));
     }
 
     private void assertIsStylusHandwritingAvailable(int profileUserId, int currentUserId) {
         // Turn stylus handwriting pref ON for current user and OFF for profile user.
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            runShellCommandOrThrow(
-                    ShellCommandUtils.setStylusHandwritingEnabled(currentUserId, true));
-            runShellCommandOrThrow(
-                    ShellCommandUtils.setStylusHandwritingEnabled(profileUserId, false));
-        }, Manifest.permission.INTERACT_ACROSS_USERS_FULL);
+        SecureSettingsUtils.putInt(mContext,
+                Settings.Secure.STYLUS_HANDWRITING_ENABLED, 1, currentUserId);
+        SecureSettingsUtils.putInt(mContext,
+                Settings.Secure.STYLUS_HANDWRITING_ENABLED, 0, profileUserId);
 
         SystemUtil.runWithShellPermissionIdentity(() -> {
             try {

@@ -16,13 +16,17 @@
 
 package android.view.inputmethod.cts.util;
 
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.inputmethod.InputMethodSubtype;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -89,5 +93,66 @@ public final class SecureSettingsUtils {
         SystemUtil.runWithShellPermissionIdentity(() ->
                 Settings.Secure.putString(resolver,
                         Settings.Secure.ENABLED_INPUT_METHODS, newSecureSettings));
+    }
+
+    /**
+     * Returns {@link ContentResolver} that can be used to get/put {@link Settings.Secure} even for
+     * the given user.
+     *
+     * <p>Requires {@link Manifest.permission#INTERACT_ACROSS_USERS_FULL} permission.</p>
+     *
+     * @param context Any {@link Context}.
+     * @param userId User ID to be queried about.
+     * @return {@link ContentResolver} that is associated with {@code userId}.
+     */
+    @NonNull
+    private static ContentResolver getContentResolverForUser(@NonNull Context context, int userId) {
+        try {
+            return context.createPackageContextAsUser("android", 0, UserHandle.of(userId))
+                    .getContentResolver();
+        } catch (PackageManager.NameNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Calls {@link Settings.Secure#putInt(ContentResolver, String, int)} for the given user.
+     *
+     * @param context Any {@link Context}.
+     * @param name A key of {@link Settings.Secure}.
+     * @param value The value of {@link Settings.Secure}.
+     * @param userId The target user ID.
+     */
+    public static void putInt(@NonNull Context context, @NonNull String name, int value,
+            int userId) {
+        if (context.getUserId() == userId && UserHandle.myUserId() == userId) {
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                Settings.Secure.putInt(context.getContentResolver(), name, value);
+            }, Manifest.permission.WRITE_SECURE_SETTINGS);
+            return;
+        }
+
+        SystemUtil.runWithShellPermissionIdentity(() -> Settings.Secure.putInt(
+                        getContentResolverForUser(context, userId), name, value),
+                Manifest.permission.WRITE_SECURE_SETTINGS,
+                Manifest.permission.INTERACT_ACROSS_USERS_FULL);
+    }
+
+    /**
+     * Calls {@link Settings.Secure#getString(ContentResolver, String)} for the given user.
+     *
+     * @param context Any {@link Context}.
+     * @param name A key of {@link Settings.Secure}.
+     * @param userId The target user ID.
+     * @return {@link String} value of {@code key}.
+     */
+    @Nullable
+    public static String getString(@NonNull Context context, @NonNull String name, int userId) {
+        if (context.getUserId() == userId && UserHandle.myUserId() == userId) {
+            return Settings.Secure.getString(context.getContentResolver(), name);
+        }
+        return SystemUtil.runWithShellPermissionIdentity(
+                () -> Settings.Secure.getString(getContentResolverForUser(context, userId), name),
+                Manifest.permission.INTERACT_ACROSS_USERS_FULL);
     }
 }
