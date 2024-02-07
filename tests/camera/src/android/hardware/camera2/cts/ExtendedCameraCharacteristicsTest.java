@@ -2911,9 +2911,9 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 .addRequiredValue(Build.VERSION_CODES.R,
                         CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED)
                 .addRequiredValue(Build.VERSION_CODES.S,
-                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL)
+                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED)
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU,
-                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL)
+                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED)
                 .build();
             return new PrimaryCameraHwLevelReq(RequirementConstants.R7_5__H_1_3,
                     rearCameraHwlLevel, frontCameraHwlLevel);
