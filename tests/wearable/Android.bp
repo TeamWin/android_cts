@@ -28,6 +28,7 @@ android_test {
     optimize: {
         enabled: false,
     },
+    platform_apis: true,
     static_libs: [
         "androidx.test.rules",
         "androidx.test.ext.junit",
@@ -35,6 +36,7 @@ android_test {
         "platform-test-annotations",
         "compatibility-device-util-axt",
         "cts-wm-util",
+        "android.app.wearable.flags-aconfig-java",
         "android-common",
         "android-support-v4",
     ],
@@ -48,5 +50,5 @@ android_test {
         "cts",
         "general-tests",
     ],
-    sdk_version: "test_current",
+    target_sdk_version: "current",
 }
