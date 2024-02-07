@@ -23,16 +23,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.InstantAppInfo;
-import android.content.pm.PackageManager;
 import android.os.RemoteCallback;
 import android.os.UserHandle;
-import android.os.UserManager;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
@@ -57,6 +54,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.RequireMultiUserSupport;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.CommonPackages;
 import com.android.bedstead.nene.packages.Package;
@@ -79,6 +77,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @LargeTest
+@RequireFeature(CommonPackages.FEATURE_INPUT_METHODS)
+@RequireMultiUserSupport
 @RunWith(BedsteadJUnit4.class)
 public class MultiUserTest {
     private static final String TAG = "MultiUserTest";
@@ -103,10 +103,6 @@ public class MultiUserTest {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = instrumentation.getContext();
         mImm = mContext.getSystemService(InputMethodManager.class);
-
-        assumeTrue(mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_INPUT_METHODS));
-        assumeTrue(UserManager.supportsMultipleUsers());
 
         mNeedsTearDown = true;
     }
