@@ -18,6 +18,7 @@ package android.permission3.cts.appthataccessescameraandmic
 
 import android.app.Activity
 import android.app.AppOpsManager
+import android.content.pm.PackageManager
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
@@ -34,6 +35,7 @@ import android.os.Handler
 import android.os.Process
 import android.util.Log
 import android.util.Size
+import android.view.WindowManager
 import androidx.annotation.NonNull
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -64,6 +66,7 @@ class AccessCameraOrMicActivity : Activity() {
     private var hotwordFinished = false
     private var runHotword = false
     private var finishEarly = false
+    private var isWatch = false
 
     override fun onStart() {
         super.onStart()
@@ -71,6 +74,7 @@ class AccessCameraOrMicActivity : Activity() {
         runMic = intent.getBooleanExtra(USE_MICROPHONE, false)
         runHotword = intent.getBooleanExtra(USE_HOTWORD, false)
         finishEarly = intent.getBooleanExtra(FINISH_EARLY, false)
+        isWatch = packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
 
         if (runMic) {
             useMic()
@@ -82,6 +86,17 @@ class AccessCameraOrMicActivity : Activity() {
 
         if (runHotword) {
             useHotword()
+        }
+
+        if (isWatch) {
+            // Make it possible for uiautomator to find the microphone icon
+            // The icon is shown on the home screen so it is hidden behind the activity unless the
+            // activity is set to translucent.
+            getWindow().setFlags(
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+            setTranslucent(true)
+            getWindow().setLayout(100, 100)
         }
     }
 
