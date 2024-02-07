@@ -307,7 +307,8 @@ public class MultiUserTest {
         SystemUtil.runWithShellPermissionIdentity(() -> assertFalse(mImm.getInputMethodListAsUser(
                         userId).stream().filter(
                             imi -> TextUtils.equals(imi.getId(), Ime1Constants.IME_ID)).flatMap(
-                                imi -> mImm.getEnabledInputMethodSubtypeList(imi, true)
+                                imi -> mImm.getEnabledInputMethodSubtypeListAsUser(imi.getId(),
+                                                true, UserHandle.of(userId))
                                         .stream()).anyMatch(
                                             InputMethodSubtype::overridesImplicitlyEnabledSubtype)),
                 Manifest.permission.INTERACT_ACROSS_USERS_FULL);
