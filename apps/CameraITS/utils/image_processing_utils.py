@@ -21,11 +21,10 @@ import math
 import os
 import sys
 
-import capture_read_noise_utils
 import capture_request_utils
 import colour
 import error_util
-import noise_model_utils
+import noise_model_constants
 import numpy
 from PIL import Image
 from PIL import ImageCms
@@ -115,7 +114,7 @@ def convert_capture_to_rgb_image(cap,
   elif cap['format'] == 'jpeg' or cap['format'] == 'jpeg_r':
     return decompress_jpeg_to_rgb_image(cap['data'])
   elif (cap['format'] in ('raw', 'rawQuadBayer') or
-        cap['format'] in noise_model_utils.VALID_RAW_STATS_FORMATS):
+        cap['format'] in noise_model_constants.VALID_RAW_STATS_FORMATS):
     assert_props_is_not_none(props)
     r, gr, gb, b = convert_capture_to_planes(cap, props)
     return convert_raw_to_rgb_image(
@@ -332,10 +331,10 @@ def _convert_quad_bayer_img_to_bayer_channels(quad_bayer_img, props=None):
   """
   height, width, num_channels = quad_bayer_img.shape
 
-  if num_channels != noise_model_utils.NUM_QUAD_BAYER_CHANNELS:
+  if num_channels != noise_model_constants.NUM_QUAD_BAYER_CHANNELS:
     raise AssertionError(
         'The number of channels in the quad Bayer image must be '
-        f'{noise_model_utils.NUM_QUAD_BAYER_CHANNELS}.'
+        f'{noise_model_constants.NUM_QUAD_BAYER_CHANNELS}.'
     )
   quad_bayer_cfa_order = get_canonical_cfa_order(props, is_quad_bayer=True)
 
@@ -348,6 +347,41 @@ def _convert_quad_bayer_img_to_bayer_channels(quad_bayer_img, props=None):
       channel_img[:, :] += quad_bayer_img[:, :, i]
     bayer_channels.append(channel_img / 4)
   return bayer_channels
+
+
+def subsample(image, num_channels=4):
+  """Subsamples the image to separate its color channels.
+
+  Args:
+    image:        2-D numpy array of raw image.
+    num_channels: The number of channels in the image.
+
+  Returns:
+    3-D numpy image with each channel separated.
+  """
+  if num_channels not in noise_model_constants.VALID_NUM_CHANNELS:
+    raise error_util.CameraItsError(
+        f'Invalid number of channels {num_channels}, which should be in '
+        f'{noise_model_constants.VALID_NUM_CHANNELS}.'
+    )
+
+  size_h, size_v = image.shape[1], image.shape[0]
+
+  # Subsample step size, which is the horizontal or vertical pixel interval
+  # between two adjacent pixels of the same channel.
+  stride = int(numpy.sqrt(num_channels))
+  subsample_img = lambda img, i, h, v, s: img[i // s: v: s, i % s: h: s]
+  channel_img = numpy.empty((
+      image.shape[0] // stride,
+      image.shape[1] // stride,
+      num_channels,
+  ))
+
+  for i in range(num_channels):
+    sub_img = subsample_img(image, i, size_h, size_v, stride)
+    channel_img[:, :, i] = sub_img
+
+  return channel_img
 
 
 def convert_capture_to_planes(cap, props=None):
@@ -454,8 +488,8 @@ def convert_capture_to_planes(cap, props=None):
     idxs = get_canonical_cfa_order(props, is_quad_bayer)
     if is_quad_bayer:
       # Subsample image array based on the color map.
-      quad_bayer_img = capture_read_noise_utils.subsample(
-          img, noise_model_utils.NUM_QUAD_BAYER_CHANNELS
+      quad_bayer_img = subsample(
+          img, noise_model_constants.NUM_QUAD_BAYER_CHANNELS
       )
       bayer_channels = _convert_quad_bayer_img_to_bayer_channels(
           quad_bayer_img, props
@@ -480,9 +514,9 @@ def convert_capture_to_planes(cap, props=None):
     is_quad_bayer = 'QuadBayer' in cap['format']
     white_level = float(props['android.sensor.info.whiteLevel'])
     if is_quad_bayer:
-      num_channels = noise_model_utils.NUM_QUAD_BAYER_CHANNELS
+      num_channels = noise_model_constants.NUM_QUAD_BAYER_CHANNELS
     else:
-      num_channels = noise_model_utils.NUM_BAYER_CHANNELS
+      num_channels = noise_model_constants.NUM_BAYER_CHANNELS
     mean_image, _ = unpack_rawstats_capture(cap, num_channels)
     if is_quad_bayer:
       bayer_channels = _convert_quad_bayer_img_to_bayer_channels(
@@ -762,12 +796,14 @@ def get_canonical_cfa_order(props, is_quad_bayer=False):
 
   channel_indices = []
   if is_quad_bayer:
-    color_map = noise_model_utils.QUAD_BAYER_COLOR_FILTER_MAP[cfa_pat]
-    for ch in noise_model_utils.BAYER_COLORS:
+    color_map = noise_model_constants.QUAD_BAYER_COLOR_FILTER_MAP[cfa_pat]
+    for ch in noise_model_constants.BAYER_COLORS:
       channel_indices.extend(color_map[ch])
   else:
-    color_map = noise_model_utils.BAYER_COLOR_FILTER_MAP[cfa_pat]
-    channel_indices = [color_map[ch] for ch in noise_model_utils.BAYER_COLORS]
+    color_map = noise_model_constants.BAYER_COLOR_FILTER_MAP[cfa_pat]
+    channel_indices = [
+        color_map[ch] for ch in noise_model_constants.BAYER_COLORS
+    ]
   return channel_indices
 
 
@@ -777,19 +813,19 @@ def unpack_rawstats_capture(cap, num_channels=4):
   Args:
     cap: A capture object as returned by its_session_utils.do_capture.
     num_channels: The number of color channels in the stats image capture, which
-      can be one of noise_model_utils.VALID_NUM_CHANNELS.
+      can be one of noise_model_constants.VALID_NUM_CHANNELS.
 
   Returns:
     Tuple (mean_image var_image) of float-4 images, with non-normalized
     pixel values computed from the RAW10/RAW16 images on the device
   """
-  if cap['format'] not in noise_model_utils.VALID_RAW_STATS_FORMATS:
+  if cap['format'] not in noise_model_constants.VALID_RAW_STATS_FORMATS:
     raise AssertionError(f"Unsupported stats format: {cap['format']}")
 
-  if num_channels not in noise_model_utils.VALID_NUM_CHANNELS:
+  if num_channels not in noise_model_constants.VALID_NUM_CHANNELS:
     raise AssertionError(
         f'Unsupported number of channels {num_channels}, which should be in'
-        f' {noise_model_utils.VALID_NUM_CHANNELS}.'
+        f' {noise_model_constants.VALID_NUM_CHANNELS}.'
     )
 
   w = cap['width']

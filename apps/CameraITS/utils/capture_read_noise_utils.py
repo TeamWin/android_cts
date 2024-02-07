@@ -22,10 +22,12 @@ import camera_properties_utils
 import capture_request_utils
 import error_util
 import image_processing_utils
+import its_session_utils
 from matplotlib import pylab
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullLocator
 from matplotlib.ticker import ScalarFormatter
+import noise_model_constants
 import noise_model_utils
 import numpy as np
 
@@ -100,7 +102,7 @@ def plot_read_noise_data(read_noise_data, iso_low, iso_high, file_path,
       plot_colors: The color list for plotting.
   """
   num_channels = len(color_channel_names)
-  is_quad_bayer = num_channels == noise_model_utils.NUM_QUAD_BAYER_CHANNELS
+  is_quad_bayer = num_channels == noise_model_constants.NUM_QUAD_BAYER_CHANNELS
   # Create the figure for plotting the read noise to ISO^2 curve.
   fig, ((red, green_r), (green_b, blue)) = plt.subplots(2, 2, figsize=(22, 22))
   subplots = [red, green_r, green_b, blue]
@@ -164,7 +166,7 @@ def plot_read_noise_data(read_noise_data, iso_low, iso_high, file_path,
   y_ticks = np.linspace(np.min(y_values), np.max(y_values), _PLOT_AXIS_TICKS)
 
   for i, subplot in enumerate(subplots):
-    subplot.set_title(noise_model_utils.BAYER_COLORS[i])
+    subplot.set_title(noise_model_constants.BAYER_COLORS[i])
     subplot.set_xlabel('ISO^2')
     subplot.set_ylabel('Read Noise')
 
@@ -180,41 +182,6 @@ def plot_read_noise_data(read_noise_data, iso_low, iso_high, file_path,
     pylab.tight_layout()
 
   fig.savefig(file_path, dpi=_FIG_DPI)
-
-
-def subsample(image, num_channels=4):
-  """Subsamples the image to separate its color channels.
-
-  Args:
-    image:        2-D numpy array of raw image.
-    num_channels: The number of channels in the image.
-
-  Returns:
-    3-D numpy image with each channel separated.
-  """
-  if num_channels not in noise_model_utils.VALID_NUM_CHANNELS:
-    raise error_util.CameraItsError(
-        f'Invalid number of channels {num_channels}, which should be in '
-        f'{noise_model_utils.VALID_NUM_CHANNELS}.'
-    )
-
-  size_h, size_v = image.shape[1], image.shape[0]
-
-  # Subsample step size, which is the horizontal or vertical pixel interval
-  # between two adjacent pixels of the same channel.
-  stride = int(np.sqrt(num_channels))
-  subsample_img = lambda img, i, h, v, s: img[i // s: v: s, i % s: h: s]
-  channel_img = np.empty((
-      image.shape[0] // stride,
-      image.shape[1] // stride,
-      num_channels,
-  ))
-
-  for i in range(num_channels):
-    sub_img = subsample_img(image, i, size_h, size_v, stride)
-    channel_img[:, :, i] = sub_img
-
-  return channel_img
 
 
 def _generate_read_noise_stats(img, iso, white_level, cfa_order):
@@ -241,7 +208,7 @@ def _generate_read_noise_stats(img, iso, white_level, cfa_order):
   result = []
 
   num_channels = len(cfa_order)
-  channel_img = subsample(img, num_channels)
+  channel_img = image_processing_utils.subsample(img, num_channels)
 
   # Create a list of dictionaries of read noise stats for each color channel
   # in the image.
@@ -300,8 +267,8 @@ def get_read_noise_coefficients(read_noise_data, iso_low=0, iso_high=1000000):
   return read_noise_coefficients_a, read_noise_coefficients_b
 
 
-def capture_read_noise_for_iso_range(cam, raw_format, low_iso, high_iso,
-                                     steps_per_stop, dest_file):
+def _capture_read_noise_for_iso_range(cam, raw_format, low_iso, high_iso,
+                                      steps_per_stop, dest_file):
   """Captures read noise data at the lowest advertised exposure value.
 
   This function captures a series of images at different ISO sensitivities,
@@ -420,3 +387,101 @@ def capture_read_noise_for_iso_range(cam, raw_format, low_iso, high_iso,
   logging.info('Read noise stats pickled into file %s.', dest_file)
 
   return stats_list
+
+
+def calibrate_read_noise(
+    device_id: str,
+    camera_id: str,
+    hidden_physical_id: str,
+    read_noise_folder_prefix: str,
+    read_noise_file_name: str,
+    steps_per_stop: int,
+    raw_format: str = 'raw',
+    is_two_stage_model: bool = False,
+) -> str:
+  """Calibrates the read noise of the camera.
+
+  Read noise is a type of noise that occurs in digital cameras when the image
+  sensor converts light to an electronic signal. Calibrating read noise is the
+  first step in the 2-stage noise model calibration.
+
+  Args:
+    device_id: The device ID of the camera.
+    camera_id: The camera ID of the camera.
+    hidden_physical_id: The hidden physical ID of the camera.
+    read_noise_folder_prefix: The prefix of the read noise folder.
+    read_noise_file_name: The name of the read noise file.
+    steps_per_stop: The number of steps per stop.
+    raw_format: The format of raw capture, which can be one of raw, raw10,
+      rawQuadBayer and raw10QuadBayer.
+    is_two_stage_model: A boolean flag indicating if the noise model is
+      calibrated in the two-stage mode.
+
+  Returns:
+    The path to the read noise file.
+  """
+  if not is_two_stage_model:
+    return ''
+  # If two-stage model is enabled, check/collect read noise data.
+  with its_session_utils.ItsSession(
+      device_id=device_id,
+      camera_id=camera_id,
+      hidden_physical_id=hidden_physical_id,
+  ) as cam:
+    props = cam.get_camera_properties()
+    props = cam.override_with_hidden_physical_camera_props(props)
+
+    # Get sensor analog ISO range.
+    sens_min, _ = props['android.sensor.info.sensitivityRange']
+    sens_max_analog = props['android.sensor.maxAnalogSensitivity']
+    # Maximum sensitivity for measuring noise model.
+    sens_max_meas = sens_max_analog
+
+    # Prepare read noise folder.
+    camera_name = cam.get_camera_name()
+    read_noise_folder = os.path.join(
+        read_noise_folder_prefix, device_id.replace(':', '_'), camera_name
+    )
+    read_noise_file_path = os.path.join(read_noise_folder, read_noise_file_name)
+    if not os.path.exists(read_noise_folder):
+      os.makedirs(read_noise_folder)
+    logging.info('Read noise data folder: %s', read_noise_folder)
+
+    # Collect or retrieve read noise data.
+    if not os.path.isfile(read_noise_file_path):
+      logging.info('Collecting read noise data for %s', camera_name)
+      # Read noise data file does not exist, collect read noise data.
+      _capture_read_noise_for_iso_range(
+          cam,
+          raw_format,
+          sens_min,
+          sens_max_meas,
+          steps_per_stop,
+          read_noise_file_path,
+      )
+    else:
+      # If data exists, check if it covers the full range.
+      with open(read_noise_file_path, 'rb') as f:
+        read_noise_data = pickle.load(f)
+        # The +5 offset takes write to read error into account.
+        if read_noise_data[-1][0]['iso'] + 5 < sens_max_meas:
+          logging.error(
+              (
+                  '\nNot enough ISO data points exist. '
+                  '\nMax ISO measured: %.2f'
+                  '\nMax ISO possible: %.2f'
+              ),
+              read_noise_data[-1][0]['iso'],
+              sens_max_meas,
+          )
+          # Not all data points were captured, continue capture.
+          _capture_read_noise_for_iso_range(
+              cam,
+              raw_format,
+              sens_min,
+              sens_max_meas,
+              steps_per_stop,
+              read_noise_file_path,
+          )
+
+    return read_noise_file_path

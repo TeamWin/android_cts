@@ -28,21 +28,22 @@ from matplotlib import pylab
 import matplotlib.pyplot as plt
 import matplotlib.ticker
 from mobly import test_runner
+import noise_model_constants
 import noise_model_utils
 import numpy as np
 
 _IS_QUAD_BAYER = False  # A manual flag to choose standard or quad Bayer noise
                         # model generation.
 if _IS_QUAD_BAYER:
-  _COLOR_CHANNEL_NAMES = noise_model_utils.QUAD_BAYER_COLORS
-  _PLOT_COLORS = noise_model_utils.QUAD_BAYER_PLOT_COLORS
+  _COLOR_CHANNEL_NAMES = noise_model_constants.QUAD_BAYER_COLORS
+  _PLOT_COLORS = noise_model_constants.QUAD_BAYER_PLOT_COLORS
   _TILE_SIZE = 64  # Tile size to compute mean/variance. Large tiles may have
                    # their variance corrupted by low freq image changes.
   _STATS_FORMAT = 'raw10QuadBayerStats'  # rawQuadBayerStats|raw10QuadBayerStats
   _READ_NOISE_RAW_FORMAT = 'raw10QuadBayer'  # rawQuadBayer|raw10QuadBayer
 else:
-  _COLOR_CHANNEL_NAMES = noise_model_utils.BAYER_COLORS
-  _PLOT_COLORS = noise_model_utils.BAYER_PLOT_COLORS
+  _COLOR_CHANNEL_NAMES = noise_model_constants.BAYER_COLORS
+  _PLOT_COLORS = noise_model_constants.BAYER_PLOT_COLORS
   _TILE_SIZE = 32  # Tile size to compute mean/variance. Large tiles may have
                    # their variance corrupted by low freq image changes.
   _STATS_FORMAT = 'rawStats'  # rawStats|raw10Stats
@@ -75,10 +76,12 @@ _TILE_CROP_N = 0  # Number of tiles to crop from edge of image. Usually 0.
 _TWO_STAGE_MODEL = False  # Require read noise data prior to running noise model
 _ZOOM_RATIO = 1  # Zoom target to be used while running the model
 _FIG_DPI = 100  # DPI for plotting noise model figures.
-_BAYER_COLORS_FOR_NOISE_PROFILE = [color.lower() for color in
-                                   noise_model_utils.BAYER_COLORS]
-_QUAD_BAYER_COLORS_FOR_NOISE_PROFILE = [color.lower() for color in
-                                        noise_model_utils.QUAD_BAYER_COLORS]
+_BAYER_COLORS_FOR_NOISE_PROFILE = tuple(
+    map(str.lower, noise_model_constants.BAYER_COLORS)
+)
+_QUAD_BAYER_COLORS_FOR_NOISE_PROFILE = tuple(
+    map(str.lower, noise_model_constants.QUAD_BAYER_COLORS)
+)
 
 
 class DngNoiseModel(its_base_test.ItsBaseTest):
@@ -217,7 +220,9 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
     )
 
     num_channels = noise_model.shape[0]
-    is_quad_bayer = num_channels == noise_model_utils.NUM_QUAD_BAYER_CHANNELS
+    is_quad_bayer = (
+        num_channels == noise_model_constants.NUM_QUAD_BAYER_CHANNELS
+    )
     if is_quad_bayer:
       # Average noise model parameters of every four channels.
       avg_noise_model = noise_model.reshape(-1, 4, noise_model.shape[1]).mean(
@@ -294,8 +299,8 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
       xmax = 0
       stats_per_plane = [[] for _ in range(num_channels)]
       for exposure_ms, means, vars_ in iso_to_stats_dict[iso]:
-        exposure_norm = noise_model_utils.COLOR_NORM(np.log2(exposure_ms))
-        exposure_color = noise_model_utils.RAINBOW_CMAP(exposure_norm)
+        exposure_norm = noise_model_constants.COLOR_NORM(np.log2(exposure_ms))
+        exposure_color = noise_model_constants.RAINBOW_CMAP(exposure_norm)
         for pidx in range(num_channels):
           means_p = means[pidx]
           vars_p = vars_[pidx]
@@ -422,7 +427,9 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
     fig, axes = plt.subplots(4, 2, figsize=(22, 17))
     s_plots, o_plots = axes[:, 0], axes[:, 1]
     num_channels = noise_model.shape[0]
-    is_quad_bayer = num_channels == noise_model_utils.NUM_QUAD_BAYER_CHANNELS
+    is_quad_bayer = (
+        num_channels == noise_model_constants.NUM_QUAD_BAYER_CHANNELS
+    )
     for pidx, measured_model in enumerate(measured_models):
       # Grab the sensitivities and line parameters of each sensitivity.
       sens, s_measured, o_measured = zip(*measured_model)
@@ -481,7 +488,7 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
     * Saves the read noise plot and csv data (optional).
     * Generates noise model and noise profile code.
     """
-    read_noise_file_path = noise_model_utils.calibrate_read_noise(
+    read_noise_file_path = capture_read_noise_utils.calibrate_read_noise(
         self.dut.serial,
         self.camera_id,
         self.hidden_physical_id,
