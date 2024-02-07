@@ -28,7 +28,7 @@ import android.telephony.DomainSelectionService;
 import android.telephony.DomainSelectionService.EmergencyScanType;
 import android.telephony.DomainSelectionService.SelectionAttributes;
 import android.telephony.DomainSelector;
-import android.telephony.EmergencyRegResult;
+import android.telephony.EmergencyRegistrationResult;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.ServiceState;
 import android.telephony.TransportSelectorCallback;
@@ -60,7 +60,7 @@ public class TestDomainSelectionService extends Service {
     private TransportSelectorCallback mTransportSelectorCallback;
     private WwanSelectorCallback mWwanSelectorCallback;
     private SelectionAttributes mSelectionAttributes;
-    private EmergencyRegResult mEmergencyRegResult;
+    private EmergencyRegistrationResult mEmergencyRegResult;
     private CancellationSignal mCancelSignal;
 
     public static final int LATCH_ON_BIND = 0;
@@ -285,8 +285,8 @@ public class TestDomainSelectionService extends Service {
         return mSelectionAttributes;
     }
 
-    /** Returns the {@link EmergencyRegResult} instance. */
-    public EmergencyRegResult getEmergencyRegResult() {
+    /** Returns the {@link EmergencyRegistrationResult} instance. */
+    public EmergencyRegistrationResult getEmergencyRegResult() {
         return mEmergencyRegResult;
     }
 
