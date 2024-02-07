@@ -111,6 +111,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public int mRecordingDisconnected;
         public int mRecordingErrorCount;
         public int mSendSelectedTrackInfoCount;
+        public int mTrackSelectedCount;
         public int mSendCertificateCount;
 
         public Integer mKeyDownCode;
@@ -142,6 +143,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public Rect mCurrentVideoBounds;
         public Integer mRecordingError;
         public List<TvTrackInfo> mSelectedTrackInfoList;
+        public String mSelectedTrackId;
         public SslCertificate mCertificate;
         public String mHost;
         public Integer mPort;
@@ -185,6 +187,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mRecordingDisconnected = 0;
             mRecordingErrorCount = 0;
             mSendSelectedTrackInfoCount = 0;
+            mTrackSelectedCount = 0;
             mSendCertificateCount = 0;
 
             mKeyDownCode = null;
@@ -216,6 +219,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mCurrentVideoBounds = null;
             mRecordingError = null;
             mSelectedTrackInfoList = null;
+            mSelectedTrackId = null;
             mCertificate = null;
             mHost = null;
             mPort = null;
@@ -504,6 +508,8 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         @Override
         public void onTrackSelected(int type, String id) {
             super.onTrackSelected(type, id);
+            mTrackSelectedCount++;
+            mSelectedTrackId = id;
         }
 
         @Override
