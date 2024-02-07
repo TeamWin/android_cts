@@ -25,7 +25,7 @@ import android.text.Layout
 import android.text.TextPaint
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
-import com.android.text.flags.Flags.FLAG_INTER_CHARACTER_JUSTIFICATION
+import com.android.text.flags.Flags.FLAG_LETTER_SPACING_JUSTIFICATION
 import com.google.common.truth.Truth.assertThat
 import kotlin.math.ceil
 import org.junit.Before
@@ -42,7 +42,7 @@ import org.mockito.MockitoAnnotations
 
 @SmallTest
 @RunWith(AndroidJUnit4::class)
-@RequiresFlagsEnabled(FLAG_INTER_CHARACTER_JUSTIFICATION)
+@RequiresFlagsEnabled(FLAG_LETTER_SPACING_JUSTIFICATION)
 class LayoutInterJustificationTest {
 
     @Rule
@@ -62,7 +62,7 @@ class LayoutInterJustificationTest {
         mPaint.textSize = 10f // Make 1em = 10px
     }
 
-    @RequiresFlagsEnabled(FLAG_INTER_CHARACTER_JUSTIFICATION)
+    @RequiresFlagsEnabled(FLAG_LETTER_SPACING_JUSTIFICATION)
     @Test
     fun defaultJustificationMode() {
         val text = "Hello, World."
@@ -74,7 +74,7 @@ class LayoutInterJustificationTest {
         assertThat(layout.justificationMode).isEqualTo(Layout.JUSTIFICATION_MODE_NONE)
     }
 
-    @RequiresFlagsEnabled(FLAG_INTER_CHARACTER_JUSTIFICATION)
+    @RequiresFlagsEnabled(FLAG_LETTER_SPACING_JUSTIFICATION)
     @Test
     fun setAndGetJustificationMode() {
         val text = "Hello, World."
@@ -93,7 +93,7 @@ class LayoutInterJustificationTest {
         assertThat(layout.justificationMode).isEqualTo(Layout.JUSTIFICATION_MODE_INTER_WORD)
     }
 
-    @RequiresFlagsEnabled(FLAG_INTER_CHARACTER_JUSTIFICATION)
+    @RequiresFlagsEnabled(FLAG_LETTER_SPACING_JUSTIFICATION)
     @Test
     fun letterSpacingAmountTest() {
         val text = "Hello, World."

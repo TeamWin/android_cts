@@ -29,7 +29,7 @@ import android.text.style.LocaleSpan
 import android.text.style.RelativeSizeSpan
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
-import com.android.text.flags.Flags.FLAG_INTER_CHARACTER_JUSTIFICATION
+import com.android.text.flags.Flags.FLAG_LETTER_SPACING_JUSTIFICATION
 import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -39,7 +39,7 @@ import org.junit.runner.RunWith
 
 @SmallTest
 @RunWith(AndroidJUnit4::class)
-@RequiresFlagsEnabled(FLAG_INTER_CHARACTER_JUSTIFICATION)
+@RequiresFlagsEnabled(FLAG_LETTER_SPACING_JUSTIFICATION)
 class LayoutClusterCountTest {
 
     @Rule
@@ -87,7 +87,7 @@ class LayoutClusterCountTest {
         )
     }
 
-    @RequiresFlagsEnabled(FLAG_INTER_CHARACTER_JUSTIFICATION)
+    @RequiresFlagsEnabled(FLAG_LETTER_SPACING_JUSTIFICATION)
     @Test
     fun testClusterCount() {
         assertLetterSpacingUnit("a", 1, 1)
@@ -97,7 +97,7 @@ class LayoutClusterCountTest {
         assertLetterSpacingUnit("ab cd    ", 5, 9)
     }
 
-    @RequiresFlagsEnabled(FLAG_INTER_CHARACTER_JUSTIFICATION)
+    @RequiresFlagsEnabled(FLAG_LETTER_SPACING_JUSTIFICATION)
     @Test
     fun testClusterCount_Ligature() {
         assertLetterSpacingUnit("fi", 1, 1)
@@ -109,14 +109,14 @@ class LayoutClusterCountTest {
         assertLetterSpacingUnit("fi", 2, 2, noLigaturePaint)
     }
 
-    @RequiresFlagsEnabled(FLAG_INTER_CHARACTER_JUSTIFICATION)
+    @RequiresFlagsEnabled(FLAG_LETTER_SPACING_JUSTIFICATION)
     @Test
     fun testClusterCount_ComposingCharacter() {
         // U+0300 is a composing accent.
         assertLetterSpacingUnit("a\u0300", 1, 1)
     }
 
-    @RequiresFlagsEnabled(FLAG_INTER_CHARACTER_JUSTIFICATION)
+    @RequiresFlagsEnabled(FLAG_LETTER_SPACING_JUSTIFICATION)
     @Test
     fun testClusterCount_Emoji() {
         // \u261D\uD83C\uDFFB is U+261D U+1F3FB which is supported sequence. Should have 1 cluster.
@@ -132,7 +132,7 @@ class LayoutClusterCountTest {
         assertLetterSpacingUnit("\uD83C\uDDE6\uD83C\uDDE8", 1, 1)
     }
 
-    @RequiresFlagsEnabled(FLAG_INTER_CHARACTER_JUSTIFICATION)
+    @RequiresFlagsEnabled(FLAG_LETTER_SPACING_JUSTIFICATION)
     @Test
     fun testClusterCount_Multiline() {
         val sampleText = "Hello, World. This is Android."
@@ -152,7 +152,7 @@ class LayoutClusterCountTest {
         }
     }
 
-    @RequiresFlagsEnabled(FLAG_INTER_CHARACTER_JUSTIFICATION)
+    @RequiresFlagsEnabled(FLAG_LETTER_SPACING_JUSTIFICATION)
     @Test
     fun testClusterCount_Bidi() {
         val rtl = "\u05D0\u05D1\u05D2"
@@ -174,7 +174,7 @@ class LayoutClusterCountTest {
         assertLetterSpacingUnit(rtl + ltr + rtl, 9, 9, rtl = true)
     }
 
-    @RequiresFlagsEnabled(FLAG_INTER_CHARACTER_JUSTIFICATION)
+    @RequiresFlagsEnabled(FLAG_LETTER_SPACING_JUSTIFICATION)
     @Test
     fun testClusterCount_MultiStyle() {
         val ss = SpannableString("Hello, World.")

@@ -23,7 +23,7 @@ import android.text.SpannedString
 import android.text.TextUtils
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
-import com.android.text.flags.Flags.FLAG_INTER_CHARACTER_JUSTIFICATION
+import com.android.text.flags.Flags.FLAG_LETTER_SPACING_JUSTIFICATION
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
 import org.junit.Test
@@ -197,7 +197,7 @@ class PaintRunFlagTest {
         return width
     }
 
-    @RequiresFlagsEnabled(FLAG_INTER_CHARACTER_JUSTIFICATION)
+    @RequiresFlagsEnabled(FLAG_LETTER_SPACING_JUSTIFICATION)
     @Test
     fun measureText_NoMeasureDifferenceWithFlag() {
         val paint = Paint(PAINT).apply {
@@ -221,7 +221,7 @@ class PaintRunFlagTest {
         assertSame_measureText_Result("ab\u05D0\u05D1cd\u05D2\u05D3ef", 5, 10, paint)
     }
 
-    @RequiresFlagsEnabled(FLAG_INTER_CHARACTER_JUSTIFICATION)
+    @RequiresFlagsEnabled(FLAG_LETTER_SPACING_JUSTIFICATION)
     @Test
     fun getTextWidths_NoMeasureDifferenceWithFlag() {
         val paint = Paint(PAINT).apply {
@@ -245,7 +245,7 @@ class PaintRunFlagTest {
         assertSame_getTextWidths_Result("ab\u05D0\u05D1cd\u05D2\u05D3ef", 5, 10, paint)
     }
 
-    @RequiresFlagsEnabled(FLAG_INTER_CHARACTER_JUSTIFICATION)
+    @RequiresFlagsEnabled(FLAG_LETTER_SPACING_JUSTIFICATION)
     @Test
     fun getTextRunAdvances_Latin() {
         val text = "Hello, World."
@@ -309,7 +309,7 @@ class PaintRunFlagTest {
         assertThat(widthLine).isEqualTo(noLetterSpacingWidth + letterSpace * len - letterSpace)
     }
 
-    @RequiresFlagsEnabled(FLAG_INTER_CHARACTER_JUSTIFICATION)
+    @RequiresFlagsEnabled(FLAG_LETTER_SPACING_JUSTIFICATION)
     @Test
     fun getTextRunAdvances_Hebrew() {
         val text = "\u05D0\u05D1\u05D2\u05D3\u05D4\u05D5\u05D6\u05D7"
