@@ -51,6 +51,7 @@ import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.NonApiTest;
@@ -81,6 +82,7 @@ public class CarTaskViewControllerTest {
     private final ComponentName mTestActivity =
             new ComponentName(mTargetContext, TestActivity.class);
     private final UiAutomation mUiAutomation = mInstrumentation.getUiAutomation();
+    private final UiDevice mUiDevice = UiDevice.getInstance(mInstrumentation);
     @Rule
     public final ApiCheckerRule mApiCheckerRule = new ApiCheckerRule.Builder().build();
 
@@ -103,6 +105,8 @@ public class CarTaskViewControllerTest {
         assertThat(mCarActivityManager).isNotNull();
 
         assumeTrue(mCarActivityManager.isCarSystemUIProxyRegistered());
+        mUiDevice.pressHome();
+
         Intent startIntent = Intent.makeMainActivity(mTestActivity)
                 .addFlags(FLAG_ACTIVITY_NEW_TASK);
         mHostActivity = (TestActivity) mInstrumentation.startActivitySync(
@@ -366,6 +370,7 @@ public class CarTaskViewControllerTest {
         PollingCheck.waitFor(() -> EmbeddedTestActivity1.sInstance != null
                 && EmbeddedTestActivity1.sInstance.mIsResumed,
                 "EmbeddedTestActivity1 is not running.");
+        mUiDevice.waitForIdle(QUIET_TIME_TO_BE_CONSIDERED_IDLE_STATE);
 
         // EmbeddedTestActivity is on the upper part of the screen.
         Point p = getTaskViewCenterOnScreen(carTaskViewHolder.mTaskView);
