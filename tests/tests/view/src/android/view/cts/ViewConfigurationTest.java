@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.graphics.Point;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.InputDevice;
@@ -44,6 +45,7 @@ import java.util.Set;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ViewConfigurationTest {
     private static Set<Integer> SUPPORTED_AXES_FOR_SCROLL_HAPTICS = Set.of(MotionEvent.AXIS_SCROLL);
 

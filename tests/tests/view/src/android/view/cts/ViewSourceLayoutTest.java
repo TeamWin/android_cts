@@ -18,19 +18,30 @@ package android.view.cts;
 
 import static org.junit.Assert.assertEquals;
 
+import android.Manifest;
 import android.content.res.Resources;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.View;
 
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ViewSourceLayoutTest {
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public ActivityTestRule<ViewSourceLayoutTestActivity> mActivityRule =
             new ActivityTestRule<>(ViewSourceLayoutTestActivity.class);
 

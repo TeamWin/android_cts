@@ -30,11 +30,13 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.Manifest;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.graphics.Point;
 import android.hardware.input.InputManager;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.InputDevice;
 import android.view.InputEvent;
 import android.view.KeyCharacterMap;
@@ -50,6 +52,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.WindowUtil;
 
 import org.junit.Before;
@@ -65,6 +68,7 @@ import java.util.List;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class VerifyInputEventTest {
     private static final int NANOS_PER_MILLISECOND = 1000000;
     private static final float EPSILON = 0.001f;
@@ -74,7 +78,12 @@ public class VerifyInputEventTest {
     private UiAutomation mAutomation;
     private InputEventInterceptTestActivity mActivity;
 
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public ActivityTestRule<InputEventInterceptTestActivity> mActivityRule =
             new ActivityTestRule<>(InputEventInterceptTestActivity.class);
 

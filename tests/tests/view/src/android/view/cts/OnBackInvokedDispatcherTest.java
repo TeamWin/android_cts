@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import android.app.Dialog;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.window.OnBackInvokedCallback;
@@ -42,6 +43,7 @@ import java.util.HashMap;
  * Test {@link OnBackInvokedDispatcher}.
  */
 @MediumTest
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class OnBackInvokedDispatcherTest {
     private OnBackInvokedDispatcherTestActivity mActivity;
     private Dialog mDialog;

@@ -33,10 +33,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -51,6 +53,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.UiDevice;
 
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.CtsTouchUtils;
 
 import org.junit.Before;
@@ -61,6 +64,7 @@ import org.mockito.invocation.InvocationOnMock;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class View_UsingViewsTest {
     /**
      * country of Argentina
@@ -103,7 +107,13 @@ public class View_UsingViewsTest {
     private TextView mSymbolTextView;
     private TextView mWarningTextView;
 
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            androidx.test.platform.app.InstrumentationRegistry
+                    .getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public ActivityTestRule<UsingViewsCtsActivity> mActivityRule =
             new ActivityTestRule<>(UsingViewsCtsActivity.class);
 

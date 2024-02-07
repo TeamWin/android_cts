@@ -116,7 +116,8 @@ public class IntentHelperTest {
                 new CreateCredentialRequest.Builder(type, data, data).build();
         RequestInfo requestInfo = RequestInfo.newCreateRequestInfo(
                 TOKEN, createRequest, PACKAGE_NAME,
-                /*hasPermissionToOverrideDefault=*/ false, defaultProviderIds
+                /*hasPermissionToOverrideDefault=*/ false, defaultProviderIds,
+                /*isShowAllOptionsRequested=*/ false
         );
         Intent intent = IntentFactory.createCredentialSelectorIntent(
                 mContext, requestInfo, new ArrayList<>(),
@@ -130,6 +131,7 @@ public class IntentHelperTest {
         assertThat(requestInfo.getDefaultProviderIds()).containsExactlyElementsIn(
                 defaultProviderIds).inOrder();
         assertThat(requestInfo.hasPermissionToOverrideDefault()).isFalse();
+        assertThat(requestInfo.isShowAllOptionsRequested()).isFalse();
         assertThat(requestInfo.getCreateCredentialRequest()).isEqualTo(createRequest);
         assertThat(requestInfo.getGetCredentialRequest()).isNull();
     }
@@ -145,7 +147,8 @@ public class IntentHelperTest {
                         new CredentialOption.Builder("type", new Bundle(),
                                 new Bundle()).build()).build();
         RequestInfo requestInfo = RequestInfo.newGetRequestInfo(
-                token, getRequest, "package", /*hasPermissionToOverrideDefault=*/ false);
+                token, getRequest, "package", /*hasPermissionToOverrideDefault=*/ false,
+                /*isShowAllOptionsRequested=*/ false);
         Intent intent = IntentFactory.createCredentialSelectorIntent(
                 mContext, requestInfo, new ArrayList<>(),
                 new ArrayList<>(), new ResultReceiver(null));
@@ -157,6 +160,7 @@ public class IntentHelperTest {
         assertThat(requestInfo.getType()).isEqualTo(RequestInfo.TYPE_GET);
         assertThat(requestInfo.getDefaultProviderIds()).isEmpty();
         assertThat(requestInfo.hasPermissionToOverrideDefault()).isFalse();
+        assertThat(requestInfo.isShowAllOptionsRequested()).isFalse();
         assertThat(requestInfo.getCreateCredentialRequest()).isNull();
         assertThat(requestInfo.getGetCredentialRequest()).isEqualTo(getRequest);
     }

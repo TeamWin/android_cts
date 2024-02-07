@@ -26,6 +26,7 @@ import static org.mockito.Mockito.verify;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.AbsSavedState;
 import android.view.View.BaseSavedState;
 
@@ -37,6 +38,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class View_BaseSavedStateTest {
     @Test(expected=IllegalArgumentException.class)
     public void testConstructorNullParcelable() {

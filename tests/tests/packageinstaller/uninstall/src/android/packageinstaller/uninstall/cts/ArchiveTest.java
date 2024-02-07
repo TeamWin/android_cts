@@ -38,6 +38,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.Flags;
 import android.content.pm.LauncherApps;
+import android.content.pm.LauncherApps.ArchiveCompatibilityParams;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.UnarchivalState;
 import android.content.pm.PackageManager;
@@ -127,8 +128,9 @@ public class ArchiveTest {
         sUnarchiveReceiverPackageName = new CompletableFuture<>();
         sUnarchiveReceiverAllUsers = new CompletableFuture<>();
         mDefaultHome = getDefaultLauncher(instrumentation);
-        mLauncherApps.setArchiveCompatibilityOptions(
-                /* enableIconOverlay= */ false, /* enableUnarchivalSupport= */ false);
+        ArchiveCompatibilityParams options = new ArchiveCompatibilityParams();
+        options.setEnableUnarchivalConfirmation(false);
+        mLauncherApps.setArchiveCompatibility(options);
         // Prepare device to same state to make tests more independent.
         prepareDevice();
         abandonPendingUnarchivalSessions();
@@ -140,8 +142,6 @@ public class ArchiveTest {
         if (mDefaultHome != null) {
             setDefaultLauncher(InstrumentationRegistry.getInstrumentation(), mDefaultHome);
         }
-        mLauncherApps.setArchiveCompatibilityOptions(
-                /* enableIconOverlay= */ false, /* enableUnarchivalSupport= */ false);
     }
 
     private void uninstallPackage(String packageName) {
@@ -280,8 +280,10 @@ public class ArchiveTest {
     public void startUnarchival_permissionDialog() throws Exception {
         installPackage(ARCHIVE_APK);
         prepareDevice();
-        mLauncherApps.setArchiveCompatibilityOptions(
-                /* enableIconOverlay= */ true, /* enableUnarchivalSupport= */ true);
+        ArchiveCompatibilityParams options = new ArchiveCompatibilityParams();
+        options.setEnableIconOverlay(true);
+        options.setEnableUnarchivalConfirmation(true);
+        mLauncherApps.setArchiveCompatibility(options);
         LocalIntentSender archiveSender = new LocalIntentSender();
         runWithShellPermissionIdentity(
                 () -> {

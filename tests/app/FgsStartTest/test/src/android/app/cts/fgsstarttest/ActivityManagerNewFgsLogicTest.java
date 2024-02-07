@@ -41,8 +41,8 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.server.am.Flags;
 
-import org.junit.Assert;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -85,7 +85,7 @@ public class ActivityManagerNewFgsLogicTest {
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_NEW_FGS_RESTRICTION_LOGIC)
     public void testForCurrent() throws Exception {
-        test(mContext, HELPER_CURRENT, true);
+        test(mContext, HELPER_CURRENT, false);
     }
 
     private void awaitLatch(CountDownLatch latch, String eventName) throws Exception {

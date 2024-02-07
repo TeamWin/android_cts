@@ -18,6 +18,7 @@ package android.view.cts;
 
 import static org.junit.Assert.assertEquals;
 
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.view.View;
 import android.view.View.MeasureSpec;
 
@@ -33,6 +34,7 @@ import org.junit.runner.RunWith;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class View_MeasureSpecTest {
     private static final int MEASURE_SPEC_SIZE = 1;
 

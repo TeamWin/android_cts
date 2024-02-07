@@ -38,6 +38,7 @@ import com.android.compatibility.common.util.RequiredFeatureRule;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
@@ -98,6 +99,11 @@ public class TvAdServiceTest {
         if (mActivityScenario != null) {
             mActivityScenario.close();
         }
+    }
+
+    @Test
+    public void testStartAdService() throws Throwable {
+        mTvAdView.startAdService();
     }
 
     private TvAdView findTvAdViewById(int id) {

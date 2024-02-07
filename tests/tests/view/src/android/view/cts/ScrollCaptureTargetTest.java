@@ -35,8 +35,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.Manifest;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.Presubmit;
 import android.view.ScrollCaptureTarget;
 import android.view.View;
@@ -44,8 +46,11 @@ import android.view.ViewGroup;
 
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.MediumTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -59,11 +64,17 @@ import org.junit.runner.RunWith;
 @Presubmit
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ScrollCaptureTargetTest {
     @Rule
     public ExpectedException mExpectedException = ExpectedException.none();
 
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public ActivityTestRule<ScrollCaptureScrollViewCtsActivity> mActivityRule =
             new ActivityTestRule<>(ScrollCaptureScrollViewCtsActivity.class);
 

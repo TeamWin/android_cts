@@ -26,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.app.Instrumentation;
@@ -46,6 +47,7 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.media.ImageWriter;
 import android.os.Debug;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.server.wm.SetRequestedOrientationRule;
 import android.util.Half;
 import android.util.Log;
@@ -63,6 +65,7 @@ import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.SynchronousPixelCopy;
 
 import org.junit.Assert;
@@ -87,6 +90,7 @@ import java.util.function.Function;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class PixelCopyTest {
     private static final String TAG = "PixelCopyTests";
 
@@ -94,11 +98,17 @@ public class PixelCopyTest {
     public static SetRequestedOrientationRule mSetRequestedOrientationRule =
             new SetRequestedOrientationRule();
 
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            androidx.test.platform.app.InstrumentationRegistry
+                    .getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public ActivityTestRule<PixelCopyGLProducerCtsActivity> mGLSurfaceViewActivityRule =
             new ActivityTestRule<>(PixelCopyGLProducerCtsActivity.class, false, false);
 
-    @Rule
+    @Rule(order = 1)
     public ActivityTestRule<PixelCopyVideoSourceActivity> mVideoSourceActivityRule =
             new ActivityTestRule<>(PixelCopyVideoSourceActivity.class, false, false);
 

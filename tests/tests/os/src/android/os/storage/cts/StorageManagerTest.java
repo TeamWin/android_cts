@@ -16,6 +16,8 @@
 
 package android.os.storage.cts;
 
+import static android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
@@ -1134,6 +1136,30 @@ public class StorageManagerTest {
                 resultModerate[0] >= 0L);
         assertTrue("" + resultModerate[0] + " expected to be less than equal to total space",
                 resultModerate[0] <= mockFile.getTotalSpace());
+    }
+
+    @Test
+    public void testStorageRemainingLifetime() {
+        if (!android.os.Flags.storageLifetimeApi()) {
+            return;
+        }
+
+        int value = -1;
+        boolean gotSecurityException = false;
+        try {
+            value = mStorageManager.getInternalStorageRemainingLifetime();
+        } catch (SecurityException e) {
+            gotSecurityException = true;
+        }
+        assertEquals(value, -1);
+        assertTrue(gotSecurityException);
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(READ_PRIVILEGED_PHONE_STATE);
+
+        value = mStorageManager.getInternalStorageRemainingLifetime();
+        assertThat(value).isAtLeast(-1);
+        assertThat(value).isAtMost(100);
     }
 
     public static byte[] readFully(InputStream in) throws IOException {

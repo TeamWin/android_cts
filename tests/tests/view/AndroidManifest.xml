@@ -189,11 +189,13 @@
 
         <activity android:name="android.view.cts.PixelCopyVideoSourceActivity"
              android:screenOrientation="locked"
-             android:label="PixelCopyVideoSourceActivity"/>
+             android:label="PixelCopyVideoSourceActivity"
+             android:exported="true"/>
 
         <activity android:name="android.view.cts.PixelCopyGLProducerCtsActivity"
              android:screenOrientation="locked"
-             android:label="PixelCopyGLProducerCtsActivity"/>
+             android:label="PixelCopyGLProducerCtsActivity"
+             android:exported="true"/>
 
 
         <activity android:name="android.view.cts.PixelCopyViewProducerActivity"
@@ -201,7 +203,8 @@
              android:screenOrientation="portrait"
              android:rotationAnimation="jumpcut"
              android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
-             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"/>
+             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"
+             android:exported="true"/>
 
         <activity android:name="android.view.cts.PixelCopyWideGamutViewProducerActivity"
              android:label="PixelCopyWideGamutViewProducerActivity"
@@ -209,14 +212,16 @@
              android:rotationAnimation="jumpcut"
              android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
              android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"
-             android:colorMode="wideColorGamut"/>
+             android:colorMode="wideColorGamut"
+             android:exported="true"/>
 
         <activity android:name="android.view.cts.PixelCopyViewProducerDialogActivity"
              android:label="PixelCopyViewProducerDialogActivity"
              android:screenOrientation="portrait"
              android:rotationAnimation="jumpcut"
              android:theme="@android:style/Theme.Material.Dialog.NoActionBar"
-             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"/>
+             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"
+             android:exported="true"/>
 
         <activity android:name="android.view.cts.FocusFinderCtsActivity"
              android:screenOrientation="locked"
@@ -237,7 +242,8 @@
         <activity android:name="android.view.cts.ScaleGestureDetectorCtsActivity"
              android:label="ScaleGestureDetectorCtsActivity"
              android:screenOrientation="locked"
-             android:theme="@android:style/Theme.NoTitleBar.Fullscreen"/>
+             android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+             android:exported="true"/>
 
         <activity android:name="android.view.cts.DisplayRefreshRateCtsActivity"
              android:label="DisplayRefreshRateCtsActivity"

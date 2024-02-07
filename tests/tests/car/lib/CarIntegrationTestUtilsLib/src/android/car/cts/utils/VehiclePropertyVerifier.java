@@ -315,6 +315,8 @@ public class VehiclePropertyVerifier<T> {
                 return "VEHICLE_AREA_TYPE_SEAT";
             case VehicleAreaType.VEHICLE_AREA_TYPE_WHEEL:
                 return "VEHICLE_AREA_TYPE_WHEEL";
+            case VehicleAreaType.VEHICLE_AREA_TYPE_VENDOR:
+                return "VEHICLE_AREA_TYPE_VENDOR";
             default:
                 return Integer.toString(areaType);
         }
@@ -1416,7 +1418,19 @@ public class VehiclePropertyVerifier<T> {
         } else if (mAreaType == VehicleAreaType.VEHICLE_AREA_TYPE_DOOR) {
             verifyValidAreaIdsForAreaType(ALL_POSSIBLE_DOOR_AREA_IDS);
             verifyNoAreaOverlapInAreaIds(DOOR_AREAS);
+        } else if (mAreaType == VehicleAreaType.VEHICLE_AREA_TYPE_VENDOR) {
+            assertWithMessage(mPropertyName
+                    + " has an unsupported area type "
+                    + areaTypeToString(mAreaType)
+                    + " since associated feature flag is false")
+                    .that(Flags.androidVicVehicleProperties())
+                    .isTrue();
+
+            ImmutableSet<Integer> setOfAreaIds =
+                    ImmutableSet.copyOf(Arrays.stream(areaIds).boxed().collect(Collectors.toSet()));
+            verifyNoAreaOverlapInAreaIds(setOfAreaIds);
         }
+
         if (mAreaIdsVerifier.isPresent()) {
             mAreaIdsVerifier.get().verify(areaIds);
         }

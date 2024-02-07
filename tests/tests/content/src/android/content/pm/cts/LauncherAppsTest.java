@@ -46,6 +46,7 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
+import android.content.pm.LauncherApps.ArchiveCompatibilityParams;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -153,8 +154,9 @@ public class LauncherAppsTest {
         mIntentSender = new ArchiveIntentSender();
         sUnarchiveReceiverPackageName = new CompletableFuture<>();
         setDefaultLauncher(mInstrumentation, mTestHome);
-        mLauncherApps.setArchiveCompatibilityOptions(
-                /* enableIconOverlay= */ true, /* enableUnarchivalSupport= */ false);
+        ArchiveCompatibilityParams options = new ArchiveCompatibilityParams();
+        options.setEnableUnarchivalConfirmation(false);
+        mLauncherApps.setArchiveCompatibility(options);
     }
 
     @After

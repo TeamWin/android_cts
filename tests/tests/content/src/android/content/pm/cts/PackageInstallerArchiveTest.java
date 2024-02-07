@@ -55,6 +55,7 @@ import android.content.IntentSender;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.Flags;
 import android.content.pm.LauncherApps;
+import android.content.pm.LauncherApps.ArchiveCompatibilityParams;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.UnarchivalState;
@@ -242,9 +243,9 @@ public class PackageInstallerArchiveTest {
         Drawable overlaidIcon = mPackageManager.getApplicationIcon(applicationInfo);
         Bitmap overlaidBitmap = drawableToBitmap(overlaidIcon);
 
-        mContext.getSystemService(LauncherApps.class)
-                .setArchiveCompatibilityOptions(
-                        /* enableIconOverlay= */ false, /* enableUnarchivalSupport= */ true);
+        ArchiveCompatibilityParams options = new ArchiveCompatibilityParams();
+        options.setEnableIconOverlay(false);
+        mContext.getSystemService(LauncherApps.class).setArchiveCompatibility(options);
         Drawable rawIcon = mPackageManager.getApplicationIcon(applicationInfo);
         Bitmap rawBitmap = drawableToBitmap(rawIcon);
 

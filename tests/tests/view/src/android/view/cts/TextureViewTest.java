@@ -31,6 +31,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.Manifest;
 import android.app.Instrumentation;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -46,6 +47,7 @@ import android.graphics.SurfaceTexture;
 import android.hardware.DataSpace;
 import android.media.Image;
 import android.media.ImageWriter;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Half;
 import android.view.PixelCopy;
 import android.view.Surface;
@@ -62,6 +64,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.SynchronousPixelCopy;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
@@ -83,6 +86,7 @@ import junitparams.Parameters;
 
 @MediumTest
 @RunWith(JUnitParamsRunner.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class TextureViewTest {
 
     static final int EGL_GL_COLORSPACE_SRGB_KHR = 0x3089;
@@ -101,11 +105,17 @@ public class TextureViewTest {
         assertNotNull(mInstrumentation);
     }
 
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            androidx.test.platform.app.InstrumentationRegistry
+                    .getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public ActivityTestRule<TextureViewCtsActivity> mActivityRule =
             new ActivityTestRule<>(TextureViewCtsActivity.class, false, false);
 
-    @Rule
+    @Rule(order = 1)
     public ActivityTestRule<SDRTestActivity> mSDRActivityRule =
             new ActivityTestRule<>(SDRTestActivity.class, false, false);
 
