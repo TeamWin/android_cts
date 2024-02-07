@@ -470,13 +470,15 @@ public class MockImeSession implements AutoCloseable {
 
         if (!mSuppressReset) {
             executeImeCmd("reset");
+
+            PollingCheck.check("Make sure that MockIME becomes unavailable", TIMEOUT_MILLIS, () ->
+                    mContext.getSystemService(InputMethodManager.class)
+                            .getEnabledInputMethodList()
+                            .stream()
+                            .noneMatch(
+                                    info -> getMockImeComponentName().equals(info.getComponent())));
         }
 
-        PollingCheck.check("Make sure that MockIME becomes unavailable", TIMEOUT_MILLIS, () ->
-                mContext.getSystemService(InputMethodManager.class)
-                        .getEnabledInputMethodList()
-                        .stream()
-                        .noneMatch(info -> getMockImeComponentName().equals(info.getComponent())));
         if (mChannel != null) {
             mChannel.close();
         }
