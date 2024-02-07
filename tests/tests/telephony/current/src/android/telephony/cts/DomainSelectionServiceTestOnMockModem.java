@@ -57,7 +57,7 @@ import android.telephony.AccessNetworkConstants;
 import android.telephony.BarringInfo;
 import android.telephony.DisconnectCause;
 import android.telephony.DomainSelectionService.SelectionAttributes;
-import android.telephony.EmergencyRegResult;
+import android.telephony.EmergencyRegistrationResult;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.TelephonyManager;
 import android.telephony.mockmodem.MockEmergencyRegResult;
@@ -370,7 +370,7 @@ public class DomainSelectionServiceTestOnMockModem extends DomainSelectionCallin
 
         assertTrue(testService.waitForLatchCountdown(LATCH_ON_EMERGENCY_REG_RESULT));
 
-        EmergencyRegResult receivedResult = testService.getEmergencyRegResult();
+        EmergencyRegistrationResult receivedResult = testService.getEmergencyRegResult();
 
         assertNotNull(receivedResult);
         assertEquals(regResult.getAccessNetwork(), receivedResult.getAccessNetwork());
