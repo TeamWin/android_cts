@@ -211,7 +211,7 @@ public class ResourceManagerTestActivityBase extends Activity {
                 mUseCodecImportanceLater = extras.getBoolean("codec-importance-later", false);
             }
             // Setting this flag to track that we get an expected reclaim on expected codec.
-            mChangingCodecImportance = mUseCodecImportanceAtConfig | mUseCodecImportanceLater;
+            mChangingCodecImportance = mUseCodecImportanceAtConfig || mUseCodecImportanceLater;
         }
 
         boolean shouldSkip = false;
