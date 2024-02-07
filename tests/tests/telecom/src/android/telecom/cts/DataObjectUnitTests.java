@@ -39,7 +39,12 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.StatusHints;
 import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
+import android.telephony.PreciseDisconnectCause;
+import android.telephony.ims.ImsReasonInfo;
 import android.test.InstrumentationTestCase;
+
+import com.android.compatibility.common.util.ApiTest;
+import com.android.server.telecom.flags.Flags;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -198,6 +203,36 @@ public class DataObjectUnitTests extends InstrumentationTestCase {
         assertEquals(0, parcelCause.describeContents());
         assertEquals(cause, parcelCause);
         p.recycle();
+    }
+
+    @ApiTest(apis = {"android.telecom.DisconnectCause#DisconnectCause"})
+    public void testDisconnectCauseWithTelephonyDebugInfo() throws Exception {
+        if (!Flags.telecomResolveHiddenDependencies()) {
+            return; //early exit
+        }
+        final CharSequence label = "Out of service area";
+        final CharSequence description = "Mobile network not available";
+        final String reason = "CTS Testing";
+        ImsReasonInfo reasonInfo = new ImsReasonInfo(ImsReasonInfo.CODE_UNSPECIFIED, 0, "");
+        DisconnectCause cause = new DisconnectCause(
+                DisconnectCause.ERROR,
+                label,
+                description,
+                reason,
+                ToneGenerator.TONE_CDMA_CALLDROP_LITE,
+                android.telephony.DisconnectCause.NORMAL,
+                PreciseDisconnectCause.NORMAL,
+                reasonInfo);
+        assertEquals(DisconnectCause.ERROR, cause.getCode());
+        assertEquals(label, cause.getLabel());
+        assertEquals(description, cause.getDescription());
+        assertEquals(reason, cause.getReason());
+        assertEquals(ToneGenerator.TONE_CDMA_CALLDROP_LITE, cause.getTone());
+        assertEquals(0, cause.describeContents());
+        // Validate additional telephony debug info
+        assertEquals(android.telephony.DisconnectCause.NORMAL, cause.getTelephonyDisconnectCause());
+        assertEquals(PreciseDisconnectCause.NORMAL, cause.getTelephonyPreciseDisconnectCause());
+        assertEquals(reasonInfo, cause.getImsReasonInfo());
     }
 
     public void testStatusHints() throws Exception {
