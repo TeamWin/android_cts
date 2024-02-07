@@ -247,8 +247,9 @@ public abstract class AudioDataPathsBaseActivity
         TestResults[] mTestResults;
 
         // Pass/Fail criteria (with defaults)
-        double mMinPassMagnitude = 0.01;
-        double mMaxPassJitter = 0.1;
+        static final double MIN_SIGNAL_PASS_MAGNITUDE = 0.01;
+        static final double MAX_SIGNAL_PASS_JITTER = 0.1;
+        static final double MAX_XTALK_PASS_MAGNITUDE = 0.02;
 
         TestModule(int outDeviceType, int outSampleRate, int outChannelCount,
                    int inDeviceType, int inSampleRate, int inChannelCount) {
@@ -394,10 +395,10 @@ public abstract class AudioDataPathsBaseActivity
             boolean passed = false;
             if (hasRun(api)) {
                 if (mAnalysisType == TYPE_SIGNAL_PRESENCE) {
-                    passed = mTestResults[api].mMaxMagnitude >= mMinPassMagnitude
-                            && mTestResults[api].mPhaseJitter <= mMaxPassJitter;
+                    passed = mTestResults[api].mMaxMagnitude >= MIN_SIGNAL_PASS_MAGNITUDE
+                            && mTestResults[api].mPhaseJitter <= MAX_SIGNAL_PASS_JITTER;
                 } else {
-                    passed = mTestResults[api].mMaxMagnitude <= mMinPassMagnitude;
+                    passed = mTestResults[api].mMaxMagnitude <= MAX_XTALK_PASS_MAGNITUDE;
                 }
             }
             return passed;
@@ -568,12 +569,12 @@ public abstract class AudioDataPathsBaseActivity
                         locale, "jitter:%.5f ", results.mPhaseJitter);
 
                 boolean passMagnitude = mAnalysisType == TYPE_SIGNAL_PRESENCE
-                        ? results.mMaxMagnitude >= mMinPassMagnitude
-                        : results.mMaxMagnitude <= mMinPassMagnitude;
+                        ? results.mMaxMagnitude >= MIN_SIGNAL_PASS_MAGNITUDE
+                        : results.mMaxMagnitude <= MAX_XTALK_PASS_MAGNITUDE;
 
                 // Do we want a threshold value for jitter in crosstalk tests?
                 boolean passJitter =
-                        results.mPhaseJitter <= mMaxPassJitter;
+                        results.mPhaseJitter <= MAX_SIGNAL_PASS_JITTER;
 
                 // Values / Criteria
                 // NOTE: The criteria is why the test passed or failed, not what
@@ -586,12 +587,12 @@ public abstract class AudioDataPathsBaseActivity
                     htmlFormatter.appendText(maxMagString
                             + String.format(locale,
                             passMagnitude ? " >= %.5f " : " < %.5f ",
-                            mMinPassMagnitude));
+                            MIN_SIGNAL_PASS_MAGNITUDE));
                 } else {
                     htmlFormatter.appendText(maxMagString
                             + String.format(locale,
                             passMagnitude ? " <= %.5f " : " > %.5f ",
-                            mMinPassMagnitude));
+                            MAX_XTALK_PASS_MAGNITUDE));
                 }
                 htmlFormatter.closeTextColor();
 
@@ -599,7 +600,7 @@ public abstract class AudioDataPathsBaseActivity
                 if (mAnalysisType == TYPE_SIGNAL_PRESENCE) {
                     htmlFormatter.appendText(phaseJitterString
                                     + String.format(locale, passJitter ? " <= %.5f" : " > %.5f",
-                                    mMaxPassJitter));
+                                    MAX_SIGNAL_PASS_JITTER));
                 } else {
                     htmlFormatter.appendText(phaseJitterString);
                 }
