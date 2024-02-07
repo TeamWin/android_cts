@@ -468,6 +468,27 @@ object DevicePolicy {
         }
     }
 
+    @Experimental
+    fun forceSecurityLogs() {
+        TestApis.permissions().withPermission(
+            CommonPermissions.FORCE_DEVICE_POLICY_MANAGER_LOGS
+        ).use {
+            val throttle = devicePolicyManager.forceSecurityLogs()
+            if (throttle == -1L) {
+                throw NeneException("Error forcing security logs: returned -1")
+            }
+            if (throttle == 0L) {
+                return
+            }
+            try {
+                Thread.sleep(throttle)
+            } catch (e: InterruptedException) {
+                throw NeneException("Error waiting for security log throttle", e)
+            }
+            forceSecurityLogs()
+        }
+    }
+
     /**
      * Sets the provided `packageName` as a device policy management role holder.
      */
