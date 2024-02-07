@@ -28,12 +28,14 @@ import android.hardware.input.VirtualMouseButtonEvent;
 import android.hardware.input.VirtualMouseConfig;
 import android.hardware.input.VirtualMouseRelativeEvent;
 import android.hardware.input.VirtualMouseScrollEvent;
+import android.hardware.input.cts.DefaultPointerSpeedRule;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -46,6 +48,9 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
     private static final String DEVICE_NAME = "CtsVirtualMouseTestDevice";
 
     private static final float EPSILON = 0.001f;
+
+    @Rule
+    public final DefaultPointerSpeedRule mDefaultPointerSpeedRule = new DefaultPointerSpeedRule();
 
     private VirtualMouse mVirtualMouse;
 
