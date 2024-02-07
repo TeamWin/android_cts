@@ -44,4 +44,8 @@
         <!-- dismiss all system dialogs before launch test -->
         <option name="run-command" value="am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS" />
     </target_preparer>
+    <object class="com.android.tradefed.testtype.suite.module.TestFailureModuleController" type="module_controller">
+        <!-- Take screenshot upon test failure -->
+        <option name="screenshot-on-failure" value="true" />
+    </object>
 </configuration>
