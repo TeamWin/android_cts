@@ -17,10 +17,12 @@
 package android.bluetooth.cts;
 
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
+import static android.Manifest.permission.BLUETOOTH_PRIVILEGED;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -33,6 +35,9 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.sysprop.BluetoothProperties;
 import android.util.Log;
 
@@ -40,10 +45,12 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bluetooth.flags.Flags;
 import com.android.compatibility.common.util.ApiLevelUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -57,15 +64,17 @@ import java.util.concurrent.locks.ReentrantLock;
 @LargeTest
 public class BluetoothHidHostTest {
     private static final String TAG = BluetoothHidHostTest.class.getSimpleName();
-    private static final int PROXY_CONNECTION_TIMEOUT_MS = 500; // ms timeout for Proxy Connect
 
+    private static final String[] DEFAULT_PERMISSIONS = {BLUETOOTH_CONNECT};
+    private static final int PROXY_CONNECTION_TIMEOUT_MS = 500; // ms timeout for Proxy Connect
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
     private Context mContext;
     private boolean mHasBluetooth;
     private boolean mIsHidHostSupported;
     private BluetoothAdapter mAdapter;
     private BluetoothHidHost mHidHost;
     private UiAutomation mUiAutomation;
-
     private boolean mIsProfileReady;
     private Condition mConditionProfileConnection;
     private ReentrantLock mProfileConnectionlock;
@@ -84,7 +93,7 @@ public class BluetoothHidHostTest {
         if (!mIsHidHostSupported) return;
 
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
+        mUiAutomation.adoptShellPermissionIdentity(DEFAULT_PERMISSIONS);
 
         BluetoothManager manager = mContext.getSystemService(BluetoothManager.class);
         mAdapter = manager.getAdapter();
@@ -108,6 +117,10 @@ public class BluetoothHidHostTest {
             mAdapter.closeProfileProxy(BluetoothProfile.HID_HOST, mHidHost);
             mHidHost = null;
             mIsProfileReady = false;
+        }
+
+        if (mUiAutomation != null) {
+            mUiAutomation.dropShellPermissionIdentity();
         }
         mAdapter = null;
     }
@@ -219,14 +232,73 @@ public class BluetoothHidHostTest {
                         testDevice, BluetoothProfile.CONNECTION_POLICY_FORBIDDEN));
     }
 
-    private static <T extends Exception> void assertThrows(Class<T> clazz, Runnable r) {
-        try {
-            r.run();
-        } catch (Exception e) {
-            if (!clazz.isAssignableFrom(e.getClass())) {
-                throw e;
-            }
-        }
+    @RequiresFlagsEnabled(Flags.FLAG_ALLOW_SWITCHING_HID_AND_HOGP)
+    @Test
+    public void getPreferredTransportTest() {
+        assumeTrue(mHasBluetooth && mIsHidHostSupported);
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mHidHost);
+
+        BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+
+        // Verify returns IllegalArgumentException when invalid input is given
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    mHidHost.getPreferredTransport(null);
+                });
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        // Verify returns false if bluetooth is not enabled
+        assertEquals(
+                BluetoothDevice.TRANSPORT_AUTO,
+                mHidHost.getPreferredTransport(testDevice));
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_ALLOW_SWITCHING_HID_AND_HOGP)
+    @Test
+    public void setPreferredTransportTest() {
+        assumeTrue(mHasBluetooth && mIsHidHostSupported);
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mHidHost);
+
+        BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+
+        // Verify that BLUETOOTH_PRIVILEGED permission is enforced
+        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
+        assertThrows("BLUETOOTH_PRIVILEGED permission not enforced",
+                SecurityException.class,
+                () -> {
+                    mHidHost.setPreferredTransport(testDevice, BluetoothDevice.TRANSPORT_AUTO);
+                });
+
+        // Verify that BLUETOOTH_CONNECT permission is enforced
+        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_PRIVILEGED);
+        assertThrows("BLUETOOTH_CONNECT permission not enforced", SecurityException.class,
+                () -> {
+                    mHidHost.setPreferredTransport(testDevice, BluetoothDevice.TRANSPORT_AUTO);
+                });
+
+        // Get required permissions
+        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
+
+        // Verify returns false when invalid input is given
+        assertFalse(
+                mHidHost.setPreferredTransport(
+                        testDevice, BluetoothDevice.TRANSPORT_AUTO));
+        // Verify returns IllegalArgumentException when invalid input is given
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    mHidHost.setPreferredTransport(null, BluetoothDevice.TRANSPORT_AUTO);
+                });
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        // Verify returns false if bluetooth is not enabled
+        assertFalse(
+                mHidHost.setPreferredTransport(
+                        testDevice, BluetoothDevice.TRANSPORT_AUTO));
     }
 
     private boolean waitForProfileConnect() {
