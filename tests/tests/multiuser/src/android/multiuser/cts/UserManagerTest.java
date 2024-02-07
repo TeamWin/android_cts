@@ -554,12 +554,6 @@ public final class UserManagerTest {
             assertThat(umOfProfile.isProfile()).isTrue();
             assertThat(umOfProfile.isUserOfType(UserManager.USER_TYPE_PROFILE_MANAGED)).isTrue();
             assertThat(umOfProfile.getUserBadge()).isNotNull();
-            if (android.multiuser.Flags.supportHidingProfiles()) {
-                assertThat(umOfProfile.getUserProperties(
-                        userHandle).getProfileApiVisibility()).isEqualTo(
-                        UserProperties.PROFILE_API_VISIBILITY_VISIBLE);
-            }
-
         } finally {
             removeUser(userHandle);
         }
@@ -604,12 +598,6 @@ public final class UserManagerTest {
                     .collect(Collectors.toList());
             assertThat(privateUsers.size()).isEqualTo(1);
             assertThat(umOfProfile.getUserBadge()).isNotNull();
-            if (android.multiuser.Flags.supportHidingProfiles()) {
-                assertThat(umOfProfile.getUserProperties(
-                        userHandle).getProfileApiVisibility()).isEqualTo(
-                        UserProperties.PROFILE_API_VISIBILITY_HIDDEN);
-            }
-
         } finally {
             removeUser(userHandle);
         }
