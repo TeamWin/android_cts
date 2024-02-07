@@ -62,6 +62,7 @@ import android.media.tv.interactive.TvInteractiveAppService;
 import android.media.tv.interactive.TvInteractiveAppServiceInfo;
 import android.media.tv.interactive.TvInteractiveAppView;
 import android.net.Uri;
+import android.net.http.SslCertificate;
 import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.os.Handler;
@@ -173,6 +174,8 @@ public class TvInteractiveAppServiceTest {
         private int mRequestTimeShiftModeCount = 0;
         private int mSendTimeShiftCommandCount = 0;
         private int mRequestSelectedTrackInfoCount = 0;
+        private int mRequestSigningSSLCount = 0;
+        private int mRequestCertificateCount = 0;
 
         private String mIAppServiceId = null;
         private Integer mState = null;
@@ -191,6 +194,12 @@ public class TvInteractiveAppServiceTest {
         private Integer mRepeatedDays = null;
         private Bundle mParams = null;
         private String mTimeShiftCommandType = null;
+        private String mSigningId = null;
+        private String mAlgorithm = null;
+        private String mHost = null;
+        private String mAlias = null;
+        private Integer mPort = null;
+        private byte[] mData = null;
 
         private void resetValues() {
             mRequestCurrentChannelUriCount = 0;
@@ -206,6 +215,8 @@ public class TvInteractiveAppServiceTest {
             mRequestTvRecordingInfoListCount = 0;
             mRequestAvailableSpeedsCount = 0;
             mRequestTimeShiftModeCount = 0;
+            mRequestSigningSSLCount = 0;
+            mRequestCertificateCount = 0;
 
             mIAppServiceId = null;
             mState = null;
@@ -224,6 +235,12 @@ public class TvInteractiveAppServiceTest {
             mRepeatedDays = null;
             mParams = null;
             mTimeShiftCommandType = null;
+            mSigningId = null;
+            mAlgorithm = null;
+            mHost = null;
+            mPort = null;
+            mData = null;
+            mAlias = null;
         }
 
         @Override
@@ -243,6 +260,28 @@ public class TvInteractiveAppServiceTest {
                 String algorithm, String alias, byte[] data) {
             super.onRequestSigning(iAppServiceId, signingId, algorithm, alias, data);
             mRequestSigningCount++;
+            mSigningId = signingId;
+            mAlgorithm = algorithm;
+            mAlias = alias;
+            mData = data;
+        }
+
+        @Override
+        public void onRequestSigning(String iAppServiceId, String signingId, String algorithm,
+                String host, int port, byte[] data) {
+            mRequestSigningSSLCount++;
+            mSigningId = signingId;
+            mAlgorithm = algorithm;
+            mHost = host;
+            mPort = port;
+            mData = data;
+        }
+
+        @Override
+        public void onRequestCertificate(String iAppServiceId, String host, int port) {
+            mRequestCertificateCount++;
+            mHost = host;
+            mPort = port;
         }
 
         @Override
@@ -813,11 +852,72 @@ public class TvInteractiveAppServiceTest {
     public void testRequestSigning() throws Throwable {
         assertNotNull(mSession);
         mCallback.resetValues();
-        mSession.requestSigning("id", "algo", "alias", new byte[1]);
+        String testId = "id";
+        String testAlgo = "algo";
+        String testAlias = "alias";
+        byte[] testData = new byte[1];
+        mSession.requestSigning(testId, testAlgo, testAlias, testData);
         PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mRequestSigningCount > 0);
 
         assertThat(mCallback.mRequestSigningCount).isEqualTo(1);
-        // TODO: check values
+        assertThat(mCallback.mSigningId).isEqualTo(testId);
+        assertThat(mCallback.mAlgorithm).isEqualTo(testAlgo);
+        assertThat(mCallback.mAlias).isEqualTo(testAlias);
+        assertArrayEquals(mCallback.mData, testData);
+    }
+
+    @Test
+    public void testRequestSSLSigning() throws Throwable {
+        assertNotNull(mSession);
+        mCallback.resetValues();
+        String testId = "id";
+        String testAlgo = "algo";
+        String testHost = "gooooogle.com";
+        int testPort = 1337;
+        byte[] testData = new byte[1];
+        mSession.requestSigning(testId, testAlgo, testHost, testPort, testData);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mRequestSigningSSLCount > 0);
+
+        assertThat(mCallback.mRequestSigningSSLCount).isEqualTo(1);
+        assertThat(mCallback.mSigningId).isEqualTo(testId);
+        assertThat(mCallback.mAlgorithm).isEqualTo(testAlgo);
+        assertThat(mCallback.mHost).isEqualTo(testHost);
+        assertThat(mCallback.mPort).isEqualTo(testPort);
+        assertArrayEquals(mCallback.mData, testData);
+    }
+
+    @Test
+    public void testRequestCertificate() throws Throwable {
+        assertNotNull(mSession);
+        String testHost = "gooooooogle.com";
+        int testPort = 1337;
+        mCallback.resetValues();
+        mSession.requestCertificate(testHost, testPort);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mRequestCertificateCount > 0);
+
+        assertThat(mCallback.mRequestCertificateCount).isEqualTo(1);
+        assertThat(mCallback.mHost).isEqualTo(testHost);
+        assertThat(mCallback.mPort).isEqualTo(testPort);
+    }
+
+    @Test
+    public void testSendCertificate() throws Throwable {
+        assertNotNull(mSession);
+        mSession.resetValues();
+
+        String testRequester = "gooogle.com";
+        String testHost = "gooooooogle.com";
+        int testPort = 1337;
+        SslCertificate testCert = new SslCertificate(testRequester, testHost, "past", "future");
+        mTvIAppView.sendCertificate(testHost, testPort, testCert);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mSendCertificateCount > 0);
+
+        assertThat(mSession.mSendCertificateCount).isEqualTo(1);
+        assertThat(mSession.mHost).isEqualTo(testHost);
+        assertThat(mSession.mPort).isEqualTo(testPort);
+        assertThat(mSession.mCertificate.getIssuedBy().getDName()).isEqualTo(testHost);
+        assertThat(mSession.mCertificate.getIssuedTo().getDName()).isEqualTo(testRequester);
     }
 
     @Test
