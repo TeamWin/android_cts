@@ -40,6 +40,7 @@ import android.telephony.euicc.EuiccCardManager;
 import android.telephony.euicc.EuiccInfo;
 import android.telephony.euicc.EuiccManager;
 import android.text.TextUtils;
+import android.util.ArraySet;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -57,6 +58,7 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -783,6 +785,30 @@ public class EuiccManagerTest {
         // This confirms the EuiccService action mapped with the respective EuiccManager action
         assertEquals(ACTION_CONVERT_TO_EMBEDDED_SUBSCRIPTIONS, mCallbackReceiver.getResultData());
     }
+
+    @Test
+    public void testSetPsimConversionSupportedCarriers() {
+        if (!Flags.supportPsimToEsimConversion()) {
+            return;
+        }
+        // Only test it when EuiccManager is enabled.
+        try {
+            if (!mEuiccManager.isEnabled()) {
+                return;
+            }
+        } catch (UnsupportedOperationException e) {
+            fail(e.toString());
+        }
+
+        // Sets supported countries
+        Set<Integer> carrierIds = new ArraySet<>();
+        carrierIds.add(1);
+        mEuiccManager.setPsimConversionSupportedCarriers(carrierIds);
+
+        assertTrue(mEuiccManager.isPsimConversionSupported(1));
+        assertFalse(mEuiccManager.isPsimConversionSupported(2));
+    }
+
 
     private void setTestEuiccUiComponent() {
         try {
