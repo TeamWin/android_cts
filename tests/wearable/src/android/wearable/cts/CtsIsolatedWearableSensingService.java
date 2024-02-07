@@ -78,7 +78,17 @@ public class CtsIsolatedWearableSensingService extends WearableSensingService {
      */
     public static final String ACTION_CLOSE_WEARABLE_CONNECTION = "CLOSE_WEARABLE_CONNECTION";
 
+    /** PersistableBundle value that represents a request to set a boolean state to true. */
+    public static final String ACTION_SET_BOOLEAN_STATE = "SET_BOOLEAN_STATE";
+
+    /**
+     * PersistableBundle value that represents a request to verify the boolean state has been set to
+     * true. This is used to check whether the process has been restarted since the state is set.
+     */
+    public static final String ACTION_VERIFY_BOOLEAN_STATE = "VERIFY_BOOLEAN_STATE";
+
     private volatile ParcelFileDescriptor mSecureWearableConnection;
+    private volatile boolean mBooleanState = false;
 
     @Override
     public void onSecureWearableConnectionProvided(
@@ -110,6 +120,16 @@ public class CtsIsolatedWearableSensingService extends WearableSensingService {
                 case ACTION_CLOSE_WEARABLE_CONNECTION:
                     closeWearableConnection(statusConsumer);
                     return;
+                case ACTION_SET_BOOLEAN_STATE:
+                    mBooleanState = true;
+                    statusConsumer.accept(WearableSensingManager.STATUS_SUCCESS);
+                    return;
+                case ACTION_VERIFY_BOOLEAN_STATE:
+                    statusConsumer.accept(
+                            mBooleanState
+                                    ? WearableSensingManager.STATUS_SUCCESS
+                                    : WearableSensingManager.STATUS_UNKNOWN);
+                    return;
                 default:
                     Log.w(TAG, "Unknown action: " + action);
                     statusConsumer.accept(WearableSensingManager.STATUS_UNKNOWN);
@@ -126,6 +146,7 @@ public class CtsIsolatedWearableSensingService extends WearableSensingService {
     private void reset() {
         Log.i(TAG, "#reset");
         mSecureWearableConnection = null;
+        mBooleanState = false;
     }
 
     private void verifyDataReceivedFromWearable(
