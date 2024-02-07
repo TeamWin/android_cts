@@ -73,7 +73,6 @@ import org.junit.rules.ErrorCollector;
 import org.junit.runner.RunWith;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -83,7 +82,6 @@ import java.util.concurrent.TimeUnit;
 public class MultiUserTest {
     private static final String TAG = "MultiUserTest";
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(15);
-    private static final long IME_COMMAND_TIMEOUT = TimeUnit.SECONDS.toMillis(20);
 
     @ClassRule
     @Rule
@@ -217,14 +215,14 @@ public class MultiUserTest {
 
         // Install IME1 then enable/set it as the current IME for the main user.
         TestApis.packages().install(currentUser, new File(Ime1Constants.APK_PATH));
-        waitUntilImeIsInShellCommandResult(Ime1Constants.IME_ID, currentUser.id());
+        assertImeExistsInApiResult(Ime1Constants.IME_ID, currentUserId);
         runShellCommandOrThrow(ShellCommandUtils.enableIme(Ime1Constants.IME_ID, currentUserId));
         runShellCommandOrThrow(
                 ShellCommandUtils.setCurrentImeSync(Ime1Constants.IME_ID, currentUserId));
 
         // Install IME2 then enable/set it as the current IME for the profile user.
         TestApis.packages().install(profileUser, new File(Ime2Constants.APK_PATH));
-        waitUntilImeIsInShellCommandResult(Ime2Constants.IME_ID, profileUserId);
+        assertImeExistsInApiResult(Ime2Constants.IME_ID, profileUserId);
         runShellCommandOrThrow(ShellCommandUtils.enableIme(Ime2Constants.IME_ID, profileUserId));
         runShellCommandOrThrow(
                 ShellCommandUtils.setCurrentImeSync(Ime2Constants.IME_ID, profileUserId));
@@ -408,14 +406,6 @@ public class MultiUserTest {
                         userId));
             }
         }
-    }
-
-    private void waitUntilImeIsInShellCommandResult(String imeId, int userId) throws Exception {
-        final String command = ShellCommandUtils.getAvailableImes(userId);
-        PollingCheck.check(imeId + " is not found for user #" + userId + " within timeout.",
-                IME_COMMAND_TIMEOUT,
-                () -> Arrays.asList(runShellCommandOrThrow(command)
-                        .split("\n")).contains(imeId));
     }
 
     // TODO(b/282196632): remove this method once b/282196632) is fixed
