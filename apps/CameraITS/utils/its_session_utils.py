@@ -1014,12 +1014,12 @@ class ItsSession(object):
     if not data[_STR_VALUE_STR]:
       raise error_util.CameraItsError('No queryable stream combinations')
 
-    # Parse the stream combination string.
-    combination_str = [c for c in data[_STR_VALUE_STR].split(';')]
-    combinations = [{"name": c,
-                     "combination": [{"format": s.split(':')[0],
-                                      "size": s.split(':')[1]} for s in c.split('+')]}
-                  for c in data[_STR_VALUE_STR].split(';')]
+    # Parse the stream combination string
+    combinations = [{
+        'name': c, 'combination': [
+            {'format': s.split(':')[0],
+             'size': s.split(':')[1]} for s in c.split('+')]}
+                    for c in data[_STR_VALUE_STR].split(';')]
 
     return data[_STR_VALUE_STR], combinations
 
