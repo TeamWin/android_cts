@@ -42,11 +42,31 @@ public class TestShareIdentityActivity extends Activity {
 
     /**
      * Activity within {@link android.app.cts.ShareIdentityTest} that will be launched by
-     * this activity to verify this package's ActivityCaller identity is only shared when expected.
+     * this activity to verify this package's initial caller identity is only shared when expected.
      */
-    private static final ComponentName ACTIVITY_CALLER_SHARE_IDENTITY_ACTIVITY = new ComponentName(
-            "android.app.cts",
-            "android.app.cts.ShareIdentityTest$ActivityCallerShareIdentityTestActivity");
+    private static final ComponentName ACTIVITY_INITIAL_CALLER_SHARE_IDENTITY_ACTIVITY =
+            new ComponentName("android.app.cts",
+            "android.app.cts.ShareIdentityTest$ActivityInitialCallerShareIdentityTestActivity");
+
+    /**
+     * Activity within {@link android.app.cts.ShareIdentityTest} that will be launched by
+     * this activity to verify this package's new intent #getCurrentCaller identity is only shared
+     * when expected.
+     */
+    static final ComponentName ACTIVITY_NEW_INTENT_GET_CALLER_SHARE_IDENTITY_ACTIVITY =
+            new ComponentName("android.app.cts",
+            "android.app.cts.ShareIdentityTest"
+                    + "$ActivityNewIntentGetCurrentCallerShareIdentityTestActivity");
+
+    /**
+     * Activity within {@link android.app.cts.ShareIdentityTest} that will be launched by
+     * this activity to verify this package's new intent overload caller identity is only shared
+     * when expected.
+     */
+    static final ComponentName ACTIVITY_NEW_INTENT_OVERLOAD_CALLER_SHARE_IDENTITY_ACTIVITY =
+            new ComponentName("android.app.cts",
+                    "android.app.cts.ShareIdentityTest"
+                            + "$ActivityNewIntentOverloadCallerShareIdentityTestActivity");
 
     /**
      * Receiver within {@link android.app.cts.ShareIdentityTest} that is registered in the
@@ -59,12 +79,12 @@ public class TestShareIdentityActivity extends Activity {
     /**
      * Key used to receive and send the unique ID of the current test.
      */
-    private static final String TEST_ID_KEY = "testId";
+    static final String TEST_ID_KEY = "testId";
 
     /**
      * Key used to receive the current test case.
      */
-    private static final String TEST_CASE_KEY = "testCase";
+    static final String TEST_CASE_KEY = "testCase";
     /**
      * Test case to verify the launching app's identity is not shared when the activity
      * is not launched with {@link android.app.ActivityOptions}.
@@ -147,28 +167,127 @@ public class TestShareIdentityActivity extends Activity {
      */
     private static final int SEND_ORDERED_BROADCAST_MANIFEST_RECEIVER_OPT_OUT_TEST_CASE = 13;
     /**
-     * Test case to verify the launching app's ActivityCaller identity is not shared when the
+     * Test case to verify the launching app's initial caller identity is not shared when the
      * activity is not launched with {@link android.app.ActivityOptions}.
      */
-    private static final int DEFAULT_SHARING_TEST_CASE_ACTIVITY_CALLER = 14;
+    private static final int DEFAULT_SHARING_TEST_CASE_ACTIVITY_INITIAL_CALLER = 14;
     /**
-     * Test case to verify the launching app's ActivityCaller identity is shared when the activity
+     * Test case to verify the launching app's initial caller identity is shared when the activity
      * is launched with {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} set to
      * {@code true}.
      */
-    private static final int EXPLICIT_OPT_IN_TEST_CASE_ACTIVITY_CALLER = 15;
+    private static final int EXPLICIT_OPT_IN_TEST_CASE_ACTIVITY_INITIAL_CALLER = 15;
     /**
-     * Test case to verify the launching app's ActivityCaller identity is not shared when the
+     * Test case to verify the launching app's initial caller identity is not shared when the
      * activity is launched with
      * {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} set to {@code false}.
      */
-    private static final int EXPLICIT_OPT_OUT_TEST_CASE_ACTIVITY_CALLER = 16;
+    private static final int EXPLICIT_OPT_OUT_TEST_CASE_ACTIVITY_INITIAL_CALLER = 16;
     /**
-     * Test case to verify the sharing of an app's ActivityCaller identity is not impacted by
+     * Test case to verify the sharing of an app's initial caller identity is not impacted by
      * launching an activity with {@link Activity#startActivityForResult(Intent, int)} since this
      * method does expose the app's identity from {@link Activity#getCallingPackage()}.
      */
-    private static final int START_ACTIVITY_FOR_RESULT_TEST_CASE_ACTIVITY_CALLER = 17;
+    private static final int START_ACTIVITY_FOR_RESULT_TEST_CASE_ACTIVITY_INITIAL_CALLER = 17;
+    /**
+     * Test case to verify the launching app's new intent #getCurrentCaller identity is not shared
+     * when the activity is not launched with {@link android.app.ActivityOptions}.
+     *
+     * <p>To reach the new intent code path, the test launches the activity twice:
+     * <ul>
+     *     <li>The first time, the activity is launched with the caller identity shared via
+     *     {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} set to {@code true}.
+     *     <li>The second time, the activity is launched without
+     *     {@link android.app.ActivityOptions}.
+     * </ul>
+     *
+     * This verifies #getCurrentCaller correctly retrieves the intended caller.
+     */
+    static final int DEFAULT_SHARING_TEST_CASE_ACTIVITY_NEW_INTENT_GET_CURRENT_CALLER = 18;
+    /**
+     * Test case to verify the launching app's new intent #getCurrentCaller identity is shared when
+     * the activity is launched with
+     * {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} set to {@code true}.
+     *
+     * <p>To reach the new intent code path, the test launches the activity twice:
+     * <ul>
+     *     <li>The first time, the activity is launched with the caller identity not shared via
+     *     {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} set to
+     *     {@code false}.
+     *     <li>The second time, the activity is launched with the caller identity shared via
+     *     {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} set to {@code true}.
+     * </ul>
+     *
+     * This verifies #getCurrentCaller correctly retrieves the intended caller.
+     */
+    static final int EXPLICIT_OPT_IN_TEST_CASE_ACTIVITY_NEW_INTENT_GET_CURRENT_CALLER = 19;
+    /**
+     * Test case to verify the launching app's new intent #getCurrentCaller identity is not shared
+     * when the activity is launched with
+     * {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} set to {@code false}.
+     *
+     * <p>To reach the new intent code path, the test launches the activity twice:
+     * <ul>
+     *     <li>The first time, the activity is launched with the caller identity shared via
+     *     {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} set to {@code true}.
+     *     <li>The second time, the activity is launched with the caller identity not shared via
+     *     {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} set to
+     *     {@code false}.
+     * </ul>
+     *
+     * This verifies #getCurrentCaller correctly retrieves the intended caller.
+     */
+    static final int EXPLICIT_OPT_OUT_TEST_CASE_ACTIVITY_NEW_INTENT_GET_CURRENT_CALLER = 20;
+    /**
+     * Test case to verify the launching app's new intent caller identity in
+     * #onNewIntent(Intent, ComponentCaller) is not shared when the activity is not launched with
+     * {@link android.app.ActivityOptions}.
+     *
+     * <p>To reach the new intent code path, the test launches the activity twice:
+     * <ul>
+     *     <li>The first time, the activity is launched with the caller identity shared via
+     *     {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} set to {@code true}.
+     *     <li>The second time, the activity is launched without
+     *     {@link android.app.ActivityOptions}.
+     * </ul>
+     *
+     * This verifies #onNewIntent(Intent, ComponentCaller) correctly retrieves the intended caller.
+     */
+    static final int DEFAULT_SHARING_TEST_CASE_ACTIVITY_NEW_INTENT_OVERLOAD_CALLER = 21;
+    /**
+     * Test case to verify the launching app's new intent caller identity in
+     * #onNewIntent(Intent, ComponentCaller) is shared when the activity is launched with
+     * {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} set to {@code true}.
+     *
+     * <p>To reach the new intent code path, the test launches the activity twice:
+     * <ul>
+     *     <li>The first time, the activity is launched with the caller identity not shared via
+     *     {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} set to
+     *     {@code false}.
+     *     <li>The second time, the activity is launched with the caller identity shared via
+     *     {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} set to {@code true}.
+     * </ul>
+     *
+     * This verifies #onNewIntent(Intent, ComponentCaller) correctly retrieves the intended caller.
+     */
+    static final int EXPLICIT_OPT_IN_TEST_CASE_ACTIVITY_NEW_INTENT_OVERLOAD_CALLER = 22;
+    /**
+     * Test case to verify the launching app's new intent caller identity in
+     * #onNewIntent(Intent, ComponentCaller) is not shared when the activity is launched with
+     * {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} set to {@code false}.
+     *
+     * <p>To reach the new intent code path, the test launches the activity twice:
+     * <ul>
+     *     <li>The first time, the activity is launched with the caller identity shared via
+     *     {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} set to {@code true}.
+     *     <li>The second time, the activity is launched with the caller identity not shared via
+     *     {@link android.app.ActivityOptions#setShareIdentityEnabled(boolean)} set to
+     *     {@code false}.
+     * </ul>
+     *
+     * This verifies #onNewIntent(Intent, ComponentCaller) correctly retrieves the intended caller.
+     */
+    static final int EXPLICIT_OPT_OUT_TEST_CASE_ACTIVITY_NEW_INTENT_OVERLOAD_CALLER = 23;
     /**
      * Action for which the runtime receiver registers in the app driving the test.
      */
@@ -188,21 +307,36 @@ public class TestShareIdentityActivity extends Activity {
         Intent intent = new Intent();
         intent.setComponent(getShareIdentityActivity(testCase));
         intent.putExtra(TEST_ID_KEY, testId);
+        intent.putExtra(TEST_CASE_KEY, testCase);
         Bundle bundle;
         switch (testCase) {
-            case DEFAULT_SHARING_TEST_CASE, DEFAULT_SHARING_TEST_CASE_ACTIVITY_CALLER:
+            case DEFAULT_SHARING_TEST_CASE, DEFAULT_SHARING_TEST_CASE_ACTIVITY_INITIAL_CALLER:
                 startActivity(intent);
                 break;
-            case EXPLICIT_OPT_IN_TEST_CASE, EXPLICIT_OPT_IN_TEST_CASE_ACTIVITY_CALLER:
+            case EXPLICIT_OPT_IN_TEST_CASE, EXPLICIT_OPT_IN_TEST_CASE_ACTIVITY_INITIAL_CALLER,
+                    // To catch the correct behavior for the new intent caller, the tests do the
+                    // opposite sharing for the initial caller. For example, in this case the new
+                    // intent caller's identity isn't meant to be shared, so here the initial caller
+                    // does the opposite and shares their identity.
+                    DEFAULT_SHARING_TEST_CASE_ACTIVITY_NEW_INTENT_GET_CURRENT_CALLER,
+                    DEFAULT_SHARING_TEST_CASE_ACTIVITY_NEW_INTENT_OVERLOAD_CALLER,
+                    EXPLICIT_OPT_OUT_TEST_CASE_ACTIVITY_NEW_INTENT_GET_CURRENT_CALLER,
+                    EXPLICIT_OPT_OUT_TEST_CASE_ACTIVITY_NEW_INTENT_OVERLOAD_CALLER:
                 bundle = ActivityOptions.makeBasic().setShareIdentityEnabled(true).toBundle();
                 startActivity(intent, bundle);
                 break;
-            case EXPLICIT_OPT_OUT_TEST_CASE, EXPLICIT_OPT_OUT_TEST_CASE_ACTIVITY_CALLER:
+            case EXPLICIT_OPT_OUT_TEST_CASE, EXPLICIT_OPT_OUT_TEST_CASE_ACTIVITY_INITIAL_CALLER,
+                    // To catch the correct behavior for the new intent caller, the tests do the
+                    // opposite sharing for the initial caller. For example, in this case the new
+                    // intent caller's identity is meant to be shared, so here the initial caller
+                    // does the opposite and doesn't share their identity.
+                    EXPLICIT_OPT_IN_TEST_CASE_ACTIVITY_NEW_INTENT_GET_CURRENT_CALLER,
+                    EXPLICIT_OPT_IN_TEST_CASE_ACTIVITY_NEW_INTENT_OVERLOAD_CALLER:
                 bundle = ActivityOptions.makeBasic().setShareIdentityEnabled(false).toBundle();
                 startActivity(intent, bundle);
                 break;
             case START_ACTIVITY_FOR_RESULT_TEST_CASE,
-                    START_ACTIVITY_FOR_RESULT_TEST_CASE_ACTIVITY_CALLER:
+                    START_ACTIVITY_FOR_RESULT_TEST_CASE_ACTIVITY_INITIAL_CALLER:
                 startActivityForResult(intent, 0);
                 break;
             case SEND_BROADCAST_RUNTIME_RECEIVER_OPT_IN_TEST_CASE:
@@ -241,13 +375,27 @@ public class TestShareIdentityActivity extends Activity {
         finish();
     }
 
-    private ComponentName getShareIdentityActivity(int testCase) {
+    static ComponentName getShareIdentityActivity(int testCase) {
         return switch (testCase) {
-            case DEFAULT_SHARING_TEST_CASE_ACTIVITY_CALLER,
-                    EXPLICIT_OPT_IN_TEST_CASE_ACTIVITY_CALLER,
-                    EXPLICIT_OPT_OUT_TEST_CASE_ACTIVITY_CALLER,
-                    START_ACTIVITY_FOR_RESULT_TEST_CASE_ACTIVITY_CALLER ->
-                    ACTIVITY_CALLER_SHARE_IDENTITY_ACTIVITY;
+            // Initial caller activity
+            case DEFAULT_SHARING_TEST_CASE_ACTIVITY_INITIAL_CALLER,
+                    EXPLICIT_OPT_IN_TEST_CASE_ACTIVITY_INITIAL_CALLER,
+                    EXPLICIT_OPT_OUT_TEST_CASE_ACTIVITY_INITIAL_CALLER,
+                    START_ACTIVITY_FOR_RESULT_TEST_CASE_ACTIVITY_INITIAL_CALLER ->
+                    ACTIVITY_INITIAL_CALLER_SHARE_IDENTITY_ACTIVITY;
+
+            // New intent #getCurrentCaller activity
+            case DEFAULT_SHARING_TEST_CASE_ACTIVITY_NEW_INTENT_GET_CURRENT_CALLER,
+                    EXPLICIT_OPT_IN_TEST_CASE_ACTIVITY_NEW_INTENT_GET_CURRENT_CALLER,
+                    EXPLICIT_OPT_OUT_TEST_CASE_ACTIVITY_NEW_INTENT_GET_CURRENT_CALLER ->
+                    ACTIVITY_NEW_INTENT_GET_CALLER_SHARE_IDENTITY_ACTIVITY;
+
+            // New intent activity with an overload
+            case DEFAULT_SHARING_TEST_CASE_ACTIVITY_NEW_INTENT_OVERLOAD_CALLER,
+                    EXPLICIT_OPT_IN_TEST_CASE_ACTIVITY_NEW_INTENT_OVERLOAD_CALLER,
+                    EXPLICIT_OPT_OUT_TEST_CASE_ACTIVITY_NEW_INTENT_OVERLOAD_CALLER ->
+                    ACTIVITY_NEW_INTENT_OVERLOAD_CALLER_SHARE_IDENTITY_ACTIVITY;
+
             default -> SHARE_IDENTITY_ACTIVITY;
         };
     }

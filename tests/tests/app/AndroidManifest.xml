@@ -36,8 +36,16 @@
         <activity android:name=".ShareIdentityTest$ShareIdentityTestActivity"
                   android:exported="true" />
 
-        <activity android:name=".ShareIdentityTest$ActivityCallerShareIdentityTestActivity"
+        <activity android:name=".ShareIdentityTest$ActivityInitialCallerShareIdentityTestActivity"
             android:exported="true" />
+
+        <activity android:name=".ShareIdentityTest$ActivityNewIntentGetCurrentCallerShareIdentityTestActivity"
+            android:exported="true"
+            android:launchMode="singleInstance"/>
+
+        <activity android:name=".ShareIdentityTest$ActivityNewIntentOverloadCallerShareIdentityTestActivity"
+            android:exported="true"
+            android:launchMode="singleInstance"/>
 
         <receiver android:name=".ShareIdentityTest$ShareIdentityTestReceiver"
                   android:exported="true">
