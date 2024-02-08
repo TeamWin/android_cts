@@ -54,6 +54,7 @@ android_test {
         "flag-junit",
         "com.android.window.flags.window-aconfig-java",
         "hwui_flags_java_lib",
+        "ui-trace-collector",
     ],
 
     jni_libs: [
