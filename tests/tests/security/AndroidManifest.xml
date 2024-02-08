@@ -309,7 +309,7 @@
 
         <service android:name="android.security.cts.AttributionSourceService"
             android:enabled="true"
-            android:exported="true"
+            android:exported="false"
             android:label="AttributionSourceService"
             android:process=":attributionSourceServiceProcess">
         </service>
