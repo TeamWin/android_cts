@@ -57,13 +57,18 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
 
+import com.google.common.collect.ImmutableList;
+import com.google.testing.junit.testparameterinjector.TestParameter;
+import com.google.testing.junit.testparameterinjector.TestParameter.TestParameterValuesProvider;
+import com.google.testing.junit.testparameterinjector.TestParameterInjector;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -75,7 +80,7 @@ import java.util.concurrent.TimeUnit;
  * (exceptions, permission results) back to the test via broadcast.
  */
 @RequiresFlagsEnabled(android.security.Flags.FLAG_CONTENT_URI_PERMISSION_APIS)
-@RunWith(JUnit4.class)
+@RunWith(TestParameterInjector.class)
 public class ComponentCallerTest {
     @Rule
     public final CheckFlagsRule mCheckFlagsRule =
@@ -90,17 +95,6 @@ public class ComponentCallerTest {
             Uri.parse("content://" + HELPER_APP_PACKAGE + ".provider/path");
 
     private Context mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-
-    private static final int[] ALL_MODE_FLAGS = {
-            Intent.FLAG_GRANT_READ_URI_PERMISSION,
-            Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
-            Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-    };
-
-    private static final int[] WRITE_MODE_FLAGS = {
-            Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
-            Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-    };
 
     private TestReceiver mReceiver;
 
@@ -120,88 +114,71 @@ public class ComponentCallerTest {
     @Test
     @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
     public void
-    testCheckContentUriPermission_throwsIfCallerOfApiDoesNotHaveTheSameAccessToContentUri()
-            throws Exception {
-        for (int modeFlagsToCheck : ALL_MODE_FLAGS) {
-            TestResults.reset();
+    testCheckContentUriPermission_throwsIfCallerOfApiDoesNotHaveTheSameAccessToContentUri(
+            @TestParameter ModeFlags modeFlagsToCheck) throws Exception {
+        Intent intent = getUriInDataSendBroadcastTestIntent(TestProvider.CONTENT_URI,
+                modeFlagsToCheck);
 
-            Intent intent = getUriInDataSendBroadcastTestIntent(TestProvider.CONTENT_URI,
-                    modeFlagsToCheck);
+        mContext.startActivity(intent);
 
-            mContext.startActivity(intent);
-
-            assertActivityWasInvoked();
-            assertTrue("Should throw a SecurityException because the caller of the API doesn't have"
-                    + " the same " + modeFlagsToString(modeFlagsToCheck) + " access to a content"
-                    + " URI", TestResults.sIsSecurityExceptionCaught);
-        }
+        assertActivityWasInvoked();
+        assertTrue("Should throw a SecurityException because the caller of the API doesn't have the"
+                + " same " + modeFlagsToString(modeFlagsToCheck) + " access to a content URI",
+                TestResults.sIsSecurityExceptionCaught);
     }
 
     @Test
     @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
-    public void testCheckContentUriPermission_throwsIfContentUriWasNotPassedAtLaunch()
-            throws Exception {
-        for (int modeFlagsToCheck : ALL_MODE_FLAGS) {
-            TestResults.reset();
+    public void testCheckContentUriPermission_throwsIfContentUriWasNotPassedAtLaunch(
+            @TestParameter ModeFlags modeFlagsToCheck) throws Exception {
+        Intent intent = getSendBroadcastTestIntent(NONE_PROVIDED_USE_HELPER_APP_URI_LOCATION_ID,
+                modeFlagsToCheck);
 
-            Intent intent = getSendBroadcastTestIntent(NONE_PROVIDED_USE_HELPER_APP_URI_LOCATION_ID,
-                    modeFlagsToCheck);
+        mContext.startActivity(intent);
 
-            mContext.startActivity(intent);
-
-            assertActivityWasInvoked();
-            assertTrue("Should throw an IllegalArgumentException because the supplied content URI"
-                    + " was not passed at launch", TestResults.sIsIllegalArgumentExceptionCaught);
-        }
+        assertActivityWasInvoked();
+        assertTrue("Should throw an IllegalArgumentException because the supplied content URI was"
+                + " not passed at launch", TestResults.sIsIllegalArgumentExceptionCaught);
     }
 
     @Test
     @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
     public void
-    testCheckContentUriPermission_returnsCorrectResultEvenIfCallerOfActivityGrantsAndDies()
-            throws Exception {
-        for (int modeFlagsToCheck : ALL_MODE_FLAGS) {
-            TestResults.reset();
+    testCheckContentUriPermission_returnsCorrectResultEvenIfCallerOfActivityGrantsAndDies(
+            @TestParameter ModeFlags modeFlagsToCheck) throws Exception {
+        Intent intent = getStartActivityTestIntent(NONE_PROVIDED_USE_HELPER_APP_URI_LOCATION_ID,
+                modeFlagsToCheck);
 
-            Intent intent = getStartActivityTestIntent(NONE_PROVIDED_USE_HELPER_APP_URI_LOCATION_ID,
-                    modeFlagsToCheck);
+        mContext.startActivity(intent);
 
-            mContext.startActivity(intent);
-
-            assertActivityWasInvoked();
-            assertEquals("Should return granted with "
-                            + modeFlagsToString(modeFlagsToCheck) + " even if the caller of the"
-                            + " activity dies",
-                    PERMISSION_GRANTED, TestResults.sCheckContentUriPermissionRes);
-        }
+        assertActivityWasInvoked();
+        assertEquals("Should return granted with " + modeFlagsToString(modeFlagsToCheck) + " even"
+                        + " if the caller of the activity dies",
+                PERMISSION_GRANTED, TestResults.sCheckContentUriPermissionRes);
     }
 
     @Test
     @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
-    public void testCheckContentUriPermission_getDataContentUriViaPermission_noPermission()
-            throws Exception {
-        for (int modeFlagsToCheck : ALL_MODE_FLAGS) {
-            TestResults.reset();
+    public void testCheckContentUriPermission_getDataContentUriViaPermission_noPermission(
+            @TestParameter ModeFlags modeFlagsToCheck) throws Exception {
+        Intent intent = getUriInDataSendBroadcastTestIntent(
+                CONTENT_URI_NO_PERMISSION, modeFlagsToCheck);
 
-            Intent intent = getUriInDataSendBroadcastTestIntent(
-                    CONTENT_URI_NO_PERMISSION, modeFlagsToCheck);
+        mContext.startActivity(intent);
 
-            mContext.startActivity(intent);
-
-            assertActivityWasInvoked();
-            assertEquals("Should return denied with "
-                            + modeFlagsToString(modeFlagsToCheck) + " because we have no access to"
-                            + " the content URI",
-                    PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
-        }
+        assertActivityWasInvoked();
+        assertEquals("Should return denied with "
+                        + modeFlagsToString(modeFlagsToCheck) + " because we have no access to"
+                        + " the content URI",
+                PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
     }
 
     @Test
     @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
     public void testCheckContentUriPermission_getDataContentUriViaPermission_hasRead()
             throws Exception {
-        Intent intent = getUriInDataSendBroadcastTestIntent(
-                CONTENT_URI_READ_PERMISSION, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        Intent intent = getUriInDataSendBroadcastTestIntent(CONTENT_URI_READ_PERMISSION,
+                ModeFlags.READ);
 
         mContext.startActivity(intent);
 
@@ -212,47 +189,40 @@ public class ComponentCallerTest {
 
     @Test
     @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
-    public void testCheckContentUriPermission_getDataContentUriViaPermission_hasReadButNoWrite()
-            throws Exception {
-        for (int modeFlagsToCheck : WRITE_MODE_FLAGS) {
-            TestResults.reset();
+    public void testCheckContentUriPermission_getDataContentUriViaPermission_hasReadButNoWrite(
+            @TestParameter(valuesProvider = WriteModeFlagsProvider.class)
+            ModeFlags modeFlagsToCheck) throws Exception {
+        Intent intent = getUriInDataSendBroadcastTestIntent(
+                CONTENT_URI_READ_PERMISSION, modeFlagsToCheck);
 
-            Intent intent = getUriInDataSendBroadcastTestIntent(
-                    CONTENT_URI_READ_PERMISSION, modeFlagsToCheck);
+        mContext.startActivity(intent);
 
-            mContext.startActivity(intent);
-
-            assertActivityWasInvoked();
-            assertEquals("Should return denied because we don't have the write permission",
-                    PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
-        }
+        assertActivityWasInvoked();
+        assertEquals("Should return denied because we don't have the write permission",
+                PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
     }
 
     @Test
     @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
-    public void testCheckContentUriPermission_clipDataContentUri_noPermission() throws Exception {
-        for (int modeFlagsToCheck : ALL_MODE_FLAGS) {
-            TestResults.reset();
+    public void testCheckContentUriPermission_clipDataContentUri_noPermission(
+            @TestParameter ModeFlags modeFlagsToCheck) throws Exception {
+        Intent intent = getSendBroadcastTestIntent(URI_IN_CLIP_DATA_LOCATION_ID,
+                modeFlagsToCheck);
+        intent.setClipData(ClipData.newRawUri("", CONTENT_URI_NO_PERMISSION));
 
-            Intent intent = getSendBroadcastTestIntent(URI_IN_CLIP_DATA_LOCATION_ID,
-                    modeFlagsToCheck);
-            intent.setClipData(ClipData.newRawUri("", CONTENT_URI_NO_PERMISSION));
+        mContext.startActivity(intent);
 
-            mContext.startActivity(intent);
-
-            assertActivityWasInvoked();
-            assertEquals("Should return denied with "
-                            + modeFlagsToString(modeFlagsToCheck) + " because we have no access to"
-                            + " the content URI",
-                    PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
-        }
+        assertActivityWasInvoked();
+        assertEquals("Should return denied with "
+                        + modeFlagsToString(modeFlagsToCheck) + " because we have no access to"
+                        + " the content URI",
+                PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
     }
 
     @Test
     @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
     public void testCheckContentUriPermission_clipDataContentUri_hasRead() throws Exception {
-        Intent intent = getSendBroadcastTestIntent(URI_IN_CLIP_DATA_LOCATION_ID,
-                Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        Intent intent = getSendBroadcastTestIntent(URI_IN_CLIP_DATA_LOCATION_ID, ModeFlags.READ);
         intent.setClipData(ClipData.newRawUri("", CONTENT_URI_READ_PERMISSION));
 
         mContext.startActivity(intent);
@@ -264,56 +234,50 @@ public class ComponentCallerTest {
 
     @Test
     @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
-    public void testCheckContentUriPermission_clipDataContentUri_hasReadButNoWrite()
-            throws Exception {
-        for (int modeFlagsToCheck : WRITE_MODE_FLAGS) {
-            TestResults.reset();
+    public void testCheckContentUriPermission_clipDataContentUri_hasReadButNoWrite(
+            @TestParameter(valuesProvider = WriteModeFlagsProvider.class)
+            ModeFlags modeFlagsToCheck) throws Exception {
+        Intent intent = getSendBroadcastTestIntent(URI_IN_CLIP_DATA_LOCATION_ID,
+                modeFlagsToCheck);
+        intent.setClipData(ClipData.newRawUri("", CONTENT_URI_READ_PERMISSION));
 
-            Intent intent = getSendBroadcastTestIntent(URI_IN_CLIP_DATA_LOCATION_ID,
-                    modeFlagsToCheck);
-            intent.setClipData(ClipData.newRawUri("", CONTENT_URI_READ_PERMISSION));
+        mContext.startActivity(intent);
 
-            mContext.startActivity(intent);
-
-            assertActivityWasInvoked();
-            assertEquals("Should return denied because we don't have the write permission",
-                    PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
-        }
+        assertActivityWasInvoked();
+        assertEquals("Should return denied because we don't have the write permission",
+                PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
     }
 
     @Test
     @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
-    public void testCheckContentUriPermission_contentUriViaGrant() throws Exception {
-        for (int modeFlagsToCheck : ALL_MODE_FLAGS) {
-            TestResults.reset();
+    public void testCheckContentUriPermission_contentUriViaGrant(
+            @TestParameter ModeFlags modeFlagsToCheck) throws Exception {
+        Intent intent = getUriInDataSendBroadcastTestIntent(TestProvider.CONTENT_URI,
+                modeFlagsToCheck);
+        intent.addFlags(modeFlagsToCheck.mValue);
 
-            Intent intent = getUriInDataSendBroadcastTestIntent(TestProvider.CONTENT_URI,
-                    modeFlagsToCheck);
-            intent.addFlags(modeFlagsToCheck);
+        mContext.startActivity(intent);
 
-            mContext.startActivity(intent);
-
-            assertActivityWasInvoked();
-            assertEquals("Should return granted because we granted "
-                            + modeFlagsToString(modeFlagsToCheck),
-                    PERMISSION_GRANTED, TestResults.sCheckContentUriPermissionRes);
-        }
+        assertActivityWasInvoked();
+        assertEquals("Should return granted because we granted "
+                        + modeFlagsToString(modeFlagsToCheck),
+                PERMISSION_GRANTED, TestResults.sCheckContentUriPermissionRes);
     }
 
     private Intent getSendBroadcastTestIntent(int uriLocationId,
-            int modeFlagsToCheck) {
+            ModeFlags modeFlagsToCheck) {
         Intent intent = new Intent();
         intent.setComponent(HELPER_APP_ACTIVITY);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT
                 | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
         intent.putExtra(URI_LOCATION_ID, uriLocationId);
         intent.putExtra(ACTION_ID, SEND_TEST_BROADCAST_ACTION_ID);
-        intent.putExtra(MODE_FLAGS_TO_CHECK, modeFlagsToCheck);
+        intent.putExtra(MODE_FLAGS_TO_CHECK, modeFlagsToCheck.mValue);
         return intent;
     }
 
     private Intent getUriInDataSendBroadcastTestIntent(Uri uri,
-            int modeFlagsToCheck) {
+            ModeFlags modeFlagsToCheck) {
         Intent intent = getSendBroadcastTestIntent(URI_IN_DATA_LOCATION_ID,
                 modeFlagsToCheck);
         intent.setAction(Intent.ACTION_ATTACH_DATA);
@@ -322,14 +286,14 @@ public class ComponentCallerTest {
     }
 
     private Intent getStartActivityTestIntent(int uriLocationId,
-            int modeFlagsToCheck) {
+            ModeFlags modeFlagsToCheck) {
         Intent intent = getSendBroadcastTestIntent(uriLocationId, modeFlagsToCheck);
         intent.putExtra(ACTION_ID, START_TEST_ACTIVITY_ACTION_ID);
         return intent;
     }
 
-    private String modeFlagsToString(int modeFlags) {
-        return switch (modeFlags) {
+    private String modeFlagsToString(ModeFlags modeFlags) {
+        return switch (modeFlags.mValue) {
             case Intent.FLAG_GRANT_READ_URI_PERMISSION -> "read";
             case Intent.FLAG_GRANT_WRITE_URI_PERMISSION -> "write";
             case Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION ->
@@ -429,6 +393,26 @@ public class ComponentCallerTest {
         public int update(@NonNull Uri uri, @Nullable ContentValues values,
                 @Nullable String selection, @Nullable String[] selectionArgs) {
             return 0;
+        }
+    }
+
+    public enum ModeFlags {
+        READ(Intent.FLAG_GRANT_READ_URI_PERMISSION),
+        WRITE(Intent.FLAG_GRANT_WRITE_URI_PERMISSION),
+        READ_AND_WRITE(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
+        final int mValue;
+
+        ModeFlags(int value) {
+            this.mValue = value;
+        }
+    }
+
+    private static final class WriteModeFlagsProvider implements TestParameterValuesProvider {
+        @Override
+        public List<ModeFlags> provideValues() {
+            return ImmutableList.of(ModeFlags.WRITE, ModeFlags.READ_AND_WRITE);
         }
     }
 }
