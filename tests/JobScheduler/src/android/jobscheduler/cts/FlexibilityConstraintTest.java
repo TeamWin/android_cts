@@ -631,6 +631,34 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
     }
 
     /**
+     * Verify that an already running job doesn't get stopped because of flex policy.
+     */
+    public void testRunningJobBypassesFlexibility() throws Exception {
+        if (!deviceSupportsAnyFlexConstraints(
+                CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CHARGING | CONSTRAINT_IDLE)) {
+            Log.d(TAG, "Skipping test since device doesn't support any constraints");
+            return;
+        }
+        try (TestAppInterface testAppInterface =
+                     new TestAppInterface(getContext(), FLEXIBLE_JOB_ID)) {
+            testAppInterface.scheduleJob(Collections.emptyMap(),
+                    Map.of(TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, FLEXIBLE_JOB_ID));
+
+            satisfyAllSystemWideConstraints();
+
+            testAppInterface.runSatisfiedJob();
+            assertTrue(
+                    "Job with flexible constraint did not fire when all constraints were satisfied",
+                    testAppInterface.awaitJobStart(FLEXIBILITY_TIMEOUT_MILLIS));
+
+            satisfySystemWideConstraints(false, false, false);
+            assertFalse(
+                    "Job stopped when flex constraints became unsatisfied",
+                    testAppInterface.awaitJobStop(FLEXIBILITY_TIMEOUT_MILLIS));
+        }
+    }
+
+    /**
      * Verify default jobs of TOP apps are excluded
      */
     public void testTopBypassesFlexibility() throws Exception {
