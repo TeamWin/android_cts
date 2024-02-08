@@ -22,10 +22,12 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
 import android.device.collectors.util.SendToInstrumentation;
+import android.hardware.DataSpace;
 import android.media.metrics.BundleSession;
 import android.media.metrics.EditingEndedEvent;
 import android.media.metrics.EditingSession;
 import android.media.metrics.LogSessionId;
+import android.media.metrics.MediaItemInfo;
 import android.media.metrics.MediaMetricsManager;
 import android.media.metrics.NetworkEvent;
 import android.media.metrics.PlaybackErrorEvent;
@@ -39,6 +41,7 @@ import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.provider.DeviceConfig;
 import android.util.Log;
+import android.util.Size;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -362,6 +365,79 @@ public class MediaMetricsAtomHostSideTests {
                     new EditingEndedEvent.Builder(EditingEndedEvent.FINAL_STATE_ERROR)
                             .setTimeSinceCreatedMillis(17630000L)
                             .setErrorCode(PlaybackErrorEvent.ERROR_RUNTIME)
+                            .setMetricsBundle(new Bundle())
+                            .build();
+            s.reportEditingEndedEvent(e);
+            resetProperties();
+        }
+    }
+
+    @Test
+    public void testEditingEndedEvent_transcodeAndClip() throws Exception {
+        turnOnForTesting();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        try (EditingSession s = manager.createEditingSession()) {
+            // Video: H.265 HDR (HLG, BT.2020) -> H.264 (SDR) transcoding
+            // Audio: transmuxing
+            // Audio and video are both clipped from 4 s to 3 s.
+            // Video is downscaled from portrait 1080p to portrait 720p.
+            MediaItemInfo inputMediaItemInfo =
+                    new MediaItemInfo.Builder()
+                            .setSourceType(MediaItemInfo.SOURCE_TYPE_CAMERA)
+                            .addDataType(MediaItemInfo.DATA_TYPE_VIDEO)
+                            .addDataType(MediaItemInfo.DATA_TYPE_AUDIO)
+                            .addDataType(MediaItemInfo.DATA_TYPE_HIGH_DYNAMIC_RANGE_VIDEO)
+                            .setDurationMillis(4_000)
+                            .setClipDurationMillis(3_000)
+                            .setContainerMimeType("video/mp4")
+                            .addSampleMimeType("video/hevc")
+                            .addSampleMimeType("audio/mp4a-latm")
+                            .addCodecName("c2.android.hevc.decoder")
+                            .addCodecName("c2.android.aac.decoder")
+                            .setAudioSampleRateHz(44100)
+                            .setAudioChannelCount(2)
+                            .setAudioSampleCount(10_000)
+                            .setVideoSize(new Size(1080, 1920))
+                            .setVideoDataSpace(
+                                    DataSpace.pack(
+                                            DataSpace.STANDARD_BT2020,
+                                            DataSpace.TRANSFER_HLG,
+                                            DataSpace.RANGE_FULL))
+                            .setVideoFrameRate(25f)
+                            .setVideoSampleCount(100)
+                            .build();
+            MediaItemInfo outputMediaItemInfo =
+                    new MediaItemInfo.Builder()
+                            .addDataType(MediaItemInfo.DATA_TYPE_VIDEO)
+                            .addDataType(MediaItemInfo.DATA_TYPE_AUDIO)
+                            .setDurationMillis(3_000)
+                            .setContainerMimeType("video/mp4")
+                            .addSampleMimeType("video/avc")
+                            .addSampleMimeType("audio/mp4a-latm")
+                            .addCodecName("c2.android.avc.encoder")
+                            .addCodecName("c2.android.aac.encoder")
+                            .setAudioSampleRateHz(44100)
+                            .setAudioChannelCount(2)
+                            .setAudioSampleCount(10_000)
+                            .setVideoSize(new Size(720, 1280))
+                            .setVideoDataSpace(
+                                    DataSpace.pack(
+                                            DataSpace.STANDARD_BT709,
+                                            DataSpace.TRANSFER_LINEAR,
+                                            DataSpace.RANGE_FULL))
+                            .setVideoFrameRate(25f)
+                            .setVideoSampleCount(100)
+                            .build();
+            EditingEndedEvent e =
+                    new EditingEndedEvent.Builder(EditingEndedEvent.FINAL_STATE_SUCCEEDED)
+                            .setTimeSinceCreatedMillis(2_000)
+                            .addOperationType(EditingEndedEvent.OPERATION_TYPE_VIDEO_TRANSCODE)
+                            .addOperationType(EditingEndedEvent.OPERATION_TYPE_AUDIO_TRANSMUX)
+                            .addOperationType(EditingEndedEvent.OPERATION_TYPE_AUDIO_EDIT)
+                            .addOperationType(EditingEndedEvent.OPERATION_TYPE_VIDEO_EDIT)
+                            .addInputMediaItemInfo(inputMediaItemInfo)
+                            .setOutputMediaItemInfo(outputMediaItemInfo)
                             .setMetricsBundle(new Bundle())
                             .build();
             s.reportEditingEndedEvent(e);
