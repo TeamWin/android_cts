@@ -109,6 +109,10 @@ public class CredentialManagerRestoreSettingsHostSideTest extends BaseHostJUnit4
 
         BackupHostSideUtils.checkSetupComplete(getDevice());
 
+        mBackupUtils.enableBackup(true);
+        mBackupUtils.activateBackupForUser(true, 0);
+        mBackupUtils.setBackupTransportForUser(mBackupUtils.getLocalTransportName(), 0);
+
         // Check that the backup wasn't disabled and the transport wasn't switched unexpectedly.
         assertTrue(
                 "Backup was unexpectedly disabled during the module test run",
@@ -130,10 +134,6 @@ public class CredentialManagerRestoreSettingsHostSideTest extends BaseHostJUnit4
 
     @Test
     public void testSettingsAreRestoredCorrectly() throws Exception {
-        mBackupUtils.enableBackup(true);
-        mBackupUtils.activateBackupForUser(true, 0);
-        mBackupUtils.setBackupTransportForUser(mBackupUtils.getLocalTransportName(), 0);
-
         // 1. Set the CredMan settings before backup.
         setSecureSettingValue(AUTOFILL_SETTING_NAME, AUTOFILL_TEST_SERVICE);
         setSecureSettingValue(CREDMAN_SETTING_NAME, CREDMAN_TEST_SERVICE);
@@ -165,10 +165,6 @@ public class CredentialManagerRestoreSettingsHostSideTest extends BaseHostJUnit4
 
     @Test
     public void testSettingsAreNotRestoredIfUserHasChangedThem() throws Exception {
-        mBackupUtils.enableBackup(true);
-        mBackupUtils.activateBackupForUser(true, 0);
-        mBackupUtils.setBackupTransportForUser(mBackupUtils.getLocalTransportName(), 0);
-
         // 1. Set the CredMan settings before backup.
         setSecureSettingValue(AUTOFILL_SETTING_NAME, AUTOFILL_TEST_SERVICE);
         setSecureSettingValue(CREDMAN_SETTING_NAME, CREDMAN_TEST_SERVICE);
