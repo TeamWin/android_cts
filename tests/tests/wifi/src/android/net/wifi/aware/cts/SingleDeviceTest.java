@@ -48,6 +48,7 @@ import android.net.wifi.aware.AwarePairingConfig;
 import android.net.wifi.aware.AwareParams;
 import android.net.wifi.aware.AwareResources;
 import android.net.wifi.aware.Characteristics;
+import android.net.wifi.aware.ConfigRequest;
 import android.net.wifi.aware.DiscoverySession;
 import android.net.wifi.aware.DiscoverySessionCallback;
 import android.net.wifi.aware.IdentityChangedListener;
@@ -70,6 +71,7 @@ import android.os.HandlerThread;
 import android.os.Parcel;
 import android.os.PersistableBundle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 
 import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -81,6 +83,7 @@ import com.android.wifi.flags.Flags;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -780,6 +783,40 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
             Thread.sleep(WAIT_FOR_AWARE_INTERFACE_CREATION_SEC * 1000);
             assertFalse(mWifiAwareManager.isDeviceAttached());
         }
+    }
+
+    /**
+     * Verify that {@link WifiAwareManager#attach(ConfigRequest, Handler, AttachCallback,
+     * IdentityChangedListener)} can be called successfully.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    public void testAttachDiscoveryWithConfigRequest() throws Exception {
+        if (!TestUtils.shouldTestWifiAware(getContext())) {
+            return;
+        }
+
+        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+            OuiKeyedData vendorDataElement =
+                    new OuiKeyedData.Builder(0x00aabbcc, new PersistableBundle()).build();
+            List<OuiKeyedData> vendorData = Arrays.asList(vendorDataElement);
+            ConfigRequest configRequest = new ConfigRequest.Builder()
+                    .setVendorData(vendorData)
+                    .build();
+            assertEquals(vendorData, configRequest.getVendorData());
+
+            ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+            AttachCallbackTest attachCb = new AttachCallbackTest();
+            IdentityChangedListenerTest identityL = new IdentityChangedListenerTest();
+            mWifiAwareManager.attach(configRequest, executor, attachCb, identityL);
+
+            assertEquals("Attach callback state", AttachCallbackTest.ATTACHED,
+                    attachCb.waitForAnyCallback());
+            WifiAwareSession session = attachCb.getSession();
+            assertNotNull("Attach callback session", session);
+            session.close();
+        });
     }
 
     /**
