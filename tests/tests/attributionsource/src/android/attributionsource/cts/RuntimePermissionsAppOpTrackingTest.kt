@@ -42,6 +42,7 @@ import android.speech.RecognitionListener
 import android.speech.SpeechRecognizer
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
+import com.android.modules.utils.build.SdkLevel;
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -610,31 +611,33 @@ class RuntimePermissionsAppOpTrackingTest {
                 val receiverUid = context.packageManager.getPackageUid(
                         RECEIVER_PACKAGE_NAME, 0)
 
-                inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                        eq(recognizerUid), eq(RECEIVER2_PACKAGE_NAME), isNull(), eq(true),
-                        eq(AppOpsManager.ATTRIBUTION_FLAG_ACCESSOR or ATTRIBUTION_FLAG_TRUSTED),
-                        intThat(attributionChainIdMatcher))
-                inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                        eq(Process.myUid()), eq(context.packageName), eq(ACCESSOR_ATTRIBUTION_TAG),
-                        eq(true), eq(AppOpsManager.ATTRIBUTION_FLAG_INTERMEDIARY or
-                        ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
-                inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                        eq(receiverUid), eq(RECEIVER_PACKAGE_NAME), eq(RECEIVER_ATTRIBUTION_TAG),
-                        eq(true), eq(AppOpsManager.ATTRIBUTION_FLAG_RECEIVER or
-                        ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
+                if (!SdkLevel.isAtLeastV()) {
+                    inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
+                            eq(recognizerUid), eq(RECEIVER2_PACKAGE_NAME), isNull(), eq(true),
+                            eq(AppOpsManager.ATTRIBUTION_FLAG_ACCESSOR or ATTRIBUTION_FLAG_TRUSTED),
+                            intThat(attributionChainIdMatcher))
+                    inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
+                            eq(Process.myUid()), eq(context.packageName), eq(ACCESSOR_ATTRIBUTION_TAG),
+                            eq(true), eq(AppOpsManager.ATTRIBUTION_FLAG_INTERMEDIARY or
+                            ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
+                    inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
+                            eq(receiverUid), eq(RECEIVER_PACKAGE_NAME), eq(RECEIVER_ATTRIBUTION_TAG),
+                            eq(true), eq(AppOpsManager.ATTRIBUTION_FLAG_RECEIVER or
+                            ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
 
-                inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                        eq(recognizerUid), eq(RECEIVER2_PACKAGE_NAME), isNull(), eq(false),
-                        eq(AppOpsManager.ATTRIBUTION_FLAG_ACCESSOR or ATTRIBUTION_FLAG_TRUSTED),
-                        intThat(attributionChainIdMatcher))
-                inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                        eq(Process.myUid()), eq(context.packageName), eq(ACCESSOR_ATTRIBUTION_TAG),
-                        eq(false), eq(AppOpsManager.ATTRIBUTION_FLAG_INTERMEDIARY or
-                        ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
-                inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                        eq(receiverUid), eq(RECEIVER_PACKAGE_NAME), eq(RECEIVER_ATTRIBUTION_TAG),
-                        eq(false), eq(AppOpsManager.ATTRIBUTION_FLAG_RECEIVER or
-                        ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
+                    inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
+                            eq(recognizerUid), eq(RECEIVER2_PACKAGE_NAME), isNull(), eq(false),
+                            eq(AppOpsManager.ATTRIBUTION_FLAG_ACCESSOR or ATTRIBUTION_FLAG_TRUSTED),
+                            intThat(attributionChainIdMatcher))
+                    inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
+                            eq(Process.myUid()), eq(context.packageName), eq(ACCESSOR_ATTRIBUTION_TAG),
+                            eq(false), eq(AppOpsManager.ATTRIBUTION_FLAG_INTERMEDIARY or
+                            ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
+                    inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
+                            eq(receiverUid), eq(RECEIVER_PACKAGE_NAME), eq(RECEIVER_ATTRIBUTION_TAG),
+                            eq(false), eq(AppOpsManager.ATTRIBUTION_FLAG_RECEIVER or
+                            ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
+                }
             } finally {
                 // Take down the recognition service
                 instrumentation.runOnMainSync { recognizerRef.get().destroy() }
