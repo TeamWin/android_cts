@@ -52,6 +52,8 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.Telephony;
 import android.util.ArraySet;
 import android.util.Log;
@@ -65,6 +67,7 @@ import com.android.compatibility.common.util.ThrowingRunnable;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -88,6 +91,9 @@ public abstract class BaseNotificationManagerTest {
     protected static final String TEST_APP = "com.android.test.notificationapp";
 
     private static final String TAG = BaseNotificationManagerTest.class.getSimpleName();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     protected Context mContext;
     protected PackageManager mPackageManager;
