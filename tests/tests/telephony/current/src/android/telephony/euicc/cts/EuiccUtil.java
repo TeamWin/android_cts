@@ -18,11 +18,8 @@ package android.telephony.euicc.cts;
 
 import static androidx.test.InstrumentationRegistry.getContext;
 
-import android.annotation.FlaggedApi;
 import android.content.Context;
 import android.content.pm.PackageManager;
-
-import com.android.internal.telephony.flags.Flags;
 
 /**
  * Utility to check device has required Telephony feature.
@@ -33,7 +30,6 @@ public class EuiccUtil {
      *
      * @return boolean Return true if the device has {@link PackageManager#FEATURE_TELEPHONY_EUICC}
      */
-    @FlaggedApi(Flags.FLAG_ENFORCE_TELEPHONY_FEATURE_MAPPING_FOR_PUBLIC_APIS)
     public static boolean hasEuiccFeature() {
         Context context = getContext();
         if (context == null) return false;
