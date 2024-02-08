@@ -1392,6 +1392,16 @@ class ProvisioningTest {
         ).isFalse()
     }
 
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = ["android.app.admin.DevicePolicyManager#isProvisioningAllowed"])
+    @Test
+    @EnsureHasDeviceOwner
+    fun isProvisioningAllowed_hasDeviceOwner_returnsFalse() {
+    assertThat(
+      localDevicePolicyManager.isProvisioningAllowed(
+        DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE
+    )).isFalse()
+    }
     @Throws(IOException::class)
     private fun createNfcIntentFromMap(input: Map<String, String>): Intent {
         return createNfcIntent(
