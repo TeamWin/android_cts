@@ -16,6 +16,8 @@
 
 package android.jobscheduler.cts;
 
+import static com.android.compatibility.common.util.TestUtils.waitUntil;
+
 import android.app.job.JobInfo;
 import android.content.pm.PackageManager;
 import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
@@ -86,21 +88,32 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         //  * CONSTRAINT_CHARGING
         //  * CONSTRAINT_CONNECTIVITY
         //  * CONSTRAINT_IDLE
-        mDeviceConfigStateHelper.set("fc_applied_constraints", "268435463");
-        mDeviceConfigStateHelper.set("fc_flexibility_deadline_proximity_limit_ms", "0");
+        setDeviceConfigFlag("fc_applied_constraints", "268435463", false);
+        setDeviceConfigFlag("fc_flexibility_deadline_proximity_limit_ms", "0", false);
         // Using jobs with no deadline, but having a short fallback deadline, lets us test jobs
         // whose lifecycle is smaller than the minimum allowed by JobStatus.
-        mDeviceConfigStateHelper.set("fc_fallback_flexibility_deadlines",
-                "500=100000,400=100000,300=100000,200=100000,100=100000");
-        mDeviceConfigStateHelper.set("fc_fallback_flexibility_deadline_scores",
-                "500=0,400=0,300=0,200=0,100=0");
-        mDeviceConfigStateHelper.set("fc_min_time_between_flexibility_alarms_ms", "0");
-        mDeviceConfigStateHelper.set("fc_percents_to_drop_flexible_constraints",
+        setDeviceConfigFlag("fc_fallback_flexibility_deadlines",
+                "500=100000,400=100000,300=100000,200=100000,100=100000", false);
+        setDeviceConfigFlag("fc_fallback_flexibility_deadline_scores",
+                "500=0,400=0,300=0,200=0,100=0", false);
+        setDeviceConfigFlag("fc_min_time_between_flexibility_alarms_ms", "0", false);
+        setDeviceConfigFlag("fc_percents_to_drop_flexible_constraints",
                 "500=3|6|12|25"
                         + ",400=3|6|12|25"
                         + ",300=3|6|12|25"
                         + ",200=3|6|12|25"
-                        + ",100=3|6|12|25");
+                        + ",100=3|6|12|25",
+                false);
+        waitUntil("Config didn't update appropriately", 10 /* seconds */,
+                () -> "268435463".equals(getConfigValue("fc_applied_constraints"))
+                && "0".equals(getConfigValue("fc_flexibility_deadline_proximity_limit_ms"))
+                && "500=100000,400=100000,300=100000,200=100000,100=100000"
+                        .equals(getConfigValue("fc_fallback_flexibility_deadlines"))
+                && "500=0,400=0,300=0,200=0,100=0"
+                        .equals(getConfigValue("fc_fallback_flexibility_deadline_scores"))
+                && "0".equals(getConfigValue("fc_min_time_between_flexibility_alarms_ms"))
+                && "500=3|6|12|25,400=3|6|12|25,300=3|6|12|25,200=3|6|12|25,100=3|6|12|25"
+                        .equals(getConfigValue("fc_percents_to_drop_flexible_constraints")));
 
         // Disable power save mode.
         mPreviousLowPowerTriggerLevel = Settings.Global.getString(getContext().getContentResolver(),
@@ -145,12 +158,13 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
             return;
         }
         // Make it so that constraints won't drop in time.
-        mDeviceConfigStateHelper.set("fc_percents_to_drop_flexible_constraints",
+        setDeviceConfigFlag("fc_percents_to_drop_flexible_constraints",
                 "500=25|30|35|50"
                         + ",400=25|30|35|50"
                         + ",300=25|30|35|50"
                         + ",200=25|30|35|50"
-                        + ",100=25|30|35|50");
+                        + ",100=25|30|35|50",
+                true);
         scheduleJobToExecute();
 
         // Job should fire even though constraints haven't dropped.
@@ -169,8 +183,9 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
             return;
         }
         // Increase timeouts to make sure the test doesn't start passing because of transpired time.
-        mDeviceConfigStateHelper.set("fc_fallback_flexibility_deadlines",
-                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000");
+        setDeviceConfigFlag("fc_fallback_flexibility_deadlines",
+                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000",
+                true);
         scheduleJobToExecute();
 
         assertJobNotReady();
@@ -192,12 +207,13 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
             return;
         }
         // Increase timeouts to make sure the test doesn't start passing because of transpired time.
-        mDeviceConfigStateHelper.set("fc_percents_to_drop_flexible_constraints",
+        setDeviceConfigFlag("fc_percents_to_drop_flexible_constraints",
                 "500=900000|1800000|3600000|7200000"
                         + ",400=900000|1800000|3600000|7200000"
                         + ",300=900000|1800000|3600000|7200000"
                         + ",200=900000|1800000|3600000|7200000"
-                        + ",100=900000|1800000|3600000|7200000");
+                        + ",100=900000|1800000|3600000|7200000",
+                true);
         scheduleJobToExecute();
 
         assertJobNotReady();
@@ -219,8 +235,9 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
             return;
         }
         // Increase timeouts to make sure the test doesn't start passing because of transpired time.
-        mDeviceConfigStateHelper.set("fc_fallback_flexibility_deadlines",
-                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000");
+        setDeviceConfigFlag("fc_fallback_flexibility_deadlines",
+                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000",
+                true);
         scheduleJobToExecute();
 
         assertJobNotReady();
@@ -242,12 +259,13 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
             Log.d(TAG, "Skipping test since device doesn't support any constraints");
             return;
         }
-        mDeviceConfigStateHelper.set("fc_percents_to_drop_flexible_constraints",
+        setDeviceConfigFlag("fc_percents_to_drop_flexible_constraints",
                 "500=3|5|7|50"
                         + ",400=3|5|7|50"
                         + ",300=3|5|7|50"
                         + ",200=3|5|7|50"
-                        + ",100=3|5|7|50");
+                        + ",100=3|5|7|50",
+                true);
         try (TestAppInterface testAppInterface =
                      new TestAppInterface(getContext(), FLEXIBLE_JOB_ID)) {
             testAppInterface.scheduleJob(Collections.emptyMap(), Collections.emptyMap());
@@ -302,8 +320,9 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
             return;
         }
         // Increase timeouts to make sure the test doesn't start passing because of transpired time.
-        mDeviceConfigStateHelper.set("fc_fallback_flexibility_deadlines",
-                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000");
+        setDeviceConfigFlag("fc_fallback_flexibility_deadlines",
+                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000",
+                true);
 
         scheduleJobToExecute();
 
@@ -312,7 +331,7 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         assertJobNotReady();
 
         // CONSTRAINT_BATTERY_NOT_LOW
-        mDeviceConfigStateHelper.set("fc_applied_constraints", "2");
+        setDeviceConfigFlag("fc_applied_constraints", "2", true);
 
         runJob();
         assertTrue("Job did not fire when applied constraints were satisfied",
@@ -342,8 +361,9 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
             return;
         }
         // Increase timeouts to make sure the test doesn't start passing because of transpired time.
-        mDeviceConfigStateHelper.set("fc_fallback_flexibility_deadlines",
-                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000");
+        setDeviceConfigFlag("fc_fallback_flexibility_deadlines",
+                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000",
+                true);
         mNetworkingHelper.setWifiState(false);
 
         final int connectivityJobId = FLEXIBLE_JOB_ID;
@@ -367,7 +387,7 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
             testAppInterface.assertJobNotReady(connectivityJobId);
 
             // CONSTRAINT_BATTERY_NOT_LOW
-            mDeviceConfigStateHelper.set("fc_applied_constraints", "2");
+            setDeviceConfigFlag("fc_applied_constraints", "2", true);
 
             satisfySystemWideConstraints(false, true, false);
 
@@ -381,7 +401,7 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
 
             // CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CONNECTIVITY
             // Connectivity job needs both to run
-            mDeviceConfigStateHelper.set("fc_applied_constraints", "268435458");
+            setDeviceConfigFlag("fc_applied_constraints", "268435458", true);
             mNetworkingHelper.setWifiState(true);
 
             testAppInterface.runSatisfiedJob(connectivityJobId);
@@ -406,8 +426,9 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
             return;
         }
         // Increase timeouts to make sure the test doesn't start passing because of transpired time.
-        mDeviceConfigStateHelper.set("fc_fallback_flexibility_deadlines",
-                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000");
+        setDeviceConfigFlag("fc_fallback_flexibility_deadlines",
+                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000",
+                true);
 
         scheduleJobToExecute();
 
@@ -416,7 +437,7 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         assertJobNotReady();
 
         // CONSTRAINT_CHARGING
-        mDeviceConfigStateHelper.set("fc_applied_constraints", "1");
+        setDeviceConfigFlag("fc_applied_constraints", "1", true);
 
         runJob();
         assertTrue("Job did not fire when applied constraints were satisfied",
@@ -445,8 +466,9 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
             return;
         }
         // Increase timeouts to make sure the test doesn't start passing because of transpired time.
-        mDeviceConfigStateHelper.set("fc_fallback_flexibility_deadlines",
-                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000");
+        setDeviceConfigFlag("fc_fallback_flexibility_deadlines",
+                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000",
+                true);
         mNetworkingHelper.setWifiState(false);
 
         mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
@@ -457,7 +479,7 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         assertJobNotReady();
 
         // CONSTRAINT_CONNECTIVITY
-        mDeviceConfigStateHelper.set("fc_applied_constraints", "268435456");
+        setDeviceConfigFlag("fc_applied_constraints", "268435456", true);
 
         runJob();
         assertTrue("Job did not fire when applied constraints were satisfied",
@@ -480,8 +502,9 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
             return;
         }
         // Increase timeouts to make sure the test doesn't start passing because of transpired time.
-        mDeviceConfigStateHelper.set("fc_fallback_flexibility_deadlines",
-                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000");
+        setDeviceConfigFlag("fc_fallback_flexibility_deadlines",
+                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000",
+                true);
 
         scheduleJobToExecute();
 
@@ -490,7 +513,7 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         assertJobNotReady();
 
         // CONSTRAINT_IDLE
-        mDeviceConfigStateHelper.set("fc_applied_constraints", "4");
+        setDeviceConfigFlag("fc_applied_constraints", "4", true);
 
         runJob();
         assertTrue("Job did not fire when applied constraints were satisfied",
@@ -522,8 +545,9 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         }
 
         // Increase timeouts to make sure the test doesn't start passing because of transpired time.
-        mDeviceConfigStateHelper.set("fc_fallback_flexibility_deadlines",
-                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000");
+        setDeviceConfigFlag("fc_fallback_flexibility_deadlines",
+                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000",
+                true);
         satisfySystemWideConstraints(false, false, false);
 
         final int jobIdHigh = FLEXIBLE_JOB_ID;
@@ -580,8 +604,9 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         }
 
         // Increase timeouts to make sure the test doesn't start passing because of transpired time.
-        mDeviceConfigStateHelper.set("fc_fallback_flexibility_deadlines",
-                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000");
+        setDeviceConfigFlag("fc_fallback_flexibility_deadlines",
+                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000",
+                true);
         satisfySystemWideConstraints(false, false, false);
 
         final int jobIdHigh = FLEXIBLE_JOB_ID;
@@ -635,8 +660,9 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
      */
     public void testTopBypassesFlexibility() throws Exception {
         // Increase timeouts to make sure the test doesn't start passing because of transpired time.
-        mDeviceConfigStateHelper.set("fc_fallback_flexibility_deadlines",
-                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000");
+        setDeviceConfigFlag("fc_fallback_flexibility_deadlines",
+                "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000",
+                true);
         satisfySystemWideConstraints(false, false, false);
         toggleScreenOn(true);
 
@@ -692,7 +718,7 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
             Log.d(TAG, "Skipping test that requires device support required constraints");
             return;
         }
-        mDeviceConfigStateHelper.set("fc_flexibility_deadline_proximity_limit_ms", "95000");
+        setDeviceConfigFlag("fc_flexibility_deadline_proximity_limit_ms", "95000", true);
         // Let Flexibility Controller update.
         Thread.sleep(1_000L);
 
@@ -935,14 +961,14 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
             Log.d(TAG, "Skipping test since device doesn't support any constraints");
             return;
         }
-        mDeviceConfigStateHelper.set("fc_percents_to_drop_flexible_constraints",
+        setDeviceConfigFlag("fc_percents_to_drop_flexible_constraints",
                 "500=3|5|7|50"
                         + ",400=3|5|7|50"
                         + ",300=3|5|7|50"
                         + ",200=3|5|7|50"
-                        + ",100=3|5|7|50");
-        mDeviceConfigStateHelper.set("fc_fallback_flexibility_deadlines",
-                "500=100000,400=100000,300=360000000,200=360000000,100=360000000");
+                        + ",100=3|5|7|50", true);
+        setDeviceConfigFlag("fc_fallback_flexibility_deadlines",
+                "500=100000,400=100000,300=360000000,200=360000000,100=360000000", true);
         final int jobIdHigh = FLEXIBLE_JOB_ID;
         final int jobIdDefault = FLEXIBLE_JOB_ID + 1;
         try (TestAppInterface testAppInterface =
@@ -990,14 +1016,15 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
             Log.d(TAG, "Skipping test since device doesn't support any constraints");
             return;
         }
-        mDeviceConfigStateHelper.set("fc_percents_to_drop_flexible_constraints",
+        setDeviceConfigFlag("fc_percents_to_drop_flexible_constraints",
                 "500=3|5|7|50"
                         + ",400=3|5|7|50"
                         + ",300=90|92|95|99"
                         + ",200=90|92|95|99"
-                        + ",100=90|92|95|99");
-        mDeviceConfigStateHelper.set("fc_fallback_flexibility_deadlines",
-                "500=100000,400=100000,300=100000,200=100000,100=100000");
+                        + ",100=90|92|95|99",
+                true);
+        setDeviceConfigFlag("fc_fallback_flexibility_deadlines",
+                "500=100000,400=100000,300=100000,200=100000,100=100000", true);
         final int jobIdHigh = FLEXIBLE_JOB_ID;
         final int jobIdDefault = FLEXIBLE_JOB_ID + 1;
         try (TestAppInterface testAppInterface =
