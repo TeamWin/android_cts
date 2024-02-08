@@ -45,8 +45,12 @@ import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ResultReceiver;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.service.chooser.ChooserAction;
 import android.service.chooser.ChooserTarget;
+import android.service.chooser.Flags;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -84,7 +88,10 @@ import java.util.stream.Collectors;
 @RunWith(AndroidJUnit4.class)
 public class CtsSharesheetDeviceTest {
 
-    @Rule
+    @Rule(order = 0)
+    public CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
+    @Rule(order = 1)
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
             InstrumentationRegistry.getInstrumentation().getUiAutomation(),
             START_ACTIVITIES_FROM_BACKGROUND);
@@ -884,6 +891,24 @@ public class CtsSharesheetDeviceTest {
                     mContext.unregisterReceiver(modifyShareActionReceiver);
                     closeSharesheet();
                 }
+        );
+    }
+
+    @Test
+    @ApiTest(apis = "android.content.Intent#EXTRA_METADATA_TEXT")
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_SHARESHEET_METADATA_EXTRA)
+    public void textSharesheetMetadata() {
+        CharSequence testMetadataText = "Metadata test text";
+        Intent shareIntent = createShareIntent(
+                true, 0, 0
+        );
+        shareIntent.putExtra(Intent.EXTRA_METADATA_TEXT, testMetadataText);
+        runAndExecuteCleanupBeforeAnyThrow(
+                () -> {
+                    launchSharesheet(shareIntent);
+                    waitAndAssertTextContains(testMetadataText.toString());
+                },
+                this::closeSharesheetIfNeeded
         );
     }
 
