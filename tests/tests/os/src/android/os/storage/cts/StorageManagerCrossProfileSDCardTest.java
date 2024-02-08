@@ -26,7 +26,6 @@ import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.platform.test.annotations.AppModeFull;
 
-import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -71,7 +70,6 @@ public class StorageManagerCrossProfileSDCardTest {
 
 
     @Test
-    @LargeTest
     @RequireRunOnWorkProfile
     @AppModeFull(reason = "Instant apps cannot access external storage")
     public void testGetStorageVolumeSDCardWorkProfile() throws Exception {
