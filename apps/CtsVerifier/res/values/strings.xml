@@ -7245,14 +7245,32 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="sharesheet_album_test">Sharesheet Album Label Test</string>
     <string name="sharesheet_album_test_info">This test verifies that the system sharesheet responds to the \"album\" hint if provided by the app.</string>
     <string name="sharesheet_skipping_for_flag">Skipping the test due to disabled feature flag</string>
-    <string name="share_label">Share</string>
-    <string name="no_title_message">No title on sharesheet, test passed.</string>
+    <string name="sharesheet_share_label">Share</string>
+    <string name="sharesheet_no_title_message">No title on sharesheet, test passed.</string>
     <string name="sharesheet_album_test_step_1">Press the \"Share\" button below to show the system sharesheet.
         When it\'s shown, look for a headline at the top saying something like \"Sharing text\".
         \n\nThen close the sharesheet and you\'ll be asked whether you saw a headline like that.</string>
     <string name="sharesheet_album_test_step_2">Did you see a title in the UI like \"Sharing Text\"?\n\nIf not sure, press Share again.</string>
     <string name="sharesheet_album_test_step_3">Now press the \"Share\" button again and see if the headline says something like \"Sharing album\" instead.
         \n\nIf the sharesheet indicates that it\'s an album being shared, pass the test, otherwise fail.</string>
+
+    <!-- Sharesheet ChooserResult test -->
+    <string name="sharesheet_result_test">Sharesheet Chooser Result Test</string>
+    <string name="sharesheet_result_test_info">This test verifies an app is notified of actions taken when sharing content.</string>
+    <string name="sharesheet_result_test_instructions">For each step, tap the \"Share\" button below and then take the requested action within the Sharing UI.</string>
+    <string name="sharesheet_result_test_app_instructions">Tap the icon for \'CtsVerifier\'.
+        \n\nIf it does not appear, dismiss the Share UI. </string>
+    <string name="sharesheet_result_test_copy_instructions">Press the \"Copy\" button.
+        \n\nIf there is no \'Copy\' button, dismiss the Share UI. </string>
+    <string name="sharesheet_result_test_edit_instructions">Press the \"Edit\" button.
+        \n\nIf there is no \'Edit\' button, dismiss the Share UI. </string>
+    <string name="sharesheet_result_test_instructions_after_share">Choose from the options below:</string>
+    <string name="sharesheet_result_test_pressed">I pressed the button</string>
+    <string name="sharesheet_result_test_not_found">I couldn\'t locate the button</string>
+    <string name="sharesheet_result_test_try_again">Try again</string>
+    <string name="sharesheet_result_test_no_result_message">No result received - test failed</string>
+    <string name="sharesheet_result_test_no_button">Some actions not available - test passed</string>
+    <string name="sharesheet_result_test_passed">Test passed.</string>
 
     <!-- Strings for CaptureContentForNotes test -->
     <string name="ccfn_tests">Capture Content For Notes Tests</string>

@@ -7074,6 +7074,25 @@
         </activity>
 
         <!-- Components for Sharesheet tests -->
+       <activity
+            android:name=".sharesheet.SharesheetChooserResultActivity"
+            android:exported="true"
+            android:label="@string/sharesheet_result_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/category_sharesheet" />
+            <meta-data
+                android:name="ApiTest"
+                android:value="android.content.Intent#EXTRA_CHOOSER_RESULT
+                    |android.service.chooser.ChooserResult#getResult" />
+            <meta-data android:name="display_mode" android:value="single_display_mode" />
+        </activity>
+
         <!-- TODO: b/324916074
         <activity
             android:name=".sharesheet.SharesheetPayloadToggleActivity"
