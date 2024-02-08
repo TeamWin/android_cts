@@ -1765,7 +1765,7 @@ public class ContextTest {
 
     private void internalTestCheckContentUriPermissionFull(int packageAccessType,
             int modeFlagsTestHasAccessTo) throws Exception {
-        Uri contentUri = mContentUriTestService.getContentUri(packageAccessType,
+        Uri contentUri = mContentUriTestService.getContentUriForContext(packageAccessType,
                 modeFlagsTestHasAccessTo);
         String argsInfo = "packageAccessType: " + packageAccessType + ", modeFlags: "
                 + modeFlagsTestHasAccessTo;
