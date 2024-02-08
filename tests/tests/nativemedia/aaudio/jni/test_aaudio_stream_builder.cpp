@@ -329,6 +329,8 @@ INSTANTIATE_TEST_CASE_P(BC, AAudioStreamBuilderBufferCapacityTest,
         ::testing::Values(
                 // Reasonable values that should not fail
                 AAUDIO_UNSPECIFIED, 8 * 192, 2 * 1024,
+                // Some large number, should not fail
+                8192, 512 * 1024,
                 // Odd values
                 AAUDIO_UNSPECIFIED - 1),
         &AAudioStreamBuilderBufferCapacityTest::getTestName);
