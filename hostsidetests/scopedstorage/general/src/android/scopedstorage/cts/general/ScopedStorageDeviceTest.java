@@ -145,6 +145,7 @@ import android.system.StructStat;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.SdkSuppress;
 
 import com.android.compatibility.common.util.FeatureUtil;
@@ -1316,6 +1317,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
                 /* permission */ null, AppOpsManager.OPSTR_WRITE_MEDIA_VIDEO, /* forWrite */ true);
     }
 
+    @FlakyTest(bugId = 324388050)
     @Test
     public void testAccessMediaLocationInvalidation() throws Exception {
         File imgFile = new File(getDcimDir(), "access_media_location.jpg");
