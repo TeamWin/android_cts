@@ -20,6 +20,7 @@
               android:supportsInlineSuggestionsWithTouchExploration="true"
               android:configChanges="fontScale"
               android:supportsStylusHandwriting="true"
+              android:supportsConnectionlessStylusHandwriting="true"
               android:languageSettingsActivity="language_settings"
               android:stylusHandwritingSettingsActivity="handwriting_settings">
 </input-method>
