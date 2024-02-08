@@ -37,6 +37,8 @@ public abstract class ControlsPanelVerifierSettingTest extends PassFailButtons.A
 
     abstract int getTestNameResId();
 
+    abstract int getInstructions();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,7 +54,7 @@ public abstract class ControlsPanelVerifierSettingTest extends PassFailButtons.A
                 ControlsPanelTestUtils.createOpenPanelInstructions(this,
                         textView.getLineHeight()));
 
-        String text = getString(R.string.controls_panel_setting_test_instructions,
+        String text = getString(getInstructions(),
                 getSettingState());
         ((TextView) findViewById(R.id.text_above)).setText(text);
 
@@ -77,6 +79,11 @@ public abstract class ControlsPanelVerifierSettingTest extends PassFailButtons.A
         int getTestNameResId() {
             return R.string.controls_panel_setting_test_false;
         }
+
+        @Override
+        int getInstructions() {
+            return R.string.controls_panel_setting_test_instructions;
+        }
     }
 
     /**
@@ -91,6 +98,51 @@ public abstract class ControlsPanelVerifierSettingTest extends PassFailButtons.A
         @Override
         int getTestNameResId() {
             return R.string.controls_panel_setting_test_true;
+        }
+
+        @Override
+        int getInstructions() {
+            return R.string.controls_panel_setting_test_instructions;
+        }
+    }
+
+    /**
+     * Test for false value when started on keyguard.
+     */
+    public static class DreamTestFalse extends ControlsPanelVerifierSettingTest {
+        @Override
+        boolean getSettingState() {
+            return false;
+        }
+
+        @Override
+        int getTestNameResId() {
+            return R.string.controls_panel_dream_test_false;
+        }
+
+        @Override
+        int getInstructions() {
+            return R.string.controls_panel_dream_false_test_instructions;
+        }
+    }
+
+    /**
+     * Test for true value when hosted in as a dream service.
+     */
+    public static class DreamTestTrue extends ControlsPanelVerifierSettingTest {
+        @Override
+        boolean getSettingState() {
+            return true;
+        }
+
+        @Override
+        int getTestNameResId() {
+            return R.string.controls_panel_dream_test_true;
+        }
+
+        @Override
+        int getInstructions() {
+            return R.string.controls_panel_dream_true_test_instructions;
         }
     }
 }

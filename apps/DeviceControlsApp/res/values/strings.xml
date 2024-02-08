@@ -17,4 +17,10 @@
     <string name="appName">Cts controls</string>
     <string name="panel_content">This is a panel belonging to Cts controls. The value of the setting
         to act on trivial device controls from the lockscreen is &lt;b>%1$s&lt;/b>.</string>
+    <string name="home_control_panel_surface">This value indicates the surface which the device controls
+    panel is shown on. \n The current surface: &lt;b>%1$s&lt;/b>
+    </string>
+    <string name="hosted_in_dream_result">Hosted in Dream Service</string>
+    <string name="not_hosted_in_dream_result">Not Hosted in Dream Service</string>
+    <string name="unknown_result">Unknown Setting</string>
 </resources>
