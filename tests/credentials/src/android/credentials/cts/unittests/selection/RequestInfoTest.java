@@ -36,10 +36,13 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -50,8 +53,11 @@ import java.util.List;
 @AppModeFull(reason = "unit test")
 @RunWith(AndroidJUnit4.class)
 public class RequestInfoTest {
-    private static final IBinder TOKEN = new Binder();
 
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
+    private static final IBinder TOKEN = new Binder();
 
     private static final List<String> DEFAULT_PROVIDER_IDS = List.of("default_provider_1",
             "default_provider_2");
@@ -77,7 +83,7 @@ public class RequestInfoTest {
 
         assertThat(requestInfo.getRequestToken()).isEqualTo(new RequestToken(TOKEN));
         assertThat(requestInfo.getType()).isEqualTo(TYPE_CREATE);
-        assertThat(requestInfo.getAppPackageName()).isEqualTo(APP_PACKAGE_NAME);
+        assertThat(requestInfo.getPackageName()).isEqualTo(APP_PACKAGE_NAME);
         assertThat(requestInfo.hasPermissionToOverrideDefault())
                 .isEqualTo(HAS_PERMISSION_TO_OVERRIDE_DEFAULT);
         assertThat(requestInfo.isShowAllOptionsRequested())
@@ -109,7 +115,7 @@ public class RequestInfoTest {
 
         assertThat(requestInfo.getRequestToken()).isEqualTo(new RequestToken(TOKEN));
         assertThat(requestInfo.getType()).isEqualTo(TYPE_GET);
-        assertThat(requestInfo.getAppPackageName()).isEqualTo(APP_PACKAGE_NAME);
+        assertThat(requestInfo.getPackageName()).isEqualTo(APP_PACKAGE_NAME);
         assertThat(requestInfo.getGetCredentialRequest().getCredentialOptions())
                 .containsExactlyElementsIn(credentialOptions);
         assertThat(requestInfo.hasPermissionToOverrideDefault())
@@ -141,7 +147,7 @@ public class RequestInfoTest {
         RequestInfo requestInfo2 = TestUtils.cloneParcelable(requestInfo1);
         assertThat(requestInfo2.getRequestToken()).isEqualTo(new RequestToken(token));
         assertThat(requestInfo2.getType()).isEqualTo(TYPE_CREATE);
-        assertThat(requestInfo2.getAppPackageName()).isEqualTo("package name");
+        assertThat(requestInfo2.getPackageName()).isEqualTo("package name");
         assertThat(requestInfo2.getCreateCredentialRequest().getType()).isEqualTo("test type");
         assertEquals(requestInfo2.getCreateCredentialRequest().getCredentialData(), credentialData);
         assertEquals(requestInfo2.getCreateCredentialRequest().getCandidateQueryData(),

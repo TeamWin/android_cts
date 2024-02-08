@@ -28,10 +28,13 @@ import android.credentials.selection.GetCredentialProviderInfo;
 import android.net.Uri;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -42,6 +45,10 @@ import java.util.List;
 @AppModeFull(reason = "unit test")
 @RunWith(AndroidJUnit4.class)
 public class GetCredentialProviderInfoTest {
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
     private static final Slice SLICE = new Slice.Builder(Uri.parse("foo://bar"), null)
             .addText("some text", null, List.of(Slice.HINT_TITLE)).build();
 

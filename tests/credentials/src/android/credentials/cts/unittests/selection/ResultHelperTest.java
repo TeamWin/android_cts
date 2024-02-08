@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.credentials.cts.unittests.ui;
+package android.credentials.cts.unittests.selection;
 
 import static android.credentials.cts.unittests.TestUtils.assertEquals;
 import static android.credentials.flags.Flags.FLAG_CONFIGURABLE_SELECTOR_UI_ENABLED;
