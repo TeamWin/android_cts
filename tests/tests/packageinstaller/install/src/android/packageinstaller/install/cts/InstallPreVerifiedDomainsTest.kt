@@ -17,6 +17,7 @@
 package android.packageinstaller.install.cts
 
 import android.app.UiAutomation
+import android.content.ComponentName
 import android.content.pm.Flags
 import android.platform.test.annotations.AppModeFull
 import android.platform.test.annotations.RequiresFlagsEnabled
@@ -63,15 +64,27 @@ class InstallPreVerifiedDomainsTest : PackageInstallerTestBase() {
     @RequiresFlagsEnabled(Flags.FLAG_SET_PRE_VERIFIED_DOMAINS)
     @Test
     fun testSetPreVerifiedDomainsNotInstantAppInstaller() {
+        val defaultInstantAppInstaller: ComponentName? = pm.getInstantAppInstallerComponent()
         uiAutomation.adoptShellPermissionIdentity(android.Manifest.permission.ACCESS_INSTANT_APPS)
         try {
-            assertThrows(
-                    "Only the instant app installer can call this API.",
-                    SecurityException::class.java,
-                    ThrowingRunnable {
-                        createSessionWithPreVerifiedDomains(testDomains)
-                    }
-            )
+            if (defaultInstantAppInstaller != null) {
+                assertThrows(
+                        "Only the instant app installer can call this API.",
+                        SecurityException::class.java,
+                        ThrowingRunnable {
+                            createSessionWithPreVerifiedDomains(testDomains)
+                        }
+                )
+            } else {
+                assertThrows(
+                        "Instant app installer is not available. " +
+                                "Only the instant app installer can call this API.",
+                        IllegalStateException::class.java,
+                        ThrowingRunnable {
+                            createSessionWithPreVerifiedDomains(testDomains)
+                        }
+                )
+            }
         } finally {
             uiAutomation.dropShellPermissionIdentity()
         }
