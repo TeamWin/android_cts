@@ -16,6 +16,8 @@
 
 package android.car.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -83,6 +85,48 @@ public final class CarWifiHostTest extends CarHostJUnit4TestCase {
     }
 
     @Test
+    @ApiTest(apis = {"android.car.settings.CarSettings#ENABLE_TETHERING_PERSISTING"})
+    public void testPersistTetheringCarSetting_enablingWithCapability_autoShutdownDisabled()
+            throws Exception {
+        assumeTrue("Skipping test: tethering capability disabled",
+                isPersistTetheringCapabilityEnabled());
+        executeCommand(ENABLE_TETHERING_PERSISTING);
+        assertThat(isAutoShutdownDisabled()).isTrue();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.settings.CarSettings#ENABLE_TETHERING_PERSISTING"})
+    public void testPersistTetheringCarSetting_disablingWithCapability_autoShutdownEnabled()
+            throws Exception {
+        assumeTrue("Skipping test: tethering capability disabled",
+                isPersistTetheringCapabilityEnabled());
+        executeCommand(DISABLE_TETHERING_PERSISTING);
+        assertThat(isAutoShutdownDisabled()).isFalse();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.settings.CarSettings#ENABLE_TETHERING_PERSISTING"})
+    public void testPersistTetheringCarSetting_enablingNoCapability_autoShutdownUnchanged()
+            throws Exception {
+        assumeFalse("Skipping test: tethering capability enabled",
+                isPersistTetheringCapabilityEnabled());
+        boolean autoShutdownEnabledBefore = isAutoShutdownDisabled();
+        executeCommand(ENABLE_TETHERING_PERSISTING);
+        assertThat(isAutoShutdownDisabled()).isEqualTo(autoShutdownEnabledBefore);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.settings.CarSettings#ENABLE_TETHERING_PERSISTING"})
+    public void testPersistTetheringCarSetting_disablingNoCapability_autoShutdownUnchanged()
+            throws Exception {
+        assumeFalse("Skipping test: tethering capability enabled",
+                isPersistTetheringCapabilityEnabled());
+        boolean autoShutdownEnabledBefore = isAutoShutdownDisabled();
+        executeCommand(DISABLE_TETHERING_PERSISTING);
+        assertThat(isAutoShutdownDisabled()).isEqualTo(autoShutdownEnabledBefore);
+    }
+
+    @Test
     @ApiTest(apis = {"android.car.wifi.CarWifiManager#canControlPersistTetheringSettings",
             "android.car.settings.CarSettings#ENABLE_TETHERING_PERSISTING"})
     public void testPersistTetheringCarSetting_withCapabilityTetheringEnabled_tetheringOnReboot()
@@ -93,6 +137,7 @@ public final class CarWifiHostTest extends CarHostJUnit4TestCase {
         enablePersistTetheringAndReboot(/* enableTethering= */ true);
 
         PollingCheck.check("Tethering NOT enabled", TIMEOUT_MS, this::isTetheringEnabled);
+        assertThat(isAutoShutdownDisabled()).isTrue();
     }
 
     @Test
@@ -128,6 +173,11 @@ public final class CarWifiHostTest extends CarHostJUnit4TestCase {
     private boolean isTetheringEnabled() throws Exception {
         String output = executeCommand(CMD_DUMPSYS_WIFI);
         return output.contains("Tethering enabled: true");
+    }
+
+    private boolean isAutoShutdownDisabled() throws Exception {
+        String output = executeCommand(CMD_DUMPSYS_WIFI);
+        return output.contains("Auto shutdown enabled: false");
     }
 
     private boolean isPersistTetheringCapabilityEnabled() throws Exception {
