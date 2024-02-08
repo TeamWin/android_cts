@@ -16,18 +16,26 @@
 
 package android.os.cts;
 
+import static org.junit.Assert.fail;
+
+import android.os.ParcelFileDescriptor;
+import android.os.ParcelFileDescriptor.AutoCloseOutputStream;
+
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.nio.channels.FileLock;
 
-import android.os.ParcelFileDescriptor;
-import android.os.ParcelFileDescriptor.AutoCloseOutputStream;
-import android.test.AndroidTestCase;
-
-public class ParcelFileDescriptor_AutoCloseOutputStreamTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class ParcelFileDescriptor_AutoCloseOutputStreamTest {
+    @Test
     public void testAutoCloseOutputStream() throws Exception {
-        ParcelFileDescriptor pf = ParcelFileDescriptorTest.makeParcelFileDescriptor(getContext());
+        ParcelFileDescriptor pf = ParcelFileDescriptorTest.makeParcelFileDescriptor();
 
         AutoCloseOutputStream out = new AutoCloseOutputStream(pf);
 
@@ -43,9 +51,10 @@ public class ParcelFileDescriptor_AutoCloseOutputStreamTest extends AndroidTestC
         }
     }
 
+    @Test
     public void testCloseOrdering() throws Exception {
         // b/118316956: Make sure that we close the OutputStream before we close the PFD.
-        ParcelFileDescriptor pfd = ParcelFileDescriptorTest.makeParcelFileDescriptor(getContext());
+        ParcelFileDescriptor pfd = ParcelFileDescriptorTest.makeParcelFileDescriptor();
         FileLock l = null;
         try (FileOutputStream out = new AutoCloseOutputStream(pfd)) {
             l = out.getChannel().lock();
