@@ -15,13 +15,14 @@
  */
 package android.app.notification.current.cts;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -48,6 +49,17 @@ public class NotificationManagerBroadcastReceiver extends BroadcastReceiver {
         mContext = context;
         mContext.registerReceiver(
                 this, new IntentFilter(action), Context.RECEIVER_EXPORTED);
+    }
+
+    /**
+     * Waits at most {@code duration} until all the broadcasts specified in {@link #register} have
+     * arrived, and fails if they have not.
+     */
+    public void assertBroadcastsReceivedWithin(Duration duration) throws InterruptedException {
+        boolean received = latch.await(duration.toMillis(), TimeUnit.MILLISECONDS);
+        assertWithMessage(
+                "Still missing " + latch.getCount() + " broadcasts after " + duration)
+                .that(received).isTrue();
     }
 
     public void unregister() {
