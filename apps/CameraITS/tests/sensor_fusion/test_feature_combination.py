@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Verify feature combinations for stabilization, 10-bit, and frame rate"""
+"""Verify feature combinations for stabilization, 10-bit, and frame rate."""
 
 import logging
 import os
@@ -76,7 +76,7 @@ class FeatureCombinationTest(its_base_test.ItsBaseTest):
       feature_combination_query_version = props.get(
           'android.info.sessionConfigurationQueryVersion')
       should_run = (feature_combination_query_version >=
-          its_session_utils.ANDROID15_API_LEVEL)
+                    its_session_utils.ANDROID15_API_LEVEL)
       camera_properties_utils.skip_unless(should_run)
 
       # Log ffmpeg version being used
@@ -109,7 +109,7 @@ class FeatureCombinationTest(its_base_test.ItsBaseTest):
             camera_properties_utils.STABILIZATION_MODE_PREVIEW)
       logging.debug('stabilization modes: %s', stabilization_params)
 
-      # TODO: b/269142636: Add HLG10 check for preview recording.
+      # TODO: b/269142636 - Add HLG10 check for preview recording.
       hlg10_params = [False]
       logging.debug('hlg10 modes: %s', hlg10_params)
 
@@ -121,7 +121,6 @@ class FeatureCombinationTest(its_base_test.ItsBaseTest):
       for stream_combination in combinations:
         streams_name = stream_combination['name']
         preview_size = None
-        picture_size = None
         min_frame_duration = 0
         configured_streams = []
         skip = False
@@ -131,20 +130,21 @@ class FeatureCombinationTest(its_base_test.ItsBaseTest):
           if stream['format'] == 'priv':
             preview_size = stream['size']
             fmt = _FMT_CODE_PRV
-          elif stream['format'] == 'jpeg':  #TODO: Add YUV and PRIVATE
-            picture_size = stream['size']
+          elif stream['format'] == 'jpeg':
+            # TODO: b/269142636 - Add YUV and PRIVATE
             fmt = _FMT_CODE_JPG
           config = [x for x in configs if
-              x['format'] == fmt and
-              x['width'] == size[0] and
-              x['height'] == size[1]]
+                    x['format'] == fmt and
+                    x['width'] == size[0] and
+                    x['height'] == size[1]]
           if not config:
             logging.debug(
                 'stream combination %s not supported. Skip', streams_name)
             skip = True
             break
 
-          min_frame_duration = max(config[0]['minFrameDuration'], min_frame_duration)
+          min_frame_duration = max(
+              config[0]['minFrameDuration'], min_frame_duration)
           logging.debug(
               'format is %s, min_frame_duration is %d}',
               stream['format'], config[0]['minFrameDuration'])
@@ -167,11 +167,10 @@ class FeatureCombinationTest(its_base_test.ItsBaseTest):
           # Construct output surfaces
           output_surfaces = []
           for configured_stream in configured_streams:
-            output_surfaces.append({'format' : configured_stream['format'],
-                                    'width' : configured_stream['width'],
-                                    'height' : configured_stream['height'],
-                                    'hlg10' : hlg10,
-                                  })
+            output_surfaces.append({'format': configured_stream['format'],
+                                    'width': configured_stream['width'],
+                                    'height': configured_stream['height'],
+                                    'hlg10': hlg10})
 
           for stabilize in stabilization_params:
             for fps_range in fps_params:
@@ -191,9 +190,11 @@ class FeatureCombinationTest(its_base_test.ItsBaseTest):
                 logging.debug('%s not supported', combination_name)
                 break
 
-              is_stabilized = (
-                  stabilize == camera_properties_utils.STABILIZATION_MODE_PREVIEW
-              )
+              is_stabilized = False
+              if (stabilize ==
+                  camera_properties_utils.STABILIZATION_MODE_PREVIEW):
+                is_stabilized = True
+
               recording_obj = preview_stabilization_utils.collect_data(
                   cam, self.tablet_device, preview_size, is_stabilized,
                   rot_rig, fps_range, hlg10)
@@ -216,7 +217,7 @@ class FeatureCombinationTest(its_base_test.ItsBaseTest):
                   video_processing_utils.get_average_frame_rate(
                       preview_file_name_with_path))
               logging.debug('Average frame rate for %s is %f', combination_name,
-                  average_frame_rate)
+                            average_frame_rate)
               if (average_frame_rate > fps_range[1] + _FPS_ATOL or
                   average_frame_rate < fps_range[0] - _FPS_ATOL):
                 failure_msg = (
@@ -235,11 +236,11 @@ class FeatureCombinationTest(its_base_test.ItsBaseTest):
                                  stabilization_result['failure'])
                   test_failures.append(failure_msg)
 
-              # TODO: Verify HLG10
+              # TODO: b/269142636 - Verify HLG10
 
       # Assert PASS/FAIL criteria
       if test_failures:
         raise AssertionError(test_failures)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
   test_runner.main()

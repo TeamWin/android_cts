@@ -61,6 +61,7 @@ android_test {
         ":CtsHiddenFromPickerIme",
         ":CtsMockA11yInputMethod",
         ":CtsMockInputMethod",
+        ":CtsMockInputMethod2",
         ":CtsSpellCheckingIme",
         ":CtsInputMethodStandaloneTestApp",
         ":CtsMockLargeResourceInputMethod",

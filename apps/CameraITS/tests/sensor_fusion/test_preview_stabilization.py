@@ -28,6 +28,7 @@ import video_processing_utils
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _TEST_REQUIRED_MPC = 33
 
+
 class PreviewStabilizationTest(its_base_test.ItsBaseTest):
   """Tests if preview is stabilized.
 
@@ -120,7 +121,6 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
             preview_stabilization_utils.verify_preview_stabilization(
                 recording_obj, gyro_events, _NAME, log_path, facing)
         )
-
 
       # Assert PASS/FAIL criteria
       test_failures = []

@@ -143,6 +143,7 @@ public class TvInputServiceTest {
         private int mTimeShiftSpeedsCount;
         private int mCueingMessageAvailabilityCount;
         private int mTvMessageCount;
+        private int mVideoFrozenCount;
 
         private Uri mChannelRetunedUri;
         private Integer mVideoUnavailableReason;
@@ -160,6 +161,7 @@ public class TvInputServiceTest {
         private Boolean mCueingMessageAvailable;
         private Integer mTvMessageType;
         private Bundle mTvMessageData;
+        private Boolean mVideoFrozen;
 
         @Override
         public void onChannelRetuned(String inputId, Uri channelUri) {
@@ -263,6 +265,12 @@ public class TvInputServiceTest {
             mTvMessageType = type;
         }
 
+        @Override
+        public void onVideoFreezeUpdated(String inputId, boolean isFrozen) {
+            mVideoFrozenCount++;
+            mVideoFrozen = isFrozen;
+        }
+
         public void resetCounts() {
             mChannelRetunedCount = 0;
             mVideoAvailableCount = 0;
@@ -279,6 +287,7 @@ public class TvInputServiceTest {
             mTimeShiftSpeedsCount = 0;
             mCueingMessageAvailabilityCount = 0;
             mTvMessageCount = 0;
+            mVideoFrozenCount = 0;
         }
 
         public void resetPassedValues() {
@@ -298,6 +307,7 @@ public class TvInputServiceTest {
             mCueingMessageAvailable = null;
             mTvMessageData = null;
             mTvMessageType = null;
+            mVideoFrozen = null;
         }
     }
 
@@ -833,6 +843,26 @@ public class TvInputServiceTest {
     }
 
     @Test
+    public void verifyCommandSetVideoFrozen() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetPassedValues();
+
+        onTvView(tvView -> tvView.setVideoFrozen(true));
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT, () -> session.mSetVideoFrozenCount > 0);
+
+        assertThat(session.mSetVideoFrozenCount).isEqualTo(1);
+        assertThat(session.mVideoFrozen).isEqualTo(true);
+
+        onTvView(tvView -> tvView.setVideoFrozen(false));
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT, () -> session.mSetVideoFrozenCount > 1);
+
+        assertThat(session.mSetVideoFrozenCount).isEqualTo(2);
+        assertThat(session.mVideoFrozen).isEqualTo(false);
+    }
+
+    @Test
     public void verifyCommandOverlayViewSizeChanged() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
@@ -1156,6 +1186,23 @@ public class TvInputServiceTest {
     }
 
     @Test
+    public void verifyCallbackVideoFrozen() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetCounts();
+        resetPassedValues();
+
+        session.notifyVideoFreezeUpdated(true);
+        PollingCheck.waitFor(TIME_OUT, () -> mCallback.mVideoFrozenCount > 0);
+        assertThat(mCallback.mVideoFrozenCount).isEqualTo(1);
+        assertThat(mCallback.mVideoFrozen).isEqualTo(true);
+
+        session.notifyVideoFreezeUpdated(false);
+        PollingCheck.waitFor(TIME_OUT, () -> mCallback.mVideoFrozenCount > 1);
+        assertThat(mCallback.mVideoFrozenCount).isEqualTo(2);
+        assertThat(mCallback.mVideoFrozen).isEqualTo(false);
+    }
+
+    @Test
     public void verifyCallbackLayoutSurface() {
         final CountingSession session = tune(CHANNEL_0);
         final int left = 10;
@@ -1422,6 +1469,7 @@ public class TvInputServiceTest {
             public volatile int mTvMessageCount;
             public volatile int mTvMessageEnabledCount;
             public volatile int mAudioPresentationSelectCount;
+            public volatile int mSetVideoFrozenCount;
 
             public volatile String mAppPrivateCommandAction;
             public volatile Bundle mAppPrivateCommandData;
@@ -1456,6 +1504,7 @@ public class TvInputServiceTest {
             public volatile Integer mAudioProgramId;
             public volatile Integer mTimeShiftMode;
             public volatile Integer mPlaybackCommandMode;
+            public volatile Boolean mVideoFrozen;
 
             CountingSession(Context context, @Nullable String sessionId) {
 
@@ -1494,6 +1543,7 @@ public class TvInputServiceTest {
                 mTvMessageCount = 0;
                 mTvMessageEnabledCount = 0;
                 mAudioPresentationSelectCount = 0;
+                mSetVideoFrozenCount = 0;
             }
 
             public void resetPassedValues() {
@@ -1530,6 +1580,7 @@ public class TvInputServiceTest {
                 mAudioProgramId = null;
                 mTimeShiftMode = null;
                 mPlaybackCommandMode = null;
+                mVideoFrozen = null;
             }
 
             @Override
@@ -1769,6 +1820,12 @@ public class TvInputServiceTest {
             public void onStopPlayback(int mode) {
                 mStopPlaybackCount++;
                 mPlaybackCommandMode = mode;
+            }
+
+            @Override
+            public void onSetVideoFrozen(boolean isFrozen) {
+                mSetVideoFrozenCount++;
+                mVideoFrozen = isFrozen;
             }
         }
 

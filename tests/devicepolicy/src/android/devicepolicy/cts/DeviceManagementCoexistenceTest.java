@@ -1335,9 +1335,8 @@ public final class DeviceManagementCoexistenceTest {
                     /* applicationHidden= */ true);
 
 
-            // Remove DPC
-            sDeviceState.dpc().devicePolicyManager().clearDeviceOwnerApp(
-                    sDeviceState.dpc().packageName());
+            // Remove DPC - we know it is a device owner due to @EnsureHasDeviceOwner
+            sDeviceState.deviceOwner().remove();
 
             // Get policies from policy engine
             PolicyState<LockTaskPolicy> lockTaskPolicy = getLockTaskPolicyState(

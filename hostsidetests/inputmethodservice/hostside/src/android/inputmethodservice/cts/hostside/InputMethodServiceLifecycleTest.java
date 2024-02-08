@@ -136,22 +136,6 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         }
     }
 
-    private void testSwitchIme(boolean instant) throws Exception {
-        sendTestStartEvent(DeviceTestConstants.TEST_SWITCH_IME1_TO_IME2);
-        installPossibleInstantPackage(
-                EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
-        shell(ShellCommandUtils.waitForBroadcastBarrier());
-        installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
-        installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
-        shell(ShellCommandUtils.waitForBroadcastBarrier());
-        shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
-        shell(ShellCommandUtils.enableIme(Ime2Constants.IME_ID));
-        waitUntilImesAreEnabled(Ime1Constants.IME_ID, Ime2Constants.IME_ID);
-        shell(ShellCommandUtils.setCurrentImeSync(Ime1Constants.IME_ID));
-
-        assertTrue(runDeviceTestMethod(DeviceTestConstants.TEST_SWITCH_IME1_TO_IME2));
-    }
-
     private void testSwitchToHandwritingIme(boolean instant) throws Exception {
         sendTestStartEvent(DeviceTestConstants.TEST_SWITCH_TO_HANDWRITING_INPUT);
         installPossibleInstantPackage(
@@ -166,24 +150,6 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         shell(ShellCommandUtils.setCurrentImeSync(Ime1Constants.IME_ID));
 
         assertTrue(runDeviceTestMethod(DeviceTestConstants.TEST_SWITCH_TO_HANDWRITING_INPUT));
-    }
-
-    /**
-     * Test IME switching APIs for full (non-instant) apps.
-     */
-    @AppModeFull
-    @Test
-    public void testSwitchImeFull() throws Exception {
-        testSwitchIme(false);
-    }
-
-    /**
-     * Test IME switching APIs for instant apps.
-     */
-    @AppModeInstant
-    @Test
-    public void testSwitchImeInstant() throws Exception {
-        testSwitchIme(true);
     }
 
     /**

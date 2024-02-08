@@ -48,6 +48,7 @@ import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.testcore.MyAutofillCallback;
+import android.content.AutofillOptions;
 import android.graphics.Rect;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
@@ -99,20 +100,24 @@ public class VirtualContainerActivityTest
     @Override
     protected AutofillActivityTestRule<VirtualContainerActivity> getActivityRule() {
         if (mActivityRule == null) {
-            mActivityRule = new AutofillActivityTestRule<VirtualContainerActivity>(
-                    VirtualContainerActivity.class) {
-                @Override
-                protected void beforeActivityLaunched() {
-                    preActivityCreated();
-                }
+            mActivityRule =
+                    new AutofillActivityTestRule<VirtualContainerActivity>(
+                            VirtualContainerActivity.class) {
+                        @Override
+                        protected void beforeActivityLaunched() {
+                            preActivityCreated();
+                        }
 
-                @Override
-                protected void afterActivityLaunched() {
-                    mActivity = getActivity();
-                    postActivityLaunched();
-                }
-            };
-
+                        @Override
+                        protected void afterActivityLaunched() {
+                            mActivity = getActivity();
+                            mActivity.setAutofillOptions(
+                                    new AutofillOptions(
+                                            /*logginLevel=AutofillManager.NO_LOGGING*/
+                                            0, mCompatMode));
+                            postActivityLaunched();
+                        }
+                    };
         }
         return mActivityRule;
     }

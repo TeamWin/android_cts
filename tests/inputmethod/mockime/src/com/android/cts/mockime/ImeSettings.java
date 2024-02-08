@@ -227,6 +227,42 @@ public class ImeSettings {
     public static final class Builder {
         private final PersistableBundle mBundle = new PersistableBundle();
 
+        @MockImePackageNames
+        @NonNull
+        String mMockImePackageName = MockImePackageNames.MockIme1;
+
+        /**
+         * Specifies a non-default {@link MockIme} package name, which is by default
+         * {@code com.android.cts.mockime}.
+         *
+         * <p>You can use this to interact with multiple {@link MockIme} sessions at the same time.
+         * </p>
+         *
+         * @param packageName One of {@link MockImePackageNames}.
+         * @return this {@link Builder} object
+         */
+        public Builder setMockImePackageName(@MockImePackageNames String packageName) {
+            mMockImePackageName = packageName;
+            return this;
+        }
+
+        boolean mSuppressResetIme = false;
+        /**
+         * Specifies whether {@code adb shell ime reset} should be suppressed or not on
+         * {@link MockImeSession#create(android.content.Context)} and
+         * {@link MockImeSession#close()}.
+         *
+         * <p>The default value is {@code false}.</p>
+         *
+         * @param suppressResetIme {@code true} to suppress {@code adb shell ime reset} upon
+         *                         initialize and cleanup processes of {@link MockImeSession}.
+         * @return this {@link Builder} object
+         */
+        public Builder setSuppressResetIme(boolean suppressResetIme) {
+            mSuppressResetIme = suppressResetIme;
+            return this;
+        }
+
         @Nullable
         InputMethodSubtype[] mAdditionalSubtypes;
 

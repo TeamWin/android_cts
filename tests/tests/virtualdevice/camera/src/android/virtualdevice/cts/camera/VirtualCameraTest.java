@@ -50,6 +50,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -468,6 +469,8 @@ public class VirtualCameraTest {
                 cameraCaptureSession.captureSingleRequest(request.build(), mExecutor,
                         mCaptureCallback);
 
+                verify(mVirtualCameraCallback, timeout(TIMEOUT_MILLIS))
+                        .onProcessCaptureRequest(anyInt(), anyLong());
                 verify(mCaptureCallback, timeout(TIMEOUT_MILLIS)).onCaptureCompleted(any(),
                         any(),
                         any());

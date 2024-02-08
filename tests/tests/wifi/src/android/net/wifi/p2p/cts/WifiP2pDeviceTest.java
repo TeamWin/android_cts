@@ -18,9 +18,12 @@ package android.net.wifi.p2p.cts;
 
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.os.Build;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.test.AndroidTestCase;
 
 import androidx.test.filters.SdkSuppress;
+
+import com.android.wifi.flags.Flags;
 
 public class WifiP2pDeviceTest extends AndroidTestCase {
 
@@ -42,5 +45,13 @@ public class WifiP2pDeviceTest extends AndroidTestCase {
     public void testGetVendorElements() {
         WifiP2pDevice dev = new WifiP2pDevice();
         dev.getVendorElements();
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    public void testGetIpAddress() {
+        WifiP2pDevice dev = new WifiP2pDevice();
+        dev.getIpAddress();
     }
 }

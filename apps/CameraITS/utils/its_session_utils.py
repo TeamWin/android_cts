@@ -72,7 +72,7 @@ _VALIDATE_LIGHTING_THRESH = 0.05  # Determined empirically from scene[1:6] tests
 _VALIDATE_LIGHTING_THRESH_DARK = 0.15  # Determined empirically for night test
 _CMD_NAME_STR = 'cmdName'
 _OBJ_VALUE_STR = 'objValue'
-_STR_VALUE = 'strValue'
+_STR_VALUE_STR = 'strValue'
 _TAG_STR = 'tag'
 _CAMERA_ID_STR = 'cameraId'
 _USE_CASE_CROPPED_RAW = 6
@@ -622,7 +622,7 @@ class ItsSession(object):
     data, _ = self.__read_response_from_socket()
     if data[_TAG_STR] != 'hlg10Response':
       raise error_util.CameraItsError('Failed to query HLG10 support')
-    return data[_STR_VALUE] == 'true'
+    return data[_STR_VALUE_STR] == 'true'
 
   def is_p3_capture_supported(self):
     """Query whether the camera device supports P3 image capture.
@@ -639,7 +639,7 @@ class ItsSession(object):
     data, _ = self.__read_response_from_socket()
     if data[_TAG_STR] != 'p3Response':
       raise error_util.CameraItsError('Failed to query P3 support')
-    return data[_STR_VALUE] == 'true'
+    return data[_STR_VALUE_STR] == 'true'
 
   def is_landscape_to_portrait_enabled(self):
     """Query whether the device has enabled the landscape to portrait property.
@@ -656,7 +656,7 @@ class ItsSession(object):
     if data[_TAG_STR] != 'landscapeToPortraitEnabledResponse':
       raise error_util.CameraItsError(
           'Failed to query landscape to portrait system property')
-    return data[_STR_VALUE] == 'true'
+    return data[_STR_VALUE_STR] == 'true'
 
   def get_supported_video_sizes_capped(self, camera_id):
     """Get the supported video sizes for camera id.
@@ -677,9 +677,9 @@ class ItsSession(object):
     data, _ = self.__read_response_from_socket()
     if data[_TAG_STR] != 'supportedVideoSizes':
       raise error_util.CameraItsError('Invalid command response')
-    if not data[_STR_VALUE]:
+    if not data[_STR_VALUE_STR]:
       raise error_util.CameraItsError('No supported video sizes')
-    return data[_STR_VALUE].split(';')
+    return data[_STR_VALUE_STR].split(';')
 
   def do_basic_recording(self, profile_id, quality, duration,
                          video_stabilization_mode=0, hlg10_enabled=False,
@@ -929,7 +929,7 @@ class ItsSession(object):
     data, _ = self.__read_response_from_socket()
     if data[_TAG_STR] != 'supportedVideoQualities':
       raise error_util.CameraItsError('Invalid command response')
-    return data[_STR_VALUE].split(';')[:-1]  # remove the last appended ';'
+    return data[_STR_VALUE_STR].split(';')[:-1]  # remove the last appended ';'
 
   def get_supported_preview_sizes(self, camera_id):
     """Get all supported preview resolutions for this camera device.
@@ -951,9 +951,9 @@ class ItsSession(object):
     data, _ = self.__read_response_from_socket()
     if data[_TAG_STR] != 'supportedPreviewSizes':
       raise error_util.CameraItsError('Invalid command response')
-    if not data[_STR_VALUE]:
+    if not data[_STR_VALUE_STR]:
       raise error_util.CameraItsError('No supported preview sizes')
-    return data[_STR_VALUE].split(';')
+    return data[_STR_VALUE_STR].split(';')
 
   def get_queryable_stream_combinations(self):
     """Get all queryable stream combinations for this camera device.
@@ -1011,17 +1011,17 @@ class ItsSession(object):
     data, _ = self.__read_response_from_socket()
     if data[_TAG_STR] != 'queryableStreamCombinations':
       raise error_util.CameraItsError('Invalid command response')
-    if not data[_STR_VALUE]:
+    if not data[_STR_VALUE_STR]:
       raise error_util.CameraItsError('No queryable stream combinations')
 
-    # Parse the stream combination string.
-    combination_str = [c for c in data[_STR_VALUE].split(';')]
-    combinations = [{"name": c,
-                     "combination": [{"format": s.split(':')[0],
-                                      "size": s.split(':')[1]} for s in c.split('+')]}
-                  for c in data[_STR_VALUE].split(';')]
+    # Parse the stream combination string
+    combinations = [{
+        'name': c, 'combination': [
+            {'format': s.split(':')[0],
+             'size': s.split(':')[1]} for s in c.split('+')]}
+                    for c in data[_STR_VALUE_STR].split(';')]
 
-    return data[_STR_VALUE], combinations
+    return data[_STR_VALUE_STR], combinations
 
   def get_supported_extensions(self, camera_id):
     """Get all supported camera extensions for this camera device.
@@ -1074,10 +1074,10 @@ class ItsSession(object):
     data, _ = self.__read_response_from_socket()
     if data[_TAG_STR] != 'supportedExtensionSizes':
       raise error_util.CameraItsError('Invalid command response')
-    if not data[_STR_VALUE]:
+    if not data[_STR_VALUE_STR]:
       logging.debug('No supported extension sizes')
       return ''
-    return data[_STR_VALUE].split(';')
+    return data[_STR_VALUE_STR].split(';')
 
   def get_display_size(self):
     """Get the display size of the screen.
@@ -1322,9 +1322,9 @@ class ItsSession(object):
     while not capture_path or not capture_status:
       data, _ = self.__read_response_from_socket()
       if data[_TAG_STR] == JCA_CAPTURE_PATH_TAG:
-        capture_path = data[_STR_VALUE]
+        capture_path = data[_STR_VALUE_STR]
       elif data[_TAG_STR] == JCA_CAPTURE_STATUS_TAG:
-        capture_status = data[_STR_VALUE]
+        capture_status = data[_STR_VALUE_STR]
       else:
         raise error_util.CameraItsError(
             f'Invalid response {data[_TAG_STR]} for JCA capture')
@@ -1961,7 +1961,7 @@ class ItsSession(object):
     converged = False
     while True:
       data, _ = self.__read_response_from_socket()
-      vals = data[_STR_VALUE].split()
+      vals = data[_STR_VALUE_STR].split()
       if data[_TAG_STR] == 'aeResult':
         if do_ae:
           ae_sens, ae_exp = [int(i) for i in vals]
@@ -2088,7 +2088,7 @@ class ItsSession(object):
     if data[_TAG_STR] != 'streamCombinationSupport':
       raise error_util.CameraItsError('Failed to query stream combination')
 
-    return data[_STR_VALUE] == 'supportedCombination'
+    return data[_STR_VALUE_STR] == 'supportedCombination'
 
   def is_camera_privacy_mode_supported(self):
     """Query whether the mobile device supports camera privacy mode.
@@ -2107,7 +2107,7 @@ class ItsSession(object):
     if data[_TAG_STR] != 'cameraPrivacyModeSupport':
       raise error_util.CameraItsError('Failed to query camera privacy mode'
                                       ' support')
-    return data[_STR_VALUE] == 'true'
+    return data[_STR_VALUE_STR] == 'true'
 
   def is_primary_camera(self):
     """Query whether the camera device is a primary rear/front camera.
@@ -2126,7 +2126,7 @@ class ItsSession(object):
     data, _ = self.__read_response_from_socket()
     if data[_TAG_STR] != 'primaryCamera':
       raise error_util.CameraItsError('Failed to query primary camera')
-    return data[_STR_VALUE] == 'true'
+    return data[_STR_VALUE_STR] == 'true'
 
   def is_performance_class(self):
     """Query whether the mobile device is an R or S performance class device.
@@ -2141,7 +2141,7 @@ class ItsSession(object):
     data, _ = self.__read_response_from_socket()
     if data[_TAG_STR] != 'performanceClass':
       raise error_util.CameraItsError('Failed to query performance class')
-    return data[_STR_VALUE] == 'true'
+    return data[_STR_VALUE_STR] == 'true'
 
   def measure_camera_launch_ms(self):
     """Measure camera launch latency in millisecond, from open to first frame.
@@ -2161,7 +2161,7 @@ class ItsSession(object):
 
     if data[_TAG_STR] != 'cameraLaunchMs':
       raise error_util.CameraItsError('Failed to measure camera launch latency')
-    return float(data[_STR_VALUE])
+    return float(data[_STR_VALUE_STR])
 
   def measure_camera_1080p_jpeg_capture_ms(self):
     """Measure camera 1080P jpeg capture latency in milliseconds.
@@ -2182,7 +2182,7 @@ class ItsSession(object):
     if data[_TAG_STR] != 'camera1080pJpegCaptureMs':
       raise error_util.CameraItsError(
           'Failed to measure camera 1080p jpeg capture latency')
-    return float(data[_STR_VALUE])
+    return float(data[_STR_VALUE_STR])
 
   def _camera_id_to_props(self):
     """Return the properties of each camera ID."""

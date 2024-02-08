@@ -158,7 +158,7 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
             TestUtils.waitOnMainUntil(() -> screenStateCallbackRef.get() == SCREEN_STATE_OFF
                             && editText.getWindowVisibility() != VISIBLE, TIMEOUT);
 
-            if (MockImeSession.isFinishInputNoFallbackConnectionEnabled()) {
+            if (imeSession.isFinishInputNoFallbackConnectionEnabled()) {
                 // Expected only onFinishInput and the EditText is inactive for input method.
                 expectEvent(stream, onFinishInputMatcher(), TIMEOUT);
                 notExpectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
@@ -180,7 +180,7 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
             mCtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText);
 
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
-            if (MockImeSession.isFinishInputNoFallbackConnectionEnabled()) {
+            if (imeSession.isFinishInputNoFallbackConnectionEnabled()) {
                 // Expected only onStartInput and the EditText is active for input method.
                 notExpectEvent(stream, onFinishInputMatcher(), TIMEOUT);
             }

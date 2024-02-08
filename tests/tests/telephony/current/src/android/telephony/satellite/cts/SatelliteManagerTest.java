@@ -32,6 +32,7 @@ import android.os.OutcomeReceiver;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.telephony.satellite.EnableRequestAttributes;
 import android.telephony.satellite.NtnSignalStrength;
 import android.telephony.satellite.NtnSignalStrengthCallback;
 import android.telephony.satellite.SatelliteCapabilities;
@@ -353,9 +354,11 @@ public class SatelliteManagerTest extends SatelliteManagerTestBase {
 
         // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
         assertThrows(SecurityException.class, () -> sSatelliteManager.requestEnabled(
-                true, true, getContext().getMainExecutor(), error::offer));
+                new EnableRequestAttributes.Builder(true).build(),
+                getContext().getMainExecutor(), error::offer));
         assertThrows(SecurityException.class, () -> sSatelliteManager.requestEnabled(
-                false, true, getContext().getMainExecutor(), error::offer));
+                new EnableRequestAttributes.Builder(false).build(),
+                getContext().getMainExecutor(), error::offer));
     }
 
     @Test
