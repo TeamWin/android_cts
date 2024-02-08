@@ -238,7 +238,6 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
       full_or_better = camera_properties_utils.full_or_better(props)
       level3 = camera_properties_utils.level3(props)
       raw_avlb = camera_properties_utils.raw16(props)
-      debug = self.debug_mode
 
       # Converge 3A.
       if camera_properties_utils.manual_sensor(props):
@@ -308,9 +307,8 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
           circle = opencv_processing_utils.find_circle(
               img, img_name, image_fov_utils.CIRCLE_MIN_AREA,
               image_fov_utils.CIRCLE_COLOR)
-          if debug:
-            opencv_processing_utils.append_circle_center_to_img(circle, img,
-                                                                img_name)
+          opencv_processing_utils.append_circle_center_to_img(
+              circle, img, img_name)
 
           # Check pass/fail for fov coverage for all fmts in AR_CHECKED
           img /= 255  # image_processing_utils uses [0, 1].
