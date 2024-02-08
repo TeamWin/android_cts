@@ -18,12 +18,20 @@ package android.app.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertNotNull;
+
 import android.app.ActivityOptions;
 import android.os.Bundle;
-import android.test.AndroidTestCase;
 
-public class ActivityOptionsTest extends AndroidTestCase {
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class ActivityOptionsTest {
+
+    @Test
     public void testActivityOptionsBundle_makeBasic() throws Throwable {
         ActivityOptions options = ActivityOptions.makeBasic();
         Bundle bundle = options.toBundle();
@@ -31,6 +39,7 @@ public class ActivityOptionsTest extends AndroidTestCase {
         assertNotNull(bundle);
     }
 
+    @Test
     public void testGetPendingIntentBackgroundActivityLaunchAllowedDefault() {
         ActivityOptions options = ActivityOptions.makeBasic();
 
@@ -39,6 +48,7 @@ public class ActivityOptionsTest extends AndroidTestCase {
                 ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_SYSTEM_DEFINED);
     }
 
+    @Test
     public void testGetSetPendingIntentBackgroundActivityLaunchAllowedTrue() {
         ActivityOptions options = ActivityOptions.makeBasic();
         options.setPendingIntentBackgroundActivityLaunchAllowed(true);
@@ -47,6 +57,7 @@ public class ActivityOptionsTest extends AndroidTestCase {
                 ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
     }
 
+    @Test
     public void testGetSetPendingIntentBackgroundActivityLaunchAllowedFalse() {
         ActivityOptions options = ActivityOptions.makeBasic();
         options.setPendingIntentBackgroundActivityLaunchAllowed(false);
@@ -55,6 +66,7 @@ public class ActivityOptionsTest extends AndroidTestCase {
                 ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_DENIED);
     }
 
+    @Test
     public void testGetSetPendingIntentBackgroundActivityStartModeAllowed() {
         ActivityOptions options = ActivityOptions.makeBasic()
                 .setPendingIntentBackgroundActivityStartMode(
@@ -64,6 +76,7 @@ public class ActivityOptionsTest extends AndroidTestCase {
                 ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
     }
 
+    @Test
     public void testGetSetPendingIntentBackgroundActivityStartModeDenied() {
         ActivityOptions options = ActivityOptions.makeBasic()
                 .setPendingIntentBackgroundActivityStartMode(
@@ -89,6 +102,7 @@ public class ActivityOptionsTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetPendingIntentCreatorBackgroundActivityLaunchAllowedDefault() {
         ActivityOptions options = ActivityOptions.makeBasic();
 
@@ -97,6 +111,7 @@ public class ActivityOptionsTest extends AndroidTestCase {
                 ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_SYSTEM_DEFINED);
     }
 
+    @Test
     public void testGetPendingIntentCreatorBackgroundActivityStartModeAllowed() {
         ActivityOptions options = ActivityOptions.makeBasic()
                 .setPendingIntentCreatorBackgroundActivityStartMode(
@@ -106,6 +121,7 @@ public class ActivityOptionsTest extends AndroidTestCase {
                 ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
     }
 
+    @Test
     public void testGetPendingIntentCreatorBackgroundActivityStartModeDenied() {
         ActivityOptions options = ActivityOptions.makeBasic()
                 .setPendingIntentCreatorBackgroundActivityStartMode(
