@@ -16,16 +16,25 @@
 
 package android.hardware.camera2.cts;
 
+import android.graphics.ImageFormat;
+import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.cts.CameraTestUtils.MockStateCallback;
+import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
+import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.SessionConfiguration;
+import android.media.ImageReader;
 import android.os.Build;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
+import android.util.Size;
 
+import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
 import com.android.internal.camera.flags.Flags;
 
@@ -35,6 +44,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -156,6 +166,83 @@ public class CameraDeviceSetupTest extends Camera2AndroidTestCase {
 
             cameraDevice.close();
             callback.waitForState(BlockingStateCallback.STATE_CLOSED, CAMERA_STATE_TIMEOUT_MS);
+        }
+    }
+
+    /**
+     * Verify if valid session characteristics can be fetched for a particular camera.
+     */
+    @Test
+    @RequiresFlagsEnabled({Flags.FLAG_FEATURE_COMBINATION_QUERY, Flags.FLAG_CAMERA_DEVICE_SETUP})
+    public void testSessionCharacteristics() throws Exception {
+        String[] cameraIdsUnderTest = getCameraIdsUnderTest();
+        for (String cameraId : cameraIdsUnderTest) {
+            // Without the following check, mOrderedPreviewSizes will be null.
+            StaticMetadata metadata = new StaticMetadata(
+                    mCameraManager.getCameraCharacteristics(cameraId));
+
+            if (!metadata.isColorOutputSupported()) {
+                Log.i(TAG, "Camera " + cameraId + " does not support color outputs, skipping.");
+                continue;
+            }
+
+            Integer queryVersion = metadata.getValueFromKeyNonNull(
+                    CameraCharacteristics.INFO_SESSION_CONFIGURATION_QUERY_VERSION);
+            if (queryVersion == null || queryVersion <= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                Log.i(TAG,
+                        "Camera " + cameraId + " doesn't support session characteristics query.");
+                continue;
+            }
+
+            CameraDevice.CameraDeviceSetup cameraDeviceSetup = mCameraManager.getCameraDeviceSetup(
+                    cameraId);
+
+            int outputFormat = ImageFormat.YUV_420_888;
+            List<Size> orderedPreviewSizes = CameraTestUtils.getSupportedPreviewSizes(cameraId,
+                    mCameraManager, CameraTestUtils.PREVIEW_SIZE_BOUND);
+            Size outputSize = orderedPreviewSizes.get(0);
+            try (ImageReader imageReader = ImageReader.newInstance(outputSize.getWidth(),
+                    outputSize.getHeight(), outputFormat, /*maxImages*/3)) {
+                CameraCaptureSession.StateCallback sessionListener = new BlockingSessionCallback();
+
+                List<OutputConfiguration> outputs = new ArrayList<>();
+                outputs.add(new OutputConfiguration(imageReader.getSurface()));
+
+                SessionConfiguration sessionConfig = new SessionConfiguration(
+                        SessionConfiguration.SESSION_REGULAR, outputs,
+                        new CameraTestUtils.HandlerExecutor(mHandler), sessionListener);
+
+                CaptureRequest.Builder builder = cameraDeviceSetup.createCaptureRequest(
+                        CameraDevice.TEMPLATE_STILL_CAPTURE);
+                builder.addTarget(imageReader.getSurface());
+
+                CaptureRequest request = builder.build();
+                sessionConfig.setSessionParameters(request);
+
+                CameraCharacteristics sessionCharacteristics =
+                        cameraDeviceSetup.getSessionCharacteristics(sessionConfig);
+                StaticMetadata sessionMetadata = new StaticMetadata(sessionCharacteristics);
+
+                List<CameraCharacteristics.Key<?>> sessionCharacteristicKeys =
+                        metadata.getCharacteristics().getAvailableSessionCharacteristicsKeys();
+
+                mCollector.expectNotNull("Session Characteristics keys must not be null",
+                        sessionCharacteristicKeys);
+
+                // Ensure every key in sessionCharacteristicKeys is present in
+                // sessionCharacteristics.
+                for (CameraCharacteristics.Key<?> sessionCharacteristicKey :
+                        sessionCharacteristicKeys) {
+                    mCollector.expectNotNull(sessionCharacteristicKey.toString()
+                                    + " is null in Session Characteristics",
+                            sessionCharacteristics.get(sessionCharacteristicKey));
+                }
+
+                // TODO: Do more thorough testing to make sure the max_digital_zoom and
+                //       zoom_ratio_range have valid values.
+                sessionMetadata.getAvailableMaxDigitalZoomChecked();
+                sessionMetadata.getZoomRatioRangeChecked();
+            }
         }
     }
 }
