@@ -25,6 +25,7 @@ android_test_helper_app {
     ],
     srcs: [
         "src/**/*.java",
+        ":CtsMediaHostSideTestsAppCommonSrcs",
     ],
     platform_apis: true, // This test uses private APIs.
     libs: [

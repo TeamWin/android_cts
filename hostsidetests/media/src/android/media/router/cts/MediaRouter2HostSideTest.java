@@ -109,6 +109,36 @@ public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
     @Test
     @AppModeFull
     @RequiresDevice
+    public void requestScan_withOffScreenScan_triggersScanning() throws Exception {
+        runDeviceTests(
+                MEDIA_ROUTER_TEST_PACKAGE,
+                DEVICE_SIDE_TEST_CLASS,
+                "requestScan_withOffScreenScan_triggersScanning");
+    }
+
+    @Test
+    @AppModeFull
+    @RequiresDevice
+    public void requestScan_withOnScreenScan_triggersScanning() throws Exception {
+        runDeviceTests(
+                MEDIA_ROUTER_TEST_PACKAGE,
+                DEVICE_SIDE_TEST_CLASS,
+                "requestScan_withOnScreenScan_triggersScanning");
+    }
+
+    @Test
+    @AppModeFull
+    @RequiresDevice
+    public void requestScan_withOnScreenScan_withScreenOff_doesNotScan() throws Exception {
+        runDeviceTests(
+                MEDIA_ROUTER_TEST_PACKAGE,
+                DEVICE_SIDE_TEST_CLASS,
+                "requestScan_withOnScreenScan_withScreenOff_doesNotScan");
+    }
+
+    @Test
+    @AppModeFull
+    @RequiresDevice
     public void getRoutes_withModifyAudioRouting_returnsDeviceRoute() throws Exception {
         runDeviceTests(
                 MEDIA_ROUTER_TEST_WITH_MODIFY_AUDIO_ROUTING_PACKAGE,

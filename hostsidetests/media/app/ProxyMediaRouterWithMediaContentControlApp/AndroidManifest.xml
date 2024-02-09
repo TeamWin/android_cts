@@ -24,6 +24,11 @@
 
     <application android:testOnly="true">
         <uses-library android:name="android.test.runner"/>
+
+        <activity
+            android:name="android.media.cts.app.common.ScreenOnActivity"
+            android:exported="false"
+            android:turnScreenOn="true" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
