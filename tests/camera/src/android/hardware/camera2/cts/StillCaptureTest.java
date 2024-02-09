@@ -28,40 +28,40 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.DngCreator;
-import android.hardware.camera2.params.DynamicRangeProfiles;
-import android.hardware.camera2.params.OutputConfiguration;
-import android.location.Location;
-import android.location.LocationManager;
-import android.media.ImageReader;
-import android.util.Pair;
-import android.util.Size;
 import android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import android.hardware.camera2.cts.CameraTestUtils.SimpleImageReaderListener;
 import android.hardware.camera2.cts.helpers.Camera2Focuser;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
+import android.hardware.camera2.params.DynamicRangeProfiles;
 import android.hardware.camera2.params.MeteringRectangle;
+import android.hardware.camera2.params.OutputConfiguration;
+import android.location.Location;
+import android.location.LocationManager;
 import android.media.Image;
+import android.media.ImageReader;
 import android.os.ConditionVariable;
 import android.util.Log;
+import android.util.Pair;
 import android.util.Range;
 import android.util.Rational;
+import android.util.Size;
 import android.view.Surface;
 
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.exceptions.TimeoutRuntimeException;
+
+import junit.framework.Assert;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-
-import junit.framework.Assert;
-
-import org.junit.runners.Parameterized;
-import org.junit.runner.RunWith;
-import org.junit.Test;
 
 @RunWith(Parameterized.class)
 public class StillCaptureTest extends Camera2SurfaceViewTestCase {
@@ -972,7 +972,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         mCollector.expectEquals("AWB mode in result and request should be same",
                 previewRequest.get(CaptureRequest.CONTROL_AWB_MODE),
                 result.get(CaptureResult.CONTROL_AWB_MODE));
-        if (canSetAwbRegion) {
+        if (canSetAwbRegion && CameraTestUtils.isStabilizationOff(previewRequest.build())) {
             MeteringRectangle[] resultAwbRegions =
                     getValueNotNull(result, CaptureResult.CONTROL_AWB_REGIONS);
             mCollector.expectEquals("AWB regions in result and request should be same",
@@ -1016,7 +1016,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         mCollector.expectEquals("AE mode in result and request should be same",
                 previewRequest.get(CaptureRequest.CONTROL_AE_MODE),
                 result.get(CaptureResult.CONTROL_AE_MODE));
-        if (canSetAeRegion) {
+        if (canSetAeRegion && CameraTestUtils.isStabilizationOff(previewRequest.build())) {
             MeteringRectangle[] resultAeRegions =
                     getValueNotNull(result, CaptureResult.CONTROL_AE_REGIONS);
 
@@ -1038,7 +1038,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         mCollector.expectEquals("AF mode in result and request should be same",
                 stillRequest.get(CaptureRequest.CONTROL_AF_MODE),
                 result.get(CaptureResult.CONTROL_AF_MODE));
-        if (canSetAfRegion) {
+        if (canSetAfRegion && CameraTestUtils.isStabilizationOff(stillRequest.build())) {
             MeteringRectangle[] resultAfRegions =
                     getValueNotNull(result, CaptureResult.CONTROL_AF_REGIONS);
             mCollector.expectMeteringRegionsAreSimilar(
