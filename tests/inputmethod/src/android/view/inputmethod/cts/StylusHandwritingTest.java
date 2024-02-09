@@ -1317,6 +1317,62 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     }
 
     /**
+     * Tap on a view with stylus to launch a new activity with Editor. The editor's
+     * initialToolType should match stylus.
+     */
+    @Test
+    public void testHandwriting_initialToolTypeOnNewWindow() throws Exception {
+        assumeTrue(Flags.useHandwritingListenerForTooltype());
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String editTextMarker = getTestMarker();
+            final CountDownLatch latch = new CountDownLatch(1);
+
+            // Use a clickable view that launches activity and focuses an editor.
+            final AtomicReference<View> clickableViewRef = new AtomicReference<>();
+            TestActivity.startSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                final View clickableView = new View(activity);
+                clickableViewRef.set(clickableView);
+                clickableView.setBackgroundColor(Color.GREEN);
+                clickableView.setOnClickListener(v -> {
+                    final EditText editText = new EditText(activity);
+                    editText.setIsHandwritingDelegate(true);
+                    editText.setPrivateImeOptions(editTextMarker);
+                    editText.setHint("editText");
+                    layout.addView(editText);
+                    editText.requestFocus();
+                    latch.countDown();
+                });
+
+                LinearLayout.LayoutParams layoutParams =
+                        new LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT);
+                layout.addView(clickableView, layoutParams);
+                return layout;
+            });
+            View clickableView = clickableViewRef.get();
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+            // click on view with stylus to launch new activity
+            TestUtils.injectStylusDownEvent(clickableView, 0, 0);
+            TestUtils.injectStylusUpEvent(clickableView, 0, 0);
+            // Wait until editor on next activity has focus.
+            latch.await(TIMEOUT_1_S, TimeUnit.MILLISECONDS);
+
+            // verify editor on new activity has initialToolType as stylus.
+            expectEvent(stream,
+                    startInputInitialEditorToolMatcher(
+                            MotionEvent.TOOL_TYPE_STYLUS, editTextMarker),
+                    TIMEOUT);
+        }
+    }
+
+    /**
      * Inject stylus events on top of a handwriting initiation delegate view and verify handwriting
      * is started on the delegator editor [in different package] and stylus handwriting is
      * started.
