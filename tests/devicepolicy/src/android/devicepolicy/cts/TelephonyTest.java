@@ -26,6 +26,7 @@ import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_OUTGOING_CALLS;
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_SMS;
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_ULTRA_WIDEBAND_RADIO;
+import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_SIM_GLOBALLY;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -39,6 +40,7 @@ import android.devicepolicy.cts.utils.PolicySetResultUtils;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.UserManager;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.telephony.TelephonyManager;
 import android.telephony.data.ApnSetting;
 
@@ -47,8 +49,6 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
-import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireTelephonySupport;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
@@ -61,6 +61,7 @@ import com.android.bedstead.harrier.policies.DisallowDataRoaming;
 import com.android.bedstead.harrier.policies.DisallowOutgoingCalls;
 import com.android.bedstead.harrier.policies.DisallowSms;
 import com.android.bedstead.harrier.policies.DisallowUltraWidebandRadio;
+import com.android.bedstead.harrier.policies.DisallowUnmanagedSubscriptionsGlobally;
 import com.android.bedstead.harrier.policies.OverrideApn;
 import com.android.bedstead.nene.TestApis;
 import com.android.compatibility.common.util.ApiTest;
@@ -73,7 +74,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.List;
 
 @RunWith(BedsteadJUnit4.class)
@@ -552,6 +552,65 @@ public final class TelephonyTest {
     @ApiTest(apis = "android.os.UserManager#DISALLOW_ULTRA_WIDEBAND_RADIO")
     public void disallowUltraWidebandRadioIsSet_todo() throws Exception {
         // TODO: Test
+    }
+
+    @CannotSetPolicyTest(
+            policy = DisallowUnmanagedSubscriptionsGlobally.class,
+            includeNonDeviceAdminStates = false)
+    @Test
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.os.UserManager#DISALLOW_SIM_GLOBALLY")
+    @RequiresFlagsEnabled(android.app.admin.flags.Flags.FLAG_ESIM_MANAGEMENT_ENABLED)
+    public void
+            setUserRestriction_disallowUnmanagedSubscriptionsGlobally_cannotSet_throwsException() {
+        assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().addUserRestriction(
+                        sDeviceState.dpc().componentName(),
+                        DISALLOW_SIM_GLOBALLY));
+    }
+
+    @PolicyAppliesTest(policy = DisallowUnmanagedSubscriptionsGlobally.class)
+    @Test
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.os.UserManager#DISALLOW_SIM_GLOBALLY")
+    @RequiresFlagsEnabled(android.app.admin.flags.Flags.FLAG_ESIM_MANAGEMENT_ENABLED)
+    public void setUserRestriction_disallowUnmanagedSubscriptionsGlobally_isSet() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().addUserRestriction(
+                    sDeviceState.dpc().componentName(), DISALLOW_SIM_GLOBALLY);
+
+            assertThat(
+                    TestApis
+                        .devicePolicy()
+                        .userRestrictions()
+                        .isSet(DISALLOW_SIM_GLOBALLY))
+                    .isTrue();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
+                    sDeviceState.dpc().componentName(), DISALLOW_SIM_GLOBALLY);
+        }
+    }
+
+    @PolicyDoesNotApplyTest(policy = DisallowUnmanagedSubscriptionsGlobally.class)
+    @Test
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.os.UserManager#DISALLOW_SIM_GLOBALLY")
+    @RequiresFlagsEnabled(android.app.admin.flags.Flags.FLAG_ESIM_MANAGEMENT_ENABLED)
+    public void setUserRestriction_disallowUnmanagedSubscriptionsGlobally_isNotSet() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().addUserRestriction(
+                    sDeviceState.dpc().componentName(), DISALLOW_SIM_GLOBALLY);
+
+            assertThat(
+                    TestApis
+                            .devicePolicy()
+                            .userRestrictions()
+                            .isSet(DISALLOW_SIM_GLOBALLY))
+                    .isFalse();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
+                    sDeviceState.dpc().componentName(), DISALLOW_SIM_GLOBALLY);
+        }
     }
 
         private static final String TEST_APN_NAME = "testEnterpriseApnName";
