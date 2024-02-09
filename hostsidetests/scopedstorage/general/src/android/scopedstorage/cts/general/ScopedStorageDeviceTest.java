@@ -1404,6 +1404,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         }
     }
 
+    @FlakyTest(bugId = 324551195)
     @Test
     public void testAppReinstallInvalidation() throws Exception {
         File file = new File(getDcimDir(), "app_reinstall.jpg");
