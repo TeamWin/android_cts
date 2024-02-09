@@ -18,6 +18,7 @@ package android.hdmicec.cts.playback;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
@@ -62,6 +63,8 @@ public final class HdmiCecSystemAudioControlTest extends BaseHdmiCecCtsTest {
     public void cect_hf4_10_5_RemoteControlCommandsWithSystemAudioControlProperty()
             throws Exception {
         setCec20();
+        assumeFalse("Skip for audio system devices (b/323469502)",
+                hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM));
         // The DUT won't send <User Control Pressed> messages if this condition is not met.
         assumeTrue(isPlayingStreamMusicOnHdmiOut());
 
