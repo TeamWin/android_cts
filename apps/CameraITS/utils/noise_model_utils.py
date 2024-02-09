@@ -20,190 +20,18 @@ import os.path
 import pickle
 from typing import Any, Dict, List, Tuple
 import warnings
-import capture_read_noise_utils
 import capture_request_utils
 import image_processing_utils
-import its_session_utils
 from matplotlib import pylab
-import matplotlib.colors
 import matplotlib.pyplot as plt
+import noise_model_constants
 import numpy as np
 import scipy.stats
 
-# Standard Bayer color channel names in canonical order.
-BAYER_COLORS = ('R', 'Gr', 'Gb', 'B')
 
-# Standard Bayer color filter arrangements dictionary.
-# The keys are color filter arrangement indices and values are dictionaries
-# mapping standard Bayer color channels to indices.
-BAYER_COLOR_FILTER_MAP = {
-    0: {'R': 0, 'Gr': 1, 'Gb': 2, 'B': 3},
-    1: {'Gr': 0, 'R': 1, 'B': 2, 'Gb': 3},
-    2: {'Gb': 0, 'B': 1, 'R': 2, 'Gr': 3},
-    3: {'B': 0, 'Gb': 1, 'Gr': 2, 'R': 3},
-}
-
-# Colors for plotting standard Bayer noise model parameters of each channel.
-BAYER_PLOT_COLORS = ('red', 'green', 'black', 'blue')
-
-# Quad Bayer color channel names in canonical order.
-QUAD_BAYER_COLORS = (
-    'R0', 'R1', 'R2', 'R3',
-    'Gr0', 'Gr1', 'Gr2', 'Gr3',
-    'Gb0', 'Gb1', 'Gb2', 'Gb3',
-    'B0', 'B1', 'B2', 'B3',
+_OUTLIER_MEDIAN_ABS_DEVS_DEFAULT = (
+    noise_model_constants.OUTLIER_MEDIAN_ABS_DEVS_DEFAULT
 )
-
-# Quad Bayer color filter arrangements dictionary.
-# The keys are color filter arrangement indices and values are dictionaries
-# mapping quad Bayer color channels to indices.
-QUAD_BAYER_COLOR_FILTER_MAP = {
-    0: {
-        'R': [0, 1, 4, 5],
-        'Gr': [2, 3, 6, 7],
-        'Gb': [8, 9, 12, 13],
-        'B': [10, 11, 14, 15],
-    },
-    1: {
-        'Gr': [0, 1, 4, 5],
-        'R': [2, 3, 6, 7],
-        'B': [8, 9, 12, 13],
-        'Gb': [10, 11, 14, 15],
-    },
-    2: {
-        'Gb': [0, 1, 4, 5],
-        'B': [2, 3, 6, 7],
-        'R': [8, 9, 12, 13],
-        'Gr': [10, 11, 14, 15],
-    },
-    3: {
-        'B': [0, 1, 4, 5],
-        'Gb': [2, 3, 6, 7],
-        'Gr': [8, 9, 12, 13],
-        'R': [10, 11, 14, 15],
-    },
-}
-
-# Colors for plotting noise model parameters of each quad Bayer channel.
-QUAD_BAYER_PLOT_COLORS = (
-    'pink', 'magenta', 'red', 'darkred',
-    'lightgreen', 'greenyellow', 'lime', 'green',
-    'orange', 'yellow', 'grey', 'black',
-    'lightblue', 'cyan', 'blue', 'darkblue',
-)
-
-NUM_BAYER_CHANNELS = len(BAYER_COLORS)
-NUM_QUAD_BAYER_CHANNELS = len(QUAD_BAYER_COLORS)
-VALID_NUM_CHANNELS = (NUM_BAYER_CHANNELS, NUM_QUAD_BAYER_CHANNELS)
-
-# Rainbow color map used to plot stats samples of different exposure times.
-RAINBOW_CMAP = plt.cm.rainbow
-# Assume the maximum exposure time is 2^12 ms for calibration.
-COLOR_NORM = matplotlib.colors.Normalize(vmin=0, vmax=12)
-_COLOR_BAR = plt.cm.ScalarMappable(cmap=RAINBOW_CMAP, norm=COLOR_NORM)
-_OUTLIER_MEDIAN_ABS_DEVS_DEFAULT = 3
-VALID_RAW_STATS_FORMATS = (
-    'rawStats', 'rawQuadBayerStats',
-    'raw10Stats', 'raw10QuadBayerStats',
-)
-
-
-def calibrate_read_noise(
-    device_id: str,
-    camera_id: str,
-    hidden_physical_id: str,
-    read_noise_folder_prefix: str,
-    read_noise_file_name: str,
-    steps_per_stop: int,
-    raw_format: str = 'raw',
-    is_two_stage_model: bool = False,
-) -> str:
-  """Calibrates the read noise of the camera.
-
-  Read noise is a type of noise that occurs in digital cameras when the image
-  sensor converts light to an electronic signal. Calibrating read noise is the
-  first step in the 2-stage noise model calibration.
-
-  Args:
-    device_id: The device ID of the camera.
-    camera_id: The camera ID of the camera.
-    hidden_physical_id: The hidden physical ID of the camera.
-    read_noise_folder_prefix: The prefix of the read noise folder.
-    read_noise_file_name: The name of the read noise file.
-    steps_per_stop: The number of steps per stop.
-    raw_format: The format of raw capture, which can be one of raw, raw10,
-      rawQuadBayer and raw10QuadBayer.
-    is_two_stage_model: A boolean flag indicating if the noise model is
-      calibrated in the two-stage mode.
-
-  Returns:
-    The path to the read noise file.
-  """
-  if not is_two_stage_model:
-    return ''
-  # If two-stage model is enabled, check/collect read noise data.
-  with its_session_utils.ItsSession(
-      device_id=device_id,
-      camera_id=camera_id,
-      hidden_physical_id=hidden_physical_id,
-  ) as cam:
-    props = cam.get_camera_properties()
-    props = cam.override_with_hidden_physical_camera_props(props)
-
-    # Get sensor analog ISO range.
-    sens_min, _ = props['android.sensor.info.sensitivityRange']
-    sens_max_analog = props['android.sensor.maxAnalogSensitivity']
-    # Maximum sensitivity for measuring noise model.
-    sens_max_meas = sens_max_analog
-
-    # Prepare read noise folder.
-    camera_name = cam.get_camera_name()
-    read_noise_folder = os.path.join(
-        read_noise_folder_prefix, device_id.replace(':', '_'), camera_name
-    )
-    read_noise_file_path = os.path.join(read_noise_folder, read_noise_file_name)
-    if not os.path.exists(read_noise_folder):
-      os.makedirs(read_noise_folder)
-    logging.info('Read noise data folder: %s', read_noise_folder)
-
-    # Collect or retrieve read noise data.
-    if not os.path.isfile(read_noise_file_path):
-      logging.info('Collecting read noise data for %s', camera_name)
-      # Read noise data file does not exist, collect read noise data.
-      capture_read_noise_utils.capture_read_noise_for_iso_range(
-          cam,
-          raw_format,
-          sens_min,
-          sens_max_meas,
-          steps_per_stop,
-          read_noise_file_path,
-      )
-    else:
-      # If data exists, check if it covers the full range.
-      with open(read_noise_file_path, 'rb') as f:
-        read_noise_data = pickle.load(f)
-        # The +5 offset takes write to read error into account.
-        if read_noise_data[-1][0]['iso'] + 5 < sens_max_meas:
-          logging.error(
-              (
-                  '\nNot enough ISO data points exist. '
-                  '\nMax ISO measured: %.2f'
-                  '\nMax ISO possible: %.2f'
-              ),
-              read_noise_data[-1][0]['iso'], sens_max_meas,
-          )
-          # Not all data points were captured, continue capture.
-          capture_read_noise_utils.capture_read_noise_for_iso_range(
-              cam,
-              raw_format,
-              sens_min,
-              sens_max_meas,
-              steps_per_stop,
-              read_noise_file_path,
-          )
-
-    return read_noise_file_path
-
 
 def _check_auto_exposure_targets(
     auto_exposure_ns: float,
@@ -243,9 +71,10 @@ def check_noise_model_shape(noise_model: np.ndarray) -> None:
     noise_model: A numpy array of shape (num_channels, num_parameters).
   """
   num_channels, num_parameters = noise_model.shape
-  if num_channels not in VALID_NUM_CHANNELS:
+  if num_channels not in noise_model_constants.VALID_NUM_CHANNELS:
     raise AssertionError(
-        f'The number of channels {num_channels} is not in {VALID_NUM_CHANNELS}.'
+        f'The number of channels {num_channels} is not in'
+        f' {noise_model_constants.VALID_NUM_CHANNELS}.'
     )
   if num_parameters != 4:
     raise AssertionError(
@@ -586,9 +415,9 @@ def capture_stats_images(
   # Whether the stats images are quad Bayer or standard Bayer.
   is_quad_bayer = 'QuadBayer' in stats_config['format']
   if is_quad_bayer:
-    num_channels = NUM_QUAD_BAYER_CHANNELS
+    num_channels = noise_model_constants.NUM_QUAD_BAYER_CHANNELS
   else:
-    num_channels = NUM_BAYER_CHANNELS
+    num_channels = noise_model_constants.NUM_BAYER_CHANNELS
   # A dict maps iso to stats images of different exposure times.
   iso_to_stats_dict = collections.defaultdict(list)
   # Start the sensitivity at the minimum.
@@ -899,13 +728,16 @@ def create_stats_figure(
   Returns:
     A tuple of the figure and a list of the subplots.
   """
-  if len(color_channel_names) not in VALID_NUM_CHANNELS:
+  if len(color_channel_names) not in noise_model_constants.VALID_NUM_CHANNELS:
     raise AssertionError(
-        f'The number of channels should be in {VALID_NUM_CHANNELS}, but found'
+        'The number of channels should be in'
+        f' {noise_model_constants.VALID_NUM_CHANNELS}, but found'
         f' {len(color_channel_names)}. '
     )
 
-  is_quad_bayer = len(color_channel_names) == NUM_QUAD_BAYER_CHANNELS
+  is_quad_bayer = (
+      len(color_channel_names) == noise_model_constants.NUM_QUAD_BAYER_CHANNELS
+  )
   if is_quad_bayer:
     # Adds a plot of the mean and variance samples for each color plane.
     fig, axes = plt.subplots(4, 4, figsize=(22, 22))
@@ -914,7 +746,9 @@ def create_stats_figure(
 
     cax = fig.add_axes([0.65, 0.995, 0.33, 0.003])
     cax.set_title('log(exposure_ms):', x=-0.13, y=-2.0)
-    fig.colorbar(_COLOR_BAR, cax=cax, orientation='horizontal')
+    fig.colorbar(
+        noise_model_constants.COLOR_BAR, cax=cax, orientation='horizontal'
+    )
 
     # Add a big axis, hide frame.
     fig.add_subplot(111, frameon=False)
@@ -932,7 +766,7 @@ def create_stats_figure(
     plt.ylabel('Variance', va='center', rotation='vertical')
 
     subplots = []
-    for pidx in range(NUM_QUAD_BAYER_CHANNELS):
+    for pidx in range(noise_model_constants.NUM_QUAD_BAYER_CHANNELS):
       subplot = axes[pidx // 4, pidx % 4]
       subplot.set_title(color_channel_names[pidx])
       # Set 'y' axis to scientific notation for all numbers by setting
@@ -949,7 +783,9 @@ def create_stats_figure(
     # Add color bar to show exposure times.
     cax = fig.add_axes([0.73, 0.99, 0.25, 0.01])
     cax.set_title('log(exposure_ms):', x=-0.3, y=-1.0)
-    fig.colorbar(_COLOR_BAR, cax=cax, orientation='horizontal')
+    fig.colorbar(
+        noise_model_constants.COLOR_BAR, cax=cax, orientation='horizontal'
+    )
 
     subplots = [plt_r, plt_gr, plt_gb, plt_b]
     fig.suptitle('ISO %d' % iso, x=0.54, y=0.99)
