@@ -20,6 +20,8 @@ import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL;
 import static android.Manifest.permission.REVOKE_RUNTIME_PERMISSIONS;
 import static android.app.NotificationManager.ACTION_AUTOMATIC_ZEN_RULE_STATUS_CHANGED;
+import static android.app.NotificationManager.ACTION_CONSOLIDATED_NOTIFICATION_POLICY_CHANGED;
+import static android.app.NotificationManager.ACTION_NOTIFICATION_POLICY_CHANGED;
 import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_ACTIVATED;
 import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_DEACTIVATED;
 import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_DISABLED;
@@ -124,6 +126,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -935,6 +938,80 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         } finally {
             mNotificationManager.setInterruptionFilter(originalFilter);
             mNotificationManager.setNotificationPolicy(origPolicy);
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled({Flags.FLAG_MODES_API})
+    public void testConsolidatedNotificationPolicy_broadcasts() throws Exception {
+        // Setup also changes Policy and creates a DND-bypassing channel, so we might get 1-2
+        // extra broadcasts. Make sure they are out of the way.
+        Thread.sleep(500);
+        assertThat(mNotificationManager.getConsolidatedNotificationPolicy().priorityCategories
+                & PRIORITY_CATEGORY_ALARMS).isNotEqualTo(0);
+
+        // Set up a rule with a custom ZenPolicy.
+        AutomaticZenRule rule = createRule("testRule");
+        rule.setZenPolicy(new ZenPolicy.Builder()
+                .allowReminders(false)
+                .allowSystem(true)
+                .allowAlarms(false)
+                .build());
+        String id = mNotificationManager.addAutomaticZenRule(rule);
+
+        // Enable rule, and check for broadcast.
+        NotificationManagerBroadcastReceiver brOn = new NotificationManagerBroadcastReceiver();
+        brOn.register(mContext, ACTION_CONSOLIDATED_NOTIFICATION_POLICY_CHANGED, 1);
+        Condition conditionOn =
+                new Condition(rule.getConditionId(), "on", Condition.STATE_TRUE);
+        mNotificationManager.setAutomaticZenRuleState(id, conditionOn);
+
+        brOn.assertBroadcastsReceivedWithin(Duration.ofMillis(500));
+        NotificationManager.Policy ruleOnPolicy = (NotificationManager.Policy) brOn.getExtra(
+                NotificationManager.EXTRA_NOTIFICATION_POLICY, 0, 0);
+        assertThat(ruleOnPolicy.priorityCategories & PRIORITY_CATEGORY_ALARMS).isEqualTo(0);
+
+        // TODO: b/324376849 - Registered BR in a DND-access pkg gets broadcast twice.
+        // Thread.sleep(500);
+        // assertThat(brOn.results).hasSize(1); // Also no *extra* broadcasts received.
+        brOn.unregister();
+
+        // Disable rule, and check for broadcast.
+        NotificationManagerBroadcastReceiver brOff = new NotificationManagerBroadcastReceiver();
+        brOff.register(mContext, ACTION_CONSOLIDATED_NOTIFICATION_POLICY_CHANGED, 1);
+        Condition conditionOff =
+                new Condition(rule.getConditionId(), "on", Condition.STATE_FALSE);
+        mNotificationManager.setAutomaticZenRuleState(id, conditionOff);
+
+        brOff.assertBroadcastsReceivedWithin(Duration.ofMillis(500));
+        NotificationManager.Policy ruleOffPolicy = (NotificationManager.Policy) brOff.getExtra(
+                NotificationManager.EXTRA_NOTIFICATION_POLICY, 0, 0);
+        assertThat(ruleOffPolicy.priorityCategories & PRIORITY_CATEGORY_ALARMS).isNotEqualTo(0);
+
+        // TODO: b/324376849 - Registered BR in a DND-access pkg gets broadcast twice.
+        // Thread.sleep(500);
+        // assertThat(brOff.results).hasSize(1); // Also no *extra* broadcasts received.
+        brOff.unregister();
+    }
+
+    @Test
+    public void testNotificationPolicy_broadcasts() throws Exception {
+        // Setup also changes Policy and creates a DND-bypassing channel, so we might get 1-2
+        // extra broadcasts. Make sure they are out of the way.
+        Thread.sleep(500);
+        assertThat(mNotificationManager.getNotificationPolicy().priorityCategories
+                & PRIORITY_CATEGORY_ALARMS).isNotEqualTo(0);
+        NotificationManagerBroadcastReceiver br = new NotificationManagerBroadcastReceiver();
+        br.register(mContext, ACTION_NOTIFICATION_POLICY_CHANGED, 1);
+
+        NotificationManager.Policy updatePolicy = new NotificationManager.Policy(0, 0, 0);
+        runAsSystemUi(() -> mNotificationManager.setNotificationPolicy(updatePolicy));
+
+        br.assertBroadcastsReceivedWithin(Duration.ofMillis(500));
+        if (Flags.modesApi()) {
+            NotificationManager.Policy broadcastPolicy = (NotificationManager.Policy) br.getExtra(
+                    NotificationManager.EXTRA_NOTIFICATION_POLICY, 0, 0);
+            assertThat(broadcastPolicy.priorityCategories & PRIORITY_CATEGORY_ALARMS).isEqualTo(0);
         }
     }
 
