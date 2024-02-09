@@ -5167,19 +5167,4 @@ public class CameraTestUtils extends Assert {
                     externalCameraConnected);
         }
     }
-
-    /**
-     * Check if the camera device keeps stabilization off
-     *
-     * @param result The capture request builder
-     * @return true if stabilization is OFF
-     */
-    public static boolean isStabilizationOff(CaptureRequest request) {
-        Integer stabilizationMode = request.get(
-                CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE);
-        assertNotNull("Value of Key CONTROL_VIDEO_STABILIZATION_MODE shouldn't be null",
-                stabilizationMode);
-
-        return (stabilizationMode == CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_OFF);
-    }
 }
