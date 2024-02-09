@@ -18,6 +18,8 @@ package android.provider.cts.media;
 
 import static android.provider.cts.media.MediaStoreTest.TAG;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -37,7 +39,6 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
-import android.os.storage.StorageManager;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Files.FileColumns;
@@ -49,10 +50,9 @@ import android.provider.cts.media.MediaStoreUtils.PendingParams;
 import android.provider.cts.media.MediaStoreUtils.PendingSession;
 import android.util.Log;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SdkSuppress;
+import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -77,17 +77,17 @@ public class MediaStore_Video_MediaTest {
     private Uri mExternalVideo;
     private Uri mExternalFiles;
 
-    @Parameter(0)
+    @Parameter
     public String mVolumeName;
 
     @Parameters
-    public static Iterable<? extends Object> data() {
+    public static Iterable<?> data() {
         return ProviderTestUtils.getSharedVolumeNames();
     }
 
     @Before
     public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getTargetContext();
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mContentResolver = mContext.getContentResolver();
 
         Log.d(TAG, "Using volume " + mVolumeName);
@@ -237,9 +237,9 @@ public class MediaStore_Video_MediaTest {
             byte[] bytes = out.toByteArray();
             byte[] xmpBytes = Arrays.copyOfRange(bytes, 3269, 3269 + 13197);
             String xmp = new String(xmpBytes);
-            assertTrue("Failed to read XMP longitude", xmp.contains("10,41.751000E"));
-            assertTrue("Failed to read XMP latitude", xmp.contains("53,50.070500N"));
-            assertTrue("Failed to read non-location XMP", xmp.contains("13166/7763"));
+            assertWithMessage("Failed to read XMP longitude").that(xmp).contains("10,41.751000E");
+            assertWithMessage("Failed to read XMP latitude").that(xmp).contains("53,50.070500N");
+            assertWithMessage("Failed to read non-location XMP").that(xmp).contains("13166/7763");
         }
 
         // Revoke location access and remove ownership, which means that location should be redacted
@@ -252,9 +252,11 @@ public class MediaStore_Video_MediaTest {
             byte[] bytes = out.toByteArray();
             byte[] xmpBytes = Arrays.copyOfRange(bytes, 3269, 3269 + 13197);
             String xmp = new String(xmpBytes);
-            assertFalse("Failed to redact XMP longitude", xmp.contains("10,41.751000E"));
-            assertFalse("Failed to redact XMP latitude", xmp.contains("53,50.070500N"));
-            assertTrue("Redacted non-location XMP", xmp.contains("13166/7763"));
+            assertWithMessage("Failed to redact XMP longitude").that(xmp)
+                    .doesNotContain("10,41.751000E");
+            assertWithMessage("Failed to redact XMP latitude").that(xmp)
+                    .doesNotContain("53,50.070500N");
+            assertWithMessage("Redacted non-location XMP").that(xmp).contains("13166/7763");
         }
     }
 
@@ -345,7 +347,8 @@ public class MediaStore_Video_MediaTest {
     public void testCanonicalize() throws Exception {
         // Remove all audio left over from other tests
         ProviderTestUtils.executeShellCommand("content delete"
-                + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
+                + " --user " + InstrumentationRegistry.getInstrumentation().getTargetContext()
+                        .getUserId()
                 + " --uri " + mExternalVideo,
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
 
