@@ -479,13 +479,19 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
                 .build());
 
         // Now switch back to A...
-        mUiBot.pressBack(); // dismiss autofill
-        mUiBot.pressBack(); // dismiss keyboard (or task, if there was no keyboard)
         final AtomicBoolean focusOnA = new AtomicBoolean();
-        mActivity.syncRunOnUiThread(() -> focusOnA.set(mActivity.hasWindowFocus()));
-        if (!focusOnA.get()) {
-            mUiBot.pressBack(); // dismiss task, if the last pressBack dismissed only the keyboard
-        }
+        int retries = 0;
+        do {
+            assertWithMessage("Did not go back to LoginActivity - did it die?")
+                    .that(retries < 10)
+                    .isTrue();
+            // Dismiss all Autofill UI until back to LoginActivity
+            // Do this in a loop because Inline/Dropdown have different number of UIs to dismiss
+            mUiBot.pressBack(); // dismiss task
+            mActivity.syncRunOnUiThread(() -> focusOnA.set(mActivity.hasWindowFocus()));
+            retries += 1;
+        } while (!focusOnA.get());
+
         mUiBot.assertShownByRelativeId(ID_USERNAME);
         assertWithMessage("root window has no focus")
                 .that(mActivity.getWindow().getDecorView().hasWindowFocus()).isTrue();
