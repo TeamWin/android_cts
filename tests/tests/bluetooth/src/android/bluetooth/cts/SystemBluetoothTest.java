@@ -445,7 +445,7 @@ public class SystemBluetoothTest {
                 }
             }
         } catch (InterruptedException e) {
-            Log.e(TAG, "waitForDiscoveryStart: interrrupted");
+            Log.e(TAG, "waitForDiscoveryStart: interrupted");
         } finally {
             mDiscoveryStartedLock.unlock();
         }
