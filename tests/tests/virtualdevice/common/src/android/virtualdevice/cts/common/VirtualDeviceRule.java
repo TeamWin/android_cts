@@ -35,7 +35,6 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.app.UiAutomation;
-import android.companion.AssociationInfo;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
@@ -261,11 +260,6 @@ public class VirtualDeviceRule implements TestRule {
     /** Returns the WM state helper. */
     public WindowManagerStateHelper getWmState() {
         return mWmState;
-    }
-
-    /** Creates a new CDM association. */
-    public AssociationInfo createManagedAssociation() {
-        return mFakeAssociationRule.createManagedAssociation();
     }
 
     /** Drops the current CDM association. */
