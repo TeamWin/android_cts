@@ -17,6 +17,8 @@ package android.widget.cts
 
 import android.graphics.Paint
 import android.platform.test.annotations.RequiresFlagsEnabled
+import android.platform.test.flag.junit.CheckFlagsRule
+import android.platform.test.flag.junit.DeviceFlagsValueProvider
 import android.view.View.MeasureSpec
 import android.widget.TextView
 import androidx.test.InstrumentationRegistry
@@ -24,6 +26,7 @@ import androidx.test.filters.SmallTest
 import androidx.test.runner.AndroidJUnit4
 import com.android.text.flags.Flags.FLAG_USE_BOUNDS_FOR_WIDTH
 import com.google.common.truth.Truth.assertThat
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -35,6 +38,10 @@ import org.junit.runner.RunWith
 class TextViewMinimumFontMetrics {
 
     private val context = InstrumentationRegistry.getInstrumentation().getTargetContext()
+
+    @JvmField
+    @Rule
+    val mCheckFlagsRule: CheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
 
     @Test
     @RequiresFlagsEnabled(FLAG_USE_BOUNDS_FOR_WIDTH)
