@@ -131,7 +131,6 @@ public class AudioHalVersionInfoTest {
         assertTrue(AudioHalVersionInfo.VERSIONS.contains(AudioHalVersionInfo.HIDL_7_0));
         assertTrue(AudioHalVersionInfo.VERSIONS.contains(AudioHalVersionInfo.HIDL_6_0));
         assertTrue(AudioHalVersionInfo.VERSIONS.contains(AudioHalVersionInfo.HIDL_5_0));
-        assertTrue(AudioHalVersionInfo.VERSIONS.contains(AudioHalVersionInfo.HIDL_4_0));
     }
 
     /**
@@ -141,5 +140,6 @@ public class AudioHalVersionInfoTest {
     @Test
     public void test_VERSIONS_not_contains() throws Exception {
         assertFalse(AudioHalVersionInfo.VERSIONS.contains(AudioHalVersionInfo.HIDL_2_0));
+        assertFalse(AudioHalVersionInfo.VERSIONS.contains(AudioHalVersionInfo.HIDL_4_0));
     }
 }
