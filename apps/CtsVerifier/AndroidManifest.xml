@@ -7074,6 +7074,61 @@
         </activity>
 
         <!-- Components for Sharesheet tests -->
+        <!-- TODO: b/324916074
+        <activity
+            android:name=".sharesheet.SharesheetPayloadToggleActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:label="@string/sharesheet_payload_toggle_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST.SharesheetPayloadToggleActivity" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/category_sharesheet" />
+            <meta-data
+                android:name="ApiTest"
+                android:value="android.content.Intent#EXTRA_CHOOSER_ADDITIONAL_CONTENT_URI
+                    |android.content.Intent#EXTRA_CHOOSER_FOCUSED_ITEM_POSITION" />
+            <meta-data android:name="display_mode" android:value="single_display_mode" />
+        </activity>-->
+
+        <activity
+            android:name=".sharesheet.SharesheetPayloadToggleActionActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:label="@string/sharesheet_payload_toggle_action_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST.SharesheetPayloadToggleActionActivity" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/category_sharesheet" />
+            <meta-data
+                android:name="ApiTest"
+                android:value="android.content.Intent#EXTRA_CHOOSER_ADDITIONAL_CONTENT_URI
+                    |android.content.Intent#EXTRA_CHOOSER_FOCUSED_ITEM_POSITION" />
+            <meta-data android:name="display_mode" android:value="single_display_mode" />
+        </activity>
+
         <activity
             android:name=".sharesheet.SharesheetAlbumActivity"
             android:exported="true"
@@ -7092,6 +7147,21 @@
                     |android.content.Intent#CHOOSER_CONTENT_TYPE_ALBUM" />
             <meta-data android:name="display_mode" android:value="single_display_mode" />
         </activity>
+
+        <provider
+            android:authorities="com.android.cts.verifier.sharesheet.images"
+            android:name=".sharesheet.SharesheetTestImageProvider"
+            android:exported="false"
+            android:enabled="true"
+            android:grantUriPermissions="true" />
+
+        <provider
+            android:authorities="com.android.cts.verifier.sharesheet.extracontent"
+            android:name=".sharesheet.SharesheetAdditionalContentProvider"
+            android:exported="false"
+            android:enabled="true"
+            android:grantUriPermissions="true" />
+
 
         <!-- Components used for CTS Verifying Capture Content For Notes APIs. -->
         <activity
