@@ -71,6 +71,9 @@ public class MidiUmpEchoTestService extends MidiUmpDeviceService {
     public int statusChangeCount;
     public boolean inputOpened;
     public int outputOpenCount;
+    public int serviceCloseCount;
+
+    private final Object mCloseLock = new Object();
 
     public static final String TEST_MANUFACTURER = "AndroidCTS";
     public static final String ECHO_PRODUCT = "MidiUmpEcho";
@@ -165,10 +168,43 @@ public class MidiUmpEchoTestService extends MidiUmpDeviceService {
         }
     }
 
+    /**
+     * Waits deadlineMillis or until onClose is called.
+     */
+    public void waitForClose(int deadlineMillis) {
+        try {
+            long now = System.currentTimeMillis();
+            long deadline = now + deadlineMillis;
+            synchronized (mCloseLock) {
+                int initialServiceCloseCount = serviceCloseCount;
+                boolean condition = initialServiceCloseCount != serviceCloseCount;
+                while (!condition && now < deadline) {
+                    mCloseLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+        } catch (InterruptedException e) {
+            Log.i(TAG, "waitForClose interrupted");
+        }
+    }
+
     @Override
     public void onDeviceStatusChanged(MidiDeviceStatus status) {
         statusChangeCount++;
-        inputOpened = status.isInputPortOpen(0);
-        outputOpenCount = status.getOutputPortOpenCount(0);
+        if (status != null) {
+            inputOpened = status.isInputPortOpen(0);
+            outputOpenCount = status.getOutputPortOpenCount(0);
+        } else {
+            inputOpened = false;
+            outputOpenCount = 0;
+        }
+    }
+
+    @Override
+    public void onClose() {
+        synchronized (mCloseLock) {
+            serviceCloseCount++;
+            mCloseLock.notifyAll();
+        }
     }
 }

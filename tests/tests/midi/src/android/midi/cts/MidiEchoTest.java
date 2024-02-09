@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
 import android.content.pm.PackageManager;
+import android.media.midi.Flags;
 import android.media.midi.MidiDevice;
 import android.media.midi.MidiDeviceInfo;
 import android.media.midi.MidiDeviceInfo.PortInfo;
@@ -29,6 +30,7 @@ import android.media.midi.MidiInputPort;
 import android.media.midi.MidiManager;
 import android.media.midi.MidiOutputPort;
 import android.media.midi.MidiReceiver;
+import android.media.midi.MidiUmpDeviceService;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -40,7 +42,6 @@ import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
 
-import android.media.midi.Flags;
 import com.android.midi.CTSMidiEchoTestService;
 import com.android.midi.CTSMidiUmpEchoTestService;
 import com.android.midi.MidiEchoTestService;
@@ -54,6 +55,7 @@ import org.junit.runners.JUnit4;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.Executor;
 
 /**
@@ -73,12 +75,15 @@ public class MidiEchoTest {
     private static final long TIMESTAMP_DATA_MASK = 0x00000000FFFFFFFFL;
     private static final long NANOS_PER_MSEC = 1000L * 1000L;
 
-    // On a fast device in 2016, the test fails if timeout is 3 but works if it is 4.
+    // On a fast device, the test fails if timeout is 3 but works if it is 4.
     // So this timeout value is very generous.
     private static final int TIMEOUT_OPEN_MSEC = 1000; // arbitrary
-    // On a fast device in 2016, the test fails if timeout is 0 but works if it is 1.
+    // On a fast device, the test fails if timeout is 0 but works if it is 1.
     // So this timeout value is very generous.
     private static final int TIMEOUT_STATUS_MSEC = 500; // arbitrary
+
+    // Time to sleep to allow callbacks to propagate
+    private static final int TIMEOUT_CLOSE_MSEC = 50; // arbitrary
 
     // This is defined in MidiPortImpl.java as the maximum payload that
     // can be sent internally by MidiInputPort in a
@@ -794,6 +799,14 @@ public class MidiEchoTest {
         MidiInputPort echoInputPort2 = mc.echoDevice.openInputPort(0);
         assertTrue("input port opened twice", echoInputPort2 == null);
 
+        int badPortIndex = mc.echoInfo.getOutputPortCount(); // out of range
+        MidiOutputPort echoOutputPort = mc.echoDevice.openOutputPort(badPortIndex);
+        assertEquals("openOutputPort(badPortIndex) should have returned null",
+                null, echoOutputPort);
+        echoOutputPort = mc.echoDevice.openOutputPort(-1);
+        assertEquals("openOutputPort(-1) should have returned null",
+                null, echoOutputPort);
+
         tearDownEchoServer(mc, false);
     }
 
@@ -814,7 +827,57 @@ public class MidiEchoTest {
         MidiOutputPort echoOutputPort2 = mc.echoDevice.openOutputPort(0);
         assertTrue("output port opened twice", echoOutputPort2 == null);
 
+        int badPortIndex = mc.echoInfo.getOutputPortCount(); // out of range
+        MidiOutputPort echoOutputPort = mc.echoDevice.openOutputPort(badPortIndex);
+        assertEquals("openOutputPort(badPortIndex) should have returned null",
+                null, echoOutputPort);
+        echoOutputPort = mc.echoDevice.openOutputPort(-1);
+        assertEquals("openOutputPort(-1) should have returned null",
+                null, echoOutputPort);
+
         tearDownEchoServer(mc, true);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
+    public void testMidiUmpDeviceServiceApis() throws Exception {
+        PackageManager pm = mContext.getPackageManager();
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
+            return; // Not supported so don't test it.
+        }
+        MidiTestContext mc = setUpEchoServer(true);
+
+        MidiUmpEchoTestService umpTestService = CTSMidiUmpEchoTestService.getInstance();
+        assertTrue("invalid ump test service", umpTestService != null);
+        MidiUmpDeviceService umpService = (MidiUmpDeviceService) umpTestService;
+        MidiDeviceInfo deviceInfo = umpService.getDeviceInfo();
+        assertTrue("null device info", deviceInfo != null);
+        List<MidiReceiver> outputReceivers = umpService.getOutputPortReceivers();
+        assertTrue("null output receiver list", outputReceivers != null);
+        assertTrue("empty output receiver list", outputReceivers.size() > 0);
+        List<MidiReceiver> inputReceivers = umpService.onGetInputPortReceivers();
+        assertTrue("null input receiver list", inputReceivers != null);
+        assertTrue("empty input receiver list", inputReceivers.size() > 0);
+
+        int initialStatusChangeCount = umpTestService.statusChangeCount;
+        int initialServiceCloseCount = umpTestService.serviceCloseCount;
+        tearDownEchoServer(mc, true);
+        umpTestService.waitForClose(TIMEOUT_CLOSE_MSEC);
+        assertTrue("device status count did not increase",
+                umpTestService.statusChangeCount > initialStatusChangeCount);
+        assertTrue("service close count did not increase",
+                umpTestService.serviceCloseCount > initialServiceCloseCount);
+
+        initialStatusChangeCount = umpTestService.statusChangeCount;
+        umpService.onDeviceStatusChanged(null);
+        assertEquals("device status count did not increment", umpTestService.statusChangeCount,
+                initialStatusChangeCount + 1);
+        assertTrue("input not closed", !umpTestService.inputOpened);
+        assertEquals("output not closed", umpTestService.outputOpenCount, 0);
+        initialServiceCloseCount = umpTestService.serviceCloseCount;
+        umpService.onClose();
+        assertEquals("service close count did not increment", umpTestService.serviceCloseCount,
+                initialServiceCloseCount + 1);
     }
 
     // Store history of status changes.
@@ -905,20 +968,9 @@ public class MidiEchoTest {
                         executor, deviceCallback);
             }
 
+            // There may be some lingering status so clear it.
             MidiDeviceStatus status = deviceCallback.waitForStatus(TIMEOUT_STATUS_MSEC);
-            // The DeviceStatus callback is supposed to be "sticky".
-            // That means we expect to get the status of every device that is
-            // already available when we register for the callback.
-            // If it was not "sticky" then we would only get a callback when there
-            // was a change in the available devices.
-            // TODO Often this is null. But sometimes not. Why?
-            if (status == null) {
-                Log.d(TAG, "testDeviceCallback() first status was null!");
-            } else {
-                // InputPort should be closed because we have not opened it yet.
-                assertEquals("input port should be closed before we open it.",
-                             false, status.isInputPortOpen(0));
-            }
+            deviceCallback.clear();
 
             // Open input port.
             MidiInputPort echoInputPort = echoDevice.openInputPort(0);
@@ -948,6 +1000,82 @@ public class MidiEchoTest {
             // Safe to call twice.
             midiManager.unregisterDeviceCallback(deviceCallback);
             echoDevice.close();
+        }
+    }
+
+    /**
+     * Opening a port on a closed device should fail.
+     */
+    @Test
+    public void testOpenOnClosedDevice() throws Exception {
+        PackageManager pm = mContext.getPackageManager();
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
+            return; // Not supported so don't test it.
+        }
+        MidiManager midiManager = mContext.getSystemService(MidiManager.class);
+
+        MidiDeviceInfo echoInfo = CTSMidiEchoTestService.findEchoDevice(mContext);
+
+        // Open device.
+        MyTestOpenCallback callback = new MyTestOpenCallback();
+        midiManager.openDevice(echoInfo, callback, null);
+        MidiDevice echoDevice = callback.waitForOpen(TIMEOUT_OPEN_MSEC);
+        assertTrue("could not open echo device", echoDevice != null);
+
+        // Close the newly opened device.
+        echoDevice.close();
+
+        // Open output port on dead device.
+        MidiOutputPort echoOutputPort = echoDevice.openOutputPort(0);
+        assertEquals("opened output port on closed device", null, echoOutputPort);
+
+        // Open input port on dead device.
+        MidiInputPort echoInputPort = echoDevice.openInputPort(0);
+        assertEquals("opened input port on closed device", null, echoInputPort);
+    }
+
+    /**
+     * Call this in a loop to check cleanup.
+     */
+    private void checkDeviceCleanup(MidiManager midiManager, MidiDeviceInfo echoInfo)
+            throws InterruptedException, IOException {
+        // Open device.
+        MyTestOpenCallback callback = new MyTestOpenCallback();
+        midiManager.openDevice(echoInfo, callback, null);
+        MidiDevice echoDevice = callback.waitForOpen(TIMEOUT_OPEN_MSEC);
+        assertTrue("could not open echo device", echoDevice != null);
+        try {
+            MidiInputPort echoInputPort1 = echoDevice.openInputPort(0);
+            assertTrue("could not open input port the first time", echoInputPort1 != null);
+            MidiInputPort echoInputPort2 = echoDevice.openInputPort(0);
+            assertTrue("opened input port twice", echoInputPort2 == null);
+        } finally {
+            // Close the newly opened device WITHOUT closing the port.
+            echoDevice.close();
+        }
+    }
+
+    /**
+     * Test whether closing a device will automatically close any open ports.
+     *
+     * This can be detected by opening an input port, which is exclusive.
+     * If it is not closed then the next open will fail. So we close the device
+     * without closing the port. If we have a bug then the input port will
+     * still be open.
+     */
+    @Test
+    public void testClosePortUponDeviceClose() throws Exception {
+        PackageManager pm = mContext.getPackageManager();
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
+            return; // Not supported so don't test it.
+        }
+        MidiManager midiManager = mContext.getSystemService(MidiManager.class);
+
+        MidiDeviceInfo echoInfo = CTSMidiEchoTestService.findEchoDevice(mContext);
+
+        // Run subtest at least twice to detect cleanup problems.
+        for (int i = 0; i < 4; i++) {
+            checkDeviceCleanup(midiManager, echoInfo);
         }
     }
 }
