@@ -464,18 +464,26 @@ public class CardEmulationTest {
     }
 
     void ensurePreferredService(Class serviceClass) {
-        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        ensurePreferredService(serviceClass, mContext);
+    }
+
+    static void ensurePreferredService(Class serviceClass, Context context) {
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(context);
         final CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
         int resId = (serviceClass == CtsMyHostApduService.class
                 ? R.string.CtsPaymentService
                 : (serviceClass == CustomHostApduService.class
-                    ? R.string.CtsCustomPaymentService : R.string.CtsBackgroundPaymentService));
-        final String desc = mContext.getResources().getString(resId);
-        ensurePreferredService(desc);
+                        ? R.string.CtsCustomPaymentService : R.string.CtsBackgroundPaymentService));
+        final String desc = context.getResources().getString(resId);
+        ensurePreferredService(desc, context);
     }
 
     void ensurePreferredService(String serviceDesc) {
-        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        ensurePreferredService(serviceDesc, mContext);
+    }
+
+    static void ensurePreferredService(String serviceDesc, Context context) {
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(context);
         final CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
         try {
             CommonTestUtils.waitUntil("Default service hasn't updated", 3,
