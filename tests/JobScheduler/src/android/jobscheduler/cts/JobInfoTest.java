@@ -52,6 +52,8 @@ public class JobInfoTest extends BaseJobSchedulerTest {
     private static final int JOB_ID = JobInfoTest.class.hashCode();
     private static final String TAG = JobInfoTest.class.getSimpleName();
 
+    private static final long THROW_ON_UNSUPPORTED_BIAS_USAGE = 300477393L;
+
     @Override
     public void tearDown() throws Exception {
         mJobScheduler.cancel(JOB_ID);
@@ -103,26 +105,11 @@ public class JobInfoTest extends BaseJobSchedulerTest {
 
         JobInfo ji = builder.build();
         // Confirm JobScheduler rejects the JobInfo object.
-        final PackageManager pm = getContext().getPackageManager();
-        ApplicationInfo applicationInfo = pm.getApplicationInfo(MY_PACKAGE, 0);
-        if (applicationInfo == null) {
-            fail("Couldn't get ApplicationInfo");
-        }
-        if (isAconfigFlagEnabled(
-                "com.android.server.job.throw_on_unsupported_bias_usage")) {
-            // TODO(309023462): create separate tests for target SDK gated changes
-            boolean targetSdkIsAfterU =
-                    applicationInfo.targetSdkVersion > Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
-            if (targetSdkIsAfterU) {
-                assertScheduleFailsWithException(
-                        "Successfully scheduled a job with a modified bias",
-                        ji, SecurityException.class);
-            } else {
-                mJobScheduler.schedule(ji);
-
-                assertEquals("Bias wasn't changed to default",
-                        0, getBias(mJobScheduler.getPendingJob(JOB_ID)));
-            }
+        // TODO(309023462): create separate tests for target SDK gated changes
+        if (CompatChanges.isChangeEnabled(THROW_ON_UNSUPPORTED_BIAS_USAGE)) {
+            assertScheduleFailsWithException(
+                    "Successfully scheduled a job with a modified bias",
+                    ji, SecurityException.class);
         } else {
             mJobScheduler.schedule(ji);
 
