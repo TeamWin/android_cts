@@ -61,6 +61,7 @@ public class MainInteractionSession extends VoiceInteractionSession {
     private String mTestName;
     private View mContentView;
     private RemoteCallback mRemoteCallback;
+    private Bundle mOnShowArgs;
 
     MainInteractionSession(Context context) {
         super(context);
@@ -119,6 +120,7 @@ public class MainInteractionSession extends VoiceInteractionSession {
             Log.e(TAG, "onshow() received null args");
             return;
         }
+        mOnShowArgs = args;
         mScreenshotNeeded = (showFlags & SHOW_WITH_SCREENSHOT) != 0;
         mTestName = args.getString(Utils.TESTCASE_TYPE, "");
         mCurColor = args.getInt(Utils.SCREENSHOT_COLOR_KEY);
@@ -300,6 +302,7 @@ public class MainInteractionSession extends VoiceInteractionSession {
         } else {
             Bundle bundle = new Bundle();
             bundle.putString(Utils.EXTRA_REMOTE_CALLBACK_ACTION, Utils.BROADCAST_ASSIST_DATA_INTENT);
+            bundle.putBundle(Utils.ON_SHOW_ARGS_KEY, mOnShowArgs);
             bundle.putAll(mAssistData);
             mRemoteCallback.sendResult(bundle);
 

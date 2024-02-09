@@ -16,6 +16,10 @@
 
 package android.assist.cts;
 
+import static android.service.voice.VoiceInteractionSession.KEY_FOREGROUND_ACTIVITIES;
+
+import static com.google.common.truth.Truth.assertThat;
+
 import android.assist.common.Utils;
 import android.content.pm.PackageManager;
 import android.util.Log;
@@ -56,10 +60,11 @@ public class DisableContextTest extends AssistTestBase {
 
         logContextAndScreenshotSetting();
         verifyAssistDataNullness(true, true, true, true);
+        assertThat(mOnShowArgs.containsKey(KEY_FOREGROUND_ACTIVITIES)).isFalse();
     }
 
     @Test
-    public void testContextOff() throws Exception {
+    public void testScreenshotOff() throws Exception {
         if (!isSupportedDevice()) {
             return;
         }
@@ -75,10 +80,11 @@ public class DisableContextTest extends AssistTestBase {
 
         logContextAndScreenshotSetting();
         verifyAssistDataNullness(false, false, false, true);
+        assertThat(mOnShowArgs.containsKey(KEY_FOREGROUND_ACTIVITIES)).isTrue();
     }
 
     @Test
-    public void testScreenshotOff() throws Exception {
+    public void testScreenContextOff() throws Exception {
         if (!isSupportedDevice()) {
             return;
         }
@@ -94,6 +100,7 @@ public class DisableContextTest extends AssistTestBase {
 
         logContextAndScreenshotSetting();
         verifyAssistDataNullness(true, true, true, true);
+        assertThat(mOnShowArgs.containsKey(KEY_FOREGROUND_ACTIVITIES)).isFalse();
     }
 
     private boolean isSupportedDevice() {

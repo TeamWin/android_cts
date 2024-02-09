@@ -124,6 +124,7 @@ abstract class AssistTestBase {
     protected AssistStructure mAssistStructure;
     protected boolean mScreenshot;
     protected Bundle mAssistBundle;
+    protected Bundle mOnShowArgs;
     protected Context mContext;
     private AutoResetLatch mReadyLatch = new AutoResetLatch(1);
     private AutoResetLatch mHas3pResumedLatch = new AutoResetLatch(1);
@@ -690,6 +691,7 @@ abstract class AssistTestBase {
         mScreenshot = assistData.getBoolean(Utils.ASSIST_SCREENSHOT_KEY, false);
 
         mScreenshotMatches = assistData.getBoolean(Utils.COMPARE_SCREENSHOT_KEY, false);
+        mOnShowArgs = assistData.getBundle(Utils.ON_SHOW_ARGS_KEY);
     }
 
     protected void eventuallyWithSessionClose(@NonNull ThrowingRunnable runnable) throws Throwable {
