@@ -19,6 +19,8 @@ package android.wearable.cts;
 import static android.wearable.cts.CtsIsolatedWearableSensingService.ACTION_CLOSE_WEARABLE_CONNECTION;
 import static android.wearable.cts.CtsIsolatedWearableSensingService.ACTION_RESET;
 import static android.wearable.cts.CtsIsolatedWearableSensingService.ACTION_SEND_DATA_TO_WEARABLE;
+import static android.wearable.cts.CtsIsolatedWearableSensingService.ACTION_SET_BOOLEAN_STATE;
+import static android.wearable.cts.CtsIsolatedWearableSensingService.ACTION_VERIFY_BOOLEAN_STATE;
 import static android.wearable.cts.CtsIsolatedWearableSensingService.ACTION_VERIFY_DATA_RECEIVED_FROM_WEARABLE;
 import static android.wearable.cts.CtsIsolatedWearableSensingService.BUNDLE_ACTION_KEY;
 import static android.wearable.cts.CtsIsolatedWearableSensingService.EXPECTED_STRING_FROM_WEARABLE_KEY;
@@ -43,6 +45,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.ParcelFileDescriptor.AutoCloseInputStream;
 import android.os.ParcelFileDescriptor.AutoCloseOutputStream;
 import android.os.PersistableBundle;
+import android.os.SystemClock;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -69,8 +72,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Test the {@link WearableSensingManager} API using {@link CtsIsolatedWearableSensingService} as
- * the implementation for {@link WearableSensingService}. Run with "atest
- * CtsWearableSensingServiceTestCases".
+ * the implementation for {@link WearableSensingService}.
+ *
+ * <p>Run with "atest CtsWearableSensingServiceTestCases".
  */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "PM will not recognize CtsIsolatedWearableSensingService in instantMode.")
@@ -237,6 +241,39 @@ public class WearableSensingManagerIsolatedServiceTest {
     }
 
     @Test
+    @RequiresFlagsEnabled({
+        Flags.FLAG_ENABLE_PROVIDE_WEARABLE_CONNECTION_API,
+        Flags.FLAG_ENABLE_RESTART_WSS_PROCESS
+    })
+    public void
+            provideWearableConnection_wearableStreamClosedThenSendDataFromWss_restartWssProcess()
+                    throws Exception {
+        getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(
+                        Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE,
+                        Manifest.permission.REQUEST_COMPANION_SELF_MANAGED,
+                        Manifest.permission.USE_COMPANION_TRANSPORTS);
+        CountDownLatch statusLatch = new CountDownLatch(1);
+        mCdmAssociationId = attachTransportToCdm(mSocketPair[0]);
+
+        mWearableSensingManager.provideWearableConnection(
+                mSocketPair[1], EXECUTOR, (statusCode) -> statusLatch.countDown());
+        assertThat(statusLatch.await(3, SECONDS)).isTrue();
+        setBooleanStateInWss();
+        verifyBooleanStateInWss(true);
+
+        // Trigger a channel error
+        mSocketPair[0].close();
+        sendDataToWearableFromWss(DATA_TO_WRITE);
+
+        // wait until the RemoteWearableSensingService is notified of the Binder/process death
+        SystemClock.sleep(2000);
+        // This indirectly verifies that the process is restarted
+        verifyBooleanStateInWss(false);
+    }
+
+    @Test
     @RequiresFlagsEnabled(Flags.FLAG_ENABLE_PROVIDE_WEARABLE_CONNECTION_API)
     public void provideWearableConnection_wssStreamClosed_channelErrorStatus() throws Exception {
         getInstrumentation()
@@ -266,6 +303,45 @@ public class WearableSensingManagerIsolatedServiceTest {
 
         assertThat(channelErrorStatusLatch.await(3, SECONDS)).isTrue();
         assertThat(statusCodeRef.get()).isEqualTo(WearableSensingManager.STATUS_CHANNEL_ERROR);
+    }
+
+    @Test
+    @RequiresFlagsEnabled({
+        Flags.FLAG_ENABLE_PROVIDE_WEARABLE_CONNECTION_API,
+        Flags.FLAG_ENABLE_RESTART_WSS_PROCESS
+    })
+    public void provideWearableConnection_restartsWssProcess() throws Exception {
+        // The first call of provideWearableConnection may not restart the process,
+        // so we call once first, then set up and call it again
+        AtomicInteger statusCodeRef1 = new AtomicInteger(WearableSensingManager.STATUS_UNKNOWN);
+        CountDownLatch statusCodeLatch1 = new CountDownLatch(1);
+        mWearableSensingManager.provideWearableConnection(
+                mSocketPair[1],
+                EXECUTOR,
+                (statusCode) -> {
+                    statusCodeLatch1.countDown();
+                    statusCodeRef1.set(statusCode);
+                });
+        assertThat(statusCodeLatch1.await(3, SECONDS)).isTrue();
+        assertThat(statusCodeRef1.get()).isEqualTo(WearableSensingManager.STATUS_SUCCESS);
+        setBooleanStateInWss();
+        // Verify that the state is true after setting it
+        verifyBooleanStateInWss(true);
+        AtomicInteger statusCodeRef2 = new AtomicInteger(WearableSensingManager.STATUS_UNKNOWN);
+        CountDownLatch statusCodeLatch2 = new CountDownLatch(1);
+
+        mWearableSensingManager.provideWearableConnection(
+                mSocketPair[1],
+                EXECUTOR,
+                (statusCode) -> {
+                    statusCodeLatch2.countDown();
+                    statusCodeRef2.set(statusCode);
+                });
+        assertThat(statusCodeLatch2.await(3, SECONDS)).isTrue();
+        assertThat(statusCodeRef2.get()).isEqualTo(WearableSensingManager.STATUS_SUCCESS);
+
+        // This indirectly verifies that the process is restarted
+        verifyBooleanStateInWss(false);
     }
 
     private int attachTransportToCdm(ParcelFileDescriptor pfd) throws Exception {
@@ -365,6 +441,20 @@ public class WearableSensingManagerIsolatedServiceTest {
 
     private void closeWearableConnectionFromWss() throws Exception {
         sendActionToIsolatedWearableSensingServiceAndWait(ACTION_CLOSE_WEARABLE_CONNECTION);
+    }
+
+    private void setBooleanStateInWss() throws Exception {
+        sendActionToIsolatedWearableSensingServiceAndWait(ACTION_SET_BOOLEAN_STATE);
+    }
+
+    private void verifyBooleanStateInWss(boolean expectedState) throws Exception {
+        int statusCode =
+                sendActionToIsolatedWearableSensingServiceAndWait(ACTION_VERIFY_BOOLEAN_STATE);
+        if (expectedState) {
+            assertThat(statusCode).isEqualTo(WearableSensingManager.STATUS_SUCCESS);
+        } else {
+            assertThat(statusCode).isEqualTo(WearableSensingManager.STATUS_UNKNOWN);
+        }
     }
 
     private int sendActionToIsolatedWearableSensingServiceAndWait(String action) throws Exception {
