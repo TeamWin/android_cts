@@ -17,6 +17,8 @@ package com.android.cts.webkit;
 
 import android.compat.cts.CompatChangeGatingTestCase;
 
+import com.android.tradefed.device.DeviceNotAvailableException;
+
 import java.util.Set;
 
 /** Tests for {@link android.webkit.URLUtil} */
@@ -32,8 +34,17 @@ public class WebViewHostSideURLUtilTest extends CompatChangeGatingTestCase {
         installPackage(TEST_APK, true);
     }
 
-    /** TODO(b/320327298): Re-enable */
-    public void disabled_testGuessFileNameChangeDisabled() throws Exception {
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    private boolean isVanillaIceCreamBuildFlagEnabled() throws DeviceNotAvailableException {
+        String output =
+                runCommand("device_config get build android.os.android_os_build_vanilla_ice_cream");
+        return Boolean.parseBoolean(output);
+    }
+
+    public void testGuessFileNameChangeDisabled() throws Exception {
+        if (!isVanillaIceCreamBuildFlagEnabled()) {
+            return; // Feature only supported on V+
+        }
         runDeviceCompatTest(
                 TEST_PKG,
                 TEST_CLASS,
@@ -42,8 +53,10 @@ public class WebViewHostSideURLUtilTest extends CompatChangeGatingTestCase {
                 /*disabledChanges*/ Set.of(PARSE_CONTENT_DISPOSITION_USING_RFC_6266));
     }
 
-    /** TODO(b/320327298): Re-enable */
-    public void disabled_testGuessFileNameChangeEnabled() throws Exception {
+    public void testGuessFileNameChangeEnabled() throws Exception {
+        if (!isVanillaIceCreamBuildFlagEnabled()) {
+            return; // Feature only supported on V+
+        }
         runDeviceCompatTest(
                 TEST_PKG,
                 TEST_CLASS,
