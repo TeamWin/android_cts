@@ -31,10 +31,6 @@ public final class ShellCommandUtils {
         return String.format("ime set --user %d %s", userId, imeId);
     }
 
-    public static String getAvailableImes(int userId) {
-        return String.format("ime list -s -a --user %d", userId);
-    }
-
     /** Command to enable IME of {@code imeId} for the specified {@code userId}. */
     public static String enableIme(String imeId, int userId) {
         return String.format("ime enable --user %d %s", userId, imeId);

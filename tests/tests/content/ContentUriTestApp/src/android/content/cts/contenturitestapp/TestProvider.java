@@ -27,6 +27,9 @@ public class TestProvider extends ContentProvider {
 
     public static final Uri CONTENT_URI_BASE = Uri.parse("content://" + AUTHORITY);
 
+    public static final Uri CONTENT_URI_NONE =
+            Uri.parse("content://" + AUTHORITY + "/none");
+
     public static final Uri CONTENT_URI_ONLY_READ =
             Uri.parse("content://" + AUTHORITY + "/only.read");
 

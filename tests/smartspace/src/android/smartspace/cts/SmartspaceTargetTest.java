@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.smartspace.SmartspaceAction;
 import android.app.smartspace.SmartspaceTarget;
+import android.app.smartspace.flags.Flags;
 import android.app.smartspace.uitemplatedata.BaseTemplateData;
 import android.app.smartspace.uitemplatedata.BaseTemplateData.SubItemInfo;
 import android.app.smartspace.uitemplatedata.BaseTemplateData.SubItemLoggingInfo;
@@ -32,6 +33,7 @@ import android.content.ComponentName;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Process;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.widget.RemoteViews;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -117,6 +119,7 @@ public class SmartspaceTargetTest {
         assertThat(testTarget.getWidget().provider).isEqualTo(testComponentName);
     }
 
+    @RequiresFlagsEnabled(Flags.FLAG_REMOTE_VIEWS)
     @Test
     public void testCreateSmartspaceTargetFromRemoteViews() {
         ComponentName testComponentName = new ComponentName("package_name", "class_name");
@@ -130,6 +133,7 @@ public class SmartspaceTargetTest {
         assertThat(testTarget.getRemoteViews()).isEqualTo(remoteViews);
     }
 
+    @RequiresFlagsEnabled(Flags.FLAG_REMOTE_VIEWS)
     @Test
     public void testCreateSmartspaceTargetFromWidgetAndRemoteViewsAtSameTime() {
         ComponentName testComponentName = new ComponentName("package_name", "class_name");
@@ -152,6 +156,7 @@ public class SmartspaceTargetTest {
                 "Widget providers and RemoteViews cannot be used at the same time.");
     }
 
+    @RequiresFlagsEnabled(Flags.FLAG_REMOTE_VIEWS)
     @Test
     public void testCreateSmartspaceTargetFromRemoteViewsAndWidgetAtSameTime() {
         ComponentName testComponentName = new ComponentName("package_name", "class_name");

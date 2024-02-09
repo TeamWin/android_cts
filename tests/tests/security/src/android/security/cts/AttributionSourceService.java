@@ -48,6 +48,7 @@ public class AttributionSourceService extends Service {
 
     public static final int MSG_READ_ATTRIBUTION_SOURCE_BUNDLE = 0;
     public static final int MSG_READ_ATTRIBUTION_SOURCE = 1;
+    public static final int MSG_EXIT = 2;
 
     private static final String KEY_READ_RESULT = "AttributionSourceResult";
 
@@ -99,6 +100,9 @@ public class AttributionSourceService extends Service {
                     }
 
                     break;
+                case MSG_EXIT:
+                    Log.i(TAG, "Exiting (received MSG_EXIT)");
+                    System.exit(0);
                 default:
                     Log.e(TAG, "Unknown message type: " + receivingMessage.what);
                     super.handleMessage(receivingMessage);
@@ -131,7 +135,7 @@ public class AttributionSourceService extends Service {
         }
     }
 
-    public static class AttributionSourceServiceConnection implements AutoCloseable {
+    public static class AttributionSourceServiceConnection {
         private Messenger mService = null;
         private boolean mBind = false;
         private final Object mLock = new Object();
@@ -146,22 +150,6 @@ public class AttributionSourceService extends Service {
             mReplyThread.start();
             mReplyHandler = new ReplyHandler(mReplyThread.getLooper());
             mReplyMessenger = new Messenger(mReplyHandler);
-        }
-
-        @Override
-        public void close() {
-            stop();
-            mReplyThread.quit();
-            synchronized (mLock) {
-                mService = null;
-                mBind = false;
-            }
-        }
-
-        @Override
-        protected void finalize() throws Throwable {
-            close();
-            super.finalize();
         }
 
         private static final class ReplyHandler extends Handler {
@@ -263,12 +251,19 @@ public class AttributionSourceService extends Service {
             }
         }
 
-        public void stop() {
+        /**
+         * Stop the service process and unbind.
+         */
+        public void stop() throws RemoteException {
             synchronized (mLock) {
                 if (mBind) {
+                    mService.send(Message.obtain(null, MSG_EXIT));
                     mContext.unbindService(mConnection);
                     mBind = false;
+                    mService = null;
                 }
+
+                mReplyThread.quit();
             }
         }
 

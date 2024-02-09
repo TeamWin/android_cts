@@ -27,10 +27,13 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -38,6 +41,10 @@ import org.junit.runner.RunWith;
 @AppModeFull(reason = "unit test")
 @RunWith(AndroidJUnit4.class)
 public class CancelSelectionRequestTest {
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
     private static final IBinder TOKEN = new Binder();
     private static final boolean SHOULD_SHOW_CANCELLATION_UI = true;
     private static final String PACKAGE_NAME = "mock_package";
@@ -46,9 +53,10 @@ public class CancelSelectionRequestTest {
     @RequiresFlagsEnabled(FLAG_CONFIGURABLE_SELECTOR_UI_ENABLED)
     public void testConstructor() {
         final CancelSelectionRequest cancelUiRequest =
-                new CancelSelectionRequest(TOKEN, SHOULD_SHOW_CANCELLATION_UI, PACKAGE_NAME);
+                new CancelSelectionRequest(new RequestToken(TOKEN), SHOULD_SHOW_CANCELLATION_UI,
+                        PACKAGE_NAME);
         assertThat(cancelUiRequest.getRequestToken()).isEqualTo(new RequestToken(TOKEN));
-        assertThat(cancelUiRequest.getAppPackageName()).isEqualTo(PACKAGE_NAME);
+        assertThat(cancelUiRequest.getPackageName()).isEqualTo(PACKAGE_NAME);
         assertThat(cancelUiRequest.shouldShowCancellationExplanation()).isEqualTo(
                 SHOULD_SHOW_CANCELLATION_UI);
     }
@@ -57,10 +65,11 @@ public class CancelSelectionRequestTest {
     @RequiresFlagsEnabled(FLAG_CONFIGURABLE_SELECTOR_UI_ENABLED)
     public void testWriteToParcel() {
         final CancelSelectionRequest cancelUiRequest1 =
-                new CancelSelectionRequest(TOKEN, SHOULD_SHOW_CANCELLATION_UI, PACKAGE_NAME);
+                new CancelSelectionRequest(new RequestToken(TOKEN), SHOULD_SHOW_CANCELLATION_UI,
+                        PACKAGE_NAME);
         final CancelSelectionRequest cancelUiRequest2 = TestUtils.cloneParcelable(cancelUiRequest1);
         assertThat(cancelUiRequest2.getRequestToken()).isEqualTo(new RequestToken(TOKEN));
-        assertThat(cancelUiRequest2.getAppPackageName()).isEqualTo(PACKAGE_NAME);
+        assertThat(cancelUiRequest2.getPackageName()).isEqualTo(PACKAGE_NAME);
         assertThat(cancelUiRequest2.shouldShowCancellationExplanation())
                 .isEqualTo(SHOULD_SHOW_CANCELLATION_UI);
     }

@@ -23,16 +23,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.InstantAppInfo;
-import android.content.pm.PackageManager;
 import android.os.RemoteCallback;
 import android.os.UserHandle;
-import android.os.UserManager;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
@@ -57,6 +54,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.RequireMultiUserSupport;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.CommonPackages;
 import com.android.bedstead.nene.packages.Package;
@@ -73,17 +71,17 @@ import org.junit.rules.ErrorCollector;
 import org.junit.runner.RunWith;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @LargeTest
+@RequireFeature(CommonPackages.FEATURE_INPUT_METHODS)
+@RequireMultiUserSupport
 @RunWith(BedsteadJUnit4.class)
 public class MultiUserTest {
     private static final String TAG = "MultiUserTest";
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(15);
-    private static final long IME_COMMAND_TIMEOUT = TimeUnit.SECONDS.toMillis(20);
 
     @ClassRule
     @Rule
@@ -103,10 +101,6 @@ public class MultiUserTest {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = instrumentation.getContext();
         mImm = mContext.getSystemService(InputMethodManager.class);
-
-        assumeTrue(mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_INPUT_METHODS));
-        assumeTrue(UserManager.supportsMultipleUsers());
 
         mNeedsTearDown = true;
     }
@@ -217,14 +211,14 @@ public class MultiUserTest {
 
         // Install IME1 then enable/set it as the current IME for the main user.
         TestApis.packages().install(currentUser, new File(Ime1Constants.APK_PATH));
-        waitUntilImeIsInShellCommandResult(Ime1Constants.IME_ID, currentUser.id());
+        assertImeExistsInApiResult(Ime1Constants.IME_ID, currentUserId);
         runShellCommandOrThrow(ShellCommandUtils.enableIme(Ime1Constants.IME_ID, currentUserId));
         runShellCommandOrThrow(
                 ShellCommandUtils.setCurrentImeSync(Ime1Constants.IME_ID, currentUserId));
 
         // Install IME2 then enable/set it as the current IME for the profile user.
         TestApis.packages().install(profileUser, new File(Ime2Constants.APK_PATH));
-        waitUntilImeIsInShellCommandResult(Ime2Constants.IME_ID, profileUserId);
+        assertImeExistsInApiResult(Ime2Constants.IME_ID, profileUserId);
         runShellCommandOrThrow(ShellCommandUtils.enableIme(Ime2Constants.IME_ID, profileUserId));
         runShellCommandOrThrow(
                 ShellCommandUtils.setCurrentImeSync(Ime2Constants.IME_ID, profileUserId));
@@ -408,14 +402,6 @@ public class MultiUserTest {
                         userId));
             }
         }
-    }
-
-    private void waitUntilImeIsInShellCommandResult(String imeId, int userId) throws Exception {
-        final String command = ShellCommandUtils.getAvailableImes(userId);
-        PollingCheck.check(imeId + " is not found for user #" + userId + " within timeout.",
-                IME_COMMAND_TIMEOUT,
-                () -> Arrays.asList(runShellCommandOrThrow(command)
-                        .split("\n")).contains(imeId));
     }
 
     // TODO(b/282196632): remove this method once b/282196632) is fixed

@@ -69,6 +69,7 @@ public class ContactKeysManagerTest {
     private static final String HELPER_APP_LOOKUP_KEY = "0r1-423A2E4644502A2E50";
     private static final String HELPER_APP_DEVICE_ID = "someDeviceId";
     private static final String HELPER_APP_ACCOUNT_ID = "someAccountId";
+    private static final String OWNER_PACKAGE_NAME = "android.provider.cts.contactkeys";
 
     private ContactKeysManager mContactKeysManager;
     private Context mContext;
@@ -105,6 +106,8 @@ public class ContactKeysManagerTest {
                 .isEqualTo(ContactKeysManager.UNVERIFIED);
         assertThat(contactKey.getRemoteVerificationState())
                 .isEqualTo(ContactKeysManager.UNVERIFIED);
+        assertThat(contactKey.getOwnerPackageName()).isEqualTo(OWNER_PACKAGE_NAME);
+        assertThat(contactKey.getEmailAddress()).isEqualTo(null);
     }
 
     @Test

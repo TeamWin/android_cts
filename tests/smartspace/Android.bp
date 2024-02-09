@@ -20,6 +20,7 @@ android_test {
     name: "CtsSmartspaceServiceTestCases",
     defaults: ["cts_defaults"],
     static_libs: [
+        "android.app.smartspace.flags-aconfig-java",
         "androidx.annotation_annotation",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",

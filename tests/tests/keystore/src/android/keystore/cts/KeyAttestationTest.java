@@ -1044,6 +1044,10 @@ public class KeyAttestationTest {
         if (!TestUtils.isAttestationSupported()) {
             return;
         }
+        assumeTrue("Curve25519 Key attestation supported from KeyMint v2 and above.",
+                getContext().getPackageManager()
+                        .hasSystemFeature(PackageManager.FEATURE_HARDWARE_KEYSTORE,
+                                Attestation.KM_VERSION_KEYMINT_2));
 
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC)) {
             return;

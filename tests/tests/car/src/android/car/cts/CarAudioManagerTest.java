@@ -350,7 +350,8 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupInfo"})
-    public void getVolumeGroupInfo() {
+    @RequiresFlagsDisabled(Flags.FLAG_CAR_AUDIO_MIN_MAX_ACTIVATION_VOLUME)
+    public void getVolumeGroupInfo_withMinMaxActivationVolumeFlagDisabled() {
         assumeDynamicRoutingIsEnabled();
         int groupCount = mCarAudioManager.getVolumeGroupCount(PRIMARY_AUDIO_ZONE);
 
@@ -367,6 +368,42 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
                     info, index).that(info.getMaxVolumeGainIndex()).isEqualTo(maxIndex);
             expectWithMessage("Car volume group info min index for info %s and group %s",
                     info, index).that(info.getMinVolumeGainIndex()).isEqualTo(minIndex);
+        }
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupInfo",
+            "android.car.media.CarVolumeGroupInfo#getMaxActivationVolumeGainIndex",
+            "android.car.media.CarVolumeGroupInfo#getMinActivationVolumeGainIndex"})
+    @RequiresFlagsEnabled(Flags.FLAG_CAR_AUDIO_MIN_MAX_ACTIVATION_VOLUME)
+    public void getVolumeGroupInfo_withMinMaxActivationVolumeFlagEnabled() {
+        assumeDynamicRoutingIsEnabled();
+        int groupCount = mCarAudioManager.getVolumeGroupCount(PRIMARY_AUDIO_ZONE);
+
+        for (int index = 0; index < groupCount; index++) {
+            int minIndex = mCarAudioManager.getGroupMinVolume(PRIMARY_AUDIO_ZONE, index);
+            int maxIndex = mCarAudioManager.getGroupMaxVolume(PRIMARY_AUDIO_ZONE, index);
+            CarVolumeGroupInfo info =
+                    mCarAudioManager.getVolumeGroupInfo(PRIMARY_AUDIO_ZONE, index);
+            int minActivationIndex = info.getMinActivationVolumeGainIndex();
+            int maxActivationIndex = info.getMaxActivationVolumeGainIndex();
+
+            expectWithMessage("Car volume group id for info %s and group %s", info, index)
+                    .that(info.getId()).isEqualTo(index);
+            expectWithMessage("Car volume group info zone for info %s and group %s",
+                    info, index).that(info.getZoneId()).isEqualTo(PRIMARY_AUDIO_ZONE);
+            expectWithMessage("Car volume group info max index for info %s and group %s",
+                    info, index).that(info.getMaxVolumeGainIndex()).isEqualTo(maxIndex);
+            expectWithMessage("Car volume group info min index for info %s and group %s",
+                    info, index).that(info.getMinVolumeGainIndex()).isEqualTo(minIndex);
+            expectWithMessage("Car volume group info min activation volume for info %s and"
+                    + " group %s", info, index).that(minActivationIndex).isAtLeast(minIndex);
+            expectWithMessage("Car volume group info max activation volume for info %s and"
+                    + " group %s", info, index).that(maxActivationIndex).isAtMost(maxIndex);
+            expectWithMessage("Max activation volume and min activation volume for info %s"
+                    + " and group %s", info, index).that(maxActivationIndex)
+                    .isGreaterThan(minActivationIndex);
         }
     }
 

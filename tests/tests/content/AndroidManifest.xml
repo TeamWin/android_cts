@@ -637,6 +637,13 @@
         <activity
             android:name="android.content.res.cts.config.activity.ApplyOverrideConfigHandleOrientationActivity"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"/>
+
+        <receiver android:name="android.content.cts.ActivityRequireContentUriPermissionFromCallerTest$TestReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.content.cts.REQUIRE_CONTENT_URI_TEST_RECEIVER_ACTION" />
+            </intent-filter>
+        </receiver>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
