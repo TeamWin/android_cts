@@ -36,6 +36,7 @@ android_test {
         "CtsDomainVerificationJavaConstantsLibrary",
         "junit",
         "truth",
+        "android.content.pm.flags-aconfig-java",
     ],
     data: [
         ":CtsDomainVerificationTestDeclaringApp1",
