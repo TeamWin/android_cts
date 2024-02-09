@@ -18,6 +18,8 @@ package android.view.inputmethod.cts;
 
 import static android.provider.Settings.Secure.STYLUS_HANDWRITING_DEFAULT_VALUE;
 import static android.provider.Settings.Secure.STYLUS_HANDWRITING_ENABLED;
+import static android.view.inputmethod.ConnectionlessHandwritingCallback.CONNECTIONLESS_HANDWRITING_ERROR_NO_TEXT_RECOGNIZED;
+import static android.view.inputmethod.ConnectionlessHandwritingCallback.CONNECTIONLESS_HANDWRITING_ERROR_UNSUPPORTED;
 import static android.view.inputmethod.Flags.FLAG_CONNECTIONLESS_HANDWRITING;
 import static android.view.inputmethod.Flags.FLAG_HOME_SCREEN_HANDWRITING_DELEGATOR;
 import static android.view.inputmethod.Flags.initiationWithoutInputConnection;
@@ -67,6 +69,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.inputmethod.ConnectionlessHandwritingCallback;
+import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.Flags;
 import android.view.inputmethod.InputConnection;
@@ -1307,6 +1311,71 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     }
 
     /**
+     * When the IME supports connectionless handwriting sessions, inject stylus events on top of a
+     * handwriting initiation delegator view and verify a connectionless handwriting session is
+     * started. When the session is finished, verify that the delegation transition os triggered
+     * and the recognised text is committed.
+     */
+    @Test
+    @ApiTest(apis = {
+            "android.view.inputmethod.InputMethodManager"
+                    + "#startConnectionlessStylusHandwritingForDelegation",
+            "android.view.inputmethod.InputMethodManager#acceptStylusHandwritingDelegation",
+            "android.view.inputmethod.InputMethodService#onStartConnectionlessStylusHandwriting",
+            "android.view.inputmethod.InputMethodService#finishConnectionlessStylusHandwriting"})
+    public void testHandwriting_delegate_connectionless() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder().setConnectionlessHandwritingEnabled(true))) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String delegateMarker = getTestMarker();
+            final View delegatorView =
+                    launchTestActivityWithDelegate(
+                            delegateMarker, null /* delegateLatch */, 0 /* delegateDelayMs */);
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+            addVirtualStylusIdForTestSession();
+
+            int touchSlop = getTouchSlop();
+            int startX = delegatorView.getWidth() / 2;
+            int startY = delegatorView.getHeight() / 2;
+            int endX = startX + 2 * touchSlop;
+            int endY = startY + 2 * touchSlop;
+            TestUtils.injectStylusDownEvent(delegatorView, startX, startY);
+            TestUtils.injectStylusMoveEvents(delegatorView, startX, startY, endX, endY, 5);
+
+            expectEvent(
+                    stream,
+                    event -> "onPrepareStylusHandwriting".equals(event.getEventName()),
+                    TIMEOUT);
+            expectEvent(
+                    stream,
+                    event -> "onStartConnectionlessStylusHandwriting".equals(event.getEventName()),
+                    TIMEOUT);
+            verifyStylusHandwritingWindowIsShown(stream, imeSession);
+            // The transition to show the real edit text shouldn't occur yet.
+            notExpectEvent(
+                    stream, editorMatcher("onStartInput", delegateMarker), NOT_EXPECT_TIMEOUT);
+
+            TestUtils.injectStylusUpEvent(delegatorView, startX, startY);
+            imeSession.callFinishConnectionlessStylusHandwriting("abc");
+
+            // Finishing the handwriting session triggers the transition to show the real edit text.
+            expectEvent(
+                    stream,
+                    event -> "onFinishStylusHandwriting".equals(event.getEventName()),
+                    TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInput", delegateMarker), TIMEOUT);
+            // When the real edit text start its input connection, the recognised text from the
+            // connectionless handwriting session is committed.
+            EditText delegate =
+                    ((View) delegatorView.getParent()).findViewById(R.id.handwriting_delegate);
+            assertThat(delegate.getText().toString()).isEqualTo("abc");
+        }
+    }
+
+    /**
      * Inject stylus events on top of a handwriting initiation delegator view and verify handwriting
      * is started on the delegate editor, even though delegate took a little time to
      * acceptStylusHandwriting().
@@ -1627,6 +1696,138 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                             NOT_EXPECT_TIMEOUT);
                 }
             }
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.view.inputmethod.InputMethodManager#startConnectionlessStylusHandwriting",
+            "android.view.inputmethod.InputMethodService#onStartConnectionlessStylusHandwriting",
+            "android.view.inputmethod.InputMethodService#finishConnectionlessStylusHandwriting"})
+    public void testHandwriting_connectionless_standalone() throws Exception {
+        final InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder().setConnectionlessHandwritingEnabled(true))) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final View view =
+                    launchTestActivityWithDelegate(
+                            getTestMarker(), null /* delegateLatch */, 0 /* delegateDelayMs */);
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+            addVirtualStylusIdForTestSession();
+
+            TestUtils.injectStylusDownEvent(view, 0, 0);
+            CursorAnchorInfo cursorAnchorInfo = new CursorAnchorInfo.Builder().build();
+            TestCallback callback = new TestCallback();
+            imm.startConnectionlessStylusHandwriting(view, cursorAnchorInfo, view::post, callback);
+
+            expectEvent(
+                    stream,
+                    event -> "onPrepareStylusHandwriting".equals(event.getEventName()),
+                    TIMEOUT);
+            expectEvent(
+                    stream,
+                    event -> "onStartConnectionlessStylusHandwriting".equals(event.getEventName()),
+                    TIMEOUT);
+            verifyStylusHandwritingWindowIsShown(stream, imeSession);
+
+            imeSession.callFinishConnectionlessStylusHandwriting("abc");
+
+            expectEvent(
+                    stream,
+                    event -> "onFinishStylusHandwriting".equals(event.getEventName()),
+                    TIMEOUT);
+            assertThat(callback.mResultText).isEqualTo("abc");
+            assertThat(callback.mErrorCode).isEqualTo(-1);
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.view.inputmethod.InputMethodManager#startConnectionlessStylusHandwriting",
+            "android.view.inputmethod.InputMethodService#onStartConnectionlessStylusHandwriting",
+            "android.view.inputmethod.InputMethodService#finishConnectionlessStylusHandwriting"})
+    public void testHandwriting_connectionless_standalone_error() throws Exception {
+        final InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder().setConnectionlessHandwritingEnabled(true))) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final View view =
+                    launchTestActivityWithDelegate(
+                            getTestMarker(), null /* delegateLatch */, 0 /* delegateDelayMs */);
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+            addVirtualStylusIdForTestSession();
+
+            TestUtils.injectStylusDownEvent(view, 0, 0);
+            CursorAnchorInfo cursorAnchorInfo = new CursorAnchorInfo.Builder().build();
+            TestCallback callback = new TestCallback();
+            imm.startConnectionlessStylusHandwriting(view, cursorAnchorInfo, view::post, callback);
+
+            expectEvent(
+                    stream,
+                    event -> "onPrepareStylusHandwriting".equals(event.getEventName()),
+                    TIMEOUT);
+            expectEvent(
+                    stream,
+                    event -> "onStartConnectionlessStylusHandwriting".equals(event.getEventName()),
+                    TIMEOUT);
+            verifyStylusHandwritingWindowIsShown(stream, imeSession);
+
+            // Finish the session with no text recognized.
+            imeSession.callFinishConnectionlessStylusHandwriting("");
+
+            expectEvent(
+                    stream,
+                    event -> "onFinishStylusHandwriting".equals(event.getEventName()),
+                    TIMEOUT);
+            assertThat(callback.mResultText).isNull();
+            assertThat(callback.mErrorCode)
+                    .isEqualTo(CONNECTIONLESS_HANDWRITING_ERROR_NO_TEXT_RECOGNIZED);
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.view.inputmethod.InputMethodManager#startConnectionlessStylusHandwriting",
+            "android.view.inputmethod.InputMethodService#onStartConnectionlessStylusHandwriting"})
+    public void testHandwriting_connectionless_standalone_unsupported() throws Exception {
+        final InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder().setConnectionlessHandwritingEnabled(false))) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final View view =
+                    launchTestActivityWithDelegate(
+                            getTestMarker(), null /* delegateLatch */, 0 /* delegateDelayMs */);
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+            addVirtualStylusIdForTestSession();
+
+            TestUtils.injectStylusDownEvent(view, 0, 0);
+            CursorAnchorInfo cursorAnchorInfo = new CursorAnchorInfo.Builder().build();
+            TestCallback callback = new TestCallback();
+            imm.startConnectionlessStylusHandwriting(view, cursorAnchorInfo, view::post, callback);
+
+            // onPrepareStylusHandwriting and onStartConnectionlessStylusHandwriting are called, but
+            // onStartConnectionlessStylusHandwriting returns false so handwriting does not start.
+            expectEvent(
+                    stream,
+                    event -> "onPrepareStylusHandwriting".equals(event.getEventName()),
+                    TIMEOUT);
+            expectEvent(
+                    stream,
+                    event -> "onStartConnectionlessStylusHandwriting".equals(event.getEventName()),
+                    TIMEOUT);
+            verifyStylusHandwritingWindowIsNotShown(stream, imeSession);
+            assertThat(callback.mResultText).isNull();
+            assertThat(callback.mErrorCode)
+                    .isEqualTo(CONNECTIONLESS_HANDWRITING_ERROR_UNSUPPORTED);
         }
     }
 
@@ -2459,6 +2660,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                         editText.setIsHandwritingDelegate(true);
                         editText.setPrivateImeOptions(editTextMarker);
                         editText.setHint("editText");
+                        editText.setId(R.id.handwriting_delegate);
                         layout.addView(editText);
                         editText.postDelayed(() -> {
                             editText.requestFocus();
@@ -2594,6 +2796,29 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                 }
             }
             return super.onTouchEvent(event);
+        }
+    }
+
+    private static final class TestCallback implements ConnectionlessHandwritingCallback {
+        private CharSequence mResultText;
+        public int mErrorCode = -1;
+
+        @Override
+        public void onResult(@NonNull CharSequence text) {
+            assertNoCallbackMethodsPreviouslyCalled();
+            mResultText = text;
+        }
+
+        @Override
+        public void onError(int errorCode) {
+            assertNoCallbackMethodsPreviouslyCalled();
+            mErrorCode = errorCode;
+        }
+
+        // Used to verify that the callback only receives a single result.
+        private void assertNoCallbackMethodsPreviouslyCalled() {
+            assertThat(mResultText).isNull();
+            assertThat(mErrorCode).isEqualTo(-1);
         }
     }
 }

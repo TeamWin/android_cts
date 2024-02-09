@@ -1895,6 +1895,18 @@ public class MockImeSession implements AutoCloseable {
         return callCommandInternal("finishStylusHandwriting", new Bundle());
     }
 
+    /**
+     * Lets {@link MockIme} call
+     * {@link android.inputmethodservice.InputMethodService#finishConnectionlessStylusHandwriting}
+     * with the given {@code text}.
+     */
+    @NonNull
+    public ImeCommand callFinishConnectionlessStylusHandwriting(CharSequence text) {
+        Bundle params = new Bundle();
+        params.putCharSequence("text", text);
+        return callCommandInternal("finishConnectionlessStylusHandwriting", params);
+    }
+
     @NonNull
     public ImeCommand callGetCurrentWindowMetricsBounds() {
         return callCommandInternal("getCurrentWindowMetricsBounds", new Bundle());
