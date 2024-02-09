@@ -124,6 +124,7 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
         super.setUp();
         mDeviceConfigStateHelper =
                 new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_JOB_SCHEDULER);
+        SystemUtil.runShellCommand("cmd jobscheduler cache-config-changes on");
         // Disable batching behavior.
         mDeviceConfigStateHelper.set("min_ready_cpu_only_jobs_count", "0");
         mDeviceConfigStateHelper.set("min_ready_non_active_jobs_count", "0");
@@ -151,6 +152,7 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
     @CallSuper
     @Override
     public void tearDown() throws Exception {
+        SystemUtil.runShellCommand("cmd jobscheduler cache-config-changes off");
         SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler monitor-battery off");
         SystemUtil.runShellCommand(getInstrumentation(), "cmd battery reset");
         Settings.Global.putString(mContext.getContentResolver(),
@@ -270,6 +272,28 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
     void closeActivity() {
         mContext.sendBroadcast(new Intent(TestActivity.ACTION_FINISH_ACTIVITY));
         mActivityStarted = false;
+    }
+
+    void setDeviceConfigFlag(String key, String value, boolean waitForConfirmation)
+            throws Exception {
+        mDeviceConfigStateHelper.set(key, value);
+        if (waitForConfirmation) {
+            waitUntil("Config didn't update appropriately to '" + value
+                            + "'. Current value=" + getConfigValue(key),
+                    5 /* seconds */,
+                    () -> {
+                        final String curVal = getConfigValue(key);
+                        if (value == null) {
+                            return "null".equals(curVal);
+                        } else {
+                            return curVal.equals(value);
+                        }
+                    });
+        }
+    }
+
+    static String getConfigValue(String key) {
+        return SystemUtil.runShellCommand("cmd jobscheduler get-config-value " + key).trim();
     }
 
     String getJobState(int jobId) throws Exception {
