@@ -1804,6 +1804,53 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
             .that(mEventCallback.receivedVolumeGroupEvents()).isFalse();
     }
 
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#isVolumeGroupMuted",
+            "android.car.media.CarVolumeGroupInfo#isMuted"})
+    public void isVolumeGroupMuted() {
+        assumeDynamicRoutingIsEnabled();
+        readFirstZoneAndVolumeGroup();
+        CarVolumeGroupInfo volumeGroupInfo = mCarAudioManager.getVolumeGroupInfo(mZoneId,
+                mVolumeGroupId);
+
+        boolean isMuted = mCarAudioManager.isVolumeGroupMuted(mZoneId, mVolumeGroupId);
+
+        assertWithMessage("Mute state for zone %s group %s", mZoneId, mVolumeGroupId)
+                .that(isMuted).isEqualTo(volumeGroupInfo.isMuted());
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#setVolumeGroupMute",
+            "android.car.media.CarAudioManager#isVolumeGroupMuted",
+            "android.car.media.CarVolumeGroupInfo#isMutedBySystem"})
+    @RequiresFlagsEnabled(Flags.FLAG_CAR_AUDIO_MUTE_AMBIGUITY)
+    public void setVolumeGroupMute_withMuteAmbiguityFlagEnabled() {
+        assumeDynamicRoutingIsEnabled();
+        readFirstZoneAndVolumeGroup();
+        boolean isMuted = mCarAudioManager.isVolumeGroupMuted(mZoneId, mVolumeGroupId);
+        boolean isMutedBySystem = mCarAudioManager.getVolumeGroupInfo(mZoneId,
+                mVolumeGroupId).isMutedBySystem();
+        String muteOperationStr = isMuted ? "unmuting" : "muting";
+
+        try {
+            mCarAudioManager.setVolumeGroupMute(mZoneId, mVolumeGroupId, !isMuted, /* flags= */ 0);
+
+            assertWithMessage("Mute state for zone %s group %s after %s", mZoneId, mVolumeGroupId,
+                    muteOperationStr)
+                    .that(mCarAudioManager.isVolumeGroupMuted(mZoneId, mVolumeGroupId))
+                    .isEqualTo(mCarAudioManager.getVolumeGroupInfo(mZoneId, mVolumeGroupId)
+                            .isMuted());
+            assertWithMessage("Mute by system state for zone %s group %s after %s", mZoneId,
+                    mVolumeGroupId, muteOperationStr)
+                    .that(mCarAudioManager.getVolumeGroupInfo(mZoneId, mVolumeGroupId)
+                            .isMutedBySystem()).isEqualTo(isMutedBySystem);
+        } finally {
+            mCarAudioManager.setVolumeGroupMute(mZoneId, mVolumeGroupId, isMuted, /* flags= */ 0);
+        }
+    }
+
     private int getNumberOfPrimaryZoneAudioMediaCallbacks() {
         if (Flags.carDumpToProto()) {
             return mCarAudioServiceProtoDump.getMediaRequestHandler().hasMediaRequestCallbackCount()
