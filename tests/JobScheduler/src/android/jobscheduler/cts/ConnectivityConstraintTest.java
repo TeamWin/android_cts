@@ -350,21 +350,16 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             Log.d(TAG, "App standby not enabled");
             return;
         }
-        // We're skipping this test because we can't make the ethernet connection metered.
-        if (hasEthernetConnection()) {
-            Log.d(TAG, "Skipping test since ethernet is connected.");
-            return;
-        }
         if (mHasWifi) {
-            setWifiMeteredState(true);
-        } else if (checkDeviceSupportsMobileData()) {
-            disconnectWifiToConnectToMobile();
-        } else {
-            Log.d(TAG, "Skipping test that requires a metered network.");
+            setWifiMeteredState(false);
+        } else if (!hasEthernetConnection()) {
+            // We're skipping this test because we can't force cellular or other networks to be
+            // unmetered. For now, we assume ethernet is always unmetered.
+            Log.d(TAG, "Skipping test that requires an unmetered network.");
             return;
         }
 
-        mDeviceConfigStateHelper.set("qc_max_session_count_restricted", "0");
+        setDeviceConfigFlag("qc_max_session_count_restricted", "0", true);
         SystemUtil.runShellCommand("am set-standby-bucket "
                 + kJobServiceComponent.getPackageName() + " restricted");
         BatteryUtils.runDumpsysBatteryUnplug();
