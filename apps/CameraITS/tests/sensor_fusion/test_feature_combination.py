@@ -75,6 +75,10 @@ class FeatureCombinationTest(its_base_test.ItsBaseTest):
       props = cam.get_camera_properties()
       feature_combination_query_version = props.get(
           'android.info.sessionConfigurationQueryVersion')
+      if not feature_combination_query_version:
+        feature_combination_query_version = (
+            its_session_utils.ANDROID14_API_LEVEL
+        )
       should_run = (feature_combination_query_version >=
                     its_session_utils.ANDROID15_API_LEVEL)
       camera_properties_utils.skip_unless(should_run)
