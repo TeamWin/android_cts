@@ -580,7 +580,7 @@ public class SplitAppTest {
         } catch (SecurityException expected) {
         }
 
-        // New Vibrate permision should be granted
+        // New Vibrate permission should be granted
         getContext().enforceCallingOrSelfPermission(android.Manifest.permission.VIBRATE, null);
     }
 
