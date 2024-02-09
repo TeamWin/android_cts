@@ -46,16 +46,21 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemProperties;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bluetooth.flags.Flags;
 import com.android.compatibility.common.util.ApiLevelUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -79,6 +84,10 @@ public class BluetoothAdapterTest {
     private static final int SET_NAME_TIMEOUT = 5000; // ms timeout for setting adapter name
     private static final String ENABLE_DUAL_MODE_AUDIO =
             "persist.bluetooth.enable_dual_mode_audio";
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private Context mContext;
     private boolean mHasBluetooth;
@@ -631,6 +640,27 @@ public class BluetoothAdapterTest {
                 BluetoothProfile.getProfileName(BluetoothProfile.LE_AUDIO_BROADCAST));
         assertEquals("LE_AUDIO_BROADCAST_ASSISTANT",
                 BluetoothProfile.getProfileName(BluetoothProfile.LE_AUDIO_BROADCAST_ASSISTANT));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_AUTO_ON_FEATURE)
+    public void autoOnApi() {
+        assumeTrue(mHasBluetooth);
+
+        assertThrows(SecurityException.class, () -> mAdapter.isAutoOnSupported());
+        assertThrows(SecurityException.class, () -> mAdapter.isAutoOnEnabled());
+        assertThrows(SecurityException.class, () -> mAdapter.setAutoOnEnabled(false));
+
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_PRIVILEGED);
+
+        // Not all devices support the auto on feature
+        assumeTrue(mAdapter.isAutoOnSupported());
+
+        mAdapter.setAutoOnEnabled(false);
+        assertEquals(false, mAdapter.isAutoOnEnabled());
+
+        mAdapter.setAutoOnEnabled(true);
+        assertEquals(true, mAdapter.isAutoOnEnabled());
     }
 
     @Test
