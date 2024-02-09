@@ -76,8 +76,11 @@ class MockSatelliteServiceManager {
             "cmd phone set-satellite-listening-timeout-duration -t ";
     private static final String SET_SATELLITE_POINTING_UI_CLASS_NAME_CMD =
             "cmd phone set-satellite-pointing-ui-class-name";
-    private static final String SET_SATELLITE_DEVICE_ALIGN_TIMEOUT_DURATION_CMD =
-            "cmd phone set-satellite-device-aligned-timeout-duration -t ";
+    private static final String SET_DATAGRAM_CONTROLLER_TIMEOUT_DURATION_CMD =
+            "cmd phone set-datagram-controller-timeout-duration ";
+
+    private static final String SET_SATELLITE_CONTROLLER_TIMEOUT_DURATION_CMD =
+            "cmd phone set-satellite-controller-timeout-duration ";
     private static final String SET_SHOULD_SEND_DATAGRAM_TO_MODEM_IN_DEMO_MODE =
             "cmd phone set-should-send-datagram-to-modem-in-demo-mode ";
     private static final String SET_COUNTRY_CODES = "cmd phone set-country-codes";
@@ -106,6 +109,8 @@ class MockSatelliteServiceManager {
     private final Semaphore mPollPendingDatagramsSemaphore = new Semaphore(0);
     private final Semaphore mStopPointingUiSemaphore = new Semaphore(0);
     private final Semaphore mSendDatagramsSemaphore = new Semaphore(0);
+    private final Semaphore mRequestSatelliteEnabledSemaphore = new Semaphore(0);
+    private final Object mRequestSatelliteEnabledLock = new Object();
     private List<SatelliteDatagram> mSentSatelliteDatagrams = new ArrayList<>();
     private List<Boolean> mSentIsEmergencyList = new ArrayList<>();
     private final Object mSendDatagramLock = new Object();
@@ -193,6 +198,16 @@ class MockSatelliteServiceManager {
                         mSetSatellitePlmnSemaphore.release();
                     } catch (Exception ex) {
                         logd("onSetSatellitePlmn: Got exception, ex=" + ex);
+                    }
+                }
+
+                @Override
+                public void onRequestSatelliteEnabled(boolean enableSatellite) {
+                    logd("onRequestSatelliteEnabled: enableSatellite=" + enableSatellite);
+                    try {
+                        mRequestSatelliteEnabledSemaphore.release();
+                    } catch (Exception ex) {
+                        logd("onRequestSatelliteEnabled: Got exception, ex=" + ex);
                     }
                 }
             };
@@ -607,6 +622,12 @@ class MockSatelliteServiceManager {
         }
     }
 
+    void clearRequestSatelliteEnabledInfo() {
+        synchronized (mRequestSatelliteEnabledLock) {
+            mRequestSatelliteEnabledSemaphore.drainPermits();
+        }
+    }
+
     int getTotalCountOfSentSatelliteDatagrams() {
         synchronized (mSendDatagramLock) {
             return mSentSatelliteDatagrams.size();
@@ -711,6 +732,22 @@ class MockSatelliteServiceManager {
                 }
             } catch (Exception ex) {
                 loge("onSendSatelliteDatagram: Got exception=" + ex);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    boolean waitForEventOnRequestSatelliteEnabled(int expectedNumberOfEvents) {
+        for (int i = 0; i < expectedNumberOfEvents; i++) {
+            try {
+                if (!mRequestSatelliteEnabledSemaphore.tryAcquire(
+                        TIMEOUT, TimeUnit.MILLISECONDS)) {
+                    loge("Timeout to receive OnRequestSatelliteEnabled");
+                    return false;
+                }
+            } catch (Exception ex) {
+                loge("OnRequestSatelliteEnabled: Got exception=" + ex);
                 return false;
             }
         }
@@ -989,15 +1026,44 @@ class MockSatelliteServiceManager {
         }
     }
 
-    boolean setSatelliteDeviceAlignedTimeoutDuration(long timeoutMillis) {
+    boolean setDatagramControllerTimeoutDuration(
+            boolean reset, int timeoutType, long timeoutMillis) {
+        StringBuilder command = new StringBuilder();
+        command.append(SET_DATAGRAM_CONTROLLER_TIMEOUT_DURATION_CMD);
+        if (reset) {
+            command.append("-r");
+        }
+        command.append(" -t " + timeoutType);
+        command.append(" -d " + timeoutMillis);
+
         try {
             String result =
-                    TelephonyUtils.executeShellCommand(mInstrumentation,
-                            SET_SATELLITE_DEVICE_ALIGN_TIMEOUT_DURATION_CMD + timeoutMillis);
-            logd("setDeviceAlignedTimeoutDuration: result = " + result);
+                    TelephonyUtils.executeShellCommand(mInstrumentation, command.toString());
+            logd("setDatagramControllerTimeoutDuration: result = " + result);
             return "true".equals(result);
         } catch (Exception e) {
-            loge("setDeviceAlignedTimeoutDuration: e=" + e);
+            loge("setDatagramControllerTimeoutDuration: e=" + e);
+            return false;
+        }
+    }
+
+    boolean setSatelliteControllerTimeoutDuration(
+            boolean reset, int timeoutType, long timeoutMillis) {
+        StringBuilder command = new StringBuilder();
+        command.append(SET_SATELLITE_CONTROLLER_TIMEOUT_DURATION_CMD);
+        if (reset) {
+            command.append("-r");
+        }
+        command.append(" -t " + timeoutType);
+        command.append(" -d " + timeoutMillis);
+
+        try {
+            String result =
+                    TelephonyUtils.executeShellCommand(mInstrumentation, command.toString());
+            logd("setSatelliteControllerTimeoutDuration: result = " + result);
+            return "true".equals(result);
+        } catch (Exception e) {
+            loge("setSatelliteControllerTimeoutDuration: e=" + e);
             return false;
         }
     }
@@ -1032,6 +1098,15 @@ class MockSatelliteServiceManager {
             return false;
         }
         return mSatelliteService.sendSavedDatagram();
+    }
+
+    boolean respondToRequestSatelliteEnabled(boolean isEnabled) {
+        logd("respondToRequestSatelliteEnabled, isEnabled=" + isEnabled);
+        if (mSatelliteService == null) {
+            loge("respondToRequestSatelliteEnabled: mSatelliteService is null");
+            return false;
+        }
+        return mSatelliteService.respondToRequestSatelliteEnabled(isEnabled);
     }
 
     boolean stopExternalSatelliteService() {
