@@ -59,7 +59,7 @@ extern "C" jobject Java_android_media_audio_cts_AudioMetadataTest_nativeGetByteB
         return nullptr;
     }
     audio_utils::metadata::Data d = audio_utils::metadata::dataFromByteString(
-            audio_utils::metadata::ByteString(bytes, sizeInBytes));
+            audio_utils::metadata::ByteString(bytes, bytes + sizeInBytes));
 
     audio_utils::metadata::ByteString bs = byteStringFromData(d);
 
