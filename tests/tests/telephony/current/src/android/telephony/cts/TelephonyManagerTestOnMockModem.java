@@ -489,6 +489,13 @@ public class TelephonyManagerTestOnMockModem {
     public void testVoiceCallState() throws Throwable {
         Log.d(TAG, "TelephonyManagerTestOnMockModem#testVoiceCallState");
 
+        // Skip the test if it is a data-only device
+        final PackageManager pm = getContext().getPackageManager();
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_CALLING)) {
+            Log.d(TAG, "Skipping test: Not test on data-only device");
+            return;
+        }
+
         assumeTrue(isSimHotSwapCapable());
 
         int slotId = 0;
