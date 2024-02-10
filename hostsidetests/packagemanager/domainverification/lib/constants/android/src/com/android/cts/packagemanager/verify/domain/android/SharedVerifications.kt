@@ -28,6 +28,7 @@ import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DECLARING_P
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DOMAIN_1
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DOMAIN_2
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DOMAIN_3
+import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DOMAIN_7
 import com.google.common.truth.Truth
 
 object SharedVerifications {
@@ -47,8 +48,12 @@ object SharedVerifications {
             val enablePrefix = "pm enable --user ${context.userId}"
             ShellUtils.runShellCommand("$enablePrefix $DECLARING_PKG_NAME_1")
             ShellUtils.runShellCommand("$enablePrefix $DECLARING_PKG_NAME_2")
-            ShellUtils.runShellCommand("$enablePrefix ${DECLARING_PKG_1_COMPONENT.flattenToString()}")
-            ShellUtils.runShellCommand("$enablePrefix ${DECLARING_PKG_2_COMPONENT.flattenToString()}")
+            ShellUtils.runShellCommand(
+                "$enablePrefix ${DECLARING_PKG_1_COMPONENT.flattenToString()}"
+            )
+            ShellUtils.runShellCommand(
+                "$enablePrefix ${DECLARING_PKG_2_COMPONENT.flattenToString()}"
+            )
         }
     }
 
@@ -66,6 +71,7 @@ object SharedVerifications {
                     DOMAIN_1 to DomainVerificationUserState.DOMAIN_STATE_NONE,
                     DOMAIN_2 to DomainVerificationUserState.DOMAIN_STATE_NONE,
                     DOMAIN_3 to DomainVerificationUserState.DOMAIN_STATE_NONE,
+                    DOMAIN_7 to DomainVerificationUserState.DOMAIN_STATE_NONE,
                 )
             )
         }
@@ -84,6 +90,7 @@ object SharedVerifications {
                     DOMAIN_1 to DomainVerificationUserState.DOMAIN_STATE_VERIFIED,
                     DOMAIN_2 to DomainVerificationUserState.DOMAIN_STATE_NONE,
                     DOMAIN_3 to DomainVerificationUserState.DOMAIN_STATE_NONE,
+                    DOMAIN_7 to DomainVerificationUserState.DOMAIN_STATE_NONE,
                 )
             )
         }
@@ -101,6 +108,7 @@ object SharedVerifications {
                     DOMAIN_1 to DomainVerificationUserState.DOMAIN_STATE_VERIFIED,
                     DOMAIN_2 to DomainVerificationUserState.DOMAIN_STATE_SELECTED,
                     DOMAIN_3 to DomainVerificationUserState.DOMAIN_STATE_NONE,
+                    DOMAIN_7 to DomainVerificationUserState.DOMAIN_STATE_NONE,
                 )
             )
         }
@@ -116,6 +124,7 @@ object SharedVerifications {
                     DOMAIN_1 to DomainVerificationUserState.DOMAIN_STATE_VERIFIED,
                     DOMAIN_2 to DomainVerificationUserState.DOMAIN_STATE_SELECTED,
                     DOMAIN_3 to DomainVerificationUserState.DOMAIN_STATE_NONE,
+                    DOMAIN_7 to DomainVerificationUserState.DOMAIN_STATE_NONE,
                 )
             )
         }
