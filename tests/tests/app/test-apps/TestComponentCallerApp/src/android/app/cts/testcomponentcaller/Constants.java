@@ -21,14 +21,14 @@ import android.content.ComponentName;
 /** Constants shared with {@link android.app.cts.ComponentCallerTest} */
 public class Constants {
     public static final String HELPER_APP_PACKAGE = "android.app.cts.testcomponentcaller";
-    public static final ComponentName HELPER_APP_ACTIVITY = new ComponentName(
-            HELPER_APP_PACKAGE, HELPER_APP_PACKAGE + ".TestActivity");
+    public static final ComponentName HELPER_APP_INITIAL_CALLER_ACTIVITY = new ComponentName(
+            HELPER_APP_PACKAGE, HELPER_APP_PACKAGE + ".TestInitialCallerActivity");
 
     private static final String TEST_PACKAGE = "android.app.cts";
     public static final ComponentName TEST_RECEIVER = new ComponentName(TEST_PACKAGE,
             TEST_PACKAGE + ".ComponentCallerTest$TestReceiver");
-    public static final ComponentName TEST_ACTIVITY = new ComponentName(TEST_PACKAGE,
-            TEST_PACKAGE + ".ComponentCallerTest$TestActivity");
+    public static final ComponentName TEST_INITIAL_CALLER_ACTIVITY = new ComponentName(TEST_PACKAGE,
+            TEST_PACKAGE + ".ComponentCallerTest$InitialCallerTestActivity");
 
     public static final String TEST_RECEIVER_ACTION = "android.app.cts.ACTIVITY_CALLER_ACTION";
 

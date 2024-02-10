@@ -24,7 +24,7 @@ import static android.app.cts.testcomponentcaller.Constants.EXTRA_SECURITY_EXCEP
 import static android.app.cts.testcomponentcaller.Constants.SEND_TEST_BROADCAST_ACTION_ID;
 import static android.app.cts.testcomponentcaller.Constants.START_TEST_ACTIVITY_ACTION_ID;
 import static android.app.cts.testcomponentcaller.Constants.URI_LOCATION_ID;
-import static android.app.cts.testcomponentcaller.Constants.HELPER_APP_ACTIVITY;
+import static android.app.cts.testcomponentcaller.Constants.HELPER_APP_INITIAL_CALLER_ACTIVITY;
 import static android.app.cts.testcomponentcaller.Constants.HELPER_APP_PACKAGE;
 import static android.app.cts.testcomponentcaller.Constants.INVALID_PERMISSION_RESULT;
 import static android.app.cts.testcomponentcaller.Constants.URI_IN_CLIP_DATA_LOCATION_ID;
@@ -41,6 +41,7 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ContentProvider;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -71,6 +72,7 @@ import org.junit.runner.RunWith;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Tests for {@link android.app.ComponentCaller#checkContentUriPermission}.
@@ -112,24 +114,28 @@ public class ComponentCallerTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
+    @ApiTest(apis = {"android.app.Activity#getInitialCaller",
+            "android.app.ComponentCaller#checkContentUriPermission"})
     public void
-    testCheckContentUriPermission_throwsIfCallerOfApiDoesNotHaveTheSameAccessToContentUri(
+    testActivityInitialCaller_checkContentUriPermission_throwsIfCallerOfApiDoesNotHaveTheSameAccessToContentUri(
             @TestParameter ModeFlags modeFlagsToCheck) throws Exception {
-        Intent intent = getUriInDataSendBroadcastTestIntent(TestProvider.CONTENT_URI,
+        Intent intent = getUriInDataSendBroadcastTestIntent(TestProvider.getContentUri(),
                 modeFlagsToCheck);
 
         mContext.startActivity(intent);
 
         assertActivityWasInvoked();
         assertTrue("Should throw a SecurityException because the caller of the API doesn't have the"
-                + " same " + modeFlagsToString(modeFlagsToCheck) + " access to a content URI",
+                        + " same " + modeFlagsToString(modeFlagsToCheck) + " access to a content"
+                        + " URI",
                 TestResults.sIsSecurityExceptionCaught);
     }
 
     @Test
-    @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
-    public void testCheckContentUriPermission_throwsIfContentUriWasNotPassedAtLaunch(
+    @ApiTest(apis = {"android.app.Activity#getInitialCaller",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    public void
+    testActivityInitialCaller_checkContentUriPermission_throwsIfContentUriWasNotPassedAtLaunch(
             @TestParameter ModeFlags modeFlagsToCheck) throws Exception {
         Intent intent = getSendBroadcastTestIntent(NONE_PROVIDED_USE_HELPER_APP_URI_LOCATION_ID,
                 modeFlagsToCheck);
@@ -138,13 +144,14 @@ public class ComponentCallerTest {
 
         assertActivityWasInvoked();
         assertTrue("Should throw an IllegalArgumentException because the supplied content URI was"
-                + " not passed at launch", TestResults.sIsIllegalArgumentExceptionCaught);
+                        + " not passed at launch", TestResults.sIsIllegalArgumentExceptionCaught);
     }
 
     @Test
-    @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
+    @ApiTest(apis = {"android.app.Activity#getInitialCaller",
+            "android.app.ComponentCaller#checkContentUriPermission"})
     public void
-    testCheckContentUriPermission_returnsCorrectResultEvenIfCallerOfActivityGrantsAndDies(
+    testActivityInitialCaller_checkContentUriPermission_returnsCorrectResultEvenIfCallerOfActivityGrantsAndDies(
             @TestParameter ModeFlags modeFlagsToCheck) throws Exception {
         Intent intent = getStartActivityTestIntent(NONE_PROVIDED_USE_HELPER_APP_URI_LOCATION_ID,
                 modeFlagsToCheck);
@@ -158,8 +165,10 @@ public class ComponentCallerTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
-    public void testCheckContentUriPermission_getDataContentUriViaPermission_noPermission(
+    @ApiTest(apis = {"android.app.Activity#getInitialCaller",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    public void
+    testActivityInitialCaller_checkContentUriPermission_getDataContentUriViaPermission_noPermission(
             @TestParameter ModeFlags modeFlagsToCheck) throws Exception {
         Intent intent = getUriInDataSendBroadcastTestIntent(
                 CONTENT_URI_NO_PERMISSION, modeFlagsToCheck);
@@ -174,8 +183,10 @@ public class ComponentCallerTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
-    public void testCheckContentUriPermission_getDataContentUriViaPermission_hasRead()
+    @ApiTest(apis = {"android.app.Activity#getInitialCaller",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    public void
+    testActivityInitialCaller_checkContentUriPermission_getDataContentUriViaPermission_hasRead()
             throws Exception {
         Intent intent = getUriInDataSendBroadcastTestIntent(CONTENT_URI_READ_PERMISSION,
                 ModeFlags.READ);
@@ -188,8 +199,10 @@ public class ComponentCallerTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
-    public void testCheckContentUriPermission_getDataContentUriViaPermission_hasReadButNoWrite(
+    @ApiTest(apis = {"android.app.Activity#getInitialCaller",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    public void
+    testActivityInitialCaller_checkContentUriPermission_getDataContentUriViaPermission_hasReadButNoWrite(
             @TestParameter(valuesProvider = WriteModeFlagsProvider.class)
             ModeFlags modeFlagsToCheck) throws Exception {
         Intent intent = getUriInDataSendBroadcastTestIntent(
@@ -203,8 +216,10 @@ public class ComponentCallerTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
-    public void testCheckContentUriPermission_clipDataContentUri_noPermission(
+    @ApiTest(apis = {"android.app.Activity#getInitialCaller",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    public void
+    testActivityInitialCaller_checkContentUriPermission_clipDataContentUri_noPermission(
             @TestParameter ModeFlags modeFlagsToCheck) throws Exception {
         Intent intent = getSendBroadcastTestIntent(URI_IN_CLIP_DATA_LOCATION_ID,
                 modeFlagsToCheck);
@@ -220,8 +235,11 @@ public class ComponentCallerTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
-    public void testCheckContentUriPermission_clipDataContentUri_hasRead() throws Exception {
+    @ApiTest(apis = {"android.app.Activity#getInitialCaller",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    public void
+    testActivityInitialCaller_checkContentUriPermission_clipDataContentUri_hasRead()
+            throws Exception {
         Intent intent = getSendBroadcastTestIntent(URI_IN_CLIP_DATA_LOCATION_ID, ModeFlags.READ);
         intent.setClipData(ClipData.newRawUri("", CONTENT_URI_READ_PERMISSION));
 
@@ -233,8 +251,10 @@ public class ComponentCallerTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
-    public void testCheckContentUriPermission_clipDataContentUri_hasReadButNoWrite(
+    @ApiTest(apis = {"android.app.Activity#getInitialCaller",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    public void
+    testActivityInitialCaller_checkContentUriPermission_clipDataContentUri_hasReadButNoWrite(
             @TestParameter(valuesProvider = WriteModeFlagsProvider.class)
             ModeFlags modeFlagsToCheck) throws Exception {
         Intent intent = getSendBroadcastTestIntent(URI_IN_CLIP_DATA_LOCATION_ID,
@@ -249,10 +269,11 @@ public class ComponentCallerTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
-    public void testCheckContentUriPermission_contentUriViaGrant(
+    @ApiTest(apis = {"android.app.Activity#getInitialCaller",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    public void testActivityInitialCaller_checkContentUriPermission_contentUriViaGrant(
             @TestParameter ModeFlags modeFlagsToCheck) throws Exception {
-        Intent intent = getUriInDataSendBroadcastTestIntent(TestProvider.CONTENT_URI,
+        Intent intent = getUriInDataSendBroadcastTestIntent(TestProvider.getContentUri(),
                 modeFlagsToCheck);
         intent.addFlags(modeFlagsToCheck.mValue);
 
@@ -267,7 +288,7 @@ public class ComponentCallerTest {
     private Intent getSendBroadcastTestIntent(int uriLocationId,
             ModeFlags modeFlagsToCheck) {
         Intent intent = new Intent();
-        intent.setComponent(HELPER_APP_ACTIVITY);
+        intent.setComponent(HELPER_APP_INITIAL_CALLER_ACTIVITY);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT
                 | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
         intent.putExtra(URI_LOCATION_ID, uriLocationId);
@@ -338,7 +359,7 @@ public class ComponentCallerTest {
         }
     }
 
-    public static final class TestActivity extends Activity {
+    public static final class InitialCallerTestActivity extends Activity {
         @Override
         public void onStart() {
             super.onStart();
@@ -355,9 +376,13 @@ public class ComponentCallerTest {
     }
 
     public static final class TestProvider extends ContentProvider {
+        private static final AtomicInteger sId = new AtomicInteger(1);
         private static final String AUTHORITY = "android.app.cts.componentcaller.provider";
-        public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY);
+        private static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY);
 
+        public static Uri getContentUri() {
+            return ContentUris.withAppendedId(CONTENT_URI, sId.getAndIncrement());
+        }
         @Override
         public boolean onCreate() {
             return false;

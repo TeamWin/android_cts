@@ -25,7 +25,7 @@ import static android.app.cts.testcomponentcaller.Constants.INVALID_PERMISSION_R
 import static android.app.cts.testcomponentcaller.Constants.NONE_PROVIDED_USE_HELPER_APP_URI_LOCATION_ID;
 import static android.app.cts.testcomponentcaller.Constants.SEND_TEST_BROADCAST_ACTION_ID;
 import static android.app.cts.testcomponentcaller.Constants.START_TEST_ACTIVITY_ACTION_ID;
-import static android.app.cts.testcomponentcaller.Constants.TEST_ACTIVITY;
+import static android.app.cts.testcomponentcaller.Constants.TEST_INITIAL_CALLER_ACTIVITY;
 import static android.app.cts.testcomponentcaller.Constants.TEST_RECEIVER;
 import static android.app.cts.testcomponentcaller.Constants.TEST_RECEIVER_ACTION;
 import static android.app.cts.testcomponentcaller.Constants.URI_IN_CLIP_DATA_LOCATION_ID;
@@ -38,7 +38,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
 
-public class TestActivity extends Activity {
+public class TestInitialCallerActivity extends Activity {
     private static final String TAG = "componentcaller";
     @Override
     public void onStart() {
@@ -59,7 +59,7 @@ public class TestActivity extends Activity {
 
     private void startTestActivity(Uri uri, int modeFlags) {
         Intent intent = new Intent();
-        intent.setComponent(TEST_ACTIVITY);
+        intent.setComponent(TEST_INITIAL_CALLER_ACTIVITY);
         intent.setData(uri);
         intent.putExtra(MODE_FLAGS_TO_CHECK, modeFlags);
         intent.setFlags(
