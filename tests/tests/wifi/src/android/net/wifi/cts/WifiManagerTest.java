@@ -7196,4 +7196,79 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
             uiAutomation.dropShellPermissionIdentity();
         }
     }
+
+    /**
+     * Tests {@link WifiManager#isD2dSupportedWhenInfraStaDisabled()},
+     * {@link WifiManager#setD2dAllowedWhenInfraStaDisabled()} and
+     * {@link WifiManager#queryD2dAllowedWhenInfraStaDisabled()}.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @Test
+    public void testD2dAllowedWhenInfraStaDisabled() throws Exception {
+        if (!sWifiManager.isD2dSupportedWhenInfraStaDisabled()) {
+            // skip the test if feature is not supported.
+            return;
+        }
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        Mutable<Boolean> isQuerySucceeded = new Mutable<Boolean>(false);
+        boolean currentD2dAllowed = false;
+        boolean isRestoreRequired = false;
+        long now, deadline;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            Mutable<Boolean> isD2dAllowed = new Mutable<Boolean>(false);
+            sWifiManager.queryD2dAllowedWhenInfraStaDisabled(mExecutor,
+                    new Consumer<Boolean>() {
+                    @Override
+                    public void accept(Boolean value) {
+                        synchronized (mLock) {
+                            isD2dAllowed.value = value;
+                            isQuerySucceeded.value = true;
+                            mLock.notify();
+                        }
+                    }
+                });
+            synchronized (mLock) {
+                now = System.currentTimeMillis();
+                deadline = now + TEST_WAIT_DURATION_MS;
+                while (!isQuerySucceeded.value && now < deadline) {
+                    mLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+            assertTrue("d2d allowed query fail", isQuerySucceeded.value);
+            // Reset for next query
+            isQuerySucceeded.value = false;
+            currentD2dAllowed = isD2dAllowed.value;
+            isRestoreRequired = true;
+            sWifiManager.setD2dAllowedWhenInfraStaDisabled(!currentD2dAllowed);
+            sWifiManager.queryD2dAllowedWhenInfraStaDisabled(mExecutor,
+                    new Consumer<Boolean>() {
+                    @Override
+                    public void accept(Boolean value) {
+                        synchronized (mLock) {
+                            isD2dAllowed.value = value;
+                            isQuerySucceeded.value = true;
+                            mLock.notify();
+                        }
+                    }
+                });
+            synchronized (mLock) {
+                now = System.currentTimeMillis();
+                deadline = now + TEST_WAIT_DURATION_MS;
+                while (!isQuerySucceeded.value && now < deadline) {
+                    mLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+            assertEquals("set/query d2d allowed should match",
+                    isD2dAllowed.value, !currentD2dAllowed);
+        } finally {
+            if (isRestoreRequired) {
+                sWifiManager.setD2dAllowedWhenInfraStaDisabled(currentD2dAllowed);
+            }
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
 }
