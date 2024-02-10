@@ -684,6 +684,9 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                         verify(captureMockCallback, times(0))
                                 .onCaptureFailed(any(CameraExtensionSession.class),
                                         any(CaptureRequest.class));
+                        verify(captureMockCallback, times(0))
+                                .onCaptureFailed(any(CameraExtensionSession.class),
+                                        any(CaptureRequest.class), anyInt());
                         Range<Long> latencyRange =
                                 extensionChars.getEstimatedCaptureLatencyRangeMillis(extension,
                                         maxSize, captureFormat);
@@ -860,6 +863,9 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                         verify(captureMockCallback, times(0))
                                 .onCaptureFailed(any(CameraExtensionSession.class),
                                         any(CaptureRequest.class));
+                        verify(captureMockCallback, times(0))
+                                .onCaptureFailed(any(CameraExtensionSession.class),
+                                        any(CaptureRequest.class), anyInt());
                         Range<Long> latencyRange =
                                 extensionChars.getEstimatedCaptureLatencyRangeMillis(extension,
                                         maxSize, captureFormat);
@@ -1225,6 +1231,9 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     verify(captureCallback, times(0))
                             .onCaptureFailed(any(CameraExtensionSession.class),
                                     any(CaptureRequest.class));
+                    verify(captureCallback, times(0))
+                            .onCaptureFailed(any(CameraExtensionSession.class),
+                                    any(CaptureRequest.class), anyInt());
 
                     extensionSession.stopRepeating();
 
@@ -1412,6 +1421,15 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
             mNumFramesFailed++;
             if (mProxy != null) {
                 mProxy.onCaptureFailed(session, request);
+            }
+        }
+
+        @Override
+        public void onCaptureFailed(CameraExtensionSession session,
+                CaptureRequest request, int failure) {
+            mNumFramesFailed++;
+            if (mProxy != null) {
+                mProxy.onCaptureFailed(session, request, failure);
             }
         }
 
