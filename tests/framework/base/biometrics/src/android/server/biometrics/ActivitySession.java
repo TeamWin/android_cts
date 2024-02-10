@@ -17,6 +17,7 @@
 package android.server.biometrics;
 
 import android.content.ComponentName;
+import android.server.biometrics.util.Utils;
 
 import androidx.annotation.NonNull;
 

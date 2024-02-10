@@ -24,6 +24,7 @@ import android.hardware.biometrics.BiometricTestSession;
 import android.hardware.biometrics.SensorProperties;
 import android.platform.test.annotations.Presubmit;
 import android.security.keystore.KeyProperties;
+import android.server.biometrics.util.Utils;
 import android.util.Log;
 
 import com.android.compatibility.common.util.ApiTest;
