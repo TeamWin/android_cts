@@ -28,6 +28,7 @@ import android.os.PersistableBundle;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetector;
 import android.service.voice.HotwordRejectedResult;
+import android.service.voice.VisualQueryDetectedResult;
 import android.service.voice.VisualQueryDetectionServiceFailure;
 import android.service.voice.VisualQueryDetector;
 import android.service.voice.VoiceInteractionService;
@@ -176,6 +177,11 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
             new VisualQueryDetector.Callback() {
                 @Override
                 public void onQueryDetected(@NonNull String partialQuery) {
+                    //No-op
+                }
+
+                @Override
+                public void onQueryDetected(@NonNull VisualQueryDetectedResult partialResult) {
                     //No-op
                 }
 

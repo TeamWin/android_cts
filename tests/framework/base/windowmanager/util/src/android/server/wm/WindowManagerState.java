@@ -953,6 +953,13 @@ public class WindowManagerState {
     }
 
     /**
+     * Count root tasks with a specific activity type.
+     */
+    public int getRootTaskCountWithActivityType(int activityType) {
+        return getRootTasksCount(t -> t.getActivityType() == activityType);
+    }
+
+    /**
      * Count root tasks filtered by the predicate passed as argument.
      */
     public int getRootTasksCount(Predicate<? super Task> predicate) {

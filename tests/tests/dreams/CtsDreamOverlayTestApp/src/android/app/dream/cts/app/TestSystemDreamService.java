@@ -15,6 +15,7 @@
  */
 package android.app.dream.cts.app;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.service.dreams.DreamService;
 import android.widget.FrameLayout;
@@ -24,6 +25,11 @@ import android.widget.FrameLayout;
  * sets the entire window to be red.
  */
 public class TestSystemDreamService extends DreamService {
+    private static final String TEST_PACKAGE = "android.dreams.cts";
+    private static final String ACTION_SYSTEM_DREAM_SHOWN =
+            "android.app.dream.cts.app.action.system_dream_shown";
+
+    @Override
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
 
@@ -33,5 +39,18 @@ public class TestSystemDreamService extends DreamService {
         final FrameLayout frameLayout = new FrameLayout(getApplicationContext());
         frameLayout.setBackgroundColor(Color.RED);
         setContentView(frameLayout);
+    }
+
+    @Override
+    public void onDreamingStarted() {
+        final Intent intent = new Intent(ACTION_SYSTEM_DREAM_SHOWN);
+        intent.setPackage(TEST_PACKAGE);
+        sendBroadcast(intent);
+    }
+
+    @Override
+    public void onDreamingStopped() {
+        super.onDreamingStopped();
+        finish();
     }
 }

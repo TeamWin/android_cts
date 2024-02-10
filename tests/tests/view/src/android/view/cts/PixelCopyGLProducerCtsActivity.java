@@ -20,6 +20,7 @@ import static android.opengl.GLES20.GL_COLOR_BUFFER_BIT;
 import static android.opengl.GLES20.GL_SCISSOR_TEST;
 import static android.opengl.GLES20.glClear;
 import static android.opengl.GLES20.glClearColor;
+import static android.opengl.GLES20.glDisable;
 import static android.opengl.GLES20.glEnable;
 import static android.opengl.GLES20.glScissor;
 
@@ -65,6 +66,9 @@ public class PixelCopyGLProducerCtsActivity extends GLSurfaceViewCtsActivity {
             int cx = mWidth / 2;
             int cy = mHeight / 2;
 
+            glDisable(GL_SCISSOR_TEST);
+            clearColor(Color.MAGENTA);
+
             glEnable(GL_SCISSOR_TEST);
 
             glScissor(0, cy, cx, mHeight - cy);
@@ -78,10 +82,6 @@ public class PixelCopyGLProducerCtsActivity extends GLSurfaceViewCtsActivity {
 
             glScissor(cx, 0, mWidth - cx, cy);
             clearColor(mBottomRightColor);
-
-            if (mFence != null) {
-                mFence.countDown();
-            }
         }
 
         private void clearColor(int color) {
@@ -103,9 +103,5 @@ public class PixelCopyGLProducerCtsActivity extends GLSurfaceViewCtsActivity {
         mView.setRenderer(mRenderer);
         mView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         mView.getHolder().setFixedSize(100, 100);
-    }
-
-    public void setSwapFence(CountDownLatch swapFence) {
-        mRenderer.mFence = swapFence;
     }
 }

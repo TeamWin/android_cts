@@ -71,6 +71,8 @@ public class ProxyMediaRouter2HostSideTest extends BaseHostJUnit4Test {
         assertThat(secondaryUser).isNotEqualTo(-1);
         assertThat(secondaryUser).isNotEqualTo(device.getCurrentUser());
 
+        installTestAppAsUser(testInformation, MEDIA_ROUTER_PROVIDER_1_APK, device.getCurrentUser());
+
         installTestAppAsUser(
                 testInformation,
                 PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_APK,
@@ -96,8 +98,10 @@ public class ProxyMediaRouter2HostSideTest extends BaseHostJUnit4Test {
                         device.uninstallPackageForUser(
                                 MEDIA_ROUTER_SECONDARY_USER_HELPER_PACKAGE, secondaryUser))
                 .isNull();
-        expect.that(device.uninstallPackageForUser(MEDIA_ROUTER_PROVIDER_1_PACKAGE, secondaryUser))
-                .isNull();
+
+        // This uninstalls package across all users.
+        expect.that(device.uninstallPackage(MEDIA_ROUTER_PROVIDER_1_PACKAGE)).isNull();
+
         assertThat(device.removeUser(secondaryUser)).isTrue();
     }
 
@@ -110,6 +114,39 @@ public class ProxyMediaRouter2HostSideTest extends BaseHostJUnit4Test {
                 PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_PACKAGE,
                 PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_TEST_CLASS,
                 "getInstance_withMediaRoutingControl_flagEnabled_doesNotThrow");
+    }
+
+    @Test
+    @AppModeFull
+    @RequiresDevice
+    public void requestScan_withScreenOnScanning_triggersScanning()
+            throws DeviceNotAvailableException {
+        runDeviceTests(
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_PACKAGE,
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_TEST_CLASS,
+                "requestScan_withScreenOnScanning_triggersScanning");
+    }
+
+    @Test
+    @AppModeFull
+    @RequiresDevice
+    public void requestScan_screenOff_withoutMediaRoutingControl_throwsSecurityException()
+            throws DeviceNotAvailableException {
+        runDeviceTests(
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_PACKAGE,
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_TEST_CLASS,
+                "requestScan_screenOff_withoutMediaRoutingControl_throwsSecurityException");
+    }
+
+    @Test
+    @AppModeFull
+    @RequiresDevice
+    public void cancelScanRequest_callTwice_throwsIllegalArgumentException()
+            throws DeviceNotAvailableException {
+        runDeviceTests(
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_PACKAGE,
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_CONTENT_CONTROL_HELPER_TEST_CLASS,
+                "cancelScanRequest_callTwice_throwsIllegalArgumentException");
     }
 
     @Test
@@ -139,6 +176,17 @@ public class ProxyMediaRouter2HostSideTest extends BaseHostJUnit4Test {
                 PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_PACKAGE,
                 PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_TEST_CLASS,
                 "getInstance_withMediaRoutingControl_flagDisabled_throwsSecurityException");
+    }
+
+    @Test
+    @AppModeFull
+    @RequiresDevice
+    public void requestScan_withMediaRoutingControl_withScreenOff_triggersScanning()
+            throws DeviceNotAvailableException {
+        runDeviceTests(
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_PACKAGE,
+                PROXY_MEDIA_ROUTER_WITH_MEDIA_ROUTING_CONTROL_APP_TEST_CLASS,
+                "requestScan_withScreenOff_triggersScanning");
     }
 
     @Test

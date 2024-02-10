@@ -54,6 +54,7 @@ public class Utils {
     public static final String ASSIST_SCREENSHOT_KEY = "assist_screenshot";
     public static final String SCREENSHOT_COLOR_KEY = "set_screenshot_color";
     public static final String COMPARE_SCREENSHOT_KEY = "compare_screenshot";
+    public static final String ON_SHOW_ARGS_KEY = "on_show_args";
     public static final String DISPLAY_WIDTH_KEY = "display_width";
     public static final String DISPLAY_HEIGHT_KEY = "dislay_height";
     public static final String DISPLAY_AREA_BOUNDS_KEY = "display_area_bounds";

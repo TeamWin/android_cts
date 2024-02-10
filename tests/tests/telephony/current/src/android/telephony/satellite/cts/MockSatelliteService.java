@@ -109,6 +109,9 @@ public class MockSatelliteService extends SatelliteImplBase {
 
     private int[] mSupportedRadioTechnologies;
     private boolean mIsProvisioningApiSupported = true;
+    private IIntegerConsumer mRequestSatelliteEnabledErrorCallback;
+    private IIntegerConsumer mRequestSatelliteDisabledErrorCallback;
+    private final Object mRequestSatelliteEnabledLock = new Object();
 
     /**
      * Create MockSatelliteService using the Executor specified for methods being called from
@@ -212,22 +215,34 @@ public class MockSatelliteService extends SatelliteImplBase {
         } else {
             disableSatellite(errorCallback);
         }
+
+        if (mLocalListener != null) {
+            runWithExecutor(() -> mLocalListener.onRequestSatelliteEnabled(enableSatellite));
+        } else {
+            loge("requestSatelliteEnabled: mLocalListener is null");
+        }
     }
 
     private void enableSatellite(@NonNull IIntegerConsumer errorCallback) {
-        mIsEnabled = true;
         if (mShouldRespondTelephony.get()) {
+            mIsEnabled = true;
             runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
+            updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_IDLE);
         }
-        updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_IDLE);
+        synchronized (mRequestSatelliteEnabledLock) {
+            mRequestSatelliteEnabledErrorCallback = errorCallback;
+        }
     }
 
     private void disableSatellite(@NonNull IIntegerConsumer errorCallback) {
-        mIsEnabled = false;
         if (mShouldRespondTelephony.get()) {
+            mIsEnabled = false;
             runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
+            updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_OFF);
         }
-        updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_OFF);
+        synchronized (mRequestSatelliteEnabledLock) {
+            mRequestSatelliteDisabledErrorCallback = errorCallback;
+        }
     }
 
     @Override
@@ -486,15 +501,10 @@ public class MockSatelliteService extends SatelliteImplBase {
             @NonNull IIntegerConsumer errorCallback, @NonNull IBooleanConsumer callback) {
         logd("requestIsCommunicationAllowedForCurrentLocation: mErrorCode=" + mErrorCode);
         if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
-            if (mShouldRespondTelephony.get()) {
-                runWithExecutor(() -> errorCallback.accept(mErrorCode));
-            }
+            runWithExecutor(() -> errorCallback.accept(mErrorCode));
             return;
         }
-
-        if (mShouldRespondTelephony.get()) {
-            runWithExecutor(() -> callback.accept(mIsCommunicationAllowedInLocation));
-        }
+        runWithExecutor(() -> callback.accept(mIsCommunicationAllowedInLocation));
     }
 
     @Override
@@ -738,6 +748,33 @@ public class MockSatelliteService extends SatelliteImplBase {
             }
             mSendDatagramErrorCallback = null;
             return true;
+        }
+    }
+
+    /**
+     * Respond to the previous enable/disable request.
+     */
+    public boolean respondToRequestSatelliteEnabled(boolean isEnabled) {
+        synchronized (mRequestSatelliteEnabledLock) {
+            if (isEnabled) {
+                logd("respondToRequestSatelliteEnabled: isEnabled=" + isEnabled + ", "
+                        + (mRequestSatelliteEnabledErrorCallback != null));
+                if (mRequestSatelliteEnabledErrorCallback == null) {
+                    return false;
+                }
+                runWithExecutor(() -> mRequestSatelliteEnabledErrorCallback.accept(mErrorCode));
+                mRequestSatelliteEnabledErrorCallback = null;
+                return true;
+            } else {
+                logd("respondToRequestSatelliteEnabled: isEnabled=" + isEnabled + ", "
+                        + (mRequestSatelliteDisabledErrorCallback != null));
+                if (mRequestSatelliteDisabledErrorCallback == null) {
+                    return false;
+                }
+                runWithExecutor(() -> mRequestSatelliteDisabledErrorCallback.accept(mErrorCode));
+                mRequestSatelliteDisabledErrorCallback = null;
+                return true;
+            }
         }
     }
 

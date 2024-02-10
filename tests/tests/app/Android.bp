@@ -33,12 +33,19 @@ android_test {
         "mockito-target-minus-junit4",
         "android.security.flags-aconfig-java",
         "flag-junit",
+        "TestParameterInjector",
     ],
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "test-apps/TestComponentCallerApp/**/Constants.java",
+    ],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
     ],
-    data: [":CtsTestShareIdentityApp"],
+    data: [
+        ":CtsTestShareIdentityApp",
+        ":CtsTestComponentCallerApp",
+    ],
 }

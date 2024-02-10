@@ -35,6 +35,8 @@ import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ST
 
 import static androidx.test.ext.truth.os.BundleSubject.assertThat;
 
+import static com.android.media.flags.Flags.FLAG_ENABLE_GET_TRANSFERABLE_ROUTES;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
@@ -68,6 +70,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 
@@ -879,6 +882,56 @@ public class MediaRouter2Test {
             mRouter2.unregisterRouteCallback(routeCallback);
             mRouter2.unregisterTransferCallback(transferCallback);
             mRouter2.unregisterControllerCallback(controllerCallback);
+        }
+    }
+
+    @RequiresFlagsEnabled(FLAG_ENABLE_GET_TRANSFERABLE_ROUTES)
+    @ApiTest(apis = "android.media.MediaRouter2.RoutingController#getTransferableRoutes")
+    @Test
+    public void routingController_getTransferableRoutes_returnsNonFeatureMatchingRoutes()
+            throws Exception {
+        setUpStubProvider();
+
+        // Set discovery preference to FEATURE_SPECIAL.
+        Map<String, MediaRoute2Info> routes = waitAndGetRoutes(List.of(FEATURE_SPECIAL));
+        MediaRoute2Info route = routes.get(ROUTE_ID7_STATIC_GROUP);
+        assertThat(route).isNotNull();
+
+        final CountDownLatch successLatch = new CountDownLatch(1);
+        TransferCallback transferCallback =
+                new TransferCallback() {
+                    @Override
+                    public void onTransfer(
+                            @NonNull RoutingController oldController,
+                            @NonNull RoutingController newController) {
+                        assertThat(newController.getTransferableRoutes())
+                                .comparingElementsUsing(ROUTE_HAS_ORIGINAL_ID)
+                                .containsExactly(ROUTE_ID5_TO_TRANSFER_TO);
+
+                        // Make sure ROUTE_ID5_TO_TRANSFER_TO does not match FEATURE_SPECIAL.
+                        assertThat(mRouter2.getRoutes())
+                                .comparingElementsUsing(ROUTE_HAS_ORIGINAL_ID)
+                                .doesNotContain(ROUTE_ID5_TO_TRANSFER_TO);
+
+                        successLatch.countDown();
+                    }
+                };
+        // We need to keep this callback to unregister the RouteCallback.
+        RouteCallback placeholderRouteCallback = new RouteCallback() {};
+
+        try {
+            RouteDiscoveryPreference preference =
+                    new RouteDiscoveryPreference.Builder(
+                                    List.of(FEATURE_SPECIAL), /* isActiveScan */ true)
+                            .build();
+            mRouter2.registerTransferCallback(mExecutor, transferCallback);
+            mRouter2.registerRouteCallback(mExecutor, placeholderRouteCallback, preference);
+            mRouter2.transferTo(route);
+            assertThat(successLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+        } finally {
+            mRouter2.stop();
+            mRouter2.unregisterTransferCallback(transferCallback);
+            mRouter2.unregisterRouteCallback(placeholderRouteCallback);
         }
     }
 

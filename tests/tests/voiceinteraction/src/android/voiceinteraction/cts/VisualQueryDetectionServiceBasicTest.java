@@ -415,6 +415,41 @@ public class VisualQueryDetectionServiceBasicTest {
 
     @Test
     @RequiresDevice
+    public void testVisualQueryDetectionService_startRecogintion_complexResultsQueryOnlySuccess()
+            throws Throwable {
+        // Create VisualQueryDetector
+        VisualQueryDetector visualQueryDetector = createVisualQueryDetector();
+        runWithShellPermissionIdentity(() -> {
+            PersistableBundle options = Helper.createFakePersistableBundleData();
+            options.putInt(MainVisualQueryDetectionService.KEY_VQDS_TEST_SCENARIO,
+                    MainVisualQueryDetectionService.SCENARIO_COMPLEX_RESULT_STREAM_QUERY_ONLY);
+            visualQueryDetector.updateState(options, Helper.createFakeSharedMemoryData());
+        });
+        try {
+            adoptShellPermissionIdentityForVisualQueryDetection();
+
+            mService.initQueryFinishRejectLatch(1);
+            visualQueryDetector.startRecognition();
+
+            // wait onStartDetection() called and verify the result
+            mService.waitOnQueryFinishedRejectCalled();
+
+            // verify results
+            ArrayList<String> streamedQueries = mService.getStreamedQueriesResult();
+            assertThat(streamedQueries.get(0)).isEqualTo(
+                    MainVisualQueryDetectionService.FAKE_QUERY_FIRST
+                            + MainVisualQueryDetectionService.FAKE_QUERY_SECOND);
+            assertThat(streamedQueries.size()).isEqualTo(1);
+        } finally {
+            visualQueryDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresDevice
     public void testVisualQueryDetectionService_startRecogintion_noAttention()
             throws Throwable {
         // Create VisualQueryDetector

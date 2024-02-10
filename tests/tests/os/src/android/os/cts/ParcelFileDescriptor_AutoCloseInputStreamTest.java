@@ -16,15 +16,24 @@
 
 package android.os.cts;
 
-import java.io.IOException;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import android.os.ParcelFileDescriptor;
 import android.os.ParcelFileDescriptor.AutoCloseInputStream;
-import android.test.AndroidTestCase;
 
-public class ParcelFileDescriptor_AutoCloseInputStreamTest extends AndroidTestCase {
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.io.IOException;
+
+@RunWith(AndroidJUnit4.class)
+public class ParcelFileDescriptor_AutoCloseInputStreamTest {
+    @Test
     public void testAutoCloseInputStream() throws Exception {
-        ParcelFileDescriptor pf = ParcelFileDescriptorTest.makeParcelFileDescriptor(getContext());
+        ParcelFileDescriptor pf = ParcelFileDescriptorTest.makeParcelFileDescriptor();
 
         AutoCloseInputStream in = new AutoCloseInputStream(pf);
         assertEquals(0, in.read());

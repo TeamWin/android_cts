@@ -107,7 +107,9 @@ public class ContactKeysManagerTest {
         assertThat(contactKey.getRemoteVerificationState())
                 .isEqualTo(ContactKeysManager.UNVERIFIED);
         assertThat(contactKey.getOwnerPackageName()).isEqualTo(OWNER_PACKAGE_NAME);
+        assertThat(contactKey.getDisplayName()).isEqualTo(null);
         assertThat(contactKey.getEmailAddress()).isEqualTo(null);
+        assertThat(contactKey.getPhoneNumber()).isEqualTo(null);
     }
 
     @Test

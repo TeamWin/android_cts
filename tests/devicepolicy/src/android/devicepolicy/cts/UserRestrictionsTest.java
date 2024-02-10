@@ -157,7 +157,8 @@ public final class UserRestrictionsTest {
             CommonUserRestrictions.DISALLOW_WIFI_TETHERING,
             CommonUserRestrictions.DISALLOW_SHARING_ADMIN_CONFIGURED_WIFI,
             CommonUserRestrictions.DISALLOW_WIFI_DIRECT,
-            CommonUserRestrictions.DISALLOW_ADD_WIFI_CONFIG
+            CommonUserRestrictions.DISALLOW_ADD_WIFI_CONFIG,
+            CommonUserRestrictions.DISALLOW_SIM_GLOBALLY
     })
     @Retention(RetentionPolicy.RUNTIME)
     private @interface AllUserRestrictions {

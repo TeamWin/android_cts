@@ -23,20 +23,14 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
-import android.os.ParcelFileDescriptor.OnCloseListener;
-import android.os.ParcelFileDescriptor.FileDescriptorDetachedException;
 import android.os.RemoteException;
 import android.os.SystemClock;
-
-import com.google.common.util.concurrent.AbstractFuture;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Sits around in a remote process doing whatever the CTS test says.
@@ -47,7 +41,7 @@ public class ParcelFileDescriptorPeer extends IParcelFileDescriptorPeer.Stub {
     private ParcelFileDescriptor mLocal;
     private ParcelFileDescriptor mRemote;
 
-    private FutureCloseListener mListener;
+    private ParcelFileDescriptorTest.FutureCloseListener mListener;
 
     @Override
     public void setPeer(IParcelFileDescriptorPeer peer) throws RemoteException {
@@ -90,7 +84,7 @@ public class ParcelFileDescriptorPeer extends IParcelFileDescriptorPeer.Stub {
     @Override
     public void setupFile() throws RemoteException {
         final Handler handler = new Handler(Looper.getMainLooper());
-        mListener = new FutureCloseListener();
+        mListener = new ParcelFileDescriptorTest.FutureCloseListener();
         try {
             mLocal = null;
             mRemote = ParcelFileDescriptor.open(File.createTempFile("pfd", "tmp"),
@@ -197,27 +191,6 @@ public class ParcelFileDescriptorPeer extends IParcelFileDescriptorPeer.Stub {
             return null;
         } catch (ExecutionException e1) {
             return null;
-        }
-    }
-
-    public static class FutureCloseListener extends AbstractFuture<IOException>
-            implements OnCloseListener {
-        @Override
-        public void onClose(IOException e) {
-            if (e instanceof FileDescriptorDetachedException) {
-                set(new IOException("DETACHED"));
-            } else {
-                set(e);
-            }
-        }
-
-        @Override
-        public IOException get() throws InterruptedException, ExecutionException {
-            try {
-                return get(5, TimeUnit.SECONDS);
-            } catch (TimeoutException e) {
-                throw new RuntimeException(e);
-            }
         }
     }
 

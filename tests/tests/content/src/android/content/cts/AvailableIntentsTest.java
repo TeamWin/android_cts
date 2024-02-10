@@ -35,6 +35,7 @@ import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.os.storage.StorageManager;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.provider.AlarmClock;
 import android.provider.MediaStore;
 import android.provider.Settings;
@@ -46,6 +47,7 @@ import android.test.AndroidTestCase;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.FeatureUtil;
+import com.android.media.flags.Flags;
 
 import java.util.List;
 
@@ -461,6 +463,14 @@ public class AvailableIntentsTest extends AndroidTestCase {
             return;
         }
         assertCanBeHandled(new Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA));
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_PRIVILEGED_ROUTING_FOR_MEDIA_ROUTING_CONTROL)
+    public void testMediaRoutingControlSettings() {
+        if (FeatureUtil.isWatch()) {
+            return;
+        }
+        assertCanBeHandled(new Intent(Settings.ACTION_REQUEST_MEDIA_ROUTING_CONTROL));
     }
 
     public void testInteractAcrossProfilesSettings() {

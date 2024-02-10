@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.router.cts.bluetoothpermissionsapp;
+package android.media.cts.app.common;
 
 import android.app.Activity;
 import android.os.Bundle;
