@@ -20,6 +20,7 @@ import static android.content.pm.ApplicationInfo.PRIVATE_FLAG_EXT_ENABLE_ON_BACK
 
 import static com.android.text.flags.Flags.FLAG_DEPRECATE_UI_FONTS;
 import static com.android.text.flags.Flags.FLAG_LETTER_SPACING_JUSTIFICATION;
+import static com.android.text.flags.Flags.FLAG_FIX_LINE_HEIGHT_FOR_LOCALE;
 import static com.android.text.flags.Flags.FLAG_USE_BOUNDS_FOR_WIDTH;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -7003,6 +7004,54 @@ public class TextViewTest {
     public void testUseBoundsForWidth_ByXml_true() {
         TextView textView = findTextView(R.id.use_bounds_for_width_true);
         assertTrue(textView.getUseBoundsForWidth());
+    }
+
+    @RequiresFlagsEnabled(FLAG_FIX_LINE_HEIGHT_FOR_LOCALE)
+    @Test
+    public void testUseLocalePreferredLineHeightForMinimumDefaultTextView() {
+        TextView textView = findTextView(
+                R.id.useLocalePreferredLineHeightForMinimumDefaultTextView);
+        assertFalse(textView.isLocalePreferredLineHeightForMinimumUsed());
+    }
+
+    @RequiresFlagsEnabled(FLAG_FIX_LINE_HEIGHT_FOR_LOCALE)
+    @Test
+    public void testUseLocalePreferredLineHeightForMinimumTrueTextView() {
+        TextView textView = findTextView(
+                R.id.useLocalePreferredLineHeightForMinimumTrueTextView);
+        assertTrue(textView.isLocalePreferredLineHeightForMinimumUsed());
+    }
+
+    @RequiresFlagsEnabled(FLAG_FIX_LINE_HEIGHT_FOR_LOCALE)
+    @Test
+    public void testUseLocalePreferredLineHeightForMinimumFalseTextView() {
+        TextView textView = findTextView(
+                R.id.useLocalePreferredLineHeightForMinimumFalseTextView);
+        assertFalse(textView.isLocalePreferredLineHeightForMinimumUsed());
+    }
+
+    @RequiresFlagsEnabled(FLAG_FIX_LINE_HEIGHT_FOR_LOCALE)
+    @Test
+    public void testUseLocalePreferredLineHeightForMinimumDefaultEditText() {
+        TextView textView = findTextView(
+                R.id.useLocalePreferredLineHeightForMinimumDefaultEditText);
+        assertTrue(textView.isLocalePreferredLineHeightForMinimumUsed());
+    }
+
+    @RequiresFlagsEnabled(FLAG_FIX_LINE_HEIGHT_FOR_LOCALE)
+    @Test
+    public void testUseLocalePreferredLineHeightForMinimumTrueEditText() {
+        TextView textView = findTextView(
+                R.id.useLocalePreferredLineHeightForMinimumTrueEditText);
+        assertTrue(textView.isLocalePreferredLineHeightForMinimumUsed());
+    }
+
+    @RequiresFlagsEnabled(FLAG_FIX_LINE_HEIGHT_FOR_LOCALE)
+    @Test
+    public void testUseLocalePreferredLineHeightForMinimumFalseEditText() {
+        TextView textView = findTextView(
+                R.id.useLocalePreferredLineHeightForMinimumFalseEditText);
+        assertFalse(textView.isLocalePreferredLineHeightForMinimumUsed());
     }
 
     @Test

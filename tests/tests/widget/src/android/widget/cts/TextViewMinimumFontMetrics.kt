@@ -20,12 +20,14 @@ import android.platform.test.annotations.RequiresFlagsEnabled
 import android.platform.test.flag.junit.CheckFlagsRule
 import android.platform.test.flag.junit.DeviceFlagsValueProvider
 import android.view.View.MeasureSpec
+import android.widget.EditText
 import android.widget.TextView
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SmallTest
 import androidx.test.runner.AndroidJUnit4
-import com.android.text.flags.Flags.FLAG_USE_BOUNDS_FOR_WIDTH
+import com.android.text.flags.Flags.FLAG_FIX_LINE_HEIGHT_FOR_LOCALE
 import com.google.common.truth.Truth.assertThat
+import java.util.Locale
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,14 +46,14 @@ class TextViewMinimumFontMetrics {
     val mCheckFlagsRule: CheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
 
     @Test
-    @RequiresFlagsEnabled(FLAG_USE_BOUNDS_FOR_WIDTH)
+    @RequiresFlagsEnabled(FLAG_FIX_LINE_HEIGHT_FOR_LOCALE)
     fun testMinimumFontHeight_NullByDefault() {
         val textView = TextView(context)
         assertThat(textView.minimumFontMetrics).isNull() // Null by default
     }
 
     @Test
-    @RequiresFlagsEnabled(FLAG_USE_BOUNDS_FOR_WIDTH)
+    @RequiresFlagsEnabled(FLAG_FIX_LINE_HEIGHT_FOR_LOCALE)
     fun testMinimumFontHeight_SetAndGet() {
         val textView = TextView(context)
         val fm = Paint.FontMetrics()
@@ -62,7 +64,7 @@ class TextViewMinimumFontMetrics {
     }
 
     @Test
-    @RequiresFlagsEnabled(FLAG_USE_BOUNDS_FOR_WIDTH)
+    @RequiresFlagsEnabled(FLAG_FIX_LINE_HEIGHT_FOR_LOCALE)
     fun testMinimumFontHeight_SetToLayout() {
         val textView = TextView(context)
         val fm = Paint.FontMetrics()
@@ -76,5 +78,61 @@ class TextViewMinimumFontMetrics {
         )
 
         assertThat(textView.layout.minimumFontMetrics).isEqualTo(fm)
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_FIX_LINE_HEIGHT_FOR_LOCALE)
+    fun testIsUseLocalePreferredLineHeightForMinimum_SetGet() {
+        val textView = TextView(context)
+
+        // False by default
+        assertThat(textView.isLocalePreferredLineHeightForMinimumUsed).isFalse()
+        textView.isLocalePreferredLineHeightForMinimumUsed = true
+        assertThat(textView.isLocalePreferredLineHeightForMinimumUsed).isTrue()
+        textView.isLocalePreferredLineHeightForMinimumUsed = false
+        assertThat(textView.isLocalePreferredLineHeightForMinimumUsed).isFalse()
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_FIX_LINE_HEIGHT_FOR_LOCALE)
+    fun testIsUseLocalePreferredLineHeightForMinimum_ForLocale_EmptyLine() {
+        val textView = EditText(context).apply {
+            textLocale = Locale.forLanguageTag("ja")
+        }
+
+        textView.setLocalePreferredLineHeightForMinimumUsed(true)
+        textView.includeFontPadding = false // make line height = descent - ascent.
+
+        textView.measure(
+                MeasureSpec.makeMeasureSpec(1024, MeasureSpec.AT_MOST),
+                MeasureSpec.makeMeasureSpec(1024, MeasureSpec.AT_MOST)
+        )
+
+        val fm = Paint.FontMetricsInt()
+        textView.paint.getFontMetricsIntForLocale(fm)
+
+        assertThat(textView.layout.height).isEqualTo(fm.descent - fm.ascent)
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_FIX_LINE_HEIGHT_FOR_LOCALE)
+    fun testIsUseLocalePreferredLineHeightForMinimum_ForLocale() {
+        val textView = EditText(context).apply {
+            textLocale = Locale.forLanguageTag("ja")
+            setText("abcde")
+        }
+
+        textView.setLocalePreferredLineHeightForMinimumUsed(true)
+        textView.includeFontPadding = false // make line height = descent - ascent.
+
+        textView.measure(
+                MeasureSpec.makeMeasureSpec(1024, MeasureSpec.AT_MOST),
+                MeasureSpec.makeMeasureSpec(1024, MeasureSpec.AT_MOST)
+        )
+
+        val fm = Paint.FontMetricsInt()
+        textView.paint.getFontMetricsIntForLocale(fm)
+
+        assertThat(textView.layout.height).isEqualTo(fm.descent - fm.ascent)
     }
 }
