@@ -68,6 +68,9 @@
           "include-annotation": "android.platform.test.annotations.LargeTest"
         }
       ]
+    },
+    {
+      "name": "CtsDeleteKeepDataHostTestCases"
     }
   ]
 }
