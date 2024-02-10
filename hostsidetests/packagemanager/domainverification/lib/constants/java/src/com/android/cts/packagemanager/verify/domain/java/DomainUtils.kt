@@ -23,6 +23,7 @@ object DomainUtils {
     const val DOMAIN_1 = "$BASE_PACKAGE.1.$DOMAIN_TLD"
     const val DOMAIN_2 = "$BASE_PACKAGE.2.$DOMAIN_TLD"
     const val DOMAIN_3 = "$BASE_PACKAGE.3.$DOMAIN_TLD"
+    const val DOMAIN_7 = "$BASE_PACKAGE.7.$DOMAIN_TLD"
     const val DOMAIN_UNHANDLED = "$BASE_PACKAGE.unhandled.$DOMAIN_TLD"
 
     const val CALLING_PKG_NAME = "$BASE_PACKAGE.callingapp"

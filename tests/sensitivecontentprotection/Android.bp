@@ -1,4 +1,4 @@
-// Copyright (C) 2021 The Android Open Source Project
+// Copyright (C) 2024 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,33 +13,34 @@
 // limitations under the License.
 
 package {
-    default_team: "trendy_team_framework_android_packages",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
 android_test {
-    name: "CtsDomainVerificationDeviceStandaloneTestCases",
-    srcs: ["src/**/*.kt"],
+    name: "CtsSensitiveContentProtectionTestCases",
+    defaults: ["cts_defaults"],
+    // Tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "device-tests",
+        "general-tests",
     ],
-    defaults: ["cts_defaults"],
-    sdk_version: "test_current",
-    min_sdk_version: "31",
-    dxflags: ["--multi-dex"],
+    libs: ["android.test.base"],
     static_libs: [
-        "androidx.test.ext.junit",
+        "androidx.test.core",
         "androidx.test.rules",
         "compatibility-device-util-axt",
-        "CtsDomainVerificationAndroidConstantsLibrary",
-        "CtsDomainVerificationJavaConstantsLibrary",
-        "junit",
+        "ctstestrunner-axt",
         "truth",
-        "android.content.pm.flags-aconfig-java",
+        "androidx.test.ext.junit",
+        "testng",
+        "androidx.test.uiautomator_uiautomator",
+        "flag-junit",
+        "android.view.flags-aconfig-java",
     ],
-    data: [
-        ":CtsDomainVerificationTestDeclaringApp1",
-        ":CtsDomainVerificationTestDeclaringApp2",
+    srcs: [
+        "src/**/*.java",
     ],
+    sdk_version: "test_current",
+    target_sdk_version: "current",
+    min_sdk_version: "current",
 }

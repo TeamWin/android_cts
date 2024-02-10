@@ -518,6 +518,41 @@
                 android:layout_height="wrap_content"
                 android:text="@string/sample_text"
                 android:useBoundsForWidth="true" />
+
+            <TextView
+                android:id="@+id/useLocalePreferredLineHeightForMinimumDefaultTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text" />
+            <TextView
+                android:id="@+id/useLocalePreferredLineHeightForMinimumTrueTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text"
+                android:useLocalePreferredLineHeightForMinimum="true" />
+            <TextView
+                android:id="@+id/useLocalePreferredLineHeightForMinimumFalseTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text"
+                android:useLocalePreferredLineHeightForMinimum="false" />
+            <EditText
+                android:id="@+id/useLocalePreferredLineHeightForMinimumDefaultEditText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text" />
+            <EditText
+                android:id="@+id/useLocalePreferredLineHeightForMinimumTrueEditText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text"
+                android:useLocalePreferredLineHeightForMinimum="true" />
+            <EditText
+                android:id="@+id/useLocalePreferredLineHeightForMinimumFalseEditText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text"
+                android:useLocalePreferredLineHeightForMinimum="false" />
         </LinearLayout>
 
 </ScrollView>
