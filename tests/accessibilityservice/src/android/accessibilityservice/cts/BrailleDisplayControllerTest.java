@@ -39,6 +39,7 @@ import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
@@ -82,6 +83,7 @@ import java.util.function.Consumer;
 @RunWith(AndroidJUnit4.class)
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
 @Presubmit
+@AppModeFull
 @RequiresFlagsEnabled(Flags.FLAG_BRAILLE_DISPLAY_HID)
 public class BrailleDisplayControllerTest {
     private static final long CALLBACK_TIMEOUT_MS = 5000;
