@@ -27,6 +27,7 @@ import camera_properties_utils
 import imu_processing_utils
 import its_session_utils
 
+_ADV_FEATURE_GYRO_DRIFT_ATOL = 1  # deg/min
 _RAD_TO_DEG = 180/math.pi
 _GYRO_DRIFT_ATOL = 0.01*_RAD_TO_DEG  # PASS/FAIL for gyro accumulated drift
 _GYRO_MEAN_THRESH = 0.01*_RAD_TO_DEG  # PASS/FAIL for gyro mean drift
@@ -36,6 +37,7 @@ _NAME = os.path.basename(__file__).split('.')[0]
 _NSEC_TO_SEC = 1E-9
 _REAR_MAIN_CAMERA_ID = '0'
 _RV_DRIFT_THRESH = 0.01*_RAD_TO_DEG  # PASS/FAIL for rotation vector drift
+_SEC_TO_MIN = 1/60
 
 
 def calc_effective_sampling_rate(times, sensor):
@@ -273,19 +275,38 @@ class ImuDriftTest(its_base_test.ItsBaseTest):
       logging.debug('%s gyro_mean: %.3e', 'XYZ'[i], gyro_mean)
       logging.debug('%s gyro_var: %.3e', 'XYZ'[i], gyro_var)
       if gyro_mean >= _GYRO_MEAN_THRESH:
-        raise AssertionError(f'gyro_mean: {gyro_mean}.3e, '
+        raise AssertionError(f'gyro_mean: {gyro_mean:.3e}, '
                              f'TOL={_GYRO_MEAN_THRESH}')
       if gyro_var >= gyro_var_atol:
-        raise AssertionError(f'gyro_var: {gyro_var}.3e, '
-                             f'ATOL={gyro_var_atol}.3e')
+        raise AssertionError(f'gyro_var: {gyro_var:.3e}, '
+                             f'ATOL={gyro_var_atol:.3e}')
+
+    # Determine common parameters between Android 15 & high performance checks
+    test_duration = times[-1] - times[0]
+    gyro_drift_total = math.sqrt(x_gyro_drift**2 +
+                                 y_gyro_drift**2 +
+                                 z_gyro_drift**2)
+    e_msg_stem = (
+        f'accumulated gyro drift is too large! x, y, z, total: '
+        f'{x_gyro_drift:.3f}, {y_gyro_drift:.3f}, {z_gyro_drift:.3f}, '
+        f'{gyro_drift_total:.3f}, test duration: {test_duration:.3f} (sec)'
+    )
+
     # Android 15 checks
     if first_api_level >= its_session_utils.ANDROID15_API_LEVEL:
-      if (x_gyro_drift >= _GYRO_DRIFT_ATOL or
-          y_gyro_drift >= _GYRO_DRIFT_ATOL or
-          z_gyro_drift >= _GYRO_DRIFT_ATOL):
-        raise AssertionError(f'gyro drift is too large! x: {x_gyro_drift}.3f, '
-                             f'y: {y_gyro_drift}.3f, z: {z_gyro_drift}.3f, '
-                             f'ATOL: {_GYRO_DRIFT_ATOL}')
+      if gyro_drift_total >= _GYRO_DRIFT_ATOL:
+        raise AssertionError(f'{e_msg_stem}, ATOL: {_GYRO_DRIFT_ATOL}')
+
+    # Performance checks for advanced features
+    logging.debug('Check for advanced features gyro drift.')
+    gyro_drift_atol_efv = (
+        _ADV_FEATURE_GYRO_DRIFT_ATOL * test_duration * _SEC_TO_MIN
+    )
+    if gyro_drift_total > gyro_drift_atol_efv:
+      e_msg = f'{e_msg_stem}, ATOL: {gyro_drift_atol_efv:.3f}'
+      raise AssertionError(
+          f'{its_session_utils.NOT_YET_MANDATED_MESSAGE}\n\n{e_msg}')
+
 
 if __name__ == '__main__':
   test_runner.main()
