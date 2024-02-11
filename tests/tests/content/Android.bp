@@ -114,6 +114,7 @@ android_test {
     static_libs: [
         "android.security.flags-aconfig-java",
         "flag-junit",
+        "TestParameterInjector",
     ],
     srcs: [
         "src/android/content/cts/**/*.java",
