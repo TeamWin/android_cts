@@ -72,6 +72,7 @@ import com.google.testing.junit.testparameterinjector.TestParameter.TestParamete
 import com.google.testing.junit.testparameterinjector.TestParameterInjector;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -607,6 +608,56 @@ public class ComponentCallerTest {
                 PERMISSION_GRANTED, TestResults.sCheckContentUriPermissionRes);
     }
 
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCaller", "android.app.Activity#getIntent",
+            "android.app.Activity#setIntent"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void testActivityGetSetIntentCaller(
+            @TestParameter NewIntentGetSetCallerActivity activity) throws Exception {
+        Intent intent = new Intent();
+        intent.setComponent(new ComponentName(mContext, activity.mCls));
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT
+                | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+
+        TestResults.reset();
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertTrue("The caller in #setIntent(Intent, ComponentCaller) does not equal to"
+                + " #getCaller()", TestResults.sAreSetGetCallerEqual);
+        assertTrue("The intent in #setIntent(Intent, ComponentCaller) does not equal to"
+                + " #getIntent()", TestResults.sAreSetGetIntentEqual);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void testActivityGetCurrentCaller_throwsIfCalledOutsideOnNewIntent() throws Exception {
+        Intent intent = new Intent();
+        intent.setComponent(new ComponentName(mContext,
+                NewIntentGetSetIntentCurrentCallerTestActivity.class));
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT
+                | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertTrue("#getCurrentCaller should throw an IllegalStateException outside #onNewIntent",
+                TestResults.sGetCurrentCallerThrowsIllegalStateExceptionInOnStart);
+
+        TestResults.reset();
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        Assert.assertFalse("#getCurrentCaller should not throw an IllegalStateException inside"
+                + " #onNewIntent",
+                TestResults.sGetCurrentCallerThrowsIllegalStateExceptionInOnNewIntent);
+    }
+
     private Intent getSendBroadcastTestIntent(int uriLocationId, ModeFlags modeFlagsToCheck,
             ComponentName component) {
         Intent intent = new Intent();
@@ -659,10 +710,16 @@ public class ComponentCallerTest {
     /** Results for each test. Use {@link #reset()} to reset all results. */
     private static final class TestResults {
         static CountDownLatch sLatch;
+        // checkContentUriPermission() results
         static boolean sIsSecurityExceptionCaught;
         static boolean sIsIllegalArgumentExceptionCaught;
         static Uri sReceivedUri;
         static int sCheckContentUriPermissionRes;
+        // Activity related get-set results
+        static boolean sAreSetGetCallerEqual;
+        static boolean sAreSetGetIntentEqual;
+        static boolean sGetCurrentCallerThrowsIllegalStateExceptionInOnStart;
+        static boolean sGetCurrentCallerThrowsIllegalStateExceptionInOnNewIntent;
 
         static void reset() {
             sLatch = new CountDownLatch(1);
@@ -670,6 +727,10 @@ public class ComponentCallerTest {
             sIsIllegalArgumentExceptionCaught = false;
             sReceivedUri = null;
             sCheckContentUriPermissionRes = INVALID_PERMISSION_RESULT;
+            sAreSetGetCallerEqual = false;
+            sAreSetGetIntentEqual = false;
+            sGetCurrentCallerThrowsIllegalStateExceptionInOnStart = false;
+            sGetCurrentCallerThrowsIllegalStateExceptionInOnNewIntent = true;
         }
     }
 
@@ -692,7 +753,7 @@ public class ComponentCallerTest {
         @Override
         public void onStart() {
             super.onStart();
-            Log.i(TAG, "onStart");
+            Log.i(TAG, "onStart: " + getIntent());
             performTest(getIntent(), getInitialCaller());
         }
 
@@ -717,7 +778,7 @@ public class ComponentCallerTest {
         private static final String TAG = "NewIntentGetCurrentCallerTestActivity";
         @Override
         public void onNewIntent(Intent intent) {
-            Log.i(TAG, "onNewIntent");
+            Log.i(TAG, "onNewIntent: " + intent);
             performTest(intent, getCurrentCaller());
             finish();
         }
@@ -728,8 +789,49 @@ public class ComponentCallerTest {
         private static final String TAG = "NewIntentOverloadCallerTestActivity";
         @Override
         public void onNewIntent(Intent intent, ComponentCaller caller) {
-            Log.i(TAG, "onNewIntent");
+            Log.i(TAG, "onNewIntent: " + intent);
             performTest(intent, caller);
+            finish();
+        }
+    }
+
+    public static class NewIntentGetSetIntentCurrentCallerTestActivity extends Activity {
+        private static final String TAG = "NewIntentGetSetIntentCurrentCallerTestActivity";
+        @Override
+        public void onStart() {
+            super.onStart();
+            Log.i(TAG, "onStart: " + getIntent());
+            try {
+                getCurrentCaller();
+            } catch (IllegalStateException e) {
+                TestResults.sGetCurrentCallerThrowsIllegalStateExceptionInOnStart = true;
+            }
+            TestResults.sLatch.countDown();
+        }
+
+        @Override
+        public void onNewIntent(Intent intent) {
+            Log.i(TAG, "onNewIntent: " + intent);
+            ComponentCaller caller = getCurrentCaller();
+            setIntent(intent, caller);
+            TestResults.sAreSetGetCallerEqual = caller.equals(getCaller());
+            TestResults.sAreSetGetIntentEqual = intent.equals(getIntent());
+            TestResults.sGetCurrentCallerThrowsIllegalStateExceptionInOnNewIntent = false;
+            TestResults.sLatch.countDown();
+            finish();
+        }
+    }
+
+    public static final class NewIntentGetSetIntentOverloadCallerTestActivity
+            extends NewIntentGetSetIntentCurrentCallerTestActivity {
+        private static final String TAG = "NewIntentGetSetIntentOverloadCallerTestActivity";
+        @Override
+        public void onNewIntent(Intent intent, ComponentCaller caller) {
+            Log.i(TAG, "onNewIntent: " + intent);
+            setIntent(intent, caller);
+            TestResults.sAreSetGetCallerEqual = caller.equals(getCaller());
+            TestResults.sAreSetGetIntentEqual = intent.equals(getIntent());
+            TestResults.sLatch.countDown();
             finish();
         }
     }
@@ -808,6 +910,17 @@ public class ComponentCallerTest {
 
         NewIntentCallerActivity(ComponentName component) {
             this.mComponent = component;
+        }
+    }
+
+    public enum NewIntentGetSetCallerActivity {
+        GET_CURRENT_CALLER(NewIntentGetSetIntentCurrentCallerTestActivity.class),
+        OVERLOAD_CALLER(NewIntentGetSetIntentOverloadCallerTestActivity.class);
+
+        final Class<? extends Activity> mCls;
+
+        NewIntentGetSetCallerActivity(Class<? extends Activity> cls) {
+            this.mCls = cls;
         }
     }
 }
