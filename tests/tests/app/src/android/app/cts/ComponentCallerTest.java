@@ -19,6 +19,7 @@ package android.app.cts;
 import static android.app.cts.testcomponentcaller.Constants.ACTION_ID;
 import static android.app.cts.testcomponentcaller.Constants.EXTRA_CHECK_CONTENT_URI_PERMISSION_RESULT;
 import static android.app.cts.testcomponentcaller.Constants.EXTRA_ILLEGAL_ARG_EXCEPTION_CAUGHT;
+import static android.app.cts.testcomponentcaller.Constants.EXTRA_UNKNOWN;
 import static android.app.cts.testcomponentcaller.Constants.HELPER_APP_NEW_INTENT_GET_CURRENT_CALLER_ACTIVITY;
 import static android.app.cts.testcomponentcaller.Constants.HELPER_APP_NEW_INTENT_OVERLOAD_CALLER_ACTIVITY;
 import static android.app.cts.testcomponentcaller.Constants.HELPER_APP_URI;
@@ -27,6 +28,10 @@ import static android.app.cts.testcomponentcaller.Constants.MODE_FLAGS_TO_CHECK;
 import static android.app.cts.testcomponentcaller.Constants.EXTRA_SECURITY_EXCEPTION_CAUGHT;
 import static android.app.cts.testcomponentcaller.Constants.SEND_TEST_BROADCAST_ACTION_ID;
 import static android.app.cts.testcomponentcaller.Constants.START_TEST_ACTIVITY_ACTION_ID;
+import static android.app.cts.testcomponentcaller.Constants.TRY_TO_RETRIEVE_EXTRA_STREAM_REFERRER_NAME;
+import static android.app.cts.testcomponentcaller.Constants.URI_IN_ARRAY_LIST_EXTRA_STREAMS_LOCATION_ID;
+import static android.app.cts.testcomponentcaller.Constants.URI_IN_EXTRA_STREAM_LOCATION_ID;
+import static android.app.cts.testcomponentcaller.Constants.URI_IN_EXTRA_UNKNOWN_LOCATION_ID;
 import static android.app.cts.testcomponentcaller.Constants.URI_LOCATION_ID;
 import static android.app.cts.testcomponentcaller.Constants.HELPER_APP_INITIAL_CALLER_ACTIVITY;
 import static android.app.cts.testcomponentcaller.Constants.HELPER_APP_PACKAGE;
@@ -78,6 +83,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -285,6 +291,166 @@ public class ComponentCallerTest {
         assertActivityWasInvoked();
         assertEquals("Should return denied because we don't have the write permission",
                 PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getInitialCaller",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityInitialCaller_checkContentUriPermission_extraStreamContentUri_noPermission(
+            @TestParameter ModeFlags modeFlagsToCheck) throws Exception {
+        Intent intent = getSendBroadcastTestIntent(URI_IN_EXTRA_STREAM_LOCATION_ID,
+                modeFlagsToCheck, HELPER_APP_INITIAL_CALLER_ACTIVITY);
+        intent.putExtra(Intent.EXTRA_STREAM, CONTENT_URI_NO_PERMISSION);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return denied with "
+                        + modeFlagsToString(modeFlagsToCheck) + " because we have no access to"
+                        + " the content URI",
+                PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getInitialCaller",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityInitialCaller_checkContentUriPermission_extraStreamContentUri_hasRead()
+            throws Exception {
+        Intent intent = getSendBroadcastTestIntent(URI_IN_EXTRA_STREAM_LOCATION_ID, ModeFlags.READ,
+                HELPER_APP_INITIAL_CALLER_ACTIVITY);
+        intent.putExtra(Intent.EXTRA_STREAM, CONTENT_URI_READ_PERMISSION);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return granted because we have the read permission",
+                PERMISSION_GRANTED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getInitialCaller",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityInitialCaller_checkContentUriPermission_extraStreamContentUri_hasReadButNoWrite(
+            @TestParameter(valuesProvider = WriteModeFlagsProvider.class)
+            ModeFlags modeFlagsToCheck) throws Exception {
+        Intent intent = getSendBroadcastTestIntent(URI_IN_EXTRA_STREAM_LOCATION_ID,
+                modeFlagsToCheck, HELPER_APP_INITIAL_CALLER_ACTIVITY);
+        intent.putExtra(Intent.EXTRA_STREAM, CONTENT_URI_READ_PERMISSION);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return denied because we don't have the write permission",
+                PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getInitialCaller",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityInitialCaller_checkContentUriPermission_arrayListExtraStreamsContentUri_noPermission(
+            @TestParameter ModeFlags modeFlagsToCheck) throws Exception {
+        Intent intent = getSendBroadcastTestIntent(URI_IN_ARRAY_LIST_EXTRA_STREAMS_LOCATION_ID,
+                modeFlagsToCheck, HELPER_APP_INITIAL_CALLER_ACTIVITY);
+        ArrayList<Uri> uris = new ArrayList<>();
+        uris.add(CONTENT_URI_NO_PERMISSION);
+        intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return denied with "
+                        + modeFlagsToString(modeFlagsToCheck) + " because we have no access to"
+                        + " the content URI",
+                PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getInitialCaller",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityInitialCaller_checkContentUriPermission_arrayListExtraStreamsContentUri_hasRead()
+            throws Exception {
+        Intent intent = getSendBroadcastTestIntent(URI_IN_ARRAY_LIST_EXTRA_STREAMS_LOCATION_ID,
+                ModeFlags.READ, HELPER_APP_INITIAL_CALLER_ACTIVITY);
+        ArrayList<Uri> uris = new ArrayList<>();
+        uris.add(CONTENT_URI_READ_PERMISSION);
+        intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return granted because we have the read permission",
+                PERMISSION_GRANTED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getInitialCaller",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityInitialCaller_checkContentUriPermission_arrayListExtraStreamsContentUri_hasReadButNoWrite(
+            @TestParameter(valuesProvider = WriteModeFlagsProvider.class)
+            ModeFlags modeFlagsToCheck) throws Exception {
+        Intent intent = getSendBroadcastTestIntent(URI_IN_ARRAY_LIST_EXTRA_STREAMS_LOCATION_ID,
+                modeFlagsToCheck, HELPER_APP_INITIAL_CALLER_ACTIVITY);
+        ArrayList<Uri> uris = new ArrayList<>();
+        uris.add(CONTENT_URI_READ_PERMISSION);
+        intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return denied because we don't have the write permission",
+                PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getInitialCaller",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityInitialCaller_checkContentUriPermission_unknownExtraContentUri_throwsIllegalArgumentException(
+            @TestParameter ModeFlags modeFlagsToCheck) throws Exception {
+        Intent intent = getSendBroadcastTestIntent(URI_IN_EXTRA_UNKNOWN_LOCATION_ID,
+                modeFlagsToCheck, HELPER_APP_INITIAL_CALLER_ACTIVITY);
+        intent.putExtra(EXTRA_UNKNOWN, CONTENT_URI_NO_PERMISSION);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertTrue("Should throw an IllegalArgumentException for an unknown EXTRA",
+                TestResults.sIsIllegalArgumentExceptionCaught);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivity_checkContentUriPermission_passingNonUriExtraStreamDoesNotAffectRetrievalOfExtras()
+            throws Exception {
+        Intent intent = getTryToRetrieveExtrasTestIntent();
+        String nonUriExtraStream = "non-uri";
+        String referrerName = "ComponentCaller";
+        intent.putExtra(Intent.EXTRA_STREAM, nonUriExtraStream);
+        intent.putExtra(Intent.EXTRA_REFERRER_NAME, referrerName);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertEquals("Passing a non-URI item as EXTRA_STREAM should not affect the retrieval of"
+                + " EXTRA_STREAM", nonUriExtraStream, TestResults.sExtraStreamString);
+        assertEquals("Passing a non-URI item as EXTRA_STREAM should not affect the retrieval of"
+                + " other extras, such as EXTRA_REFERRER_NAME",
+                referrerName, TestResults.sReferrerName);
     }
 
     @Test
@@ -729,6 +895,15 @@ public class ComponentCallerTest {
         return intent;
     }
 
+    private Intent getTryToRetrieveExtrasTestIntent() {
+        Intent intent = new Intent();
+        intent.setComponent(HELPER_APP_INITIAL_CALLER_ACTIVITY);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT
+                | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        intent.putExtra(ACTION_ID, TRY_TO_RETRIEVE_EXTRA_STREAM_REFERRER_NAME);
+        return intent;
+    }
+
     private String modeFlagsToString(ModeFlags modeFlags) {
         return switch (modeFlags.mValue) {
             case Intent.FLAG_GRANT_READ_URI_PERMISSION -> "read";
@@ -763,6 +938,9 @@ public class ComponentCallerTest {
         static boolean sGetCurrentCallerThrowsIllegalStateExceptionInOnStart;
         static boolean sGetCurrentCallerThrowsIllegalStateExceptionInOnNewIntent;
         static boolean sGetCurrentCallerThrowsIllegalStateExceptionInOnActivityResult;
+        // TRY_TO_RETRIEVE_EXTRA_STREAM_REFERRER_NAME data
+        static String sExtraStreamString;
+        static String sReferrerName;
 
         static void reset() {
             sLatch = new CountDownLatch(1);
@@ -775,6 +953,8 @@ public class ComponentCallerTest {
             sGetCurrentCallerThrowsIllegalStateExceptionInOnStart = false;
             sGetCurrentCallerThrowsIllegalStateExceptionInOnNewIntent = true;
             sGetCurrentCallerThrowsIllegalStateExceptionInOnActivityResult = true;
+            sExtraStreamString = null;
+            sReferrerName = null;
         }
     }
 
@@ -788,6 +968,8 @@ public class ComponentCallerTest {
             TestResults.sCheckContentUriPermissionRes =
                     intent.getIntExtra(EXTRA_CHECK_CONTENT_URI_PERMISSION_RESULT,
                             INVALID_PERMISSION_RESULT);
+            TestResults.sExtraStreamString = intent.getStringExtra(Intent.EXTRA_STREAM);
+            TestResults.sReferrerName = intent.getStringExtra(Intent.EXTRA_REFERRER_NAME);
             TestResults.sLatch.countDown();
         }
     }
