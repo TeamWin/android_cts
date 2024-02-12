@@ -30,6 +30,7 @@ android_test {
         "android.service.notification.flags-aconfig-java",
         "android.app.flags-aconfig-java",
         "flag-junit",
+        "notification_flags_lib",
     ],
     libs: [
         "android.test.runner",
