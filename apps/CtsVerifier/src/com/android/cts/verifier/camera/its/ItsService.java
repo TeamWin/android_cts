@@ -1597,17 +1597,25 @@ public class ItsService extends Service implements SensorEventListener {
                 }
             }
 
-            boolean supported = false;
+            String returnString;
             if (templateReq == null) {
-                supported = mCamera.isSessionConfigurationSupported(sessionConfig);
+                returnString = mCamera.isSessionConfigurationSupported(sessionConfig)
+                        ? "supportedCombination" : "unsupportedCombination";
+            } else if (!mCameraManager.isCameraDeviceSetupSupported(mCamera.getId())) {
+                Log.i(TAG,
+                        "Attempting to query session support with parameters, but "
+                                + "CameraDeviceSetup is not supported.");
+                returnString = "unsupportedOperation";
             } else {
                 sessionConfig.setSessionParameters(templateReq.build());
-                supported = mCameraManager.isSessionConfigurationWithParametersSupported(
-                        cameraId, sessionConfig);
+                CameraDevice.CameraDeviceSetup cameraDeviceSetup =
+                        mCameraManager.getCameraDeviceSetup(mCamera.getId());
+                boolean supported = cameraDeviceSetup.isSessionConfigurationSupported(
+                        sessionConfig);
+                returnString = supported ? "supportedCombination" : "unsupportedCombination";
             }
 
-            String supportString = supported ? "supportedCombination" : "unsupportedCombination";
-            mSocketRunnableObj.sendResponse("streamCombinationSupport", supportString);
+            mSocketRunnableObj.sendResponse("streamCombinationSupport", returnString);
 
         } catch (UnsupportedOperationException e) {
             mSocketRunnableObj.sendResponse("streamCombinationSupport", "unsupportedOperation");
