@@ -86,8 +86,10 @@ public class MediaProjectionHelper {
 
             LaunchCookie launchCookie = getIntent().getParcelableExtra(EXTRA_LAUNCH_COOKIE,
                     LaunchCookie.class);
-            startActivityForResult(mediaProjectionManager.createScreenCaptureIntent(launchCookie),
-                    REQUEST_MEDIA_PROJECTION);
+            Intent screenCaptureIntent =
+                    launchCookie == null ? mediaProjectionManager.createScreenCaptureIntent()
+                            : mediaProjectionManager.createScreenCaptureIntent(launchCookie);
+            startActivityForResult(screenCaptureIntent, REQUEST_MEDIA_PROJECTION);
         }
 
         @Override
