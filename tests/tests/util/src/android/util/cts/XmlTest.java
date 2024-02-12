@@ -97,7 +97,6 @@ public class XmlTest {
             + "\"/></" + TAG_TEST + ">";
 
     @Test
-    @IgnoreUnderRavenwood
     public void testParseStringContentHandler() {
         final String xmlStr = "<Test><Son name=\"abc\"/></Test>";
         DefaultContentHandler dc = new DefaultContentHandler();
@@ -167,7 +166,12 @@ public class XmlTest {
         }
 
         public void setDocumentLocator(Locator locator) {
-            mVec.add(STR_SET_DOCUMENT_LOCATOR_TAG + locator);
+            // Some implementations have inconsistent column numbering (starting from 0 or 1), so
+            // focus on verifying all other consistent location variables
+            final String str = String.format(
+                    "Locator[publicId: %s, systemId: %s, line: %d, column: 0]",
+                    locator.getPublicId(), locator.getSystemId(), locator.getLineNumber());
+            mVec.add(STR_SET_DOCUMENT_LOCATOR_TAG + str);
         }
 
         public void skippedEntity(String name) throws SAXException {
@@ -198,7 +202,6 @@ public class XmlTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
     public void testParseReaderContentHander() {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         DataOutputStream dout = new DataOutputStream(bout);
@@ -248,7 +251,6 @@ public class XmlTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
     public void testParseInputStreamEncodingContentHandler() {
         // test US-ASCII
         DefaultContentHandler dc = new DefaultContentHandler();
@@ -389,7 +391,6 @@ public class XmlTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
     public void testFindEncodingByName() {
 
         try {
@@ -410,7 +411,7 @@ public class XmlTest {
     }
 
     @Test
-    @IgnoreUnderRavenwood
+    @IgnoreUnderRavenwood(blockedBy = Resources.class)
     public void testAsAttributeSet() {
         Resources res = InstrumentationRegistry.getTargetContext().getResources();
         XmlResourceParser xp = res.getLayout(R.layout.xml_test);
