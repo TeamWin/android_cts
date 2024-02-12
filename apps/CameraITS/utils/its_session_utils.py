@@ -32,6 +32,7 @@ import camera_properties_utils
 import capture_request_utils
 import error_util
 import image_processing_utils
+import its_device_utils
 import opencv_processing_utils
 import ui_interaction_utils
 
@@ -41,7 +42,6 @@ ANDROID15_API_LEVEL = 35
 CHART_DISTANCE_NO_SCALING = 0
 IMAGE_FORMAT_JPEG = 256
 IMAGE_FORMAT_YUV_420_888 = 35
-ITS_TEST_ACTIVITY = 'com.android.cts.verifier/.camera.its.ItsTestActivity'
 JCA_CAPTURE_PATH_TAG = 'JCA_CAPTURE_PATH'
 JCA_CAPTURE_STATUS_TAG = 'JCA_CAPTURE_STATUS'
 LOAD_SCENE_DELAY_SEC = 3
@@ -118,18 +118,6 @@ def check_apk_installed(device_id, package_name):
     raise AssertionError(
         f'{package_name} not installed on device {device_id}!'
     )
-
-
-def start_its_test_activity(device_id):
-  """Starts ItsTestActivity, waking the device if necessary.
-
-  Args:
-    device_id: str; ID of the device.
-  """
-  run(f'adb -s {device_id} shell input keyevent KEYCODE_WAKEUP')
-  run(f'adb -s {device_id} shell input keyevent KEYCODE_MENU')
-  run(f'adb -s {device_id} shell am start -n '
-      f'{ITS_TEST_ACTIVITY} --activity-brought-to-front')
 
 
 class ItsSession(object):
@@ -311,19 +299,22 @@ class ItsSession(object):
         if len(s) > 7 and s[6] == '=':
           duration = int(s[7:])
         logging.debug('Rebooting device')
-        run(f'{self.adb} reboot')
-        run(f'{self.adb} wait-for-device')
+        its_device_utils.run(f'{self.adb} reboot')
+        its_device_utils.run(f'{self.adb} wait-for-device')
         time.sleep(duration)
         logging.debug('Reboot complete')
 
     # Flush logcat so following code won't be misled by previous
     # 'ItsService ready' log.
-    run(f'{self.adb} logcat -c')
+    its_device_utils.run(f'{self.adb} logcat -c')
     time.sleep(1)
 
-    run(f'{self.adb} shell am force-stop --user 0 {self.PACKAGE}')
-    run(f'{self.adb} shell am start-foreground-service --user 0 '
-        f'-t text/plain -a {self.INTENT_START}')
+    its_device_utils.run(
+        f'{self.adb} shell am force-stop --user 0 {self.PACKAGE}')
+    its_device_utils.run(
+        f'{self.adb} shell am start-foreground-service --user 0 '
+        f'-t text/plain -a {self.INTENT_START}'
+    )
 
     # Wait until the socket is ready to accept a connection.
     proc = subprocess.Popen(
@@ -1333,7 +1324,7 @@ class ItsSession(object):
                     RESULT_OK_STATUS, capture_status)
     logging.debug('capture path: %s', capture_path)
     _, capture_name = os.path.split(capture_path)
-    run(f'adb -s {dut.serial} pull {capture_path} {log_path}')
+    its_device_utils.run(f'adb -s {dut.serial} pull {capture_path} {log_path}')
     return os.path.join(log_path, capture_name)
 
   def do_capture_with_flash(self,
@@ -2273,16 +2264,6 @@ def parse_camera_ids(ids):
       raise AssertionError('Camera id parameters must be either ID or '
                            f'ID{SUB_CAMERA_SEPARATOR}SUB_ID')
   return id_combos
-
-
-def run(cmd):
-  """Replacement for os.system, with hiding of stdout+stderr messages.
-
-  Args:
-    cmd: Command to be executed in string format.
-  """
-  with open(os.devnull, 'wb') as devnull:
-    subprocess.check_call(cmd.split(), stdout=devnull, stderr=subprocess.STDOUT)
 
 
 def do_capture_with_latency(cam, req, sync_latency, fmt=None):
