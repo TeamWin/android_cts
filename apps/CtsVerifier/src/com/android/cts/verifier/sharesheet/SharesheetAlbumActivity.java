@@ -18,6 +18,7 @@ package com.android.cts.verifier.sharesheet;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.service.chooser.Flags;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -45,6 +46,13 @@ public class SharesheetAlbumActivity extends PassFailButtons.Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (!Flags.chooserAlbumText()) {
+            // If the API isn't enabled, immediately let the test pass.
+            Toast.makeText(this, R.string.sharesheet_skipping_for_flag, Toast.LENGTH_LONG).show();
+            setTestResultAndFinish(true);
+            return;
+        }
 
         setContentView(R.layout.sharesheet_album_activity);
         setPassFailButtonClickListeners();
