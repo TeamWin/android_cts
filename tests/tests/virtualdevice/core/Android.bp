@@ -21,8 +21,6 @@ android_test {
 
     defaults: ["cts_defaults"],
 
-    platform_apis: true,
-
     libs: [
         "android.test.runner",
         "android.test.base",
