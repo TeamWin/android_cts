@@ -40,6 +40,12 @@ android_test_helper_app {
     defaults: ["CtsMediaRouterHostSizeTestProviderAppDefaults"],
 }
 
+android_test_helper_app {
+    name: "CtsMediaRouterHostSideTestProviderWithPackageManagerSpam",
+    manifest: "AndroidManifestProviderWithPackageManagerSpam.xml",
+    defaults: ["CtsMediaRouterHostSizeTestProviderAppDefaults"],
+}
+
 java_defaults {
     name: "CtsMediaRouterHostSizeTestProviderAppDefaults",
     defaults: ["cts_defaults"],

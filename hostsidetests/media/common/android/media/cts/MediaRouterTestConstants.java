@@ -31,6 +31,10 @@ public final class MediaRouterTestConstants {
             "android.media.router.cts.provider3";
     public static final String MEDIA_ROUTER_PROVIDER_3_APK =
             "CtsMediaRouterHostSideTestProviderApp3.apk";
+    public static final String MEDIA_ROUTER_PROVIDER_WITH_PACKAGE_MANAGER_SPAM_PACKAGE =
+            "android.media.router.cts.providerwithpackagemanagerspam";
+    public static final String MEDIA_ROUTER_PROVIDER_WITH_PACKAGE_MANAGER_SPAM_APK =
+            "CtsMediaRouterHostSideTestProviderWithPackageManagerSpam.apk";
     public static final String MEDIA_ROUTER_PROVIDER_SELF_SCAN_ONLY_PACKAGE =
             "android.media.router.cts.provider_self_scan_only";
     public static final String MEDIA_ROUTER_PROVIDER_SELF_SCAN_ONLY_APK =
