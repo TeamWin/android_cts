@@ -27,9 +27,12 @@ import android.app.job.Flags;
 import android.app.job.JobInfo;
 import android.content.ClipData;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -49,7 +52,6 @@ public class JobInfoTest extends BaseJobSchedulerTest {
     private static final int JOB_ID = JobInfoTest.class.hashCode();
     private static final String TAG = JobInfoTest.class.getSimpleName();
 
-    private static final long REJECT_NEGATIVE_DELAYS_AND_DEADLINES = 323349338L;
     private static final long THROW_ON_UNSUPPORTED_BIAS_USAGE = 300477393L;
 
     @Override
@@ -469,21 +471,6 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         mJobScheduler.schedule(ji);
     }
 
-    public void testMinimumLatency_negative() {
-        JobInfo.Builder jiBuilder = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                .setMinimumLatency(-1);
-
-        // TODO(309023462): create separate tests for target SDK gated changes
-        if (CompatChanges.isChangeEnabled(REJECT_NEGATIVE_DELAYS_AND_DEADLINES)) {
-            assertBuildFails("Successfully scheduled a job with a negative latency", jiBuilder);
-        } else {
-            // Confirm JobScheduler accepts the JobInfo object.
-            JobInfo ji = jiBuilder.build();
-            assertEquals(0, ji.getMinLatencyMillis());
-            mJobScheduler.schedule(ji);
-        }
-    }
-
     public void testOverrideDeadline() {
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setOverrideDeadline(HOUR_IN_MILLIS)
@@ -527,21 +514,6 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         mJobScheduler.schedule(jiBuilderShortNonfunctional.build());
         mJobScheduler.schedule(jiBuilderLongFunctional.build());
         mJobScheduler.schedule(jiBuilderLongNonfunctional.build());
-    }
-
-    public void testOverrideDeadline_negative() {
-        JobInfo.Builder jiBuilder = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                .setOverrideDeadline(-1);
-
-        // TODO(309023462): create separate tests for target SDK gated changes
-        if (CompatChanges.isChangeEnabled(REJECT_NEGATIVE_DELAYS_AND_DEADLINES)) {
-            assertBuildFails("Successfully scheduled a job with a negative deadline", jiBuilder);
-        } else {
-            // Confirm JobScheduler accepts the JobInfo object.
-            JobInfo ji = jiBuilder.build();
-            assertTrue(ji.getMaxExecutionDelayMillis() >= 0);
-            mJobScheduler.schedule(ji);
-        }
     }
 
     public void testPeriodic() {
