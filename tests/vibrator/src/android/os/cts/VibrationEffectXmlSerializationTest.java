@@ -34,7 +34,6 @@ import android.os.vibrator.Flags;
 import android.os.vibrator.persistence.ParsedVibration;
 import android.os.vibrator.persistence.VibrationXmlParser;
 import android.os.vibrator.persistence.VibrationXmlSerializer;
-import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
@@ -68,7 +67,6 @@ import junitparams.Parameters;
         "android.os.vibrator.persistence.VibrationXmlParser#parse",
         "android.os.vibrator.persistence.VibrationXmlSerializer#serialize"
 })
-@RequiresFlagsEnabled(Flags.FLAG_ENABLE_VIBRATION_SERIALIZATION_APIS)
 public class VibrationEffectXmlSerializationTest {
 
     @Rule
