@@ -74,6 +74,12 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
     static final String APP_C_PACKAGE = "android.server.wm.backgroundactivity.appc";
     static final Components APP_C = Components.get(APP_C_PACKAGE);
     static final Components APP_C_33 = Components.get(APP_C_PACKAGE + "33");
+    static final Components APP_ASM_OPT_IN =
+            Components.get("android.server.wm.backgroundactivity.appasmoptin");
+
+    static final String APP_ASM_OPT_OUT_PACKAGE =
+            "android.server.wm.backgroundactivity.appasmoptout";
+    static final Components APP_ASM_OPT_OUT = Components.get(APP_ASM_OPT_OUT_PACKAGE);
 
     static final List<Components> ALL_APPS =
             List.of(APP_A, APP_A_33, APP_B, APP_B_33, APP_C, APP_C_33);
@@ -307,6 +313,11 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
         ActivityStartVerifier activity(ComponentName to, int id) {
             activity(to);
             mLaunchIntent.putExtra(COMMON_FOREGROUND_ACTIVITY_EXTRAS.ACTIVITY_ID, id);
+            return this;
+        }
+
+        ActivityStartVerifier allowCrossUidLaunch() {
+            mLaunchIntent.putExtra(COMMON_FOREGROUND_ACTIVITY_EXTRAS.ALLOW_CROSS_UID, true);
             return this;
         }
 

@@ -32,6 +32,7 @@
         <option name="test-file-name" value="CtsBackgroundActivityAppB33.apk" />
         <option name="test-file-name" value="CtsBackgroundActivityAppC.apk" />
         <option name="test-file-name" value="CtsBackgroundActivityAppC33.apk" />
+        <option name="test-file-name" value="CtsBackgroundActivityAppAllowCrossUidFlagDefault.apk" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
