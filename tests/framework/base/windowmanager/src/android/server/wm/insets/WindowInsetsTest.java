@@ -39,6 +39,7 @@ import static org.junit.Assert.assertTrue;
 import android.graphics.Insets;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
+import android.util.Size;
 import android.view.DisplayCutout;
 import android.view.DisplayShape;
 import android.view.RoundedCorner;
@@ -53,7 +54,9 @@ import com.android.compatibility.common.util.ApiTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 /** Test {@link WindowInsets}. */
 @SmallTest
@@ -82,6 +85,13 @@ public class WindowInsetsTest {
     private static final int INSET_BOTTOM = 4;
     private static final DisplayShape DISPLAY_SHAPE =
             DisplayShape.fromSpecString("M0,0 h100 v200 h-100 z", 1f, 100, 200);
+    private static final List<Rect> BOUNDING_RECTS = Arrays.asList(
+            new Rect(0, 0, 10, 10), new Rect(20, 20, 30, 30)
+    );
+    private static final List<Rect> BOUNDING_RECTS_2 = Arrays.asList(
+            new Rect(10, 10, 20, 20)
+    );
+    private static final int FRAME_SIZE = 200;
 
     @Test
     public void testBuilder() {
@@ -101,6 +111,8 @@ public class WindowInsetsTest {
                         .setRoundedCorner(
                                 RoundedCorner.POSITION_BOTTOM_LEFT, ROUNDED_CORNER_BOTTOM_LEFT)
                         .setDisplayShape(DISPLAY_SHAPE)
+                        .setBoundingRects(captionBar(), BOUNDING_RECTS)
+                        .setFrame(FRAME_SIZE, FRAME_SIZE)
                         .build();
 
         assertEquals(Insets.of(1, 2, 3, 4), insets.getSystemWindowInsets());
@@ -122,6 +134,8 @@ public class WindowInsetsTest {
                 ROUNDED_CORNER_BOTTOM_LEFT,
                 insets.getRoundedCorner(RoundedCorner.POSITION_BOTTOM_LEFT));
         assertEquals(DISPLAY_SHAPE, insets.getDisplayShape());
+        assertEquals(BOUNDING_RECTS, insets.getBoundingRects(captionBar()));
+        assertEquals(new Size(FRAME_SIZE, FRAME_SIZE), insets.getFrame());
     }
 
     @Test
@@ -142,6 +156,8 @@ public class WindowInsetsTest {
                         .setRoundedCorner(
                                 RoundedCorner.POSITION_BOTTOM_LEFT, ROUNDED_CORNER_BOTTOM_LEFT)
                         .setDisplayShape(DISPLAY_SHAPE)
+                        .setBoundingRects(captionBar(), BOUNDING_RECTS)
+                        .setFrame(FRAME_SIZE, FRAME_SIZE)
                         .build();
         final WindowInsets copy = new WindowInsets.Builder(insets).build();
 
@@ -186,7 +202,9 @@ public class WindowInsetsTest {
                         .setSystemGestureInsets(Insets.of(9, 10, 11, 12))
                         .setMandatorySystemGestureInsets(Insets.of(13, 14, 15, 16))
                         .setTappableElementInsets(Insets.of(17, 18, 19, 20))
-                        .setDisplayCutout(CUTOUT);
+                        .setDisplayCutout(CUTOUT)
+                        .setBoundingRects(captionBar(), BOUNDING_RECTS)
+                        .setFrame(FRAME_SIZE, FRAME_SIZE);
         final WindowInsets insets = builder.build();
 
         builder.setSystemWindowInsets(Insets.NONE);
@@ -195,11 +213,17 @@ public class WindowInsetsTest {
         builder.setSystemGestureInsets(Insets.NONE);
         builder.setMandatorySystemGestureInsets(Insets.NONE);
         builder.setTappableElementInsets(Insets.NONE);
+        builder.setBoundingRects(captionBar(), Collections.emptyList());
+        builder.setFrame(FRAME_SIZE + 1, FRAME_SIZE + 1);
 
         assertEquals(Insets.of(1, 2, 3, 4), insets.getSystemWindowInsets());
         assertEquals(Insets.of(5, 6, 7, 8), insets.getStableInsets());
         assertSame(CUTOUT, insets.getDisplayCutout());
         assertEquals(getCutoutSafeInsets(insets), insets.getInsets(Type.displayCutout()));
+        assertEquals(
+                BOUNDING_RECTS,
+                insets.getBoundingRects(captionBar()));
+        assertEquals(new Size(FRAME_SIZE, FRAME_SIZE), insets.getFrame());
     }
 
     @Test
@@ -274,6 +298,58 @@ public class WindowInsetsTest {
     }
 
     @Test
+    public void testBuilder_boundingRectsTypeMap() {
+        final WindowInsets insets =
+                new WindowInsets.Builder()
+                        .setInsets(statusBars(), Insets.of(0, 0, 10, 10))
+                        .setBoundingRects(statusBars(), List.of(new Rect(0, 0, 10, 10)))
+                        .setBoundingRects(navigationBars(), List.of(new Rect(0, 100, 10, 10)))
+                        .setBoundingRects(tappableElement(), List.of(new Rect(0, 0, 5, 5)))
+                        .setBoundingRects(mandatorySystemGestures(),
+                                List.of(new Rect(0, 0, 20, 20)))
+                        .setBoundingRects(systemGestures(), List.of(new Rect(0, 0, 30, 30)))
+                        .setBoundingRects(displayCutout(), List.of(new Rect(50, 0, 60, 10)))
+                        .setBoundingRects(captionBar(), List.of(new Rect(0, 0, 50, 50)))
+                        .setBoundingRects(ime(), List.of(new Rect(0, 90, 100, 100)))
+                        .setBoundingRects(systemOverlays(), List.of(new Rect(30, 30, 40, 40)))
+                        .build();
+        assertEquals(
+                Collections.singletonList(new Rect(0, 0, 10, 10)),
+                insets.getBoundingRects(statusBars()));
+        assertEquals(
+                Collections.singletonList(new Rect(0, 100, 10, 10)),
+                insets.getBoundingRects(navigationBars()));
+        assertEquals(
+                Collections.singletonList(new Rect(0, 0, 5, 5)),
+                insets.getBoundingRects(tappableElement()));
+        assertEquals(
+                Collections.singletonList(new Rect(0, 0, 20, 20)),
+                insets.getBoundingRects(mandatorySystemGestures()));
+        assertEquals(
+                Collections.singletonList(new Rect(0, 0, 30, 30)),
+                insets.getBoundingRects(systemGestures()));
+        assertEquals(
+                Collections.singletonList(new Rect(50, 0, 60, 10)),
+                insets.getBoundingRects(displayCutout()));
+        assertEquals(
+                Collections.singletonList(new Rect(0, 0, 50, 50)),
+                insets.getBoundingRects(captionBar()));
+        assertEquals(
+                Arrays.asList(
+                        new Rect(0, 0, 10, 10),
+                        new Rect(0, 100, 10, 10),
+                        new Rect(0, 0, 50, 50),
+                        new Rect(30, 30, 40, 40)),
+                insets.getBoundingRects(systemBars()));
+        assertEquals(
+                Collections.singletonList(new Rect(0, 90, 100, 100)),
+                insets.getBoundingRects(ime()));
+        assertEquals(
+                Collections.singletonList(new Rect(30, 30, 40, 40)),
+                insets.getBoundingRects(systemOverlays()));
+    }
+
+    @Test
     public void testBuilder_compatInsets() {
         final WindowInsets insets =
                 new WindowInsets.Builder().setSystemWindowInsets(Insets.of(0, 50, 30, 10)).build();
@@ -305,6 +381,8 @@ public class WindowInsetsTest {
                         .setMandatorySystemGestureInsets(Insets.of(13, 14, 15, 16))
                         .setTappableElementInsets(Insets.of(17, 18, 19, 20))
                         .setDisplayCutout(CUTOUT)
+                        .setBoundingRects(captionBar(), BOUNDING_RECTS)
+                        .setFrame(FRAME_SIZE, FRAME_SIZE)
                         .build();
 
         final WindowInsets insets2 =
@@ -315,6 +393,8 @@ public class WindowInsetsTest {
                         .setMandatorySystemGestureInsets(Insets.of(13, 14, 15, 16))
                         .setTappableElementInsets(Insets.of(17, 18, 19, 20))
                         .setDisplayCutout(CUTOUT)
+                        .setBoundingRects(captionBar(), BOUNDING_RECTS)
+                        .setFrame(FRAME_SIZE, FRAME_SIZE)
                         .build();
 
         assertNotSame(
@@ -508,6 +588,8 @@ public class WindowInsetsTest {
                         .setMandatorySystemGestureInsets(Insets.of(13, 14, 15, 16))
                         .setTappableElementInsets(Insets.of(17, 18, 19, 20))
                         .setDisplayCutout(CUTOUT)
+                        .setBoundingRects(captionBar(), BOUNDING_RECTS)
+                        .setFrame(FRAME_SIZE, FRAME_SIZE)
                         .build();
 
         final WindowInsets insetsChangedSysWindowInsets =
@@ -518,6 +600,8 @@ public class WindowInsetsTest {
                         .setMandatorySystemGestureInsets(Insets.of(13, 14, 15, 16))
                         .setTappableElementInsets(Insets.of(17, 18, 19, 20))
                         .setDisplayCutout(CUTOUT)
+                        .setBoundingRects(captionBar(), BOUNDING_RECTS)
+                        .setFrame(FRAME_SIZE, FRAME_SIZE)
                         .build();
 
         final WindowInsets insetsChangedStableInsets =
@@ -528,6 +612,8 @@ public class WindowInsetsTest {
                         .setMandatorySystemGestureInsets(Insets.of(13, 14, 15, 16))
                         .setTappableElementInsets(Insets.of(17, 18, 19, 20))
                         .setDisplayCutout(CUTOUT)
+                        .setBoundingRects(captionBar(), BOUNDING_RECTS)
+                        .setFrame(FRAME_SIZE, FRAME_SIZE)
                         .build();
 
         final WindowInsets insetsChangedCutout =
@@ -538,6 +624,8 @@ public class WindowInsetsTest {
                         .setMandatorySystemGestureInsets(Insets.of(13, 14, 15, 16))
                         .setTappableElementInsets(Insets.of(17, 18, 19, 20))
                         .setDisplayCutout(CUTOUT2)
+                        .setBoundingRects(captionBar(), BOUNDING_RECTS)
+                        .setFrame(FRAME_SIZE, FRAME_SIZE)
                         .build();
 
         final WindowInsets insetsChangedGesture =
@@ -548,6 +636,8 @@ public class WindowInsetsTest {
                         .setMandatorySystemGestureInsets(Insets.of(13, 14, 15, 16))
                         .setTappableElementInsets(Insets.of(17, 18, 19, 20))
                         .setDisplayCutout(CUTOUT)
+                        .setBoundingRects(captionBar(), BOUNDING_RECTS)
+                        .setFrame(FRAME_SIZE, FRAME_SIZE)
                         .build();
 
         final WindowInsets insetsChangedMandatoryGesture =
@@ -558,6 +648,8 @@ public class WindowInsetsTest {
                         .setMandatorySystemGestureInsets(Insets.of(130, 140, 150, 160))
                         .setTappableElementInsets(Insets.of(17, 18, 19, 20))
                         .setDisplayCutout(CUTOUT)
+                        .setBoundingRects(captionBar(), BOUNDING_RECTS)
+                        .setFrame(FRAME_SIZE, FRAME_SIZE)
                         .build();
 
         final WindowInsets insetsChangedTappableElement =
@@ -568,6 +660,32 @@ public class WindowInsetsTest {
                         .setMandatorySystemGestureInsets(Insets.of(13, 14, 15, 16))
                         .setTappableElementInsets(Insets.of(170, 180, 190, 200))
                         .setDisplayCutout(CUTOUT)
+                        .setBoundingRects(captionBar(), BOUNDING_RECTS)
+                        .setFrame(FRAME_SIZE, FRAME_SIZE)
+                        .build();
+
+        final WindowInsets insetsChangedBoundingRects =
+                new WindowInsets.Builder()
+                        .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
+                        .setStableInsets(Insets.of(5, 6, 7, 8))
+                        .setSystemGestureInsets(Insets.of(9, 10, 11, 12))
+                        .setMandatorySystemGestureInsets(Insets.of(13, 14, 15, 16))
+                        .setTappableElementInsets(Insets.of(170, 180, 190, 200))
+                        .setDisplayCutout(CUTOUT)
+                        .setBoundingRects(captionBar(), BOUNDING_RECTS_2)
+                        .setFrame(FRAME_SIZE, FRAME_SIZE)
+                        .build();
+
+        final WindowInsets insetsChangedFrameSize =
+                new WindowInsets.Builder()
+                        .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
+                        .setStableInsets(Insets.of(5, 6, 7, 8))
+                        .setSystemGestureInsets(Insets.of(9, 10, 11, 12))
+                        .setMandatorySystemGestureInsets(Insets.of(13, 14, 15, 16))
+                        .setTappableElementInsets(Insets.of(17, 18, 19, 20))
+                        .setDisplayCutout(CUTOUT)
+                        .setBoundingRects(captionBar(), BOUNDING_RECTS)
+                        .setFrame(FRAME_SIZE + 1, FRAME_SIZE + 1)
                         .build();
 
         assertNotEquals(insets, insetsChangedSysWindowInsets);
@@ -576,6 +694,8 @@ public class WindowInsetsTest {
         assertNotEquals(insets, insetsChangedGesture);
         assertNotEquals(insets, insetsChangedMandatoryGesture);
         assertNotEquals(insets, insetsChangedTappableElement);
+        assertNotEquals(insets, insetsChangedBoundingRects);
+        assertNotEquals(insets, insetsChangedFrameSize);
     }
 
     @Test
@@ -608,6 +728,34 @@ public class WindowInsetsTest {
         assertEquals(
                 applyInset(getCutoutSafeInsets(insets)),
                 insetInsets.getInsets(Type.displayCutout()));
+    }
+
+    @Test
+    public void testInset_boundingRects() {
+        final WindowInsets insets =
+                new WindowInsets.Builder()
+                        .setSystemWindowInsets(Insets.of(10, 20, 30, 40))
+                        .setStableInsets(Insets.of(50, 60, 70, 80))
+                        .setSystemGestureInsets(Insets.of(90, 100, 110, 120))
+                        .setMandatorySystemGestureInsets(Insets.of(130, 140, 150, 160))
+                        .setTappableElementInsets(Insets.of(170, 180, 190, 200))
+                        .setDisplayCutout(CUTOUT)
+                        .setBoundingRects(captionBar(), List.of(
+                                new Rect(0, 0, 200, 10), // Full width of the frame, height split.
+                                new Rect(0, 5, 200, 10), // Full width but height not affected.
+                                new Rect(90, 0, 110, 10), // Width unaffected.
+                                new Rect(0, 0, 200, 5) // Will be fully consumed by the top inset.
+                        ))
+                        .setFrame(FRAME_SIZE, FRAME_SIZE)
+                        .build();
+
+        final WindowInsets insetInsets = insets.inset(10, 5, 10, 5);
+
+        final List<Rect> insetRects = insetInsets.getBoundingRects(captionBar());
+        assertEquals(3, insetRects.size());
+        assertEquals(new Rect(0, 0, 180, 5), insetRects.get(0));
+        assertEquals(new Rect(0, 0, 180, 5), insetRects.get(1));
+        assertEquals(new Rect(80, 0, 100, 5), insetRects.get(2));
     }
 
     @Test
