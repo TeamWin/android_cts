@@ -78,8 +78,8 @@ public final class TestAppProviderTest {
     private TestAppProvider mTestAppProvider;
 
     @AutoAnnotation
-    public static Query query(StringQuery packageName, IntegerQuery minSdkVersion, IntegerQuery maxSdkVersion, IntegerQuery targetSdkVersion, BooleanQuery isDeviceAdmin) {
-        return new AutoAnnotation_TestAppProviderTest_query(packageName, minSdkVersion, maxSdkVersion, targetSdkVersion, isDeviceAdmin);
+    public static Query query(StringQuery packageName, IntegerQuery minSdkVersion, IntegerQuery maxSdkVersion, IntegerQuery targetSdkVersion, BooleanQuery isDeviceAdmin, BooleanQuery isHeadlessDOSingleUser) {
+        return new AutoAnnotation_TestAppProviderTest_query(packageName, minSdkVersion, maxSdkVersion, targetSdkVersion, isDeviceAdmin, isHeadlessDOSingleUser);
     }
 
     @AutoAnnotation
@@ -103,6 +103,7 @@ public final class TestAppProviderTest {
         private IntegerQuery mMaxSdkVersion = null;
         private IntegerQuery mTargetSdkVersion = null;
         private BooleanQuery mIsDeviceAdmin = null;
+        private BooleanQuery mIsHeadlessDOSingleUser = null;
 
         public QueryBuilder packageName(StringQuery packageName) {
             mPackageName = packageName;
@@ -129,13 +130,19 @@ public final class TestAppProviderTest {
             return this;
         }
 
+        public QueryBuilder isHeadlessDOSingleUser(BooleanQuery isHeadlessDOSingleUser) {
+            mIsHeadlessDOSingleUser = isHeadlessDOSingleUser;
+            return this;
+        }
+
         public Query build() {
             return query(
                     mPackageName != null ? mPackageName : stringQueryBuilder().build(),
                     mMinSdkVersion != null ? mMinSdkVersion : integerQueryBuilder().build(),
                     mMaxSdkVersion != null ? mMaxSdkVersion : integerQueryBuilder().build(),
                     mTargetSdkVersion != null ? mTargetSdkVersion : integerQueryBuilder().build(),
-                    mIsDeviceAdmin != null ? mIsDeviceAdmin : booleanQueryBuilder().build()
+                    mIsDeviceAdmin != null ? mIsDeviceAdmin : booleanQueryBuilder().build(),
+                    mIsHeadlessDOSingleUser != null ? mIsHeadlessDOSingleUser : booleanQueryBuilder().build()
             );
         }
     }
@@ -496,6 +503,27 @@ public final class TestAppProviderTest {
 
         assertThat(testApp.packageName()).isNotEqualTo(
                 "com.android.bedstead.testapp.DeviceAdminTestApp");
+    }
+
+    @Test
+    public void query_isHeadlessDOSingleUser_returnsMatching() {
+        TestApp testApp = mTestAppProvider.query()
+                .allowInternalBedsteadTestApps()
+                .whereIsHeadlessDOSingleUser().isTrue()
+                .get();
+
+        assertThat(testApp.metadata().getString("headless_do_single_user"))
+                .isEqualTo("true");
+    }
+
+    @Test
+    public void query_isNotHeadlessDOSingleUser_returnsMatching() {
+        TestApp testApp = mTestAppProvider.query()
+                .allowInternalBedsteadTestApps()
+                .whereIsHeadlessDOSingleUser().isFalse()
+                .get();
+
+        assertThat(testApp.metadata().getString("headless_do_single_user")).isNull();
     }
 
     @Test

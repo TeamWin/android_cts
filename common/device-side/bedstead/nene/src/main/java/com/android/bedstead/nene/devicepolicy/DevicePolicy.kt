@@ -139,13 +139,13 @@ object DevicePolicy {
     /**
      * Set the device owner.
      */
-    fun setDeviceOwner(deviceOwnerComponent: ComponentName): DeviceOwner {
+    @JvmOverloads
+    fun setDeviceOwner(deviceOwnerComponent: ComponentName, user: UserReference = TestApis.users().system()): DeviceOwner {
         if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
             return setDeviceOwnerPreS(deviceOwnerComponent)
         } else if (!Versions.meetsMinimumSdkVersionRequirement(Versions.U)) {
             return setDeviceOwnerPreU(deviceOwnerComponent)
         }
-        val user = TestApis.users().system()
         try {
             TestApis.permissions().withPermission(
                 CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS,

@@ -64,13 +64,21 @@ public @interface EnsureHasDeviceOwner {
 
         /**
          * When used - when setting the device owner on a headless system user mode device, a profile
-         * owner will also be set on the initial user. This matches the behaviour when setting up
-         * a new HSUM device.
+         * owner will also be set on the initial user. This matches the behaviour when the DPC
+         * has 'headless-system-user device-owner-mode="affiliated"' in device_admin.xml.
          *
          * <p>Note that when this is set - a default affiliation ID will be added to the Device
          * Owner and to the Profile Owner set on any other users.
          */
-        AFFILIATED;
+        AFFILIATED,
+
+        /**
+         * When used - the Device Owner will be set on the first secondary user (user 10).
+         * This matches the behaviour when the DPC has
+         * 'headless-system-user device-owner-mode="single_user"'
+         * in headless_single_user_device_admin.xml.
+         */
+        SINGLE_USER;
     }
 
     int DO_PO_PRIORITY = MIDDLE;
