@@ -116,6 +116,8 @@ import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.ScreenUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
+import com.android.modules.utils.build.SdkLevel;
+
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 
@@ -1128,9 +1130,10 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         Condition condition =
                 new Condition(rule.getConditionId(), "summary", Condition.STATE_TRUE);
         mNotificationManager.setAutomaticZenRuleState(id, condition);
-        // TODO: b/323398944 - Shouldn't be necessary, but the test is flaky without it.
-        runAsSystemUi(
-                () -> mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY));
+        if (!SdkLevel.isAtLeastV()) {
+            runAsSystemUi(
+                    () -> mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY));
+        }
 
         // delay for streams to get into correct mute states
         Thread.sleep(1000);
@@ -1159,16 +1162,19 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         mAudioManager.setStreamVolume(AudioManager.STREAM_SYSTEM, 1, 0);
         mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 1, 0);
 
-        mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA, 0, 0));
+        if (!SdkLevel.isAtLeastV()) {
+            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
+                    PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA, 0, 0));
+        }
         AutomaticZenRule rule = createRule("test_alarms", INTERRUPTION_FILTER_ALARMS);
         String id = mNotificationManager.addAutomaticZenRule(rule);
         Condition condition =
                 new Condition(rule.getConditionId(), "summary", Condition.STATE_TRUE);
         mNotificationManager.setAutomaticZenRuleState(id, condition);
-        // TODO: b/323398944 - Shouldn't be necessary, but the test is flaky without it.
-        runAsSystemUi(
-                () -> mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY));
+        if (!SdkLevel.isAtLeastV()) {
+            runAsSystemUi(
+                    () -> mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY));
+        }
 
         // delay for streams to get into correct mute states
         Thread.sleep(1000);
