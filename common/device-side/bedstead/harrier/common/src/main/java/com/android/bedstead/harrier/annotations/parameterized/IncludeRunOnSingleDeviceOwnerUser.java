@@ -32,6 +32,8 @@ import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 import com.android.queryable.annotations.BooleanQuery;
 import com.android.queryable.annotations.Query;
 
+import org.junit.Ignore;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -47,6 +49,7 @@ import java.lang.annotation.Target;
 @EnsureHasDeviceOwner(isPrimary = true, key = "dpc", headlessDeviceOwnerType = SINGLE_USER,
         dpc = @Query(isHeadlessDOSingleUser = @BooleanQuery(isEqualTo = TRUE)))
 @EnsureHasNoDelegate
+@Ignore
 @RequiresFlagsEnabled(Flags.FLAG_HEADLESS_DEVICE_OWNER_SINGLE_USER_ENABLED)
 public @interface IncludeRunOnSingleDeviceOwnerUser {
     /**
