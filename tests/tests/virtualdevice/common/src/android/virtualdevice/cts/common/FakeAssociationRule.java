@@ -38,6 +38,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.rules.ExternalResource;
 import org.mockito.Mock;
@@ -52,7 +53,7 @@ import java.util.function.Consumer;
  */
 public class FakeAssociationRule extends ExternalResource {
 
-    private static final String FAKE_ASSOCIATION_ADDRESS = "00:00:00:00:00:10";
+    private static final String FAKE_ASSOCIATION_ADDRESS_FORMAT = "00:00:00:00:00:%02d";
 
     private static final int TIMEOUT_MS = 10000;
 
@@ -64,6 +65,8 @@ public class FakeAssociationRule extends ExternalResource {
 
     @Mock
     private CompanionDeviceManager.OnAssociationsChangedListener mOnAssociationsChangedListener;
+
+    private int mNextDeviceId = 0;
 
     private AssociationInfo mAssociationInfo;
     private CompanionDeviceManager mCompanionDeviceManager;
@@ -77,6 +80,36 @@ public class FakeAssociationRule extends ExternalResource {
         mCompanionDeviceManager = mContext.getSystemService(CompanionDeviceManager.class);
     }
 
+    public AssociationInfo createManagedAssociation() {
+        String deviceAddress = String.format(FAKE_ASSOCIATION_ADDRESS_FORMAT, ++mNextDeviceId);
+        if (mNextDeviceId > 99) {
+            throw new IllegalArgumentException("At most 99 associations supported");
+        }
+        if (mNextDeviceId > 1 && !SdkLevel.isAtLeastT()) {
+            throw new IllegalArgumentException("Multiple associations require API level 33");
+        }
+
+        reset(mOnAssociationsChangedListener);
+        SystemUtil.runShellCommand(String.format("cmd companiondevice associate %d %s %s %s",
+                Process.myUserHandle().getIdentifier(),
+                mContext.getPackageName(),
+                deviceAddress,
+                mDeviceProfile));
+        verify(mOnAssociationsChangedListener, timeout(TIMEOUT_MS)).onAssociationsChanged(any());
+        List<AssociationInfo> associations = mCompanionDeviceManager.getMyAssociations();
+
+        if (SdkLevel.isAtLeastT()) {
+            final AssociationInfo associationInfo = associations.stream()
+                    .filter(a -> deviceAddress.equals(a.getDeviceMacAddress().toString()))
+                    .findAny().orElse(null);
+            assertThat(associationInfo).isNotNull();
+            return associationInfo;
+        } else {
+            assertThat(associations).hasSize(1);
+            return associations.get(0);
+        }
+    }
+
     @Override
     protected void before() throws Throwable {
         super.before();
@@ -85,41 +118,24 @@ public class FakeAssociationRule extends ExternalResource {
 
         Consumer<Boolean> callback = mock(Consumer.class);
         SystemUtil.runWithShellPermissionIdentity(() -> {
+            mCompanionDeviceManager.addOnAssociationsChangedListener(
+                    mContext.getMainExecutor(), mOnAssociationsChangedListener);
             mRoleManager.setBypassingRoleQualification(true);
             mRoleManager.addRoleHolderAsUser(
                     mDeviceProfile, mContext.getPackageName(),
                     RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP, Process.myUserHandle(),
                     mContext.getMainExecutor(), callback);
             verify(callback, timeout(TIMEOUT_MS)).accept(eq(true));
-            mCompanionDeviceManager.addOnAssociationsChangedListener(
-                    mContext.getMainExecutor(), mOnAssociationsChangedListener);
         });
 
         clearExistingAssociations();
-        SystemUtil.runShellCommand(String.format("cmd companiondevice associate %d %s %s %s",
-                Process.myUserHandle().getIdentifier(),
-                mContext.getPackageName(),
-                FAKE_ASSOCIATION_ADDRESS,
-                mDeviceProfile));
-
-        verify(mOnAssociationsChangedListener, timeout(TIMEOUT_MS)).onAssociationsChanged(any());
-        List<AssociationInfo> associations = mCompanionDeviceManager.getMyAssociations();
-        assertThat(associations).hasSize(1);
-        mAssociationInfo = associations.get(0);
+        mAssociationInfo = createManagedAssociation();
     }
 
     @Override
     protected void after() {
         super.after();
-        if (mAssociationInfo != null) {
-            for (AssociationInfo associationInfo : mCompanionDeviceManager.getMyAssociations()) {
-                if (associationInfo.getId() == mAssociationInfo.getId()) {
-                    disassociate();
-                    assertThat(mCompanionDeviceManager.getMyAssociations()).isEmpty();
-                    break;
-                }
-            }
-        }
+        clearExistingAssociations();
 
         Consumer<Boolean> callback = mock(Consumer.class);
         SystemUtil.runWithShellPermissionIdentity(() -> {
@@ -140,6 +156,7 @@ public class FakeAssociationRule extends ExternalResource {
             disassociate(association.getId());
         }
         assertThat(mCompanionDeviceManager.getMyAssociations()).isEmpty();
+        mAssociationInfo = null;
     }
 
     public AssociationInfo getAssociationInfo() {
@@ -147,7 +164,7 @@ public class FakeAssociationRule extends ExternalResource {
     }
 
     public void disassociate() {
-        disassociate(mAssociationInfo.getId());
+        clearExistingAssociations();
     }
 
     private void disassociate(int associationId) {
