@@ -883,8 +883,15 @@ public final class ActivityManagerAppExitInfoTest {
         // Get the memory info from it.
         String dump = executeShellCmd("dumpsys activity processes " + STUB_PACKAGE_NAME);
         assertNotNull(dump);
-        final String lastPss = extractMemString(dump, " lastPss=", ' ');
-        final String lastRss = extractMemString(dump, " lastRss=", '\n');
+        String lastPss = null;
+        String lastRss = null;
+        if (!Flags.removeAppProfilerPssCollection()) {
+            lastPss = extractMemString(dump, " lastPss=", ' ');
+            lastRss = extractMemString(dump, " lastRss=", '\n');
+        } else {
+            // lastRss is not the final field in the dump, so the next separator is not a newline.
+            lastRss = extractMemString(dump, " lastRss=", ' ');
+        }
 
         // Revoke the read calendar permission
         runWithShellPermissionIdentity(() -> {
@@ -908,8 +915,10 @@ public final class ActivityManagerAppExitInfoTest {
         assertEquals(revokeReason, info.getDescription());
 
         // Also verify that we get the expected meminfo
-        assertEquals(lastPss, DebugUtils.sizeValueToString(
-                info.getPss() * 1024, new StringBuilder()));
+        if (!Flags.removeAppProfilerPssCollection()) {
+            assertEquals(lastPss, DebugUtils.sizeValueToString(
+                    info.getPss() * 1024, new StringBuilder()));
+        }
         assertEquals(lastRss, DebugUtils.sizeValueToString(
                 info.getRss() * 1024, new StringBuilder()));
     }
