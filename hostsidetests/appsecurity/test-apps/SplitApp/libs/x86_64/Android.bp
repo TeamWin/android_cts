@@ -17,6 +17,7 @@
 // DO NOT MODIFY THIS FILE.
 
 package {
+    default_team: "trendy_team_framework_android_packages",
     // See: http://go/android-license-faq
     default_applicable_licenses: ["Android-Apache-2.0"],
 }

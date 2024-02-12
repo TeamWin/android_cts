@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package {
+    default_team: "trendy_team_machine_learning",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
@@ -28,7 +29,7 @@ android_test {
         "CtsAssistCommon",
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
-	"androidx.test.ext.junit",
+        "androidx.test.ext.junit",
     ],
 
     srcs: ["src/**/*.java"],

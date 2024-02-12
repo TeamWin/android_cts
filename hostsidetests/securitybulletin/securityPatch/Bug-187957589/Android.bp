@@ -15,16 +15,17 @@
  */
 
 package {
+    default_team: "trendy_team_platform_security",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
 cc_test {
     name: "Bug-187957589",
     defaults: [
-        "cts_hostsidetests_securitybulletin_defaults"
+        "cts_hostsidetests_securitybulletin_defaults",
     ],
     srcs: [
-        "poc.cpp"
+        "poc.cpp",
     ],
     shared_libs: [
         "libstatssocket",
