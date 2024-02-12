@@ -47,10 +47,16 @@ public class TestActivities {
         @Override
         public void onStart() {
             super.onStart();
-            Intent intent = new Intent();
-            intent.setComponent(TEST_RECEIVER);
-            intent.setAction(TEST_RECEIVER_ACTION);
-            sendBroadcast(intent);
+            String streamString = getIntent().getStringExtra(Intent.EXTRA_STREAM);
+            String referrerName = getIntent().getStringExtra(Intent.EXTRA_REFERRER_NAME);
+
+            Intent broadcastIntent = new Intent();
+            broadcastIntent.setComponent(TEST_RECEIVER);
+            broadcastIntent.setAction(TEST_RECEIVER_ACTION);
+
+            broadcastIntent.putExtra(Intent.EXTRA_STREAM, streamString);
+            broadcastIntent.putExtra(Intent.EXTRA_REFERRER_NAME, referrerName);
+            sendBroadcast(broadcastIntent);
             finish();
         }
     }
