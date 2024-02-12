@@ -3218,6 +3218,24 @@ public class TelephonyManagerTest {
     }
 
     /**
+     * Tests TelephonyManager.setCallComposerStatus and TelephonyManager.getCallComposerStatus with
+     * the TelephonyManager.CALL_COMPOSER_STATUS_BUSINESS_ONLY value.
+     */
+    @RequiresFlagsEnabled(com.android.server.telecom.flags.Flags.FLAG_BUSINESS_CALL_COMPOSER)
+    @Test
+    public void testBusinessOnlyCallComposerStatus() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_CALLING));
+        if (hasFeature(PackageManager.FEATURE_TELEPHONY_IMS)) {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    tm -> tm.setCallComposerStatus(
+                            TelephonyManager.CALL_COMPOSER_STATUS_BUSINESS_ONLY));
+            int status = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    tm -> tm.getCallComposerStatus());
+            assertThat(status).isEqualTo(TelephonyManager.CALL_COMPOSER_STATUS_BUSINESS_ONLY);
+        }
+    }
+
+    /**
      * Tests {@link TelephonyManager#getSupportedRadioAccessFamily()}
      */
     @Test

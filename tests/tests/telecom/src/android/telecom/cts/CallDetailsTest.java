@@ -730,6 +730,23 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
     }
 
     /**
+     * Verify the {@link  android.telecom.Call#EXTRA_IS_BUSINESS_CALL} and the
+     * {@link android.telecom.Call#EXTRA_ASSERTED_DISPLAY_NAME} can be set and fetched
+     * via the {@link android.telecom.Connection#setExtras(Bundle)} method.
+     */
+    public void testBusinessComposerExtras() {
+        if (!mShouldTestTelecom || !Flags.businessCallComposer()) {
+            return;
+        }
+        Bundle exampleExtras = new Bundle();
+        exampleExtras.putBoolean(Call.EXTRA_IS_BUSINESS_CALL, true);
+        exampleExtras.putString(Call.EXTRA_ASSERTED_DISPLAY_NAME, "Google");
+        mConnection.setExtras(exampleExtras);
+        assertCallExtras(mCall, Call.EXTRA_IS_BUSINESS_CALL);
+        assertCallExtras(mCall, Call.EXTRA_ASSERTED_DISPLAY_NAME);
+    }
+
+    /**
      * Tests that {@link Connection} extras changes made via {@link Connection#putExtras(Bundle)}
      * are propagated to the {@link Call} via
      * {@link android.telecom.Call.Callback#onDetailsChanged(Call, Call.Details)}.

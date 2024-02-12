@@ -30,6 +30,7 @@ import android.os.OutcomeReceiver;
 import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.provider.CallLog;
 import android.provider.CallLog.Calls;
 import android.provider.cts.R;
@@ -41,6 +42,7 @@ import androidx.annotation.NonNull;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.ShellUtils;
+import com.android.server.telecom.flags.Flags;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -350,6 +352,47 @@ public class CallLogTest extends InstrumentationTestCase {
         );
     }
 
+    /**
+     * Verify the {@link CallLog.Calls#IS_BUSINESS_CALL} and
+     * {@link CallLog.Calls#ASSERTED_DISPLAY_NAME} values can be populated in the call logs and
+     * fetched.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_BUSINESS_CALL_COMPOSER)
+    public void testInsertingBusinessCallComposerValues() {
+        if (!Flags.businessCallComposer()) {
+            return;
+        }
+        final String[] businessCallSelection =
+                new String[]{Calls.NUMBER, Calls.TYPE, Calls.IS_BUSINESS_CALL,
+                        Calls.ASSERTED_DISPLAY_NAME};
+        try {
+            // needed in order to populate call log database
+            ShellUtils.runShellCommand("telecom set-default-dialer %s",
+                    getInstrumentation().getContext().getPackageName());
+
+            // Add a business call to the call logs via the ContentResolver
+            String businessName = "Google";
+            Uri newlyCreatedCallLogRow = mContentResolver.insert(CallLog.Calls.CONTENT_URI,
+                    createBusinessCallValues(true /*isBusinessCall*/, businessName));
+            // fetch the newly inserted call log and assert the values
+            Cursor cursor = mContentResolver.query(newlyCreatedCallLogRow, businessCallSelection,
+                    Calls.NUMBER + " = " + TEST_NUMBER, null, Calls.DEFAULT_SORT_ORDER);
+            assertNotNull(cursor);
+            verifyBusinessCallValues(cursor, true /*isBusinessCall*/, businessName);
+
+            // Add a non business call to the call logs
+            newlyCreatedCallLogRow = mContentResolver.insert(CallLog.Calls.CONTENT_URI,
+                    createBusinessCallValues(false /*isBusinessCall*/, "" /* businessName */));
+            // fetch the newly inserted call log and assert the values
+            cursor = mContentResolver.query(newlyCreatedCallLogRow, businessCallSelection,
+                    Calls.NUMBER + " = " + TEST_NUMBER, null, Calls.DEFAULT_SORT_ORDER);
+            assertNotNull(cursor);
+            verifyBusinessCallValues(cursor, false /*isBusinessCall*/, "" /* businessName */);
+        } finally {
+            deleteCallLogRowsWithNumber(TEST_NUMBER);
+        }
+    }
+
     public void testLocationStorageAndRetrieval() {
         Context context = getInstrumentation().getContext();
 
@@ -531,6 +574,36 @@ public class CallLogTest extends InstrumentationTestCase {
         mContentResolver.insert(Calls.CONTENT_URI, getDefaultCallValues());
         // add voicemail entry
         mContentResolver.insert(Calls.CONTENT_URI_WITH_VOICEMAIL, getDefaultVoicemailValues());
+    }
+
+    /**
+     * This helper deletes all call logs that have the @param number passed in
+     */
+    private void deleteCallLogRowsWithNumber(String number) {
+        mContentResolver.delete(Calls.CONTENT_URI, Calls.NUMBER + " = " + number, null);
+    }
+
+    private ContentValues createBusinessCallValues(boolean isBusiness, String displayName) {
+        ContentValues values = new ContentValues();
+        values.put(Calls.NUMBER, TEST_NUMBER);
+        values.put(Calls.TYPE, Integer.valueOf(Calls.INCOMING_TYPE));
+        values.put(Calls.ASSERTED_DISPLAY_NAME, displayName);
+        values.put(Calls.IS_BUSINESS_CALL, (isBusiness ? 1 : 0));
+        return values;
+    }
+
+    private void verifyBusinessCallValues(
+            Cursor cursor,
+            boolean isBusiness,
+            String displayName) {
+        // extract the data from the cursor and put the objects in a map
+        cursor.moveToFirst();
+
+        assertEquals((isBusiness ? 1 : 0), cursor.getInt(
+                cursor.getColumnIndex(Calls.IS_BUSINESS_CALL)));
+
+        assertEquals(displayName, cursor.getString(
+                cursor.getColumnIndex(Calls.ASSERTED_DISPLAY_NAME)));
     }
 
     /**
