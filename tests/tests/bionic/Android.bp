@@ -6,6 +6,11 @@ cc_test {
     name: "CtsBionicTestCases",
 
     defaults: ["cts_bionic_defaults"],
+
+    test_suites: [
+        "cts",
+    ],
+
 }
 
 cc_defaults {
@@ -62,7 +67,6 @@ cc_defaults {
     stl: "libc++_static",
 
     test_suites: [
-        "cts",
         "general-tests",
         "mts-mainline-infra",
     ],
