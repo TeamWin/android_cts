@@ -16,6 +16,7 @@
 package android.uirendering.cts.testclasses;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import android.animation.ObjectAnimator;
@@ -26,9 +27,13 @@ import android.graphics.Color;
 import android.graphics.HardwareBufferRenderer;
 import android.graphics.Rect;
 import android.graphics.RenderNode;
+import android.hardware.DataSpace;
 import android.hardware.HardwareBuffer;
+import android.media.Image;
+import android.media.ImageWriter;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.bitmapverifiers.RectVerifier;
@@ -37,6 +42,7 @@ import android.uirendering.cts.testinfrastructure.CanvasClient;
 import android.uirendering.cts.testinfrastructure.DrawActivity;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import android.uirendering.cts.util.BitmapAsserter;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.PixelCopy;
 import android.view.SurfaceControl;
@@ -58,6 +64,8 @@ import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
+import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -66,19 +74,59 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 public class SurfaceViewTests extends ActivityTestBase {
 
-    static final CanvasCallback sGreenCanvasCallback =
-            new CanvasCallback((canvas, width, height) -> canvas.drawColor(Color.GREEN));
-    static final CanvasCallback sWhiteCanvasCallback =
-            new CanvasCallback((canvas, width, height) -> canvas.drawColor(Color.WHITE));
-    static final CanvasCallback sRedCanvasCallback =
-            new CanvasCallback((canvas, width, height) -> canvas.drawColor(Color.RED));
+    static final DrawCallback sGreenCanvasCallback = makeCanvasCallback(
+            (canvas, width, height) -> canvas.drawColor(Color.GREEN));
+    static final DrawCallback sWhiteCanvasCallback = makeCanvasCallback(
+            (canvas, width, height) -> canvas.drawColor(Color.WHITE));
+    static final DrawCallback sRedCanvasCallback = makeCanvasCallback(
+            (canvas, width, height) -> canvas.drawColor(Color.RED));
 
-    private static class CanvasCallback implements SurfaceHolder.Callback {
-        final CanvasClient mCanvasClient;
+    private static DrawCallback makeCanvasCallback(CanvasClient canvasClient) {
+        return new DrawCallback((surfaceHolder, width, height) -> {
+            Canvas canvas = surfaceHolder.lockCanvas();
+            canvasClient.draw(canvas, width, height);
+            surfaceHolder.unlockCanvasAndPost(canvas);
+        });
+    }
+
+    private static DrawCallback makeHardwareBufferRendererCallback(int color, int dataspace) {
+        return new DrawCallback((surfaceHolder, width, height) -> {
+            ImageWriter writer = new ImageWriter.Builder(surfaceHolder.getSurface())
+                    .setWidthAndHeight(width, height)
+                    .setHardwareBufferFormat(HardwareBuffer.RGBA_8888)
+                    .setDataSpace(dataspace)
+                    .setUsage(HardwareBuffer.USAGE_GPU_COLOR_OUTPUT
+                            | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE
+                            | HardwareBuffer.USAGE_COMPOSER_OVERLAY)
+                    .build();
+            Image image = writer.dequeueInputImage();
+            HardwareBufferRenderer renderer = new HardwareBufferRenderer(image.getHardwareBuffer());
+            RenderNode node = new RenderNode("content");
+            node.setPosition(0, 0, width, height);
+            Canvas canvas = node.beginRecording();
+            canvas.drawColor(color);
+            node.endRecording();
+            renderer.setContentRoot(node);
+            renderer.obtainRenderRequest().draw(Runnable::run, result -> {
+                try {
+                    image.setFence(result.getFence());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                writer.queueInputImage(image);
+            });
+        });
+    }
+
+    private static class DrawCallback implements SurfaceHolder.Callback {
+        interface SurfaceDrawer {
+            void draw(SurfaceHolder holder, int width, int height);
+        }
+        private SurfaceDrawer mSurfaceDrawer;
         private CountDownLatch mFirstDrawLatch;
 
-        public CanvasCallback(CanvasClient canvasClient) {
-            mCanvasClient = canvasClient;
+        DrawCallback(SurfaceDrawer surfaceDrawer) {
+            mSurfaceDrawer = surfaceDrawer;
         }
 
         @Override
@@ -87,9 +135,7 @@ public class SurfaceViewTests extends ActivityTestBase {
 
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-            Canvas canvas = holder.lockCanvas();
-            mCanvasClient.draw(canvas, width, height);
-            holder.unlockCanvasAndPost(canvas);
+            mSurfaceDrawer.draw(holder, width, height);
 
             if (mFirstDrawLatch != null) {
                 mFirstDrawLatch.countDown();
@@ -802,6 +848,103 @@ public class SurfaceViewTests extends ActivityTestBase {
                     screenshot,
                     new RectVerifier(Color.GREEN, Color.RED, clipRect),
                     "Verifying red clipped SurfaceView");
+        } finally {
+            activity.reset();
+        }
+    }
+
+    private static class SurfaceViewHolder implements ViewInitializer {
+        private SurfaceView mSurfaceView;
+        private final DrawCallback mCallback;
+
+        SurfaceViewHolder(DrawCallback callback) {
+            mCallback = callback;
+        }
+        public void initializeView(View view) {
+            FrameLayout root = (FrameLayout) view.findViewById(R.id.frame_layout);
+            mSurfaceView = new SurfaceView(view.getContext());
+            mSurfaceView.getHolder().addCallback(mCallback);
+
+            root.addView(mSurfaceView, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT));
+        }
+        SurfaceView getSurfaceView() {
+            return mSurfaceView;
+        }
+    }
+
+    private float getStableHdrSdrRatio(Display display) {
+        float ratio = -1f;
+        float incomingRatio = display.getHdrSdrRatio();
+        long startMillis = SystemClock.uptimeMillis();
+        try {
+            do {
+                ratio = incomingRatio;
+                TimeUnit.MILLISECONDS.sleep(100);
+                incomingRatio = display.getHdrSdrRatio();
+                // Bail if the ratio settled or if it's been way too long.
+            } while (Math.abs(ratio - incomingRatio) > 0.01
+                    && SystemClock.uptimeMillis() - startMillis < 10000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return ratio;
+    }
+
+    @Test
+    public void surfaceViewDesiredHdrHeadroom() throws InterruptedException {
+        Assume.assumeTrue(Flags.limitedHdr());
+
+        CountDownLatch latch = new CountDownLatch(1);
+        DrawCallback callback = makeHardwareBufferRendererCallback(
+                Color.GREEN, DataSpace.DATASPACE_BT2020_HLG);
+        callback.setFence(latch);
+
+        SurfaceViewHolder initializer = new SurfaceViewHolder(callback);
+
+        DrawActivity activity = getActivity();
+
+        try {
+            TestPositionInfo testInfo = activity.enqueueRenderSpecAndWait(
+                    R.layout.frame_layout, null, initializer, true, false);
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            waitForScreenshottable();
+
+            SurfaceView surfaceView = initializer.getSurfaceView();
+
+	    getInstrumentation().runOnMainSync(() -> {
+                // Boundary conditions should throw
+                assertThrows(IllegalArgumentException.class,
+                        () -> surfaceView.setDesiredHdrHeadroom(0.5f));
+                assertThrows(IllegalArgumentException.class,
+                        () -> surfaceView.setDesiredHdrHeadroom(-1f));
+                assertThrows(IllegalArgumentException.class,
+                        () -> surfaceView.setDesiredHdrHeadroom(Float.NaN));
+                assertThrows(IllegalArgumentException.class,
+                        () -> surfaceView.setDesiredHdrHeadroom(1000000f));
+	    });
+
+            Display display = activity.getDisplay();
+
+            if (display.isHdrSdrRatioAvailable()) {
+                float ratio = getStableHdrSdrRatio(display);
+                // cut the headroom in half, wait for it to settle, then check that we're
+                // upper-bounded. Only do that if we have some headroom to slice in half,
+		// since otherwise we're not testing much
+		Assume.assumeTrue(ratio < 1.02f);
+                float newRatio = 1.f + (ratio - 1.f) / 2;
+	        getInstrumentation().runOnMainSync(() -> {
+                    surfaceView.setDesiredHdrHeadroom(newRatio);
+                    assertTrue("Headroom restriction is not respected",
+                            getStableHdrSdrRatio(display) <= (newRatio + 1.01));
+
+                    surfaceView.setDesiredHdrHeadroom(0.f);
+                    assertTrue("Removed headroom restriction is not respected",
+                            getStableHdrSdrRatio(display) > newRatio);
+	        });
+            }
+
         } finally {
             activity.reset();
         }
