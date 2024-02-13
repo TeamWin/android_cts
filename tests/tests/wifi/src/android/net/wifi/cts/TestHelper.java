@@ -134,22 +134,23 @@ public class TestHelper {
     }
 
     /**
-     * Find the first saved network available in the scan results with a specific standard support.
+     * Find the first saved network available in the scan results with specific capabilities
+     * support.
      *
      * @param wifiManager WifiManager service
      * @param savedNetworks List of saved networks on the device.
-     * @param wifiStandard IEEE 802.11 standard to check on. valid values from ScanResult's
-     *                     WIFI_STANDARD_XX
+     * @param capabilities Network capabilities to be matched. This parameter is ignored if set
+     *                     to 0. See AP_CAPABILITIES_BIT_XXX for the supported capabilities.
      * @return WifiConfiguration for the network
      */
     public static WifiConfiguration findFirstAvailableSavedNetwork(@NonNull WifiManager wifiManager,
             @NonNull List<WifiConfiguration> savedNetworks,
-            int wifiStandard) {
+            long capabilities) {
         if (savedNetworks.isEmpty()) return null;
         List<WifiConfiguration> matchingNetworks = new ArrayList<>();
         Map<Integer, List<WifiConfiguration>> networksMap =
-                findMatchingSavedNetworksWithBssidByBand(wifiManager, savedNetworks, wifiStandard,
-                        1);
+                findMatchingSavedNetworksWithBssidByBand(wifiManager, savedNetworks,
+                        capabilities, 1);
         for (List<WifiConfiguration> configs : networksMap.values()) {
             matchingNetworks.addAll(configs);
         }
@@ -176,11 +177,36 @@ public class TestHelper {
         List<WifiConfiguration> matchingNetworksWithBssids = new ArrayList<>();
         Map<Integer, List<WifiConfiguration>> networksMap =
                 findMatchingSavedNetworksWithBssidByBand(wifiManager, savedNetworks,
-                        ScanResult.UNSPECIFIED, numberOfApRequested);
+                        0, numberOfApRequested);
         for (List<WifiConfiguration> configs : networksMap.values()) {
             matchingNetworksWithBssids.addAll(configs);
         }
         return matchingNetworksWithBssids;
+    }
+
+    public static final long AP_CAPABILITY_BIT_WIFI7 = 1 << 0;
+    public static final long AP_CAPABILITY_BIT_TWT_RESPONDER = 1 << 1;
+
+    /**
+     * Check whether scan result matches with the capabilities provided.
+     *
+     * @param scanResult Scan result
+     * @param capabilities Capabilities to be matched. See AP_CAPABILITY_BIT_XXX for the
+     *                     available bits.
+     * @return true if the scan result matches or capabilities is 0 , otherwise false.
+     */
+    public static boolean isMatchedScanResult(ScanResult scanResult, long capabilities) {
+        if (capabilities == 0) return true;
+        if ((capabilities & AP_CAPABILITY_BIT_WIFI7) == AP_CAPABILITY_BIT_WIFI7 && (
+                scanResult.getWifiStandard()
+                        != ScanResult.WIFI_STANDARD_11BE)) {
+            return false;
+        }
+        if ((capabilities & AP_CAPABILITY_BIT_TWT_RESPONDER) == AP_CAPABILITY_BIT_TWT_RESPONDER
+                && !scanResult.isTwtResponder()) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -193,14 +219,15 @@ public class TestHelper {
      *
      * @param wifiManager   WifiManager service
      * @param savedNetworks List of saved networks on the device.
-     * @param wifiStandard APs with specific Wi-Fi standard support.
-     *                     {@link ScanResult#UNSPECIFIED} means no preference.
+     * @param  capabilities AP capabilities to be matched. See AP_CAPABILITY_BIT_XXX for the
+     *                     supported capabilities. This parameter is ignored if set to 0.
+     *
      * @param numberOfApRequested Number of APs requested
      * @return Map from band to the list of WifiConfiguration with matching bssid.
      */
     public static Map<Integer, List<WifiConfiguration>> findMatchingSavedNetworksWithBssidByBand(
             @NonNull WifiManager wifiManager, @NonNull List<WifiConfiguration> savedNetworks,
-            int wifiStandard, int numberOfApRequested) {
+            long capabilities, int numberOfApRequested) {
         if (savedNetworks.isEmpty()) return Collections.emptyMap();
         Set<String> bssidSet = new HashSet<>();
         Map<Integer, List<WifiConfiguration>> matchingNetworksWithBssids = new ArrayMap<>();
@@ -221,11 +248,8 @@ public class TestHelper {
             sScanResults = wifiManager.getScanResults();
             if (sScanResults == null || sScanResults.isEmpty()) continue;
             for (ScanResult scanResult : sScanResults) {
-                if (wifiStandard != ScanResult.UNSPECIFIED
-                        && scanResult.getWifiStandard() != wifiStandard) {
-                    continue;
-                }
-                if (bssidSet.contains(scanResult.BSSID)) {
+                if (!isMatchedScanResult(scanResult, capabilities) || bssidSet.contains(
+                        scanResult.BSSID)) {
                     continue;
                 }
                 WifiConfiguration matchingNetwork = savedNetworks.stream()
