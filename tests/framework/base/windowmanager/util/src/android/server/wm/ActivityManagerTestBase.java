@@ -98,6 +98,7 @@ import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.LaunchingActivity.KEY_FINISH_BEFORE_LAUNCH;
 import static android.server.wm.app.Components.PipActivity.ACTION_CHANGE_ASPECT_RATIO;
 import static android.server.wm.app.Components.PipActivity.ACTION_ENTER_PIP;
+import static android.server.wm.app.Components.PipActivity.ACTION_ENTER_PIP_AND_WAIT_FOR_UI_STATE;
 import static android.server.wm.app.Components.PipActivity.ACTION_EXPAND_PIP;
 import static android.server.wm.app.Components.PipActivity.ACTION_SET_REQUESTED_ORIENTATION;
 import static android.server.wm.app.Components.PipActivity.ACTION_UPDATE_PIP_STATE;
@@ -507,6 +508,11 @@ public abstract class ActivityManagerTestBase {
             mContext.sendBroadcast(createIntentWithAction(ACTION_UPDATE_PIP_STATE)
                     .putExtra(EXTRA_SET_PIP_CALLBACK, callback)
                     .putExtra(EXTRA_SET_PIP_STASHED, stashed));
+        }
+
+        public void enterPipAndWaitForPipUiStateChange(RemoteCallback callback) {
+            mContext.sendBroadcast(createIntentWithAction(ACTION_ENTER_PIP_AND_WAIT_FOR_UI_STATE)
+                    .putExtra(EXTRA_SET_PIP_CALLBACK, callback));
         }
 
         public void requestOrientationForPip(int orientation) {
