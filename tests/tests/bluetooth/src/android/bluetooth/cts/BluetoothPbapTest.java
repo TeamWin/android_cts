@@ -224,7 +224,7 @@ public class BluetoothPbapTest {
                 } // else spurious wakeups
             }
         } catch (InterruptedException e) {
-            Log.e(TAG, "waitForProfileDisconnect: interrrupted");
+            Log.e(TAG, "waitForProfileDisconnect: interrupted");
         } finally {
             mProfileConnectionlock.unlock();
         }
