@@ -16,7 +16,7 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.net.wifi.cts"
+    package="android.net.wifi.nonupdatable.cts"
     android:targetSandboxVersion="2">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -43,10 +43,19 @@
     <application android:usesCleartextTraffic="true">
         <uses-library android:name="android.test.runner"/>
         <activity android:name=".WaitForResultActivity" android:screenOrientation="portrait"/>
+        <service
+            android:name="android.net.wifi.sharedconnectivity.service.cts.TestSharedConnectivityService"
+            android:exported="true">
+            <intent-filter>
+                <action
+                    android:name="android.net.wifi.sharedconnectivity.service.cts.TestSharedConnectivityService.BIND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </service>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.net.wifi.cts"
+                     android:targetPackage="android.net.wifi.nonupdatable.cts"
                      android:label="CTS tests of android.net.wifi">
     </instrumentation>
 </manifest>

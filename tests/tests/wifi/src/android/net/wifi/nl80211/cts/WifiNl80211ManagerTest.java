@@ -29,7 +29,6 @@ import android.content.Context;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiScanner;
-import android.net.wifi.cts.WifiFeature;
 import android.net.wifi.nl80211.WifiNl80211Manager;
 import android.os.Binder;
 import android.os.Build;
