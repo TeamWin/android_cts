@@ -229,6 +229,20 @@ public class FabricatedOverlayTest {
     }
 
     @Test
+    public void setNinePatchResourceValue_withNull_shouldFail() {
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
+
+        assertThrows(
+                NullPointerException.class,
+                () ->
+                        overlay.setNinePatchResourceValue(
+                                "layout/demo",
+                                null /* value */,
+                                null /* configuration */));
+    }
+
+    @Test
     public void setResourceValue_forAssetFileDescriptor_withNull_shouldFail() {
         final FabricatedOverlay overlay =
                 new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
@@ -260,6 +274,8 @@ public class FabricatedOverlayTest {
         overlay.setResourceValue("string/demo2", TypedValue.TYPE_STRING, "black",
                 null /* configuration */);
         overlay.setResourceValue("raw/demo", parcelFileDescriptor, null /* configuration */);
+        overlay.setNinePatchResourceValue(
+                "raw/demo", parcelFileDescriptor, null /* configuration */);
         overlay.setResourceValue("raw/demo2", assetFileDescriptor, null /* configuration */);
     }
 
