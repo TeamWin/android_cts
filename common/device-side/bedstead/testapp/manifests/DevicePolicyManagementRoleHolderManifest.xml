@@ -83,6 +83,7 @@
     <uses-permission android:name="android.permission.MANAGE_DEVICE_POLICY_SAFE_BOOT" />
     <uses-permission android:name="android.permission.MANAGE_DEVICE_POLICY_MICROPHONE" />
     <uses-permission android:name="android.permission.MANAGE_DEVICE_POLICY_USB_FILE_TRANSFER" />
+    <uses-permission android:name="android.permission.MANAGE_DEVICE_POLICY_CONTENT_PROTECTION" />
 
     <application
         android:label="DevicePolicyManagerRoleHolder" android:testOnly="true">
