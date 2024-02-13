@@ -208,9 +208,11 @@ public class VirtualTouchscreenTest extends VirtualDeviceTestCase {
 
     @Test
     public void createVirtualTouchscreen_unownedDisplay_throwsException() {
-        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
-        assertThrows(SecurityException.class, () -> createVirtualTouchscreen(unownedDisplay));
-        unownedDisplay.release();
+        try (VirtualDisplayCreator.UnownedVirtualDisplay unownedDisplay =
+                     VirtualDisplayCreator.createUnownedVirtualDisplay()) {
+            assertThrows(SecurityException.class,
+                    () -> createVirtualTouchscreen(unownedDisplay.getVirtualDisplay()));
+        }
     }
 
     @Test
@@ -226,10 +228,13 @@ public class VirtualTouchscreenTest extends VirtualDeviceTestCase {
     @Test
     public void createVirtualTouchscreen_unownedVirtualDisplay_injectEvents_succeeds() {
         mVirtualTouchscreen.close();
-        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
-        runWithPermission(
-                () -> assertThat(createVirtualTouchscreen(unownedDisplay)).isNotNull(),
-                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
+        try (VirtualDisplayCreator.UnownedVirtualDisplay unownedDisplay =
+                     VirtualDisplayCreator.createUnownedVirtualDisplay()) {
+            runWithPermission(
+                    () -> assertThat(createVirtualTouchscreen(unownedDisplay.getVirtualDisplay()))
+                            .isNotNull(),
+                    INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
+        }
     }
 
     private VirtualTouchscreen createVirtualTouchscreen(VirtualDisplay display) {

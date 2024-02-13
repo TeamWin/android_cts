@@ -103,9 +103,11 @@ public class VirtualStylusTest extends VirtualDeviceTestCase {
 
     @Test
     public void createVirtualStylus_unownedDisplay_throwsException() {
-        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
-        assertThrows(SecurityException.class, () -> createVirtualStylus(unownedDisplay));
-        unownedDisplay.release();
+        try (VirtualDisplayCreator.UnownedVirtualDisplay unownedDisplay =
+                     VirtualDisplayCreator.createUnownedVirtualDisplay()) {
+            assertThrows(SecurityException.class,
+                    () -> createVirtualStylus(unownedDisplay.getVirtualDisplay()));
+        }
     }
 
     @Test
@@ -121,10 +123,13 @@ public class VirtualStylusTest extends VirtualDeviceTestCase {
     @Test
     public void createVirtualStylus_unownedVirtualDisplay_injectEvents_succeeds() {
         mVirtualStylus.close();
-        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
-        runWithPermission(
-                () -> assertThat(createVirtualStylus(unownedDisplay)).isNotNull(),
-                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
+        try (VirtualDisplayCreator.UnownedVirtualDisplay unownedDisplay =
+                     VirtualDisplayCreator.createUnownedVirtualDisplay()) {
+            runWithPermission(
+                    () -> assertThat(
+                            createVirtualStylus(unownedDisplay.getVirtualDisplay())).isNotNull(),
+                    INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
+        }
     }
 
     @Parameters(method = "getAllToolTypes")
