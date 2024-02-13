@@ -306,6 +306,30 @@ public class ShareIdentityTest {
      */
     private static final int EXPLICIT_OPT_OUT_TEST_CASE_ACTIVITY_NEW_INTENT_OVERLOAD_CALLER = 23;
     /**
+     * Test case to verify the launching app's result #getCurrentCaller identity is not shared when
+     * the activity is not launched with {@link android.app.ActivityOptions}.
+     */
+    private static final int DEFAULT_SHARING_TEST_CASE_ACTIVITY_RESULT_GET_CURRENT_CALLER = 24;
+    /**
+     * Test case to verify the launching app's result #getCurrentCaller identity is shared when
+     * the activity belongs to the same uid.
+     */
+    private static final int DEFAULT_SHARING_TEST_CASE_SAME_UID_ACTIVITY_RESULT_GET_CURRENT_CALLER =
+            25;
+    /**
+     * Test case to verify the launching app's result caller identity in
+     * #onActivityResult(int, int, Intent, ComponentCaller) is not shared when the activity is not
+     * launched with {@link android.app.ActivityOptions}.
+     */
+    private static final int DEFAULT_SHARING_TEST_CASE_ACTIVITY_RESULT_OVERLOAD_CALLER = 26;
+    /**
+     * Test case to verify the launching app's result caller identity in
+     * #onActivityResult(int, int, Intent, ComponentCaller) is shared when the activity belongs to
+     * the same uid.
+     */
+    private static final int DEFAULT_SHARING_TEST_CASE_SAME_UID_ACTIVITY_RESULT_OVERLOAD_CALLER =
+            27;
+    /**
      * Action for which the runtime receiver registers to receive broadcasts from the test app.
      */
     private static final String TEST_BROADCAST_RUNTIME_ACTION =
@@ -324,6 +348,15 @@ public class ShareIdentityTest {
      */
     private static final String TEST_SHARED_IDENTITY_RECEIVER_ACTION =
             "android.app.cts.testshareidentity.RECEIVER_ACTION";
+    /**
+     * Activity that sends a result back to either
+     * {@link ActivityResultGetCurrentCallerShareIdentityTestActivity} or
+     * {@link ActivityResultOverloadCallerShareIdentityTestActivity} for the sharing test cases with
+     * the same uid.
+     */
+    private static final ComponentName SET_RESULT_SAME_UID_ACTIVITY = new ComponentName(
+            "android.app.cts",
+            "android.app.cts.ShareIdentityTest$ActivitySetResultSameUidShareIdentityTestActivity");
     /**
      * Key used to pass the int test ID as an extra in the {@code Intent} to the {@link
      * #TEST_COMPONENT}. This ID is then passed back to {@link ShareIdentityTestActivity} to
@@ -1076,6 +1109,130 @@ public class ShareIdentityTest {
                 mContext.getPackageName(), testData.fromPackage);
     }
 
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onActivityResult(int,int,Intent)",
+            "android.app.ComponentCaller#getUid", "android.app.ComponentCaller#getPackage"})
+    @CddTest(requirement = "4/C-0-2")
+    @RequiresFlagsEnabled(android.security.Flags.FLAG_CONTENT_URI_PERMISSION_APIS)
+    public void
+    testActivityResultGetCurrentCallerShareIdentity_defaultIdentityNotShared_identityNotAvailableToActivity()
+            throws Exception {
+        TestData testData = new TestData(new CountDownLatch(1));
+        int testId = TEST_ID.getAndIncrement();
+        sTestIdToData.put(testId, testData);
+        Intent intent = getResultTestIntent(testId,
+                DEFAULT_SHARING_TEST_CASE_ACTIVITY_RESULT_GET_CURRENT_CALLER, mContext,
+                ActivityResultGetCurrentCallerShareIdentityTestActivity.class);
+
+        mContext.startActivity(intent);
+
+        assertTrue("Activity was not invoked by the timeout",
+                testData.countDownLatch.await(15, TimeUnit.SECONDS));
+        assertEquals(
+                Process.INVALID_UID
+                        + " Activity result #getCurrentCaller#getUid expected for app not opting-in"
+                        + "to sharing identity",
+                Process.INVALID_UID, testData.fromUid);
+        assertNull("null Activity result #getCurrentCaller#getPackage expected for app not"
+                        + " opting-in to sharing identity",
+                testData.fromPackage);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onActivityResult(int,int,Intent)",
+            "android.app.ComponentCaller#getUid", "android.app.ComponentCaller#getPackage"})
+    @CddTest(requirement = "4/C-0-2")
+    @RequiresFlagsEnabled(android.security.Flags.FLAG_CONTENT_URI_PERMISSION_APIS)
+    public void
+    testActivityResultGetCurrentCallerShareIdentity_identityNotSharedSameUid_identityAvailableToActivity()
+            throws Exception {
+        // While an external app must opt-in to sharing its identity with a launched activity,
+        // when the launching app belongs to the same uid as the launched activity, the platform
+        // will grant the activity access to its own uid and package name.
+        TestData testData = new TestData(new CountDownLatch(1));
+        int testId = TEST_ID.getAndIncrement();
+        sTestIdToData.put(testId, testData);
+        Intent intent = getResultTestIntent(testId,
+                DEFAULT_SHARING_TEST_CASE_SAME_UID_ACTIVITY_RESULT_GET_CURRENT_CALLER, mContext,
+                ActivityResultGetCurrentCallerShareIdentityTestActivity.class);
+
+        mContext.startActivity(intent);
+
+        assertTrue("Activity was not invoked by the timeout",
+                testData.countDownLatch.await(15, TimeUnit.SECONDS));
+        assertEquals(
+                "Expected Activity result #getCurrentCaller#getUid not obtained after launching"
+                        + " activity from same uid",
+                Process.myUid(), testData.fromUid);
+        assertEquals(
+                "Expected Activity result #getCurrentCaller#getPackage not obtained after launching"
+                        + " activity from same uid",
+                mContext.getPackageName(), testData.fromPackage);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#onActivityResult(int,int,Intent,ComponentCaller)",
+            "android.app.ComponentCaller#getUid", "android.app.ComponentCaller#getPackage"})
+    @CddTest(requirement = "4/C-0-2")
+    @RequiresFlagsEnabled(android.security.Flags.FLAG_CONTENT_URI_PERMISSION_APIS)
+    public void
+    testActivityResultOverloadCallerShareIdentity_defaultIdentityNotShared_identityNotAvailableToActivity()
+            throws Exception {
+        TestData testData = new TestData(new CountDownLatch(1));
+        int testId = TEST_ID.getAndIncrement();
+        sTestIdToData.put(testId, testData);
+        Intent intent = getResultTestIntent(testId,
+                DEFAULT_SHARING_TEST_CASE_ACTIVITY_RESULT_OVERLOAD_CALLER, mContext,
+                ActivityResultOverloadCallerShareIdentityTestActivity.class);
+
+        mContext.startActivity(intent);
+
+        assertTrue("Activity was not invoked by the timeout",
+                testData.countDownLatch.await(15, TimeUnit.SECONDS));
+        assertEquals(
+                Process.INVALID_UID
+                        + " Activity result overloaded caller#getUid expected for app not opting-in"
+                        + "to sharing identity",
+                Process.INVALID_UID, testData.fromUid);
+        assertNull("null Activity result overloaded caller#getPackage expected for app not"
+                        + " opting-in to sharing identity",
+                testData.fromPackage);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#onActivityResult(int,int,Intent,ComponentCaller)",
+            "android.app.ComponentCaller#getUid", "android.app.ComponentCaller#getPackage"})
+    @CddTest(requirement = "4/C-0-2")
+    @RequiresFlagsEnabled(android.security.Flags.FLAG_CONTENT_URI_PERMISSION_APIS)
+    public void
+    testActivityResultGetOverloadCallerShareIdentity_identityNotSharedSameUid_identityAvailableToActivity()
+            throws Exception {
+        // While an external app must opt-in to sharing its identity with a launched activity,
+        // when the launching app belongs to the same uid as the launched activity, the platform
+        // will grant the activity access to its own uid and package name.
+        TestData testData = new TestData(new CountDownLatch(1));
+        int testId = TEST_ID.getAndIncrement();
+        sTestIdToData.put(testId, testData);
+        Intent intent = getResultTestIntent(testId,
+                DEFAULT_SHARING_TEST_CASE_SAME_UID_ACTIVITY_RESULT_OVERLOAD_CALLER, mContext,
+                ActivityResultOverloadCallerShareIdentityTestActivity.class);
+
+        mContext.startActivity(intent);
+
+        assertTrue("Activity was not invoked by the timeout",
+                testData.countDownLatch.await(15, TimeUnit.SECONDS));
+        assertEquals(
+                "Expected Activity result overloaded caller#getUid not obtained after launching"
+                        + " activity from same uid",
+                Process.myUid(), testData.fromUid);
+        assertEquals(
+                "Expected Activity result overloaded caller#getPackage not obtained after launching"
+                        + " activity from same uid",
+                mContext.getPackageName(), testData.fromPackage);
+    }
+
     private void assertPackageVisibility(TestData testData) throws Exception {
         PackageManager packageManager = mContext.getPackageManager();
         PackageInfo packageInfo = packageManager.getPackageInfo(TEST_PACKAGE,
@@ -1109,16 +1266,37 @@ public class ShareIdentityTest {
     }
 
     /**
-     * Returns a test Intent to launch the {@link #TEST_COMPONENT} with the provided {@code testId}
-     * and {@code testCase}.
+     * Returns a default new task test Intent to launch the {@link #TEST_COMPONENT} with the
+     * provided {@code testId} and {@code testCase}.
      */
     private static Intent getTestIntent(int testId, int testCase) {
+        return getTestIntent(testId, testCase, Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_NEW_DOCUMENT | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+    }
+
+    /**
+     * Returns a test Intent to launch the {@link #TEST_COMPONENT} with the provided {@code testId},
+     * {@code testCase}, and {@code flags}.
+     */
+    private static Intent getTestIntent(int testId, int testCase, int flags) {
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setComponent(TEST_COMPONENT);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT
-                | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        intent.setFlags(flags);
         intent.putExtra(TEST_ID_KEY, testId);
         intent.putExtra(TEST_CASE_KEY, testCase);
+        return intent;
+    }
+
+    /**
+     * Returns a test Intent to launch an activity for result with the provided {@code testId},
+     * {@code testCase}, and a component via {@code context} and {@code cls}.
+     */
+    private static Intent getResultTestIntent(int testId, int testCase, Context context,
+            Class<?> cls) {
+        Intent intent = new Intent(context, cls);
+        intent.putExtra(TEST_ID_KEY, testId);
+        intent.putExtra(TEST_CASE_KEY, testCase);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         return intent;
     }
 
@@ -1235,6 +1413,97 @@ public class ShareIdentityTest {
             testData.fromUid = caller.getUid();
             testData.fromPackage = caller.getPackage();
             testData.countDownLatch.countDown();
+            finish();
+        }
+    }
+
+    /**
+     * Activity that can be launched by this package to verify sharing of the launching app's result
+     * #getCurrentCaller identity works as expected based on whether the launching app opted-in to
+     * sharing its identity.
+     */
+    public static class ActivityResultGetCurrentCallerShareIdentityTestActivity extends Activity {
+        public void onStart() {
+            super.onStart();
+            int testId = getIntent().getIntExtra(TEST_ID_KEY, -1);
+            int testCase = getIntent().getIntExtra(TEST_CASE_KEY, -1);
+
+            Intent intent;
+            if (testCase == getDefaultSharingTestCase()) {
+                intent = getTestIntent(testId, testCase, /* flags */ 0);
+
+            } else if (testCase == getDefaultSharingTestCaseSameUid()) {
+                intent = new Intent();
+                intent.setComponent(SET_RESULT_SAME_UID_ACTIVITY);
+                intent.putExtra(TEST_ID_KEY, testId);
+                intent.putExtra(TEST_CASE_KEY, testCase);
+
+            } else {
+                throw new RuntimeException("Unexpected test case: " + testCase);
+            }
+            startActivityForResult(intent, 0);
+        }
+
+        protected int getDefaultSharingTestCase() {
+            return DEFAULT_SHARING_TEST_CASE_ACTIVITY_RESULT_GET_CURRENT_CALLER;
+        }
+
+        protected int getDefaultSharingTestCaseSameUid() {
+            return DEFAULT_SHARING_TEST_CASE_SAME_UID_ACTIVITY_RESULT_GET_CURRENT_CALLER;
+        }
+
+        @Override
+        public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+            performResult(intent, getCurrentCaller());
+        }
+
+        protected void performResult(Intent intent, ComponentCaller caller) {
+            int testId = intent.getIntExtra(TEST_ID_KEY, -1);
+            TestData testData = sTestIdToData.remove(testId);
+            testData.fromUid = caller.getUid();
+            testData.fromPackage = caller.getPackage();
+            testData.countDownLatch.countDown();
+            finish();
+        }
+    }
+
+    /**
+     * Activity that can be launched by this package to verify sharing of the launching app's result
+     * overload caller identity works as expected based on whether the launching app opted-in to
+     * sharing its identity.
+     */
+    public static class ActivityResultOverloadCallerShareIdentityTestActivity
+            extends ActivityResultGetCurrentCallerShareIdentityTestActivity {
+        @Override
+        protected int getDefaultSharingTestCase() {
+            return DEFAULT_SHARING_TEST_CASE_ACTIVITY_RESULT_OVERLOAD_CALLER;
+        }
+
+        @Override
+        protected int getDefaultSharingTestCaseSameUid() {
+            return DEFAULT_SHARING_TEST_CASE_SAME_UID_ACTIVITY_RESULT_OVERLOAD_CALLER;
+        }
+
+        @Override
+        public void onActivityResult(int requestCode, int resultCode, Intent intent,
+                ComponentCaller caller) {
+            performResult(intent, caller);
+        }
+    }
+
+    /**
+     * Activity that sends a result back to either
+     * {@link ActivityResultGetCurrentCallerShareIdentityTestActivity} or
+     * {@link ActivityResultOverloadCallerShareIdentityTestActivity} for the sharing test cases with
+     * the same uid.
+     */
+    public static class ActivitySetResultSameUidShareIdentityTestActivity extends Activity {
+        public void onStart() {
+            super.onStart();
+            int testId = getIntent().getIntExtra(TEST_ID_KEY, -1);
+            Intent intent = new Intent();
+            intent.putExtra(TEST_ID_KEY, testId);
+            setResult(RESULT_OK, intent);
             finish();
         }
     }

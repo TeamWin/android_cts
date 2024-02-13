@@ -289,6 +289,17 @@ public class TestShareIdentityActivity extends Activity {
      */
     static final int EXPLICIT_OPT_OUT_TEST_CASE_ACTIVITY_NEW_INTENT_OVERLOAD_CALLER = 23;
     /**
+     * Test case to verify the launching app's result #getCurrentCaller identity is not shared when
+     * the activity is not launched with {@link android.app.ActivityOptions}.
+     */
+    private static final int DEFAULT_SHARING_TEST_CASE_ACTIVITY_RESULT_GET_CURRENT_CALLER = 24;
+    /**
+     * Test case to verify the launching app's result caller identity in
+     * #onActivityResult(int, int, Intent, ComponentCaller) is not shared when the activity is not
+     * launched with {@link android.app.ActivityOptions}.
+     */
+    private static final int DEFAULT_SHARING_TEST_CASE_ACTIVITY_RESULT_OVERLOAD_CALLER = 26;
+    /**
      * Action for which the runtime receiver registers in the app driving the test.
      */
     private static final String TEST_BROADCAST_RUNTIME_ACTION =
@@ -338,6 +349,11 @@ public class TestShareIdentityActivity extends Activity {
             case START_ACTIVITY_FOR_RESULT_TEST_CASE,
                     START_ACTIVITY_FOR_RESULT_TEST_CASE_ACTIVITY_INITIAL_CALLER:
                 startActivityForResult(intent, 0);
+                break;
+            case DEFAULT_SHARING_TEST_CASE_ACTIVITY_RESULT_GET_CURRENT_CALLER,
+                    DEFAULT_SHARING_TEST_CASE_ACTIVITY_RESULT_OVERLOAD_CALLER:
+                intent.setComponent(null);
+                setResult(RESULT_OK, intent);
                 break;
             case SEND_BROADCAST_RUNTIME_RECEIVER_OPT_IN_TEST_CASE:
                 testSendBroadcast(testId, false, false, true, true);
