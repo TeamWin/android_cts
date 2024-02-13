@@ -19,6 +19,8 @@ package com.android.cts.input.inputeventmatchers
 import android.graphics.Point
 import android.graphics.PointF
 import android.util.Log
+import android.view.KeyEvent
+import android.view.KeyEvent.keyCodeToString
 import android.view.MotionEvent
 import org.hamcrest.Description
 import org.hamcrest.Matcher
@@ -170,5 +172,15 @@ fun withToolType(toolType: Int): Matcher<MotionEvent> = object : TypeSafeMatcher
             }
         }
         return true
+    }
+}
+
+fun withKeyCode(keyCode: Int): Matcher<KeyEvent> = object : TypeSafeMatcher<KeyEvent>() {
+    override fun describeTo(description: Description) {
+        description.appendText("With key code = " + keyCodeToString(keyCode))
+    }
+
+    override fun matchesSafely(event: KeyEvent): Boolean {
+        return event.keyCode == keyCode
     }
 }

@@ -17,6 +17,7 @@
 package android.input.cts
 
 import android.view.InputEvent
+import android.view.KeyEvent
 import android.view.MotionEvent
 import org.hamcrest.Matcher
 import org.hamcrest.MatcherAssert.assertThat
@@ -33,5 +34,17 @@ class EventVerifier(val getInputEvent: () -> InputEvent?) {
         val motionEvent =
             event as? MotionEvent ?: fail("Instead of MotionEvent, got: $event")
         return motionEvent as MotionEvent
+    }
+
+    fun assertReceivedKey(matcher: Matcher<KeyEvent>) {
+        val event = getKeyEvent()
+        assertThat("Additional KeyEvent checks", event, matcher)
+    }
+
+    private fun getKeyEvent(): KeyEvent {
+        val event = getInputEvent() ?: fail("Failed to receive input event")
+        val keyEvent =
+            event as? KeyEvent ?: fail("Instead of KeyEvent, got: $event")
+        return keyEvent as KeyEvent
     }
 }

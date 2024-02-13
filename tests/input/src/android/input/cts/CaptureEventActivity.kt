@@ -27,6 +27,7 @@ import org.junit.Assert.assertNull
 
 class CaptureEventActivity : Activity() {
     private val events = LinkedBlockingQueue<InputEvent>()
+    var shouldHandleKeyEvents = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,7 +57,7 @@ class CaptureEventActivity : Activity() {
 
     override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
         events.add(KeyEvent(event))
-        return true
+        return shouldHandleKeyEvents
     }
 
     override fun dispatchTrackballEvent(ev: MotionEvent?): Boolean {
@@ -66,6 +67,10 @@ class CaptureEventActivity : Activity() {
 
     fun getInputEvent(): InputEvent? {
         return events.poll(5, TimeUnit.SECONDS)
+    }
+
+    fun hasReceivedEvents(): Boolean {
+      return !events.isEmpty()
     }
 
     fun assertNoEvents() {
