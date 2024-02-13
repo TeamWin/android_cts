@@ -29,6 +29,7 @@ import android.Manifest;
 import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.Notification;
+import android.app.Notification.CallStyle;
 import android.app.NotificationChannel;
 import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
@@ -272,6 +273,19 @@ public abstract class BaseNotificationManagerTest {
                                 SystemClock.currentThreadTimeMillis(), person)
                 )
                 .setSmallIcon(android.R.drawable.sym_def_app_icon);
+    }
+
+    protected Notification.Builder getCallStyleNotification(final int id) {
+        Person person = new Person.Builder().setName("Test name").build();
+        PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0,
+            new Intent().setPackage(mContext.getPackageName()), PendingIntent.FLAG_MUTABLE);
+        CallStyle cs = CallStyle.forIncomingCall(person, pendingIntent, pendingIntent);
+
+        return new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.black)
+                .setContentTitle("notify#" + id)
+                .setContentText("This is #" + id + "notification  ")
+                .setStyle(cs);
     }
 
     protected void cancelAndPoll(int id) {
