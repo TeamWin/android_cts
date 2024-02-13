@@ -16,6 +16,8 @@
 
 package android.scopedstorage.cts.device;
 
+import static android.scopedstorage.cts.device.OtherAppFilesRule.GrantModifications.GRANT;
+import static android.scopedstorage.cts.device.OwnedAndOtherFilesRule.getResultForFilesQuery;
 import static android.scopedstorage.cts.device.OwnedFilesRule.RESOURCE_ID_WITH_METADATA;
 import static android.scopedstorage.cts.lib.FilePathAccessTestUtils.assertFileAccess_listFiles;
 import static android.scopedstorage.cts.lib.FilePathAccessTestUtils.assertFileAccess_readWrite;
@@ -35,11 +37,15 @@ import static android.scopedstorage.cts.lib.TestUtils.getDcimDir;
 import static android.scopedstorage.cts.lib.TestUtils.pollForPermission;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.Manifest;
 import android.content.ContentResolver;
+import android.content.ContentUris;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
@@ -47,6 +53,7 @@ import android.scopedstorage.cts.lib.ResolverAccessTestUtils;
 import android.system.Os;
 import android.util.Log;
 
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.filters.SdkSuppress;
 
 import org.junit.BeforeClass;
@@ -54,6 +61,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
@@ -156,6 +164,29 @@ public class StorageOwnedFilesTest {
                 ResolverAccessTestUtils::assertResolver_insertImage);
         assertInsertFile(TAG + "_insert_2.mp4",
                 ResolverAccessTestUtils::assertResolver_insertVideo);
+    }
+
+    @Test
+    public void owned_grantOwnedItemBySelection() throws IOException {
+        // A granted item should be returned when recent_selection is requested even though the item
+        // is an owned item.
+        OtherAppFilesRule.modifyReadAccess(IMAGE_FILE_1, ApplicationProvider.getApplicationContext()
+                .getPackageName(), GRANT);
+        Bundle queryArgs = new Bundle();
+        queryArgs.putBoolean(MediaStore.QUERY_ARG_LATEST_SELECTION_ONLY, true);
+        try (Cursor c = getResultForFilesQuery(sContentResolver, queryArgs)) {
+            assertThat(c).isNotNull();
+            // Now only recently selected item should be returned.
+            assertWithMessage("Expected number of items(only recently selected) is 1.")
+                    .that(c.getCount()).isEqualTo(1);
+            final Uri expectedMediaUri = MediaStore.scanFile(sContentResolver,
+                    IMAGE_FILE_1);
+            c.moveToFirst();
+            assertWithMessage("Expected item Uri was: " + expectedMediaUri).that(
+                    c.getInt(c.getColumnIndex(
+                            MediaStore.Files.FileColumns._ID))).isEqualTo(
+                    ContentUris.parseId(expectedMediaUri));
+        }
     }
 
     private void assertInsertFile(String filename,

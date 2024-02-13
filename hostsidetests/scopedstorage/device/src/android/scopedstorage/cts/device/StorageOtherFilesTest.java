@@ -16,6 +16,8 @@
 
 package android.scopedstorage.cts.device;
 
+import static android.scopedstorage.cts.device.OtherAppFilesRule.GrantModifications.GRANT;
+import static android.scopedstorage.cts.device.OtherAppFilesRule.modifyReadAccess;
 import static android.scopedstorage.cts.device.OwnedFilesRule.RESOURCE_ID_WITH_METADATA;
 import static android.scopedstorage.cts.lib.FilePathAccessTestUtils.assertCannotReadOrWrite;
 import static android.scopedstorage.cts.lib.FilePathAccessTestUtils.assertFileAccess_listFiles;
@@ -42,15 +44,12 @@ import static android.scopedstorage.cts.lib.TestUtils.revokeAccessMediaLocation;
 import android.Manifest;
 import android.app.Instrumentation;
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.os.UserHandle;
 import android.provider.MediaStore;
-import android.scopedstorage.cts.lib.TestUtils;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.filters.SdkSuppress;
@@ -63,7 +62,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -108,8 +106,8 @@ public class StorageOtherFilesTest {
     public static void init() throws Exception {
         pollForPermission(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED, true);
         // creating grants only for one
-        grantReadAccess(IMAGE_FILE_READABLE);
-        grantReadAccess(VIDEO_FILE_READABLE);
+        modifyReadAccess(IMAGE_FILE_READABLE, THIS_PACKAGE_NAME, GRANT);
+        modifyReadAccess(VIDEO_FILE_READABLE, THIS_PACKAGE_NAME, GRANT);
     }
 
     @Before
@@ -193,7 +191,7 @@ public class StorageOtherFilesTest {
         try {
             Uri uriToBeDeleted1 = sFilesRule.createEmptyFileAsOther(fileToBeDeleted1);
             Uri uriToBeDeleted2 = sFilesRule.createEmptyFileAsOther(fileToBeDeleted2);
-            grantReadAccess(fileToBeDeleted1);
+            modifyReadAccess(fileToBeDeleted1, THIS_PACKAGE_NAME, GRANT);
 
             doEscalation(
                     MediaStore.createDeleteRequest(
@@ -217,46 +215,5 @@ public class StorageOtherFilesTest {
         // Revoke A_M_L
         revokeAccessMediaLocation();
         assertExifMetadataMismatch(getExifMetadataFromFile(IMAGE_FILE_READABLE), originalExif);
-    }
-
-    private static void grantReadAccess(File imageFile) throws IOException {
-        final String pickerUri1 = buildPhotopickerUriWithStringEscaping(imageFile);
-        String adbCommand =
-                "content call "
-                        + " --method grant_media_read_for_package"
-                        + " --user " + UserHandle.myUserId()
-                        + " --uri content://media/external/file"
-                        + " --extra uri:s:"
-                        + pickerUri1
-                        + " --extra "
-                        + Intent.EXTRA_PACKAGE_NAME
-                        + ":s:"
-                        + THIS_PACKAGE_NAME;
-        TestUtils.executeShellCommand(adbCommand);
-    }
-
-    private static String buildPhotopickerUriWithStringEscaping(File imageFile) {
-        /*
-        adb shell content call  --method 'grant_media_read_for_package'
-        --uri content://media/external/file
-        --extra uri:s:content\\://media/picker/0/com.android.providers.media
-        .photopicker/media/1000000089
-        --extra android.intent.extra.PACKAGE_NAME:s:android.scopedstorage.cts.device
-         */
-        final Uri originalUri = MediaStore.scanFile(getContentResolver(), imageFile);
-        long fileId = ContentUris.parseId(originalUri);
-
-        // We are forced to build the URI string this way due to various layers of string escaping
-        // we are hitting when using uris in adb shell commands from tests.
-        return "content\\://"
-                + MediaStore.AUTHORITY
-                + Uri.EMPTY
-                        .buildUpon()
-                        .appendPath("picker") // PickerUriResolver.PICKER_SEGMENT
-                        .appendPath(String.valueOf(UserHandle.myUserId()))
-                        .appendPath("com.android.providers.media.photopicker") //
-                        .appendPath(MediaStore.AUTHORITY)
-                        .appendPath(Long.toString(fileId))
-                        .build();
     }
 }
