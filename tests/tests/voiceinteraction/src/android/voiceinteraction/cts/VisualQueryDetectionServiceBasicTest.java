@@ -304,6 +304,76 @@ public class VisualQueryDetectionServiceBasicTest {
 
     @Test
     @RequiresDevice
+    public void testVisualQueryDetectionService_startRecogintion_audioVisualAttentionQueryStream()
+            throws Throwable {
+        // Create VisualQueryDetector
+        VisualQueryDetector visualQueryDetector = createVisualQueryDetector();
+        runWithShellPermissionIdentity(() -> {
+            PersistableBundle options = Helper.createFakePersistableBundleData();
+            options.putInt(MainVisualQueryDetectionService.KEY_VQDS_TEST_SCENARIO,
+                    MainVisualQueryDetectionService.SCENARIO_AUDIO_VISUAL_ATTENTION_STREAM);
+            visualQueryDetector.updateState(options, Helper.createFakeSharedMemoryData());
+        });
+        try {
+            adoptShellPermissionIdentityForVisualQueryDetection();
+
+            mService.initQueryFinishRejectLatch(1);
+            visualQueryDetector.startRecognition();
+
+            // wait onStartDetection() called and verify the result
+            mService.waitOnQueryFinishedRejectCalled();
+
+            // verify results
+            ArrayList<String> streamedQueries = mService.getStreamedQueriesResult();
+            assertThat(streamedQueries.get(0)).isEqualTo(
+                    MainVisualQueryDetectionService.FAKE_QUERY_FIRST);
+            assertThat(streamedQueries.size()).isEqualTo(1);
+
+        } finally {
+            visualQueryDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresDevice
+    public void testVisualQueryDetectionService_startRecogintion_AccessibilityAttentionQueryStream()
+            throws Throwable {
+        // Create VisualQueryDetector
+        VisualQueryDetector visualQueryDetector = createVisualQueryDetector();
+        runWithShellPermissionIdentity(() -> {
+            PersistableBundle options = Helper.createFakePersistableBundleData();
+            options.putInt(MainVisualQueryDetectionService.KEY_VQDS_TEST_SCENARIO,
+                    MainVisualQueryDetectionService.SCENARIO_ACCESSIBILITY_ATTENTION_STREAM);
+            visualQueryDetector.updateState(options, Helper.createFakeSharedMemoryData());
+        });
+        try {
+            adoptShellPermissionIdentityForVisualQueryDetection();
+
+            mService.initQueryFinishRejectLatch(1);
+            visualQueryDetector.startRecognition();
+
+            // wait onStartDetection() called and verify the result
+            mService.waitOnQueryFinishedRejectCalled();
+
+            // verify results
+            ArrayList<String> streamedQueries = mService.getStreamedQueriesResult();
+            assertThat(streamedQueries.get(0)).isEqualTo(
+                    MainVisualQueryDetectionService.FAKE_QUERY_FIRST);
+            assertThat(streamedQueries.size()).isEqualTo(1);
+
+        } finally {
+            visualQueryDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresDevice
     public void testVisualQueryDetectionService_startRecogintion_attentionQueryRejectedLeave()
             throws Throwable {
         // Create VisualQueryDetector
