@@ -70,9 +70,6 @@ import java.util.Set;
  */
 @RunWith(JUnit4.class)
 public class SystemFeaturesTest {
-    private static final String FEATURE_GOOGLE_ENTERPRISE_DEVICE =
-            "com.google.android.feature.ENTERPRISE_DEVICE";
-
     private Context mContext;
     private PackageManager mPackageManager;
     private Set<String> mAvailableFeatures;
@@ -333,16 +330,8 @@ public class SystemFeaturesTest {
     @Test
     public void testNfcFeatures() {
         if (NfcAdapter.getDefaultAdapter(mContext) != null) {
-            // Watches/Enterprise devices MAY support all FEATURE_NFC features when an NfcAdapter
-            // is available, but other MUST support them both.
-            if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
-                    || mPackageManager.hasSystemFeature(FEATURE_GOOGLE_ENTERPRISE_DEVICE)) {
-                assertOneAvailable(PackageManager.FEATURE_NFC,
-                    PackageManager.FEATURE_NFC_HOST_CARD_EMULATION);
-            } else {
-                assertAvailable(PackageManager.FEATURE_NFC);
-                assertAvailable(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION);
-            }
+            assertOneAvailable(PackageManager.FEATURE_NFC,
+                PackageManager.FEATURE_NFC_HOST_CARD_EMULATION);
         } else {
             assertNotAvailable(PackageManager.FEATURE_NFC);
             assertNotAvailable(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION);
