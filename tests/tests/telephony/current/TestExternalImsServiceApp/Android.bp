@@ -1,4 +1,5 @@
 package {
+    default_team: "trendy_team_fwk_telephony",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
@@ -8,11 +9,11 @@ android_test_helper_app {
     srcs: [
         "src/**/*.java",
         "aidl/**/I*.aidl",
-        ":telephony-cts-ims-common-srcs"
+        ":telephony-cts-ims-common-srcs",
     ],
     static_libs: [
-            "compatibility-device-util-axt",
-        ],
+        "compatibility-device-util-axt",
+    ],
     aidl: {
         local_include_dirs: ["aidl/"],
     },
@@ -24,5 +25,5 @@ android_test_helper_app {
         "cts",
         "general-tests",
         "mts",
-    ]
+    ],
 }
