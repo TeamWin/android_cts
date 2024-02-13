@@ -5037,6 +5037,70 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     }
 
     /**
+     * Tests {@link WifiManager#setPerSsidRoamingMode(WifiSsid, int)},
+     * {@link WifiManager#getPerSsidRoamingModes(Executor, Consumer)},
+     * and {@link WifiManager#removePerSsidRoamingMode(WifiSsid)}.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    @Test
+    public void testPerSsidRoamingMode() throws Exception {
+        if (!sWifiManager.isAggressiveRoamingModeSupported()) {
+            // skip the test if aggressive roaming mode is not supported
+            return;
+        }
+        WifiSsid testSsid = WifiSsid.fromBytes("TEST_SSID_1".getBytes(StandardCharsets.UTF_8));
+        Map<String, Integer> roamingModes = new HashMap<>();
+        Consumer<Map<String, Integer>> listener = new Consumer<Map<String, Integer>>() {
+            @Override
+            public void accept(Map<String, Integer> value) {
+                synchronized (mLock) {
+                    roamingModes.clear();
+                    roamingModes.putAll(value);
+                    mLock.notify();
+                }
+            }
+        };
+
+        // Test caller with no permission triggers SecurityException.
+        assertThrows("No permission should trigger SecurityException", SecurityException.class,
+                () -> sWifiManager.setPerSsidRoamingMode(testSsid,
+                        WifiManager.ROAMING_MODE_AGGRESSIVE));
+        assertThrows("No permission should trigger SecurityException", SecurityException.class,
+                () -> sWifiManager.removePerSsidRoamingMode(testSsid));
+        assertThrows("No permission should trigger SecurityException", SecurityException.class,
+                () -> sWifiManager.getPerSsidRoamingModes(mExecutor, listener));
+
+        // Test that invalid inputs trigger an Exception.
+        assertThrows("null WifiSsid should trigger exception", NullPointerException.class,
+                () -> sWifiManager.setPerSsidRoamingMode(null,
+                        WifiManager.ROAMING_MODE_AGGRESSIVE));
+        assertThrows("null WifiSsid should trigger exception", NullPointerException.class,
+                () -> sWifiManager.removePerSsidRoamingMode(null));
+        assertThrows("null executor should trigger exception", NullPointerException.class,
+                () -> sWifiManager.getPerSsidRoamingModes(null, listener));
+        assertThrows("null listener should trigger exception", NullPointerException.class,
+                () -> sWifiManager.getPerSsidRoamingModes(mExecutor, null));
+
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            sWifiManager.setPerSsidRoamingMode(testSsid, WifiManager.ROAMING_MODE_AGGRESSIVE);
+            sWifiManager.getPerSsidRoamingModes(mExecutor, listener);
+            Thread.sleep(TEST_WAIT_DURATION_MS);
+            assertTrue(
+                    roamingModes.get(testSsid.toString()) == WifiManager.ROAMING_MODE_AGGRESSIVE);
+            sWifiManager.removePerSsidRoamingMode(testSsid);
+            sWifiManager.getPerSsidRoamingModes(mExecutor, listener);
+            Thread.sleep(TEST_WAIT_DURATION_MS);
+            assertNull(roamingModes.get(testSsid.toString()));
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
      * Verify the invalid and valid usages of {@code WifiManager#setPnoScanState}.
      */
     @Test
