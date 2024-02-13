@@ -3015,7 +3015,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
         final PackageManager pm = mContext.getPackageManager();
         final Intent intent = new Intent(Settings.ACTION_AUTOMATIC_ZEN_RULE_SETTINGS);
-        intent.setData(Uri.parse("package:" + STUB_PACKAGE_NAME));
         intent.putExtra(EXTRA_AUTOMATIC_ZEN_RULE_ID, id);
         final ResolveInfo resolveInfo = pm.resolveActivity(intent, MATCH_DEFAULT_ONLY);
         assertNotNull(resolveInfo);
