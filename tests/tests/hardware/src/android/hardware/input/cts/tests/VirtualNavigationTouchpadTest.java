@@ -24,7 +24,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 
-import android.hardware.display.VirtualDisplay;
 import android.hardware.input.VirtualNavigationTouchpad;
 import android.hardware.input.VirtualTouchEvent;
 import android.hardware.input.cts.virtualcreators.VirtualDisplayCreator;
@@ -147,10 +146,12 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
 
     @Test
     public void createVirtualNavigationTouchpad_unownedDisplay_throwsException() {
-        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
-        assertThrows(SecurityException.class,
-                () -> createVirtualNavigationTouchpad(unownedDisplay.getDisplay().getDisplayId()));
-        unownedDisplay.release();
+        try (VirtualDisplayCreator.UnownedVirtualDisplay unownedDisplay =
+                     VirtualDisplayCreator.createUnownedVirtualDisplay()) {
+            assertThrows(SecurityException.class,
+                    () -> createVirtualNavigationTouchpad(
+                            unownedDisplay.getDisplay().getDisplayId()));
+        }
     }
 
     @Test
@@ -164,12 +165,14 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
     @Test
     public void createVirtualNavigationTouchpad_unownedVirtualDisplay_injectEvents_succeeds() {
         mVirtualNavigationTouchpad.close();
-        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
-        runWithPermission(
-                () -> assertThat(createVirtualNavigationTouchpad(
-                        unownedDisplay.getDisplay().getDisplayId()))
-                        .isNotNull(),
-                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
+        try (VirtualDisplayCreator.UnownedVirtualDisplay unownedDisplay =
+                     VirtualDisplayCreator.createUnownedVirtualDisplay()) {
+            runWithPermission(
+                    () -> assertThat(createVirtualNavigationTouchpad(
+                            unownedDisplay.getDisplay().getDisplayId()))
+                            .isNotNull(),
+                    INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
+        }
     }
 
     @Test

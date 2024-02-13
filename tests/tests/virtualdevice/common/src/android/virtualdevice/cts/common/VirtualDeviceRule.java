@@ -190,6 +190,8 @@ public class VirtualDeviceRule implements TestRule {
                 config, /* executor= */ null, /* callback= */ null);
         if (virtualDisplay != null) {
             assertDisplayExists(virtualDisplay.getDisplay().getDisplayId());
+            // There's no need to track managed virtual displays to have them released on tear-down
+            // because they will be released automatically when the VirtualDevice is closed.
         }
         return virtualDisplay;
     }

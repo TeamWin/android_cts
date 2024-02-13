@@ -16,6 +16,8 @@
 
 package android.hardware.input.cts.virtualcreators;
 
+import static org.junit.Assert.assertNotNull;
+
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.content.Context;
 import android.graphics.Point;
@@ -23,9 +25,11 @@ import android.graphics.SurfaceTexture;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
+import android.view.Display;
 import android.view.Surface;
 import android.virtualdevice.cts.common.VirtualDeviceRule;
 
+import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 /**
@@ -55,13 +59,38 @@ public class VirtualDisplayCreator {
                 null /* callback */);
     }
 
-    public static VirtualDisplay createUnownedVirtualDisplay() {
+    // Wrapper for an auto-closable unowned virtual display for compatibility with
+    // try-with-resources.
+    public static class UnownedVirtualDisplay implements AutoCloseable {
+        private final VirtualDisplay mVirtualDisplay;
+
+        private UnownedVirtualDisplay(@NonNull VirtualDisplay virtualDisplay) {
+            mVirtualDisplay = virtualDisplay;
+        }
+
+        public Display getDisplay() {
+            return mVirtualDisplay.getDisplay();
+        }
+
+        public VirtualDisplay getVirtualDisplay() {
+            return mVirtualDisplay;
+        }
+
+        @Override
+        public void close() {
+            mVirtualDisplay.release();
+        }
+    }
+
+    public static UnownedVirtualDisplay createUnownedVirtualDisplay() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         DisplayManager displayManager = context.getSystemService(DisplayManager.class);
-        return displayManager.createVirtualDisplay(
+        VirtualDisplay virtualDisplay = displayManager.createVirtualDisplay(
                 VirtualDeviceRule.createDefaultVirtualDisplayConfigBuilder()
                         .setFlags(VIRTUAL_DISPLAY_FLAG_SUPPORTS_TOUCH)
                         .build());
+        assertNotNull(virtualDisplay);
+        return new UnownedVirtualDisplay(virtualDisplay);
     }
 
     public static Point getDisplaySize(VirtualDisplay virtualDisplay) {
