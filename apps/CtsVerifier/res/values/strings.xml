@@ -7220,6 +7220,28 @@ Follow the instructions on the screen to measure the frequency response for the 
 
     <!-- Strings for Sharesheet tests -->
     <string name="category_sharesheet">Sharesheet</string>
+
+    <string name="sharesheet_payload_toggle_test">Sharesheet Payload Toggle Test</string>
+    <string name="sharesheet_payload_toggle_test_info">
+        This test verifies that the system sharesheet properly handles the API that allows for shared items to be chosen from a larger set of optional items.
+        \n\n
+        1. Press the \"Share\" button below to launch the system sharesheet.
+        \n\n
+        2. In the system sharesheet, select all images and send them to the CTS verifier app.
+    </string>
+    <string name="sharesheet_payload_toggle_action_test">Sharesheet Payload Toggle Chooser Action Test</string>
+    <string name="sharesheet_payload_toggle_chooser_action_test_info">
+        This test verifies that the system sharesheet properly handles the API that allows for chooser actions to be updated in response to a change in the set of shared items in the system sharesheet.
+        \n\n
+        1. Press the \"Share\" button below to launch the system sharesheet.
+        \n\n
+        2. In the system sharesheet, select all images and tap on the chooser action.
+    </string>
+    <string name="sharesheet_chooser_action">Test Action</string>
+    <string name="sharesheet_wrong_intent_action">Wrong intent action; test failed.</string>
+    <string name="sharesheet_wrong_intent_mime_type">Wrong intent mime type; test failed.</string>
+    <string name="sharesheet_wrong_shared_items">Wrong set of shared items; test failed.</string>
+
     <string name="sharesheet_album_test">Sharesheet Album Label Test</string>
     <string name="sharesheet_album_test_info">This test verifies that the system sharesheet responds to the \"album\" hint if provided by the app.</string>
     <string name="sharesheet_skipping_for_flag">Skipping the test due to disabled feature flag</string>
