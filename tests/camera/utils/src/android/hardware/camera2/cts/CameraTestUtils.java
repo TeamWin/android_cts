@@ -4039,17 +4039,15 @@ public class CameraTestUtils extends Assert {
     }
 
     public static boolean isSessionConfigWithParamsSupported(
-            CameraManager manager, String cameraId,
+            CameraDevice.CameraDeviceSetup cameraDeviceSetup,
             Handler handler, List<OutputConfiguration> outputConfigs,
-            int operatingMode, CaptureRequest request) throws Exception {
+            int operatingMode, CaptureRequest request) throws CameraAccessException {
         BlockingSessionCallback sessionListener = new BlockingSessionCallback();
         SessionConfiguration sessionConfig = new SessionConfiguration(operatingMode, outputConfigs,
                 new HandlerExecutor(handler), sessionListener);
         sessionConfig.setSessionParameters(request);
 
-        boolean ret = manager.isSessionConfigurationWithParametersSupported(
-                cameraId, sessionConfig);
-        return ret;
+        return cameraDeviceSetup.isSessionConfigurationSupported(sessionConfig);
     }
 
 
