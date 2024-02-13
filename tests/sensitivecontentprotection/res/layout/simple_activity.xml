@@ -24,4 +24,22 @@
           android:id="@+id/view"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content" />
+
+      <View
+          android:id="@+id/view_content_sensitivity_auto"
+          android:contentSensitivity="auto"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content" />
+
+      <View
+          android:id="@+id/view_content_sensitivity_sensitive"
+          android:contentSensitivity="sensitive"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content" />
+
+      <View
+          android:id="@+id/view_content_sensitivity_not_sensitive"
+          android:contentSensitivity="notSensitive"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content" />
 </LinearLayout>
