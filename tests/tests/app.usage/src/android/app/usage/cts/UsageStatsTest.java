@@ -84,6 +84,7 @@ import android.util.SparseLongArray;
 import android.view.KeyEvent;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
@@ -764,6 +765,7 @@ public class UsageStatsTest {
         assertEquals(events.hasNextEvent(), reparceledEvents.hasNextEvent());
     }
 
+    @FlakyTest(bugId = 324189427)
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testPackageUsageStatsIntervals() throws Exception {
@@ -1621,6 +1623,7 @@ public class UsageStatsTest {
         }
     }
 
+    @FlakyTest(bugId = 324329425)
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testInteractiveEvents() throws Exception {
