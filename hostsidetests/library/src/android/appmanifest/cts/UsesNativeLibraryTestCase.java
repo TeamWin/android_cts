@@ -16,9 +16,9 @@
 package android.appmanifest.cts;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -296,13 +296,19 @@ public class UsesNativeLibraryTestCase extends BaseHostJUnit4Test {
                 getFile("CtsUsesNativeLibraryTestApp.jar")));
 
         File signedApkFile = new File(buildRoot, "signed.apk");
-        runCommand(String.format("java -Djava.library.path=%s -jar %s %s %s %s %s",
-                mWorkDir,
-                getFile("signapk.jar"),
-                getFile("testkey.x509.pem"),
-                getFile("testkey.pk8"),
-                unsignedApkFile,
-                signedApkFile));
+        try {
+            runCommand(String.format("java -Djava.library.path=%s -jar %s %s %s %s %s",
+                    mWorkDir,
+                    getFile("signapk.jar"),
+                    getFile("testkey.x509.pem"),
+                    getFile("testkey.pk8"),
+                    unsignedApkFile,
+                    signedApkFile));
+        } catch (RuntimeException e) {
+            String msg = "Failed to sign apk. This is likely due to the use of old JDK. Please "
+                + "update JDK to the latest. If you are a Googler, see b/208923903#comment19.";
+            throw new RuntimeException(msg, e);
+        }
 
         return signedApkFile;
     }
