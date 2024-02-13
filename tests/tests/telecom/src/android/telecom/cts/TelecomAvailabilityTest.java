@@ -17,6 +17,7 @@
 package android.telecom.cts;
 
 import static android.telecom.cts.TestUtils.shouldTestTelecom;
+import static android.telecom.cts.TestUtils.hasTelephonyFeature;
 
 import android.content.Context;
 import android.content.Intent;
@@ -26,6 +27,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.telecom.TelecomManager;
+import android.telephony.TelephonyManager;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
@@ -121,7 +123,10 @@ public class TelecomAvailabilityTest extends InstrumentationTestCase {
      * Tests that TelecomManager always creates resolvable/actionable emergency dialer intent.
      */
     public void testCreateLaunchEmergencyDialerIntent() {
-        if (!shouldTestTelecom(mContext)) {
+        TelephonyManager telephonyManager = mContext.getSystemService(TelephonyManager.class);
+        if (!shouldTestTelecom(mContext)
+            || !hasTelephonyFeature(mContext)
+                || !telephonyManager.isVoiceCapable()) {
             return;
         }
         final TelecomManager telecomManager = mContext.getSystemService(TelecomManager.class);
