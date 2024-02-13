@@ -82,7 +82,7 @@ public class CodecInitializationLatencyTest {
 
     private static final String AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
     private static final String HEVC = MediaFormat.MIMETYPE_VIDEO_HEVC;
-    private static final String AVC_TRANSCODE_FILE = "bbb_1280x720_3mbps_30fps_avc.mp4";
+    private static final String AVC_TRANSCODE_FILE = "bbb_1920x1080_8mbps_60fps_avc.mp4";
     private static String AVC_DECODER_NAME;
     private static String AVC_ENCODER_NAME;
     private static final Map<String, String> mTestFiles = new HashMap<>();
@@ -219,8 +219,7 @@ public class CodecInitializationLatencyTest {
     }
 
     private void startLoad() throws Exception {
-        // TODO: b/183671436
-        // Create Transcode load (AVC Decoder(720p) + AVC Encoder(720p))
+        // Create Transcode load (AVC Decoder(1080p) + AVC Encoder(720p))
         mTranscodeLoadStatus = new LoadStatus();
         mTranscodeLoadThread = new Thread(() -> {
             try {
