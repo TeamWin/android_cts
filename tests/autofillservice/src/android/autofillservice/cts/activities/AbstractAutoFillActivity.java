@@ -124,7 +124,7 @@ public abstract class AbstractAutoFillActivity extends Activity {
     /**
      * Unregister the callback from the {@link AutofillManager}.
      *
-     * <p>This method just neeed to be called when a test case wants to explicitly test the behavior
+     * <p>This method just need to be called when a test case wants to explicitly test the behavior
      * of the activity when the callback is unregistered.
      */
     public void unregisterCallback() {
