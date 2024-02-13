@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -266,6 +267,8 @@ public class BiometricPromptContentViewTest extends BiometricTestBase {
     public void testSimpleBiometricAuth_nonConvenience_setContentView_itemTooLongFor2Column()
             throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
+        // TODO (b/302735104): add another test to check tablet columns.
+        assumeFalse(isTablet());
         for (SensorProperties props : mSensorProperties) {
             if (props.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
                 continue;
