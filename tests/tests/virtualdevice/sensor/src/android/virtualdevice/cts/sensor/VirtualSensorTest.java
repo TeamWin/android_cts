@@ -709,8 +709,7 @@ public class VirtualSensorTest {
         @Override
         public void onSensorChanged(SensorEvent event) {
             try {
-                mEvents.put(new SensorEvent(event.sensor, event.accuracy, event.timestamp,
-                        event.values));
+                mEvents.put(event);
             } catch (InterruptedException ex) {
                 fail("Interrupted while adding a SensorEvent to the queue");
             }

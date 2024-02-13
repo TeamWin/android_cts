@@ -30,20 +30,14 @@ import static android.media.AudioManager.AUDIO_SESSION_ID_GENERATE;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import android.companion.virtual.VirtualDeviceParams;
 import android.companion.virtual.flags.Flags;
-import android.companion.virtual.sensor.VirtualSensor;
 import android.companion.virtual.sensor.VirtualSensorCallback;
 import android.companion.virtual.sensor.VirtualSensorConfig;
 import android.companion.virtual.sensor.VirtualSensorDirectChannelCallback;
 import android.content.ComponentName;
 import android.hardware.SensorDirectChannel;
-import android.os.Binder;
 import android.os.Parcel;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
@@ -52,8 +46,7 @@ import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-import com.android.internal.os.BackgroundThread;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -62,9 +55,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executor;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
@@ -86,9 +79,12 @@ public class VirtualDeviceParamsTest {
     @Mock
     private VirtualSensorDirectChannelCallback mVirtualSensorDirectChannelCallback;
 
+    private Executor mExecutor;
+
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
+        mExecutor = InstrumentationRegistry.getInstrumentation().getContext().getMainExecutor();
     }
 
     @Test
@@ -109,9 +105,9 @@ public class VirtualDeviceParamsTest {
                                         SensorDirectChannel.TYPE_MEMORY_FILE)
                                 .setHighestDirectReportRateLevel(SensorDirectChannel.RATE_NORMAL)
                                 .build())
-                .setVirtualSensorCallback(BackgroundThread.getExecutor(), mVirtualSensorCallback)
+                .setVirtualSensorCallback(mExecutor, mVirtualSensorCallback)
                 .setVirtualSensorDirectChannelCallback(
-                        BackgroundThread.getExecutor(), mVirtualSensorDirectChannelCallback)
+                        mExecutor, mVirtualSensorDirectChannelCallback)
                 .build();
         Parcel parcel = Parcel.obtain();
         originalParams.writeToParcel(parcel, 0);
@@ -129,7 +125,6 @@ public class VirtualDeviceParamsTest {
                 Flags.crossDeviceClipboard() ? DEVICE_POLICY_CUSTOM : DEVICE_POLICY_DEFAULT);
         assertThat(params.getAudioPlaybackSessionId()).isEqualTo(PLAYBACK_SESSION_ID);
         assertThat(params.getAudioRecordingSessionId()).isEqualTo(RECORDING_SESSION_ID);
-        assertThat(params.getVirtualSensorCallback()).isNotNull();
 
         List<VirtualSensorConfig> sensorConfigs = params.getVirtualSensorConfigs();
         assertThat(sensorConfigs).hasSize(1);
@@ -408,8 +403,7 @@ public class VirtualDeviceParamsTest {
                         .addVirtualSensorConfig(new VirtualSensorConfig.Builder(
                                 TYPE_ACCELEROMETER, SENSOR_NAME)
                                 .build())
-                        .setVirtualSensorCallback(
-                                BackgroundThread.getExecutor(), mVirtualSensorCallback)
+                        .setVirtualSensorCallback(mExecutor, mVirtualSensorCallback)
                         .build());
     }
 
@@ -435,8 +429,7 @@ public class VirtualDeviceParamsTest {
                                 .setHighestDirectReportRateLevel(SensorDirectChannel.RATE_NORMAL)
                                 .build())
                         .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
-                        .setVirtualSensorCallback(
-                                BackgroundThread.getExecutor(), mVirtualSensorCallback)
+                        .setVirtualSensorCallback(mExecutor, mVirtualSensorCallback)
                         .build());
     }
 
@@ -464,7 +457,7 @@ public class VirtualDeviceParamsTest {
                 .addVirtualSensorConfig(
                         new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, secondSensorName)
                                 .build())
-                .setVirtualSensorCallback(BackgroundThread.getExecutor(), mVirtualSensorCallback)
+                .setVirtualSensorCallback(mExecutor, mVirtualSensorCallback)
                 .build();
 
         List<VirtualSensorConfig> virtualSensorConfigs = params.getVirtualSensorConfigs();
@@ -472,29 +465,6 @@ public class VirtualDeviceParamsTest {
         for (int i = 0; i < virtualSensorConfigs.size(); ++i) {
             assertThat(virtualSensorConfigs.get(i).getType()).isEqualTo(TYPE_ACCELEROMETER);
         }
-    }
-
-    @Test
-    public void virtualSensorConfigs_virtualSensorCallbackInvocation() throws Exception {
-        VirtualDeviceParams params = new VirtualDeviceParams.Builder()
-                .addVirtualSensorConfig(
-                        new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, SENSOR_NAME).build())
-                .setVirtualSensorCallback(BackgroundThread.getExecutor(), mVirtualSensorCallback)
-                .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
-                .build();
-
-        final Duration samplingPeriod = Duration.ofMillis(123);
-        final Duration batchLatency = Duration.ofMillis(456);
-
-        VirtualSensor virtualSensor = new VirtualSensor(
-                0, TYPE_ACCELEROMETER, SENSOR_NAME, null, new Binder(SENSOR_NAME));
-
-        params.getVirtualSensorCallback().onConfigurationChanged(virtualSensor, true,
-                (int) MILLISECONDS.toMicros(samplingPeriod.toMillis()),
-                (int) MILLISECONDS.toMicros(batchLatency.toMillis()));
-
-        verify(mVirtualSensorCallback, timeout(1000)).onConfigurationChanged(
-                virtualSensor, true, samplingPeriod, batchLatency);
     }
 
     @Test

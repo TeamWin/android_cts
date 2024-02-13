@@ -233,7 +233,7 @@ public class VirtualDeviceManagerBasicTest {
         CompanionDeviceManager cdm = mContext.getSystemService(CompanionDeviceManager.class);
         List<AssociationInfo> associations = cdm.getMyAssociations();
         final AssociationInfo associationInfo = associations.stream()
-                .filter(a -> fakeAddress.equals(a.getDeviceMacAddressAsString()))
+                .filter(a -> fakeAddress.equals(a.getDeviceMacAddress().toString()))
                 .findAny().orElse(null);
         assertThat(associationInfo).isNotNull();
         try {
