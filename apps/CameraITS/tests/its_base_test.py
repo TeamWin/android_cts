@@ -23,6 +23,7 @@ import lighting_control_utils
 from mobly import base_test
 from mobly import utils
 from mobly.controllers import android_device
+from snippet_uiautomator import uiautomator
 
 
 ADAPTIVE_BRIGHTNESS_OFF = '0'
@@ -272,3 +273,19 @@ class ItsBaseTest(base_test.BaseTestClass):
     # Note: Do not replace print with logging.debug here.
     print('root_output_path:',
           f'{self.root_output_path}_{self.__class__.__name__}')
+
+
+class UiAutomatorItsBaseTest(ItsBaseTest):
+  def setup_class(self):
+    super().setup_class()
+    self.ui_app = None
+    self.dut.services.register(
+        uiautomator.ANDROID_SERVICE_NAME, uiautomator.UiAutomatorService
+    )
+
+  def setup_test(self):
+    super().setup_test()
+    if not self.ui_app:
+      raise AssertionError(
+          'UiAutomator ITS tests must specify an app for UI interaction!')
+    its_session_utils.check_apk_installed(self.dut.serial, self.ui_app)
