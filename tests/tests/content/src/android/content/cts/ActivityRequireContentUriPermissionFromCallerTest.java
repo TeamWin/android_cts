@@ -43,13 +43,15 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
 
+import com.google.testing.junit.testparameterinjector.TestParameter;
+import com.google.testing.junit.testparameterinjector.TestParameterInjector;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -78,7 +80,7 @@ import java.util.concurrent.TimeUnit;
  * </ol>
  */
 @RequiresFlagsEnabled(android.security.Flags.FLAG_CONTENT_URI_PERMISSION_APIS)
-@RunWith(JUnit4.class)
+@RunWith(TestParameterInjector.class)
 public class ActivityRequireContentUriPermissionFromCallerTest {
     @Rule
     public final CheckFlagsRule mCheckFlagsRule =
@@ -116,14 +118,9 @@ public class ActivityRequireContentUriPermissionFromCallerTest {
     private static IContentUriTestService sContentUriTestService;
     private static ServiceConnection sContentUriServiceConnection;
 
-    // modeFlags equivalent constants
-    private static final int NO_PERMISSION = 0;
-    private static final int READ_PERMISSION = Intent.FLAG_GRANT_READ_URI_PERMISSION;
-    private static final int WRITE_PERMISSION = Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
-    private static final int READ_AND_WRITE_PERMISSION = Intent.FLAG_GRANT_READ_URI_PERMISSION
-            | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
-
     private static Uri[] sUrisFromService;
+
+    @TestParameter UriLocation mUriLocation;
 
     /**
      * Retrieves and saves Uris from
@@ -152,88 +149,73 @@ public class ActivityRequireContentUriPermissionFromCallerTest {
     }
 
     @Test
-    public void testNone_allModeFlags_doNotThrow() throws Exception {
-        for (int modeFlags : new int[] {
-                NO_PERMISSION,
-                READ_PERMISSION,
-                WRITE_PERMISSION,
-                READ_AND_WRITE_PERMISSION
-        }) {
-            internalTest(TEST_NONE_ACTIVITY, modeFlags, /* assertThrow */ false, /* isOr */ false);
-        }
+    public void testNoneAttribute_allModeFlags_doNotThrow(
+            @TestParameter({"NONE", "READ", "WRITE", "READ_AND_WRITE"}) ModeFlags modeFlags)
+            throws Exception {
+        internalTestAssertDoesNotThrow(TestedAttributeActivity.NONE, modeFlags);
     }
 
     @Test
-    public void testRead_readModeFlags_doNotThrow() throws Exception {
-        for (int modeFlags : new int[] { READ_PERMISSION, READ_AND_WRITE_PERMISSION }) {
-            internalTest(TEST_READ_ACTIVITY, modeFlags, /* assertThrow */ false, /* isOr */ false);
-        }
+    public void testReadAttribute_readModeFlags_doNotThrow(
+            @TestParameter({"READ", "READ_AND_WRITE"}) ModeFlags modeFlags) throws Exception {
+        internalTestAssertDoesNotThrow(TestedAttributeActivity.READ, modeFlags);
     }
 
     @Test
-    public void testRead_noneAndWriteModeFlags_throw() throws Exception {
-        for (int modeFlags : new int[]{ NO_PERMISSION, WRITE_PERMISSION }) {
-            internalTest(TEST_READ_ACTIVITY, modeFlags, /* assertThrow */ true, /* isOr */ false);
-        }
+    public void testReadAttribute_noneAndWriteModeFlags_throw(
+            @TestParameter({"NONE", "WRITE"}) ModeFlags modeFlags) throws Exception {
+        internalTestAssertThrows(TestedAttributeActivity.READ, modeFlags);
     }
 
     @Test
-    public void testWrite_writeModeFlags_doNotThrow() throws Exception {
-        for (int modeFlags : new int[] { WRITE_PERMISSION, READ_AND_WRITE_PERMISSION }) {
-            internalTest(TEST_WRITE_ACTIVITY, modeFlags, /* assertThrow */ false, /* isOr */ false);
-        }
+    public void testWriteAttribute_writeModeFlags_doNotThrow(
+            @TestParameter({"WRITE", "READ_AND_WRITE"}) ModeFlags modeFlags) throws Exception {
+        internalTestAssertDoesNotThrow(TestedAttributeActivity.WRITE, modeFlags);
     }
 
     @Test
-    public void testWrite_noneAndReadModeFlags_throw() throws Exception {
-        for (int modeFlags : new int[] { NO_PERMISSION, READ_PERMISSION }) {
-            internalTest(TEST_WRITE_ACTIVITY, modeFlags, /* assertThrow */ true, /* isOr */ false);
-        }
+    public void testWriteAttribute_noneAndReadModeFlags_throw(
+            @TestParameter({"NONE", "READ"}) ModeFlags modeFlags) throws Exception {
+        internalTestAssertThrows(TestedAttributeActivity.WRITE, modeFlags);
     }
 
     @Test
-    public void testReadOrWrite_allButNoneModeFlags_doNotThrow() throws Exception {
-        for (int modeFlags : new int[] {
-                READ_PERMISSION,
-                WRITE_PERMISSION,
-                READ_AND_WRITE_PERMISSION
-        }) {
-            internalTest(TEST_READ_OR_WRITE_ACTIVITY, modeFlags, /* assertThrow */ false,
-                    /* isOr */ true);
-        }
+    public void testReadOrWriteAttribute_allButNoneModeFlags_doNotThrow(
+            @TestParameter({"READ", "WRITE", "READ_AND_WRITE"}) ModeFlags modeFlags)
+            throws Exception {
+        internalTestAssertDoesNotThrow(TestedAttributeActivity.READ_OR_WRITE, modeFlags);
     }
 
     @Test
-    public void testReadOrWrite_noneModeFlags_throws() throws Exception {
-        internalTest(TEST_READ_OR_WRITE_ACTIVITY, NO_PERMISSION, /* assertThrow */ true,
-                /* isOr */ true);
+    public void testReadOrWriteAttribute_noneModeFlags_throws() throws Exception {
+        internalTestAssertThrows(TestedAttributeActivity.READ_OR_WRITE, ModeFlags.NONE);
     }
 
     @Test
-    public void testReadAndWrite_readAndWriteModeFlags_doesNotThrow() throws Exception {
-        internalTest(TEST_READ_AND_WRITE_ACTIVITY, READ_AND_WRITE_PERMISSION,
-                /* assertThrow */ false, /* isOr */ false);
+    public void testReadAndWriteAttribute_readAndWriteModeFlags_doesNotThrow() throws Exception {
+        internalTestAssertDoesNotThrow(TestedAttributeActivity.READ_AND_WRITE,
+                ModeFlags.READ_AND_WRITE);
     }
 
     @Test
-    public void testReadAndWrite_allButReadAndWriteModeFlags_throw() throws Exception {
-        for (int modeFlags : new int[] { NO_PERMISSION, READ_PERMISSION, WRITE_PERMISSION }) {
-            internalTest(TEST_READ_AND_WRITE_ACTIVITY, modeFlags, /* assertThrow */ true,
-                    /* isOr */ false);
-        }
+    public void testReadAndWriteAttribute_allButReadAndWriteModeFlags_throw(
+            @TestParameter({"NONE", "READ", "WRITE"}) ModeFlags modeFlags) throws Exception {
+        internalTestAssertThrows(TestedAttributeActivity.READ_AND_WRITE, modeFlags);
     }
 
-    private void internalTest(ComponentName component, int modeFlags, boolean assertThrow,
-            boolean isOr) throws Exception {
-        internalTest(component, modeFlags, assertThrow, isOr, /* uriInDataOtherwiseInClip */ true);
-        internalTest(component, modeFlags, assertThrow, isOr, /* uriInDataOtherwiseInClip */ false);
+    private void internalTestAssertDoesNotThrow(TestedAttributeActivity attributeActivity,
+            ModeFlags modeFlags) throws Exception {
+        internalTest(attributeActivity, modeFlags, /* assertThrows */ false);
     }
 
-    private void internalTest(ComponentName component, int modeFlags, boolean assertThrow,
-            boolean isOr, boolean uriInDataOtherwiseInClip) throws Exception {
-        resetCountDownLatch();
+    private void internalTestAssertThrows(TestedAttributeActivity attributeActivity,
+            ModeFlags modeFlags) throws Exception {
+        internalTest(attributeActivity, modeFlags, /* assertThrows */ true);
+    }
 
-        Intent intent = getTestIntent(component, modeFlags, uriInDataOtherwiseInClip);
+    private void internalTest(TestedAttributeActivity attributeActivity, ModeFlags modeFlags,
+            boolean assertThrows) throws Exception {
+        Intent intent = getTestIntent(attributeActivity.mComponent, modeFlags);
 
         boolean securityExceptionCaught = false;
         try {
@@ -242,17 +224,22 @@ public class ActivityRequireContentUriPermissionFromCallerTest {
             securityExceptionCaught = true;
         }
 
-        String errorMsg = getErrorMessage(modeFlags, assertThrow, isOr);
-        assertEquals(errorMsg, securityExceptionCaught, assertThrow);
+        String errorMsg = getErrorMessage(modeFlags, assertThrows, attributeActivity.mIsOr);
+        assertEquals(errorMsg, securityExceptionCaught, assertThrows);
 
-        if (!assertThrow) {
+        if (!assertThrows) {
             assertActivityWasInvoked();
         }
     }
 
-    private String getErrorMessage(int modeFlags, boolean assertThrow, boolean isOr) {
-        String requiredModeFlags = modeFlagsToString(modeFlags, assertThrow, isOr);
-        if (assertThrow) {
+    private String getErrorMessage(ModeFlags modeFlags, boolean assertThrows, boolean isOr) {
+        String requiredModeFlags = switch (modeFlags) {
+            case NONE -> assertThrows ? "any" : "no";
+            case READ -> "read";
+            case WRITE -> "write";
+            case READ_AND_WRITE -> isOr ? "read or write" : "read and write";
+        };
+        if (assertThrows) {
             return "Should throw a SecurityException because we don't have " + requiredModeFlags
                     + " access to the content URI";
         } else {
@@ -261,40 +248,17 @@ public class ActivityRequireContentUriPermissionFromCallerTest {
         }
     }
 
-    private String modeFlagsToString(int modeFlags, boolean assertThrow, boolean isOr) {
-        return switch (modeFlags) {
-            case NO_PERMISSION -> assertThrow ? "any" : "no";
-            case READ_PERMISSION -> "read";
-            case WRITE_PERMISSION -> "write";
-            case READ_AND_WRITE_PERMISSION -> isOr ? "read or write" : "read and write";
-            default -> throw new RuntimeException("Invalid modeFlags");
-        };
-    }
-
-    private Intent getTestIntent(ComponentName component, int modeFlags,
-            boolean uriInDataOtherwiseInClip) {
+    private Intent getTestIntent(ComponentName component, ModeFlags modeFlags) {
         Intent intent = new Intent();
         intent.setComponent(component);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT
                 | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
-        Uri uri = getContentUriFromService(modeFlags);
-        if (uriInDataOtherwiseInClip) {
-            intent.setData(uri);
-        } else {
-            intent.setClipData(ClipData.newRawUri("", uri));
+        Uri uri = sUrisFromService[modeFlags.mIdFromService];
+        switch (mUriLocation) {
+            case URI_IN_GET_DATA -> intent.setData(uri);
+            case URI_IN_GET_CLIP_DATA -> intent.setClipData(ClipData.newRawUri("", uri));
         }
         return intent;
-    }
-
-    private Uri getContentUriFromService(int modeFlags) {
-        int id = switch (modeFlags) {
-            case NO_PERMISSION -> URI_NO_PERMISSION_ID;
-            case READ_PERMISSION -> URI_READ_PERMISSION_ID;
-            case WRITE_PERMISSION -> URI_WRITE_PERMISSION_ID;
-            case READ_AND_WRITE_PERMISSION -> URI_READ_WRITE_PERMISSION_ID;
-            default -> throw new RuntimeException("Invalid modeFlags");
-        };
-        return sUrisFromService[id];
     }
 
     private void assertActivityWasInvoked() throws Exception {
@@ -335,6 +299,43 @@ public class ActivityRequireContentUriPermissionFromCallerTest {
         @Override
         public void onReceive(Context context, Intent intent) {
             sLatch.countDown();
+        }
+    }
+
+    public enum ModeFlags {
+        NONE(0, URI_NO_PERMISSION_ID),
+        READ(Intent.FLAG_GRANT_READ_URI_PERMISSION, URI_READ_PERMISSION_ID),
+        WRITE(Intent.FLAG_GRANT_WRITE_URI_PERMISSION, URI_WRITE_PERMISSION_ID),
+        READ_AND_WRITE(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION, URI_READ_WRITE_PERMISSION_ID);
+
+        final int mValue;
+        final int mIdFromService;
+
+        ModeFlags(int value, int idFromService) {
+            this.mValue = value;
+            this.mIdFromService = idFromService;
+        }
+    }
+
+    public enum UriLocation { URI_IN_GET_DATA, URI_IN_GET_CLIP_DATA }
+
+    public enum TestedAttributeActivity {
+        NONE(TEST_NONE_ACTIVITY),
+        READ(TEST_READ_ACTIVITY),
+        WRITE(TEST_WRITE_ACTIVITY),
+        READ_OR_WRITE(TEST_READ_OR_WRITE_ACTIVITY, /* isOr */ true),
+        READ_AND_WRITE(TEST_READ_AND_WRITE_ACTIVITY);
+
+        final ComponentName mComponent;
+        final boolean mIsOr;
+        TestedAttributeActivity(ComponentName component) {
+            this(component, /* isOr */ false);
+        }
+
+        TestedAttributeActivity(ComponentName component, boolean isOr) {
+            this.mComponent = component;
+            this.mIsOr = isOr;
         }
     }
 }
