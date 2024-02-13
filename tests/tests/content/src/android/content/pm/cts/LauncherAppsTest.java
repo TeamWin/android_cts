@@ -29,7 +29,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import android.Manifest;
@@ -47,6 +46,7 @@ import android.content.IntentSender;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.LauncherApps.ArchiveCompatibilityParams;
+import android.content.pm.LauncherUserInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -359,10 +359,8 @@ public class LauncherAppsTest {
     @AppModeFull(reason = "Need special permission")
     @RequiresFlagsEnabled(FLAG_ALLOW_PRIVATE_PROFILE)
     public void testLauncherUserInfo() {
-        // TODO(b/303803157): Add a permission check if we decide to support 3p launchers
-        SecurityException exception = assertThrows(SecurityException.class,
-                () -> mLauncherApps.getLauncherUserInfo(UserHandle.of(0)));
-        assertThat(exception).hasMessageThat().contains("Caller is not the recents app");
+        LauncherUserInfo info = mLauncherApps.getLauncherUserInfo(UserHandle.of(0));
+        assertThat(info).isNotNull();
     }
 
 
