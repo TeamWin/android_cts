@@ -152,6 +152,7 @@ public class InlineLoginMixedCredentialActivityTest
     }
 
     @Test
+    @RequiresFlagsEnabled("android.service.autofill.autofill_credman_integration")
     public void testCredmanProxyServiceIsNotPublic() throws Exception {
         // Set service.
         enableService();
