@@ -29,9 +29,10 @@ android_test {
         "flag-junit",
         "platform-test-annotations",
         "testng",
+        "CtsAppTestStubsShared",
     ],
     srcs: [
-         "src/**/*.java",
+        "src/**/*.java",
     ],
     sdk_version: "core_current",
     libs: [
@@ -42,6 +43,12 @@ android_test {
         "android.test.base",
         "unsupportedappusage",
     ],
+    data: [
+        ":WalletRoleHolderApp",
+        ":ForegroundNfcApp",
+        ":NonPaymentNfcApp",
+    ],
+    instrumentation_for: "CtsAppTestStubs",
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",

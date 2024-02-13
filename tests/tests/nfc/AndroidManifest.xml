@@ -22,6 +22,12 @@
     <uses-permission android:name="android.permission.NFC" />
     <uses-permission android:name="android.permission.NFC_PREFERRED_PAYMENT_INFO" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+
+    <queries>
+        <package android:name="com.android.test.foregroundnfc" />
+        <package android:name="com.android.test.walletroleholder" />
+    </queries>
+
     <application android:testOnly="true">
         <uses-library android:name="android.test.runner"/>
 
@@ -52,6 +58,13 @@
         <activity android:name="android.nfc.cts.NfcFCardEmulationActivity"
              android:exported="false">
         </activity>
+        <receiver android:name=".PollingLoopBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.cts.PollingLoopFired" />
+            </intent-filter>
+        </receiver>
     </application>
 
     <!-- This is a self-instrumenting test package. -->
