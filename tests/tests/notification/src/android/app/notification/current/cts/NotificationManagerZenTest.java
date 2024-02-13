@@ -116,6 +116,7 @@ import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.ScreenUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 
 import org.junit.After;
@@ -2679,6 +2680,23 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         String ruleId = mNotificationManager.addAutomaticZenRule(newRule);
         AutomaticZenRule readRule = mNotificationManager.getAutomaticZenRule(ruleId);
 
+        assertThat(readRule.getDeviceEffects()).isEqualTo(effects);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void addAutomaticZenRule_withDeviceExtraEffects_storedFromSystem() {
+        ZenDeviceEffects effects = new ZenDeviceEffects.Builder()
+                .setShouldDisplayGrayscale(true)
+                .setShouldUseNightMode(true)
+                .setExtraEffects(ImmutableSet.of("TIME_TRAVEL", "DINOSAUR_CLONING"))
+                .build();
+        AutomaticZenRule newRule = createRule("With effects");
+        newRule.setDeviceEffects(effects);
+
+        String ruleId = callAsSystemUi(() -> mNotificationManager.addAutomaticZenRule(newRule));
+
+        AutomaticZenRule readRule = mNotificationManager.getAutomaticZenRule(ruleId);
         assertThat(readRule.getDeviceEffects()).isEqualTo(effects);
     }
 
