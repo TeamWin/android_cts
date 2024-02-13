@@ -1948,6 +1948,8 @@ public class CommonPermissions {
     public static final String MANAGE_DEVICE_POLICY_OVERRIDE_APN = "android.permission.MANAGE_DEVICE_POLICY_OVERRIDE_APN";
     /** See {@link Manifest#MANAGE_DEVICE_POLICY_SECURITY_LOGGING} */
     public static final String MANAGE_DEVICE_POLICY_SECURITY_LOGGING = "android.permission.MANAGE_DEVICE_POLICY_SECURITY_LOGGING";
+    /** See {@link Manifest#MANAGE_DEVICE_POLICY_AUDIT_LOGGING} */
+    public static final String MANAGE_DEVICE_POLICY_AUDIT_LOGGING = "android.permission.MANAGE_DEVICE_POLICY_AUDIT_LOGGING";
     /** See {@link Manifest#MANAGE_DEVICE_POLICY_SYSTEM_UPDATES} */
     public static final String MANAGE_DEVICE_POLICY_SYSTEM_UPDATES = "android.permission.MANAGE_DEVICE_POLICY_SYSTEM_UPDATES";
     /** See {@link Manifest#MANAGE_DEVICE_POLICY_QUERY_SYSTEM_UPDATES} */
