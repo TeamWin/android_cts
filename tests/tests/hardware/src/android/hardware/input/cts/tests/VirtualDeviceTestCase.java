@@ -30,6 +30,8 @@ import android.hardware.input.cts.virtualcreators.VirtualDeviceCreator;
 import android.hardware.input.cts.virtualcreators.VirtualDisplayCreator;
 import android.hardware.input.cts.virtualcreators.VirtualInputDeviceCreator;
 import android.os.Bundle;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.server.wm.WakeUpAndUnlockRule;
 import android.server.wm.WindowManagerStateHelper;
 import android.virtualdevice.cts.common.FakeAssociationRule;
@@ -53,6 +55,9 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
 
     @Rule
     public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     InputManager mInputManager;
     VirtualDeviceManager.VirtualDevice mVirtualDevice;
