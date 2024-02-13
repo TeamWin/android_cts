@@ -22,7 +22,7 @@
     <permission android:name="android.permission.COMPONENT_CALLER_HELPER_PATH_PROVIDER_READ_PERMISSION" />
 
     <application>
-        <activity android:name=".TestActivity"
+        <activity android:name=".TestInitialCallerActivity"
                   android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

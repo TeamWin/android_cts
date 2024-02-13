@@ -46,7 +46,7 @@
             </intent-filter>
         </receiver>
 
-        <activity android:name=".ComponentCallerTest$TestActivity"
+        <activity android:name=".ComponentCallerTest$InitialCallerTestActivity"
             android:exported="true" />
 
         <receiver android:name=".ComponentCallerTest$TestReceiver"
