@@ -305,7 +305,7 @@ public class LauncherAppsForHiddenProfilesTest {
     private void assertHiddenProfileInfoStripped(UserHandle targetUser) {
         assertThat(mLauncherApps.getProfiles()).doesNotContain(targetUser);
         assertThat(mLauncherApps.getLauncherUserInfo(targetUser)).isNull();
-        assertThat(mLauncherApps.getPreInstalledSystemPackages(targetUser)).isNull();
+        assertThat(mLauncherApps.getPreInstalledSystemPackages(targetUser)).isEmpty();
         assertThat(mLauncherApps.getAppMarketActivityIntent(/* packageName= */ null, targetUser))
                 .isNull();
 
@@ -338,7 +338,7 @@ public class LauncherAppsForHiddenProfilesTest {
     private void assertHiddenProfileInfoAvailable(UserHandle targetUser) {
         assertThat(mLauncherApps.getProfiles()).contains(targetUser);
         assertThat(mLauncherApps.getLauncherUserInfo(targetUser)).isNotNull();
-        assertThat(mLauncherApps.getPreInstalledSystemPackages(targetUser)).isNotNull();
+        assertThat(mLauncherApps.getPreInstalledSystemPackages(targetUser)).isNotEmpty();
         assertThat(mLauncherApps.getAppMarketActivityIntent(/* packageName= */ null, targetUser))
                 .isNotNull();
 
