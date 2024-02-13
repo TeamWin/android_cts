@@ -31,6 +31,7 @@ android_test {
         "compatibility-device-util-axt",
         "flag-junit",
         "mockito-target-minus-junit4",
+        "android.nfc.flags-aconfig-java",
         "android.service.chooser.flags-aconfig-java",
         "androidx.test.uiautomator_uiautomator",
     ],
