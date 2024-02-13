@@ -116,8 +116,13 @@ public class CtsSyncAccountAccessOtherCertTestCases {
         if (uiDevice.openNotification()) {
             Thread.sleep(1000);
             UiObject2 scrollable = uiDevice.findObject(By.scrollable(true));
-            UiObject2 clear =
-                    scrollable.scrollUntil(Direction.DOWN, Until.findObject(By.text("Clear all")));
+            UiObject2 clear;
+            if (scrollable != null) {
+                clear = scrollable.scrollUntil(Direction.DOWN,
+                                        Until.findObject(By.text("Clear all")));
+            } else {
+                clear = uiDevice.findObject(By.text("Clear all"));
+            }
             assumeNotNull(clear);
             clear.click();
         }
