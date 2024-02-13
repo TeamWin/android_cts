@@ -46,4 +46,7 @@ public @interface Query {
 
     /** Require the dpc to be or not be a device admin app. */
     BooleanQuery isDeviceAdmin() default @BooleanQuery;
+
+    /** Require the dpc to be or not be a headless device owner single user app. */
+    BooleanQuery isHeadlessDOSingleUser() default @BooleanQuery;
 }

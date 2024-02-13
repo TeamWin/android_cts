@@ -7222,6 +7222,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="category_sharesheet">Sharesheet</string>
     <string name="sharesheet_album_test">Sharesheet Album Label Test</string>
     <string name="sharesheet_album_test_info">This test verifies that the system sharesheet responds to the \"album\" hint if provided by the app.</string>
+    <string name="sharesheet_skipping_for_flag">Skipping the test due to disabled feature flag</string>
     <string name="share_label">Share</string>
     <string name="no_title_message">No title on sharesheet, test passed.</string>
     <string name="sharesheet_album_test_step_1">Press the \"Share\" button below to show the system sharesheet.

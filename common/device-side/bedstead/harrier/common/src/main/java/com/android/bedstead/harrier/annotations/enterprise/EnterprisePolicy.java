@@ -89,14 +89,21 @@ public @interface EnterprisePolicy {
 
     // Applied by
 
-    /** A policy that can be applied by a device owner. */
-    int APPLIED_BY_DEVICE_OWNER = 1 << 7;
+    /** A policy that can be applied by a system device owner. */
+    int APPLIED_BY_SYSTEM_DEVICE_OWNER = 1 << 7;
+    /** A policy that can be applied by a single user device owner on headless. */
+    int APPLIED_BY_SINGLE_DEVICE_OWNER = 1 << 8;
+
+    /** A policy that can be applied by a system device owner or a main user device owner. */
+    int APPLIED_BY_DEVICE_OWNER =
+            APPLIED_BY_SYSTEM_DEVICE_OWNER
+                    | APPLIED_BY_SINGLE_DEVICE_OWNER;
     /** A policy that can be applied by a profile owner of an unaffiliated profile. */
-    int APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE = 1 << 8;
+    int APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE = 1 << 9;
     /** A policy that can be applied by a profile owner of an affiliated profile */
-    int APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE = 1 << 9;
+    int APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE = 1 << 10;
     /** A policy that can be applied by a profile owner of an organization owned profile */
-    int APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE = 1 << 10;
+    int APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE = 1 << 11;
 
     /** A policy that can be applied by a profile owner of an affiliated or unaffiliated profile. */
     int APPLIED_BY_PROFILE_OWNER_PROFILE =
@@ -107,18 +114,18 @@ public @interface EnterprisePolicy {
      * A policy that can be applied by a Profile Owner for a User (not Profile) with no Device
      * Owner.
      */
-    int APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO = 1 << 11;
+    int APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO = 1 << 12;
     /**
      * A policy that can be applied by an unaffiliated Profile Owner for a User (not Profile) with
      * a Device Owner.
      */
-    int APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER_WITH_DO = 1 << 12;
+    int APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER_WITH_DO = 1 << 13;
     /** A policy that can be applied by a profile owner of an unaffiliated user. */
     int APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER =
             APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO
                     | APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER_WITH_DO;
     /** A policy that can be applied by a profile owner of an affiliated user. */
-    int APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER = 1 << 13;
+    int APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER = 1 << 14;
     /** A policy that can be applied by an affiliated or unaffiliated profile owner on a User (not Profile). */
     int APPLIED_BY_PROFILE_OWNER_USER =
             APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER | APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER;
@@ -129,8 +136,8 @@ public @interface EnterprisePolicy {
             APPLIED_BY_PROFILE_OWNER_PROFILE
             | APPLIED_BY_PROFILE_OWNER_USER;
 
-    int APPLIED_BY_PARENT_INSTANCE_OF_NON_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE = 1 << 14;
-    int APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE = 1 << 15;
+    int APPLIED_BY_PARENT_INSTANCE_OF_NON_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE = 1 << 15;
+    int APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE = 1 << 16;
 
     int APPLIED_BY_PARENT_INSTANCE_OF_PROFILE_OWNER_PROFILE =
             APPLIED_BY_PARENT_INSTANCE_OF_NON_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE | APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE;
@@ -138,21 +145,21 @@ public @interface EnterprisePolicy {
     // Modifiers
     /** Internal use only. Do not use */
     // This is to be used to mark specific annotations as not generating PolicyDoesNotApply tests
-    int DO_NOT_APPLY_TO_POLICY_DOES_NOT_APPLY_TESTS = 1 << 16;
+    int DO_NOT_APPLY_TO_POLICY_DOES_NOT_APPLY_TESTS = 1 << 17;
 
     /** Internal use only. Do not use */
     // This is to be used to mark specific annotations as not generating PolicyDoesNotApply tests
-    int DO_NOT_APPLY_TO_CANNOT_SET_POLICY_TESTS = 1 << 17;
+    int DO_NOT_APPLY_TO_CANNOT_SET_POLICY_TESTS = 1 << 18;
 
     /** A policy that the DPM Role Holder has permission access to */
-    int APPLIED_BY_DPM_ROLE_HOLDER = 1 << 18 | (DO_NOT_APPLY_TO_CANNOT_SET_POLICY_TESTS);
+    int APPLIED_BY_DPM_ROLE_HOLDER = 1 << 19 | (DO_NOT_APPLY_TO_CANNOT_SET_POLICY_TESTS);
 
     /**
      * A policy which applies even when the user is not in the foreground.
      *
      * <p>Note that lacking this flag does not mean a policy does not apply - to indicate that use
      * {@link DOES_NOT_APPLY_IN_BACKGROUND}. */
-    int APPLIES_IN_BACKGROUND = 1 << 19 | (DO_NOT_APPLY_TO_POLICY_DOES_NOT_APPLY_TESTS);
+    int APPLIES_IN_BACKGROUND = 1 << 20 | (DO_NOT_APPLY_TO_POLICY_DOES_NOT_APPLY_TESTS);
     /**
      * A policy which does not apply when the user is not in the foreground.
      *
@@ -160,7 +167,7 @@ public @interface EnterprisePolicy {
      *
      * <p>Note that lacking this flag does not mean a policy does apply - to indicate that use
      * {@link APPLIES_IN_BACKGROUND}. */
-    int DOES_NOT_APPLY_IN_BACKGROUND = 1 << 20;
+    int DOES_NOT_APPLY_IN_BACKGROUND = 1 << 21;
 
 
     /**
@@ -168,13 +175,13 @@ public @interface EnterprisePolicy {
      *
      * See {@link #delegatedScopes()} for the scopes which enable this.
      */
-    int CAN_BE_DELEGATED = 1 << 21;
+    int CAN_BE_DELEGATED = 1 << 22;
 
     /** A policy that can be applied by a financed device owner. */
-    int APPLIED_BY_FINANCED_DEVICE_OWNER = 1 << 22;
+    int APPLIED_BY_FINANCED_DEVICE_OWNER = 1 << 23;
 
     /** A policy that has not yet been migrated to allow for DPM Role holder access. */
-    int CANNOT_BE_APPLIED_BY_ROLE_HOLDER = 1 << 23;
+    int CANNOT_BE_APPLIED_BY_ROLE_HOLDER = 1 << 24;
 
     /** Flags indicating DPC states which can set the policy. */
     int[] dpc() default {};

@@ -39,7 +39,7 @@ import java.lang.annotation.Target;
 @EnsureHasNoWorkProfile
 @EnsureHasDeviceOwner(isPrimary = true, key = "dpc")
 @EnsureHasNoDelegate
-public @interface IncludeRunOnDeviceOwnerUser {
+public @interface IncludeRunOnSystemDeviceOwnerUser {
      /**
      * Priority sets the order that annotations will be resolved.
      *
@@ -49,7 +49,8 @@ public @interface IncludeRunOnDeviceOwnerUser {
      * <p>If there is an order requirement between annotations, ensure that the priority of the
      * annotation which must be resolved first is lower than the one which must be resolved later.
      *
-     * <p>Priority can be set to a {@link AnnotationPriorityRunPrecedence} constant, or to any {@link int}.
+     * <p>Priority can be set to a {@link AnnotationPriorityRunPrecedence} constant, or to any
+      * {@link int}.
      */
     int priority() default EARLY;
 }

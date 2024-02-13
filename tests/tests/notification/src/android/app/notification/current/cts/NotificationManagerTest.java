@@ -85,6 +85,8 @@ import android.permission.PermissionManager;
 import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.RequiresDevice;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.provider.Settings;
 import android.service.notification.Flags;
 import android.service.notification.NotificationListenerService;
@@ -1537,8 +1539,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertAllPostedNotificationsAutogrouped();
     }
 
-    @Test
-    public void testAutogrouping_autogroupStaysUntilAllNotificationsCanceled() throws Exception {
+    private void testAutogrouping_autogroupStaysUntilAllNotificationsCanceled_common(
+            final int numExpectedUpdates) throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
         CountDownLatch rerankLatch = mListener.setRankingUpdateCountDown(5);
@@ -1558,8 +1560,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         // Assert all notis stay in the same autogroup until all children are canceled
         CountDownLatch removedLatch;
         for (int i = 704; i > 701; i--) {
-            rerankLatch = mListener.setRankingUpdateCountDown(1);
-            removedLatch = mListener.setRemovedCountDown(1);
+            rerankLatch = mListener.setRankingUpdateCountDown(numExpectedUpdates);
+            removedLatch = mListener.setRemovedCountDown(numExpectedUpdates);
 
             cancelAndPoll(i);
 
@@ -1576,8 +1578,20 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     @Test
-    public void testAutogrouping_autogroupStaysUntilAllNotificationsAddedToGroup()
+    @RequiresFlagsDisabled(com.android.server.notification.Flags.FLAG_AUTOGROUP_SUMMARY_ICON_UPDATE)
+    public void testAutogrouping_autogroupStaysUntilAllNotificationsCanceled() throws Exception {
+        testAutogrouping_autogroupStaysUntilAllNotificationsCanceled_common(1);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(com.android.server.notification.Flags.FLAG_AUTOGROUP_SUMMARY_ICON_UPDATE)
+    public void testAutogrouping_autogroupStaysUntilAllNotificationsCanceled_summaryUpdated()
             throws Exception {
+        testAutogrouping_autogroupStaysUntilAllNotificationsCanceled_common(2);
+    }
+
+    private void testAutogrouping_autogroupStaysUntilAllNotificationsAddedToGroup_common(
+            final int numExpectedUpdates) throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
         CountDownLatch rerankLatch = mListener.setRankingUpdateCountDown(5);
@@ -1603,8 +1617,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
         // Assert all notis stay in the same autogroup until all children are canceled
         for (int i = 904; i > 901; i--) {
-            postingLatch = mListener.setPostedCountDown(1);
-            rerankLatch = mListener.setRankingUpdateCountDown(1);
+            postingLatch = mListener.setPostedCountDown(numExpectedUpdates);
+            rerankLatch = mListener.setRankingUpdateCountDown(numExpectedUpdates);
 
             sendNotification(i, newGroup, R.drawable.blue);
             postedIds.remove(postedIds.size() - 1);
@@ -1626,8 +1640,21 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     @Test
-    public void testNewNotificationsAddedToAutogroup_ifOriginalNotificationsCanceled()
+    @RequiresFlagsDisabled(com.android.server.notification.Flags.FLAG_AUTOGROUP_SUMMARY_ICON_UPDATE)
+    public void testAutogrouping_autogroupStaysUntilAllNotificationsAddedToGroup()
             throws Exception {
+        testAutogrouping_autogroupStaysUntilAllNotificationsAddedToGroup_common(1);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(com.android.server.notification.Flags.FLAG_AUTOGROUP_SUMMARY_ICON_UPDATE)
+    public void testAutogrouping_autogroupStaysUntilAllNotificationsAddedToGroup_summaryUpdated()
+            throws Exception {
+        testAutogrouping_autogroupStaysUntilAllNotificationsAddedToGroup_common(2);
+    }
+
+    private void testNewNotificationsAddedToAutogroup_ifOriginalNotificationsCanceled_common(
+                final int numExpectedUpdates) throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
         CountDownLatch postingLatch = mListener.setPostedCountDown(5);
@@ -1653,8 +1680,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
         // regroup all but one of the children
         for (int i = postedIds.size() - 1; i > 0; i--) {
-            postingLatch = mListener.setPostedCountDown(1);
-            rerankLatch = mListener.setRankingUpdateCountDown(1);
+            postingLatch = mListener.setPostedCountDown(numExpectedUpdates);
+            rerankLatch = mListener.setRankingUpdateCountDown(numExpectedUpdates);
 
             int id = postedIds.remove(i);
             sendNotification(id, newGroup, R.drawable.blue);
@@ -1667,14 +1694,29 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
         // send a new non-grouped notification. since the autogroup summary still exists,
         // the notification should be added to it
-        rerankLatch = mListener.setRankingUpdateCountDown(1);
-        postingLatch = mListener.setPostedCountDown(1);
+        rerankLatch = mListener.setRankingUpdateCountDown(numExpectedUpdates);
+        postingLatch = mListener.setPostedCountDown(numExpectedUpdates);
         sendNotification(950, R.drawable.blue);
         postedIds.add(950);
 
         postingLatch.await(400, TimeUnit.MILLISECONDS);
         rerankLatch.await(400, TimeUnit.MILLISECONDS);
         assertOnlySomeNotificationsAutogrouped(postedIds);
+    }
+
+    @Test
+    @RequiresFlagsDisabled(com.android.server.notification.Flags.FLAG_AUTOGROUP_SUMMARY_ICON_UPDATE)
+    public void testNewNotificationsAddedToAutogroup_ifOriginalNotificationsCanceled()
+            throws Exception {
+        testNewNotificationsAddedToAutogroup_ifOriginalNotificationsCanceled_common(1);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(com.android.server.notification.Flags.FLAG_AUTOGROUP_SUMMARY_ICON_UPDATE)
+    public void testNewNotificationsAddedToAutogroup_ifOriginalNotificationsCanceled_summaryUpdated()
+            throws Exception {
+        // The autogroup summary should update as well => wait for 2 notification updates
+        testNewNotificationsAddedToAutogroup_ifOriginalNotificationsCanceled_common(2);
     }
 
     @Test

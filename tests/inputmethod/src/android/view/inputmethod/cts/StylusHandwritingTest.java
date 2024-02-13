@@ -19,6 +19,7 @@ package android.view.inputmethod.cts;
 import static android.provider.Settings.Secure.STYLUS_HANDWRITING_DEFAULT_VALUE;
 import static android.provider.Settings.Secure.STYLUS_HANDWRITING_ENABLED;
 import static android.view.inputmethod.Flags.FLAG_HOME_SCREEN_HANDWRITING_DELEGATOR;
+import static android.view.inputmethod.Flags.initiationWithoutInputConnection;
 import static android.view.inputmethod.InputMethodInfo.ACTION_STYLUS_HANDWRITING_SETTINGS;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
@@ -845,7 +846,6 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     stream,
                     editorMatcher("onStartStylusHandwriting", unfocusedMarker),
                     TIMEOUT);
-
             verifyStylusHandwritingWindowIsShown(stream, imeSession);
 
             TestUtils.injectStylusUpEvent(unfocusedEditText, endX, endY);
@@ -1350,6 +1350,62 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     }
 
     /**
+     * Tap on a view with stylus to launch a new activity with Editor. The editor's
+     * initialToolType should match stylus.
+     */
+    @Test
+    public void testHandwriting_initialToolTypeOnNewWindow() throws Exception {
+        assumeTrue(Flags.useHandwritingListenerForTooltype());
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String editTextMarker = getTestMarker();
+            final CountDownLatch latch = new CountDownLatch(1);
+
+            // Use a clickable view that launches activity and focuses an editor.
+            final AtomicReference<View> clickableViewRef = new AtomicReference<>();
+            TestActivity.startSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                final View clickableView = new View(activity);
+                clickableViewRef.set(clickableView);
+                clickableView.setBackgroundColor(Color.GREEN);
+                clickableView.setOnClickListener(v -> {
+                    final EditText editText = new EditText(activity);
+                    editText.setIsHandwritingDelegate(true);
+                    editText.setPrivateImeOptions(editTextMarker);
+                    editText.setHint("editText");
+                    layout.addView(editText);
+                    editText.requestFocus();
+                    latch.countDown();
+                });
+
+                LinearLayout.LayoutParams layoutParams =
+                        new LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT);
+                layout.addView(clickableView, layoutParams);
+                return layout;
+            });
+            View clickableView = clickableViewRef.get();
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+            // click on view with stylus to launch new activity
+            TestUtils.injectStylusDownEvent(clickableView, 0, 0);
+            TestUtils.injectStylusUpEvent(clickableView, 0, 0);
+            // Wait until editor on next activity has focus.
+            latch.await(TIMEOUT_1_S, TimeUnit.MILLISECONDS);
+
+            // verify editor on new activity has initialToolType as stylus.
+            expectEvent(stream,
+                    startInputInitialEditorToolMatcher(
+                            MotionEvent.TOOL_TYPE_STYLUS, editTextMarker),
+                    TIMEOUT);
+        }
+    }
+
+    /**
      * Inject stylus events on top of a handwriting initiation delegate view and verify handwriting
      * is started on the delegator editor [in different package] and stylus handwriting is
      * started.
@@ -1393,6 +1449,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             final int endX = startX + 2 * touchSlop;
             final int endY = startY + 2 * touchSlop;
             final int number = 5;
+
             TestUtils.injectStylusDownEvent(delegateView, startX, startY);
             TestUtils.injectStylusMoveEvents(delegateView, startX, startY, endX, endY, number);
 
@@ -1400,14 +1457,32 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             notExpectEvent(
                     stream, editorMatcher("onStartInputView", editTextMarker),
                     NOT_EXPECT_TIMEOUT);
+
             if (setAllowedDelegatorPackage) {
-                expectEvent(
-                        stream, editorMatcher("onStartStylusHandwriting", editTextMarker), TIMEOUT);
+                if (initiationWithoutInputConnection()) {
+                    // There will be no active InputConnection when handwriting starts
+                    expectEvent(
+                            stream,
+                            event -> "onStartStylusHandwriting".equals(event.getEventName()),
+                            TIMEOUT);
+                } else {
+                    expectEvent(
+                            stream, editorMatcher("onStartStylusHandwriting", editTextMarker),
+                            TIMEOUT);
+                }
                 verifyStylusHandwritingWindowIsShown(stream, imeSession);
             } else {
-                notExpectEvent(
-                        stream, editorMatcher("onStartStylusHandwriting", editTextMarker),
-                        NOT_EXPECT_TIMEOUT);
+                if (initiationWithoutInputConnection()) {
+                    // There will be no active InputConnection if handwriting starts
+                    notExpectEvent(
+                            stream,
+                            event -> "onStartStylusHandwriting".equals(event.getEventName()),
+                            NOT_EXPECT_TIMEOUT);
+                } else {
+                    notExpectEvent(
+                            stream, editorMatcher("onStartStylusHandwriting", editTextMarker),
+                            NOT_EXPECT_TIMEOUT);
+                }
             }
         }
     }
@@ -1484,13 +1559,30 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             notExpectEvent(
                     stream, editorMatcher("onStartInputView", editTextMarker), NOT_EXPECT_TIMEOUT);
             if (setHomeDelegatorAllowed) {
-                expectEvent(
-                        stream, editorMatcher("onStartStylusHandwriting", editTextMarker), TIMEOUT);
+                if (initiationWithoutInputConnection()) {
+                    // There will be no active InputConnection when handwriting starts.
+                    expectEvent(
+                            stream,
+                            event -> "onStartStylusHandwriting".equals(event.getEventName()),
+                            TIMEOUT);
+                } else {
+                    expectEvent(
+                            stream, editorMatcher("onStartStylusHandwriting", editTextMarker),
+                            TIMEOUT);
+                }
                 verifyStylusHandwritingWindowIsShown(stream, imeSession);
             } else {
-                notExpectEvent(
-                        stream, editorMatcher("onStartStylusHandwriting", editTextMarker),
-                        NOT_EXPECT_TIMEOUT);
+                if (initiationWithoutInputConnection()) {
+                    // There will be no active InputConnection if handwriting starts.
+                    notExpectEvent(
+                            stream,
+                            event -> "onStartStylusHandwriting".equals(event.getEventName()),
+                            NOT_EXPECT_TIMEOUT);
+                } else {
+                    notExpectEvent(
+                            stream, editorMatcher("onStartStylusHandwriting", editTextMarker),
+                            NOT_EXPECT_TIMEOUT);
+                }
             }
         }
     }

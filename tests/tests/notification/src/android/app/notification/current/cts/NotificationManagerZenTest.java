@@ -99,8 +99,6 @@ import android.permission.PermissionManager;
 import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
-import android.platform.test.flag.junit.CheckFlagsRule;
-import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.ContactsContract;
 import android.provider.Settings;
 import android.service.notification.Condition;
@@ -122,7 +120,6 @@ import com.google.common.collect.Iterables;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -183,9 +180,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             android.app.notification.current.cts.R.drawable.ic_android;
     private NotificationManager.Policy mOriginalPolicy;
     private ZenPolicy mDefaultPolicy;
-
-    @Rule(order = 0)
-    public final CheckFlagsRule checkFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setUp() throws Exception {

@@ -19,7 +19,7 @@ import logging
 import types
 
 import camera_properties_utils
-import its_session_utils
+import its_device_utils
 
 ACTION_ITS_DO_JCA_CAPTURE = (
     'com.android.cts.verifier.camera.its.ACTION_ITS_DO_JCA_CAPTURE'
@@ -72,7 +72,7 @@ def open_jca_viewfinder(dut, log_path):
   Raises:
     AssertionError: If JCA viewfinder is not visible.
   """
-  its_session_utils.start_its_test_activity(dut.serial)
+  its_device_utils.start_its_test_activity(dut.serial)
   call_on_fail = lambda: dut.take_screenshot(log_path, prefix='its_not_found')
   verify_ui_object_visible(
       dut.ui(text=ITS_ACTIVITY_TEXT),
@@ -80,7 +80,7 @@ def open_jca_viewfinder(dut, log_path):
   )
 
   # Send intent to ItsTestActivity, which will start the correct JCA activity.
-  its_session_utils.run(
+  its_device_utils.run(
       f'adb -s {dut.serial} shell am broadcast -a {ACTION_ITS_DO_JCA_CAPTURE}'
   )
   jca_capture_button_visible = dut.ui(

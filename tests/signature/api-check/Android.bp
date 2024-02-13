@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package {
+    default_team: "trendy_team_java_core_libraries",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
@@ -95,7 +96,7 @@ java_defaults {
     defaults: ["signature-api-check-defaults"],
     java_resources: [
         ":platform-bootclasspath{hiddenapi-flags.csv}",
-        ":cts-api-hiddenapi-filter-csv"
+        ":cts-api-hiddenapi-filter-csv",
     ],
     jni_libs: [
         "libcts_dexchecker",
@@ -107,6 +108,6 @@ java_defaults {
 filegroup {
     name: "CtsHiddenApiBlocklistApiDynamicConfig",
     srcs: [
-      "CtsHiddenApiBlocklistApiDynamicConfig.dynamic",
+        "CtsHiddenApiBlocklistApiDynamicConfig.dynamic",
     ],
 }

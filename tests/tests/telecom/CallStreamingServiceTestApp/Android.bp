@@ -18,6 +18,7 @@
 // impacting the CTS runner.
 
 package {
+    default_team: "trendy_team_fwk_telephony",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
