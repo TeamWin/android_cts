@@ -44,13 +44,9 @@ import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.SessionConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.ImageReader;
-import android.os.Build;
 import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.SystemClock;
-import android.platform.test.annotations.RequiresFlagsEnabled;
-import android.platform.test.flag.junit.CheckFlagsRule;
-import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 import android.util.Range;
 import android.view.Surface;
@@ -59,7 +55,6 @@ import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
 import com.android.ex.camera2.exceptions.TimeoutRuntimeException;
 import com.android.ex.camera2.utils.StateWaiter;
-import com.android.internal.camera.flags.Flags;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,7 +68,6 @@ import java.util.HashMap;
 import java.util.Set;
 import android.util.Size;
 
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 import org.junit.runner.RunWith;
@@ -124,10 +118,6 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         sLegacySkipTemplates.add(CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG);
         sLegacySkipTemplates.add(CameraDevice.TEMPLATE_MANUAL);
     }
-
-    @Rule
-    public final CheckFlagsRule mCheckFlagsRule =
-            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Override
     public void setUp() throws Exception {
@@ -1133,113 +1123,6 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             }
         }
     }
-
-    /**
-     * Verifies that valid session characteristic keys can be fetched for a particular camera.
-     */
-    @Test
-    @RequiresFlagsEnabled(Flags.FLAG_FEATURE_COMBINATION_QUERY)
-    public void testSessionCharacteristicsKeys() throws Exception {
-        String[] cameraIdsUnderTest = getCameraIdsUnderTest();
-        for (int i = 0; i < cameraIdsUnderTest.length; i++) {
-            CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(
-                    cameraIdsUnderTest[i]);
-
-            if (characteristics.get(CameraCharacteristics.INFO_SESSION_CONFIGURATION_QUERY_VERSION)
-                    <= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                Log.i(TAG, "Camera " + i + " doesn't support session characteristics query");
-                continue;
-            }
-
-            List<CameraCharacteristics.Key<?>> sessionCharacteristicKeys =
-                    characteristics.getAvailableSessionCharacteristicsKeys();
-
-            assertNotNull(sessionCharacteristicKeys);
-            assertTrue(sessionCharacteristicKeys.contains(
-                    CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM));
-            assertTrue(sessionCharacteristicKeys.contains(
-                    CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE));
-        }
-    }
-
-    /**
-     * Verify if valid session characteristics can be fetched for a particular camera.
-     */
-    @Test
-    @RequiresFlagsEnabled(Flags.FLAG_FEATURE_COMBINATION_QUERY)
-    public void testSessionCharacteristics() throws Exception {
-        String[] cameraIdsUnderTest = getCameraIdsUnderTest();
-        for (int i = 0; i < cameraIdsUnderTest.length; i++) {
-            try {
-                // Without the following check, mOrderedPreviewSizes will be null.
-                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i]
-                            + " does not support color outputs, skipping");
-                    continue;
-                }
-
-                CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(
-                        cameraIdsUnderTest[i]);
-
-                if (characteristics.get(
-                        CameraCharacteristics.INFO_SESSION_CONFIGURATION_QUERY_VERSION)
-                        <= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    Log.i(TAG, "Camera " + i + " doesn't support session characteristics query");
-                    continue;
-                }
-
-                openDevice(cameraIdsUnderTest[i], mCameraMockListener);
-                waitForDeviceState(STATE_OPENED, CAMERA_OPEN_TIMEOUT_MS);
-
-                int outputFormat = ImageFormat.YUV_420_888;
-                Size outputSize = mOrderedPreviewSizes.get(0);
-                ImageReader imageReader = ImageReader.newInstance(outputSize.getWidth(),
-                        outputSize.getHeight(), outputFormat, /*maxImages*/3);
-
-                List<OutputConfiguration> outputs = new ArrayList<>();
-                outputs.add(new OutputConfiguration(imageReader.getSurface()));
-                SessionConfiguration sessionConfig = new SessionConfiguration(
-                        SessionConfiguration.SESSION_REGULAR, outputs,
-                        new HandlerExecutor(mHandler), mSessionMockListener);
-
-                CaptureRequest.Builder builder =
-                        mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-                builder.addTarget(imageReader.getSurface());
-                CaptureRequest request = builder.build();
-
-                sessionConfig.setSessionParameters(request);
-
-                CameraCharacteristics sessionCharacteristics =
-                        mCamera.getSessionCharacteristics(sessionConfig);
-
-                List<CameraCharacteristics.Key<?>> sessionCharacteristicKeys =
-                        characteristics.getAvailableSessionCharacteristicsKeys();
-
-                assertNotNull(sessionCharacteristicKeys);
-
-                // Ensure every key in sessionCharacteristicKeys is present in
-                // sessionCharacteristics.
-                for (CameraCharacteristics.Key<?> sessionCharacteristicKey :
-                        sessionCharacteristicKeys) {
-                    assertNotNull(sessionCharacteristicKey.toString()
-                                    + " is null in Session Characteristics",
-                            sessionCharacteristics.get(sessionCharacteristicKey));
-                }
-
-                // Do more thorough testing to make sure the max_digital_zoom and zoom_ratio_range
-                // have valid values.
-                mStaticInfo.getAvailableMaxDigitalZoomChecked();
-                mStaticInfo.getZoomRatioRangeChecked();
-            } finally {
-                try {
-                    closeSession();
-                } finally {
-                    closeDevice(cameraIdsUnderTest[i], mCameraMockListener);
-                }
-            }
-        }
-    }
-
 
     /**
      * Verify creating a session with additional parameters works

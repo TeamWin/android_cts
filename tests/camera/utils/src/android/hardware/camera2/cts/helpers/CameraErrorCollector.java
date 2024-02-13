@@ -25,15 +25,19 @@ import android.hardware.camera2.params.MeteringRectangle;
 import android.media.Image;
 import android.util.Log;
 import android.util.Size;
+
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matcher;
+import org.junit.rules.ErrorCollector;
+
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.Matcher;
-import org.junit.rules.ErrorCollector;
+import java.util.stream.Collectors;
 
 /**
  * A camera test ErrorCollector class to gather the test failures during a test,
@@ -982,9 +986,37 @@ public class CameraErrorCollector extends ErrorCollector {
         checkThat(reason, expected, InMatcher.in(values));
     }
 
+    /**
+     * Check if the {@code values} Collection contains the expected element.
+     *
+     * @param reason   reason to print for failure.
+     * @param values   Collection to check for membership in.
+     * @param expected the value to check.
+     */
+    public <T> void expectContains(String reason, Collection<T> values, T expected) {
+        if (values == null) {
+            throw new NullPointerException();
+        }
+        checkThat(reason, expected, InMatcher.in(values));
+    }
+
     public <T> void expectContains(T[] values, T expected) {
         String reason = "Expected value " + expected
                 + " is not contained in the given values " + Arrays.toString(values);
+        expectContains(reason, values, expected);
+    }
+
+    /**
+     * Check if the {@code values} list contains the expected element.
+     *
+     * @param values   List to check for membership in
+     * @param expected the value to check
+     */
+    public <T> void expectContains(List<T> values, T expected) {
+        String prettyList = values.stream().map(String::valueOf).collect(
+                Collectors.joining(/*delimiter=*/ ",", /*prefix=*/ "[", /*suffix=*/ "]"));
+        String reason = "Expected value " + expected + " is not contained in the given values "
+                + prettyList;
         expectContains(reason, values, expected);
     }
 
