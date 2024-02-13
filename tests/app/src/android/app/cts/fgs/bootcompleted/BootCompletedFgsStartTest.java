@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.app.cts;
+package android.app.cts.fgs.bootcompleted;
 
 import static android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA;
 import static android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH;
@@ -28,6 +28,8 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
 
 import android.app.Instrumentation;
+import android.app.cts.CtsAppTestUtils;
+import android.app.cts.LocationBootCompletedFgs;
 import android.app.stubs.BootCompletedFgs;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -42,7 +44,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AmUtils;
-import com.android.compatibility.common.util.SystemUtil;
 import com.android.server.am.Flags;
 
 import org.junit.After;
@@ -61,8 +62,11 @@ public class BootCompletedFgsStartTest {
     private static Instrumentation sInstrumentation;
 
     public static final String BOOT_COMPLETED_FGS_FINISHED = "boot_completed_fgs_finished";
+
+    public static final String FAKE_BOOT_COMPLETED = "PSEUDO_BOOT_COMPLETED";
+
     public static final String ALLOW_FGS_START_CMD =
-            "am broadcast -a android.intent.action.BOOT_COMPLETED --allow-fgs-start-reason 200";
+            "am broadcast -a " + FAKE_BOOT_COMPLETED + " --allow-fgs-start-reason 200";
 
     @Rule
     public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
@@ -90,6 +94,12 @@ public class BootCompletedFgsStartTest {
                 + " --no-kill FGS_BOOT_COMPLETED_RESTRICTIONS " + packageName);
     }
 
+    private void startFgsBootCompleted() {
+        sInstrumentation.getUiAutomation().adoptShellPermissionIdentity();
+        sInstrumentation.getUiAutomation().executeShellCommand(ALLOW_FGS_START_CMD);
+        sInstrumentation.getUiAutomation().dropShellPermissionIdentity();
+    }
+
     @Before
     public void setUp() throws Exception {
         sInstrumentation = InstrumentationRegistry.getInstrumentation();
@@ -97,7 +107,7 @@ public class BootCompletedFgsStartTest {
         BootCompletedFgs.latch = new CountDownLatch(1);
         sBroadcastLatch = new CountDownLatch(1);
         final IntentFilter filter = new IntentFilter();
-        filter.addAction(Intent.ACTION_BOOT_COMPLETED);
+        filter.addAction(FAKE_BOOT_COMPLETED);
         sTargetContext.registerReceiver(mReceiver, filter, Context.RECEIVER_EXPORTED);
         resetFgsRestrictionEnabled(sTargetContext.getPackageName());
 
@@ -116,7 +126,7 @@ public class BootCompletedFgsStartTest {
             BootCompletedFgs.types = FOREGROUND_SERVICE_TYPE_CAMERA
                     | FOREGROUND_SERVICE_TYPE_MICROPHONE;
             enableFgsRestriction(true, sTargetContext.getPackageName());
-            SystemUtil.runShellCommandOrThrow(ALLOW_FGS_START_CMD);
+            startFgsBootCompleted();
 
             sBroadcastLatch.await(10000, TimeUnit.MILLISECONDS);
             assertEquals(0, sBroadcastLatch.getCount());
@@ -136,7 +146,7 @@ public class BootCompletedFgsStartTest {
             BootCompletedFgs.types = FOREGROUND_SERVICE_TYPE_CAMERA
                     | FOREGROUND_SERVICE_TYPE_MICROPHONE;
             enableFgsRestriction(false, sTargetContext.getPackageName());
-            SystemUtil.runShellCommandOrThrow(ALLOW_FGS_START_CMD);
+            startFgsBootCompleted();
 
             sBroadcastLatch.await(10000, TimeUnit.MILLISECONDS);
             assertEquals(0, sBroadcastLatch.getCount());
@@ -153,7 +163,7 @@ public class BootCompletedFgsStartTest {
     public void fgsTypeAllowedStartTest() throws Exception {
         try {
             BootCompletedFgs.types = FOREGROUND_SERVICE_TYPE_SPECIAL_USE;
-            SystemUtil.runShellCommandOrThrow(ALLOW_FGS_START_CMD);
+            startFgsBootCompleted();
 
             sBroadcastLatch.await(10000, TimeUnit.MILLISECONDS);
             assertEquals(0, sBroadcastLatch.getCount());
@@ -171,7 +181,7 @@ public class BootCompletedFgsStartTest {
     public void fgsTypeLocationAllowedStartTest() throws Exception {
         try {
             BootCompletedFgs.types = FOREGROUND_SERVICE_TYPE_LOCATION;
-            SystemUtil.runShellCommandOrThrow(ALLOW_FGS_START_CMD);
+            startFgsBootCompleted();
 
             sBroadcastLatch.await(10000, TimeUnit.MILLISECONDS);
             assertEquals(0, sBroadcastLatch.getCount());
@@ -191,7 +201,7 @@ public class BootCompletedFgsStartTest {
         enableFgsRestriction(true, sTargetContext.getPackageName());
 
         final IntentFilter filter = new IntentFilter();
-        filter.addAction(Intent.ACTION_BOOT_COMPLETED);
+        filter.addAction(FAKE_BOOT_COMPLETED);
         sTargetContext.registerReceiver(mReceiver, filter, Context.RECEIVER_EXPORTED);
 
         final CountDownLatch fgsStartedLatch = new CountDownLatch(1);
@@ -207,7 +217,7 @@ public class BootCompletedFgsStartTest {
         try {
             sTargetContext.registerReceiver(finishedReceiver,
                     fgsFinishedActionFilter, Context.RECEIVER_EXPORTED);
-            SystemUtil.runShellCommandOrThrow(ALLOW_FGS_START_CMD);
+            startFgsBootCompleted();
 
             sBroadcastLatch.await(10000, TimeUnit.MILLISECONDS);
             assertEquals(0, sBroadcastLatch.getCount());
@@ -228,7 +238,7 @@ public class BootCompletedFgsStartTest {
     public void fgsTypeHealthAllowedStartTest() throws Exception {
         try {
             BootCompletedFgs.types = FOREGROUND_SERVICE_TYPE_HEALTH;
-            SystemUtil.runShellCommandOrThrow(ALLOW_FGS_START_CMD);
+            startFgsBootCompleted();
 
             sBroadcastLatch.await(10000, TimeUnit.MILLISECONDS);
             assertEquals(0, sBroadcastLatch.getCount());
@@ -245,7 +255,7 @@ public class BootCompletedFgsStartTest {
     public void fgsTypeRemoteMessagingAllowedStartTest() throws Exception {
         try {
             BootCompletedFgs.types = FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING;
-            SystemUtil.runShellCommandOrThrow(ALLOW_FGS_START_CMD);
+            startFgsBootCompleted();
 
             sBroadcastLatch.await(10000, TimeUnit.MILLISECONDS);
             assertEquals(0, sBroadcastLatch.getCount());
@@ -264,7 +274,7 @@ public class BootCompletedFgsStartTest {
             BootCompletedFgs.types = FOREGROUND_SERVICE_TYPE_CAMERA
                     | FOREGROUND_SERVICE_TYPE_MICROPHONE
                     | FOREGROUND_SERVICE_TYPE_SPECIAL_USE;
-            SystemUtil.runShellCommandOrThrow(ALLOW_FGS_START_CMD);
+            startFgsBootCompleted();
 
             sBroadcastLatch.await(10000, TimeUnit.MILLISECONDS);
             assertEquals(0, sBroadcastLatch.getCount());
