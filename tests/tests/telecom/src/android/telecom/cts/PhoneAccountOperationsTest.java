@@ -45,7 +45,7 @@ import java.util.Set;
 public class PhoneAccountOperationsTest extends InstrumentationTestCase {
     public static final PhoneAccountHandle TEST_PHONE_ACCOUNT_HANDLE =
             new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), ACCOUNT_ID_1);
-    public static final Bundle TEST_BUNDLE = createTestBundle();
+    public static final Bundle TEST_BUNDLE = createTestBundle(false);
     public static final int TEST_LENGTH = 10;
     public static final String TEST_ENCODING = "enUS";
 
@@ -65,10 +65,13 @@ public class PhoneAccountOperationsTest extends InstrumentationTestCase {
                 }
             };
 
-    private static Bundle createTestBundle() {
+    private static Bundle createTestBundle(boolean setCallFiltering) {
         Bundle testBundle = new Bundle();
         testBundle.putInt(PhoneAccount.EXTRA_CALL_SUBJECT_MAX_LENGTH, TEST_LENGTH);
         testBundle.putString(PhoneAccount.EXTRA_CALL_SUBJECT_CHARACTER_ENCODING, TEST_ENCODING);
+        if (setCallFiltering) {
+            testBundle.putBoolean(PhoneAccount.EXTRA_SKIP_CALL_FILTERING, true);
+        }
         return testBundle;
     }
 
@@ -105,6 +108,19 @@ public class PhoneAccountOperationsTest extends InstrumentationTestCase {
             .setShortDescription(ACCOUNT_LABEL)
             .setSupportedUriSchemes(Arrays.asList(
                     PhoneAccount.SCHEME_TEL, PhoneAccount.SCHEME_VOICEMAIL))
+            .build();
+
+    public static final PhoneAccount TEST_SKIP_CALL_FILTERING_ACCOUNT = PhoneAccount.builder(
+                    TEST_PHONE_ACCOUNT_HANDLE, ACCOUNT_LABEL)
+            .setAddress(Uri.parse("tel:555-TEST"))
+            .setSubscriptionAddress(Uri.parse("tel:555-TEST"))
+            .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER
+                    | PhoneAccount.CAPABILITY_VIDEO_CALLING)
+            .setHighlightColor(Color.RED)
+            .setShortDescription(ACCOUNT_LABEL)
+            .setSupportedUriSchemes(Arrays.asList(
+                    PhoneAccount.SCHEME_TEL, PhoneAccount.SCHEME_VOICEMAIL))
+            .setExtras(createTestBundle(true))
             .build();
 
     private static PhoneAccount copyPhoneAccountAndOverrideCapabilities(
@@ -471,5 +487,39 @@ public class PhoneAccountOperationsTest extends InstrumentationTestCase {
                         PhoneAccount.CAPABILITY_SIM_SUBSCRIPTION
                                 | PhoneAccount.CAPABILITY_SUPPORTS_VOICE_CALLING_INDICATIONS
                                 | PhoneAccount.CAPABILITY_VOICE_CALLING_AVAILABLE));
+    }
+
+    public void testRegisterPhoneAccount_ExtraCallFiltering() throws Exception {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+
+        // Register phone account without MODIFY_PHONE_STATE permission. Registration should fail.
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelecomManager,
+                    tm -> tm.registerPhoneAccount(TEST_SKIP_CALL_FILTERING_ACCOUNT),
+                    "android.permission.REGISTER_SIM_SUBSCRIPTION");
+            fail("TelecomManager#registerPhoneAccount should throw SecurityException since caller "
+                    + "is not a system app.");
+        } catch (SecurityException e) {
+            // expected (caller should have the MODIFY_PHONE_STATE permission)
+        }
+
+        // Register phone account with MODIFY_PHONE_STATE permission. Registration should still fail
+        // because CTS app is not considered a system app but holding the MODIFY_PHONE_STATE
+        // permission is only granted to system apps so this check should be sufficient.
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelecomManager, tm -> {
+            try {
+                tm.registerPhoneAccount(TEST_SKIP_CALL_FILTERING_ACCOUNT);
+                fail("TelecomManager#registerPhoneAccount should not throw a SecurityException"
+                        + "as the caller is a system app (granted MODIFY_PHONE_STATE permission)");
+            } catch (SecurityException e) {
+                // expected
+                String callFilteringSystemAppErrorMsg = "EXTRA_SKIP_CALL_FILTERING is only "
+                        + "available to system apps.";
+                assertEquals(callFilteringSystemAppErrorMsg, e.getMessage());
+            }
+        });
     }
 }
