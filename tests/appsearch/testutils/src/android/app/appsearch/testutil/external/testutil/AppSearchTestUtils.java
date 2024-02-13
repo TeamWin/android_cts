@@ -118,8 +118,8 @@ public class AppSearchTestUtils {
     }
 
     /**
-     * Creates a mock {@link VisibilityChecker} where schema is searchable if prefixedSchema is
-     * one of the provided set of visiblePrefixedSchemas and caller does not have system access.
+     * Creates a mock {@link VisibilityChecker} where schema is searchable if prefixedSchema is one
+     * of the provided set of visiblePrefixedSchemas and caller does not have system access.
      *
      * @param visiblePrefixedSchemas Schema types that are accessible to any caller.
      * @return Mocked {@link VisibilityChecker} instance.
