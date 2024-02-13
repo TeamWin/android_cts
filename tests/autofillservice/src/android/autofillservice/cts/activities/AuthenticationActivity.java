@@ -50,7 +50,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
- * This class simulates authentication at the dataset at reponse level
+ * This class simulates authentication at the dataset at response level
  */
 public class AuthenticationActivity extends AbstractAutoFillActivity {
 
