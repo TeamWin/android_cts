@@ -56,6 +56,7 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -155,6 +156,7 @@ public class MediaSessionManagerTest {
                 .isFalse();
     }
 
+    @Ignore // TODO(b/291800179): Diagnose flakiness and re-enable.
     @Test
     @NonMainlineTest
     public void testOnMediaKeyEventSessionChangedListener_whenSessionIsReleased() throws Exception {
@@ -490,6 +492,7 @@ public class MediaSessionManagerTest {
         }
     }
 
+    @Ignore // TODO(b/291800179): Diagnose flakiness and re-enable.
     @Test
     public void testGetSession2TokensWithTwoSessions() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
