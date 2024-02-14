@@ -61,7 +61,7 @@ public class ListeningPortsTest extends AndroidTestCase {
     static {
         // IPv4 exceptions
         // Patterns containing ":" are allowed address port combinations
-        // Pattterns contains " " are allowed address UID combinations
+        // Patterns contains " " are allowed address UID combinations
         // Patterns containing both are allowed address, port, and UID combinations
         EXCEPTION_PATTERNS.add("0.0.0.0:5555");     // emulator port
         EXCEPTION_PATTERNS.add("0.0.0.0:9101");     // verified ports
