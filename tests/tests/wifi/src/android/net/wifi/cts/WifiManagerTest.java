@@ -27,9 +27,6 @@ import static android.net.wifi.WifiConfiguration.INVALID_NETWORK_ID;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_SOFTAP;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_WIFI_AWARE;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_WIFI_DIRECT;
-import static android.net.wifi.WifiManager.SEND_DHCP_HOSTNAME_RESTRICTION_ALL;
-import static android.net.wifi.WifiManager.SEND_DHCP_HOSTNAME_RESTRICTION_NONE;
-import static android.net.wifi.WifiManager.SEND_DHCP_HOSTNAME_RESTRICTION_OPEN;
 import static android.net.wifi.WifiScanner.WIFI_BAND_24_GHZ;
 import static android.os.Process.myUid;
 
@@ -182,6 +179,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 
 @RunWith(AndroidJUnit4.class)
@@ -6914,8 +6912,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     }
 
     private int querySendDhcpHostnameRestrictionSynchronous() throws Exception {
-        Mutable<Integer> queriedRestriction =
-                new Mutable<>(SEND_DHCP_HOSTNAME_RESTRICTION_NONE);
+        Mutable<Integer> queriedRestriction = new Mutable<>(0);
         Mutable<Boolean> isQuerySucceeded = new Mutable<>(false);
         sWifiManager.querySendDhcpHostnameRestriction(mExecutor, (value) -> {
             synchronized (mLock) {
@@ -6938,7 +6935,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
 
     /**
      * Tests {@link WifiManager#setSendDhcpHostnameRestriction(int)} and
-     * {@link WifiManager#querySendDhcpHostnameRestriction(Executor, Consumer)}.
+     * {@link WifiManager#querySendDhcpHostnameRestriction(Executor, IntConsumer)}.
      */
     @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
@@ -6946,20 +6943,24 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     @Test
     public void testSetAndQuerySendDhcpHostnameRestriction() throws Exception {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        int previousRestriction = SEND_DHCP_HOSTNAME_RESTRICTION_NONE;
+        int previousRestriction = 0;
         boolean isRestoreRequired = false;
         try {
             uiAutomation.adoptShellPermissionIdentity();
             previousRestriction = querySendDhcpHostnameRestrictionSynchronous();
 
-            sWifiManager.setSendDhcpHostnameRestriction(SEND_DHCP_HOSTNAME_RESTRICTION_OPEN);
+            sWifiManager.setSendDhcpHostnameRestriction(
+                    WifiManager.FLAG_SEND_DHCP_HOSTNAME_RESTRICTION_OPEN);
             isRestoreRequired = true;
             assertEquals(querySendDhcpHostnameRestrictionSynchronous(),
-                    SEND_DHCP_HOSTNAME_RESTRICTION_OPEN);
+                    WifiManager.FLAG_SEND_DHCP_HOSTNAME_RESTRICTION_OPEN);
 
-            sWifiManager.setSendDhcpHostnameRestriction(SEND_DHCP_HOSTNAME_RESTRICTION_ALL);
+            sWifiManager.setSendDhcpHostnameRestriction(
+                    WifiManager.FLAG_SEND_DHCP_HOSTNAME_RESTRICTION_OPEN
+                            | WifiManager.FLAG_SEND_DHCP_HOSTNAME_RESTRICTION_SECURE);
             assertEquals(querySendDhcpHostnameRestrictionSynchronous(),
-                    SEND_DHCP_HOSTNAME_RESTRICTION_ALL);
+                    WifiManager.FLAG_SEND_DHCP_HOSTNAME_RESTRICTION_OPEN
+                            | WifiManager.FLAG_SEND_DHCP_HOSTNAME_RESTRICTION_SECURE);
         } finally {
             if (isRestoreRequired) {
                 sWifiManager.setSendDhcpHostnameRestriction(previousRestriction);
