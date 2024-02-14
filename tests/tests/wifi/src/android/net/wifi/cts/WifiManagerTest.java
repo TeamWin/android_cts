@@ -7271,4 +7271,45 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
             uiAutomation.dropShellPermissionIdentity();
         }
     }
+
+    /**
+     * Tests {@link WifiManager#retrieveWifiBackupData()},
+     * {@link WifiManager#restoreWifiBackupData()}.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @Test
+    public void testWifiBackupRestore() throws Exception {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        Mutable<Boolean> isQuerySucceeded = new Mutable<Boolean>(false);
+        Mutable<byte[]> backupWifiData = new Mutable<byte[]>();
+        long now, deadline;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            sWifiManager.retrieveWifiBackupData(mExecutor,
+                    new Consumer<byte[]>() {
+                    @Override
+                    public void accept(byte[] value) {
+                        synchronized (mLock) {
+                            isQuerySucceeded.value = true;
+                            backupWifiData.value = value;
+                            mLock.notify();
+                        }
+                    }
+                });
+            // Test no crash when calling backup/restore api
+            synchronized (mLock) {
+                now = System.currentTimeMillis();
+                deadline = now + TEST_WAIT_DURATION_MS;
+                while (!isQuerySucceeded.value && now < deadline) {
+                    mLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+            assertTrue("retrieve Wi-Fi backup data fail", isQuerySucceeded.value);
+            sWifiManager.restoreWifiBackupData(backupWifiData.value);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
 }
