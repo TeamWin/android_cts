@@ -173,6 +173,7 @@ java_test_host {
         ":CtsApkVerityTestAppSplit",
         // PackageSetInstallerTest
         ":CtsPkgInstallerPermRequestApp",
+        ":CtsPkgInstallerPermWhitelistApp",
         // CtsAppDataIsolationAppA
         ":CtsAppDataIsolationAppA",
         ":CtsAppDataIsolationAppSharedA",
@@ -190,6 +191,7 @@ java_test_host {
         ":CtsUseProcessFailActivity",
         // PermissionEscalationTest
         ":CtsDeclareNonRuntimePermissions",
+        ":CtsEscalateToRuntimePermissions",
     ],
     per_testcase_directory: true,
 }
