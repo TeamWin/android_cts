@@ -222,9 +222,9 @@ public class VectorDrawableTest {
     @Test
     public void testVectorDrawableGradient() throws XmlPullParserException, IOException {
         verifyVectorDrawables(GRADIENT_ICON_RES_IDS, GRADIENT_GOLDEN_IMAGES, null,
-                DrawableTestUtils.PIXEL_ERROR_THRESHOLD,
-                DrawableTestUtils.PIXEL_ERROR_COUNT_THRESHOLD,
-                DrawableTestUtils.PIXEL_ERROR_TOLERANCE + 0.5f);
+                DrawableTestUtils.FATAL_PIXEL_ERROR_THRESHOLD,
+                DrawableTestUtils.MAX_REGULAR_ERROR_RATIO,
+                DrawableTestUtils.REGULAR_PIXEL_ERROR_THRESHOLD);
     }
 
     @Test
@@ -238,9 +238,9 @@ public class VectorDrawableTest {
     private void verifyVectorDrawables(int[] resIds, int[] goldenImages, int[] stateSet)
             throws XmlPullParserException, IOException {
         verifyVectorDrawables(resIds, goldenImages, stateSet,
-                DrawableTestUtils.PIXEL_ERROR_THRESHOLD,
-                DrawableTestUtils.PIXEL_ERROR_COUNT_THRESHOLD,
-                DrawableTestUtils.PIXEL_ERROR_TOLERANCE);
+                DrawableTestUtils.FATAL_PIXEL_ERROR_THRESHOLD,
+                DrawableTestUtils.MAX_REGULAR_ERROR_RATIO,
+                DrawableTestUtils.REGULAR_PIXEL_ERROR_THRESHOLD);
     }
 
     private void verifyVectorDrawables(int[] resIds, int[] goldenImages, int[] stateSet,
