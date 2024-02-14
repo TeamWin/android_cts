@@ -19,7 +19,7 @@ package android.app.appsearch.cts.app;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.appsearch.PackageIdentifier;
-import android.app.appsearch.VisibilityConfig;
+import android.app.appsearch.SchemaVisibilityConfig;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -27,7 +27,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-public class VisibilityConfigCtsTest {
+public class SchemaVisibilityConfigCtsTest {
 
     @Test
     public void testBuildVisibilityConfig() {
@@ -35,38 +35,38 @@ public class VisibilityConfigCtsTest {
         Arrays.fill(cert1, (byte) 1);
         byte[] cert2 = new byte[32];
         Arrays.fill(cert2, (byte) 2);
-        VisibilityConfig visibilityConfig =
-                new VisibilityConfig.Builder()
-                        .addVisibleToPackage(new PackageIdentifier("pkg1", cert1))
+        SchemaVisibilityConfig schemaVisibilityConfig =
+                new SchemaVisibilityConfig.Builder()
+                        .addAllowedPackage(new PackageIdentifier("pkg1", cert1))
                         .setPubliclyVisibleTargetPackage(new PackageIdentifier("pkg2", cert2))
-                        .addVisibleToPermissions(ImmutableSet.of(1, 2))
+                        .addRequiredPermissions(ImmutableSet.of(1, 2))
                         .build();
 
-        assertThat(visibilityConfig.getVisibleToPermissions())
+        assertThat(schemaVisibilityConfig.getRequiredPermissions())
                 .containsExactly(ImmutableSet.of(1, 2));
-        assertThat(visibilityConfig.getVisibleToPackages())
+        assertThat(schemaVisibilityConfig.getAllowedPackages())
                 .containsExactly(new PackageIdentifier("pkg1", cert1));
-        assertThat(visibilityConfig.getPubliclyVisibleTargetPackage())
+        assertThat(schemaVisibilityConfig.getPubliclyVisibleTargetPackage())
                 .isEqualTo(new PackageIdentifier("pkg2", cert2));
     }
 
     @Test
     public void testVisibilityConfigEquals() {
         // Create two VisibilityConfig instances with the same properties
-        VisibilityConfig visibilityConfig1 =
-                new VisibilityConfig.Builder()
-                        .addVisibleToPackage(new PackageIdentifier("pkg1", new byte[32]))
+        SchemaVisibilityConfig visibilityConfig1 =
+                new SchemaVisibilityConfig.Builder()
+                        .addAllowedPackage(new PackageIdentifier("pkg1", new byte[32]))
                         .setPubliclyVisibleTargetPackage(
                                 new PackageIdentifier("pkg2", new byte[32]))
-                        .addVisibleToPermissions(ImmutableSet.of(1, 2))
+                        .addRequiredPermissions(ImmutableSet.of(1, 2))
                         .build();
 
-        VisibilityConfig visibilityConfig2 =
-                new VisibilityConfig.Builder()
-                        .addVisibleToPackage(new PackageIdentifier("pkg1", new byte[32]))
+        SchemaVisibilityConfig visibilityConfig2 =
+                new SchemaVisibilityConfig.Builder()
+                        .addAllowedPackage(new PackageIdentifier("pkg1", new byte[32]))
                         .setPubliclyVisibleTargetPackage(
                                 new PackageIdentifier("pkg2", new byte[32]))
-                        .addVisibleToPermissions(ImmutableSet.of(1, 2))
+                        .addRequiredPermissions(ImmutableSet.of(1, 2))
                         .build();
 
         // Test equals method
@@ -82,33 +82,33 @@ public class VisibilityConfigCtsTest {
         String publiclyVisibleTarget = "com.example.test";
         byte[] publiclyVisibleTargetCert = new byte[32];
 
-        VisibilityConfig.Builder builder =
-                new VisibilityConfig.Builder()
-                        .addVisibleToPackage(
+        SchemaVisibilityConfig.Builder builder =
+                new SchemaVisibilityConfig.Builder()
+                        .addAllowedPackage(
                                 new PackageIdentifier(visibleToPackage, visibleToPackageCert))
                         .setPubliclyVisibleTargetPackage(
                                 new PackageIdentifier(
                                         publiclyVisibleTarget, publiclyVisibleTargetCert))
-                        .addVisibleToPermissions(ImmutableSet.of(1, 2));
+                        .addRequiredPermissions(ImmutableSet.of(1, 2));
 
         // Create a VisibilityConfig using the Builder
-        VisibilityConfig original = builder.build();
+        SchemaVisibilityConfig original = builder.build();
 
-        VisibilityConfig rebuild =
-                builder.clearVisibleToPackages()
+        SchemaVisibilityConfig rebuild =
+                builder.clearAllowedPackages()
                         .setPubliclyVisibleTargetPackage(null)
-                        .clearVisibleToPermissions()
+                        .clearRequiredPermissions()
                         .build();
 
         // Check if the properties are set correctly
-        assertThat(original.getVisibleToPackages())
+        assertThat(original.getAllowedPackages())
                 .containsExactly(new PackageIdentifier(visibleToPackage, visibleToPackageCert));
         assertThat(original.getPubliclyVisibleTargetPackage())
                 .isEqualTo(new PackageIdentifier(publiclyVisibleTarget, publiclyVisibleTargetCert));
-        assertThat(original.getVisibleToPermissions()).containsExactly(ImmutableSet.of(1, 2));
+        assertThat(original.getRequiredPermissions()).containsExactly(ImmutableSet.of(1, 2));
 
-        assertThat(rebuild.getVisibleToPackages()).isEmpty();
+        assertThat(rebuild.getAllowedPackages()).isEmpty();
         assertThat(rebuild.getPubliclyVisibleTargetPackage()).isNull();
-        assertThat(rebuild.getVisibleToPermissions()).isEmpty();
+        assertThat(rebuild.getRequiredPermissions()).isEmpty();
     }
 }
