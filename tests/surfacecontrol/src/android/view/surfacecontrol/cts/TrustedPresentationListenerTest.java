@@ -247,6 +247,32 @@ public class TrustedPresentationListenerTest {
         assertResults(List.of(true));
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_TRUSTED_PRESENTATION_LISTENER_FOR_WINDOW)
+    public void testTrustedPresentationThresholdGetters() {
+        float alpha = 0.5f;
+        float fractionRendered = 0.9f;
+        int stabilityRequirementMs = 20;
+        TrustedPresentationThresholds thresholds = new TrustedPresentationThresholds(alpha,
+                fractionRendered, stabilityRequirementMs);
+        Assert.assertEquals(alpha, thresholds.getMinAlpha());
+        Assert.assertEquals(fractionRendered, thresholds.getMinFractionRendered());
+        Assert.assertEquals(stabilityRequirementMs, thresholds.getStabilityRequirementMillis());
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_TRUSTED_PRESENTATION_LISTENER_FOR_WINDOW)
+    public void testEquals() {
+        float alpha = 0.5f;
+        float fractionRendered = 0.9f;
+        int stabilityRequirementMs = 20;
+        TrustedPresentationThresholds thresholdsA = new TrustedPresentationThresholds(alpha,
+                fractionRendered, stabilityRequirementMs);
+        TrustedPresentationThresholds thresholdsB = new TrustedPresentationThresholds(alpha,
+                fractionRendered, stabilityRequirementMs);
+        Assert.assertEquals(thresholdsA, thresholdsB);
+    }
+
     private boolean wait(CountDownLatch latch, long waitTimeMs) {
         while (true) {
             long now = SystemClock.uptimeMillis();
