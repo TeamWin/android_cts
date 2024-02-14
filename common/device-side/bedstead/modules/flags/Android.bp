@@ -12,7 +12,7 @@ android_library {
     static_libs: [
         "Harrier",
         "device_policy_aconfig_flags_lib",
-    ]
+    ],
 }
 
 android_test {
@@ -26,7 +26,7 @@ android_test {
     static_libs: [
         "Harrier",
         "truth",
-        "bedstead-flags"
+        "bedstead-flags",
     ],
     manifest: "src/test/AndroidManifest.xml",
     min_sdk_version: "29",

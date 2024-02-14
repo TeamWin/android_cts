@@ -39,7 +39,7 @@ android_test {
         "statsdprotolite",
         "Interactive",
         "flag-junit",
-        "bedstead-flags"
+        "bedstead-flags",
     ],
     srcs: [
         "src/**/*.java",
@@ -74,7 +74,7 @@ android_test {
         "statsdprotolite",
         "Interactive",
         "flag-junit",
-        "bedstead-flags"
+        "bedstead-flags",
     ],
     srcs: [
         "src/**/*.java",
