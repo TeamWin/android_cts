@@ -49,13 +49,16 @@ import android.os.Parcelable;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.platform.test.ravenwood.RavenwoodRule;
 import android.test.mock.MockContext;
 import android.util.AttributeSet;
 import android.util.Xml;
 
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -75,6 +78,10 @@ import java.util.Set;
 @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class IntentTest {
     @Rule public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = RavenwoodRule.isOnRavenwood() ? null :
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private Intent mIntent;
     private static final String TEST_ACTION = "android.content.IntentTest_test";
@@ -107,7 +114,7 @@ public class IntentTest {
                 }
             };
         } else {
-            mContext = InstrumentationRegistry.getTargetContext();
+            mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
             mPm = mContext.getPackageManager();
         }
 
@@ -781,6 +788,23 @@ public class IntentTest {
         mIntent.addFlags(flag);
         expected |= flag;
         assertEquals(expected, mIntent.getFlags());
+    }
+
+    @Test
+    public void testAddExtendedFlags() {
+        final int flag = 1;
+        long expected = 0;
+        mIntent.addExtendedFlags(flag);
+        expected |= flag;
+        assertEquals(expected, mIntent.getExtendedFlags());
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.security.Flags.FLAG_ENFORCE_INTENT_FILTER_MATCH)
+    public void testIsMismatchingFilter() {
+        assertFalse(mIntent.isMismatchingFilter());
+        mIntent.addExtendedFlags(Intent.EXTENDED_FLAG_FILTER_MISMATCH);
+        assertTrue(mIntent.isMismatchingFilter());
     }
 
     @Test

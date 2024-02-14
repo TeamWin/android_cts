@@ -61,6 +61,7 @@
         <option name="test-file-name" value="CtsSyncAccountAccessStubs.apk" />
         <option name="test-file-name" value="CtsBinderPermissionTestService.apk" />
         <option name="test-file-name" value="CtsContentMockRestrictedApp.apk" />
+        <option name="test-file-name" value="CtsIntentResolutionTestApp.apk" />
 
     </target_preparer>
 
