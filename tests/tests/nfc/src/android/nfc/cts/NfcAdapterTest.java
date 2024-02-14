@@ -454,11 +454,12 @@ public class NfcAdapterTest {
         try {
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
                     .getUiAutomation().adoptShellPermissionIdentity(MANAGE_DEFAULT_APPLICATIONS);
-            assumeTrue(setDefaultWalletRoleHolder(mContext));
+            Assert.assertTrue(setDefaultWalletRoleHolder(mContext));
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+
             assumeTrue(adapter.isObserveModeSupported());
-            boolean result = adapter.setTransactionAllowed(true);
-            Assert.assertTrue(result);
+            adapter.setTransactionAllowed(true);
+            Assert.assertFalse(adapter.isObserveModeEnabled());
         } finally {
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
                     .getUiAutomation().dropShellPermissionIdentity();
@@ -472,11 +473,11 @@ public class NfcAdapterTest {
         try {
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
                     .getUiAutomation().adoptShellPermissionIdentity(MANAGE_DEFAULT_APPLICATIONS);
-            assumeTrue(setDefaultWalletRoleHolder(mContext));
+            Assert.assertTrue(setDefaultWalletRoleHolder(mContext));
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
             assumeTrue(adapter.isObserveModeSupported());
-            boolean result = adapter.setTransactionAllowed(false);
-            Assert.assertTrue(result);
+            adapter.setTransactionAllowed(false);
+            Assert.assertTrue(adapter.isObserveModeEnabled());
         } finally {
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
                     .getUiAutomation().dropShellPermissionIdentity();
