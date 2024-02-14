@@ -15,6 +15,7 @@
  */
 package android.devicepolicy.cts
 
+import android.app.admin.SecurityLog
 import com.android.bedstead.harrier.BedsteadJUnit4
 import com.android.bedstead.harrier.DeviceState
 import com.android.bedstead.harrier.UserType
@@ -30,6 +31,7 @@ import com.android.bedstead.nene.TestApis
 import com.android.bedstead.nene.exceptions.NeneException
 import com.android.bedstead.nene.users.UserReference
 import com.android.compatibility.common.util.ApiTest
+import com.android.eventlib.truth.EventLogsSubject
 import com.google.common.truth.Truth
 import org.junit.ClassRule
 import org.junit.Rule
@@ -44,20 +46,25 @@ class SecurityLoggingTest {
     fun setSecurityLoggingEnabled_notPermitted_throwsException() {
         assertThrows(SecurityException::class.java) {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), true
+                sDeviceState.dpc().componentName(),
+                true
             )
         }
     }
 
     @CanSetPolicyTest(policy = [GlobalSecurityLogging::class, SecurityLogging::class])
     @Postsubmit(reason = "new test")
-    @ApiTest(apis = ["android.app.admin.DevicePolicyManager#setSecurityLoggingEnabled", "android.app.admin.DevicePolicyManager#isSecurityLoggingEnabled"])
+    @ApiTest(
+        apis = ["android.app.admin.DevicePolicyManager#setSecurityLoggingEnabled",
+            "android.app.admin.DevicePolicyManager#isSecurityLoggingEnabled"]
+    )
     fun setSecurityLoggingEnabled_true_securityLoggingIsEnabled() {
         val originalSecurityLoggingEnabled = sDeviceState.dpc()
             .devicePolicyManager().isSecurityLoggingEnabled(sDeviceState.dpc().componentName())
         try {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), true
+                sDeviceState.dpc().componentName(),
+                true
             )
             Truth.assertThat(
                 sDeviceState.dpc().devicePolicyManager().isSecurityLoggingEnabled(
@@ -66,20 +73,25 @@ class SecurityLoggingTest {
             ).isTrue()
         } finally {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), originalSecurityLoggingEnabled
+                sDeviceState.dpc().componentName(),
+                originalSecurityLoggingEnabled
             )
         }
     }
 
     @CanSetPolicyTest(policy = [GlobalSecurityLogging::class, SecurityLogging::class])
     @Postsubmit(reason = "new test")
-    @ApiTest(apis = ["android.app.admin.DevicePolicyManager#setSecurityLoggingEnabled", "android.app.admin.DevicePolicyManager#isSecurityLoggingEnabled"])
+    @ApiTest(
+        apis = ["android.app.admin.DevicePolicyManager#setSecurityLoggingEnabled",
+            "android.app.admin.DevicePolicyManager#isSecurityLoggingEnabled"]
+    )
     fun setSecurityLoggingEnabled_false_securityLoggingIsNotEnabled() {
         val originalSecurityLoggingEnabled = sDeviceState.dpc()
             .devicePolicyManager().isSecurityLoggingEnabled(sDeviceState.dpc().componentName())
         try {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), false
+                sDeviceState.dpc().componentName(),
+                false
             )
             Truth.assertThat(
                 sDeviceState.dpc().devicePolicyManager().isSecurityLoggingEnabled(
@@ -88,7 +100,8 @@ class SecurityLoggingTest {
             ).isFalse()
         } finally {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), originalSecurityLoggingEnabled
+                sDeviceState.dpc().componentName(),
+                originalSecurityLoggingEnabled
             )
         }
     }
@@ -118,43 +131,27 @@ class SecurityLoggingTest {
 
     @CanSetPolicyTest(policy = [GlobalSecurityLogging::class, SecurityLogging::class])
     @Postsubmit(reason = "new test")
-    @ApiTest(apis = ["android.app.admin.DeviceAdminReceiver#onSecurityLogsAvailable"])
-    fun retrieveSecurityLogs_onSecurityLogsAvailableCallbackIsCalled() {
+    @ApiTest(
+        apis = ["android.app.admin.DeviceAdminReceiver#onSecurityLogsAvailable",
+        "android.app.admin.DevicePolicyManager#retrieveSecurityLogs"]
+    )
+    fun retrieveSecurityLogs_logsCanBeFetchedAfterOnSecurityLogsAvailableCallback() {
         ensureNoAdditionalFullUsers()
 
+        val dpc = sDeviceState.dpc()
+
         try {
-            sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), true
-            )
+            dpc.devicePolicyManager().setSecurityLoggingEnabled(dpc.componentName(), true)
 
-            // TODO: Generate some security logs then assert on the callback
+            TestApis.devicePolicy().forceSecurityLogs()
+            EventLogsSubject.assertThat(dpc.events().securityLogsAvailable()).eventOccurred()
+
+            val logs = dpc.devicePolicyManager().retrieveSecurityLogs(dpc.componentName())
+            Truth.assertThat(logs).isNotNull()
+            Truth.assertThat(logs.stream().filter { e -> e.tag == SecurityLog.TAG_LOGGING_STARTED })
+                    .isNotNull()
         } finally {
-            sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), false
-            )
-        }
-    }
-
-    @CanSetPolicyTest(policy = [GlobalSecurityLogging::class, SecurityLogging::class])
-    @Postsubmit(reason = "new test")
-    @ApiTest(apis = ["android.app.admin.DevicePolicyManager#retrieveSecurityLogs"])
-    fun retrieveSecurityLogs_returnsSecurityLogs() {
-        ensureNoAdditionalFullUsers()
-        val originalSecurityLoggingEnabled = sDeviceState.dpc().devicePolicyManager()
-            .isSecurityLoggingEnabled(sDeviceState.dpc().componentName())
-        try {
-            sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), true
-            )
-
-            // TODO: Generate some security logs and assert on them
-            sDeviceState.dpc().devicePolicyManager().retrieveSecurityLogs(
-                sDeviceState.dpc().componentName()
-            )
-        } finally {
-            sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), originalSecurityLoggingEnabled
-            )
+            dpc.devicePolicyManager().setSecurityLoggingEnabled(dpc.componentName(), false)
         }
     }
 
@@ -183,7 +180,8 @@ class SecurityLoggingTest {
             .isSecurityLoggingEnabled(sDeviceState.dpc().componentName())
         try {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), true
+                sDeviceState.dpc().componentName(),
+                true
             )
 
             // Nothing to assert as this can be null on some devices
@@ -192,7 +190,8 @@ class SecurityLoggingTest {
             )
         } finally {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), originalSecurityLoggingEnabled
+                sDeviceState.dpc().componentName(),
+                originalSecurityLoggingEnabled
             )
         }
     }
@@ -203,7 +202,8 @@ class SecurityLoggingTest {
     fun retrieveSecurityLogs_unaffiliatedAdditionalUser_throwsException() {
         try {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), true
+                sDeviceState.dpc().componentName(),
+                true
             )
             assertThrows(SecurityException::class.java) {
                 sDeviceState.dpc().devicePolicyManager().retrieveSecurityLogs(
@@ -212,7 +212,8 @@ class SecurityLoggingTest {
             }
         } finally {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), false
+                sDeviceState.dpc().componentName(),
+                false
             )
         }
     }
@@ -225,11 +226,11 @@ class SecurityLoggingTest {
         // TODO(273474964): Move into infra
         TestApis.users().all().stream()
             .filter { u: UserReference ->
-                (u != TestApis.users().instrumented()
-                        && u != TestApis.users().system()
-                        && u != sDeviceState.additionalUser()
-                        && u != TestApis.users().current()
-                        && !u.isMain)
+                (u != TestApis.users().instrumented() &&
+                        u != TestApis.users().system() &&
+                        u != sDeviceState.additionalUser() &&
+                        u != TestApis.users().current() &&
+                        !u.isMain)
             }
             .forEach { obj: UserReference -> obj.remove() }
         val affiliationIds: MutableSet<String> = HashSet(
@@ -244,14 +245,16 @@ class SecurityLoggingTest {
 
         try {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), true
+                sDeviceState.dpc().componentName(),
+                true
             )
             sDeviceState.dpc().devicePolicyManager().retrieveSecurityLogs(
                 sDeviceState.dpc().componentName()
             )
         } finally {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), false
+                sDeviceState.dpc().componentName(),
+                false
             )
         }
     }
@@ -264,14 +267,16 @@ class SecurityLoggingTest {
 
         try {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), true
+                sDeviceState.dpc().componentName(),
+                true
             )
             sDeviceState.dpc().devicePolicyManager().retrieveSecurityLogs(
                 sDeviceState.dpc().componentName()
             )
         } finally {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), false
+                sDeviceState.dpc().componentName(),
+                false
             )
         }
     }
@@ -282,7 +287,8 @@ class SecurityLoggingTest {
     fun retrievePreRebootSecurityLogs_unaffiliatedAdditionalUser_throwsException() {
         try {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), true
+                sDeviceState.dpc().componentName(),
+                true
             )
             assertThrows(SecurityException::class.java) {
                 sDeviceState.dpc().devicePolicyManager().retrievePreRebootSecurityLogs(
@@ -291,7 +297,8 @@ class SecurityLoggingTest {
             }
         } finally {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), false
+                sDeviceState.dpc().componentName(),
+                false
             )
         }
     }
@@ -304,10 +311,10 @@ class SecurityLoggingTest {
         // TODO(273474964): Move into infra
         TestApis.users().all().stream()
             .filter { u: UserReference ->
-                (u != TestApis.users().instrumented()
-                        && u != TestApis.users().system()
-                        && u != sDeviceState.additionalUser()
-                        && u != TestApis.users().current())
+                (u != TestApis.users().instrumented() &&
+                        u != TestApis.users().system() &&
+                        u != sDeviceState.additionalUser() &&
+                        u != TestApis.users().current())
             }
             .forEach { obj: UserReference -> obj.remove() }
         val affiliationIds: MutableSet<String> = HashSet(
@@ -322,14 +329,16 @@ class SecurityLoggingTest {
 
         try {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), true
+                sDeviceState.dpc().componentName(),
+                true
             )
             sDeviceState.dpc().devicePolicyManager().retrievePreRebootSecurityLogs(
                 sDeviceState.dpc().componentName()
             )
         } finally {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), false
+                sDeviceState.dpc().componentName(),
+                false
             )
         }
     }
@@ -342,14 +351,16 @@ class SecurityLoggingTest {
 
         try {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), true
+                sDeviceState.dpc().componentName(),
+                true
             )
             sDeviceState.dpc().devicePolicyManager().retrievePreRebootSecurityLogs(
                 sDeviceState.dpc().componentName()
             )
         } finally {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
-                sDeviceState.dpc().componentName(), false
+                sDeviceState.dpc().componentName(),
+                false
             )
         }
     }
@@ -359,22 +370,23 @@ class SecurityLoggingTest {
         try {
             TestApis.users().all().stream()
                 .filter { u: UserReference ->
-                    (u != TestApis.users().instrumented()
-                            && u != TestApis.users().system()
-                            && u != TestApis.users()
-                        .current() // We can't remove the profile of the instrumented user for the
-                            // run on parent profile tests. But the profiles of other users
+                    (u != TestApis.users().instrumented() &&
+                            u != TestApis.users().system() &&
+                            u != TestApis.users()
+                        .current() && // We can't remove the profile of the instrumented user for
+                            // the run on parent profile tests. But the profiles of other users
                             // will be removed when the full-user is removed anyway.
-                            && !u.isProfile)
+                            !u.isProfile)
                 }
                 .forEach { obj: UserReference -> obj.remove() }
         } catch (e: NeneException) {
             // Happens when we can't remove a user
             throw NeneException(
-                "Error when removing user. Instrumented user is "
-                        + TestApis.users().instrumented() + ", current user is "
-                        + TestApis.users().current() + ", system user is "
-                        + TestApis.users().system(), e
+                "Error when removing user. Instrumented user is " +
+                        TestApis.users().instrumented() + ", current user is " +
+                        TestApis.users().current() + ", system user is " +
+                        TestApis.users().system(),
+                e
             )
         }
     }
