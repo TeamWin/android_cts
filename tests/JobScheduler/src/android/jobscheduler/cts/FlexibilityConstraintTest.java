@@ -364,6 +364,11 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         setDeviceConfigFlag("fc_fallback_flexibility_deadlines",
                 "500=360000000,400=360000000,300=360000000,200=360000000,100=360000000",
                 true);
+        final boolean hasNonWifiNetwork =
+                mNetworkingHelper.hasCellularNetwork() || mNetworkingHelper.hasEthernetConnection();
+        if (hasNonWifiNetwork) {
+            mNetworkingHelper.setAllNetworksEnabled(true);
+        }
         mNetworkingHelper.setWifiState(false);
 
         final int connectivityJobId = FLEXIBLE_JOB_ID;
@@ -390,18 +395,42 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
             setDeviceConfigFlag("fc_applied_constraints", "2", true);
 
             satisfySystemWideConstraints(false, true, false);
-
-            // Only the connectivity job should be held back by the lack of connectivity.
-            testAppInterface.assertJobNotReady(connectivityJobId);
-
             testAppInterface.runSatisfiedJob(nonConnectivityJobId);
             assertTrue("Job did not fire when applied constraints were satisfied",
                     testAppInterface.awaitJobStart(nonConnectivityJobId,
                             FLEXIBILITY_TIMEOUT_MILLIS));
+            if (hasNonWifiNetwork) {
+                // Connectivity isn't in the set of applied constraints, so the job should be able
+                // to run.
+                testAppInterface.runSatisfiedJob(connectivityJobId);
+                assertTrue("Job did not fire when applied constraints were satisfied",
+                        testAppInterface.awaitJobStart(connectivityJobId,
+                                FLEXIBILITY_TIMEOUT_MILLIS));
+            }
+
+            if (mNetworkingHelper.hasEthernetConnection()) {
+                // We currently can't control the ethernet connection, so skip the remainder
+                // of the test.
+                Log.d(TAG, "Skipping remainder of test because of an active ethernet connection");
+                return;
+            }
 
             // CONSTRAINT_BATTERY_NOT_LOW | CONSTRAINT_CONNECTIVITY
             // Connectivity job needs both to run
             setDeviceConfigFlag("fc_applied_constraints", "268435458", true);
+
+            testAppInterface.scheduleJob(Collections.emptyMap(),
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, connectivityJobId,
+                            TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE,
+                            JobInfo.NETWORK_TYPE_ANY
+                    )
+            );
+
+            // Connectivity is now in the set of applied constraints, so the job should be held
+            // back by the lack of Wi-Fi.
+            testAppInterface.assertJobNotReady(connectivityJobId);
+
             mNetworkingHelper.setWifiState(true);
 
             testAppInterface.runSatisfiedJob(connectivityJobId);
