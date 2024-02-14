@@ -29,6 +29,7 @@ import org.junit.rules.ExternalResource;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 public class OwnedFilesRule extends ExternalResource {
 
@@ -36,19 +37,23 @@ public class OwnedFilesRule extends ExternalResource {
     public static final int RESOURCE_ID = R.raw.scenery;
     public static final int RESOURCE_ID_WITH_METADATA = R.raw.img_with_metadata;
     private static final String NONCE = String.valueOf(System.nanoTime());
+
     private static final String IMAGE_1 = TAG + "_image1_" + NONCE + ".jpg";
     private static final String IMAGE_2 = TAG + "_image2_" + NONCE + ".jpg";
     private static final String VIDEO_1 = TAG + "_video1_" + NONCE + ".mp4";
 
+    private static final File sImageFile1 = new File(getDcimDir(), IMAGE_1);
+    private static final File sImageFile2Metadata = new File(getDcimDir(), IMAGE_2);
+
+    private static final File sVideoFile1 = new File(getDcimDir(), VIDEO_1);
+
     private final ContentResolver mContentResolver;
-
-    private final File mImageFile1 = new File(getDcimDir(), IMAGE_1);
-    private final File mImageFile2Metadata = new File(getDcimDir(), IMAGE_2);
-
-    private final File mVideoFile1 = new File(getDcimDir(), VIDEO_1);
     private Uri mImageUri1;
     private Uri mImageUri2;
     private Uri mVideoUri1;
+
+    private static final List<File> ownedItemsList = List.of(sImageFile1, sImageFile2Metadata,
+            sVideoFile1);
 
     public OwnedFilesRule(ContentResolver contentResolver) {
         this.mContentResolver = contentResolver;
@@ -56,9 +61,9 @@ public class OwnedFilesRule extends ExternalResource {
 
     @Override
     protected void before() throws IOException {
-        mImageUri1 = createFile(RESOURCE_ID, mImageFile1);
-        mImageUri2 = createFile(RESOURCE_ID_WITH_METADATA, mImageFile2Metadata);
-        mVideoUri1 = createFile(mVideoFile1);
+        mImageUri1 = createFile(RESOURCE_ID, sImageFile1);
+        mImageUri2 = createFile(RESOURCE_ID_WITH_METADATA, sImageFile2Metadata);
+        mVideoUri1 = createFile(sVideoFile1);
 
     }
 
@@ -79,23 +84,26 @@ public class OwnedFilesRule extends ExternalResource {
 
     @Override
     protected void after() {
-        mImageFile1.delete();
-        mImageFile2Metadata.delete();
-        mVideoFile1.delete();
+        sImageFile1.delete();
+        sImageFile2Metadata.delete();
+        sVideoFile1.delete();
     }
 
-    public File getImageFile1() {
-        return mImageFile1;
+    public static File getImageFile1() {
+        return sImageFile1;
     }
 
-    public File getImageFile2Metadata() {
-        return mImageFile2Metadata;
+    public static File getImageFile2Metadata() {
+        return sImageFile2Metadata;
     }
 
-    public File getVideoFile1() {
-        return mVideoFile1;
+    public static File getVideoFile1() {
+        return sVideoFile1;
     }
 
+    public static List<File> getAllFiles() {
+        return ownedItemsList;
+    }
 
     public Uri getImageUri1() {
         return mImageUri1;

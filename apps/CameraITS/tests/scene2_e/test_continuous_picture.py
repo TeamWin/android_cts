@@ -39,15 +39,15 @@ _RGB_G_CH = 1
 _VGA_W, _VGA_H = 640, 480
 
 
-def _capture_frames(cam, log_path, debug):
+def _capture_frames(cam):
   """Captures frames, logs info, and creates cap_3a_state_list.
 
   Args:
     cam: a camera capture object.
-    log_path: str to identify saved image location.
-    debug: bool for debugging info.
+
   Returns:
     cap_3a_state_list: list of 3a states [AE, AF, AWB] during captures.
+    imgs: list of images indexed by frame.
   """
   cap_3a_state_list = []
   req = capture_request_utils.auto_capture_request()
@@ -56,6 +56,7 @@ def _capture_frames(cam, log_path, debug):
   caps = cam.do_capture([req]*_NUM_FRAMES, fmt)
 
   # Extract frame metadata and frame.
+  imgs = []
   for i, cap in enumerate(caps):
     md = cap['metadata']
     exp = md['android.sensor.exposureTime']
@@ -76,10 +77,8 @@ def _capture_frames(cam, log_path, debug):
         ': [%d,%d,%d]', i, iso, exp * _NS_TO_MS, fd_str, green_mean, ae_state,
         af_state, awb_state)
     cap_3a_state_list.append([ae_state, af_state, awb_state])
-    if debug:
-      image_processing_utils.write_image(
-          img, f'{os.path.join(log_path, _NAME)}_{i}.jpg')
-  return cap_3a_state_list
+    imgs.append(img)
+  return cap_3a_state_list, imgs
 
 
 class ContinuousPictureTest(its_base_test.ItsBaseTest):
@@ -99,15 +98,12 @@ class ContinuousPictureTest(its_base_test.ItsBaseTest):
   """
 
   def test_continuous_picture(self):
-    logging.debug('Starting %s', _NAME)
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
         hidden_physical_id=self.hidden_physical_id) as cam:
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
-      log_path = self.log_path
-      debug = self.debug_mode
 
       # Check SKIP conditions.
       camera_properties_utils.skip_unless(
@@ -122,9 +118,12 @@ class ContinuousPictureTest(its_base_test.ItsBaseTest):
       cam.do_3a()
 
       # Ensure 3A settles in CONTINUOUS_PICTURE mode with no scene change.
-      cap_3a_state_list = _capture_frames(cam, log_path, debug)
+      cap_3a_state_list, imgs = _capture_frames(cam)
       final_3a = cap_3a_state_list[_NUM_FRAMES-1]
       if final_3a != list(_CONVERGED_3A):
+        for i, img in enumerate(imgs):
+          image_processing_utils.write_image(
+              img, f'{os.path.join(self.log_path, _NAME)}_{i}.jpg')
         raise AssertionError(
             f'Last frame [AE,AF,AWB]: {final_3a}. CONVERGED: {_CONVERGED_3A}.')
 

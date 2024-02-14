@@ -24,7 +24,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 
-import android.hardware.display.VirtualDisplay;
 import android.hardware.input.VirtualDpad;
 import android.hardware.input.VirtualKeyEvent;
 import android.hardware.input.cts.virtualcreators.VirtualDisplayCreator;
@@ -142,10 +141,11 @@ public class VirtualDpadTest extends VirtualDeviceTestCase {
 
     @Test
     public void createVirtualDpad_unownedDisplay_throwsException() {
-        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
-        assertThrows(SecurityException.class,
-                () -> createVirtualDpad(unownedDisplay.getDisplay().getDisplayId()));
-        unownedDisplay.release();
+        try (VirtualDisplayCreator.UnownedVirtualDisplay unownedDisplay =
+                     VirtualDisplayCreator.createUnownedVirtualDisplay()) {
+            assertThrows(SecurityException.class,
+                    () -> createVirtualDpad(unownedDisplay.getDisplay().getDisplayId()));
+        }
     }
 
     @Test
@@ -159,11 +159,13 @@ public class VirtualDpadTest extends VirtualDeviceTestCase {
     @Test
     public void createVirtualDpad_unownedVirtualDisplay_injectEvents_succeeds() {
         mVirtualDpad.close();
-        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
-        runWithPermission(
-                () -> assertThat(createVirtualDpad(unownedDisplay.getDisplay().getDisplayId()))
-                        .isNotNull(),
-                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
+        try (VirtualDisplayCreator.UnownedVirtualDisplay unownedDisplay =
+                     VirtualDisplayCreator.createUnownedVirtualDisplay()) {
+            runWithPermission(
+                    () -> assertThat(createVirtualDpad(unownedDisplay.getDisplay().getDisplayId()))
+                            .isNotNull(),
+                    INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
+        }
     }
 
     private VirtualDpad createVirtualDpad(int displayId) {

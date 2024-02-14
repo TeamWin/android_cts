@@ -67,6 +67,7 @@ import android.net.NetworkRequest;
 import android.net.TetheringManager;
 import android.net.Uri;
 import android.net.wifi.CoexUnsafeChannel;
+import android.net.wifi.MloLink;
 import android.net.wifi.MscsParams;
 import android.net.wifi.OuiKeyedData;
 import android.net.wifi.QosCharacteristics;
@@ -96,6 +97,9 @@ import android.net.wifi.hotspot2.PasspointConfiguration;
 import android.net.wifi.hotspot2.ProvisioningCallback;
 import android.net.wifi.hotspot2.pps.Credential;
 import android.net.wifi.hotspot2.pps.HomeSp;
+import android.net.wifi.twt.TwtCallback;
+import android.net.wifi.twt.TwtRequest;
+import android.net.wifi.twt.TwtSession;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -5033,6 +5037,70 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     }
 
     /**
+     * Tests {@link WifiManager#setPerSsidRoamingMode(WifiSsid, int)},
+     * {@link WifiManager#getPerSsidRoamingModes(Executor, Consumer)},
+     * and {@link WifiManager#removePerSsidRoamingMode(WifiSsid)}.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    @Test
+    public void testPerSsidRoamingMode() throws Exception {
+        if (!sWifiManager.isAggressiveRoamingModeSupported()) {
+            // skip the test if aggressive roaming mode is not supported
+            return;
+        }
+        WifiSsid testSsid = WifiSsid.fromBytes("TEST_SSID_1".getBytes(StandardCharsets.UTF_8));
+        Map<String, Integer> roamingModes = new HashMap<>();
+        Consumer<Map<String, Integer>> listener = new Consumer<Map<String, Integer>>() {
+            @Override
+            public void accept(Map<String, Integer> value) {
+                synchronized (mLock) {
+                    roamingModes.clear();
+                    roamingModes.putAll(value);
+                    mLock.notify();
+                }
+            }
+        };
+
+        // Test caller with no permission triggers SecurityException.
+        assertThrows("No permission should trigger SecurityException", SecurityException.class,
+                () -> sWifiManager.setPerSsidRoamingMode(testSsid,
+                        WifiManager.ROAMING_MODE_AGGRESSIVE));
+        assertThrows("No permission should trigger SecurityException", SecurityException.class,
+                () -> sWifiManager.removePerSsidRoamingMode(testSsid));
+        assertThrows("No permission should trigger SecurityException", SecurityException.class,
+                () -> sWifiManager.getPerSsidRoamingModes(mExecutor, listener));
+
+        // Test that invalid inputs trigger an Exception.
+        assertThrows("null WifiSsid should trigger exception", NullPointerException.class,
+                () -> sWifiManager.setPerSsidRoamingMode(null,
+                        WifiManager.ROAMING_MODE_AGGRESSIVE));
+        assertThrows("null WifiSsid should trigger exception", NullPointerException.class,
+                () -> sWifiManager.removePerSsidRoamingMode(null));
+        assertThrows("null executor should trigger exception", NullPointerException.class,
+                () -> sWifiManager.getPerSsidRoamingModes(null, listener));
+        assertThrows("null listener should trigger exception", NullPointerException.class,
+                () -> sWifiManager.getPerSsidRoamingModes(mExecutor, null));
+
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            sWifiManager.setPerSsidRoamingMode(testSsid, WifiManager.ROAMING_MODE_AGGRESSIVE);
+            sWifiManager.getPerSsidRoamingModes(mExecutor, listener);
+            Thread.sleep(TEST_WAIT_DURATION_MS);
+            assertTrue(
+                    roamingModes.get(testSsid.toString()) == WifiManager.ROAMING_MODE_AGGRESSIVE);
+            sWifiManager.removePerSsidRoamingMode(testSsid);
+            sWifiManager.getPerSsidRoamingModes(mExecutor, listener);
+            Thread.sleep(TEST_WAIT_DURATION_MS);
+            assertNull(roamingModes.get(testSsid.toString()));
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
      * Verify the invalid and valid usages of {@code WifiManager#setPnoScanState}.
      */
     @Test
@@ -6920,7 +6988,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
 
             List<WifiConfiguration> savedNetworks = sWifiManager.getConfiguredNetworks();
             wifi7Network = TestHelper.findFirstAvailableSavedNetwork(sWifiManager,
-                    savedNetworks, ScanResult.WIFI_STANDARD_11BE);
+                    savedNetworks, TestHelper.AP_CAPABILITY_BIT_WIFI7);
             // TODO: b/322011012
             assumeTrue("Unable to locate Wi-Fi 7 networks in range.\n", wifi7Network != null);
 
@@ -6956,6 +7024,175 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
             if (wifi7Network != null) {
                 wifi7Network.setWifi7Enabled(true);
             }
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Validate setting up a TWT session if device supports and get stats and finally teardown.
+     */
+    @ApiTest(apis = {"android.net.wifi.WifiManager#getTwtCapabilities",
+            "android.net.wifi.WifiManager#twtSessionSetup",
+            "android.net.wifi.twt.TwtSession#getStats", "android.net.wifi.twt.TwtSession#teardown",
+            "android.net.wifi.twt.TwtSession#getWakeDurationMicros",
+            "android.net.wifi.twt.TwtSession#getWakeIntervalMicros",
+            "android.net.wifi.twt.TwtSession#getMloLinkId"})
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM, codeName =
+            "VanillaIceCream")
+    @Test
+    public void testTwt() throws Exception {
+        AtomicReference<Bundle> twtCapabilities = new AtomicReference<>();
+        AtomicReference<Bundle> twtStats = new AtomicReference<>();
+        long now, deadline;
+        Consumer<Bundle> twtCapabilityCallback = new Consumer<Bundle>() {
+            @Override
+            public void accept(Bundle capabilities) {
+                synchronized (mLock) {
+                    twtCapabilities.set(capabilities);
+                    mLock.notify();
+                }
+            }
+        };
+        Consumer<Bundle> twtStatsCallback = new Consumer<Bundle>() {
+            @Override
+            public void accept(Bundle stats) {
+                synchronized (mLock) {
+                    twtStats.set(stats);
+                    mLock.notify();
+                }
+            }
+        };
+        class TestTwtCallback implements TwtCallback {
+            final AtomicReference<TwtSession> mTwtSession = new AtomicReference<>();
+            final AtomicInteger mTwtTeardownReasonCode = new AtomicInteger(-1);
+            final AtomicInteger mTwtErrorCode = new AtomicInteger(-1);
+
+            @Override
+            public void onFailure(int errorCode) {
+                synchronized (mLock) {
+                    mTwtErrorCode.set(errorCode);
+                    mLock.notify();
+                }
+            }
+
+            @Override
+            public void onTeardown(int reasonCode) {
+                synchronized (mLock) {
+                    mTwtTeardownReasonCode.set(reasonCode);
+                    mLock.notify();
+                }
+            }
+
+            @Override
+            public void onCreate(TwtSession twtSession) {
+                synchronized (mLock) {
+                    mTwtSession.set(twtSession);
+                }
+            }
+        }
+        TestTwtCallback testTwtCallback = new TestTwtCallback();
+        TestActionListener actionListener = new TestActionListener(mLock);
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            sWifiManager.getTwtCapabilities(mExecutor, twtCapabilityCallback);
+            synchronized (mLock) {
+                now = System.currentTimeMillis();
+                deadline = now + TEST_WAIT_DURATION_MS;
+                while (twtCapabilities.get() == null && now < deadline) {
+                    mLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+            assertNotNull("getTwtCapabilities() timed out !", twtCapabilities.get());
+            // Assume device is a TWT requester
+            assumeTrue(twtCapabilities.get().getBoolean(
+                    WifiManager.TWT_CAPABILITIES_KEY_BOOLEAN_TWT_REQUESTER));
+            assertTrue(twtCapabilities.get().getInt(
+                    WifiManager.TWT_CAPABILITIES_KEY_INT_MIN_WAKE_DURATION_MICROS) >= 0);
+            assertTrue(twtCapabilities.get().getInt(
+                    WifiManager.TWT_CAPABILITIES_KEY_INT_MAX_WAKE_DURATION_MICROS) >= 0);
+            assertTrue(twtCapabilities.get().getLong(
+                    WifiManager.TWT_CAPABILITIES_KEY_LONG_MIN_WAKE_INTERVAL_MICROS) >= 0);
+            assertTrue(twtCapabilities.get().getLong(
+                    WifiManager.TWT_CAPABILITIES_KEY_LONG_MAX_WAKE_INTERVAL_MICROS) >= 0);
+
+            // Connect to an available TWT responder network
+            List<WifiConfiguration> savedNetworks = sWifiManager.getConfiguredNetworks();
+            WifiConfiguration twtNetwork = TestHelper.findFirstAvailableSavedNetwork(sWifiManager,
+                    savedNetworks, TestHelper.AP_CAPABILITY_BIT_TWT_RESPONDER);
+            // TODO: Make it an assert once the TWT setup is available for CTS test
+            assumeTrue("Unable to locate TWT capable networks in range.\n", twtNetwork != null);
+            sWifiManager.disconnect();
+            waitForDisconnection();
+            sWifiManager.connect(twtNetwork.networkId, actionListener);
+            waitForConnection();
+
+            // Verify TWT session setup
+            sWifiManager.setupTwtSession(new TwtRequest.Builder(twtCapabilities.get().getInt(
+                            WifiManager.TWT_CAPABILITIES_KEY_INT_MIN_WAKE_DURATION_MICROS),
+                            twtCapabilities.get().getInt(
+                                    WifiManager.TWT_CAPABILITIES_KEY_INT_MAX_WAKE_DURATION_MICROS),
+                            twtCapabilities.get().getLong(
+                                    WifiManager.TWT_CAPABILITIES_KEY_LONG_MIN_WAKE_INTERVAL_MICROS),
+                            twtCapabilities.get().getLong(
+                                    WifiManager.TWT_CAPABILITIES_KEY_LONG_MAX_WAKE_INTERVAL_MICROS)).build(),
+                    mExecutor, testTwtCallback);
+            synchronized (mLock) {
+                now = System.currentTimeMillis();
+                deadline = now + TEST_WAIT_DURATION_MS;
+                while (testTwtCallback.mTwtSession.get() == null && now < deadline) {
+                    mLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+            assertNotNull("setupTwtSession() timed out !", testTwtCallback.mTwtSession.get());
+            assertTrue(testTwtCallback.mTwtSession.get().getWakeDurationMicros() > 0);
+            assertTrue(testTwtCallback.mTwtSession.get().getWakeIntervalMicros() > 0);
+            assertTrue(testTwtCallback.mTwtSession.get().getMloLinkId()
+                    == MloLink.INVALID_MLO_LINK_ID);
+
+            // Verify TWT session get stats
+            testTwtCallback.mTwtSession.get().getStats(mExecutor, twtStatsCallback);
+            synchronized (mLock) {
+                now = System.currentTimeMillis();
+                deadline = now + TEST_WAIT_DURATION_MS;
+                while (twtStats.get() == null && now < deadline) {
+                    mLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+            assertNotNull("TwtSession#getStats() timed out !", twtStats.get());
+            assertTrue(twtStats.get().getInt(TwtSession.TWT_STATS_KEY_INT_AVERAGE_TX_PACKET_COUNT)
+                    >= 0);
+            assertTrue(twtStats.get().getInt(TwtSession.TWT_STATS_KEY_INT_AVERAGE_RX_PACKET_COUNT)
+                    >= 0);
+            assertTrue(twtStats.get().getInt(TwtSession.TWT_STATS_KEY_INT_AVERAGE_TX_PACKET_SIZE)
+                    >= 0);
+            assertTrue(twtStats.get().getInt(TwtSession.TWT_STATS_KEY_INT_AVERAGE_RX_PACKET_SIZE)
+                    >= 0);
+            assertTrue(
+                    twtStats.get().getInt(TwtSession.TWT_STATS_KEY_INT_AVERAGE_EOSP_DURATION_MICROS)
+                            >= 0);
+            assertTrue(twtStats.get().getInt(TwtSession.TWT_STATS_KEY_INT_EOSP_COUNT) >= 0);
+
+            // Verify TWT session teardown
+            testTwtCallback.mTwtSession.get().teardown();
+            synchronized (mLock) {
+                now = System.currentTimeMillis();
+                deadline = now + TEST_WAIT_DURATION_MS;
+                while (testTwtCallback.mTwtTeardownReasonCode.get() == -1 && now < deadline) {
+                    mLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+            assertNotEquals("TwtSession#teardown() timed out !", -1,
+                    testTwtCallback.mTwtTeardownReasonCode.get());
+            assertTrue(testTwtCallback.mTwtTeardownReasonCode.get()
+                    == TwtCallback.TWT_REASON_CODE_LOCALLY_REQUESTED);
+        } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
     }

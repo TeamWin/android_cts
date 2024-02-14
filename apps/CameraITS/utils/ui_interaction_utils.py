@@ -36,14 +36,16 @@ QUICK_SET_FLIP_CAMERA_RESOURCE_ID = 'QuickSetFlipCamera'
 UI_DESCRIPTION_BACK_CAMERA = 'Back Camera'
 UI_DESCRIPTION_FRONT_CAMERA = 'Front Camera'
 UI_OBJECT_WAIT_TIME_SECONDS = datetime.timedelta(seconds=3)
+VIEWFINDER_NOT_VISIBLE_PREFIX = 'viewfinder_not_visible'
+VIEWFINDER_VISIBLE_PREFIX = 'viewfinder_visible'
 
 
 def _find_ui_object_else_click(object_to_await, object_to_click):
   """Waits for a UI object to be visible. If not, clicks another UI object.
 
   Args:
-    object_to_await: A snippet-uiautomator Selector object to be awaited.
-    object_to_click: A snippet-uiautomator Selector object to be clicked.
+    object_to_await: A snippet-uiautomator selector object to be awaited.
+    object_to_click: A snippet-uiautomator selector object to be clicked.
   """
   if not object_to_await.wait.exists(UI_OBJECT_WAIT_TIME_SECONDS):
     object_to_click.click()
@@ -53,7 +55,7 @@ def verify_ui_object_visible(ui_object, call_on_fail=None):
   """Verifies that a UI object is visible.
 
   Args:
-    ui_object: A snippet-uiautomator Selector object.
+    ui_object: A snippet-uiautomator selector object.
     call_on_fail: [Optional] Callable; method to call on failure.
   """
   ui_object_visible = ui_object.wait.exists(UI_OBJECT_WAIT_TIME_SECONDS)
@@ -87,10 +89,10 @@ def open_jca_viewfinder(dut, log_path):
       res=CAPTURE_BUTTON_RESOURCE_ID).wait.exists(
           UI_OBJECT_WAIT_TIME_SECONDS)
   if not jca_capture_button_visible:
-    dut.take_screenshot(log_path, prefix='viewfinder_not_visible')
+    dut.take_screenshot(log_path, prefix=VIEWFINDER_NOT_VISIBLE_PREFIX)
     logging.debug('Current UI dump: %s', dut.ui.dump())
     raise AssertionError('JCA was not started successfully!')
-  dut.take_screenshot(log_path, prefix='viewfinder_visible')
+  dut.take_screenshot(log_path, prefix=VIEWFINDER_VISIBLE_PREFIX)
 
 
 def switch_jca_camera(dut, log_path, facing):

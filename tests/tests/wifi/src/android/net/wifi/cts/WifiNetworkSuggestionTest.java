@@ -1344,7 +1344,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
         assertWithMessage("Need at least one saved network").that(
                 savedNetworks.isEmpty()).isFalse();
         WifiConfiguration wifi7Network = TestHelper.findFirstAvailableSavedNetwork(sWifiManager,
-                savedNetworks, ScanResult.WIFI_STANDARD_11BE);
+                savedNetworks, TestHelper.AP_CAPABILITY_BIT_WIFI7);
         // TODO: b/322011012
         assumeTrue("Unable to locate Wi-Fi 7 networks in range.\n", wifi7Network != null);
         WifiNetworkSuggestion suggestion =
@@ -1375,7 +1375,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
         assertWithMessage("Need at least one saved network").that(
                 savedNetworks.isEmpty()).isFalse();
         WifiConfiguration wifi7Network = TestHelper.findFirstAvailableSavedNetwork(sWifiManager,
-                savedNetworks, ScanResult.WIFI_STANDARD_11BE);
+                savedNetworks, TestHelper.AP_CAPABILITY_BIT_WIFI7);
         // TODO: b/322011012
         assumeTrue("Unable to locate Wi-Fi 7 networks in range.\n", wifi7Network != null);
         WifiNetworkSuggestion suggestion =
@@ -1406,7 +1406,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
         assertWithMessage("Need at least one saved network").that(
                 savedNetworks.isEmpty()).isFalse();
         WifiConfiguration wifi7Network = TestHelper.findFirstAvailableSavedNetwork(sWifiManager,
-                savedNetworks, ScanResult.WIFI_STANDARD_11BE);
+                savedNetworks, TestHelper.AP_CAPABILITY_BIT_WIFI7);
         // TODO: b/322011012
         assumeTrue("Unable to locate Wi-Fi 7 networks in range.\n", wifi7Network != null);
         WifiNetworkSuggestion suggestion =

@@ -51,6 +51,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
+import android.app.NotificationManager.CallNotificationEventListener;
 import android.app.PendingIntent;
 import android.app.compat.CompatChanges;
 import android.app.role.RoleManager;
@@ -3214,6 +3215,181 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 "testFlagUserInitiatedJobNeedsRealUij", 1, SEARCH_TYPE.POSTED);
 
         assertFalse(sbn.getNotification().isUserInitiatedJob());
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.service.notification.Flags.FLAG_CALLSTYLE_CALLBACK_API)
+    public void testCallNotificationListener_registerCallback_noPermission() throws Exception {
+        try {
+            PermissionUtils.revokePermission(mContext.getPackageName(),
+                    android.Manifest.permission.INTERACT_ACROSS_USERS);
+            PermissionUtils.revokePermission(mContext.getPackageName(),
+                    android.Manifest.permission.ACCESS_NOTIFICATIONS);
+
+            mNotificationManager.registerCallNotificationEventListener(mContext.getPackageName(),
+                    UserHandle.SYSTEM, mContext.getMainExecutor(),
+                    new CallNotificationEventListener() {
+                    @Override
+                    public void onCallNotificationPosted(String packageName, UserHandle user) {
+                    }
+                    @Override
+                    public void onCallNotificationRemoved(String packageName, UserHandle user) {
+                    }
+                });
+            fail("registerCallNotificationListener should not succeed - privileged call");
+        } catch (SecurityException e) {
+            // Expected SecurityException
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.service.notification.Flags.FLAG_CALLSTYLE_CALLBACK_API)
+    public void testCallNotificationListener_registerCallback_withPermission()
+            throws Exception {
+        try {
+            PermissionUtils.grantPermission(mContext.getPackageName(),
+                    android.Manifest.permission.INTERACT_ACROSS_USERS);
+            PermissionUtils.setAppOp(mContext.getPackageName(),
+                    android.Manifest.permission.ACCESS_NOTIFICATIONS, MODE_ALLOWED);
+
+            mNotificationManager.registerCallNotificationEventListener(mContext.getPackageName(),
+                    UserHandle.SYSTEM, mContext.getMainExecutor(),
+                    new CallNotificationEventListener() {
+                        @Override
+                        public void onCallNotificationPosted(@NonNull String packageName,
+                                UserHandle user) {
+                        }
+                        @Override
+                        public void onCallNotificationRemoved(@NonNull String packageName,
+                                UserHandle user) {
+                        }
+                    });
+        } catch (SecurityException e) {
+            fail("registerCallNotificationListener should succeed " + e);
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.service.notification.Flags.FLAG_CALLSTYLE_CALLBACK_API)
+    public void testCallNotificationListener_callstyleNotificationPosted() throws Exception {
+        mNotificationManager.cancelAll();
+        final Semaphore semaphore = new Semaphore(0);
+        try {
+            mNotificationManager.registerCallNotificationEventListener(mContext.getPackageName(),
+                    UserHandle.CURRENT, mContext.getMainExecutor(),
+                    new CallNotificationEventListener() {
+                    @Override
+                    public void onCallNotificationPosted(String packageName, UserHandle userH) {
+                        semaphore.release();
+                    }
+                    @Override
+                    public void onCallNotificationRemoved(String packageName, UserHandle user) {
+                        semaphore.release();
+                    }
+                });
+        } catch (SecurityException e) {
+            fail("registerCallNotificationListener should succeed " + e);
+        }
+
+        // Post a CallStyle notification
+        final int id = 4242;
+        mNotificationManager.notify(id, getCallStyleNotification(id)
+                .setFullScreenIntent(getPendingIntent(), false).build());
+
+        // Check that onCallNotificationPosted is called
+        try {
+            if (!semaphore.tryAcquire(5, TimeUnit.SECONDS)) {
+                fail("onCallNotificationPosted notification callback failed");
+            }
+        } catch (InterruptedException e) {
+            fail("notification callback failed " + e);
+        }
+
+        // Check that onCallNotificationRemoved is called
+        semaphore.release();
+        mNotificationManager.cancel(id);
+        try {
+            if (!semaphore.tryAcquire(5, TimeUnit.SECONDS)) {
+                fail("onCallNotificationRemoved notification callback failed");
+            }
+        } catch (InterruptedException e) {
+            fail("notification callback failed " + e);
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.service.notification.Flags.FLAG_CALLSTYLE_CALLBACK_API)
+    public void testCallNotificationListener_nonCallStyleNotificationPosted()
+            throws Exception {
+        final Semaphore semaphore = new Semaphore(0);
+        try {
+            mNotificationManager.registerCallNotificationEventListener(mContext.getPackageName(),
+                    UserHandle.CURRENT, mContext.getMainExecutor(),
+                    new CallNotificationEventListener() {
+                    @Override
+                        public void onCallNotificationPosted(String packageName, UserHandle user) {
+                            semaphore.release();
+                        }
+                        @Override
+                        public void onCallNotificationRemoved(String packageName, UserHandle user) {
+                        }
+                    });
+        } catch (SecurityException e) {
+            fail("registerCallNotificationListener should succeed " + e);
+        }
+
+        // Post a non-CallStyle (conversation) notification
+        final int id = 4242;
+        mNotificationManager.notify(id, getConversationNotification().build());
+
+        // Check that CallNotificationListener is not called
+        try {
+            if (semaphore.tryAcquire(5, TimeUnit.SECONDS)) {
+                fail("notification callback should fail!");
+            }
+        } catch (InterruptedException e) {
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.service.notification.Flags.FLAG_CALLSTYLE_CALLBACK_API)
+    public void testCallNotificationListener_unregisterListener() throws Exception {
+        final Semaphore semaphore = new Semaphore(0);
+        final CallNotificationEventListener listener = new CallNotificationEventListener() {
+                @Override
+                public void onCallNotificationPosted(String packageName, UserHandle user) {
+                    semaphore.release();
+                }
+                @Override
+                public void onCallNotificationRemoved(String packageName, UserHandle user) {
+                }
+        };
+
+        try {
+            mNotificationManager.registerCallNotificationEventListener(mContext.getPackageName(),
+                    UserHandle.CURRENT, mContext.getMainExecutor(), listener);
+        } catch (SecurityException e) {
+            fail("registerCallNotificationListener should succeed " + e);
+        }
+
+        try {
+            mNotificationManager.unregisterCallNotificationEventListener(listener);
+        } catch (SecurityException e) {
+            fail("unregisterCallNotificationListener should succeed " + e);
+        }
+
+        // Post a CallStyle notification
+        final int id = 4242;
+        mNotificationManager.notify(id, getCallStyleNotification(id)
+                .setFullScreenIntent(getPendingIntent(), false).build());
+
+        // Check that onCallNotificationPosted is not called
+        try {
+            if (semaphore.tryAcquire(5, TimeUnit.SECONDS)) {
+                fail("notification callback should fail!");
+            }
+        } catch (InterruptedException e) {
+        }
     }
 
     private static class EventCallback extends Handler {

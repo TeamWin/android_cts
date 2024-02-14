@@ -364,6 +364,9 @@ public class MediaMetricsAtomHostSideTests {
             EditingEndedEvent e =
                     new EditingEndedEvent.Builder(EditingEndedEvent.FINAL_STATE_ERROR)
                             .setTimeSinceCreatedMillis(17630000L)
+                            .setFinalProgressPercent(10f)
+                            .setExporterName("some.unknown.library:1.0-alpha01")
+                            .setMuxerName("androidx.media3:media3-muxer:1.2.1")
                             .setErrorCode(PlaybackErrorEvent.ERROR_RUNTIME)
                             .setMetricsBundle(new Bundle())
                             .build();
@@ -431,7 +434,10 @@ public class MediaMetricsAtomHostSideTests {
                             .build();
             EditingEndedEvent e =
                     new EditingEndedEvent.Builder(EditingEndedEvent.FINAL_STATE_SUCCEEDED)
+                            .setFinalProgressPercent(100f)
                             .setTimeSinceCreatedMillis(2_000)
+                            .setExporterName("androidx.media3:media3-transformer:1.3.0-beta01")
+                            .setMuxerName("androidx.media3:media3-muxer:1.3.0-beta01")
                             .addOperationType(EditingEndedEvent.OPERATION_TYPE_VIDEO_TRANSCODE)
                             .addOperationType(EditingEndedEvent.OPERATION_TYPE_AUDIO_TRANSMUX)
                             .addOperationType(EditingEndedEvent.OPERATION_TYPE_AUDIO_EDIT)

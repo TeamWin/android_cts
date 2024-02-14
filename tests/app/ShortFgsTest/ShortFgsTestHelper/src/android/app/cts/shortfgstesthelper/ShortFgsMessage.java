@@ -102,7 +102,7 @@ public class ShortFgsMessage implements Parcelable {
     private String mExpectedExceptionClass;
 
     @Nullable
-    private String mActualExceptionClasss;
+    private String mActualExceptionClass;
 
     @Nullable
     private String mActualExceptionMessage;
@@ -130,7 +130,7 @@ public class ShortFgsMessage implements Parcelable {
     }
 
     public void setException(Throwable e) {
-        mActualExceptionClasss = e.getClass().getName();
+        mActualExceptionClass = e.getClass().getName();
         mActualExceptionMessage = e.getMessage();
 
         try (StringWriter sw = new StringWriter();
@@ -180,7 +180,7 @@ public class ShortFgsMessage implements Parcelable {
             boolean doFinishActivity,
             boolean callGetTestInfo,
             @Nullable String expectedExceptionClass,
-            @Nullable String actualExceptionClasss,
+            @Nullable String actualExceptionClass,
             @Nullable String actualExceptionMessage,
             long lastTestStartUptime,
             long lastTestEndUptime,
@@ -205,7 +205,7 @@ public class ShortFgsMessage implements Parcelable {
         this.mDoFinishActivity = doFinishActivity;
         this.mCallGetTestInfo = callGetTestInfo;
         this.mExpectedExceptionClass = expectedExceptionClass;
-        this.mActualExceptionClasss = actualExceptionClasss;
+        this.mActualExceptionClass = actualExceptionClass;
         this.mActualExceptionMessage = actualExceptionMessage;
         this.mLastTestStartUptime = lastTestStartUptime;
         this.mLastTestEndUptime = lastTestEndUptime;
@@ -345,7 +345,7 @@ public class ShortFgsMessage implements Parcelable {
 
     @DataClass.Generated.Member
     public @Nullable String getActualExceptionClasss() {
-        return mActualExceptionClasss;
+        return mActualExceptionClass;
     }
 
     @DataClass.Generated.Member
@@ -524,7 +524,7 @@ public class ShortFgsMessage implements Parcelable {
 
     @DataClass.Generated.Member
     public @NonNull ShortFgsMessage setActualExceptionClasss(@NonNull String value) {
-        mActualExceptionClasss = value;
+        mActualExceptionClass = value;
         return this;
     }
 
@@ -582,7 +582,7 @@ public class ShortFgsMessage implements Parcelable {
                 "doFinishActivity = " + mDoFinishActivity + ", " +
                 "callGetTestInfo = " + mCallGetTestInfo + ", " +
                 "expectedExceptionClass = " + mExpectedExceptionClass + ", " +
-                "actualExceptionClasss = " + mActualExceptionClasss + ", " +
+                "actualExceptionClass = " + mActualExceptionClass + ", " +
                 "actualExceptionMessage = " + mActualExceptionMessage + ", " +
                 "lastTestStartUptime = " + mLastTestStartUptime + ", " +
                 "lastTestEndUptime = " + mLastTestEndUptime + ", " +
@@ -613,7 +613,7 @@ public class ShortFgsMessage implements Parcelable {
         if (mComponentName != null) flg |= 0x40;
         if (mMethodName != null) flg |= 0x80;
         if (mExpectedExceptionClass != null) flg |= 0x80000;
-        if (mActualExceptionClasss != null) flg |= 0x100000;
+        if (mActualExceptionClass != null) flg |= 0x100000;
         if (mActualExceptionMessage != null) flg |= 0x200000;
         dest.writeLong(flg);
         dest.writeLong(mTimestamp);
@@ -624,7 +624,7 @@ public class ShortFgsMessage implements Parcelable {
         if (mComponentName != null) dest.writeTypedObject(mComponentName, flags);
         if (mMethodName != null) dest.writeString(mMethodName);
         if (mExpectedExceptionClass != null) dest.writeString(mExpectedExceptionClass);
-        if (mActualExceptionClasss != null) dest.writeString(mActualExceptionClasss);
+        if (mActualExceptionClass != null) dest.writeString(mActualExceptionClass);
         if (mActualExceptionMessage != null) dest.writeString(mActualExceptionMessage);
         dest.writeLong(mLastTestStartUptime);
         dest.writeLong(mLastTestEndUptime);
@@ -663,7 +663,7 @@ public class ShortFgsMessage implements Parcelable {
         ComponentName componentName = (flg & 0x40) == 0 ? null : (ComponentName) in.readTypedObject(ComponentName.CREATOR);
         String methodName = (flg & 0x80) == 0 ? null : in.readString();
         String expectedExceptionClass = (flg & 0x80000) == 0 ? null : in.readString();
-        String actualExceptionClasss = (flg & 0x100000) == 0 ? null : in.readString();
+        String actualExceptionClass = (flg & 0x100000) == 0 ? null : in.readString();
         String actualExceptionMessage = (flg & 0x200000) == 0 ? null : in.readString();
         long lastTestStartUptime = in.readLong();
         long lastTestEndUptime = in.readLong();
@@ -689,7 +689,7 @@ public class ShortFgsMessage implements Parcelable {
         this.mDoFinishActivity = doFinishActivity;
         this.mCallGetTestInfo = callGetTestInfo;
         this.mExpectedExceptionClass = expectedExceptionClass;
-        this.mActualExceptionClasss = actualExceptionClasss;
+        this.mActualExceptionClass = actualExceptionClass;
         this.mActualExceptionMessage = actualExceptionMessage;
         this.mLastTestStartUptime = lastTestStartUptime;
         this.mLastTestEndUptime = lastTestEndUptime;
@@ -739,7 +739,7 @@ public class ShortFgsMessage implements Parcelable {
         private boolean mDoFinishActivity;
         private boolean mCallGetTestInfo;
         private @Nullable String mExpectedExceptionClass;
-        private @Nullable String mActualExceptionClasss;
+        private @Nullable String mActualExceptionClass;
         private @Nullable String mActualExceptionMessage;
         private long mLastTestStartUptime;
         private long mLastTestEndUptime;
@@ -797,7 +797,7 @@ public class ShortFgsMessage implements Parcelable {
                 boolean doFinishActivity,
                 boolean callGetTestInfo,
                 @Nullable String expectedExceptionClass,
-                @Nullable String actualExceptionClasss,
+                @Nullable String actualExceptionClass,
                 @Nullable String actualExceptionMessage,
                 long lastTestStartUptime,
                 long lastTestEndUptime) {
@@ -821,7 +821,7 @@ public class ShortFgsMessage implements Parcelable {
             mDoFinishActivity = doFinishActivity;
             mCallGetTestInfo = callGetTestInfo;
             mExpectedExceptionClass = expectedExceptionClass;
-            mActualExceptionClasss = actualExceptionClasss;
+            mActualExceptionClass = actualExceptionClass;
             mActualExceptionMessage = actualExceptionMessage;
             mLastTestStartUptime = lastTestStartUptime;
             mLastTestEndUptime = lastTestEndUptime;
@@ -1028,7 +1028,7 @@ public class ShortFgsMessage implements Parcelable {
         public @NonNull Builder setActualExceptionClasss(@NonNull String value) {
             checkNotUsed();
             mBuilderFieldsSet |= 0x100000;
-            mActualExceptionClasss = value;
+            mActualExceptionClass = value;
             return this;
         }
 
@@ -1096,7 +1096,7 @@ public class ShortFgsMessage implements Parcelable {
                     mDoFinishActivity,
                     mCallGetTestInfo,
                     mExpectedExceptionClass,
-                    mActualExceptionClasss,
+                    mActualExceptionClass,
                     mActualExceptionMessage,
                     mLastTestStartUptime,
                     mLastTestEndUptime,

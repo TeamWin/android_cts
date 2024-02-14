@@ -49,6 +49,7 @@ class PreVerifiedDomainsTests : DomainVerificationIntentTestBase(DOMAIN_1) {
     @RequiresFlagsEnabled(Flags.FLAG_SET_PRE_VERIFIED_DOMAINS)
     @Test
     fun launchPreVerified() {
+        uninstallTestApp(DECLARING_PKG_NAME_1)
         installAppWithPreVerifiedDomains()
         val hostToStateMap = manager.getDomainVerificationUserState(DECLARING_PKG_NAME_1)
                 ?.hostToStateMap
@@ -64,6 +65,10 @@ class PreVerifiedDomainsTests : DomainVerificationIntentTestBase(DOMAIN_1) {
         setAppLinks(DECLARING_PKG_NAME_1, false, DOMAIN_1, DOMAIN_2)
         // The first domain now resolves to browser
         assertResolvesTo(browsers)
+    }
+
+    private fun uninstallTestApp(packageName: String) {
+        SystemUtil.runShellCommand("pm uninstall $packageName")
     }
 
     private fun installAppWithPreVerifiedDomains() {

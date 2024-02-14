@@ -35,6 +35,7 @@ import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraDevice.CameraDeviceSetup;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
@@ -89,7 +90,7 @@ public final class FeatureCombinationTest extends Camera2AndroidTestCase {
      * resolutions smaller than 1080P.
      */
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_FEATURE_COMBINATION_QUERY)
+    @RequiresFlagsEnabled({Flags.FLAG_FEATURE_COMBINATION_QUERY, Flags.FLAG_CAMERA_DEVICE_SETUP})
     public void testIsSessionConfigurationSupported() throws Exception {
         // Note: This must match the required stream combinations defined in
         // CameraCharacteristcs#INFO_SESSION_CONFIGURATION_QUERY_VERSION.
@@ -147,6 +148,7 @@ public final class FeatureCombinationTest extends Camera2AndroidTestCase {
             }
 
             openDevice(id);
+            CameraDeviceSetup cameraDeviceSetup = mCameraManager.getCameraDeviceSetup(id);
 
             try {
                 for (int[] c : legacyCombinations) {
@@ -160,11 +162,14 @@ public final class FeatureCombinationTest extends Camera2AndroidTestCase {
 
                     if (testAspectRatios) {
                         // Test 16:9 version of the combination
-                        testIsSessionConfigurationSupported(id, AspectRatio.AR_16_9, c);
+                        testIsSessionConfigurationSupported(
+                                cameraDeviceSetup, AspectRatio.AR_16_9, c);
                         // Test 4:3 version of the combination
-                        testIsSessionConfigurationSupported(id, AspectRatio.AR_4_3, c);
+                        testIsSessionConfigurationSupported(
+                                cameraDeviceSetup, AspectRatio.AR_4_3, c);
                     } else {
-                        testIsSessionConfigurationSupported(id, AspectRatio.ARBITRARY, c);
+                        testIsSessionConfigurationSupported(
+                                cameraDeviceSetup, AspectRatio.ARBITRARY, c);
                     }
                 }
             } finally {
@@ -173,12 +178,12 @@ public final class FeatureCombinationTest extends Camera2AndroidTestCase {
         }
     }
 
-    private void testIsSessionConfigurationSupported(String cameraId,
+    private void testIsSessionConfigurationSupported(CameraDeviceSetup cameraDeviceSetup,
             AspectRatio aspectRatio, int[] combination) throws Exception {
         final int kNumBuffers = 5;
         final int kWarmupFrames = 2;
         MaxStreamSizes maxStreamSizes = new MaxStreamSizes(mStaticInfo,
-                cameraId, mContext, aspectRatio);
+                cameraDeviceSetup.getId(), mContext, aspectRatio);
 
         Set<Long> dynamicRangeProfiles = mStaticInfo.getAvailableDynamicRangeProfilesChecked();
         int[] videoStabilizationModes =
@@ -230,17 +235,17 @@ public final class FeatureCombinationTest extends Camera2AndroidTestCase {
 
                     boolean haveSession = false;
                     try {
-                        CaptureRequest.Builder builder = mCameraManager.createCaptureRequest(
-                                cameraId, CameraDevice.TEMPLATE_PREVIEW);
+                        CaptureRequest.Builder builder = cameraDeviceSetup.createCaptureRequest(
+                                CameraDevice.TEMPLATE_PREVIEW);
                         builder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
                                 stabilizationMode);
                         builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
                         CaptureRequest request = builder.build();
 
                         boolean sessionConfigSupport =
-                                isSessionConfigWithParamsSupported(mCameraManager,
-                                        cameraId, mHandler, outputConfigs,
-                                        SessionConfiguration.SESSION_REGULAR, request);
+                                isSessionConfigWithParamsSupported(cameraDeviceSetup, mHandler,
+                                        outputConfigs, SessionConfiguration.SESSION_REGULAR,
+                                        request);
                         if (!sessionConfigSupport) {
                             Log.i(TAG, String.format("Session configuration from combination [%s],"
                                     + " not supported", combinationStr));
@@ -363,7 +368,7 @@ public final class FeatureCombinationTest extends Camera2AndroidTestCase {
                         try {
                             Log.i(TAG, String.format(
                                     "Done with camera %s, config %s, closing session",
-                                    cameraId, combinationStr));
+                                    cameraDeviceSetup.getId(), combinationStr));
                             stopCapture(/*fast*/false);
                         } catch (Throwable e) {
                             mCollector.addMessage(String.format(

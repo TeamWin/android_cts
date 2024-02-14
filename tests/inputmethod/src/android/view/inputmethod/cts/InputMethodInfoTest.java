@@ -99,6 +99,7 @@ public class InputMethodInfoTest {
     private boolean mSubtypeOverridesImplicitlyEnabledSubtype;
     private int mSubtypeId;
     private boolean mSupportsStylusHandwriting;
+    private boolean mSupportsConnectionlessStylusHandwriting;
     private String mSettingsActivityActionForStylusHandwriting;
     private InputMethodSubtype mInputMethodSubtype;
 
@@ -112,9 +113,11 @@ public class InputMethodInfoTest {
         mSettingsActivity = "android.view.inputmethod.cts.InputMethodSettingsActivityStub";
         mLanguageSettingsActivity = "MockInputMethodLanguageSettingsActivity";
         mSupportsStylusHandwriting = true;
+        mSupportsConnectionlessStylusHandwriting = true;
         mSettingsActivityActionForStylusHandwriting = mSettingsActivity;
         mInputMethodInfo = new InputMethodInfo(mPackageName, mClassName, mLabel, mSettingsActivity,
                 mLanguageSettingsActivity, mSupportsStylusHandwriting,
+                mSupportsConnectionlessStylusHandwriting,
                 mSettingsActivityActionForStylusHandwriting);
 
         mSubtypeNameResId = 0;
@@ -191,6 +194,8 @@ public class InputMethodInfoTest {
         assertEquals(expectedId, info.getId());
         assertEquals(mClassName, info.getServiceName());
         assertEquals(mSupportsStylusHandwriting, info.supportsStylusHandwriting());
+        assertEquals(mSupportsConnectionlessStylusHandwriting,
+                info.supportsConnectionlessStylusHandwriting());
         assertEquals(mSettingsActivityActionForStylusHandwriting,
                 info.createStylusHandwritingSettingsActivityIntent().getComponent().getClassName());
     }

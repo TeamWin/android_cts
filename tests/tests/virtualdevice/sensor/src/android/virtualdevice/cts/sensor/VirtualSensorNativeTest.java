@@ -42,14 +42,14 @@ import android.virtualdevice.cts.sensor.util.NativeSensorTestActivity;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.internal.os.BackgroundThread;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import java.util.concurrent.Executors;
 
 /** Tests for native sensor behavior for virtual devices. */
 @RunWith(AndroidJUnit4.class)
@@ -77,7 +77,7 @@ public class VirtualSensorNativeTest {
                                         TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME)
                                         .build())
                         .setVirtualSensorCallback(
-                                BackgroundThread.getExecutor(), mVirtualSensorCallback)
+                                Executors.newSingleThreadExecutor(), mVirtualSensorCallback)
                         .build());
     }
 

@@ -76,7 +76,8 @@ class SystemPaletteTest(
                 getAllAccent2Colors(context),
                 getAllAccent3Colors(context),
                 getAllNeutral1Colors(context),
-                getAllNeutral2Colors(context)
+                getAllNeutral2Colors(context),
+                getAllErrorColors(context)
         )
 
         Log.d(TAG, "whiteColor: ${getAllAccent1Colors(context).joinToString()} ")
@@ -402,6 +403,25 @@ class SystemPaletteTest(
                 R.color.system_neutral2_800,
                 R.color.system_neutral2_900,
                 R.color.system_neutral2_1000
+        )
+    }
+
+    private fun getAllErrorColors(context: Context): IntArray {
+        return getAllResourceColors(
+                context,
+                R.color.system_error_0,
+                R.color.system_error_10,
+                R.color.system_error_50,
+                R.color.system_error_100,
+                R.color.system_error_200,
+                R.color.system_error_300,
+                R.color.system_error_400,
+                R.color.system_error_500,
+                R.color.system_error_600,
+                R.color.system_error_700,
+                R.color.system_error_800,
+                R.color.system_error_900,
+                R.color.system_error_1000
         )
     }
 

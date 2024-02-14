@@ -466,7 +466,10 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
                 data.get(0)
                         .getAtom()
                         .getExtension(MediaEditingExtensionAtoms.mediaEditingEndedReported);
+        assertThat(atom.getFinalProgressPercent()).isEqualTo(-1f);
         assertThat(atom.getTimeSinceEditingCreatedMillis()).isEqualTo(-1L);
+        assertThat(atom.getExporterName()).isEqualTo("");
+        assertThat(atom.getMuxerName()).isEqualTo("");
         assertThat(atom.getFinalState().toString()).isEqualTo("SUCCEEDED");
         assertThat(atom.getErrorCode().toString()).isEqualTo("ERROR_CODE_NONE");
     }
@@ -494,7 +497,10 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
                         .getAtom()
                         .getExtension(MediaEditingExtensionAtoms.mediaEditingEndedReported);
         assertThat(atom.getTimeSinceEditingCreatedMillis()).isEqualTo(17630000L);
+        assertThat(atom.getExporterName()).isEqualTo("");
+        assertThat(atom.getMuxerName()).isEqualTo("androidx.media3:media3-muxer:1.2.1");
         assertThat(atom.getFinalState().toString()).isEqualTo("ERROR");
+        assertThat(atom.getFinalProgressPercent()).isEqualTo(10f);
         assertThat(atom.getErrorCode().toString()).isEqualTo("ERROR_CODE_FAILED_RUNTIME_CHECK");
     }
 
@@ -521,7 +527,11 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
                         .getAtom()
                         .getExtension(MediaEditingExtensionAtoms.mediaEditingEndedReported);
         assertThat(atom.getTimeSinceEditingCreatedMillis()).isEqualTo(2_000L);
+        assertThat(atom.getExporterName())
+                .isEqualTo("androidx.media3:media3-transformer:1.3.0-beta01");
+        assertThat(atom.getMuxerName()).isEqualTo("androidx.media3:media3-muxer:1.3.0-beta01");
         assertThat(atom.getFinalState().toString()).isEqualTo("SUCCEEDED");
+        assertThat(atom.getFinalProgressPercent()).isEqualTo(100f);
         assertThat(atom.getErrorCode().toString()).isEqualTo("ERROR_CODE_NONE");
         assertThat(atom.getInputMediaItemCount()).isEqualTo(1);
         assertThat(atom.getInputMediaItem1SourceType().toString()).isEqualTo("SOURCE_TYPE_CAMERA");

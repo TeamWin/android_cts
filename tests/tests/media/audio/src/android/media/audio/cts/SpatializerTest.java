@@ -16,15 +16,19 @@
 
 package android.media.audio.cts;
 
+import static android.media.audio.Flags.FLAG_FEATURE_SPATIAL_AUDIO_HEADTRACKING_LOW_LATENCY;
+
 import static org.junit.Assert.assertThrows;
 
 import android.annotation.NonNull;
+import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.AudioDeviceAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.Spatializer;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
@@ -123,6 +127,18 @@ public class SpatializerTest extends CtsAndroidTestCase {
                 compatDevices.contains(device));
 
         getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+    }
+
+    @RequiresFlagsEnabled(FLAG_FEATURE_SPATIAL_AUDIO_HEADTRACKING_LOW_LATENCY)
+    public void testLowLatencyHeadtrackingFeature() throws Exception {
+        Spatializer spat = mAudioManager.getSpatializer();
+        if (spat.getImmersiveAudioLevel() != Spatializer.SPATIALIZER_IMMERSIVE_LEVEL_NONE) {
+            return;
+        }
+        assertFalse("Cannot have SPATIALIZER_IMMERSIVE_LEVEL_NONE with feature "
+                + "FEATURE_AUDIO_SPATIAL_HEADTRACKING_LOW_LATENCY declared",
+                getContext().getPackageManager().hasSystemFeature(
+                        PackageManager.FEATURE_AUDIO_SPATIAL_HEADTRACKING_LOW_LATENCY));
     }
 
     public void testHeadTrackingListener() throws Exception {

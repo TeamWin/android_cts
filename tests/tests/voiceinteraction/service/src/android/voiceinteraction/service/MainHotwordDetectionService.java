@@ -109,9 +109,6 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
 
     private boolean mCheckAudioDataIsNotZero;
 
-    private boolean mSendTrainingData;
-    private boolean mSendTrainingDataAfterDetect;
-
     @Override
     public void onCreate() {
         super.onCreate();
@@ -124,12 +121,6 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     public void onDetect(@NonNull AlwaysOnHotwordDetector.EventPayload eventPayload,
             long timeoutMillis, @NonNull Callback callback) {
         Log.d(TAG, "onDetect for DSP source");
-
-        if (mSendTrainingData) {
-            Log.d(TAG, "Sending training data");
-            callback.onTrainingData(Utils.HOTWORD_TRAINING_DATA);
-            return;
-        }
 
         if (mIsNoNeedActionDuringDetection) {
             mIsNoNeedActionDuringDetection = false;
@@ -181,16 +172,10 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                                 callback.onDetected(Utils.AUDIO_EGRESS_DETECTED_RESULT);
                             }
                         } else {
-                            Log.d(TAG, "Sending on detected");
                             callback.onDetected(hotwordDetectedResult);
                         }
                     } catch (IllegalArgumentException e) {
                         callback.onDetected(DETECTED_RESULT);
-                    }
-
-                    if (mSendTrainingDataAfterDetect) {
-                        Log.i(TAG, "Sending training data after detect");
-                        callback.onTrainingData(Utils.HOTWORD_TRAINING_DATA);
                     }
                 }, mDetectionDelayMs);
             }
@@ -216,13 +201,6 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             Log.w(TAG, "callback is null");
             return;
         }
-
-        if (mSendTrainingData) {
-            Log.d(TAG, "Sending training data.");
-            callback.onTrainingData(Utils.HOTWORD_TRAINING_DATA);
-            return;
-        }
-
         if (audioStream == null) {
             Log.w(TAG, "audioStream is null");
             return;
@@ -270,11 +248,6 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                     } else {
                         callback.onDetected(DETECTED_RESULT);
                     }
-
-                    if (mSendTrainingDataAfterDetect) {
-                        Log.d(TAG, "Sending training data after detect");
-                        callback.onTrainingData(Utils.HOTWORD_TRAINING_DATA);
-                    }
                 };
 
                 synchronized (mLock) {
@@ -293,12 +266,6 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     @Override
     public void onDetect(@NonNull Callback callback) {
         Log.d(TAG, "onDetect for Mic source");
-
-        if (mSendTrainingData) {
-            Log.d(TAG, "Sending training data");
-            callback.onTrainingData(Utils.HOTWORD_TRAINING_DATA);
-            return;
-        }
 
         synchronized (mLock) {
             if (mDetectionJob != null) {
@@ -329,11 +296,6 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                         }
                     } else {
                         callback.onDetected(DETECTED_RESULT_FOR_MIC_FAILURE);
-                    }
-
-                    if (mSendTrainingDataAfterDetect) {
-                        Log.d(TAG, "Sending training data after detect");
-                        callback.onTrainingData(Utils.HOTWORD_TRAINING_DATA);
                     }
                 };
                 mHandler.postDelayed(mDetectionJob, mDetectionDelayMs);
@@ -460,19 +422,6 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                     == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_CAN_READ_AUDIO_DATA_IS_NOT_ZERO) {
                 Log.d(TAG, "options : Test can read audio, and data is not zero");
                 mCheckAudioDataIsNotZero = true;
-                return;
-            }
-            if (options.getInt(Utils.KEY_TEST_SCENARIO, -1)
-                    == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_TRAINING_DATA) {
-                Log.d(TAG, "options: Test send training data on trigger or start.");
-                mSendTrainingData = true;
-                return;
-            }
-            if (options.getInt(Utils.KEY_TEST_SCENARIO, -1)
-                    == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_TRAINING_DATA_AFTER_DETECT) {
-                Log.d(TAG, "options: Test send training data after detection on trigger or"
-                        + " start.");
-                mSendTrainingDataAfterDetect = true;
                 return;
             }
 

@@ -3532,7 +3532,10 @@ public class ImsServiceTest {
         // We should not have voice availability here, we notified the framework earlier.
         MmTelFeature.MmTelCapabilities capCb = waitForResult(mQueue);
         assertFalse(capCb.isCapable(MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_CALL_COMPOSER));
-
+        if (com.android.server.telecom.flags.Flags.businessCallComposer()) {
+            assertFalse(capCb.isCapable(
+                    MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_CALL_COMPOSER_BUSINESS_ONLY));
+        }
         // Now enable call composer availability
         sServiceConnector.getCarrierService().getMmTelFeature()
                 .notifyCapabilitiesStatusChanged(new MmTelFeature.MmTelCapabilities(
@@ -3540,16 +3543,42 @@ public class ImsServiceTest {
         capCb = waitForResult(mQueue);
         assertNotNull(capCb);
         assertTrue(capCb.isCapable(MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_CALL_COMPOSER));
+        if (com.android.server.telecom.flags.Flags.businessCallComposer()) {
+            assertFalse(capCb.isCapable(
+                    MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_CALL_COMPOSER_BUSINESS_ONLY));
+        }
 
         try {
             automan.adoptShellPermissionIdentity();
             assertTrue(ImsUtils.retryUntilTrue(() -> mmTelManager.isAvailable(
                     MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_CALL_COMPOSER,
                     IMS_REGI_TECH_LTE)));
-
-            mmTelManager.unregisterMmTelCapabilityCallback(callback);
         } finally {
             automan.dropShellPermissionIdentity();
+        }
+
+        if (com.android.server.telecom.flags.Flags.businessCallComposer()) {
+            // Now enable call composer availability
+            sServiceConnector.getCarrierService().getMmTelFeature()
+                    .notifyCapabilitiesStatusChanged(new MmTelFeature.MmTelCapabilities(
+                            MmTelFeature.MmTelCapabilities
+                                    .CAPABILITY_TYPE_CALL_COMPOSER_BUSINESS_ONLY));
+            capCb = waitForResult(mQueue);
+            assertNotNull(capCb);
+            assertTrue(capCb.isCapable(MmTelFeature.MmTelCapabilities
+                    .CAPABILITY_TYPE_CALL_COMPOSER_BUSINESS_ONLY));
+            assertFalse(capCb.isCapable(MmTelFeature.MmTelCapabilities
+                    .CAPABILITY_TYPE_CALL_COMPOSER));
+
+            try {
+                automan.adoptShellPermissionIdentity();
+                assertTrue(ImsUtils.retryUntilTrue(() -> mmTelManager.isAvailable(
+                        MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_CALL_COMPOSER_BUSINESS_ONLY,
+                        IMS_REGI_TECH_LTE)));
+                mmTelManager.unregisterMmTelCapabilityCallback(callback);
+            } finally {
+                automan.dropShellPermissionIdentity();
+            }
         }
 
         try {

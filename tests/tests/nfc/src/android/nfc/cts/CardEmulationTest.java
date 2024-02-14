@@ -1,5 +1,9 @@
 package android.nfc.cts;
 
+import static android.nfc.cts.WalletRoleTestUtils.CTS_PACKAGE_NAME;
+import static android.nfc.cts.WalletRoleTestUtils.runWithRole;
+import static android.nfc.cts.WalletRoleTestUtils.runWithRoleNone;
+
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 import static org.junit.Assume.assumeTrue;
@@ -22,7 +26,10 @@ import android.nfc.Constants;
 import android.nfc.Flags;
 import android.nfc.INfcCardEmulation;
 import android.nfc.NfcAdapter;
-import android.nfc.cardemulation.*;
+import android.nfc.cardemulation.AidGroup;
+import android.nfc.cardemulation.ApduServiceInfo;
+import android.nfc.cardemulation.CardEmulation;
+import android.nfc.cardemulation.HostApduService;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -62,11 +69,10 @@ import java.util.List;
 public class CardEmulationTest {
     private NfcAdapter mAdapter;
 
-    private Context mContext;
-
     private static final ComponentName mService =
         new ComponentName("android.nfc.cts", "android.nfc.cts.CtsMyHostApduService");
 
+    private Context mContext;
     private INfcCardEmulation mOldService;
     @Mock private INfcCardEmulation mEmulation;
 
@@ -100,9 +106,19 @@ public class CardEmulationTest {
     @After
     public void tearDown() throws Exception {
         if (!supportsHardware()) return;
+        restoreOriginalService();
+    }
+
+    private void restoreOriginalService() throws NoSuchFieldException {
         CardEmulation instance = CardEmulation.getInstance(mAdapter);
         FieldSetter.setField(instance,
                 instance.getClass().getDeclaredField("sService"), mOldService);
+    }
+
+    private void setMockService() throws NoSuchFieldException {
+        CardEmulation instance = CardEmulation.getInstance(mAdapter);
+        FieldSetter.setField(instance, instance.getClass().getDeclaredField("sService"),
+                mEmulation);
     }
 
     @Test
@@ -371,6 +387,28 @@ public class CardEmulationTest {
     }
 
     @Test
+    @RequiresFlagsEnabled({android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP,
+            android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED})
+    public void testTypeAPollingLoopToWalletHolder() {
+        WalletRoleTestUtils.runWithRole(mContext, WalletRoleTestUtils.WALLET_HOLDER_PACKAGE_NAME,
+                () -> {
+                    NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+                    adapter.notifyHceDeactivated();
+                    ArrayList<Bundle> frames = new ArrayList<Bundle>(6);
+                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_ON));
+                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_A));
+                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_OFF));
+                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_ON));
+                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_A));
+                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_OFF));
+                    ensurePreferredService(WalletRoleTestUtils.WALLET_HOLDER_SERVICE_DESC);
+                    notifyPollingLoopAndWait(new ArrayList<Bundle>(frames),
+                            WalletRoleTestUtils.getWalletRoleHolderService().getClassName());
+                    adapter.notifyHceDeactivated();
+                });
+    }
+
+    @Test
     @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP)
     public void testTypeAPollingLoopToForeground() {
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
@@ -396,6 +434,35 @@ public class CardEmulationTest {
             adapter.notifyHceDeactivated();
         }
     }
+
+    @Test
+    @RequiresFlagsEnabled({android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP,
+            android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED})
+    public void testTypeAPollingLoopToForegroundWithWalletHolder() {
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        adapter.notifyHceDeactivated();
+        Activity activity = createAndResumeActivity();
+        final CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
+        WalletRoleTestUtils.runWithRole(mContext, WalletRoleTestUtils.WALLET_HOLDER_PACKAGE_NAME,
+                () -> {
+                    Assert.assertTrue(cardEmulation.setPreferredService(activity,
+                            new ComponentName(mContext,
+                                    CtsMyHostApduService.class)));
+                    ArrayList<Bundle> frames = new ArrayList<Bundle>(6);
+                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_ON));
+                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_A));
+                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_OFF));
+                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_ON));
+                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_A));
+                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_OFF));
+                    ensurePreferredService(CtsMyHostApduService.class);
+                    notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
+                    Assert.assertTrue(cardEmulation.unsetPreferredService(activity));
+                    activity.finish();
+                    adapter.notifyHceDeactivated();
+                });
+    }
+
     void ensurePreferredService(Class serviceClass) {
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
         final CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
@@ -404,10 +471,15 @@ public class CardEmulationTest {
                 : (serviceClass == CustomHostApduService.class
                     ? R.string.CtsCustomPaymentService : R.string.CtsBackgroundPaymentService));
         final String desc = mContext.getResources().getString(resId);
+        ensurePreferredService(desc);
+    }
 
+    void ensurePreferredService(String serviceDesc) {
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        final CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
         try {
             CommonTestUtils.waitUntil("Default service hasn't updated", 3,
-                    () -> desc.equals(
+                    () -> serviceDesc.equals(
                             cardEmulation.getDescriptionForPreferredPaymentService()));
         } catch (InterruptedException ie) { }
     }
@@ -583,6 +655,32 @@ public class CardEmulationTest {
     }
 
     @Test
+    @RequiresFlagsEnabled({android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP,
+            android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED})
+    public void testThreeWayConflictPollingLoopToForegroundWithWalletHolder() {
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        adapter.notifyHceDeactivated();
+        Activity activity = createAndResumeActivity();
+        CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
+        WalletRoleTestUtils.runWithRole(mContext, WalletRoleTestUtils.WALLET_HOLDER_PACKAGE_NAME,
+                () -> {
+                    Assert.assertTrue(cardEmulation.setPreferredService(activity,
+                            new ComponentName(mContext, CtsMyHostApduService.class)));
+                    String testName = new Object() {
+                    }.getClass().getEnclosingMethod().getName();
+                    String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
+                    ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
+                    frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
+                            HexFormat.of().parseHex(annotationStringHex)));
+                    ensurePreferredService(CtsMyHostApduService.class);
+                    notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
+                    Assert.assertTrue(cardEmulation.unsetPreferredService(activity));
+                    activity.finish();
+                    adapter.notifyHceDeactivated();
+                });
+    }
+
+    @Test
     @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP)
     public void testBackgroundForegroundConflictPollingLoopToForeground() {
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
@@ -634,6 +732,7 @@ public class CardEmulationTest {
     @Test
     @RequiresFlagsEnabled({android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP,
             Flags.FLAG_NFC_OBSERVE_MODE})
+    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
     public void testAutoTransact() {
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
         adapter.notifyHceDeactivated();
@@ -652,6 +751,34 @@ public class CardEmulationTest {
         adapter.notifyHceDeactivated();
         Assert.assertTrue(adapter.isObserveModeEnabled());
         adapter.setTransactionAllowed(true);
+    }
+
+    @Test
+    @RequiresFlagsEnabled({android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP,
+            Flags.FLAG_NFC_OBSERVE_MODE,
+            android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED})
+    public void testAutoTransact_walletRoleEnabled() throws NoSuchFieldException {
+        restoreOriginalService();
+        runWithRole(mContext, CTS_PACKAGE_NAME, () -> {
+            NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+            adapter.notifyHceDeactivated();
+            createAndResumeActivity();
+            String testName = new Object() {
+            }.getClass().getEnclosingMethod().getName();
+            String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
+            android.util.Log.i("PLF", annotationStringHex);
+            ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
+            frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
+                    HexFormat.of().parseHex(annotationStringHex)));
+            Assert.assertTrue(adapter.setTransactionAllowed(false));
+            Assert.assertTrue(adapter.isObserveModeEnabled());
+            notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
+            Assert.assertFalse(adapter.isObserveModeEnabled());
+            adapter.notifyHceDeactivated();
+            Assert.assertTrue(adapter.isObserveModeEnabled());
+            adapter.setTransactionAllowed(true);
+        });
+        setMockService();
     }
 
     static void ensureUnlocked() {
@@ -825,6 +952,205 @@ public class CardEmulationTest {
         sCurrentPollLoopReceiver = null;
     }
 
+    @RequiresFlagsEnabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
+    @Test
+    public void testAidResolutionWithRoleHolder_anotherAppHoldsForeground()
+            throws NoSuchFieldException {
+        restoreOriginalService();
+        Activity activity = createAndResumeActivity();
+        CardEmulation instance = CardEmulation.getInstance(mAdapter);
+        instance.setPreferredService(activity, WalletRoleTestUtils.getForegroundService());
+        runWithRole(mContext, WalletRoleTestUtils.WALLET_HOLDER_PACKAGE_NAME, ()-> {
+            /*
+            * Aid Mapping:
+            * Wallet Holder App: Service 1:     PAYMENT_AID_1, PAYMENT_AID_2
+            * Wallet Holder App: Service 2:     PAYMENT_AID_1, PAYMENT_AID_2
+            * Foreground App :   Only Service:  PAYMENT_AID_1
+            * Non Payment App:   Only Service:  NON_PAYMENT_AID_1
+            *
+            * Scenario:
+            * Wallet Role Holder is WalletRoleHolderApp
+            * Foreground app: ForegroundApp
+            *
+            * Expected Outcome:
+            * Both wallet role holder and the foreground app holds PAYMENT_AID_1.
+            * So the foreground app is expected to get the routing for PAYMENT_AID_1.
+            *
+            * The foreground app does not have NON_PAYMENT_AID_1. Neither does the role holder.
+            * So an app in the background (Non Payment App) gets the routing.
+            **/
+            Assert.assertTrue(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getForegroundService(),
+                    WalletRoleTestUtils.PAYMENT_AID_1));
+            Assert.assertFalse(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getForegroundService(),
+                    WalletRoleTestUtils.NON_PAYMENT_AID_1));
+            Assert.assertFalse(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getWalletRoleHolderService(),
+                    WalletRoleTestUtils.PAYMENT_AID_1));
+            Assert.assertTrue(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getNonPaymentService(),
+                    WalletRoleTestUtils.NON_PAYMENT_AID_1));
+            Assert.assertTrue(instance.unsetPreferredService(activity));
+            activity.finish();
+        });
+        setMockService();
+    }
+
+    @RequiresFlagsEnabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
+    @Test
+    public void testAidResolutionWithRoleHolder() throws NoSuchFieldException {
+        restoreOriginalService();
+        CardEmulation instance = CardEmulation.getInstance(mAdapter);
+        runWithRole(mContext, WalletRoleTestUtils.WALLET_HOLDER_PACKAGE_NAME, ()-> {
+            /*
+             * Aid Mapping:
+             * Wallet Holder App: Service 1:     PAYMENT_AID_1, PAYMENT_AID_2
+             * Wallet Holder App: Service 2:     PAYMENT_AID_1, PAYMENT_AID_2
+             * Foreground App :   Only Service:  PAYMENT_AID_1
+             * Non Payment App:   Only Service:  NON_PAYMENT_AID_1
+             *
+             * Scenario:
+             * Wallet Role Holder is WalletRoleHolderApp
+             * Foreground app: None
+             *
+             * Expected Outcome:
+             * Wallet role holder and a background app holds PAYMENT_AID_1.
+             * So the Wallet role holder app is expected to get the routing for PAYMENT_AID_1.
+             * The wallet role holder has two services holding PAYMENT_AID_1. Therefore the one
+             * that has the priority based on alphabetical sorting of their names gets the routing
+             * WalletRoleHolderService vs XWAlletRoleHolderService. WalletRoleHolderService gets it.
+             *
+             * Only the Wallet Role Holder holds PAYMENT_AID_2.
+             * So the wallet role holder app gets the routing for PAYMENT_AID_2.
+             *
+             * A background app that is not the wallet role holder has the NON_PAYMENT_AID_1.
+             * So that app gets the routing for NON_PAYMENT_AID_1.
+             **/
+            Assert.assertTrue(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getWalletRoleHolderService(),
+                    WalletRoleTestUtils.PAYMENT_AID_1));
+            Assert.assertTrue(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getWalletRoleHolderService(),
+                    WalletRoleTestUtils.PAYMENT_AID_2));
+            Assert.assertFalse(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getWalletRoleHolderXService(),
+                    WalletRoleTestUtils.PAYMENT_AID_1));
+            Assert.assertFalse(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getWalletRoleHolderXService(),
+                    WalletRoleTestUtils.PAYMENT_AID_2));
+            Assert.assertFalse(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getForegroundService(),
+                    WalletRoleTestUtils.PAYMENT_AID_1));
+            Assert.assertFalse(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getWalletRoleHolderService(),
+                    WalletRoleTestUtils.NON_PAYMENT_AID_1));
+            Assert.assertTrue(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getNonPaymentService(),
+                    WalletRoleTestUtils.NON_PAYMENT_AID_1));
+        });
+        setMockService();
+    }
+
+    @RequiresFlagsEnabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
+    @Test
+    public void testAidResolutionWithRoleHolderSetToNone() throws NoSuchFieldException {
+        restoreOriginalService();
+        CardEmulation instance = CardEmulation.getInstance(mAdapter);
+        runWithRoleNone(mContext, ()-> {
+            /*
+             * Aid Mapping:
+             * Wallet Holder App: Service 1:     PAYMENT_AID_1, PAYMENT_AID_2
+             * Wallet Holder App: Service 2:     PAYMENT_AID_1, PAYMENT_AID_2
+             * Foreground App :   Only Service:  PAYMENT_AID_1
+             * Non Payment App:   Only Service:  NON_PAYMENT_AID_1
+             *
+             * Scenario:
+             * Wallet Role Holder is Set to None
+             *
+             * Expected Outcome:
+             * Wallet role holder does not exist therefore routing is handled on the basis of
+             * supported AIDs and overlapping services.
+             *
+             * Non Payment App is the only map holding the NON_PAYMENT_AID_1 and will be set
+             * as the default service for that AID.
+             *
+             *  The rest of the apps will always need to disambig and will not be set as defaults.
+             *
+             **/
+            Assert.assertFalse(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getWalletRoleHolderService(),
+                    WalletRoleTestUtils.PAYMENT_AID_1));
+            Assert.assertFalse(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getWalletRoleHolderService(),
+                    WalletRoleTestUtils.PAYMENT_AID_2));
+            Assert.assertFalse(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getWalletRoleHolderXService(),
+                    WalletRoleTestUtils.PAYMENT_AID_1));
+            Assert.assertFalse(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getWalletRoleHolderXService(),
+                    WalletRoleTestUtils.PAYMENT_AID_2));
+            Assert.assertFalse(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getForegroundService(),
+                    WalletRoleTestUtils.PAYMENT_AID_1));
+            Assert.assertFalse(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getWalletRoleHolderService(),
+                    WalletRoleTestUtils.NON_PAYMENT_AID_1));
+            Assert.assertTrue(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getNonPaymentService(),
+                    WalletRoleTestUtils.NON_PAYMENT_AID_1));
+        });
+    }
+
+    @RequiresFlagsEnabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
+    @Test
+    public void testAidResolutionWithRoleHolder_holderDoesNotSupportAid_overLappingAids()
+            throws NoSuchFieldException {
+        restoreOriginalService();
+        CardEmulation instance = CardEmulation.getInstance(mAdapter);
+        runWithRole(mContext, WalletRoleTestUtils.NON_PAYMENT_NFC_PACKAGE_NAME, ()-> {
+            /*
+             * Aid Mapping:
+             * Wallet Holder App: Service 1:     PAYMENT_AID_1, PAYMENT_AID_2
+             * Wallet Holder App: Service 2:     PAYMENT_AID_1, PAYMENT_AID_2
+             * Foreground App :   Only Service:  PAYMENT_AID_1
+             * Non Payment App:   Only Service:  NON_PAYMENT_AID_1
+             *
+             * Scenario:
+             * Wallet Role Holder is Non Payment App
+             * Foreground app: None
+             *
+             * Expected Outcome:
+             * Wallet role holder holds NON_PAYMENT_AID_1
+             * So wallet role holders gets the routing for NON_PAYMENT_AID_1.
+             * The non wallet apps have overlapping aids and therefore no default services exist
+             * for those AIDs.
+             *
+             **/
+            Assert.assertTrue(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getNonPaymentService(),
+                    WalletRoleTestUtils.NON_PAYMENT_AID_1));
+            Assert.assertFalse(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getWalletRoleHolderService(),
+                    WalletRoleTestUtils.PAYMENT_AID_1));
+            Assert.assertFalse(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getWalletRoleHolderService(),
+                    WalletRoleTestUtils.PAYMENT_AID_2));
+            Assert.assertFalse(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getWalletRoleHolderXService(),
+                    WalletRoleTestUtils.PAYMENT_AID_2));
+            Assert.assertFalse(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getWalletRoleHolderService(),
+                    WalletRoleTestUtils.PAYMENT_AID_1));
+            Assert.assertFalse(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getForegroundService(),
+                    WalletRoleTestUtils.PAYMENT_AID_1));
+            Assert.assertFalse(instance.isDefaultServiceForAid(
+                    WalletRoleTestUtils.getForegroundService(),
+                    WalletRoleTestUtils.PAYMENT_AID_2));
+        });
+        setMockService();
+    }
 
     private Activity createAndResumeActivity() {
         ensureUnlocked();

@@ -56,11 +56,9 @@ public class VirtualSensorDirectChannelWriterTest {
     private static final int SHARED_MEMORY_SIZE = SENSOR_EVENT_SIZE * 3;
 
     private final VirtualSensor mAccelerometer = new VirtualSensor(
-            SENSOR_HANDLE, TYPE_ACCELEROMETER, ACCELEROMETER_SENSOR_NAME,
-            /*virtualDevice=*/null, /*token=*/null);
+            SENSOR_HANDLE, TYPE_ACCELEROMETER, ACCELEROMETER_SENSOR_NAME);
     private final VirtualSensor mGyroscope = new VirtualSensor(
-            SENSOR_HANDLE + 1, TYPE_GYROSCOPE, GYROSCOPE_SENSOR_NAME,
-            /*virtualDevice=*/null, /*token=*/null);
+            SENSOR_HANDLE + 1, TYPE_GYROSCOPE, GYROSCOPE_SENSOR_NAME);
 
     private final VirtualSensorDirectChannelWriter mWriter = new VirtualSensorDirectChannelWriter();
 
@@ -93,12 +91,13 @@ public class VirtualSensorDirectChannelWriterTest {
     @Test
     public void removeChannel_closesSharedMemory() throws Exception {
         SharedMemory sharedMemory = SharedMemory.create(SHARED_MEMORY_NAME, SHARED_MEMORY_SIZE);
-        assertThat(sharedMemory.getFileDescriptor().valid()).isTrue();
+        assertThat(sharedMemory.getSize()).isGreaterThan(0);
 
         mWriter.addChannel(CHANNEL_HANDLE, sharedMemory);
         mWriter.removeChannel(CHANNEL_HANDLE);
 
-        assertThat(sharedMemory.getFileDescriptor().valid()).isFalse();
+        // The shared memory's file descriptor is closed.
+        assertThrows(IllegalStateException.class, sharedMemory::getSize);
     }
 
     @Test

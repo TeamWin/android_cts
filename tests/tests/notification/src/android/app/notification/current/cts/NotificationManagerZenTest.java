@@ -116,6 +116,7 @@ import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.ScreenUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 
 import org.junit.After;
@@ -2684,6 +2685,23 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void addAutomaticZenRule_withDeviceExtraEffects_storedFromSystem() {
+        ZenDeviceEffects effects = new ZenDeviceEffects.Builder()
+                .setShouldDisplayGrayscale(true)
+                .setShouldUseNightMode(true)
+                .setExtraEffects(ImmutableSet.of("TIME_TRAVEL", "DINOSAUR_CLONING"))
+                .build();
+        AutomaticZenRule newRule = createRule("With effects");
+        newRule.setDeviceEffects(effects);
+
+        String ruleId = callAsSystemUi(() -> mNotificationManager.addAutomaticZenRule(newRule));
+
+        AutomaticZenRule readRule = mNotificationManager.getAutomaticZenRule(ruleId);
+        assertThat(readRule.getDeviceEffects()).isEqualTo(effects);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
     public void addAutomaticZenRule_withUnderspecifiedPolicies_filledIn() {
         AutomaticZenRule noPolicy = new AutomaticZenRule.Builder("no policy", CONDITION_ID)
                 .setConfigurationActivity(CONFIG_ACTIVITY)
@@ -2997,7 +3015,6 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         String id = mNotificationManager.addAutomaticZenRule(ruleToCreate);
         final PackageManager pm = mContext.getPackageManager();
         final Intent intent = new Intent(Settings.ACTION_AUTOMATIC_ZEN_RULE_SETTINGS);
-        intent.setData(Uri.parse("package:" + STUB_PACKAGE_NAME));
         intent.putExtra(EXTRA_AUTOMATIC_ZEN_RULE_ID, id);
         final ResolveInfo resolveInfo = pm.resolveActivity(intent, MATCH_DEFAULT_ONLY);
         assertNotNull(resolveInfo);

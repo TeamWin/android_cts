@@ -27,7 +27,6 @@ import static org.junit.Assert.assertThrows;
 
 import android.graphics.Point;
 import android.graphics.PointF;
-import android.hardware.display.VirtualDisplay;
 import android.hardware.input.VirtualMouse;
 import android.hardware.input.VirtualMouseButtonEvent;
 import android.hardware.input.VirtualMouseRelativeEvent;
@@ -248,10 +247,11 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
 
     @Test
     public void createVirtualMouse_unownedDisplay_throwsException() {
-        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
-        assertThrows(SecurityException.class,
-                () -> createVirtualMouse(unownedDisplay.getDisplay().getDisplayId()));
-        unownedDisplay.release();
+        try (VirtualDisplayCreator.UnownedVirtualDisplay unownedDisplay =
+                     VirtualDisplayCreator.createUnownedVirtualDisplay()) {
+            assertThrows(SecurityException.class,
+                    () -> createVirtualMouse(unownedDisplay.getDisplay().getDisplayId()));
+        }
     }
 
     @Test
@@ -265,11 +265,13 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
     @Test
     public void createVirtualMouse_unownedVirtualDisplay_injectEvents_succeeds() {
         mVirtualMouse.close();
-        VirtualDisplay unownedDisplay = VirtualDisplayCreator.createUnownedVirtualDisplay();
-        runWithPermission(
-                () -> assertThat(createVirtualMouse(unownedDisplay.getDisplay().getDisplayId()))
-                        .isNotNull(),
-                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
+        try (VirtualDisplayCreator.UnownedVirtualDisplay unownedDisplay =
+                     VirtualDisplayCreator.createUnownedVirtualDisplay()) {
+            runWithPermission(
+                    () -> assertThat(createVirtualMouse(unownedDisplay.getDisplay().getDisplayId()))
+                            .isNotNull(),
+                    INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
+        }
     }
 
     private VirtualMouse createVirtualMouse(int displayId) {

@@ -18,6 +18,7 @@ package android.view.inputmethod.cts;
 
 import static android.provider.Settings.Secure.STYLUS_HANDWRITING_DEFAULT_VALUE;
 import static android.provider.Settings.Secure.STYLUS_HANDWRITING_ENABLED;
+import static android.view.inputmethod.Flags.FLAG_CONNECTIONLESS_HANDWRITING;
 import static android.view.inputmethod.Flags.FLAG_HOME_SCREEN_HANDWRITING_DELEGATOR;
 import static android.view.inputmethod.Flags.initiationWithoutInputConnection;
 import static android.view.inputmethod.InputMethodInfo.ACTION_STYLUS_HANDWRITING_SETTINGS;
@@ -236,6 +237,48 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             assertTrue("Mock IME should return true for isStylusHandwritingAvailable() ",
                     mContext.getSystemService(
                             InputMethodManager.class).isStylusHandwritingAvailable());
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_CONNECTIONLESS_HANDWRITING)
+    public void testIsConnectionlessStylusHandwritingAvailable_prefDisabled() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            imeSession.openEventStream();
+
+            // Disable pref
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                Settings.Secure.putInt(mContext.getContentResolver(),
+                        STYLUS_HANDWRITING_ENABLED, SETTING_VALUE_OFF);
+            }, Manifest.permission.WRITE_SECURE_SETTINGS);
+            mShouldRestoreInitialHwState = true;
+
+            launchTestActivity(getTestMarker());
+            assertFalse(
+                    "Mock IME should return false for isConnectionlessStylusHandwritingAvailable() "
+                            + "when pref is disabled",
+                    mContext.getSystemService(
+                            InputMethodManager.class).isConnectionlessStylusHandwritingAvailable());
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_CONNECTIONLESS_HANDWRITING)
+    public void testIsConnectionlessStylusHandwritingAvailable() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            imeSession.openEventStream();
+
+            launchTestActivity(getTestMarker());
+            assertTrue(
+                    "Mock IME should return true for isConnectionlessStylusHandwritingAvailable()",
+                    mContext.getSystemService(
+                            InputMethodManager.class).isConnectionlessStylusHandwritingAvailable());
         }
     }
 

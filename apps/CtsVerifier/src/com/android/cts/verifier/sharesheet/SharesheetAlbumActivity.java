@@ -90,7 +90,7 @@ public class SharesheetAlbumActivity extends PassFailButtons.Activity {
 
         // If there's no title, then the test is passed.
         findViewById(R.id.title_no).setOnClickListener(v -> {
-            Toast.makeText(this, R.string.no_title_message, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.sharesheet_no_title_message, Toast.LENGTH_LONG).show();
             setTestResultAndFinish(true);
         });
     }

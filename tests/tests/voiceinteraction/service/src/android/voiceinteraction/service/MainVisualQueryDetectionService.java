@@ -34,6 +34,7 @@ import android.os.Looper;
 import android.os.PersistableBundle;
 import android.os.Process;
 import android.os.SharedMemory;
+import android.service.voice.VisualQueryAttentionResult;
 import android.service.voice.VisualQueryDetectedResult;
 import android.service.voice.VisualQueryDetectionService;
 import android.system.ErrnoException;
@@ -78,10 +79,14 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
     public static final int SCENARIO_QUERY_NO_QUERY_FINISH = 6;
     public static final int SCENARIO_MULTIPLE_QUERIES_FINISHED = 7;
     public static final int SCENARIO_COMPLEX_RESULT_STREAM_QUERY_ONLY = 8;
+    public static final int SCENARIO_AUDIO_VISUAL_ATTENTION_STREAM = 9;
+    public static final int SCENARIO_ACCESSIBILITY_ATTENTION_STREAM = 10;
     public static final int SCENARIO_READ_FILE_MMAP_READ_ONLY = 100;
     public static final int SCENARIO_READ_FILE_MMAP_WRITE = 101;
     public static final int SCENARIO_READ_FILE_MMAP_MULTIPLE = 102;
     public static final int SCENARIO_READ_FILE_FILE_NOT_EXIST = 103;
+
+    private static final int TEST_ENGAGEMENT_LEVEL = 100;
 
     // stores the content of a file for isolated process to perform disk read
     private ArrayList<String> mResourceContents = new ArrayList<>();
@@ -219,6 +224,25 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
                 gainedAttention();
                 lostAttention();
             };
+        } else if (scenario == SCENARIO_AUDIO_VISUAL_ATTENTION_STREAM) {
+            detectionJob = () -> {
+                gainedAttention(buildNewVisualQueryAttentionResult(
+                        VisualQueryAttentionResult.INTERACTION_INTENTION_AUDIO_VISUAL,
+                        TEST_ENGAGEMENT_LEVEL));
+                streamQuery(FAKE_QUERY_FIRST);
+                finishQuery();
+                lostAttention(VisualQueryAttentionResult.INTERACTION_INTENTION_AUDIO_VISUAL);
+            };
+        } else if (scenario == SCENARIO_ACCESSIBILITY_ATTENTION_STREAM) {
+            detectionJob = () -> {
+                gainedAttention(buildNewVisualQueryAttentionResult(
+                        VisualQueryAttentionResult.INTERACTION_INTENTION_VISUAL_ACCESSIBILITY,
+                        TEST_ENGAGEMENT_LEVEL));
+                streamQuery(FAKE_QUERY_FIRST);
+                finishQuery();
+                lostAttention(
+                        VisualQueryAttentionResult.INTERACTION_INTENTION_VISUAL_ACCESSIBILITY);
+            };
         } else if (scenario == SCENARIO_ATTENTION_QUERY_FINISHED_LEAVE) {
             detectionJob = () -> {
                 gainedAttention();
@@ -305,6 +329,13 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
             return null;
         }
         return detectionJob;
+    }
+
+    private VisualQueryAttentionResult buildNewVisualQueryAttentionResult(
+            int interactionIntention, int engagementLevel) {
+        return new VisualQueryAttentionResult.Builder()
+                .setInteractionIntention(interactionIntention)
+                .setEngagementLevel(engagementLevel).build();
     }
 
     private void sendCameraOpenSuccessSignals() {

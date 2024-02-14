@@ -1,6 +1,7 @@
 package android.nfc.cts;
 
 import static android.Manifest.permission.MANAGE_DEFAULT_APPLICATIONS;
+import static android.nfc.cts.WalletRoleTestUtils.setDefaultWalletRoleHolder;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -14,8 +15,6 @@ import static org.mockito.Mockito.doNothing;
 
 import android.app.Activity;
 import android.app.PendingIntent;
-import android.app.UiAutomation;
-import android.app.role.RoleManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -31,8 +30,6 @@ import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.core.app.ApplicationProvider;
-
-import com.google.common.util.concurrent.MoreExecutors;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -52,10 +49,10 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 @RunWith(JUnit4.class)
 public class NfcAdapterTest {
+
     @Mock private INfcAdapter mService;
     private INfcAdapter mSavedService;
     private Context mContext;
@@ -508,21 +505,6 @@ public class NfcAdapterTest {
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
         FieldSetter.setField(adapter, adapter.getClass().getDeclaredField("sService"), mService);
         return adapter;
-    }
-
-    private static boolean setDefaultWalletRoleHolder(Context context)
-            throws InterruptedException {
-        RoleManager roleManager = context.getSystemService(RoleManager.class);
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        AtomicReference<Boolean> result = new AtomicReference<>(false);
-        roleManager.setDefaultApplication(RoleManager.ROLE_WALLET,
-                "android.nfc.cts", 0,
-                MoreExecutors.directExecutor(), aBoolean -> {
-                    result.set(aBoolean);
-                    countDownLatch.countDown();
-                });
-        countDownLatch.await(2000, TimeUnit.MILLISECONDS);
-        return result.get();
     }
 
     private ComponentName setDefaultPaymentService(Class serviceClass) {
