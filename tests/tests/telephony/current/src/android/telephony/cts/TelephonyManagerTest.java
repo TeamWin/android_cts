@@ -7071,14 +7071,20 @@ public class TelephonyManagerTest {
                 System.lineSeparator());
         assertNotNull("Dropbox entry content is null", content);
         int lineCount = 1;
+        int foundCount = 0;
         for (String line : content) {
             assertFalse(line.contains(DIAG_ERROR_MSG));
             //verify that corresponding dumpsys output also has this data
             if (lineCount++ < MAX_LINES_TO_VERIFY_IN_DUMPSYS_OUTPUT) {
-                //we only check top x lines to verify presence in dumpsys output
-                assertTrue("line not found: " + line, dumpsysOutput.contains(line));
+                // Only perform half verification in order to make the verification less prone to
+                // timing issues between when the dumpsys is taken v.s. when the entry is recorded.
+                if (dumpsysOutput.contains(line)) {
+                    foundCount++;
+                }
             }
         }
+        assertTrue("Should have found ~50% of expected lines in dropbox",
+                foundCount >= MAX_LINES_TO_VERIFY_IN_DUMPSYS_OUTPUT / 2);
         entry.close();
         return entryTime;
     }
