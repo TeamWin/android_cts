@@ -45,13 +45,13 @@ import android.autofillservice.cts.testcore.MyAutofillCallback;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.Presubmit;
 import android.view.View;
 
 import androidx.test.uiautomator.UiObject2;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Set;
@@ -106,6 +106,7 @@ public class PccFieldClassificationTest extends
     }
 
     @Test
+    @Ignore("PCC turndown")
     public void testFieldClassificationRequestIsSentWhenScreenEntered() throws Exception {
 
         sClassificationReplier.addResponse(new CannedFieldClassificationResponse.Builder()
@@ -121,6 +122,7 @@ public class PccFieldClassificationTest extends
     }
 
     @Test
+    @Ignore("PCC turndown")
     public void testFieldClassification_withFillDialog() throws Exception {
 
         // Enable feature and test service
@@ -185,6 +187,7 @@ public class PccFieldClassificationTest extends
     }
 
     @Test
+    @Ignore("PCC turndown")
     public void testFieldClassification_withDropdownDialog() throws Exception {
 
         // Enable feature and test service
@@ -240,6 +243,7 @@ public class PccFieldClassificationTest extends
     }
 
     @Test
+    @Ignore("PCC turndown")
     public void testFieldClassification_mergeResultsFromPccAndProvider_sameDataset()
             throws Exception {
 
@@ -301,6 +305,7 @@ public class PccFieldClassificationTest extends
     }
 
     @Test
+    @Ignore("PCC turndown")
     public void testFieldClassification_mergeResultsFromPccAndProvider_separateDataset()
             throws Exception {
 
@@ -380,6 +385,7 @@ public class PccFieldClassificationTest extends
     }
 
     @Test
+    @Ignore("PCC turndown")
     public void testFieldClassification_preferPccDetection_sameDetection() throws Exception {
 
         // Enable feature and test service
@@ -446,12 +452,14 @@ public class PccFieldClassificationTest extends
     }
 
     @Test
+    @Ignore("PCC turndown")
     public void testFieldClassification_noDetectionFromProvider() throws Exception {
         preferPccDetectionOverProvider(sContext, false);
         testNoDetectionFromProvider();
     }
 
     @Test
+    @Ignore("PCC turndown")
     public void testFieldClassification_noDetectionFromProvider_preferPcc() throws Exception {
         preferPccDetectionOverProvider(sContext, true);
         testNoDetectionFromProvider();
@@ -517,11 +525,13 @@ public class PccFieldClassificationTest extends
     }
 
     @Test
+    @Ignore("PCC turndown")
     public void testDatasetAuthTwoFields() throws Exception {
         datasetAuthTwoFields(false);
     }
 
     @Test
+    @Ignore("PCC turndown")
     @AppModeFull(reason = "testDatasetAuthTwoFields() is enough")
     public void testDatasetAuthTwoFieldsUserCancelsFirstAttempt() throws Exception {
         datasetAuthTwoFields(true);
@@ -624,13 +634,14 @@ public class PccFieldClassificationTest extends
         activity.assertAutoFilled();
     }
 
-    @Presubmit
     @Test
+    @Ignore("PCC turndown")
     public void testFillResponseAuthBothFields() throws Exception {
         fillResponseAuthBothFields(false);
     }
 
     @Test
+    @Ignore("PCC turndown")
     @AppModeFull(reason = "testFillResponseAuthBothFields() is enough")
     public void testFillResponseAuthBothFieldsUserCancelsFirstAttempt() throws Exception {
         fillResponseAuthBothFields(true);
