@@ -6,4 +6,5 @@
         <aid-filter android:name="A000000004101013"/>
         <aid-filter android:name="A000000004101018"/>
     </aid-group>
+    <polling-loop-filter android:name="5cadc10f"/>
 </host-apdu-service>

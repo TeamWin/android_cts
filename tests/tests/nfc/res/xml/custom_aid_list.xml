@@ -8,4 +8,5 @@
     <polling-loop-filter android:name="70dca719"/>
     <polling-loop-filter android:name="261c0050"/>
     <polling-loop-filter android:name="7f71156b" android:autoTransact="true"/>"
+    <polling-loop-filter android:name="b0343a5e" android:autoTransact="true"/>
 </host-apdu-service>

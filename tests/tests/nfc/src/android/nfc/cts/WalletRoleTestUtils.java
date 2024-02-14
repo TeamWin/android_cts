@@ -105,7 +105,7 @@ public final class WalletRoleTestUtils {
         return result.get();
     }
 
-    static boolean setDefaultWalletRoleHolderToNone(Context context, String currentHolder) {
+    static boolean removeRoleHolder(Context context, String currentHolder) {
         RoleManager roleManager = context.getSystemService(RoleManager.class);
         CountDownLatch countDownLatch = new CountDownLatch(1);
         AtomicReference<Boolean> result = new AtomicReference<>(false);
@@ -133,6 +133,7 @@ public final class WalletRoleTestUtils {
 
     static void runWithRole(Context context, String roleHolder, Runnable runnable) {
         try {
+            runWithRoleNone(context, () -> {}); //Remove the role holder first to trigger callbacks
             RoleManager roleManager = context.getSystemService(RoleManager.class);
             CountDownLatch countDownLatch = new CountDownLatch(1);
             OnRoleHoldersChangedListener onRoleHoldersChangedListener = (roleName, user) -> {
@@ -163,6 +164,7 @@ public final class WalletRoleTestUtils {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } finally {
+            runWithRoleNone(context, () -> {}); //Remove the role holder first to trigger callbacks
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
                     .getUiAutomation().dropShellPermissionIdentity();
         }
@@ -193,8 +195,10 @@ public final class WalletRoleTestUtils {
                     onRoleHoldersChangedListener, context.getUser());
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
                     .getUiAutomation().adoptShellPermissionIdentity(MANAGE_ROLE_HOLDERS);
-            assumeTrue(setDefaultWalletRoleHolderToNone(context, currentHolder));
-            countDownLatch.await(4000, TimeUnit.MILLISECONDS);
+            if (currentHolder != null) {
+                assumeTrue(removeRoleHolder(context, currentHolder));
+                countDownLatch.await(4000, TimeUnit.MILLISECONDS);
+            }
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
                     .getUiAutomation().adoptShellPermissionIdentity(OBSERVE_ROLE_HOLDERS);
             roleManager.removeOnRoleHoldersChangedListenerAsUser(onRoleHoldersChangedListener,

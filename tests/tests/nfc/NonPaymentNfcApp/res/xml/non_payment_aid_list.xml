@@ -3,4 +3,5 @@
     <aid-group android:description="@string/NonPaymentApduService" android:category="other">
         <aid-filter android:name="F053414950454D"/>
     </aid-group>
+    <polling-loop-filter android:name="5cadc10f"/>
 </host-apdu-service>
