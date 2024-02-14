@@ -2418,6 +2418,7 @@
                 android:label="@string/nfc_observe_mode_emulator">
                 <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+                <meta-data android:name="GmsTest" android:value="GMS-VSR-3.2.8-001" />
                 <meta-data android:name="ApiTest"
                        android:value="android.nfc.NfcAdapter#disallowTransaction|
                                       android.nfc.NfcAdapter#allowTransaction|
@@ -2431,6 +2432,7 @@
                 android:label="@string/nfc_polling_loop_a_reader">
                 <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+                <meta-data android:name="GmsTest" android:value="GMS-VSR-3.2.8-001" />
                 <meta-data android:name="ApiTest"
                        android:value="android.nfc.NfcAdapter#disallowTransaction|
                                       android.nfc.NfcAdapter#allowTransaction|
@@ -2444,6 +2446,7 @@
                 android:label="@string/nfc_polling_loop_a_emulator">
                 <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+                <meta-data android:name="GmsTest" android:value="GMS-VSR-3.2.8-001" />
                 <meta-data android:name="ApiTest"
                        android:value="android.nfc.NfcAdapter#disallowTransaction|
                                       android.nfc.NfcAdapter#allowTransaction|
