@@ -17,8 +17,7 @@
 package android.devicepolicy.internal
 
 import android.app.admin.flags.Flags
-import android.platform.test.annotations.RequiresFlagsEnabled
-import android.platform.test.flag.junit.DeviceFlagsValueProvider
+import com.android.bedstead.flags.annotations.RequireFlagsEnabled
 import com.android.bedstead.harrier.BedsteadJUnit4
 import com.android.bedstead.harrier.DeviceState
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile
@@ -27,8 +26,6 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.RuleChain
-import org.junit.rules.TestRule
 import org.junit.runner.RunWith
 
 @RunWith(BedsteadJUnit4::class)
@@ -39,14 +36,11 @@ class DumpSysTest {
         @ClassRule
         @Rule
         val deviceState = DeviceState()
-        var chain: TestRule = RuleChain
-                .outerRule(DeviceFlagsValueProvider.createCheckFlagsRule())
-                .around(deviceState)
     }
 
     @Test
     @EnsureHasWorkProfile(dpcIsPrimary = true)
-    @RequiresFlagsEnabled(Flags.FLAG_DUMPSYS_POLICY_ENGINE_MIGRATION_ENABLED)
+    @RequireFlagsEnabled(Flags.FLAG_DUMPSYS_POLICY_ENGINE_MIGRATION_ENABLED)
     fun dumpSys_containsPolicy() {
         try {
             deviceState.dpc().devicePolicyManager()
