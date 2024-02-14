@@ -21,12 +21,14 @@ import android.view.SurfaceControlViewHost.SurfacePackage;
 import android.view.WindowManager.LayoutParams;
 import android.view.SurfaceControl;
 import android.view.cts.surfacevalidator.IMotionEventReceiver;
+import android.window.InputTransferToken;
 
 interface IAttachEmbeddedWindow {
     SurfacePackage attachEmbedded(IBinder hostToken, int width, int height, int displayId, long delayMs);
     void relayout(in LayoutParams lp);
     void sendCrash();
-    String attachEmbeddedSurfaceControl(in SurfaceControl sc, int displayId, IBinder hostToken,
-            int width, int height, in IMotionEventReceiver motionEventReceiver);
+    String attachEmbeddedSurfaceControl(in SurfaceControl sc, int displayId,
+            in InputTransferToken hostToken, int width, int height,
+            in IMotionEventReceiver motionEventReceiver);
     void tearDownEmbeddedSurfaceControl();
 }
