@@ -53,7 +53,7 @@ public class KeyProtectionTest {
             spec.getDigests();
             fail();
         } catch (IllegalStateException expected) {}
-        if (Flags.mgf1DigestSetter()) {
+        if (Flags.mgf1DigestSetterV2()) {
             assertFalse(spec.isMgf1DigestsSpecified());
             assertThrows(IllegalStateException.class, spec::getMgf1Digests);
         }
@@ -101,7 +101,7 @@ public class KeyProtectionTest {
                 .setMaxUsageCount(maxUsageCount)
                 .setIsStrongBoxBacked(true);
 
-        if (Flags.mgf1DigestSetter()) {
+        if (Flags.mgf1DigestSetterV2()) {
             specBuilder.setMgf1Digests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512);
         }
         KeyProtection spec = specBuilder.build();
@@ -113,7 +113,7 @@ public class KeyProtectionTest {
         assertTrue(spec.isDigestsSpecified());
         MoreAsserts.assertContentsInOrder(Arrays.asList(spec.getDigests()),
                 KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512);
-        if (Flags.mgf1DigestSetter()) {
+        if (Flags.mgf1DigestSetterV2()) {
             assertTrue(spec.isMgf1DigestsSpecified());
             /* Since getMgf1Digest return type is Set, objects could be in any order. */
             MoreAsserts.assertContentsInAnyOrder(spec.getMgf1Digests(),
@@ -214,7 +214,7 @@ public class KeyProtectionTest {
                 .setKeyValidityForConsumptionEnd(keyValidityEndDateForConsumption)
                 .setSignaturePaddings(signaturePaddings);
 
-        if (Flags.mgf1DigestSetter()) {
+        if (Flags.mgf1DigestSetterV2()) {
             specBuilder.setMgf1Digests(mgfDigests);
         }
         KeyProtection spec = specBuilder.build();
@@ -227,7 +227,7 @@ public class KeyProtectionTest {
         digests[1] = null;
         assertEquals(Arrays.asList(originalDigests), Arrays.asList(spec.getDigests()));
 
-        if (Flags.mgf1DigestSetter()) {
+        if (Flags.mgf1DigestSetterV2()) {
             assertTrue(Arrays.asList(originalMgfDigests).containsAll(spec.getMgf1Digests()));
             mgfDigests[1] = null;
             assertTrue(Arrays.asList(originalMgfDigests).containsAll(spec.getMgf1Digests()));
@@ -280,7 +280,7 @@ public class KeyProtectionTest {
                         KeyProperties.SIGNATURE_PADDING_RSA_PSS,
                         KeyProperties.SIGNATURE_PADDING_RSA_PKCS1);
 
-        if (Flags.mgf1DigestSetter()) {
+        if (Flags.mgf1DigestSetterV2()) {
             specBuilder.setMgf1Digests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512);
         }
         KeyProtection spec = specBuilder.build();

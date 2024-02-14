@@ -289,7 +289,7 @@ public class RSACipherTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(android.security.Flags.FLAG_MGF1_DIGEST_SETTER)
+    @RequiresFlagsEnabled(android.security.Flags.FLAG_MGF1_DIGEST_SETTER_V2)
     public void testRsaOaepDecryptWithWrongMGF1DigestFails() throws Exception {
         Provider provider = Security.getProvider(EXPECTED_PROVIDER_NAME);
         KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA", "AndroidKeyStore");
