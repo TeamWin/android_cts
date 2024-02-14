@@ -520,6 +520,20 @@
                 android:useBoundsForWidth="true" />
 
             <TextView
+                android:id="@+id/shift_draw_offset_false"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text"
+                android:shiftDrawingOffsetForStartOverhang="false" />
+
+            <TextView
+                android:id="@+id/shift_draw_offset_true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text"
+                android:shiftDrawingOffsetForStartOverhang="true" />
+
+            <TextView
                 android:id="@+id/useLocalePreferredLineHeightForMinimumDefaultTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

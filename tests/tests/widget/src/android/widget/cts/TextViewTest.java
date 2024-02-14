@@ -7006,6 +7006,20 @@ public class TextViewTest {
         assertTrue(textView.getUseBoundsForWidth());
     }
 
+    @RequiresFlagsEnabled(FLAG_USE_BOUNDS_FOR_WIDTH)
+    @Test
+    public void testShiftDrawingOffsetForStartOverhang_ByXml_false() {
+        TextView textView = findTextView(R.id.shift_draw_offset_false);
+        assertFalse(textView.getShiftDrawingOffsetForStartOverhang());
+    }
+
+    @RequiresFlagsEnabled(FLAG_USE_BOUNDS_FOR_WIDTH)
+    @Test
+    public void testShiftDrawingOffsetForStartOverhang_ByXml_true() {
+        TextView textView = findTextView(R.id.shift_draw_offset_true);
+        assertTrue(textView.getShiftDrawingOffsetForStartOverhang());
+    }
+
     @RequiresFlagsEnabled(FLAG_FIX_LINE_HEIGHT_FOR_LOCALE)
     @Test
     public void testUseLocalePreferredLineHeightForMinimumDefaultTextView() {
