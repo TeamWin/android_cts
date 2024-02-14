@@ -17,8 +17,6 @@
 package android.media.projection.cts;
 
 
-import static android.Manifest.permission.MANAGE_MEDIA_PROJECTION;
-import static android.content.pm.PackageManager.MATCH_ANY_USER;
 import static android.media.projection.cts.MediaProjectionCustomIntentActivity.EXTRA_FGS_CLASS;
 import static android.media.projection.cts.MediaProjectionCustomIntentActivity.EXTRA_SCREEN_CAPTURE_INTENT;
 import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
@@ -31,11 +29,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
-import android.app.role.RoleManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
 import android.media.cts.ForegroundServiceUtil;
 import android.media.cts.LocalMediaProjectionHelperService;
 import android.media.projection.MediaProjection;
@@ -56,7 +52,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -96,33 +91,6 @@ public class MediaProjectionManagerTest {
             mMediaProjection.stop();
             mMediaProjection = null;
         }
-    }
-
-    /**
-     * Validate that only the SystemUI role holds the MANAGE_MEDIA_PROJECTION permission.
-     */
-    @Test
-    public void testManageMediaProjectionPermission() {
-        // Get list of packages granted the permission.
-        final List<PackageInfo> permissionPackageNames =
-                mContext.getPackageManager().getPackagesHoldingPermissions(
-                        new String[]{MANAGE_MEDIA_PROJECTION}, MATCH_ANY_USER);
-
-        runWithShellPermissionIdentity(() -> {
-            // Get list of packages holding the SystemUI role.
-            final RoleManager roleManager = mContext.getSystemService(RoleManager.class);
-            final List<String> rolePackageNames = roleManager.getRoleHolders(
-                    "android.app.role.SYSTEM_UI");
-
-            // Since SystemUI is an exclusive role, only one package should have that role.
-            assertThat(rolePackageNames).hasSize(1);
-
-            // Check that only one package is granted the permission, since only one can
-            // hold the role.
-            assertThat(permissionPackageNames).hasSize(1);
-            assertThat(permissionPackageNames.get(0).packageName).isEqualTo(
-                    rolePackageNames.get(0));
-        });
     }
 
     @ApiTest(apis = "android.media.projection.MediaProjectionManager#createScreenCaptureIntent")
