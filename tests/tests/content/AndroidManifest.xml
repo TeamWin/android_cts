@@ -43,6 +43,9 @@
     <!-- Used for ContextTest#testCreatePackageContextAsUser -->
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS"/>
 
+    <!-- Used for HiddenProfileTests -->
+    <uses-permission android:name="android.permission.ACCESS_HIDDEN_PROFILES"/>
+
     <!-- Used for PackageManager test, don't delete this INTERNET permission -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
