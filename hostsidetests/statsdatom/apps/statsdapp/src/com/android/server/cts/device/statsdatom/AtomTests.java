@@ -265,6 +265,7 @@ public class AtomTests {
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_RUN_BACKUP_JOBS, 144);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_ARCHIVE_ICON_OVERLAY, 145);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_UNARCHIVAL_CONFIRMATION, 146);
+        APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_EMERGENCY_LOCATION, 147);
     }
 
     @Test
