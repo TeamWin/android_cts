@@ -124,6 +124,7 @@ android_test {
         "flag-junit",
         "com.android.media.flags.bettertogether-aconfig-java",
         "android.app.flags-aconfig-java",
+        "ravenwood-junit",
     ],
     srcs: [
         "src/**/*.java",
