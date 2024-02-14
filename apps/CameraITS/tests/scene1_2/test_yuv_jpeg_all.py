@@ -58,7 +58,8 @@ def do_capture_and_extract_rgb_means(
     debug: boolean to flag saving captured images
 
   Returns:
-    center patch RGB means
+    rgb: center patch RGB means
+    img: RGB image array
   """
   out_surface = {'width': size[0], 'height': size[1], 'format': img_type}
   if camera_properties_utils.stream_use_case(props):
@@ -91,10 +92,6 @@ def do_capture_and_extract_rgb_means(
   if cap['height'] != size[1]:
     raise AssertionError(f"{cap['height']} != {size[1]}")
 
-  if debug:
-    image_processing_utils.write_image(
-        img, f'{name_with_log_path}_{img_type}_w{size[0]}_h{size[1]}.png')
-
   if img_type == _JPG_STR:
     if img.shape[0] != size[1]:
       raise AssertionError(f'{img.shape[0]} != {size[1]}')
@@ -107,14 +104,13 @@ def do_capture_and_extract_rgb_means(
   rgb = image_processing_utils.compute_image_means(patch)
   logging.debug('Captured %s %dx%d rgb = %s, format number = %d',
                 img_type, cap['width'], cap['height'], str(rgb), index)
-  return rgb
+  return rgb, img
 
 
 class YuvJpegAllTest(its_base_test.ItsBaseTest):
   """Test reported sizes & fmts for YUV & JPEG caps return similar images."""
 
   def test_yuv_jpeg_all(self):
-    logging.debug('Starting %s', _NAME)
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
@@ -157,18 +153,24 @@ class YuvJpegAllTest(its_base_test.ItsBaseTest):
         match_ar = (largest_yuv['width'], largest_yuv['height'])
 
       yuv_rgbs = []
+      yuv_imgs = []
       for i, size in enumerate(
           capture_request_utils.get_available_output_sizes(
               _YUV_STR, props, match_ar_size=match_ar)):
-        yuv_rgbs.append(do_capture_and_extract_rgb_means(
-            req, cam, props, size, _YUV_STR, i, name_with_log_path, debug))
+        yuv_rgb, yuv_img = do_capture_and_extract_rgb_means(
+            req, cam, props, size, _YUV_STR, i, name_with_log_path, debug)
+        yuv_rgbs.append(yuv_rgb)
+        yuv_imgs.append(yuv_img)
 
       jpg_rgbs = []
+      jpg_imgs = []
       for i, size in enumerate(
           capture_request_utils.get_available_output_sizes(
               _JPG_STR, props, match_ar_size=match_ar)):
-        jpg_rgbs.append(do_capture_and_extract_rgb_means(
-            req, cam, props, size, _JPG_STR, i, name_with_log_path, debug))
+        jpg_rgb, jpg_img = do_capture_and_extract_rgb_means(
+            req, cam, props, size, _JPG_STR, i, name_with_log_path, debug)
+        jpg_rgbs.append(jpg_rgb)
+        jpg_imgs.append(jpg_img)
 
       # Plot means vs format
       pylab.figure(_NAME)
@@ -189,8 +191,7 @@ class YuvJpegAllTest(its_base_test.ItsBaseTest):
                  '-b^', alpha=_PLOT_ALPHA, markersize=_PLOT_MARKER_SIZE)
       pylab.ylim([0, 1])
       ax = pylab.gca()
-      # force matplotlib to use integers for x-axis labels
-      ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+      ax.xaxis.set_major_locator(MaxNLocator(integer=True))  # x-axis integers
       yuv_marker = mlines.Line2D([], [], linestyle='None',
                                  color='black', marker='.',
                                  markersize=_PLOT_LEGEND_CIRCLE_SIZE,
@@ -214,6 +215,16 @@ class YuvJpegAllTest(its_base_test.ItsBaseTest):
       msg = f'Max RMS difference: {max_diff:.4f}'
       logging.debug('%s', msg)
       if max_diff >= _THRESHOLD_MAX_RMS_DIFF:
+        for img in yuv_imgs:
+          image_processing_utils.write_image(
+              img,
+              f'{name_with_log_path}_yuv_{img.shape[1]}x{img.shape[0]}.png'
+          )
+        for img in jpg_imgs:
+          image_processing_utils.write_image(
+              img,
+              f'{name_with_log_path}_jpg_{img.shape[1]}x{img.shape[0]}.png'
+          )
         raise AssertionError(f'{msg} spec: {_THRESHOLD_MAX_RMS_DIFF}')
 
 if __name__ == '__main__':
