@@ -5,10 +5,12 @@ android.app.Activity.ScreenCaptureCallback
 android.app.admin.DevicePolicyManager
 android.app.Application
 android.app.Application.ActivityLifecycleCallbacks
+android.app.ComponentCaller
 android.app.Dialog
 android.app.Fragment
 android.app.FragmentManager
 android.app.LoaderManager
+android.app.NotificationManager.CallNotificationEventListener
 android.app.SharedElementCallback
 android.app.TaskStackBuilder
 android.app.VoiceInteractor
@@ -25,7 +27,9 @@ android.content.ContentResolver
 android.content.ContentResolver.MimeTypeInfo
 android.content.Context
 android.content.ContextParams
+android.content.pm.ArchivedPackageInfo
 android.content.pm.LauncherActivityInfo
+android.content.pm.LauncherApps.ArchiveCompatibilityParams
 android.content.pm.LauncherApps.Callback
 android.content.pm.LauncherApps.ShortcutQuery
 android.content.pm.PackageInstaller
@@ -107,6 +111,7 @@ android.app.WallpaperManager.OnColorsChangedListener
 android.telephony.TelephonyManager
 android.telephony.CellLocation
 android.telephony.PhoneStateListener
+android.telephony.TelephonyManager.EmergencyCallDiagnosticData
 android.telephony.TelephonyManager.UssdResponseCallback
 android.telephony.TelephonyManager.CarrierPrivilegesCallback
 android.telephony.TelephonyCallback

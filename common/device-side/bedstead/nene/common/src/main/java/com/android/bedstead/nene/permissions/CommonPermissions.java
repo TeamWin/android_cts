@@ -1978,6 +1978,8 @@ public class CommonPermissions {
     public static final String MANAGE_DEVICE_POLICY_APP_USER_DATA = "android.permission.MANAGE_DEVICE_POLICY_APP_USER_DATA";
     /** See {@link Manifest#MANAGE_DEVICE_POLICY_LOCK} */
     public static final String MANAGE_DEVICE_POLICY_LOCK = "android.permission.MANAGE_DEVICE_POLICY_LOCK";
+    /** See {@link Manifest#MANAGE_DEVICE_POLICY_THEFT_DETECTION} */
+    public static final String MANAGE_DEVICE_POLICY_THEFT_DETECTION = "android.permission.MANAGE_DEVICE_POLICY_THEFT_DETECTION";
     /** See {@link Manifest#MANAGE_DEVICE_POLICY_SYSTEM_APPS} */
     public static final String MANAGE_DEVICE_POLICY_SYSTEM_APPS = "android.permission.MANAGE_DEVICE_POLICY_SYSTEM_APPS";
     /** See {@link Manifest#MANAGE_DEVICE_POLICY_WIPE_DATA} */
