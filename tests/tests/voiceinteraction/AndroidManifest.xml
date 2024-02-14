@@ -238,6 +238,11 @@
             <meta-data android:name="android.speech"
                      android:resource="@xml/recognition_service" />
         </service>
+        <service android:name="android.voiceinteraction.service.MainWearableSensingService"
+                 android:label="CTS Wearable Sensing Service"
+                 android:permission="android.permission.BIND_WEARABLE_SENSING_SERVICE"
+                 android:isolatedProcess="true">
+        </service>
       <receiver android:name="VoiceInteractionTestReceiver"
            android:exported="true"/>
     </application>
