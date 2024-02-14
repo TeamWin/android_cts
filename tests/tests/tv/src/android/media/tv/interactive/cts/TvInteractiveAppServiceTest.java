@@ -41,6 +41,9 @@ import android.media.tv.PesRequest;
 import android.media.tv.PesResponse;
 import android.media.tv.SectionRequest;
 import android.media.tv.SectionResponse;
+import android.media.tv.SignalingDataInfo;
+import android.media.tv.SignalingDataRequest;
+import android.media.tv.SignalingDataResponse;
 import android.media.tv.StreamEventRequest;
 import android.media.tv.StreamEventResponse;
 import android.media.tv.TableRequest;
@@ -1586,6 +1589,28 @@ public class TvInteractiveAppServiceTest {
     }
 
     @Test
+    public void testSignalingDataRequest() throws Throwable {
+        linkTvView();
+
+        ArrayList<String> signalingInfoList = new ArrayList<>();
+        signalingInfoList.add(SignalingDataRequest.SIGNALING_METADATA_AEAT);
+        SignalingDataRequest request = new SignalingDataRequest(0, 0,
+                SignalingDataRequest.SIGNALING_DATA_NO_GROUP_ID, signalingInfoList);
+        mSession.requestBroadcastInfo(request);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mInputSession.mBroadcastInfoRequestCount > 0);
+
+        request = (SignalingDataRequest) mInputSession.mBroadcastInfoRequest;
+        assertThat(mInputSession.mBroadcastInfoRequestCount).isEqualTo(1);
+        assertThat(request.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_SIGNALING_DATA);
+        assertThat(request.getRequestId()).isEqualTo(0);
+        assertThat(request.getOption()).isEqualTo(0);
+        assertThat(request.getGroup()).isEqualTo(SignalingDataRequest.SIGNALING_DATA_NO_GROUP_ID);
+        assertThat(request.getSignalingDataTypes().get(0))
+                .isEqualTo(SignalingDataRequest.SIGNALING_METADATA_AEAT);
+    }
+
+    @Test
     public void testCommandRequest() throws Throwable {
         linkTvView();
 
@@ -1760,6 +1785,82 @@ public class TvInteractiveAppServiceTest {
                 BroadcastInfoResponse.RESPONSE_RESULT_OK);
         assertThat(response.getSharedFilterToken()).isEqualTo("TestToken");
     }
+
+    @Test
+    public void testSignalingResponse() throws Throwable {
+        linkTvView();
+
+        String testTable = "data";
+        SignalingDataInfo testSignalingDataInfo =
+                new SignalingDataInfo(testTable, SignalingDataRequest.SIGNALING_METADATA_AEAT, 1,
+                        SignalingDataInfo.LLS_NO_GROUP_ID);
+        ArrayList<String> signalingDataTypes = new ArrayList<>();
+        ArrayList<SignalingDataInfo> signalingDataInfoArrayList = new ArrayList<>();
+        signalingDataInfoArrayList.add(testSignalingDataInfo);
+        signalingDataTypes.add(SignalingDataRequest.SIGNALING_METADATA_AEAT);
+        SignalingDataResponse response = new SignalingDataResponse(1, 11,
+                BroadcastInfoResponse.RESPONSE_RESULT_OK, signalingDataTypes,
+                signalingDataInfoArrayList);
+        mInputSession.notifyBroadcastInfoResponse(response);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mBroadcastInfoResponseCount > 0);
+
+        response = (SignalingDataResponse) mSession.mBroadcastInfoResponse;
+        assertThat(mSession.mBroadcastInfoResponseCount).isEqualTo(1);
+        assertThat(response.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_SIGNALING_DATA);
+        assertThat(response.getRequestId()).isEqualTo(1);
+        assertThat(response.getSequence()).isEqualTo(11);
+        assertThat(response.getResponseResult())
+                .isEqualTo(BroadcastInfoResponse.RESPONSE_RESULT_OK);
+        assertThat(response.getSignalingDataTypes().get(0))
+                .isEqualTo(SignalingDataRequest.SIGNALING_METADATA_AEAT);
+        SignalingDataInfo receivedInfo = response.getSignalingDataInfoList().get(0);
+        assertThat(receivedInfo.getEncoding()).isEqualTo(SignalingDataInfo.CONTENT_ENCODING_UTF_8);
+        assertThat(receivedInfo.getGroup()).isEqualTo(SignalingDataInfo.LLS_NO_GROUP_ID);
+        assertThat(receivedInfo.getTable()).isEqualTo(testTable);
+        assertThat(receivedInfo.getSignalingDataType())
+                .isEqualTo(SignalingDataRequest.SIGNALING_METADATA_AEAT);
+        assertThat(receivedInfo.getVersion()).isEqualTo(1);
+    }
+
+    @Test
+    public void testSignalingResponseWithEncoding() throws Throwable {
+        linkTvView();
+
+        String testTable = "data";
+        SignalingDataInfo testSignalingDataInfo =
+                new SignalingDataInfo(testTable, SignalingDataRequest.SIGNALING_METADATA_AEAT, 1,
+                        SignalingDataInfo.LLS_NO_GROUP_ID,
+                        SignalingDataInfo.CONTENT_ENCODING_BASE64);
+        ArrayList<String> signalingDataTypes = new ArrayList<>();
+        ArrayList<SignalingDataInfo> signalingDataInfoArrayList = new ArrayList<>();
+        signalingDataInfoArrayList.add(testSignalingDataInfo);
+        signalingDataTypes.add(SignalingDataRequest.SIGNALING_METADATA_AEAT);
+        SignalingDataResponse response = new SignalingDataResponse(1, 11,
+                BroadcastInfoResponse.RESPONSE_RESULT_OK, signalingDataTypes,
+                signalingDataInfoArrayList);
+        mInputSession.notifyBroadcastInfoResponse(response);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mBroadcastInfoResponseCount > 0);
+
+        response = (SignalingDataResponse) mSession.mBroadcastInfoResponse;
+        assertThat(mSession.mBroadcastInfoResponseCount).isEqualTo(1);
+        assertThat(response.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_SIGNALING_DATA);
+        assertThat(response.getRequestId()).isEqualTo(1);
+        assertThat(response.getSequence()).isEqualTo(11);
+        assertThat(response.getResponseResult())
+                .isEqualTo(BroadcastInfoResponse.RESPONSE_RESULT_OK);
+        assertThat(response.getSignalingDataTypes().get(0))
+                .isEqualTo(SignalingDataRequest.SIGNALING_METADATA_AEAT);
+        SignalingDataInfo receivedInfo = response.getSignalingDataInfoList().get(0);
+        assertThat(receivedInfo.getEncoding()).isEqualTo(SignalingDataInfo.CONTENT_ENCODING_BASE64);
+        assertThat(receivedInfo.getGroup()).isEqualTo(SignalingDataInfo.LLS_NO_GROUP_ID);
+        assertThat(receivedInfo.getTable()).isEqualTo(testTable);
+        assertThat(receivedInfo.getSignalingDataType())
+                .isEqualTo(SignalingDataRequest.SIGNALING_METADATA_AEAT);
+        assertThat(receivedInfo.getVersion()).isEqualTo(1);
+    }
+
 
     @Test
     public void testCommandResponse() throws Throwable {
