@@ -24,7 +24,6 @@ import android.app.compat.PackageOverride;
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
-import android.os.Build;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -108,7 +107,7 @@ public class TimingConstraintsTest extends BaseJobSchedulerTest {
         // Make sure the storage constraint is *not* met
         // for the duration of the override deadline.
         setStorageStateLow(true);
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        if (CompatChanges.isChangeEnabled(TestAppInterface.ENFORCE_MINIMUM_TIME_WINDOWS)) {
             SystemUtil.runWithShellPermissionIdentity(
                     () -> CompatChanges.putPackageOverrides(
                             TestAppInterface.TEST_APP_PACKAGE,
