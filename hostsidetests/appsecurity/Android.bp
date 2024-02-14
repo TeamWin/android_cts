@@ -199,6 +199,7 @@ java_test_host {
         ":CtsApkVerityTestAppSplit",
         // PackageSetInstallerTest
         ":CtsPkgInstallerPermRequestApp",
+        ":CtsPkgInstallerPermWhitelistApp",
         // CtsAppDataIsolationAppA
         ":CtsAppDataIsolationAppA",
         ":CtsAppDataIsolationAppSharedA",
