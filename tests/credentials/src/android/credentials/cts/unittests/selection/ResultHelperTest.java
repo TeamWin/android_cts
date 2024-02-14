@@ -29,7 +29,6 @@ import android.content.Intent;
 import android.credentials.selection.FailureDialogResult;
 import android.credentials.selection.FailureResult;
 import android.credentials.selection.ProviderPendingIntentResponse;
-import android.credentials.selection.ResultHelper;
 import android.credentials.selection.UserSelectionDialogResult;
 import android.credentials.selection.UserSelectionResult;
 import android.os.Bundle;
@@ -62,7 +61,7 @@ public class ResultHelperTest {
         ResultReceiver resultReceiver = mock(ResultReceiver.class);
         ArgumentCaptor<Bundle> resultDataCaptor = ArgumentCaptor.forClass(Bundle.class);
 
-        ResultHelper.sendFailureResult(resultReceiver, failure);
+        FailureResult.sendFailureResult(resultReceiver, failure);
 
         verify(resultReceiver).send(eq(/*RESULT_CODE_DATA_PARSING_FAILURE*/3),
                 resultDataCaptor.capture());
@@ -77,7 +76,7 @@ public class ResultHelperTest {
         ResultReceiver resultReceiver = mock(ResultReceiver.class);
         ArgumentCaptor<Bundle> resultDataCaptor = ArgumentCaptor.forClass(Bundle.class);
 
-        ResultHelper.sendFailureResult(resultReceiver, failure);
+        FailureResult.sendFailureResult(resultReceiver, failure);
 
         verify(resultReceiver).send(eq(/*RESULT_CODE_DATA_PARSING_FAILURE*/3),
                 resultDataCaptor.capture());
@@ -93,7 +92,7 @@ public class ResultHelperTest {
         ResultReceiver resultReceiver = mock(ResultReceiver.class);
         ArgumentCaptor<Bundle> resultDataCaptor = ArgumentCaptor.forClass(Bundle.class);
 
-        ResultHelper.sendFailureResult(resultReceiver, failure);
+        FailureResult.sendFailureResult(resultReceiver, failure);
 
         verify(resultReceiver).send(eq(/*RESULT_CODE_DIALOG_USER_CANCELED*/0),
                 resultDataCaptor.capture());
@@ -109,7 +108,7 @@ public class ResultHelperTest {
         ResultReceiver resultReceiver = mock(ResultReceiver.class);
         ArgumentCaptor<Bundle> resultDataCaptor = ArgumentCaptor.forClass(Bundle.class);
 
-        ResultHelper.sendFailureResult(resultReceiver, failure);
+        FailureResult.sendFailureResult(resultReceiver, failure);
 
         verify(resultReceiver).send(eq(/*RESULT_CODE_CANCELED_AND_LAUNCHED_SETTINGS*/1),
                 resultDataCaptor.capture());
@@ -127,7 +126,7 @@ public class ResultHelperTest {
         ResultReceiver resultReceiver = mock(ResultReceiver.class);
         ArgumentCaptor<Bundle> resultDataCaptor = ArgumentCaptor.forClass(Bundle.class);
 
-        ResultHelper.sendUserSelectionResult(resultReceiver, result);
+        UserSelectionResult.sendUserSelectionResult(resultReceiver, result);
 
         verify(resultReceiver).send(eq(/*RESULT_CODE_DIALOG_COMPLETE_WITH_SELECTION*/2),
                 resultDataCaptor.capture());
