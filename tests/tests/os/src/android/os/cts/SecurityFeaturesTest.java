@@ -19,6 +19,7 @@ package android.os.cts;
 import static android.system.OsConstants.PR_GET_DUMPABLE;
 
 import android.os.Build;
+import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RestrictedBuildTest;
 import android.system.Os;
@@ -50,7 +51,7 @@ public class SecurityFeaturesTest extends TestCase {
     }
 
     /**
-     * Verifies that prctl(PR_GET_DUMPABLE) == ro.debuggable
+     * Verifies prctl(PR_GET_DUMPABLE)
      *
      * When PR_SET_DUMPABLE is 0, an application will not generate a
      * coredump, and PTRACE_ATTACH is disallowed. It's a security best
@@ -61,8 +62,8 @@ public class SecurityFeaturesTest extends TestCase {
      * By default, PR_SET_DUMPABLE is 0 for zygote spawned apps, except
      * in the following circumstances:
      *
-     * 1) ro.debuggable=1 (global debuggable enabled, i.e., userdebug or
-     * eng builds).
+     * 1) eng build or userdebug build when one of property "persist.debug.ptrace.enabled"
+     * and "persist.debug.dalvik.vm.jdwp.enabled" is set.
      *
      * 2) android:debuggable="true" in the manifest for an individual
      * application.
@@ -73,15 +74,16 @@ public class SecurityFeaturesTest extends TestCase {
      * <meta-data android:name="com.android.graphics.injectLayers.enable" android:value="true"/>
      * in the application manifest.
      *
-     * For this test, neither #2, #3, nor #4 are true, so we expect ro.debuggable
-     * to exactly equal prctl(PR_GET_DUMPABLE).
+     * For this test, neither #2, #3, nor #4 are true, so we only test #1.
      */
     @AppModeFull(reason = "Instant apps cannot access APIs")
-    @RestrictedBuildTest
     public void testPrctlDumpable() throws Exception {
-        boolean userBuild = "user".equals(Build.TYPE);
+        boolean userDebugBuild = "userdebug".equals(Build.TYPE);
+        boolean engBuild = "eng".equals(Build.TYPE);
+        boolean enablePtrace = SystemProperties.get("persist.debug.ptrace.enabled").equals("1");
+        boolean enableJDWP = SystemProperties.get("persist.debug.dalvik.vm.jdwp.enabled").equals("1");
         int prctl_dumpable = Os.prctl(PR_GET_DUMPABLE, 0, 0, 0, 0);
-        int expected = userBuild ? 0 : 1;
+        int expected = ((userDebugBuild && (enablePtrace || enableJDWP)) || engBuild) ? 1 : 0;
         assertEquals(expected, prctl_dumpable);
     }
 }
