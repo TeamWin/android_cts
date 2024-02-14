@@ -65,6 +65,15 @@
             android:exported="true"
             android:launchMode="singleInstance" />
 
+        <activity android:name=".ComponentCallerTest$ResultGetSetIntentCurrentCallerTestActivity"
+            android:exported="true" />
+
+        <activity android:name=".ComponentCallerTest$ResultGetSetIntentOverloadCallerTestActivity"
+            android:exported="true" />
+
+        <activity android:name=".ComponentCallerTest$SetResultTestActivity"
+            android:exported="true" />
+
         <receiver android:name=".ComponentCallerTest$TestReceiver"
             android:exported="true">
             <intent-filter>
