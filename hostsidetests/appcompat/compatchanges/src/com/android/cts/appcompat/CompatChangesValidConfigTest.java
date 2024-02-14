@@ -16,7 +16,6 @@
 
 package com.android.cts.appcompat;
 
-import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.compat.cts.Change;
@@ -43,6 +42,8 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
     private static final long PRIORITY_QUEUE_OFFER_NON_COMPARABLE_ONE_ELEMENT = 289878283L;
     private static final long ASM_RESTRICTIONS = 230590090L;
     private static final String FEATURE_WATCH = "android.hardware.type.watch";
+    // Version number for a current development build
+    private static final int CUR_DEVELOPMENT_VERSION = 10000;
 
     private static final Set<String> OVERRIDES_ALLOWLIST = ImmutableSet.of(
         // This change id will sometimes remain enabled if an instrumentation test fails.
@@ -132,8 +133,10 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
      * Check that only approved changes are overridable.
      */
     public void testOnlyAllowedlistedChangesAreOverridable() throws Exception {
+        int platformSdkVersion = getPlatformSdkVersion();
         for (Change c : getOnDeviceCompatConfig()) {
-            if (c.overridable) {
+            // Skip changeIDs with EnabledSince more than platform sdk version
+            if (c.overridable && c.sinceSdk <= platformSdkVersion) {
                 assertWithMessage("Please contact compat-team@google.com for approval")
                         .that(OVERRIDABLE_CHANGES).contains(c.changeName);
             }
@@ -187,6 +190,18 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
         // This feature is enabled only from V for apps targeting SDK 35+, see b/307477133
         changes.removeIf(c -> c.changeId == ASM_RESTRICTIONS);
         return changes;
+    }
+
+    /**
+     * Return the current platform SDK version for release sdk, else current development version.
+     */
+    private int getPlatformSdkVersion() throws Exception {
+        String codeName = getDevice().getProperty("ro.build.version.codename");
+        if ("REL".equals(codeName)) {
+            String sdkAsString = getDevice().getProperty("ro.build.version.sdk");
+            return Integer.parseInt(sdkAsString);
+        }
+        return CUR_DEVELOPMENT_VERSION;
     }
 
 }
