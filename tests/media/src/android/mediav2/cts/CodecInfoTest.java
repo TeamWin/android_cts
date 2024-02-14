@@ -25,6 +25,7 @@ import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420P
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
 import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_HdrEditing;
+import static android.media.codec.Flags.FLAG_IN_PROCESS_SW_AUDIO_CODEC;
 import static android.mediav2.common.cts.CodecTestBase.BOARD_SDK_IS_AT_LEAST_T;
 import static android.mediav2.common.cts.CodecTestBase.FIRST_SDK_IS_AT_LEAST_T;
 import static android.mediav2.common.cts.CodecTestBase.IS_AT_LEAST_T;
@@ -46,7 +47,9 @@ import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.MediaCodecList;
 import android.mediav2.common.cts.CodecTestBase;
 import android.os.Build;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 
+import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -239,6 +242,23 @@ public class CodecInfoTest {
                             ", but not decoding it",
                     selectCodecs(mMediaType, null, null, false).size() > 0);
         }
+    }
+
+    /**
+     * For all the available regulard codecs on the device, the test checks
+     * none of them are marked as suitable only for trusted content.
+     */
+    @Test
+    @RequiresFlagsEnabled(FLAG_IN_PROCESS_SW_AUDIO_CODEC)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
+    @ApiTest(apis = "android.media.MediaCodecInfo#getSecurityModel")
+    public void testSecurityModel() {
+        assertTrue("Codecs in REGULAR_CODECS list should have security model "
+                 + "SANDBOXED or MEMORY_SAFE",
+                List.of(MediaCodecInfo.SECURITY_MODEL_SANDBOXED,
+                        MediaCodecInfo.SECURITY_MODEL_MEMORY_SAFE).contains(
+                        mCodecInfo.getSecurityModel()));
     }
 }
 
