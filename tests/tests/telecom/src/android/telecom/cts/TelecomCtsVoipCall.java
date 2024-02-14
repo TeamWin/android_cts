@@ -19,6 +19,7 @@ package android.telecom.cts;
 import android.os.Bundle;
 import android.os.OutcomeReceiver;
 import android.os.ParcelUuid;
+import android.telecom.CallAttributes;
 import android.telecom.CallControl;
 import android.telecom.CallControlCallback;
 import android.telecom.CallEndpoint;
@@ -97,7 +98,9 @@ public class TelecomCtsVoipCall {
         private CallEndpoint mCallEndpoint;
         private List<CallEndpoint> mAvailableEndpoints;
         private boolean mIsMuted = false;
+        private int mVideoState = CallAttributes.AUDIO_CALL;
         public boolean mWasMuteStateChangedCalled = false;
+        public boolean mWasVideoStateChangedCalled = false;
         public Pair<String, Bundle> mLastEventReceived = null;
 
         @Override
@@ -123,6 +126,12 @@ public class TelecomCtsVoipCall {
         }
 
         @Override
+        public void onVideoStateChanged(int videoState) {
+            mVideoState = videoState;
+            mWasVideoStateChangedCalled = true;
+        }
+
+        @Override
         public void onCallStreamingFailed(int reason) {
             Log.i(TAG, String.format("onCallStreamingFailed: callId=[%s], reason=[%s]", mCallId,
                     reason));
@@ -135,6 +144,7 @@ public class TelecomCtsVoipCall {
         }
 
         public void resetAllCallbackVerifiers() {
+            mWasVideoStateChangedCalled = false;
             mWasMuteStateChangedCalled = false;
             mLastEventReceived = null;
         }
@@ -150,6 +160,7 @@ public class TelecomCtsVoipCall {
         public boolean isMuted() {
             return mIsMuted;
         }
+        public int getVideoState() {return mVideoState;}
     }
 
     public static class LatchedOutcomeReceiver implements OutcomeReceiver<Void, CallException> {
