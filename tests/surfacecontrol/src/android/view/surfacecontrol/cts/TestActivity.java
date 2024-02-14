@@ -48,6 +48,7 @@ public class TestActivity extends Activity {
         windowInsetsController.hide(sTypeMask);
         WindowManager.LayoutParams params = getWindow().getAttributes();
         params.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+        params.flags |= WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
         getWindow().setAttributes(params);
         getWindow().setDecorFitsSystemWindows(false);
     }
