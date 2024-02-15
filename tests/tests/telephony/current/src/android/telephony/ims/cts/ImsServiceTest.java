@@ -4757,7 +4757,7 @@ public class ImsServiceTest {
 
     @Test
     public void testProvisioningManagerRcsProvisioningChangedCallback() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsSingleRegistration()) {
             return;
         }
 
@@ -4857,7 +4857,7 @@ public class ImsServiceTest {
 
     @Test
     public void testProvisioningManagerNotifyRcsAutoConfigurationReceived() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsSingleRegistration()) {
             return;
         }
 
@@ -4924,7 +4924,7 @@ public class ImsServiceTest {
 
     @Test
     public void testProvisioningManagerTriggerRcsReconfiguration() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsSingleRegistration()) {
             return;
         }
 
@@ -4982,7 +4982,7 @@ public class ImsServiceTest {
 
     @Test
     public void testProvisioningManagerSetRcsClientConfiguration() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestImsSingleRegistration()) {
             return;
         }
         RcsClientConfiguration rcc = new RcsClientConfiguration(
