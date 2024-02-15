@@ -16,10 +16,13 @@
 
 package android.server.wm;
 
-import static android.hardware.devicestate.DeviceStateManager.MAXIMUM_DEVICE_STATE;
-import static android.hardware.devicestate.DeviceStateManager.MINIMUM_DEVICE_STATE;
+import static android.hardware.devicestate.DeviceStateManager.MAXIMUM_DEVICE_STATE_IDENTIFIER;
+import static android.hardware.devicestate.DeviceStateManager.MINIMUM_DEVICE_STATE_IDENTIFIER;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+
+import android.hardware.devicestate.DeviceState;
 
 import androidx.annotation.NonNull;
 
@@ -55,8 +58,22 @@ public final class DeviceStateUtils {
      * [{@link MINIMUM_DEVICE_STATE}, {@link MAXIMUM_DEVICE_STATE}].
      */
     public static void assertValidState(int state) {
-        assertTrue(state >= MINIMUM_DEVICE_STATE);
-        assertTrue(state <= MAXIMUM_DEVICE_STATE);
+        assertTrue("Device state identifier is smaller than the minimum state identifier value",
+                state >= MINIMUM_DEVICE_STATE_IDENTIFIER);
+        assertTrue("Device state identifier is larger than the maximum state identifier value",
+                state <= MAXIMUM_DEVICE_STATE_IDENTIFIER);
+    }
+
+    /**
+     * asserts that the provided {@code state} has an identifier in the range
+     * [{@link MINIMUM_DEVICE_STATE}, {@link MAXIMUM_DEVICE_STATE}] and a non-null {@code name}.
+     */
+    public static void assertValidDeviceState(DeviceState state) {
+        assertTrue("Device state identifier is smaller than the minimum state identifier value",
+                state.getIdentifier() >= MINIMUM_DEVICE_STATE_IDENTIFIER);
+        assertTrue("Device state identifier is larger than the maximum state identifier value",
+                state.getIdentifier() <= MAXIMUM_DEVICE_STATE_IDENTIFIER);
+        assertNotNull("Device state name was null", state.getName());
     }
 
     private DeviceStateUtils() {}
