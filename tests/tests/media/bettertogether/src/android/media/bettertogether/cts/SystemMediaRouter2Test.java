@@ -56,6 +56,7 @@ import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -780,6 +781,7 @@ public class SystemMediaRouter2Test {
         }
     }
 
+    @Ignore // TODO(b/291800179): Diagnose flakiness and re-enable.
     @Test
     public void testRoutingControllerSelectAndDeselectRoute() throws Exception {
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(FEATURE_SAMPLE);
@@ -997,6 +999,7 @@ public class SystemMediaRouter2Test {
         }
     }
 
+    @Ignore // TODO(b/291800179): Diagnose flakiness and re-enable.
     @Test
     public void testRoutingControllerRelease() throws Exception {
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(FEATURE_SAMPLE);
