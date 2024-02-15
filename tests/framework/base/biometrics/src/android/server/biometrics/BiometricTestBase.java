@@ -49,6 +49,8 @@ import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.TestJournalProvider.TestJournal;
 import android.server.wm.UiDeviceUtils;
@@ -66,6 +68,7 @@ import com.android.server.biometrics.nano.BiometricServiceStateProto;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -76,6 +79,10 @@ import java.util.concurrent.Executor;
  * Base class containing useful functionality. Actual tests should be done in subclasses.
  */
 abstract class BiometricTestBase extends ActivityManagerTestBase implements TestSessionList.Idler {
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private static final String TAG = "BiometricTestBase";
     private static final String DUMPSYS_BIOMETRIC = Utils.DUMPSYS_BIOMETRIC;

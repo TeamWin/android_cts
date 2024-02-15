@@ -45,9 +45,8 @@ import android.hardware.biometrics.SensorProperties;
 import android.os.CancellationSignal;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
-import android.platform.test.flag.junit.CheckFlagsRule;
-import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 
 import androidx.test.uiautomator.UiObject2;
@@ -57,7 +56,6 @@ import com.android.compatibility.common.util.CddTest;
 import com.android.server.biometrics.nano.SensorStateProto;
 
 import org.junit.Ignore;
-import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -72,10 +70,6 @@ import java.util.concurrent.TimeUnit;
 @Presubmit
 public class BiometricSimpleTests extends BiometricTestBase {
     private static final String TAG = "BiometricTests/Simple";
-
-    @Rule
-    public final CheckFlagsRule mCheckFlagsRule =
-            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     /**
      * Tests that enrollments created via {@link BiometricTestSession} show up in the
@@ -400,6 +394,7 @@ public class BiometricSimpleTests extends BiometricTestBase {
                     + "BiometricPrompt.AuthenticationCallback#onAuthenticationSucceeded",
             "android.hardware.biometrics."
                     + "BiometricPrompt#authenticate"})
+    @RequiresFlagsDisabled(Flags.FLAG_CUSTOM_BIOMETRIC_PROMPT)
     @Test
     public void testWhenCredentialEnrolled() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
@@ -599,6 +594,7 @@ public class BiometricSimpleTests extends BiometricTestBase {
                     + "BiometricPrompt#authenticate",
             "android.hardware.biometrics."
                     + "BiometricPrompt.AuthenticationResult#getAuthenticationType"})
+    @RequiresFlagsDisabled(Flags.FLAG_CUSTOM_BIOMETRIC_PROMPT)
     @Test
     public void testSimpleCredentialAuth() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
