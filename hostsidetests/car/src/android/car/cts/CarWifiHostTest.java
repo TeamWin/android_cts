@@ -107,7 +107,7 @@ public final class CarWifiHostTest extends CarHostJUnit4TestCase {
         assumeTrue("Skipping test: tethering capability disabled",
                 isPersistTetheringCapabilityEnabled());
         executeCommand(ENABLE_PERSISTENT_TETHERING);
-        assertThat(isAutoShutdownDisabled()).isTrue();
+        assertThat(isAutoShutdownEnabled()).isFalse();
     }
 
     @Test
@@ -118,7 +118,7 @@ public final class CarWifiHostTest extends CarHostJUnit4TestCase {
         assumeTrue("Skipping test: tethering capability disabled",
                 isPersistTetheringCapabilityEnabled());
         executeCommand(DISABLE_PERSISTENT_TETHERING);
-        assertThat(isAutoShutdownDisabled()).isFalse();
+        assertThat(isAutoShutdownEnabled()).isTrue();
     }
 
     @Test
@@ -128,9 +128,9 @@ public final class CarWifiHostTest extends CarHostJUnit4TestCase {
             throws Exception {
         assumeFalse("Skipping test: tethering capability enabled",
                 isPersistTetheringCapabilityEnabled());
-        boolean autoShutdownEnabledBefore = isAutoShutdownDisabled();
+        boolean autoShutdownEnabledBefore = isAutoShutdownEnabled();
         executeCommand(ENABLE_PERSISTENT_TETHERING);
-        assertThat(isAutoShutdownDisabled()).isEqualTo(autoShutdownEnabledBefore);
+        assertThat(isAutoShutdownEnabled()).isEqualTo(autoShutdownEnabledBefore);
     }
 
     @Test
@@ -140,9 +140,9 @@ public final class CarWifiHostTest extends CarHostJUnit4TestCase {
             throws Exception {
         assumeFalse("Skipping test: tethering capability enabled",
                 isPersistTetheringCapabilityEnabled());
-        boolean autoShutdownEnabledBefore = isAutoShutdownDisabled();
+        boolean autoShutdownEnabledBefore = isAutoShutdownEnabled();
         executeCommand(DISABLE_PERSISTENT_TETHERING);
-        assertThat(isAutoShutdownDisabled()).isEqualTo(autoShutdownEnabledBefore);
+        assertThat(isAutoShutdownEnabled()).isEqualTo(autoShutdownEnabledBefore);
     }
 
     @Test
@@ -157,7 +157,7 @@ public final class CarWifiHostTest extends CarHostJUnit4TestCase {
         enablePersistTetheringAndReboot(/* enableTethering= */ true);
 
         PollingCheck.check("Tethering NOT enabled", TIMEOUT_MS, this::isTetheringEnabled);
-        assertThat(isAutoShutdownDisabled()).isTrue();
+        assertThat(isAutoShutdownEnabled()).isFalse();
     }
 
     @Test
@@ -198,7 +198,7 @@ public final class CarWifiHostTest extends CarHostJUnit4TestCase {
         return carWifiDump.getTetheringEnabled();
     }
 
-    private boolean isAutoShutdownDisabled() throws Exception {
+    private boolean isAutoShutdownEnabled() throws Exception {
         CarWifiDumpProto carWifiDump = ProtoUtils.getProto(getDevice(),
                 CarWifiDumpProto.parser(), CMD_DUMPSYS_WIFI_PROTO);
         return carWifiDump.getAutoShutdownEnabled();
