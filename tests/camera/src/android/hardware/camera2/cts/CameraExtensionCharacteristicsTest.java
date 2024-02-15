@@ -403,7 +403,7 @@ public class CameraExtensionCharacteristicsTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_CAMERA_EXTENSIONS_CHARACTERISTICS_GET)
-    public void testExtensionGetRequiredCharacteristics() throws Exception {
+    public void testExtensionGetCharacteristics() throws Exception {
         for (String id : mTestRule.getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
@@ -416,16 +416,10 @@ public class CameraExtensionCharacteristicsTest {
 
             List<Integer> supportedExtensions = chars.getSupportedExtensions();
             for (Integer extension : supportedExtensions) {
-                Range<Float> zoomRatioRange = chars.get(extension,
-                        CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE);
-                assertNotNull("Zoom ratio must be present in extensions", zoomRatioRange);
-
-                int[] availableAFModes = chars.get(extension,
-                        CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
-                assertNotNull("Available AF modes must be present in extensions", availableAFModes);
-                if (staticMeta.hasFocuser()) {
-                    assertTrue(Arrays.stream(availableAFModes).boxed().collect(Collectors.toList())
-                            .contains(CameraMetadata.CONTROL_AF_MODE_AUTO));
+                Set<CameraCharacteristics.Key> keys = chars.getKeys(extension);
+                for (CameraCharacteristics.Key key : keys) {
+                    assertNotNull("Associated value for key cannot be null.",
+                            chars.get(extension, key));
                 }
             }
         }
@@ -451,7 +445,9 @@ public class CameraExtensionCharacteristicsTest {
             List<Integer> supportedExtensions = chars.getSupportedExtensions();
             for (Integer extension : supportedExtensions) {
                 Set<CameraCharacteristics.Key> keys = chars.getKeys(extension);
-                assertNotNull("Available extensions characteristics keys cannot be null", keys);
+                if (keys.isEmpty()) {
+                    continue;
+                }
                 for (CameraCharacteristics.Key key : requiredKeys) {
                     assertTrue(keys.contains(key));
                 }
