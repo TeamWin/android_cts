@@ -174,7 +174,7 @@ public class BiometricSimpleTests extends BiometricTestBase {
     public void testIsConfirmationRequired() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
         for (SensorProperties props : mSensorProperties) {
-            if (props.getSensorStrength() != SensorProperties.STRENGTH_CONVENIENCE) {
+            if (props.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
                 continue;
             }
 
@@ -202,11 +202,11 @@ public class BiometricSimpleTests extends BiometricTestBase {
                         mock(BiometricPrompt.AuthenticationCallback.class);
 
                 BiometricPrompt prompt = showDefaultBiometricPrompt(props.getSensorId(),
-                        0 /* userId */,
-                        false /* requireConfirmation */, callback, new CancellationSignal());
+                        0 /* userId */, true /* requireConfirmation */, callback,
+                        new CancellationSignal());
 
-                assertFalse(prompt.isConfirmationRequired());
-                verify(callback).onAuthenticationError(anyInt(), anyObject());
+                assertTrue(prompt.isConfirmationRequired());
+                successfullyAuthenticate(session, 0 /* userId */);
             }
         }
     }
