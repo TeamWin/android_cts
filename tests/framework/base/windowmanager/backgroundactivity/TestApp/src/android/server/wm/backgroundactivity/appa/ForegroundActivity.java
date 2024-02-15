@@ -116,6 +116,8 @@ public class ForegroundActivity extends Activity {
         mRelaunch = intent.getBooleanExtra(
                 mA.FOREGROUND_ACTIVITY_EXTRA.RELAUNCH_FOREGROUND_ACTIVITY_EXTRA, false);
         mActivityId = intent.getIntExtra(mA.FOREGROUND_ACTIVITY_EXTRA.ACTIVITY_ID, -1);
+        setAllowCrossUidActivitySwitchFromBelow(
+                intent.getBooleanExtra(mA.FOREGROUND_ACTIVITY_EXTRA.ALLOW_CROSS_UID, false));
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(mA.FOREGROUND_ACTIVITY_ACTIONS.LAUNCH_BACKGROUND_ACTIVITIES);
