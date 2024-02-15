@@ -4,7 +4,7 @@
       "name": "CtsWifiTestCases"
     }
   ],
-  "postsubmit": [
+  "presubmit": [
     {
       "name": "CtsWifiNonUpdatableTestCases"
     }
