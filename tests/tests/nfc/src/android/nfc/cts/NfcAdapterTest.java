@@ -378,7 +378,7 @@ public class NfcAdapterTest {
         try {
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
             CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
-            cardEmulation.setServiceObserveModeDefault(new ComponentName(mContext,
+            cardEmulation.setDefaultToObserveModeForService(new ComponentName(mContext,
                     CustomHostApduService.class), true);
             originalDefault = setDefaultPaymentService(CustomHostApduService.class);
             CardEmulationTest.ensurePreferredService(CustomHostApduService.class, mContext);
@@ -398,7 +398,7 @@ public class NfcAdapterTest {
         CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
         try {
             Activity activity = createAndResumeActivity();
-            cardEmulation.setServiceObserveModeDefault(new ComponentName(mContext,
+            cardEmulation.setDefaultToObserveModeForService(new ComponentName(mContext,
                     CustomHostApduService.class), true);
             Assert.assertTrue(cardEmulation.setPreferredService(activity,
                     new ComponentName(mContext, CustomHostApduService.class)));
@@ -409,7 +409,7 @@ public class NfcAdapterTest {
             CardEmulationTest.ensurePreferredService(CtsMyHostApduService.class, mContext);
             Assert.assertFalse(adapter.isObserveModeEnabled());
         } finally {
-            cardEmulation.setServiceObserveModeDefault(new ComponentName(mContext,
+            cardEmulation.setDefaultToObserveModeForService(new ComponentName(mContext,
                     CustomHostApduService.class), false);
         }
     }
