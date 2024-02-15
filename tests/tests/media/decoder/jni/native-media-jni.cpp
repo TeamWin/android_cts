@@ -26,6 +26,7 @@
 #include <queue>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <android/native_window_jni.h>
@@ -465,4 +466,186 @@ extern "C" jobject Java_android_media_decoder_cts_NativeDecoderTest_getDecodedDa
     AMediaExtractor_delete(ex);
     AMediaDataSource_delete(ndkSrc);
     return ret;
+}
+
+static bool arePtsListsIdentical(const std::vector<u_long>& refArray,
+                                 const std::vector<u_long>& testArray) {
+    bool isEqual = true;
+    u_long i;
+    if (refArray.size() != testArray.size()) {
+        ALOGE("Expected and received timestamps list sizes are not identical");
+        ALOGE("Expected pts list size is %zu", refArray.size());
+        ALOGE("Received pts list size is %zu", testArray.size());
+        isEqual = false;
+    } else {
+        for (i = 0; i < refArray.size(); i++) {
+            if (refArray[i] != testArray[i]) {
+                isEqual = false;
+            }
+        }
+    }
+
+    if (!isEqual) {
+        for (i = 0; i < std::min(refArray.size(), testArray.size()); i++) {
+            ALOGE("Frame idx %3lu, expected pts %9luus, received pts %9luus", i, refArray[i],
+                  testArray[i]);
+        }
+        if (refArray.size() < testArray.size()) {
+            for (i = refArray.size(); i < testArray.size(); i++) {
+                ALOGE("Frame idx %3lu, expected pts %11s, received pts %9luus", i, "EMPTY",
+                      testArray[i]);
+            }
+        } else if (refArray.size() > testArray.size()) {
+            for (i = testArray.size(); i < refArray.size(); i++) {
+                ALOGE("Frame idx %3lu, expected pts %9luus, received pts %11s", i, refArray[i],
+                      "EMPTY");
+            }
+        }
+    }
+
+    return isEqual;
+}
+
+bool testNonTunneledTrickPlay(const char *fileName, ANativeWindow *pWindow, bool isAsync) {
+    FILE *fp = fopen(fileName, "rbe");
+    if (fp == nullptr) {
+        ALOGE("Unable to open input file: %s", fileName);
+        return false;
+    }
+
+    struct stat buf {};
+    AMediaExtractor *extractor = AMediaExtractor_new();
+    if (!fstat(fileno(fp), &buf)) {
+        media_status_t res = AMediaExtractor_setDataSourceFd(extractor, fileno(fp), 0, buf.st_size);
+        if (res != AMEDIA_OK) {
+            ALOGE("AMediaExtractor_setDataSourceFd failed with error %d", res);
+            AMediaExtractor_delete(extractor);
+            return false;
+        }
+    }
+
+    int trackIndex = -1;
+    for (size_t trackID = 0; trackID < AMediaExtractor_getTrackCount(extractor); trackID++) {
+        AMediaFormat *format = AMediaExtractor_getTrackFormat(extractor, trackID);
+        const char *mediaType = nullptr;
+        AMediaFormat_getString(format, AMEDIAFORMAT_KEY_MIME, &mediaType);
+        bool isVideo = strncmp(mediaType, "video/", strlen("video/")) == 0;
+        AMediaFormat_delete(format);
+        if (isVideo) {
+            trackIndex = trackID;
+            ALOGV("mediaType = %s, prefix = \"video/\", trackId = %zu", mediaType, trackID);
+            break;
+        }
+    }
+
+    if (trackIndex < 0) {
+        ALOGE("No video track found for track index: %d", trackIndex);
+        AMediaExtractor_delete(extractor);
+        return false;
+    }
+
+    AMediaExtractor_selectTrack(extractor, trackIndex);
+    AMediaFormat *format = AMediaExtractor_getTrackFormat(extractor, trackIndex);
+    const char *mediaType = nullptr;
+    AMediaFormat_getString(format, AMEDIAFORMAT_KEY_MIME, &mediaType);
+    AMediaCodec *codec = AMediaCodec_createDecoderByType(mediaType);
+    CallbackData *callbackData = new CallbackData();
+
+    if (isAsync) {
+        AMediaCodecOnAsyncNotifyCallback callBack = {OnInputAvailableCB, OnOutputAvailableCB,
+                                                     OnFormatChangedCB, OnErrorCB};
+        auto status = AMediaCodec_setAsyncNotifyCallback(codec, callBack, callbackData);
+        if (status != AMEDIA_OK) {
+            ALOGE("failed to set async callback");
+            delete callbackData;
+            AMediaFormat_delete(format);
+            AMediaCodec_delete(codec);
+            AMediaExtractor_delete(extractor);
+            return false;
+        }
+    }
+    AMediaCodec_configure(codec, format, pWindow, nullptr, 0);
+    AMediaCodec_start(codec);
+
+    std::atomic<bool> done(false);
+    std::vector<u_long> expectedPresentationTimes;
+    std::vector<u_long> receivedPresentationTimes;
+    bool mEosQueued = false;
+    int mDecodeOnlyCounter = 0;
+    // keep looping until the codec receives the EOS frame
+    while (!done.load()) {
+        // enqueue
+        if (!mEosQueued) {
+            size_t inBufSize;
+            int32_t id;
+            if (isAsync) {
+                id = callbackData->getInputBufferId();
+            } else {
+                id = AMediaCodec_dequeueInputBuffer(codec, 5000);
+            }
+            if (id >= 0) {
+                uint8_t *inBuf = AMediaCodec_getInputBuffer(codec, id, &inBufSize);
+                if (inBuf == nullptr) {
+                    ALOGE("AMediaCodec_getInputBuffer returned nullptr");
+                    delete callbackData;
+                    AMediaFormat_delete(format);
+                    AMediaCodec_stop(codec);
+                    AMediaCodec_delete(codec);
+                    AMediaExtractor_delete(extractor);
+                    return false;
+                }
+                ssize_t sampleSize = AMediaExtractor_readSampleData(extractor, inBuf, inBufSize);
+                int64_t presentationTime = AMediaExtractor_getSampleTime(extractor);
+                uint32_t flags = 0;
+                if (sampleSize < 0) {
+                    flags = AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM;
+                    sampleSize = 0;
+                    mEosQueued = true;
+                } else if (mDecodeOnlyCounter % 2 == 0) {
+                    flags = AMEDIACODEC_BUFFER_FLAG_DECODE_ONLY;
+                } else {
+                    expectedPresentationTimes.push_back(presentationTime);
+                }
+                mDecodeOnlyCounter++;
+                AMediaCodec_queueInputBuffer(codec, id, 0, sampleSize, presentationTime, flags);
+                AMediaExtractor_advance(extractor);
+            }
+        }
+
+        // dequeue
+        AMediaCodecBufferInfo bufferInfo;
+        AMediaFormat *outputFormat;
+        int id;
+        if (isAsync) {
+            id = callbackData->getOutput(&bufferInfo, &outputFormat);
+        } else {
+            id = AMediaCodec_dequeueOutputBuffer(codec, &bufferInfo, 1);
+        }
+        if (id >= 0) {
+            AMediaCodec_releaseOutputBuffer(codec, id, false);
+            if ((bufferInfo.flags & AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM) != 0) {
+                done.store(true);
+            } else {
+                receivedPresentationTimes.push_back(bufferInfo.presentationTimeUs);
+            }
+        }
+    }
+
+    delete callbackData;
+    AMediaFormat_delete(format);
+    AMediaCodec_stop(codec);
+    AMediaCodec_delete(codec);
+    AMediaExtractor_delete(extractor);
+    std::sort(expectedPresentationTimes.begin(), expectedPresentationTimes.end());
+    return arePtsListsIdentical(expectedPresentationTimes, receivedPresentationTimes);
+}
+
+extern "C" jboolean Java_android_media_decoder_cts_DecodeOnlyTest_nativeTestNonTunneledTrickPlay(
+        JNIEnv *env, jclass /*clazz*/, jstring jFileName, jobject surface, jboolean isAsync) {
+    ALOGD("nativeTestNonTunneledTrickPlay");
+    const char *cFileName = env->GetStringUTFChars(jFileName, nullptr);
+    ANativeWindow *window = surface ? ANativeWindow_fromSurface(env, surface) : nullptr;
+    bool isPass = testNonTunneledTrickPlay(cFileName, window, isAsync);
+    env->ReleaseStringUTFChars(jFileName, cFileName);
+    return static_cast<jboolean>(isPass);
 }
