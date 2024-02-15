@@ -17,18 +17,33 @@
 package android.app.cts.testcomponentcaller;
 
 import android.content.ComponentName;
+import android.net.Uri;
 
 /** Constants shared with {@link android.app.cts.ComponentCallerTest} */
 public class Constants {
     public static final String HELPER_APP_PACKAGE = "android.app.cts.testcomponentcaller";
     public static final ComponentName HELPER_APP_INITIAL_CALLER_ACTIVITY = new ComponentName(
             HELPER_APP_PACKAGE, HELPER_APP_PACKAGE + ".TestInitialCallerActivity");
+    public static final ComponentName HELPER_APP_NEW_INTENT_GET_CURRENT_CALLER_ACTIVITY =
+            new ComponentName(HELPER_APP_PACKAGE, HELPER_APP_PACKAGE
+                    + ".TestNewIntentCallerActivities$TestNewIntentGetCurrentCallerActivity");
+    public static final ComponentName HELPER_APP_NEW_INTENT_OVERLOAD_CALLER_ACTIVITY =
+            new ComponentName(HELPER_APP_PACKAGE, HELPER_APP_PACKAGE
+                    + ".TestNewIntentCallerActivities$TestNewIntentOverloadCallerActivity");
+    public static final Uri HELPER_APP_URI =
+            Uri.parse("content://android.app.cts.testcomponentcaller.provider");
 
     private static final String TEST_PACKAGE = "android.app.cts";
     public static final ComponentName TEST_RECEIVER = new ComponentName(TEST_PACKAGE,
             TEST_PACKAGE + ".ComponentCallerTest$TestReceiver");
     public static final ComponentName TEST_INITIAL_CALLER_ACTIVITY = new ComponentName(TEST_PACKAGE,
             TEST_PACKAGE + ".ComponentCallerTest$InitialCallerTestActivity");
+    public static final ComponentName TEST_NEW_INTENT_GET_CURRENT_CALLER_ACTIVITY =
+            new ComponentName(TEST_PACKAGE, TEST_PACKAGE
+                    + ".ComponentCallerTest$NewIntentGetCurrentCallerTestActivity");
+    public static final ComponentName TEST_NEW_INTENT_OVERLOAD_CALLER_ACTIVITY =
+            new ComponentName(TEST_PACKAGE, TEST_PACKAGE
+                    + ".ComponentCallerTest$NewIntentOverloadCallerTestActivity");
 
     public static final String TEST_RECEIVER_ACTION = "android.app.cts.ACTIVITY_CALLER_ACTION";
 
@@ -40,6 +55,8 @@ public class Constants {
     public static final String ACTION_ID = "actionId";
     public static final int START_TEST_ACTIVITY_ACTION_ID = 0;
     public static final int SEND_TEST_BROADCAST_ACTION_ID = 1;
+
+    public static final String IS_NEW_INTENT = "isNewIntent";
 
     public static final String MODE_FLAGS_TO_CHECK = "modeFlags";
 
