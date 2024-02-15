@@ -18,6 +18,7 @@ package android.accessibilityservice.cts;
 
 import static android.Manifest.permission.MANAGE_ACCESSIBILITY;
 import static android.accessibilityservice.BrailleDisplayController.BrailleDisplayCallback.FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND;
+import static android.accessibilityservice.BrailleDisplayController.BrailleDisplayCallback.FLAG_ERROR_CANNOT_ACCESS;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -171,7 +172,9 @@ public class BrailleDisplayControllerTest {
 
     @After
     public void cleanup() throws Exception {
-        mController.disconnect();
+        if (mController != null) {
+            mController.disconnect();
+        }
         executeSystemShellCommand("rm -rf " + TEST_DATA_DIR);
     }
 
@@ -249,7 +252,12 @@ public class BrailleDisplayControllerTest {
                         }
                     }
                 };
-        controller.connect(device, executor, callback);
+        if (executor == null) {
+            controller.connect(device, callback);
+        } else {
+            controller.connect(device, executor, callback);
+        }
+
 
         TestUtils.waitUntil("Expected connection success", (int) CALLBACK_TIMEOUT_MS / 1000,
                 () -> connectedDeviceDescriptor.get() != null);
@@ -312,6 +320,25 @@ public class BrailleDisplayControllerTest {
         setTestData(List.of(testBD));
 
         byte[] connectedDeviceDescriptor = expectConnectionSuccess(mController, mExecutor,
+                mBluetoothDevice1);
+
+        assertThat(connectedDeviceDescriptor).isEqualTo(DESCRIPTOR1);
+        assertThat(mController.isConnected()).isTrue();
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.accessibilityservice.BrailleDisplayController#connect",
+            "android.accessibilityservice.BrailleDisplayController"
+                    + ".BrailleDisplayCallback#onConnected",
+            "android.accessibilityservice.BrailleDisplayController#isConnected",
+    })
+    public void connect_defaultExecutor_isSuccessful() throws Exception {
+        String hidraw1 = createTestHidrawNode("hidraw1");
+        Bundle testBD = getTestBrailleDisplay(hidraw1, DESCRIPTOR1, BT_ADDRESS1, true);
+        setTestData(List.of(testBD));
+
+        byte[] connectedDeviceDescriptor = expectConnectionSuccess(mController, /*executor=*/null,
                 mBluetoothDevice1);
 
         assertThat(connectedDeviceDescriptor).isEqualTo(DESCRIPTOR1);
@@ -466,6 +493,44 @@ public class BrailleDisplayControllerTest {
 
         expectConnectionFailed(mController, mExecutor, mBluetoothDevice2);
         expectConnectionSuccess(mController, mExecutor, mBluetoothDevice1);
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.accessibilityservice.BrailleDisplayController#connect",
+            "android.accessibilityservice.BrailleDisplayController"
+                    + ".BrailleDisplayCallback#onConnectionFailed",
+            "android.accessibilityservice.BrailleDisplayController"
+                    + ".BrailleDisplayCallback#FLAG_ERROR_CANNOT_ACCESS",
+    })
+    public void connect_unableToGetHidrawNodePaths_returnsCannotAccessError() throws Exception {
+        // BrailleDisplayScanner#getHidrawNodePaths returns null when test data is empty.
+        setTestData(List.of());
+
+        int errorCode = expectConnectionFailed(mController, mExecutor, mBluetoothDevice1);
+
+        assertThat(errorCode).isEqualTo(FLAG_ERROR_CANNOT_ACCESS);
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.accessibilityservice.BrailleDisplayController#connect",
+            "android.accessibilityservice.BrailleDisplayController"
+                    + ".BrailleDisplayCallback#onConnectionFailed",
+            "android.accessibilityservice.BrailleDisplayController"
+                    + ".BrailleDisplayCallback#FLAG_ERROR_CANNOT_ACCESS",
+            "android.accessibilityservice.BrailleDisplayController"
+                    + ".BrailleDisplayCallback#FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND",
+    })
+    public void connect_unableToGetReportDescriptor_returnsErrors() throws Exception {
+        String hidraw1 = createTestHidrawNode("hidraw1");
+        Bundle testBD = getTestBrailleDisplay(hidraw1, /*descriptor=*/null, BT_ADDRESS1, true);
+        setTestData(List.of(testBD));
+
+        int errorCode = expectConnectionFailed(mController, mExecutor, mBluetoothDevice1);
+
+        assertThat(errorCode).isEqualTo(
+                FLAG_ERROR_CANNOT_ACCESS | FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND);
     }
 
     // TODO: b/316035785 - Change this to a CTS-Verifier test, requiring >=1 connected USB device
