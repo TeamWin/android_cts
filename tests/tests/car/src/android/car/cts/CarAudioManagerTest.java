@@ -1828,6 +1828,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @RequiresFlagsEnabled(Flags.FLAG_CAR_AUDIO_MUTE_AMBIGUITY)
     public void setVolumeGroupMute_withMuteAmbiguityFlagEnabled() {
         assumeDynamicRoutingIsEnabled();
+        assumeVolumeGroupMutingIsEnabled();
         readFirstZoneAndVolumeGroup();
         boolean isMuted = mCarAudioManager.isVolumeGroupMuted(mZoneId, mVolumeGroupId);
         boolean isMutedBySystem = mCarAudioManager.getVolumeGroupInfo(mZoneId,
