@@ -83,6 +83,33 @@ public class CodecDecoderTestBase extends CodecTestBase {
         }
     }
 
+    public static int getMaxSampleSizeForMediaType(String fileName, String mediaType)
+            throws IOException {
+        Preconditions.assertTestFileExists(fileName);
+        int maxSampleSize = 0;
+        MediaExtractor extractor = new MediaExtractor();
+        extractor.setDataSource(fileName);
+        for (int trackID = 0; trackID < extractor.getTrackCount(); trackID++) {
+            MediaFormat format = extractor.getTrackFormat(trackID);
+            if (mediaType.equalsIgnoreCase(format.getString(MediaFormat.KEY_MIME))) {
+                extractor.selectTrack(trackID);
+                if (format.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE)) {
+                    maxSampleSize = format.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE);
+                } else {
+                    int size;
+                    while ((size = (int) extractor.getSampleSize()) != -1) {
+                        maxSampleSize = Math.max(maxSampleSize, size);
+                        extractor.advance();
+                    }
+                }
+                extractor.release();
+                return maxSampleSize;
+            }
+        }
+        fail("No track with mediaType: " + mediaType + " found in file: " + fileName + "\n");
+        return maxSampleSize;
+    }
+
     protected MediaFormat setUpSource(String srcFile) throws IOException {
         Preconditions.assertTestFileExists(srcFile);
         mExtractor = new MediaExtractor();
@@ -90,6 +117,13 @@ public class CodecDecoderTestBase extends CodecTestBase {
         for (int trackID = 0; trackID < mExtractor.getTrackCount(); trackID++) {
             MediaFormat format = mExtractor.getTrackFormat(trackID);
             if (mMediaType.equalsIgnoreCase(format.getString(MediaFormat.KEY_MIME))) {
+                // This is required for some mlaw and alaw test vectors where access unit size is
+                // exceeding default max input size
+                if (mMediaType.equalsIgnoreCase(MediaFormat.MIMETYPE_AUDIO_G711_ALAW)
+                        || mMediaType.equalsIgnoreCase(MediaFormat.MIMETYPE_AUDIO_G711_MLAW)) {
+                    format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE,
+                            getMaxSampleSizeForMediaType(srcFile, mMediaType));
+                }
                 mExtractor.selectTrack(trackID);
                 if (mIsVideo) {
                     ArrayList<MediaFormat> formatList = new ArrayList<>();
@@ -322,7 +356,7 @@ public class CodecDecoderTestBase extends CodecTestBase {
         }
     }
 
-    void validateTestState() {
+    protected void validateTestState() {
         super.validateTestState();
         if (!mOutputBuff.isPtsStrictlyIncreasing(mPrevOutputPts)) {
             fail("Output timestamps are not strictly increasing \n" + mTestConfig + mTestEnv

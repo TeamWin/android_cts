@@ -26,6 +26,7 @@ android_test {
         "ctstestrunner-axt",
         "ctstestserver",
         "ctsmediav2common",
+        "aconfig_mediacodec_flags_java_lib",
     ],
     libs: [
         "org.apache.http.legacy",
